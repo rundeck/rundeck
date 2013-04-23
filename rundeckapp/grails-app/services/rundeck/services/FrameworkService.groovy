@@ -408,9 +408,9 @@ class FrameworkService implements ApplicationContextAware {
 
     /**
      * Create a map of option name to value given an input argline.
-     * Supports the form "-option value", and boolean "-option", which is given
-     * the value of "true".  Other options are ignored. if a double-dash
-     * is seen it is not interpreted, and --option is parsed as option name "-option".
+     * Supports the form "-option value".  Tokens not in that form are ignored. The string
+     * can have quoted values, using single or double quotes, and allows double/single to be
+     * embedded. To embed single/single or double/double, the quotes should be repeated.
      */
     def Map<String,String> parseOptsFromString(String argstring){
         if(!argstring){
@@ -419,25 +419,25 @@ class FrameworkService implements ApplicationContextAware {
         def String[] tokens=com.dtolabs.rundeck.core.utils.OptsUtil.burst(argstring)
         return parseOptsFromArray(tokens)
     }
+    /**
+     * Parse an array of tokens in the form ['-optionname','value',...], ignoring
+     * incorrectly sequenced values and options.
+     * @param tokens
+     * @return
+     */
     def Map<String,String> parseOptsFromArray(String[] tokens){
         def Map<String,String> optsmap = new HashMap<String,String>()
         def String key=null
         for(int i=0;i<tokens.length;i++){
-            if(tokens[i].startsWith("-") && tokens[i].length()>1){
-                if(key){
-                    //previous key was boolean flag, set to true
-                    optsmap[key]="true"
-                    key=null
-                }
+            if (key) {
+                optsmap[key] = tokens[i]
+                key = null
+            }else if (tokens[i].startsWith("-") && tokens[i].length()>1){
                 key=tokens[i].substring(1)
-            }else if(key){
-                optsmap[key]=tokens[i]
-                key=null
             }
         }
         if(key){
-            optsmap[key]="true"
-            key=null
+            //ignore
         }
         return optsmap
     }
