@@ -1,12 +1,12 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.core.utils.OptsUtil
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
 
 import com.dtolabs.rundeck.app.support.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.cli.CLIToolLogger
-import com.dtolabs.rundeck.core.cli.CLIUtils
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.common.NodesSelector
@@ -513,11 +513,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
         def LogHandler loghandler = createLogHandler(lognamespace, execution.outputfilepath,execution.loglevel,
             [user:execution.user,node:framework.getFrameworkNodeName()])
 
+        if(scheduledExecution){
+            //send onstart notification
+            def result = notificationService.triggerJobNotification('start', scheduledExecution.id, [execution: execution])
+        }
         //install custom outputstreams for System.out and System.err for this thread and any child threads
         //output will be sent to loghandler instead.
         sysThreadBoundOut.installThreadStream(loghandler.createLoggerStream(Level.WARNING, null));
         sysThreadBoundErr.installThreadStream(loghandler.createLoggerStream(Level.SEVERE, null));
 
+        def startMap
         try{
             def jobcontext=new HashMap<String,String>()
             if(scheduledExecution){
@@ -596,9 +601,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
         if (!execMap.workflow.commands || execMap.workflow.commands.size() < 1) {
             throw new Exception("Workflow is empty")
         }
-        def User user = User.findByLogin(userName?userName:execMap.user)
-        if (!user) {
-            throw new Exception(g.message(code:'unauthorized.job.run.user',args:[userName?userName:execMap.user]))
+        if (!userName) {
+            userName = execMap.user
         }
 
         //create thread object with an execution item, and start it
@@ -612,7 +616,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
             CommandExec cmd=step.asType(CommandExec)
             if (null != cmd.getAdhocRemoteString()) {
 
-                final List<String> strings = CLIUtils.splitArgLine(cmd.getAdhocRemoteString());
+                final List<String> strings = OptsUtil.burst(cmd.getAdhocRemoteString());
                 final String[] args = strings.toArray(new String[strings.size()]);
 
                 return ExecutionItemFactory.createExecCommand(args, handler, !!cmd.keepgoingOnSuccess);
@@ -621,7 +625,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
                 final String script = cmd.getAdhocLocalString();
                 final String[] args;
                 if (null != cmd.getArgString()) {
-                    final List<String> strings = CLIUtils.splitArgLine(cmd.getArgString());
+                    final List<String> strings = OptsUtil.burst(cmd.getArgString());
                     args = strings.toArray(new String[strings.size()]);
                 } else {
                     args = new String[0];
@@ -632,7 +636,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
                 final String filepath = cmd.getAdhocFilepath();
                 final String[] args;
                 if (null != cmd.getArgString()) {
-                    final List<String> strings = CLIUtils.splitArgLine(cmd.getArgString());
+                    final List<String> strings = OptsUtil.burst(cmd.getArgString());
                     args = strings.toArray(new String[strings.size()]);
                 } else {
                     args = new String[0];
@@ -648,7 +652,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
 
             final String[] args;
             if (null != jobcmditem.getArgString()) {
-                final List<String> strings = CLIUtils.splitArgLine(jobcmditem.getArgString());
+                final List<String> strings = OptsUtil.burst(jobcmditem.getArgString());
                 args = strings.toArray(new String[strings.size()]);
             } else {
                 args = new String[0];
@@ -677,12 +681,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
      * Return an StepExecutionItem instance for the given workflow Execution, suitable for the ExecutionService layer
      */
     public StepExecutionContext createContext(ExecutionContext execMap, StepExecutionContext origContext, Framework framework, String userName = null, Map<String, String> jobcontext, ExecutionListener listener, String[] inputargs=null, Map extraParams=null, Map extraParamsExposed=null) {
-        def User user = User.findByLogin(userName ? userName : execMap.user)
-        if (!user) {
-            throw new Exception("User ${userName ? userName : execMap.user} is not authorized to run this Job.")
+        if (!userName) {
+            userName=execMap.user
         }
         //convert argString into Map<String,String>
-        def String[] args = execMap.argString? CLIUtils.splitArgLine(execMap.argString):inputargs
+        def String[] args = execMap.argString? OptsUtil.burst(execMap.argString):inputargs
         def Map<String, String> optsmap = execMap.argString ? frameworkService.parseOptsFromString(execMap.argString) : null!=args? frameworkService.parseOptsFromArray(args):[:]
         if(extraParamsExposed){
             optsmap.putAll(extraParamsExposed)
@@ -735,7 +738,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
         //create execution context
         def builder = com.dtolabs.rundeck.core.execution.ExecutionContextImpl.builder(origContext)
             .frameworkProject(execMap.project)
-            .user(user.login)
+            .user(userName)
             .nodeSelector(nodeselector)
             .nodes(nodeSet)
             .loglevel(loglevels[null != execMap.loglevel ? execMap.loglevel : 'WARN'])
@@ -796,7 +799,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
         return thread.isSuccessful()
     }
 
-    def abortExecution(ScheduledExecution se, Execution e, String user, final def framework){
+    def abortExecution(ScheduledExecution se, Execution e, String user, final def framework, String killAsUser=null
+    ){
         def eid=e.id
         def dateCompleted = e.dateCompleted
         e.discard()
@@ -805,15 +809,21 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
         def abortstate
         def jobstate
         def failedreason
+        def userIdent=killAsUser?:user
         if (!frameworkService.authorizeProjectExecutionAll(framework,e,[AuthConstants.ACTION_KILL])){
             jobstate = ExecutionController.getExecutionState(e)
             abortstate= ExecutionController.ABORT_FAILED
             failedreason="unauthorized"
             statusStr= jobstate
+        }else if(killAsUser && !frameworkService.authorizeProjectExecutionAll(framework, e, [AuthConstants.ACTION_KILLAS])) {
+            jobstate = ExecutionController.getExecutionState(e)
+            abortstate = ExecutionController.ABORT_FAILED
+            failedreason = "unauthorized"
+            statusStr = jobstate
         }else if (scheduledExecutionService.existsJob(ident.jobname, ident.groupname)){
             Execution e2 = Execution.lock(eid)
             if(!e2.abortedby){
-                e2.abortedby=user
+                e2.abortedby= userIdent
                 e2.save(flush:true)
             }
             def didcancel=scheduledExecutionService.interruptJob(ident.jobname, ident.groupname)
@@ -828,7 +838,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
                     status:String.valueOf(false),
                     dateCompleted:new Date(),
                     cancelled:true,
-                    abortedby:user
+                    abortedby: userIdent
                     ]
                 )
             abortstate=ExecutionController.ABORT_ABORTED
@@ -1014,12 +1024,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
 
 
     public Map executeScheduledExecution(ScheduledExecution scheduledExecution, Framework framework, Subject subject, params) {
-        def User user = User.findByLogin(params.user)
-        if (!user) {
-            def msg = g.message(code: 'unauthorized.job.run.user', args: [params.user])
-            log.error(msg)
-            return [error: 'unauthorized', message: msg]
-        }
         if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_RUN],
             scheduledExecution.project)) {
 //            unauthorized("Execute Job ${scheduledExecution.extid}")
@@ -1029,10 +1033,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
         def extra = params.extra
 
         try {
-            def Execution e = createExecution(scheduledExecution, framework, user.login, extra)
+            def Execution e = createExecution(scheduledExecution, framework, params.user, extra)
             def extraMap = selectSecureOptionInput(scheduledExecution, extra)
             def extraParamsExposed = selectSecureOptionInput(scheduledExecution, extra, true)
-            def eid = scheduledExecutionService.scheduleTempJob(scheduledExecution, user.login, subject, e, extraMap, extraParamsExposed) ;
+            def eid = scheduledExecutionService.scheduleTempJob(scheduledExecution, params.user, subject, e, extraMap, extraParamsExposed) ;
 
             return [executionId: eid, name: scheduledExecution.jobName, execution: e]
         } catch (ExecutionServiceValidationException exc) {
@@ -1613,53 +1617,40 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
     * Generate an argString from a map of options and values
      */
     public static String generateArgline(Map<String,String> opts){
-        StringBuffer sb = new StringBuffer()
-        for (String key: opts.keySet().sort()) {
-            String val = opts.get(key)
-            if(val.contains(" ")){
-                if(val.contains("\\")){
-                    val = val.replaceAll("\\","\\\\")
-                }
-                if(val.contains("'")){
-                    val = val.replaceAll("'","\\'")
-                }
-                if(sb.size()>0){
-                    sb.append(" ")
-                }
-                sb.append("-").append(key).append(" ")
-
-                sb.append("'").append(val).append("'")
-            }else if(val){
-                if(sb.size()>0){
-                    sb.append(" ")
-                }
-                sb.append("-").append(key).append(" ")
-                sb.append(val)
-            }
+        def argsList = []
+        for (Map.Entry<String, String> entry : opts.entrySet()) {
+            String val = opts.get(entry.key)
+            argsList<<'-'+entry.key
+            argsList<<val
         }
-        return sb.toString()
+        return OptsUtil.join(argsList)
     }
 
     /**
     * Generate an argString from a map of options and values
      */
     public static String generateJobArgline(ScheduledExecution sched,Map<String,Object> opts){
-        HashMap<String,String> newopts = new HashMap<String,String>();
-        for (String key: opts.keySet().sort()) {
-            Object obj=opts.get(key)
+        def newopts = [:]
+        def addOptVal={key,obj,Option opt=null->
             String val
             if (obj instanceof String[] || obj instanceof Collection) {
                 //join with delimiter
-                def opt = sched.options.find {it.name == key}
                 if (opt && opt.delimiter) {
-                    val = obj.grep {it}.join(opt.delimiter)
+                    val = obj.grep { it }.join(opt.delimiter)
                 } else {
-                    val = obj.grep {it}.join(",")
+                    val = obj.grep { it }.join(",")
                 }
-            }else{
+            } else {
                 val = (String) obj
             }
-            newopts[key]=val
+            newopts[key] = val
+        }
+        for (Option opt : sched.options.findAll {opts[it.name]}) {
+            addOptVal(opt.name, opts.get(opt.name),opt)
+        }
+        //add any input options that don't match job options, to preserve information
+        opts.keySet().findAll {!newopts[it]}.sort().each {
+            addOptVal(it, opts[it])
         }
         return generateArgline(newopts)
     }
@@ -1828,9 +1819,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
             }
 
             if (newContext.getNodes().getNodeNames().size()<1){
-                def msg = "No nodes matched for the filters: " + newContext.getNodeSelector()
+                String msg = "No nodes matched for the filters: " + newContext.getNodeSelector()
                 executionContext.getExecutionListener().log(0, msg)
-                throw new StepException(JobReferenceFailureReason.NoMatchedNodes, msg)
+                throw new StepException(msg, JobReferenceFailureReason.NoMatchedNodes)
             }
 
             def WorkflowExecutionService service = executionContext.getFramework().getWorkflowExecutionService()

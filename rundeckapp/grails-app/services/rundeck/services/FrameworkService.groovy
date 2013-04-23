@@ -86,11 +86,14 @@ class FrameworkService implements ApplicationContextAware {
      */
     def projects (Framework framework) {
         //authorize the list of projects
-        def projs = framework.getFrameworkProjectMgr().listFrameworkProjects()
-        def allowed=projs.findAll { FrameworkProject fp->
-            authorizeApplicationResource(framework,[type:'project',name:fp.getName()],'read')
+        def projMap=[:]
+        def resources=[] as Set
+        for (proj in framework.frameworkProjectMgr.listFrameworkProjects()) {
+            projMap[proj.name] = proj;
+            resources << [type: 'project', name: proj.name]
         }
-        return new ArrayList(allowed)
+        def authed = authorizeApplicationResourceSet(framework, resources, 'read')
+        return new ArrayList(authed.collect{projMap[it.name]})
     }
 
     def existsFrameworkProject(String project, Framework framework) {
@@ -276,6 +279,21 @@ class FrameworkService implements ApplicationContextAware {
             Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "application"), 'rundeck')))
         return decision.authorized
     }
+    /**
+     * return all authorized resources for the action evaluated in the application context
+     * @param framework
+     * @param resources requested resources to authorize
+     * @param action
+     * @return set of authorized resources
+     */
+    def Set authorizeApplicationResourceSet(Framework framework, Set<Map> resources, String action) {
+        def decisions = framework.getAuthorizationMgr().evaluate(
+                resources,
+                framework.getAuthenticationMgr().subject,
+                [action] as Set,
+                Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "application"), 'rundeck')))
+        return decisions.findAll {it.authorized}.collect {it.resource}
+    }
 
     /**
      * return true if all of the actions are authorized for the resource in the application context
@@ -390,9 +408,9 @@ class FrameworkService implements ApplicationContextAware {
 
     /**
      * Create a map of option name to value given an input argline.
-     * Supports the form "-option value", and boolean "-option", which is given
-     * the value of "true".  Other options are ignored. if a double-dash
-     * is seen it is not interpreted, and --option is parsed as option name "-option".
+     * Supports the form "-option value".  Tokens not in that form are ignored. The string
+     * can have quoted values, using single or double quotes, and allows double/single to be
+     * embedded. To embed single/single or double/double, the quotes should be repeated.
      */
     def Map<String,String> parseOptsFromString(String argstring){
         if(!argstring){
@@ -401,25 +419,25 @@ class FrameworkService implements ApplicationContextAware {
         def String[] tokens=com.dtolabs.rundeck.core.utils.OptsUtil.burst(argstring)
         return parseOptsFromArray(tokens)
     }
+    /**
+     * Parse an array of tokens in the form ['-optionname','value',...], ignoring
+     * incorrectly sequenced values and options.
+     * @param tokens
+     * @return
+     */
     def Map<String,String> parseOptsFromArray(String[] tokens){
         def Map<String,String> optsmap = new HashMap<String,String>()
         def String key=null
         for(int i=0;i<tokens.length;i++){
-            if(tokens[i].startsWith("-") && tokens[i].length()>1){
-                if(key){
-                    //previous key was boolean flag, set to true
-                    optsmap[key]="true"
-                    key=null
-                }
+            if (key) {
+                optsmap[key] = tokens[i]
+                key = null
+            }else if (tokens[i].startsWith("-") && tokens[i].length()>1){
                 key=tokens[i].substring(1)
-            }else if(key){
-                optsmap[key]=tokens[i]
-                key=null
             }
         }
         if(key){
-            optsmap[key]="true"
-            key=null
+            //ignore
         }
         return optsmap
     }

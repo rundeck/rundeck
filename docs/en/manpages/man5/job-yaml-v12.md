@@ -351,6 +351,12 @@ Optional map entries are:
 
 :   "true/false" - whether the option is a secure input option. Not compatible with "multivalued"
 
+`sortIndex`
+
+:   *integer* - A number indicating the order this option should appear in the GUI.  If specified this
+    option will be arranged in order with other options with a `sortIndex` value. Any options without
+    a value will be arranged in alphabetical order below the other options.
+
 Example:
 
     test:
@@ -521,9 +527,10 @@ Example:
 
 ### Notification
 
-Defines result notification for the job.  You can include one or both of `onsuccess` or `onfailure` notifications. Each type of notification can include a list of email addresses and/or a list of URLs to use as a webhook.
+Defines a notification for the job.  You can include any of `onsuccess`, `onfailure` or `onstart` notifications. Each type of notification can define any of the built in notifications, or define plugin notifications.
 
-`onsuccess`/`onfailure`
+
+`onsuccess`/`onfailure`/`onstart`
 
 :    A Map containing either or both of:
 
@@ -535,6 +542,10 @@ Defines result notification for the job.  You can include one or both of `onsucc
     
     :    A comma-separated list of URLs to use as webhooks
 
+    [`plugin`](#plugin)
+
+    :    Defines a plugin notification.
+
 Example:
 
     notification:
@@ -542,8 +553,33 @@ Example:
         recipients: tom@example.com,shirley@example.com
       onsuccess:
         urls: 'http://server/callback?id=${execution.id}&status=${execution.status}&trigger=${notification.trigger}'
+        plugin:
+          type: myplugin
+          configuration:
+            somekey: somevalue
+      onstart:
+        -  plugin:
+            type: myplugin
+            configuration:
+              somekey: somevalue
+        -  plugin:
+            type: otherplugin
+            configuration:
+              a: b
 
 * For more information about the Webhook mechanism used, see the chapter [Integration - Webhooks](manual/jobs.html#webhooks).
+
+#### plugin
+
+Defines a plugin notification section, can contain a single Map, or a Sequence of Maps.  Each such map must have these contents:
+
+`type`
+
+:    The type identifier of the plugin
+
+`configuration`
+
+:    A Map containing any custom configuration key/values for the plugin.
 
 # SEE ALSO
 

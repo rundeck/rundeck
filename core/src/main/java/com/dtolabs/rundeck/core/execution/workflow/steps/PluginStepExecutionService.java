@@ -26,22 +26,9 @@ package com.dtolabs.rundeck.core.execution.workflow.steps;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkSupportService;
-import com.dtolabs.rundeck.core.execution.StepExecutionItem;
-import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
-import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
-import com.dtolabs.rundeck.core.plugins.BasePluggableProviderService;
-import com.dtolabs.rundeck.core.plugins.BaseProviderRegistryService;
-import com.dtolabs.rundeck.core.plugins.PluginException;
-import com.dtolabs.rundeck.core.plugins.ProviderIdent;
-import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
-import com.dtolabs.rundeck.core.plugins.configuration.Describable;
+import com.dtolabs.rundeck.core.plugins.*;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
-import com.dtolabs.rundeck.core.plugins.configuration.DescribableServiceUtil;
-import com.dtolabs.rundeck.core.plugins.configuration.Description;
-import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
 import com.dtolabs.rundeck.plugins.step.StepPlugin;
-
-import java.util.*;
 
 
 /**
@@ -49,7 +36,7 @@ import java.util.*;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class PluginStepExecutionService extends BasePluggableProviderService<StepPlugin>
+class PluginStepExecutionService extends FrameworkPluggableProviderService<StepPlugin>
     implements FrameworkSupportService, DescribableService {
 
     PluginStepExecutionService(final String name, final Framework framework) {

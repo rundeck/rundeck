@@ -39,5 +39,7 @@ public class AuthConstants {
     public static final String ACTION_KILL = "kill";
     public static final String ACTION_ADMIN = "admin";
     public static final String ACTION_REFRESH = "refresh";
+    public static final String ACTION_RUNAS = "runAs";
+    public static final String ACTION_KILLAS = "killAs";
 
 }

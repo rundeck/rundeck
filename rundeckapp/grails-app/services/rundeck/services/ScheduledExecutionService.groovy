@@ -3,6 +3,7 @@ package rundeck.services
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import org.apache.commons.validator.EmailValidator
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
 import org.quartz.*
@@ -26,6 +27,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
     boolean transactional = false
 
     def FrameworkService frameworkService
+    def NotificationService notificationService
 
     def Scheduler quartzScheduler
 
@@ -853,6 +855,41 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         }
     }
 
+    private List parseParamNotifications(params){
+        List nots=[]
+        if ('true' == params.notifyOnsuccess) {
+            nots << [eventTrigger: 'onsuccess', type: 'email', content: params.notifySuccessRecipients]
+        }
+        if ('true' == params.notifyOnsuccessUrl) {
+            nots << [eventTrigger: 'onsuccess', type: 'url', content: params.notifySuccessUrl]
+        }
+        if ('true' == params.notifyOnfailure) {
+            nots << [eventTrigger: 'onfailure', type: 'email', content: params.notifyFailureRecipients]
+        }
+        if ('true' == params.notifyOnfailureUrl) {
+            nots << [eventTrigger: 'onfailure', type: 'url', content: params.notifyFailureUrl]
+        }
+        if ('true' == params.notifyOnstart) {
+            nots << [eventTrigger: 'onstart', type: 'email', content: params.notifyStartRecipients]
+        }
+        if ('true' == params.notifyOnstartUrl) {
+            nots << [eventTrigger: 'onstart', type: 'url', content: params.notifyStartUrl]
+        }
+        //notifyOnsuccessPlugin
+        if (params.notifyPlugin) {
+            ['success', 'failure', 'start'].each { trig ->
+//                params.notifyPlugin.each { trig, plug ->
+                def plugs = params.notifyPlugin[trig]
+                plugs['type'].each { pluginType ->
+                    def config = plugs[pluginType]?.config
+                    if (plugs['enabled'][pluginType] == 'true') {
+                        nots << [eventTrigger: 'on' + trig, type: pluginType, configuration: config]
+                    }
+                }
+            }
+        }
+        nots
+    }
 
     def _doupdate ( params, user, String roleList, Framework framework, changeinfo = [:] ){
         log.debug("ScheduledExecutionController: update : attempting to update: " + params.id +
@@ -895,6 +932,9 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         if (nonopts.uuid != scheduledExecution.uuid) {
             changeinfo.extraInfo = " (internalID:${scheduledExecution.id})"
         }
+        def origJobName=scheduledExecution.jobName
+        def origGroupPath=scheduledExecution.groupPath
+
         scheduledExecution.properties = nonopts
 
         if(!scheduledExecution.nodeThreadcount){
@@ -941,6 +981,14 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
 
         if (!scheduledExecution.validate()) {
             failed = true
+        }
+        if(origGroupPath!=scheduledExecution.groupPath || origJobName!=scheduledExecution.jobName){
+            //reauthorize if the name/group has changed
+            if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_CREATE], scheduledExecution.project)) {
+                failed = true
+                scheduledExecution.errors.rejectValue('jobName', 'ScheduledExecution.jobName.unauthorized', [AuthConstants.ACTION_CREATE, scheduledExecution.jobName].toArray(), 'Unauthorized action: {0} for value: {1}')
+                scheduledExecution.errors.rejectValue('groupPath', 'ScheduledExecution.groupPath.unauthorized', [ AuthConstants.ACTION_CREATE, scheduledExecution.groupPath].toArray(), 'Unauthorized action: {0} for value: {1}')
+            }
         }
         if (scheduledExecution.scheduled) {
             scheduledExecution.populateTimeDateFields(params)
@@ -1131,41 +1179,33 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
 
         }
 
-        if (!params.notifications && (params.notifyOnsuccess || params.notifyOnfailure || params.notifyOnsuccessUrl || params.notifyOnfailureUrl)) {
-            def nots = []
-            if ('true' == params.notifyOnsuccess) {
-                nots << [eventTrigger: 'onsuccess', type: 'email', content: params.notifySuccessRecipients]
-            }
-            if ('true' == params.notifyOnsuccessUrl) {
-                nots << [eventTrigger: 'onsuccess', type: 'url', content: params.notifySuccessUrl]
-            }
-            if ('true' == params.notifyOnfailure) {
-                nots << [eventTrigger: 'onfailure', type: 'email', content: params.notifyFailureRecipients]
-            }
-            if ('true' == params.notifyOnfailureUrl) {
-                nots << [eventTrigger: 'onfailure', type: 'url', content: params.notifyFailureUrl]
-            }
-            params.notifications = nots
+        if (!params.notifications && (params.notifyPlugin ||params.notifyOnsuccess || params.notifyOnfailure || params.notifyOnsuccessUrl || params.notifyOnfailureUrl)) {
+            params.notifications=parseParamNotifications(params)
         }
         if (!params.notifications) {
             params.notified = 'false'
         }
         def todiscard = []
+        def modifiednotifs = []
+        if (params.notifications && 'false' != params.notified) {
+            //create notifications
+            def result = _updateNotificationsData(params, scheduledExecution)
+            failed=result.failed
+            modifiednotifs=result.modified
+        }
+        //delete notifications that are not part of the modified set
         if (scheduledExecution.notifications) {
             def todelete = []
-            scheduledExecution.notifications.each {Notification note ->
-                todelete << note
+            scheduledExecution.notifications.each { Notification note ->
+                if (!(note in modifiednotifs)) {
+                    todelete << note
+                }
             }
             todelete.each {
                 it.delete()
                 scheduledExecution.removeFromNotifications(it)
                 todiscard << it
             }
-            scheduledExecution.notifications = null
-        }
-        if (params.notifications && 'false' != params.notified) {
-            //create notifications
-            failed = _updateNotifications(params, scheduledExecution)
         }
 
         //try to save workflow
@@ -1210,90 +1250,90 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         }
 
     }
-    /**
-     * Update ScheduledExecution notification definitions based on input params.
-     *
-     * expected params: [notifications: [<eventTrigger>:[email:<content>]]]
-     */
-    private boolean _updateNotifications(Map params, ScheduledExecution scheduledExecution) {
-        boolean failed = false
-        def fieldNames = [onsuccess: 'notifySuccessRecipients', onfailure: 'notifyFailureRecipients']
-        def fieldNamesUrl = [onsuccess: 'notifySuccessUrl', onfailure: 'notifyFailureUrl']
-        params.notifications.each {notif ->
-            def trigger = notif.eventTrigger
-            if (notif && notif.type == 'email' && notif.content) {
-                def arr = notif.content.split(",")
-                arr.each {email ->
-                    if (email && !org.apache.commons.validator.EmailValidator.getInstance().isValid(email)) {
-                        failed = true
-                        scheduledExecution.errors.rejectValue(
-                                fieldNames[trigger],
-                                'scheduledExecution.notifications.invalidemail.message',
-                                [email] as Object[],
-                                'Invalid email address: {0}'
-                        )
-                    }
+    private Map validatePluginNotification(ScheduledExecution scheduledExecution, String trigger,notif,params=null){
+        //plugin type
+        def failed=false
+        def pluginDesc = notificationService.getNotificationPluginDescriptor(notif.type)
+        if (!pluginDesc) {
+            return //closure
+        }
+        def validation = notificationService.validatePluginConfig(notif.type, notif.configuration)
+        if (!validation.valid) {
+            failed = true
+            if(params instanceof Map){
+                if (!params['notificationValidation']) {
+                    params['notificationValidation'] = [:]
                 }
-                if (failed) {
-                    return
+                if (!params['notificationValidation'][trigger]) {
+                    params['notificationValidation'][trigger] = [:]
                 }
-                def addrs = arr.findAll {it.trim()}.join(",")
-                Notification n = new Notification(eventTrigger: trigger, type: 'email', content: addrs)
-                scheduledExecution.addToNotifications(n)
-                if (!n.validate()) {
-                    failed = true
-                    n.discard()
-                    def errmsg = trigger + " notification: " + n.errors.allErrors.collect {lookupMessageError(it)}.join(";")
-                    scheduledExecution.errors.rejectValue(
-                            fieldNames[trigger],
-                            'scheduledExecution.notifications.invalid.message',
-                            [errmsg] as Object[],
-                            'Invalid notification definition: {0}'
-                    )
-                }
-                n.scheduledExecution = scheduledExecution
-            } else if (notif && notif.type == 'url' && notif.content) {
-                def arr = notif.content.split(",")
-
-                arr.each {String url ->
-                    boolean valid = false
-                    try {
-                        new URL(url)
-                        valid = true
-                    } catch (MalformedURLException e) {
-                        valid = false
-                    }
-                    if (url && !valid) {
-                        failed = true
-                        scheduledExecution.errors.rejectValue(
-                                fieldNamesUrl[trigger],
-                                'scheduledExecution.notifications.invalidurl.message',
-                                [url] as Object[],
-                                'Invalid URL: {0}'
-                        )
-                    }
-                }
-                if (failed) {
-                    return
-                }
-                def addrs = arr.findAll {it.trim()}.join(",")
-                Notification n = new Notification(eventTrigger: trigger, type: 'url', content: addrs)
-                scheduledExecution.addToNotifications(n)
-                if (!n.validate()) {
-                    failed = true
-                    n.discard()
-                    def errmsg = trigger + " notification: " + n.errors.allErrors.collect {lookupMessageError(it)}.join(";")
-                    scheduledExecution.errors.rejectValue(
-                            fieldNamesUrl[trigger],
-                            'scheduledExecution.notifications.invalid.message',
-                            [errmsg] as Object[],
-                            'Invalid notification definition: {0}'
-                    )
-                }
-                n.scheduledExecution = scheduledExecution
+                params['notificationValidation'][trigger][notif.type] = validation
+            }
+            scheduledExecution.errors.rejectValue(
+                    'notifications',
+                    'scheduledExecution.notifications.invalidPlugin.message',
+                    [notif.type] as Object[],
+                    'Invalid Configuration for plugin: {0}'
+            )
+        }
+        if (failed) {
+            return [failed:true]
+        }
+        //TODO: better config test
+        def n = Notification.fromMap(trigger, notif)
+        [failed:failed,notification:n]
+    }
+    private Map validateEmailNotification(ScheduledExecution scheduledExecution, String trigger, notif, params = null){
+        def failed
+        def fieldNames = [onsuccess: 'notifySuccessRecipients', onfailure: 'notifyFailureRecipients', onstart: 'notifyStartRecipients']
+        def arr = notif.content.split(",")
+        arr.each { email ->
+            if (email && !EmailValidator.getInstance().isValid(email)) {
+                failed = true
+                scheduledExecution.errors.rejectValue(
+                        fieldNames[trigger],
+                        'scheduledExecution.notifications.invalidemail.message',
+                        [email] as Object[],
+                        'Invalid email address: {0}'
+                )
             }
         }
-        return failed
+        if (failed) {
+            return [failed:true]
+        }
+        def addrs = arr.findAll { it.trim() }.join(",")
+
+        def n = new Notification(eventTrigger: trigger, type: 'email', content: addrs)
+        [failed: false, notification: n]
+    }
+    private Map validateUrlNotification(ScheduledExecution scheduledExecution, String trigger, notif, params = null){
+        def failed
+        def fieldNamesUrl = [onsuccess: 'notifySuccessUrl', onfailure: 'notifyFailureUrl', onstart: 'notifyStartUrl']
+        def arr = notif.content.split(",")
+        arr.each { String url ->
+            boolean valid = false
+            try {
+                new URL(url)
+                valid = true
+            } catch (MalformedURLException e) {
+                valid = false
+            }
+            if (url && !valid) {
+                failed = true
+                scheduledExecution.errors.rejectValue(
+                        fieldNamesUrl[trigger],
+                        'scheduledExecution.notifications.invalidurl.message',
+                        [url] as Object[],
+                        'Invalid URL: {0}'
+                )
+            }
+        }
+        if (failed) {
+            return [failed: true]
+        }
+        def addrs = arr.findAll { it.trim() }.join(",")
+        def n = new Notification(eventTrigger: trigger, type: 'url', content: addrs)
+        [failed:false,notification: n]
     }
 
     /**
@@ -1301,84 +1341,74 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
      *
      * expected params: [notifications: [<eventTrigger>:[email:<content>]]]
      */
-    private boolean _updateNotifications(ScheduledExecution params, ScheduledExecution scheduledExecution) {
+    private Map _updateNotificationsData( params, ScheduledExecution scheduledExecution) {
         boolean failed = false
         def fieldNames = [onsuccess: 'notifySuccessRecipients', onfailure: 'notifyFailureRecipients']
         def fieldNamesUrl = [onsuccess: 'notifySuccessUrl', onfailure: 'notifyFailureUrl']
+        def addedNotifications=[]
         params.notifications.each {notif ->
             def trigger = notif.eventTrigger
+            def Notification n
+            def String failureField
             if (notif && notif.type == 'email' && notif.content) {
-                def arr = notif.content.split(",")
-                arr.each {email ->
-                    if (email && !org.apache.commons.validator.EmailValidator.getInstance().isValid(email)) {
-                        failed = true
-                        scheduledExecution.errors.rejectValue(
-                                fieldNames[trigger],
-                                'scheduledExecution.notifications.invalidemail.message',
-                                [email] as Object[],
-                                'Invalid email address: {0}'
-                        )
-                    }
+                def result=validateEmailNotification(scheduledExecution,trigger,notif,params)
+                if(result.failed){
+                    failed=true
+                }else{
+                    n=result.notification
                 }
-                if (failed) {
-                    return
-                }
-                def addrs = arr.findAll {it.trim()}.join(",")
-                Notification n = new Notification(eventTrigger: trigger, type: 'email', content: addrs)
-                scheduledExecution.addToNotifications(n)
-                if (!n.validate()) {
-                    failed = true
-                    n.discard()
-                    def errmsg = trigger + " notification: " + n.errors.allErrors.collect {lookupMessageError(it)}.join(";")
-                    scheduledExecution.errors.rejectValue(
-                            fieldNames[trigger],
-                            'scheduledExecution.notifications.invalid.message',
-                            [errmsg] as Object[],
-                            'Invalid notification definition: {0}'
-                    )
-                }
-                n.scheduledExecution = scheduledExecution
+                failureField= fieldNames[trigger]
             } else if (notif && notif.type == 'url' && notif.content) {
-                def arr = notif.content.split(",")
-                arr.each {String url ->
-                    boolean valid = false
-                    try {
-                        new URL(url)
-                        valid = true
-                    } catch (MalformedURLException e) {
-                        valid = false
-                    }
-                    if (url && !valid) {
-                        failed = true
-                        scheduledExecution.errors.rejectValue(
-                                fieldNamesUrl[trigger],
-                                'scheduledExecution.notifications.invalidurl.message',
-                                [url] as Object[],
-                                'Invalid URL: {0}'
-                        )
-                    }
+
+                def result = validateUrlNotification(scheduledExecution, trigger, notif, params)
+                if (result.failed) {
+                    failed = true
+                } else {
+                    n = result.notification
                 }
-                if (failed) {
-                    return
+                failureField = fieldNamesUrl[trigger]
+            } else if (notif.type) {
+                def data=notif
+                if(notif instanceof Notification){
+                    data=[type:notif.type, configuration:notif.configuration]
                 }
-                def addrs = arr.findAll {it.trim()}.join(",")
-                Notification n = new Notification(eventTrigger: trigger, type: 'url', content: addrs)
-                scheduledExecution.addToNotifications(n)
+                def result = validatePluginNotification(scheduledExecution, trigger, data, params)
+                if (result.failed) {
+                    failed = true
+                    failureField="notifications"
+                } else {
+                    n = result.notification
+                }
+            }
+            if(n){
+                //modify existing notification
+                def oldn = scheduledExecution.findNotification(n.eventTrigger,n.type)
+                if(oldn){
+                    oldn.content=n.content
+                    n=oldn
+                }else{
+                    n.scheduledExecution = scheduledExecution
+                }
                 if (!n.validate()) {
                     failed = true
                     n.discard()
-                    def errmsg = trigger + " notification: " + n.errors.allErrors.collect {lookupMessageError(it)}.join(";")
+                    def errmsg = trigger + " notification: " + n.errors.allErrors.collect { lookupMessageError(it) }.join(";")
                     scheduledExecution.errors.rejectValue(
-                            fieldNamesUrl[trigger],
+                            failureField,
                             'scheduledExecution.notifications.invalid.message',
                             [errmsg] as Object[],
                             'Invalid notification definition: {0}'
                     )
+                    scheduledExecution.discard()
+                }else{
+                    if(!oldn){
+                        scheduledExecution.addToNotifications(n)
+                    }
+                    addedNotifications << n
                 }
-                n.scheduledExecution = scheduledExecution
             }
         }
-        return failed
+        return [failed:failed,modified:addedNotifications]
     }
     public List _doupdateJob(id, ScheduledExecution params, user, String roleList, Framework framework, changeinfo = [:]) {
         log.debug("ScheduledExecutionController: update : attempting to update: " + id +
@@ -1417,6 +1447,9 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         }
         //clear filter params
         scheduledExecution.clearFilterFields()
+        def origGroupPath=scheduledExecution.groupPath
+        def origJobName=scheduledExecution.jobName
+
         scheduledExecution.properties = newprops
 
         //fix potential null/blank issue after upgrading rundeck to 1.3.1/1.4
@@ -1432,6 +1465,15 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
 
         if (!scheduledExecution.validate()) {
             failed = true
+        }
+
+        if (origGroupPath != scheduledExecution.groupPath || origJobName != scheduledExecution.jobName) {
+            //reauthorize if the name/group has changed
+            if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_CREATE], scheduledExecution.project)) {
+                failed = true
+                scheduledExecution.errors.rejectValue('jobName', 'ScheduledExecution.jobName.unauthorized', [AuthConstants.ACTION_CREATE, scheduledExecution.jobName].toArray(), 'Unauthorized action: {0} for value: {1}')
+                scheduledExecution.errors.rejectValue('groupPath', 'ScheduledExecution.groupPath.unauthorized', [AuthConstants.ACTION_CREATE, scheduledExecution.groupPath].toArray(), 'Unauthorized action: {0} for value: {1}')
+            }
         }
         if (scheduledExecution.scheduled) {
             scheduledExecution.user = user
@@ -1544,21 +1586,27 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         }
 
         def todiscard = []
+        def modifiednotifs=[]
+        if (params.notifications) {
+            //create notifications
+            def result = _updateNotificationsData(params, scheduledExecution)
+            failed=result.failed
+            modifiednotifs=result.modified
+        }
+
+        //delete notifications that are not part of the modified set
         if (scheduledExecution.notifications) {
             def todelete = []
-            scheduledExecution.notifications.each {Notification note ->
-                todelete << note
+            scheduledExecution.notifications.each { Notification note ->
+                if(!(note in modifiednotifs)){
+                    todelete << note
+                }
             }
             todelete.each {
                 it.delete()
                 scheduledExecution.removeFromNotifications(it)
                 todiscard << it
             }
-            scheduledExecution.notifications = null
-        }
-        if (params.notifications) {
-            //create notifications
-            failed = _updateNotifications(params, scheduledExecution)
         }
 
         //try to save workflow
@@ -1975,25 +2023,14 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                 }
             }
         }
-        if (!params.notifications && (params.notifyOnsuccess || params.notifyOnfailure || params.notifyOnsuccessUrl || params.notifyOnfailureUrl)) {
-            def nots = []
-            if ('true' == params.notifyOnsuccess) {
-                nots << [eventTrigger: 'onsuccess', type: 'email', content: params.notifySuccessRecipients]
-            }
-            if ('true' == params.notifyOnsuccessUrl) {
-                nots << [eventTrigger: 'onsuccess', type: 'url', content: params.notifySuccessUrl]
-            }
-            if ('true' == params.notifyOnfailure) {
-                nots << [eventTrigger: 'onfailure', type: 'email', content: params.notifyFailureRecipients]
-            }
-            if ('true' == params.notifyOnfailureUrl) {
-                nots << [eventTrigger: 'onfailure', type: 'url', content: params.notifyFailureUrl]
-            }
-            params.notifications = nots
+
+        if (!params.notifications && (params.notifyPlugin || params.notifyOnsuccess || params.notifyOnfailure || params.notifyOnsuccessUrl || params.notifyOnfailureUrl)) {
+            params.notifications = parseParamNotifications(params)
         }
         if (params.notifications) {
             //create notifications
-            failed = _updateNotifications(params, scheduledExecution)
+            def result = _updateNotificationsData(params, scheduledExecution)
+            failed=result.failed
         }
         if (scheduledExecution.doNodedispatch) {
             if (       !scheduledExecution.nodeInclude

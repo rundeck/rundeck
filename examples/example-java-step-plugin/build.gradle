@@ -1,4 +1,4 @@
-version = '1.5-dev'
+version = '1.5'
 defaultTasks 'clean','build'
 apply plugin: 'java'
 apply plugin: 'idea'
@@ -11,7 +11,7 @@ repositories {
 }
 
 dependencies {
-    compile files("${rootProject.projectDir}/../../core/build/libs/rundeck-core-${version}.jar")
+    compile( [group: 'org.rundeck', name: 'rundeck-core', version: version,ext:'jar'])
     testCompile(
         //[group: 'junit', name: 'junit', version: '3.8.1',ext:'jar']
     )

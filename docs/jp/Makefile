@@ -10,16 +10,19 @@ DATE = $(shell date "+%Y-%m-%dT%H:%M:%S%Z")
 HRDATE = $(shell date "+%B %e %Y, %H:%M %Z")
 ifndef VERSION
 VERSION=$(shell grep version.number= ../../version.properties | cut -d= -f 2)
-endif
-RVERSION=$(VERSION)
+
 ifndef TAG
 TAG=$(shell grep version.tag= ../../version.properties | cut -d= -f 2)
 endif
 ifneq ($(TAG),GA)
-RVERSION=$(VERSION)-$(TAG)
+VERSION=$(VERSION)-$(TAG)
 endif
 
-EDAM=groovy ../en/edam.groovy
+endif
+RVERSION=$(VERSION)
+
+# use templates from en dir
+EDAM=groovy ../scripts/edam.groovy -t ../en/templates
 
 .PHONY: man html clean oldlinks
 
@@ -36,7 +39,7 @@ html: oldlinks
 
 oldlinks: oldlinks/*.md
 	mkdir -p $(DIST)/html
-	$(EDAM) -o $(DIST)/html -d oldlinks -t templates -V "DATE=$(DATE)" -V "HRDATE=$(HRDATE)"
+	$(EDAM) -o $(DIST)/html -d oldlinks -V "DATE=$(DATE)" -V "HRDATE=$(HRDATE)"
 
 resources :  $(CSS) ../figures/*.png
 	mkdir -p $(DIST)/html/figures

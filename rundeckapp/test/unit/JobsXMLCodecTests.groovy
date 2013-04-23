@@ -416,6 +416,87 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertNotNull jobs
             assertNull "incorrect groupPath",jobs[0].groupPath
     }
+    public void testDecodeBasic2(){
+
+        def xml = """<joblist>
+  <job>
+    <id>8</id>
+    <name>punch2</name>
+    <description>dig it potato</description>
+    <loglevel>WARN</loglevel>
+    <context>
+      <project>zig</project>
+      <options>
+        <option name='clip' value='true' />
+      </options>
+    </context>
+    <sequence>
+        <command>
+        <exec>true</exec>
+        </command>
+        <command>
+        <exec>false</exec>
+        </command>
+        <command>
+        <exec>0</exec>
+        </command>
+        <command>
+        <script>true</script>
+            <scriptargs>true</scriptargs>
+        </command>
+        <command>
+        <script>false</script>
+            <scriptargs>false</scriptargs>
+        </command>
+        <command>
+        <script>0</script>
+            <scriptargs>0</scriptargs>
+        </command>
+        <command>
+            <scriptfile>false</scriptfile>
+            <scriptargs>false</scriptargs>
+            <errorhandler  keepgoingOnSuccess='false'>
+                <scriptfile>false</scriptfile>
+                <scriptargs>0</scriptargs>
+            </errorhandler>
+        </command>
+        <command>
+            <jobref>
+            <name>false</name>
+            <group>false</group>
+            <arg line="123"/>
+            </jobref>
+        </command>
+    </sequence>
+    <dispatch>
+      <threadcount>2</threadcount>
+      <keepgoing>true</keepgoing>
+    </dispatch>
+  </job>
+</joblist>
+"""
+        def jobs = JobsXMLCodec.decode(xml)
+        assertNotNull jobs
+        assertEquals  8, jobs[0].workflow.commands.size()
+        assertEquals 'true', jobs[0].workflow.commands[0].adhocRemoteString
+        assertEquals 'false', jobs[0].workflow.commands[1].adhocRemoteString
+        assertEquals '0', jobs[0].workflow.commands[2].adhocRemoteString
+        assertEquals 'true', jobs[0].workflow.commands[3].adhocLocalString
+        assertEquals 'true', jobs[0].workflow.commands[3].argString
+        assertEquals 'false', jobs[0].workflow.commands[4].adhocLocalString
+        assertEquals 'false', jobs[0].workflow.commands[4].argString
+        assertEquals '0', jobs[0].workflow.commands[5].adhocLocalString
+        assertEquals '0', jobs[0].workflow.commands[5].argString
+
+        assertEquals 'false', jobs[0].workflow.commands[6].adhocFilepath
+        assertEquals 'false', jobs[0].workflow.commands[6].argString
+        assertEquals 'false', jobs[0].workflow.commands[6].errorHandler.adhocFilepath
+        assertEquals '0', jobs[0].workflow.commands[6].errorHandler.argString
+
+        assertEquals 'false', jobs[0].workflow.commands[7].jobName
+        assertEquals 'false', jobs[0].workflow.commands[7].jobGroup
+        assertEquals '123', jobs[0].workflow.commands[7].argString
+    }
     /**
      * Empty options declaration
      */
@@ -551,13 +632,13 @@ class JobsXMLCodecTests extends GroovyTestCase {
         <command>
             <step-plugin type="blah">
                 <configuration>
-                    <elf>cheese</elf>
+                    <entry key="elf" value="cheese"/>
                 </configuration>
             </step-plugin>
             <errorhandler keepgoingOnSuccess='true'>
                 <node-step-plugin type="blah2">
                     <configuration>
-                        <rice>pilaf</rice>
+                        <entry key="rice" value="pilaf"/>
                     </configuration>
                 </node-step-plugin>
             </errorhandler>
@@ -647,6 +728,72 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect project","demo",jobs[0].project
     }
 
+    void testDecodeStringsShouldNotBeBoolean() {
+        def example1 = """<joblist>
+  <job>
+    <id>1</id>
+    <name>false</name>
+    <description >false</description>
+    <loglevel>VERBOSE</loglevel>
+    <group>false</group>
+    <context>
+      <project>false</project>
+      <options>
+        <option name="false" enforcedvalues="false"/>
+        <option required="false" name="x" value="9000636026"/>
+      </options>
+    </context>
+    <sequence keepgoing="false">
+        <command>
+            <exec>false</exec>
+            <errorhandler keepgoingOnSuccess="false">
+                <script>false</script>
+                <scriptargs>false</scriptargs>
+            </errorhandler>
+        </command>
+    </sequence>
+    <nodefilters excludeprecedence="false">
+      <include>
+        <hostname>false</hostname>
+        <tags />
+        <os-name />
+        <os-family />
+        <os-arch />
+        <os-version />
+        <name />
+      </include>
+    </nodefilters>
+    <dispatch>
+      <threadcount>2</threadcount>
+      <keepgoing>false</keepgoing>
+    </dispatch>
+  </job>
+</joblist>
+"""
+        def jobs = JobsXMLCodec.decode(example1)
+        assertNotNull jobs
+        assertEquals "false",jobs[0].jobName
+        assertEquals  "false",jobs[0].groupPath
+        assertEquals  "false",jobs[0].description
+        assertEquals  false, jobs[0].nodeExcludePrecedence
+        assertEquals  false, jobs[0].nodeKeepgoing
+        assertEquals  "false", jobs[0].nodeInclude
+        assertEquals  "false",jobs[0].project
+        assertEquals  1, jobs[0].workflow.commands.size()
+        assertEquals  "false", jobs[0].workflow.commands[0].adhocRemoteString
+        assertEquals  "false", jobs[0].workflow.commands[0].errorHandler.adhocLocalString
+        assertEquals  "false", jobs[0].workflow.commands[0].errorHandler.argString
+        assertEquals  false, jobs[0].workflow.commands[0].errorHandler.keepgoingOnSuccess
+        assertEquals  2, jobs[0].nodeThreadcount
+        assertEquals  false, jobs[0].workflow.keepgoing
+        assertEquals 2, jobs[0].options.size()
+        def opts=new ArrayList(jobs[0].options)
+        assertEquals 'false', opts[0].name
+        assertEquals false, opts[0].enforced
+        assertEquals 'x', opts[1].name
+        assertEquals false, opts[1].required
+        assertEquals '9000636026', opts[1].defaultValue
+    }
     void testDecodeBackwardsCompatibility(){
         /**
          * Backwards compatibility test, using pre 3.5 format for input
@@ -1717,8 +1864,8 @@ class JobsXMLCodecTests extends GroovyTestCase {
         <command>
             <node-step-plugin type="blah">
                 <configuration>
-                    <elf>monkey</elf>
-                    <ok>howdy</ok>
+                    <entry key="elf" value="monkey"/>
+                    <entry key="ok" value="howdy"/>
                 </configuration>
             </node-step-plugin>
         </command>
@@ -1767,8 +1914,8 @@ class JobsXMLCodecTests extends GroovyTestCase {
         <command>
             <step-plugin type="blah">
                 <configuration>
-                    <elf>monkey</elf>
-                    <ok>howdy</ok>
+                    <entry key="elf" value="monkey"/>
+                    <entry key="ok" value="howdy"/>
                 </configuration>
             </step-plugin>
         </command>
@@ -2220,6 +2367,46 @@ class JobsXMLCodecTests extends GroovyTestCase {
 
     }
 
+    void testDecodeOptionsPreserveOrder() {
+        //secure option
+        def xml1 = """<joblist>
+  <job>
+    <id>5</id>
+    <name>wait1</name>
+    <description></description>
+    <loglevel>INFO</loglevel>
+    <context>
+        <project>test1</project>
+        <options preserveOrder="true">
+          <option name="zxy" value="789" multivalued="true" delimiter=","/>
+          <option name="abc" value="789" multivalued="true" delimiter=","/>
+          <option name="wxy" value="789" multivalued="true" delimiter=","/>
+        </options>
+    </context>
+    <sequence><command><exec>test</exec></command></sequence>
+    <dispatch>
+      <threadcount>1</threadcount>
+      <keepgoing>false</keepgoing>
+    </dispatch>
+    <schedule>
+      <time hour='11' minute='21' />
+      <weekday day='*' />
+      <month month='*' />
+    </schedule>
+  </job>
+</joblist>
+"""
+
+        def jobs = JobsXMLCodec.decode(xml1)
+        assertNotNull jobs
+        assertEquals "incorrect size", 1, jobs.size()
+        assertNotNull "incorrect options", jobs[0].options
+        assertEquals "incorrect options size", 3, jobs[0].options.size()
+        assertEquals(['zxy','abc','wxy'], jobs[0].options*.name)
+
+    }
+
+
     void testDecodeNotification(){
 
         //onsuccess notification
@@ -2330,6 +2517,165 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect email content", "z@example.com,x@example.com", onsuccess.content
     }
 
+    void testDecodeNotificationPlugin() {
+
+        //onsuccess notification
+        def xml1 = """<joblist>
+  <job>
+    <id>5</id>
+    <name>wait1</name>
+    <description></description>
+    <loglevel>INFO</loglevel>
+    <context>
+        <project>test1</project>
+    </context>
+    <sequence><command><exec>test</exec></command></sequence>
+    <dispatch>
+      <threadcount>1</threadcount>
+      <keepgoing>false</keepgoing>
+    </dispatch>
+    <notification>
+        <onsuccess>
+            <plugin type="test1">
+                <configuration>
+                    <entry key="name" value="test"/>
+                    <entry key="key" value="value"/>
+                </configuration>
+            </plugin>
+        </onsuccess>
+    </notification>
+  </job>
+</joblist>
+"""
+
+        def jobs = JobsXMLCodec.decode(xml1)
+        assertNotNull jobs
+        assertEquals "incorrect size", 1, jobs.size()
+        assertNotNull "missing notifications", jobs[0].notifications
+        assertEquals "incorrect notifications size", 1, jobs[0].notifications.size()
+        final def onsuccess = jobs[0].notifications.find { 'onsuccess' == it.eventTrigger }
+        assertNotNull "missing notifications onsuccess", onsuccess
+        assertNotNull "missing content", onsuccess.content
+        assertEquals "test1", onsuccess.type
+        assertEquals([key:'value',name:'test'], onsuccess.configuration)
+
+    }
+    void testDecodeNotificationPluginMulti() {
+
+        //onsuccess notification
+        def xml1 = """<joblist>
+  <job>
+    <id>5</id>
+    <name>wait1</name>
+    <description></description>
+    <loglevel>INFO</loglevel>
+    <context>
+        <project>test1</project>
+    </context>
+    <sequence><command><exec>test</exec></command></sequence>
+    <dispatch>
+      <threadcount>1</threadcount>
+      <keepgoing>false</keepgoing>
+    </dispatch>
+    <notification>
+        <onsuccess>
+            <plugin type="test1">
+                <configuration>
+                <entry key="name" value="test"/>
+                <entry key="key" value="value"/>
+                </configuration>
+            </plugin>
+            <plugin type="test2">
+                <configuration>
+                <entry key="name2" value="test2"/>
+                </configuration>
+            </plugin>
+        </onsuccess>
+        <onfailure>
+            <plugin type="test3">
+                <configuration>
+                <entry key="name3" value="test3"/>
+                <entry key="key3" value="value3"/>
+                </configuration>
+            </plugin>
+            <plugin type="test4">
+                <configuration>
+                <entry key="name4" value="test4"/>
+                </configuration>
+            </plugin>
+        </onfailure>
+        <onstart>
+            <plugin type="test5">
+                <configuration>
+                <entry key="name5" value="test5"/>
+                <entry key="key5" value="value5"/>
+                </configuration>
+            </plugin>
+            <plugin type="test6">
+                <configuration>
+                <entry key="name6" value="test6"/>
+                </configuration>
+            </plugin>
+        </onstart>
+    </notification>
+  </job>
+</joblist>
+"""
+
+        def jobs = JobsXMLCodec.decode(xml1)
+        assertNotNull jobs
+        assertEquals "incorrect size", 1, jobs.size()
+        assertNotNull "missing notifications", jobs[0].notifications
+        assertEquals "incorrect notifications size", 6, jobs[0].notifications.size()
+
+        final def onsuccess = jobs[0].notifications.findAll { 'onsuccess' == it.eventTrigger } as List
+        assertNotNull "missing notifications onsuccess", onsuccess
+        assertEquals (2, onsuccess.size())
+        def on1=onsuccess.find{it.type=='test1'}
+        assertNotNull "missing content", on1
+        assertNotNull "missing content", on1.content
+        assertEquals "test1", on1.type
+        assertEquals([key:'value',name:'test'], on1.configuration)
+
+        def on2 = onsuccess.find { it.type == 'test2' }
+        assertNotNull "missing content", on2
+        assertNotNull "missing content", on2.content
+        assertEquals "test2", on2.type
+        assertEquals([name2:'test2'], on2.configuration)
+
+
+        final def onfailure = jobs[0].notifications.findAll { 'onfailure' == it.eventTrigger } as List
+        assertNotNull "missing notifications onfailure", onfailure
+        assertEquals(2, onfailure.size())
+        def on3 = onfailure.find { it.type == 'test3' }
+        assertNotNull "missing content", on3
+        assertNotNull "missing content", on3.content
+        assertEquals "test3", on3.type
+        assertEquals([key3: 'value3', name3: 'test3'], on3.configuration)
+
+        def on4 = onfailure.find { it.type == 'test4' }
+        assertNotNull "missing content", on4
+        assertNotNull "missing content", on4.content
+        assertEquals "test4", on4.type
+        assertEquals([name4: 'test4'], on4.configuration)
+
+        final def onstart = jobs[0].notifications.findAll { 'onstart' == it.eventTrigger } as List
+        assertNotNull "missing notifications onstart", onstart
+        assertEquals(2, onstart.size())
+        def on5 = onstart.find { it.type == 'test5' }
+        assertNotNull "missing content", on5
+        assertNotNull "missing content", on5.content
+        assertEquals "test5", on5.type
+        assertEquals([key5: 'value5', name5: 'test5'], on5.configuration)
+
+        def on6 = onstart.find { it.type == 'test6' }
+        assertNotNull "missing content", on6
+        assertNotNull "missing content", on6.content
+        assertEquals "test6", on6.type
+        assertEquals([name6: 'test6'], on6.configuration)
+
+    }
+
     void testDecodeNotificationFailure(){
 
         //missing notification handler
@@ -2357,7 +2703,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
             def jobs = JobsXMLCodec.decode(xml0)
             fail "parsing should have failed"
         } catch (Exception e) {
-            assertEquals ("notification section had no onsuccess or onfailure element",e.message)
+            assertEquals ("notification section had no trigger elements",e.message)
         }
         //missing email element
         def xml1 = """<joblist>
@@ -2387,7 +2733,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
             def jobs = JobsXMLCodec.decode(xml1)
             fail "parsing should have failed"
         } catch (Exception e) {
-            assertEquals ("notification 'onsuccess' element had missing 'email' or 'webhook' element",e.message)
+            assertEquals ("notification 'onsuccess' element had missing 'email' or 'webhook' or 'plugin' element",e.message)
         }
         //missing email attribute
         def xml2 = """<joblist>
@@ -2480,7 +2826,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
             def jobs = JobsXMLCodec.decode(xml4)
             fail "parsing should have failed"
         } catch (Exception e) {
-            assertEquals ("notification 'onfailure' element had missing 'email' or 'webhook' element",e.message)
+            assertEquals ("notification 'onfailure' element had missing 'email' or 'webhook' or 'plugin' element",e.message)
         }
         //missing email attribute
         def xml5 = """<joblist>
@@ -3993,6 +4339,122 @@ class JobsXMLCodecTests extends GroovyTestCase {
         assertEquals "incorrect context options option 2 regex", '<', doc2.job[0].context[0].options[0].option[0]['@delimiter'].text()
     }
 
+    void testEncodeOptionSortIndexPreservesOrder() {
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+
+                        workflow: new Workflow(keepgoing: true, commands: [new JobExec(
+                                jobName: 'a Job',
+                                jobGroup: '/some/path',
+                        )]
+                        ),
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        options: [
+                                new Option(name: 'abc', defaultValue: '12', sortIndex: 4),
+                                new Option(name: 'bcd', defaultValue: '12', sortIndex: 2),
+                                new Option(name: 'cde', defaultValue: '12', sortIndex: 3),
+                                new Option(name: 'def', defaultValue: '12', sortIndex: 1),
+                        ] as TreeSet,
+                )
+        ]
+
+        def xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+        println xmlstr
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "incorrect context options size", 4, doc.job[0].context[0].options[0].option.size()
+        assertEquals "incorrect context options/@preserveOrder", 'true', doc.job[0].context[0].options[0]['@preserveOrder'].text()
+        assertEquals "incorrect context options option 1 name", 'def', doc.job[0].context[0].options[0].option[0]['@name'].text()
+        assertEquals "incorrect context options option 1 name", 'bcd', doc.job[0].context[0].options[0].option[1]['@name'].text()
+        assertEquals "incorrect context options option 1 name", 'cde', doc.job[0].context[0].options[0].option[2]['@name'].text()
+        assertEquals "incorrect context options option 1 name", 'abc', doc.job[0].context[0].options[0].option[3]['@name'].text()
+    }
+    void testEncodeOptionNullSortIndexDoesNotPreserveOrder() {
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+
+                        workflow: new Workflow(keepgoing: true, commands: [new JobExec(
+                                jobName: 'a Job',
+                                jobGroup: '/some/path',
+                        )]
+                        ),
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        options: [
+                                new Option(name: 'abc', defaultValue: '12', sortIndex: null),
+                                new Option(name: 'bcd', defaultValue: '12', sortIndex: null),
+                                new Option(name: 'cde', defaultValue: '12', sortIndex: null),
+                                new Option(name: 'def', defaultValue: '12', sortIndex: null),
+                        ] as TreeSet,
+                )
+        ]
+
+        def xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+        println xmlstr
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "incorrect context options size", 4, doc.job[0].context[0].options[0].option.size()
+        assertEquals "incorrect context options/@preserveOrder",0, doc.job[0].context[0].options[0]['@preserveOrder'].size()
+        assertEquals "incorrect context options option 1 name", 'abc', doc.job[0].context[0].options[0].option[0]['@name'].text()
+        assertEquals "incorrect context options option 1 name", 'bcd', doc.job[0].context[0].options[0].option[1]['@name'].text()
+        assertEquals "incorrect context options option 1 name", 'cde', doc.job[0].context[0].options[0].option[2]['@name'].text()
+        assertEquals "incorrect context options option 1 name", 'def', doc.job[0].context[0].options[0].option[3]['@name'].text()
+    }
+    void testEncodeOptionMixedSortIndexDoesNotPreserveOrder() {
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+
+                        workflow: new Workflow(keepgoing: true, commands: [new JobExec(
+                                jobName: 'a Job',
+                                jobGroup: '/some/path',
+                        )]
+                        ),
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        options: [
+                                new Option(name: 'abc', defaultValue: '12', sortIndex: null),
+                                new Option(name: 'bcd', defaultValue: '12', sortIndex: 1),
+                                new Option(name: 'cde', defaultValue: '12', sortIndex: null),
+                                new Option(name: 'def', defaultValue: '12', sortIndex: 0),
+                        ] as TreeSet,
+                )
+        ]
+
+        def xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+        println xmlstr
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "incorrect context options size", 4, doc.job[0].context[0].options[0].option.size()
+        assertEquals "incorrect context options/@preserveOrder",1, doc.job[0].context[0].options[0]['@preserveOrder'].size()
+        assertEquals "incorrect context options/@preserveOrder",'true', doc.job[0].context[0].options[0]['@preserveOrder'].text()
+        assertEquals "incorrect context options option 1 name", 'def', doc.job[0].context[0].options[0].option[0]['@name'].text()
+        assertEquals "incorrect context options option 1 name", 'bcd', doc.job[0].context[0].options[0].option[1]['@name'].text()
+        assertEquals "incorrect context options option 1 name", 'abc', doc.job[0].context[0].options[0].option[2]['@name'].text()
+        assertEquals "incorrect context options option 1 name", 'cde', doc.job[0].context[0].options[0].option[3]['@name'].text()
+    }
+
     void testEncodePluginNodeStep(){
         def XmlSlurper parser = new XmlSlurper()
         def jobs1 = [
@@ -4231,6 +4693,106 @@ class JobsXMLCodecTests extends GroovyTestCase {
                     new Notification(eventTrigger: 'onfailure', type: 'email', content: 'test2@example.com'),
                 ]
             )
+        ]
+
+        xmlstr = JobsXMLCodec.encode(jobs2)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+        doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "incorrect notifications onsuccess webhook size", 1, doc.job[0].notification[0].onsuccess[0].webhook.size()
+        assertEquals "incorrect notifications onsuccess webhook/@urls", "http://example.com", doc.job[0].notification[0].onsuccess[0].webhook[0]['@urls'].text()
+        assertEquals "incorrect notifications onfailure webhook size", 1, doc.job[0].notification[0].onfailure[0].webhook.size()
+        assertEquals "incorrect notifications onfailure webhook/@urls value", "http://2.example.com", doc.job[0].notification[0].onfailure[0].webhook[0]['@urls'].text()
+        assertEquals "incorrect notifications onsuccess email size", 1, doc.job[0].notification[0].onsuccess[0].email.size()
+        assertEquals "incorrect notifications onsuccess email size", "test@example.com", doc.job[0].notification[0].onsuccess[0].email[0]['@recipients'].text()
+        assertEquals "incorrect notifications onsuccess email size", 1, doc.job[0].notification[0].onfailure[0].email.size()
+        assertEquals "incorrect notifications onsuccess email size", "test2@example.com", doc.job[0].notification[0].onfailure[0].email[0]['@recipients'].text()
+    }
+
+    void testEncodeNotificationPlugin() {
+
+        def XmlSlurper parser = new XmlSlurper()
+
+        def notifs= [
+                new Notification(eventTrigger: 'onsuccess', type: 'test1'),
+                new Notification(eventTrigger: 'onfailure', type: 'test2'),
+        ]
+        notifs[0].configuration=[a:'b', c:'d' ]
+        notifs[1].configuration=[x:'yz' ]
+
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+
+
+                        workflow: new Workflow(keepgoing: true, commands: [new JobExec(
+                                jobName: 'a Job',
+                                jobGroup: '/some/path',
+                        )]
+                        ),
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        notifications: notifs
+                )
+        ]
+
+        def xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "incorrect notifications onsuccess webhook size", 0, doc.job[0].notification[0].onsuccess[0].webhook.size()
+        assertEquals "incorrect notifications onfailure webhook size", 0, doc.job[0].notification[0].onfailure[0].webhook.size()
+        assertEquals "incorrect notifications onsuccess email size", 0, doc.job[0].notification[0].onsuccess[0].email.size()
+        assertEquals "incorrect notifications onfailure email size", 0, doc.job[0].notification[0].onfailure[0].email.size()
+
+        assertEquals "incorrect notifications onsuccess plugin size", 1, doc.job[0].notification[0].onsuccess[0].plugin.size()
+        assertEquals "incorrect notifications onfailure plugin size", 1, doc.job[0].notification[0].onfailure[0].plugin.size()
+        assertEquals "incorrect notifications onsuccess plugin/@type", "test1", doc.job[0].notification[0].onsuccess[0].plugin[0]['@type'].text()
+        assertEquals "incorrect notifications onfailure plugin/@type", "test2", doc.job[0].notification[0].onfailure[0].plugin[0]['@type'].text()
+
+        assertEquals "incorrect notifications onsuccess plugin/configuration size", 1, doc.job[0].notification[0].onsuccess[0].plugin[0].configuration.size()
+        assertEquals "incorrect notifications onfailure plugin/configuration size", 1, doc.job[0].notification[0].onfailure[0].plugin[0].configuration.size()
+        assertEquals "incorrect notifications onsuccess plugin/configuration/entry size", 2, doc.job[0].notification[0].onsuccess[0].plugin[0].configuration[0].entry.size()
+        assertEquals "incorrect notifications onfailure plugin/configuration/entry size", 1, doc.job[0].notification[0].onfailure[0].plugin[0].configuration[0].entry.size()
+
+        assertEquals "incorrect notifications onsuccess plugin/configuration/entry/@key value", "a", doc.job[0].notification[0].onsuccess[0].plugin[0].configuration[0].entry[0]['@key'].text()
+        assertEquals "incorrect notifications onsuccess plugin/configuration/entry/@value value", "b", doc.job[0].notification[0].onsuccess[0].plugin[0].configuration[0].entry[0]['@value'].text()
+        assertEquals "incorrect notifications onsuccess plugin/configuration/entry/@key value", "c", doc.job[0].notification[0].onsuccess[0].plugin[0].configuration[0].entry[1]['@key'].text()
+        assertEquals "incorrect notifications onsuccess plugin/configuration/entry/@value value", "d", doc.job[0].notification[0].onsuccess[0].plugin[0].configuration[0].entry[1]['@value'].text()
+
+
+        assertEquals "incorrect notifications onsuccess plugin/configuration/entry/@key value", "x", doc.job[0].notification[0].onfailure[0].plugin[0].configuration[0].entry[0]['@key'].text()
+        assertEquals "incorrect notifications onsuccess plugin/configuration/entry/@value value", "yz", doc.job[0].notification[0].onfailure[0].plugin[0].configuration[0].entry[0]['@value'].text()
+
+        def jobs2 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+
+
+                        workflow: new Workflow(keepgoing: true, commands: [new JobExec(
+                                jobName: 'a Job',
+                                jobGroup: '/some/path',
+                        )]
+                        ),
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        notifications: [
+                                new Notification(eventTrigger: 'onsuccess', type: 'url', content: 'http://example.com'),
+                                new Notification(eventTrigger: 'onsuccess', type: 'email', content: 'test@example.com'),
+                                new Notification(eventTrigger: 'onfailure', type: 'url', content: 'http://2.example.com'),
+                                new Notification(eventTrigger: 'onfailure', type: 'email', content: 'test2@example.com'),
+                        ]
+                )
         ]
 
         xmlstr = JobsXMLCodec.encode(jobs2)

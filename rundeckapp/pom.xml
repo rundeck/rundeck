@@ -4,7 +4,7 @@
   <groupId>org.rundeck</groupId>
   <artifactId>rundeck</artifactId>
   <packaging>war</packaging>
-  <version>1.5</version>
+  <version>1.5.1-SNAPSHOT</version>
   
   <name>RunDeck App</name>
   <description>RunDeck Command and Job Console</description>
@@ -252,7 +252,17 @@
           <groupId>xerces</groupId>
           <artifactId>xmlParserAPIs</artifactId>
         </exclusion>
+          <exclusion>
+              <groupId>xalan</groupId>
+              <artifactId>xalan</artifactId>
+          </exclusion>
       </exclusions>
+    </dependency>
+
+    <dependency>
+      <groupId>org.rundeck</groupId>
+      <artifactId>rundeck-jetty-server</artifactId>
+      <version>${project.version}</version>
     </dependency>
 
     <!-- quartz dependency -->

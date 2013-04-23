@@ -6,5 +6,16 @@
 &copy;2012 DTO Solutions
 <br/>
 <span class="generated-date" title="${DATE}">${DATE}</span>
+  <script type="text/javascript">
+  
 
+   var _gaq = [['_setAccount', 'UA-529275-13'], ['_trackPageview']];
+   (function(d, t) {
+    var g = d.createElement(t),
+        s = d.getElementsByTagName(t)[0];
+    g.async = true;
+    g.src = ('https:' == location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    s.parentNode.insertBefore(g, s);
+   })(document, 'script');
+  </script>
 </footer>

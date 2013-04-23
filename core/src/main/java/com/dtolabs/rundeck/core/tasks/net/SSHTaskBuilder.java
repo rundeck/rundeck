@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.CoreException;
 import com.dtolabs.rundeck.core.cli.CLIUtils;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.taskdefs.optional.ssh.SSHBase;
 import org.apache.tools.ant.taskdefs.optional.ssh.Scp;
@@ -218,7 +219,8 @@ public class SSHTaskBuilder {
 
         configureSSHBase(nodeentry, project, sshConnectionInfo, sshexecTask, loglevel);
 
-        final String commandString = CLIUtils.generateArgline(null, args);
+//        final String commandString = CLIUtils.generateArgline(null, args, false);
+        final String commandString = StringUtils.join(args, " ");
         sshexecTask.setCommand(commandString);
         sshexecTask.setTimeout(sshConnectionInfo.getSSHTimeout());
         sshexecTask.setOutputproperty("sshexec.output");

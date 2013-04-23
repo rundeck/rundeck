@@ -99,7 +99,7 @@ class JobsXMLCodec {
      *
      */
     static convertToJobMap={ data->
-        final Object object = XmlParserUtil.toObject(data)
+        final Object object = XmlParserUtil.toObject(data,false)
         if(!(object instanceof Map)){
             throw new JobXMLException("Expected map data")
         }
@@ -142,11 +142,13 @@ class JobsXMLCodec {
         }
         if(map.context?.options && map.context?.options?.option){
             final def opts = map.context.options.remove('option')
+            def ndx = map.context.options.preserveOrder ? 0 : -1;
             map.remove('context')
             map.options=[:]
             if (opts && opts instanceof Map){
                 opts=[opts]
             }
+            //if preserveOrder is true, include sortIndex information
             if(opts && opts instanceof Collection){
                 opts.each{optm->
                     map.options[optm.name.toString()]=optm
@@ -155,8 +157,14 @@ class JobsXMLCodec {
                     } else if (optm.values) {
                         optm.values = [optm.values.toString()]
                     }
-                    if(null!=optm.enforcedvalues){
-                        optm.enforced=optm.remove('enforcedvalues')
+                    if(null!=optm.enforcedvalues) {
+                        optm.enforced = Boolean.parseBoolean(optm.remove('enforcedvalues'))
+                    }
+                    if(null!=optm.required) {
+                        optm.required = Boolean.parseBoolean(optm.remove('required'))
+                    }
+                    if(ndx>-1){
+                        optm.sortIndex=ndx++;
                     }
                 }
             }
@@ -169,6 +177,25 @@ class JobsXMLCodec {
             map.nodefilters.dispatch=map.remove('dispatch')
             if(null!=map.nodefilters.excludeprecedence){
                 map.nodefilters.dispatch['excludePrecedence']=map.nodefilters.remove('excludeprecedence')
+            }
+            if(null!=map.nodefilters.dispatch.threadcount && ""!= map.nodefilters.dispatch.threadcount){
+                //convert to integer
+                def value= map.nodefilters.dispatch.threadcount
+                try{
+                    map.nodefilters.dispatch.threadcount=Integer.parseInt(value)
+                }catch (NumberFormatException e){
+                    throw new JobXMLException("Not a valid threadcount: "+value)
+                }
+            }
+            if(null!=map.nodefilters.dispatch.keepgoing){
+                //convert to boolean
+                def value= map.nodefilters.dispatch.keepgoing
+                map.nodefilters.dispatch.keepgoing=Boolean.parseBoolean(value)
+            }
+            if(null!=map.nodefilters.dispatch.excludePrecedence){
+                //convert to boolean
+                def value= map.nodefilters.dispatch.excludePrecedence
+                map.nodefilters.dispatch.excludePrecedence=Boolean.parseBoolean(value)
             }
         }
         if(map.schedule){
@@ -188,20 +215,48 @@ class JobsXMLCodec {
         convertXmlWorkflowToMap(map.sequence)
 
         if(null!=map.notification){
-            if(!map.notification || null==map.notification.onsuccess && null==map.notification.onfailure){
-                throw new JobXMLException("notification section had no onsuccess or onfailure element")
+            if(!map.notification || !(map.notification instanceof Map)){
+                throw new JobXMLException("notification section had no trigger elements")
             }
-            ['onsuccess','onfailure'].each{trigger->
+            def triggers = map.notification?.keySet().findAll { it.startsWith('on') }
+            if( !triggers){
+                throw new JobXMLException("notification section had no trigger elements")
+            }
+            def convertPluginToMap={Map plugin->
+                def e=plugin.configuration?.remove('entry')
+                def confMap=[:]
+                if(e instanceof Map){
+                    confMap[e['key']]=e['value']
+                }else if(e instanceof Collection){
+                    e.each{
+                        confMap[it['key']] = it['value']
+                    }
+                }
+                plugin['configuration']=confMap
+            }
+            triggers.each{trigger->
                 if(null!=map.notification[trigger]){
-
-                    if(!map.notification[trigger] || null==map.notification[trigger].email && null == map.notification[trigger].webhook){
-                        throw new JobXMLException("notification '${trigger}' element had missing 'email' or 'webhook' element")
+                    if(!map.notification[trigger] || null==map.notification[trigger].email && null == map.notification[trigger].webhook
+                            && null == map.notification[trigger].plugin
+                    ){
+                        throw new JobXMLException("notification '${trigger}' element had missing 'email' or 'webhook' or 'plugin' element")
                     }
                     if(null!=map.notification[trigger].email && (!map.notification[trigger].email || !map.notification[trigger].email.recipients)){
                         throw new JobXMLException("${trigger} email had blank or missing 'recipients' attribute")
                     }
                     if(null !=map.notification[trigger].webhook && (!map.notification[trigger].webhook || !map.notification[trigger].webhook.urls)){
                         throw new JobXMLException("${trigger} webhook had blank or missing 'urls' attribute")
+                    }
+                    if(null !=map.notification[trigger].plugin){
+                        if(!map.notification[trigger].plugin){
+                            throw new JobXMLException("${trigger} plugin element was empty")
+                        }
+                        if(map.notification[trigger].plugin instanceof Map && !map.notification[trigger].plugin.type){
+                            throw new JobXMLException("${trigger} plugin had blank or missing 'type' attribute")
+                        }
+                        if(map.notification[trigger].plugin instanceof Collection && !map.notification[trigger].plugin.every{it.type}){
+                            throw new JobXMLException("${trigger} plugin had blank or missing 'type' attribute")
+                        }
                     }
                     if(map.notification[trigger].email){
                         map.notification[trigger].recipients=map.notification[trigger].email.remove('recipients')
@@ -210,6 +265,13 @@ class JobsXMLCodec {
                     if(map.notification[trigger].webhook){
                         map.notification[trigger].urls = map.notification[trigger].webhook.remove('urls')
                         map.notification[trigger].remove('webhook')
+                    }
+                    if(map.notification[trigger].plugin && map.notification[trigger].plugin instanceof Map){
+                        convertPluginToMap(map.notification[trigger].plugin)
+                    }else if(map.notification[trigger].plugin && map.notification[trigger].plugin instanceof Collection){
+                        map.notification[trigger].plugin.each{
+                            convertPluginToMap(it)
+                        }
                     }
                 }
             }
@@ -223,25 +285,49 @@ class JobsXMLCodec {
                 data.commands = [data.remove('commands')]
             }  //convert script args values to idiosyncratic label
             def fixup = { cmd ->
-                if (cmd.scriptfile || cmd.script || cmd.scripturl) {
-                    cmd.args = cmd.remove('scriptargs')
-                } else if (cmd.jobref?.arg?.line) {
-                    cmd.jobref.args = cmd.jobref.arg.remove('line')
-                    cmd.jobref.remove('arg')
+                if (cmd.scriptfile!=null || cmd.script!=null || cmd.scripturl!=null) {
+                    cmd.args = cmd.remove('scriptargs')?.toString()
+                } else if (cmd.jobref!=null) {
+                    if(!(cmd.jobref instanceof Map)){
+                        throw new JobXMLException("'jobref' value incorrect: ${cmd.jobref}, expected elements: arg, group, name")
+                    }
+                    if(cmd.jobref.arg!=null){
+                        if (!(cmd.jobref.arg instanceof Map)) {
+                            throw new JobXMLException("'jobref/arg' value incorrect: ${cmd.jobref.arg}, expected attribute: line")
+                        }
+                        cmd.jobref.args = cmd.jobref.arg.remove('line')?.toString()
+                        cmd.jobref.remove('arg')
+                    }
                 }else if(cmd['node-step-plugin'] || cmd['step-plugin']){
+                    def parsePluginConfig={ plc->
+                        def outconf=[:]
+                        if (plc?.entry instanceof Map && plc?.entry['key']) {
+                            outconf[plc?.entry['key']] = plc?.entry['value']
+                        } else if (plc?.entry instanceof Collection) {
+                            plc?.entry.each { o ->
+                                if (o instanceof Map && o['key']) {
+                                    outconf[o['key']] = o['value']
+                                }
+                            }
+                        }
+                        outconf
+                    }
                     if(cmd['node-step-plugin']){
                         def plugin= cmd.remove('node-step-plugin')
 
                         cmd.nodeStep=true
                         cmd.type = plugin.type
-                        cmd.configuration = plugin.configuration
+                        cmd.configuration=parsePluginConfig(plugin.configuration)
                     }else if(cmd['step-plugin']){
                         def plugin= cmd.remove('step-plugin')
 
                         cmd.nodeStep = false
                         cmd.type = plugin.type
-                        cmd.configuration = plugin.configuration
+                        cmd.configuration = parsePluginConfig(plugin.configuration)
                     }
+                }
+                if(null!= cmd.keepgoingOnSuccess){
+                    cmd.keepgoingOnSuccess=Boolean.parseBoolean(cmd.keepgoingOnSuccess)
                 }
             }
             data.commands.each(fixup)
@@ -251,6 +337,9 @@ class JobsXMLCodec {
                 }
             }
         }
+        if(null!=data.keepgoing && data.keepgoing instanceof String){
+            data.keepgoing = Boolean.parseBoolean(data.keepgoing)
+        }
     }
     /**
      * Convert structure returned by job.toMap into correct structure for jobs xml
@@ -258,13 +347,23 @@ class JobsXMLCodec {
     static convertJobMap={Map map->
         map.context=[project:map.remove('project')]
         final Map opts = map.remove('options')
+        boolean preserveOrder=false
         if(null!=opts){
+            preserveOrder=opts.any{it.value.sortIndex!=null}
             def optslist=[]
-            //xml expects sorted option names
-            opts.keySet().sort().each{
-                def x = opts[it]
+            //options are sorted by (sortIndex, name)
+            opts.sort{a,b->
+                if(null != a.value.sortIndex && null != b.value.sortIndex){
+                    return a.value.sortIndex<=>b.value.sortIndex
+                }else if (null == a.value.sortIndex && null == b.value.sortIndex) {
+                    return a.value.name <=> b.value.name
+                }else{
+                    return a.value.sortIndex!=null?-1:1
+                }
+            }.each{k,x->
+                x.remove('sortIndex')
                 //add 'name' attribute
-                BuilderUtil.addAttribute(x,'name',it)
+                BuilderUtil.addAttribute(x,'name',k)
                 //convert to attributes: 'value','regex','valuesUrl'
                 BuilderUtil.makeAttribute(x,'value')
                 BuilderUtil.makeAttribute(x,'regex')
@@ -307,7 +406,11 @@ class JobsXMLCodec {
                 }
                 optslist<<x
             }
-            map.context[BuilderUtil.pluralize('option')]=optslist
+            if(preserveOrder){
+                map.context['options'] = [option:optslist] + BuilderUtil.toAttrMap('preserveOrder',true)
+            }else{
+                map.context[BuilderUtil.pluralize('option')] = optslist
+            }
         }
         if(map.nodefilters?.dispatch){
             map.dispatch=map.nodefilters.remove('dispatch')
@@ -337,13 +440,36 @@ class JobsXMLCodec {
 
         convertWorkflowMapForBuilder(map.sequence)
         if(map.notification){
-            ['onsuccess','onfailure'].each{trigger->
+            def convertNotificationPlugin={Map pluginMap->
+                def confMap = pluginMap.remove('configuration')
+                BuilderUtil.makeAttribute(pluginMap, 'type')
+                confMap.each { k, v ->
+                    if (!pluginMap['configuration']) {
+                        pluginMap['configuration'] = [entry: []]
+                    }
+                    def entryMap= [key: k, value: v]
+                    BuilderUtil.makeAttribute(entryMap,'key')
+                    BuilderUtil.makeAttribute(entryMap,'value')
+                    pluginMap['configuration']['entry'] <<  entryMap
+                }
+            }
+            map.notification.keySet().findAll { it.startsWith('on') }.each{trigger->
                 if(map.notification[trigger]){
                     if(map.notification[trigger]?.recipients){
                         map.notification[trigger].email=BuilderUtil.toAttrMap('recipients',map.notification[trigger].remove('recipients'))
                     }
                     if(map.notification[trigger]?.urls){
                         map.notification[trigger].webhook=BuilderUtil.toAttrMap('urls',map.notification[trigger].remove('urls'))
+                    }
+                    if(map.notification[trigger]?.plugin){
+                        if(map.notification[trigger]?.plugin instanceof Map){
+                            convertNotificationPlugin(map.notification[trigger]?.plugin)
+                        }else if(map.notification[trigger]?.plugin instanceof Collection){
+                            //list of plugins,
+                            map.notification[trigger].plugin.each{Map plugin->
+                                convertNotificationPlugin(plugin)
+                            }
+                        }
                     }
                 }
             }

@@ -21,7 +21,7 @@ endif
 endif
 RVERSION=$(VERSION)
 
-EDAM=groovy edam.groovy
+EDAM=groovy ../scripts/edam.groovy
 
 .PHONY: man html clean oldlinks
 

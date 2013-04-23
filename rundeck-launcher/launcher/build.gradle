@@ -29,26 +29,18 @@ configurations{
 }
 
 dependencies {
-    compile project(":rundeck-launcher:rundeck-jetty-server")
-    compile(
-        //[group: 'log4j', name: 'log4j', version: '1.2.16',ext:'jar'],
-        [group: 'commons-cli', name: 'commons-cli', version: '1.0',ext:'jar'],
-    )
+    compile project(":rundeck-launcher:rundeck-jetty-server"),
+		'commons-cli:commons-cli:1.0'
 	
-    warBundle(
-        project(':rundeckapp')
-    )
+    warBundle project(':rundeckapp')
 	
-    pluginFiles(
-        project(':plugins:script-plugin'),
+    pluginFiles project(':plugins:script-plugin'),
         project(':plugins:stub-plugin'),
         project(':plugins:localexec-plugin')
-    )
-	
+
     jettyServerLib(project(path:":rundeck-launcher:rundeck-jetty-server", configuration:'runtime')) {
         exclude module:'commons-cli'
         transitive = true
-
     }
 }
 
@@ -66,6 +58,7 @@ task expandCli(dependsOn: setupLauncherContent) << {
         into launcherContentsDir
     }
 }
+
 task expandWar(dependsOn: setupLauncherContent) << {
     //copy libs to a tools lib dir
     File webappDir=new File(launcherContentsDir,"pkgs/webapp")
@@ -86,6 +79,7 @@ task copyJettyServerLib(dependsOn: setupLauncherContent) << {
         into libDir
     }
 }
+
 task copyPluginLibs(dependsOn: setupLauncherContent) << {
     File libextDir=new File(launcherContentsDir,"libext")
     libextDir.mkdirs()
@@ -96,7 +90,6 @@ task copyPluginLibs(dependsOn: setupLauncherContent) << {
         }
     }
 }
-
 
 jar {
     from launcherContentsDir
@@ -211,3 +204,4 @@ task createPom << {
         }
     }.writeTo("pom.xml")
 }
+

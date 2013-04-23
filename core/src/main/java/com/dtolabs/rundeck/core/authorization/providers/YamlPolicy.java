@@ -70,6 +70,7 @@ final class YamlPolicy implements Policy {
         this.sourceIndex = sourceIndex;
         parseByClause();
         createAclContext();
+        parseEnvironment();
     }
 
     public YamlPolicy(final Map yamlDoc) {
@@ -89,24 +90,34 @@ final class YamlPolicy implements Policy {
     private boolean envchecked;
 
     public EnvironmentalContext getEnvironment() {
-        synchronized (this) {
-            if (!envchecked) {
-                //create
-                final Object ctxClause = policyInput.get(CONTEXT_SECTION);
-                if (null != ctxClause && ctxClause instanceof Map) {
-                    Map ctx = (Map) ctxClause;
-
-                    environment = new YamlEnvironmentalContext(EnvironmentalContext.URI_BASE, ctx);
-                }
-                envchecked = true;
-            }
-        }
         return environment;
     }
+
+    private void parseEnvironment() {
+        //create
+        final Object ctxClause = policyInput.get(CONTEXT_SECTION);
+        if (null != ctxClause && ctxClause instanceof Map) {
+            environment = new YamlEnvironmentalContext(EnvironmentalContext.URI_BASE, (Map) ctxClause);
+        }
+    }
+
     static class YamlEnvironmentalContext implements EnvironmentalContext{
         Map<URI, String> matcher = new HashMap<URI, String>();
+        Map<URI, Pattern> matcherRegex = new HashMap<URI, Pattern>();
         private boolean valid=false;
         private String validation;
+        private String description;
+        static private Comparator<Attribute> comparator = new Comparator<Attribute>() {
+            public int compare(Attribute attribute, Attribute attribute2) {
+                int u = attribute.property.compareTo(attribute2.property);
+                if (u == 0) {
+                    return attribute.value.compareTo(attribute2.value);
+                } else {
+                    return u;
+                }
+            }
+        };;
+
         YamlEnvironmentalContext(final String uriPrefix, final Map ctx) {
             boolean invalidentry=false;
             ArrayList<String> errors = new ArrayList<String>();
@@ -125,6 +136,11 @@ final class YamlPolicy implements Policy {
                     if(entry.getValue() instanceof String) {
                         String value = (String) entry.getValue();
                         matcher.put(uri, value);
+                        try {
+                            Pattern compile = Pattern.compile(value);
+                            matcherRegex.put(uri, compile);
+                        } catch (PatternSyntaxException e) {
+                        }
                     }else {
                         errors.add(
                             "Context section: " + entry.getKey() + ": expected 'String', saw: " + entry.getValue()
@@ -147,33 +163,56 @@ final class YamlPolicy implements Policy {
                 validation = sb.toString();
             }
             valid = !invalidentry && matcher.size() >= 1;
+
+            description = "YamlEnvironmentalContext{" +
+                    (valid ?
+                            ", valid=" + valid +
+                                    ", context='" + matcher + '\'' +
+                                    '}'
+                            :
+                            ", valid=" + valid +
+                                    ", validation='" + getValidation() + '\'' +
+                                    '}');
         }
 
         public boolean matches(final Set<Attribute> environment) {
+            return memo(environment);
+        }
+
+        private HashMap<String, Boolean> memoize = new HashMap<String, Boolean>();
+        private boolean memo(Set<Attribute> environment) {
+            String ident = ident(environment);
+            Boolean found = memoize.get(ident);
+            if (null == found) {
+                found = evaluateMatches(environment);
+                memoize.put(ident, found);
+            }
+            return found;
+        }
+
+        private String ident(Set<Attribute> environment) {
+            StringBuilder sb = new StringBuilder();
+            TreeSet<Attribute> attributes = new TreeSet<Attribute>(comparator);
+            attributes.addAll(environment);
+            for (Attribute attribute : attributes) {
+                sb.append(attribute.hashCode());
+                sb.append("/");
+            }
+            return sb.toString();
+        }
+
+        private boolean evaluateMatches(Set<Attribute> environment) {
             //return true if all declared environmental context attributes match in the input
             Set<URI> matchedSet = new HashSet<URI>();
             for (final Attribute attribute : environment) {
+                final Pattern pattern = matcherRegex.get(attribute.property);
                 final String matchValue = matcher.get(attribute.property);
-                if (null != matchValue) {
-                    Pattern compile;
-                    try {
-                        compile = Pattern.compile(matchValue);
-                    } catch (PatternSyntaxException e){
-                        compile=null;
-                    }
-                    if(null!=compile){
-                        final RegexPredicate regexPredicate = new RegexPredicate(compile);
-                        if (regexPredicate.evaluate(attribute.value)) {
-                            matchedSet.add(attribute.property);
-                        }
-                    }else{
-                        if(matchValue.equals(attribute.value)) {
-                            matchedSet.add(attribute.property);
-                        }
-                    }
+                if (null != matchValue && matchValue.equals(attribute.value)) {
+                    matchedSet.add(attribute.property);
+                }else if (null != pattern && pattern.matcher(attribute.value).matches()) {
+                    matchedSet.add(attribute.property);
                 }
             }
-
             return valid && matchedSet.size()==matcher.keySet().size();
         }
 
@@ -183,15 +222,7 @@ final class YamlPolicy implements Policy {
 
         @Override
         public String toString() {
-            return "YamlEnvironmentalContext{" +
-                   (valid?
-                   ", valid=" + valid +
-                   ", context='" + matcher + '\'' +
-                   '}'
-            :
-                   ", valid=" + valid +
-                   ", validation='" + getValidation() + '\'' +
-                   '}');
+            return description;
         }
 
         public String getValidation() {
@@ -787,12 +818,59 @@ final class YamlPolicy implements Policy {
         private final ConcurrentHashMap<String, AclContext> typeContexts = new ConcurrentHashMap<String, AclContext>();
         TypeContextFactory typeContextFactory;
         LegacyContextFactory legacyContextFactory;
+        private Map forsection;
 
         YamlAclContext(final Map policyDef, final TypeContextFactory typeContextFactory,
                        final LegacyContextFactory legacyContextFactory) {
             this.policyDef = policyDef;
             this.typeContextFactory = typeContextFactory;
             this.legacyContextFactory = legacyContextFactory;
+            initialize();
+        }
+        private ContextDecision invalid;
+
+        private void initialize() {
+            final List<ContextEvaluation> evaluations = new ArrayList<ContextEvaluation>();
+
+            //require description
+            final Object descriptionValue = policyDef.get("description");
+            if (descriptionValue == null || !(descriptionValue instanceof String)) {
+                evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED_NO_DESCRIPTION_PROVIDED,
+                        "Policy is missing a description."));
+                invalid=new ContextDecision(Explanation.Code.REJECTED_NO_DESCRIPTION_PROVIDED, false, evaluations);
+                return;
+            }
+            description = (String) descriptionValue;
+
+            final Object forMap = policyDef.get(FOR_SECTION);
+
+            //require for section is a map
+            if (null != forMap && !(forMap instanceof Map)) {
+                evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED_INVALID_FOR_SECTION,
+                        "'" + FOR_SECTION + "' was not declared"));
+                invalid= new ContextDecision(Explanation.Code.REJECTED_INVALID_FOR_SECTION, false, evaluations);
+                return;
+            }
+
+            forsection = (Map) forMap;
+            /**
+             * true indicates the old style "rules:" section is in effect for a resource of type "job"
+             */
+            boolean useLegacyRules = policyDef.containsKey(RULES_SECTION) && policyDef.get(RULES_SECTION) instanceof Map;
+
+            if(null!=forsection){
+                for (Object key : forsection.keySet()) {
+                    if(key instanceof String) {
+                        String type=(String) key;
+                        Object typeSection = forsection.get(key);
+                        typeContexts.putIfAbsent(type, createTypeContext((List) typeSection));
+                    }
+                }
+            }else if (useLegacyRules && null != legacyContextFactory) {
+                final Object rulesValue = policyDef.get(RULES_SECTION);
+                final Map rules = (Map) rulesValue;
+                typeContexts.putIfAbsent(JOB_TYPE, createLegacyContext(rules));
+            }
         }
 
         public String toString() {
@@ -808,66 +886,33 @@ final class YamlPolicy implements Policy {
 
         }
 
+        static final ContextDecision NO_RESOURCE_TYPE_DECISION = new ContextDecision(
+                Explanation.Code.REJECTED_NO_RESOURCE_TYPE, false,
+                Collections.singletonList(new ContextEvaluation(Explanation.Code.REJECTED_NO_RESOURCE_TYPE,
+                "Resource has no '" + TYPE_PROPERTY + "'.")));
+
+        private static ContextDecision createNoRulesDecision(String type) {
+            return new ContextDecision(Explanation.Code.REJECTED_NO_RULES_DECLARED, false,
+                    Collections.singletonList(new ContextEvaluation(Explanation.Code.REJECTED_NO_RULES_DECLARED,
+                            "Section for type '" + type + "' was not declared in " + FOR_SECTION + " section")));
+        }
+
         @SuppressWarnings ("rawtypes")
         public ContextDecision includes(final Map<String, String> resourceMap, final String action) {
-            final List<ContextEvaluation> evaluations = new ArrayList<ContextEvaluation>();
-
-            //require description
-            final Object descriptionValue = policyDef.get("description");
-            if (descriptionValue == null || !(descriptionValue instanceof String)) {
-                evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED_NO_DESCRIPTION_PROVIDED,
-                    "Policy is missing a description."));
-                return new ContextDecision(Explanation.Code.REJECTED_NO_DESCRIPTION_PROVIDED, false, evaluations);
+            if(null!=invalid){
+                return invalid;
             }
-            description = (String) descriptionValue;
-
             //require the resource to have a "type" value
             final String type = resourceMap.get(TYPE_PROPERTY);
             if (null == type) {
-                evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED_NO_RESOURCE_TYPE,
-                    "Resource has no '" + TYPE_PROPERTY + "'."));
-                return new ContextDecision(Explanation.Code.REJECTED_NO_RESOURCE_TYPE, false, evaluations);
+                return NO_RESOURCE_TYPE_DECISION;
             }
-
-            final Object forMap = policyDef.get(FOR_SECTION);
-
-            //require for section is a map
-            if (null != forMap && !(forMap instanceof Map)) {
-                evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED_INVALID_FOR_SECTION,
-                    "'" + FOR_SECTION + "' was not declared"));
-                return new ContextDecision(Explanation.Code.REJECTED_INVALID_FOR_SECTION, false, evaluations);
-            }
-
-            final Map forsection = (Map) forMap;
-            final Object typeSection = null != forsection ? forsection.get(type) : null;
-
-            /**
-             * true indicates the old style "rules:" section is in effect for a resource of type "job"
-             */
-            final boolean useLegacyRules = JOB_TYPE.equals(type) && policyDef.containsKey(RULES_SECTION) && policyDef
-                .get(RULES_SECTION) instanceof Map;
-
-            if (null == typeContexts.get(type)) {
-                if (null != typeSection) {
-                    typeContexts.putIfAbsent(type, createTypeContext((List) typeSection));
-                } else if (useLegacyRules) {
-                    final Object rulesValue = policyDef.get(RULES_SECTION);
-                    final Map rules = (Map) rulesValue;
-                    typeContexts.putIfAbsent(type, createLegacyContext(rules));
-                } else {
-                    evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED_NO_RULES_DECLARED,
-                        "Section for type '" + type + "' was not declared in " + FOR_SECTION + " section"));
-                    return new ContextDecision(Explanation.Code.REJECTED_NO_RULES_DECLARED, false, evaluations);
-                }
-            }
-
-            //evaluate resource given the type specific matcher
 
             final AclContext typeContext = typeContexts.get(type);
+            if(null==typeContext) {
+                return createNoRulesDecision(type);
+            }
             return typeContext.includes(resourceMap, action);
-
         }
-
-
     }
 }

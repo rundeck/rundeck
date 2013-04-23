@@ -27,7 +27,6 @@ import com.dtolabs.rundeck.core.authorization.Explanation.Code;
 import org.apache.log4j.Logger;
 
 import javax.security.auth.Subject;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -60,7 +59,7 @@ public class SAREAuthorization implements Authorization {
         policies = Policies.load(directory);
         baseDirectory = directory;
     }
-    
+
     /**
      * Convenience constructor that looks in a predefine spot for policy files.
      * 
@@ -77,13 +76,16 @@ public class SAREAuthorization implements Authorization {
      * @param subject
      * @param action
      * @param environment
+     * @param contexts
      * @return decision
      */
-    private Decision internalEvaluate(Map<String, String> resource, Subject subject, String action, 
-            Set<Attribute> environment) {
-        
+    private Decision internalEvaluate(Map<String, String> resource, Subject subject, String action,
+                                      Set<Attribute> environment, List<AclContext> contexts) {
         long start = System.currentTimeMillis();
-        
+        if (contexts.size() < 1) {
+            return authorize(false, "No context matches subject or environment", Code.REJECTED_NO_SUBJECT_OR_ENV_FOUND,
+                    resource, subject, action, environment, System.currentTimeMillis() - start);
+        }
         if(resource == null) {
             throw new IllegalArgumentException("Resource does not identify any resource because it's an empty resource property or null.");
         } else {
@@ -108,14 +110,7 @@ public class SAREAuthorization implements Authorization {
         
         this.decisionsMade++;
         
-//        long narrowStart = System.currentTimeMillis();
-        List<AclContext> contexts = policies.narrowContext(subject, environment);
-        //long narrowDuration = System.currentTimeMillis() - narrowStart;
-        
-        if(contexts.size() <= 0) {
-            return authorize(false, "No context matches subject or environment", Code.REJECTED_NO_SUBJECT_OR_ENV_FOUND, resource, subject, action, environment, System.currentTimeMillis() - start);
-        }
-        
+
         ContextDecision contextDecision = null;
         ContextDecision lastDecision = null;
 
@@ -152,9 +147,16 @@ public class SAREAuthorization implements Authorization {
      * 
      */
     public Decision evaluate(Map<String, String> resource, Subject subject, 
-            String action, Set<Attribute> environment) {     
-        
-        Decision decision = internalEvaluate(resource, subject, action, environment);
+            String action, Set<Attribute> environment) {
+        return evaluate(resource, subject, action, environment, policies.narrowContext(subject, environment));
+    }
+    /**
+     * Return the evaluation decision for the resource, subject, action, environment and contexts
+     */
+    private Decision evaluate(Map<String, String> resource, Subject subject,
+                             String action, Set<Attribute> environment, List<AclContext>contexts) {
+
+        Decision decision = internalEvaluate(resource, subject, action, environment, contexts);
         StringBuilder sb = new StringBuilder();
         sb.append("Evaluating ").append(decision).append(" (").append(decision.evaluationDuration()).append("ms)");
         logger.info(sb.toString());
@@ -167,9 +169,10 @@ public class SAREAuthorization implements Authorization {
         
         Set<Decision> decisions = new HashSet<Decision>();
         long duration=0;
+        List<AclContext> aclContexts = policies.narrowContext(subject, environment);
         for(Map<String, String> resource: resources) {
             for(String action: actions) {
-                final Decision decision = evaluate(resource, subject, action, environment);
+                final Decision decision = evaluate(resource, subject, action, environment, aclContexts);
                 duration += decision.evaluationDuration();
                 decisions.add(decision);
             }

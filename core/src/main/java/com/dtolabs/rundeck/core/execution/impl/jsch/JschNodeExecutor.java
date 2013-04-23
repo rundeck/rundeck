@@ -61,12 +61,7 @@ import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.text.MessageFormat;
 import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.regex.Pattern;
 
 
@@ -186,10 +181,18 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
 
         //Sudo support
 
-        final ExecutorService executor = Executors.newFixedThreadPool(1);
+        final ExecutorService executor = Executors.newSingleThreadExecutor(
+                new ThreadFactory() {
+                    public Thread newThread(Runnable r) {
+                        return new Thread(null, r, "SudoResponder " + node.getNodename() + ": "
+                                + System.currentTimeMillis());
+                    }
+                }
+        );
 
         final Future<ResponderTask.ResponderResult> responderFuture;
         final SudoResponder sudoResponder = SudoResponder.create(node, framework, context);
+        Runnable responderCleanup=null;
         if (sudoResponder.isSudoEnabled() && sudoResponder.matchesCommandPattern(command[0])) {
             final DisconnectResultHandler resultHandler = new DisconnectResultHandler();
 
@@ -197,6 +200,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             final PipedInputStream responderInput = new PipedInputStream();
             final PipedOutputStream responderOutput = new PipedOutputStream();
             final PipedInputStream jschInput = new PipedInputStream();
+            //lead pipe allows connected inputstream to close and not hang the writer to this stream
             final PipedOutputStream jschOutput = new LeadPipeOutputStream();
             try {
                 responderInput.connect(jschOutput);
@@ -219,7 +223,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
                                                                       DEFAULT_SUDO2_PASSWORD_OPTION,
                                                                       DEFAULT_SUDO2_COMMAND_PATTERN);
             if (sudoResponder2.isSudoEnabled()
-                && sudoResponder2.matchesCommandPattern(CLIUtils.generateArgline(null, command))) {
+                && sudoResponder2.matchesCommandPattern(CLIUtils.generateArgline(null, command, false))) {
                 logger.debug("Enable second sudo responder");
 
                 sudoResponder2.setDescription("Second " + SudoResponder.DEFAULT_DESCRIPTION);
@@ -240,7 +244,27 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
 
 
             responderFuture = executor.submit(responderResultCallable);
-        } else {
+            //close streams after responder is finished
+            responderCleanup = new Runnable() {
+                public void run() {
+                    logger.debug("SudoResponder shutting down...");
+                    try {
+                        responderInput.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    try {
+                        responderOutput.flush();
+                        responderOutput.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    //executor pool shutdown
+                    executor.shutdownNow();
+                }
+            };
+            executor.submit(responderCleanup);
+        }else {
             responderFuture = null;
         }
         if (null != context.getExecutionListener()) {
@@ -259,6 +283,9 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             errormsg = extractJschFailure.getErrormsg();
             failureReason = extractJschFailure.getReason();
             context.getExecutionListener().log(0, errormsg);
+        }
+        if (null != responderCleanup) {
+            responderCleanup.run();
         }
         shutdownAndAwaitTermination(executor);
         if (null != responderFuture) {
@@ -574,17 +601,26 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
      */
     private static class DisconnectResultHandler implements ResponderTask.ResultHandler,
                                                             ExtSSHExec.DisconnectHolder {
-        private ExtSSHExec.Disconnectable disconnectable;
+        private volatile ExtSSHExec.Disconnectable disconnectable;
+        private volatile boolean needsDisconnect=false;
 
         public void setDisconnectable(final ExtSSHExec.Disconnectable disconnectable) {
             this.disconnectable = disconnectable;
+            checkAndDisconnect();
         }
 
         public void handleResult(final boolean success, final String reason) {
-            if (!success) {
-                if (null != disconnectable) {
-                    disconnectable.disconnect();
-                }
+            needsDisconnect=!success;
+            checkAndDisconnect();
+        }
+
+        /**
+         * synchronize to prevent race condition on setDisconnectable and handleResult
+         */
+        private synchronized void checkAndDisconnect() {
+            if (null != disconnectable && needsDisconnect) {
+                disconnectable.disconnect();
+                needsDisconnect = false;
             }
         }
     }

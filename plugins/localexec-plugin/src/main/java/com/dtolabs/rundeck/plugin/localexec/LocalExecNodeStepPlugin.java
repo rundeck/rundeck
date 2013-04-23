@@ -24,12 +24,15 @@
 */
 package com.dtolabs.rundeck.plugin.localexec;
 
+import com.dtolabs.rundeck.core.cli.CLIUtils;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureReason;
 import com.dtolabs.rundeck.core.plugins.Plugin;
+import com.dtolabs.rundeck.core.utils.Converter;
+import com.dtolabs.rundeck.core.utils.OptsUtil;
 import com.dtolabs.rundeck.core.utils.ScriptExecUtil;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
@@ -62,11 +65,18 @@ public class LocalExecNodeStepPlugin implements NodeStepPlugin {
                                         StepFailureReason.ConfigurationFailure,
                                         entry.getNodename());
         }
-        String[] split = command.split(" ");
+        String[] split = OptsUtil.burst(command);
         Map<String, Map<String, String>> nodeData = DataContextUtils.addContext("node",
                                                                                 DataContextUtils.nodeData(entry),
                                                                                 context.getDataContext());
-        String[] finalCommand = DataContextUtils.replaceDataReferences(split, nodeData);
+
+        final String[] finalCommand = DataContextUtils.replaceDataReferences(split, nodeData);
+        StringBuilder preview=new StringBuilder();
+
+        for (int i = 0; i < finalCommand.length; i++) {
+            preview.append("'").append(finalCommand[i]).append("'");
+        }
+        context.getLogger().log(5, "LocalExecNodeStepPlugin, running command ("+split.length+"): " + preview.toString());
         Map<String, String> env = DataContextUtils.generateEnvVarsFromContext(nodeData);
         final int result;
         try {

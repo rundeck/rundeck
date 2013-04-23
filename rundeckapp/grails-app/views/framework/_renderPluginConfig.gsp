@@ -23,8 +23,12 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 
 <g:if test="${description}">
-    <span class="prompt">${description.title.encodeAsHTML()}</span>
-    <span class="desc">${description.description.encodeAsHTML()}</span>
+    <g:if test="${!hideTitle}">
+        <span class="prompt">${description.title.encodeAsHTML()}</span>
+    </g:if>
+    <g:if test="${!hideDescription}">
+        <span class="desc">${description.description?.encodeAsHTML()}</span>
+    </g:if>
 </g:if>
 <div class="" style="margin-top:5px;">
     <g:set var="rkey" value="${g.rkey()}"/><g:if test="${includeFormFields && saved}">

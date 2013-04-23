@@ -782,13 +782,33 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
             assertNotNull(se2.options)
             assertEquals(3, se2.options.size())
 
-            assertEquals "-test3 'some value'", ExecutionService.generateJobArgline(se2, ['test3': 'some value'])
-            assertEquals "-test2 'some value'", ExecutionService.generateJobArgline(se2, ['test2': 'some value'])
-            assertEquals "-test1 'some value'", ExecutionService.generateJobArgline(se2, ['test1': 'some value'])
+            assertEquals "-test1 \"some value\"", ExecutionService.generateJobArgline(se2, ['test1': 'some value'])
             //multivalue
-            assertEquals "-test1 'some value+another value'", ExecutionService.generateJobArgline(se2, ['test1': ['some value','another value']])
-            assertEquals "-test2 'some value,another value'", ExecutionService.generateJobArgline(se2, ['test2': ['some value','another value']])
-            assertEquals "-test3 'some value,another value'", ExecutionService.generateJobArgline(se2, ['test3': ['some value','another value']])
+            assertEquals "-test1 \"some value+another value\"", ExecutionService.generateJobArgline(se2, ['test1': ['some value','another value']])
+            assertEquals "-test2 \"some value,another value\"", ExecutionService.generateJobArgline(se2, ['test2': ['some value','another value']])
+            assertEquals "-test3 \"some value,another value\"", ExecutionService.generateJobArgline(se2, ['test3': ['some value','another value']])
+        }
+    }
+    void testGenerateJobArglinePreservesOptionSortIndexOrder() {
+        mockDomain(ScheduledExecution)
+        mockDomain(Option)
+        ScheduledExecution se = new ScheduledExecution()
+        def testService = new ExecutionService()
+        def frameworkService = new FrameworkService()
+        testService.frameworkService = frameworkService
+
+        t: {
+            //test regex and optional value
+            ScheduledExecution se2 = new ScheduledExecution()
+            se2.addToOptions(new Option(name: 'abc', enforced: false, multivalued: true,delimiter: "+"))
+            se2.addToOptions(new Option(name: 'zyx', enforced: false, multivalued: true,sortIndex: 1))
+            se2.addToOptions(new Option(name: 'pst', enforced: false, multivalued: false,sortIndex: 0))
+            assertNotNull(se2.options)
+            assertEquals(3, se2.options.size())
+
+            assertEquals "-zyx value", ExecutionService.generateJobArgline(se2, ['zyx': 'value'])
+            assertEquals "-pst blah -zyx value", ExecutionService.generateJobArgline(se2, ['zyx': 'value','pst':'blah'])
+            assertEquals "-pst blah -zyx value -abc elf", ExecutionService.generateJobArgline(se2, ['zyx': 'value','pst':'blah', abc:'elf'])
         }
     }
 
@@ -824,39 +844,6 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
             assertEquals(1,val.loglevel)
             assertNull(val.framework)
             assertNull(val.executionListener)
-        }
-    }
-
-    /**
-     * Test createContext
-     */
-    void testCreateContextUserDNE() {
-        mockDomain(Execution)
-        mockDomain(User)
-        ConfigurationHolder.metaClass.getConfig = {-> [:] }
-
-        def testService = new ExecutionService()
-        def fcontrol = mockFor(FrameworkService, true)
-        fcontrol.demand.parseOptsFromString(1..1) {argString ->
-            [test: 'args']
-        }
-        fcontrol.demand.filterNodeSet(1..1) {fwk, sel, proj ->
-            new NodeSetImpl()
-        }
-        testService.frameworkService = fcontrol.createMock()
-        //create mock user
-        User u1 = new User(login: 'testuser')
-        u1.save()
-        t:{//test DNE user
-
-            Execution se = new Execution(argString:"-test args",user:"DNEuser",project:"testproj", loglevel:'WARN',doNodedispatch: false)
-            try {
-                def val=testService.createContext(se,null,null,null,null,null,null)
-                fail("Should not succeed")
-            } catch (Exception e) {
-                assertEquals("User DNEuser is not authorized to run this Job.",e.message)
-            }
-
         }
     }
 

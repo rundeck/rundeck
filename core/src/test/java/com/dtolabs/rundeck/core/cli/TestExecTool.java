@@ -457,7 +457,6 @@ public class TestExecTool extends AbstractBaseTest {
             this.framework = framework;
         }
 
-        @Override
         public NodeStepResult executeNodeStep(StepExecutionContext context, NodeStepExecutionItem item, INodeEntry node) throws
                                                                                                              NodeStepException {
             testContext=context;
@@ -809,18 +808,6 @@ public class TestExecTool extends AbstractBaseTest {
 
             testExecutor1.reset();
         }
-    }
-
-    public void testGenerateArgline() throws Exception {
-        assertEquals("invalid", "test 1 2", CLIUtils.generateArgline("test", new String[]{"1", "2"}));
-        assertEquals("invalid", "test 1 2 '3 4'", CLIUtils.generateArgline("test", new String[]{"1", "2", "3 4"}));
-        assertEquals("invalid", "test 1 2 '\"3 4\"'", CLIUtils.generateArgline("test",
-            new String[]{"1", "2", "\"3 4\""}));
-        assertEquals("invalid", "test 1 2 \"34\"", CLIUtils.generateArgline("test", new String[]{"1", "2", "\"34\""}));
-        assertEquals("invalid", "test 1 2 '3 4'", CLIUtils.generateArgline("test", new String[]{"1", "2", "'3 4'"}));
-        //test empty and null values
-        assertEquals("invalid", "test", CLIUtils.generateArgline("test", null));
-        assertEquals("invalid", "test", CLIUtils.generateArgline("test", new String[0]));
     }
 
     /**

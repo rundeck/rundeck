@@ -629,7 +629,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
         } else {
             tags = null;
         }
-        final String script = CLIUtils.generateArgline("dispatch", inputArgs);
+        final String script = OptsUtil.join("dispatch", inputArgs);
         final Collection<INodeEntry> nodeEntryCollection = filterNodes(true).getNodes();
         if (null != result && result.isSuccess()) {
             final String resultString =
@@ -717,7 +717,6 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
                     return null;
                 }
 
-                @Override
                 public boolean isKeepgoingOnSuccess() {
                     return false;
                 }
@@ -1085,7 +1084,6 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
         return createFilterNodeSelector().nodeSelectorWithDefault(framework.getFrameworkNodeName());
     }
 
-    @Override
     public INodeSet getNodes() {
         return filterNodes(true);
     }
@@ -1298,12 +1296,10 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
         this.scriptURLString = scriptURLString;
     }
 
-    @Override
     public int getStepNumber() {
         return 1;
     }
 
-    @Override
     public List<Integer> getStepContext() {
         return null;
     }

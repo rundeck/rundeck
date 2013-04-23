@@ -19,7 +19,7 @@ PROXY_DEFS="-Dhttp.proxyHost=$gradle_proxy_host -Dhttp.proxyPort=$gradle_proxy_p
 endif
 
 
-.PHONY: clean rundeck docs makedocs release core-snapshot test app notes
+.PHONY: clean rundeck release core-snapshot test app notes
 
 rundeck:  app
 	@echo $(VERSION)-$(RELEASE)
@@ -48,46 +48,20 @@ test:
 
 #rpm and deb packaging
 
-rpm: docs app
+rpm: app
 	cd packaging; $(MAKE) VERSION=$(VNUMBER) VNAME=$(VERSION) RELEASE=$(RELEASE) rpmclean rpm
 
-deb: docs app
+deb: app
 	cd packaging; $(MAKE) VERSION=$(VNUMBER) VNAME=$(VERSION) RELEASE=$(RELEASE) debclean deb
 
 #doc build
 
-notes: docs/en/history/toc.conf docs/en/RELEASE.md
 
-docs/en/RELEASE.md: RELEASE.md
-	cp $< $@
-
-docs/en/history/version-$(VNUMBER).md: RELEASE.md
-	( echo "% Version $(VNUMBER)" ; \
-		echo "%" $(shell whoami) ; \
-		echo "%" $(shell date "+%m/%d/%Y") ; \
-		echo ; ) >$@
-	cat RELEASE.md >>$@
-
-docs/en/history/toc.conf: docs/en/history/version-$(VNUMBER).md
-	echo "1:version-$(VNUMBER).md:Version $(VNUMBER)" > $@.new
-	test -f $@ && ( grep -v -q "$(VNUMBER)" $@ && \
-		cat $@ >> $@.new && \
-		mv $@.new $@ ) || (  mv $@.new $@ )
-	
-
-makedocs: 
-	$(MAKE) VERSION=$(VERSION) -C docs
-
-docs: makedocs
-	mkdir -p ./rundeckapp/web-app/docs/jp
-	cp -r docs/en/dist/html/* ./rundeckapp/web-app/docs
-	cp -r docs/jp/dist/html/* ./rundeckapp/web-app/docs/jp
 
 #clean various components
 
 clean:
 	./gradlew clean
-	$(MAKE) -C docs clean
 	$(MAKE) -C packaging clean
 	rm -rf ./gradle-cache
 

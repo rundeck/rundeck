@@ -23,11 +23,12 @@
 */
 package com.dtolabs.rundeck.core.cli;
 
+import com.dtolabs.rundeck.core.utils.Converter;
+import org.apache.commons.lang.CharUtils;
+import org.apache.commons.lang.StringUtils;
+
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * CLIUtils provides utility functions
@@ -43,22 +44,41 @@ public class CLIUtils {
      * @param args       arguments to pass to the command
      *
      * @return a String of the command followed by the arguments, where each item which has spaces is appropriately
-     *         quoted.  Pre-quoted items are not changed.
+     *         quoted.  Pre-quoted items are not changed during "unsafe" quoting.
+     *
+     *         At this point in time, default behavior is "unsafe" quoting.
      */
     public static String generateArgline(final String scriptpath, final String[] args) {
-        return generateArgline(scriptpath, args, " ");
+        return generateArgline(scriptpath, args, " ", false);
     }
+
     /**
      * Create an appropriately quoted argline to use given the command (script path) and argument strings.
      *
      * @param scriptpath path to command or script
      * @param args       arguments to pass to the command
+     * @param unsafe     whether to use backwards-compatible, known-insecure quoting
      *
      * @return a String of the command followed by the arguments, where each item which has spaces is appropriately
-     *         quoted.  Pre-quoted items are not changed.
+     *         quoted.  Pre-quoted items are not changed during "unsafe" quoting.
      */
-    public static String generateArgline(final String scriptpath, final String[] args, final String separator) {
-        final StringBuffer sb = new StringBuffer();
+    public static String generateArgline(final String scriptpath, final String[] args, final Boolean unsafe) {
+        return generateArgline(scriptpath, args, " ", unsafe);
+    }
+
+    /**
+     * Create an appropriately quoted argline to use given the command (script path) and argument strings.
+     *
+     * @param scriptpath path to command or script
+     * @param args       arguments to pass to the command
+     * @param separator  character to use to separate arguments
+     * @param unsafe     whether to use backwards-compatible, known-insecure quoting
+     *
+     * @return a String of the command followed by the arguments, where each item which has spaces is appropriately
+     *         quoted.  Pre-quoted items are not changed during "unsafe" quoting.
+     */
+    public static String generateArgline(final String scriptpath, final String[] args, final String separator, final Boolean unsafe) {
+        final StringBuilder sb = new StringBuilder();
         final ArrayList<String> list = new ArrayList<String>();
         if (null != scriptpath) {
             list.add(scriptpath);
@@ -73,38 +93,114 @@ public class CLIUtils {
             if (sb.length() > 0) {
                 sb.append(separator);
             }
-            if (arg.indexOf(" ") >= 0 && !(0 == arg.indexOf("'") && (arg.length() - 1) == arg.lastIndexOf("'"))) {
-                sb.append("'").append(arg).append("'");
+            if(unsafe) {
+                /* DEPRECATED SECURITY RISK: Exists for backwards compatibility only. */
+                if (arg.indexOf(" ") >= 0 && !(0 == arg.indexOf("'") && (arg.length() - 1) == arg.lastIndexOf("'"))) {
+                    sb.append("'").append(arg).append("'");
+                } else {
+                    sb.append(arg);
+                }
             } else {
-                sb.append(arg);
+                quoteUnixShellArg(sb, arg);
             }
         }
         return sb.toString();
     }
 
-    /**
-     * Split the argline string into a list of strings, each quoted string will be a single element in the list.
-     *
-     * @param argline
-     *
-     * @return argline with single-quote quoted strings additionally quoted with double quotes
-     */
-    public static List<String> splitArgLine(final String argline) {
-        final ArrayList<String> sb1 = new ArrayList<String>();
-
-        final String sqre = "(?:^'|\\s*')([^\\']+)(?:'$|'\\s*)";
-        final String dqre = "(?:^\"|\\s*\")([^\\\"]+)(?:\"$|\"\\s*)";
-        final String nospac = "(?:^|\\s*)(\\S+)(?:$|\\s*)";
-        final Matcher matcher = Pattern.compile(sqre + "|" + dqre + "|" + nospac).matcher(argline);
-        while(matcher.find()) {
-            if(matcher.group(1)!=null){
-                sb1.add(matcher.group(1));
-            }else if(matcher.group(2)!=null){
-                sb1.add(matcher.group(2));
-            }else if(matcher.group(3)!=null){
-                sb1.add(matcher.group(3));
+    public static String quoteUnixShellArg(String arg) {
+        StringBuilder stringBuilder = new StringBuilder();
+        quoteUnixShellArg(stringBuilder, arg);
+        return stringBuilder.toString();
+    }
+    private static void quoteUnixShellArg(StringBuilder sb, String arg) {
+        if (StringUtils.containsNone(arg, UNIX_SHELL_CHARS) &&
+                StringUtils.containsNone(arg, WS_CHARS) &&
+                StringUtils.containsNone(arg, " ")) {
+            if (arg != null) {
+                sb.append(arg);
             }
+            return;
         }
-        return sb1;
+        sb.append("'");
+        sb.append(arg.replace("'", "'\"'\"'"));
+        sb.append("'");
+    }
+
+    public static Converter<String, String> characterEscapeForOperatingSystem(String type) {
+        if ("unix".equalsIgnoreCase(type)) {
+            return UNIX_SHELL_ESCAPE;
+        } else if ("windows".equalsIgnoreCase(type)) {
+            //TODO
+            return null;
+        } else if (null != type) {
+            //default
+            return UNIX_SHELL_ESCAPE;
+        } else {
+            return null;
+        }
+    }
+    public static Converter<String, String> argumentQuoteForOperatingSystem(String type) {
+        if ("unix".equalsIgnoreCase(type)) {
+            return UNIX_ARGUMENT_QUOTE;
+        } else if ("windows".equalsIgnoreCase(type)) {
+            //TODO
+            return null;
+        } else if (null != type) {
+            //default
+            return UNIX_ARGUMENT_QUOTE;
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Converter that can escape shell-special characters
+     */
+    public static final Converter<String, String> UNIX_ARGUMENT_QUOTE= new Converter<String, String>() {
+        public String convert(String s) {
+            return quoteUnixShellArg(s);
+        }
+    };
+    /**
+     * Converter that can escape shell-special characters
+     */
+    public static final Converter<String,String> UNIX_SHELL_ESCAPE =new Converter<String, String>() {
+        public String convert(String s) {
+            return escapeUnixShellChars(s);
+        }
+    };
+    public static String escapeUnixShellChars(String str) {
+        StringBuilder stringBuilder = new StringBuilder();
+        escapeUnixShellChars(stringBuilder, str);
+        return stringBuilder.toString();
+    }
+
+    private static final String UNIX_SHELL_CHARS = "\"';{}()&$\\|*?><";
+    private static final String WS_CHARS = "\n\r\t";
+
+    public static void escapeUnixShellChars(StringBuilder out, String str) {
+        if (StringUtils.containsNone(str, UNIX_SHELL_CHARS)) {
+            if (str != null) {
+                out.append(str);
+            }
+            return;
+        }
+        for (int i = 0; i < str.length(); i++) {
+            char c = str.charAt(i);
+            if(UNIX_SHELL_CHARS.indexOf(c)>=0){
+                out.append('\\');
+            }else if(WS_CHARS.indexOf(c)>=0){
+                out.append('\\');
+                if(c==CharUtils.CR){
+                    out.append('r');
+                }else if(c==CharUtils.LF){
+                    out.append('n');
+                }else if(c=='\t'){
+                    out.append('t');
+                }
+                continue;
+            }
+            out.append(c);
+        }
     }
 }

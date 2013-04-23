@@ -1,15 +1,30 @@
+/*
+ * The following allows grails to leverage a different url setting for maven central. This would
+ * typically be passed along as a -D parameter to grails, ie: grails -Dmaven.central.ur=http://...
+ */
+def mavenCentralUrl = "http://repo1.maven.org/maven2/"
+if (System.properties["maven.central.url"]) {
+    mavenCentralUrl = System.properties["maven.central.url"]
+}
+println "Maven Central: ${mavenCentralUrl}"
+
+def grailsLocalRepo = "grails-app/plugins"
+if (System.properties["grails.local.repo"]) {
+        grailsLocalRepo = System.properties["grails.local.repo"]
+}
+println "Grails Local Repo: ${grailsLocalRepo}"
+
 grails.project.dependency.resolution = {
     inherits "global" // inherit Grails' default dependencies
     log "warn" // log level of Ivy resolver, either 'error', 'warn', 'info', 'debug' or 'verbose'
     repositories {
         useOrigin true
-        //include snakeyaml from deps dir
-        flatDir name:'sourceDeps', dirs:'../dependencies/snakeyaml/jars'
         mavenLocal()
+        flatDir name:'grailsLocalRepo', dirs:"${grailsLocalRepo}"
         grailsHome()
         grailsPlugins()
+        mavenRepo mavenCentralUrl
         grailsCentral()
-        mavenCentral()
     }
 
     grails.war.resources = {def stagingDir ->
@@ -25,30 +40,34 @@ grails.project.dependency.resolution = {
         delete(file: "${stagingDir}/WEB-INF/lib/jasper-compiler-jdt-5.5.15.jar")
     }
 
-	println "Application Version: ${appVersion}"
+    rundeckVersion = System.getProperty("RUNDECK_VERSION", appVersion)
+    println "Application Version: ${rundeckVersion}"
 	
     dependencies {
         
         test 'org.yaml:snakeyaml:1.9', 'org.apache.ant:ant:1.7.1', 'org.apache.ant:ant-jsch:1.7.1', 
              'com.jcraft:jsch:0.1.45', 'log4j:log4j:1.2.16', 'commons-collections:commons-collections:3.2.1', 
              'commons-codec:commons-codec:1.5', 'com.fasterxml.jackson.core:jackson-databind:2.0.2'
-        test("org.rundeck:rundeck-core:${appVersion}"){
+        test("org.rundeck:rundeck-core:${rundeckVersion}"){
             changing=true
         }
              
         compile 'org.yaml:snakeyaml:1.9', 'org.apache.ant:ant:1.7.1', 'org.apache.ant:ant-jsch:1.7.1', 
                 'com.jcraft:jsch:0.1.45','log4j:log4j:1.2.16','commons-collections:commons-collections:3.2.1',
                 'commons-codec:commons-codec:1.5', 'com.fasterxml.jackson.core:jackson-databind:2.0.2'
-        compile("org.rundeck:rundeck-core:${appVersion}") {
+        compile("org.rundeck:rundeck-core:${rundeckVersion}") {
             changing = true
+            excludes("xalan")
         }
 
         runtime 'org.yaml:snakeyaml:1.9', 'org.apache.ant:ant:1.7.1', 'org.apache.ant:ant-launcher:1.7.1',
                 'org.apache.ant:ant-jsch:1.7.1','com.jcraft:jsch:0.1.45', 'org.springframework:spring-test:3.0.5.RELEASE',
                 'log4j:log4j:1.2.16' ,'commons-collections:commons-collections:3.2.1','commons-codec:commons-codec:1.5', 
-                'com.fasterxml.jackson.core:jackson-databind:2.0.2',
-                'postgresql:postgresql:9.1-901.jdbc4'
-        runtime("org.rundeck:rundeck-core:${appVersion}") {
+                'com.fasterxml.jackson.core:jackson-databind:2.0.2', 'postgresql:postgresql:9.1-901.jdbc4'
+        runtime("org.rundeck:rundeck-core:${rundeckVersion}") {
+            changing = true
+        }
+        runtime("org.rundeck:rundeck-jetty-server:${appVersion}") {
             changing = true
         }
     }
