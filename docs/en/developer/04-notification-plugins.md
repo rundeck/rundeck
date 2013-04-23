@@ -31,6 +31,10 @@ and passed in two sets of Map data:
 
 The Configuration data is fully custom depending on your plugin, and is described in the [Plugin configuration properties](#plugin-configuration-properties) section.
 
+The specific data values of the Configuration section are allowed to have embedded Property References as described in the [Job Workflows - Context Variables](../manual/job-workflows.html#context-variables) chapter.
+
+For example, when a user configures your plugin, they could embed an option value using: `${option.myoption}`.  This value will be replaced with the runtime option value before being passed to your plugin.
+
 ### Execution data
 
 The execution data is included as a Map containing the following keys and values:
@@ -89,6 +93,13 @@ The following values may be available after the job is finished (not available f
       :  Job Description
     `averageDuration`
       :  Average job duration in Milliseconds, if available
+
+* `context` - this is a map containing all of the context variables available to the execution when it ran or will run, such as [Job Options](../manual/job-workflows.html#context-variables). The contents of this Map are the specific context namespaces and variables.
+    * `option` - a Map containing the Job Option keys/values
+
+In Groovy, you can simply reference any values in the Execution data maps using [Groovy Gpath](http://groovy.codehaus.org/GPath), e.g.:
+
+    println execution.context.option.name
 
 ## Plugin configuration properties
 

@@ -23,14 +23,11 @@
 */
 package com.dtolabs.rundeck.core.execution;
 
-import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionService;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutor;
-
-import java.util.*;
 
 /**
  * WorkflowExecutionServiceThread is ...
@@ -40,22 +37,22 @@ import java.util.*;
 public class WorkflowExecutionServiceThread extends ServiceThreadBase {
     WorkflowExecutionService weservice;
     WorkflowExecutionItem weitem;
-    StepExecutionContext econtext;
+    private StepExecutionContext context;
     WorkflowExecutionResult result;
 
     public WorkflowExecutionServiceThread(WorkflowExecutionService eservice, WorkflowExecutionItem eitem, StepExecutionContext econtext) {
         this.weservice = eservice;
         this.weitem = eitem;
-        this.econtext = econtext;
+        this.context = econtext;
     }
 
     public void run() {
-        if (null == this.weservice || null == this.weitem || null == this.econtext) {
+        if (null == this.weservice || null == this.weitem || null == context) {
             throw new IllegalStateException("project or execution detail not instantiated");
         }
         try {
             final WorkflowExecutor executorForItem = weservice.getExecutorForItem(weitem);
-            result = executorForItem.executeWorkflow(econtext,weitem);
+            result = executorForItem.executeWorkflow(context,weitem);
             success = result.isSuccess();
             if (null != result.getException()) {
                 thrown = result.getException();
@@ -67,4 +64,7 @@ public class WorkflowExecutionServiceThread extends ServiceThreadBase {
         }
     }
 
+    public StepExecutionContext getContext() {
+        return context;
+    }
 }

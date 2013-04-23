@@ -513,16 +513,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
         def LogHandler loghandler = createLogHandler(lognamespace, execution.outputfilepath,execution.loglevel,
             [user:execution.user,node:framework.getFrameworkNodeName()])
 
-        if(scheduledExecution){
-            //send onstart notification
-            def result = notificationService.triggerJobNotification('start', scheduledExecution.id, [execution: execution])
-        }
-        //install custom outputstreams for System.out and System.err for this thread and any child threads
-        //output will be sent to loghandler instead.
-        sysThreadBoundOut.installThreadStream(loghandler.createLoggerStream(Level.WARNING, null));
-        sysThreadBoundErr.installThreadStream(loghandler.createLoggerStream(Level.SEVERE, null));
-
-        def startMap
         try{
             def jobcontext=new HashMap<String,String>()
             if(scheduledExecution){
@@ -545,6 +535,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
             final cis = StepExecutionService.getInstanceForFramework(framework);
             cis.registerInstance(JobExecutionItem.STEP_EXECUTION_TYPE, this)
 
+            if (scheduledExecution) {
+                //send onstart notification
+                def result = notificationService.triggerJobNotification('start', scheduledExecution.id,
+                        [execution: execution, context:executioncontext])
+            }
+            //install custom outputstreams for System.out and System.err for this thread and any child threads
+            //output will be sent to loghandler instead.
+            sysThreadBoundOut.installThreadStream(loghandler.createLoggerStream(Level.WARNING, null));
+            sysThreadBoundErr.installThreadStream(loghandler.createLoggerStream(Level.SEVERE, null));
             //create service object for the framework and listener
             Thread thread = new WorkflowExecutionServiceThread(framework.getWorkflowExecutionService(),item, executioncontext)
             thread.start()
@@ -1470,7 +1469,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
                 execution.dateStarted, jobid, jobname, summary, props.cancelled,
                 node, execution.abortedby)
 
-            notificationService.triggerJobNotification(props.status == 'true' ? 'success' : 'failure', schedId, [execution: execution,nodestatus:[succeeded:sucCount,failed:failedCount,total:totalCount]])
+            def context = execmap?.thread?.context
+            notificationService.triggerJobNotification(props.status == 'true' ? 'success' : 'failure', schedId, [execution: execution,nodestatus:[succeeded:sucCount,failed:failedCount,total:totalCount],context:context])
         }
     }
     public String summarizeJob(ScheduledExecution job=null,Execution exec){

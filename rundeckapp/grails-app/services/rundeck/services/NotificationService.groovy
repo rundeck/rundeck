@@ -1,5 +1,6 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
@@ -215,6 +216,10 @@ public class NotificationService implements ApplicationContextAware{
                     if(content['nodestatus']){
                         execMap['nodestatus'] = content['nodestatus']
                     }
+                    //pass data context
+                    if(content['context']){
+                        execMap['context'] = content['context']?.dataContext
+                    }
 
                     didsend=triggerPlugin(trigger,execMap,n.type, n.configuration)
                 }else{
@@ -242,6 +247,9 @@ public class NotificationService implements ApplicationContextAware{
      */
     private boolean triggerPlugin(String trigger, Map data,String type, Map config){
         //replace exec info data references in config???
+        if(data.context){
+            config=DataContextUtils.replaceDataReferences(config,data.context)
+        }
 
         //load plugin and configure with config values
         def plugin = configureNotificationPlugin(type, config)

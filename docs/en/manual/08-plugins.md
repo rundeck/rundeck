@@ -53,6 +53,21 @@ referring to an actual file containing the provider implementations we will say
 Rundeck supports several different types of plugins to perform different kinds 
 of services.
 
+Types of plugins:
+
+* [Workflow Step](#workflow-step-plugins) - defines an action that can be a distinct step within a workflow, either for an individual Node or a set of Nodes
+* [Node Execution](#node-execution-plugins) - defines a mechanism to connect to a remote Node and execute a command
+* [File Copier](#node-execution-plugins) - defines a mechanism to copy a file to a remote node
+* [Resource Model Source](#resource-model-source-plugins) - defines a mechanism to retrieve Resource Model data (Node definitions) for use by a Rundeck project
+* [Resource Format](#resource-format-plugins) - defines a data format for Resource Models
+* [Notification](#notification-plugins) - defines a mechanism for notification that can be triggered when a Job starts or finishes
+
+## Plugin Development
+
+Plugins can be developed easily using scripts, or you can use Java.
+
+See more information in the [Developer Guide - Plugin Development](../developer/plugin-development.html) chapter.
+
 ### Workflow Step Plugins
 
 These plugins define the behavior taken for a single step in a workflow.  
@@ -68,6 +83,7 @@ types of plugins that can be defined:
 More information:
 
 * Configuration: [Workflow Step Services](plugins.html#workflow-step-services)
+* Development: [Workflow Step Plugin Development](../developer/workflow-step-plugin-development.html)
 
 ### Node Execution Plugins
 
@@ -110,6 +126,7 @@ More information:
 
 * Configuration: [Notifications](plugins.html#notifications)
 * Built-in Providers: [Notification services](plugins.html#notification-services)
+* Development: [Notification Plugin Development](../developer/notification-plugin-development.html)
 
 ## About Services and Providers
 
@@ -1311,8 +1328,3 @@ You can also test some failure scenarios by configuring the following node attri
 You could, for example, disable or test an entire project's workflows or jobs by
 simply setting the `project.properties` node executor provider to `stub`.
 
-## Plugin Development
-
-Plugins can be developed easily using scripts, or you can use Java.
-
-See more information in the [Developer Guide - Plugin Development](../developer/plugin-development.html) chapter.
