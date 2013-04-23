@@ -99,7 +99,7 @@ class JobsXMLCodec {
      *
      */
     static convertToJobMap={ data->
-        final Object object = XmlParserUtil.toObject(data)
+        final Object object = XmlParserUtil.toObject(data,false)
         if(!(object instanceof Map)){
             throw new JobXMLException("Expected map data")
         }
@@ -157,8 +157,11 @@ class JobsXMLCodec {
                     } else if (optm.values) {
                         optm.values = [optm.values.toString()]
                     }
-                    if(null!=optm.enforcedvalues){
-                        optm.enforced=optm.remove('enforcedvalues')
+                    if(null!=optm.enforcedvalues) {
+                        optm.enforced = Boolean.parseBoolean(optm.remove('enforcedvalues'))
+                    }
+                    if(null!=optm.required) {
+                        optm.required = Boolean.parseBoolean(optm.remove('required'))
                     }
                     if(ndx>-1){
                         optm.sortIndex=ndx++;
@@ -174,6 +177,25 @@ class JobsXMLCodec {
             map.nodefilters.dispatch=map.remove('dispatch')
             if(null!=map.nodefilters.excludeprecedence){
                 map.nodefilters.dispatch['excludePrecedence']=map.nodefilters.remove('excludeprecedence')
+            }
+            if(null!=map.nodefilters.dispatch.threadcount && ""!= map.nodefilters.dispatch.threadcount){
+                //convert to integer
+                def value= map.nodefilters.dispatch.threadcount
+                try{
+                    map.nodefilters.dispatch.threadcount=Integer.parseInt(value)
+                }catch (NumberFormatException e){
+                    throw new JobXMLException("Not a valid threadcount: "+value)
+                }
+            }
+            if(null!=map.nodefilters.dispatch.keepgoing){
+                //convert to boolean
+                def value= map.nodefilters.dispatch.keepgoing
+                map.nodefilters.dispatch.keepgoing=Boolean.parseBoolean(value)
+            }
+            if(null!=map.nodefilters.dispatch.excludePrecedence){
+                //convert to boolean
+                def value= map.nodefilters.dispatch.excludePrecedence
+                map.nodefilters.dispatch.excludePrecedence=Boolean.parseBoolean(value)
             }
         }
         if(map.schedule){
@@ -304,6 +326,9 @@ class JobsXMLCodec {
                         cmd.configuration = parsePluginConfig(plugin.configuration)
                     }
                 }
+                if(null!= cmd.keepgoingOnSuccess){
+                    cmd.keepgoingOnSuccess=Boolean.parseBoolean(cmd.keepgoingOnSuccess)
+                }
             }
             data.commands.each(fixup)
             data.commands.each {
@@ -311,6 +336,9 @@ class JobsXMLCodec {
                     fixup(it.errorhandler)
                 }
             }
+        }
+        if(null!=data.keepgoing && data.keepgoing instanceof String){
+            data.keepgoing = Boolean.parseBoolean(data.keepgoing)
         }
     }
     /**

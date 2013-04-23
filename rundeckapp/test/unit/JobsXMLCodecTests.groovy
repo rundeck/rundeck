@@ -728,6 +728,72 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect project","demo",jobs[0].project
     }
 
+    void testDecodeStringsShouldNotBeBoolean() {
+        def example1 = """<joblist>
+  <job>
+    <id>1</id>
+    <name>false</name>
+    <description >false</description>
+    <loglevel>VERBOSE</loglevel>
+    <group>false</group>
+    <context>
+      <project>false</project>
+      <options>
+        <option name="false" enforcedvalues="false"/>
+        <option required="false" name="x" value="9000636026"/>
+      </options>
+    </context>
+    <sequence keepgoing="false">
+        <command>
+            <exec>false</exec>
+            <errorhandler keepgoingOnSuccess="false">
+                <script>false</script>
+                <scriptargs>false</scriptargs>
+            </errorhandler>
+        </command>
+    </sequence>
+    <nodefilters excludeprecedence="false">
+      <include>
+        <hostname>false</hostname>
+        <tags />
+        <os-name />
+        <os-family />
+        <os-arch />
+        <os-version />
+        <name />
+      </include>
+    </nodefilters>
+    <dispatch>
+      <threadcount>2</threadcount>
+      <keepgoing>false</keepgoing>
+    </dispatch>
+  </job>
+</joblist>
+"""
+        def jobs = JobsXMLCodec.decode(example1)
+        assertNotNull jobs
+        assertEquals "false",jobs[0].jobName
+        assertEquals  "false",jobs[0].groupPath
+        assertEquals  "false",jobs[0].description
+        assertEquals  false, jobs[0].nodeExcludePrecedence
+        assertEquals  false, jobs[0].nodeKeepgoing
+        assertEquals  "false", jobs[0].nodeInclude
+        assertEquals  "false",jobs[0].project
+        assertEquals  1, jobs[0].workflow.commands.size()
+        assertEquals  "false", jobs[0].workflow.commands[0].adhocRemoteString
+        assertEquals  "false", jobs[0].workflow.commands[0].errorHandler.adhocLocalString
+        assertEquals  "false", jobs[0].workflow.commands[0].errorHandler.argString
+        assertEquals  false, jobs[0].workflow.commands[0].errorHandler.keepgoingOnSuccess
+        assertEquals  2, jobs[0].nodeThreadcount
+        assertEquals  false, jobs[0].workflow.keepgoing
+        assertEquals 2, jobs[0].options.size()
+        def opts=new ArrayList(jobs[0].options)
+        assertEquals 'false', opts[0].name
+        assertEquals false, opts[0].enforced
+        assertEquals 'x', opts[1].name
+        assertEquals false, opts[1].required
+        assertEquals '9000636026', opts[1].defaultValue
+    }
     void testDecodeBackwardsCompatibility(){
         /**
          * Backwards compatibility test, using pre 3.5 format for input
