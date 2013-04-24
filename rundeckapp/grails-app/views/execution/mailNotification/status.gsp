@@ -344,7 +344,7 @@ div.progressContainer div.progressContent{
     </div>
 </div>
 <div class="foot">
-    Run Deck:
+    <g:message code="main.app.name"/> :
     <g:link absolute="true" controller="framework" action="nodes"><g:message code="gui.menu.Run"/> &raquo;</g:link>
     <g:link absolute="true" controller="menu" action="jobs"><g:message code="gui.menu.Workflows"/> &raquo;</g:link>
     <g:link absolute="true" controller="reports" action="index"><g:message code="gui.menu.Events"/> &raquo;</g:link>

@@ -1,5 +1,7 @@
 package rundeck
 
+import org.codehaus.groovy.grails.commons.ConfigurationHolder
+
 import java.text.SimpleDateFormat
 import rundeck.ScheduledExecution
 
@@ -7,7 +9,7 @@ class UtilityTagLib{
     def static  daysofweekkey = [Calendar.SUNDAY,Calendar.MONDAY,Calendar.TUESDAY,Calendar.WEDNESDAY,Calendar.THURSDAY,Calendar.FRIDAY,Calendar.SATURDAY];
     def public static daysofweekord = ScheduledExecution.daysofweeklist;
     def public static monthsofyearord = ScheduledExecution.monthsofyearlist;
-	static returnObjectForTags = ['rkey','w3cDateValue','sortGroupKeys']
+	static returnObjectForTags = ['rkey','w3cDateValue','sortGroupKeys','helpLinkUrl']
     def frameworkService
   
     private static Random rand=new java.util.Random()
@@ -605,5 +607,31 @@ class UtilityTagLib{
                 out<<attrs.value+' ('+attrs.unit+')'
             }
         }
+    }
+
+    def helpLinkUrl={attrs,body->
+        def path=''
+        def fragment=''
+        if(attrs.path){
+            path=attrs.path
+            if(!path.startsWith('/')){
+                path='/'+path
+            }
+            if(path.contains('#')){
+                def split=path.split('#',2)
+                path=split[0]
+                fragment='#'+split[1]
+            }
+        }
+        def helpBase='http://rundeck.org/' + grailsApplication.metadata['app.version']
+        def helpUrl
+        if(ConfigurationHolder.config.rundeck?.gui?.helpLink){
+            helpBase= ConfigurationHolder.config.rundeck?.gui?.helpLink
+            helpUrl=helpBase + path + fragment
+        }else{
+            def helpParams = [utm_source: 'rundeckapp', utm_medium: 'app', utm_campaign: 'helplink', utm_content: (controllerName + '/' + actionName)].collect { k, v -> k + '=' + v }.join('&')
+            helpUrl= helpBase + path + '?' + helpParams + fragment
+        }
+        helpUrl
     }
 }
