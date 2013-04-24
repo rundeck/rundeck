@@ -585,10 +585,13 @@ final class YamlPolicy implements Policy {
             }
             return matchesMet == matchesRequired;
         }
+        private boolean validRuleSection(final Map section) {
+            return null != section && section.size() > 0;
+        }
 
         boolean ruleMatchesContainsSection(final Map<String, String> resource, final Map ruleSection) {
             final Map section = (Map) ruleSection.get(CONTAINS_SECTION);
-            return predicateMatchRules(section, resource, true, new Converter<String, Predicate>() {
+            return validRuleSection(section) && predicateMatchRules(section, resource, true, new Converter<String, Predicate>() {
                 public Predicate convert(final String o) {
                     return new SetContainsPredicate(o);
                 }
@@ -597,7 +600,8 @@ final class YamlPolicy implements Policy {
 
         boolean ruleMatchesEqualsSection(final Map<String, String> resource, final Map ruleSection) {
             final Map section = (Map) ruleSection.get(EQUALS_SECTION);
-            return predicateMatchRules(section, resource, false, new Converter<String, Predicate>() {
+
+            return validRuleSection(section) && predicateMatchRules(section, resource, false, new Converter<String, Predicate>() {
                 public Predicate convert(final String o) {
                     return PredicateUtils.equalPredicate(o);
                 }
@@ -606,7 +610,7 @@ final class YamlPolicy implements Policy {
 
         boolean ruleMatchesMatchSection(final Map<String, String> resource, final Map ruleSection) {
             final Map section = (Map) ruleSection.get(MATCH_SECTION);
-            return predicateMatchRules(section, resource, true, new Converter<String, Predicate>() {
+            return validRuleSection(section) && predicateMatchRules(section, resource, true, new Converter<String, Predicate>() {
                 public Predicate convert(final String o) {
                     return new RegexPredicate(patternForRegex(o));
                 }

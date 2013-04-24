@@ -1610,6 +1610,30 @@ public class TestYamlPolicy extends TestCase {
         }
     }
 
+    public void testTypeRuleContextMatcherMatchRuleWithInvalidContentShouldNotMatch() {
+        //invalid content
+        final Object load = yaml.load("match: \n"
+                + "name: '.*blah.*'\n"
+                + "allow: '*'");
+        assertTrue(load instanceof Map);
+        final Map ruleSection = (Map) load;
+        final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher(
+                ruleSection, 1);
+
+        final HashMap<String, String> resmap = new HashMap<String, String>();
+
+        //false result for no match
+        assertFalse(typeRuleContext.ruleMatchesMatchSection(resmap, ruleSection));
+
+        resmap.put("name", "something");
+        assertFalse(typeRuleContext.ruleMatchesMatchSection(resmap, ruleSection));
+        resmap.put("name", "blah");
+        assertFalse(typeRuleContext.ruleMatchesMatchSection(resmap, ruleSection));
+        resmap.put("name", "ablahz");
+        assertFalse(typeRuleContext.ruleMatchesMatchSection(resmap, ruleSection));
+
+    }
+
     public void testTypeRuleContextMatcherEqualsRule() {
         {
             //equality for single attribute 'name'
@@ -1669,6 +1693,28 @@ public class TestYamlPolicy extends TestCase {
         }
     }
 
+    public void testTypeRuleContextMatcherEqualsRuleWithInvalidContentShouldNotMatch() {
+        //yaml name: is not indented properly
+        final Object load = yaml.load("equals: \n"
+                + "name: blah\n"
+                + "allow: '*'");
+        assertTrue(load instanceof Map);
+        final Map ruleSection = (Map) load;
+        final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher(
+                ruleSection, 1);
+
+        final HashMap<String, String> resmap = new HashMap<String, String>();
+
+        //false result for no match
+        assertFalse(typeRuleContext.ruleMatchesEqualsSection(resmap, ruleSection));
+
+        resmap.put("name", "something");
+        assertFalse(typeRuleContext.ruleMatchesEqualsSection(resmap, ruleSection));
+        resmap.put("name", "blah");
+        assertFalse(typeRuleContext.ruleMatchesEqualsSection(resmap, ruleSection));
+        resmap.put("name", "ablahz");
+        assertFalse(typeRuleContext.ruleMatchesEqualsSection(resmap, ruleSection));
+    }
     public void testTypeRuleContextMatcherContainsRule() {
         {
             //match single attribute
@@ -1771,6 +1817,31 @@ public class TestYamlPolicy extends TestCase {
             resmap.put("something", " blee  , plead ");
             assertTrue(typeRuleContext.ruleMatchesContainsSection(resmap, ruleSection));
         }
+    }
+
+    public void testTypeRuleContextMatcherContainsRuleWithInvalidContentShouldNotMatch() {
+            //empty contains section
+            final Object load = yaml.load("contains: \n"
+                    + "name: blah\n"
+                    + "allow: '*'");
+            assertTrue(load instanceof Map);
+            final Map ruleSection = (Map) load;
+            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher(
+                    ruleSection, 1);
+
+            final HashMap<String, String> resmap = new HashMap<String, String>();
+
+            //false result for no match
+            assertFalse(typeRuleContext.ruleMatchesContainsSection(resmap, ruleSection));
+
+            resmap.put("name", "something");
+            assertFalse(typeRuleContext.ruleMatchesContainsSection(resmap, ruleSection));
+            resmap.put("name", "blah");
+            assertFalse(typeRuleContext.ruleMatchesContainsSection(resmap, ruleSection));
+            resmap.put("name", "ablahz");
+            assertFalse(typeRuleContext.ruleMatchesContainsSection(resmap, ruleSection));
+            resmap.put("name", "blah, test");
+            assertFalse(typeRuleContext.ruleMatchesContainsSection(resmap, ruleSection));
     }
 
     public void testTypeRuleContextMatcher() {
