@@ -1,6 +1,6 @@
 #!/bin/bash 
 #
-# rundeckd    Startup script for the tapd
+# rundeckd    Startup script for the rundeck
 #
 # chkconfig: 2345 90 10
 # description: rundeckd, providing rundeckd

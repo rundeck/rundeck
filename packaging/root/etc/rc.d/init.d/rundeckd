@@ -1,6 +1,6 @@
 #!/bin/bash 
 #
-# rundeckd    Startup script for the tapd
+# rundeckd    Startup script for the rundeck
 #
 # chkconfig: 2345 90 10
 # description: rundeckd, providing rundeckd
@@ -24,7 +24,7 @@ start() {
 		echo
 		return 1
 	fi
-	nohup runuser -l rundeck -c "$rundeckd" 2>&1 >>$servicelog &
+        nohup runuser -s /bin/bash -l rundeck -c "$rundeckd" 2>&1 >>$servicelog &
  	RETVAL=$?	
 	PID=$!
 	echo $PID > $PID_FILE
