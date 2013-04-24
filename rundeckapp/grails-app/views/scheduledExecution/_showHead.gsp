@@ -2,7 +2,7 @@
         <g:set var="execInfo" value="${scheduledExecution?scheduledExecution:execution}"/>
         <div class="jobInfo" id="jobInfo_${execution?execution.id:''}">
             <g:if test="${scheduledExecution}">
-                <g:link controller="scheduledExecution" action="show" id="${scheduledExecution.extid}" class="jobIcon ${execution?.status=='true'?'jobok':execution?.cancelled?'jobwarn':'joberror'}" absolute="${absolute?'true':'false'}">
+                <g:link controller="scheduledExecution" action="show" id="${scheduledExecution.extid}" class="jobIcon ${execution?.status == 'true' ? 'jobok' : null == execution?.dateCompleted ? 'jobrunning' : execution?.cancelled ? 'jobwarn' : 'joberror'}" absolute="${absolute?'true':'false'}">
                     <g:if test="${iconName}">
                         <g:if test="${!noimgs}"><img src="${resource(dir:'images',file:iconName+'.png')}" alt="job" style="border:0;"/></g:if>
                     </g:if>
@@ -64,4 +64,3 @@
             </g:if>
 
         </div>
-        

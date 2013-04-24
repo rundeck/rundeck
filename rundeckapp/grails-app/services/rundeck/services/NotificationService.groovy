@@ -155,13 +155,21 @@ public class NotificationService implements ApplicationContextAware{
                     //sending notification of a status trigger for the Job
                     def Execution exec = content.execution
                     def destarr=n.content.split(",") as List
-                    def subjectmsg="${exec.status == 'true' ? 'SUCCESS' : 'FAILURE'} [${exec.project}] ${source.groupPath?source.groupPath+'/':''}${source.jobName}${exec.argString?' '+exec.argString:''}"
+                    final state = ExecutionController.getExecutionState(exec)
+                    def statMsg=[
+                            (ExecutionController.EXECUTION_ABORTED):'KILLING',
+                            (ExecutionController.EXECUTION_FAILED):'FAILURE',
+                            (ExecutionController.EXECUTION_RUNNING):'STARTING',
+                            (ExecutionController.EXECUTION_SUCCEEDED):'SUCCESS',
+                    ]
+                    def status= statMsg[state]?:state
+                    def subjectmsg="${status} [${exec.project}] ${source.groupPath?source.groupPath+'/':''}${source.jobName}${exec.argString?' '+exec.argString:''}"
                     destarr.each{recipient->
                         try{
                             mailService.sendMail{
                               to recipient
                               subject subjectmsg
-                              body( view:"/execution/mailNotification/status", model: [execution: exec,scheduledExecution:source, msgtitle:subjectmsg,nodestatus:content.nodestatus])
+                              body( view:"/execution/mailNotification/status", model: [execution: exec,scheduledExecution:source, msgtitle:subjectmsg,execstate: state,nodestatus:content.nodestatus])
                             }
                         }catch(Exception e){
                             log.error("Error sending notification email: "+e.getMessage());
