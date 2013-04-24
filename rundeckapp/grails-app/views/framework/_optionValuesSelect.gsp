@@ -90,10 +90,10 @@
                         </div>
                         <g:if test="${selectedoptsmap && selectedoptsmap[optName] && selectedoptsmap[optName] instanceof String}">
                             %{
-                                selectedoptsmap[optName]= selectedoptsmap[optName].split(optionSelect.delimiter)
+                                selectedoptsmap[optName]= selectedoptsmap[optName].split(optionSelect.delimiter) as List
                                 }%
                         </g:if>
-                        <g:set var="newvals" value="${selectedoptsmap ?selectedoptsmap[optName].findAll {optionSelect.values && !optionSelect.values.contains(it)}:null}"/>
+                        <g:set var="newvals" value="${selectedoptsmap ? optionSelect.values?selectedoptsmap[optName].findAll { !optionSelect.values.contains(it) } : selectedoptsmap[optName] : null}"/>
                         <g:if test="${newvals}">
                             <g:javascript>
                                 fireWhenReady('${rkey.encodeAsJavaScript()}varinput', function(){
