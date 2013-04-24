@@ -184,8 +184,7 @@ class UserController {
                 while(AuthToken.findByToken(newtoken) != null){
                     newtoken = genRandomString()
                 }
-                final userroles = request.subject?.getPrincipals(com.dtolabs.rundeck.core.authentication.Group.class).collect { it.name }
-                AuthToken token = new AuthToken(token:newtoken,authRoles: userroles.join(","),user:u)
+                AuthToken token = new AuthToken(token:newtoken, authRoles: 'api_token_group',user:u)
 
                 if(token.save()){
                     log.debug("GENERATE TOKEN ${newtoken} for User ${login} with roles: ${token.authRoles}")
