@@ -23,7 +23,7 @@
 --%>
 <%@ page import="rundeck.Execution" contentType="text/html" %>
 <html>
-<head><title>Execution <g:message code="status.label.${execution.status=='true'?'succeed':'fail'}"/></title>
+<head><title>Execution <g:message code="status.label.${execstate}"/></title>
     <style type="text/css">
     span.jobname {
         font-weight: bold;
@@ -73,6 +73,11 @@
 
     .jobInfo .jobIcon.jobok {
         background: transparent url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAABDQAAAQ0BROAatAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAACUSURBVDjLY/j//z8DNjznXp8oEB+J3ObysfBIvAYudfg0XwLi/55rjf+HbnH8jssQvJphBuAzBK/muff6/3utM8VrCE7N8+9P+r/7xab/zcdL/vtvsMJpCF7NB1/t/N93pgGvIXg1wwzAZwjIgCPIfkbWjGwAzBDkMAFFMVUMoMwLFAciVaKRKgmJKkmZKpmJ1OwMACFquSGbMQYsAAAAAElFTkSuQmCC") top left no-repeat;
+        padding-left: 18px;
+    }
+
+    .jobInfo .jobIcon.jobrunning {
+        background: transparent url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAABDQAAAQ0BROAatAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAADVSURBVDjLrZNBCsIwEEV7Ce/gtbyBew/gQQLtovQGXdaVK12YdCUI2oo2RW0tUuGbWaRgdSJCF0M2eY/8mYkHwPtWUsqRqSSKokscx2Pungtem4IQAmEYNpzECVuBS8LCaZpClyWUOYMgYCUsfKtr6PaJ473BIc9ZCQufHy3muwLT5QZ5zUuc8Gx7wmSxckpIkNiGUWZ6toWtwEooDvXENpZGPIigi6CU+hnB9/33CP0m9iUW3mfZB8yOkSTXqurGyMHORSJJoTWkOTl4+FUe5DP9+51f1mwg28gP3wsAAAAASUVORK5CYII=") top left no-repeat;
         padding-left: 18px;
     }
 
@@ -206,19 +211,24 @@ div.progressContainer div.progressContent{
     </style>
 </head>
 <body>
+<g:set var="execfailed" value="${execstate in ['failed','aborted']}"/>
 <div class="content">
     <div class="report">
         <g:render template="/scheduledExecution/showHead" model="[scheduledExecution:scheduledExecution,execution:execution,noimgs:true,absolute:true]"/>
 
         <div class="presentation">
-            &bull; <span class="result ${execution?.status != 'true' ? 'fail' : ''}"><g:message code="status.label.${execution.status=='true'?'succeed':'fail'}"/></span>
+            &bull; <span class="result ${execfailed ? 'fail' : ''}"><g:message code="status.label.${execstate}"/></span>
             <g:if test="${execution.dateCompleted && execution.dateStarted}">
             <span class="date">
-                in <g:timeDuration end="${execution?.dateCompleted}" start="${execution.dateStarted}"/>
+                after <g:timeDuration end="${execution?.dateCompleted}" start="${execution.dateStarted}"/>
             </span>
+            </g:if>
+            <g:if test="${execstate=='aborted'}">
+                by <em>${execution.abortedby}</em>
             </g:if>
             - <g:link absolute="true" controller="execution" action="show" id="${execution.id}" title="View execution output">View Output &raquo;</g:link>
         </div>
+        <g:if test="${execstate!='running'}">
         <div class="presentation">
             &bull; <g:link class="filelink"
                 title="Download entire output file"
@@ -230,6 +240,7 @@ div.progressContainer div.progressContent{
             </g:link>
              <g:if test="${filesize}">(${filesize} bytes)</g:if>
         </div>
+        </g:if>
 
         <span class="prompt">Execution</span>
         <div class="presentation">
