@@ -100,10 +100,9 @@ class ScheduledExecution extends ExecutionContext {
         adhocRemoteString type: 'text'
         adhocFilepath type: 'text'
         argString type: 'text'
-        notifySuccessRecipients type: 'text'
-        notifyFailureRecipients type: 'text'
-        notifySuccessUrl type: 'text'
-        notifyFailureUrl type: 'text'
+        description type: 'text'
+        jobName type: 'text'
+        groupPath type: 'text'
     }
 
 
