@@ -25,4 +25,7 @@ class AuthToken {
         authRoles(nullable:false)
         user(nullable:false)
     }
+    static mapping = {
+        authRoles type: 'text'
+    }
 }

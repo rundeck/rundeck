@@ -591,7 +591,7 @@ class FrameworkController  {
                 projectNameError= "Project name is required"
                 errors << projectNameError
             }else if(!(project=~FrameworkResource.VALID_RESOURCE_NAME_REGEX)){
-                projectNameError= "Project name can only contain these characters: [a-zA-Z0-9_-+.]"
+                projectNameError= message(code:"project.name.can.only.contain.these.characters")
                 errors << projectNameError
             }else if (framework.getFrameworkProjectMgr().existsFrameworkProject(project)){
                 projectNameError= "Project already exists: ${project}"

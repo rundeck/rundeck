@@ -80,6 +80,9 @@ public class Option implements Comparable{
         table "rdoption"
         valuesUrlLong length:3000
         values type: 'text'
+        description type: 'text'
+        defaultValue type: 'text'
+        regex type: 'text'
     }
     /**
      * Return canonical map representation

@@ -5,4 +5,4 @@ loglevel.default=INFO
 rss.enabled=true
 grails.serverURL=http://${server.hostname}:${server.http.port}${server.web.context}
 dataSource.dbCreate = update
-dataSource.url = jdbc:h2:file:${server.datastore.path}
+dataSource.url = jdbc:h2:file:${server.datastore.path};MVCC=true

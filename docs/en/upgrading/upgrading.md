@@ -431,48 +431,5 @@ Here is the list of old "application roles", and how to translate them into the 
 
 This file grants all authorizations to 'admin' role, and explicitly enumerates the actions granted for each resource.  It could be simplified into a much shorter file by allowing '*' and not explicitly matching the resources.
 
-    description: Admin project level access control. Applies to resources within a specific project.
-    context:
-      project: '.*' # all projects
-    for:
-      resource:
-        - equals:
-            kind: job
-          allow: [create] # allow create jobs
-        - equals:
-            kind: node
-          allow: [read,create,update,refresh] # allow refresh node sources
-        - equals:
-            kind: event
-          allow: [read,create] # allow read/create events
-      adhoc:
-        - allow: [run,kill] # allow running/killing adhoc jobs
-      job: 
-        - allow: [create,read,update,delete,run,kill] # allow create/read/write/delete/run/kill of all jobs
-      node:
-        - allow: [read,run] # allow read/run for nodes
-    by:
-      group: admin
-
-    ---
-
-    description: Admin Application level access control, applies to creating/deleting projects, admin of user profiles, viewing projects and reading system information.
-    context:
-      application: 'rundeck'
-    for:
-      resource:
-        - equals:
-            kind: project
-          allow: [create] # allow create of projects
-        - equals:
-            kind: system
-          allow: [read] # allow read of system info
-        - equals:
-            kind: user
-          allow: [admin] # allow modify user profiles
-      project:
-        - match:
-            name: '.*'
-          allow: [read,admin] # allow view/admin of all projects
-    by:
-      group: admin
+* See the [Man pages - Formats - ACLPolicy v10.5 Format - Example admin.aclpolicy](../manpages/man5/aclpolicy-v10.html#example-admin-policy).
+* See the [Administration Guide - Authorization](../administration/authorization.html#rundeck-resource-authorizations) for detail about authorization.

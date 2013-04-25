@@ -41,6 +41,8 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
 
     static mapping = {
         argString type: 'text'
+        jobName type: 'text'
+        jobGroup type: 'text'
     }
 
     public String toString() {
