@@ -366,6 +366,11 @@ You can enable notifications for either Success or Failure or Start, and either 
 
 Enter either comma-separated email addresses for email notification, or comma-separated URLs for webhook notification.
 
+In the field for "Send Email to" you can also use these variables as property references:
+
+* `${job.user.name}` - the user who executed the job
+* `${job.user.email}` - the email of the executing user if set in their user profile
+
 When the Job starts, all "start" notifications will be triggered.
 
 When the Job finishes executing, all "success" notifications will be triggered if the Job is successful.  Otherwise, all "failure" notifications will be triggered if the Job fails or is cancelled.
