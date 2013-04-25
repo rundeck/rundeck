@@ -29,6 +29,8 @@ Execution Options..." where input and menu choices must be configured.
 Command line users executing Jobs via the `run` shell
 tool also will specify options as an argument string.
 
+> Note, the `run` command does not prompt the user for required options so you must specify them directly.
+
 It is worth spending a moment to consider how options become
 part of the user interface to Jobs and give some thought to this next
 level of procedure formalization.
@@ -222,24 +224,44 @@ Replacement token
 Jobs can be invoked from the command line using the `run`
 shell tool or as a step in another Job's workflow.
 
-The format for specifying options is `-name value`.
+The format for specifying options is `-option value` where "-option" 
+is replaced by your option name (e.g., -message).
 
-Using the `run` command pass them after the double hyphen:
+Using the `run` command pass options after the double hyphen.
+Here are two examples. The first specifies the job by its ID.
 
-    run -i jobId -- -paramA valA -paramB valB
-    run -j group/name -p project -- -paramA valA -paramB valB
+    run -i jobId -- -optionA valA -optionB valB
 
-Inside an XML definition, insert them as an `arg` element:
+Or specifying the job by name:
+
+    run -j group/name -p project -- -optionA valA -optionB valB
+
+Inside an XML definition, insert using the `arg` tag:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.xml}
 <command>
-    <jobref group="test" name="other tests">
-        <arg line="-paramA valA -paramB valB"/>
+    <jobref group="utils" name="check-app">
+        <arg line="-port 80 -host node1"/>
     </jobref>
 </command>
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 
-Consult the [run(1)](../manpages/man1/run.html) and [job-v20(5)](../manpages/man5/job-v20.html) manual pages for additional
+### Passing options to job steps
+
+If you are passing option values from the parent job to 
+job steps. 
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.xml}
+<command>
+    <jobref group="utils" name="check-app">
+        <arg line="-port ${option.port} -host ${option.host}"/>
+    </jobref>
+</command>
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+
+
+Consult the [run(1)](../manpages/man1/run.html) and 
+[job-v20(5)](../manpages/man5/job-v20.html) manual pages for additional
 information.
 
 ## Secure Options
