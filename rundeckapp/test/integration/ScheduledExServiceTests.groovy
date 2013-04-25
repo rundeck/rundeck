@@ -1201,6 +1201,58 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertTrue(execution.errors.hasFieldErrors('notifySuccessUrl'))
         }
     }
+    public void testInvalidNotificationsEmailsAllowEmbeddedProps(){
+
+        def sec = new ScheduledExecutionService()
+        //test job with notifications, invalid email addresses using map based notifications definition
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.existsFrameworkProject { project, framework ->
+            assertEquals 'testProject', project
+            return true
+        }
+        fwkControl.demand.getCommand { project, type, command, framework ->
+            assertEquals 'testProject', project
+            assertEquals 'aType', type
+            assertEquals 'aCommand', command
+            return null
+        }
+        sec.frameworkService = fwkControl.createMock()
+
+        def params = [jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand',
+                notifications: [[eventTrigger: 'onsuccess', type: 'email', content: '${job.user.name}@something.org'],
+                        [eventTrigger: 'onfailure', type: 'email', content: '${job.user.email}']]
+        ]
+        def results = sec._dovalidate(params, 'test', 'test', null)
+        if (results.scheduledExecution.errors.hasErrors()) {
+            results.scheduledExecution.errors.allErrors.each {
+                System.err.println(it);
+            }
+        }
+
+        assertFalse results.failed
+        assertNotNull(results.scheduledExecution)
+        assertTrue(results.scheduledExecution instanceof ScheduledExecution)
+        final ScheduledExecution execution = results.scheduledExecution
+        assertNotNull(execution)
+        assertNotNull(execution.errors)
+        assertFalse(execution.errors.hasErrors())
+        assertNotNull execution.notifications
+        assertEquals 2, execution.notifications.size()
+        def notifications = execution.notifications.groupBy {it.eventTrigger}
+        final def not0 = notifications['onsuccess'][0]
+        assertTrue(not0 instanceof Notification)
+        def Notification n0 = not0
+        assertEquals "onsuccess", n0.eventTrigger
+        assertEquals "email", n0.type
+        assertEquals '${job.user.name}@something.org', n0.content
+        final def not1 = notifications['onfailure'][0]
+        assertTrue(not1 instanceof Notification)
+        def Notification n1 = not1
+        assertEquals "onfailure", n1.eventTrigger
+        assertEquals "email", n1.type
+        assertEquals '${job.user.email}', n1.content
+    }
 
     public void testDoValidateOptions() {
 
