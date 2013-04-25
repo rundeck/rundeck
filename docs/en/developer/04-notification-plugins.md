@@ -31,9 +31,19 @@ and passed in two sets of Map data:
 
 The Configuration data is fully custom depending on your plugin, and is described in the [Plugin configuration properties](#plugin-configuration-properties) section.
 
-The specific data values of the Configuration section are allowed to have embedded Property References as described in the [Job Workflows - Context Variables](../manual/job-workflows.html#context-variables) chapter.
+#### Property References
+
+The specific data values of the Configuration section are allowed to have embedded Property References as described in the [Job Workflows - Context Variables](../manual/job-workflows.html#context-variables) chapter, as well 
+as some mentioned in the [Plugins - Notifications](../manual/plugins.html#notifications) section.
 
 For example, when a user configures your plugin, they could embed an option value using: `${option.myoption}`.  This value will be replaced with the runtime option value before being passed to your plugin.
+
+When defining Configuration properties that use custom Validation, keep in mind
+that the value set by a user may have such an embedded property reference and
+therefore may not pass the validation rules you have defined.  If you want to
+allow these property references for a Configuration property, it must be a String type property, and any custom validation code should allow the embedded
+property references, for example by looking for a '${' sequence and allowing
+the value.
 
 ### Execution data
 

@@ -26,7 +26,9 @@
                                         value="${defEmail?.content ?: params[notifyRecipients]}"
                                         size="60"/></label>
 
-                <div class="info note">comma-separated email addresses</div>
+                <div class="info note">comma-separated email addresses. You can substitute these variables:
+                    $<!---->{job.user.name}, $<!---->{job.user.email}
+                </div>
                 <g:hasErrors bean="${scheduledExecution}" field="${notifyRecipients}">
                     <div class="fieldError">
                         <g:renderErrors bean="${scheduledExecution}" as="list" field="${notifyRecipients}"/>

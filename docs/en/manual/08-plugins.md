@@ -125,7 +125,6 @@ finishes or starts.
 More information:
 
 * Configuration: [Notifications](plugins.html#notifications)
-* Built-in Providers: [Notification services](plugins.html#notification-services)
 * Development: [Notification Plugin Development](../developer/notification-plugin-development.html)
 
 ## About Services and Providers
@@ -374,10 +373,21 @@ currently available triggers:
 * `onfailure` - the Job failed
 
 When you define the Job in the GUI or via [XML](../manpages/man5/job-v20.html#notification) or
-[Yaml](../manpages/man5/job-yaml-v12.html#notification), you can add any of the available Notification types to happen for
-an of the possible triggers.  Each Notification type can have unique
-configuration properties that you specify. Each combination of trigger and
+[Yaml](../manpages/man5/job-yaml-v12.html#notification), you can add any of the available Notification plugin types to happen for
+any of the possible triggers.  Each Notification plugin type may have unique
+configuration properties that you can specify. Each combination of trigger and
  Notification type has a unique configuration.
+
+When defining configuration values for a plugin, you can usually substitute
+any "Job context variables" that are listed under [Context Variables](job-workflows.html#context-variables). (Note: Some configuration properties of a plugin may not support this feature.)
+
+In addition, you can also use these variables:
+
+* `${job.user.name}` - the user who executed the job
+* `${job.user.email}` - the email of the executing user if set in their user profile
+* `${job.user.firstName}` - the first name of the executing user if set in their user profile
+* `${job.user.lastName}` - the first name of the executing user if set in their user profile
+
 
 ## When Node Execution Service providers are invoked
 
