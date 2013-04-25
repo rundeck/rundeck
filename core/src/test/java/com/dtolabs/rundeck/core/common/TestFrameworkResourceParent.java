@@ -213,6 +213,45 @@ public class TestFrameworkResourceParent extends TestCase {
         newbase2.delete();
 
     }
+    public void testListChildNamesIgnoresDotDir(){
+        final IFrameworkResourceParent parent = new FrameworkResourceParentImpl(RESOURCE_NAME, baseDir, null);
+        //create sub dirs and test that child names list includes them
+        File newbase = new File(baseDir, ".blah");
+        newbase.mkdirs();
+        assertTrue(newbase.exists());
+        assertTrue(newbase.isDirectory());
+        assertTrue(parent.childCouldBeLoaded(".blah"));
+        Collection list = parent.listChildNames();
+        assertEquals("Child names list was wrong size: " + list, 0,list.size());
+        assertFalse("List doesn't contain correct value blah: " + list, list.contains(".blah"));
+        File newbase2 = new File(baseDir, "blahex");
+        newbase2.mkdirs();
+        assertTrue(newbase2.exists());
+        assertTrue(newbase2.isDirectory());
+        assertTrue(parent.childCouldBeLoaded("blahex"));
+        list = parent.listChildNames();
+        assertEquals("Child names list was wrong size: " + list, 1,list.size());
+        assertFalse("List doesn't contain correct value blah: " + list, list.contains("blah"));
+        assertTrue("List doesn't contain correct value blahex: " + list, list.contains("blahex"));
+
+        //add a new child manually without creating subdir and verify that names list is correct size
+
+        try {
+            parent.createChild(".child1");
+            fail("Should not allow createChild with invalid name");
+        } catch (IllegalArgumentException e) {
+
+        }
+        list = parent.listChildNames();
+        assertEquals(1, list.size());
+        assertTrue(list.contains("blahex"));
+        assertFalse(list.contains(".blah"));
+        assertFalse(list.contains(".child1"));
+
+        newbase.delete();
+        newbase2.delete();
+
+    }
     public void testCreateRemoveChild() {
         final IFrameworkResourceParent parent = new FrameworkResourceParent(RESOURCE_NAME, baseDir, null) {
 
