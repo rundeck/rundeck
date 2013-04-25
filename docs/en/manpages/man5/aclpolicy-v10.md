@@ -20,7 +20,7 @@ The resulting file must be a valid yaml file.
 
 For more information about the exact resources and actions you need to
 authorize for the Rundeck application, see the 
-[Rundeck User Manual - Authorization](manual/administration.html#authorization).
+[Administration Guide - Authorization](../../administration/authorization.html#rundeck-resource-authorizations).
 
 ## Authorizing a certain action on a resource
 
@@ -252,7 +252,7 @@ The changes for the newer version affect the old `rules` section in these ways:
 * Action names have changed from "workflow_X" to simply "X", so you will have 
   to modify the actions.
 
-See [Rundeck User Manual - Authorization](manual/administration.html#authorization) for more information.
+See [Administration Guide - Authorization](../../administration/authorization.html#rundeck-resource-authorizations) for more information.
 
 ### `rules` Element
 
