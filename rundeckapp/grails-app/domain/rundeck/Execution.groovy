@@ -78,7 +78,6 @@ class Execution extends ExecutionContext {
         adhocLocalString type: 'text'
         adhocRemoteString type: 'text'
         adhocFilepath type: 'text'
-        argString type: 'text'
     }
 
 
