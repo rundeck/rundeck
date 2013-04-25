@@ -47,6 +47,10 @@ public abstract class FrameworkResourceParent extends FrameworkResource implemen
      * create a new child resource
      */
     public IFrameworkResource createChild(final String name) {
+        if(!name.matches(VALID_RESOURCE_NAME_REGEX)) {
+            throw new IllegalArgumentException("Child resource name \"" + name + "\" does not match: " +
+                    VALID_RESOURCE_NAME_REGEX);
+        }
         FrameworkResource resource = new FrameworkResource(name, new File(getBaseDir(), name), this);
         if(!resource.getBaseDir().mkdirs()) {
             logger.warn("Unable to create basedir for resource: " + resource.getBaseDir());
