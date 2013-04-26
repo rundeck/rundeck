@@ -22,6 +22,7 @@ import org.springframework.web.context.request.RequestContextHolder
 import rundeck.ScheduledExecution
 import rundeck.Notification
 import rundeck.Execution
+import rundeck.User
 import rundeck.controllers.ExecutionController
 import com.fasterxml.jackson.databind.ObjectMapper
 
@@ -164,12 +165,37 @@ public class NotificationService implements ApplicationContextAware{
                     ]
                     def status= statMsg[state]?:state
                     def subjectmsg="${status} [${exec.project}] ${source.groupPath?source.groupPath+'/':''}${source.jobName}${exec.argString?' '+exec.argString:''}"
-                    destarr.each{recipient->
+
+                    //data context for property refs in email
+                    def userData = ['user.name': exec.user]
+                    //add execution.user.email context data
+                    //search for user profile
+                    def user = User.findByLogin(exec.user)
+                    if(user&& user.email){
+                        userData['user.email']=user.email
+                    }
+
+                    def mailctx=DataContextUtils.addContext("job", userData,null)
+
+                    destarr.each{String recipient->
+                        //try to expand property references
+                        String sendTo=recipient
+                        if(sendTo.indexOf('${')>=0){
+                            try {
+                                sendTo=DataContextUtils.replaceDataReferences(recipient, mailctx,null,true)
+                            } catch (DataContextUtils.UnresolvedDataReferenceException e) {
+                                log.error("Cannot send notification email: "+e.message +
+                                        ", context: user: "+ exec.user+", job: "+source.generateFullName());
+                                return
+                            }
+                        }
                         try{
                             mailService.sendMail{
-                              to recipient
+                              to sendTo
                               subject subjectmsg
-                              body( view:"/execution/mailNotification/status", model: [execution: exec,scheduledExecution:source, msgtitle:subjectmsg,execstate: state,nodestatus:content.nodestatus])
+                              body( view:"/execution/mailNotification/status", model: [execution: exec,
+                                      scheduledExecution:source, msgtitle:subjectmsg,execstate: state,
+                                      nodestatus:content.nodestatus])
                             }
                         }catch(Exception e){
                             log.error("Error sending notification email: "+e.getMessage());
@@ -216,18 +242,33 @@ public class NotificationService implements ApplicationContextAware{
                     }
                     didsend=!webhookfailure
                 }else if (n.type) {
+                    def Execution exec = content.execution
                     //prep execution data
                     def Map execMap=doWithMockRequest {
-                        new ExecutionController().exportExecutionData([content.execution])[0]
+                        new ExecutionController().exportExecutionData([exec])[0]
                     }
                     //TBD: nodestatus will migrate to execution data
                     if(content['nodestatus']){
                         execMap['nodestatus'] = content['nodestatus']
                     }
-                    //pass data context
-                    if(content['context']){
-                        execMap['context'] = content['context']?.dataContext
+                    //data context for property refs in email
+                    def userData = [:]
+                    //add user context data
+                    def user = User.findByLogin(exec.user)
+                    if (user && user.email) {
+                        userData['user.email'] = user.email
                     }
+                    if (user && user.firstName) {
+                        userData['user.firstName'] = user.firstName
+                    }
+                    if (user && user.lastName) {
+                        userData['user.lastName'] = user.lastName
+                    }
+                    //pass data context
+                    def dcontext= content['context']?.dataContext?:[:]
+                    def mailcontext=DataContextUtils.addContext("job",userData,null)
+                    DataContextUtils.merge(dcontext,mailcontext)
+                    execMap['context']=dcontext
 
                     didsend=triggerPlugin(trigger,execMap,n.type, n.configuration)
                 }else{

@@ -522,6 +522,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
             }
             jobcontext.execid = execution.id.toString()
             jobcontext.username=execution.user
+            jobcontext['user.name']=execution.user
             jobcontext.project=execution.project
             jobcontext.loglevel= textLogLevels[execution.loglevel] ?: execution.loglevel
 
@@ -1809,6 +1810,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
                 jobcontext.group = se.groupPath
                 jobcontext.project = se.project
                 jobcontext.username = executionContext.getUser()
+                jobcontext['user.name'] = jobcontext.username
                 newExecItem = createExecutionItemForExecutionContext(se, executionContext.getFramework(), executionContext.getUser())
                 newContext= createContext(se, executionContext, jobcontext, newargs, evalSecAuthOpts, evalSecOpts)
                 return

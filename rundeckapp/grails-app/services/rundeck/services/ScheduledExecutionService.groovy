@@ -1288,7 +1288,9 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         def fieldNames = [onsuccess: 'notifySuccessRecipients', onfailure: 'notifyFailureRecipients', onstart: 'notifyStartRecipients']
         def arr = notif.content.split(",")
         arr.each { email ->
-            if (email && !EmailValidator.getInstance().isValid(email)) {
+            if(email && email.indexOf('${')>=0){
+                //don't reject embedded prop refs
+            }else if (email && !EmailValidator.getInstance().isValid(email)) {
                 failed = true
                 scheduledExecution.errors.rejectValue(
                         fieldNames[trigger],
