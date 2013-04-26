@@ -21,6 +21,10 @@ def mailProperties=[
 ]
 
 /**
+ * define the default subject line configuration
+ */
+def defaultSubjectLine='$STATUS [$PROJECT] $JOB run by $USER (#$ID)'
+/**
  * Expands the Subject string using a predefined set of tokens
  */
 def subjectString={text,binding->
@@ -42,6 +46,17 @@ def subjectString={text,binding->
             it[0]
         }
     }
+}
+
+/**
+ * Generates an HTML string using a markup builder for the input closure
+ */
+def buildHtml={ Closure clos->
+    def sw=new StringWriter()
+    clos.delegate=new MarkupBuilder(sw)
+    clos.resolveStrategy=Closure.DELEGATE_FIRST
+    clos.call()
+    sw.toString()
 }
 
 /**
@@ -127,18 +142,6 @@ def sendMail={Closure callable->
     }
 }
 
-/**
- * Generates an HTML string using a markup builder for the input closure
- */
-def buildHtml={ Closure clos->
-    def sw=new StringWriter()
-    def mk=new MarkupBuilder(sw)
-    clos.delegate=mk
-    clos.resolveStrategy=Closure.DELEGATE_FIRST
-    clos.call()
-    sw.toString()
-}
-
 
 //defines the NotificationPlugin
 rundeckPlugin(NotificationPlugin){
@@ -158,7 +161,7 @@ rundeckPlugin(NotificationPlugin){
             }
         }
 
-        subject(title:"Subject line",defaultValue:'$STATUS [$PROJECT] $JOB run by $USER', 
+        subject(title:"Subject line",defaultValue:defaultSubjectLine, 
             required:true,
             description:'Subject line string, which can contain these variables: $STATUS (job status), $PROJECT (project name), '+
             '$JOB (job name), $GROUP (group name), $JOB_FULL (job group and name), $USER (user name)')
