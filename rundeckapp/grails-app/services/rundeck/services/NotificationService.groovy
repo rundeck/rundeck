@@ -267,8 +267,7 @@ public class NotificationService implements ApplicationContextAware{
                     //pass data context
                     def dcontext= content['context']?.dataContext?:[:]
                     def mailcontext=DataContextUtils.addContext("job",userData,null)
-                    DataContextUtils.merge(dcontext,mailcontext)
-                    execMap['context']=dcontext
+                    execMap['context']= DataContextUtils.merge(dcontext, mailcontext)
 
                     didsend=triggerPlugin(trigger,execMap,n.type, n.configuration)
                 }else{
