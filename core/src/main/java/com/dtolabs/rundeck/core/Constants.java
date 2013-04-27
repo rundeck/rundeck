@@ -140,6 +140,24 @@ public final class Constants {
     public static String getBaseVar(final String rdeck_base) {
         return rdeck_base + FILE_SEP + "var";
     }
+    
+    /**
+     * @return the scratch directory used for temporary storage located within the 
+     * the directory returned by {@link getSystemBaseDir}
+     */
+    public static String getBaseTempDirectory() {
+        return getBaseTempDirectory(getSystemBaseDir());
+    }
+
+    /**
+     * @return the scratch directory used for temporary storage located within the 
+     * the provided rdeck_base param
+     * 
+     * @param rdeck_base the prefix location for the scratch directory
+     */
+    public static String getBaseTempDirectory(final String rdeck_base) {
+        return getBaseVar(rdeck_base) + FILE_SEP + "tmp";
+    }
 
     /**
      * Return framework projects dir
