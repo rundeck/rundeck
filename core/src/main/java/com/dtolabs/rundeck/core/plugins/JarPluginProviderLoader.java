@@ -29,8 +29,10 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -239,20 +241,22 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
      */
     protected boolean isEquivalentPluginJar(File other) {
         String name = other.getName();
-        // 37 is length of UUID + 1 for the dash in generateCachedJarName
-        if (name.length() <= 37) {
+        // 18 is length of timestamp + 1 for the dash in generateCachedJarName
+        if (name.length() <= 18) {
             log.warn(String.format("%s does not conform to cached plugin jar naming convention.", other));
             return false;
         } else {
-            return other.getName().substring(37).equals(pluginJar.getName());
+            return other.getName().substring(18).equals(pluginJar.getName());
         }
     }
     
     /**
-     * @return a randomly generated name for the pluginJar
+     * @return a generated name for the pluginJar using the last modified timestamp
      */
     protected String generateCachedJarName() {
-        return String.format("%s-%s", UUID.randomUUID(), pluginJar.getName());
+        Date mtime = new Date(pluginJar.lastModified());
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+        return String.format("%s-%s", dateFormat.format(mtime), pluginJar.getName());
     }
 
     /**

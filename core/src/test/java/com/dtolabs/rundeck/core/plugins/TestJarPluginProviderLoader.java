@@ -30,6 +30,7 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -67,8 +68,14 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
     public void setUp() {
         super.setUp();
         testCachedir = getFrameworkInstance().getLibextCacheDir();
-        testPluginJarCacheDirectory = new File(Constants.getBaseTempDirectory(getFrameworkInstance().getBaseDir().getAbsolutePath()));
-        testPluginJarCacheDirectory.deleteOnExit();
+        try {
+            testPluginJarCacheDirectory = File.createTempFile("tempRundeckJars", UUID.randomUUID().toString());
+            testPluginJarCacheDirectory.deleteOnExit();
+            testPluginJarCacheDirectory.delete();
+            testPluginJarCacheDirectory.mkdirs();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void testConstruct() throws Exception {
@@ -402,7 +409,7 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
 
         final JarPluginProviderLoader jarPluginProviderLoader = new JarPluginProviderLoader(testJar11, testPluginJarCacheDirectory, testCachedir);
         // Create test jar in pluginCache
-        File otherJar = new File(testPluginJarCacheDirectory, "456c72dd-cfa9-49f5-9965-d004a258cd6a-" + testJar11.getName());
+        File otherJar = new File(testPluginJarCacheDirectory, "20120301121249123-" + testJar11.getName());
         otherJar.createNewFile();
         otherJar.deleteOnExit();
         
@@ -522,7 +529,7 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
                 testPluginJarCacheDirectory, testCachedir);
         
         // This name is short by 1 char
-        File otherJar = new File(testPluginJarCacheDirectory, "456c72dd-cfa9-49f5-9965-d004a258cd6-" + testJar.getName());
+        File otherJar = new File(testPluginJarCacheDirectory, "2012030112124912-" + testJar.getName());
         Assert.assertFalse("Expected non-conforming name failure", jarPluginProviderLoader.isEquivalentPluginJar(otherJar));
     }
     
@@ -531,7 +538,7 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
         JarPluginProviderLoader jarPluginProviderLoader = new JarPluginProviderLoader(testJar,
                 testPluginJarCacheDirectory, testCachedir);
         
-        File otherJar = new File(testPluginJarCacheDirectory, "456c72dd-cfa9-49f5-9965-d004a258cd6a-" + testJar.getName());
+        File otherJar = new File(testPluginJarCacheDirectory, "20120301121249123-" + testJar.getName());
         Assert.assertTrue("Expected jar names to be the same without UUID", jarPluginProviderLoader.isEquivalentPluginJar(otherJar));
     }
     
@@ -540,7 +547,7 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
         JarPluginProviderLoader jarPluginProviderLoader = new JarPluginProviderLoader(testJar,
                 testPluginJarCacheDirectory, testCachedir);
         
-        File otherJar = new File(testPluginJarCacheDirectory, "456c72dd-cfa9-49f5-9965-d004a258cd6a-this-is-not-the-jar-name.jar");
+        File otherJar = new File(testPluginJarCacheDirectory, "20140201121249212-this-is-not-the-jar-name.jar");
         Assert.assertFalse("Jar names are different without UUID", jarPluginProviderLoader.isEquivalentPluginJar(otherJar));
     }
     
@@ -549,7 +556,7 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
         JarPluginProviderLoader jarPluginProviderLoader = new JarPluginProviderLoader(testJar,
                 testPluginJarCacheDirectory, testCachedir);
         String cachedName = jarPluginProviderLoader.generateCachedJarName();
-        Assert.assertTrue("Expected cached name - UUID to be the same as original jar name", cachedName.substring(37).equals(testJar.getName()));
+        Assert.assertTrue("Expected cached name - mtime to be the same as original jar name", cachedName.substring(18).equals(testJar.getName()));
     }
     
     public void testCreateCachedJar() throws Exception {
@@ -561,7 +568,7 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
         final JarPluginProviderLoader jarPluginProviderLoader = new JarPluginProviderLoader(testJar, testPluginJarCacheDirectory, testCachedir);
         
         // Create test jar in pluginCache
-        File otherJar = new File(testPluginJarCacheDirectory, "456c72dd-cfa9-49f5-9965-d004a258cd6a-" + testJar.getName());
+        File otherJar = new File(testPluginJarCacheDirectory, "20120301121249123-" + testJar.getName());
         otherJar.createNewFile();
         otherJar.deleteOnExit();
         
