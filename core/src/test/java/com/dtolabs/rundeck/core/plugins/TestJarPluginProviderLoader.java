@@ -539,7 +539,7 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
                 testPluginJarCacheDirectory, testCachedir);
         
         File otherJar = new File(testPluginJarCacheDirectory, "20120301121249123-" + testJar.getName());
-        Assert.assertTrue("Expected jar names to be the same without UUID", jarPluginProviderLoader.isEquivalentPluginJar(otherJar));
+        Assert.assertTrue("Expected jar names to be the same without timestamp", jarPluginProviderLoader.isEquivalentPluginJar(otherJar));
     }
     
     public void testIsEquivalentPluginJarDifferentNames() throws IOException {
@@ -548,7 +548,7 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
                 testPluginJarCacheDirectory, testCachedir);
         
         File otherJar = new File(testPluginJarCacheDirectory, "20140201121249212-this-is-not-the-jar-name.jar");
-        Assert.assertFalse("Jar names are different without UUID", jarPluginProviderLoader.isEquivalentPluginJar(otherJar));
+        Assert.assertFalse("Jar names are different without timestamp", jarPluginProviderLoader.isEquivalentPluginJar(otherJar));
     }
     
     public void testGenerateCachedJarName() throws IOException {

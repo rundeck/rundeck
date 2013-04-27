@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -36,7 +37,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.jar.Attributes;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
@@ -66,9 +66,11 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
     public static final VersionCompare LOWEST_JAR_PLUGIN_VERSION = VersionCompare.forString(JAR_PLUGIN_VERSION);
     public static final String RUNDECK_PLUGIN_VERSION = "Rundeck-Plugin-Version";
     public static final String RUNDECK_PLUGIN_FILE_VERSION = "Rundeck-Plugin-File-Version";
+    public static final String CACHED_JAR_TIMESTAMP_FORMAT = "yyyyMMddHHmmssSSS";
     private final File pluginJar;
     private final File pluginJarCacheDirectory;
     private final File cachedir;
+    private final DateFormat cachedJarTimestampFormatter = new SimpleDateFormat(CACHED_JAR_TIMESTAMP_FORMAT);
     @SuppressWarnings("rawtypes")
     private Map<ProviderIdent, Class> pluginProviderDefs = new HashMap<ProviderIdent, Class>();
 
@@ -241,12 +243,13 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
      */
     protected boolean isEquivalentPluginJar(File other) {
         String name = other.getName();
-        // 18 is length of timestamp + 1 for the dash in generateCachedJarName
-        if (name.length() <= 18) {
+        // length of timestamp + 1 for the dash in generateCachedJarName
+        int length = CACHED_JAR_TIMESTAMP_FORMAT.length() + 1; 
+        if (name.length() <= length) {
             log.warn(String.format("%s does not conform to cached plugin jar naming convention.", other));
             return false;
         } else {
-            return other.getName().substring(18).equals(pluginJar.getName());
+            return other.getName().substring(length).equals(pluginJar.getName());
         }
     }
     
@@ -255,8 +258,7 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
      */
     protected String generateCachedJarName() {
         Date mtime = new Date(pluginJar.lastModified());
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmssSSS");
-        return String.format("%s-%s", dateFormat.format(mtime), pluginJar.getName());
+        return String.format("%s-%s", cachedJarTimestampFormatter.format(mtime), pluginJar.getName());
     }
 
     /**
