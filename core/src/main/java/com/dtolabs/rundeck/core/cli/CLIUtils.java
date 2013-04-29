@@ -107,6 +107,14 @@ public class CLIUtils {
         return sb.toString();
     }
 
+    /**
+     * Return true if the string contains any whitespace
+     * @param arg
+     * @return
+     */
+    public static boolean containsSpace(String arg) {
+        return StringUtils.containsAny(arg, " ");
+    }
     public static String quoteUnixShellArg(String arg) {
         StringBuilder stringBuilder = new StringBuilder();
         quoteUnixShellArg(stringBuilder, arg);
@@ -176,6 +184,9 @@ public class CLIUtils {
     }
 
     private static final String UNIX_SHELL_CHARS = "\"';{}()&$\\|*?><";
+    /**
+     * non-space whitespace
+     */
     private static final String WS_CHARS = "\n\r\t";
 
     public static void escapeUnixShellChars(StringBuilder out, String str) {

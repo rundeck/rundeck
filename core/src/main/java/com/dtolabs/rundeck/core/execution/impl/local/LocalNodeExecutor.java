@@ -41,7 +41,6 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureRea
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.taskdefs.ExecTask;
-import org.apache.tools.ant.types.Commandline;
 
 import java.util.Map;
 
@@ -112,10 +111,15 @@ public class LocalNodeExecutor implements NodeExecutor {
         execTask.setTaskType("exec");
         execTask.setFailonerror(false);
         execTask.setProject(project);
-        final Commandline.Argument arg = execTask.createArg();
 
         execTask.setExecutable(taskParameters.getCommandexecutable());
-        arg.setLine(taskParameters.getCommandargline());
+        String[] commandargs = taskParameters.getCommandArgs();
+        if(null!=commandargs){
+            for (int i = 0; i < commandargs.length; i++) {
+                String commandarg = commandargs[i];
+                execTask.createArg().setValue(commandarg);
+            }
+        }
 
         //add Env elements to pass environment variables to the exec
 

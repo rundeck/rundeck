@@ -27,9 +27,6 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
-import java.util.Arrays;
-import java.util.List;
-
 public class TestCLIUtils extends TestCase {
     CLIUtils cliUtils;
 
@@ -81,5 +78,14 @@ public class TestCLIUtils extends TestCase {
         assertEquals("invalid",
                 "test rm '*' '&&' 'do\tthings\t>/etc/passwd'",
                 CLIUtils.generateArgline("test", new String[]{"rm", "*", "&&", "do\tthings\t>/etc/passwd"}, false));
+    }
+    public void testContainsWhitespace() throws Exception {
+        assertFalse("invalid",  CLIUtils.containsSpace(""));
+        assertFalse("invalid",  CLIUtils.containsSpace("asdf1234"));
+        assertTrue("invalid", CLIUtils.containsSpace("asdf123 4"));
+        assertTrue("invalid", CLIUtils.containsSpace("   "));
+        assertFalse("invalid", CLIUtils.containsSpace("asdf123\t4"));
+        assertFalse("invalid", CLIUtils.containsSpace("asdf123\n4"));
+        assertFalse("invalid", CLIUtils.containsSpace("asdf123\r4"));
     }
 }
