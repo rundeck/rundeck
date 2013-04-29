@@ -15,14 +15,16 @@
  */
 
 /*
-* JarPluginDirScanner.java
-* 
-* User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 4/12/11 6:19 PM
-* 
-*/
+ * JarPluginDirScanner.java
+ * 
+ * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
+ * Created: 4/12/11 6:19 PM
+ * 
+ */
 package com.dtolabs.rundeck.core.plugins;
 
+import com.dtolabs.rundeck.core.Constants;
+import com.dtolabs.rundeck.core.utils.FileUtils;
 import com.dtolabs.rundeck.core.utils.cache.FileCache;
 import org.apache.log4j.Logger;
 
@@ -30,7 +32,7 @@ import java.io.*;
 
 /**
  * JarPluginScanner scans for java Jar plugins in the extensions dir.
- *
+ * 
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 class JarPluginScanner extends DirPluginScanner {
@@ -40,22 +42,39 @@ class JarPluginScanner extends DirPluginScanner {
             return file.isFile() && file.getName().endsWith(".jar");
         }
     };
+
+    public static final String JAR_SCRATCH_DIRECTORY = "pluginJars";
+
     final File cachedir;
+    final File pluginJarCacheDirectory;
 
     JarPluginScanner(final File extdir, final File cachedir, final FileCache<ProviderLoader> filecache, final int rescanInterval) {
         super(extdir, filecache, rescanInterval);
         this.cachedir = cachedir;
+        this.pluginJarCacheDirectory = new File(Constants.getBaseTempDirectory() + Constants.FILE_SEP + JAR_SCRATCH_DIRECTORY);
+        
+        // Clean up old caches on startup.
+        log.info(String.format("Deleting plugin jar cache at %s", pluginJarCacheDirectory));
+        if (pluginJarCacheDirectory.exists() && !FileUtils.deleteDir(pluginJarCacheDirectory)) {
+            log.warn("Could not delete plugin jar cache");
+        }
+        log.info(String.format("Deleting plugin lib dependency directory at %s", this.cachedir));
+        if (this.cachedir.exists() && !FileUtils.deleteDir(this.cachedir)) {
+            log.warn("Could not delete plugin lib dependency directory");
+        }
+        
+        // Create the directories
+        this.cachedir.mkdirs();
+        this.pluginJarCacheDirectory.mkdirs();
     }
 
     public boolean isValidPluginFile(final File file) {
         return JarPluginProviderLoader.isValidJarPlugin(file);
     }
 
-
     public FileFilter getFileFilter() {
         return FILENAME_FILTER;
     }
-
 
     public ProviderLoader createCacheItemForFile(final File file) {
         return createLoader(file);
@@ -65,7 +84,7 @@ class JarPluginScanner extends DirPluginScanner {
         if (log.isDebugEnabled()) {
             log.debug("create JarFileProviderLoader: " + file);
         }
-        return new JarPluginProviderLoader(file,cachedir);
+        return new JarPluginProviderLoader(file, pluginJarCacheDirectory, cachedir);
     }
 
     @Override
