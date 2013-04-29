@@ -24,6 +24,8 @@
 */
 package com.dtolabs.rundeck.core.utils;
 
+import com.dtolabs.rundeck.core.cli.CLIUtils;
+import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.utils.Streams;
 
@@ -107,6 +109,27 @@ public class ScriptExecUtil {
                                             final String[] scriptargsarr,
                                             final String scriptinterpreter,
                                             final boolean interpreterargsquoted, final String filepath) {
+        return createScriptArgs(localDataContext, null, scriptargs, scriptargsarr, scriptinterpreter,
+                interpreterargsquoted, filepath);
+    }
+
+    /**
+     * Generate argument array for a script file invocation
+     *
+     * @param localDataContext      data context properties to expand among the args
+     * @param node                  node to use for os-type argument quoting.
+     * @param scriptargs            arguments to the script file
+     * @param scriptargsarr         arguments to the script file as an array
+     * @param scriptinterpreter     interpreter invocation for the file, or null to invoke it directly
+     * @param interpreterargsquoted if true, pass the script file and args as a single argument to the interpreter
+     * @param filepath              remote filepath for the script
+     */
+    public static String[] createScriptArgs(final Map<String, Map<String, String>> localDataContext,
+            final INodeEntry node,
+            final String scriptargs,
+            final String[] scriptargsarr,
+            final String scriptinterpreter,
+            final boolean interpreterargsquoted, final String filepath) {
         final ArrayList<String> arglist = new ArrayList<String>();
         if (null != scriptinterpreter) {
             arglist.addAll(Arrays.asList(scriptinterpreter.split(" ")));
@@ -129,9 +152,25 @@ public class ScriptExecUtil {
             arglist.add(filepath);
             if (null != scriptargs) {
                 arglist.addAll(Arrays.asList(DataContextUtils.replaceDataReferences(scriptargs.split(" "),
-                                                                                    localDataContext)));
+                        localDataContext)));
             } else if (null != scriptargsarr) {
-                arglist.addAll(Arrays.asList(DataContextUtils.replaceDataReferences(scriptargsarr, localDataContext)));
+                final String[] newargs = DataContextUtils.replaceDataReferences(scriptargsarr, localDataContext);
+                Converter<String, String> quote;
+                if (null != node) {
+                    quote = CLIUtils.argumentQuoteForOperatingSystem(node.getOsFamily());
+                } else {
+                    quote = CLIUtils.argumentQuoteForOperatingSystem(null);
+                }
+                //quote args that have substituted context input, or have whitespace
+                //allow other args to be used literally
+                for (int i = 0; i < newargs.length; i++) {
+                    String replaced = newargs[i];
+                    if (!replaced.equals(scriptargsarr[i]) || CLIUtils.containsSpace(replaced)) {
+                        arglist.add(quote.convert(replaced));
+                    } else {
+                        arglist.add(replaced);
+                    }
+                }
             }
         }
         return arglist.toArray(new String[arglist.size()]);
