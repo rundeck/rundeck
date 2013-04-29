@@ -210,6 +210,20 @@ because the option is not specified.
 
 Job References are *Workflow Steps*, and only operate once within a workflow.
 
+## Quoting arguments to steps
+
+When you define a [Command](#command-step) or arguments to any Script or Job reference step, your arguments are interpreted as a space-separated sequence of strings. If you need to use spaces or quotes within the argument, here are some rules for quoting arguments:
+
+* If you have an argument with a space character, you can use either double or single quotes: 
+    * `"my argument"`: interpreted as `my argument`
+    * `'my argument'`: interpreted as `my argument`
+* If you need to embed quotes within a quoted argument, you can wrap it in the opposite kind of quote (double or single):
+    * `'"double quotes"'`: interpreted as `"double quotes"`
+    * `"'single quotes'"`: interpreted as `'single quotes'`
+* Or use doubled-up quote characters
+    * `"""double quotes"""`: interpreted as `"double quotes"`
+    * `'''single quotes'''`: interpreted as `'single quotes'`
+
 ## Reordering steps
 
 The order of the Workflow steps can be modified by hovering over any
