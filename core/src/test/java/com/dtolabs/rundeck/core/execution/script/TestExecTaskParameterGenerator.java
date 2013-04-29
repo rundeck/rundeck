@@ -32,7 +32,6 @@ import junit.framework.TestSuite;
 import java.io.File;
 
 public class TestExecTaskParameterGenerator extends TestCase {
-    ExecTaskParameterGenerator execTaskParameterGenerator;
     private File testScriptFile;
 
     public TestExecTaskParameterGenerator(String name) {
@@ -57,6 +56,14 @@ public class TestExecTaskParameterGenerator extends TestCase {
         junit.textui.TestRunner.run(suite());
     }
 
+    static void assertArrayEquals(String desc, String[] expected, String[] actual) {
+        assertEquals(desc, expected.length, actual.length);
+        for (int i = 0; i < expected.length; i++) {
+            String expect = expected[i];
+            String actualStr = actual[i];
+            assertEquals("pos " + i + ": " + desc, expect, actualStr);
+        }
+    }
 
     public void testGenerateCommand() throws Exception {
         /*
@@ -77,7 +84,7 @@ public class TestExecTaskParameterGenerator extends TestCase {
                 testArgs);
 
             assertEquals("Wrong executable for local unix command", "/bin/sh", params.getCommandexecutable());
-            assertEquals("Wrong argline for local command", "-c id", params.getCommandargline());
+            assertArrayEquals("Wrong argline for local command", new String[]{"-c", "id"}, params.getCommandArgs());
         }
         {
             //command input with unix os-family
@@ -96,7 +103,8 @@ public class TestExecTaskParameterGenerator extends TestCase {
                 testArgs);
 
             assertEquals("Wrong executable for local unix command", "/bin/sh", params.getCommandexecutable());
-            assertEquals("Wrong argline for local command", "-c 'id && hostname'", params.getCommandargline());
+            assertArrayEquals("Wrong argline for local command", new String[]{"-c","id && hostname"},
+                    params.getCommandArgs());
         }
         {
             //basic command with windows os-family
@@ -115,7 +123,7 @@ public class TestExecTaskParameterGenerator extends TestCase {
                 testArgs);
 
             assertEquals("Wrong executable for local windows command", "cmd.exe", params.getCommandexecutable());
-            assertEquals("Wrong argline for local command", "/c id", params.getCommandargline());
+            assertArrayEquals("Wrong argline for local command", new String[]{"/c", "id"}, params.getCommandArgs());
 
         }
         {
@@ -135,7 +143,8 @@ public class TestExecTaskParameterGenerator extends TestCase {
                 testArgs);
 
             assertEquals("Wrong executable for local windows command", "cmd.exe", params.getCommandexecutable());
-            assertEquals("Wrong argline for local command", "/c id potato hell", params.getCommandargline());
+            assertArrayEquals("Wrong argline for local command", new String[]{"/c", "id", "potato", "hell"},
+                    params.getCommandArgs());
 
         }
         {// quoted command with windows os-family
@@ -154,7 +163,7 @@ public class TestExecTaskParameterGenerator extends TestCase {
                 testArgs);
 
             assertEquals("Wrong executable for local windows command", "cmd.exe", params.getCommandexecutable());
-            assertEquals("Wrong argline for local command", "/c echo 'test belief'", params.getCommandargline());
+            assertArrayEquals("Wrong argline for local command", new String[]{"/c", "echo","test belief"}, params.getCommandArgs());
 
         }
     }
@@ -179,7 +188,7 @@ public class TestExecTaskParameterGenerator extends TestCase {
                 testArgs);
             assertEquals("Wrong executable for local unix command", testScriptFile.getAbsolutePath(),
                 params.getCommandexecutable());
-            assertEquals("Wrong argline for local command", "", params.getCommandargline());
+            assertNull("Wrong argline for local command", params.getCommandArgs());
         }
         {
             //scriptfile with args, with unix os-family
@@ -200,7 +209,7 @@ public class TestExecTaskParameterGenerator extends TestCase {
 
             assertEquals("Wrong executable for local unix command", testScriptFile.getAbsolutePath(),
                 params.getCommandexecutable());
-            assertEquals("Wrong argline for local command", "test args", params.getCommandargline());
+            assertArrayEquals("Wrong argline for local command", new String[]{"test","args"}, params.getCommandArgs());
         }
 
         {
@@ -220,8 +229,7 @@ public class TestExecTaskParameterGenerator extends TestCase {
                 testArgs);
 
             assertEquals("Wrong executable for local unix command", "cmd.exe", params.getCommandexecutable());
-            assertEquals("Wrong argline for local command", "/c " + testScriptFile.getAbsolutePath(),
-                params.getCommandargline());
+            assertArrayEquals("Wrong argline for local command", new String[]{"/c", testScriptFile.getAbsolutePath()}, params.getCommandArgs());
         }
         {
             //scriptfile with args, with windows os-family
@@ -240,8 +248,8 @@ public class TestExecTaskParameterGenerator extends TestCase {
                 testArgs);
 
             assertEquals("Wrong executable for local unix command", "cmd.exe", params.getCommandexecutable());
-            assertEquals("Wrong argline for local command", "/c " + testScriptFile.getAbsolutePath()+" test args something",
-                params.getCommandargline());
+            assertArrayEquals("Wrong argline for local command", new String[]{"/c", testScriptFile.getAbsolutePath(),
+                    "test", "args", "something"}, params.getCommandArgs());
         }
     }
 }

@@ -123,12 +123,15 @@ public class ScriptFileNodeStepExecutor implements NodeStepExecutor {
         }
 
         //replace data references
-        final String[] newargs = ScriptExecUtil.createScriptArgs(context.getDataContext(),
-                                                                 null,
-                                                                 args,
-                                                                 scriptInterpreter,
-                                                                 interpreterargsquoted,
-                                                                 filepath);
+        final String[] newargs = ScriptExecUtil.createScriptArgs(
+                context.getDataContext(),
+                node,
+                null,
+                args,
+                scriptInterpreter,
+                interpreterargsquoted,
+                filepath
+        );
         //XXX: windows specific call?
 
         return framework.getExecutionService().executeCommand(context, newargs, node);

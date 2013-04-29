@@ -52,9 +52,8 @@ public class ExecTaskParameterGeneratorImpl implements ExecTaskParameterGenerato
     public ExecTaskParameters generate(final INodeEntry nodeentry, final boolean command, final File scriptfile,
                                        final String[] args) throws ExecutionException {
         final String commandexecutable;
-        final String commandargline;
+        final String[] commandargs;
 
-        String commandString;
         if (!command && null == scriptfile) {
             throw new ExecutionException("Could not determine the command to dispatch");
         }
@@ -62,7 +61,10 @@ public class ExecTaskParameterGeneratorImpl implements ExecTaskParameterGenerato
             //TODO: escape args properly for windows
             commandexecutable = "cmd.exe";
             if (command) {
-                commandargline = CLIUtils.generateArgline("/c", args, false);
+                ArrayList<String> list = new ArrayList<String>();
+                list.add(0, "/c");
+                list.addAll(Arrays.asList(args));
+                commandargs = list.toArray(new String[list.size()]);
             } else if (null != scriptfile) {
                 //commandString is the script file location
                 ArrayList<String> list = new ArrayList<String>();
@@ -70,34 +72,19 @@ public class ExecTaskParameterGeneratorImpl implements ExecTaskParameterGenerato
                 if(args!=null && args.length>0){
                     list.addAll(Arrays.asList(args));
                 }
-                commandargline = CLIUtils.generateArgline("/c", list.toArray(new String[list.size()]), false);
+                list.add(0,"/c");
+                commandargs = list.toArray(new String[list.size()]);
             } else {
                 throw new ExecutionException("Could not determine the command to dispatch");
             }
         } else {
             if (command) {
                 commandexecutable = "/bin/sh";
-//
-//                final String[] quotedCommand = new String[args.length];
-//                {
-//                    Converter<String, String> quote = CLIUtils.argumentQuoteForOperatingSystem(nodeentry.getOsFamily());
-//                    for (int i = 0; i < args.length; i++) {
-//                        String replaced = args[i];
-//                        quotedCommand[i] = quote.convert(replaced);
-//                    }
-//                }
-//                commandString = StringUtils.join(args, " ");
-//                commandargline = CLIUtils.generateArgline("-c", new String[]{commandString},false);
-
-//                commandexecutable = args[0];
-//                String[] newargs = new String[args.length-1];
-//                System.arraycopy(args, 1, newargs, 0, newargs.length);
-                commandString = StringUtils.join(args," ");//CLIUtils.generateArgline(null,args,false);
-                commandargline = CLIUtils.generateArgline("-c",new String[]{commandString},false);
+                commandargs = new String[]{"-c", StringUtils.join(args, " ")};
             } else if (null != scriptfile) {
                 final String scriptPath = scriptfile.getAbsolutePath();
                 commandexecutable = scriptPath;
-                commandargline = CLIUtils.generateArgline(null, args, false);
+                commandargs=args;
             } else {
                 throw new ExecutionException("Could not determine the command to dispatch");
             }
@@ -107,8 +94,8 @@ public class ExecTaskParameterGeneratorImpl implements ExecTaskParameterGenerato
                 return commandexecutable;
             }
 
-            public String getCommandargline() {
-                return commandargline;
+            public String[] getCommandArgs() {
+                return commandargs;
             }
         };
     }

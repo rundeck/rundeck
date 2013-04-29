@@ -23,8 +23,6 @@
 */
 package com.dtolabs.rundeck.core.tasks.net;
 
-import com.dtolabs.rundeck.core.CoreException;
-import com.dtolabs.rundeck.core.cli.CLIUtils;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import org.apache.commons.lang.StringUtils;
@@ -219,12 +217,11 @@ public class SSHTaskBuilder {
 
         configureSSHBase(nodeentry, project, sshConnectionInfo, sshexecTask, loglevel);
 
-//        final String commandString = CLIUtils.generateArgline(null, args, false);
-        final String commandString = StringUtils.join(args, " ");
+        //nb: args are already quoted as necessary
+        final String commandString = StringUtils.join(args," ");
         sshexecTask.setCommand(commandString);
         sshexecTask.setTimeout(sshConnectionInfo.getSSHTimeout());
         sshexecTask.setOutputproperty("sshexec.output");
-
 
         DataContextUtils.addEnvVars(sshexecTask, dataContext);
     }

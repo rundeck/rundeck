@@ -294,10 +294,11 @@ class ExecutionServiceImpl implements ExecutionService {
 
         final String[] nodeCommand = DataContextUtils.replaceDataReferences(command, nodeContext.getDataContext());
         Converter<String,String> quote = CLIUtils.argumentQuoteForOperatingSystem(node.getOsFamily());
-        //quote args that have substituted context input
+        //quote args that have substituted context input, or have whitespace
+        //allow other args to be used literally
         for (int i = 0; i < nodeCommand.length; i++) {
             String replaced = nodeCommand[i];
-            if(!replaced.equals(command[i])) {
+            if (!replaced.equals(command[i]) || CLIUtils.containsSpace(replaced)) {
                 nodeCommand[i] = quote.convert(replaced);
             }
         }

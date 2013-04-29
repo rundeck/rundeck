@@ -219,6 +219,32 @@ Replacement token
            message=mydefault
         fi
 
+## Escaped values
+
+When the arguments to script or the contents of a Command execution string are
+evaluated, embedded property references like `${option.name}` are replaced by
+the values entered by a user. 
+
+To prevent any user input from including shell-special characters (accidentally or maliciously), any argument which has embedded references will be quoted for the shell.
+
+You should also be careful in how arguments to scripts are used within a script.
+
+For example, if you have a Shell script step with argument string `${option.message}`, and script:
+
+    #!/bin/bash
+
+    echo $1
+
+Then this script will expand the `${option.message}` value a second time, even though it was correctly quoted to pass to your script.  
+
+You should do something like this instead:
+
+    #!/bin/bash
+
+    echo "$1"
+
+Which allows the shell will correctly handle the input value by quoting it.
+
 ## Calling a Job with options
 
 Jobs can be invoked from the command line using the `run`
