@@ -235,7 +235,7 @@ For example, if you have a Shell script step with argument string `${option.mess
 
     echo $1
 
-Then this script will expand the `${option.message}` value a second time, even though it was correctly quoted to pass to your script.  
+Then this script will partially expand the `${option.message}` value a second time, even though it was correctly quoted to pass to your script.  
 
 You should do something like this instead:
 
