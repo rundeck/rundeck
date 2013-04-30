@@ -1,5 +1,0 @@
-keystore=${rdeck.base}/etc/keystore
-keystore.password=adminadmin
-key.password=adminadmin
-truststore=${rdeck.base}/etc/truststore
-truststore.password=adminadmin

@@ -1,8 +1,0 @@
-#loglevel.default is the default log level for jobs: ERROR,WARN,INFO,VERBOSE,DEBUG
-loglevel.default=INFO
-
-#rss.enabled if set to true enables RSS feeds that are public (non-authenticated)
-rss.enabled=true
-grails.serverURL=http://${server.hostname}:${server.http.port}${server.web.context}
-dataSource.dbCreate = update
-dataSource.url = jdbc:h2:file:${server.datastore.path};MVCC=true
