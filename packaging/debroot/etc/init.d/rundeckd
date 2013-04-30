@@ -24,7 +24,7 @@ prog="rundeckd"
 RETVAL=0
 PIDFILE=/var/run/$prog.pid
 DAEMON="${JAVA_HOME:-/usr}/bin/java"
-DAEMON_ARGS="${RDECK_JVM} -cp ${BOOTSTRAP_CP}:/etc/rundeck com.dtolabs.rundeck.RunServer /etc/rundeck 4440"
+DAEMON_ARGS="${RDECK_JVM} -cp ${BOOTSTRAP_CP} com.dtolabs.rundeck.RunServer /var/log/rundeck 4440"
 rundeckd="$DAEMON $DAEMON_ARGS"
 
 start() {
