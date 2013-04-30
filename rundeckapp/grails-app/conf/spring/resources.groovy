@@ -1,11 +1,9 @@
 import com.dtolabs.rundeck.core.plugins.PluginManagerService
-import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader
 import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
 import com.dtolabs.rundeck.server.plugins.PluginCustomizer
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import com.dtolabs.rundeck.server.plugins.services.NotificationPluginProviderService
 import groovy.io.FileType
-import org.springframework.beans.factory.config.MethodInvokingFactoryBean
 
 beans={
     defaultGrailsServiceInjectorJobListener(GrailsServiceInjectorJobListener){
@@ -13,8 +11,18 @@ beans={
         services=[executionService: ref('executionService')]
         quartzScheduler=ref('quartzScheduler')
     }
-
-    def serverLibextDir = application.config.rundeck?.server?.plugins?.dir?:"${application.config.rdeck.base}/libext"
+    def rdeckBase
+    if (!application.config.rdeck.base) {
+        //look for system property
+        rdeckBase = System.getProperty('rdeck.base')
+    } else {
+        rdeckBase = application.config.rdeck.base
+    }
+    if(!rdeckBase){
+        System.err.println("rdeck.base was not defined in application config or as a system property")
+        return
+    }
+    def serverLibextDir = application.config.rundeck?.server?.plugins?.dir?:"${rdeckBase}/libext"
     File pluginDir = new File(serverLibextDir)
     def serverLibextCacheDir = application.config.rundeck?.server?.plugins?.cacheDir?:"${serverLibextDir}/cache"
     File cacheDir= new File(serverLibextCacheDir)

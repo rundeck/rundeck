@@ -60,7 +60,7 @@ public class NotificationService implements ApplicationContextAware{
     def FrameworkService frameworkService
 
     def NotificationPlugin getNotificationPlugin(String name) {
-        def bean= rundeckPluginRegistry.loadPluginByName(name, notificationPluginProviderService)
+        def bean= rundeckPluginRegistry?.loadPluginByName(name, notificationPluginProviderService)
         if (bean ) {
             return (NotificationPlugin) bean
         }
@@ -81,7 +81,7 @@ public class NotificationService implements ApplicationContextAware{
      * @return map containing [instance:(plugin instance), description: (map or Description), ]
      */
     def Map getNotificationPluginDescriptor(String name) {
-        def bean= rundeckPluginRegistry.loadPluginDescriptorByName(name, notificationPluginProviderService)
+        def bean= rundeckPluginRegistry?.loadPluginDescriptorByName(name, notificationPluginProviderService)
         if (bean ) {
             return (Map) bean
         }
@@ -89,7 +89,7 @@ public class NotificationService implements ApplicationContextAware{
         return null
     }
     private NotificationPlugin configureNotificationPlugin(String name, Map configuration) {
-        def bean= rundeckPluginRegistry.configurePluginByName(name, notificationPluginProviderService,configuration)
+        def bean= rundeckPluginRegistry?.configurePluginByName(name, notificationPluginProviderService,configuration)
         if (bean ) {
             return (NotificationPlugin) bean
         }
@@ -98,7 +98,7 @@ public class NotificationService implements ApplicationContextAware{
     }
     def Map listNotificationPlugins(){
         def plugins=[:]
-        plugins=rundeckPluginRegistry.listPluginDescriptors(NotificationPlugin, notificationPluginProviderService)
+        plugins=rundeckPluginRegistry?.listPluginDescriptors(NotificationPlugin, notificationPluginProviderService)
         //clean up name of any Groovy plugin without annotations that ends with "NotificationPlugin"
         plugins.each {key,Map plugin->
             def desc = plugin.description
