@@ -41,16 +41,19 @@ notes: en/history/toc.conf en/RELEASE.md
 
 en/RELEASE.md: ../RELEASE.md
 	cp $< $@
+	perl  -i -p -e "s#http://rundeck.org/docs/##" $@
 
-en/history/version-$(RVERSION).md: en/RELEASE.md
+en/history/version-$(RVERSION).md: ../RELEASE.md
 	( $(ECHO) "% Version $(RVERSION)" ; \
         $(ECHO) "%" $(shell whoami) ; \
         $(ECHO) "%" $(shell date "+%m/%d/%Y") ; \
         $(ECHO) ; ) >$@
 	cat $< >>$@
 
+	perl  -i -p -e "s#http://rundeck.org/docs/#../#" $@
+
 en/history/toc.conf: en/history/version-$(RVERSION).md
-	$(ECHO) "1:version-$(RVERSION).md:Version $(RVERSION)" > $@.new
+	$(ECHO) "1:version-$(RVERSION).md:Version $(RVERSION) ($(shell date "+%Y-%m-%d"))" > $@.new
 	test -f $@ && ( grep -v -q "$(RVERSION)" $@ && \
 		cat $@ >> $@.new && \
 		mv $@.new $@ ) || (  mv $@.new $@ )
