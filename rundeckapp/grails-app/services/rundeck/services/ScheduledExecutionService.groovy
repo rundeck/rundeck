@@ -880,7 +880,8 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             ['success', 'failure', 'start'].each { trig ->
 //                params.notifyPlugin.each { trig, plug ->
                 def plugs = params.notifyPlugin[trig]
-                plugs['type'].each { pluginType ->
+                def types=[plugs['type']].flatten()
+                types.each { pluginType ->
                     def config = plugs[pluginType]?.config
                     if (plugs['enabled'][pluginType] == 'true') {
                         nots << [eventTrigger: 'on' + trig, type: pluginType, configuration: config]
