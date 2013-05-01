@@ -295,7 +295,7 @@ public class NotificationService implements ApplicationContextAware{
      */
     private boolean triggerPlugin(String trigger, Map data,String type, Map config){
         //replace exec info data references in config???
-        if(data.context){
+        if(data.context && config){
             config=DataContextUtils.replaceDataReferences(config,data.context)
         }
 
