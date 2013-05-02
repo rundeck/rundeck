@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.rundeck</groupId>
   <artifactId>rundeck-jetty-server</artifactId>
-  <version>1.5.1</version>
+  <version>1.5.2</version>
   <name>RunDeck Jetty Server</name>
   <url>http://rundeck.org</url>
   <inceptionYear>2011</inceptionYear>
@@ -31,7 +31,7 @@
         <configuration>
           <archive>
             <manifestEntries>
-              <Rundeck-Version>1.5.1</Rundeck-Version>
+              <Rundeck-Version>1.5.2</Rundeck-Version>
               <Main-Class>com.dtolabs.rundeck.RunServer</Main-Class>
             </manifestEntries>
           </archive>
