@@ -67,7 +67,7 @@ grails.project.dependency.resolution = {
         runtime("org.rundeck:rundeck-core:${rundeckVersion}") {
             changing = true
         }
-        runtime("org.rundeck:rundeck-jetty-server:${appVersion}") {
+        runtime("org.rundeck:rundeck-jetty-server:${rundeckVersion}") {
             changing = true
         }
     }
