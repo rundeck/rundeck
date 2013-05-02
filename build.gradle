@@ -35,8 +35,7 @@ subprojects {
     ext.isReleaseBuild = false
     ext.isSnapshotBuild = false
     ext.isDevBuild = false
-
-    if(hasProperty('environment') && environment == 'release'){
+    if(project.hasProperty('environment') && project.environment == 'release'){
         ext.isReleaseBuild=true
     }else if(hasProperty("snapshot")){
         ext.isSnapshotBuild=true
