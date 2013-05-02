@@ -1,4 +1,4 @@
-RunDeck
+Rundeck
 ========
 
 RunDeck is an open source automation service with a web console, 
@@ -21,7 +21,7 @@ Gradle Build
 
 Artifacts: 
 
-* `rundeckapp/build/libs/rundeck-X.Y.war`
+* `rundeckapp/target/rundeck-X.Y.war`
 * `rundeck-launcher/launcher/build/libs/rundeck-launcher-X.Y.jar`
 
 Maven2 Build
@@ -44,7 +44,8 @@ The documentation can be built with [pandoc](http://johnmacfarlane.net/pandoc/).
     
 Build the documentation. Artifacts in `docs/en/dist`:
 
-    make docs
+    cd docs
+    make
 
 You can build .rpm or .deb files (requires pandoc to build the docs):
 
@@ -63,7 +64,7 @@ To build clean:
 Installation
 ======
 
-There are two install options, a self-contained jar file, or RPM.
+There are several install options: a self-contained jar file, or RPM, or Debian.
 
 To start from the rundeck-launcher.jar, put it in a directory named ~/rundeck, then execute:
 
@@ -76,13 +77,17 @@ If you'd like to install via RPM, you can use Yum:
 
 OR install directly from RPM:
 
-    rpm -ivh rundeck-1.5.0-xxx.rpm
+    rpm -ivh rundeck-1.5.0-xxx.rpm rundeck-config-1.5.0-xxx.rpm
 
 Once the RPM is installed, execute:
 
     sudo /etc/init.d/rundeckd start
 
 The server should launch on port 4440, with default username/password of `admin/admin`.
+
+For Debian, download the .deb from the [downloads page](http://rundeck.org/downloads.html), then run:
+
+    dpkg -i rundeck-1.5.x-x.deb
 
 * For more info and configuration information, see the [RunDeck Guide](http://rundeck.org/docs/RunDeck-Guide.html)
 
