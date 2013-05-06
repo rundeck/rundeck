@@ -1,7 +1,9 @@
-Release 1.5.1
+Release 1.5.2
 ===========
 
-Date: 2013-04-30
+Date: 2013-05-06
+
+**Note: the 1.5.2 release fixes a packaging issue with rpm/debian installations.  1.5.1 release notes follow.**
 
 Notable Changes:
 
