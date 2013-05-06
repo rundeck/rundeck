@@ -249,8 +249,8 @@
     </dependency>
   </dependencies>
   <properties>
-    <version_ident>1.5.2-0</version_ident>
+    <version_ident>1.5.2-1</version_ident>
     <version>1.5.2</version>
-    <version_build>0</version_build>
+    <version_build>1</version_build>
   </properties>
 </project>
