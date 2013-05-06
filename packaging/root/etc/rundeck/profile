@@ -25,13 +25,13 @@ export BOOTSTRAP_CP=$(find /var/lib/rundeck/bootstrap -name \*.jar -printf %p:)
 export RDECK_JVM="-Djava.security.auth.login.config=/etc/rundeck/jaas-loginmodule.conf \
 	-Dloginmodule.name=RDpropertyfilelogin \
 	-Drdeck.config=/etc/rundeck \
-	-Drdeck.base=/etc/rundeck \
+	-Drdeck.base=/var/lib/rundeck \
 	-Drundeck.server.configDir=/etc/rundeck \
 	-Dserver.datastore.path=/var/lib/rundeck/data \
 	-Drundeck.server.serverDir=/var/lib/rundeck \
 	-Drdeck.projects=/var/rundeck/projects \
 	-Drdeck.runlogs=/var/lib/rundeck/logs \
-	-Drundeck.config.name=/etc/rundeck/rundeck-config.properties \
+	-Drundeck.config.location=/etc/rundeck/rundeck-config.properties \
 	-Djava.io.tmpdir=$RUNDECK_TEMPDIR"
 #
 # Set min/max heap size
