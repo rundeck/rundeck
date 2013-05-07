@@ -38,7 +38,7 @@ core-snapshot:
 	cd core; ./gradlew $(PROXY_DEFS) -Psnapshot -PbuildNum=$(RELEASE) uploadArchives
 
 release: 
-	cd core; ./gradlew $(PROXY_DEFS) -Penvironment=release -PbuildNum=$(RELEASE) uploadArchives
+	GRADLE_OPTS="-Xmx1024m -Xms256m" ./gradlew $(PROXY_DEFS) -Penvironment=release -PbuildNum=$(RELEASE) uploadArchives
 
 #test via gradle
 
