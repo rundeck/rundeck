@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.plugins.configuration;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Property describes a configuration property of a provider
@@ -58,9 +59,7 @@ public interface Property {
         /**
          * A string input property with a select
          */
-        FreeSelect,
-//        MultiSelect,
-//        MultiFreeSelect
+        FreeSelect
     }
 
     /**
@@ -108,4 +107,9 @@ public interface Property {
      * the default scope.
      */
     public PropertyScope getScope();
+    
+    /**
+     * Returns a map of optional rendering options for the UI
+     */
+    public Map<String, Object> getRenderingOptions();
 }

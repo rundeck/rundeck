@@ -67,8 +67,14 @@
     </td>
     <td>
     <g:hiddenField name="${origfieldname}" value="${values&&values[prop.name]?values[prop.name]:''}"/>
-    <g:textField name="${fieldname}" value="${values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue}"
+    <g:if test="${prop.renderingOptions?.('displayType')?.name() == 'MULTI_LINE'}">
+        <g:textArea name="${fieldname}" value="${values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue}"
+                 id="${fieldid}" rows="10" cols="80"/>
+    </g:if>
+    <g:else>
+        <g:textField name="${fieldname}" value="${values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue}"
                  id="${fieldid}" size="80"/>
+    </g:else>
 </g:else>
     <div class="info note">${prop.description?.encodeAsHTML()}</div>
     <g:if test="${error}">

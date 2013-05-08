@@ -1,12 +1,14 @@
 package com.dtolabs.rundeck.plugins.util;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import com.dtolabs.rundeck.core.plugins.configuration.Property;
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil;
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyValidator;
-
-import java.util.Arrays;
-import java.util.List;
 
 
 /**
@@ -22,6 +24,7 @@ public class PropertyBuilder {
     private List<String> values;
     private PropertyValidator validator;
     private PropertyScope scope;
+    private Map<String, Object> renderingOptions = new HashMap<String, Object>();
 
     private PropertyBuilder() {
 
@@ -45,6 +48,7 @@ public class PropertyBuilder {
             .values(orig.getSelectValues())
             .validator(orig.getValidator())
             .scope(orig.getScope())
+            .renderingOptions(orig.getRenderingOptions())
             ;
     }
 
@@ -181,6 +185,22 @@ public class PropertyBuilder {
         this.scope = scope;
         return this;
     }
+    
+    /**
+     * Adds all rendering options from the given renderingOptions
+     */
+    public PropertyBuilder renderingOptions(final Map<String, Object> renderingOptions) {
+        this.renderingOptions.putAll(renderingOptions);
+        return this;
+    }
+    
+    /**
+     * Adds the given renderingOption
+     */
+    public PropertyBuilder renderingOption(final String optionKey, final Object optionValue) {
+        this.renderingOptions.put(optionKey, optionValue);
+        return this;
+    }
 
     /**
      * Build the Property object
@@ -193,7 +213,7 @@ public class PropertyBuilder {
         if (null == name) {
             throw new IllegalStateException("name is required");
         }
-        return PropertyUtil.forType(type, name, title, description, required, value, values, validator, scope);
+        return PropertyUtil.forType(type, name, title, description, required, value, values, validator, scope, renderingOptions);
     }
 
     /**
