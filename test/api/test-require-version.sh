@@ -16,7 +16,7 @@ path=$(getpath "$runurl")
 echo "TEST: Invalid API Version, $path..."
 
 # get listing
-sh $DIR/api-expect-error.sh ${runurl} "${params}" "Unsupported API Version \"${WRONG_VERS}\". API Request: ${path}. Reason: Current version: ${API_CURRENT_VERSION}" || exit 2
+sh $SRC_DIR/api-expect-error.sh ${runurl} "${params}" "Unsupported API Version \"${WRONG_VERS}\". API Request: ${path}. Reason: Current version: ${API_CURRENT_VERSION}" || exit 2
 echo "OK"
 
 
@@ -27,7 +27,7 @@ path=$(getpath "$runurl")
 echo "TEST: Wrong API Version: ${WRONG_VERS}..."
 
 # get listing
-sh $DIR/api-expect-error.sh ${runurl} "${params}" "Unsupported API Version \"${WRONG_VERS}\". API Request: ${path}. Reason: Current version: ${API_CURRENT_VERSION}" || exit 2
+sh $SRC_DIR/api-expect-error.sh ${runurl} "${params}" "Unsupported API Version \"${WRONG_VERS}\". API Request: ${path}. Reason: Current version: ${API_CURRENT_VERSION}" || exit 2
 echo "OK"
 
 
@@ -38,7 +38,7 @@ path=$(getpath "$runurl")
 echo "TEST: Wrong API Version: ${WRONG_VERS}..."
 
 # get listing
-sh $DIR/api-expect-error.sh ${runurl} "${params}" "Unsupported API Version \"${WRONG_VERS}\". API Request: ${path}. Reason: Current version: ${API_CURRENT_VERSION}" || exit 2
+sh $SRC_DIR/api-expect-error.sh ${runurl} "${params}" "Unsupported API Version \"${WRONG_VERS}\". API Request: ${path}. Reason: Current version: ${API_CURRENT_VERSION}" || exit 2
 echo "OK"
 
 WRONG_VERS="000001"
@@ -48,7 +48,7 @@ path=$(getpath "$runurl")
 echo "TEST: Wrong API Version: ${WRONG_VERS}..."
 
 # get listing
-sh $DIR/api-expect-error.sh ${runurl} "${params}" "Unsupported API Version \"${WRONG_VERS}\". API Request: ${path}. Reason: Current version: ${API_CURRENT_VERSION}" || exit 2
+sh $SRC_DIR/api-expect-error.sh ${runurl} "${params}" "Unsupported API Version \"${WRONG_VERS}\". API Request: ${path}. Reason: Current version: ${API_CURRENT_VERSION}" || exit 2
 echo "OK"
 
 rm $DIR/curl.out

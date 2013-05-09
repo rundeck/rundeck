@@ -17,7 +17,7 @@ reportparams="title=test&status=succeeded&nodesuccesscount=1&nodefailcount=0&sum
 params="${reportparams}"
 
 # get listing
-sh $DIR/api-expect-error.sh "${runurl}" "${params}" "parameter \"project\" is required" || exit 2
+sh $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "parameter \"project\" is required" || exit 2
 echo "OK"
 
 
@@ -29,7 +29,7 @@ reportparams="title=test&x=succeeded&nodesuccesscount=1&nodefailcount=0&summary=
 params="project=${proj}&${reportparams}"
 
 # get listing
-sh $DIR/api-expect-error.sh "${runurl}" "${params}" "parameter \"status\" is required" || exit 2
+sh $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "parameter \"status\" is required" || exit 2
 echo "OK"
 
 
@@ -41,7 +41,7 @@ reportparams="x=test&status=succeeded&nodesuccesscount=1&nodefailcount=0&summary
 params="project=${proj}&${reportparams}"
 
 # get listing
-sh $DIR/api-expect-error.sh "${runurl}" "${params}" "parameter \"title\" is required" || exit 2
+sh $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "parameter \"title\" is required" || exit 2
 echo "OK"
 
 #test missing parameters - nodesuccesscount
@@ -52,7 +52,7 @@ reportparams="title=test&status=succeeded&x=1&nodefailcount=0&summary=test+is+ok
 params="project=${proj}&${reportparams}"
 
 # get listing
-sh $DIR/api-expect-error.sh "${runurl}" "${params}" "parameter \"nodesuccesscount\" is required" || exit 2
+sh $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "parameter \"nodesuccesscount\" is required" || exit 2
 echo "OK"
 
 #test missing parameters - nodefailcount
@@ -63,7 +63,7 @@ reportparams="title=test&status=succeeded&nodesuccesscount=1&x=0&summary=test+is
 params="project=${proj}&${reportparams}"
 
 # get listing
-sh $DIR/api-expect-error.sh "${runurl}" "${params}" "parameter \"nodefailcount\" is required" || exit 2
+sh $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "parameter \"nodefailcount\" is required" || exit 2
 echo "OK"
 
 
@@ -75,7 +75,7 @@ reportparams="title=test&status=succeeded&nodesuccesscount=1&nodefailcount=0&x=t
 params="project=${proj}&${reportparams}"
 
 # get listing
-sh $DIR/api-expect-error.sh "${runurl}" "${params}" "parameter \"summary\" is required" || exit 2
+sh $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "parameter \"summary\" is required" || exit 2
 echo "OK"
 
 
@@ -87,7 +87,7 @@ reportparams="title=test&status=blah&nodesuccesscount=1&nodefailcount=0&summary=
 params="project=${proj}&${reportparams}"
 
 # get listing
-sh $DIR/api-expect-error.sh "${runurl}" "${params}" "the value \"blah\" for parameter \"status\" was invalid. It must be in the list: [succeeded, aborted, failed]" || exit 2
+sh $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "the value \"blah\" for parameter \"status\" was invalid. It must be in the list: [succeeded, aborted, failed]" || exit 2
 echo "OK"
 
 
@@ -99,7 +99,7 @@ reportparams="title=test&status=succeeded&nodesuccesscount=1&nodefailcount=0&sum
 params="project=${proj}&${reportparams}"
 
 # get listing
-sh $DIR/api-expect-error.sh "${runurl}" "${params}" "The parameter \"end\" did not have a valid time or dateTime format: not-a-time" || exit 2
+sh $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "The parameter \"end\" did not have a valid time or dateTime format: not-a-time" || exit 2
 echo "OK"
 
 #test wrong parameter - start value
@@ -110,7 +110,7 @@ reportparams="title=test&status=succeeded&nodesuccesscount=1&nodefailcount=0&sum
 params="project=${proj}&${reportparams}"
 
 # get listing
-sh $DIR/api-expect-error.sh "${runurl}" "${params}" "The parameter \"start\" did not have a valid time or dateTime format: not-a-time" || exit 2
+sh $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "The parameter \"start\" did not have a valid time or dateTime format: not-a-time" || exit 2
 echo "OK"
 
 
@@ -126,14 +126,14 @@ params="project=${proj}&${reportparams}"
 
 # get listing
 docurl ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
-sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
+sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 # get history and look for test
 
 params="project=${proj}&max=1"
 
 docurl  "${APIURL}/history/?${params}" > $DIR/curl.out || fail "failed request: ${runurl}"
-sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
+sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 assert "1" $(xmlsel "/result/events/@count" $DIR/curl.out)
 # assert "1298512842793" $(xmlsel "/result/events/event/@starttime" $DIR/curl.out)
@@ -167,7 +167,7 @@ params="project=${proj}&${reportparams}"
 
 # get listing
 docurl  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
-sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
+sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 # get history and look for test
 
@@ -176,7 +176,7 @@ runurl="${APIURL}/history"
 params="project=${proj}&max=1"
 
 docurl  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
-sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
+sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 assert "1" $(xmlsel "/result/events/@count" $DIR/curl.out)
 # assert "1298512842793" $(xmlsel "/result/events/event/@starttime" $DIR/curl.out)

@@ -8,7 +8,7 @@ source $DIR/include.sh
 runurl="${APIURL}/projects"
 
 #remove any existing cookies
-rm $DIR/cookies
+test -f $DIR/cookies && rm $DIR/cookies
 
 echo "TEST: unauthorized simple request"
 
@@ -21,7 +21,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-sh $DIR/api-test-error.sh $DIR/curl.out || exit 2
+sh $SRC_DIR/api-test-error.sh $DIR/curl.out || exit 2
 
 #test result error message
 
@@ -50,7 +50,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-sh $DIR/api-test-error.sh $DIR/curl.out || exit 2
+sh $SRC_DIR/api-test-error.sh $DIR/curl.out || exit 2
 
 #test result error message
 
@@ -77,7 +77,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-sh $DIR/api-test-error.sh $DIR/curl.out || exit 2
+sh $SRC_DIR/api-test-error.sh $DIR/curl.out || exit 2
 
 #test result error message
 

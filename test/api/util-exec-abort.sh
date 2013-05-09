@@ -19,7 +19,7 @@ echo "# Abort execution: ${execid}"
 # get listing
 docurl ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
+sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 xmlsel "/result/success/message" -n $DIR/curl.out
 $XMLSTARLET sel -T -t -o "Abort status: " -v "/result/abort/@status" -n  $DIR/curl.out

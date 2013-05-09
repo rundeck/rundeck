@@ -8,12 +8,12 @@ source $DIR/include.sh
 file=$DIR/curl.out
 
 ###
-# Setup: acquire local node name from RDECK_BASE/etc/framework.properties#node.name
+# Setup: acquire local node name from RDECK_ETC/framework.properties#node.name
 ####
-localnode=$(grep 'framework.node.name' $RDECK_BASE/etc/framework.properties | sed 's/framework.node.name = //')
+localnode=$(grep 'framework.node.name' $RDECK_ETC/framework.properties | sed 's/framework.node.name = //')
 
 if [ -z "${localnode}" ] ; then
-    errorMsg "FAIL: Unable to determine framework.node.name from $RDECK_BASE/etc/framework.properties"
+    errorMsg "FAIL: Unable to determine framework.node.name from $RDECK_ETC/framework.properties"
     exit 2
 fi
 
@@ -114,9 +114,9 @@ echo "OK"
 
 # temporarily move actual resources.xml out of the way, and replace with our own
 
-cp $RDECK_BASE/projects/test/etc/resources.xml $RDECK_BASE/projects/test/etc/resources.xml.backup
+cp $RDECK_PROJECTS/test/etc/resources.xml $RDECK_PROJECTS/test/etc/resources.xml.backup
 
-cat <<END > $RDECK_BASE/projects/test/etc/resources.xml
+cat <<END > $RDECK_PROJECTS/test/etc/resources.xml
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE project PUBLIC "-//DTO Labs Inc.//DTD Resources Document 1.0//EN" "project.dtd">
 
@@ -189,4 +189,4 @@ assert "test2" $itemname "Query result name was wrong"
 echo "OK"
 
 rm ${file}
-mv $RDECK_BASE/projects/test/etc/resources.xml.backup $RDECK_BASE/projects/test/etc/resources.xml
+mv $RDECK_PROJECTS/test/etc/resources.xml.backup $RDECK_PROJECTS/test/etc/resources.xml

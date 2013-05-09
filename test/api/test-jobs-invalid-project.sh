@@ -12,7 +12,7 @@ echo "TEST:  project parameter invalid for /api/jobs..."
 
 params="project=DNEProject"
 
-sh $DIR/api-expect-error.sh "${runurl}" "${params}" "project does not exist: DNEProject" || exit 2
+sh $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "project does not exist: DNEProject" || exit 2
 echo "OK"
 
 rm $DIR/curl.out

@@ -85,7 +85,7 @@ echo "TEST: /api/2/project/${proj}/resources (GET) (unsupported)"
 params="format=unsupported"
 
 docurl ${runurl}?${params} > ${file} || fail "ERROR: failed request"
-sh $DIR/api-test-error.sh ${file} "Unsupported API Version \"2\". API Request: /api/2/project/${proj}/resources. Reason: Minimum supported version: 3" || fail "ERROR: failed request"
+sh $SRC_DIR/api-test-error.sh ${file} "Unsupported API Version \"2\". API Request: /api/2/project/${proj}/resources. Reason: Minimum supported version: 3" || fail "ERROR: failed request"
 
 echo "OK"
 
@@ -96,13 +96,13 @@ runurl3="${API3URL}/project/${proj}/resources"
 params="format=other"
 
 docurl ${runurl3}?${params} > ${file} || fail "ERROR: failed request"
-sh $DIR/api-test-error.sh ${file} "The format specified is unsupported: other" || fail "ERROR: failed request"
+sh $SRC_DIR/api-test-error.sh ${file} "The format specified is unsupported: other" || fail "ERROR: failed request"
 
 echo "OK"
 
 echo "TEST: /api/2/project/${proj}/resources (POST) (xml)"
 
-TETC=$RDECK_BASE/projects/test/etc
+TETC=$RDECK_PROJECTS/test/etc
 TRES=$TETC/resources.xml
 
 if [ ! -f $TRES.testbackup ] ; then
@@ -122,7 +122,7 @@ END
 # post data
 $CURL -H "$AUTHHEADER" -X POST -H 'Content-Type: text/xml' --data-binary "@$TETC/testUpdateResources.xml" ${runurl}?${params} > ${file} || fail "ERROR: failed request"
 
-sh $DIR/api-test-success.sh ${file} "Resources were successfully updated for project test" || exit 2
+sh $SRC_DIR/api-test-success.sh ${file} "Resources were successfully updated for project test" || exit 2
 
 echo "OK"
 
@@ -161,7 +161,7 @@ echo "TEST: /api/2/project/${proj}/resources (POST) (yaml)"
 # post data
 $CURL -H "$AUTHHEADER" -X POST -H 'Content-Type: text/yaml' --data-binary "@$TETC/testUpdateResources.yaml" ${runurl}?${params} > ${file} || fail "ERROR: failed request"
 
-sh $DIR/api-test-success.sh ${file} "Resources were successfully updated for project test" || exit 2
+sh $SRC_DIR/api-test-success.sh ${file} "Resources were successfully updated for project test" || exit 2
 
 echo "OK"
 
@@ -181,7 +181,7 @@ END
 # post data
 $CURL -H "$AUTHHEADER" -X POST -H 'Content-Type: text/x-something' --data-binary "@$TETC/testUpdateResources.xml" ${runurl}?${params} > ${file} || fail "ERROR: failed request"
 
-sh $DIR/api-test-error.sh ${file} "Unsupported API Version \"2\". API Request: /api/2/project/test/resources. Reason: Minimum supported version: 3" || exit 2
+sh $SRC_DIR/api-test-error.sh ${file} "Unsupported API Version \"2\". API Request: /api/2/project/test/resources. Reason: Minimum supported version: 3" || exit 2
 
 echo "OK"
 
@@ -203,7 +203,7 @@ END
 # post data
 $CURL -H "$AUTHHEADER" -X POST -H 'Content-Type: text/x-something' --data-binary "@$TETC/testUpdateResources.xml" ${runurl3}?${params} > ${file} || fail "ERROR: failed request"
 
-sh $DIR/api-test-error.sh ${file} "Unsupported format: No provider available to parse MIME type: text/x-something" || exit 2
+sh $SRC_DIR/api-test-error.sh ${file} "Unsupported format: No provider available to parse MIME type: text/x-something" || exit 2
 
 echo "OK"
 

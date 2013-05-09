@@ -28,7 +28,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
+sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
 itemcount=$(xmlsel "/result/executions/@count" $DIR/curl.out)

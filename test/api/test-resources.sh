@@ -8,12 +8,12 @@ source $DIR/include.sh
 file=$DIR/curl.out
 
 ###
-# Setup: acquire local node name from RDECK_BASE/etc/framework.properties#node.name
+# Setup: acquire local node name from RDECK_ETC/framework.properties#node.name
 ####
-localnode=$(grep 'framework.node.name' $RDECK_BASE/etc/framework.properties | sed 's/framework.node.name = //')
+localnode=$(grep 'framework.node.name' $RDECK_ETC/framework.properties | sed 's/framework.node.name = //')
 
 if [ -z "${localnode}" ] ; then
-    errorMsg "FAIL: Unable to determine framework.node.name from $RDECK_BASE/etc/framework.properties"
+    errorMsg "FAIL: Unable to determine framework.node.name from $RDECK_ETC/framework.properties"
     exit 2
 fi
 
@@ -109,7 +109,7 @@ echo "TEST: /api/resources, format unsupported"
 
 # get listing
 docurl ${runurl}?${params} > ${file} || fail "failed request"
-sh $DIR/api-test-error.sh ${file} "The format specified is unsupported: unsupported" || fail "expected error"
+sh $SRC_DIR/api-test-error.sh ${file} "The format specified is unsupported: unsupported" || fail "expected error"
 
 echo "OK"
 
@@ -123,7 +123,7 @@ params="project=${project}&format=other"
 API2URL="${RDURL}/api/2"
 runurl="${API2URL}/resources"
 docurl ${runurl}?${params} > ${file} || fail "failed request"
-sh $DIR/api-test-error.sh ${file} "Unsupported API Version \"2\". API Request: /api/2/resources. Reason: Minimum supported version: 3" || fail "expected error"
+sh $SRC_DIR/api-test-error.sh ${file} "Unsupported API Version \"2\". API Request: /api/2/resources. Reason: Minimum supported version: 3" || fail "expected error"
 
 echo "OK"
 
@@ -133,9 +133,9 @@ echo "OK"
 
 # temporarily move actual resources.xml out of the way, and replace with our own
 
-cp $RDECK_BASE/projects/test/etc/resources.xml $RDECK_BASE/projects/test/etc/resources.xml.backup
+cp $RDECK_PROJECTS/test/etc/resources.xml $RDECK_PROJECTS/test/etc/resources.xml.backup
 
-cat <<END > $RDECK_BASE/projects/test/etc/resources.xml
+cat <<END > $RDECK_PROJECTS/test/etc/resources.xml
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE project PUBLIC "-//DTO Labs Inc.//DTD Resources Document 1.0//EN" "project.dtd">
 
@@ -329,4 +329,4 @@ assert "$localnode" "$itemname" "Query for local item"
 echo "OK"
 
 rm ${file}
-mv $RDECK_BASE/projects/test/etc/resources.xml.backup $RDECK_BASE/projects/test/etc/resources.xml
+mv $RDECK_PROJECTS/test/etc/resources.xml.backup $RDECK_PROJECTS/test/etc/resources.xml

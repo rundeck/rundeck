@@ -22,7 +22,7 @@ params="project=${proj}&${qparams}"
 # get listing
 docurl --data-urlencode "exec=${execargs}" ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
+sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 # job list query doesn't wrap result in common result wrapper
 #If <result error="true"> then an error occured.

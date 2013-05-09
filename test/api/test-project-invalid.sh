@@ -12,7 +12,7 @@ runurl="${APIURL}/project/${proj}"
 
 echo "TEST: get mising project ${proj}..."
 
-sh $DIR/api-expect-error.sh "${runurl}" "${params}" "project does not exist: DNEProject" || exit 2
+sh $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "project does not exist: DNEProject" || exit 2
 echo "OK"
 
 

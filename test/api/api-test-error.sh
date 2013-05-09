@@ -8,9 +8,10 @@ errorMsg() {
    echo "$*" 1>&2
 }
 
-DIR=$(cd `dirname $0` && pwd)
+SRC_DIR=$(cd `dirname $0` && pwd)
+DIR=${TMP_DIR:-$SRC_DIR}
 
-XMLSTARLET=xml
+XMLSTARLET=${XMLSTARLET:-xmlstarlet}
 
 file=$1
 shift
