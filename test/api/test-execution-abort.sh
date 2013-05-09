@@ -16,7 +16,7 @@ params="project=${proj}&exec=echo+testing+execution+abort+api%3Bsleep+120"
 # get listing
 docurl ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
+sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #select id
 
@@ -38,7 +38,7 @@ params=""
 # get listing
 docurl ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
+sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
 itemcount=$(xmlsel "/result/executions/@count" $DIR/curl.out)
@@ -65,7 +65,7 @@ sleep 4
 # get listing
 docurl ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
+sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
 astatus=$(xmlsel "/result/abort/@status" $DIR/curl.out)
@@ -95,7 +95,7 @@ params=""
 # get listing
 docurl ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
+sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
 itemcount=$(xmlsel "/result/executions/@count" $DIR/curl.out)

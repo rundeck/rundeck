@@ -26,7 +26,7 @@ params="project=${proj}&$args"
 # get listing
 docurl ${runurl}?${params} > $DIR/curl.out|| fail "failed request: ${runurl}"
 
-sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
+sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
 itemcount=$(xmlsel "/result/jobs/@count" $DIR/curl.out)

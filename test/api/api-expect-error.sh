@@ -3,7 +3,8 @@
 # usage:
 #  api-expect-error.sh <URL> <params> <message>
 # curls the URL with the params, and expects result error="true", with result message if specified
-DIR=$(cd `dirname $0` && pwd)
+SRC_DIR=$(cd `dirname $0` && pwd)
+DIR=${TMP_DIR:-$SRC_DIR}
 
 errorMsg() {
    echo "$*" 1>&2
@@ -39,4 +40,4 @@ if [ 0 != $okheader -a 0 != $ok2header ] ; then
 fi
 rm $DIR/headers.out
 
-sh $DIR/api-test-error.sh $DIR/curl.out $*
+sh $SRC_DIR/api-test-error.sh $DIR/curl.out $*

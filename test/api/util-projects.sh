@@ -25,7 +25,7 @@ file=$DIR/curl.out
 
 # get listing
 docurl ${runurl}?${params} > ${file} || fail "failed request: ${runurl}"
-$DIR/api-test-success.sh ${file} || exit 2
+$SRC_DIR/api-test-success.sh ${file} || exit 2
 
 #Check projects list
 itemcount=$($XMLSTARLET sel -T -t -v "count(/result/projects/project)" $DIR/curl.out)

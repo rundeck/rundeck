@@ -65,7 +65,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
+sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #result will contain list of failed and succeeded jobs, in this
 #case there should only be 1 failed or 1 succeeded since we submit only 1
@@ -94,7 +94,7 @@ execargs="-opt2 a"
 # get listing
 $CURL -H "$AUTHHEADER" --data-urlencode "argString=${execargs}" ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
+sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #get execid
 
@@ -108,6 +108,9 @@ else
     exit 2
 fi
 
+#wait for execution to complete
+
+rd-queue follow -q -e $execid || fail "Failed waiting for execution $execid to complete"
 
 ###
 # Run the chosen id, leave off required option value
@@ -127,7 +130,7 @@ sleep 2
 # get listing
 $CURL -H "$AUTHHEADER" --data-urlencode "argString=${execargs}" ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-sh $DIR/api-test-error.sh $DIR/curl.out "Option 'opt2' is required." || exit 2
+sh $SRC_DIR/api-test-error.sh $DIR/curl.out "Option 'opt2' is required." || exit 2
 
 echo "OK"
 

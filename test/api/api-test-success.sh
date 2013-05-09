@@ -8,14 +8,15 @@ errorMsg() {
    echo "$*" 1>&2
 }
 
-DIR=$(cd `dirname $0` && pwd)
+SRC_DIR=$(cd `dirname $0` && pwd)
+DIR=${TMP_DIR:-$SRC_DIR}
 
 file="$1"
 shift
 
 message="$*"
 
-XMLSTARLET=xml
+XMLSTARLET=${XMLSTARLET:-xmlstarlet}
 
 #test ${file} for valid xml
 $XMLSTARLET val -w ${file} > /dev/null 2>&1

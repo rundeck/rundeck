@@ -1,6 +1,12 @@
 #!/bin/bash
 
-DIR=$(cd `dirname $0` && pwd)
+SRC_DIR=$(cd `dirname $0` && pwd)
+DIR=${TMP_DIR:-$SRC_DIR}
+
+RDECK_ETC=${RDECK_ETC:-$RDECK_BASE/etc}
+# modify to point to xmlstarlet
+XMLSTARLET=${XMLSTARLET:-xmlstarlet}
+
 
 #assert RDECK_BASE
 if [ -z "$RDECK_BASE" ] ; then
@@ -15,19 +21,17 @@ if [ 0 != $? ] ; then
 fi
 
 #create test project
-$RDECK_BASE/tools/bin/rd-project -p test -a create  
+rd-project -p test -a create  
 if [ 0 != $? ] ; then
 	echo Failed to create test project : $!
 	exit 2
 fi
 
 #copy jobs file to replace template
-cp $DIR/test.jobs.xml $DIR/test.jobs.expanded.xml
-
-sed -i '' "s#@DIRNAME@#$DIR#" $DIR/test.jobs.expanded.xml
+sed "s#@DIRNAME@#$DIR#" $SRC_DIR/test.jobs.xml > $DIR/test.jobs.expanded.xml
 
 #load jobs
-$RDECK_BASE/tools/bin/rd-jobs load -f $DIR/test.jobs.expanded.xml > $DIR/load.out
+rd-jobs load -f $DIR/test.jobs.expanded.xml > $DIR/load.out
 if [ 0 != $? ] ; then
 	echo Failed to load jobs: $!
 	exit 2
@@ -41,7 +45,7 @@ if [ 0 == $? ] ; then
 fi
 
 #purge the jobs
-$RDECK_BASE/tools/bin/rd-jobs purge -p test -g test > $DIR/load.out
+rd-jobs purge -p test -g test > $DIR/load.out
 if [ 0 != $? ] ; then
 	echo Failed to purge jobs: $!
 	exit 2
@@ -50,7 +54,7 @@ cat $DIR/load.out
 
 
 
-$RDECK_BASE/tools/bin/rd-jobs load -f $DIR/test.jobs.expanded.xml > $DIR/load.out
+rd-jobs load -f $DIR/test.jobs.expanded.xml > $DIR/load.out
 if [ 0 != $? ] ; then
 	echo Failed to load jobs: $!
 	exit 2
@@ -72,7 +76,7 @@ rm $DIR/test.jobs.expanded.xml
 #copy jobs file to replace template
 
 #load jobs
-$RDECK_BASE/tools/bin/rd-jobs load -f $DIR/test.jobs2.xml > $DIR/load.out
+rd-jobs load -f $SRC_DIR/test.jobs2.xml > $DIR/load.out
 if [ 1 != $? ] ; then
 	echo Should have failed to load a job: $!
 	exit 2
@@ -90,7 +94,7 @@ rm $DIR/load.out
 
 # try to run job id 1
 
-$RDECK_BASE/tools/bin/run -i 1 
+run -i 1 
 if [ 0 != $? ] ; then
 	echo Failed to run job id 1: $!
 	exit 2
@@ -98,7 +102,7 @@ fi
 
 # try to run job by name and project
 
-$RDECK_BASE/tools/bin/run -j 'test/simple script test' -p test
+run -j 'test/simple script test' -p test
 if [ 0 != $? ] ; then
 	echo Failed to run job by name: $!
 	exit 2
@@ -107,13 +111,13 @@ fi
 
 # try dispatch
 echo "dispatch --noqueue option"
-$RDECK_BASE/tools/bin/dispatch -p test --noqueue -- uptime
+dispatch -p test --noqueue -- uptime
 if [ 0 != $? ] ; then
 	echo Failed to dispatch uptime via cli : $!
 	exit 2
 fi
 
-$RDECK_BASE/tools/bin/dispatch -p test -Q -- uptime > $DIR/exec.out 
+dispatch -p test -Q -- uptime > $DIR/exec.out 
 if [ 0 != $? ] ; then
 	echo Failed: dispatch -Q -- uptime : $!
 	exit 2
@@ -127,7 +131,7 @@ fi
 rm $DIR/exec.out
 
 echo "dispatch --follow -- command"
-$RDECK_BASE/tools/bin/dispatch -p test --follow -- echo dispatch test \; uptime > $DIR/exec.out
+dispatch -p test --follow -- echo dispatch test \; uptime > $DIR/exec.out
 if [ 0 != $? ] ; then
 	echo Failed to dispatch uptime and follow : $!
 	exit 2
@@ -143,7 +147,7 @@ cat > $DIR/dispatch-test.sh <<END
 #!/bin/bash
 echo this is a test of dispatch -s 
 END
-$RDECK_BASE/tools/bin/dispatch -p test -s $DIR/dispatch-test.sh > $DIR/exec.out
+dispatch -p test -s $DIR/dispatch-test.sh > $DIR/exec.out
 if [ 0 != $? ] ; then
 	echo Failed to dispatch scriptfile via cli : $!
 	exit 2
@@ -155,7 +159,7 @@ if [ 0 != $? ] ; then
 fi
 
 echo "dispatch --follow -s scriptfile"
-$RDECK_BASE/tools/bin/dispatch -p test --follow -s $DIR/dispatch-test.sh  > $DIR/exec.out
+dispatch -p test --follow -s $DIR/dispatch-test.sh  > $DIR/exec.out
 if [ 0 != $? ] ; then
 	echo Failed to follow scriptfile via cli : $!
 	exit 2
@@ -171,7 +175,7 @@ cat > $DIR/dispatch-test.sh <<END
 #!/bin/bash
 echo this is a test of dispatch -u url
 END
-$RDECK_BASE/tools/bin/dispatch -p test -u file:$DIR/dispatch-test.sh  > $DIR/exec.out
+dispatch -p test -u file:$DIR/dispatch-test.sh  > $DIR/exec.out
 if [ 0 != $? ] ; then
 	echo Failed to dispatch url via cli : $!
 	exit 2
@@ -183,7 +187,7 @@ if [ 0 != $? ] ; then
 fi
 
 echo "dispatch --follow -u url"
-$RDECK_BASE/tools/bin/dispatch -p test --follow -u file:$DIR/dispatch-test.sh  > $DIR/exec.out
+dispatch -p test --follow -u file:$DIR/dispatch-test.sh  > $DIR/exec.out
 if [ 0 != $? ] ; then
 	echo Failed to follow dispatch url via cli : $!
 	exit 2
@@ -200,11 +204,9 @@ rm $DIR/exec.out
 #try loading yaml jobs
 
 echo "Loading some jobs via yaml"
-cp $DIR/test.jobs.yaml $DIR/test.jobs.expanded.yaml
+sed "s#@DIRNAME@#$DIR#" $SRC_DIR/test.jobs.yaml > $DIR/test.jobs.expanded.yaml
 
-sed -i '' "s#@DIRNAME@#$DIR#" $DIR/test.jobs.expanded.yaml
-
-$RDECK_BASE/tools/bin/rd-jobs load -F yaml -f $DIR/test.jobs.expanded.yaml > $DIR/load.out
+rd-jobs load -F yaml -f $DIR/test.jobs.expanded.yaml > $DIR/load.out
 if [ 0 != $? ] ; then
 	echo Failed to load jobs: $!
 	exit 2
@@ -223,7 +225,7 @@ rm $DIR/test.jobs.expanded.yaml
 
 echo "Listing jobs"
 
-$RDECK_BASE/tools/bin/rd-jobs list -p test  > $DIR/list.out
+rd-jobs list -p test  > $DIR/list.out
 if [ 0 != $? ] ; then
 	echo Failed to list jobs: $!
 	exit 2
@@ -240,7 +242,7 @@ rm $DIR/list.out
 
 echo "Listing jobs in XML"
 
-$RDECK_BASE/tools/bin/rd-jobs list -p test -f $DIR/list.out --format xml
+rd-jobs list -p test -f $DIR/list.out --format xml
 if [ 0 != $? ] ; then
 	echo Failed to list jobs: $!
 	exit 2
@@ -251,8 +253,6 @@ if [ ! -s $DIR/list.out ] ; then
 	exit 2
 fi
 
-# modify to point to xmlstarlet
-XMLSTARLET=xml
 
 $XMLSTARLET val $DIR/list.out
 if [ 0 != $? ] ; then
@@ -264,7 +264,7 @@ rm $DIR/list.out
 
 echo "Listing jobs in Yaml"
 
-$RDECK_BASE/tools/bin/rd-jobs list -p test -f $DIR/list.out --format yaml
+rd-jobs list -p test -f $DIR/list.out --format yaml
 if [ 0 != $? ] ; then
 	echo Failed to list jobs: $!
 	exit 2
@@ -285,7 +285,7 @@ rm $DIR/list.out
 
 echo "Test rd-queue"
 
-$RDECK_BASE/tools/bin/rd-queue list -p test  > $DIR/list.out
+rd-queue list -p test  > $DIR/list.out
 if [ 0 != $? ] ; then
 	echo Failed to list queue: $!
 	exit 2
@@ -296,7 +296,7 @@ rm $DIR/list.out
 # create secondary project and assert rd-queue requires -p parameter
 
 #create test project
-$RDECK_BASE/tools/bin/rd-project -p test2 -a create
+rd-project -p test2 -a create
 if [ 0 != $? ] ; then
 	echo Failed to create test 2project : $!
 	exit 2
@@ -304,7 +304,7 @@ fi
 
 echo "Test rd-queue requires -p argument"
 
-$RDECK_BASE/tools/bin/rd-queue list   > $DIR/list.out
+rd-queue list   > $DIR/list.out
 if [ 0 == $? ] ; then
 	echo Expected failure to rd-queue: $!
     cat $DIR/list.out
@@ -319,18 +319,18 @@ if [ -d "$RDECK_BASE/projects/test2" ] ; then
 	exit 2
 fi
 
-egrep 'https://' $RDECK_BASE/etc/framework.properties > /dev/null
+egrep 'https://' $RDECK_ETC/framework.properties > /dev/null
 https=$?
 
 if [ 0 = $https ] ; then
     # call api/testall.sh and use -k curl option to ignore server certificate
-    sh $DIR/api/testall.sh "https://localhost:4443" -k
+    sh $SRC_DIR/api/testall.sh "https://localhost:4443" -k
     #################
     # alternate args to curl to use a pem formatted cert to verify server cert:
-    #sh $DIR/testweb.sh "https://localhost:4443" "--cacert $RDECK_BASE/etc/rundeck.server.pem"
+    #sh $SRC_DIR/testweb.sh "https://localhost:4443" "--cacert $RDECK_ETC/rundeck.server.pem"
     ################
 else
-    sh $DIR/api/testall.sh "http://localhost:4440"
+    sh $SRC_DIR/api/testall.sh "http://localhost:4440"
 fi
 
 if [ 0 != $? ] ; then

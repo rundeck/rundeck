@@ -23,13 +23,14 @@ xmlproj=$($XMLSTARLET esc "$project")
 xmlhost=$($XMLSTARLET esc $(hostname))
 
 #determine h:m:s to run, 10 seconds from now
-NDATE=$(date -v '+10S' '+%Y %m %d %H %M %S')
+NDATE=$(date '+%Y %m %d %H %M %S')
 NY=$(echo $NDATE | cut -f 1 -d ' ')
 NMO=$(echo $NDATE | cut -f 2 -d ' ')
 ND=$(echo $NDATE | cut -f 3 -d ' ')
 NH=$(echo $NDATE | cut -f 4 -d ' ')
 NM=$(echo $NDATE | cut -f 5 -d ' ')
 NS=$(echo $NDATE | cut -f 6 -d ' ')
+NS=$(( $NS + 10 ))
 
 #produce job.xml content corresponding to the dispatch request
 cat > $DIR/temp.out <<END
@@ -78,7 +79,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
+sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #result will contain list of failed and succeeded jobs, in this
 #case there should only be 1 failed or 1 succeeded since we submit only 1
@@ -106,7 +107,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
+sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #result will contain list of failed and succeeded jobs, in this
 #case there should only be 1 failed or 1 succeeded since we submit only 1
@@ -133,7 +134,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
+sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #result will contain list of failed and succeeded jobs, in this
 #case there should only be 1 failed or 1 succeeded since we submit only 1

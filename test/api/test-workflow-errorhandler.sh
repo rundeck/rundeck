@@ -82,7 +82,7 @@ END
       exit 2
   fi
 
-  sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
+  sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
   #result will contain list of failed and succeeded jobs, in this
   #case there should only be 1 failed or 1 succeeded since we submit only 1
@@ -117,7 +117,7 @@ runjob(){
   fi
 
   #test success result
-  sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
+  sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
   #get execid
 
@@ -141,37 +141,9 @@ waitexecstatus(){
   expectstatus=$1
   shift
   # sleep
-
-  sleep 2
-
-  #test that execution succeeded
-
-  ####
-  # Test:
-  ####
-
-  # execution result
-  runurl="${APIURL}/execution/${execid}"
-
-  params=""
-
-  # get listing
-  docurl ${runurl}?${params} > $DIR/curl.out
-  if [ 0 != $? ] ; then
-      errorMsg "ERROR: failed query request"
-      exit 2
-  fi
-
-  sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
-
-  #Check projects list
-  itemcount=$($XMLSTARLET sel -T -t -v "/result/executions/@count" $DIR/curl.out)
-  assert "1" "$itemcount" "execution count should be 1"
-
-  execstatus=$($XMLSTARLET sel -T -t -v "//execution[@id=$execid]/@status" $DIR/curl.out)
-
-  assert "$expectstatus" "$execstatus" "status should be $expectstatus"
-
+  # 
+  rd-queue follow -q -e $execid || fail "Waiting for $execid to finish"
+  sh $SRC_DIR/api-expect-exec-success.sh $execid $expectstatus || exit 2
 }
 
 

@@ -1,6 +1,7 @@
 #!/bin/bash
-DIR=$(cd `dirname $0` && pwd)
-cd $DIR
+SRC_DIR=$(cd `dirname $0` && pwd)
+DIR=${TMP_DIR:-$SRC_DIR}
+cd $SRC_DIR
 URL=${1:-"http://localhost:4440"}
 
 die() {
@@ -25,7 +26,7 @@ done
 
 #perform login
 rm $DIR/cookies
-sh $DIR/rundecklogin.sh $URL $USER $PASS >/dev/null && echo "Login: OK" || die "Login: FAILED"
+sh $SRC_DIR/rundecklogin.sh $URL $USER $PASS >/dev/null && echo "Login: OK" || die "Login: FAILED"
 
 for i in $(ls ./test-*.sh) ; do
     sh ${i} ${URL} >/dev/null

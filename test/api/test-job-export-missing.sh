@@ -18,7 +18,7 @@ runurl="${APIURL}/job/9000"
 params=""
 
 # expect error message
-sh $DIR/api-expect-error.sh "${runurl}" "${params}" "Job ID does not exist: 9000" || exit 2
+sh $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "Job ID does not exist: 9000" || exit 2
 echo "OK"
 
 
