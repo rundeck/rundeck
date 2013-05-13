@@ -35,6 +35,8 @@ class FrameworkService implements ApplicationContextAware {
     def File varDir
     String rundeckbase
     String depsdir
+    String serverUUID
+    boolean clusterModeEnabled
     SAREAuthorization aclpolicies
 
     def ApplicationContext applicationContext
@@ -56,6 +58,9 @@ class FrameworkService implements ApplicationContextAware {
 
     // Initailize the Framework
     def initialize() {
+        if(initialized){
+            return
+        }
         if (!applicationContext){
             throw new IllegalStateException("ApplicationContext instance not found!")
         }
@@ -74,7 +79,9 @@ class FrameworkService implements ApplicationContextAware {
 
         aclpolicies= new SAREAuthorization(new File(Constants.getFrameworkConfigDir(rundeckbase)))
 
-        initialized = true 
+        clusterModeEnabled = applicationContext.getServletContext().getAttribute("CLUSTER_MODE_ENABLED")=='true'
+        serverUUID = applicationContext.getServletContext().getAttribute("SERVER_UUID")
+        initialized = true
     }
    
     def getVarDir() {

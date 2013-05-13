@@ -73,6 +73,7 @@ class ScheduledExecution extends ExecutionContext {
         description(nullable:true)
         uuid(unique: true, nullable:true, blank:false, matches: /^\S+$/)
         multipleExecutions(nullable: true)
+        serverNodeUUID(maxSize: 1024, nullable: true)
     }
 
     static mapping = {

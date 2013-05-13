@@ -46,6 +46,7 @@ class Execution extends ExecutionContext {
         nodeRankAttribute(nullable: true)
         failedNodeList(nullable:true, blank:true)
         abortedby(nullable:true, blank:true)
+        serverNodeUUID(maxSize: 1024, nullable: true)
     }
 
     static mapping = {

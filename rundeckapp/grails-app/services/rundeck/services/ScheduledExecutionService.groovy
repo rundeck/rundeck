@@ -6,6 +6,7 @@ import com.dtolabs.rundeck.server.authorization.AuthConstants
 import org.apache.commons.validator.EmailValidator
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
+import org.hibernate.StaleObjectStateException
 import org.quartz.*
 import org.springframework.context.MessageSource
 import org.springframework.web.context.request.RequestContextHolder
@@ -266,11 +267,52 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         return groupMap
     }
 
-    def rescheduleJobs(){
-        def schedJobs=ScheduledExecution.findAllByScheduled(true)
-        schedJobs.each{ ScheduledExecution se->
+    private boolean claimScheduledJob(ScheduledExecution scheduledExecution, String serverUUID){
+        def schedId=scheduledExecution.id
+        def claimed=false
+        try {
+            ScheduledExecution.withNewSession {
+                scheduledExecution = ScheduledExecution.lock(schedId)
+                scheduledExecution.refresh()
+                if (!scheduledExecution.scheduled) {
+                    return
+                }
+                scheduledExecution.serverNodeUUID=serverUUID
+                if (scheduledExecution.save(flush: true)) {
+                    claimed=true
+                    log.info("claimScheduledJob: schedule claimed for ${schedId} on node ${serverUUID}")
+                } else {
+                    log.debug("claimScheduledJob: failed for ${schedId} on node ${serverUUID}")
+                }
+            }
+        } catch (org.springframework.dao.OptimisticLockingFailureException e) {
+            log.debug("claimScheduledJob: success for ${schedId} on node ${serverUUID}")
+        } catch (StaleObjectStateException e) {
+            log.debug("claimScheduledJob: success for ${schedId} on node ${serverUUID}")
+        }
+        return claimed
+    }
+
+    /**
+     * Claim scheduling for any jobs not assigned to this serverUUID
+     * @param serverUUID
+     * @return
+     */
+    def claimScheduledJobs(String serverUUID) {
+        ScheduledExecution.findAllByScheduledAndServerNodeUUID(true, null).each { ScheduledExecution se ->
+            claimScheduledJob(se,serverUUID)
+        }
+    }
+    /**
+     * Reschedule all scheduled jobs which match the given serverUUID, or all jobs if it is null.
+     * @param serverUUID
+     * @return
+     */
+    def rescheduleJobs(String serverUUID=null) {
+        def schedJobs = serverUUID ? ScheduledExecution.findAllByScheduledAndServerNodeUUID(true, serverUUID) : ScheduledExecution.findAllByScheduled(true)
+        schedJobs.each { ScheduledExecution se ->
             try {
-                scheduleJob(se,null,null)
+                scheduleJob(se, null, null)
                 log.error("rescheduled job: ${se.id}")
             } catch (Exception e) {
                 log.error("Job not rescheduled: ${se.id}: ${e.message}")

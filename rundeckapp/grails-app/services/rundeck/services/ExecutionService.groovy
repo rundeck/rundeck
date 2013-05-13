@@ -439,10 +439,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
 
     /**
      * Set the result status to FAIL for any Executions that are not complete
+     * @param serverUUID if not null, only match executions assigned to the given serverUUID
      */
-    def cleanupRunningJobs(){
-        Execution.findAllByDateCompleted(null).each{Execution e->
-            saveExecutionState(e.scheduledExecution?.id, e.id, [status: String.valueOf(false), dateCompleted: new Date(), cancelled: true],null)
+    def cleanupRunningJobs(String serverUUID=null) {
+        def found = serverUUID ? Execution.findAllByDateCompletedAndServerNodeUUID(null, serverUUID) : Execution.findAllByDateCompleted(null)
+        found.each { Execution e ->
+            saveExecutionState(e.scheduledExecution?.id, e.id, [status: String.valueOf(false), dateCompleted: new Date(), cancelled: true], null)
             log.error("Stale Execution cleaned up: [${e.id}]")
         }
     }
