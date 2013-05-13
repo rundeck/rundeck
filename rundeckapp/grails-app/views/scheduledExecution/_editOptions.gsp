@@ -14,7 +14,6 @@
 
 </div>
 
-<g:if test="${!scheduledExecution.adhocExecution }">
 <span class="prompt">Job Options:</span>
 <div class="presentation">
     <g:hasErrors bean="${scheduledExecution}" field="argString">
@@ -27,27 +26,7 @@
                   model="[paramsPrefix:'extra.',selectedargstring:selectedargstring,selectedoptsmap:selectedoptsmap,notfound:commandnotfound,authorized:authorized,optionSelections:scheduledExecution?.options?scheduledExecution.options:null,scheduledExecutionId:scheduledExecution.id,jobexecOptionErrors:jobexecOptionErrors, optiondependencies: optiondependencies, dependentoptions: dependentoptions, optionordering: optionordering]"/>
     </div>
 </div>
-</g:if>
-<g:if test="${scheduledExecution.adhocExecution && (scheduledExecution.adhocFilepath||scheduledExecution.adhocLocalString)}">
-    <span class="prompt">Script Arguments:</span>
-    <div class="presentation">
-        <g:hasErrors bean="${scheduledExecution}" field="argString">
-            <div class="fieldError">
-                <g:renderErrors bean="${scheduledExecution}" as="list" field="argString"/>
-            </div>
-        </g:hasErrors>
 
-        <span class="input">
-            <input type='text' name="extra.argString" value='${scheduledExecution?.argString?.encodeAsHTML()}' id="schedJobArgString" size="40"/>
-            <g:hasErrors bean="${scheduledExecution}" field="argString">
-                <img src="${resource( dir:'images',file:'icon-small-warn.png' )}" alt="Error"  width="16px" height="16px"/>
-            </g:hasErrors>
-        </span>
-        <span class="info note">
-            Enter arguments to the script.
-        </span>
-    </div>
-</g:if>
 
 <span class="prompt">Log level:</span>
 <div class="presentation">

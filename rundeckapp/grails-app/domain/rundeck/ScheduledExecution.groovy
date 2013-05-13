@@ -71,10 +71,6 @@ class ScheduledExecution extends ExecutionContext {
         seconds(nullable:true)
         year(nullable:true)
         description(nullable:true)
-        adhocExecution(nullable:true)
-        adhocRemoteString(nullable:true, blank:true)
-        adhocLocalString(nullable:true, blank:true)
-        adhocFilepath(nullable:true, blank:true)
         uuid(unique: true, nullable:true, blank:false, matches: /^\S+$/)
         multipleExecutions(nullable: true)
     }
@@ -96,9 +92,6 @@ class ScheduledExecution extends ExecutionContext {
         nodeIncludeOsVersion(type: 'text')
         nodeExcludeOsVersion(type: 'text')
 
-        adhocLocalString type: 'text'
-        adhocRemoteString type: 'text'
-        adhocFilepath type: 'text'
         argString type: 'text'
         description type: 'text'
         jobName type: 'text'

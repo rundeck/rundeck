@@ -197,7 +197,6 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertEquals 'monkey1', execution.jobName
             assertEquals 'testProject', execution.project
             assertEquals 'blah', execution.description
-            assertFalse execution.adhocExecution
             assertNotNull execution.workflow
             assertEquals 1, execution.workflow.commands.size()
             final CommandExec exec = execution.workflow.commands[0]
@@ -615,15 +614,12 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertEquals 'monkey1', execution.jobName
             assertEquals 'testProject', execution.project
             assertEquals 'blah', execution.description
-            assertFalse execution.adhocExecution
             assertNotNull execution.workflow
             assertNotNull execution.workflow.commands
             assertEquals 1, execution.workflow.commands.size()
             def CommandExec cexec = execution.workflow.commands[0]
             assertTrue cexec.adhocExecution
             assertEquals 'test what', cexec.adhocRemoteString
-            assertNull execution.adhocLocalString
-            assertNull execution.adhocFilepath
             assertNull execution.argString
         }
         if (true) {//test basic passing input (adhocLocalString)
@@ -660,15 +656,12 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertEquals 'monkey1', execution.jobName
             assertEquals 'testProject', execution.project
             assertEquals 'blah', execution.description
-            assertFalse execution.adhocExecution
             assertNotNull execution.workflow
             assertNotNull execution.workflow.commands
             assertEquals 1, execution.workflow.commands.size()
             def CommandExec cexec = execution.workflow.commands[0]
             assertTrue cexec.adhocExecution
             assertEquals 'test what', cexec.adhocLocalString
-            assertNull execution.adhocRemoteString
-            assertNull execution.adhocFilepath
             assertNull execution.argString
         }
         if (true) {//test basic passing input (adhocFilepath)
@@ -705,15 +698,12 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertEquals 'monkey1', execution.jobName
             assertEquals 'testProject', execution.project
             assertEquals 'blah', execution.description
-            assertFalse execution.adhocExecution
             assertNotNull execution.workflow
             assertNotNull execution.workflow.commands
             assertEquals 1, execution.workflow.commands.size()
             def CommandExec cexec = execution.workflow.commands[0]
             assertTrue cexec.adhocExecution
             assertEquals 'test what', cexec.adhocFilepath
-            assertNull execution.adhocLocalString
-            assertNull execution.adhocRemoteString
             assertNull execution.argString
         }
         if (true) {//test argString input for adhocFilepath
@@ -754,15 +744,12 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertEquals 'monkey1', execution.jobName
             assertEquals 'testProject', execution.project
             assertEquals 'blah', execution.description
-            assertFalse execution.adhocExecution
             assertNotNull execution.workflow
             assertNotNull execution.workflow.commands
             assertEquals 1, execution.workflow.commands.size()
             def CommandExec cexec = execution.workflow.commands[0]
             assertTrue cexec.adhocExecution
             assertEquals 'test file', cexec.adhocFilepath
-            assertNull execution.adhocLocalString
-            assertNull execution.adhocRemoteString
             assertEquals 'test args', execution.argString
         }
         if (true) {//test argString input for adhocRemoteString argString should be set
@@ -780,7 +767,7 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             }
             testService.frameworkService = fwkControl.createMock()
 
-            def params = [jobName: 'monkey1', project: 'testProject', description: 'blah', type: '', command: '',
+            def params = [jobName: 'monkey1', project: 'testProject', description: 'blah',
                     adhocExecution: true,
                     adhocExecutionType: 'remote',
                     adhocRemoteString: 'test remote',
@@ -804,15 +791,12 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertEquals 'monkey1', execution.jobName
             assertEquals 'testProject', execution.project
             assertEquals 'blah', execution.description
-            assertFalse execution.adhocExecution
             assertNotNull execution.workflow
             assertNotNull execution.workflow.commands
             assertEquals 1, execution.workflow.commands.size()
             def CommandExec cexec = execution.workflow.commands[0]
             assertTrue cexec.adhocExecution
             assertEquals 'test remote', cexec.adhocRemoteString
-            assertNull execution.adhocLocalString
-            assertNull execution.adhocFilepath
             assertEquals 'test args', execution.argString
         }
         if (true) {//test argString input for adhocLocalString
@@ -830,7 +814,7 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             }
             testService.frameworkService = fwkControl.createMock()
 
-            def params = [jobName: 'monkey1', project: 'testProject', description: 'blah', type: '', command: '',
+            def params = [jobName: 'monkey1', project: 'testProject', description: 'blah',
                     adhocExecution: true,
                     adhocExecutionType: 'local',
                     adhocLocalString: 'test local',
@@ -854,15 +838,12 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertEquals 'monkey1', execution.jobName
             assertEquals 'testProject', execution.project
             assertEquals 'blah', execution.description
-            assertFalse execution.adhocExecution
             assertNotNull execution.workflow
             assertNotNull execution.workflow.commands
             assertEquals 1, execution.workflow.commands.size()
             def CommandExec cexec = execution.workflow.commands[0]
             assertTrue cexec.adhocExecution
             assertEquals 'test local', cexec.adhocLocalString
-            assertNull execution.adhocFilepath
-            assertNull execution.adhocRemoteString
             assertEquals 'test args', execution.argString
         }
     }
@@ -909,7 +890,6 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertEquals 'monkey1', execution.jobName
             assertEquals 'testProject', execution.project
             assertEquals 'blah', execution.description
-            assertFalse execution.adhocExecution
             assertNotNull execution.workflow
             assertNotNull execution.workflow.commands
             assertEquals 1, execution.workflow.commands.size()
@@ -917,8 +897,6 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertTrue cexec.adhocExecution
             assertEquals 'test command', cexec.adhocRemoteString
             assertNull cexec.adhocFilepath
-            assertNull execution.adhocLocalString
-            assertNull execution.adhocRemoteString
             assertNull execution.argString
 
             assertNotNull execution.notifications
@@ -964,7 +942,6 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertEquals 'monkey1', execution.jobName
             assertEquals 'testProject', execution.project
             assertEquals 'blah', execution.description
-            assertFalse execution.adhocExecution
             assertNotNull execution.workflow
             assertNotNull execution.workflow.commands
             assertEquals 1, execution.workflow.commands.size()
@@ -972,8 +949,6 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertTrue cexec.adhocExecution
             assertEquals 'test command', cexec.adhocRemoteString
             assertNull cexec.adhocFilepath
-            assertNull execution.adhocLocalString
-            assertNull execution.adhocRemoteString
             assertNull execution.argString
 
             assertNotNull execution.notifications
@@ -1032,7 +1007,6 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertEquals 'monkey1', execution.jobName
             assertEquals 'testProject', execution.project
             assertEquals 'blah', execution.description
-            assertFalse execution.adhocExecution
             assertNotNull execution.workflow
             assertNotNull execution.workflow.commands
             assertEquals 1, execution.workflow.commands.size()
@@ -1040,8 +1014,6 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertTrue cexec.adhocExecution
             assertEquals 'test command', cexec.adhocRemoteString
             assertNull cexec.adhocFilepath
-            assertNull execution.adhocLocalString
-            assertNull execution.adhocRemoteString
             assertNull execution.argString
 
             assertNotNull execution.notifications
@@ -1581,7 +1553,7 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
     public void testDoUpdate() {
         def sec = new ScheduledExecutionService()
         if (true) {//test update basic job details
-            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: true, adhocRemoteString: 'test command',)
+            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah')
             se.save()
 
             assertNotNull se.id
@@ -1628,7 +1600,6 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertEquals 'testProject2', execution.project
             assertEquals 'blah', execution.description
 
-            assertFalse execution.adhocExecution
             assertNotNull execution.workflow
             assertNotNull execution.workflow.commands
             assertEquals 1, execution.workflow.commands.size()
@@ -1636,8 +1607,6 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertTrue cexec.adhocExecution
             assertEquals 'test command', cexec.adhocRemoteString
             assertNull cexec.adhocFilepath
-            assertNull execution.adhocLocalString
-            assertNull execution.adhocRemoteString
             assertNull execution.argString
 
             assertNull execution.notifications
@@ -1731,7 +1700,6 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertEquals 'testProject2', execution.project
             assertEquals 'blah', execution.description
 
-            assertFalse execution.adhocExecution
             assertNotNull execution.workflow
             assertNotNull execution.workflow.commands
             assertEquals 1, execution.workflow.commands.size()
@@ -1739,15 +1707,13 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertTrue cexec.adhocExecution
             assertEquals 'test command', cexec.adhocRemoteString
             assertNull cexec.adhocFilepath
-            assertNull execution.adhocLocalString
-            assertNull execution.adhocRemoteString
             assertNull execution.argString
 
             assertNull execution.notifications
             assertNull execution.options
         }
         if (true) {//test update basic job details
-            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: true, adhocRemoteString: 'test command',)
+            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah', )
             se.save()
 
             assertNotNull se.id
@@ -1805,7 +1771,7 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             sec.frameworkService = fwkControl.createMock()
 
             def eh1 = new CommandExec(adhocRemoteString: 'err command')
-            def params = new ScheduledExecution(jobName: 'monkey2', project: 'testProject2', description: 'blah', adhocExecution: true, adhocRemoteString: 'test command',
+            def params = new ScheduledExecution(jobName: 'monkey2', project: 'testProject2', description: 'blah',
                                                 workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', errorHandler: eh1)])
             )
             def results = sec._doupdateJob(se.id.toString(), params, 'test', 'test', null)
@@ -1827,7 +1793,6 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertEquals 'testProject2', execution.project
             assertEquals 'blah', execution.description
 
-            assertFalse execution.adhocExecution
             assertNotNull execution.workflow
             assertNotNull execution.workflow.commands
             assertEquals 1, execution.workflow.commands.size()
@@ -1882,7 +1847,6 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertEquals 'testProject2', execution.project
             assertEquals 'blah', execution.description
 
-            assertFalse execution.adhocExecution
             assertNotNull execution.workflow
             assertNotNull execution.workflow.commands
             assertEquals 1, execution.workflow.commands.size()
@@ -3227,7 +3191,6 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertEquals 'monkey2', execution.jobName
             assertEquals 'testProject2', execution.project
             assertEquals 'blah', execution.description
-            assertFalse execution.adhocExecution
             assertNotNull execution.workflow
             assertNotNull execution.workflow.commands
             assertEquals 1, execution.workflow.commands.size()
@@ -3243,8 +3206,7 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
         }
         if (true) {//test update from one adhoc type to another; remote -> file
             def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah',
-                                            adhocExecution: true, adhocRemoteString: 'test remote',
-                                            command: '', type: '',)
+                                            adhocExecution: true,)
             se.save()
 
             assertNotNull se.id
@@ -3285,7 +3247,6 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertEquals 'monkey2', execution.jobName
             assertEquals 'testProject2', execution.project
             assertEquals 'blah', execution.description
-            assertFalse execution.adhocExecution
             assertNotNull execution.workflow
             assertNotNull execution.workflow.commands
             assertEquals 1, execution.workflow.commands.size()
@@ -3344,7 +3305,6 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertEquals 'monkey2', execution.jobName
             assertEquals 'testProject2', execution.project
             assertEquals 'blah', execution.description
-            assertFalse execution.adhocExecution
             assertNotNull execution.workflow
             assertNotNull execution.workflow.commands
             assertEquals 1, execution.workflow.commands.size()
@@ -3402,7 +3362,6 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertEquals 'monkey2', execution.jobName
             assertEquals 'testProject2', execution.project
             assertEquals 'blah', execution.description
-            assertFalse execution.adhocExecution
             assertNotNull execution.workflow
             assertNotNull execution.workflow.commands
             assertEquals 1, execution.workflow.commands.size()
@@ -3460,7 +3419,6 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertEquals 'monkey2', execution.jobName
             assertEquals 'testProject2', execution.project
             assertEquals 'blah', execution.description
-            assertFalse execution.adhocExecution
             assertNotNull execution.workflow
             assertNotNull execution.workflow.commands
             assertEquals 1, execution.workflow.commands.size()
@@ -3518,7 +3476,6 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertEquals 'monkey2', execution.jobName
             assertEquals 'testProject2', execution.project
             assertEquals 'blah', execution.description
-            assertFalse execution.adhocExecution
             assertNotNull execution.workflow
             assertNotNull execution.workflow.commands
             assertEquals 1, execution.workflow.commands.size()
@@ -3626,7 +3583,6 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
         assertEquals 'monkey2', execution.jobName
         assertEquals 'testProject2', execution.project
         assertEquals 'blah', execution.description
-        assertFalse execution.adhocExecution
         assertNotNull execution.workflow
         assertNotNull execution.workflow.commands
         assertEquals 1, execution.workflow.commands.size()
@@ -3698,7 +3654,6 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertEquals 'monkey1', execution.jobName
             assertEquals 'testProject', execution.project
             assertEquals 'blah2', execution.description
-            assertFalse execution.adhocExecution
             assertNotNull execution.workflow
             assertNotNull execution.workflow.commands
             assertEquals 1, execution.workflow.commands.size()
@@ -3706,8 +3661,6 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertTrue cexec.adhocExecution
             assertEquals 'test command', cexec.adhocRemoteString
             assertNull cexec.adhocFilepath
-            assertNull execution.adhocLocalString
-            assertNull execution.adhocRemoteString
             assertNull execution.argString
 
             assertNotNull execution.notifications
@@ -3779,7 +3732,6 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertEquals 'monkey1', execution.jobName
             assertEquals 'testProject', execution.project
             assertEquals 'blah2', execution.description
-            assertFalse execution.adhocExecution
             assertNotNull execution.workflow
             assertNotNull execution.workflow.commands
             assertEquals 1, execution.workflow.commands.size()
@@ -3787,8 +3739,6 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertTrue cexec.adhocExecution
             assertEquals 'test command', cexec.adhocRemoteString
             assertNull cexec.adhocFilepath
-            assertNull execution.adhocLocalString
-            assertNull execution.adhocRemoteString
             assertNull execution.argString
 
             assertNotNull execution.notifications
@@ -3861,7 +3811,6 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertEquals 'monkey1', execution.jobName
             assertEquals 'testProject', execution.project
             assertEquals 'blah2', execution.description
-            assertFalse execution.adhocExecution
             assertNotNull execution.workflow
             assertNotNull execution.workflow.commands
             assertEquals 1, execution.workflow.commands.size()
@@ -3869,8 +3818,6 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertTrue cexec.adhocExecution
             assertEquals 'test command', cexec.adhocRemoteString
             assertNull cexec.adhocFilepath
-            assertNull execution.adhocLocalString
-            assertNull execution.adhocRemoteString
             assertNull execution.argString
 
             assertTrue(execution.notifications==null || execution.notifications.size()==0)
@@ -3931,7 +3878,6 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertEquals 'monkey1', execution.jobName
             assertEquals 'testProject', execution.project
             assertEquals 'blah2', execution.description
-            assertFalse execution.adhocExecution
             assertNotNull execution.workflow
             assertNotNull execution.workflow.commands
             assertEquals 1, execution.workflow.commands.size()
@@ -3939,8 +3885,6 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertTrue cexec.adhocExecution
             assertEquals 'test command', cexec.adhocRemoteString
             assertNull cexec.adhocFilepath
-            assertNull execution.adhocLocalString
-            assertNull execution.adhocRemoteString
             assertNull execution.argString
 
             assertTrue(execution.notifications == null || execution.notifications.size() == 0)
@@ -4003,7 +3947,6 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertEquals 'testProject', execution.project
             assertEquals 'blah', execution.description
 
-            assertFalse execution.adhocExecution
             assertNotNull execution.workflow
             assertNotNull execution.workflow.commands
             assertEquals 1, execution.workflow.commands.size()
@@ -4011,8 +3954,6 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertTrue cexec.adhocExecution
             assertEquals 'test command', cexec.adhocRemoteString
             assertNull cexec.adhocFilepath
-            assertNull execution.adhocLocalString
-            assertNull execution.adhocRemoteString
             assertNull execution.argString
 
             assertNotNull execution.notifications
@@ -4089,7 +4030,6 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertEquals 'monkey1', execution.jobName
             assertEquals 'testProject', execution.project
             assertEquals 'blah', execution.description
-            assertFalse execution.adhocExecution
             assertNotNull execution.workflow
             assertNotNull execution.workflow.commands
             assertEquals 1, execution.workflow.commands.size()
@@ -4097,8 +4037,6 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertTrue cexec.adhocExecution
             assertEquals 'test command', cexec.adhocRemoteString
             assertNull cexec.adhocFilepath
-            assertNull execution.adhocLocalString
-            assertNull execution.adhocRemoteString
             assertNull execution.argString
 
             assertNotNull execution.notifications
@@ -4152,7 +4090,7 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
 //            sesControl.demand.getByIDorUUID {id -> return se }
 //            sec.scheduledExecutionService = sesControl.createMock()
 
-            def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: true, adhocRemoteString: 'test command',
+            def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah',
                     notifyOnsuccess: 'true', notifySuccessRecipients: 'spaghetti@ nowhere.com',
                     notifyOnfailure: 'true', notifyFailureRecipients: 'milkstore.com',
             ]
@@ -4179,8 +4117,6 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertEquals 'monkey1', execution.jobName
             assertEquals 'testProject', execution.project
             assertEquals 'blah', execution.description
-            assertEquals 'test command', execution.adhocRemoteString
-            assertTrue execution.adhocExecution
             assertNotNull execution.notifications
             assertEquals 2, execution.notifications.size()
             def nmap = [:]
@@ -4257,7 +4193,6 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertEquals 'testProject', execution.project
             assertEquals 'blah', execution.description
 
-            assertFalse execution.adhocExecution
             assertNotNull execution.workflow
             assertNotNull execution.workflow.commands
             assertEquals 1, execution.workflow.commands.size()
@@ -4265,8 +4200,6 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertTrue cexec.adhocExecution
             assertEquals 'test command', cexec.adhocRemoteString
             assertNull cexec.adhocFilepath
-            assertNull execution.adhocLocalString
-            assertNull execution.adhocRemoteString
             assertNull execution.argString
 
             assertNotNull execution.notifications
@@ -4347,8 +4280,6 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertEquals 'monkey1', execution.jobName
             assertEquals 'testProject', execution.project
             assertEquals 'blah', execution.description
-            assertEquals 'test command', execution.adhocRemoteString
-            assertTrue execution.adhocExecution
             assertNotNull execution.notifications
             assertEquals 2, execution.notifications.size()
             def nmap = [:]

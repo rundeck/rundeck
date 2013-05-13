@@ -183,7 +183,6 @@ class BootStrap {
 
              executionService.cleanupRunningJobs()
              scheduledExecutionService.rescheduleJobs()
-             scheduledExecutionService.convertNonWorkflowJobs()
          }
 
         

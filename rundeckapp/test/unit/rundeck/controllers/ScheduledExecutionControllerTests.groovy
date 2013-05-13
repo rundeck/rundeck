@@ -63,7 +63,7 @@ class ScheduledExecutionControllerTests extends ControllerUnitTestCase {
         mockDomain(ScheduledExecution)
         mockDomain(Option)
         ConfigurationHolder.metaClass.getConfig = {-> [:] }
-        ScheduledExecution se = new ScheduledExecution(jobName: 'blue', groupPath:'some/where',description:'a job',project:'AProject',argString:'-a b -c d',adhocExecution:false)
+        ScheduledExecution se = new ScheduledExecution(jobName: 'blue', groupPath:'some/where',description:'a job',project:'AProject',argString:'-a b -c d')
 
         final Option option = new Option(name: 'test1', enforced: false)
         se.addToOptions(option)
@@ -78,7 +78,6 @@ class ScheduledExecutionControllerTests extends ControllerUnitTestCase {
         assertEquals 'a+job', ctrl.expandUrl(option, '${job.description}', se)
         assertEquals 'AProject', ctrl.expandUrl(option, '${job.project}', se)
         assertEquals '-a+b+-c+d', ctrl.expandUrl(option, '${job.argString}', se)
-        assertEquals 'false', ctrl.expandUrl(option, '${job.adhoc}', se)
         assertEquals '${job.noexist}', ctrl.expandUrl(option, '${job.noexist}', se)
         assertEquals 'http://test/action?name=blue&option=test1&project=AProject',
             ctrl.expandUrl(option, 'http://test/action?name=${job.name}&option=${option.name}&project=${job.project}', se)

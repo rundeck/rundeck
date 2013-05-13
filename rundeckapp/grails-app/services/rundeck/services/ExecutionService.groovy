@@ -501,8 +501,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
         String lognamespace="rundeck"
         if(execution.workflow){
             lognamespace="workflow"
-        }else if (execution.adhocExecution && (execution.adhocRemoteString || execution.adhocLocalString || execution.adhocFilepath)){
-            lognamespace="run"
         }else{
             lognamespace=execution.command
         }
@@ -569,10 +567,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
      * and if that does not exist then based on execution type and context.
      */
     def String createOutputFilepathForExecution(Execution execution, Framework framework){
-        def String name=(execution.adhocExecution?'run':(execution.workflow?'workflow':execution.command))+"-"+generateTimestamp()+"_"+generateUniqueId()+".txt"
-        if(execution.id){
-            name=execution.id.toString()+".txt"
-        }
+        String name=execution.id.toString()+".txt"
         if(execution.scheduledExecution){
             return new File(maybeCreateJobLogDir(execution.scheduledExecution,framework),name).getAbsolutePath()
         }else{

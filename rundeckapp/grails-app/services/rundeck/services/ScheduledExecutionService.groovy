@@ -277,37 +277,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             }
         }
     }
-    boolean convertNonWorkflow(ScheduledExecution se){
-        def kprops=['argString','adhocLocalString','adhocRemoteString','adhocFilepath']
-        def props = se.properties.findAll{it.key=~/^(type|name|command|argString|adhocExecution|adhoc.*String|adhocFilepath)$/}
-        if(props){
-            def Workflow workflow = new Workflow(threadcount:1,keepgoing:true)
-            def cexec
-            if(props.jobName){
-                cexec = new JobExec(props)
-            }else{
-                //TODO
-                cexec = new CommandExec(props)
-            }
-            workflow.commands = new ArrayList()
-            workflow.commands.add(cexec)
-            se.workflow=workflow
-            se.adhocExecution=false
-            kprops.each{k->
-                se[k]=null
-            }
-            return true
-        }
-        return false
-    }
-    def convertNonWorkflowJobs(){
-        def nonwfjobs = ScheduledExecution.findAllByWorkflowIsNull()
-        nonwfjobs.each{ScheduledExecution se->
-            def ok=convertNonWorkflow(se)
-            se.save()
-            log.error("Converted non-workflow job: ${se.id}: success? ${ok}")
-        }
-    }
+
     /**
      *  Return a Map with a tree structure of the available grouppaths, and their job counts
      * <pre>
@@ -974,11 +944,6 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             params.workflow.keepgoing = true
             params['_workflow_data'] = true
         }
-        //clear old mode job properties
-        scheduledExecution.adhocExecution = false;
-        scheduledExecution.adhocRemoteString = null
-        scheduledExecution.adhocLocalString = null
-        scheduledExecution.adhocFilepath = null
 
         if (!scheduledExecution.validate()) {
             failed = true
@@ -1460,12 +1425,6 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             scheduledExecution.description = ''
         }
 
-        //clear old mode job properties
-        scheduledExecution.adhocExecution = false;
-        scheduledExecution.adhocRemoteString = null
-        scheduledExecution.adhocLocalString = null
-        scheduledExecution.adhocFilepath = null
-
         if (!scheduledExecution.validate()) {
             failed = true
         }
@@ -1792,11 +1751,6 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             params.workflow.threadcount = 1
             params.workflow.keepgoing = true
         }
-        //clear old mode job properties
-        scheduledExecution.adhocExecution = false;
-        scheduledExecution.adhocRemoteString = null
-        scheduledExecution.adhocLocalString = null
-        scheduledExecution.adhocFilepath = null
 
         def valid = scheduledExecution.validate()
         if (scheduledExecution.scheduled) {

@@ -44,10 +44,6 @@ class Execution extends ExecutionContext {
         nodeThreadcount(nullable:true)
         nodeRankOrderAscending(nullable: true)
         nodeRankAttribute(nullable: true)
-        adhocExecution(nullable:true)
-        adhocRemoteString(nullable:true, blank:true)
-        adhocLocalString(nullable:true, blank:true)
-        adhocFilepath(nullable:true, blank:true)
         failedNodeList(nullable:true, blank:true)
         abortedby(nullable:true, blank:true)
     }
@@ -75,9 +71,6 @@ class Execution extends ExecutionContext {
         nodeIncludeOsVersion(type: 'text')
         nodeExcludeOsVersion(type: 'text')
 
-        adhocLocalString type: 'text'
-        adhocRemoteString type: 'text'
-        adhocFilepath type: 'text'
     }
 
 
