@@ -46,7 +46,12 @@ class Execution extends ExecutionContext {
         nodeRankAttribute(nullable: true)
         failedNodeList(nullable:true, blank:true)
         abortedby(nullable:true, blank:true)
-        serverNodeUUID(maxSize: 1024, nullable: true)
+        serverNodeUUID(size:36..36, blank: true, nullable: true, validator: { val, obj ->
+            if (null == val) return true;
+            try { return null!= UUID.fromString(val) } catch (IllegalArgumentException e) {
+                return false
+            }
+        })
     }
 
     static mapping = {
