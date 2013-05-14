@@ -1539,37 +1539,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
             }
         }
     }
-    def saveExecutionState( scheduledExecutionId, Map execMap) {
-        def ScheduledExecution scheduledExecution = ScheduledExecution.get(scheduledExecutionId)
-        if(!scheduledExecution){
-            log.severe("Couldn't get ScheduledExecution with id: ${scheduledExecutionId}")
-        }
-        def Execution execution = new Execution(execMap)
-        scheduledExecution.nextExecution = scheduledExecutionService.nextExecutionTime(scheduledExecution)
-//        scheduledExecution.addToExecutions(execution)
-        if (execution.save(flush:true)) {
-            log.info("saved execution status")
-        } else {
-            log.warn("failed to save execution status")
-        }
-        if (scheduledExecution.save(flush:true)) {
-            log.info("added execution to history")
-        } else {
-            log.warn("failed saving execution to history")
-        }
-    }
-
-    def generateTimestamp() {
-        return new java.text.SimpleDateFormat("yyyyMMHHmmss").format(new Date())
-    }
-    private static long uIdCounter=0
-    /**
-     * Generate a string that will be different from the last call, uses a simple serial counter.
-     */
-    public static synchronized String generateUniqueId() {
-        uIdCounter++
-        return sprintf("%x",uIdCounter)
-    }
 
     def File maybeCreateAdhocLogDir(Execution execution, Framework framework) {
         return maybeCreateAdhocLogDir(execution.project,framework)
