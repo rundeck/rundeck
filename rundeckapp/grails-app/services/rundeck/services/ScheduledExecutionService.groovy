@@ -616,7 +616,12 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         return names.contains(se.generateJobScheduledName())
     }
 
-    def Map nextExecutionTimes(Collection scheduledExecutions) {
+    /**
+     * Return a map of job ID to next trigger Date
+     * @param scheduledExecutions
+     * @return
+     */
+    def Map nextExecutionTimes(Collection<ScheduledExecution> scheduledExecutions) {
         def map = [ : ]
         scheduledExecutions.each {
             def next = nextExecutionTime(it)
@@ -627,7 +632,30 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         return map
     }
 
+    /**
+     * Return a map of job ID to serverNodeUUID for any jobs which are scheduled on a different server, if cluster mode is enabled.
+     * @param scheduledExecutions
+     * @return
+     */
+    def Map clusterScheduledJobs(Collection<ScheduledExecution> scheduledExecutions) {
+        def map = [ : ]
+        if(frameworkService.clusterModeEnabled) {
+            def serverUUID = frameworkService.serverUUID
+            scheduledExecutions.findAll { it.serverNodeUUID != serverUUID }.each {
+                map[it.id] = it.serverNodeUUID
+            }
+        }
+        return map
+    }
+
     public static final long TWO_HUNDRED_YEARS=1000l * 60l * 60l * 24l * 365l * 200l
+    /**
+     * Return the next scheduled or predicted execution time for the scheduled job, and if it is not scheduled
+     * return a time in the future.  If the job is not scheduled on the current server (cluster mode), returns
+     * the time that the job is expected to run on its configured server.
+     * @param se
+     * @return
+     */
     def Date nextExecutionTime(ScheduledExecution se) {
         if(!se.scheduled){
             return new Date(TWO_HUNDRED_YEARS)
@@ -635,14 +663,25 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         def trigger = quartzScheduler.getTrigger(se.generateJobScheduledName(), se.generateJobGroupName())
         if(trigger){
             return trigger.getNextFireTime()
-        }else{
+        }else if (frameworkService.clusterModeEnabled && se.serverNodeUUID != frameworkService.serverUUID) {
+            //guess next trigger time for the job on the assigned cluster node
+            def value= tempNextExecutionTime(se)
+            return value
+        } else {
             return null;
         }
     }
 
+    /**
+     * Return the Date for the next execution time for a scheduled job
+     * @param se
+     * @return
+     */
     def Date tempNextExecutionTime(ScheduledExecution se){
         def trigger = createTrigger(se)
-        return trigger.getNextFireTime()
+        List<Date> times = TriggerUtils.computeFireTimes(trigger,
+                quartzScheduler.getCalendar(trigger.getCalendarName()), 1)
+        return times?.first()
     }
 
     /**

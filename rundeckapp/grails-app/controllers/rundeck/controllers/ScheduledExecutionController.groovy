@@ -193,8 +193,11 @@ class ScheduledExecutionController  {
 
         def total = Execution.countByScheduledExecution(scheduledExecution)
 
-        //todo: authorize job for workflow_read
-
+        def remoteClusterNodeUUID=null
+        if (scheduledExecution.scheduled && frameworkService.clusterModeEnabled
+                && scheduledExecution.serverNodeUUID != frameworkService.serverUUID) {
+            remoteClusterNodeUUID = scheduledExecution.serverNodeUUID
+        }
 
         withFormat{
             html{
@@ -202,6 +205,7 @@ class ScheduledExecutionController  {
             executions:executions,
             total:total,
             nextExecution:scheduledExecutionService.nextExecutionTime(scheduledExecution),
+                        remoteClusterNodeUUID: remoteClusterNodeUUID,
             notificationPlugins: notificationService.listNotificationPlugins(),
             max: params.max?params.max:10,
             offset:params.offset?params.offset:0]

@@ -14,9 +14,16 @@
             <tr>
             <td></td>
             <td colspan="3">
-              Next execution
+            <g:if test="${remoteClusterNodeUUID}">
+                  Expecting another cluster server to run
+                  <g:relativeDate elapsed="${nextExecution}" untilClass="desc"/>
+                  at <span class="desc">${nextExecution}</span>
+            </g:if>
+            <g:else>
+                    Next execution
                     <g:relativeDate elapsed="${nextExecution}" untilClass="timeuntil"/>
                     at <span class="timeabs">${nextExecution}</span>
+            </g:else>
             </td>
             </tr>
         </g:if>
