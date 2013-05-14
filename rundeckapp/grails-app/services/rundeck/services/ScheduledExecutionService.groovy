@@ -464,6 +464,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         
         def jobDetail = createJobDetail(se)
         def trigger = createTrigger(se)
+        jobDetail.getJobDataMap().put("bySchedule", true)
         def Date nextTime
         if(oldJobName && oldGroupName){
             def oldjob = quartzScheduler.getJobDetail(oldJobName,oldGroupName)
@@ -586,6 +587,9 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         jobDetail.getJobDataMap().put("rdeck.base",frameworkService.getRundeckBase())
         if(se.scheduled){
             jobDetail.getJobDataMap().put("userRoles",se.userRoleList)
+            if(frameworkService.clusterModeEnabled){
+                jobDetail.getJobDataMap().put("serverUUID",frameworkService.serverUUID)
+            }
         }
 //            jobDetail.addJobListener("sessionBinderListener")
         jobDetail.addJobListener("defaultGrailsServiceInjectorJobListener")
@@ -1002,6 +1006,11 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             scheduledExecution.populateTimeDateFields(params)
             scheduledExecution.user = user
             scheduledExecution.userRoleList = roleList
+            if (frameworkService.clusterModeEnabled) {
+                scheduledExecution.serverNodeUUID = frameworkService.serverUUID
+            } else {
+                scheduledExecution.serverNodeUUID = null
+            }
             if (!CronExpression.isValidExpression(params.crontabString ? params.crontabString : scheduledExecution.generateCrontabExression())) {
                 failed = true;
                 scheduledExecution.errors.rejectValue('crontabString', 'scheduledExecution.crontabString.invalid.message')
@@ -1482,6 +1491,11 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         if (scheduledExecution.scheduled) {
             scheduledExecution.user = user
             scheduledExecution.userRoleList = roleList
+            if (frameworkService.clusterModeEnabled) {
+                scheduledExecution.serverNodeUUID = frameworkService.serverUUID
+            } else {
+                scheduledExecution.serverNodeUUID = null
+            }
 
             if (scheduledExecution.crontabString && (!CronExpression.isValidExpression(scheduledExecution.crontabString)
                     ||                               !scheduledExecution.parseCrontabString(scheduledExecution.crontabString))) {
@@ -1798,6 +1812,11 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         if (scheduledExecution.scheduled) {
             scheduledExecution.user = user
             scheduledExecution.userRoleList = roleList
+            if(frameworkService.clusterModeEnabled) {
+                scheduledExecution.serverNodeUUID = frameworkService.serverUUID
+            }else{
+                scheduledExecution.serverNodeUUID = null
+            }
 
             scheduledExecution.populateTimeDateFields(params)
 
