@@ -960,7 +960,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
                                     nodeRankOrderAscending:params.nodeRankOrderAscending,
                                     nodeRankAttribute:params.nodeRankAttribute,
                                     workflow:params.workflow,
-                                    argString:params.argString
+                                    argString:params.argString,
+                                    serverNodeUUID: frameworkService.serverUUID
             )
 
 
