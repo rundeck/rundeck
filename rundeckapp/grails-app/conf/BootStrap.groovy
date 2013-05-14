@@ -113,24 +113,20 @@ class BootStrap {
              servletContext.setAttribute("CLUSTER_MODE_ENABLED", Boolean.toString(clusterMode))
              if (clusterMode) {
                  serverNodeUUID = properties.getProperty("rundeck.server.uuid")
-                 if (serverNodeUUID) {
-                     try {
-                         UUID.fromString(serverNodeUUID)
-                     } catch (IllegalArgumentException e) {
-                         throw new RuntimeException("Cluster mode: 'rundeck.server.uuid' in framework.properties was not a valid UUID: ${serverNodeUUID}. ")
-                     }
-                     servletContext.setAttribute("SERVER_UUID", serverNodeUUID)
-                 } else {
-                     throw new RuntimeException("Cluster mode: rundeck.clusterMode.enabled is set to 'true', but 'rundeck.server.uuid' not found in framework.properties")
+                 if (!serverNodeUUID) {
+                     throw new RuntimeException("Cluster mode: rundeck.clusterMode.enabled is set to 'true', but " +
+                             "'rundeck.server.uuid' not found in framework.properties")
                  }
+                 try {
+                     UUID.fromString(serverNodeUUID)
+                 } catch (IllegalArgumentException e) {
+                     throw new RuntimeException("Cluster mode: 'rundeck.server.uuid' in framework.properties was not " +
+                             "a valid UUID: ${serverNodeUUID}. ")
+                 }
+                 servletContext.setAttribute("SERVER_UUID", serverNodeUUID)
                  log.warn("Cluster mode enabled, this server's UUID: ${serverNodeUUID}")
              }
          }
-
-
-         //initialize execution service plugin
-//         com.dtolabs.rundeck.core.execution.ExecutionServiceFactory.instance().setDefaultExecutorClass(WorkflowExecutionItem.class,WorkflowExecutor.class)
-//         com.dtolabs.rundeck.core.execution.ExecutionServiceFactory.instance().setDefaultExecutor(JobExecutionItem.class,executionService)
 
 
          if(grailsApplication.config.loglevel.default){
