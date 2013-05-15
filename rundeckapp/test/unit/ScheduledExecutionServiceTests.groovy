@@ -17,6 +17,7 @@
 import grails.test.GrailsUnitTestCase
 import rundeck.ScheduledExecution
 import rundeck.CommandExec
+import rundeck.Workflow
 import rundeck.services.FrameworkService
 import rundeck.services.ScheduledExecutionService
 
@@ -33,6 +34,8 @@ public class ScheduledExecutionServiceTests extends GrailsUnitTestCase {
     public void testGetGroups(){
         mockDomain(ScheduledExecution)
         def schedlist=[new ScheduledExecution(jobName:'test1',groupPath:'group1'),new ScheduledExecution(jobName:'test2',groupPath:null)]
+
+        registerMetaClass(ScheduledExecution)
         ScheduledExecution.metaClass.static.findAllByProject={proj-> return schedlist}
 
         ScheduledExecutionService test = new ScheduledExecutionService()
@@ -62,5 +65,99 @@ public class ScheduledExecutionServiceTests extends GrailsUnitTestCase {
         assertEquals 1,result.size()
         assertEquals 1,result['group1']
 
+    }
+
+    void testClaimScheduledJobsUnassigned() {
+        def (ScheduledExecution job1, String serverUUID2, ScheduledExecution job2, ScheduledExecution job3,
+        ScheduledExecutionService testService, String serverUUID) = setupTestClaimScheduledJobs()
+
+        assertEquals(null, job1.serverNodeUUID)
+        assertEquals(serverUUID2, job2.serverNodeUUID)
+        assertEquals(null, job3.serverNodeUUID)
+
+        def resultMap = testService.claimScheduledJobs(serverUUID)
+
+        assertEquals(serverUUID, job1.serverNodeUUID)
+        assertEquals(serverUUID2, job2.serverNodeUUID)
+        assertEquals(null, job3.serverNodeUUID)
+
+        assertTrue(resultMap[job1.extid])
+        assertEquals(null, resultMap[job2.extid])
+        assertEquals(null, resultMap[job3.extid])
+    }
+
+    void testClaimScheduledJobsFromServerUUID() {
+        def (ScheduledExecution job1, String serverUUID2, ScheduledExecution job2, ScheduledExecution job3,
+        ScheduledExecutionService testService, String serverUUID) = setupTestClaimScheduledJobs()
+
+        assertEquals(job1, ScheduledExecution.lock(job1.id))
+        assertEquals(job2, ScheduledExecution.lock(job2.id))
+        assertEquals(job3, ScheduledExecution.lock(job3.id))
+        assertEquals(null, job1.serverNodeUUID)
+        assertEquals(serverUUID2, job2.serverNodeUUID)
+        assertEquals(null, job3.serverNodeUUID)
+
+        def resultMap = testService.claimScheduledJobs(serverUUID, serverUUID2)
+
+        assertEquals(null, job1.serverNodeUUID)
+        assertEquals(serverUUID, job2.serverNodeUUID)
+        assertEquals(null, job3.serverNodeUUID)
+
+        assertEquals(null, resultMap[job1.extid])
+        assertTrue(resultMap[job2.extid])
+        assertEquals(null, resultMap[job3.extid])
+    }
+
+    private List setupTestClaimScheduledJobs() {
+        mockDomain(ScheduledExecution)
+        mockDomain(Workflow)
+        mockDomain(CommandExec)
+        mockLogging(ScheduledExecutionService)
+        ScheduledExecutionService testService = new ScheduledExecutionService()
+        def serverUUID = UUID.randomUUID().toString()
+        def serverUUID2 = UUID.randomUUID().toString()
+        ScheduledExecution job1 = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                workflow: new Workflow(keepgoing: true, commands:
+                        [new CommandExec([adhocRemoteString: 'test buddy'])]),
+                serverNodeUUID: null,
+                scheduled: true
+        )
+        job1.save()
+        ScheduledExecution job2 = new ScheduledExecution(
+                jobName: 'blue2',
+                project: 'AProject2',
+                groupPath: 'some/where2',
+                description: 'a job2',
+                argString: '-a b -c d2',
+                workflow: new Workflow(keepgoing: true, commands:
+                        [new CommandExec([adhocRemoteString: 'test buddy2'])]),
+                serverNodeUUID: serverUUID2,
+                scheduled: true
+        )
+        job2.save()
+        ScheduledExecution job3 = new ScheduledExecution(
+                jobName: 'blue2',
+                project: 'AProject2',
+                groupPath: 'some/where2',
+                description: 'a job2',
+                argString: '-a b -c d2',
+                workflow: new Workflow(keepgoing: true, commands:
+                        [new CommandExec([adhocRemoteString: 'test buddy2'])]),
+                scheduled: false,
+        )
+        job3.save()
+        def map = [(job1.id): job1, (job2.id): job2, (job3.id): job3]
+        registerMetaClass(ScheduledExecution)
+        ScheduledExecution.metaClass.static.lock = { id ->
+            println("lock for id ${id}")
+            return map[id]
+        }
+
+        [job1, serverUUID2, job2, job3, testService, serverUUID]
     }
 }

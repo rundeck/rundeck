@@ -55,6 +55,7 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
         se.save()
         long id = se.id
 
+        registerMetaClass(ScheduledExecution)
         ScheduledExecution.metaClass.static.findByUuid = {uuid-> uuid=='testUUID'?se:null }
 
         def result = testService.getByIDorUUID('testUUID')
@@ -110,6 +111,7 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
         se2.save()
         long id2 = se2.id
 
+        registerMetaClass(ScheduledExecution)
         ScheduledExecution.metaClass.static.findByUuid = { uuid-> uuid=='testUUID'? se : uuid==idstr?se2:null }
         assertEquals(se,ScheduledExecution.findByUuid('testUUID'))
 
@@ -6103,6 +6105,7 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
         }
         test.delete()
     }
+
 
 }
 

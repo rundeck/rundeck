@@ -273,28 +273,29 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
      * @param serverUUID uuid to assign to the scheduled job
      * @return
      */
-    private boolean claimScheduledJob(ScheduledExecution scheduledExecution, String serverUUID){
+    private boolean claimScheduledJob(ScheduledExecution scheduledExecution, String serverUUID, String fromServerUUID=null){
         def schedId=scheduledExecution.id
         def claimed=false
         try {
-            ScheduledExecution.withNewSession {
-                scheduledExecution = ScheduledExecution.lock(schedId)
-                scheduledExecution.refresh()
-                if (!scheduledExecution.scheduled) {
-                    return
-                }
-                scheduledExecution.serverNodeUUID=serverUUID
-                if (scheduledExecution.save(flush: true)) {
-                    claimed=true
-                    log.info("claimScheduledJob: schedule claimed for ${schedId} on node ${serverUUID}")
-                } else {
-                    log.debug("claimScheduledJob: failed for ${schedId} on node ${serverUUID}")
-                }
+            scheduledExecution = ScheduledExecution.lock(schedId)
+            scheduledExecution.refresh()
+            if (!scheduledExecution.scheduled) {
+                return false
+            }
+            if(scheduledExecution.serverNodeUUID!= fromServerUUID){
+                return false
+            }
+            scheduledExecution.serverNodeUUID=serverUUID
+            if (scheduledExecution.save(flush: true)) {
+                claimed=true
+                log.info("claimScheduledJob: schedule claimed for ${schedId} on node ${serverUUID}")
+            } else {
+                log.debug("claimScheduledJob: failed for ${schedId} on node ${serverUUID}")
             }
         } catch (org.springframework.dao.OptimisticLockingFailureException e) {
-            log.debug("claimScheduledJob: success for ${schedId} on node ${serverUUID}")
+            log.debug("claimScheduledJob: failed for ${schedId} on node ${serverUUID}")
         } catch (StaleObjectStateException e) {
-            log.debug("claimScheduledJob: success for ${schedId} on node ${serverUUID}")
+            log.debug("claimScheduledJob: failed for ${schedId} on node ${serverUUID}")
         }
         return claimed
     }
@@ -309,7 +310,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
     def Map claimScheduledJobs(String toServerUUID, String fromServerUUID=null) {
         Map claimed=[:]
         ScheduledExecution.findAllByScheduledAndServerNodeUUID(true, fromServerUUID).each { ScheduledExecution se ->
-            claimed[se.extid]=claimScheduledJob(se, toServerUUID)
+            claimed[se.extid]=claimScheduledJob(se, toServerUUID, fromServerUUID)
         }
         claimed
     }
