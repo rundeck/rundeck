@@ -1,3 +1,6 @@
+import rundeck.services.NotificationService
+import rundeck.services.ReportService
+
 import java.util.logging.LogRecord
 import java.text.SimpleDateFormat
 import grails.test.GrailsUnitTestCase
@@ -1241,5 +1244,102 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
             assertNotNull(item.args)
             assertEquals(['some', 'args'], item.args as List)
         }
+    }
+
+    private ExecutionService setupCleanupService(){
+        def testService = new ExecutionService()
+
+        def fcontrol = mockFor(FrameworkService, true)
+        fcontrol.demand.getFrameworkNodeName(2..2) {
+            'testnode'
+        }
+        testService.frameworkService = fcontrol.createMock()
+
+        def rcontrol = mockFor(ReportService, true)
+        rcontrol.demand.reportExecutionResult(2..2) { map ->
+            [success: true]
+        }
+        testService.reportService = rcontrol.createMock()
+
+        def ncontrol = mockFor(NotificationService, true)
+        ncontrol.demand.triggerJobNotification(2..2) { String trigger, schedId, Map content ->
+            true
+        }
+        testService.notificationService = ncontrol.createMock()
+        return testService
+    }
+    void testCleanupRunningJobsNull(){
+        mockDomain(Execution)
+        mockDomain(Workflow)
+        mockDomain(CommandExec)
+        mockLogging(ExecutionService)
+        def testService = setupCleanupService()
+
+        Execution exec1 = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false,
+                dateStarted: new Date(),
+                dateCompleted: null,
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: "test")])
+        )
+        assertNotNull(exec1.save())
+        Execution exec2 = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false,
+                dateStarted: new Date(),
+                dateCompleted: null,
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: "test")]),
+                serverNodeUUID: UUID.randomUUID().toString()
+        )
+        assertNotNull(exec2.save())
+
+        assertNull(exec1.dateCompleted)
+        assertNull(exec1.status)
+
+        assertNull(exec2.dateCompleted)
+        assertNull(exec2.status)
+
+        testService.cleanupRunningJobs(null)
+
+        assertNotNull(exec1.dateCompleted)
+        assertEquals("false", exec1.status)
+
+        assertNotNull(exec2.dateCompleted)
+        assertEquals("false", exec2.status)
+
+    }
+
+    void testCleanupRunningJobsForClusterNode() {
+        mockDomain(Execution)
+        mockDomain(Workflow)
+        mockDomain(CommandExec)
+        mockLogging(ExecutionService)
+        def testService = setupCleanupService()
+        def uuid = UUID.randomUUID().toString()
+
+        Execution exec1 = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false,
+                dateStarted: new Date(),
+                dateCompleted: null,
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: "test")])
+        )
+        assertNotNull(exec1.save())
+        Execution exec2 = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false,
+                dateStarted: new Date(),
+                dateCompleted: null,
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: "test")]),
+                serverNodeUUID: uuid
+        )
+        assertNotNull(exec2.save())
+
+        assertNull(exec1.dateCompleted)
+        assertNull(exec1.status)
+
+        assertNull(exec2.dateCompleted)
+        assertNull(exec2.status)
+
+        testService.cleanupRunningJobs(uuid)
+
+        assertNull(exec1.dateCompleted)
+        assertNull(exec1.status)
+
+        assertNotNull(exec2.dateCompleted)
+        assertEquals("false", exec2.status)
+
     }
 }
