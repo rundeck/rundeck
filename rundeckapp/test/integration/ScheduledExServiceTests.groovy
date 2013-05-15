@@ -1552,6 +1552,82 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
         }
     }
 
+    public void testDoValidateClusterModeNotEnabledShouldSetNotServerUUID(){
+        def testService= new ScheduledExecutionService()
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.existsFrameworkProject { project, framework ->
+            assertEquals 'testProject', project
+            return true
+        }
+        fwkControl.demand.getCommand { project, type, command, framework ->
+            assertEquals 'testProject', project
+            assertEquals 'aType', type
+            assertEquals 'aCommand', command
+            return null
+        }
+        testService.frameworkService = fwkControl.createMock()
+        testService.frameworkService.metaClass.isClusterModeEnabled = {
+            return false
+        }
+        def params = [jobName: 'monkey1', project: 'testProject', description: 'blah',
+                workflow: [threadcount: 1, keepgoing: true, "commands[0]":
+                        [adhocExecution: true, adhocRemoteString: 'a remote string']
+                ],
+                scheduled: true,
+                crontabString: '0 21 */4 */4 */6 ? 2010-2040'
+        ]
+        def results = testService._dovalidate(params, 'test', 'test', null)
+        assertFalse(results.failed)
+        assertNotNull(results.scheduledExecution)
+        assertTrue(results.scheduledExecution instanceof ScheduledExecution)
+        final ScheduledExecution execution = results.scheduledExecution
+        assertNotNull(execution)
+        assertNotNull(execution.errors)
+        assertFalse(execution.errors.hasErrors())
+        assertNull(execution.serverNodeUUID)
+    }
+
+    public void testDoValidateClusterModeIsEnabledShouldSetServerUUID(){
+        def testService= new ScheduledExecutionService()
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.existsFrameworkProject { project, framework ->
+            assertEquals 'testProject', project
+            return true
+        }
+        fwkControl.demand.getCommand { project, type, command, framework ->
+            assertEquals 'testProject', project
+            assertEquals 'aType', type
+            assertEquals 'aCommand', command
+            return null
+        }
+        testService.frameworkService = fwkControl.createMock()
+        testService.frameworkService.metaClass.isClusterModeEnabled = {
+            return true
+        }
+        def uuid = UUID.randomUUID().toString()
+        testService.frameworkService.metaClass.getServerUUID = {
+            return uuid
+        }
+        def params = [jobName: 'monkey1', project: 'testProject', description: 'blah',
+                workflow: [threadcount: 1, keepgoing: true, "commands[0]":
+                        [adhocExecution: true, adhocRemoteString: 'a remote string']
+                ],
+                scheduled: true,
+                crontabString: '0 21 */4 */4 */6 ? 2010-2040'
+        ]
+        def results = testService._dovalidate(params, 'test', 'test', null)
+        assertFalse(results.failed)
+        assertNotNull(results.scheduledExecution)
+        assertTrue(results.scheduledExecution instanceof ScheduledExecution)
+        final ScheduledExecution execution = results.scheduledExecution
+        assertNotNull(execution)
+        assertNotNull(execution.errors)
+        assertFalse(execution.errors.hasErrors())
+        assertEquals(uuid, execution.serverNodeUUID)
+    }
+
     public void testDoUpdate() {
         def sec = new ScheduledExecutionService()
         if (true) {//test update basic job details
@@ -2136,6 +2212,9 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             fwkControl.demand.getRundeckBase {'test-base'}
             sec.frameworkService = fwkControl.createMock()
+            sec.frameworkService.metaClass.isClusterModeEnabled={
+                return false
+            }
 //            def sesControl = mockFor(ScheduledExecutionService, true)
 //            sesControl.demand.getByIDorUUID {id -> return se }
 //            sesControl.demand.scheduleJob {schedEx, oldname, oldgroup ->
@@ -2211,6 +2290,9 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService = fwkControl.createMock()
+            sec.frameworkService.metaClass.isClusterModeEnabled = {
+                return false
+            }
 //            def sesControl = mockFor(ScheduledExecutionService, true)
 //            sesControl.demand.getByIDorUUID {id -> return se }
 //            sesControl.demand.scheduleJob {schedEx, oldname, oldgroup ->
@@ -2258,6 +2340,9 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService = fwkControl.createMock()
+            sec.frameworkService.metaClass.isClusterModeEnabled = {
+                return false
+            }
 //            def sesControl = mockFor(ScheduledExecutionService, true)
 //            sesControl.demand.getByIDorUUID {id -> return se }
 //            sesControl.demand.scheduleJob {schedEx, oldname, oldgroup ->
@@ -2306,6 +2391,9 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService = fwkControl.createMock()
 
+            sec.frameworkService.metaClass.isClusterModeEnabled = {
+                return false
+            }
 //            def sesControl = mockFor(ScheduledExecutionService, true)
 //            sesControl.demand.getByIDorUUID {id -> return se }
 //            sec.scheduledExecutionService = sesControl.createMock()
@@ -2349,6 +2437,9 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService = fwkControl.createMock()
+            sec.frameworkService.metaClass.isClusterModeEnabled = {
+                return false
+            }
 
 //            def sesControl = mockFor(ScheduledExecutionService, true)
 //            sesControl.demand.getByIDorUUID {id -> return se }
@@ -2394,6 +2485,9 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService = fwkControl.createMock()
 
+            sec.frameworkService.metaClass.isClusterModeEnabled = {
+                return false
+            }
 //            def sesControl = mockFor(ScheduledExecutionService, true)
 //            sesControl.demand.getByIDorUUID {id -> return se }
 //            sec.scheduledExecutionService = sesControl.createMock()
@@ -2438,6 +2532,9 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService = fwkControl.createMock()
 
+            sec.frameworkService.metaClass.isClusterModeEnabled = {
+                return false
+            }
 //            def sesControl = mockFor(ScheduledExecutionService, true)
 //            sesControl.demand.getByIDorUUID {id -> return se }
 //            sec.scheduledExecutionService = sesControl.createMock()
@@ -2482,6 +2579,9 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService = fwkControl.createMock()
 
+            sec.frameworkService.metaClass.isClusterModeEnabled = {
+                return false
+            }
 //            def sesControl = mockFor(ScheduledExecutionService, true)
 //            sesControl.demand.getByIDorUUID {id -> return se }
 //            sec.scheduledExecutionService = sesControl.createMock()
@@ -2526,6 +2626,9 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService = fwkControl.createMock()
 
+            sec.frameworkService.metaClass.isClusterModeEnabled = {
+                return false
+            }
 //            def sesControl = mockFor(ScheduledExecutionService, true)
 //            sesControl.demand.getByIDorUUID {id -> return se }
 //            sec.scheduledExecutionService = sesControl.createMock()
@@ -2570,6 +2673,9 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService = fwkControl.createMock()
 
+            sec.frameworkService.metaClass.isClusterModeEnabled = {
+                return false
+            }
 //            def sesControl = mockFor(ScheduledExecutionService, true)
 //            sesControl.demand.getByIDorUUID {id -> return se }
 //            sec.scheduledExecutionService = sesControl.createMock()
@@ -2614,6 +2720,9 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService = fwkControl.createMock()
 
+            sec.frameworkService.metaClass.isClusterModeEnabled = {
+                return false
+            }
 //            def sesControl = mockFor(ScheduledExecutionService, true)
 //            sesControl.demand.getByIDorUUID {id -> return se }
 //            sec.scheduledExecutionService = sesControl.createMock()
@@ -2632,6 +2741,117 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertTrue scheduledExecution.errors.hasFieldErrors('crontabString')
 
         }
+    }
+
+    public void testDoUpdateClusterModeNotEnabledShouldNotSetServerUUID() {
+        def sec = new ScheduledExecutionService()
+        def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah',
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: "blah")])
+        )
+        se.save()
+
+        assertNotNull se.id
+        assertFalse se.scheduled
+
+        //try to do update of the ScheduledExecution
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.existsFrameworkProject { project, framework ->
+            assertEquals 'testProject', project
+            return true
+        }
+        fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.getRundeckBase { 'test-base' }
+        def uuid = UUID.randomUUID().toString()
+        fwkControl.demand.getServerUUID { uuid }
+        sec.frameworkService = fwkControl.createMock()
+        sec.frameworkService.metaClass.isClusterModeEnabled = {
+            return false
+        }
+
+        def qtzControl = mockFor(FakeScheduler, true)
+        qtzControl.demand.getJobNames { name -> [] }
+        qtzControl.demand.scheduleJob { jobDetail, trigger -> new Date() }
+        sec.quartzScheduler = qtzControl.createMock()
+
+        def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah',
+                scheduled: true, crontabString: '0 21 */4 */4 */6 ? 2010-2040', useCrontabString: 'true']
+        def results = sec._doupdate(params, 'test', 'userrole,test', null)
+        def succeeded = results.success
+        def scheduledExecution = results.scheduledExecution
+        if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
+            scheduledExecution.errors.allErrors.each {
+                System.err.println(it);
+            }
+        }
+        assertTrue succeeded
+        assertNotNull(scheduledExecution)
+        assertTrue(scheduledExecution instanceof ScheduledExecution)
+        final ScheduledExecution execution = scheduledExecution
+        assertNotNull(execution)
+        assertNotNull(execution.errors)
+        assertFalse(execution.errors.hasErrors())
+        assertTrue execution.scheduled
+        assertNull execution.serverNodeUUID
+        assertTrue execution.serverNodeUUID!=uuid
+    }
+    void testDoUpdateClusterModeIsEnabledShouldSetServerUUID(){
+        def sec = new ScheduledExecutionService()
+        def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah',
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: "blah")]))
+        se.save()
+
+        assertNotNull se.id
+        assertFalse se.scheduled
+
+        //try to do update of the ScheduledExecution
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.existsFrameworkProject { project, framework ->
+            assertEquals 'testProject', project
+            return true
+        }
+        fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.getRundeckBase { 'test-base' }
+        def uuid = UUID.randomUUID().toString()
+        sec.frameworkService = fwkControl.createMock()
+        sec.frameworkService.metaClass.isClusterModeEnabled = {
+            return true
+        }
+        sec.frameworkService.metaClass.getServerUUID = {
+            return uuid
+        }
+
+        def qtzControl = mockFor(FakeScheduler, true)
+        qtzControl.demand.getJobNames { name -> [] }
+        qtzControl.demand.scheduleJob { jobDetail, trigger -> new Date() }
+        sec.quartzScheduler = qtzControl.createMock()
+
+        def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah',
+                scheduled: true, crontabString: '0 21 */4 */4 */6 ? 2010-2040', useCrontabString: 'true']
+        def results = sec._doupdate(params, 'test', 'userrole,test', null)
+        def succeeded = results.success
+        def scheduledExecution = results.scheduledExecution
+        if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
+            scheduledExecution.errors.allErrors.each {
+                System.err.println(it);
+            }
+        }
+        println results
+        assertTrue succeeded
+        assertNotNull(scheduledExecution)
+        assertTrue(scheduledExecution instanceof ScheduledExecution)
+        final ScheduledExecution execution = scheduledExecution
+        assertNotNull(execution)
+        assertNotNull(execution.errors)
+        assertFalse(execution.errors.hasErrors())
+        assertTrue execution.scheduled
+        assertNotNull (execution.serverNodeUUID)
+        assertTrue execution.serverNodeUUID==uuid
     }
 
     public void testDoUpdateJobShouldSetCrontabString() {
@@ -2658,6 +2878,9 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
         }
         fwkControl.demand.getRundeckBase{'test-base'}
         sec.frameworkService = fwkControl.createMock()
+        sec.frameworkService.metaClass.isClusterModeEnabled = {
+            return false
+        }
 //        def sesControl = mockFor(ScheduledExecutionService, true)
 //        sesControl.demand.scheduleJob {schedEx, oldname, oldgroup ->
             //scheduledExecution, renamed ? oldjobname : null, renamed ? oldjobgroup : null
@@ -2702,6 +2925,110 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
         assertEquals '?', execution.dayOfWeek
         assertEquals '2010-2040', execution.year
     }
+    public void testDoUpdateJobClusterModeNotEnabledShouldNotSetServerUUID() {
+        def sec = new ScheduledExecutionService()
+        //test set scheduled with crontabString
+        def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah',
+
+        )
+        se.save()
+
+        assertNotNull se.id
+        assertFalse se.scheduled
+
+        //try to do update of the ScheduledExecution
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.existsFrameworkProject {project, framework ->
+            assertEquals 'testProject', project
+            return true
+        }
+        fwkControl.demand.getRundeckBase{'test-base'}
+        sec.frameworkService = fwkControl.createMock()
+        sec.frameworkService.metaClass.isClusterModeEnabled = {
+            return false
+        }
+
+        def qtzControl = mockFor(FakeScheduler, true)
+        qtzControl.demand.getJobNames {name -> []}
+        qtzControl.demand.scheduleJob {jobDetail, trigger -> new Date()}
+        sec.quartzScheduler = qtzControl.createMock()
+        def params = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah',
+                                            workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)]),
+                                            scheduled: true, crontabString: '0 21 */4 */4 */6 ? 2010-2040',
+                useCrontabString: 'true')
+        def results = sec._doupdateJob(se.id.toString(), params,'test','test',null)
+        def succeeded = results[0]
+        def scheduledExecution = results[1]
+        if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
+            scheduledExecution.errors.allErrors.each {
+                System.err.println(it);
+            }
+        }
+        assertTrue succeeded
+        assertNotNull(scheduledExecution)
+        assertTrue(scheduledExecution instanceof ScheduledExecution)
+        final ScheduledExecution execution = scheduledExecution
+        assertNotNull(execution)
+        assertNotNull(execution.errors)
+        assertFalse(execution.errors.hasErrors())
+        assertTrue execution.scheduled
+        assertEquals null,execution.serverNodeUUID
+    }
+    public void testDoUpdateJobClusterModeIsEnabledShouldSetServerUUID() {
+        def sec = new ScheduledExecutionService()
+        //test set scheduled with crontabString
+        def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah',
+
+        )
+        se.save()
+
+        assertNotNull se.id
+        assertFalse se.scheduled
+
+        //try to do update of the ScheduledExecution
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.existsFrameworkProject {project, framework ->
+            assertEquals 'testProject', project
+            return true
+        }
+        fwkControl.demand.getRundeckBase{'test-base'}
+        sec.frameworkService = fwkControl.createMock()
+        sec.frameworkService.metaClass.isClusterModeEnabled = {
+            return true
+        }
+        def uuid= UUID.randomUUID().toString()
+        sec.frameworkService.metaClass.getServerUUID = {
+            return uuid
+        }
+
+        def qtzControl = mockFor(FakeScheduler, true)
+        qtzControl.demand.getJobNames {name -> []}
+        qtzControl.demand.scheduleJob {jobDetail, trigger -> new Date()}
+        sec.quartzScheduler = qtzControl.createMock()
+        def params = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah',
+                                            workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)]),
+                                            scheduled: true, crontabString: '0 21 */4 */4 */6 ? 2010-2040',
+                useCrontabString: 'true')
+        def results = sec._doupdateJob(se.id.toString(), params,'test','test',null)
+        def succeeded = results[0]
+        def scheduledExecution = results[1]
+        if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
+            scheduledExecution.errors.allErrors.each {
+                System.err.println(it);
+            }
+        }
+        assertTrue succeeded
+        assertNotNull(scheduledExecution)
+        assertTrue(scheduledExecution instanceof ScheduledExecution)
+        final ScheduledExecution execution = scheduledExecution
+        assertNotNull(execution)
+        assertNotNull(execution.errors)
+        assertFalse(execution.errors.hasErrors())
+        assertTrue execution.scheduled
+        assertEquals uuid,execution.serverNodeUUID
+    }
 
     public void testDoUpdateJobShouldNotSetInvalidCrontabString() {
         def sec = new ScheduledExecutionService()
@@ -2726,6 +3053,9 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
                 return null
             }
             sec.frameworkService = fwkControl.createMock()
+            sec.frameworkService.metaClass.isClusterModeEnabled = {
+                return false
+            }
 //            def sesControl = mockFor(ScheduledExecutionService, true)
 //            sesControl.demand.scheduleJob {schedEx, oldname, oldgroup ->
                 //scheduledExecution, renamed ? oldjobname : null, renamed ? oldjobgroup : null
@@ -2774,6 +3104,9 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
                 return null
             }
             sec.frameworkService = fwkControl.createMock()
+            sec.frameworkService.metaClass.isClusterModeEnabled = {
+                return false
+            }
 //            def sesControl = mockFor(ScheduledExecutionService, true)
 //            sesControl.demand.scheduleJob {schedEx, oldname, oldgroup ->
                 //scheduledExecution, renamed ? oldjobname : null, renamed ? oldjobgroup : null
@@ -2817,6 +3150,9 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
                 return null
             }
             sec.frameworkService = fwkControl.createMock()
+            sec.frameworkService.metaClass.isClusterModeEnabled = {
+                return false
+            }
 
             def params = new ScheduledExecution(scheduled: true, crontabString: '0 21 */4 */4 */6 ? z2010-2040', useCrontabString: 'true',
                                                 workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)]))
@@ -2854,6 +3190,9 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
                 return null
             }
             sec.frameworkService = fwkControl.createMock()
+            sec.frameworkService.metaClass.isClusterModeEnabled = {
+                return false
+            }
 
             def params = new ScheduledExecution(scheduled: true, crontabString: '0 21 */4 */4 */6', useCrontabString: 'true', jobName: 'monkey1', project: 'testProject', description: 'blah',
                                                 workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)]))
@@ -2891,6 +3230,9 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
                 return null
             }
             sec.frameworkService = fwkControl.createMock()
+            sec.frameworkService.metaClass.isClusterModeEnabled = {
+                return false
+            }
 
             def params = new ScheduledExecution(scheduled: true, crontabString: '70 21 */4 */4 */6 ?', useCrontabString: 'true', jobName: 'monkey1', project: 'testProject', description: 'blah',
                                                 workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)]))
@@ -2928,6 +3270,9 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
                 return null
             }
             sec.frameworkService = fwkControl.createMock()
+            sec.frameworkService.metaClass.isClusterModeEnabled = {
+                return false
+            }
 
             def params = new ScheduledExecution(scheduled: true, crontabString: '0 70 */4 */4 */6 ?', useCrontabString: 'true', jobName: 'monkey1', project: 'testProject', description: 'blah',
                                                 workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)]))
@@ -2965,6 +3310,9 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
                 return null
             }
             sec.frameworkService = fwkControl.createMock()
+            sec.frameworkService.metaClass.isClusterModeEnabled = {
+                return false
+            }
 
             def params = new ScheduledExecution(scheduled: true, crontabString: '0 0 25 */4 */6 ?', useCrontabString: 'true', jobName: 'monkey1', project: 'testProject', description: 'blah',
                                                 workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)]))
@@ -3002,6 +3350,9 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
                 return null
             }
             sec.frameworkService = fwkControl.createMock()
+            sec.frameworkService.metaClass.isClusterModeEnabled = {
+                return false
+            }
 
             def params = new ScheduledExecution(scheduled: true, crontabString: '0 0 2 32 */6 ?', useCrontabString: 'true', jobName: 'monkey1', project: 'testProject', description: 'blah',
                                                 workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)]))
@@ -3039,6 +3390,9 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
                 return null
             }
             sec.frameworkService = fwkControl.createMock()
+            sec.frameworkService.metaClass.isClusterModeEnabled = {
+                return false
+            }
 
             def params = new ScheduledExecution(scheduled: true, crontabString: '0 0 2 3 13 ?', useCrontabString: 'true', jobName: 'monkey1', project: 'testProject', description: 'blah',
                                                 workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)]))
@@ -3076,6 +3430,9 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
                 return null
             }
             sec.frameworkService = fwkControl.createMock()
+            sec.frameworkService.metaClass.isClusterModeEnabled = {
+                return false
+            }
 
             def params = new ScheduledExecution(scheduled: true, crontabString: '0 0 2 ? 12 8', useCrontabString: 'true', jobName: 'monkey1', project: 'testProject', description: 'blah',
                                                 workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)]))
