@@ -439,10 +439,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
 
     /**
      * Set the result status to FAIL for any Executions that are not complete
+     * @param serverUUID if not null, only match executions assigned to the given serverUUID
      */
-    def cleanupRunningJobs(){
-        Execution.findAllByDateCompleted(null).each{Execution e->
-            saveExecutionState(e.scheduledExecution?.id, e.id, [status: String.valueOf(false), dateCompleted: new Date(), cancelled: true],null)
+    def cleanupRunningJobs(String serverUUID=null) {
+        def found = serverUUID ? Execution.findAllByDateCompletedAndServerNodeUUID(null, serverUUID) : Execution.findAllByDateCompleted(null)
+        found.each { Execution e ->
+            saveExecutionState(e.scheduledExecution?.id, e.id, [status: String.valueOf(false), dateCompleted: new Date(), cancelled: true], null)
             log.error("Stale Execution cleaned up: [${e.id}]")
         }
     }
@@ -958,7 +960,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
                                     nodeRankOrderAscending:params.nodeRankOrderAscending,
                                     nodeRankAttribute:params.nodeRankAttribute,
                                     workflow:params.workflow,
-                                    argString:params.argString
+                                    argString:params.argString,
+                                    serverNodeUUID: frameworkService.getServerUUID()
             )
 
 
@@ -1535,37 +1538,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
                 Thread.sleep(200)
             }
         }
-    }
-    def saveExecutionState( scheduledExecutionId, Map execMap) {
-        def ScheduledExecution scheduledExecution = ScheduledExecution.get(scheduledExecutionId)
-        if(!scheduledExecution){
-            log.severe("Couldn't get ScheduledExecution with id: ${scheduledExecutionId}")
-        }
-        def Execution execution = new Execution(execMap)
-        scheduledExecution.nextExecution = scheduledExecutionService.nextExecutionTime(scheduledExecution)
-//        scheduledExecution.addToExecutions(execution)
-        if (execution.save(flush:true)) {
-            log.info("saved execution status")
-        } else {
-            log.warn("failed to save execution status")
-        }
-        if (scheduledExecution.save(flush:true)) {
-            log.info("added execution to history")
-        } else {
-            log.warn("failed saving execution to history")
-        }
-    }
-
-    def generateTimestamp() {
-        return new java.text.SimpleDateFormat("yyyyMMHHmmss").format(new Date())
-    }
-    private static long uIdCounter=0
-    /**
-     * Generate a string that will be different from the last call, uses a simple serial counter.
-     */
-    public static synchronized String generateUniqueId() {
-        uIdCounter++
-        return sprintf("%x",uIdCounter)
     }
 
     def File maybeCreateAdhocLogDir(Execution execution, Framework framework) {

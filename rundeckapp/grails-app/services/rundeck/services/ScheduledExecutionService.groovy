@@ -6,6 +6,7 @@ import com.dtolabs.rundeck.server.authorization.AuthConstants
 import org.apache.commons.validator.EmailValidator
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
+import org.hibernate.StaleObjectStateException
 import org.quartz.*
 import org.springframework.context.MessageSource
 import org.springframework.web.context.request.RequestContextHolder
@@ -266,16 +267,78 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         return groupMap
     }
 
-    def rescheduleJobs(){
-        def schedJobs=ScheduledExecution.findAllByScheduled(true)
-        schedJobs.each{ ScheduledExecution se->
+    /**
+     * Claim schedule for a job with the passed in serverUUID
+     * @param scheduledExecution
+     * @param serverUUID uuid to assign to the scheduled job
+     * @return
+     */
+    private boolean claimScheduledJob(ScheduledExecution scheduledExecution, String serverUUID, String fromServerUUID=null){
+        def schedId=scheduledExecution.id
+        def claimed=false
+        try {
+            scheduledExecution = ScheduledExecution.lock(schedId)
+            scheduledExecution.refresh()
+            if (!scheduledExecution.scheduled) {
+                return false
+            }
+            if(scheduledExecution.serverNodeUUID!= fromServerUUID){
+                return false
+            }
+            scheduledExecution.serverNodeUUID=serverUUID
+            if (scheduledExecution.save(flush: true)) {
+                claimed=true
+                log.info("claimScheduledJob: schedule claimed for ${schedId} on node ${serverUUID}")
+            } else {
+                log.debug("claimScheduledJob: failed for ${schedId} on node ${serverUUID}")
+            }
+        } catch (org.springframework.dao.OptimisticLockingFailureException e) {
+            log.debug("claimScheduledJob: failed for ${schedId} on node ${serverUUID}")
+        } catch (StaleObjectStateException e) {
+            log.debug("claimScheduledJob: failed for ${schedId} on node ${serverUUID}")
+        }
+        return claimed
+    }
+
+    /**
+     * Claim scheduling for any jobs assigned to fromServerUUID, or not assigned if it is null
+     * @param toServerUUID uuid to assign to scheduled jobs
+     * @param fromServerUUID uuid to claim from, or null to claim from unassigned jobs
+     *
+     * @return Map of job ID to boolean, indicating whether the job was claimed
+     */
+    def Map claimScheduledJobs(String toServerUUID, String fromServerUUID=null) {
+        Map claimed=[:]
+        ScheduledExecution.findAllByScheduledAndServerNodeUUID(true, fromServerUUID).each { ScheduledExecution se ->
+            claimed[se.extid]=claimScheduledJob(se, toServerUUID, fromServerUUID)
+        }
+        claimed
+    }
+    /**
+     * Reschedule all scheduled jobs which match the given serverUUID, or all jobs if it is null.
+     * @param serverUUID
+     * @return
+     */
+    def rescheduleJobs(String serverUUID=null) {
+        def schedJobs = serverUUID ? ScheduledExecution.findAllByScheduledAndServerNodeUUID(true, serverUUID) : ScheduledExecution.findAllByScheduled(true)
+        schedJobs.each { ScheduledExecution se ->
             try {
-                scheduleJob(se,null,null)
+                scheduleJob(se, null, null)
                 log.error("rescheduled job: ${se.id}")
             } catch (Exception e) {
                 log.error("Job not rescheduled: ${se.id}: ${e.message}")
             }
         }
+    }
+    /**
+     * Claim scheduling of jobs from the given fromServerUUID, and return a map identifying successfully claimed jobs
+     * @param fromServerUUID server UUID to claim scheduling of jobs from
+     * @return map of job ID to boolean indicating reclaim was successful or not.
+     */
+    def reclaimAndScheduleJobs(String fromServerUUID){
+        def claimed=claimScheduledJobs(frameworkService.getServerUUID(), fromServerUUID)
+        rescheduleJobs(frameworkService.getServerUUID())
+        claimed
     }
 
     /**
@@ -422,6 +485,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         
         def jobDetail = createJobDetail(se)
         def trigger = createTrigger(se)
+        jobDetail.getJobDataMap().put("bySchedule", true)
         def Date nextTime
         if(oldJobName && oldGroupName){
             def oldjob = quartzScheduler.getJobDetail(oldJobName,oldGroupName)
@@ -544,6 +608,9 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         jobDetail.getJobDataMap().put("rdeck.base",frameworkService.getRundeckBase())
         if(se.scheduled){
             jobDetail.getJobDataMap().put("userRoles",se.userRoleList)
+            if(frameworkService.isClusterModeEnabled()){
+                jobDetail.getJobDataMap().put("serverUUID",frameworkService.getServerUUID())
+            }
         }
 //            jobDetail.addJobListener("sessionBinderListener")
         jobDetail.addJobListener("defaultGrailsServiceInjectorJobListener")
@@ -570,7 +637,12 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         return names.contains(se.generateJobScheduledName())
     }
 
-    def Map nextExecutionTimes(Collection scheduledExecutions) {
+    /**
+     * Return a map of job ID to next trigger Date
+     * @param scheduledExecutions
+     * @return
+     */
+    def Map nextExecutionTimes(Collection<ScheduledExecution> scheduledExecutions) {
         def map = [ : ]
         scheduledExecutions.each {
             def next = nextExecutionTime(it)
@@ -581,7 +653,30 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         return map
     }
 
+    /**
+     * Return a map of job ID to serverNodeUUID for any jobs which are scheduled on a different server, if cluster mode is enabled.
+     * @param scheduledExecutions
+     * @return
+     */
+    def Map clusterScheduledJobs(Collection<ScheduledExecution> scheduledExecutions) {
+        def map = [ : ]
+        if(frameworkService.isClusterModeEnabled()) {
+            def serverUUID = frameworkService.getServerUUID()
+            scheduledExecutions.findAll { it.serverNodeUUID != serverUUID }.each {
+                map[it.id] = it.serverNodeUUID
+            }
+        }
+        return map
+    }
+
     public static final long TWO_HUNDRED_YEARS=1000l * 60l * 60l * 24l * 365l * 200l
+    /**
+     * Return the next scheduled or predicted execution time for the scheduled job, and if it is not scheduled
+     * return a time in the future.  If the job is not scheduled on the current server (cluster mode), returns
+     * the time that the job is expected to run on its configured server.
+     * @param se
+     * @return
+     */
     def Date nextExecutionTime(ScheduledExecution se) {
         if(!se.scheduled){
             return new Date(TWO_HUNDRED_YEARS)
@@ -589,14 +684,25 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         def trigger = quartzScheduler.getTrigger(se.generateJobScheduledName(), se.generateJobGroupName())
         if(trigger){
             return trigger.getNextFireTime()
-        }else{
+        }else if (frameworkService.isClusterModeEnabled() && se.serverNodeUUID != frameworkService.getServerUUID()) {
+            //guess next trigger time for the job on the assigned cluster node
+            def value= tempNextExecutionTime(se)
+            return value
+        } else {
             return null;
         }
     }
 
+    /**
+     * Return the Date for the next execution time for a scheduled job
+     * @param se
+     * @return
+     */
     def Date tempNextExecutionTime(ScheduledExecution se){
         def trigger = createTrigger(se)
-        return trigger.getNextFireTime()
+        List<Date> times = TriggerUtils.computeFireTimes(trigger,
+                quartzScheduler.getCalendar(trigger.getCalendarName()), 1)
+        return times?.first()
     }
 
     /**
@@ -960,6 +1066,11 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             scheduledExecution.populateTimeDateFields(params)
             scheduledExecution.user = user
             scheduledExecution.userRoleList = roleList
+            if (frameworkService.isClusterModeEnabled()) {
+                scheduledExecution.serverNodeUUID = frameworkService.getServerUUID()
+            } else {
+                scheduledExecution.serverNodeUUID = null
+            }
             if (!CronExpression.isValidExpression(params.crontabString ? params.crontabString : scheduledExecution.generateCrontabExression())) {
                 failed = true;
                 scheduledExecution.errors.rejectValue('crontabString', 'scheduledExecution.crontabString.invalid.message')
@@ -1440,6 +1551,11 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         if (scheduledExecution.scheduled) {
             scheduledExecution.user = user
             scheduledExecution.userRoleList = roleList
+            if (frameworkService.isClusterModeEnabled()) {
+                scheduledExecution.serverNodeUUID = frameworkService.getServerUUID()
+            } else {
+                scheduledExecution.serverNodeUUID = null
+            }
 
             if (scheduledExecution.crontabString && (!CronExpression.isValidExpression(scheduledExecution.crontabString)
                     ||                               !scheduledExecution.parseCrontabString(scheduledExecution.crontabString))) {
@@ -1756,6 +1872,11 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         if (scheduledExecution.scheduled) {
             scheduledExecution.user = user
             scheduledExecution.userRoleList = roleList
+            if (frameworkService.isClusterModeEnabled()) {
+                scheduledExecution.serverNodeUUID = frameworkService.getServerUUID()
+            }else{
+                scheduledExecution.serverNodeUUID = null
+            }
 
             scheduledExecution.populateTimeDateFields(params)
 

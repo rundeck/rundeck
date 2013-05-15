@@ -23,6 +23,8 @@
                         <g:set var="execCount" value="${scheduledExecution.id?Execution.countByScheduledExecution(scheduledExecution):0}"/>
                         <g:set var="nextExecution"
                                value="${ (nextExecutions)? nextExecutions[scheduledExecution.id] : null}"/>
+                        <g:set var="clusterUUID"
+                               value="${ (clusterMap)? clusterMap[scheduledExecution.id] : null}"/>
                         <g:set var="currentTime" value="${new Date()}"/>
                         <g:if test="${jobsjscallback}">
                             <tr class=" expandComponentHolder expanded" id="jobrow_${scheduledExecution.id}">
@@ -78,8 +80,9 @@
                             </g:if>
                             <g:elseif test="${nextExecution}">
                                     <img src="${resource(dir:'images',file:'icon-clock-small.png')}" alt=""  width="16px" height="16px"/>
-                                    <span title="<g:relativeDate atDate='${nextExecution}'/>">
-                                    <g:relativeDate elapsed="${nextExecution}" untilClass="timeuntil"/>
+                                    <g:set var="titleHint" value="${clusterUUID ? 'Expecting another cluster server to run ' : ''}"/>
+                                    <span title="${titleHint}at <g:relativeDate atDate='${nextExecution}'/>">
+                                    <g:relativeDate elapsed="${nextExecution}" untilClass="${clusterUUID?'desc':'timeuntil'}"/>
                                     </span>
                             </g:elseif>
                             <g:elseif test="${scheduledExecution.scheduled && !nextExecution}">

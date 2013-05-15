@@ -73,6 +73,12 @@ class ScheduledExecution extends ExecutionContext {
         description(nullable:true)
         uuid(unique: true, nullable:true, blank:false, matches: /^\S+$/)
         multipleExecutions(nullable: true)
+        serverNodeUUID(size: 36..36, blank: true, nullable: true, validator: { val, obj ->
+            if (null == val) return true;
+            try { return null != UUID.fromString(val) } catch (IllegalArgumentException e) {
+                return false
+            }
+        })
     }
 
     static mapping = {

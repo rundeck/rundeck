@@ -7,7 +7,7 @@ Rundeck provides a Web API for use with your application.
 API Version Number
 ----
 
-The current API version is `6`.
+The current API version is `7`.
 
 For API endpoints described in this document, the *minimum* API version required for their
 use is indicated by the URL used, e.g.:
@@ -34,6 +34,12 @@ If the version number is not included or if the requested version number is unsu
 ### Changes
 
 Changes introduced by API Version number:
+
+**Version 7**:
+
+* Add **Incubator** endpoint
+    * PUT `/api/7/incubator/jobs/takeoverSchedule` - [Takeover Schedule in Cluster Mode](#takeover-schedule-in-cluster-mode)
+        * incubating feature for cluster mode schedule takeover
 
 **Version 6**:
 
@@ -1367,3 +1373,100 @@ Optional Parameters:
 Result: Depending on the `format` parameter, a value of "xml" will return [resources-v10(5)](resources-v10.html) and "yaml" will return [resources-v10-yaml(5)](resources-v10-yaml.html) formatted results.
 
 The result will contain a single item for the specified resource.
+
+### Takeover Schedule in Cluster Mode
+
+**INCUBATOR**: this endpoint is available under the `/incubator` top-level path to indicate it is under development, and the specific behavior may change before it is finalized, or even completely removed.
+
+Tell a Rundeck server in cluster mode to claim all scheduled jobs from another cluster server.
+
+URL:
+
+    /api/7/incubator/jobs/takeoverSchedule
+
+HTTP Method:
+
+    PUT
+
+Required Content:
+
+One of the following:
+
+* XML content:
+
+        <server uuid="[UUID]"/>
+
+* JSON content:
+
+        { server: { uuid: "[UUID]" } }
+
+Result: 
+
+If request was XML, then Standard API response containing the following additional elements:
+
+* `self`
+    * `server`
+        *  `@uuid` - this cluster server's uuid
+*  `takeoverSchedule`
+    *  `server`
+        *  `@uuid` - requested server uuid to take over
+    *  `jobs` - set of successful and failed jobs taken over
+        *  `successful`/`failed` - job set
+            *  `@count` number of jobs in the set
+            *  `job` - one element for each job
+                *  `@id` Job ID
+                *  `@href` Job HREF
+
+Example XML Response:
+
+    <result success='true' apiversion='7'>
+      <message>Schedule Takeover successful for 2/2 Jobs.</message>
+      <self>
+        <server uuid='C677C663-F902-4B97-B8AC-4AA57B58DDD6' />
+      </self>
+      <takeoverSchedule>
+        <server uuid='8F3D5976-2232-4529-847B-8E45764608E3' />
+        <jobs total='2'>
+          <successful count='2'>
+            <job id='a1aa53ac-73a6-4ead-bbe4-34afbff8e057'
+            href='http://localhost:9090/rundeck/job/show/a1aa53ac-73a6-4ead-bbe4-34afbff8e057' />
+            <job id='116e2025-7895-444a-88f7-d96b4f19fdb3'
+            href='http://localhost:9090/rundeck/job/show/116e2025-7895-444a-88f7-d96b4f19fdb3' />
+          </successful>
+          <failed count='0'></failed>
+        </jobs>
+      </takeoverSchedule>
+    </result>
+
+If request was JSON, then the following JSON:
+
+    {
+      "takeoverSchedule": {
+        "jobs": {
+          "failed": [],
+          "successful": [
+            {
+              "href": "http://dignan:4440/job/show/a1aa53ac-73a6-4ead-bbe4-34afbff8e057",
+              "id": "a1aa53ac-73a6-4ead-bbe4-34afbff8e057"
+            },
+            {
+              "href": "http://dignan:4440/job/show/116e2025-7895-444a-88f7-d96b4f19fdb3",
+              "id": "116e2025-7895-444a-88f7-d96b4f19fdb3"
+            }
+          ],
+          "total": 2
+        },
+        "server": {
+          "uuid": "8F3D5976-2232-4529-847B-8E45764608E3"
+        }
+      },
+      "self": {
+        "server": {
+          "uuid": "C677C663-F902-4B97-B8AC-4AA57B58DDD6"
+        }
+      },
+      "message": "Schedule Takeover successful for 2/2 Jobs.",
+      "apiversion": 7,
+      "success": true
+    }
+

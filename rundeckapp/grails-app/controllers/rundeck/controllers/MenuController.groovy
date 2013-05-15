@@ -241,8 +241,10 @@ class MenuController {
         def filters=qres._filters
         
         def finishq=scheduledExecutionService.finishquery(query,params,qres)
-        
-        def nextExecutions=scheduledExecutionService.nextExecutionTimes(schedlist.findAll { it.scheduled })
+
+        def allScheduled = schedlist.findAll { it.scheduled }
+        def nextExecutions=scheduledExecutionService.nextExecutionTimes(allScheduled)
+        def clusterMap=scheduledExecutionService.clusterScheduledJobs(allScheduled)
         log.debug("listWorkflows(nextSched): "+(System.currentTimeMillis()-rest));
         long running=System.currentTimeMillis()
         
@@ -338,6 +340,7 @@ class MenuController {
         projects:projects,
         nextScheduled:schedlist,
         nextExecutions: nextExecutions,
+                clusterMap: clusterMap,
         jobauthorizations:jobauthorizations,
         authMap:authorizemap,
         nowrunning: nowrunning,
