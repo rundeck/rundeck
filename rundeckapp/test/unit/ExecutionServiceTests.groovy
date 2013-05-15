@@ -42,6 +42,7 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
         )
         se.save()
 
+        registerMetaClass(ScheduledExecution)
         ScheduledExecution.metaClass.static.lock={id-> return se}
         def myCriteria = new Expando();
         myCriteria.get = {Closure cls -> return [id:123]}
@@ -77,6 +78,7 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
         )
         se.save()
 
+        registerMetaClass(ScheduledExecution)
         ScheduledExecution.metaClass.static.lock={id-> return se}
         ScheduledExecution.metaClass.static.withNewSession={clos-> clos.call([clear:{}])}
         def myCriteria = new Expando();
@@ -109,6 +111,7 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
         )
         se.save()
 
+        registerMetaClass(ScheduledExecution)
         ScheduledExecution.metaClass.static.lock={id-> return se}
         ScheduledExecution.metaClass.static.withNewSession = {clos -> clos.call([clear: {}])}
         def myCriteria = new Expando();
@@ -159,6 +162,7 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
         se.addToOptions(opt4)
         se.save()
 
+        registerMetaClass(ScheduledExecution)
         ScheduledExecution.metaClass.static.lock={id-> return se}
         ScheduledExecution.metaClass.static.withNewSession = {clos -> clos.call([clear: {}])}
         def myCriteria = new Expando();
