@@ -7,6 +7,7 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import grails.converters.JSON
 import groovy.xml.MarkupBuilder
 import org.apache.commons.collections.list.TreeList
 import org.apache.commons.httpclient.HttpClient
@@ -63,7 +64,8 @@ class ScheduledExecutionController  {
         apiJobDelete:'DELETE',
         apiJobAction:['GET','DELETE'],
         apiRunScript:'POST',
-        apiJobDeleteBulk:['DELETE','POST']
+        apiJobDeleteBulk:['DELETE','POST'],
+        apiJobClusterTakeoverSchedule:'PUT',
     ]
 
     def cancel = {
@@ -2227,6 +2229,98 @@ class ScheduledExecutionController  {
         }
 
         return new ExecutionController().renderApiExecutionListResultXML(result)
+    }
+    /**
+     * API: /api/incubator/jobs/takeoverSchedule , version 7
+     */
+    def apiJobClusterTakeoverSchedule = {
+        if (!new ApiController().requireVersion(ApiRequestFilters.V7)) {
+            return
+        }
+        //test valid project
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+
+        if (!frameworkService.authorizeApplicationResource(framework, [type: 'resource', kind: 'job'], AuthConstants.ACTION_ADMIN)) {
+            request.errorCode = "api.error.item.unauthorized"
+            request.errorArgs = ['Reschedule Jobs', 'Server', params.serverNodeUUID]
+            return new ApiController().renderError()
+        }
+        if(!frameworkService.clusterModeEnabled){
+            return new ApiController().success {
+                message("No action performed, cluster mode is not enabled.")
+            }
+        }
+
+        def serverUUID
+        if(request.format=='json' ){
+            def data= request.JSON
+            serverUUID = data?.server?.uuid
+        }else if(request.format=='xml' || !request.format){
+            def data= request.XML
+            if(data.name()=='server'){
+                serverUUID = data.'@uuid'?.text()
+            }
+        }else{
+            request.errorCode = "api.error.invalid.request"
+            request.errorArgs = ['Expected content of type text/xml or text/json, content was of type: '+request.format]
+            return new ApiController().renderError()
+        }
+        if (!serverUUID) {
+            request.errorCode = "api.error.invalid.request"
+            request.errorArgs = ['Expected server.uuid in request.']
+            return new ApiController().renderError()
+        }
+
+        def reclaimMap=scheduledExecutionService.reclaimAndScheduleJobs(serverUUID)
+        def successCount=reclaimMap.findAll {it.value}.size()
+        def failedCount = reclaimMap.size() - successCount
+        //TODO: retry for failed reclaims?
+
+        def jobData = { entry ->
+            [id: entry.key, href: g.createLink(action: 'show', controller: 'scheduledExecution',
+                    id: entry.key, absolute: true)]
+        }
+        def jobLink={ delegate, entry->
+            delegate.'job'(jobData(entry))
+        }
+        def successMessage= "Schedule Takeover successful for ${successCount}/${reclaimMap.size()} Jobs."
+        withFormat {
+            xml{
+                return new ApiController().success { delegate ->
+                    delegate.'message'(successMessage)
+                    delegate.'self'{
+                        delegate.'server'(uuid:frameworkService.serverUUID)
+                    }
+                    delegate.'takeoverSchedule'{
+                        delegate.'server'(uuid: serverUUID)
+                        delegate.'jobs'(total: reclaimMap.size()){
+                            delegate.'successful'(count: successCount) {
+                                reclaimMap.findAll { it.value }.each(jobLink.curry(delegate))
+                            }
+                            delegate.'failed'(count: failedCount) {
+                                reclaimMap.findAll { !it.value }.each(jobLink.curry(delegate))
+                            }
+                        }
+                    }
+                }
+            }
+            json{
+                render(contentType: "text/json",text: [
+                    success:true,
+                    apiversion:ApiRequestFilters.API_CURRENT_VERSION,
+                    message: successMessage,
+                    self:[server:[uuid:frameworkService.serverUUID]],
+                    takeoverSchedule:[
+                        server:[uuid: serverUUID],
+                        jobs:[
+                            total:reclaimMap.size(),
+                            successful:reclaimMap.findAll { it.value }.collect (jobData),
+                            failed:reclaimMap.findAll { !it.value }.collect (jobData)
+                        ]
+                    ]
+                ] as JSON)
+            }
+        }
     }
 }
 

@@ -267,6 +267,12 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         return groupMap
     }
 
+    /**
+     * Claim schedule for a job with the passed in serverUUID
+     * @param scheduledExecution
+     * @param serverUUID uuid to assign to the scheduled job
+     * @return
+     */
     private boolean claimScheduledJob(ScheduledExecution scheduledExecution, String serverUUID){
         def schedId=scheduledExecution.id
         def claimed=false
@@ -294,14 +300,18 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
     }
 
     /**
-     * Claim scheduling for any jobs not assigned to this serverUUID
-     * @param serverUUID
-     * @return
+     * Claim scheduling for any jobs assigned to fromServerUUID, or not assigned if it is null
+     * @param toServerUUID uuid to assign to scheduled jobs
+     * @param fromServerUUID uuid to claim from, or null to claim from unassigned jobs
+     *
+     * @return Map of job ID to boolean, indicating whether the job was claimed
      */
-    def claimScheduledJobs(String serverUUID) {
-        ScheduledExecution.findAllByScheduledAndServerNodeUUID(true, null).each { ScheduledExecution se ->
-            claimScheduledJob(se,serverUUID)
+    def Map claimScheduledJobs(String toServerUUID, String fromServerUUID=null) {
+        Map claimed=[:]
+        ScheduledExecution.findAllByScheduledAndServerNodeUUID(true, fromServerUUID).each { ScheduledExecution se ->
+            claimed[se.extid]=claimScheduledJob(se, toServerUUID)
         }
+        claimed
     }
     /**
      * Reschedule all scheduled jobs which match the given serverUUID, or all jobs if it is null.
@@ -318,6 +328,16 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                 log.error("Job not rescheduled: ${se.id}: ${e.message}")
             }
         }
+    }
+    /**
+     * Claim scheduling of jobs from the given fromServerUUID, and return a map identifying successfully claimed jobs
+     * @param fromServerUUID server UUID to claim scheduling of jobs from
+     * @return map of job ID to boolean indicating reclaim was successful or not.
+     */
+    def reclaimAndScheduleJobs(String fromServerUUID){
+        def claimed=claimScheduledJobs(frameworkService.serverUUID, fromServerUUID)
+        rescheduleJobs(frameworkService.serverUUID)
+        claimed
     }
 
     /**
