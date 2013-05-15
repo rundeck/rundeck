@@ -336,8 +336,8 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
      * @return map of job ID to boolean indicating reclaim was successful or not.
      */
     def reclaimAndScheduleJobs(String fromServerUUID){
-        def claimed=claimScheduledJobs(frameworkService.serverUUID, fromServerUUID)
-        rescheduleJobs(frameworkService.serverUUID)
+        def claimed=claimScheduledJobs(frameworkService.getServerUUID(), fromServerUUID)
+        rescheduleJobs(frameworkService.getServerUUID())
         claimed
     }
 
@@ -608,8 +608,8 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         jobDetail.getJobDataMap().put("rdeck.base",frameworkService.getRundeckBase())
         if(se.scheduled){
             jobDetail.getJobDataMap().put("userRoles",se.userRoleList)
-            if(frameworkService.clusterModeEnabled){
-                jobDetail.getJobDataMap().put("serverUUID",frameworkService.serverUUID)
+            if(frameworkService.isClusterModeEnabled()){
+                jobDetail.getJobDataMap().put("serverUUID",frameworkService.getServerUUID())
             }
         }
 //            jobDetail.addJobListener("sessionBinderListener")
@@ -660,8 +660,8 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
      */
     def Map clusterScheduledJobs(Collection<ScheduledExecution> scheduledExecutions) {
         def map = [ : ]
-        if(frameworkService.clusterModeEnabled) {
-            def serverUUID = frameworkService.serverUUID
+        if(frameworkService.isClusterModeEnabled()) {
+            def serverUUID = frameworkService.getServerUUID()
             scheduledExecutions.findAll { it.serverNodeUUID != serverUUID }.each {
                 map[it.id] = it.serverNodeUUID
             }
@@ -684,7 +684,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         def trigger = quartzScheduler.getTrigger(se.generateJobScheduledName(), se.generateJobGroupName())
         if(trigger){
             return trigger.getNextFireTime()
-        }else if (frameworkService.clusterModeEnabled && se.serverNodeUUID != frameworkService.serverUUID) {
+        }else if (frameworkService.isClusterModeEnabled() && se.serverNodeUUID != frameworkService.getServerUUID()) {
             //guess next trigger time for the job on the assigned cluster node
             def value= tempNextExecutionTime(se)
             return value
@@ -1066,8 +1066,8 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             scheduledExecution.populateTimeDateFields(params)
             scheduledExecution.user = user
             scheduledExecution.userRoleList = roleList
-            if (frameworkService.clusterModeEnabled) {
-                scheduledExecution.serverNodeUUID = frameworkService.serverUUID
+            if (frameworkService.isClusterModeEnabled()) {
+                scheduledExecution.serverNodeUUID = frameworkService.getServerUUID()
             } else {
                 scheduledExecution.serverNodeUUID = null
             }
@@ -1551,8 +1551,8 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         if (scheduledExecution.scheduled) {
             scheduledExecution.user = user
             scheduledExecution.userRoleList = roleList
-            if (frameworkService.clusterModeEnabled) {
-                scheduledExecution.serverNodeUUID = frameworkService.serverUUID
+            if (frameworkService.isClusterModeEnabled()) {
+                scheduledExecution.serverNodeUUID = frameworkService.getServerUUID()
             } else {
                 scheduledExecution.serverNodeUUID = null
             }
@@ -1872,8 +1872,8 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         if (scheduledExecution.scheduled) {
             scheduledExecution.user = user
             scheduledExecution.userRoleList = roleList
-            if(frameworkService.clusterModeEnabled) {
-                scheduledExecution.serverNodeUUID = frameworkService.serverUUID
+            if (frameworkService.isClusterModeEnabled()) {
+                scheduledExecution.serverNodeUUID = frameworkService.getServerUUID()
             }else{
                 scheduledExecution.serverNodeUUID = null
             }

@@ -196,8 +196,8 @@ class ScheduledExecutionController  {
         def total = Execution.countByScheduledExecution(scheduledExecution)
 
         def remoteClusterNodeUUID=null
-        if (scheduledExecution.scheduled && frameworkService.clusterModeEnabled
-                && scheduledExecution.serverNodeUUID != frameworkService.serverUUID) {
+        if (scheduledExecution.scheduled && frameworkService.isClusterModeEnabled()
+                && scheduledExecution.serverNodeUUID != frameworkService.getServerUUID()) {
             remoteClusterNodeUUID = scheduledExecution.serverNodeUUID
         }
 
@@ -2245,7 +2245,7 @@ class ScheduledExecutionController  {
             request.errorArgs = ['Reschedule Jobs', 'Server', params.serverNodeUUID]
             return new ApiController().renderError()
         }
-        if(!frameworkService.clusterModeEnabled){
+        if(!frameworkService.isClusterModeEnabled()){
             return new ApiController().success {
                 message("No action performed, cluster mode is not enabled.")
             }
@@ -2289,7 +2289,7 @@ class ScheduledExecutionController  {
                 return new ApiController().success { delegate ->
                     delegate.'message'(successMessage)
                     delegate.'self'{
-                        delegate.'server'(uuid:frameworkService.serverUUID)
+                        delegate.'server'(uuid:frameworkService.getServerUUID())
                     }
                     delegate.'takeoverSchedule'{
                         delegate.'server'(uuid: serverUUID)
@@ -2309,7 +2309,7 @@ class ScheduledExecutionController  {
                     success:true,
                     apiversion:ApiRequestFilters.API_CURRENT_VERSION,
                     message: successMessage,
-                    self:[server:[uuid:frameworkService.serverUUID]],
+                    self:[server:[uuid:frameworkService.getServerUUID()]],
                     takeoverSchedule:[
                         server:[uuid: serverUUID],
                         jobs:[

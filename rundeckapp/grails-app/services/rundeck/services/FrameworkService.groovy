@@ -35,8 +35,8 @@ class FrameworkService implements ApplicationContextAware {
     def File varDir
     String rundeckbase
     String depsdir
-    String serverUUID
-    boolean clusterModeEnabled
+    private String serverUUID
+    private boolean clusterModeEnabled
     SAREAuthorization aclpolicies
 
     def ApplicationContext applicationContext
@@ -82,6 +82,12 @@ class FrameworkService implements ApplicationContextAware {
         clusterModeEnabled = applicationContext.getServletContext().getAttribute("CLUSTER_MODE_ENABLED")=='true'
         serverUUID = applicationContext.getServletContext().getAttribute("SERVER_UUID")
         initialized = true
+    }
+    def isClusterModeEnabled(){
+        return clusterModeEnabled
+    }
+    def getServerUUID(){
+        return serverUUID
     }
    
     def getVarDir() {
