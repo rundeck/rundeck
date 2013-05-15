@@ -12,6 +12,7 @@ import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
+import rundeck.services.ScheduledExecutionService
 
 class ExecutionJob implements InterruptableJob {
 
@@ -40,6 +41,10 @@ class ExecutionJob implements InterruptableJob {
             initMap= initialize(context)
         }catch(Throwable t){
             log.error("Unable to start Job execution: ${t.message?t.message:'no message'}",t)
+            return
+        }
+        if(initMap.jobShouldNotRun){
+            log.info(initMap.jobShouldNotRun)
             return
         }
         def result
@@ -119,8 +124,7 @@ class ExecutionJob implements InterruptableJob {
                 def rolelist = Arrays.asList(roles.split(","))
                 initMap.framework = FrameworkService.getFrameworkForUserAndRoles(initMap.execution.user, rolelist, initMap.adbase)
             }
-        }else{
-            if(jobDataMap.get("executionId")){
+        }else if(jobDataMap.get("executionId")){
                 initMap.executionId=jobDataMap.get("executionId")
                 initMap.extraParams=jobDataMap.get("extraParams")
                 initMap.extraParamsExposed=jobDataMap.get("extraParamsExposed")
@@ -157,10 +161,18 @@ class ExecutionJob implements InterruptableJob {
                     def rolelist = Arrays.asList(roles.split(","))
                     initMap.framework = FrameworkService.getFrameworkForUserAndRoles(initMap.execution.user, rolelist, initMap.adbase)
                 }
-            }else{
-                initMap.framework = FrameworkService.getFrameworkForUserAndRoles(initMap.scheduledExecution.user,initMap.scheduledExecution.userRoles,initMap.adbase)
-                initMap.execution = initMap.executionService.createExecution(initMap.scheduledExecution, initMap.framework,initMap.scheduledExecution.user)
+        }else{
+            def serverUUID = jobDataMap.getString("serverUUID")
+            if (serverUUID != null && jobDataMap.getBoolean("bySchedule")) {
+                //verify scheduled job should be run on this node in cluster mode
+                if (serverUUID!=initMap.scheduledExecution.serverNodeUUID){
+                    initMap.jobShouldNotRun="Job ${initMap.scheduledExecution.extid} will run on server ID ${initMap.scheduledExecution.serverNodeUUID}, removing schedule on this node."
+                    context.getScheduler().deleteJob(context.jobDetail.name,context.jobDetail.group)
+                    return initMap
+                }
             }
+            initMap.framework = FrameworkService.getFrameworkForUserAndRoles(initMap.scheduledExecution.user,initMap.scheduledExecution.userRoles,initMap.adbase)
+            initMap.execution = initMap.executionService.createExecution(initMap.scheduledExecution, initMap.framework,initMap.scheduledExecution.user)
         }
         return initMap
     }
@@ -260,9 +272,9 @@ class ExecutionJob implements InterruptableJob {
             throw new RuntimeException("ExecutionService could not be retrieved from JobDataMap!")
         }
         if (! es instanceof ExecutionService) {
-            throw new RuntimeException("JobDataMap contained invalid ExecutionService type: " + se.getClass().getName())
+            throw new RuntimeException("JobDataMap contained invalid ExecutionService type: " + es.getClass().getName())
         }
         return es
-        
+
     }
 }

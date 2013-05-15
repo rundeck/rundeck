@@ -43,6 +43,11 @@ class UrlMappings {
         "/api/$api_version/run/script"(controller: 'scheduledExecution', action: 'apiRunScript')
         "/api/$api_version/run/url"(controller: 'scheduledExecution', action: 'apiRunScriptUrl')
         "/api/$api_version/system/info"(controller: 'api', action: 'apiSystemInfo')
+
+        //incubator endpoints
+        "/api/$api_version/incubator/jobs/takeoverSchedule"(controller: 'scheduledExecution', action: 'apiJobClusterTakeoverSchedule')
+
+        //catchall
         "/api/$api_version/$action?"(controller: 'api', action: 'invalid')
 
         //simplified url mappings for link generation
