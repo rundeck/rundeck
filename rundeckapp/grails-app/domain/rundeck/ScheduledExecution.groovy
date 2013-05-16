@@ -102,6 +102,7 @@ class ScheduledExecution extends ExecutionContext {
         description type: 'text'
         jobName type: 'text'
         groupPath type: 'text'
+        options lazy: false
     }
 
 

@@ -172,6 +172,7 @@ class ExecutionJob implements InterruptableJob {
                 }
             }
             initMap.framework = FrameworkService.getFrameworkForUserAndRoles(initMap.scheduledExecution.user,initMap.scheduledExecution.userRoles,initMap.adbase)
+            initMap.extraParamsExposed = initMap.executionService.selectSecureOptionInput(initMap.scheduledExecution,[:],true)
             initMap.execution = initMap.executionService.createExecution(initMap.scheduledExecution, initMap.framework,initMap.scheduledExecution.user)
         }
         return initMap
