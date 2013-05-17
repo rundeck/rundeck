@@ -90,7 +90,7 @@ fi
 /var/lib/rundeck/cli/icu4j-2.6.1.jar
 /var/lib/rundeck/cli/jaxen-1.1.jar
 /var/lib/rundeck/cli/jdom-1.0.jar
-/var/lib/rundeck/cli/jsch-0.1.45.jar
+/var/lib/rundeck/cli/jsch-0.1.50.jar
 /var/lib/rundeck/cli/log4j-1.2.16.jar
 /var/lib/rundeck/cli/rundeck-core-%{_vname}.jar
 /var/lib/rundeck/cli/snakeyaml-1.9.jar
