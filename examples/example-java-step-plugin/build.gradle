@@ -1,4 +1,4 @@
-version = '1.5'
+version = '1.5.3-SNAPSHOT'
 defaultTasks 'clean','build'
 apply plugin: 'java'
 apply plugin: 'idea'
@@ -7,6 +7,7 @@ ext.rundeckPluginVersion= '1.1'
 
 
 repositories {
+    mavenLocal()
     mavenCentral()
 }
 
