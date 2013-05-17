@@ -539,6 +539,9 @@ public class ExtSSHExec extends SSHBase {
         if (getVerbose()) {
             log("Connecting to " + getHost() + ":" + getPort());
         }
+        session.setConfig("MaxAuthTries", "1");//jsch 0.1.46+
+        //use keyboard-interactive last
+        session.setConfig("PreferredAuthentications", "publickey,password,keyboard-interactive");
         session.connect();
         return session;
     }
