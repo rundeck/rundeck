@@ -24,19 +24,24 @@
 */
 package com.dtolabs.rundeck.core.execution.workflow.steps;
 
+import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import com.dtolabs.rundeck.core.common.PropertyRetriever;
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.plugins.configuration.Property;
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
+import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants;
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty;
 import com.dtolabs.rundeck.plugins.descriptions.SelectValues;
+import com.dtolabs.rundeck.plugins.descriptions.TextArea;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
-
-import java.lang.reflect.Field;
-import java.util.*;
 
 
 /**
@@ -150,12 +155,18 @@ public class PluginAdapterUtility {
         }
         pbuild.type(type);
         if (type == Property.Type.String) {
+            StringRenderingConstants.DisplayType renderBehaviour = StringRenderingConstants.DisplayType.SINGLE_LINE;
             //set select/freeselect
             final SelectValues selectAnnotation = field.getAnnotation(SelectValues.class);
             if (null != selectAnnotation) {
                 pbuild.type(selectAnnotation.freeSelect() ? Property.Type.FreeSelect : Property.Type.Select);
                 pbuild.values(selectAnnotation.values());
             }
+            
+            if (field.getAnnotation(TextArea.class) != null) {
+                renderBehaviour = StringRenderingConstants.DisplayType.MULTI_LINE;
+            }
+            pbuild.renderingOption(StringRenderingConstants.DISPLAY_TYPE_KEY, renderBehaviour);
         }
 
         String name = annotation.name();
@@ -264,7 +275,6 @@ public class PluginAdapterUtility {
     private static boolean setValueForProperty(final Property property, final Object value, final Object object) {
         final Field field = fieldForPropertyName(property.getName(), object);
         if (null == field) {
-
             return false;
         }
         final Property.Type type = property.getType();

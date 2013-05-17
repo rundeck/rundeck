@@ -23,7 +23,9 @@
 */
 package com.dtolabs.rundeck.core.plugins.configuration;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -39,6 +41,7 @@ abstract class PropertyBase implements Property {
     private final String defaultValue;
     private final PropertyValidator validator;
     private final PropertyScope scope;
+    private final Map<String, Object> renderingOptions;
 
     public PropertyBase(final String name, final String title, final String description, final boolean required,
                         final String defaultValue, final PropertyValidator validator) {
@@ -48,7 +51,12 @@ abstract class PropertyBase implements Property {
 
     public PropertyBase(final String name, final String title, final String description, final boolean required,
                         final String defaultValue, final PropertyValidator validator, final PropertyScope scope) {
+        this(name, title, description, required, defaultValue, validator, scope, null);
+    }
 
+    public PropertyBase(final String name, final String title, final String description, final boolean required,
+                        final String defaultValue, final PropertyValidator validator, final PropertyScope scope,
+                        final Map<String, Object> renderingOptions) {
         this.title = title;
         this.name = name;
         this.description = description;
@@ -56,6 +64,8 @@ abstract class PropertyBase implements Property {
         this.defaultValue = defaultValue;
         this.validator = validator;
         this.scope = scope;
+        this.renderingOptions = renderingOptions == null ? Collections.<String, Object> emptyMap() : Collections
+                .unmodifiableMap(renderingOptions);
     }
 
     public String getTitle() {
@@ -89,5 +99,10 @@ abstract class PropertyBase implements Property {
     @Override
     public PropertyScope getScope() {
         return scope;
+    }
+    
+    @Override
+    public Map<String, Object> getRenderingOptions() {
+        return renderingOptions;
     }
 }
