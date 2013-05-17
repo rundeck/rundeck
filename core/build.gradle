@@ -25,7 +25,7 @@ dependencies {
         'dom4j:dom4j:1.6.1',
         'commons-cli:commons-cli:1.0',
         'org.apache.ant:ant-jsch:1.7.1',
-        'com.jcraft:jsch:0.1.45',
+        'com.jcraft:jsch:0.1.50',
         'org.yaml:snakeyaml:1.9',
         'xerces:xercesImpl:2.6.2',
         'xml-apis:xml-apis:2.0.2' 
