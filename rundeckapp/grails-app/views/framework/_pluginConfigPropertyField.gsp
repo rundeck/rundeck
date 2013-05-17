@@ -20,7 +20,7 @@
     Created: 7/28/11 12:01 PM
  --%>
 
-<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ page import="com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants" contentType="text/html;charset=UTF-8" %>
 %{--<g:set var="fieldname" value="${}"/>--}%
 %{--<g:set var="origfieldname" value="${}"/>--}%
 
@@ -67,7 +67,7 @@
     </td>
     <td>
     <g:hiddenField name="${origfieldname}" value="${values&&values[prop.name]?values[prop.name]:''}"/>
-    <g:if test="${prop.renderingOptions?.('displayType')?.name() == 'MULTI_LINE'}">
+    <g:if test="${prop.renderingOptions?.('displayType') == StringRenderingConstants.DisplayType.MULTI_LINE}">
         <g:textArea name="${fieldname}" value="${values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue}"
                  id="${fieldid}" rows="10" cols="80"/>
     </g:if>
