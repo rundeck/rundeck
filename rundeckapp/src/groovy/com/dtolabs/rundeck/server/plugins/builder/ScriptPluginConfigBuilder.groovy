@@ -2,6 +2,7 @@ package com.dtolabs.rundeck.server.plugins.builder
 
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyValidator
+import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.core.plugins.configuration.ValidationException
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
@@ -52,6 +53,13 @@ class ScriptPluginConfigBuilder {
                 } else if (props['defaultValue'] instanceof List) {
                     pbuilder.type(Property.Type.Select)
                     pbuilder.values((List) props['defaultValue'])
+                }else if (props['defaultValue'] instanceof String) {
+                    pbuilder.type(Property.Type.String)
+                    //if default string value is multi-line, use multi-line option
+                    String defaultString = props['defaultValue']
+                    if(defaultString.indexOf(System.getProperty("line.separator"))>=0){
+                        props.multiline=true
+                    }
                 }
             }
             if (!(props['defaultValue'] instanceof List)) {
@@ -79,12 +87,20 @@ class ScriptPluginConfigBuilder {
                 pbuilder.type(props['type'])
             }
         }
+        if (pbuilder.getType()==Property.Type.String && props['multiline']) {
+            pbuilder.renderingOption(StringRenderingConstants.DISPLAY_TYPE_KEY,
+                    StringRenderingConstants.DisplayType.MULTI_LINE)
+        }
+        if(props['renderingOptions'] instanceof Map){
+            pbuilder.renderingOptions(props['renderingOptions'])
+        }
         //TODO: scopes
         if (validationClosure != null) {
             //validation
             pbuilder.validator(new PropertyValidator() {
                 @Override
                 boolean isValid(String value) throws ValidationException {
+                    //todo: support simpler closure results shortcuts for validation (string, null)
                     return validationClosure.call(value)
                 }
             })
