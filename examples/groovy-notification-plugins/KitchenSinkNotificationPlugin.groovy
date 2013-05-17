@@ -1,13 +1,21 @@
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin;
+import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants;
+import com.dtolabs.rundeck.core.plugins.configuration.ValidationException;
 
 rundeckPlugin(NotificationPlugin){
     title="Script Test"
     description="A Test"
     configuration{
         test1 title:"Test1", description:"Simple string"
+        testarea1 title:"Textarea", description:"Multi-line string", multiline:true
+        testarea2 title:"Textarea2", description:"Multi-line string", renderingOptions:[displayType:StringRenderingConstants.DisplayType.MULTI_LINE]
 
-        test2(title:'Test2',description:"Matches regex"){
-            it=~/^\d+$/
+        test2(title:'Test2',description:'Matches regex ^\\d+$'){
+            if(!(it==~/^\d+$/)){
+                throw new ValidationException('Must match ^\\d+$')
+            }else{
+                return true
+            }
         }
 
         test3 values: ["a","b","c"], required:true
@@ -21,6 +29,9 @@ rundeckPlugin(NotificationPlugin){
         test9 title:"My Select Field", description:"Should be select", defaultValue:"y", required:true
         test10=true
         test11=false
+        test12='''A multiline string default value
+will use multiline renderingOptions
+'''
     }
     onstart { Map executionData,Map config ->
         System.err.println("script, success: data ${executionData}, config: ${config}")

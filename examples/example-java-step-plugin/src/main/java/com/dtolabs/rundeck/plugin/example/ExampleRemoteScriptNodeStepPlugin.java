@@ -33,6 +33,7 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty;
 import com.dtolabs.rundeck.plugins.descriptions.SelectValues;
+import com.dtolabs.rundeck.plugins.descriptions.TextArea;
 import com.dtolabs.rundeck.plugins.step.GeneratedScript;
 import com.dtolabs.rundeck.plugins.step.GeneratedScriptBuilder;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
@@ -90,6 +91,14 @@ public class ExampleRemoteScriptNodeStepPlugin implements RemoteScriptNodeStepPl
      */
     @PluginProperty(title = "Funky", description = "Funk name", required = true)
     protected String funky;
+
+    /**
+     * Defines a multi-line textarea for a string property.
+     */
+    @PluginProperty(title = "Thesis", description = "Thesis")
+    @TextArea
+    protected String thesis;
+
     /**
      * Defines a boolean field as a property
      */
@@ -204,18 +213,19 @@ public class ExampleRemoteScriptNodeStepPlugin implements RemoteScriptNodeStepPl
              * Returns a script to execute
              */
             return GeneratedScriptBuilder.script(
-                "#!/bin/bash\n"
-                + "echo this is node " + entry.getNodename() + "\n"
-                + "echo stepnum " + context.getStepNumber() + "\n"
-                + "echo step context " + context.getStepContext() + "\n"
-                + "echo funky is " + funky + "\n"
-                + "echo fruit is " + fruit + "\n"
-                + "echo amount is " + amount + "\n"
-                + "echo money is " + money + "\n"
-                + "echo cake is " + cake + "\n"
-                + "echo extra: " + configuration + "\n"
-                ,
-                null
+                    "#!/bin/bash\n"
+                            + "echo this is node " + entry.getNodename() + "\n"
+                            + "echo stepnum " + context.getStepNumber() + "\n"
+                            + "echo step context " + context.getStepContext() + "\n"
+                            + "echo funky is " + funky + "\n"
+                            + "echo fruit is " + fruit + "\n"
+                            + "echo amount is " + amount + "\n"
+                            + "echo money is " + money + "\n"
+                            + "echo cake is " + cake + "\n"
+                            + "echo extra: " + configuration + "\n"
+                            + "echo thesis: '" + thesis.replaceAll("'", "'\"'\"'") + "'\n"
+                    ,
+                    null
 
             );
         } else {
