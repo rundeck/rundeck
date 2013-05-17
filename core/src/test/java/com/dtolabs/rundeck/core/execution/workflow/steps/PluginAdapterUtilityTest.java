@@ -24,17 +24,24 @@
 */
 package com.dtolabs.rundeck.core.execution.workflow.steps;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import junit.framework.TestCase;
+
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.plugins.configuration.Property;
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
+import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants;
+import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants.DisplayType;
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty;
 import com.dtolabs.rundeck.plugins.descriptions.SelectValues;
+import com.dtolabs.rundeck.plugins.descriptions.TextArea;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
-import junit.framework.TestCase;
-
-import java.util.*;
 
 
 /**
@@ -159,6 +166,7 @@ public class PluginAdapterUtilityTest extends TestCase {
         assertEquals(null, p1.getSelectValues());
         assertEquals(null, p1.getValidator());
         assertEquals(false, p1.isRequired());
+        assertEquals(DisplayType.SINGLE_LINE, p1.getRenderingOptions().get(StringRenderingConstants.DISPLAY_TYPE_KEY));
     }
 
     /**
@@ -251,6 +259,9 @@ public class PluginAdapterUtilityTest extends TestCase {
         private long testlong1;
         @PluginProperty
         private Long testlong2;
+        @TextArea
+        @PluginProperty(name = "textArea", title = "textAreaTitle", description = "textAreaDescription")
+        private String textArea;
     }
 
     public void testFieldTypesString() throws Exception {
@@ -273,6 +284,29 @@ public class PluginAdapterUtilityTest extends TestCase {
         assertEquals(fieldType, prop1.getType());
     }
 
+    public void testTextArea() {
+        typeTest1 test = new typeTest1();
+        Description desc = PluginAdapterUtility.buildDescription(test, DescriptionBuilder.builder());
+        assertNotNull(desc);
+        HashMap<String, Property> map = mapOfProperties(desc);
+
+        Property p1 = map.get("textArea");
+        assertEquals(Property.Type.String, p1.getType());
+        assertEquals(null, p1.getDefaultValue());
+        assertEquals("textAreaDescription", p1.getDescription());
+        assertEquals("textAreaTitle", p1.getTitle());
+        assertEquals(DisplayType.MULTI_LINE, p1.getRenderingOptions().get(StringRenderingConstants.DISPLAY_TYPE_KEY));
+    }
+
+    public void testSetTextArea() {
+        typeTest1 test = new typeTest1();
+        String value = "some value";
+        Map<String, Object> values = new HashMap<String, Object>();
+        values.put("textArea", value);
+        PropertyResolver resolver = new mapResolver(values);
+        PluginAdapterUtility.configureProperties(resolver, test);
+        assertEquals(value, test.textArea);
+    }
 
     /**
      * test property types
@@ -447,6 +481,7 @@ public class PluginAdapterUtilityTest extends TestCase {
         assertFalse(test.testbool1);
         assertFalse(test.testbool2);
     }
+    
     public void testConfigurePropertiesInt() throws Exception {
         configuretest1 test = new configuretest1();
         HashMap<String, Object> configuration = new HashMap<String, Object>();
@@ -469,6 +504,7 @@ public class PluginAdapterUtilityTest extends TestCase {
         assertEquals(1, test.testint1);
         assertEquals(2, (int) test.testint2);
     }
+    
     public void testConfigurePropertiesLong() throws Exception {
         configuretest1 test = new configuretest1();
         HashMap<String, Object> configuration = new HashMap<String, Object>();
