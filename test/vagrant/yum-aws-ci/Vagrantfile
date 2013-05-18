@@ -1,0 +1,36 @@
+
+Vagrant.configure("2") do |config|
+
+  config.vm.box = "dummy"
+  config.vm.box_url = "https://github.com/mitchellh/vagrant-aws/raw/master/dummy.box"
+
+  #config.vm.network :forwarded_port, guest: 4440, host: 14440
+
+  config.vm.synced_folder "../../", "/rundeck_api_test"
+  config.vm.synced_folder "../src", "/test_scripts"
+
+  config.vm.provision :shell, :path => "bootstrap.sh"
+  config.vm.provision :shell, :path => "prepare-tests.sh"
+  config.vm.provision :shell,
+    :inline => "su - rundeck -c 'sh /test_scripts/api-test.sh'"
+
+
+
+  config.vm.provider :aws do |aws, override|
+    aws.access_key_id = ENV['AWS_ACCESS_KEY']
+    aws.secret_access_key = ENV['AWS_SECRET_KEY']
+
+    aws.keypair_name = "build-ci"
+
+    aws.security_groups = "quicklaunch-1"
+    aws.user_data = "#!/bin/bash\necho 'Defaults:ec2-user !requiretty' > /etc/sudoers.d/999-vagrant-cloud-init-requiretty && chmod 440 /etc/sudoers.d/999-vagrant-cloud-init-requiretty\nyum update -y\n"
+    #aws.ami = "ami-a6e15bcf" #Centos 6.3 official
+    aws.ami = "ami-05355a6c" #Amazon linux amazon/amzn-ami-pv-2013.03.1.x86_64-ebs
+    aws.tags = {
+      'Name' => 'Rundeck CI Test',
+    }
+
+    override.ssh.username = "ec2-user"
+    override.ssh.private_key_path = ENV['SSH_KEY_PATH']
+  end
+end

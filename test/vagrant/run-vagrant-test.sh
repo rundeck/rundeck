@@ -7,6 +7,11 @@ fi
 
 DIR=$1
 cd $DIR
+
+if [ -f ./run-vagrant-test.sh ] ; then
+    exec sh ./run-vagrant-test.sh
+fi
+
 vagrant up
 xit=$?
 if [ $xit != 0 ] ; then
