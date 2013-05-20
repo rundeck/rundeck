@@ -23,14 +23,15 @@ xmlproj=$($XMLSTARLET esc "$project")
 xmlhost=$($XMLSTARLET esc $(hostname))
 
 #determine h:m:s to run, 10 seconds from now
-NDATE=$(date '+%Y %m %d %H %M %S')
+NDATES=$(date '+%s')
+NDATES=$(( $NDATES + 10 ))
+NDATE=$(date --date="@$NDATES" '+%Y %m %d %H %M %S')
 NY=$(echo $NDATE | cut -f 1 -d ' ')
 NMO=$(echo $NDATE | cut -f 2 -d ' ')
 ND=$(echo $NDATE | cut -f 3 -d ' ')
 NH=$(echo $NDATE | cut -f 4 -d ' ')
 NM=$(echo $NDATE | cut -f 5 -d ' ')
 NS=$(echo $NDATE | cut -f 6 -d ' ')
-NS=$(( $NS + 10 ))
 
 #produce job.xml content corresponding to the dispatch request
 cat > $DIR/temp.out <<END
@@ -88,8 +89,9 @@ succount=$($XMLSTARLET sel -T -t -v "/result/succeeded/@count" $DIR/curl.out)
 jobid=$($XMLSTARLET sel -T -t -v "/result/succeeded/job/id" $DIR/curl.out)
 
 if [ "1" != "$succount" -o "" == "$jobid" ] ; then
-    errorMsg  "Upload was not successful."
-    exit 
+    errorMsg  "Upload job, success count expected 1, saw $succount."
+    cat $DIR/curl.out
+    exit 2
 fi
 
 ###
