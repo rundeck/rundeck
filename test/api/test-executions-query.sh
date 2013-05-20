@@ -5,7 +5,7 @@
 DIR=$(cd `dirname $0` && pwd)
 source $DIR/include.sh
 
-sleep 1
+sleep 3
 
 #determine date
 #yyyy-MM-dd'T'HH:mm:ss'Z'
@@ -232,11 +232,13 @@ testExecQuery(){
     if [ -n "${expect}" ] ; then 
         if [ "${expect}" != "$itemcount" ] ; then
             errorMsg "FAIL: expected ${expect} but saw $itemcount results for test: $desc: $xargs, url: ${runurl}?${params}"
+            cat $DIR/curl.out
             exit 2
         fi
     else
         if [ "" == "$itemcount" -o "0" == "$itemcount" ] ; then
             errorMsg "FAIL: expected some but saw $itemcount results for test: $desc: $xargs, url ${runurl}?${params}"
+            cat $DIR/curl.out
             exit 2
         fi
     fi
