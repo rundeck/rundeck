@@ -269,7 +269,13 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
         File cachedJar;
         try {
             debug(String.format("Scanning %s for cached versions of %s", pluginJarCacheDirectory, pluginJar));
-            for (File f : pluginJarCacheDirectory.listFiles()) {
+            File[] files = pluginJarCacheDirectory.listFiles();
+            if(files == null) {
+                throw new PluginException(
+                        String.format("Plugin jar cache dir is not a directory or cannot be read: %s",
+                                pluginJarCacheDirectory));
+            }
+            for (File f : files) {
                 if (isEquivalentPluginJar(f)) {
                     debug(String.format("Found %s, deleting...", f));
                     if (!f.delete()) {

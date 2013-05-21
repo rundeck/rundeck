@@ -579,6 +579,27 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
         Assert.assertEquals("Expected single cached jar in plugin jar cache", 1, files.length);
         Assert.assertTrue("Expected cached jar to meet requirements for equivalency against original jar", jarPluginProviderLoader.isEquivalentPluginJar(files[0]));
     }
+    public void testCreateCachedJarInvalidDir() throws Exception {
+        File testJar = createTestJar(null, null);
+
+        FileUtils.deleteDir(testPluginJarCacheDirectory);
+        testPluginJarCacheDirectory.mkdirs();
+
+        //specify a dir which will fail to read, e.g. a file.
+        File invalidCacheDir = new File(testPluginJarCacheDirectory, "notadir");
+        Assert.assertTrue(invalidCacheDir.createNewFile());
+        invalidCacheDir.deleteOnExit();
+
+        final JarPluginProviderLoader jarPluginProviderLoader = new JarPluginProviderLoader(testJar, invalidCacheDir, testCachedir);
+
+        try {
+            jarPluginProviderLoader.createCachedJar();
+            fail("Should fail to create cached jar");
+        } catch (PluginException e) {
+            e.printStackTrace();
+        }
+        invalidCacheDir.delete();
+    }
 
     /**
      * Create test jar file with manifest entries
