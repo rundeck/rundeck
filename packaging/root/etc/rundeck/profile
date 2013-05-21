@@ -1,7 +1,7 @@
-RDECK_HOME=/etc/rundeck
+RDECK_HOME=/var/lib/rundeck
 export RDECK_HOME
 
-RDECK_BASE=/etc/rundeck
+RDECK_BASE=/var/lib/rundeck
 export RDECK_BASE
 
 JAVA_CMD=java
