@@ -1,29 +1,28 @@
 package rundeck.services
-
+import com.dtolabs.rundeck.core.Constants
+import com.dtolabs.rundeck.core.authentication.Group
+import com.dtolabs.rundeck.core.authentication.Username
+import com.dtolabs.rundeck.core.authorization.Attribute
+import com.dtolabs.rundeck.core.authorization.DenyAuthorization
+import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
+import com.dtolabs.rundeck.core.authorization.providers.SAREAuthorization
 import com.dtolabs.rundeck.core.common.*
-import com.dtolabs.rundeck.core.authorization.*
-import com.dtolabs.rundeck.core.utils.*
-
-import org.springframework.beans.BeansException
+import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
+import com.dtolabs.rundeck.core.execution.service.MissingProviderException
+import com.dtolabs.rundeck.core.plugins.configuration.Describable
+import com.dtolabs.rundeck.core.plugins.configuration.Description
+import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import com.dtolabs.rundeck.core.utils.SingleUserAclsAuthorization
+import com.dtolabs.rundeck.core.utils.SingleUserAuthentication
+import com.dtolabs.rundeck.core.utils.UserSubjectAuthorization
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
-
-import com.dtolabs.rundeck.core.Constants
-import javax.security.auth.Subject
-import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
-import com.dtolabs.rundeck.core.authentication.Username
-import com.dtolabs.rundeck.core.authentication.Group
-import com.dtolabs.rundeck.core.authorization.providers.SAREAuthorization
-import rundeck.ScheduledExecution
 import rundeck.Execution
 import rundeck.PluginStep
-import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
-import com.dtolabs.rundeck.core.plugins.configuration.Describable
-import com.dtolabs.rundeck.core.plugins.configuration.Validator
-import com.dtolabs.rundeck.core.plugins.configuration.Property
-import com.dtolabs.rundeck.core.plugins.configuration.Description
-import com.dtolabs.rundeck.core.execution.service.MissingProviderException
+import rundeck.ScheduledExecution
 
+import javax.security.auth.Subject
 /**
  * Interfaces with the core Framework object
  */
@@ -42,11 +41,6 @@ class FrameworkService implements ApplicationContextAware {
     def ApplicationContext applicationContext
     def ExecutionService executionService
     def projects
-
-    // implement ApplicationContextAware interface
-    def void setApplicationContext(ApplicationContext ac) throws BeansException {
-        applicationContext = ac;
-    }
 
     def getRundeckBase(){
         if (!initialized) {

@@ -41,4 +41,8 @@ public interface Reformatter {
      * @return new message string
      */
     public String reformat(Map<String, String> context, String message);
+
+    public String getTail();
+
+    public String getHead();
 }

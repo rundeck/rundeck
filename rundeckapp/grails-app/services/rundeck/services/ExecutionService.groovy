@@ -1,12 +1,13 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.core.logging.LogUtil
 import com.dtolabs.rundeck.core.utils.OptsUtil
-import org.springframework.web.servlet.support.RequestContextUtils as RCU
-
 import com.dtolabs.rundeck.app.support.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.core.Constants
-import com.dtolabs.rundeck.core.cli.CLIToolLogger
+import com.dtolabs.rundeck.core.logging.ContextLogWriter
+import com.dtolabs.rundeck.core.logging.LogLevel
+import com.dtolabs.rundeck.core.logging.StreamingLogWriter
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.common.NodesSelector
@@ -15,11 +16,8 @@ import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepException
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionService
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor
+import com.dtolabs.rundeck.core.execution.workflow.*
+import com.dtolabs.rundeck.core.execution.workflow.steps.*
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.execution.ExecutionItemFactory
@@ -27,32 +25,25 @@ import com.dtolabs.rundeck.execution.JobExecutionItem
 import com.dtolabs.rundeck.execution.JobReferenceFailureReason
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.util.GrailsWebUtil
-import org.apache.tools.ant.BuildEvent
-import org.apache.tools.ant.BuildException
-import org.apache.tools.ant.BuildLogger
-import org.apache.tools.ant.Project
 import org.codehaus.groovy.grails.web.context.ServletContextHolder
 import org.hibernate.StaleObjectStateException
-import org.springframework.beans.BeansException
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.MessageSource
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.context.support.WebApplicationContextUtils
+import org.springframework.web.servlet.support.RequestContextUtils as RCU
+import rundeck.*
 import rundeck.controllers.ExecutionController
+import rundeck.services.logging.ExecutionLogWriter
 
-import java.text.MessageFormat
-import java.text.SimpleDateFormat
-import java.util.logging.Handler
-import java.util.logging.Level
-import java.util.logging.LogRecord
-import java.util.logging.Logger
-import java.util.regex.Pattern
 import javax.security.auth.Subject
 import javax.servlet.http.HttpSession
+import java.text.MessageFormat
+import java.text.SimpleDateFormat
+import java.util.regex.Pattern
 
-import com.dtolabs.rundeck.core.execution.workflow.*
-import rundeck.*
+import static org.apache.tools.ant.util.StringUtils.*
 
 /**
  * Coordinates Command executions via Ant Project objects
@@ -64,6 +55,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
     def notificationService
     def ScheduledExecutionService scheduledExecutionService
     def ReportService reportService
+    def LoggingService loggingService
 
     def ThreadBoundOutputStream sysThreadBoundOut
     def ThreadBoundOutputStream sysThreadBoundErr
@@ -72,10 +64,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
     def ApplicationContext applicationContext
 
     // implement ApplicationContextAware interface
-    def void setApplicationContext(ApplicationContext ac) throws BeansException {
-        applicationContext = ac;
-    }
-
 
     def listLastExecutionsPerProject(Framework framework, int max=5){
         def projects = frameworkService.projects(framework).collect{ it.name }
@@ -500,18 +488,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
      */
     def Map executeAsyncBegin(Framework framework, Execution execution, ScheduledExecution scheduledExecution=null, Map extraParams = null, Map extraParamsExposed = null){
         execution.refresh()
-        String lognamespace="rundeck"
-        if(execution.workflow){
-            lognamespace="workflow"
-        }else{
-            lognamespace=execution.command
-        }
-
-        def outfile = createOutputFilepathForExecution(execution, framework)
-        execution.outputfilepath=outfile
+        def ExecutionLogWriter loghandler= loggingService.openLogWriter(execution,
+                                                                          logLevelForString(execution.loglevel),
+                                                                          [user:execution.user,
+                                                                                  node: framework.getFrameworkNodeName()])
+        execution.outputfilepath= loghandler.filepath?.getAbsolutePath()
         execution.save(flush:true)
-        def LogHandler loghandler = createLogHandler(lognamespace, execution.outputfilepath,execution.loglevel,
-            [user:execution.user,node:framework.getFrameworkNodeName()])
 
         try{
             def jobcontext=new HashMap<String,String>()
@@ -531,7 +513,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
             NodeRecorder recorder = new NodeRecorder();//TODO: use workflow-aware listener for nodes
 
             //create listener to handle log messages and Ant build events
-            ExecutionListener executionListener = new WorkflowExecutionListenerImpl(recorder, loghandler,false,null);
+            ExecutionListener executionListener = new WorkflowExecutionListenerImpl(recorder, new ContextLogWriter(loghandler),false,null);
             StepExecutionContext executioncontext = createContext(execution, null,framework, execution.user, jobcontext, executionListener, null,extraParams, extraParamsExposed)
             final cis = StepExecutionService.getInstanceForFramework(framework);
             cis.registerInstance(JobExecutionItem.STEP_EXECUTION_TYPE, this)
@@ -543,22 +525,38 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
             }
             //install custom outputstreams for System.out and System.err for this thread and any child threads
             //output will be sent to loghandler instead.
-            sysThreadBoundOut.installThreadStream(loghandler.createLoggerStream(Level.WARNING, null));
-            sysThreadBoundErr.installThreadStream(loghandler.createLoggerStream(Level.SEVERE, null));
+            sysThreadBoundOut.installThreadStream(loggingService.createLogOutputStream(loghandler, LogLevel.NORMAL));
+            sysThreadBoundErr.installThreadStream(loggingService.createLogOutputStream(loghandler, LogLevel.ERROR));
             //create service object for the framework and listener
             Thread thread = new WorkflowExecutionServiceThread(framework.getWorkflowExecutionService(),item, executioncontext)
             thread.start()
             return [thread:thread, loghandler:loghandler, noderecorder:recorder, execution: execution, scheduledExecution:scheduledExecution]
-        }catch(Exception e){
-            loghandler.publish(new LogRecord(Level.SEVERE, 'Failed to start execution: ' + e.getClass().getName() + ": " + e.message))
+        }catch(Exception e) {
+            log.error('Failed to start execution', e)
+            loghandler.logError('Failed to start execution: ' + e.getClass().getName() + ": " + e.message)
             sysThreadBoundOut.removeThreadStream()
             sysThreadBoundErr.removeThreadStream()
             loghandler.close()
-            log.error('Failed to start execution',e)
             return null
         }
     }
+    private LogLevel logLevelForString(String level){
+        def deflevel = applicationContext?.getServletContext()?.getAttribute("LOGLEVEL_DEFAULT")
+        return LogLevel.looseValueOf(level?:deflevel,LogLevel.NORMAL)
+    }
 
+    def static textLogLevels = ['ERR': 'ERROR']
+    def static mappedLogLevels = ['ERROR', 'WARN', 'INFO', 'VERBOSE', 'DEBUG']
+    /**
+     * Map the log level to an integer used internally
+     * @param level
+     * @return
+     */
+    private int logLevelIntValue(String level){
+        LogLevel loglevel = logLevelForString(level)
+        List levels= LogLevel.values() as List
+        return levels.indexOf(loglevel)
+    }
     /**
      * create the path to the execution output file based on the Execution object.
      *
@@ -738,7 +736,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
             .user(userName)
             .nodeSelector(nodeselector)
             .nodes(nodeSet)
-            .loglevel(loglevels[null != execMap.loglevel ? execMap.loglevel : 'WARN'])
+            .loglevel(logLevelIntValue(execMap.loglevel))
             .dataContext(datacontext)
             .privateDataContext(privatecontext)
             .executionListener(listener)
@@ -761,7 +759,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
      */
     def boolean executeAsyncFinish(Map execMap){
         def WorkflowExecutionServiceThread thread=execMap.thread
-        def LogHandler loghandler=execMap.loghandler
+        def ExecutionLogWriter loghandler=execMap.loghandler
         if(!thread.isSuccessful() ){
             Throwable exc = thread.getThrowable()
             def errmsgs = []
@@ -774,15 +772,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
                 if(exc.getCause()){
                     errmsgs << "Caused by: "+exc.getCause().getMessage()
                 }
-            }else if (Project.MSG_VERBOSE <= loghandler.getMessageOutputLevel()) {
-                loghandler.publish(new LogRecord(Level.SEVERE, thread.resultObject?.toString()))
+            }else if(thread.resultObject){
+                loghandler.logVerbose(thread.resultObject.toString())
             }
             if(errmsgs) {
                 log.error("Execution failed: " + execMap.execution.id + ": " + errmsgs.join(","))
-                if (exc && Project.MSG_VERBOSE <= loghandler.getMessageOutputLevel()) {
-                    errmsgs << org.apache.tools.ant.util.StringUtils.getStackTrace(exc)
+
+                loghandler.logError(errmsgs.join(','))
+                if (exc) {
+                    loghandler.logVerbose(getStackTrace(exc))
                 }
-                loghandler.publish(new LogRecord(Level.SEVERE, errmsgs.join(',')))
             }else {
                 log.error("Execution failed: " + execMap.execution.id + ": " + thread.resultObject?.toString())
             }
@@ -1395,30 +1394,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
         return optparams
     }
 
-    def static loglevels=['ERR':Project.MSG_ERR,'ERROR':Project.MSG_ERR,'WARN':Project.MSG_WARN,'INFO':Project.MSG_INFO,'VERBOSE':Project.MSG_VERBOSE,'DEBUG':Project.MSG_DEBUG]
-    def static textLogLevels=['ERR':'ERROR']
-    def static mappedLogLevels=['ERROR','WARN','INFO','VERBOSE','DEBUG']
-
-    def LogHandler createLogHandler(command, filepath,loglevel="WARN", Map defaultData=null){
-        def namespace = "com.dtolabs.rundeck.core."+command
-        if (!filepath) {
-            throw new IllegalArgumentException("outputfilepath property value not set" )
-        }
-
-        if (!applicationContext){
-            throw new IllegalStateException("ApplicationContext instance not found!")
-        }
-
-        def deflevel=applicationContext.getServletContext().getAttribute("LOGLEVEL_DEFAULT")
-        def int level=loglevels[deflevel]?loglevels[deflevel]:Project.MSG_INFO;
-        if(null!=loglevels[loglevel]){
-            level=loglevels[loglevel]
-        }
-
-
-        return new HtTableLogger(namespace, new File(filepath), level,defaultData)
-    }
-
     def saveExecutionState( schedId, exId, Map props, Map execmap=null){
         def ScheduledExecution scheduledExecution
         def Execution execution = Execution.get(exId)
@@ -1900,469 +1875,5 @@ class ExecutionServiceValidationException extends ExecutionServiceException{
     }
     public Map<String,String> getErrors(){
         return errors;
-    }
-}
-
-interface LogHandler {
-    public BuildLogger getBuildLogger()
-    public void publish(final LogRecord lr)
-    public OutputStream createLoggerStream(Level level, String prefix);
-    public int getMessageOutputLevel()
-}
-class LogOutputStream extends OutputStream{
-    HtTableLogger logger;
-    Level level;
-    String prefix;
-    StringBuffer sb;
-    def LogOutputStream(HtTableLogger logger, Level level, String prefix){
-        this.logger=logger;
-        this.level=level;
-        this.prefix=prefix;
-        sb = new StringBuffer();
-    }
-    def boolean crchar=false;
-
-    public void write(final int b) {
-        if(b=='\n' ){
-            logger.logOOB(level,null==prefix?sb.toString():prefix+sb.toString());
-            sb = new StringBuffer()
-            crchar=false;
-        }else if(b=='\r'){
-            crchar=true;
-        }else{
-            if (crchar){
-                logger.logOOB(level,null==prefix?sb.toString():prefix+sb.toString());
-                sb = new StringBuffer()
-                crchar=false;
-            }
-            sb.append((char)b)
-        }
-
-    }
-    public void flush(){
-        if(sb.size()>0){
-            logger.logOOB(level,null==prefix?sb.toString():prefix+sb.toString());
-        }
-    }
-}
-/**
-  * HtTableLogger
-  */
-class HtTableLogger extends Handler implements LogHandler, BuildLogger, CLIToolLogger, ContextLogger {
-    def PrintStream printstream
-    def String namespace
-    def File outfile
-    def boolean closed=false
-    def int msgOutputLevel
-    def long startTime
-    def Map defaultEntries=[:]
-
-    def HtTableLogger(final String namespace, File outfile, int msglevel) {
-        this(namespace,outfile,msglevel,null)
-    }
-    def HtTableLogger(final String namespace, File outfile, int msglevel, Map defaultEntries) {
-        this.namespace = namespace
-        this.outfile = outfile
-        if(null!=defaultEntries){
-            this.defaultEntries=new HashMap(defaultEntries)
-        }
-        printstream = new PrintStream(new FileOutputStream(outfile))
-        msgOutputLevel=msglevel
-        def Logger logger = Logger.getLogger(namespace)
-        logger.addHandler(this);
-        setFormatter(new HtFormatter())
-    }
-
-    void setMessageOutputLevel(int i){
-        msgOutputLevel = i;
-
-    }
-    public int getMessageOutputLevel(){
-        return msgOutputLevel;
-    }
-    public OutputStream createLoggerStream(final Level level, String prefix){
-        return new LogOutputStream(this,level, prefix) ;
-    }
-    void setOutputPrintStream(java.io.PrintStream stream){
-
-    }
-
-    void setEmacsMode(boolean b){
-
-    }
-
-    void setErrorPrintStream(java.io.PrintStream stream){
-
-    }
-
-    public void taskStarted(final BuildEvent e) {
-    }
-
-    public void taskFinished(final BuildEvent e) {
-    }
-
-    public void targetStarted(final BuildEvent e) {
-        log(Level.CONFIG, e.getMessage());
-    }
-
-    public void targetFinished(final BuildEvent e) {
-        log(Level.CONFIG, e.getMessage());
-    }
-
-    public void buildStarted(final BuildEvent e) {
-        startTime = System.currentTimeMillis();
-        log(Level.CONFIG, e.getMessage());
-    }
-
-    private String lSep = System.getProperty("line.separator");
-    public void buildFinished(final BuildEvent event) {
-        final Throwable error = event.getException();
-        final StringBuffer message = new StringBuffer();
-
-
-        if (error == null) {
-//            log(Level.CONFIG, "Command successful. " + org.apache.tools.ant.util.DateUtils.formatElapsedTime(System.currentTimeMillis() - startTime));
-        } else {
-
-            message.append("Command failed.");
-            message.append(lSep);
-
-            if (Project.MSG_VERBOSE <= msgOutputLevel || !(error instanceof BuildException)) {
-                message.append(org.apache.tools.ant.util.StringUtils.getStackTrace(error));
-            } else {
-                message.append(error.toString()).append(lSep);
-            }
-            log(Level.SEVERE, message.toString());
-        }
-
-        //close();
-    }
-
-
-    public void messageLogged(final BuildEvent event) {
-        final String msg = event.getMessage();
-        if (msg == null || msg.length() == 0) {
-            return;
-        }
-
-        final int priority = event.getPriority();
-        // Filter out messages based on priority
-        if (priority <= msgOutputLevel) {
-            def data = [:]
-            if (msg.startsWith("[")) {
-                data = parseLogDetail(event.getMessage())
-                if (data) {
-                    msg = data.rest ? data.rest : msg
-                }
-            }
-            log(getLevelForPriority(priority), msg, data ? data : defaultEntries);
-        }
-    }
-    /**
-     * Converts an ant Priority (from {@link org.apache.tools.ant.Project} class) into a logging Level value.
-     */
-    public static Level getLevelForPriority(final int priority){
-        switch(priority){
-            case Project.MSG_ERR:
-            return Level.SEVERE
-            case Project.MSG_WARN:
-            return Level.WARNING
-            case Project.MSG_INFO:
-            return Level.INFO
-            case Project.MSG_VERBOSE:
-            return Level.CONFIG
-            case Project.MSG_DEBUG:
-            return Level.FINEST
-            default:
-            return Level.WARNING
-        }
-    }
-    /**
-     * Converts an ant Priority (from {@link org.apache.tools.ant.Project} class) into a logging Level value.
-     */
-    public static Level getLevelForString(final String level){
-        switch(level){
-            case "ERROR":
-            return Level.SEVERE
-            case "WARN":
-            return Level.WARNING
-            case "INFO":
-            return Level.INFO
-            case "VERBOSE":
-            return Level.CONFIG
-            case "DEBUG":
-            return Level.FINEST
-            default:
-            return Level.WARNING
-        }
-    }
-
-    /**
-     * Matches the outer most context message:
-     * [context][level] *message
-     */
-    def static outerre1 = /(?x) ^\[   ([^\]]+)  \]  \[  ([^\]\s]+)  \] \s* (.*)    $/
-    /**
-    * Matches simple context:
-     * user@node .*
-     */
-    def static userre = /(?x) ^  ([^@\]]*) @ ([^\s\]]*) (.*) $/
-    def static cmdctxre = /(?x)  ^  \s*  (  [^.\]\s]+  \.  [^.\]\s]+  (\.[^\]\s]+)? )  \s+  ([^\]]+)  $/
-    def static ctexecctxre = /(?x)  ^  \s* ([^\]]+)  $/
-    public static Map parseLogDetail(final String output){
-        def matcher1= output=~outerre1
-        def map=[:]
-        if(matcher1.matches()){
-            def ctxInfo=matcher1.group(1)
-            def level=matcher1.group(2)
-            def rest=matcher1.group(3)
-            def umatcher= ctxInfo=~userre
-            if(umatcher.matches()){
-
-                map['user']=umatcher.group(1)
-                map['node']=umatcher.group(2)
-                def restctx=umatcher.group(3)
-                def matcher=restctx=~cmdctxre
-                def matcher2=restctx=~ctexecctxre
-                if(matcher.matches()){
-                    map['context']=matcher.group(1)
-                    map['command']=matcher.group(3)
-                }else if(matcher2.matches()){
-                    map['command']=matcher2.group(1)
-                }
-            }
-            map['level']=level
-            map['rest']=rest
-        }
-        return map
-    }
-
-    /**
-     * Logs build output to a java.util.logging.Logger.
-     *
-     * @param message Message to log. <code>null</code> messages are not logged,
-     *                however, zero-length strings are.
-     */
-    public void log(final String message) {
-        logOOB(Level.WARNING, message);
-    }
-    /**
-     * Logs build output to a java.util.logging.Logger.
-     *
-     * @param message Message being logged. <code>null</code> messages are not
-     *                logged, however, zero-length strings are.
-     * @param level   the log level
-     */
-    public void log(final Level level, final String message) {
-        if (message == null) {
-            return;
-        }
-
-        // log the message
-        final LogRecord record = new LogRecord(level, message);
-        publish(record);
-    }
-    /**
-     * Logs build output to a java.util.logging.Logger.
-     *
-     * @param message Message being logged. <code>null</code> messages are not
-     *                logged, however, zero-length strings are.
-     * @param level   the log level
-     */
-    public void logOOB(final Level level, final String message) {
-        if (message == null) {
-            return;
-        }
-
-        String xmessage=message
-        Level xlevel=level
-        // log the message
-        def Map data = parseLogDetail(message)
-        if(data){
-            xmessage=data.rest
-            if(data.level){
-                xlevel = getLevelForString(data.level)
-            }
-        }else{
-            //output was to console from stderr/stdout
-            data = defaultEntries
-        }
-
-        final LogRecord record = new LogRecord(xlevel, xmessage);
-
-
-        if(data){
-            publish(record,data);
-        }else{
-            publish(record);
-        }
-
-    }
-
-    public static String makeContextId(final Map data){
-        return "${data.level}:${data.user}:${data.node}:${data.context}:${data.command}"
-    }
-    /**
-     * Logs build output to a java.util.logging.Logger.
-     *
-     * @param message Message being logged. <code>null</code> messages are not
-     *                logged, however, zero-length strings are.
-     * @param level   the log level
-     * @param data the contextual data
-     */
-    public void log(final Level level, final String message, final Map data) {
-        if (message == null) {
-            return;
-        }
-        // log the message
-        final LogRecord record = new LogRecord(level, message);
-        if(data){
-            publish(record,data);
-        }else if(defaultEntries){
-            publish(record,defaultEntries);
-        }else{
-            publish(record);
-        }
-    }
-    public BuildLogger getBuildLogger() {
-        return this
-    }
-    public void publish(final LogRecord lr) {
-        if (lr.getMessage() == null) {
-            return;
-        }
-        if(closed){
-            return;
-        }
-        if(lr.getLevel().intValue()>=getLevelForPriority(msgOutputLevel).intValue()){
-            printstream.println(getFormatter().format(lr))
-        }
-    }
-    public void publish(final LogRecord lr,final Map data) {
-        if (lr.getMessage() == null) {
-            return;
-        }
-        if(closed){
-            return;
-        }
-        if(lr.getLevel().intValue()>=getLevelForPriority(msgOutputLevel).intValue()){
-            printstream.println(getHtFormatter().format(lr,data))
-        }
-    }
-    public HtFormatter getHtFormatter(){
-        return (HtFormatter)getFormatter()
-    }
-    public void close() {
-        if(!closed ){
-            closed=true;
-            if(null!=getFormatter()){
-                printstream.println (getFormatter().getTail(this))
-            }
-            flush()
-
-            this.printstream.close()
-            def Logger logger = Logger.getLogger(namespace)
-            logger.removeHandler(this);
-        }
-    }
-    public void flush() {
-        this.printstream.flush()
-    }
-
-    public void error(String s) {
-        logOOB(getLevelForString("ERROR"),s)
-
-    }
-
-    public void warn(String s) {
-        logOOB(getLevelForString("WARN"),s)
-
-    }
-
-    public void verbose(String s) {
-        logOOB(getLevelForString("VERBOSE"),s)
-    }
-
-    void log(String s, Map<String, String> data) {
-        log(Level.WARNING,s,data)
-    }
-
-    void error(String s, Map<String, String> data) {
-        log(getLevelForString("ERROR"), s, data)
-
-    }
-
-    void warn(String s, Map<String, String> data) {
-        log(getLevelForString("WARN"), s, data)
-
-    }
-
-    void verbose(String s, Map<String, String> data) {
-        log(getLevelForString("VERBOSE"), s, data)
-
-    }
-
-    void debug(String s, Map<String, String> data) {
-        log(getLevelForString("DEBUG"), s, data)
-
-    }
-
-    void debug(String s) {
-        logOOB(getLevelForString("DEBUG"), s)
-
-    }
-}
-    
-class HtFormatter extends java.util.logging.Formatter{
-    public HtFormatter(){
-        
-    }
-    def SimpleDateFormat fmt = new SimpleDateFormat("hh:mm:ss");
-    public String format(LogRecord record,Map data){
-
-        def Date d = new Date(record.getMillis());
-        def String dDate = fmt.format(d);
-        String dMesg = record.getMessage();
-        while(dMesg.endsWith('\r')){
-            dMesg = dMesg.substring(0,dMesg.length()-1)
-        }
-        StringBuffer sb = new StringBuffer()
-        sb.append('^^^')
-        //date
-        sb.append(dDate).append('|')
-        //level
-        sb.append(record.getLevel()).append("|")
-
-        //sequence
-        for(def i =2;i<ExecutionService.EXEC_FORMAT_SEQUENCE.size();i++){
-            if(null==data[ExecutionService.EXEC_FORMAT_SEQUENCE[i]]){
-                sb.append('|')
-            }else{
-                sb.append(data[ExecutionService.EXEC_FORMAT_SEQUENCE[i]]).append('|')
-            }
-        }
-        //mesg
-        sb.append(dMesg)
-        //end
-        sb.append('^^^')
-
-        return sb.toString()
-    }
-    public String format(LogRecord record){
-
-        def Date d = new Date(record.getMillis());
-        def String dDate = fmt.format(d);
-        String dMesg = record.getMessage();
-        while(dMesg.endsWith('\r')){
-            dMesg = dMesg.substring(0,dMesg.length()-1)
-        }
-
-        return '^^^'+dDate+"|"+record.getLevel()+"|"+dMesg+'^^^'
-    }
-    public String getHead(Handler h){
-        return "";
-    }
-    public String getTail(Handler h){
-        return '^^^END^^^';
     }
 }

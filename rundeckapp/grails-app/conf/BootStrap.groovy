@@ -1,25 +1,19 @@
-import grails.util.Environment
-
-import java.io.File;
-
-import com.dtolabs.rundeck.core.Constants;
-import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
-import org.springframework.web.context.support.WebApplicationContextUtils
-import org.springframework.web.context.WebApplicationContext
-import org.apache.log4j.Logger
-import org.apache.log4j.LogManager
-import org.apache.log4j.Level
-import org.apache.log4j.net.SocketAppender
-import grails.util.GrailsUtil
 import com.dtolabs.launcher.Setup
+import com.dtolabs.rundeck.core.Constants
+import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
+import grails.util.Environment
 import org.codehaus.groovy.grails.plugins.web.filters.FilterConfig
 import org.codehaus.groovy.grails.plugins.web.filters.FilterToHandlerAdapter
+import org.springframework.web.context.WebApplicationContext
+import org.springframework.web.context.support.WebApplicationContextUtils
 
 class BootStrap {
 
     def grailsApplication
     def scheduledExecutionService
     def executionService
+    def frameworkService
+    def loggingService
     def filterInterceptor
 
      def init = { servletContext ->
@@ -35,11 +29,16 @@ class BootStrap {
          if(!grailsApplication.config.rdeck.base){
              //look for system property
              rdeckBase=System.getProperty('rdeck.base')
-             log.warn("using rdeck.base system property: ${rdeckBase}");
+             log.error("using rdeck.base system property: ${rdeckBase}");
+             def newconf= new ConfigObject()
+             newconf.rdeck.base = rdeckBase
+             grailsApplication.config.merge(newconf)
          }else{
              rdeckBase=grailsApplication.config.rdeck.base
-             log.warn("using rdeck.base config property: ${rdeckBase}");
+             log.error("using rdeck.base config property: ${rdeckBase}");
          }
+         frameworkService.rundeckbase = rdeckBase
+         loggingService.configure()
          def clusterMode = false
          def serverNodeUUID = null
          if (Environment.getCurrent()!=Environment.TEST) {

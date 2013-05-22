@@ -1,0 +1,151 @@
+package com.dtolabs.rundeck.app.internal.logging
+
+import com.dtolabs.rundeck.core.logging.LogEntryIterator
+import com.dtolabs.rundeck.core.logging.LogEvent
+import com.dtolabs.rundeck.core.logging.LogLevel
+import com.dtolabs.rundeck.core.logging.OffsetIterator
+import com.dtolabs.rundeck.core.utils.Utility
+import rundeck.services.ExecutionService
+
+import java.text.ParseException
+import java.text.SimpleDateFormat
+
+/**
+ * $INTERFACE is ...
+ * User: greg
+ * Date: 5/21/13
+ * Time: 6:04 PM
+ */
+class LogEntryLineIterator implements LogEntryIterator{
+    private static final String lSep = System.getProperty("line.separator")
+    OffsetIterator<String> iter
+    private boolean complete
+    private long offset
+    private Deque<LogEvent> latest
+    private Deque<Long> poslist
+    private StringBuilder buf
+    private DefaultLogEvent eventBuf
+    private wasStarted = false
+    private LineLogFormat lineLogFormat
+
+    public LogEntryLineIterator(OffsetIterator<String> iter, LineLogFormat format) {
+        this.iter = iter
+        offset = iter.offset
+        complete = !iter.hasNext()
+        latest = new ArrayDeque<LogEvent>()
+        poslist = new ArrayDeque<Long>()
+        poslist << iter.offset
+        this.lineLogFormat=format
+    }
+
+    private void checkStarted() {
+        if (!wasStarted) {
+            readNextEntry()
+            wasStarted = true
+        }
+    }
+
+    private void readNextEntry() {
+        while (!complete && iter.hasNext() && !latest) {
+            parseLine(iter.next())
+        }
+    }
+
+    @Override
+    boolean isComplete() {
+        return complete
+    }
+
+    @Override
+    boolean hasNext() {
+        checkStarted()
+        if (complete) {
+            return false
+        } else {
+            return latest.size() > 0
+        }
+    }
+
+    @Override
+    LogEvent next() {
+        checkStarted()
+        LogEvent next = latest.removeFirst()
+        poslist.removeFirst()
+        offset = poslist.peekFirst()
+        if (!complete && latest.size() < 1) {
+            readNextEntry()
+        }
+        return next
+    }
+
+    @Override
+    void remove() {
+        iter.remove()
+    }
+
+    @Override
+    long getOffset() {
+        return offset
+    }
+
+    /**
+     * drain buffers into item, save offset
+     */
+    private void finishMessage(LogEvent event) {
+        poslist << iter.offset
+        latest << event
+        eventBuf=null
+    }
+    /**
+     * Parse the log line, and if aany log entries are completed add them to the buffer
+     * @param line
+     */
+    private void parseLine(String line) {
+        def LineLogFormat.FormatItem item = lineLogFormat.parseLine(line)
+        if(item.lineComplete){
+            if(!eventBuf){
+                eventBuf=new DefaultLogEvent(item.entry)
+            }else if(item.partial){
+                //merge any partial
+                eventBuf.message+=item.partial
+            }
+            finishMessage(eventBuf)
+        }else if(item.entry){
+            if(eventBuf){
+                finishMessage(eventBuf)
+            }
+            eventBuf= new DefaultLogEvent(item.entry)
+        } else if (item.partial && eventBuf) {
+            //merge any partial
+            eventBuf.message += item.partial
+        }else if(item.partial){
+            //partial but no event
+        }
+        if(item.fileEnd){
+            complete=true
+        }
+        if(item.fileStart){
+
+        }
+        if(item.invalid){
+            //invalid
+        }
+    }
+
+    /**
+     * Seek backwards within the file to the specified entry index from the end.
+     * @param file
+     * @param count
+     * @return
+     */
+    public static long seekBackwards(File file, int count) {
+        //NB: we search for log entry ending indicators, so we have to skip 2 of them
+        //1: the final sigil, 2: the end of the final entry, before we can seek back the number of entries
+        //this might skip over a single entry if the log is not complete at the end of the file
+        long seek = Utility.seekBack(file, count + 2, "^^^${lSep}")
+        if (seek > 0) {
+            seek += "^^^${lSep}".getBytes("UTF-8").length
+        }
+        seek
+    }
+}
