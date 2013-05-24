@@ -83,7 +83,13 @@ class LogFileStorageService {
      * @return
      */
     ExecutionLogReader requestLogFileReader(Execution e, performLoad = true) {
-        def state = getLogFileState(e)
+        def state
+        if (!e.outputfilepath && e.dateCompleted == null && e.dateStarted != null) {
+            //assume pending write locally
+            state = LogState.PENDING_LOCAL
+        } else {
+            state = getLogFileState(e)
+        }
         def reader=null
         switch (state){
             case LogState.FOUND_LOCAL:
