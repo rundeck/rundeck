@@ -23,7 +23,7 @@ import java.text.SimpleDateFormat
  *
  */
 
-/*
+/**
  * Logs to a file using the OutputLogFormat
  */
 class FSStreamingLogWriter implements StreamingLogWriter {
@@ -34,6 +34,13 @@ class FSStreamingLogWriter implements StreamingLogWriter {
     private LogLevel threshold
     private boolean started
 
+    /**
+     * Create a FSStreamingLogWriter
+     * @param output outputstream
+     * @param threshold highest log level to emit
+     * @param defaultMeta default metadata to add to emitted events, only applies if the metadata is not present
+     * @param formatter log format
+     */
     public FSStreamingLogWriter(OutputStream output, LogLevel threshold, Map<String, String> defaultMeta,
                                 OutputLogFormat formatter) {
         this.output = output
@@ -44,16 +51,22 @@ class FSStreamingLogWriter implements StreamingLogWriter {
     }
 
     @Override
+    void openStream(Map<String, Object> context) {
+        synchronized (this) {
+            if (!started) {
+                output << formatter.outputBegin()
+                output << lineSep
+                started = true
+            }
+        }
+    }
+
+    @Override
     void addEntry(LogEvent event) {
         if (event.logLevel.belowThreshold(threshold)) {
             synchronized (this) {
                 if (null == output) {
                     throw new IllegalStateException("output was closed")
-                }
-                if (!started) {
-                    output << formatter.outputBegin()
-                    output << lineSep
-                    started = true
                 }
                 def event1 = formatter.outputEvent(new DefaultLogEvent(event, defaultMeta))
                 output << event1

@@ -17,15 +17,26 @@ package com.dtolabs.rundeck.core.logging;
  *
  */
 
-/*
- * StreamingLogWriter.java
- * 
- * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
- * Created: 1/22/13 6:51 PM
- * 
+import java.io.IOException;
+import java.util.Map;
+
+/**
+ * writes log entries in a streaming manner
  */
 public interface StreamingLogWriter {
+    /**
+     * Open a stream, called before addEntry is called
+     */
+    void openStream(Map<String, ? extends Object> context) throws IOException;
+
+    /**
+     * Add a new entry
+     * @param entry
+     */
     void addEntry(LogEvent entry);
 
+    /**
+     * Close the stream.
+     */
     void close();
 }
