@@ -46,6 +46,11 @@
 <div class="login">
     <form action="j_security_check" method="post">
         <div class="row">
+            <span class="login welcome">
+            <g:message code="main.app.login.welcome"/>
+            </span>
+        </div>
+        <div class="row">
             <label for="login">Username: </label>
             <span class="input"><input type="text" name="j_username" id="login"/></span>
         </div>

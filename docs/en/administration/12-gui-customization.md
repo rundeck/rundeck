@@ -42,4 +42,7 @@ these properties in the [rundeck-config.properties](configuration.html#rundeck-c
 `rundeck.gui.enableJobHoverInfo`            Shows job information when the user  false
                                             hovers over a job name in various  
                                             pages. (Default: true)
+                                            
+`rundeck.gui.login.welcome    `             Text displayed in the login form.
+                                            pages. (Default: blank)                                            
 -------------------------------------------------------------------------------
