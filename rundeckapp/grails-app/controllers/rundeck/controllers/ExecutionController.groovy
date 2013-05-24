@@ -186,8 +186,10 @@ class ExecutionController {
         SimpleDateFormat logFormater = new SimpleDateFormat("HH:mm:ss", Locale.US);
         logFormater.timeZone= TimeZone.getTimeZone("GMT")
         def iterator = reader.reader.logEntryIterator()
+        def lineSep=System.getProperty("line.separator")
         iterator.each{ LogEvent msgbuf ->
             response.outputStream << (isFormatted?"${logFormater.format(msgbuf.datetime)} [${msgbuf.metadata?.user}@${msgbuf.metadata?.node} ${msgbuf.metadata?.context} ${msgbuf.metadata?.command}][${msgbuf.logLevel}] ${msgbuf.message}" : msgbuf.message)
+            response.outputStream<<lineSep
         }
     }
     /**
@@ -404,8 +406,8 @@ class ExecutionController {
         def completed=false
         def max= 0
         def LogEntryIterator offsetIterator
-        if(params.lastlines && (ReverseSeekingStreamingLogReader.isInstance(reader))){
-            def ReverseSeekingStreamingLogReader reversing= (ReverseSeekingStreamingLogReader) reader
+        if(params.lastlines && (ReverseSeekingStreamingLogReader.isInstance(logread))){
+            def ReverseSeekingStreamingLogReader reversing= (ReverseSeekingStreamingLogReader) logread
             def lastlines = Long.parseLong(params.lastlines)
             offsetIterator = reversing.logEntryIteratorFromReverseOffset(lastlines)
             //load only the last X lines of the file, by going to the end and searching backwards for the
@@ -535,9 +537,10 @@ class ExecutionController {
                 response.addHeader('X-Rundeck-Exec-Duration', execDuration.toString())
                 response.addHeader('X-Rundeck-ExecOutput-LastModifed', lastmodl.toString())
                 response.addHeader('X-Rundeck-ExecOutput-TotalSize', totsize.toString())
+                def lineSep = System.getProperty("line.separator")
                 render(contentType:"text/plain"){
                     entry.each{
-                        out<<it.mesg
+                        out<<it.mesg+lineSep
                     }
                 }
             }

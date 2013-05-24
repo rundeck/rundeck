@@ -10,7 +10,7 @@ import com.dtolabs.rundeck.core.logging.LogEvent
  */
 public interface LineLogFormat {
     FormatItem parseLine(String line)
-
+    long seekBackwards(File file, int count)
     static interface FormatItem {
         boolean getFileEnd()
         boolean getLineComplete()

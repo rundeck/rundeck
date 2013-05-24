@@ -138,14 +138,7 @@ class LogEntryLineIterator implements LogEntryIterator{
      * @param count
      * @return
      */
-    public static long seekBackwards(File file, int count) {
-        //NB: we search for log entry ending indicators, so we have to skip 2 of them
-        //1: the final sigil, 2: the end of the final entry, before we can seek back the number of entries
-        //this might skip over a single entry if the log is not complete at the end of the file
-        long seek = Utility.seekBack(file, count + 2, "^^^${lSep}")
-        if (seek > 0) {
-            seek += "^^^${lSep}".getBytes("UTF-8").length
-        }
-        seek
+    public static long seekBackwards(File file, int count, LineLogFormat format) {
+        format.seekBackwards(file,count)
     }
 }
