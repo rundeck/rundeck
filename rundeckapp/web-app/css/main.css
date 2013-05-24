@@ -807,6 +807,8 @@ table.execoutput td.info{
 }
 table.execoutput td.info.time{
     color:#888;
+    white-space: nowrap;
+    vertical-align: top;
 }
 table.execoutput tr.alternateRow td.info.time{
     color:#808080;

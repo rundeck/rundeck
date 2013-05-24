@@ -129,6 +129,11 @@ class LegacyLogEntryLineIterator implements LogEntryIterator{
         return offset
     }
 
+    @Override
+    void close() throws IOException {
+        iter.close()
+    }
+
     /**
      * drain buffers into item, save offset
      */

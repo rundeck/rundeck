@@ -16,6 +16,8 @@ package com.dtolabs.rundeck.core.logging;
  *
  */
 
+import java.io.Closeable;
+
 /*
  * LogEntryIterator.java
  * 
@@ -23,6 +25,6 @@ package com.dtolabs.rundeck.core.logging;
  * Created: 1/23/13 8:46 PM
  * 
  */
-public interface LogEntryIterator extends OffsetIterator<LogEvent>, CompletableIterator<LogEvent>{
+public interface LogEntryIterator extends OffsetIterator<LogEvent>, CompletableIterator<LogEvent>, Closeable {
 
 }

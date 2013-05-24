@@ -148,7 +148,7 @@ class RundeckPluginRegistry implements ApplicationContextAware{
                 if (bean instanceof PluginBuilder) {
                     bean = ((PluginBuilder) bean).buildPlugin()
                 }
-                if(bean){
+                if(bean!=null && groovyPluginType.isAssignableFrom(bean.class)){
                     list[k]=[instance:bean,
                             description:[
                                 name:k,
@@ -162,7 +162,7 @@ class RundeckPluginRegistry implements ApplicationContextAware{
                         list[k]['description']= PluginAdapterUtility.buildDescription(bean,DescriptionBuilder.builder())
                     }
                 }else{
-                    log.error("bean not right type: ${bean}, class: ${bean.class.name}, assignable: ${groovyPluginType.isAssignableFrom(bean.class)}")
+                    log.debug("bean not right type: ${bean}, class: ${bean.class.name}, assignable: ${groovyPluginType.isAssignableFrom(bean.class)}")
                 }
             } catch (NoSuchBeanDefinitionException e) {
                 log.error("No such bean: ${v}")
@@ -173,6 +173,9 @@ class RundeckPluginRegistry implements ApplicationContextAware{
         if(rundeckServerServiceProviderLoader && service){
             service.listProviders().each { ProviderIdent ident ->
                 def instance = rundeckServerServiceProviderLoader.loadProvider(service, ident.providerName)
+                if(!groovyPluginType.isAssignableFrom(instance.class)){
+                    return
+                }
                 if (!list[ident.providerName]) {
                     list[ident.providerName] = [:]
                 }

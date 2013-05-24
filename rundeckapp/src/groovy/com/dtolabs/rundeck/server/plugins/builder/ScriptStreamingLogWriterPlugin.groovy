@@ -1,0 +1,120 @@
+package com.dtolabs.rundeck.server.plugins.builder
+
+import com.dtolabs.rundeck.core.logging.LogEvent
+import com.dtolabs.rundeck.core.plugins.configuration.Describable
+import com.dtolabs.rundeck.core.plugins.configuration.Description
+import com.dtolabs.rundeck.plugins.logging.StreamingLogWriterPlugin
+import org.apache.log4j.Logger
+
+
+/**
+ * $INTERFACE is ...
+ * User: greg
+ * Date: 5/24/13
+ * Time: 12:05 PM
+ */
+class ScriptStreamingLogWriterPlugin implements StreamingLogWriterPlugin, Describable {
+    static Logger logger = Logger.getLogger(ScriptNotificationPlugin)
+    private Description description
+    private Map<String,Closure> handlers
+    Map configuration
+    private Object streamContext
+    ScriptStreamingLogWriterPlugin(Map<String,Closure> handlers, Description description) {
+        this.description=description
+        this.handlers=handlers
+    }
+
+    @Override
+    Description getDescription() {
+        description
+    }
+
+    @Override
+    void openStream(Map<String, ? extends Object> context) throws IOException {
+        def closure = handlers.open
+        if (!closure) {
+            throw new RuntimeException("LogWriterPlugin: 'open' closure not defined for plugin ${description.name}")
+        }
+        if (!handlers.addEvent) {
+            throw new RuntimeException("LogWriterPlugin: 'addEvent' closure not defined for plugin ${description.name}")
+        }
+        if (!handlers.close) {
+            throw new RuntimeException("LogWriterPlugin: 'close' closure not defined for plugin ${description.name}")
+        }
+        if (closure.getMaximumNumberOfParameters() == 2) {
+            def Closure newclos = closure.clone()
+            newclos.resolveStrategy = Closure.DELEGATE_ONLY
+            this.streamContext = newclos.call(context, configuration)
+        } else if (closure.getMaximumNumberOfParameters() == 1 && closure.parameterTypes[0] == Map) {
+            def Closure newclos = closure.clone()
+            newclos.delegate = configuration
+            newclos.resolveStrategy = Closure.DELEGATE_ONLY
+            this.streamContext = newclos.call(context)
+        } else if (closure.getMaximumNumberOfParameters() == 1 && closure.parameterTypes[0] == Object) {
+            def Closure newclos = closure.clone()
+            newclos.delegate = [execution: context, configuration: configuration]
+            newclos.resolveStrategy = Closure.DELEGATE_ONLY
+            this.streamContext = newclos.call(context)
+        } else {
+            logger.error("LogWriterPlugin: 'open' closure signature invalid for plugin ${description.name}, cannot open")
+        }
+    }
+
+    @Override
+    void addEntry(LogEvent entry) {
+        def closure = handlers.addEvent
+        if (closure.getMaximumNumberOfParameters() == 2) {
+            def Closure newclos = closure.clone()
+            newclos.resolveStrategy = Closure.DELEGATE_ONLY
+            newclos.call(this.streamContext, entry)
+        } else if (closure.getMaximumNumberOfParameters() == 1 ) {
+            def Closure newclos = closure.clone()
+            newclos.delegate = [context: this.streamContext, configuration: configuration]
+            newclos.resolveStrategy = Closure.DELEGATE_ONLY
+            newclos.call(entry)
+        }  else {
+            logger.error("LogWriterPlugin: 'addEvent' closure signature invalid for plugin ${description.name}, cannot addEvent")
+        }
+    }
+
+    @Override
+    void close() {
+        def closure = handlers.close
+        if (closure.getMaximumNumberOfParameters() == 1) {
+            def Closure newclos = closure.clone()
+            newclos.delegate = [context: this.streamContext, configuration: configuration]
+            newclos.resolveStrategy = Closure.DELEGATE_ONLY
+            try {
+                newclos.call(this.streamContext)
+            } catch (IOException e) {
+                logger.error("LogWriterPlugin: 'close' for plugin ${description.name}: "+e.message,e)
+            }
+        } else {
+            logger.error("LogWriterPlugin: 'open' closure signature invalid for plugin ${description.name}, cannot open")
+        }
+    }
+
+    public static boolean validOpenClosure(Closure closure) {
+        if (closure.getMaximumNumberOfParameters() == 2) {
+            return closure.parameterTypes[0] == Map && closure.parameterTypes[1] == Map
+        }else if (closure.getMaximumNumberOfParameters() == 1) {
+            return closure.parameterTypes[0] == Map || closure.parameterTypes[0] == Object
+        }
+        return false
+    }
+
+    public static boolean validEventClosure(Closure closure) {
+        if (closure.getMaximumNumberOfParameters() == 2) {
+            return closure.parameterTypes[1] == LogEvent
+        } else if (closure.getMaximumNumberOfParameters() == 1) {
+            return closure.parameterTypes[0] == LogEvent || closure.parameterTypes[0] == Object
+        }
+        return false
+    }
+    public static boolean validCloseClosure(Closure closure) {
+        if (closure.getMaximumNumberOfParameters() == 1) {
+            return true
+        }
+        return false
+    }
+}

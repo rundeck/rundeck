@@ -1,8 +1,11 @@
+import com.dtolabs.rundeck.core.logging.StreamingLogWriter
 import com.dtolabs.rundeck.core.plugins.PluginManagerService
 import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
 import com.dtolabs.rundeck.server.plugins.PluginCustomizer
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import com.dtolabs.rundeck.server.plugins.services.NotificationPluginProviderService
+import com.dtolabs.rundeck.server.plugins.services.StreamingLogReaderPluginProviderService
+import com.dtolabs.rundeck.server.plugins.services.StreamingLogWriterPluginProviderService
 import groovy.io.FileType
 
 beans={
@@ -36,6 +39,18 @@ beans={
      * the Notification plugin provider service
      */
     notificationPluginProviderService(NotificationPluginProviderService){
+        rundeckServerServiceProviderLoader=ref('rundeckServerServiceProviderLoader')
+    }
+    /**
+     * the StreamingLogReader plugin provider service
+     */
+    streamingLogReaderPluginProviderService(StreamingLogReaderPluginProviderService){
+        rundeckServerServiceProviderLoader=ref('rundeckServerServiceProviderLoader')
+    }
+    /**
+     * the StreamingLogReader plugin provider service
+     */
+    streamingLogWriterPluginProviderService(StreamingLogWriterPluginProviderService){
         rundeckServerServiceProviderLoader=ref('rundeckServerServiceProviderLoader')
     }
 

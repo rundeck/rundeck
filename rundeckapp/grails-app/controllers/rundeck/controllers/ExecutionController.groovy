@@ -185,12 +185,14 @@ class ExecutionController {
 
         SimpleDateFormat logFormater = new SimpleDateFormat("HH:mm:ss", Locale.US);
         logFormater.timeZone= TimeZone.getTimeZone("GMT")
-        def iterator = reader.reader.logEntryIterator()
+        def iterator = reader.reader
+        iterator.openStream(0)
         def lineSep=System.getProperty("line.separator")
         iterator.each{ LogEvent msgbuf ->
             response.outputStream << (isFormatted?"${logFormater.format(msgbuf.datetime)} [${msgbuf.metadata?.user}@${msgbuf.metadata?.node} ${msgbuf.metadata?.context} ${msgbuf.metadata?.command}][${msgbuf.logLevel}] ${msgbuf.message}" : msgbuf.message)
             response.outputStream<<lineSep
         }
+        iterator.close()
     }
     /**
      * API: /api/execution/{id}/output, version 5
@@ -254,7 +256,7 @@ class ExecutionController {
 
         ExecutionLogReader reader
         def error=null
-            reader = loggingService.getLogReader(e)
+        reader = loggingService.getLogReader(e)
         if (null==reader|| error || reader.state==LogState.NOT_FOUND){
             def errmsg = "No output"
             if (null!=error) {
@@ -312,7 +314,6 @@ class ExecutionController {
             return;
         }
         def StreamingLogReader logread=reader.reader
-        def totsize = logread.getTotalSize()
 
         def Long offset = 0
         if(params.offset){
@@ -332,9 +333,10 @@ class ExecutionController {
             }
         }
 
-        long lastmodl = logread.getLastModified().time
+        def totsize = logread.getTotalSize()
+        long lastmodl = logread.lastModified?.time
 
-        if(params.lastmod){
+        if(params.lastmod && lastmodl>0){
             def ll = 0
             if (params.lastmod) {
 
@@ -405,15 +407,14 @@ class ExecutionController {
         def entry=[]
         def completed=false
         def max= 0
-        def LogEntryIterator offsetIterator
         if(params.lastlines && (ReverseSeekingStreamingLogReader.isInstance(logread))){
             def ReverseSeekingStreamingLogReader reversing= (ReverseSeekingStreamingLogReader) logread
             def lastlines = Long.parseLong(params.lastlines)
-            offsetIterator = reversing.logEntryIteratorFromReverseOffset(lastlines)
+            reversing.openStreamFromReverseOffset(lastlines)
             //load only the last X lines of the file, by going to the end and searching backwards for the
             max=lastlines+1
         }else{
-            offsetIterator = logread.beginFromOffset(offset)
+            logread.openStream(offset)
 
             if (null != params.maxlines) {
                 max = Integer.parseInt(params.maxlines)
@@ -426,16 +427,18 @@ class ExecutionController {
             bufsize=25*1024
         }
 
-        for(LogEvent data : offsetIterator){
-            def logdata= [mesg: data.message, time: data.datetime, level: data.logLevel.toString()] + data.metadata
+        for(LogEvent data : logread){
+            log.debug("read stream event: ${data}")
+            def logdata= [mesg: data.message, time: data.datetime, level: data.logLevel.toString()] + (data.metadata?:[:])
             entry<<logdata
             if (!(0 == max || entry.size() < max)){
                 break
             }
         }
-        storeoffset=offsetIterator.offset
-        completed = offsetIterator.complete || (jobcomplete && storeoffset==totsize)
-        
+        storeoffset= logread.offset
+        completed = logread.complete || (jobcomplete && storeoffset==totsize)
+        log.debug("finish stream iterator, offset: ${storeoffset}, completed: ${completed}")
+
         if("true" == servletContext.getAttribute("output.markdown.enabled") && !params.disableMarkdown){
             entry.each{
                 if(it.mesg){

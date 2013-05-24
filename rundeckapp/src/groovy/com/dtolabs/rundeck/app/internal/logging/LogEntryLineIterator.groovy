@@ -23,10 +23,10 @@ class LogEntryLineIterator implements LogEntryIterator{
     private long offset
     private Deque<LogEvent> latest
     private Deque<Long> poslist
-    private StringBuilder buf
     private DefaultLogEvent eventBuf
     private wasStarted = false
     private LineLogFormat lineLogFormat
+    boolean closed=false
 
     public LogEntryLineIterator(OffsetIterator<String> iter, LineLogFormat format) {
         this.iter = iter
@@ -46,6 +46,9 @@ class LogEntryLineIterator implements LogEntryIterator{
     }
 
     private void readNextEntry() {
+        if(closed) {
+            throw new IllegalStateException("Closed")
+        }
         while (!complete && iter.hasNext() && !latest) {
             parseLine(iter.next())
         }
@@ -140,5 +143,11 @@ class LogEntryLineIterator implements LogEntryIterator{
      */
     public static long seekBackwards(File file, int count, LineLogFormat format) {
         format.seekBackwards(file,count)
+    }
+
+    @Override
+    void close() throws IOException {
+        iter.close()
+        closed=true
     }
 }

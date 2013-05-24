@@ -4,6 +4,8 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyValidator
 import com.dtolabs.rundeck.core.plugins.configuration.ValidationException
+import com.dtolabs.rundeck.plugins.logging.StreamingLogReaderPlugin
+import com.dtolabs.rundeck.plugins.logging.StreamingLogWriterPlugin
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
@@ -28,7 +30,9 @@ abstract class ScriptPluginBuilder implements GroovyObject, PluginBuilder{
      * Registry of valid Rundeck plugin classes and associated groovy DSL builders
      */
     private static Map clazzBuilderRegistry=[
-            (NotificationPlugin):ScriptNotificationPluginBuilder
+            (NotificationPlugin):ScriptNotificationPluginBuilder,
+            (StreamingLogWriterPlugin):StreamingLogWriterPluginBuilder,
+            (StreamingLogReaderPlugin):StreamingLogReaderPluginBuilder
     ]
     /**
      * Return a ScriptPluginBuilder for the given plugin class and plugin name

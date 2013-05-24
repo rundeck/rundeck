@@ -37,6 +37,7 @@ class FSFileLineIterator implements OffsetIterator<String>{
     private String encoding
     private static final String lineSep=System.getProperty("line.separator")
     private lineSeplen
+    boolean closed=false
     public FSFileLineIterator(FileInputStream raf,String encoding){
         this.encoding=encoding
         this.raf=raf
@@ -62,6 +63,9 @@ class FSFileLineIterator implements OffsetIterator<String>{
         return s
     }
     private void readNext(){
+        if(closed){
+            throw new IllegalStateException("Stream is closed")
+        }
         String v = read.readLine()
         if (null!=v){
             buffer<<v
@@ -76,5 +80,11 @@ class FSFileLineIterator implements OffsetIterator<String>{
     @Override
     void remove() {
         throw new UnsupportedOperationException()
+    }
+
+    @Override
+    void close() {
+        read.close()
+        closed=true
     }
 }

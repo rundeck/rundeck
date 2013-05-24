@@ -81,6 +81,11 @@ class LogEntryLineIteratorTest extends GroovyTestCase {
             println("parseLine(${line}): ${item}")
             return item as LineLogFormat.FormatItem
         }
+
+        @Override
+        long seekBackwards(File file, int count) {
+            return 0  //To change body of implemented methods use File | Settings | File Templates.
+        }
     }
     void test1(){
         File testfile1 = File.createTempFile("LogEntryLineIteratorTest1", ".log")

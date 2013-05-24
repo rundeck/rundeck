@@ -34,6 +34,7 @@ class FSStreamingLogReader implements ReverseSeekingStreamingLogReader {
     RundeckLogFormat rundeckLogFormat
     private boolean detectedFormat
     private boolean detected
+    private LogEntryIterator iterator
     /**
      * Optional date for resolving legacy unspecific timestamps
      */
@@ -82,43 +83,73 @@ class FSStreamingLogReader implements ReverseSeekingStreamingLogReader {
     }
 
     @Override
-    LogEntryIterator beginFromOffset(long offset) {
+    void openStream(Long offset) {
+        if(null!=iterator){
+            throw new IllegalStateException("Already open")
+        }
+        this.iterator=beginFromOffset(offset)
+    }
+
+    @Override
+    void openStreamFromReverseOffset(Long offset) {
+        if (null != iterator) {
+            throw new IllegalStateException("Already open")
+        }
+        this.iterator= beginFromOffset(detectedSeekBackwards((int) offset))
+    }
+
+    private LogEntryIterator beginFromOffset(long offset) {
         def raf = new FileInputStream(file)
         raf.channel.position(offset)
         def LogEntryIterator iterator = detectedIterator(new FSFileLineIterator(raf, encoding))
         return iterator
     }
 
-    Iterator<LogEvent> iteratorFromOffset(long offset) {
-        return beginFromOffset(offset)
+    @Override
+    boolean hasNext() {
+        if (null == iterator) {
+            throw new IllegalStateException("Not open")
+        }
+        return iterator.hasNext()
     }
 
     @Override
-    LogEntryIterator logEntryIterator() {
-        return beginFromOffset(0)
+    LogEvent next() {
+        if (null == iterator) {
+            throw new IllegalStateException("Not open")
+        }
+        return iterator.next()
     }
 
     @Override
-    Iterator<LogEvent> iterator() {
-        return logEntryIterator()
+    void remove() {
+        if (null == iterator) {
+            throw new IllegalStateException("Not open")
+        }
+        iterator.remove()
     }
 
-    /**
-     * Returns the iterator starting at offset entries from the end.
-     * @param offset
-     * @return
-     */
-    LogEntryIterator logEntryIteratorFromReverseOffset(long offset) {
-        return beginFromOffset(detectedSeekBackwards((int) offset))
-    }
-
-    /**
-     * Offset indicates number of entries from the end in this case, not byte index.
-     * @param offset
-     * @return
-     */
     @Override
-    Iterator<LogEvent> iteratorFromReverseOffset(long offset) {
-        return logEntryIteratorFromReverseOffset(offset)
+    void close() throws IOException {
+        if (null == iterator) {
+            throw new IllegalStateException("Not open")
+        }
+        iterator.close()
+    }
+
+    @Override
+    boolean isComplete() {
+        if (null == iterator) {
+            throw new IllegalStateException("Not open")
+        }
+        return iterator.isComplete()
+    }
+
+    @Override
+    long getOffset() {
+        if (null == iterator) {
+            throw new IllegalStateException("Not open")
+        }
+        return iterator.getOffset()
     }
 }

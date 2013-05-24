@@ -1044,7 +1044,7 @@ var FollowControl = Class.create({
             this.contextStatus[ctxid] = data.level.toLowerCase();
         }
         var tdtime = $(tr.insertCell(1));
-        tdtime.setAttribute('width', '20');
+        //tdtime.setAttribute('width', '20');
         tdtime.addClassName('info');
         tdtime.addClassName('time');
         tdtime.setAttribute('style', 'vertical-align:top;');

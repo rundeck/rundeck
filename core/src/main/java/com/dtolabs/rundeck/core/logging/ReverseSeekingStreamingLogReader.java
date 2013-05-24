@@ -26,8 +26,6 @@ import java.util.Iterator;
  * Created: 1/23/13 10:39 PM
  * 
  */
-public interface ReverseSeekingStreamingLogReader extends StreamingLogReader, ReverseSeekingIterable<LogEvent>{
-    LogEntryIterator logEntryIteratorFromReverseOffset(long offset);
-
-    Iterator<LogEvent> iteratorFromReverseOffset(long offset);
+public interface ReverseSeekingStreamingLogReader extends StreamingLogReader{
+    void openStreamFromReverseOffset(Long offset);
 }

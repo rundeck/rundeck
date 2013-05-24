@@ -17,6 +17,7 @@ package com.dtolabs.rundeck.core.logging;
  *
  */
 
+import java.io.Closeable;
 import java.util.Iterator;
 
 /*
@@ -26,7 +27,7 @@ import java.util.Iterator;
  * Created: 1/23/13 7:53 PM
  * 
  */
-public interface OffsetIterator<T> extends Iterator<T> {
+public interface OffsetIterator<T> extends Iterator<T> , Closeable{
     /**
      * Returns the current opaque offset within the underlying data stream
      *

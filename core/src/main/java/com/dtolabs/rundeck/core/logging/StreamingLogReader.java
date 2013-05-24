@@ -24,20 +24,20 @@ package com.dtolabs.rundeck.core.logging;
  * 
  */
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.Date;
 
-/**
- * Readers log entries
- */
-public interface StreamingLogReader extends Iterable<LogEvent>, SeekingIterable<LogEvent> {
+/** Readers log entries */
+public interface StreamingLogReader extends LogEntryIterator, Closeable {
     /**
      * Read log entries starting at the specified offset
      *
-     * @param index
+     * @param offset
      *
      * @return
      */
-    LogEntryIterator beginFromOffset(long index);
+    void openStream(Long offset) throws IOException;
 
     /**
      * Return the total size
@@ -52,11 +52,4 @@ public interface StreamingLogReader extends Iterable<LogEvent>, SeekingIterable<
      * @return
      */
     Date getLastModified();
-
-    /**
-     * Return the iterator from the start
-     *
-     * @return
-     */
-    LogEntryIterator logEntryIterator();
 }
