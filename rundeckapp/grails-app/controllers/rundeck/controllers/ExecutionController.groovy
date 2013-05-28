@@ -1,7 +1,6 @@
 package rundeck.controllers
 
 import com.dtolabs.client.utils.Constants
-import com.dtolabs.rundeck.core.logging.LogEntryIterator
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.ReverseSeekingStreamingLogReader
 import com.dtolabs.rundeck.core.logging.StreamingLogReader
@@ -208,6 +207,7 @@ class ExecutionController {
      * Also used by apiExecutionOutput for API response
      */
     def tailExecutionOutput = {
+        log.debug("tailExecutionOutput: ${params}, format: ${request.format}")
         def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         Execution e = Execution.get(Long.parseLong(params.id))
         def api= new ApiController()
@@ -470,6 +470,7 @@ class ExecutionController {
         }
         long marktime=System.currentTimeMillis()
         def percent=100.0 * (((float)storeoffset)/((float)totsize))
+        log.debug("percent: ${percent}, store: ${storeoffset}, total: ${totsize} lastmod : ${lastmodl}")
         //via http://benjchristensen.com/2008/02/07/how-to-strip-invalid-xml-characters/
         String invalidXmlPattern = "[^" + "\\u0009\\u000A\\u000D" + "\\u0020-\\uD7FF" +
                 "\\uE000-\\uFFFD" + "\\u10000-\\u10FFFF" + "]+";
@@ -493,7 +494,7 @@ class ExecutionController {
                     def datamap = [
                         time: it.time.toString(),
                         level: it.level,
-                        log: it.mesg.replaceAll(/\r?\n$/,''),
+                        log: it.mesg?.replaceAll(/\r?\n$/,''),
                         user: it.user,
 //                        module: it.module,
                         command: it.command,
