@@ -822,6 +822,11 @@ table.execoutput td.data{
     font-family: "Lucida Console",courier,monospace;
     padding: 1px 3px;
     vertical-align:top;
+    color: #777;
+}
+
+table.execoutput td.data.log_normal {
+    color: black;
 }
 table.execoutput td.datahtml{
     white-space:normal;
