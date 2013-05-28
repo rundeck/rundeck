@@ -22,7 +22,7 @@ class RundeckLogFormatTest extends GroovyTestCase {
         dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
         dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
         event = new DefaultLogEvent()
-        event.logLevel = LogLevel.DEBUG
+        event.loglevel = LogLevel.DEBUG
         event.eventType = "log"
         event.datetime = dateFormat.parse('2013-05-24T01:31:02Z')
         event.metadata = [test: "1", something: "else"]
@@ -103,7 +103,7 @@ class RundeckLogFormatTest extends GroovyTestCase {
         assertNotNull(assertMsg, item.entry)
         assertEquals(assertMsg, expectMessage, item.entry.message)
         assertEquals(assertMsg, event.metadata, item.entry.metadata)
-        assertEquals(assertMsg, event.logLevel, item.entry.logLevel)
+        assertEquals(assertMsg, event.loglevel, item.entry.loglevel)
         assertEquals(assertMsg, event.datetime, item.entry.datetime)
         assertEquals(assertMsg, /*event.eventType*/ null, item.entry.eventType)
     }

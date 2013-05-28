@@ -170,7 +170,7 @@ class LegacyLogEntryLineIteratorTest extends GroovyTestCase {
         assertEquals(message, entry.message)
         assertNotNull(entry.datetime)
         assertEquals(date.time, entry.datetime.time)
-        assertEquals(level, entry.logLevel)
+        assertEquals(level, entry.loglevel)
         assertNotNull(entry.metadata)
         meta.each { k, v ->
             assertEquals("key ${k}", v, entry.metadata[k])

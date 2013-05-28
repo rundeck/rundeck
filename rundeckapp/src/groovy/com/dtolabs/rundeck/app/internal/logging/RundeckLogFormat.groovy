@@ -5,7 +5,6 @@ import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.utils.Utility
 
 import java.text.SimpleDateFormat
-import java.util.regex.Matcher
 
 /**
  * $INTERFACE is ...
@@ -66,7 +65,7 @@ class RundeckLogFormat implements OutputLogFormat, LineLogFormat {
         sb.append(date).append('|')
 //        sb.append(entry.eventType?:'').append('|')
         //level
-        sb.append(entry.logLevel).append("|")
+        sb.append(entry.loglevel).append("|")
 
         //metadata
         def metadata = entry.metadata
@@ -192,7 +191,7 @@ class RundeckLogFormat implements OutputLogFormat, LineLogFormat {
 
             def (message, done) = decodeLog(rest)
             item.lineComplete = done?true:false
-            item.entry = new DefaultLogEvent(logLevel: level, datetime: time, message: message, metadata: meta)
+            item.entry = new DefaultLogEvent(loglevel: level, datetime: time, message: message, metadata: meta)
             return item
         } else {
             def (temp, done) = decodeLog(line)

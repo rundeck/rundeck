@@ -30,7 +30,7 @@ import java.util.Map;
 public interface LogEvent {
     String getEventType();
     Date getDatetime();
-    LogLevel getLogLevel();
+    LogLevel getLoglevel();
     String getMessage();
     Map<String,String> getMetadata();
 }

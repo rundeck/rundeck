@@ -7,15 +7,15 @@ import java.util.Map;
 class LogEventImpl implements LogEvent {
     private String eventType;
     private Date datetime;
-    private LogLevel logLevel;
+    private LogLevel loglevel;
     private String message;
     private Map<String, String> metadata;
 
-    private LogEventImpl(String eventType, Date datetime, LogLevel logLevel, String message, Map<String,
+    private LogEventImpl(String eventType, Date datetime, LogLevel loglevel, String message, Map<String,
             String> metadata) {
         this.eventType = eventType;
         this.datetime = datetime;
-        this.logLevel = logLevel;
+        this.loglevel = loglevel;
         this.message = message;
         this.metadata = metadata;
     }
@@ -33,8 +33,8 @@ class LogEventImpl implements LogEvent {
         return datetime;
     }
 
-    public LogLevel getLogLevel() {
-        return logLevel;
+    public LogLevel getLoglevel() {
+        return loglevel;
     }
 
     public String getMessage() {

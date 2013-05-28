@@ -142,7 +142,7 @@ class LegacyLogEntryLineIterator implements LogEntryIterator{
         buf = new StringBuilder()
         msgbuf = [:]
         poslist << iter.offset
-        latest << new DefaultLogEvent(datetime: parseTime(data.time), message: data.mesg, metadata: data, logLevel: LogLevel.looseValueOf(data.level, LogLevel.NORMAL))
+        latest << new DefaultLogEvent(datetime: parseTime(data.time), message: data.mesg, metadata: data, loglevel: LogLevel.looseValueOf(data.level, LogLevel.NORMAL))
     }
 
     /**

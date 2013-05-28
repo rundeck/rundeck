@@ -4,8 +4,6 @@ import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.StreamingLogWriter
 
-import java.text.SimpleDateFormat
-
 /*
  * Copyright 2013 DTO Labs, Inc. (http://dtolabs.com)
  * 
@@ -51,7 +49,7 @@ class FSStreamingLogWriter implements StreamingLogWriter {
     }
 
     @Override
-    void openStream(Map<String, Object> context) {
+    void openStream(Map<String, ? extends Object> context) throws IOException{
         synchronized (this) {
             if (!started) {
                 output << formatter.outputBegin()
@@ -63,7 +61,7 @@ class FSStreamingLogWriter implements StreamingLogWriter {
 
     @Override
     void addEntry(LogEvent event) {
-        if (event.logLevel.belowThreshold(threshold)) {
+        if (event.loglevel.belowThreshold(threshold)) {
             synchronized (this) {
                 if (null == output) {
                     throw new IllegalStateException("output was closed")

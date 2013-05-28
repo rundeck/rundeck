@@ -2,9 +2,6 @@ package com.dtolabs.rundeck.app.internal.logging
 
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogLevel
-import com.dtolabs.rundeck.core.logging.LogUtil
-
-import java.text.SimpleDateFormat
 
 /**
  * $INTERFACE is ...
@@ -63,7 +60,7 @@ class LogEntryLineIteratorTest extends GroovyTestCase {
             if(line==~/^START:.*$/){
                 event.datetime = new Date(0)
                 event.eventType = "log"
-                event.logLevel = LogLevel.DEBUG
+                event.loglevel = LogLevel.DEBUG
                 event.metadata = [node: "test1", something: "else"]
                 item.partial = item.partial.substring(6)
                 event.message = item.partial
