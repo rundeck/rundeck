@@ -29,7 +29,6 @@ class FSStreamingLogWriter implements StreamingLogWriter {
     private OutputStream output
     private Map<String, String> defaultMeta
     private OutputLogFormat formatter
-    private LogLevel threshold
     private boolean started
 
     /**
@@ -39,12 +38,11 @@ class FSStreamingLogWriter implements StreamingLogWriter {
      * @param defaultMeta default metadata to add to emitted events, only applies if the metadata is not present
      * @param formatter log format
      */
-    public FSStreamingLogWriter(OutputStream output, LogLevel threshold, Map<String, String> defaultMeta,
+    public FSStreamingLogWriter(OutputStream output, Map<String, String> defaultMeta,
                                 OutputLogFormat formatter) {
         this.output = output
         this.defaultMeta = defaultMeta
         this.formatter = formatter
-        this.threshold = threshold
         started = false
     }
 
@@ -61,15 +59,13 @@ class FSStreamingLogWriter implements StreamingLogWriter {
 
     @Override
     void addEntry(LogEvent event) {
-        if (event.loglevel.belowThreshold(threshold)) {
-            synchronized (this) {
-                if (null == output) {
-                    throw new IllegalStateException("output was closed")
-                }
-                def event1 = formatter.outputEvent(new DefaultLogEvent(event, defaultMeta))
-                output << event1
-                output << lineSep
+        synchronized (this) {
+            if (null == output) {
+                throw new IllegalStateException("output was closed")
             }
+            def event1 = formatter.outputEvent(new DefaultLogEvent(event, defaultMeta))
+            output << event1
+            output << lineSep
         }
     }
 

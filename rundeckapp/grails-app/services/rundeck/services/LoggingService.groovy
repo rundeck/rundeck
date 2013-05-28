@@ -13,6 +13,8 @@ import rundeck.Execution
 import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.logging.ExecutionLogWriter
 import rundeck.services.logging.LogState
+import rundeck.services.logging.LoglevelThresholdLogWriter
+import rundeck.services.logging.MultiLogWriter
 
 class LoggingService {
 
@@ -141,21 +143,26 @@ class LoggingService {
     }
 
     public ExecutionLogWriter openLogWriter(Execution execution, LogLevel level, Map<String, String> defaultMeta) {
-        def pluginWriters=[]
+        def plugins=[]
         if (grailsApplication.config.rundeck?.execution?.logs?.streamingWriterPlugins) {
-//            def writers = listLogWriterPlugins()
-//            def names = writers.keySet()
             def names = grailsApplication.config.rundeck?.execution?.logs?.streamingWriterPlugins.toString().split(/,\s*/) as List
-
-            log.error("Using log writer plugins ${names}")
-            pluginWriters = names.collectAll { getLogWriterPlugin(it) }
-            //TODO: configure each plugin from properties
+            def found=[:]
+            log.debug("Using log writer plugins ${names}")
+            names.each {name->
+                found[name]= getLogWriterPlugin(name)
+                if(null==found[name]){
+                    log.error("Unable to load StreamingLogWriter plugin named ${name}")
+                }
+                //TODO: configure each plugin from properties
+            }
+            plugins = found.values() as List
         }
         //TODO: configuration to disable file storage
-        pluginWriters << logFileStorageService.getLogFileWriterForExecution(execution, level, defaultMeta)
+        plugins << logFileStorageService.getLogFileWriterForExecution(execution, defaultMeta)
 
-
-        def writer = new ExecutionLogWriter(pluginWriters)
+        def multiWriter = new MultiLogWriter(plugins)
+        def thresholdWriter = new LoglevelThresholdLogWriter(multiWriter, level)
+        def writer = new ExecutionLogWriter(thresholdWriter)
         //file path support
         writer.filepath = logFileStorageService.generateFilepathForExecution(execution)
         return writer
@@ -164,7 +171,6 @@ class LoggingService {
     public ExecutionLogReader getLogReader(Execution execution) {
         ExecutionLogReader reader
         if(grailsApplication.config.rundeck?.execution?.logs?.streamingReaderPlugin){
-            log.error("log reader plugins: ${listLogReaderPlugins()}")
             def pluginName = grailsApplication.config.rundeck.execution.logs.streamingReaderPlugin
             def plugin =  getLogReaderPlugin(pluginName)
             if(plugin==null){
@@ -172,7 +178,7 @@ class LoggingService {
             }
             //TODO: configure plugin from properties
             HashMap<String, String> jobcontext = contextForExecution(execution)
-            log.error("Using log reader plugin ${pluginName}")
+            log.debug("Using log reader plugin ${pluginName}")
             plugin.initialize(jobcontext)
             return new ExecutionLogReader(state: LogState.FOUND_LOCAL, reader: plugin)
         }else{

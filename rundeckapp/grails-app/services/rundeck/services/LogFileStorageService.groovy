@@ -23,7 +23,7 @@ class LogFileStorageService {
      * @param defaultMeta
      * @return
      */
-    StreamingLogWriter getLogFileWriterForExecution(Execution e, LogLevel logThreshold, Map<String, String> defaultMeta) {
+    StreamingLogWriter getLogFileWriterForExecution(Execution e, Map<String, String> defaultMeta) {
         def path = generateFilekeyForExecution(e)
         File file = getFileForKey(path)
 
@@ -33,7 +33,7 @@ class LogFileStorageService {
             }
         }
         //TODO: if remote log storage plugin available, apply hook to call storeLogFile on close
-        return new FSStreamingLogWriter(new FileOutputStream(file), logThreshold, defaultMeta, rundeckLogFormat)
+        return new FSStreamingLogWriter(new FileOutputStream(file), defaultMeta, rundeckLogFormat)
     }
 
     File generateFilepathForExecution(Execution execution) {
