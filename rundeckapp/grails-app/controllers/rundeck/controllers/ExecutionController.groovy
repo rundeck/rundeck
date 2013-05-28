@@ -490,11 +490,12 @@ class ExecutionController {
             delegate.totalSize(totsize)
             delegate.lastlinesSupported(lastlinesSupported)
 
-
+            def timeFmt = new SimpleDateFormat("HH:mm:ss")
             delegate.entries(){
                 entry.each{
                     def datamap = [
-                        time: it.time.toString(),
+                        time: timeFmt.format(it.time),
+                        absolute_time: g.w3cDateValue([date:it.time]),
                         level: it.level,
                         log: it.mesg?.replaceAll(/\r?\n$/,''),
                         user: it.user,

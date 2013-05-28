@@ -1092,6 +1092,9 @@ var FollowControl = Class.create({
         tdtime.addClassName('time');
         tdtime.setAttribute('style', 'vertical-align:top;');
         tdtime.innerHTML = "<span class=\"" + data.level + "\">" + data.time + "</span>";
+        if(data.absolute_time){
+            tdtime.setAttribute('title', data.absolute_time);
+        }
         var tddata = $(tr.insertCell(2));
         tddata.addClassName('data');
         tddata.setAttribute('style', 'vertical-align:top');
