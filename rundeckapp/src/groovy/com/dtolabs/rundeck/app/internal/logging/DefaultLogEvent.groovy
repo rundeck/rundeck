@@ -47,7 +47,7 @@ class DefaultLogEvent implements LogEvent{
         this.datetime = event.datetime
         this.message = event.message
         this.eventType = event.eventType
-        this.metadata=defaultMetadata+event.metadata
+        this.metadata=defaultMetadata+(event.metadata?:[:])
     }
     @Override
     public String toString() {
