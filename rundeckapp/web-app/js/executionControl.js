@@ -460,13 +460,6 @@ var FollowControl = Class.create({
         if (!this.isAppendTop() && this.isAtBottom()) {
             needsScroll = true;
         }
-        if (this.refresh && this.cmdoutputtbl) {
-            try {
-                this.clearTable(this.cmdoutputtbl);
-            } catch(e) {
-                this._log(e);
-            }
-        }
         if (typeof(data) == "string" && data == "") {
             return;
         }
@@ -477,6 +470,13 @@ var FollowControl = Class.create({
         try {
             if (typeof(data) == "string") {
                 eval("data=" + data);
+            }
+            if (this.refresh && this.cmdoutputtbl && data.lastlinesSupported){
+                try {
+                    this.clearTable(this.cmdoutputtbl);
+                } catch (e) {
+                    this._log(e);
+                }
             }
             if (!this.cmdoutputtbl) {
                 this.cmdoutputtbl = this.createTable();
@@ -508,13 +508,22 @@ var FollowControl = Class.create({
         if (null != data.execDuration) {
             this.updateDuration(data.execDuration);
         }
+        //if tail mode, count number of rows
+        var rowcount= this.countTableRows(this.cmdoutputtbl);
+        console.log("rowcount: "+rowcount+", entries: "+(entries.length));
         if (entries != null && entries.length > 0) {
 
             for (var i = 0 ; i < entries.length ; i++) {
                 var e = entries[i];
-                this.runningcmd.entries.push(e);
+                //this.runningcmd.entries.push(e);
                 this.genDataRow(e, this.cmdoutputtbl);
-
+                //if tail mode and count>last lines, remove 1 row from top
+                rowcount++;
+            }
+            if (this.refresh && rowcount > this.lastlines && !data.lastlinesSupported) {
+                //remove extra lines
+                console.log("remove: " + rowcount +" - "+ this.lastlines + " = "+ (rowcount - this.lastlines));
+                this.removeTableRows(this.cmdoutputtbl, rowcount- this.lastlines);
             }
         }
 
@@ -684,6 +693,40 @@ var FollowControl = Class.create({
                 cb();
             }
         }
+    },
+    countTableRows: function(tbl){
+        var count=0;
+        //count rows for every table body
+        for (var j = 0; j < tbl.tBodies.length; j++) {
+            for (var k = 0; k < tbl.tBodies[j].rows.length ; k++) {
+                if (!$(tbl.tBodies[j].rows[0]).hasClassName('contextRow')) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    },
+    removeTableRows: function(tbl,x){
+        var count=x;
+        //count rows for every table body
+        for (var j = 0; j < tbl.tBodies.length && count>0; j++) {
+            console.log("tbody " + j + ", original length: " + tbl.tBodies[j].rows.length);
+            for(var k=0;k<tbl.tBodies[j].rows.length && count>0;k++){
+                var row= tbl.tBodies[j].rows[k];
+                if(!$(row).hasClassName('contextRow')){
+                    tbl.tBodies[j].removeChild(row);
+                    count--;
+                    k--;
+                }
+            }
+            console.log("tbody " + j + ", new length: " + tbl.tBodies[j].rows.length);
+
+            if (tbl.tBodies[j].rows.length == 1 && $(tbl.tBodies[j].rows[0]).hasClassName('contextRow')) {
+                tbl.removeChild(tbl.tBodies[j]);
+                j--;
+            }
+        }
+        console.log("removeTableRows, final count: "+count);
     },
     reverseOutputTable: function(tbl) {
         try {

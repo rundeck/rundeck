@@ -407,7 +407,8 @@ class ExecutionController {
         def entry=[]
         def completed=false
         def max= 0
-        if(params.lastlines && (ReverseSeekingStreamingLogReader.isInstance(logread))){
+        def lastlinesSupported= (ReverseSeekingStreamingLogReader.isInstance(logread))
+        if(params.lastlines && lastlinesSupported){
             def ReverseSeekingStreamingLogReader reversing= (ReverseSeekingStreamingLogReader) logread
             def lastlines = Long.parseLong(params.lastlines)
             reversing.openStreamFromReverseOffset(lastlines)
@@ -487,6 +488,7 @@ class ExecutionController {
             delegate.execDuration(execDuration)
             delegate.percentLoaded(percent)
             delegate.totalSize(totsize)
+            delegate.lastlinesSupported(lastlinesSupported)
 
 
             delegate.entries(){
@@ -541,6 +543,7 @@ class ExecutionController {
                 response.addHeader('X-Rundeck-Exec-Duration', execDuration.toString())
                 response.addHeader('X-Rundeck-ExecOutput-LastModifed', lastmodl.toString())
                 response.addHeader('X-Rundeck-ExecOutput-TotalSize', totsize.toString())
+                response.addHeader('X-Rundeck-ExecOutput-LastLinesSupported', lastlinesSupported.toString())
                 def lineSep = System.getProperty("line.separator")
                 render(contentType:"text/plain"){
                     entry.each{
