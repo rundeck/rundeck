@@ -189,7 +189,7 @@ class ExecutionController {
         iterator.openStream(0)
         def lineSep=System.getProperty("line.separator")
         iterator.each{ LogEvent msgbuf ->
-            response.outputStream << (isFormatted?"${logFormater.format(msgbuf.datetime)} [${msgbuf.metadata?.user}@${msgbuf.metadata?.node} ${msgbuf.metadata?.context} ${msgbuf.metadata?.command}][${msgbuf.logLevel}] ${msgbuf.message}" : msgbuf.message)
+            response.outputStream << (isFormatted?"${logFormater.format(msgbuf.datetime)} [${msgbuf.metadata?.user}@${msgbuf.metadata?.node} ${msgbuf.metadata?.context} ${msgbuf.metadata?.command}][${msgbuf.loglevel}] ${msgbuf.message}" : msgbuf.message)
             response.outputStream<<lineSep
         }
         iterator.close()
@@ -429,7 +429,7 @@ class ExecutionController {
 
         for(LogEvent data : logread){
             log.debug("read stream event: ${data}")
-            def logdata= [mesg: data.message, time: data.datetime, level: data.logLevel.toString()] + (data.metadata?:[:])
+            def logdata= [mesg: data.message, time: data.datetime, level: data.loglevel.toString()] + (data.metadata?:[:])
             entry<<logdata
             if (!(0 == max || entry.size() < max)){
                 break
