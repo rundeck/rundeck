@@ -10,6 +10,7 @@ import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogReaderPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogWriterPluginProviderService
 import rundeck.Execution
+import rundeck.services.logging.DisablingLogWriter
 import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.logging.ExecutionLogWriter
 import rundeck.services.logging.LogState
@@ -143,19 +144,28 @@ class LoggingService {
     }
 
     public ExecutionLogWriter openLogWriter(Execution execution, LogLevel level, Map<String, String> defaultMeta) {
-        def plugins=[]
+        List<StreamingLogWriter> plugins=[]
         if (grailsApplication.config.rundeck?.execution?.logs?.streamingWriterPlugins) {
-            def names = grailsApplication.config.rundeck?.execution?.logs?.streamingWriterPlugins.toString().split(/,\s*/) as List
+            def names = grailsApplication.config?.rundeck?.execution?.logs?.streamingWriterPlugins?.toString().split(/,\s*/) as List
             def found=[:]
-            log.debug("Using log writer plugins ${names}")
+            HashMap<String, String> jobcontext = contextForExecution(execution)
+            log.debug("Configured log writer plugins: ${names}")
             names.each {name->
-                found[name]= getLogWriterPlugin(name)
-                if(null==found[name]){
-                    log.error("Unable to load StreamingLogWriter plugin named ${name}")
+                def plugin= getLogWriterPlugin(name)
+                if(null==plugin){
+                    log.error("Failed to load StreamingLogWriter plugin named ${name}")
+                    return
                 }
-                //TODO: configure each plugin from properties
+                try{
+                    plugin.initialize(jobcontext)
+                    plugins << DisablingLogWriter.create(plugin, "StreamingLogWriter(${name})")
+                } catch (Throwable e) {
+                    log.error("Failed to initialize plugin ${name}: " + e.message)
+                    log.debug("Failed to initialize plugin ${name}: " + e.message, e)
+                }
+
             }
-            plugins = found.values() as List
+            //TODO: configure each plugin from properties
         }
         //TODO: configuration to disable file storage
         plugins << logFileStorageService.getLogFileWriterForExecution(execution, defaultMeta)

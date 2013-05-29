@@ -27,7 +27,7 @@ public interface StreamingLogWriter {
     /**
      * Open a stream, called before addEntry is called
      */
-    void openStream(Map<String, ? extends Object> context) throws IOException;
+    void openStream() throws IOException;
 
     /**
      * Add a new entry

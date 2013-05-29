@@ -47,7 +47,7 @@ class FSStreamingLogWriter implements StreamingLogWriter {
     }
 
     @Override
-    void openStream(Map<String, ? extends Object> context) throws IOException{
+    void openStream() throws IOException{
         synchronized (this) {
             if (!started) {
                 output << formatter.outputBegin()

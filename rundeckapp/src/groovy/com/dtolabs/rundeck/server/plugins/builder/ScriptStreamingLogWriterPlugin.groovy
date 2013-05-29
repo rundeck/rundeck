@@ -8,10 +8,7 @@ import org.apache.log4j.Logger
 
 
 /**
- * $INTERFACE is ...
- * User: greg
- * Date: 5/24/13
- * Time: 12:05 PM
+ * Streaming Log Writer plugin implemention built from a groovy DSL
  */
 class ScriptStreamingLogWriterPlugin implements StreamingLogWriterPlugin, Describable {
     static Logger logger = Logger.getLogger(ScriptNotificationPlugin)
@@ -19,6 +16,7 @@ class ScriptStreamingLogWriterPlugin implements StreamingLogWriterPlugin, Descri
     private Map<String,Closure> handlers
     Map configuration
     private Object streamContext
+    private Map pluginContext
     ScriptStreamingLogWriterPlugin(Map<String,Closure> handlers, Description description) {
         this.description=description
         this.handlers=handlers
@@ -30,7 +28,12 @@ class ScriptStreamingLogWriterPlugin implements StreamingLogWriterPlugin, Descri
     }
 
     @Override
-    void openStream(Map<String, ? extends Object> context) throws IOException {
+    void initialize(Map<String, ? extends Object> context) {
+        this.pluginContext=context
+    }
+
+    @Override
+    void openStream() throws IOException {
         def closure = handlers.open
         if (!closure) {
             throw new RuntimeException("LogWriterPlugin: 'open' closure not defined for plugin ${description.name}")
@@ -44,17 +47,17 @@ class ScriptStreamingLogWriterPlugin implements StreamingLogWriterPlugin, Descri
         if (closure.getMaximumNumberOfParameters() == 2) {
             def Closure newclos = closure.clone()
             newclos.resolveStrategy = Closure.DELEGATE_ONLY
-            this.streamContext = newclos.call(context, configuration)
+            this.streamContext = newclos.call(pluginContext, configuration)
         } else if (closure.getMaximumNumberOfParameters() == 1 && closure.parameterTypes[0] == Map) {
             def Closure newclos = closure.clone()
             newclos.delegate = configuration
             newclos.resolveStrategy = Closure.DELEGATE_ONLY
-            this.streamContext = newclos.call(context)
+            this.streamContext = newclos.call(pluginContext)
         } else if (closure.getMaximumNumberOfParameters() == 1 && closure.parameterTypes[0] == Object) {
             def Closure newclos = closure.clone()
-            newclos.delegate = [execution: context, configuration: configuration]
+            newclos.delegate = [execution: pluginContext, configuration: configuration]
             newclos.resolveStrategy = Closure.DELEGATE_ONLY
-            this.streamContext = newclos.call(context)
+            this.streamContext = newclos.call(pluginContext)
         } else {
             logger.error("LogWriterPlugin: 'open' closure signature invalid for plugin ${description.name}, cannot open")
         }

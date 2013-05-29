@@ -14,8 +14,8 @@ public class FilterStreamingLogWriter implements StreamingLogWriter {
         this.writer = writer;
     }
 
-    public void openStream(Map<String, ? extends Object> context) throws IOException {
-        getWriter().openStream(context);
+    public void openStream() throws IOException {
+        getWriter().openStream();
     }
 
     public void addEntry(LogEvent entry) {

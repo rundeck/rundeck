@@ -507,7 +507,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
             jobcontext['user.name']=execution.user
             jobcontext.project=execution.project
             jobcontext.loglevel= textLogLevels[execution.loglevel] ?: execution.loglevel
-            loghandler.openStream(jobcontext)
+            loghandler.openStream()
 
             WorkflowExecutionItem item = createExecutionItemForExecutionContext(execution, framework, execution.user)
 
