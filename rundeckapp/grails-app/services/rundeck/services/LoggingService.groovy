@@ -142,12 +142,16 @@ class LoggingService {
 
         plugins
     }
+    public boolean isLocalFileStorageEnabled(){
+        boolean fileDisabled = grailsApplication.config.rundeck?.execution?.logs?.localFileStorageEnabled in ['false', false]
+        boolean readerPluginConfigured= getConfiguredStreamingReaderPluginName()
+        return !fileDisabled && readerPluginConfigured
+    }
 
     public ExecutionLogWriter openLogWriter(Execution execution, LogLevel level, Map<String, String> defaultMeta) {
         List<StreamingLogWriter> plugins=[]
-        if (grailsApplication.config.rundeck?.execution?.logs?.streamingWriterPlugins) {
-            def names = grailsApplication.config?.rundeck?.execution?.logs?.streamingWriterPlugins?.toString().split(/,\s*/) as List
-            def found=[:]
+        def names = listConfiguredStreamingWriterPluginNames()
+        if (names) {
             HashMap<String, String> jobcontext = contextForExecution(execution)
             log.debug("Configured log writer plugins: ${names}")
             names.each {name->
@@ -167,35 +171,53 @@ class LoggingService {
             }
             //TODO: configure each plugin from properties
         }
-        //TODO: configuration to disable file storage
-        plugins << logFileStorageService.getLogFileWriterForExecution(execution, defaultMeta)
+        if (plugins.size() < 1 || isLocalFileStorageEnabled()) {
+            plugins << logFileStorageService.getLogFileWriterForExecution(execution, defaultMeta)
+        }else{
+            log.debug("File log writer disabled for execution ${execution.id}")
+        }
 
         def multiWriter = new MultiLogWriter(plugins)
         def thresholdWriter = new LoglevelThresholdLogWriter(multiWriter, level)
         def writer = new ExecutionLogWriter(thresholdWriter)
-        //file path support
-        writer.filepath = logFileStorageService.generateFilepathForExecution(execution)
+        if(isLocalFileStorageEnabled()){
+            //file path support
+            writer.filepath = logFileStorageService.generateFilepathForExecution(execution)
+        }
         return writer
     }
 
+    private List<String> listConfiguredStreamingWriterPluginNames() {
+        grailsApplication.config?.rundeck?.execution?.logs?.streamingWriterPlugins?.toString().split(/,\s*/) as List
+    }
+
     public ExecutionLogReader getLogReader(Execution execution) {
-        ExecutionLogReader reader
-        if(grailsApplication.config.rundeck?.execution?.logs?.streamingReaderPlugin){
-            def pluginName = grailsApplication.config.rundeck.execution.logs.streamingReaderPlugin
-            def plugin =  getLogReaderPlugin(pluginName)
-            if(plugin==null){
-                throw new RuntimeException("Unable to load reader plugin: ${pluginName}")
-            }
-            //TODO: configure plugin from properties
+        def pluginName = getConfiguredStreamingReaderPluginName()
+        if(pluginName){
             HashMap<String, String> jobcontext = contextForExecution(execution)
             log.debug("Using log reader plugin ${pluginName}")
-            plugin.initialize(jobcontext)
-            return new ExecutionLogReader(state: LogState.FOUND_LOCAL, reader: plugin)
-        }else{
-            reader = logFileStorageService.requestLogFileReader(execution)
+
+            try {
+                def plugin = getLogReaderPlugin(pluginName)
+                if (plugin != null) {
+                    //TODO: configure plugin from properties
+                    plugin.initialize(jobcontext)
+                    return new ExecutionLogReader(state: LogState.FOUND_LOCAL, reader: plugin)
+                }
+            } catch (Throwable e) {
+                log.error("Failed to initialize reader plugin ${pluginName}: " + e.message)
+                log.debug("Failed to initialize reader plugin ${pluginName}: " + e.message, e)
+            }
         }
 
-        return reader
+        if(pluginName){
+            log.error("Falling back to local file storage log reader")
+        }
+        return logFileStorageService.requestLogFileReader(execution)
+    }
+
+    private String getConfiguredStreamingReaderPluginName() {
+        grailsApplication.config.rundeck?.execution?.logs?.streamingReaderPlugin
     }
 
     private HashMap<String, String> contextForExecution(Execution execution) {
