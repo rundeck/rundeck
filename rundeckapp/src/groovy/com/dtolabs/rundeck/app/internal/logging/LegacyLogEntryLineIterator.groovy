@@ -150,10 +150,6 @@ class LegacyLogEntryLineIterator implements LogEntryIterator{
      * @param line
      */
     private void parseLine(String line){
-        //todo: use new format
-        legacyParseLine(line)
-    }
-    private void legacyParseLine(String line){
         if (line =~ /^\^\^\^END\^\^\^/) {
             complete = true;
             if (msgbuf) {
@@ -205,7 +201,7 @@ class LegacyLogEntryLineIterator implements LogEntryIterator{
                 } else {
                     mesg = list[list.size() - 1].trim()
                 }
-                msgbuf = [time: time, level: level, mesg: mesg + "\n"]
+                msgbuf = [time: time, level: level, mesg: mesg ]
                 if (list.size() >= LegacyLogOutFormatter.EXEC_FORMAT_SEQUENCE.size()) {
                     for (int i = 2; i < list.size() - 1; i++) {
                         msgbuf[LegacyLogOutFormatter.EXEC_FORMAT_SEQUENCE[i]] = list[i].trim()
@@ -217,11 +213,11 @@ class LegacyLogEntryLineIterator implements LogEntryIterator{
             }
         } else if (line =~ /\^\^\^$/ && msgbuf) {
             def temp = line.substring(0, line.length() - 3)
-            buf << temp + "\n"
+            buf << "\n" + temp
             msgbuf.mesg += buf.toString()
             finishMessage()
         } else {
-            buf << line + "\n"
+            buf << "\n" + line
         }
     }
 

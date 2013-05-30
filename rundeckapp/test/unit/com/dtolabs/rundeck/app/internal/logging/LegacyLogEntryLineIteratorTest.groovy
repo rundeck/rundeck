@@ -50,6 +50,7 @@ class LegacyLogEntryLineIteratorTest extends GroovyTestCase {
         nowtime = nowtime -  (nowtime%1000)//reduce granularity to seconds
         startDate = new Date(nowtime - 120000 /*120 sec ago*/)
         dates = [
+                new Date(nowtime - (90000) /*90 sec ago*/),
                 new Date(nowtime - (60000) /*60 sec ago*/),
                 new Date(nowtime - (30000) /*30 sec ago*/),
                 new Date(nowtime),
@@ -62,6 +63,9 @@ class LegacyLogEntryLineIteratorTest extends GroovyTestCase {
                 "^^^${w3cDateFormat.format(dates[0])}|ERROR|user1|||nodea|ctx1|This is a test^^^\n",
                 "^^^${w3cDateFormat.format(dates[1])}|WARN|user2|||nodeb|ctx2|This is a test2^^^\n",
                 "^^^${w3cDateFormat.format(dates[2])}|NORMAL|user3|||nodec|ctx3|This is a test3^^^\n",
+                "^^^${w3cDateFormat.format(dates[3])}|NORMAL|user3|||nodec|ctx3|This is a test4\n" +
+                        "and some more text\n" +
+                        "and even more^^^\n",
                 "^^^END^^^\n"
         ]
         def linelens= (lines*.toString().bytes.length)
@@ -85,16 +89,20 @@ class LegacyLogEntryLineIteratorTest extends GroovyTestCase {
         assertTrue(iterator.hasNext())
         assertEquals(lengths[0], iterator.offset)
         LogEvent entry = iterator.next()
-        assertEntry(entry, dates[0], LogLevel.ERROR, [user: 'user1', node: 'nodea', context: 'ctx1'], "This is a test\n")
+        assertEntry(entry, dates[0], LogLevel.ERROR, [user: 'user1', node: 'nodea', context: 'ctx1'], "This is a test")
         assertEquals(lengths[1], iterator.offset)
 
         LogEvent entry2 = iterator.next()
-        assertEntry(entry2, dates[1], LogLevel.WARN, [user: 'user2', node: 'nodeb', context: 'ctx2'], "This is a test2\n")
+        assertEntry(entry2, dates[1], LogLevel.WARN, [user: 'user2', node: 'nodeb', context: 'ctx2'], "This is a test2")
         assertEquals(lengths[2], iterator.offset)
 
         LogEvent entry3 = iterator.next()
-        assertEntry(entry3, dates[2], LogLevel.NORMAL, [user: 'user3', node: 'nodec', context: 'ctx3'], "This is a test3\n")
+        assertEntry(entry3, dates[2], LogLevel.NORMAL, [user: 'user3', node: 'nodec', context: 'ctx3'], "This is a test3")
         assertEquals(lengths[3], iterator.offset)
+
+        LogEvent entry4 = iterator.next()
+        assertEntry(entry4, dates[3], LogLevel.NORMAL, [user: 'user3', node: 'nodec', context: 'ctx3'], "This is a test4\nand some more text\nand even more")
+        assertEquals(lengths[4], iterator.offset)
 
         assertFalse(iterator.hasNext())
     }
@@ -104,15 +112,15 @@ class LegacyLogEntryLineIteratorTest extends GroovyTestCase {
         assertTrue(iterator.hasNext())
         assertEquals(lengths2[0], iterator.offset)
         LogEvent entry = iterator.next()
-        assertEntry(entry, dates[0], LogLevel.ERROR, [user: 'user1', node: 'nodea', context: 'ctx1'], "This is a test\n")
+        assertEntry(entry, dates[0], LogLevel.ERROR, [user: 'user1', node: 'nodea', context: 'ctx1'], "This is a test")
         assertEquals(lengths2[1], iterator.offset)
 
         LogEvent entry2 = iterator.next()
-        assertEntry(entry2, dates[1], LogLevel.WARN, [user: 'user2', node: 'nodeb', context: 'ctx2'], "This is a test2\n")
+        assertEntry(entry2, dates[1], LogLevel.WARN, [user: 'user2', node: 'nodeb', context: 'ctx2'], "This is a test2")
         assertEquals(lengths2[2], iterator.offset)
 
         LogEvent entry3 = iterator.next()
-        assertEntry(entry3, dates[2], LogLevel.NORMAL, [user: 'user3', node: 'nodec', context: 'ctx3'], "This is a test3\n")
+        assertEntry(entry3, dates[2], LogLevel.NORMAL, [user: 'user3', node: 'nodec', context: 'ctx3'], "This is a test3")
         assertEquals(lengths2[3], iterator.offset)
 
         assertFalse(iterator.hasNext())
@@ -127,12 +135,18 @@ class LegacyLogEntryLineIteratorTest extends GroovyTestCase {
         assertEquals(lengths[1], iterator.offset)
 
         LogEvent entry2 = iterator.next()
-        assertEntry(entry2, dates[1], LogLevel.WARN, [user: 'user2', node: 'nodeb', context: 'ctx2'], "This is a test2\n")
+        assertEntry(entry2, dates[1], LogLevel.WARN, [user: 'user2', node: 'nodeb', context: 'ctx2'], "This is a test2")
         assertEquals(lengths[2], iterator.offset)
 
         LogEvent entry3 = iterator.next()
-        assertEntry(entry3, dates[2], LogLevel.NORMAL, [user: 'user3', node: 'nodec', context: 'ctx3'], "This is a test3\n")
+        assertEntry(entry3, dates[2], LogLevel.NORMAL, [user: 'user3', node: 'nodec', context: 'ctx3'], "This is a test3")
         assertEquals(lengths[3], iterator.offset)
+
+        LogEvent entry4 = iterator.next()
+        assertEntry(entry4, dates[3], LogLevel.NORMAL, [user: 'user3', node: 'nodec', context: 'ctx3'], "This is a test4\n" +
+                "and some more text\n" +
+                "and even more")
+        assertEquals(lengths[4], iterator.offset)
 
         assertFalse(iterator.hasNext())
     }
@@ -145,25 +159,33 @@ class LegacyLogEntryLineIteratorTest extends GroovyTestCase {
         assertEquals(lengths[2], iterator.offset)
 
         LogEvent entry3 = iterator.next()
-        assertEntry(entry3, dates[2], LogLevel.NORMAL, [user: 'user3', node: 'nodec', context: 'ctx3'], "This is a test3\n")
+        assertEntry(entry3, dates[2], LogLevel.NORMAL, [user: 'user3', node: 'nodec', context: 'ctx3'], "This is a test3")
         assertEquals(lengths[3], iterator.offset)
+
+        LogEvent entry4 = iterator.next()
+        assertEntry(entry4, dates[3], LogLevel.NORMAL, [user: 'user3', node: 'nodec', context: 'ctx3'], "This is a test4\n" +
+                "and some more text\n" +
+                "and even more")
+        assertEquals(lengths[4], iterator.offset)
+
 
         assertFalse(iterator.hasNext())
     }
     public testFromEnd() {
         def fis = new FileInputStream(testfile1)
-        fis.channel.position(lengths[3])
+        fis.channel.position(lengths[4])
         def iterator = new LegacyLogEntryLineIterator(new FSFileLineIterator(fis, "UTF-8"))
 
-        assertEquals(lengths[3], iterator.offset)
+        assertEquals(lengths[4], iterator.offset)
 
         assertFalse(iterator.hasNext())
     }
 
     public testSeekBackwards(){
-        assertEquals(lengths[2],LegacyLogEntryLineIterator.seekBackwards(testfile1,1))
-        assertEquals(lengths[1],LegacyLogEntryLineIterator.seekBackwards(testfile1,2))
-        assertEquals(lengths[0],LegacyLogEntryLineIterator.seekBackwards(testfile1,3))
+        assertEquals(lengths[3],LegacyLogEntryLineIterator.seekBackwards(testfile1,1))
+        assertEquals(lengths[2],LegacyLogEntryLineIterator.seekBackwards(testfile1,2))
+        assertEquals(lengths[1],LegacyLogEntryLineIterator.seekBackwards(testfile1,3))
+        assertEquals(lengths[0],LegacyLogEntryLineIterator.seekBackwards(testfile1,4))
     }
     private static void assertEntry(LogEvent entry, final Date date, final LogLevel level, final LinkedHashMap<String, String> meta, final String message) {
         assertNotNull(entry)

@@ -95,7 +95,7 @@ class ExecutionControllerTests extends ControllerUnitTestCase {
 
         def result=ec.downloadOutput()
         assertNotNull(ec.response.getHeader('Content-Disposition'))
-        assert "blah blah test monkey\n"+"Execution failed on the following 1 nodes: [centos5]\n"==ec.response.contentAsString
+        assertEquals("blah blah test monkey\n" + "Execution failed on the following 1 nodes: [centos5]\n", ec.response.contentAsString)
     }
 
     void testDownloadOutputFormatted(){
