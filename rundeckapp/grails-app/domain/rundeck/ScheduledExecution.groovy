@@ -97,6 +97,7 @@ class ScheduledExecution extends ExecutionContext {
         nodeExcludeOsArch(type: 'text')
         nodeIncludeOsVersion(type: 'text')
         nodeExcludeOsVersion(type: 'text')
+        userRoleList(type: 'text')
 
         argString type: 'text'
         description type: 'text'
