@@ -47,7 +47,7 @@
     <form action="j_security_check" method="post">
         <div class="row">
             <span class="login welcome">
-            <g:message code="main.app.login.welcome"/>
+                ${grailsApplication.config.rundeck?.gui?.login?.welcome ?: g.message(code: 'gui.login.welcome',default: '')}
             </span>
         </div>
         <div class="row">
