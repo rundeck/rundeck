@@ -334,8 +334,11 @@ class ProjectService {
                 jobset*.uuid=null
                 def results=scheduledExecutionService.loadJobs(jobset,'update',user,roleList,[:],framework)
                 if(results.errjobs){
-                    log.warn("Failed loading some jobs in xml from zip: ${path}${name}")
+                    log.warn("Failed loading (${results.errjobs.size()}) jobs from XML at archive path: ${path}${name}")
                     loadjoberrors.addAll(results.errjobs)
+                    results.errjobs.each {
+                        log.warn("Job at index [${it.entrynum}] had errors: ${it.errmsg}")
+                    }
                 }
                 loadjobresults.addAll(results.jobs)
                 results.jobsi.each{jobi->

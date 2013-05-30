@@ -837,7 +837,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                         }
 
                         if (!success && scheduledExecution && scheduledExecution.hasErrors()) {
-                            errmsg = "Validation errors"
+                            errmsg = "Validation errors: "+ scheduledExecution.errors.allErrors.collect{lookupMessageError(it)}.join("; ")
                         } else {
                             logJobChange(jobchange, scheduledExecution.properties)
                         }
@@ -866,7 +866,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                         def result = _dosave(jobdata, user, roleList, framework, jobchange)
                         scheduledExecution = result.scheduledExecution
                         if (!result.success && scheduledExecution && scheduledExecution.hasErrors()) {
-                            errmsg = "Validation errors"
+                            errmsg = "Validation errors: " + scheduledExecution.errors.allErrors.collect { lookupMessageError(it) }.join("; ")
                         } else if (!result.success) {
                             errmsg = result.error ?: "Failed to save job"
                         } else {
