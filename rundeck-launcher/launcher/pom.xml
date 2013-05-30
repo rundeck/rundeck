@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.rundeck</groupId>
   <artifactId>rundeck-launcher</artifactId>
-  <version>1.5.3-SNAPSHOT</version>
+  <version>1.5.3</version>
   <name>Rundeck Launcher</name>
   <url>http://rundeck.org</url>
   <inceptionYear>2011</inceptionYear>
@@ -66,28 +66,28 @@
     <dependency>
       <groupId>org.rundeck</groupId>
       <artifactId>rundeck</artifactId>
-      <version>1.5.3-SNAPSHOT</version>
+      <version>1.5.3</version>
       <type>war</type>
     </dependency>
     <dependency>
       <groupId>org.rundeck</groupId>
       <artifactId>rundeck-script-plugin</artifactId>
-      <version>1.5.3-SNAPSHOT</version>
+      <version>1.5.3</version>
     </dependency>
     <dependency>
       <groupId>org.rundeck</groupId>
       <artifactId>rundeck-stub-plugin</artifactId>
-      <version>1.5.3-SNAPSHOT</version>
+      <version>1.5.3</version>
     </dependency>
     <dependency>
       <groupId>org.rundeck</groupId>
       <artifactId>rundeck-localexec-plugin</artifactId>
-      <version>1.5.3-SNAPSHOT</version>
+      <version>1.5.3</version>
     </dependency>
     <dependency>
       <groupId>org.rundeck</groupId>
       <artifactId>rundeck-jetty-server</artifactId>
-      <version>1.5.3-SNAPSHOT</version>
+      <version>1.5.3</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
