@@ -1,56 +1,33 @@
-Release 1.5.2
+Release 1.5.3
 ===========
 
-Date: 2013-05-06
-
-**Note: the 1.5.2 release fixes a packaging issue with rpm/debian installations.  1.5.1 release notes follow.**
+Date: 2013-05-30
 
 Notable Changes:
 
-* Bug fixes
-* Job Notification Plugins
-    * Jobs can now trigger notification plugins in addition to the built-in email and webhook
-    * plugins can be developed in Java or with a new Groovy DSL
-    * See the [Notification Plugin Development](developer/notification-plugin-development.html) Chapter.
-    * Example code at [dtolabs/rundeck/examples](https://github.com/dtolabs/rundeck/tree/development/examples)
-* Notification 'onstart' trigger
-    * Jobs can now cause a notification trigger when started via the 'onstart' trigger
-* Notifications can now use the email address of the user who executed a job, as `${job.user.email}`. (You can set an email for your account in the Profile page.)
+* bug fixes
+* plugins can define input properties that get displayed as textareas in the gui
+
+Incubator changes:
+
+* cluster mode, which allows scheduled (cron) jobs to only run on a single node when multiple Rundeck servers share a single DB. (Note: "incubator" features are experimental and likely to change)
 
 Contributors:
 
 * Alex Honor
-* Charles Duffy
 * Greg Schueler
-* John Burbridge
-* Jonathan Li
 * Kim Ho
 
 Issues:
 
-* [Add static ordering to job options instead of always sorted by name](https://github.com/dtolabs/rundeck/issues/361)
-* [Add job notification plugins](https://github.com/dtolabs/rundeck/issues/360)
-* [Big number as option default causes exception on load job from xml](https://github.com/dtolabs/rundeck/issues/356)
-* [Job XML parse fails if "false" value in an command step](https://github.com/dtolabs/rundeck/issues/353)
-* [Local error handling command lost on export / import](https://github.com/dtolabs/rundeck/issues/351)
-* [error handler has exception when attempting to handle No Matched Nodes failure for a job reference](https://github.com/dtolabs/rundeck/issues/350)
-* [Multi-value options not pre-populated when doing a "run again"](https://github.com/dtolabs/rundeck/issues/346)
-* [API: add "asUser" feature for running/killing jobs and executions](https://github.com/dtolabs/rundeck/issues/341)
-* [init script doesn't work on CentOS (one-line fix provided)](https://github.com/dtolabs/rundeck/issues/338)
-* [job group changes before authorization check in 1.5](https://github.com/dtolabs/rundeck/issues/330)
-* [Many ACL policy files can slow down the Project drop down menu](https://github.com/dtolabs/rundeck/issues/328)
-* [Unable to generate an api-token on rundeck 1.5](https://github.com/dtolabs/rundeck/issues/327)
-* [Cannot send notification email using 1.5](https://github.com/dtolabs/rundeck/issues/325)
-* [Long description for Option causes Job import failure in 1.5 for jobs exported from 1.4](https://github.com/dtolabs/rundeck/issues/320)
-* [1.5: GUI regression: Success rate % in job popup always shows 0%](https://github.com/dtolabs/rundeck/issues/316)
-* [1.5: GUI regression: Job execution follow page: progress meter stuck](https://github.com/dtolabs/rundeck/issues/315)
-* [Invalid XML char in log output breaks CLI output follow mode.](https://github.com/dtolabs/rundeck/issues/313)
-* [1.5: html and ajax errors about "Timeout trying to lock table"](https://github.com/dtolabs/rundeck/issues/312)
-* [sudo responder hangs](https://github.com/dtolabs/rundeck/issues/311)
-* [CLIUtils.generateArgline does not quote IFS characters other than space](https://github.com/dtolabs/rundeck/issues/298)
-* [documentation: upgrade guide "admin" aclpolicy doesn't allow all permissions](https://github.com/dtolabs/rundeck/issues/280)
-* [Add Job Notification/webhook on job start](https://github.com/dtolabs/rundeck/issues/250)
-* [projects folder under version control - .svn folder treated as project](https://github.com/dtolabs/rundeck/issues/209)
-* [incorrect aclpolicy yaml structure can cause NPE](https://github.com/dtolabs/rundeck/issues/206)
-* [Options are not passed correctly to programs](https://github.com/dtolabs/rundeck/issues/201)
-* [Allow Email Address substitution in notification recipients list](https://github.com/dtolabs/rundeck/issues/165)
+* [Unable to create scheduled jobs if user has too many authorization roles](https://github.com/dtolabs/rundeck/issues/407)
+* [Add customizable text in the login box.](https://github.com/dtolabs/rundeck/issues/405)
+* [Authentication Page in manual lists wrong port for LDAPS](https://github.com/dtolabs/rundeck/issues/404)
+* [deb packaging: rd-queue script has wrong perms](https://github.com/dtolabs/rundeck/issues/403)
+* [JarPluginProviderLoader NPE if the pluginJar cache dir is not readable or does not exist](https://github.com/dtolabs/rundeck/issues/402)
+* [deb/rpm packaging, cli tools use wrong rdeck.base value](https://github.com/dtolabs/rundeck/issues/401)
+* [Secure option default values are not used by scheduled jobs](https://github.com/dtolabs/rundeck/issues/399)
+* [Feature/cluster mode unique server for job schedules](https://github.com/dtolabs/rundeck/issues/396)
+* [JSch authentication retries until server maxes out allowed attempts](https://github.com/dtolabs/rundeck/issues/393)
+* [Add support for textarea rendering option for String property type](https://github.com/dtolabs/rundeck/issues/390)
+* [deb/rpm packaging rundeck-config doesn't set grails.serverURL](https://github.com/dtolabs/rundeck/issues/387)
