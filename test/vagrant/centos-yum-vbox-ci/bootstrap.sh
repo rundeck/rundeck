@@ -39,7 +39,15 @@ yum -y install java-1.6.0
 
 # Install Rundeck core
 
-yum -y install rundeck
+#check local rpms
+ls /vagrant/rundeck-*.rpm >/dev/null
+if [ $? -eq 0 ] ; then
+    rpm -i /vagrant/rundeck-*.rpm
+else
+    yum -y install rundeck
+fi
+
+
 
 # Add vagrant user to rundeck group
 usermod -g rundeck vagrant
