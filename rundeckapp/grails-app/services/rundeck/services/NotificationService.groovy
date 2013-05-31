@@ -55,6 +55,7 @@ public class NotificationService implements ApplicationContextAware{
     ApplicationContext applicationContext
     def grailsApplication
     def mailService
+    //TODO: use PluginService instead of registry directly
     def RundeckPluginRegistry rundeckPluginRegistry
     def NotificationPluginProviderService notificationPluginProviderService
     def FrameworkService frameworkService
