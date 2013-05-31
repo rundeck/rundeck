@@ -3,6 +3,7 @@ package rundeck.services
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogWriter
 import com.dtolabs.rundeck.app.internal.logging.RundeckLogFormat
+import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.logging.LogFileState
 import com.dtolabs.rundeck.core.logging.LogFileStorage
 import com.dtolabs.rundeck.core.logging.StreamingLogReader
@@ -24,68 +25,12 @@ class LogFileStorageService {
 
     static transactional = false
     static final RundeckLogFormat rundeckLogFormat = new RundeckLogFormat()
-    def RundeckPluginRegistry rundeckPluginRegistry
     LogFileStoragePluginProviderService logFileStoragePluginProviderService
+    PluginService pluginService
     def frameworkService
     def grailsApplication
     def AsyncTaskExecutor logFileTaskExecutor
 
-    def LogFileStoragePlugin getPlugin(String name) {
-        def bean = rundeckPluginRegistry?.loadPluginByName(name, logFileStoragePluginProviderService)
-        if (bean != null) {
-            return (LogFileStoragePlugin) bean
-        }
-        log.error("LogFileStoragePlugin not found: ${name}")
-        return bean
-    }
-
-    def Map validatePluginConfig(String name, Map config) {
-        def Map pluginDesc = getPluginDescriptor(name)
-        if (pluginDesc && pluginDesc.description instanceof Description) {
-            return frameworkService.validateDescription(pluginDesc.description, '', config)
-        } else {
-            return null
-        }
-    }
-    /**
-     *
-     * @param name
-     * @return map containing [instance:(plugin instance), description: (map or Description), ]
-     */
-    def Map getPluginDescriptor(String name) {
-        def bean = rundeckPluginRegistry?.loadPluginDescriptorByName(name, logFileStoragePluginProviderService)
-        if (bean) {
-            return (Map) bean
-        }
-        log.error("LogFileStoragePlugin not found: ${name}")
-        return null
-    }
-
-    private LogFileStoragePlugin configurePlugin(String name, Map configuration) {
-        def bean = rundeckPluginRegistry?.configurePluginByName(name, logFileStoragePluginProviderService, configuration)
-        if (bean) {
-            return (LogFileStoragePlugin) bean
-        }
-        log.error("LogFileStoragePlugin not found: ${name}")
-        return null
-    }
-
-    def Map listPlugins() {
-        def plugins = [:]
-        plugins = rundeckPluginRegistry?.listPluginDescriptors(LogFileStoragePlugin, logFileStoragePluginProviderService)
-        //clean up name of any Groovy plugin without annotations that ends with "LogFileStoragePlugin"
-        plugins.each { key, Map plugin ->
-            def desc = plugin.description
-            if (desc && desc instanceof Map) {
-                if (desc.name.endsWith("LogFileStoragePlugin")) {
-                    desc.name = desc.name.replaceAll(/LogFileStoragePlugin$/, '')
-                }
-            }
-        }
-//        System.err.println("listed plugins: ${plugins}")
-
-        plugins
-    }
     /**
      * Create a streaming log writer for the given execution.
      * @param e
@@ -102,7 +47,6 @@ class LogFileStorageService {
                 throw new IllegalStateException("Unable to create directories for storage: " + file)
             }
         }
-        //TODO: if remote log storage plugin available, apply hook to call storeLogFile on close
         def fsWriter = new FSStreamingLogWriter(new FileOutputStream(file), defaultMeta, rundeckLogFormat)
         def plugin = getConfiguredPluginForExecution(e)
         if(null!=plugin){
@@ -179,6 +123,11 @@ class LogFileStorageService {
         return state
     }
 
+    /**
+     * Create and initialize the log file storage plugin for this execution, or return null
+     * @param execution
+     * @return
+     */
     private LogFileStoragePlugin getConfiguredPluginForExecution(Execution execution) {
         def jobcontext = ExecutionService.exportContextForExecution(execution)
         def plugin = getConfiguredPlugin(jobcontext)
@@ -188,15 +137,22 @@ class LogFileStorageService {
     private String getConfiguredPluginName(){
         grailsApplication.config.rundeck?.execution?.logs?.fileStoragePlugin
     }
+
+    /**
+     * Create and initialize the log file storage plugin for the context, or return null
+     * @param context
+     * @return
+     */
     private LogFileStoragePlugin getConfiguredPlugin(Map context){
         def pluginName=getConfiguredPluginName()
         if (pluginName) {
             log.debug("Using log file storage plugin ${pluginName}")
 
             try {
-                def plugin = getPlugin(pluginName)
+                def plugin = pluginService.getPlugin(pluginName,logFileStoragePluginProviderService)
                 if (plugin != null) {
                     //TODO: configure plugin from properties
+//                    pluginService.configurePlugin(pluginName, projectName, framework, logFileStoragePluginProviderService)
                     plugin.initialize(context)
                     return plugin
                 }
@@ -243,7 +199,6 @@ class LogFileStorageService {
 
     private ConcurrentHashMap<String, Object> logFileStorageRequests = new ConcurrentHashMap<String, Object>()
     private ConcurrentHashMap<String, Map> logFileRetrievalRequests = new ConcurrentHashMap<String, Map>()
-//    private ConcurrentHashMap<String, LogFileState> logFileRetrievalStates = new ConcurrentHashMap<String, LogFileState>()
 
     private String logFileRetrievalKey(Execution execution){
         return execution.id.toString()
@@ -269,13 +224,11 @@ class LogFileStorageService {
             return pending.state
         }
         log.error("requestLogFileRetrieval, start a new request...")
-//        logFileRetrievalStates.remove(key)
         def file=new File(getFilepathForExecution(execution))
         newstate.future = logFileTaskExecutor.submit({
             if(!retrieveLogFile(file, plugin)){
                 log.error("LogFileStorage: failed retrieval request for ${key}")
             }
-//            logFileRetrievalStates.put(key, success ? LogFileState.AVAILABLE : LogFileState.NOT_FOUND)
             logFileRetrievalRequests.remove(key)
         })
         return ExecutionLogState.PENDING_LOCAL

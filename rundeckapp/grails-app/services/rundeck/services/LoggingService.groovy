@@ -21,7 +21,7 @@ class LoggingService {
 
     FrameworkService frameworkService
     LogFileStorageService logFileStorageService
-    def RundeckPluginRegistry rundeckPluginRegistry
+    def pluginService
     def StreamingLogWriterPluginProviderService streamingLogWriterPluginProviderService
     def StreamingLogReaderPluginProviderService streamingLogReaderPluginProviderService
     def grailsApplication
@@ -29,119 +29,6 @@ class LoggingService {
     def configure() {
     }
 
-    def StreamingLogReaderPlugin getLogReaderPlugin(String name) {
-        def bean = rundeckPluginRegistry?.loadPluginByName(name, streamingLogReaderPluginProviderService)
-        if (bean!=null) {
-            return (StreamingLogReaderPlugin) bean
-        }
-        log.error("StreamingLogReaderPlugin not found: ${name}")
-        return bean
-    }
-
-    def Map validateReaderPluginConfig(String name, Map config) {
-        def Map pluginDesc = getReaderPluginDescriptor(name)
-        if (pluginDesc && pluginDesc.description instanceof Description) {
-            return frameworkService.validateDescription(pluginDesc.description, '', config)
-        } else {
-            return null
-        }
-    }
-    /**
-     *
-     * @param name
-     * @return map containing [instance:(plugin instance), description: (map or Description), ]
-     */
-    def Map getReaderPluginDescriptor(String name) {
-        def bean = rundeckPluginRegistry?.loadPluginDescriptorByName(name, streamingLogReaderPluginProviderService)
-        if (bean) {
-            return (Map) bean
-        }
-        log.error("StreamingLogReaderPlugin not found: ${name}")
-        return null
-    }
-
-    private StreamingLogReaderPlugin configureStreamingReaderPlugin(String name, Map configuration) {
-        def bean = rundeckPluginRegistry?.configurePluginByName(name, streamingLogReaderPluginProviderService, configuration)
-        if (bean) {
-            return (StreamingLogReaderPlugin) bean
-        }
-        log.error("StreamingLogReaderPlugin not found: ${name}")
-        return null
-    }
-
-    def Map listLogReaderPlugins() {
-        def plugins = [:]
-        plugins = rundeckPluginRegistry?.listPluginDescriptors(StreamingLogReaderPlugin, streamingLogReaderPluginProviderService)
-        //clean up name of any Groovy plugin without annotations that ends with "NotificationPlugin"
-        plugins.each { key, Map plugin ->
-            def desc = plugin.description
-            if (desc && desc instanceof Map) {
-                if (desc.name.endsWith("StreamingLogReaderPlugin")) {
-                    desc.name = desc.name.replaceAll(/StreamingLogReaderPlugin$/, '')
-                }
-            }
-        }
-//        System.err.println("listed plugins: ${plugins}")
-
-        plugins
-    }
-
-    def StreamingLogWriterPlugin getLogWriterPlugin(String name) {
-        def bean = rundeckPluginRegistry?.loadPluginByName(name, streamingLogWriterPluginProviderService)
-        if (bean) {
-            return (StreamingLogWriterPlugin) bean
-        }
-        log.error("StreamingLogReaderPlugin not found: ${name}")
-        return null
-    }
-
-    def Map validateWriterPluginConfig(String name, Map config) {
-        def Map pluginDesc = getReaderPluginDescriptor(name)
-        if (pluginDesc && pluginDesc.description instanceof Description) {
-            return frameworkService.validateDescription(pluginDesc.description, '', config)
-        } else {
-            return null
-        }
-    }
-    /**
-     *
-     * @param name
-     * @return map containing [instance:(plugin instance), description: (map or Description), ]
-     */
-    def Map getWriterPluginDescriptor(String name) {
-        def bean = rundeckPluginRegistry?.loadPluginDescriptorByName(name, streamingLogWriterPluginProviderService)
-        if (bean) {
-            return (Map) bean
-        }
-        log.error("StreamingLogWriterPlugin not found: ${name}")
-        return null
-    }
-
-    private StreamingLogWriterPlugin configureStreamingWriterPlugin(String name, Map configuration) {
-        def bean = rundeckPluginRegistry?.configurePluginByName(name, streamingLogWriterPluginProviderService, configuration)
-        if (bean) {
-            return (StreamingLogWriterPlugin) bean
-        }
-        log.error("StreamingLogWriterPlugin not found: ${name}")
-        return null
-    }
-
-    def Map listLogWriterPlugins() {
-        def plugins = [:]
-        plugins = rundeckPluginRegistry?.listPluginDescriptors(StreamingLogWriterPlugin, streamingLogWriterPluginProviderService)
-        //clean up name of any Groovy plugin without annotations that ends with "NotificationPlugin"
-        plugins.each { key, Map plugin ->
-            def desc = plugin.description
-            if (desc && desc instanceof Map) {
-                if (desc.name.endsWith("StreamingLogWriterPlugin")) {
-                    desc.name = desc.name.replaceAll(/StreamingLogWriterPlugin$/, '')
-                }
-            }
-        }
-//        System.err.println("listed plugins: ${plugins}")
-
-        plugins
-    }
     public boolean isLocalFileStorageEnabled(){
         boolean fileDisabled = grailsApplication.config.rundeck?.execution?.logs?.localFileStorageEnabled in ['false', false]
         boolean readerPluginConfigured= getConfiguredStreamingReaderPluginName()
@@ -155,7 +42,7 @@ class LoggingService {
             HashMap<String, String> jobcontext = ExecutionService.exportContextForExecution(execution)
             log.debug("Configured log writer plugins: ${names}")
             names.each {name->
-                def plugin= getLogWriterPlugin(name)
+                def plugin= pluginService.getPlugin(name,streamingLogWriterPluginProviderService)
                 if(null==plugin){
                     log.error("Failed to load StreamingLogWriter plugin named ${name}")
                     return
@@ -203,7 +90,7 @@ class LoggingService {
             log.debug("Using log reader plugin ${pluginName}")
 
             try {
-                def plugin = getLogReaderPlugin(pluginName)
+                def plugin = pluginService.getPlugin(pluginName,streamingLogReaderPluginProviderService)
                 if (plugin != null) {
                     //TODO: configure plugin from properties
                     plugin.initialize(jobcontext)

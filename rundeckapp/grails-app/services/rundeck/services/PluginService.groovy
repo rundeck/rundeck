@@ -16,7 +16,7 @@ class PluginService {
         if (bean != null) {
             return (T) bean
         }
-        log.error("Plugin not found: ${name}")
+        log.error("${service.name} plugin not found: ${name}")
         return bean
     }
 
@@ -38,7 +38,7 @@ class PluginService {
         if (bean) {
             return (Map) bean
         }
-        log.error("LogFileStoragePlugin not found: ${name}")
+        log.error("${service.name} not found: ${name}")
         return null
     }
 
@@ -47,7 +47,7 @@ class PluginService {
         if (bean) {
             return (T) bean
         }
-        log.error("LogFileStoragePlugin not found: ${name}")
+        log.error("${service.name} not found: ${name}")
         return null
     }
 
@@ -56,19 +56,19 @@ class PluginService {
         if (bean) {
             return (T) bean
         }
-        log.error("LogFileStoragePlugin not found: ${name}")
+        log.error("${service.name} not found: ${name}")
         return null
     }
 
-    def <T> Map listPlugins(PluggableProviderService<T> service, String groovySuffix) {
+    def <T> Map listPlugins(PluggableProviderService<T> service) {
         def plugins = [:]
         plugins = rundeckPluginRegistry?.listPluginDescriptors(T, service)
-        //clean up name of any Groovy plugin without annotations that ends with "LogFileStoragePlugin"
+        //clean up name of any Groovy plugin without annotations that ends with the service name
         plugins.each { key, Map plugin ->
             def desc = plugin.description
             if (desc && desc instanceof Map) {
-                if (desc.name.endsWith(groovySuffix)) {
-                    desc.name = desc.name.substring(groovySuffix.length())
+                if (desc.name.endsWith(service.name)) {
+                    desc.name = desc.name.substring(service.name.length())
                 }
             }
         }
