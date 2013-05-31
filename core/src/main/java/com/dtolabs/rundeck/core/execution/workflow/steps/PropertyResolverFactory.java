@@ -90,7 +90,25 @@ public class PropertyResolverFactory {
                                            projectRetriever(projectPrefix,
                                                             context.getFramework(),
                                                             context.getFrameworkProject()),
-                                           frameworkRetriever(context, frameworkPrefix)
+                                           frameworkRetriever(frameworkPrefix, context.getFramework())
+        );
+    }
+
+    /**
+     * Create a PropertyResolver for a plugin for resolving Framework, Project and instance scoped properties.
+     */
+    public static PropertyResolver createFrameworkProjectRuntimeResolver(final Framework framework,
+            final String projectName,
+            final Map<String, Object> instanceProperties,
+            final String pluginType,
+            final String providerName) {
+
+        final String projectPrefix = projectPropertyPrefix(pluginPropertyPrefix(pluginType, providerName));
+        final String frameworkPrefix = frameworkPropertyPrefix(pluginPropertyPrefix(pluginType, providerName));
+
+        return new RuntimePropertyResolver(instanceRetriever(instanceProperties),
+                projectRetriever(projectPrefix, framework, projectName),
+                frameworkRetriever(frameworkPrefix, framework)
         );
     }
 
@@ -102,10 +120,9 @@ public class PropertyResolverFactory {
         return new RuntimePropertyResolver(instanceRetriever(instanceProperties), null, null);
     }
 
-    private static PropertyRetriever frameworkRetriever(final StepExecutionContext context,
-                                                        final String frameworkPrefix) {
+    private static PropertyRetriever frameworkRetriever(final String frameworkPrefix, Framework framework) {
         return prefixedRetriever(frameworkPrefix,
-                                 context.getFramework().getPropertyRetriever());
+                framework.getPropertyRetriever());
     }
 
     private static PropertyRetriever projectRetriever(final String projectPrefix,
@@ -129,7 +146,7 @@ public class PropertyResolverFactory {
 
         @Override
         public String getProperty(String name) {
-            Object o = map.get(name);
+            Object o = null != map ? map.get(name) : null;
             return o != null ? o.toString() : null;
         }
 
