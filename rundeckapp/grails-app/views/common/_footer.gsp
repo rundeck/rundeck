@@ -1,6 +1,7 @@
     <g:message code="main.app.name"/>
     <span class="num">${grailsApplication.metadata['app.version']}</span>
-    &copy; Copyright 2010 <a href="http://dtolabs.com"><g:img file="dto-logo-small.png" width="16px" height="16px"/> DTO Labs</a>.
+    &copy; Copyright 2013 <a href="http://simplifyops.com">
+    <span style="color:red;">#Simplify</span>Ops</a>.
 
     All rights reserved.
     
