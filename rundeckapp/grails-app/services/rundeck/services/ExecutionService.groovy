@@ -482,6 +482,20 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
         }
     }
 
+    def static HashMap<String, String> exportContextForExecution(Execution execution) {
+        def jobcontext = new HashMap<String, String>()
+        if (execution.scheduledExecution) {
+            jobcontext.name = execution.scheduledExecution.jobName
+            jobcontext.group = execution.scheduledExecution.groupPath
+            jobcontext.id = execution.scheduledExecution.extid
+        }
+        jobcontext.execid = execution.id.toString()
+        jobcontext.username = execution.user
+        jobcontext['user.name'] = execution.user
+        jobcontext.project = execution.project
+        jobcontext.loglevel = ExecutionService.textLogLevels[execution.loglevel] ?: execution.loglevel
+        jobcontext
+    }
 
     /**
      * starts an execution in a separate thread, returning a map of [thread:Thread, loghandler:LogHandler]
@@ -496,17 +510,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
         execution.save(flush:true)
 
         try{
-            def jobcontext=new HashMap<String,String>()
-            if(scheduledExecution){
-                jobcontext.name=scheduledExecution.jobName
-                jobcontext.group=scheduledExecution.groupPath
-                jobcontext.id=scheduledExecution.extid
-            }
-            jobcontext.execid = execution.id.toString()
-            jobcontext.username=execution.user
-            jobcontext['user.name']=execution.user
-            jobcontext.project=execution.project
-            jobcontext.loglevel= textLogLevels[execution.loglevel] ?: execution.loglevel
+            def jobcontext=exportContextForExecution(execution)
             loghandler.openStream()
 
             WorkflowExecutionItem item = createExecutionItemForExecutionContext(execution, framework, execution.user)

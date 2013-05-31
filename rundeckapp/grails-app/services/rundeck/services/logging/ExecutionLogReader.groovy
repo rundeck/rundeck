@@ -9,6 +9,6 @@ import com.dtolabs.rundeck.core.logging.StreamingLogReader
  * Time: 10:55 AM
  */
 class ExecutionLogReader {
-    LogState state
+    ExecutionLogState state
     StreamingLogReader reader
 }

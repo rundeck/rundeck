@@ -503,6 +503,7 @@ var FollowControl = Class.create({
         this.runningcmd.jobstatus = data.execState;
         this.runningcmd.failednodes = data.hasFailedNodes;
         this.runningcmd.percent = data.percentLoaded;
+        this.runningcmd.pending = data.pending;
 
         var entries = $A(data.entries);
         if (null != data.execDuration) {
@@ -545,9 +546,13 @@ var FollowControl = Class.create({
             return;
         } else {
             var obj=this;
+            var time= (this.tailmode && this.taildelay > 0) ? this.taildelay * 1000 : 50;
+            if(this.runningcmd.pending != null){
+                time= (this.tailmode && this.taildelay > 0) ? this.taildelay * 5000 : 5000
+            }
             setTimeout(function() {
                 obj.loadMoreOutput(obj.runningcmd.id, obj.runningcmd.offset);
-            }, (this.tailmode && this.taildelay > 0) ? this.taildelay * 1000 : 50);
+            }, time);
         }
         if (this.runningcmd.jobcompleted && !this.runningcmd.completed) {
             this.jobFinishStatus(this.runningcmd.jobstatus);
@@ -556,11 +561,19 @@ var FollowControl = Class.create({
             }
             if ($('fileload')) {
                 $('fileload').show();
-                $('fileloadpercent').innerHTML = Math.ceil(this.runningcmd.percent) + "%";
+                if(this.runningcmd.percent!=null){
+                    $('fileloadpercent').innerHTML = Math.ceil(this.runningcmd.percent) + "%";
+                } else if (this.runningcmd.pending != null) {
+                    $('fileloadpercent').innerHTML = this.runningcmd.pending;
+                }
             }
             if ($('fileload2')) {
                 $('fileload2').show();
-                $('fileload2percent').innerHTML = Math.ceil(this.runningcmd.percent) + "%";
+                if (this.runningcmd.percent != null) {
+                    $('fileload2percent').innerHTML = Math.ceil(this.runningcmd.percent) + "%";
+                }else if(this.runningcmd.pending!=null){
+                    $('fileload2percent').innerHTML = this.runningcmd.pending;
+                }
             }
         }
         if (this.runningcmd.jobcompleted) {

@@ -6,13 +6,15 @@ import java.util.zip.*
  */
 rundeckPlugin(LogFileStoragePlugin){
     def outputDir="/tmp"
-    state { String id->
+    state { Map execution->
+        def id = execution.execid
         //return state of storage given the id
         def tmpfile=new File(outputDir,"log-${id}.gz.tmp")
         def outfile=new File(outputDir,"log-${id}.gz")
         outfile.exists()? AVAILABLE : tmpfile.exists()? PENDING : NOT_FOUND
     }
-    put { String id, InputStream source->
+    put { Map execution, InputStream source->
+        def id = execution.execid
         //use gzip
         def outfile=new File(outputDir,"log-${id}.gz.tmp")
         source.withReader { reader ->
@@ -30,7 +32,8 @@ rundeckPlugin(LogFileStoragePlugin){
         }
         source.close()
     }
-    get {  String id, OutputStream out->
+    get {  Map execution, OutputStream out->
+        def id = execution.execid
 
         def infile=new File(outputDir,"log-${id}.gz")
         infile.withInputStream { in ->

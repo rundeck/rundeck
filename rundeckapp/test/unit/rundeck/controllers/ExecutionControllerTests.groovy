@@ -4,9 +4,8 @@ import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
 import com.dtolabs.rundeck.app.internal.logging.RundeckLogFormat
 import grails.test.ControllerUnitTestCase
 import rundeck.Execution
-import rundeck.controllers.ExecutionController
 import rundeck.services.LoggingService
-import rundeck.services.logging.LogState
+import rundeck.services.logging.ExecutionLogState
 
 class ExecutionControllerTests extends ControllerUnitTestCase {
 
@@ -29,7 +28,7 @@ class ExecutionControllerTests extends ControllerUnitTestCase {
         assert e1.save()
         def fwkControl = mockFor(LoggingService, true)
         fwkControl.demand.getLogReader { Execution e ->
-            [state: LogState.NOT_FOUND]
+            [state: ExecutionLogState.NOT_FOUND]
         }
         ec.loggingService = fwkControl.createMock()
 
@@ -58,7 +57,7 @@ class ExecutionControllerTests extends ControllerUnitTestCase {
         assert e1.save()
         def fwkControl = mockFor(LoggingService, true)
         fwkControl.demand.getLogReader { Execution e ->
-            [state: LogState.FOUND_REMOTE]
+            [state: ExecutionLogState.AVAILABLE_REMOTE]
         }
         ec.loggingService = fwkControl.createMock()
 
@@ -87,7 +86,7 @@ class ExecutionControllerTests extends ControllerUnitTestCase {
         assert e1.save()
         def fwkControl = mockFor(LoggingService, true)
         fwkControl.demand.getLogReader{Execution e->
-            [state:LogState.FOUND_LOCAL,reader:new FSStreamingLogReader(tf1,"UTF-8",new RundeckLogFormat())]
+            [state:ExecutionLogState.AVAILABLE,reader:new FSStreamingLogReader(tf1,"UTF-8",new RundeckLogFormat())]
         }
         ec.loggingService = fwkControl.createMock()
 
@@ -117,7 +116,7 @@ class ExecutionControllerTests extends ControllerUnitTestCase {
         assert e1.save()
         def fwkControl = mockFor(LoggingService, true)
         fwkControl.demand.getLogReader { Execution e ->
-            [state: LogState.FOUND_LOCAL, reader: new FSStreamingLogReader(tf1, "UTF-8", new RundeckLogFormat())]
+            [state: ExecutionLogState.AVAILABLE, reader: new FSStreamingLogReader(tf1, "UTF-8", new RundeckLogFormat())]
         }
         ec.loggingService = fwkControl.createMock()
 

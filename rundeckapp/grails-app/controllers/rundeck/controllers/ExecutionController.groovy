@@ -16,7 +16,7 @@ import rundeck.services.FrameworkService
 import rundeck.services.LoggingService
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.logging.ExecutionLogReader
-import rundeck.services.logging.LogState
+import rundeck.services.logging.ExecutionLogState
 
 import java.text.ParseException
 import java.text.SimpleDateFormat
@@ -162,11 +162,12 @@ class ExecutionController {
 
         def jobcomplete = e.dateCompleted!=null
         def reader = loggingService.getLogReader(e)
-        if (reader.state==LogState.NOT_FOUND) {
+        if (reader.state==ExecutionLogState.NOT_FOUND) {
             response.setStatus(404)
             log.error("Output file not found")
             return
-        }else if (reader.state != LogState.FOUND_LOCAL) {
+        }else if (reader.state != ExecutionLogState.AVAILABLE) {
+            //TODO: handle other states
             response.setStatus(404)
             log.error("Output file not available")
             return
@@ -257,12 +258,9 @@ class ExecutionController {
         ExecutionLogReader reader
         def error=null
         reader = loggingService.getLogReader(e)
-        if (null==reader|| error || reader.state==LogState.NOT_FOUND){
+        log.error("Reader, state: ${reader.state}, reader: ${reader.reader}")
+        if (null == reader  || reader.state == ExecutionLogState.NOT_FOUND) {
             def errmsg = "No output"
-            if (null!=error) {
-                errmsg = error.message
-            }
-
             //execution has not be started yet
             def renderclos = { delegate ->
                 if (e.dateCompleted) {
@@ -312,6 +310,49 @@ class ExecutionController {
                 }
             }
             return;
+        }
+        else if (null == reader || reader.state == ExecutionLogState.PENDING_LOCAL) {
+            //pending data
+            def renderclos = { delegate ->
+                delegate.message("Pending")
+                delegate.pending("Retrieving from storage")
+                delegate.id(params.id.toString())
+                delegate.offset(params.offset ? params.offset.toString() : "0")
+                delegate.completed(false)
+                delegate.execCompleted(jobcomplete)
+                delegate.hasFailedNodes(hasFailedNodes)
+                delegate.execState(execState)
+                delegate.execDuration(execDuration)
+                delegate.entries() {
+                }
+            }
+            withFormat {
+                xml {
+                    api.success({ del ->
+                        del.'output' {
+                            renderclos(del)
+                        }
+                    })
+                }
+                json {
+                    render(contentType: "text/json") {
+                        renderclos(delegate)
+                    }
+                }
+                text {
+                    response.addHeader('X-Rundeck-ExecOutput-Message', 'Pending')
+                    response.addHeader('X-Rundeck-ExecOutput-Pending', 'Retrieving from storage')
+                    response.addHeader('X-Rundeck-ExecOutput-Offset', params.offset ? params.offset.toString() : "0")
+                    response.addHeader('X-Rundeck-ExecOutput-Completed', "false")
+                    response.addHeader('X-Rundeck-Exec-Completed', jobcomplete.toString())
+                    response.addHeader('X-Rundeck-Exec-State', execState)
+                    response.addHeader('X-Rundeck-Exec-Duration', execDuration.toString())
+                    render(contentType: "text/plain") {
+                        ''
+                    }
+                }
+            }
+            return
         }
         def StreamingLogReader logread=reader.reader
 

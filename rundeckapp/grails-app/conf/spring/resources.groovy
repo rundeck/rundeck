@@ -1,12 +1,13 @@
-import com.dtolabs.rundeck.core.logging.StreamingLogWriter
 import com.dtolabs.rundeck.core.plugins.PluginManagerService
 import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
 import com.dtolabs.rundeck.server.plugins.PluginCustomizer
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
+import com.dtolabs.rundeck.server.plugins.services.LogFileStoragePluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.NotificationPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogReaderPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogWriterPluginProviderService
 import groovy.io.FileType
+import org.springframework.core.task.SimpleAsyncTaskExecutor
 
 beans={
     defaultGrailsServiceInjectorJobListener(GrailsServiceInjectorJobListener){
@@ -52,6 +53,15 @@ beans={
      */
     streamingLogWriterPluginProviderService(StreamingLogWriterPluginProviderService){
         rundeckServerServiceProviderLoader=ref('rundeckServerServiceProviderLoader')
+    }
+    /**
+     * the LogFileStorage plugin provider service
+     */
+    logFileStoragePluginProviderService(LogFileStoragePluginProviderService) {
+        rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
+    }
+    logFileTaskExecutor(SimpleAsyncTaskExecutor,"LogFileStorage"){
+
     }
 
     /**
