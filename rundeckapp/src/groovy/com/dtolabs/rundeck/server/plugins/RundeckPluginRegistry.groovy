@@ -1,5 +1,6 @@
 package com.dtolabs.rundeck.server.plugins
 
+import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException
 import com.dtolabs.rundeck.core.execution.workflow.steps.PluginAdapterUtility
@@ -59,6 +60,26 @@ class RundeckPluginRegistry implements ApplicationContextAware{
      * @param service provider service
      * @return
      */
+    public Object configurePluginByName(String name, PluggableProviderService service, Framework framework, String project) {
+        Map pluginDesc = loadPluginDescriptorByName(name, service)
+        Object plugin=pluginDesc['instance']
+
+//        if (null != configuration) {
+//            configuration = DataContextUtils.replaceDataReferences(configuration, context.getDataContext());
+//        }
+        def description = pluginDesc['description']
+        if(description && description instanceof Description) {
+            final PropertyResolver resolver = PropertyResolverFactory.createFrameworkProjectRuntimeResolver(framework, project, null, name, service.getName());
+            final Map<String, Object> config = PluginAdapterUtility.configureProperties(resolver, description, plugin);
+        }
+        plugin
+    }
+    /**
+     * Load a plugin instance with the given bean or provider name
+     * @param name name of bean or provider
+     * @param service provider service
+     * @return
+     */
     public Object loadPluginByName(String name, PluggableProviderService service){
         return loadPluginDescriptorByName(name,service)?.get('instance')
     }
@@ -68,7 +89,7 @@ class RundeckPluginRegistry implements ApplicationContextAware{
      * @param service provider service
      * @return map containing [instance:(plugin instance), description: (map or Description),
      */
-    public Object loadPluginDescriptorByName(String name, PluggableProviderService service){
+    public Map loadPluginDescriptorByName(String name, PluggableProviderService service){
         def beanDesc=[:]
         try {
             def beanName = pluginRegistryMap[name]
