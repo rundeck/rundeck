@@ -29,18 +29,24 @@ public enum ExecutionLogState {
      * Pending presence on local storage (being copied)
      */
     PENDING_LOCAL
-    public static ExecutionLogState forFileStates(LogFileState local, LogFileState remote){
+    /**
+     * Return an {@link ExecutionLogState} given a local and remote {@link LogFileState}
+     * @param local
+     * @param remote
+     * @return
+     */
+    public static ExecutionLogState forFileStates(LogFileState local, LogFileState remote) {
         switch (local) {
             case LogFileState.AVAILABLE:
-                 return AVAILABLE
+                return AVAILABLE
             case LogFileState.PENDING:
-                 return PENDING_LOCAL
+                return PENDING_LOCAL
             case LogFileState.NOT_FOUND:
-                switch (remote){
+                switch (remote) {
                     case LogFileState.AVAILABLE:
-                         return AVAILABLE_REMOTE
+                        return AVAILABLE_REMOTE
                     case LogFileState.PENDING:
-                         return PENDING_REMOTE
+                        return PENDING_REMOTE
                 }
         }
         return NOT_FOUND
