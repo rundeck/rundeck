@@ -311,11 +311,11 @@ class ExecutionController {
             }
             return;
         }
-        else if (null == reader || reader.state == ExecutionLogState.PENDING_LOCAL) {
+        else if (null == reader || reader.state in [ExecutionLogState.PENDING_LOCAL, ExecutionLogState.PENDING_REMOTE]) {
             //pending data
             def renderclos = { delegate ->
                 delegate.message("Pending")
-                delegate.pending("Retrieving from storage")
+                delegate.pending(g.message(code:'execution.log.storage.state.'+reader.state,default: "Pending"))
                 delegate.id(params.id.toString())
                 delegate.offset(params.offset ? params.offset.toString() : "0")
                 delegate.completed(false)
@@ -341,7 +341,7 @@ class ExecutionController {
                 }
                 text {
                     response.addHeader('X-Rundeck-ExecOutput-Message', 'Pending')
-                    response.addHeader('X-Rundeck-ExecOutput-Pending', 'Retrieving from storage')
+                    response.addHeader('X-Rundeck-ExecOutput-Pending', g.message(code: 'execution.log.storage.state.' + reader.state, default: "Pending"))
                     response.addHeader('X-Rundeck-ExecOutput-Offset', params.offset ? params.offset.toString() : "0")
                     response.addHeader('X-Rundeck-ExecOutput-Completed', "false")
                     response.addHeader('X-Rundeck-Exec-Completed', jobcomplete.toString())
