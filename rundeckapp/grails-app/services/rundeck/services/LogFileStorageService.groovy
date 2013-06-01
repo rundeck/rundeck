@@ -170,14 +170,18 @@ class LogFileStorageService {
      * @return
      */
     ExecutionLogReader requestLogFileReader(Execution e, performLoad = true) {
-        if (!e.outputfilepath && e.dateCompleted == null && e.dateStarted != null) {
-            //assume pending write locally
-            //todo: compare server uuid
-            return new ExecutionLogReader(state: ExecutionLogState.PENDING_LOCAL, reader: null)
+        if(e.dateCompleted == null && e.dateStarted != null){
+            //execution is running
+            if (frameworkService.isClusterModeEnabled() && e.serverNodeUUID != frameworkService.getServerUUID()) {
+                //execution on another rundeck server, we have to wait until it is complete
+                return new ExecutionLogReader(state: ExecutionLogState.PENDING_REMOTE, reader: null)
+            }else if(!e.outputfilepath){
+                //no filepath defined: execution started, hasn't created output file yet.
+                return new ExecutionLogReader(state: ExecutionLogState.PENDING_LOCAL, reader: null)
+            }
         }
         def plugin= getConfiguredPluginForExecution(e)
         def state = getLogFileState(e, plugin)
-//        def requestState = logFileRetrievalRequestState(e)
         def reader = null
         switch (state) {
             case ExecutionLogState.AVAILABLE:
@@ -226,10 +230,12 @@ class LogFileStorageService {
         log.error("requestLogFileRetrieval, start a new request...")
         def file=new File(getFilepathForExecution(execution))
         newstate.future = logFileTaskExecutor.submit({
+            log.error("LogFileStorage: start request for ${key}")
             if(!retrieveLogFile(file, plugin)){
                 log.error("LogFileStorage: failed retrieval request for ${key}")
             }
             logFileRetrievalRequests.remove(key)
+            log.error("LogFileStorage: finish reqest for ${key}")
         })
         return ExecutionLogState.PENDING_LOCAL
     }
@@ -253,9 +259,13 @@ class LogFileStorageService {
     private Boolean storeLogFile(File file, LogFileStorage storage) {
         log.error("Start task, store log file")
         def success = false
-        file.withInputStream { input ->
-            storage.storeLogFile(input)
-            success = true
+        try{
+            file.withInputStream { input ->
+                storage.storeLogFile(input)
+                success = true
+            }
+        }catch (Throwable e) {
+            log.error("Failed store log file: ${e.message}", e)
         }
         if (success) {
             file.deleteOnExit()
@@ -275,13 +285,25 @@ class LogFileStorageService {
         def tempfile = File.createTempFile("temp-storage","logfile")
         tempfile.deleteOnExit()
         def success=false
-        tempfile.withOutputStream {out->
-            storage.retrieveLogFile(out)
-            success=true
+        try {
+            tempfile.withOutputStream {out->
+                storage.retrieveLogFile(out)
+            }
+            if(!file.getParentFile().isDirectory()){
+                if(!file.getParentFile().mkdirs()){
+                    log.error("Unable to create directories for log file: ${file}")
+                }
+            }
+            if(!tempfile.renameTo(file)){
+                log.error("Failed to move log file to location: ${file}")
+            }else{
+                success = true
+            }
+
+        } catch (Throwable t) {
+            log.error("Failed retrieve log file: ${t.message}", t)
         }
-        if(success){
-           tempfile.renameTo(file)
-        }else{
+        if(!success){
             tempfile.delete()
         }
         return success

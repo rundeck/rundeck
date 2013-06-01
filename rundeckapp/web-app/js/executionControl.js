@@ -575,6 +575,20 @@ var FollowControl = Class.create({
                     $('fileload2percent').innerHTML = this.runningcmd.pending;
                 }
             }
+        }else if (!this.runningcmd.jobcompleted && !this.runningcmd.completed && this.runningcmd.pending) {
+            //pending a remote load
+            if ($('fileload')) {
+                $('fileload').show();
+                if (this.runningcmd.pending != null) {
+                    $('fileloadpercent').innerHTML = this.runningcmd.pending;
+                }
+            }
+            if ($('fileload2')) {
+                $('fileload2').show();
+                if(this.runningcmd.pending!=null){
+                    $('fileload2percent').innerHTML = this.runningcmd.pending;
+                }
+            }
         }
         if (this.runningcmd.jobcompleted) {
 
