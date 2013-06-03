@@ -453,6 +453,28 @@ var FollowControl = Class.create({
         $('commandPerform').show();
         return tbl;
     },
+    showLoading:function(message){
+        if ($('fileload')) {
+            $('fileload').show();
+            if (message != null) {
+                $('fileloadpercent').innerHTML = message;
+            }
+        }
+        if ($('fileload2')) {
+            $('fileload2').show();
+            if (message != null) {
+                $('fileload2percent').innerHTML = message;
+            }
+        }
+    },
+    hideLoading:function(){
+        if ($('fileload')) {
+            $('fileload').hide();
+        }
+        if ($('fileload2')) {
+            $('fileload2').hide();
+        }
+    },
     appendCmdOutput: function(data) {
         var orig = data;
         var needsScroll = false;
@@ -559,35 +581,19 @@ var FollowControl = Class.create({
             if ($('progressContainer')) {
                 $('progressContainer').hide();
             }
-            if ($('fileload')) {
-                $('fileload').show();
-                if(this.runningcmd.percent!=null){
-                    $('fileloadpercent').innerHTML = Math.ceil(this.runningcmd.percent) + "%";
-                } else if (this.runningcmd.pending != null) {
-                    $('fileloadpercent').innerHTML = this.runningcmd.pending;
-                }
+            var message=null
+            if(this.runningcmd.percent!=null){
+                message= "Loading Output... "+Math.ceil(this.runningcmd.percent) + "%";
+            } else if (this.runningcmd.pending != null) {
+                message = this.runningcmd.pending;
             }
-            if ($('fileload2')) {
-                $('fileload2').show();
-                if (this.runningcmd.percent != null) {
-                    $('fileload2percent').innerHTML = Math.ceil(this.runningcmd.percent) + "%";
-                }else if(this.runningcmd.pending!=null){
-                    $('fileload2percent').innerHTML = this.runningcmd.pending;
-                }
-            }
-        }else if (!this.runningcmd.jobcompleted && !this.runningcmd.completed && this.runningcmd.pending) {
+            this.showLoading(message);
+        }else if (!this.runningcmd.jobcompleted && !this.runningcmd.completed) {
             //pending a remote load
-            if ($('fileload')) {
-                $('fileload').show();
-                if (this.runningcmd.pending != null) {
-                    $('fileloadpercent').innerHTML = this.runningcmd.pending;
-                }
-            }
-            if ($('fileload2')) {
-                $('fileload2').show();
-                if(this.runningcmd.pending!=null){
-                    $('fileload2percent').innerHTML = this.runningcmd.pending;
-                }
+            if (this.runningcmd.pending != null) {
+                this.showLoading(this.runningcmd.pending);
+            }else {
+                this.hideLoading();
             }
         }
         if (this.runningcmd.jobcompleted) {
