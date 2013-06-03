@@ -6,14 +6,16 @@ import java.util.zip.*
  */
 rundeckPlugin(LogFileStoragePlugin){
     def outputDir="/tmp"
-    state { Map execution->
+
+    state { Map execution, Map configuration->
         def id = execution.execid
         //return state of storage given the id
         def tmpfile=new File(outputDir,"log-${id}.gz.tmp")
         def outfile=new File(outputDir,"log-${id}.gz")
         outfile.exists()? AVAILABLE : tmpfile.exists()? PENDING : NOT_FOUND
     }
-    put { Map execution, InputStream source->
+
+    store { Map execution, Map configuration, InputStream source->
         def id = execution.execid
         //use gzip
         def outfile=new File(outputDir,"log-${id}.gz.tmp")
@@ -23,24 +25,26 @@ rundeckPlugin(LogFileStoragePlugin){
 
                 def line=reader.readLine()
                 while(line!=null){
-                    gzip.write(line)
+                    gzip.write(line+'\n')
                     line=reader.readLine()
                 }
                 gzip.flush()       
+                gzip.close()
             }
-            outfile.renameTo(outputDir,"log-${id}.gz")
+            outfile.renameTo(new File(outputDir,"log-${id}.gz"))
         }
         source.close()
     }
-    get {  Map execution, OutputStream out->
+
+    retrieve {  Map execution, Map configuration, OutputStream out->
         def id = execution.execid
 
         def infile=new File(outputDir,"log-${id}.gz")
-        infile.withInputStream { in ->
-            def gzip=new BufferedReader(new GZIPInputStream(in))
-            def writer=new BufferedWriter(out)
+        infile.withInputStream { inpu ->
+            def gzip=new BufferedReader(new InputStreamReader(new GZIPInputStream(inpu)))
+            def writer=new BufferedWriter(new OutputStreamWriter(out))
             gzip.eachLine { line ->
-                writer.write(line)
+                writer.write(line+'\n')
             }
             writer.flush()
         }
