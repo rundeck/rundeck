@@ -18,6 +18,10 @@ public enum ExecutionLogState {
      */
     AVAILABLE,
     /**
+     * Waiting for output
+     */
+    WAITING,
+    /**
      * Present on remote storage
      */
     AVAILABLE_REMOTE,
@@ -36,6 +40,16 @@ public enum ExecutionLogState {
      * @return
      */
     public static ExecutionLogState forFileStates(LogFileState local, LogFileState remote) {
+        return forFileStates(local, remote, null)
+    }
+    /**
+     * Return an {@link ExecutionLogState} given a local and remote {@link LogFileState}
+     * @param local
+     * @param remote
+     * @param notFoundState a state to return if both states are NOT_FOUND
+     * @return
+     */
+    public static ExecutionLogState forFileStates(LogFileState local, LogFileState remote, ExecutionLogState notFoundState) {
         switch (local) {
             case LogFileState.AVAILABLE:
                 return AVAILABLE
@@ -47,6 +61,10 @@ public enum ExecutionLogState {
                         return AVAILABLE_REMOTE
                     case LogFileState.PENDING:
                         return PENDING_REMOTE
+                    case LogFileState.NOT_FOUND:
+                        if(null!=notFoundState){
+                            return notFoundState
+                        }
                 }
         }
         return NOT_FOUND

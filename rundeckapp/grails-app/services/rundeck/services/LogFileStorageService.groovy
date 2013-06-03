@@ -107,7 +107,13 @@ class LogFileStorageService {
         File file = getFileForExecution(execution)
         LogFileState local = (file!=null && file.exists() )? LogFileState.AVAILABLE : LogFileState.NOT_FOUND
         LogFileState remote = LogFileState.NOT_FOUND
+        ExecutionLogState remoteNotFound = null
+
         if (null != plugin && local != LogFileState.AVAILABLE) {
+            /**
+             * If plugin exists, assume NOT_FOUND is actually pending
+             */
+            remoteNotFound= ExecutionLogState.PENDING_REMOTE
             try {
                 def newremote=plugin.getState()
                 remote=newremote
@@ -117,7 +123,7 @@ class LogFileStorageService {
                 log.debug("Failed to get state of file storage plugin ${pluginName}: " + e.message, e)
             }
         }
-        def state = ExecutionLogState.forFileStates(local, remote)
+        def state = ExecutionLogState.forFileStates(local, remote, remoteNotFound)
 
         log.error("getLogFileState ${state} forFileStates: ${local}, ${remote}")
         return state
@@ -177,7 +183,7 @@ class LogFileStorageService {
                 return new ExecutionLogReader(state: ExecutionLogState.PENDING_REMOTE, reader: null)
             }else if(!e.outputfilepath){
                 //no filepath defined: execution started, hasn't created output file yet.
-                return new ExecutionLogReader(state: ExecutionLogState.PENDING_LOCAL, reader: null)
+                return new ExecutionLogReader(state: ExecutionLogState.WAITING, reader: null)
             }
         }
         def plugin= getConfiguredPluginForExecution(e)

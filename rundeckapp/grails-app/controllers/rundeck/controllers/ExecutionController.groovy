@@ -311,7 +311,7 @@ class ExecutionController {
             }
             return;
         }
-        else if (null == reader || reader.state in [ExecutionLogState.PENDING_LOCAL, ExecutionLogState.PENDING_REMOTE]) {
+        else if (null == reader || reader.state in [ExecutionLogState.PENDING_LOCAL, ExecutionLogState.PENDING_REMOTE, ExecutionLogState.WAITING]) {
             //pending data
             def renderclos = { delegate ->
                 delegate.message("Pending")
