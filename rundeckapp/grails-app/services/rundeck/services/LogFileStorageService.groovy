@@ -66,8 +66,18 @@ class LogFileStorageService {
         return getFileForKey(generateFilekeyForExecution(execution))
     }
 
+    /**
+     * Return the local file path for the log file for the execution, which may be different than the stored
+     * outputfilepath on the current server node
+     * @param execution
+     * @return
+     */
     private File getFileForExecution(Execution execution) {
-        return execution.outputfilepath?new File(execution.outputfilepath):null
+        if (frameworkService.isClusterModeEnabled() && execution.serverNodeUUID != frameworkService.getServerUUID()) {
+            //execution on another rundeck server, generate a local filepath
+            return generateFilepathForExecution(execution)
+        }
+        return execution.outputfilepath?new File(execution.outputfilepath): generateFilepathForExecution(execution)
     }
 
     private static String generateFilekeyForExecution(Execution execution) {
@@ -76,10 +86,6 @@ class LogFileStorageService {
         } else {
             return "${execution.project}/run/logs/${execution.id}.rdlog"
         }
-    }
-
-    private static String getFilepathForExecution(Execution execution) {
-        return execution.outputfilepath
     }
 
     private File getFileForKey(String key) {
@@ -234,7 +240,7 @@ class LogFileStorageService {
             return pending.state
         }
         log.error("requestLogFileRetrieval, start a new request...")
-        def file=new File(getFilepathForExecution(execution))
+        def file=getFileForExecution(execution)
         newstate.future = logFileTaskExecutor.submit({
             log.error("LogFileStorage: start request for ${key}")
             if(!retrieveLogFile(file, plugin)){
