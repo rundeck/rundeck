@@ -11,8 +11,8 @@ import org.apache.log4j.Logger
  * Streaming Log Writer plugin implemention built from a groovy DSL
  */
 class ScriptStreamingLogWriterPlugin implements StreamingLogWriterPlugin, Describable {
-    static Logger logger = Logger.getLogger(ScriptNotificationPlugin)
-    private Description description
+    static Logger logger = Logger.getLogger(ScriptStreamingLogWriterPlugin)
+    Description description
     private Map<String,Closure> handlers
     Map configuration
     private Object streamContext
@@ -20,11 +20,6 @@ class ScriptStreamingLogWriterPlugin implements StreamingLogWriterPlugin, Descri
     ScriptStreamingLogWriterPlugin(Map<String,Closure> handlers, Description description) {
         this.description=description
         this.handlers=handlers
-    }
-
-    @Override
-    Description getDescription() {
-        description
     }
 
     @Override

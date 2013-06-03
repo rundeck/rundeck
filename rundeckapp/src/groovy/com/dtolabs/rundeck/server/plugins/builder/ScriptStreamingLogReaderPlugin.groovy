@@ -14,8 +14,8 @@ import java.text.SimpleDateFormat
  * Implements a StreamingLogReaderPlugin from a set of closures
  */
 class ScriptStreamingLogReaderPlugin implements StreamingLogReaderPlugin, Describable {
-    static Logger logger = Logger.getLogger(ScriptNotificationPlugin)
-    private Description description
+    static Logger logger = Logger.getLogger(ScriptStreamingLogReaderPlugin)
+    Description description
     private Map<String, Closure> handlers
     Map configuration
     private Map streamContext
@@ -38,11 +38,6 @@ class ScriptStreamingLogReaderPlugin implements StreamingLogReaderPlugin, Descri
     void initialize(Map<String, ? extends Object> context) {
         this.context = context
         readInfo()
-    }
-
-    @Override
-    Description getDescription() {
-        description
     }
 
     Date getLastModified() {
