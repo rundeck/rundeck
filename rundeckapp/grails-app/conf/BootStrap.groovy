@@ -14,6 +14,7 @@ class BootStrap {
     def executionService
     def frameworkService
     def loggingService
+    def logFileStorageService
     def filterInterceptor
 
      def init = { servletContext ->
@@ -204,6 +205,7 @@ class BootStrap {
                 scheduledExecutionService.claimScheduledJobs(serverNodeUUID)
              }
              scheduledExecutionService.rescheduleJobs(clusterMode ? serverNodeUUID : null)
+             logFileStorageService.resumeIncompleteLogStorage(clusterMode ? serverNodeUUID : null)
          }
      }
 

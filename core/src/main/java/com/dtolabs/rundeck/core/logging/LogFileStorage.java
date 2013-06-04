@@ -15,7 +15,7 @@ public interface LogFileStorage {
      *
      * @throws IOException
      */
-    void storeLogFile(InputStream stream) throws IOException;
+    boolean storeLogFile(InputStream stream) throws IOException;
 
     /**
      * Writes a log file to the given stream
@@ -24,5 +24,5 @@ public interface LogFileStorage {
      *
      * @throws IOException
      */
-    void retrieveLogFile(OutputStream stream) throws IOException;
+    boolean retrieveLogFile(OutputStream stream) throws IOException;
 }

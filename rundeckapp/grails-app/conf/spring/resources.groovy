@@ -9,6 +9,8 @@ import com.dtolabs.rundeck.server.plugins.services.StreamingLogWriterPluginProvi
 import groovy.io.FileType
 import org.springframework.core.task.SimpleAsyncTaskExecutor
 
+import java.util.concurrent.Executors
+
 beans={
     defaultGrailsServiceInjectorJobListener(GrailsServiceInjectorJobListener){
         name= 'defaultGrailsServiceInjectorJobListener'
@@ -61,7 +63,7 @@ beans={
         rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
     }
     logFileTaskExecutor(SimpleAsyncTaskExecutor,"LogFileStorage"){
-
+        concurrencyLimit= 2 + (application.config.rundeck?.execution?.logs?.fileStorage?.concurrencyLimit ?: 5)
     }
 
     /**

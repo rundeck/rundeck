@@ -24,6 +24,7 @@ class ScriptLogFileStoragePlugin implements LogFileStoragePlugin, Describable{
         this.description = description
     }
 
+
     @Override
     void initialize(Map<String, ? extends Object> context) {
         this.pluginContext = context
@@ -59,7 +60,7 @@ class ScriptLogFileStoragePlugin implements LogFileStoragePlugin, Describable{
     }
 
     @Override
-    void storeLogFile(InputStream stream) throws IOException {
+    boolean storeLogFile(InputStream stream) throws IOException {
         logger.debug("storeLogFile ${pluginContext}")
         def closure = handlers.store
         def binding = [
@@ -71,24 +72,24 @@ class ScriptLogFileStoragePlugin implements LogFileStoragePlugin, Describable{
             def Closure newclos = closure.clone()
             newclos.resolveStrategy = Closure.DELEGATE_ONLY
             newclos.delegate = binding
-            newclos.call(pluginContext, configuration, stream)
+            return newclos.call(pluginContext, configuration, stream)
         } else if (closure.getMaximumNumberOfParameters() == 2) {
             def Closure newclos = closure.clone()
             newclos.resolveStrategy = Closure.DELEGATE_ONLY
             newclos.delegate = binding
-            newclos.call(pluginContext, stream)
+            return newclos.call(pluginContext, stream)
         } else if (closure.getMaximumNumberOfParameters() == 1) {
             def Closure newclos = closure.clone()
             newclos.delegate = binding
             newclos.resolveStrategy = Closure.DELEGATE_ONLY
-            newclos.call(stream)
+            return newclos.call(stream)
         } else {
             throw new RuntimeException("ScriptLogFileStoragePlugin: 'store' closure signature invalid for plugin ${description.name}, cannot open")
         }
     }
 
     @Override
-    void retrieveLogFile(OutputStream stream) throws IOException {
+    boolean retrieveLogFile(OutputStream stream) throws IOException {
         logger.debug("retrieveLogFile ${pluginContext}")
         def closure = handlers.retrieve
         def binding = [
@@ -100,17 +101,17 @@ class ScriptLogFileStoragePlugin implements LogFileStoragePlugin, Describable{
             def Closure newclos = closure.clone()
             newclos.resolveStrategy = Closure.DELEGATE_ONLY
             newclos.delegate = binding
-            newclos.call(pluginContext, configuration, stream)
+            return newclos.call(pluginContext, configuration, stream)
         } else if (closure.getMaximumNumberOfParameters() == 2) {
             def Closure newclos = closure.clone()
             newclos.resolveStrategy = Closure.DELEGATE_ONLY
             newclos.delegate = binding
-            newclos.call(pluginContext, stream)
+            return newclos.call(pluginContext, stream)
         } else if (closure.getMaximumNumberOfParameters() == 1) {
             def Closure newclos = closure.clone()
             newclos.delegate = binding
             newclos.resolveStrategy = Closure.DELEGATE_ONLY
-            newclos.call(stream)
+            return newclos.call(stream)
         } else {
             throw new RuntimeException("ScriptLogFileStoragePlugin: 'retrieve' closure signature invalid for plugin ${description.name}, cannot open")
         }
@@ -147,4 +148,12 @@ class ScriptLogFileStoragePlugin implements LogFileStoragePlugin, Describable{
         return false
     }
 
+    @Override
+    public java.lang.String toString() {
+        return "ScriptLogFileStoragePlugin{" +
+                "description=" + description +
+                ", configuration=" + configuration +
+                ", pluginContext=" + pluginContext +
+                '}';
+    }
 }
