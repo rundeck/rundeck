@@ -36,6 +36,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.PropertyResolverFactory
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
 import com.dtolabs.rundeck.core.utils.Converter;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
@@ -95,7 +96,7 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable {
                                                                                                   ServiceNameConstants.WorkflowNodeStep,
                                                                                                   providerName);
         final PluginStepContext pluginContext = PluginStepContextImpl.from(context);
-        final Map<String, Object> config = PluginAdapterUtility.configureProperties(resolver, getDescription(), plugin);
+        final Map<String, Object> config = PluginAdapterUtility.configureProperties(resolver, getDescription(), plugin, PropertyScope.InstanceOnly);
         try {
             plugin.executeNodeStep(pluginContext, config, node);
         } catch (RuntimeException e) {

@@ -40,6 +40,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileNodeStepExecutor;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
 import com.dtolabs.rundeck.core.utils.Converter;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.step.GeneratedScript;
@@ -104,7 +105,7 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
         );
         final PluginStepContextImpl pluginContext = PluginStepContextImpl.from(context);
         Description description = getDescription();
-        final Map<String, Object> config = PluginAdapterUtility.configureProperties(resolver, description, plugin);
+        final Map<String, Object> config = PluginAdapterUtility.configureProperties(resolver, description, plugin, PropertyScope.InstanceOnly);
 
         final GeneratedScript script;
         try {

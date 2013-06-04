@@ -26,6 +26,7 @@ package com.dtolabs.rundeck.core.execution.workflow.steps;
 
 import com.dtolabs.rundeck.core.common.PropertyRetriever;
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
+import org.apache.log4j.Logger;
 
 
 /**
@@ -35,6 +36,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 class RuntimePropertyResolver implements PropertyResolver {
+    static final Logger log = Logger.getLogger(RuntimePropertyResolver.class);
     private PropertyRetriever instanceScopeResolver;
     private PropertyRetriever projectScopeResolver;
     private PropertyRetriever frameworkScopeResolver;
@@ -52,7 +54,6 @@ class RuntimePropertyResolver implements PropertyResolver {
      *
      * @throws IllegalArgumentException if the scope is null or {@link PropertyScope#Unspecified}
      */
-    @Override
     public String resolvePropertyValue(final String name, final PropertyScope scope) {
         if (null == scope || scope == PropertyScope.Unspecified) {
             throw new IllegalArgumentException("scope must be specified");
@@ -61,25 +62,31 @@ class RuntimePropertyResolver implements PropertyResolver {
         if (scope.isInstanceLevel()) {
             if (null != instanceScopeResolver) {
                 value = instanceScopeResolver.getProperty(name);
+                log.trace("resolvePropertyValue(" + scope + ")(I) " + name + " = " + value);
             }
         }
         if (null != value || scope == PropertyScope.InstanceOnly) {
+            log.debug("resolvePropertyValue(" + scope + ") " + name + " = " + value);
             return value;
         }
 
         if (scope.isProjectLevel()) {
             if (null != projectScopeResolver) {
                 value = projectScopeResolver.getProperty(name);
+                log.trace("resolvePropertyValue(" + scope + ")(P) " + name + " = " + value);
             }
         }
         if (null != value || scope == PropertyScope.ProjectOnly) {
+            log.debug("resolvePropertyValue(" + scope + ") " + name + " = " + value);
             return value;
         }
         if (null != frameworkScopeResolver) {
             if (scope.isFrameworkLevel()) {
                 value = frameworkScopeResolver.getProperty(name);
+                log.trace("resolvePropertyValue(" + scope + ")(F) " + name + " = " + value);
             }
         }
+        log.debug("resolvePropertyValue(" + scope + ") " + name + " = " + value);
         return value;
     }
 }

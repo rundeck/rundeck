@@ -255,6 +255,17 @@ public class DescriptionBuilder {
             public Map<String, String> getPropertiesMapping() {
                 return mapping1;
             }
+
+            @Override
+            public String toString() {
+                return "PropertyDescription{" +
+                        "name = " + getName() + ", " +
+                        "title = " + getTitle() + ", " +
+                        "description = " + getDescription() + ", " +
+                        "properties = " + getProperties() + ", " +
+                        "mapping = " + getPropertiesMapping() +
+                        "}";
+            }
         };
     }
 
