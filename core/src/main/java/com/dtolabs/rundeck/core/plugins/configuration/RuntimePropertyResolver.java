@@ -22,10 +22,9 @@
 * Created: 12/3/12 4:15 PM
 * 
 */
-package com.dtolabs.rundeck.core.execution.workflow.steps;
+package com.dtolabs.rundeck.core.plugins.configuration;
 
 import com.dtolabs.rundeck.core.common.PropertyRetriever;
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
 import org.apache.log4j.Logger;
 
 
