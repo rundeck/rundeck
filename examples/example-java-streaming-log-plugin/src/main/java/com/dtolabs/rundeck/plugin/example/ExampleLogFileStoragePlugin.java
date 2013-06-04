@@ -25,10 +25,10 @@ public class ExampleLogFileStoragePlugin implements LogFileStoragePlugin {
     private String destinationDirPath;
 
     public ExampleLogFileStoragePlugin() {
-        this.destinationDirPath = "/tmp/example";
+        this.destinationDirPath = "/tmp/rundeck_cluster";
     }
 
-    public void storeLogFile(InputStream stream) throws IOException {
+    public boolean storeLogFile(InputStream stream) throws IOException {
         File storeFile = getDestinationFile();
         File tempFile = getDestinationTempFile();
         if (!storeFile.getParentFile().isDirectory() && !storeFile.getParentFile().mkdirs()) {
@@ -37,39 +37,40 @@ public class ExampleLogFileStoragePlugin implements LogFileStoragePlugin {
         if (!tempFile.getParentFile().isDirectory() && !tempFile.getParentFile().mkdirs()) {
             log.log(Level.SEVERE, "Failed creating dirs {0}", storeFile.getParentFile());
         }
-        //introduce delay
-        try {
-            Thread.sleep(10000L);
-        } catch (InterruptedException e) {
-
-        }
         tempFile.deleteOnExit();
         OutputStream os = new FileOutputStream(tempFile);
+        boolean finished=false;
         try {
             Streams.copyStream(stream, os);
-            tempFile.renameTo(storeFile);
+            finished=true;
         } finally {
             os.close();
+            if(!finished) {
+                tempFile.delete();
+            }
         }
-        log.log(Level.SEVERE, "Stored output to file {0}", storeFile);
+
+        finished=tempFile.renameTo(storeFile);
+        if(!finished){
+            log.log(Level.SEVERE, "Failed to rename output to file {0}", storeFile);
+            tempFile.delete();
+        }
+        return finished;
     }
 
-    public void retrieveLogFile(OutputStream stream) throws IOException {
+    public boolean retrieveLogFile(OutputStream stream) throws IOException {
         File getFile = getDestinationFile();
         InputStream is = new FileInputStream(getFile);
         //introduce delay
-        try {
-            Thread.sleep(10000L);
-        } catch (InterruptedException e) {
-
-        }
-
+        boolean finished = false;
         try {
             Streams.copyStream(is, stream);
+            finished=true;
         } finally {
             is.close();
         }
-        log.log(Level.SEVERE, "Retrieved output from file {0}", getFile);
+        log.log(Level.INFO, "Retrieved output from file {0}", getFile);
+        return finished;
     }
 
     public void initialize(Map<String, ? extends Object> context) {
@@ -90,11 +91,6 @@ public class ExampleLogFileStoragePlugin implements LogFileStoragePlugin {
 
     public LogFileState getState() {
         //introduce delay
-        try {
-            Thread.sleep(500L);
-        } catch (InterruptedException e) {
-
-        }
         File storeFile = getDestinationFile();
         File tempFile = getDestinationTempFile();
         LogFileState state = (storeFile != null && storeFile.exists()) ?

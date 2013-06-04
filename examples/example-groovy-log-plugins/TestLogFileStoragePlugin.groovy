@@ -34,6 +34,7 @@ rundeckPlugin(LogFileStoragePlugin){
             outfile.renameTo(new File(outputDir,"log-${id}.gz"))
         }
         source.close()
+        true
     }
 
     retrieve {  Map execution, Map configuration, OutputStream out->
@@ -48,5 +49,6 @@ rundeckPlugin(LogFileStoragePlugin){
             }
             writer.flush()
         }
+        true
     }
 }
