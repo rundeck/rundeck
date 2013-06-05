@@ -9,14 +9,17 @@ import com.fasterxml.jackson.core.*;
  */
 rundeckPlugin(StreamingLogReaderPlugin){
     //define some utility and constant data
-    def outputDir="/tmp"
-    //the file for storing the log data given execution data
-    def fileForExecution={ execution->
-        new File(outputDir,"plugin-log-${execution.execid}.json")
+    configuration{
+        outputDir="/tmp"
+        outputDir required:true, description: "Location of log files"
     }
     //the file for storing the log data given execution data
-    def indexfileForExecution={ execution->
-        new File(outputDir,"plugin-log-${execution.execid}.json.index")
+    def fileForExecution={ execution,config->
+        new File(config.outputDir,"plugin-log-${execution.execid}.json")
+    }
+    //the file for storing the log data given execution data
+    def indexfileForExecution={ execution,config->
+        new File(config.outputDir,"plugin-log-${execution.execid}.json.index")
     }
     /**
      * The 'info' closure is called to retrieve some metadata about the stream.
@@ -26,8 +29,8 @@ rundeckPlugin(StreamingLogReaderPlugin){
      *     merely a measurement of total data size
      */
     info {Map execution, Map configuration->
-        def file=fileForExecution(execution)
-        def idx=indexfileForExecution(execution)
+        def file=fileForExecution(execution,configuration)
+        def idx=indexfileForExecution(execution,configuration)
         def data=[:]
         if(idx.exists()){
             def mapper=new ObjectMapper()
@@ -43,7 +46,7 @@ rundeckPlugin(StreamingLogReaderPlugin){
     }
     open { Map execution, Map configuration, long offset ->
         //execution = [id: Long, user: String, jobName: String, dateStarted: Date]
-        def file=fileForExecution(execution)
+        def file=fileForExecution(execution,configuration)
         
         def mapper=new ObjectMapper()
         JsonParser jp = mapper.getJsonFactory().createJsonParser(file)
@@ -88,8 +91,6 @@ rundeckPlugin(StreamingLogReaderPlugin){
                 value.meta=meta
                 //return a map containing event: (Map) and offset: (Long)
                 return [event:value,offset: context.next]
-            }else{
-                println "read json value: ${value}"
             }
         }catch (JsonParseException e){
             //indicates json format was incomplete.  return a null event 

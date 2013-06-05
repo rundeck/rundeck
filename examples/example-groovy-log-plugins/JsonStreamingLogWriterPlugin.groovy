@@ -7,8 +7,10 @@ import com.dtolabs.rundeck.core.logging.LogLevel;
  * This example is a minimal streaming log writer plugin for Rundeck
  */
 rundeckPlugin(StreamingLogWriterPlugin){
-    def outputDir="/tmp"
-
+    configuration{
+        outputDir="/tmp"
+        outputDir required:true, description: "Location of log files"
+    }
     /**
      * The "open" closure is called to open the stream for writing events.
      * It is passed two map arguments, the execution data, and the plugin configuration data.
@@ -18,8 +20,13 @@ rundeckPlugin(StreamingLogWriterPlugin){
      */
     open { Map execution, Map config ->
         //in this example we open a file output stream to store data in JSON format.
+        System.err.println("Configured outputdir: ${config.outputDir}")
+        def outputDir=new File(config.outputDir)
+        if(!outputDir.isDirectory() && !outputDir.mkdirs()){
+            throw new RuntimeException("Couldn't create outputdir: ${config.outputDir}")
+        }
+        def file=new File(config.outputDir,"plugin-log-${execution.execid}.json")
         
-        def file=new File(outputDir,"plugin-log-${execution.execid}.json")
         def out=new BufferedOutputStream(new FileOutputStream(file))
 
         //write some prefix data
@@ -67,7 +74,7 @@ rundeckPlugin(StreamingLogWriterPlugin){
         context.out.close()
 
         //write index info about the json data
-        def file=new File(outputDir,"plugin-log-${context.execution.execid}.json.index")
+        def file=new File(configuration.outputDir,"plugin-log-${context.execution.execid}.json.index")
         file.withWriter{w->
             w<< context.json.writeValueAsString([total:context.count,execution:context.execution])
         }

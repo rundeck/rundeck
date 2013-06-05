@@ -5,20 +5,23 @@ import java.util.zip.*
  * This example is an log file storage plugin for Rundeck
  */
 rundeckPlugin(LogFileStoragePlugin){
-    def outputDir="/tmp"
-
+    configuration{
+        filebase defaultValue:"log-", required:true
+        outputDir="/tmp"
+        outputDir required:true, description: "Location of log files"
+    }
     state { Map execution, Map configuration->
         def id = execution.execid
         //return state of storage given the id
-        def tmpfile=new File(outputDir,"log-${id}.gz.tmp")
-        def outfile=new File(outputDir,"log-${id}.gz")
+        def tmpfile=new File(configuration.outputDir,"${configuration.filebase}${id}.gz.tmp")
+        def outfile=new File(configuration.outputDir,"${configuration.filebase}${id}.gz")
         outfile.exists()? AVAILABLE : tmpfile.exists()? PENDING : NOT_FOUND
     }
 
     store { Map execution, Map configuration, InputStream source->
         def id = execution.execid
         //use gzip
-        def outfile=new File(outputDir,"log-${id}.gz.tmp")
+        def outfile=new File(configuration.outputDir,"${configuration.filebase}${id}.gz.tmp")
         source.withReader { reader ->
             outfile.withOutputStream { out ->
                 def gzip=new OutputStreamWriter(new GZIPOutputStream(out))
@@ -31,7 +34,7 @@ rundeckPlugin(LogFileStoragePlugin){
                 gzip.flush()       
                 gzip.close()
             }
-            outfile.renameTo(new File(outputDir,"log-${id}.gz"))
+            outfile.renameTo(new File(outputDir,"${configuration.filebase}${id}.gz"))
         }
         source.close()
         true
@@ -40,7 +43,7 @@ rundeckPlugin(LogFileStoragePlugin){
     retrieve {  Map execution, Map configuration, OutputStream out->
         def id = execution.execid
 
-        def infile=new File(outputDir,"log-${id}.gz")
+        def infile=new File(configuration.outputDir,"${configuration.filebase}${id}.gz")
         infile.withInputStream { inpu ->
             def gzip=new BufferedReader(new InputStreamReader(new GZIPInputStream(inpu)))
             def writer=new BufferedWriter(new OutputStreamWriter(out))

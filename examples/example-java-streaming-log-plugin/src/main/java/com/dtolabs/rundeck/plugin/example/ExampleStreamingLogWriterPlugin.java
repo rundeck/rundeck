@@ -1,14 +1,13 @@
 package com.dtolabs.rundeck.plugin.example;
 
+import com.dtolabs.rundeck.plugins.descriptions.PluginProperty;
 import com.dtolabs.rundeck.plugins.logging.StreamingLogWriterPlugin;
 import com.dtolabs.rundeck.core.logging.LogEvent;
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
-import com.dtolabs.rundeck.plugins.descriptions.PluginProperty;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.util.*;
 
@@ -16,10 +15,14 @@ import java.util.*;
 @PluginDescription(title = "Example Streaming Log Writer Plugin", description = "An example Plugin for Streaming Log " +
         "Writer")
 public class ExampleStreamingLogWriterPlugin implements StreamingLogWriterPlugin {
-    public static int PORT = 9091;
+    @PluginProperty(title = "Port", description = "TCP Port to send data to", required = true, defaultValue = "9091")
+    public int port = 9091;
+    @PluginProperty(title = "Host", description = "Host address", required = true)
+    private String host;
     private Socket socket;
     private Map<String, ? extends Object> context;
     private OutputStream socketStream;
+
 
     public ExampleStreamingLogWriterPlugin() {
 
@@ -29,9 +32,11 @@ public class ExampleStreamingLogWriterPlugin implements StreamingLogWriterPlugin
         this.context = context;
     }
 
-    /** Open a stream, called before addEntry is called */
+    /**
+     * Open a stream, called before addEntry is called
+     */
     public void openStream() throws IOException {
-        socket = new Socket((String) null, PORT);
+        socket = new Socket(host, port);
         socketStream = socket.getOutputStream();
         if (null != context.get("name") && null != context.get("id")) {
             Object group = context.get("group");
@@ -55,11 +60,11 @@ public class ExampleStreamingLogWriterPlugin implements StreamingLogWriterPlugin
     }
 
     private String getString(LogEvent entry) {
-        return (entry.getEventType()!=null?entry.getEventType():"")
-                +" "+entry.getDatetime()
-                +" "+entry.getLoglevel()
-                +" "+entry.getMessage()
-                +" "+entry.getMetadata()
+        return (entry.getEventType() != null ? entry.getEventType() : "")
+                + " " + entry.getDatetime()
+                + " " + entry.getLoglevel()
+                + " " + entry.getMessage()
+                + " " + entry.getMetadata()
                 ;
     }
 
@@ -68,7 +73,9 @@ public class ExampleStreamingLogWriterPlugin implements StreamingLogWriterPlugin
         socketStream.write("\n".getBytes("UTF-8"));
     }
 
-    /** Close the stream. */
+    /**
+     * Close the stream.
+     */
     public void close() {
         try {
             socket.close();
