@@ -46,7 +46,7 @@ rundeckPlugin(StreamingLogWriterPlugin){
         if(context.wasWritten){
             context.out <<','    
         }
-        def data=[datetime:event.datetime.time,loglevel:event.loglevel.toString(),message:event.message]
+        def data=[datetime:event.datetime.time,loglevel:event.loglevel.toString(),message:event.message,eventType:event.eventType]
         event.metadata?.each{k,v->
             data['meta_'+k]=event.metadata[k]
         }

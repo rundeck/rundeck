@@ -60,7 +60,7 @@ public class ExampleStreamingLogWriterPlugin implements StreamingLogWriterPlugin
     }
 
     private String getString(LogEvent entry) {
-        return (entry.getEventType() != null ? entry.getEventType() : "")
+        return (entry.getEventType() != null ? (entry.getEventType()+": ") : "")
                 + " " + entry.getDatetime()
                 + " " + entry.getLoglevel()
                 + " " + entry.getMessage()
