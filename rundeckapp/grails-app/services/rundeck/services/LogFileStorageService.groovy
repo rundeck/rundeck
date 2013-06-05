@@ -82,14 +82,14 @@ class LogFileStorageService implements InitializingBean{
         running << task
         int count=task.count?:0;
         task.count = ++count
-        log.debug("running task ${task} (${count} attempts of ${retry})...")
-        def success = storeLogFile(task.file, task.storage)
+        log.debug("Storage request [ID#${task.id}] (attempt ${count} of ${retry})...")
+        def success = storeLogFile(task.file, task.storage, task.id)
         if (!success && count < retry) {
-            log.debug("Failed, retrying in ${delay} seconds...")
+            log.debug("Storage request [ID#${task.id}] was not successful, retrying in ${delay} seconds...")
             running.remove(task)
             queueLogStorageRequest(task, delay)
         } else if (!success) {
-            log.error("Failed for ${task.id} after ${task.count} tries")
+            log.error("Storage request [ID#${task.id}] FAILED ${retry} attempts, giving up")
             running.remove(task)
         } else {
             //use executorService to run within hibernate session
@@ -98,7 +98,7 @@ class LogFileStorageService implements InitializingBean{
                 task.request.completed = success
                 task.request.save(flush: true)
                 running.remove(task)
-                log.debug("executorService done")
+                log.debug("Storage request [ID#${task.id}] complete.")
             }
         }
     }
@@ -111,7 +111,7 @@ class LogFileStorageService implements InitializingBean{
 
         logFileTaskExecutor.execute{
             running << task
-            def success = retrieveLogFile(task.file, task.storage)
+            def success = retrieveLogFile(task.file, task.storage,task.id)
             logFileRetrievalRequests.remove(task.id)
             if (!success) {
                 log.error("LogFileStorage: failed retrieval request for ${task.id}")
@@ -154,7 +154,7 @@ class LogFileStorageService implements InitializingBean{
      * Create a streaming log writer for the given execution.
      * @param e execution
      * @param defaultMeta default metadata for logging
-     * @return
+     * @param resolver @return
      */
     StreamingLogWriter getLogFileWriterForExecution(Execution e, Map<String, String> defaultMeta) {
         def path = generateFilekeyForExecution(e)
@@ -179,9 +179,9 @@ class LogFileStorageService implements InitializingBean{
     }
     /**
      * Resume log storage requests for the given serverUUID, or null for unspecified
-     * @param serverUUID
+     * @param serverUUID @param resolver
      */
-    void resumeIncompleteLogStorage(String serverUUID=null){
+    void resumeIncompleteLogStorage(String serverUUID){
         def incomplete = LogFileStorageRequest.findAllByCompleted(false)
         log.debug("resumeIncompleteLogStorage: incomplete count: ${incomplete.size()}, serverUUID: ${serverUUID}")
         //use a slow start to process backlog storage requests
@@ -337,9 +337,9 @@ class LogFileStorageService implements InitializingBean{
      * Return an ExecutionLogFileReader containing state of logfile availability, and reader if available
      * @param e execution
      * @param performLoad if true, perform remote file transfer
-     * @return
+     * @param resolver @return
      */
-    ExecutionLogReader requestLogFileReader(Execution e, performLoad = true) {
+    ExecutionLogReader requestLogFileReader(Execution e, boolean performLoad = true) {
         if(e.dateCompleted == null && e.dateStarted != null){
             //execution is running
             if (frameworkService.isClusterModeEnabled() && e.serverNodeUUID != frameworkService.getServerUUID()) {
@@ -449,21 +449,22 @@ class LogFileStorageService implements InitializingBean{
      * @param execution
      * @param storage plugin that is already initialized
      */
-    private Boolean storeLogFile(File file, LogFileStorage storage) {
-        log.debug("Start task, store log file")
+    private Boolean storeLogFile(File file, LogFileStorage storage, String ident) {
+        log.debug("Storage request [ID#${ident}], start")
         def success = false
         try{
             file.withInputStream { input ->
                 success = storage.storeLogFile(input)
             }
         }catch (Throwable e) {
-            log.error("Failed store log file: ${e.message}", e)
+            log.error("Storage request [ID#${ident}] error: ${e.message}")
+            log.debug("Storage request [ID#${ident}] error: ${e.message}", e)
         }
         if (success) {
             file.deleteOnExit()
             //TODO: mark file to be cleaned up in future
         }
-        log.debug("Finish task, store log file: ${success}")
+        log.debug("Storage request [ID#${ident}], finish: ${success}")
         return success
     }
 
@@ -473,7 +474,7 @@ class LogFileStorageService implements InitializingBean{
      * @param storage plugin that is already initialized
      * @return
      */
-    private Boolean retrieveLogFile(File file, LogFileStorage storage){
+    private Boolean retrieveLogFile(File file, LogFileStorage storage, String ident){
         def tempfile = File.createTempFile("temp-storage","logfile")
         tempfile.deleteOnExit()
         def success=false
@@ -484,19 +485,21 @@ class LogFileStorageService implements InitializingBean{
             }
             if(!file.getParentFile().isDirectory()){
                 if(!file.getParentFile().mkdirs()){
-                    log.error("Unable to create directories for log file: ${file}")
+                    log.error("Retrieval request [ID#${ident}] error: Failed to create directories for file: ${file}")
                 }
             }
-            if(!psuccess){
-                log.error("Plugin failed to retrieve Log File")
-            }else if (!tempfile.renameTo(file)){
-                log.error("Failed to move log file to location: ${file}")
-            }else{
-                success = true
+            if(psuccess) {
+                if (!tempfile.renameTo(file)) {
+                    log.error("Retrieval request [ID#${ident}] error: Failed to move temp file to location: ${file}")
+                } else {
+                    success = true
+                }
             }
+            log.error("Retrieval request [ID#${ident}], result: ${success}")
 
         } catch (Throwable t) {
-            log.error("Failed retrieve log file: ${t.message}", t)
+            log.error("Retrieval request [ID#${ident}]: Failed retrieve log file: ${t.message}")
+            log.debug("Retrieval request [ID#${ident}]: Failed retrieve log file: ${t.message}", t)
         }
         if(!success){
             tempfile.delete()
