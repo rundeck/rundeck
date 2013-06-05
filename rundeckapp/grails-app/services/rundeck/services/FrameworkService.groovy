@@ -9,6 +9,7 @@ import com.dtolabs.rundeck.core.authorization.providers.SAREAuthorization
 import com.dtolabs.rundeck.core.common.*
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
@@ -111,6 +112,17 @@ class FrameworkService implements ApplicationContextAware {
         return framework.getFrameworkProjectMgr().getFrameworkProject(project)
     }
 
+    /**
+     * Get a property resolver for optional project level
+     * @param projectName
+     * @return
+     */
+    def getFrameworkPropertyResolver(String projectName=null) {
+        return PropertyResolverFactory.createResolver(
+                Framework.createPropertyRetriever(new File(rundeckbase)),
+                null!=projectName?Framework.createProjectPropertyRetriever(new File(rundeckbase),projectName):null,
+                null)
+    }
     /**
      * Filter nodes for a project given the node selector
      * @param framework

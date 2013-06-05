@@ -1,6 +1,8 @@
 package com.dtolabs.rundeck.server.plugins.builder
 
 import com.dtolabs.rundeck.core.logging.LogEvent
+import com.dtolabs.rundeck.core.plugins.configuration.Configurable
+import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.plugins.logging.StreamingLogWriterPlugin
@@ -10,7 +12,7 @@ import org.apache.log4j.Logger
 /**
  * Streaming Log Writer plugin implemention built from a groovy DSL
  */
-class ScriptStreamingLogWriterPlugin implements StreamingLogWriterPlugin, Describable {
+class ScriptStreamingLogWriterPlugin implements StreamingLogWriterPlugin, Describable, Configurable {
     static Logger logger = Logger.getLogger(ScriptStreamingLogWriterPlugin)
     Description description
     private Map<String,Closure> handlers
@@ -20,6 +22,11 @@ class ScriptStreamingLogWriterPlugin implements StreamingLogWriterPlugin, Descri
     ScriptStreamingLogWriterPlugin(Map<String,Closure> handlers, Description description) {
         this.description=description
         this.handlers=handlers
+    }
+
+    @Override
+    void configure(Properties configuration) throws ConfigurationException {
+        this.configuration = new HashMap(configuration)
     }
 
     @Override

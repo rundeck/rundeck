@@ -3,6 +3,8 @@ package com.dtolabs.rundeck.server.plugins.builder
 import com.dtolabs.rundeck.app.internal.logging.DefaultLogEvent
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogLevel
+import com.dtolabs.rundeck.core.plugins.configuration.Configurable
+import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.plugins.logging.StreamingLogReaderPlugin
@@ -13,7 +15,7 @@ import java.text.SimpleDateFormat
 /**
  * Implements a StreamingLogReaderPlugin from a set of closures
  */
-class ScriptStreamingLogReaderPlugin implements StreamingLogReaderPlugin, Describable {
+class ScriptStreamingLogReaderPlugin implements StreamingLogReaderPlugin, Describable,Configurable {
     static Logger logger = Logger.getLogger(ScriptStreamingLogReaderPlugin)
     Description description
     private Map<String, Closure> handlers
@@ -34,6 +36,10 @@ class ScriptStreamingLogReaderPlugin implements StreamingLogReaderPlugin, Descri
         simpleDateFormat.timeZone=TimeZone.getTimeZone("GMT")
     }
 
+    @Override
+    void configure(Properties configuration) throws ConfigurationException {
+        this.configuration = new HashMap(configuration)
+    }
     @Override
     void initialize(Map<String, ? extends Object> context) {
         this.context = context

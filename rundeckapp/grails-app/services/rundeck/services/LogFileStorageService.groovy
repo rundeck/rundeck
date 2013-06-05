@@ -7,6 +7,8 @@ import com.dtolabs.rundeck.core.logging.LogFileState
 import com.dtolabs.rundeck.core.logging.LogFileStorage
 import com.dtolabs.rundeck.core.logging.StreamingLogReader
 import com.dtolabs.rundeck.core.logging.StreamingLogWriter
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.logging.LogFileStoragePlugin
 import com.dtolabs.rundeck.server.plugins.services.LogFileStoragePluginProviderService
 import org.springframework.beans.factory.InitializingBean
@@ -164,7 +166,7 @@ class LogFileStorageService implements InitializingBean{
             }
         }
         def fsWriter = new FSStreamingLogWriter(new FileOutputStream(file), defaultMeta, rundeckLogFormat)
-        def plugin = getConfiguredPluginForExecution(e)
+        def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolver(e.project))
         if(null!=plugin) {
             LogFileStorageRequest request = new LogFileStorageRequest(execution: e, pluginName: getConfiguredPluginName(), completed: false)
             request.save()
@@ -191,7 +193,7 @@ class LogFileStorageService implements InitializingBean{
                 log.info("re-queueing incomplete log storage request for execution ${e.id}")
                 def path = generateFilekeyForExecution(e)
                 File file = getFileForKey(path)
-                def plugin = getConfiguredPluginForExecution(e)
+                def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolver(e.project))
                 //re-queue storage request
                 storeLogFileAsync(e.id.toString(),file, plugin, request, delay)
                 delay += delayInc
@@ -300,36 +302,34 @@ class LogFileStorageService implements InitializingBean{
     /**
      * Create and initialize the log file storage plugin for this execution, or return null
      * @param execution
-     * @return
+     * @param resolver @return
      */
-    private LogFileStoragePlugin getConfiguredPluginForExecution(Execution execution) {
+    private LogFileStoragePlugin getConfiguredPluginForExecution(Execution execution, PropertyResolver resolver) {
         def jobcontext = ExecutionService.exportContextForExecution(execution)
-        def plugin = getConfiguredPlugin(jobcontext)
+        def plugin = getConfiguredPlugin(jobcontext, resolver)
         plugin
     }
 
     /**
      * Create and initialize the log file storage plugin for the context, or return null
      * @param context
-     * @return
+     * @param resolver @return
      */
-    private LogFileStoragePlugin getConfiguredPlugin(Map context){
+    private LogFileStoragePlugin getConfiguredPlugin(Map context, PropertyResolver resolver){
         def pluginName=getConfiguredPluginName()
-        if (pluginName) {
-            log.debug("Using log file storage plugin ${pluginName}")
-
-            try {
-                def plugin = pluginService.getPlugin(pluginName,logFileStoragePluginProviderService)
-                if (plugin != null) {
-                    //TODO: configure plugin from properties
-//                    pluginService.configurePlugin(pluginName, projectName, framework, logFileStoragePluginProviderService)
-                    plugin.initialize(context)
-                    return plugin
-                }
-            } catch (Throwable e) {
-                log.error("Failed to initialize reader plugin ${pluginName}: " + e.message)
-                log.debug("Failed to initialize reader plugin ${pluginName}: " + e.message, e)
+        if (!pluginName) {
+            return null
+        }
+        log.debug("Using log file storage plugin ${pluginName}")
+        try {
+            def plugin = pluginService.configurePlugin(pluginName, logFileStoragePluginProviderService, resolver, PropertyScope.Instance)
+            if (plugin != null) {
+                plugin.initialize(context)
+                return plugin
             }
+        } catch (Throwable e) {
+            log.error("Failed to initialize reader plugin ${pluginName}: " + e.message)
+            log.debug("Failed to initialize reader plugin ${pluginName}: " + e.message, e)
         }
         return null
     }
@@ -350,7 +350,7 @@ class LogFileStorageService implements InitializingBean{
                 return new ExecutionLogReader(state: ExecutionLogState.WAITING, reader: null)
             }
         }
-        def plugin= getConfiguredPluginForExecution(e)
+        def plugin= getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolver(e.project))
         def state = getLogFileState(e, plugin)
         def reader = null
         switch (state) {

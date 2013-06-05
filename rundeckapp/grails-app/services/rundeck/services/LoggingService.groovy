@@ -1,12 +1,10 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.app.internal.logging.LogOutputStream
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.StreamingLogWriter
-import com.dtolabs.rundeck.core.plugins.configuration.Description
-import com.dtolabs.rundeck.plugins.logging.StreamingLogReaderPlugin
-import com.dtolabs.rundeck.plugins.logging.StreamingLogWriterPlugin
-import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogReaderPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogWriterPluginProviderService
 import rundeck.Execution
@@ -41,13 +39,14 @@ class LoggingService {
         if (names) {
             HashMap<String, String> jobcontext = ExecutionService.exportContextForExecution(execution)
             log.debug("Configured log writer plugins: ${names}")
-            names.each {name->
-                def plugin= pluginService.getPlugin(name,streamingLogWriterPluginProviderService)
-                if(null==plugin){
+            names.each { name ->
+                def plugin = pluginService.configurePlugin(name, streamingLogWriterPluginProviderService,
+                        frameworkService.getFrameworkPropertyResolver(execution.project), PropertyScope.Instance)
+                if (null == plugin) {
                     log.error("Failed to load StreamingLogWriter plugin named ${name}")
                     return
                 }
-                try{
+                try {
                     plugin.initialize(jobcontext)
                     plugins << DisablingLogWriter.create(plugin, "StreamingLogWriter(${name})")
                 } catch (Throwable e) {
@@ -56,7 +55,6 @@ class LoggingService {
                 }
 
             }
-            //TODO: configure each plugin from properties
         }
         def outfilepath=null
         if (plugins.size() < 1 || isLocalFileStorageEnabled()) {
@@ -76,6 +74,13 @@ class LoggingService {
         return writer
     }
 
+    private String getConfiguredStreamingReaderPluginName() {
+        if (grailsApplication.config.rundeck?.execution?.logs?.streamingReaderPlugin) {
+            return grailsApplication.config.rundeck?.execution?.logs?.streamingReaderPlugin.toString()
+        }
+        null
+    }
+
     private List<String> listConfiguredStreamingWriterPluginNames() {
         if(grailsApplication.config?.rundeck?.execution?.logs?.streamingWriterPlugins){
             return grailsApplication.config?.rundeck?.execution?.logs?.streamingWriterPlugins.toString().split(/,\s*/) as List
@@ -90,9 +95,9 @@ class LoggingService {
             log.debug("Using log reader plugin ${pluginName}")
 
             try {
-                def plugin = pluginService.getPlugin(pluginName,streamingLogReaderPluginProviderService)
+                def plugin = pluginService.configurePlugin(pluginName, streamingLogReaderPluginProviderService,
+                        frameworkService.getFrameworkPropertyResolver(execution.project), PropertyScope.Instance)
                 if (plugin != null) {
-                    //TODO: configure plugin from properties
                     plugin.initialize(jobcontext)
                     return new ExecutionLogReader(state: ExecutionLogState.AVAILABLE, reader: plugin)
                 }
@@ -106,13 +111,6 @@ class LoggingService {
             log.error("Falling back to local file storage log reader")
         }
         return logFileStorageService.requestLogFileReader(execution)
-    }
-
-    private String getConfiguredStreamingReaderPluginName() {
-        if(grailsApplication.config.rundeck?.execution?.logs?.streamingReaderPlugin){
-            return grailsApplication.config.rundeck?.execution?.logs?.streamingReaderPlugin.toString()
-        }
-        null
     }
 
     public OutputStream createLogOutputStream(StreamingLogWriter logWriter, LogLevel level) {

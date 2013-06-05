@@ -1,6 +1,8 @@
 package com.dtolabs.rundeck.server.plugins.builder
 
 import com.dtolabs.rundeck.core.logging.LogFileState
+import com.dtolabs.rundeck.core.plugins.configuration.Configurable
+import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.plugins.logging.LogFileStoragePlugin
@@ -12,7 +14,7 @@ import org.apache.log4j.Logger
  * Date: 6/3/13
  * Time: 2:50 PM
  */
-class ScriptLogFileStoragePlugin implements LogFileStoragePlugin, Describable{
+class ScriptLogFileStoragePlugin implements LogFileStoragePlugin, Describable, Configurable {
     static Logger logger = Logger.getLogger(ScriptLogFileStoragePlugin)
     Description description
     private Map<String, Closure> handlers
@@ -24,11 +26,16 @@ class ScriptLogFileStoragePlugin implements LogFileStoragePlugin, Describable{
         this.description = description
     }
 
+    @Override
+    void configure(Properties configuration) throws ConfigurationException {
+        this.configuration = new HashMap(configuration)
+    }
+
 
     @Override
     void initialize(Map<String, ? extends Object> context) {
         this.pluginContext = context
-        ['state','retrieve','store'].each {
+        ['state', 'retrieve', 'store'].each {
             if (!handlers[it]) {
                 throw new RuntimeException("ScriptLogFileStoragePlugin: '${it}' closure not defined for plugin ${description.name}")
             }
@@ -39,11 +46,11 @@ class ScriptLogFileStoragePlugin implements LogFileStoragePlugin, Describable{
     LogFileState getState() {
         logger.debug("getState ${pluginContext}")
         def closure = handlers.state
-        def binding= [
+        def binding = [
                 configuration: configuration,
                 context: pluginContext
         ]
-        LogFileState.values().each { binding[it.toString()]=it }
+        LogFileState.values().each { binding[it.toString()] = it }
         if (closure.getMaximumNumberOfParameters() == 2) {
             def Closure newclos = closure.clone()
             newclos.resolveStrategy = Closure.DELEGATE_ONLY
@@ -137,6 +144,7 @@ class ScriptLogFileStoragePlugin implements LogFileStoragePlugin, Describable{
         }
         return false
     }
+
     public static boolean validRetrieveClosure(Closure closure) {
         if (closure.getMaximumNumberOfParameters() == 3) {
             return closure.parameterTypes[0] == Map && closure.parameterTypes[1] == Map && closure.parameterTypes[2] == OutputStream

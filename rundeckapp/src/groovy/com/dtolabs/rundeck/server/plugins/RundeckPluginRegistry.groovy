@@ -3,14 +3,15 @@ package com.dtolabs.rundeck.server.plugins
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException
-import com.dtolabs.rundeck.core.execution.workflow.steps.PluginAdapterUtility
-import com.dtolabs.rundeck.core.execution.workflow.steps.PropertyResolver
-import com.dtolabs.rundeck.core.execution.workflow.steps.PropertyResolverFactory
+import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.ProviderIdent
 import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Description
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.server.plugins.services.PluginBuilder
 import org.apache.log4j.Logger
@@ -35,32 +36,44 @@ class RundeckPluginRegistry implements ApplicationContextAware{
     def File pluginCacheDirectory
 
     /**
-     * Load a plugin instance with the given bean or provider name
+     * Create and configure a plugin instance with the given bean or provider name
      * @param name name of bean or provider
      * @param service provider service
+     * @param configuration map of configuration data
      * @return
      */
     public Object configurePluginByName(String name, PluggableProviderService service, Map configuration) {
-        Map pluginDesc = loadPluginDescriptorByName(name, service)
-        Object plugin=pluginDesc['instance']
-
-//        if (null != configuration) {
-//            configuration = DataContextUtils.replaceDataReferences(configuration, context.getDataContext());
-//        }
-        def description = pluginDesc['description']
-        if(description && description instanceof Description){
-            final PropertyResolver resolver = PropertyResolverFactory.createInstanceResolver(configuration);
-            final Map<String, Object> config = PluginAdapterUtility.configureProperties(resolver, description, plugin);
-        }
-        plugin
+        final PropertyResolver resolver = PropertyResolverFactory.createInstanceResolver(configuration);
+        return configurePluginByName(name, service, resolver, PropertyScope.InstanceOnly)
     }
+
     /**
-     * Load a plugin instance with the given bean or provider name
+     * Create and configure a plugin instance with the given bean or provider name, resolving properties via
+     * the framework and specified project properties as well as instance configuration.
      * @param name name of bean or provider
      * @param service provider service
+     * @param framework framework
+     * @param project project name or null
+     * @param instanceConfiguration configuration or null
      * @return
      */
-    public Object configurePluginByName(String name, PluggableProviderService service, Framework framework, String project) {
+    public Object configurePluginByName(String name, PluggableProviderService service, Framework framework,
+                                        String project, Map instanceConfiguration) {
+
+            final PropertyResolver resolver = PropertyResolverFactory.createFrameworkProjectRuntimeResolver(framework,
+                    project, instanceConfiguration, name, service.getName());
+        return configurePluginByName(name, service, resolver, PropertyScope.Instance)
+    }
+    /**
+     * Create and configure a plugin instance with the given bean or provider name using a property resolver and a
+     * default property scope
+     * @param name name of bean or provider
+     * @param service provider service
+     * @param resolver a property resolver
+     * @param defaultScope default scope to search for property values when undeclared
+     * @return
+     */
+    public Object configurePluginByName(String name, PluggableProviderService service, PropertyResolver resolver, PropertyScope defaultScope) {
         Map pluginDesc = loadPluginDescriptorByName(name, service)
         Object plugin=pluginDesc['instance']
 
@@ -69,8 +82,7 @@ class RundeckPluginRegistry implements ApplicationContextAware{
 //        }
         def description = pluginDesc['description']
         if(description && description instanceof Description) {
-            final PropertyResolver resolver = PropertyResolverFactory.createFrameworkProjectRuntimeResolver(framework, project, null, name, service.getName());
-            final Map<String, Object> config = PluginAdapterUtility.configureProperties(resolver, description, plugin);
+            final Map<String, Object> config = PluginAdapterUtility.configureProperties(resolver, description, plugin, defaultScope);
         }
         plugin
     }
