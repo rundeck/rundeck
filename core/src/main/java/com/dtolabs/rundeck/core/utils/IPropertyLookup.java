@@ -16,12 +16,14 @@
 
 package com.dtolabs.rundeck.core.utils;
 
+import com.dtolabs.rundeck.core.common.PropertyRetriever;
+
 import java.util.Map;
 
 /**
  * simple interface to lookup property data
  */
-public interface IPropertyLookup {
+public interface IPropertyLookup extends PropertyRetriever{
     /**
      * get property value
      *

@@ -89,7 +89,7 @@ public class FrameworkProject extends FrameworkResourceParent {
         super(name, basedir, resourceMgr);
         projectResourceMgr = resourceMgr;
         resourcesBaseDir = new File(getBaseDir(), "resources");
-        etcDir = new File(getBaseDir(), ETC_DIR_NAME);
+        etcDir = getProjectEtcDir(getBaseDir());
         if (!etcDir.exists()) {
             if (!etcDir.mkdirs()) {
                 throw new FrameworkResourceException("error while creating project structure. " +
@@ -97,7 +97,7 @@ public class FrameworkProject extends FrameworkResourceParent {
             }
         }
 
-        propertyFile = new File(getEtcDir(), PROP_FILENAME);
+        propertyFile = getProjectPropertyFile(getBaseDir());
         if ( !propertyFile.exists()) {
             generateProjectPropertiesFile(false, properties);
         }
@@ -106,6 +106,24 @@ public class FrameworkProject extends FrameworkResourceParent {
         nodesSourceList = new ArrayList<ResourceModelSource>();
 
         initialize();
+    }
+
+    /**
+     * Get the etc dir from the basedir
+     * @param baseDir
+     * @return
+     */
+    private static File getProjectEtcDir(File baseDir) {
+        return new File(baseDir, ETC_DIR_NAME);
+    }
+
+    /**
+     * Get the project property file from the basedir
+     * @param baseDir
+     * @return
+     */
+    private static File getProjectPropertyFile(File baseDir) {
+        return new File(getProjectEtcDir(baseDir), PROP_FILENAME);
     }
 
     private long propertiesLastReload=0L;
@@ -125,29 +143,59 @@ public class FrameworkProject extends FrameworkResourceParent {
         }
     }
     private synchronized void loadProperties() {
-        final Properties ownProps = new Properties();
-        ownProps.setProperty("project.name", getName());
-
         //generic framework properties for a project
         final File fwkProjectPropertyFile = new File(projectResourceMgr.getFramework().getConfigDir(), PROP_FILENAME);
-        final Properties nodeWideDepotProps = PropertyLookup.fetchProperties(fwkProjectPropertyFile);
-        nodeWideDepotProps.putAll(ownProps);
+
+        lookup = createProjectPropertyLookup(projectResourceMgr.getFramework().getBaseDir(), getName());
 
         if (propertyFile.exists()) {
-            lookup = PropertyLookup.create(propertyFile,
-                    nodeWideDepotProps, projectResourceMgr.getFramework().getPropertyLookup());
             getLogger().debug("loading existing project.properties: " + propertyFile.getAbsolutePath());
             final long fwkPropsLastModified = fwkProjectPropertyFile.lastModified();
             final long propsLastMod = propertyFile.lastModified();
             propertiesLastReload = propsLastMod > fwkPropsLastModified ? propsLastMod : fwkPropsLastModified;
         } else {
-            lookup = PropertyLookup.create(fwkProjectPropertyFile,
-                    ownProps, projectResourceMgr.getFramework().getPropertyLookup());
             getLogger().debug("loading instance-level project.properties: " + propertyFile.getAbsolutePath());
             propertiesLastReload = fwkProjectPropertyFile.lastModified();
+        }
+    }
 
+    /**
+     * Create PropertyLookup for a project from the framework basedir
+     * @param baseDir the framework basedir
+     * @param projectName
+     * @return
+     */
+    private static PropertyLookup createProjectPropertyLookup(File baseDir, String projectName) {
+        PropertyLookup lookup;
+        final Properties ownProps = new Properties();
+        ownProps.setProperty("project.name", projectName);
+
+        //generic framework properties for a project
+        final File fwkProjectPropertyFile = Framework.getPropertyFile(Framework.getConfigDir(baseDir));
+        final Properties nodeWideDepotProps = PropertyLookup.fetchProperties(fwkProjectPropertyFile);
+        nodeWideDepotProps.putAll(ownProps);
+
+        final File propertyFile = getProjectPropertyFile(new File(Framework.getProjectsBaseDir(baseDir), projectName));
+
+        if (propertyFile.exists()) {
+            lookup = PropertyLookup.create(propertyFile,
+                    nodeWideDepotProps, Framework.createPropertyLookupFromBasedir(baseDir));
+        } else {
+            lookup = PropertyLookup.create(fwkProjectPropertyFile,
+                    ownProps, Framework.createPropertyLookupFromBasedir(baseDir));
         }
         lookup.expand();
+        return lookup;
+    }
+
+    /**
+     * Create a property retriever for a project given the framework basedir
+     * @param baseDir the framework basedir
+     * @param projectName
+     * @return
+     */
+    public static PropertyRetriever createProjectPropertyRetriever(File baseDir, String projectName) {
+        return createProjectPropertyLookup(baseDir, projectName).safe();
     }
 
     private ArrayList<Exception> nodesSourceExceptions;
@@ -603,34 +651,13 @@ public class FrameworkProject extends FrameworkResourceParent {
         return lookup.getPropertiesMap();
     }
 
-    /**
-     * Return the property value by name or null if not present
-     *
-     * @param name
-     *
-     * @return
-     */
-    private synchronized String getPropertySafe(final String name) {
-        checkReloadProperties();
-        if(lookup.hasProperty(name)){
-            return lookup.getProperty(name);
-        }
-        return null;
-    }
-
-
-    final PropertyRetriever propertyRetriever = new PropertyRetriever() {
-        @Override
-        public String getProperty(final String name) {
-            return getPropertySafe(name);
-        }
-    };
 
     /**
      * Return a PropertyRetriever interface for project-scoped properties
      */
-    public PropertyRetriever getPropertyRetriever() {
-        return propertyRetriever;
+    public synchronized PropertyRetriever getPropertyRetriever() {
+        checkReloadProperties();
+        return lookup.safe();
     }
 
 
