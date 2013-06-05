@@ -18,7 +18,7 @@ class RundeckLogFormatTest extends GroovyTestCase {
 
     @Override
     protected void setUp() throws Exception {
-        super.setUp()    //To change body of overridden methods use File | Settings | File Templates.
+        super.setUp()
         dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
         dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
         event = new DefaultLogEvent()
@@ -26,7 +26,7 @@ class RundeckLogFormatTest extends GroovyTestCase {
         event.eventType = "log"
         event.datetime = dateFormat.parse('2013-05-24T01:31:02Z')
         event.metadata = [test: "1", something: "else"]
-        expectPrefix1 = "^2013-05-24T01:31:02Z|DEBUG|{something=else|test=1}|"
+        expectPrefix1 = "^2013-05-24T01:31:02Z|log|DEBUG|{something=else|test=1}|"
         expectLineEnd = "^"
     }
 
@@ -63,11 +63,18 @@ class RundeckLogFormatTest extends GroovyTestCase {
     }
 
     void testOutputEventEscapeMeta() {
-        //nb: current meta does not escape, but eliminates unexpected chars
         RundeckLogFormat format = new RundeckLogFormat()
         event.message = "test"
         event.metadata = ["aomething=": "=else", "best|as}df": "flif}|="]
-        assertEquals("^2013-05-24T01:31:02Z|DEBUG|{aomething\\==\\=else|best\\|as\\}df=flif\\}\\|\\=}|test^",
+        assertEquals("^2013-05-24T01:31:02Z|log|DEBUG|{aomething\\==\\=else|best\\|as\\}df=flif\\}\\|\\=}|test^",
+                format.outputEvent(event))
+    }
+
+    void testOutputEventEscapeEventType() {
+        RundeckLogFormat format = new RundeckLogFormat()
+        event.message = "test"
+        event.eventType = "test2|test3"
+        assertEquals("^2013-05-24T01:31:02Z|test2test3|DEBUG|{something=else|test=1}|test^",
                 format.outputEvent(event))
     }
 
@@ -105,7 +112,7 @@ class RundeckLogFormatTest extends GroovyTestCase {
         assertEquals(assertMsg, event.metadata, item.entry.metadata)
         assertEquals(assertMsg, event.loglevel, item.entry.loglevel)
         assertEquals(assertMsg, event.datetime, item.entry.datetime)
-        assertEquals(assertMsg, /*event.eventType*/ null, item.entry.eventType)
+        assertEquals(assertMsg, event.eventType, item.entry.eventType)
     }
 
     void assertDecode(String expect, String expectDone, String input) {

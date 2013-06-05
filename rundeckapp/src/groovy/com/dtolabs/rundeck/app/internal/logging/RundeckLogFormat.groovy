@@ -2,6 +2,7 @@ package com.dtolabs.rundeck.app.internal.logging
 
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogLevel
+import com.dtolabs.rundeck.core.logging.LogUtil
 import com.dtolabs.rundeck.core.utils.Utility
 
 import java.text.SimpleDateFormat
@@ -63,7 +64,7 @@ class RundeckLogFormat implements OutputLogFormat, LineLogFormat {
         sb.append(DELIM)
         //date
         sb.append(date).append('|')
-//        sb.append(entry.eventType?:'').append('|')
+        sb.append(entry.eventType?entry.eventType.replaceAll('\\|',''):'').append('|')
         //level
         sb.append(entry.loglevel).append("|")
 
@@ -146,14 +147,15 @@ class RundeckLogFormat implements OutputLogFormat, LineLogFormat {
         } else if (line.startsWith(DELIM)) {
             def temp = line.substring(DELIM.length())
             def item = new RDFormatItem()
-            def arr = temp.split("\\|", 3)
+            def arr = temp.split("\\|", 4)
 
-            if (arr.length != 3) {
-                return RDFormatItem.error("Expected 3 sections: " + arr.length)
+            if (arr.length != 4) {
+                return RDFormatItem.error("Expected 4 sections: " + arr.length)
             }
             Date time = w3cDateFormat.parse(arr[0])
-            LogLevel level = LogLevel.valueOf(arr[1])
-            def rest = arr[2]
+            String eventType = arr[1] ?: LogUtil.EVENT_TYPE_LOG
+            LogLevel level = LogLevel.valueOf(arr[2])
+            def rest = arr[3]
             def meta = [:]
             if (rest.startsWith('{')) {
                 //parse meta
@@ -191,7 +193,7 @@ class RundeckLogFormat implements OutputLogFormat, LineLogFormat {
 
             def (message, done) = decodeLog(rest)
             item.lineComplete = done?true:false
-            item.entry = new DefaultLogEvent(loglevel: level, datetime: time, message: message, metadata: meta)
+            item.entry = new DefaultLogEvent(loglevel: level, datetime: time, message: message, metadata: meta,eventType: eventType)
             return item
         } else {
             def (temp, done) = decodeLog(line)

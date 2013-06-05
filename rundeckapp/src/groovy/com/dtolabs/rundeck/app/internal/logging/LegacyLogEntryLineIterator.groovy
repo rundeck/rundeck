@@ -3,6 +3,7 @@ package com.dtolabs.rundeck.app.internal.logging
 import com.dtolabs.rundeck.core.logging.LogEntryIterator
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogLevel
+import com.dtolabs.rundeck.core.logging.LogUtil
 import com.dtolabs.rundeck.core.logging.OffsetIterator
 import com.dtolabs.rundeck.core.utils.Utility
 import rundeck.services.ExecutionService
@@ -142,7 +143,8 @@ class LegacyLogEntryLineIterator implements LogEntryIterator{
         buf = new StringBuilder()
         msgbuf = [:]
         poslist << iter.offset
-        latest << new DefaultLogEvent(datetime: parseTime(data.time), message: data.mesg, metadata: data, loglevel: LogLevel.looseValueOf(data.level, LogLevel.NORMAL))
+        latest << new DefaultLogEvent(eventType: LogUtil.EVENT_TYPE_LOG, datetime: parseTime(data.time), message:
+                data.mesg, metadata: data, loglevel: LogLevel.looseValueOf(data.level, LogLevel.NORMAL))
     }
 
     /**
