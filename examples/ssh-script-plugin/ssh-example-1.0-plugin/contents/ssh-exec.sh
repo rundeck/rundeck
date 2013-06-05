@@ -34,7 +34,7 @@ if [ ! -z $XHOST ] ; then
     HOST=$XHOST
 fi
 
-SSHOPTS="-p $PORT"
+SSHOPTS="-p $PORT -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o LogLevel=quiet"
 
 #use ssh-keyfile node attribute from env vars
 if [ ! -z "$RD_NODE_SSH_KEYFILE" ] ; then
