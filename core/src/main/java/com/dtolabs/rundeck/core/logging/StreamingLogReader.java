@@ -28,8 +28,15 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.Date;
 
-/** Readers log entries */
-public interface StreamingLogReader extends LogEntryIterator, Closeable {
+/**
+ *  Reads log events in a streaming manner, and supports resuming from a specified offset.
+ *
+ *  @see LogEventIterator
+ *  @see OffsetIterator
+ *  @see Closeable
+ *  @see CompletableIterator
+ */
+public interface StreamingLogReader extends LogEventIterator, Closeable {
     /**
      * Read log entries starting at the specified offset
      *

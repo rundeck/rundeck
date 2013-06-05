@@ -1,7 +1,7 @@
 package com.dtolabs.rundeck.app.internal.logging
 
 import com.dtolabs.rundeck.core.logging.LogEvent
-import com.dtolabs.rundeck.core.logging.LogEntryIterator
+import com.dtolabs.rundeck.core.logging.LogEventIterator
 import com.dtolabs.rundeck.core.logging.ReverseSeekingStreamingLogReader
 
 /*
@@ -34,7 +34,7 @@ class FSStreamingLogReader implements ReverseSeekingStreamingLogReader {
     RundeckLogFormat rundeckLogFormat
     private boolean detectedFormat
     private boolean detected
-    private LogEntryIterator iterator
+    private LogEventIterator iterator
     /**
      * Optional date for resolving legacy unspecific timestamps
      */
@@ -50,14 +50,14 @@ class FSStreamingLogReader implements ReverseSeekingStreamingLogReader {
             detected=true
         }
     }
-    private LogEntryIterator detectedIterator(FSFileLineIterator fsiter){
+    private LogEventIterator detectedIterator(FSFileLineIterator fsiter){
         if(!detected){
             detectLegacyLogFile()
         }
         if (detectedFormat) {
-            return new LogEntryLineIterator(fsiter, rundeckLogFormat)
+            return new LogEventLineIterator(fsiter, rundeckLogFormat)
         } else {
-            def iterator = new LegacyLogEntryLineIterator(fsiter)
+            def iterator = new LegacyLogEventLineIterator(fsiter)
             iterator.referenceDate = referenceDate ?: new Date(file.lastModified())
             return iterator
         }
@@ -68,9 +68,9 @@ class FSStreamingLogReader implements ReverseSeekingStreamingLogReader {
         }
 
         if (detectedFormat) {
-            return LogEntryLineIterator.seekBackwards(file, (int) offset, rundeckLogFormat)
+            return LogEventLineIterator.seekBackwards(file, (int) offset, rundeckLogFormat)
         } else {
-            return LegacyLogEntryLineIterator.seekBackwards(file, (int) offset)
+            return LegacyLogEventLineIterator.seekBackwards(file, (int) offset)
         }
     }
 
@@ -98,10 +98,10 @@ class FSStreamingLogReader implements ReverseSeekingStreamingLogReader {
         this.iterator= beginFromOffset(detectedSeekBackwards((int) offset))
     }
 
-    private LogEntryIterator beginFromOffset(long offset) {
+    private LogEventIterator beginFromOffset(long offset) {
         def raf = new FileInputStream(file)
         raf.channel.position(offset)
-        def LogEntryIterator iterator = detectedIterator(new FSFileLineIterator(raf, encoding))
+        def LogEventIterator iterator = detectedIterator(new FSFileLineIterator(raf, encoding))
         return iterator
     }
 

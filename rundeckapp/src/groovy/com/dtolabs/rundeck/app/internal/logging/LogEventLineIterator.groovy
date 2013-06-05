@@ -1,14 +1,8 @@
 package com.dtolabs.rundeck.app.internal.logging
 
-import com.dtolabs.rundeck.core.logging.LogEntryIterator
 import com.dtolabs.rundeck.core.logging.LogEvent
-import com.dtolabs.rundeck.core.logging.LogLevel
+import com.dtolabs.rundeck.core.logging.LogEventIterator
 import com.dtolabs.rundeck.core.logging.OffsetIterator
-import com.dtolabs.rundeck.core.utils.Utility
-import rundeck.services.ExecutionService
-
-import java.text.ParseException
-import java.text.SimpleDateFormat
 
 /**
  * $INTERFACE is ...
@@ -16,7 +10,7 @@ import java.text.SimpleDateFormat
  * Date: 5/21/13
  * Time: 6:04 PM
  */
-class LogEntryLineIterator implements LogEntryIterator{
+class LogEventLineIterator implements LogEventIterator{
     private static final String lSep = System.getProperty("line.separator")
     OffsetIterator<String> iter
     private boolean complete
@@ -28,7 +22,7 @@ class LogEntryLineIterator implements LogEntryIterator{
     private LineLogFormat lineLogFormat
     boolean closed=false
 
-    public LogEntryLineIterator(OffsetIterator<String> iter, LineLogFormat format) {
+    public LogEventLineIterator(OffsetIterator<String> iter, LineLogFormat format) {
         this.iter = iter
         offset = iter.offset
         complete = !iter.hasNext()

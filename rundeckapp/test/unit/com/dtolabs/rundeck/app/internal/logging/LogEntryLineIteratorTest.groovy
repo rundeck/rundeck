@@ -96,7 +96,7 @@ class LogEntryLineIteratorTest extends GroovyTestCase {
                 "end\n"
         ]
         testfile1.withWriter { w -> lines2.each { w << it } }
-        LogEntryLineIterator test = new LogEntryLineIterator(
+        LogEventLineIterator test = new LogEventLineIterator(
                 new FSFileLineIterator(new FileInputStream(testfile1), "UTF-8"),
                 new testFormat())
         assertTrue(test.hasNext())

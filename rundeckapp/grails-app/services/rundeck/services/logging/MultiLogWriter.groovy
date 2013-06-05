@@ -25,8 +25,8 @@ class MultiLogWriter implements StreamingLogWriter {
     }
 
     @Override
-    void addEntry(LogEvent event) {
-        writers*.addEntry(event)
+    void addEvent(LogEvent event) {
+        writers*.addEvent(event)
     }
 
     @Override

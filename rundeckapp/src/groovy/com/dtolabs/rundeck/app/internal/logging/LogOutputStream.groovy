@@ -43,14 +43,14 @@ class LogOutputStream extends OutputStream {
 
     public void write(final int b) {
         if (b == '\n') {
-            logger.addEntry(level,[:], sb.toString() );
+            logger.addEvent(level,[:], sb.toString() );
             sb = new StringBuilder()
             crchar = false;
         } else if (b == '\r') {
             crchar = true;
         } else {
             if (crchar) {
-                logger.addEntry(level,[:], sb.toString() );
+                logger.addEvent(level,[:], sb.toString() );
                 sb = new StringBuilder()
                 crchar = false;
             }
@@ -61,7 +61,7 @@ class LogOutputStream extends OutputStream {
 
     public void flush() {
         if (sb.size() > 0) {
-            logger.addEntry(level,[:], sb.toString() );
+            logger.addEvent(level,[:], sb.toString() );
         }
     }
 }

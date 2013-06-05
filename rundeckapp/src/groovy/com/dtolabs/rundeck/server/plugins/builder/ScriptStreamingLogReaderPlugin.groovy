@@ -151,6 +151,9 @@ class ScriptStreamingLogReaderPlugin implements StreamingLogReaderPlugin, Descri
             if(null!=result?.offset){
                 this.offset=result.offset
             }
+            if(result?.complete){
+                this.complete=true
+            }
             nextEvent = createEvent(result.event)
         } else {
             logger.error("LogWriterPlugin: 'open' closure signature invalid for plugin ${description.name}, cannot open")

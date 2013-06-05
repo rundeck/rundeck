@@ -5,6 +5,7 @@ import com.dtolabs.rundeck.core.logging.StreamingLogWriter;
 import java.util.Map;
 
 /**
+ * Plugin interface for streaming log writers
  */
 public interface StreamingLogWriterPlugin extends StreamingLogWriter {
     /**

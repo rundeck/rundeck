@@ -66,17 +66,17 @@ class ScriptStreamingLogWriterPlugin implements StreamingLogWriterPlugin, Descri
     }
 
     @Override
-    void addEntry(LogEvent entry) {
+    void addEvent(LogEvent event) {
         def closure = handlers.addEvent
         if (closure.getMaximumNumberOfParameters() == 2) {
             def Closure newclos = closure.clone()
             newclos.resolveStrategy = Closure.DELEGATE_ONLY
-            newclos.call(this.streamContext, entry)
+            newclos.call(this.streamContext, event)
         } else if (closure.getMaximumNumberOfParameters() == 1 ) {
             def Closure newclos = closure.clone()
             newclos.delegate = [context: this.streamContext, configuration: configuration]
             newclos.resolveStrategy = Closure.DELEGATE_ONLY
-            newclos.call(entry)
+            newclos.call(event)
         }  else {
             logger.error("LogWriterPlugin: 'addEvent' closure signature invalid for plugin ${description.name}, cannot addEvent")
         }

@@ -6,7 +6,7 @@ import com.dtolabs.rundeck.core.logging.LogFileStorage;
 import java.util.Map;
 
 /**
- *
+ * Plugin interface for Log file storage
  */
 public interface LogFileStoragePlugin extends LogFileStorage {
     /**

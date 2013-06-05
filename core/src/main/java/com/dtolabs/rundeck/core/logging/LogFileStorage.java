@@ -11,7 +11,9 @@ public interface LogFileStorage {
     /**
      * Stores a log file read from the given stream
      *
-     * @param stream
+     * @param stream the input stream
+     *
+     * @return true if successful
      *
      * @throws IOException
      */
@@ -20,7 +22,9 @@ public interface LogFileStorage {
     /**
      * Writes a log file to the given stream
      *
-     * @param stream
+     * @param stream the output stream
+     *
+     * @return true if successful
      *
      * @throws IOException
      */

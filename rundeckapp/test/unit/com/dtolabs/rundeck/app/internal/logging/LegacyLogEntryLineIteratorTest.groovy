@@ -85,7 +85,7 @@ class LegacyLogEntryLineIteratorTest extends GroovyTestCase {
     }
 
     public testFromStart() {
-        def iterator = new LegacyLogEntryLineIterator(new FSFileLineIterator(new FileInputStream(testfile1), "UTF-8"))
+        def iterator = new LegacyLogEventLineIterator(new FSFileLineIterator(new FileInputStream(testfile1), "UTF-8"))
         assertTrue(iterator.hasNext())
         assertEquals(lengths[0], iterator.offset)
         LogEvent entry = iterator.next()
@@ -107,7 +107,7 @@ class LegacyLogEntryLineIteratorTest extends GroovyTestCase {
         assertFalse(iterator.hasNext())
     }
     public testFromStartDate2() {
-        def iterator = new LegacyLogEntryLineIterator(new FSFileLineIterator(new FileInputStream(testfile2), "UTF-8"))
+        def iterator = new LegacyLogEventLineIterator(new FSFileLineIterator(new FileInputStream(testfile2), "UTF-8"))
         iterator.referenceDate= startDate
         assertTrue(iterator.hasNext())
         assertEquals(lengths2[0], iterator.offset)
@@ -129,7 +129,7 @@ class LegacyLogEntryLineIteratorTest extends GroovyTestCase {
     public testFromMiddle() {
         def fis = new FileInputStream(testfile1)
         fis.channel.position(lengths[1])
-        def iterator = new LegacyLogEntryLineIterator(new FSFileLineIterator(fis, "UTF-8"))
+        def iterator = new LegacyLogEventLineIterator(new FSFileLineIterator(fis, "UTF-8"))
         assertTrue(iterator.hasNext())
 
         assertEquals(lengths[1], iterator.offset)
@@ -153,7 +153,7 @@ class LegacyLogEntryLineIteratorTest extends GroovyTestCase {
     public testFromMiddle2() {
         def fis = new FileInputStream(testfile1)
         fis.channel.position(lengths[2])
-        def iterator = new LegacyLogEntryLineIterator(new FSFileLineIterator(fis, "UTF-8"))
+        def iterator = new LegacyLogEventLineIterator(new FSFileLineIterator(fis, "UTF-8"))
         assertTrue(iterator.hasNext())
 
         assertEquals(lengths[2], iterator.offset)
@@ -174,7 +174,7 @@ class LegacyLogEntryLineIteratorTest extends GroovyTestCase {
     public testFromEnd() {
         def fis = new FileInputStream(testfile1)
         fis.channel.position(lengths[4])
-        def iterator = new LegacyLogEntryLineIterator(new FSFileLineIterator(fis, "UTF-8"))
+        def iterator = new LegacyLogEventLineIterator(new FSFileLineIterator(fis, "UTF-8"))
 
         assertEquals(lengths[4], iterator.offset)
 
@@ -182,10 +182,10 @@ class LegacyLogEntryLineIteratorTest extends GroovyTestCase {
     }
 
     public testSeekBackwards(){
-        assertEquals(lengths[3],LegacyLogEntryLineIterator.seekBackwards(testfile1,1))
-        assertEquals(lengths[2],LegacyLogEntryLineIterator.seekBackwards(testfile1,2))
-        assertEquals(lengths[1],LegacyLogEntryLineIterator.seekBackwards(testfile1,3))
-        assertEquals(lengths[0],LegacyLogEntryLineIterator.seekBackwards(testfile1,4))
+        assertEquals(lengths[3],LegacyLogEventLineIterator.seekBackwards(testfile1,1))
+        assertEquals(lengths[2],LegacyLogEventLineIterator.seekBackwards(testfile1,2))
+        assertEquals(lengths[1],LegacyLogEventLineIterator.seekBackwards(testfile1,3))
+        assertEquals(lengths[0],LegacyLogEventLineIterator.seekBackwards(testfile1,4))
     }
     private static void assertEntry(LogEvent entry, final Date date, final LogLevel level, final LinkedHashMap<String, String> meta, final String message) {
         assertNotNull(entry)

@@ -1,6 +1,6 @@
 package com.dtolabs.rundeck.app.internal.logging
 
-import com.dtolabs.rundeck.core.logging.LogEntryIterator
+import com.dtolabs.rundeck.core.logging.LogEventIterator
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.LogUtil
@@ -29,14 +29,14 @@ import java.text.SimpleDateFormat
  */
 
 /**
- * LegacyLogEntryLineIterator.java
+ * LegacyLogEventLineIterator.java
  * 
  * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * Created: 1/23/13 7:50 PM
  *
  * @deprecated
  */
-class LegacyLogEntryLineIterator implements LogEntryIterator{
+class LegacyLogEventLineIterator implements LogEventIterator{
     OffsetIterator<String> iter
     private boolean complete
     private long offset
@@ -49,7 +49,7 @@ class LegacyLogEntryLineIterator implements LogEntryIterator{
     private SimpleDateFormat w3cDateFormat
     Date referenceDate
     private String referenceDateString
-    public LegacyLogEntryLineIterator(OffsetIterator<String> iter){
+    public LegacyLogEventLineIterator(OffsetIterator<String> iter){
         this.iter=iter
         buf=new StringBuilder()
         offset=iter.offset

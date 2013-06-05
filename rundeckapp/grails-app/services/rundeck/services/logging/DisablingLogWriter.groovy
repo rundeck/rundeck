@@ -36,10 +36,10 @@ class DisablingLogWriter extends FilterStreamingLogWriter {
     }
 
     @Override
-    void addEntry(LogEvent entry) {
+    void addEvent(LogEvent event) {
         if (!enabled) return
         try {
-            getWriter().addEntry(entry)
+            getWriter().addEvent(event)
         } catch (Throwable e) {
             enabled = false
             log.error("Failed addEvent for ${identity}, disabling. " + e.message)

@@ -48,10 +48,10 @@ class EventStreamingLogWriter extends FilterStreamingLogWriter {
     }
 
     @Override
-    void addEntry(LogEvent entry) {
-        super.addEntry(entry)
+    void addEvent(LogEvent event) {
+        super.addEvent(event)
         if (null != onAddEvent) {
-            onAddEvent.call(entry)
+            onAddEvent.call(event)
         }
     }
 }

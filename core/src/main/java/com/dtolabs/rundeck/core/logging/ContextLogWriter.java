@@ -36,23 +36,23 @@ class ContextLogWriter implements ContextLogger {
     }
 
     public void log(String message, Map<String, String> context) {
-        writer.addEntry(LogUtil.logNormal(message, context));
+        writer.addEvent(LogUtil.logNormal(message, context));
     }
 
     public void error(String message, Map<String, String> context) {
-        writer.addEntry(LogUtil.logError(message, context));
+        writer.addEvent(LogUtil.logError(message, context));
     }
 
     public void warn(String message, Map<String, String> context) {
-        writer.addEntry(LogUtil.logWarn(message, context));
+        writer.addEvent(LogUtil.logWarn(message, context));
     }
 
     public void verbose(String message, Map<String, String> context) {
-        writer.addEntry(LogUtil.logVerbose(message, context));
+        writer.addEvent(LogUtil.logVerbose(message, context));
     }
 
     public void debug(String message, Map<String, String> context) {
-        writer.addEntry(LogUtil.logDebug(message, context));
+        writer.addEvent(LogUtil.logDebug(message, context));
     }
 
     public void log(String message) {

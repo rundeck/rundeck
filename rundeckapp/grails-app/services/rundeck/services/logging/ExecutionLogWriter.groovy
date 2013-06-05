@@ -1,9 +1,6 @@
 package rundeck.services.logging
 
-import com.dtolabs.rundeck.app.internal.logging.LogOutputStream
 import com.dtolabs.rundeck.core.logging.FilterStreamingLogWriter
-import com.dtolabs.rundeck.core.logging.LogEvent
-import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.LogUtil
 import com.dtolabs.rundeck.core.logging.StreamingLogWriter
 import org.apache.log4j.Logger
@@ -24,22 +21,22 @@ class ExecutionLogWriter extends FilterStreamingLogWriter {
     }
 // utility methods
     void logError(String message) {
-        addEntry(LogUtil.logError(message))
+        addEvent(LogUtil.logError(message))
     }
 
     void log(String message) {
-        addEntry(LogUtil.logNormal(message))
+        addEvent(LogUtil.logNormal(message))
     }
 
     void logDebug(String message) {
-        addEntry(LogUtil.logDebug(message))
+        addEvent(LogUtil.logDebug(message))
     }
 
     void logWarn(String message) {
-        addEntry(LogUtil.logWarn(message))
+        addEvent(LogUtil.logWarn(message))
     }
 
     void logVerbose(String message) {
-        addEntry(LogUtil.logVerbose(message))
+        addEvent(LogUtil.logVerbose(message))
     }
 }

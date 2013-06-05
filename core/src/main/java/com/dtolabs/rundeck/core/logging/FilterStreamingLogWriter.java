@@ -1,7 +1,6 @@
 package com.dtolabs.rundeck.core.logging;
 
 import java.io.IOException;
-import java.util.Map;
 
 /**
  * A log writer class which can easily be subclassed override default behavior. By default all method calls are delegated
@@ -18,8 +17,8 @@ public class FilterStreamingLogWriter implements StreamingLogWriter {
         getWriter().openStream();
     }
 
-    public void addEntry(LogEvent entry) {
-        getWriter().addEntry(entry);
+    public void addEvent(LogEvent event) {
+        getWriter().addEvent(event);
     }
 
     public void close() {

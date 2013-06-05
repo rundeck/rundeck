@@ -17,9 +17,9 @@ class LoglevelThresholdLogWriter extends FilterStreamingLogWriter {
     }
 
     @Override
-    void addEntry(LogEvent event) {
+    void addEvent(LogEvent event) {
         if (event.loglevel.belowThreshold(threshold)) {
-            getWriter().addEntry(event)
+            getWriter().addEvent(event)
         }
     }
 }

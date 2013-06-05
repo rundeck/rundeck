@@ -58,7 +58,7 @@ class FSStreamingLogWriter implements StreamingLogWriter {
     }
 
     @Override
-    void addEntry(LogEvent event) {
+    void addEvent(LogEvent event) {
         synchronized (this) {
             if (null == output) {
                 throw new IllegalStateException("output was closed")

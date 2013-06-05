@@ -18,13 +18,11 @@ package com.dtolabs.rundeck.core.logging;
 
 import java.io.Closeable;
 
-/*
- * LogEntryIterator.java
- * 
- * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
- * Created: 1/23/13 8:46 PM
+/**
+ * Iterator of LogEvents that can report the current offset and whether the log is complete, as well
+ * as close it.
  * 
  */
-public interface LogEntryIterator extends OffsetIterator<LogEvent>, CompletableIterator<LogEvent>, Closeable {
+public interface LogEventIterator extends OffsetIterator<LogEvent>, CompletableIterator<LogEvent>, Closeable {
 
 }

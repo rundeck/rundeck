@@ -25,15 +25,15 @@ import java.util.Map;
  */
 public interface StreamingLogWriter {
     /**
-     * Open a stream, called before addEntry is called
+     * Open a stream, called before addEvent is called
      */
     void openStream() throws IOException;
 
     /**
-     * Add a new entry
-     * @param entry
+     * Add a new event
+     * @param event
      */
-    void addEntry(LogEvent entry);
+    void addEvent(LogEvent event);
 
     /**
      * Close the stream.
