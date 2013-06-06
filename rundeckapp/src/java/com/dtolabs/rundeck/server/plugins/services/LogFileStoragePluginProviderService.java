@@ -2,11 +2,12 @@ package com.dtolabs.rundeck.server.plugins.services;
 
 import com.dtolabs.rundeck.core.plugins.BasePluggableProviderService;
 import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader;
+import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.logging.LogFileStoragePlugin;
 
 /** $INTERFACE is ... User: greg Date: 5/29/13 Time: 1:40 PM */
 public class LogFileStoragePluginProviderService extends BasePluggableProviderService<LogFileStoragePlugin> {
-    public static final String SERVICE_NAME = "LogFileStorage";
+    public static final String SERVICE_NAME = ServiceNameConstants.LogFileStorage;
     private ServiceProviderLoader rundeckServerServiceProviderLoader;
 
     public LogFileStoragePluginProviderService() {
