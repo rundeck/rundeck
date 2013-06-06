@@ -66,7 +66,7 @@ class ScriptStreamingLogWriterPlugin implements StreamingLogWriterPlugin, Descri
     }
 
     @Override
-    void addEvent(LogEvent event) {
+    synchronized void addEvent(LogEvent event) {
         def closure = handlers.addEvent
         if (closure.getMaximumNumberOfParameters() == 2) {
             def Closure newclos = closure.clone()
