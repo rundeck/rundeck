@@ -41,9 +41,9 @@ class ScriptStreamingLogReaderPlugin implements StreamingLogReaderPlugin, Descri
         this.configuration = new HashMap(configuration)
     }
     @Override
-    void initialize(Map<String, ? extends Object> context) {
+    boolean initialize(Map<String, ? extends Object> context) {
         this.context = context
-        readInfo()
+        return readInfo()
     }
 
     Date getLastModified() {
@@ -83,13 +83,14 @@ class ScriptStreamingLogReaderPlugin implements StreamingLogReaderPlugin, Descri
         readNextEvent()
     }
 
-    private void readInfo() {
+    private boolean readInfo() {
         logger.debug("read info")
         def closure = handlers.info
         if (!closure) {
             throw new RuntimeException("LogReaderPlugin: 'info' closure not defined for plugin ${description.name}")
         }
         def metadata = [:]
+        def readystate=false
         if (closure.getMaximumNumberOfParameters() == 2) {
             def Closure newclos = closure.clone()
             newclos.resolveStrategy = Closure.DELEGATE_ONLY
@@ -113,7 +114,9 @@ class ScriptStreamingLogReaderPlugin implements StreamingLogReaderPlugin, Descri
             if (metadata.totalSize) {
                 totalSize = metadata.totalSize
             }
+            readystate=metadata.ready
         }
+        return readystate
     }
 
     @Override

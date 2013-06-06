@@ -10,9 +10,10 @@ import java.util.Map;
 public interface StreamingLogReaderPlugin extends StreamingLogReader {
     /**
      * Sets the execution context information for the log information being requested, will be called
-     * prior to other methods {@link #openStream(Long)}
-     * @param context
+     * prior to other methods {@link #openStream(Long)}, and must return true to indicate the stream is ready to be open, false otherwise.
+     * @param context execution context data
+     * @return true if the stream is ready to open
      */
-    public void initialize(Map<String, ? extends Object> context);
+    public boolean initialize(Map<String, ? extends Object> context);
 
 }

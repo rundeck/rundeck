@@ -93,13 +93,17 @@ class LoggingService {
         if(pluginName){
             HashMap<String, String> jobcontext = ExecutionService.exportContextForExecution(execution)
             log.debug("Using log reader plugin ${pluginName}")
-
+            boolean ready=false
             try {
                 def plugin = pluginService.configurePlugin(pluginName, streamingLogReaderPluginProviderService,
                         frameworkService.getFrameworkPropertyResolver(execution.project), PropertyScope.Instance)
                 if (plugin != null) {
-                    plugin.initialize(jobcontext)
-                    return new ExecutionLogReader(state: ExecutionLogState.AVAILABLE, reader: plugin)
+                    ready=plugin.initialize(jobcontext)
+                    if(ready){
+                        return new ExecutionLogReader(state: ExecutionLogState.AVAILABLE, reader: plugin)
+                    }else{
+                        return new ExecutionLogReader(state: ExecutionLogState.WAITING, reader: null)
+                    }
                 }
             } catch (Throwable e) {
                 log.error("Failed to initialize reader plugin ${pluginName}: " + e.message)
