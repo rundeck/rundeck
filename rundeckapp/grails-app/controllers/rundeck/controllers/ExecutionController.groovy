@@ -258,7 +258,7 @@ class ExecutionController {
         ExecutionLogReader reader
         def error=null
         reader = loggingService.getLogReader(e)
-        log.error("Reader, state: ${reader.state}, reader: ${reader.reader}")
+        log.debug("Reader, state: ${reader.state}, reader: ${reader.reader}")
         if (null == reader  || reader.state == ExecutionLogState.NOT_FOUND) {
             def errmsg = "No output"
             //execution has not be started yet
