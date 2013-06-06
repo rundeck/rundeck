@@ -1,7 +1,7 @@
 package rundeck.services
 
-import com.dtolabs.rundeck.app.internal.logging.LogOutputStream
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
+import com.dtolabs.rundeck.app.internal.logging.ThreadBoundLogOutputStream
+import com.dtolabs.rundeck.core.execution.Contextual
 import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.StreamingLogWriter
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
@@ -117,7 +117,7 @@ class LoggingService {
         return logFileStorageService.requestLogFileReader(execution)
     }
 
-    public OutputStream createLogOutputStream(StreamingLogWriter logWriter, LogLevel level) {
-        return new LogOutputStream(logWriter, level)
+    public OutputStream createLogOutputStream(StreamingLogWriter logWriter, LogLevel level, Contextual listener) {
+        return new ThreadBoundLogOutputStream(logWriter, level, listener)
     }
 }

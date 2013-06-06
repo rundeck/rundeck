@@ -518,7 +518,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
             NodeRecorder recorder = new NodeRecorder();//TODO: use workflow-aware listener for nodes
 
             //create listener to handle log messages and Ant build events
-            ExecutionListener executionListener = new WorkflowExecutionListenerImpl(recorder, new ContextLogWriter(loghandler),false,null);
+            WorkflowExecutionListenerImpl executionListener = new WorkflowExecutionListenerImpl(recorder, new ContextLogWriter(loghandler),false,null);
             StepExecutionContext executioncontext = createContext(execution, null,framework, execution.user, jobcontext, executionListener, null,extraParams, extraParamsExposed)
             final cis = StepExecutionService.getInstanceForFramework(framework);
             cis.registerInstance(JobExecutionItem.STEP_EXECUTION_TYPE, this)
@@ -530,8 +530,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
             }
             //install custom outputstreams for System.out and System.err for this thread and any child threads
             //output will be sent to loghandler instead.
-            sysThreadBoundOut.installThreadStream(loggingService.createLogOutputStream(loghandler, LogLevel.NORMAL));
-            sysThreadBoundErr.installThreadStream(loggingService.createLogOutputStream(loghandler, LogLevel.ERROR));
+            sysThreadBoundOut.installThreadStream(loggingService.createLogOutputStream(loghandler, LogLevel.NORMAL, executionListener));
+            sysThreadBoundErr.installThreadStream(loggingService.createLogOutputStream(loghandler, LogLevel.ERROR, executionListener));
             //create service object for the framework and listener
             Thread thread = new WorkflowExecutionServiceThread(framework.getWorkflowExecutionService(),item, executioncontext)
             thread.start()
