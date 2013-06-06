@@ -44,6 +44,11 @@ rundeckPlugin(StreamingLogReaderPlugin){
             totalSize: data?.total?:file.length()
         ]
     }
+    /**
+     * The `open` closure is called to begin reading events from the stream.
+     * It is passed the execution data, the plugin configuration, and an offset.
+     * It should return a Map containing any context to store between calls.
+     */
     open { Map execution, Map configuration, long offset ->
         //execution = [id: Long, user: String, jobName: String, dateStarted: Date]
         def file=fileForExecution(execution,configuration)
@@ -71,6 +76,19 @@ rundeckPlugin(StreamingLogReaderPlugin){
             file:file,iterator:mapping,next:next,json:jp,
         ]
     }
+    /**
+     * Next is called to produce the next event, it should return a Map
+     * containing: [event: (event data), offset: (next offset), complete: (true/false)].  
+     * The event data can be a LogEvent, or a Map containing:
+     * [
+     * message: (String),
+     * loglevel: (String or LogLevel),
+     * datetime: (long or Date),
+     * eventType: (String),
+     * metadata: (Map),
+     * ]
+     * `complete` should be true if no more events will ever be available.
+     */
     next { context->
         try{
             Map value=null
@@ -101,6 +119,9 @@ rundeckPlugin(StreamingLogReaderPlugin){
         }
         return [event:null,offset:context.next]
     }
+    /**
+     * Close is called to finish the read stream
+     */
     close{ context->
         //perform any close action
         context.json.close()

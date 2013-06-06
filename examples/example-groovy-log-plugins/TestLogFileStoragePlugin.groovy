@@ -10,6 +10,9 @@ rundeckPlugin(LogFileStoragePlugin){
         outputDir="/tmp"
         outputDir required:true, description: "Location of log files"
     }
+    /**
+     * Called to determine the storage state, return on of: AVAILABLE, PENDING or NOT_FOUND
+     */
     state { Map execution, Map configuration->
         def id = execution.execid
         //return state of storage given the id
@@ -18,6 +21,10 @@ rundeckPlugin(LogFileStoragePlugin){
         outfile.exists()? AVAILABLE : tmpfile.exists()? PENDING : NOT_FOUND
     }
 
+    /**
+     * Called to store a log file, called with the execution data, configuration properties, and an InputStream.
+     * Return true to indicate success.
+     */
     store { Map execution, Map configuration, InputStream source->
         def id = execution.execid
         //use gzip
@@ -40,6 +47,10 @@ rundeckPlugin(LogFileStoragePlugin){
         true
     }
 
+    /**
+     * Called to retrieve a log file, called with the execution data, configuration properties, and an OutputStream.
+     * Return true to indicate success.
+     */
     retrieve {  Map execution, Map configuration, OutputStream out->
         def id = execution.execid
 
