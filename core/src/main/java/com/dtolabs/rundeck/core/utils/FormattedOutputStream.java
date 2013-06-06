@@ -35,6 +35,7 @@ import java.util.Map;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision$
+ * @deprecated
  */
 public class FormattedOutputStream extends FilterOutputStream {
     Reformatter reformatter;

@@ -51,6 +51,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.utils.*;
 
 import java.io.File;
+import java.io.FilterOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
@@ -81,6 +82,8 @@ class ExecutionServiceImpl implements ExecutionService {
         boolean success = false;
         DispatcherResult result = null;
         BaseExecutionResult baseExecutionResult = null;
+        final LogReformatter formatter = createLogReformatter(null, context.getExecutionListener());
+        final ThreadStreamFormatter loggingReformatter = new ThreadStreamFormatter(formatter).invoke();
         try {
             result = dispatchToNodes(context, item);
             success = result.isSuccess();
@@ -88,6 +91,7 @@ class ExecutionServiceImpl implements ExecutionService {
         } catch (DispatcherException e) {
             baseExecutionResult = new BaseExecutionResult(result, success, e);
         } finally {
+            loggingReformatter.resetOutputStreams();
             if (null != context.getExecutionListener()) {
                 context.getExecutionListener().finishStepExecution(baseExecutionResult, context, item);
             }
@@ -109,12 +113,9 @@ class ExecutionServiceImpl implements ExecutionService {
         }
 
         StepExecutionResult result = null;
-        final LogReformatter formatter = createLogReformatter(null, context.getExecutionListener());
-        final ThreadStreamFormatter loggingReformatter = new ThreadStreamFormatter(formatter).invoke();
         try {
             result = executor.executeWorkflowStep(context, item);
         } finally {
-            loggingReformatter.resetOutputStreams();
             if (null != context.getExecutionListener()) {
                 context.getExecutionListener().finishStepExecution(result, context, item);
             }
@@ -141,8 +142,6 @@ class ExecutionServiceImpl implements ExecutionService {
         }
         //create node context for node and substitute data references in command
 
-        final LogReformatter formatter = createLogReformatter(node, context.getExecutionListener());
-        final ThreadStreamFormatter loggingReformatter = new ThreadStreamFormatter(formatter).invoke();
         NodeStepResult result = null;
         try {
             final ExecutionContextImpl nodeContext = new ExecutionContextImpl.Builder(context)
@@ -153,7 +152,6 @@ class ExecutionServiceImpl implements ExecutionService {
                 context.getExecutionListener().log(0, "Failed: " + result.toString());
             }
         } finally {
-            loggingReformatter.resetOutputStreams();
             if (null != context.getExecutionListener()) {
                 context.getExecutionListener().finishExecuteNodeStep(result, context, item, node);
             }
@@ -212,13 +210,10 @@ class ExecutionServiceImpl implements ExecutionService {
         } catch (ExecutionServiceException e) {
             throw new FileCopierException(e.getMessage(), ServiceFailureReason.ServiceFailure, e);
         }
-        final LogReformatter formatter = createLogReformatter(node, context.getExecutionListener());
-        final ThreadStreamFormatter loggingReformatter = new ThreadStreamFormatter(formatter).invoke();
         String result = null;
         try {
             result = copier.copyFileStream(context, input, node);
         } finally {
-            loggingReformatter.resetOutputStreams();
             if (null != context.getExecutionListener()) {
                 context.getExecutionListener().finishFileCopy(result, context, node);
             }
@@ -237,13 +232,10 @@ class ExecutionServiceImpl implements ExecutionService {
         } catch (ExecutionServiceException e) {
             throw new FileCopierException(e.getMessage(), ServiceFailureReason.ServiceFailure, e);
         }
-        final LogReformatter formatter = createLogReformatter(node, context.getExecutionListener());
-        final ThreadStreamFormatter loggingReformatter = new ThreadStreamFormatter(formatter).invoke();
         String result = null;
         try {
             result = copier.copyFile(context, file, node);
         } finally {
-            loggingReformatter.resetOutputStreams();
             if (null != context.getExecutionListener()) {
                 context.getExecutionListener().finishFileCopy(result, context, node);
             }
@@ -262,13 +254,10 @@ class ExecutionServiceImpl implements ExecutionService {
         } catch (ExecutionServiceException e) {
             throw new FileCopierException(e.getMessage(), ServiceFailureReason.ServiceFailure, e);
         }
-        final LogReformatter formatter = createLogReformatter(node, context.getExecutionListener());
-        final ThreadStreamFormatter loggingReformatter = new ThreadStreamFormatter(formatter).invoke();
         String result = null;
         try {
             result = copier.copyScriptContent(context, script, node);
         } finally {
-            loggingReformatter.resetOutputStreams();
             if (null != context.getExecutionListener()) {
                 context.getExecutionListener().finishFileCopy(result, context, node);
             }
@@ -303,13 +292,10 @@ class ExecutionServiceImpl implements ExecutionService {
             }
         }
 
-        final LogReformatter formatter = createLogReformatter(node, context.getExecutionListener());
-        final ThreadStreamFormatter loggingReformatter = new ThreadStreamFormatter(formatter).invoke();
         NodeExecutorResult result = null;
         try {
             result = nodeExecutor.executeCommand(nodeContext, nodeCommand, node);
         } finally {
-            loggingReformatter.resetOutputStreams();
             if (null != context.getExecutionListener()) {
                 context.getExecutionListener().finishNodeExecution(result, context, command, node);
             }
@@ -321,6 +307,9 @@ class ExecutionServiceImpl implements ExecutionService {
         return SERVICE_NAME;
     }
 
+    /**
+     * @deprecated
+     */
     private static class ContextLoggerExecutionListenerMapGenerator implements MapGenerator<String,String>{
         final ContextLoggerExecutionListener ctxListener;
 
@@ -335,6 +324,7 @@ class ExecutionServiceImpl implements ExecutionService {
     /**
      * Create a LogReformatter for the specified node and listener. If the listener is a {@link ContextLoggerExecutionListener},
      * then the context map data is used by the reformatter.
+     * @deprecated
      */
     public static LogReformatter createLogReformatter(final INodeEntry node, final ExecutionListener listener) {
         LogReformatter gen;
@@ -360,6 +350,9 @@ class ExecutionServiceImpl implements ExecutionService {
         return gen;
     }
 
+    /**
+     * @deprecated
+     */
     static class ThreadStreamFormatter {
         final LogReformatter gen;
         private ThreadBoundOutputStream threadBoundSysOut;

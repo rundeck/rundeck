@@ -30,7 +30,7 @@ import java.util.*;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public interface ContextLoggerExecutionListener extends ExecutionListener{
+public interface ContextLoggerExecutionListener extends ExecutionListener,Contextual{
 
     /**
      * Return the current logging context, or null.
