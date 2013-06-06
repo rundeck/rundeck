@@ -52,7 +52,7 @@ class FSFileLineIterator implements OffsetIterator<String>{
     }
     @Override
     boolean hasNext() {
-        offset<raf.channel.size()
+        buffer.size()>0
     }
 
     @Override
