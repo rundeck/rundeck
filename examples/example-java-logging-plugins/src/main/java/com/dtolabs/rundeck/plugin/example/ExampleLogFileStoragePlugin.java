@@ -3,6 +3,7 @@ package com.dtolabs.rundeck.plugin.example;
 import com.dtolabs.rundeck.core.logging.LogFileState;
 import com.dtolabs.rundeck.core.logging.LogFileStorage;
 import com.dtolabs.rundeck.core.plugins.Plugin;
+import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty;
 import com.dtolabs.rundeck.plugins.logging.LogFileStoragePlugin;
@@ -16,7 +17,7 @@ import java.util.logging.Logger;
 /**
  * Example plugin which copies log files to another directory
  */
-@Plugin(service = "LogFileStorage", name = "example")
+@Plugin(service = ServiceNameConstants.LogFileStorage, name = "example")
 @PluginDescription(title = "Example Log File Storage Plugin", description = "An example Plugin for Log File Storage")
 public class ExampleLogFileStoragePlugin implements LogFileStoragePlugin {
     static final Logger log = Logger.getLogger(ExampleLogFileStoragePlugin.class.getName());

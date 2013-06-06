@@ -22,8 +22,12 @@ rundeckPlugin(StreamingLogReaderPlugin){
         new File(config.outputDir,"plugin-log-${execution.execid}.json.index")
     }
     /**
-     * The 'info' closure is called to retrieve some metadata about the stream.
+     * The 'info' closure is called to retrieve some metadata about the stream, 
+     * such as whether it is available to read, totalSize of the content, and last
+     *  modification time
+     * 
      * It should return a Map containing these two entries:
+     *  `ready` : a boolean indicating whether 'open' will work
      * `lastModified`: Long (unix epoch) or Date indicating last modification of the log
      * `totalSize`: Long indicating total size of the log, it doesn't have to indicate bytes,
      *     merely a measurement of total data size
@@ -41,7 +45,8 @@ rundeckPlugin(StreamingLogReaderPlugin){
         // it SHOULD contain these two elements:
         [
             lastModified: file.lastModified(),
-            totalSize: data?.total?:file.length()
+            totalSize: data?.total?:file.length(),
+            ready: file.exists()
         ]
     }
     /**
@@ -72,7 +77,7 @@ rundeckPlugin(StreamingLogReaderPlugin){
         }
         MappingIterator<Map> mapping = mapper.readValues(jp, Map.class);
         //return map of context data for your plugin to reuse later,
-       [
+        [
             file:file,iterator:mapping,next:next,json:jp,
         ]
     }

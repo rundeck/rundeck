@@ -1,5 +1,6 @@
 package com.dtolabs.rundeck.plugin.example;
 
+import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty;
 import com.dtolabs.rundeck.plugins.logging.StreamingLogWriterPlugin;
 import com.dtolabs.rundeck.core.logging.LogEvent;
@@ -11,7 +12,7 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.util.*;
 
-@Plugin(service = "StreamingLogWriter", name = "example")
+@Plugin(service = ServiceNameConstants.StreamingLogWriter, name = "example")
 @PluginDescription(title = "Example Streaming Log Writer Plugin", description = "An example Plugin for Streaming Log " +
         "Writer")
 public class ExampleStreamingLogWriterPlugin implements StreamingLogWriterPlugin {
@@ -47,24 +48,24 @@ public class ExampleStreamingLogWriterPlugin implements StreamingLogWriterPlugin
     }
 
     /**
-     * Add a new entry
+     * Add a new event
      *
-     * @param entry
+     * @param event
      */
-    public void addEntry(LogEvent entry) {
+    public void addEvent(LogEvent event) {
         try {
-            write(getString(entry));
+            write(getString(event));
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private String getString(LogEvent entry) {
-        return (entry.getEventType() != null ? (entry.getEventType()+": ") : "")
-                + " " + entry.getDatetime()
-                + " " + entry.getLoglevel()
-                + " " + entry.getMessage()
-                + " " + entry.getMetadata()
+    private String getString(LogEvent event) {
+        return (event.getEventType() != null ? (event.getEventType()+": ") : "")
+                + " " + event.getDatetime()
+                + " " + event.getLoglevel()
+                + " " + event.getMessage()
+                + " " + event.getMetadata()
                 ;
     }
 

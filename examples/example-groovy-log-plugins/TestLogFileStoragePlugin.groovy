@@ -7,7 +7,7 @@ import java.util.zip.*
 rundeckPlugin(LogFileStoragePlugin){
     configuration{
         filebase defaultValue:"log-", required:true
-        outputDir="/tmp"
+        outputDir='/tmp'
         outputDir required:true, description: "Location of log files"
     }
     /**
@@ -41,7 +41,7 @@ rundeckPlugin(LogFileStoragePlugin){
                 gzip.flush()       
                 gzip.close()
             }
-            outfile.renameTo(new File(outputDir,"${configuration.filebase}${id}.gz"))
+            outfile.renameTo(new File(configuration.outputDir,"${configuration.filebase}${id}.gz"))
         }
         source.close()
         true
