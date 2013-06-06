@@ -243,10 +243,11 @@ Create a Java class that implements the [StreamingLogReaderPlugin](https://githu
     public interface StreamingLogReaderPlugin extends StreamingLogReader {
         /**
          * Sets the execution context information for the log information being requested, will be called
-         * prior to other methods {@link #openStream(Long)}
-         * @param context
+         * prior to other methods {@link #openStream(Long)}, and must return true to indicate the stream is ready to be open, false otherwise.
+         * @param context execution context data
+         * @return true if the stream is ready to open
          */
-        public void initialize(Map<String, ? extends Object> context);
+        public boolean initialize(Map<String, ? extends Object> context);
 
     }
 
@@ -309,7 +310,7 @@ Additional methods that must be implemented from super-interfaces:
 The plugin is used in this manner:
 
 1. When the plugin is instantiated, any configuration properties defined that have values to be resolved are set on the plugin instance
-2. the `initialize` method is called with a map of [contextual data](#execution-context-data) about the execution
+2. the `initialize` method is called with a map of [contextual data](#execution-context-data) about the execution, if the method returns false, then clients are told that the log stream is pending.
 2. the `getLastModified` method may be called, to determine if there are new events since a read sequence
 3. The `openStream` method is called, possibly with an offset larger than 0, which indicates the event stream should begin at the specified offset
 4. The `java.util.Iterator` methods will be called to iterate all available LogEvents
@@ -340,8 +341,12 @@ Define these closures inside your definition:
 `info`
 
     /**
-     * The 'info' closure is called to retrieve some metadata about the stream.
+     * The 'info' closure is called to retrieve some metadata about the stream, 
+     * such as whether it is available to read, totalSize of the content, and last
+     *  modification time
+     * 
      * It should return a Map containing these two entries:
+     *  `ready` : a boolean indicating whether 'open' will work
      * `lastModified`: Long (unix epoch) or Date indicating last modification of the log
      * `totalSize`: Long indicating total size of the log, it doesn't have to indicate bytes,
      *     merely a measurement of total data size
@@ -351,8 +356,9 @@ Define these closures inside your definition:
         //return map containing metadata about the stream
         // it SHOULD contain these two elements:
         [
-            lastModified: file.lastModified(),
-            totalSize: data?.total?:file.length()
+            lastModified: determineLastModified(),
+            totalSize: determineDataSize(),
+            ready: isReady()
         ]
     }
 
