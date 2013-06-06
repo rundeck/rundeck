@@ -28,7 +28,6 @@ import com.dtolabs.rundeck.core.logging.LogLevel
  * 
  */
 class DefaultLogEvent implements LogEvent{
-    long entryNum
     LogLevel loglevel
     Date datetime
     String message
@@ -52,7 +51,6 @@ class DefaultLogEvent implements LogEvent{
     @Override
     public String toString() {
         return "DefaultLogEvent{" +
-               "entryNum=" + entryNum +
                ", eventType=" + eventType +
                ", loglevel=" + loglevel +
                ", datetime=" + datetime +
