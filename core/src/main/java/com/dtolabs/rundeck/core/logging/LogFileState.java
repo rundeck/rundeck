@@ -1,6 +1,8 @@
 package com.dtolabs.rundeck.core.logging;
 
-/** $INTERFACE is ... User: greg Date: 5/29/13 Time: 2:01 PM */
+/**
+ * Represents the state of a log file
+ **/
 public enum LogFileState {
     /** Not found at all */
     NOT_FOUND,
