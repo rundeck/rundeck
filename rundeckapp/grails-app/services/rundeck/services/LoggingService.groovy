@@ -7,6 +7,7 @@ import com.dtolabs.rundeck.core.logging.StreamingLogWriter
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogReaderPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogWriterPluginProviderService
+import org.codehaus.groovy.grails.commons.ConfigurationHolder
 import rundeck.Execution
 import rundeck.services.logging.DisablingLogWriter
 import rundeck.services.logging.ExecutionLogReader
@@ -24,11 +25,8 @@ class LoggingService {
     def StreamingLogReaderPluginProviderService streamingLogReaderPluginProviderService
     def grailsApplication
 
-    def configure() {
-    }
-
     public boolean isLocalFileStorageEnabled(){
-        boolean fileDisabled = grailsApplication.config.rundeck?.execution?.logs?.localFileStorageEnabled in ['false', false]
+        boolean fileDisabled = ConfigurationHolder.config?.rundeck?.execution?.logs?.localFileStorageEnabled in ['false', false]
         boolean readerPluginConfigured= getConfiguredStreamingReaderPluginName()
         return !(fileDisabled && readerPluginConfigured)
     }
@@ -74,16 +72,16 @@ class LoggingService {
         return writer
     }
 
-    private String getConfiguredStreamingReaderPluginName() {
-        if (grailsApplication.config.rundeck?.execution?.logs?.streamingReaderPlugin) {
-            return grailsApplication.config.rundeck?.execution?.logs?.streamingReaderPlugin.toString()
+    String getConfiguredStreamingReaderPluginName() {
+        if (ConfigurationHolder.config?.rundeck?.execution?.logs?.streamingReaderPlugin) {
+            return ConfigurationHolder.config?.rundeck?.execution?.logs?.streamingReaderPlugin.toString()
         }
         null
     }
 
-    private List<String> listConfiguredStreamingWriterPluginNames() {
-        if(grailsApplication.config?.rundeck?.execution?.logs?.streamingWriterPlugins){
-            return grailsApplication.config?.rundeck?.execution?.logs?.streamingWriterPlugins.toString().split(/,\s*/) as List
+    List<String> listConfiguredStreamingWriterPluginNames() {
+        if(ConfigurationHolder.config?.rundeck?.execution?.logs?.streamingWriterPlugins){
+            return ConfigurationHolder.config?.rundeck?.execution?.logs?.streamingWriterPlugins.toString().split(/,\s*/) as List
         }
         []
     }
@@ -93,22 +91,22 @@ class LoggingService {
         if(pluginName){
             HashMap<String, String> jobcontext = ExecutionService.exportContextForExecution(execution)
             log.debug("Using log reader plugin ${pluginName}")
-            boolean ready=false
-            try {
-                def plugin = pluginService.configurePlugin(pluginName, streamingLogReaderPluginProviderService,
-                        frameworkService.getFrameworkPropertyResolver(execution.project), PropertyScope.Instance)
-                if (plugin != null) {
-                    ready=plugin.initialize(jobcontext)
-                    if(ready){
+            def plugin = pluginService.configurePlugin(pluginName, streamingLogReaderPluginProviderService,
+                    frameworkService.getFrameworkPropertyResolver(execution.project), PropertyScope.Instance)
+            if (plugin != null) {
+                try {
+                    if(plugin.initialize(jobcontext)){
                         return new ExecutionLogReader(state: ExecutionLogState.AVAILABLE, reader: plugin)
                     }else{
                         return new ExecutionLogReader(state: ExecutionLogState.WAITING, reader: null)
                     }
+                } catch (Throwable e) {
+                    log.error("Failed to initialize reader plugin ${pluginName}: " + e.message)
+                    log.debug("Failed to initialize reader plugin ${pluginName}: " + e.message, e)
                 }
-            } catch (Throwable e) {
-                log.error("Failed to initialize reader plugin ${pluginName}: " + e.message)
-                log.debug("Failed to initialize reader plugin ${pluginName}: " + e.message, e)
-            }
+            }else[
+                log.error("Failed to create reader plugin ${pluginName}")
+            ]
         }
 
         if(pluginName){

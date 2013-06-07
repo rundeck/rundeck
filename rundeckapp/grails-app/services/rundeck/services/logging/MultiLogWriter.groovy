@@ -13,7 +13,7 @@ import org.apache.log4j.Logger
  */
 class MultiLogWriter implements StreamingLogWriter {
     public static final Logger log = Logger.getLogger(MultiLogWriter.class)
-    private List<StreamingLogWriter> writers
+    List<StreamingLogWriter> writers
 
     MultiLogWriter (List<StreamingLogWriter> writers) {
         this.writers = new ArrayList<StreamingLogWriter>(writers)
