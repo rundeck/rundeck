@@ -20,7 +20,6 @@ rundeckPlugin(StreamingLogWriterPlugin){
      */
     open { Map execution, Map config ->
         //in this example we open a file output stream to store data in JSON format.
-        System.err.println("Configured outputdir: ${config.outputDir}")
         def outputDir=new File(config.outputDir)
         if(!outputDir.isDirectory() && !outputDir.mkdirs()){
             throw new RuntimeException("Couldn't create outputdir: ${config.outputDir}")

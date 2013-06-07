@@ -117,7 +117,6 @@ class ScriptPluginConfigBuilder {
             buildProperty(name, (Map)list[0], (Closure)list[1])
             return true
         } else {
-            System.err.println("missing method: ${name}")
             throw new MissingMethodException(name.toString(), getClass(), list.toArray(), false);
         }
     }
