@@ -29,7 +29,7 @@ import com.dtolabs.rundeck.core.logging.ReverseSeekingStreamingLogReader
  * 
  */
 class FSStreamingLogReader implements ReverseSeekingStreamingLogReader {
-    private File file
+    File file
     private String encoding
     RundeckLogFormat rundeckLogFormat
     private boolean detectedFormat

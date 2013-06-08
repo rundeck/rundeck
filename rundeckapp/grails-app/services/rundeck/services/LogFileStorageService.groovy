@@ -11,6 +11,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.logging.LogFileStoragePlugin
 import com.dtolabs.rundeck.server.plugins.services.LogFileStoragePluginProviderService
+import org.codehaus.groovy.grails.commons.ConfigurationHolder
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.core.task.AsyncTaskExecutor
 import rundeck.Execution
@@ -34,7 +35,6 @@ class LogFileStorageService implements InitializingBean{
     LogFileStoragePluginProviderService logFileStoragePluginProviderService
     PluginService pluginService
     def frameworkService
-    def grailsApplication
     def AsyncTaskExecutor logFileTaskExecutor
     def executorService
 
@@ -71,6 +71,12 @@ class LogFileStorageService implements InitializingBean{
         logFileTaskExecutor.execute( new TaskRunner<Map>(retrievalRequests,{ Map task ->
             runRetrievalRequest(task)
         }))
+    }
+    List getCurrentRetrievalRequests(){
+        return new ArrayList(retrievalRequests)
+    }
+    List getCurrentStorageRequests(){
+        return new ArrayList(storageRequests)
     }
     /**
      * Run a storage request task, and if it fails submit a retry depending on the configured retry count and delay
@@ -124,7 +130,7 @@ class LogFileStorageService implements InitializingBean{
      * @return
      */
     int getConfiguredStorageRetryCount() {
-        def count = grailsApplication.config.rundeck?.execution?.logs?.fileStorage?.retryCount ?: 0
+        def count = ConfigurationHolder.config.rundeck?.execution?.logs?.fileStorage?.retryCount ?: 0
         if(count instanceof String){
             count = count.toInteger()
         }
@@ -135,7 +141,7 @@ class LogFileStorageService implements InitializingBean{
      * @return
      */
     int getConfiguredStorageRetryDelay() {
-        def delay = grailsApplication.config.rundeck?.execution?.logs?.fileStorage?.retryDelay ?: 0
+        def delay = ConfigurationHolder.config.rundeck?.execution?.logs?.fileStorage?.retryDelay ?: 0
         if (delay instanceof String) {
             delay = delay.toInteger()
         }
@@ -146,8 +152,8 @@ class LogFileStorageService implements InitializingBean{
      * Return the configured plugin name
      * @return
      */
-    private String getConfiguredPluginName() {
-        def plugin = grailsApplication.config.rundeck?.execution?.logs?.fileStoragePlugin
+    String getConfiguredPluginName() {
+        def plugin = ConfigurationHolder.config.rundeck?.execution?.logs?.fileStoragePlugin
         return (plugin instanceof String) ? plugin : null
     }
     /**
@@ -217,7 +223,7 @@ class LogFileStorageService implements InitializingBean{
      * @return
      */
     private File getFileForExecution(Execution execution) {
-        if (frameworkService.isClusterModeEnabled() && execution.serverNodeUUID != frameworkService.getServerUUID()) {
+        if (frameworkService.isClusterModeEnabled() && (execution.serverNodeUUID != frameworkService.getServerUUID())) {
             //execution on another rundeck server, generate a local filepath
             return generateFilepathForExecution(execution)
         }
@@ -243,7 +249,7 @@ class LogFileStorageService implements InitializingBean{
      * @return
      */
     private File getFileForKey(String key) {
-        new File(new File(frameworkService.rundeckbase, "var/logs/rundeck"), key)
+        new File(new File(frameworkService.rundeckBase, "var/logs/rundeck"), key)
     }
 
     /**
@@ -296,6 +302,7 @@ class LogFileStorageService implements InitializingBean{
         def state = ExecutionLogState.forFileStates(local, remote, remoteNotFound)
 
         log.debug("getLogFileState(${execution.id},${plugin}): ${state} forFileStates: ${local}, ${remote}")
+        System.out.println("getLogFileState(${execution.id},${plugin}): ${state} forFileStates: ${local}, ${remote}")
         return state
     }
 
