@@ -39,7 +39,6 @@ class BootStrap {
              log.error("using rdeck.base config property: ${rdeckBase}");
          }
          frameworkService.rundeckbase = rdeckBase
-         loggingService.configure()
          def clusterMode = false
          def serverNodeUUID = null
          if (Environment.getCurrent()!=Environment.TEST) {
