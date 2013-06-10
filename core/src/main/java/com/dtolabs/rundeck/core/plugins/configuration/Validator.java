@@ -51,6 +51,16 @@ public class Validator {
         public boolean isValid() {
             return 0 == errors.size();
         }
+
+        @Override
+        public String toString() {
+            if(isValid()) {
+                return "Property validation OK.";
+            }else{
+                return "Property validation FAILED. " +
+                        "errors=" + errors ;
+            }
+        }
     }
 
     /**

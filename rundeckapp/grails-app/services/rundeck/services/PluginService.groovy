@@ -6,8 +6,8 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.server.plugins.PluginRegistry
-import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 
 class PluginService {
 
@@ -46,7 +46,19 @@ class PluginService {
         return null
     }
 
+    /**
+     * Configure a plugin given only instance configuration
+     * @param name name
+     * @param configuration instance configuration
+     * @param service service
+     * @return plugin, or null if configuration or plugin loading failed
+     */
     def <T> T configurePlugin(String name, Map configuration, PluggableProviderService<T> service) {
+        def validation = rundeckPluginRegistry?.validatePluginByName(name, service, configuration)
+        if (validation != null && !validation.valid) {
+            logValidationErrors(service.name, name, validation.report )
+            return null
+        }
         def bean = rundeckPluginRegistry?.configurePluginByName(name, service, configuration)
         if (bean != null) {
             return (T) bean
@@ -63,7 +75,12 @@ class PluginService {
      * @return configured plugin instance, or null if not found
      */
     def <T> T configurePlugin(String name, Map configuration, String projectName, Framework framework, PluggableProviderService<T> service) {
-        def bean = rundeckPluginRegistry?.configurePluginByName(name, service,framework,projectName, configuration)
+        def validation = rundeckPluginRegistry?.validatePluginByName(name, service, framework, projectName, configuration)
+        if (!validation.valid) {
+            logValidationErrors(service.name, name, validation.report)
+            return null
+        }
+        def bean = rundeckPluginRegistry?.configurePluginByName(name, service, framework, projectName, configuration)
         if (bean != null) {
             return (T) bean
         }
@@ -80,6 +97,12 @@ class PluginService {
      * @return configured plugin instance, or null if not found
      */
     def <T> T configurePlugin(String name, PluggableProviderService<T> service, PropertyResolver resolver, PropertyScope defaultScope) {
+        def validation = rundeckPluginRegistry?.validatePluginByName(name, service,
+                PropertyResolverFactory.createPrefixedResolver(resolver, name, service.name), defaultScope)
+        if(!validation.valid) {
+            logValidationErrors(service.name, name, validation.report)
+            return null
+        }
         def bean = rundeckPluginRegistry?.configurePluginByName(name, service,
                 PropertyResolverFactory.createPrefixedResolver(resolver, name, service.name), defaultScope)
 
@@ -88,6 +111,15 @@ class PluginService {
         }
         log.error("${service.name} not found: ${name}")
         return null
+    }
+
+    private void logValidationErrors(String svcName, String pluginName,Validator.Report report) {
+        def sb = new StringBuilder()
+        sb<< "${svcName}: configuration was not valid for plugin '${pluginName}': "
+        report?.errors.each { k, v ->
+            sb<<"${k}: ${v}\n"
+        }
+        log.error(sb.toString())
     }
 
     /**

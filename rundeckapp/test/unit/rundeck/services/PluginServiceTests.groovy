@@ -78,6 +78,8 @@ class PluginServiceTests extends GrailsUnitTestCase {
         boolean cpWithFrameworkCalled
         boolean cpWithResolverCalled
         boolean validateWithResolverCalled
+        boolean validateWithMapCalled
+        boolean validateWithFrameworkCalled
         boolean listPluginDescriptorsCalled
         Object plugin
         Map pluginDescriptor
@@ -106,6 +108,18 @@ class PluginServiceTests extends GrailsUnitTestCase {
         @Override
         Map validatePluginByName(String name, PluggableProviderService service, PropertyResolver resolver, PropertyScope defaultScope) {
             validateWithResolverCalled=true
+            return pluginValidation
+        }
+
+        @Override
+        Map validatePluginByName(String name, PluggableProviderService service, Framework framework, String project, Map instanceConfiguration) {
+            validateWithFrameworkCalled=true
+            return pluginValidation
+        }
+
+        @Override
+        Map validatePluginByName(String name, PluggableProviderService service, Map instanceConfiguration) {
+            validateWithMapCalled=true
             return pluginValidation
         }
 
@@ -213,9 +227,26 @@ class PluginServiceTests extends GrailsUnitTestCase {
         service.rundeckPluginRegistry = testReg
         def test = "Test configure"
         testReg.plugin= test
+        testReg.pluginValidation = [valid: true]
         assertFalse(testReg.cpbnMapCalled)
+        assertFalse(testReg.validateWithMapCalled)
         assertEquals(test, service.configurePlugin("blah", [:], new testProvider()))
         assertTrue(testReg.cpbnMapCalled)
+        assertTrue(testReg.validateWithMapCalled)
+    }
+    void testConfigurePluginByNameExistsInvalidConfiguration(){
+        mockLogging(PluginService)
+        def service = new PluginService()
+        def TestRegistry testReg = new TestRegistry()
+        service.rundeckPluginRegistry = testReg
+        def test = "Test configure"
+        testReg.plugin= test
+        testReg.pluginValidation = [valid: false]
+        assertFalse(testReg.cpbnMapCalled)
+        assertFalse(testReg.validateWithMapCalled)
+        assertNull(service.configurePlugin("blah", [:], new testProvider()))
+        assertFalse(testReg.cpbnMapCalled)
+        assertTrue(testReg.validateWithMapCalled)
     }
     void testConfigurePluginWithFrameworkExists(){
         mockLogging(PluginService)
@@ -224,9 +255,26 @@ class PluginServiceTests extends GrailsUnitTestCase {
         service.rundeckPluginRegistry = testReg
         def test = "Test configure"
         testReg.plugin= test
+        testReg.pluginValidation=[valid:true]
         assertFalse(testReg.cpWithFrameworkCalled)
+        assertFalse(testReg.validateWithFrameworkCalled)
         assertEquals(test, service.configurePlugin("blah",[:], "project",(Framework)null,new testProvider()))
         assertTrue(testReg.cpWithFrameworkCalled)
+        assertTrue(testReg.validateWithFrameworkCalled)
+    }
+    void testConfigurePluginWithFrameworkExistsInvalidConfiguration(){
+        mockLogging(PluginService)
+        def service = new PluginService()
+        def TestRegistry testReg = new TestRegistry()
+        service.rundeckPluginRegistry = testReg
+        def test = "Test configure"
+        testReg.plugin= test
+        testReg.pluginValidation=[valid:false]
+        assertFalse(testReg.cpWithFrameworkCalled)
+        assertFalse(testReg.validateWithFrameworkCalled)
+        assertNull(service.configurePlugin("blah",[:], "project",(Framework)null,new testProvider()))
+        assertFalse(testReg.cpWithFrameworkCalled)
+        assertTrue(testReg.validateWithFrameworkCalled)
     }
     void testConfigurePluginWithResolverExists(){
         mockLogging(PluginService)
@@ -235,9 +283,26 @@ class PluginServiceTests extends GrailsUnitTestCase {
         service.rundeckPluginRegistry = testReg
         def test = "Test configure"
         testReg.plugin= test
+        testReg.pluginValidation= [valid: true]
         assertFalse(testReg.cpWithResolverCalled)
+        assertFalse(testReg.validateWithResolverCalled)
         assertEquals(test, service.configurePlugin("blah",new testProvider(),null,null))
         assertTrue(testReg.cpWithResolverCalled)
+        assertTrue(testReg.validateWithResolverCalled)
+    }
+    void testConfigurePluginWithResolverExistsInvalidConfiguration(){
+        mockLogging(PluginService)
+        def service = new PluginService()
+        def TestRegistry testReg = new TestRegistry()
+        service.rundeckPluginRegistry = testReg
+        def test = "Test configure"
+        testReg.plugin= test
+        testReg.pluginValidation= [valid: false]
+        assertFalse(testReg.cpWithResolverCalled)
+        assertFalse(testReg.validateWithResolverCalled)
+        assertNull(service.configurePlugin("blah",new testProvider(),null,null))
+        assertFalse(testReg.cpWithResolverCalled)
+        assertTrue(testReg.validateWithResolverCalled)
     }
     void testValidatePlugin(){
         mockLogging(PluginService)

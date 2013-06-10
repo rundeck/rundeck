@@ -50,6 +50,26 @@ public interface PluginRegistry {
      * @return
      */
     Map validatePluginByName(String name, PluggableProviderService service, PropertyResolver resolver, PropertyScope defaultScope) ;
+
+    /**
+     * Create and configure a plugin instance with the given bean or provider name using the framework, project name and instance configuration map
+     * @param name name of bean or provider
+     * @param service provider service
+     * @param framework the framework
+     * @param project the project name
+     * @param instanceConfiguration config map
+     * @return
+     */
+    Map validatePluginByName(String name, PluggableProviderService service, Framework framework,
+                                    String project, Map instanceConfiguration);
+    /**
+     * Create and configure a plugin instance with the given bean or provider name using the instance configuration map
+     * @param name name of bean or provider
+     * @param service provider service
+     * @param instanceConfiguration config map
+     * @return
+     */
+    Map validatePluginByName(String name, PluggableProviderService service, Map instanceConfiguration);
     /**
      * Load a plugin instance with the given bean or provider name
      * @param name name of bean or provider

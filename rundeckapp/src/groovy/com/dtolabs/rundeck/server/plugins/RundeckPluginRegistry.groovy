@@ -88,6 +88,33 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
         plugin
     }
     /**
+     * Create and configure a plugin instance with the given bean or provider name using the framework, project name and instance configuration map
+     * @param name name of bean or provider
+     * @param service provider service
+     * @param framework the framework
+     * @param project the project name
+     * @param instanceConfiguration config map
+     * @return
+     */
+    public Map validatePluginByName(String name, PluggableProviderService service, Framework framework,
+                                    String project, Map instanceConfiguration) {
+        final PropertyResolver resolver = PropertyResolverFactory.createFrameworkProjectRuntimeResolver(framework,
+                project, instanceConfiguration, name, service.getName());
+        return validatePluginByName(name, service, resolver, PropertyScope.Instance)
+    }
+
+    /**
+     * Create and configure a plugin instance with the given bean or provider name using the instance configuration map
+     * @param name name of bean or provider
+     * @param service provider service
+     * @param instanceConfiguration config map
+     * @return
+     */
+    Map validatePluginByName(String name, PluggableProviderService service, Map instanceConfiguration) {
+        final PropertyResolver resolver = PropertyResolverFactory.createInstanceResolver(instanceConfiguration);
+        return validatePluginByName(name, service, resolver, PropertyScope.InstanceOnly)
+    }
+/**
      * Create and configure a plugin instance with the given bean or provider name using a property resolver and a
      * default property scope
      * @param name name of bean or provider
@@ -102,9 +129,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
         def description = pluginDesc['description']
         if (description && description instanceof Description) {
             def report = Validator.validate(resolver, description, defaultScope)
-            if (report.valid) {
-                result.valid = true
-            }
+            result.valid=report.valid
             result.report = report
         }
         result
