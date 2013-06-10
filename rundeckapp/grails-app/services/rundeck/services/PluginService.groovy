@@ -6,11 +6,12 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.server.plugins.PluginRegistry
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 
 class PluginService {
 
-    def RundeckPluginRegistry rundeckPluginRegistry
+    def PluginRegistry rundeckPluginRegistry
     def frameworkService
     static transactional = false
 
@@ -89,15 +90,27 @@ class PluginService {
         return null
     }
 
+    /**
+     * Configure a new plugin using a specific property resolver for configuration
+     * @param name provider name
+     * @param service service
+     * @param resolver property resolver for configuration properties
+     * @param defaultScope default plugin property scope
+     * @return configured plugin instance, or null if not found
+     */
+    def Map validatePlugin(String name, PluggableProviderService service, PropertyResolver resolver, PropertyScope defaultScope) {
+        return rundeckPluginRegistry?.validatePluginByName(name, service,
+                PropertyResolverFactory.createPrefixedResolver(resolver, name, service.name), defaultScope)
+    }
+
     def <T> Map listPlugins(PluggableProviderService<T> service) {
-        def plugins = [:]
-        plugins = rundeckPluginRegistry?.listPluginDescriptors(T, service)
+        def plugins = rundeckPluginRegistry?.listPluginDescriptors(T, service)
         //clean up name of any Groovy plugin without annotations that ends with the service name
         plugins.each { key, Map plugin ->
             def desc = plugin.description
             if (desc && desc instanceof Map) {
                 if (desc.name.endsWith(service.name)) {
-                    desc.name = desc.name.substring(service.name.length())
+                    desc.name = desc.name.substring(0,desc.name.length()-service.name.length())
                 }
             }
         }
