@@ -131,7 +131,8 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
 
         def test = new testStoragePlugin()
 
-        def writer=performWriterRequest(test, createExecution())
+        def execution = createExecution()
+        def writer=performWriterRequest(test, execution)
 
         assertNotNull(writer)
         assert writer instanceof EventStreamingLogWriter
@@ -145,9 +146,27 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         assert test.context!=null
 
         assertEquals(1, LogFileStorageRequest.list().size())
+        LogFileStorageRequest req = LogFileStorageRequest.list().first()
+        assertEquals(false, req.completed)
+        assertEquals(execution, req.execution)
+        assertEquals("test1", req.pluginName)
     }
 
-    private StreamingLogWriter performWriterRequest(testStoragePlugin test, Execution e) {
+    void testPluginLogFileWriterOnCloseShouldStartStorageRequest(){
+        ConfigurationHolder.config = [:]
+        ConfigurationHolder.config.rundeck.execution.logs.fileStoragePlugin = "test1"
+
+        def test = new testStoragePlugin()
+        LogFileStorageService svc
+        def writer=performWriterRequest(test, createExecution()){LogFileStorageService service->
+            svc=service
+            assertEquals(0, svc.getCurrentStorageRequests().size())
+        }
+        writer.close()
+        assertEquals(1, svc.getCurrentStorageRequests().size())
+    }
+
+    private StreamingLogWriter performWriterRequest(testStoragePlugin test, Execution e, Closure clos=null) {
         mockDomain(Execution)
         mockDomain(LogFileStorageRequest)
         mockLogging(LogFileStorageService)
@@ -169,7 +188,9 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         svc.pluginService = pmock.createMock()
 
         assertEquals(0, LogFileStorageRequest.list().size())
-
+        if(null!=clos){
+            svc.with(clos)
+        }
         return svc.getLogFileWriterForExecution(e, [:])
 
     }
