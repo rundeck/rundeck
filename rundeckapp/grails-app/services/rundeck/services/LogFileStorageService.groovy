@@ -328,15 +328,21 @@ class LogFileStorageService implements InitializingBean{
             return null
         }
         log.debug("Using log file storage plugin ${pluginName}")
+        def plugin
         try {
-            def plugin = pluginService.configurePlugin(pluginName, logFileStoragePluginProviderService, resolver, PropertyScope.Instance)
-            if (plugin != null) {
+            plugin= pluginService.configurePlugin(pluginName, logFileStoragePluginProviderService, resolver, PropertyScope.Instance)
+        } catch (Throwable e) {
+            log.error("Failed to create LogFileStoragePlugin '${pluginName}': ${e.class.name}:" + e.message)
+            log.debug("Failed to create LogFileStoragePlugin '${pluginName}': ${e.class.name}:" + e.message, e)
+        }
+        if (plugin != null) {
+            try {
                 plugin.initialize(context)
                 return plugin
+            } catch (Throwable e) {
+                log.error("Failed to initialize LogFileStoragePlugin '${pluginName}': ${e.class.name}: " + e.message)
+                log.debug("Failed to initialize LogFileStoragePlugin '${pluginName}': ${e.class.name}: " + e.message, e)
             }
-        } catch (Throwable e) {
-            log.error("Failed to initialize reader plugin ${pluginName}: " + e.message)
-            log.debug("Failed to initialize reader plugin ${pluginName}: " + e.message, e)
         }
         return null
     }
