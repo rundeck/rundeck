@@ -84,7 +84,8 @@ class JarPluginScanner extends DirPluginScanner {
         if (log.isDebugEnabled()) {
             log.debug("create JarFileProviderLoader: " + file);
         }
-        return new JarPluginProviderLoader(file, pluginJarCacheDirectory, cachedir);
+        return new JarPluginProviderLoader(file, pluginJarCacheDirectory, cachedir,
+                JarPluginProviderLoader.getLoadLocalLibsFirstForFile(file));
     }
 
     @Override

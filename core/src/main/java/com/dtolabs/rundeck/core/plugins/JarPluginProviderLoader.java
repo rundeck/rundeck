@@ -51,10 +51,10 @@ import com.dtolabs.rundeck.core.utils.cache.FileCache;
 
 /**
  * JarPluginProviderLoader can load jar plugin files as provider instances.
- * 
+ *
  * Calls to load a provider instance should be synchronized as this class will
  * perform file copy operations.
- * 
+ *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
@@ -66,15 +66,22 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
     public static final VersionCompare LOWEST_JAR_PLUGIN_VERSION = VersionCompare.forString(JAR_PLUGIN_VERSION);
     public static final String RUNDECK_PLUGIN_VERSION = "Rundeck-Plugin-Version";
     public static final String RUNDECK_PLUGIN_FILE_VERSION = "Rundeck-Plugin-File-Version";
+    public static final String RUNDECK_PLUGIN_LIBS_LOAD_FIRST = "Rundeck-Plugin-Libs-Load-First";
     public static final String CACHED_JAR_TIMESTAMP_FORMAT = "yyyyMMddHHmmssSSS";
     private final File pluginJar;
     private final File pluginJarCacheDirectory;
     private final File cachedir;
+    private final boolean loadLibsFirst;
     private final DateFormat cachedJarTimestampFormatter = new SimpleDateFormat(CACHED_JAR_TIMESTAMP_FORMAT);
     @SuppressWarnings("rawtypes")
     private Map<ProviderIdent, Class> pluginProviderDefs = new HashMap<ProviderIdent, Class>();
 
     public JarPluginProviderLoader(final File pluginJar, final File pluginJarCacheDirectory, final File cachedir) {
+        this(pluginJar, pluginJarCacheDirectory, cachedir, true);
+    }
+
+    public JarPluginProviderLoader(final File pluginJar, final File pluginJarCacheDirectory, final File cachedir,
+            final boolean loadLibsFirst) {
         if (null == pluginJar) {
             throw new NullPointerException("Expected non-null plugin jar argument.");
         }
@@ -87,6 +94,7 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
         this.pluginJar = pluginJar;
         this.pluginJarCacheDirectory = pluginJarCacheDirectory;
         this.cachedir = cachedir;
+        this.loadLibsFirst = loadLibsFirst;
     }
 
     /**
@@ -188,7 +196,7 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
 
     /**
      * Attempt to create an instance of thea provider for the given service
-     * 
+     *
      * @param cls
      */
     static <T> T createProviderForClass(final PluggableService<T> service, final Class cls) throws PluginException,
@@ -244,7 +252,7 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
     protected boolean isEquivalentPluginJar(File other) {
         String name = other.getName();
         // length of timestamp + 1 for the dash in generateCachedJarName
-        int length = CACHED_JAR_TIMESTAMP_FORMAT.length() + 1; 
+        int length = CACHED_JAR_TIMESTAMP_FORMAT.length() + 1;
         if (name.length() <= length) {
             log.warn(String.format("%s does not conform to cached plugin jar naming convention.", other));
             return false;
@@ -252,7 +260,7 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
             return other.getName().substring(length).equals(pluginJar.getName());
         }
     }
-    
+
     /**
      * @return a generated name for the pluginJar using the last modified timestamp
      */
@@ -333,7 +341,8 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
             } else {
                 urlarray = new URL[] { url };
             }
-            final URLClassLoader urlClassLoader = URLClassLoader.newInstance(urlarray, parent);
+            final URLClassLoader urlClassLoader = loadLibsFirst ? LocalFirstClassLoader.newInstance(urlarray,
+                    parent) : URLClassLoader.newInstance(urlarray, parent);
             cls = Class.forName(classname, true, urlClassLoader);
             classCache.put(classname, cls);
         } catch (ClassNotFoundException e) {
@@ -348,7 +357,7 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
 
     /**
      * Extract the dependent libs and return the extracted jar files
-     * 
+     *
      * @return the collection of extracted files
      */
     private Collection<File> extractDependentLibs() throws IOException {
@@ -378,7 +387,7 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
     /**
      * Extract specific entries from the jar to a destination directory. Creates the
      * destination directory if it does not exist
-     * 
+     *
      * @param entries
      *            the entries to extract
      * @param destdir
@@ -566,7 +575,7 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
     /**
      * Return the version string metadata value for the plugin file, or null if it is not available or could not
      * loaded
-     * 
+     *
      * @param file
      * @return version string
      */
@@ -574,23 +583,51 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
         return loadManifestAttribute(file, RUNDECK_PLUGIN_FILE_VERSION);
     }
 
-    private static String loadManifestAttribute(final File file, final String attribute) {
-        String plugvers = null;
+    /**
+     * Return true if the jar attributes declare it should load local dependency classes first.
+     *
+     * @param file
+     *
+     * @return version string
+     */
+    static boolean getLoadLocalLibsFirstForFile(final File file) {
+        Attributes attributes = loadMainAttributes(file);
+        if (null == attributes) {
+            return false;
+        }
+        boolean loadFirstDefault=true;
+        String loadFirst = attributes.getValue(RUNDECK_PLUGIN_LIBS_LOAD_FIRST);
+        if(null!=loadFirst){
+            return Boolean.valueOf(loadFirst);
+        }
+        return loadFirstDefault;
+    }
+
+    private static Attributes loadMainAttributes(final File file) {
+        Attributes mainAttributes = null;
         try {
             final JarInputStream jarInputStream = new JarInputStream(new FileInputStream(file));
-            final Manifest manifest = jarInputStream.getManifest();
-            if (null == manifest) {
+            try {
+                final Manifest manifest = jarInputStream.getManifest();
+                if (null != manifest) {
+                    mainAttributes = manifest.getMainAttributes();
+                }
+            } finally {
                 jarInputStream.close();
-                return null;
             }
-            final Attributes mainAttributes = manifest.getMainAttributes();
-            plugvers = mainAttributes.getValue(attribute);
-
-            jarInputStream.close();
         } catch (IOException e) {
             e.printStackTrace(System.err);
             log.warn(e.getMessage() + ": " + file.getAbsolutePath());
         }
-        return plugvers;
+        return mainAttributes;
+    }
+
+    private static String loadManifestAttribute(final File file, final String attribute) {
+        String value = null;
+        final Attributes mainAttributes = loadMainAttributes(file);
+        if(null!=mainAttributes){
+            value = mainAttributes.getValue(attribute);
+        }
+        return value;
     }
 }
