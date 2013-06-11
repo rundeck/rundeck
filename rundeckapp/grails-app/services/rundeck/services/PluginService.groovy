@@ -137,12 +137,14 @@ class PluginService {
 
     def <T> Map listPlugins(PluggableProviderService<T> service) {
         def plugins = rundeckPluginRegistry?.listPluginDescriptors(T, service)
+        //XX: avoid groovy bug where generic types referenced in closure can cause NPE: http://jira.codehaus.org/browse/GROOVY-5034
+        String svcName=service.name
         //clean up name of any Groovy plugin without annotations that ends with the service name
         plugins.each { key, Map plugin ->
             def desc = plugin.description
             if (desc && desc instanceof Map) {
-                if (desc.name.endsWith(service.name)) {
-                    desc.name = desc.name.substring(0,desc.name.length()-service.name.length())
+                if (desc.name.endsWith(svcName)) {
+                    desc.name = desc.name.substring(0,desc.name.length()- svcName.length())
                 }
             }
         }
