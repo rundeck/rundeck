@@ -94,6 +94,8 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         boolean storeLogFileSuccess
         boolean retrieveLogFileCalled
         boolean retrieveLogFileSuccess
+        long storeLength
+        Date storeLastModified
 
         @Override
         void initialize(Map<String, ? extends Object> context) {
@@ -109,6 +111,8 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         @Override
         boolean store(InputStream stream, long length, Date lastModified) throws IOException {
             storeLogFileCalled = true
+            storeLength=length
+            storeLastModified=lastModified
             return storeLogFileSuccess
         }
 
@@ -193,6 +197,115 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         }
         return svc.getLogFileWriterForExecution(e, [:])
 
+    }
+
+    void testRunStorageRequestSuccess(){
+        ConfigurationHolder.config = [:]
+        ConfigurationHolder.config.rundeck.execution.logs.fileStoragePlugin = "test1"
+
+        def test = new testStoragePlugin()
+        test.storeLogFileSuccess=true
+        LogFileStorageService svc
+        Map task=performRunStorage(test, createExecution(), testLogFile1) { LogFileStorageService service ->
+            svc = service
+            assertFalse(test.storeLogFileCalled)
+        }
+
+        assertTrue(test.storeLogFileCalled)
+        assertEquals(testLogFile1.length(),test.storeLength)
+        assertEquals(new Date(testLogFile1.lastModified()),test.storeLastModified)
+
+        assertEquals(1,task.count)
+        assertTrue(svc.executorService.executeCalled)
+        assertEquals(1,svc.getCurrentRequests().size())
+    }
+    void testRunStorageRequestFailure(){
+        ConfigurationHolder.config = [:]
+        ConfigurationHolder.config.rundeck.execution.logs.fileStoragePlugin = "test1"
+
+        def test = new testStoragePlugin()
+        test.storeLogFileSuccess=false
+        LogFileStorageService svc
+        Map task=performRunStorage(test, createExecution(), testLogFile1) { LogFileStorageService service ->
+            svc = service
+            assertFalse(test.storeLogFileCalled)
+        }
+
+        assertTrue(test.storeLogFileCalled)
+        assertEquals(testLogFile1.length(),test.storeLength)
+        assertEquals(new Date(testLogFile1.lastModified()),test.storeLastModified)
+
+        assertEquals(1,task.count)
+        assertFalse(svc.executorService.executeCalled)
+        assertEquals(0, svc.getCurrentRequests().size())
+    }
+    void testRunStorageRequestFailureWithRetry(){
+        ConfigurationHolder.config = [:]
+        ConfigurationHolder.config.rundeck.execution.logs.fileStoragePlugin = "test1"
+        ConfigurationHolder.config.rundeck.execution.logs.fileStorage.retryDelay = 30
+        ConfigurationHolder.config.rundeck.execution.logs.fileStorage.retryCount = 2
+
+
+        def test = new testStoragePlugin()
+        test.storeLogFileSuccess=false
+        registerMetaClass(LogFileStorageService)
+        LogFileStorageService svc
+        boolean queued=false
+        Map task=performRunStorage(test, createExecution(), testLogFile1) { LogFileStorageService service ->
+            svc = service
+            svc.metaClass.queueLogStorageRequest={ Map task, int delay ->
+                queued=true
+                assertEquals(30,delay)
+                assertEquals(testLogFile1,task.file)
+            }
+            assertFalse(test.storeLogFileCalled)
+        }
+
+        assertTrue(test.storeLogFileCalled)
+        assertEquals(testLogFile1.length(),test.storeLength)
+        assertEquals(new Date(testLogFile1.lastModified()),test.storeLastModified)
+
+        assertEquals(1,task.count)
+        assertFalse(svc.executorService.executeCalled)
+        assertEquals(0, svc.getCurrentRequests().size())
+        assertTrue(queued)
+    }
+
+    private Map performRunStorage(testStoragePlugin test, Execution e, File testfile, Closure clos = null) {
+        mockDomain(Execution)
+        mockDomain(LogFileStorageRequest)
+        mockLogging(LogFileStorageService)
+        assertNotNull(e.save())
+        def fmock = mockFor(FrameworkService)
+        fmock.demand.getFrameworkPropertyResolver() { project ->
+            assert project == "testprojz"
+        }
+        def pmock = mockFor(PluginService)
+        pmock.demand.configurePlugin(1) { pname, svc, resolv, scope ->
+            assertEquals("test1", pname)
+            assert scope == PropertyScope.Instance
+            test
+        }
+        def emock = new Expando()
+        emock.executeCalled=false
+        emock.execute={Closure cls->
+            emock.executeCalled=true
+            assertNotNull(cls)
+        }
+        LogFileStorageService svc = new LogFileStorageService()
+        svc.frameworkService = fmock.createMock()
+        svc.frameworkService.initialized = true
+        svc.frameworkService.rundeckbase = '/tmp'
+        svc.pluginService = pmock.createMock()
+        svc.executorService=emock
+
+        assertEquals(0, LogFileStorageRequest.list().size())
+        if (null != clos) {
+            svc.with(clos)
+        }
+        def task = [id: e.id.toString(), file: testfile, storage: test]
+        svc.runStorageRequest(task)
+        return task
     }
 
     void testRequestLogFileReaderFileDNE(){
