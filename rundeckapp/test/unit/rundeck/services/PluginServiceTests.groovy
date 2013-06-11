@@ -81,6 +81,7 @@ class PluginServiceTests extends GrailsUnitTestCase {
         boolean validateWithMapCalled
         boolean validateWithFrameworkCalled
         boolean listPluginDescriptorsCalled
+        boolean listPluginsCalled
         Object plugin
         Map pluginDescriptor
         Map pluginDescriptorMap
@@ -138,6 +139,7 @@ class PluginServiceTests extends GrailsUnitTestCase {
 
         @Override
         Map<String, Object> listPlugins(Class groovyPluginType, PluggableProviderService service) {
+            listPluginsCalled=true
             return pluginListMap
         }
 
@@ -320,25 +322,26 @@ class PluginServiceTests extends GrailsUnitTestCase {
         def service = new PluginService()
         def TestRegistry testReg = new TestRegistry()
         service.rundeckPluginRegistry = testReg
-        def test = ["a": [description: [name:"a",title:"A"]], "b": [description: [name:"b",title:"B"]]]
+        def test = ['a': [description: [name:'a',title:'A']], 'b': [description: [name:'b',title:'B']]]
         testReg.pluginDescriptorMap= test
         assertFalse(testReg.listPluginDescriptorsCalled)
-        assertEquals(test, service.listPlugins(new testProvider("test service")))
+        def result = service.listPlugins(new testProvider("test service"))
         assertTrue(testReg.listPluginDescriptorsCalled)
+        assertEquals([name: 'a', title: 'A'], result['a']['description'])
+        assertEquals([name: 'b', title: 'B'], result['b']['description'])
     }
     void testListPluginsCullName(){
         mockLogging(PluginService)
         def service = new PluginService()
         def TestRegistry testReg = new TestRegistry()
         service.rundeckPluginRegistry = testReg
-        def test = ["a": [description: [name:"alphaTestService",title:"A"]], "b": [description: [name:"bTestService",title:"B"]]]
+        def test = ['a': [description: [name:'alphaTestService',title:'A']], 'b': [description: [name:'bTestService',title:'B']]]
         testReg.pluginDescriptorMap= test
         assertFalse(testReg.listPluginDescriptorsCalled)
         def result = service.listPlugins(new testProvider("TestService"))
-        assertEquals(test, result)
         assertTrue(testReg.listPluginDescriptorsCalled)
+        assertEquals([name: 'alpha', title: 'A'], result['a']['description'])
+        assertEquals([name: 'b', title: 'B'], result['b']['description'])
 
-        assertEquals("alpha",result['a'].description.name)
-        assertEquals("b",result['b'].description.name)
     }
 }
