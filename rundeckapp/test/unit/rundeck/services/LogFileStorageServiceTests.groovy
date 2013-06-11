@@ -107,13 +107,13 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         }
 
         @Override
-        boolean storeLogFile(InputStream stream) throws IOException {
-            storeLogFileCalled=true
+        boolean store(InputStream stream, long length, Date lastModified) throws IOException {
+            storeLogFileCalled = true
             return storeLogFileSuccess
         }
 
         @Override
-        boolean retrieveLogFile(OutputStream stream) throws IOException {
+        boolean retrieve(OutputStream stream) throws IOException {
             retrieveLogFileCalled=true
             return retrieveLogFileSuccess
         }

@@ -10,6 +10,7 @@ import com.dtolabs.rundeck.plugins.logging.LogFileStoragePlugin;
 import com.dtolabs.utils.Streams;
 
 import java.io.*;
+import java.util.Date;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -29,7 +30,7 @@ public class ExampleLogFileStoragePlugin implements LogFileStoragePlugin {
         this.destinationDirPath = "/tmp/rundeck_cluster";
     }
 
-    public boolean storeLogFile(InputStream stream) throws IOException {
+    public boolean store(InputStream stream, long length, Date lastModified) throws IOException {
         File storeFile = getDestinationFile();
         File tempFile = getDestinationTempFile();
         if (!storeFile.getParentFile().isDirectory() && !storeFile.getParentFile().mkdirs()) {
@@ -59,7 +60,7 @@ public class ExampleLogFileStoragePlugin implements LogFileStoragePlugin {
         return finished;
     }
 
-    public boolean retrieveLogFile(OutputStream stream) throws IOException {
+    public boolean retrieve(OutputStream stream) throws IOException {
         File getFile = getDestinationFile();
         InputStream is = new FileInputStream(getFile);
         //introduce delay

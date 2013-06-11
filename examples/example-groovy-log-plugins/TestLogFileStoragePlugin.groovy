@@ -23,6 +23,8 @@ rundeckPlugin(LogFileStoragePlugin){
 
     /**
      * Called to store a log file, called with the execution data, configuration properties, and an InputStream.
+     * Additionally `length` and `lastModified` properties are in the closure binding, providing the file length,
+     * and last modification Date.
      * Return true to indicate success.
      */
     store { Map execution, Map configuration, InputStream source->

@@ -78,11 +78,14 @@ class LogFileStorageService implements InitializingBean{
     List getCurrentStorageRequests(){
         return new ArrayList(storageRequests)
     }
+    List getCurrentRequests(){
+        return new ArrayList(running)
+    }
     /**
      * Run a storage request task, and if it fails submit a retry depending on the configured retry count and delay
      * @param task
      */
-    private void runStorageRequest(Map task){
+    void runStorageRequest(Map task){
         int retry = getConfiguredStorageRetryCount()
         int delay = getConfiguredStorageRetryDelay()
         running << task
@@ -465,9 +468,11 @@ class LogFileStorageService implements InitializingBean{
     private Boolean storeLogFile(File file, LogFileStorage storage, String ident) {
         log.debug("Storage request [ID#${ident}], start")
         def success = false
+        Date lastModified = new Date(file.lastModified())
+        long length = file.length()
         try{
             file.withInputStream { input ->
-                success = storage.storeLogFile(input)
+                success = storage.store(input,length,lastModified)
             }
         }catch (Throwable e) {
             log.error("Storage request [ID#${ident}] error: ${e.message}")
@@ -494,7 +499,7 @@ class LogFileStorageService implements InitializingBean{
         def psuccess=false
         try {
             tempfile.withOutputStream { out ->
-                psuccess = storage.retrieveLogFile(out)
+                psuccess = storage.retrieve(out)
             }
             if(!file.getParentFile().isDirectory()){
                 if(!file.getParentFile().mkdirs()){

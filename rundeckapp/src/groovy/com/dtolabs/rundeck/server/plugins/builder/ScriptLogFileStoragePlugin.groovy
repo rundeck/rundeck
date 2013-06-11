@@ -67,13 +67,15 @@ class ScriptLogFileStoragePlugin implements LogFileStoragePlugin, Describable, C
     }
 
     @Override
-    boolean storeLogFile(InputStream stream) throws IOException {
-        logger.debug("storeLogFile ${pluginContext}")
+    boolean store(InputStream stream, long length, Date lastModified) throws IOException {
+        logger.debug("store ${pluginContext}")
         def closure = handlers.store
         def binding = [
                 configuration: configuration,
                 context: pluginContext,
                 stream: stream,
+                length:length,
+                lastModified:lastModified
         ]
         if (closure.getMaximumNumberOfParameters() == 3) {
             def Closure newclos = closure.clone()
@@ -96,8 +98,8 @@ class ScriptLogFileStoragePlugin implements LogFileStoragePlugin, Describable, C
     }
 
     @Override
-    boolean retrieveLogFile(OutputStream stream) throws IOException {
-        logger.debug("retrieveLogFile ${pluginContext}")
+    boolean retrieve(OutputStream stream) throws IOException {
+        logger.debug("retrieve ${pluginContext}")
         def closure = handlers.retrieve
         def binding = [
                 configuration: configuration,

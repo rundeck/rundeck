@@ -438,14 +438,14 @@ When a LogFileStorage plugin is enabled, and the **Local File Log** streaming wr
 
 After an execution completes, and the **Local File Log** finishes writing, Rundeck will place a *Storage Request* in an asynchronous queue for that Execution.
 
-When triggered, the *Storage Request* will use the configured LogFileStorage plugin and invoke `storeLogFile`:
+When triggered, the *Storage Request* will use the configured LogFileStorage plugin and invoke `store`:
 * If it is unsuccessful, Rundeck may re-queue the request to retry it after a delay (configurable)
 
 ### Retrieval behavior
 
 When a client requests a log stream to read via the **Local File Log**, Rundeck determines if the file is available locally.  If it is not available, it will start a *Retrieval Request* asynchronously, and tell the client that the file is in a "pending" state.
 
-The *Retrieval Request* will use the configured LogFileStorage plugin, and invoke `retrieveLogFile`.
+The *Retrieval Request* will use the configured LogFileStorage plugin, and invoke `retrieve`.
 
 If successful, the client requests to read the **Local File Log** should find the file available locally.  If unsuccessful, a new *Retrieval Request* may be started if requested by a client.
 
@@ -493,12 +493,14 @@ This extends the the [LogFileStorage](https://github.com/dtolabs/rundeck/tree/co
          * Stores a log file read from the given stream
          *
          * @param stream the input stream
+         * @param length the file length
+         * @param lastModified the file modification time
          *
          * @return true if successful
          *
          * @throws IOException
          */
-        boolean storeLogFile(InputStream stream) throws IOException;
+        boolean store(InputStream stream, long length, Date lastModified) throws IOException;
 
         /**
          * Writes a log file to the given stream
@@ -509,7 +511,7 @@ This extends the the [LogFileStorage](https://github.com/dtolabs/rundeck/tree/co
          *
          * @throws IOException
          */
-        boolean retrieveLogFile(OutputStream stream) throws IOException;
+        boolean retrieve(OutputStream stream) throws IOException;
     }
 
 
@@ -524,11 +526,11 @@ The plugin is used in these two conditions:
 When `retrieval` is needed:
 
 1. The `getState` method is called to determine if the plugin can retrieve the file
-2. If the state is `AVAILABLE`, then `retrieveLogFile` method is called.
+2. If the state is `AVAILABLE`, then `retrieve` method is called.
 
 When `storage` is needed:
 
-1. The `storeLogFile` method is called.
+1. The `store` method is called.
 
 ### Groovy LogFileStorage
 
@@ -557,7 +559,7 @@ Define these closures inside your definition:
 `store`
 
     /**
-     * Called to store a log file, called with the execution data, configuration properties, and an InputStream.
+     * Called to store a log file, called with the execution data, configuration properties, and an InputStream.  Additionally `length` and `lastModified` properties are in the closure binding, providing the file length, and last modification Date.
      * Return true to indicate success.
      */
     store { Map execution, Map configuration, InputStream source->
@@ -586,5 +588,5 @@ Define these closures inside your definition:
 The plugin is used in this manner:
 
 1. The `state` closure is called before retrieving the file, to determine if it is available
-1. The `store` closure is called when a file needs to be stored, with the [contextual data](#execution-context-data), configuration Map, and InputStream which will produce the log data
+1. The `store` closure is called when a file needs to be stored, with the [contextual data](#execution-context-data), configuration Map, and InputStream which will produce the log data. Additionally `length` and `lastModified` properties are in the closure binding, providing the file length, and last modification Date.
 2. The `retrieve` closure is called when a file needs to be retrieved, with the [contextual data](#execution-context-data), configuration Map, and OutputStream to write the log file content
