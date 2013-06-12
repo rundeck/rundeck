@@ -25,7 +25,7 @@ die() {
 set -o nounset -o pipefail
 
 #get the ci repo
-curl -# --fail -L -o /etc/yum.repos.d/bintray.repo https://bintray.com/repo/rpm/rundeck/ci-snapshot-rpm || die "failed downloading bintray.repo"
+curl -# --fail -L -o /etc/yum.repos.d/bintray.repo https://bintray.com/rundeck/ci-snapshot-rpm/rpm || die "failed downloading bintray.repo"
 
 curl -# --fail -L -O http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm || die "failed downloading epel-release-6-8"
 

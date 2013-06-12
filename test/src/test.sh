@@ -324,13 +324,13 @@ https=$?
 
 if [ 0 = $https ] ; then
     # call api/testall.sh and use -k curl option to ignore server certificate
-    sh $SRC_DIR/api/testall.sh "https://localhost:4443" -k
+    sh $SRC_DIR/../api/testall.sh "https://localhost:4443" -k
     #################
     # alternate args to curl to use a pem formatted cert to verify server cert:
     #sh $SRC_DIR/testweb.sh "https://localhost:4443" "--cacert $RDECK_ETC/rundeck.server.pem"
     ################
 else
-    sh $SRC_DIR/api/testall.sh "http://localhost:4440"
+    sh $SRC_DIR/../api/testall.sh "http://localhost:4440"
 fi
 
 if [ 0 != $? ] ; then

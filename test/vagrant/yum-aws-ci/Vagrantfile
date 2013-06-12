@@ -6,7 +6,8 @@ Vagrant.configure("2") do |config|
 
   #config.vm.network :forwarded_port, guest: 4440, host: 14440
 
-  config.vm.synced_folder "../../", "/rundeck_api_test"
+  config.vm.synced_folder "../../src", "/rundeck_api_test/src"
+  config.vm.synced_folder "../../api", "/rundeck_api_test/api"
   config.vm.synced_folder "../src", "/test_scripts"
 
   config.vm.provision :shell, :path => "bootstrap.sh"
