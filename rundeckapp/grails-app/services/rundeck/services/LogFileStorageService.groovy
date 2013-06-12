@@ -203,9 +203,13 @@ class LogFileStorageService implements InitializingBean{
                 def path = generateFilekeyForExecution(e)
                 File file = getFileForKey(path)
                 def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolver(e.project))
-                //re-queue storage request
-                storeLogFileAsync(e.id.toString(),file, plugin, request, delay)
-                delay += delayInc
+                if(null!=plugin){
+                    //re-queue storage request
+                    storeLogFileAsync(e.id.toString(),file, plugin, request, delay)
+                    delay += delayInc
+                }else{
+                    log.error("cannot re-queue incomplete log storage request for execution ${e.id}, plugin was not available: ${getConfiguredPluginName()}")
+                }
             }
         }
     }
@@ -305,7 +309,6 @@ class LogFileStorageService implements InitializingBean{
         def state = ExecutionLogState.forFileStates(local, remote, remoteNotFound)
 
         log.debug("getLogFileState(${execution.id},${plugin}): ${state} forFileStates: ${local}, ${remote}")
-        System.out.println("getLogFileState(${execution.id},${plugin}): ${state} forFileStates: ${local}, ${remote}")
         return state
     }
 
