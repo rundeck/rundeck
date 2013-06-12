@@ -77,6 +77,10 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         fmock.demand.getFrameworkPropertyResolver() { project ->
             assert project == "testproj"
         }
+        registerMetaClass(ExecutionService)
+        ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
+            [:]
+        }
         LogFileStorageService svc = new LogFileStorageService()
         svc.frameworkService=fmock.createMock()
         svc.frameworkService.initialized=true
@@ -184,6 +188,10 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
             assertEquals("test1", pname)
             assert scope == PropertyScope.Instance
             test
+        }
+        registerMetaClass(ExecutionService)
+        ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
+            [:]
         }
         LogFileStorageService svc = new LogFileStorageService()
         svc.frameworkService = fmock.createMock()
@@ -485,6 +493,10 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
             assertEquals("test1", pname)
             assert scope == PropertyScope.Instance
             test
+        }
+        registerMetaClass(ExecutionService)
+        ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
+            [:]
         }
         LogFileStorageService svc = new LogFileStorageService()
         svc.frameworkService = fmock.createMock()

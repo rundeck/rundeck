@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
 import com.dtolabs.rundeck.app.internal.logging.RundeckLogFormat
 import grails.test.ControllerUnitTestCase
 import rundeck.Execution
+import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.LoggingService
 import rundeck.services.logging.ExecutionLogState
@@ -43,6 +44,10 @@ class ExecutionControllerTests extends ControllerUnitTestCase {
         ec.frameworkService = fwkControl.createMock()
 
         ec.params.id = e1.id.toString()
+        registerMetaClass(ExecutionService)
+        ExecutionService.metaClass.static.exportContextForExecution={ Execution data->
+            [:]
+        }
 
         def result = ec.downloadOutput()
         assertEquals(404,ec.response.status)
@@ -81,6 +86,11 @@ class ExecutionControllerTests extends ControllerUnitTestCase {
         ec.frameworkService = fwkControl.createMock()
 
         ec.params.id = e1.id.toString()
+        registerMetaClass(ExecutionService)
+        ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
+            [:]
+        }
+
 
         def result = ec.downloadOutput()
         assertEquals(404,ec.response.status)
@@ -118,8 +128,13 @@ class ExecutionControllerTests extends ControllerUnitTestCase {
             null
         }
         ec.frameworkService = fwkControl.createMock()
+        registerMetaClass(ExecutionService)
+        ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
+            [:]
+        }
 
         ec.params.id = e1.id.toString()
+
 
         def result=ec.downloadOutput()
         assertNotNull(ec.response.getHeader('Content-Disposition'))
@@ -157,6 +172,11 @@ class ExecutionControllerTests extends ControllerUnitTestCase {
             null
         }
         ec.frameworkService = fwkControl.createMock()
+        registerMetaClass(ExecutionService)
+        ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
+            [:]
+        }
+
 
         ec.params.id = e1.id.toString()
         ec.params.formatted = 'true'

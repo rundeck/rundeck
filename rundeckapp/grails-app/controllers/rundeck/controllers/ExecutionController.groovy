@@ -609,6 +609,12 @@ class ExecutionController {
     public static String getExecutionState(Execution e){
         return null==e.dateCompleted?EXECUTION_RUNNING:"true"==e.status?EXECUTION_SUCCEEDED:e.cancelled?EXECUTION_ABORTED:EXECUTION_FAILED
     }
+    public String createExecutionUrl(def id){
+        return g.createLink(controller: 'execution', action: 'follow', id: id, absolute: true)
+    }
+    public String createServerUrl() {
+        return g.createLink(controller: 'menu', action: 'index', absolute: true)
+    }
     /**
      * Render execution list xml given a List of executions, and a builder delegate
      */

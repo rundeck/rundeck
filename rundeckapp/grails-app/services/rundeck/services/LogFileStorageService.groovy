@@ -188,7 +188,7 @@ class LogFileStorageService implements InitializingBean{
     }
     /**
      * Resume log storage requests for the given serverUUID, or null for unspecified
-     * @param serverUUID @param resolver
+     * @param serverUUID
      */
     void resumeIncompleteLogStorage(String serverUUID){
         def incomplete = LogFileStorageRequest.findAllByCompleted(false)

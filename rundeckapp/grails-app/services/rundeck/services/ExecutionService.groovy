@@ -1,13 +1,11 @@
 package rundeck.services
 
-import com.dtolabs.rundeck.core.logging.LogUtil
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.app.support.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.logging.ContextLogWriter
 import com.dtolabs.rundeck.core.logging.LogLevel
-import com.dtolabs.rundeck.core.logging.StreamingLogWriter
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.common.NodesSelector
@@ -490,11 +488,25 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
             jobcontext.id = execution.scheduledExecution.extid
         }
         jobcontext.execid = execution.id.toString()
+        jobcontext.serverUrl = generateServerURL()
+        jobcontext.url = generateExecutionURL(execution)
+        jobcontext.serverUUID = execution.serverNodeUUID
         jobcontext.username = execution.user
         jobcontext['user.name'] = execution.user
         jobcontext.project = execution.project
         jobcontext.loglevel = ExecutionService.textLogLevels[execution.loglevel] ?: execution.loglevel
         jobcontext
+    }
+
+    static String generateExecutionURL(Execution execution) {
+        RequestHelper.doWithMockRequest {
+            new ExecutionController().createExecutionUrl(execution.id)
+        }
+    }
+    static String generateServerURL() {
+        RequestHelper.doWithMockRequest {
+            new ExecutionController().createServerUrl()
+        }
     }
 
     /**

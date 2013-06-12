@@ -1,7 +1,6 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.app.internal.logging.ThreadBoundLogOutputStream
-import com.dtolabs.rundeck.core.logging.FilterStreamingLogWriter
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.StreamingLogReader
@@ -135,6 +134,10 @@ class LoggingServiceTests extends GrailsUnitTestCase {
         def fmock = mockFor(FrameworkService)
         fmock.demand.getFrameworkPropertyResolver(2..2) { project ->
             assert project=="testproj"
+        }
+        registerMetaClass(ExecutionService)
+        ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
+            [:]
         }
 //        pluginService.configurePlugin(name, streamingLogWriterPluginProviderService,
 //                frameworkService.getFrameworkPropertyResolver(execution.project), PropertyScope.Instance)
@@ -295,6 +298,10 @@ class LoggingServiceTests extends GrailsUnitTestCase {
         fmock.demand.getFrameworkPropertyResolver(2..2) { project ->
             assert project == "testproj"
         }
+        registerMetaClass(ExecutionService)
+        ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
+            [:]
+        }
 
         svc.logFileStorageService=lfsvcmock.createMock()
         svc.pluginService=pmock.createMock()
@@ -332,6 +339,10 @@ class LoggingServiceTests extends GrailsUnitTestCase {
         def fmock = mockFor(FrameworkService)
         fmock.demand.getFrameworkPropertyResolver(2..2) { project ->
             assert project == "testproj"
+        }
+        registerMetaClass(ExecutionService)
+        ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
+            [:]
         }
 
         svc.logFileStorageService=lfsvcmock.createMock()
