@@ -15,7 +15,6 @@ defaultTasks 'clean','assemble'
 
 dependencies {
     compile 'org.apache.ant:ant:1.7.1',
-        'org.apache.ant:ant-launcher:1.7.1',
         'log4j:log4j:1.2.16',
         'commons-codec:commons-codec:1.5',
         'commons-beanutils:commons-beanutils:1.8.0',
