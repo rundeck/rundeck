@@ -166,6 +166,12 @@ class ExecutionController {
             response.setStatus(404)
             log.error("Output file not found")
             return
+        }else if (reader.state == ExecutionLogState.ERROR) {
+            response.setStatus(500)
+            def msg= g.message(code: reader.errorCode, args: reader.errorData)
+            log.error("Output file reader error: ${msg}")
+            response.outputStream << msg
+            return
         }else if (reader.state != ExecutionLogState.AVAILABLE) {
             //TODO: handle other states
             response.setStatus(404)
@@ -240,6 +246,7 @@ class ExecutionController {
                     }
                 }
                 text {
+                    response.setStatus(500)
                     render(contentType: "text/plain", text: request.error)
                 }
             }
@@ -256,10 +263,15 @@ class ExecutionController {
         execDuration = (e.dateCompleted ? e.dateCompleted.getTime() : System.currentTimeMillis()) - e.dateStarted.getTime()
 
         ExecutionLogReader reader
-        def error=null
         reader = loggingService.getLogReader(e)
+        def error = reader.state == ExecutionLogState.ERROR
         log.debug("Reader, state: ${reader.state}, reader: ${reader.reader}")
-        if (null == reader  || reader.state == ExecutionLogState.NOT_FOUND) {
+        if(error) {
+            request.error = g.message(code: reader.errorCode, args: reader.errorData)
+            apiError();
+            return
+        }
+        if (null == reader  || reader.state == ExecutionLogState.NOT_FOUND ) {
             def errmsg = "No output"
             //execution has not be started yet
             def renderclos = { delegate ->

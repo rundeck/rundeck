@@ -1,6 +1,5 @@
 package com.dtolabs.rundeck.server.plugins.builder
 
-import com.dtolabs.rundeck.core.logging.LogFileState
 import com.dtolabs.rundeck.core.plugins.configuration.Configurable
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
@@ -35,7 +34,7 @@ class ScriptLogFileStoragePlugin implements LogFileStoragePlugin, Describable, C
     @Override
     void initialize(Map<String, ? extends Object> context) {
         this.pluginContext = context
-        ['state', 'retrieve', 'store'].each {
+        ['available', 'retrieve', 'store'].each {
             if (!handlers[it]) {
                 throw new RuntimeException("ScriptLogFileStoragePlugin: '${it}' closure not defined for plugin ${description.name}")
             }
@@ -43,14 +42,13 @@ class ScriptLogFileStoragePlugin implements LogFileStoragePlugin, Describable, C
     }
 
     @Override
-    LogFileState getState() {
-        logger.debug("getState ${pluginContext}")
-        def closure = handlers.state
+    boolean isAvailable() {
+        logger.debug("isAvailable ${pluginContext}")
+        def closure = handlers.available
         def binding = [
                 configuration: configuration,
                 context: pluginContext
         ]
-        LogFileState.values().each { binding[it.toString()] = it }
         if (closure.getMaximumNumberOfParameters() == 2) {
             def Closure newclos = closure.clone()
             newclos.resolveStrategy = Closure.DELEGATE_ONLY
@@ -62,7 +60,7 @@ class ScriptLogFileStoragePlugin implements LogFileStoragePlugin, Describable, C
             newclos.resolveStrategy = Closure.DELEGATE_ONLY
             return newclos.call(pluginContext)
         } else {
-            throw new RuntimeException("ScriptLogFileStoragePlugin: 'state' closure signature invalid for plugin ${description.name}, cannot open")
+            throw new RuntimeException("ScriptLogFileStoragePlugin: 'available' closure signature invalid for plugin ${description.name}, cannot open")
         }
     }
 
@@ -127,7 +125,7 @@ class ScriptLogFileStoragePlugin implements LogFileStoragePlugin, Describable, C
     }
 
 
-    public static boolean validStateClosure(Closure closure) {
+    public static boolean validAvailableClosure(Closure closure) {
         if (closure.getMaximumNumberOfParameters() == 2) {
             return closure.parameterTypes[0] == Map && closure.parameterTypes[1] == Map
         } else if (closure.getMaximumNumberOfParameters() == 1) {

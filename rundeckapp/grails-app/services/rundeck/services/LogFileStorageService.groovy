@@ -286,30 +286,34 @@ class LogFileStorageService implements InitializingBean{
      * @param plugin
      * @return state of the execution log
      */
-    private ExecutionLogState getLogFileState(Execution execution, LogFileStoragePlugin plugin) {
+    private Map getLogFileState(Execution execution, LogFileStoragePlugin plugin) {
         File file = getFileForExecution(execution)
         LogFileState local = (file!=null && file.exists() )? LogFileState.AVAILABLE : LogFileState.NOT_FOUND
         LogFileState remote = LogFileState.NOT_FOUND
         ExecutionLogState remoteNotFound = null
-
+        String errorCode=null
+        List errorData=null
         if (null != plugin && local != LogFileState.AVAILABLE) {
             /**
              * If plugin exists, assume NOT_FOUND is actually pending
              */
             remoteNotFound= ExecutionLogState.PENDING_REMOTE
             try {
-                def newremote=plugin.getState()
-                remote=newremote
+                def newremote = plugin.isAvailable() ? LogFileState.AVAILABLE : LogFileState.NOT_FOUND
+                remote = newremote
             } catch (Throwable e) {
                 def pluginName = getConfiguredPluginName()
                 log.error("Failed to get state of file storage plugin ${pluginName}: " + e.message)
                 log.debug("Failed to get state of file storage plugin ${pluginName}: " + e.message, e)
+                errorCode ='execution.log.storage.state.ERROR'
+                errorData = [pluginName, e.message]
+                remote = LogFileState.ERROR
             }
         }
         def state = ExecutionLogState.forFileStates(local, remote, remoteNotFound)
 
         log.debug("getLogFileState(${execution.id},${plugin}): ${state} forFileStates: ${local}, ${remote}")
-        return state
+        return [state: state, errorCode: errorCode, errorData: errorData]
     }
 
     /**
@@ -370,7 +374,8 @@ class LogFileStorageService implements InitializingBean{
             }
         }
         def plugin= getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolver(e.project))
-        def state = getLogFileState(e, plugin)
+        def result = getLogFileState(e, plugin)
+        def state = result.state
         def reader = null
         switch (state) {
             case ExecutionLogState.AVAILABLE:
@@ -387,7 +392,8 @@ class LogFileStorageService implements InitializingBean{
                 }
         }
         log.debug("requestLogFileRetrieval(${e.id},${performLoad}): ${state}")
-        return new ExecutionLogReader(state: state, reader: reader)
+        return new ExecutionLogReader(state: state, reader: reader, errorCode: result.errorCode, errorData: result.errorData)
+
     }
 
     /**

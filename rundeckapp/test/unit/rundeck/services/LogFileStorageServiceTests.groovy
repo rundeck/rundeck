@@ -3,6 +3,7 @@ package rundeck.services
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogWriter
 import com.dtolabs.rundeck.core.logging.LogFileState
+import com.dtolabs.rundeck.core.logging.LogFileStorageException
 import com.dtolabs.rundeck.core.logging.StreamingLogWriter
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.logging.LogFileStoragePlugin
@@ -92,7 +93,8 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
     }
     class testStoragePlugin implements LogFileStoragePlugin{
         Map<String, ? extends Object> context
-        LogFileState state
+        boolean available
+        boolean availableException
         boolean initializeCalled
         boolean storeLogFileCalled
         boolean storeLogFileSuccess
@@ -108,8 +110,11 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         }
 
         @Override
-        LogFileState getState() {
-            return state
+        boolean isAvailable() throws LogFileStorageException {
+            if(availableException){
+                throw new LogFileStorageException("testStoragePlugin.available")
+            }
+            return available
         }
 
         @Override
@@ -351,7 +356,7 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         ConfigurationHolder.config = [:]
 
         def test = new testStoragePlugin()
-        test.state = LogFileState.NOT_FOUND
+        test.available = false
 
         def e = createExecution{
             it.dateStarted = new Date()
@@ -369,7 +374,7 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         ConfigurationHolder.config = [:]
 
         def test = new testStoragePlugin()
-        test.state = LogFileState.NOT_FOUND
+        test.available = false
 
         def reader = performReaderRequest(test, false, testLogFile1, false, createExecution())
 
@@ -383,12 +388,12 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
     }
 
 
-    void testRequestLogFileReaderFileDNEPluginStateNotFoundShouldResultInPendingRemote() {
+    void testRequestLogFileReaderFileDNEPluginAvailableFalseShouldResultInPendingRemote() {
         ConfigurationHolder.config = [:]
         ConfigurationHolder.config.rundeck.execution.logs.fileStoragePlugin = "test1"
 
         def test = new testStoragePlugin()
-        test.state=LogFileState.NOT_FOUND
+        test.available = false
 
         def reader = performReaderRequest(test, false, testLogFileDNE, false, createExecution())
 
@@ -400,29 +405,13 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         assertEquals(ExecutionLogState.PENDING_REMOTE, reader.state)
         assertNull(reader.reader)
     }
-    void testRequestLogFileReaderFileDNEPluginStatePendingShouldResultInPendingRemote() {
+
+    void testRequestLogFileReaderFileDNEPluginAvailableTrueShouldResultInAvailableRemote() {
         ConfigurationHolder.config = [:]
         ConfigurationHolder.config.rundeck.execution.logs.fileStoragePlugin = "test1"
 
         def test = new testStoragePlugin()
-        test.state = LogFileState.PENDING
-
-        def reader=performReaderRequest(test, false, testLogFileDNE, false, createExecution())
-
-        //initialize should have been called
-        assert test.initializeCalled
-        assert test.context!=null
-
-        assertNotNull(reader)
-        assertEquals(ExecutionLogState.PENDING_REMOTE, reader.state)
-        assertNull(reader.reader)
-    }
-    void testRequestLogFileReaderFileDNEPluginStateAvailableShouldResultInAvailableRemote() {
-        ConfigurationHolder.config = [:]
-        ConfigurationHolder.config.rundeck.execution.logs.fileStoragePlugin = "test1"
-
-        def test = new testStoragePlugin()
-        test.state = LogFileState.AVAILABLE
+        test.available = true
 
         def reader=performReaderRequest(test, false, testLogFileDNE, false, createExecution())
 
@@ -434,12 +423,33 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         assertEquals(ExecutionLogState.AVAILABLE_REMOTE, reader.state)
         assertNull(reader.reader)
     }
+
+    void testRequestLogFileReaderFileDNEPluginAvailableErrorShouldResultInError() {
+        ConfigurationHolder.config = [:]
+        ConfigurationHolder.config.rundeck.execution.logs.fileStoragePlugin = "test1"
+
+        def test = new testStoragePlugin()
+        test.available = true
+        test.availableException = true
+
+        def reader=performReaderRequest(test, false, testLogFileDNE, false, createExecution())
+
+        //initialize should have been called
+        assert test.initializeCalled
+        assert test.context!=null
+
+        assertNotNull(reader)
+        assertEquals(ExecutionLogState.ERROR, reader.state)
+        assertEquals('execution.log.storage.state.ERROR', reader.errorCode)
+        assertEquals(['test1','testStoragePlugin.available'], reader.errorData)
+        assertNull(reader.reader)
+    }
     void testRequestLogFileReaderFileDNEPluginRequestAlreadyPending() {
         ConfigurationHolder.config = [:]
         ConfigurationHolder.config.rundeck.execution.logs.fileStoragePlugin = "test1"
 
         def test = new testStoragePlugin()
-        test.state = LogFileState.AVAILABLE
+        test.available = true
 
         def reader=performReaderRequest(test, false, testLogFileDNE, false, createExecution()){ LogFileStorageService svc->
             svc.metaClass.logFileRetrievalRequestState={Execution execution->
@@ -460,7 +470,7 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         ConfigurationHolder.config.rundeck.execution.logs.fileStoragePlugin = "test1"
 
         def test = new testStoragePlugin()
-        test.state = LogFileState.AVAILABLE
+        test.available = true
 
         def LogFileStorageService service
         def reader=performReaderRequest(test, false, testLogFileDNE, true, createExecution()){ LogFileStorageService svc->

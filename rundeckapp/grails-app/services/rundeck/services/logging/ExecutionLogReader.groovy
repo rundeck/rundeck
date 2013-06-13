@@ -3,12 +3,11 @@ package rundeck.services.logging
 import com.dtolabs.rundeck.core.logging.StreamingLogReader
 
 /**
- * $INTERFACE is ...
- * User: greg
- * Date: 5/23/13
- * Time: 10:55 AM
+ * Contains a log reader, state and any error code
  */
 class ExecutionLogReader {
     ExecutionLogState state
     StreamingLogReader reader
+    String errorCode
+    List errorData
 }

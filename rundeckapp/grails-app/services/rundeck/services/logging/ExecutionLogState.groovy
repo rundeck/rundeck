@@ -32,7 +32,11 @@ public enum ExecutionLogState {
     /**
      * Pending presence on local storage (being copied)
      */
-    PENDING_LOCAL
+    PENDING_LOCAL,
+    /**
+     * Error determining state
+     */
+    ERROR
     /**
      * Return an {@link ExecutionLogState} given a local and remote {@link LogFileState}
      * @param local
@@ -57,6 +61,8 @@ public enum ExecutionLogState {
                 return PENDING_LOCAL
             case LogFileState.NOT_FOUND:
                 switch (remote) {
+                    case LogFileState.ERROR:
+                        return ERROR
                     case LogFileState.AVAILABLE:
                         return AVAILABLE_REMOTE
                     case LogFileState.PENDING:

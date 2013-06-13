@@ -27,8 +27,8 @@ class LogFileStoragePluginBuilder extends ScriptPluginBuilder implements PluginB
     @Override
     Object invokeMethod(String name, Object args) {
         List list = InvokerHelper.asList(args);
-        if (name == 'state' && list.size() == 1 && list[0] instanceof Closure) {
-            if (!ScriptLogFileStoragePlugin.validStateClosure (list[0])) {
+        if (name == 'available' && list.size() == 1 && list[0] instanceof Closure) {
+            if (!ScriptLogFileStoragePlugin.validAvailableClosure (list[0])) {
                 logger.error("Invalid trigger closure: ${name}, unexpected parameter set: ${list[0].parameterTypes}")
                 throw new MissingMethodException(name.toString(), getClass(), list.toArray(), false);
             }
