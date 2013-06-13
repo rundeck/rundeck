@@ -2,6 +2,7 @@ package com.dtolabs.rundeck.plugins.logging;
 
 import com.dtolabs.rundeck.core.logging.LogFileState;
 import com.dtolabs.rundeck.core.logging.LogFileStorage;
+import com.dtolabs.rundeck.core.logging.LogFileStorageException;
 
 import java.util.Map;
 
@@ -16,8 +17,9 @@ public interface LogFileStoragePlugin extends LogFileStorage {
     public void initialize(Map<String, ? extends Object> context);
 
     /**
-     * Returns the state of the log file storage
+     * Returns true if the file is available, false otherwise
      * @return
+     * @throws LogFileStorageException if there is an error determining the availability
      */
-    public LogFileState getState();
+    public boolean isAvailable() throws LogFileStorageException;
 }

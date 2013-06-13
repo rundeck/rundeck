@@ -20,7 +20,7 @@ public interface LogFileStorage {
      *
      * @throws IOException
      */
-    boolean store(InputStream stream, long length, Date lastModified) throws IOException;
+    boolean store(InputStream stream, long length, Date lastModified) throws IOException, LogFileStorageException;
 
     /**
      * Writes a log file to the given stream
@@ -31,5 +31,5 @@ public interface LogFileStorage {
      *
      * @throws IOException
      */
-    boolean retrieve(OutputStream stream) throws IOException;
+    boolean retrieve(OutputStream stream) throws IOException, LogFileStorageException;
 }

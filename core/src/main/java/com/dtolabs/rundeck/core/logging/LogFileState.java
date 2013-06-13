@@ -11,5 +11,9 @@ public enum LogFileState {
     /**
      * In process of being transferred to local storage
      */
-    PENDING
+    PENDING,
+    /**
+     * Error determining state
+     */
+    ERROR
 }
