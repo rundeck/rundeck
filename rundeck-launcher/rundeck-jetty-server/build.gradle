@@ -20,6 +20,10 @@ dependencies {
     runtime(
         [group: 'org.mortbay.jetty', name: 'servlet-api', version: '2.5-20081211',ext:'jar'],
     )
+    testCompile (
+        [group: 'junit', name: 'junit', version: '4.8.1',ext:'jar'],
+        [group: 'org.mockito', name: 'mockito-all', version: '1.8.5',ext:'jar'],
+    )
 }
 
 jar {
