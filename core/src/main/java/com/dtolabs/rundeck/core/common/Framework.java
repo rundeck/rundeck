@@ -57,7 +57,7 @@ import java.util.*;
 /**
  * Manages the elements of the Ctl framework. Provides access to the various
  * kinds of framework resource managers like
- * {@link FrameworkProjectMgr}, {@link ModuleMgr}, {@link Authenticator}, {@link Authorization}.
+ * {@link FrameworkProjectMgr}, {@link Authenticator}, {@link Authorization}.
  * <p/>
  * User: alexh
  * Date: Jun 4, 2004
@@ -204,7 +204,6 @@ public class Framework extends FrameworkResourceParent {
      * Standard constructor
      *
      * @param rdeck_base_dir path name to the rdeck_base
-     * @param module_base_dir  path name to the module_base
      * @param projects_base_dir  path name to the projects base
      */
     private Framework(final String rdeck_base_dir,
@@ -216,7 +215,6 @@ public class Framework extends FrameworkResourceParent {
      * Standard constructor
      *
      * @param rdeck_base_dir path name to the rdeck_base
-     * @param module_base_dir  path name to the module_base
      * @param projects_base_dir  path name to the projects base
      */
     private Framework(final String rdeck_base_dir,
@@ -326,11 +324,14 @@ public class Framework extends FrameworkResourceParent {
     }
     /**
      * Create a safe project property retriever given a basedir and project name
-     * @param baseDir
+     *
+     * @param baseDir framework base directory
+     * @param projectsBaseDir projects base directory
+     * @param projectName name of the project
      * @return
      */
-    public static PropertyRetriever createProjectPropertyRetriever(File baseDir, String projectName) {
-        return FrameworkProject.createProjectPropertyRetriever(baseDir, projectName);
+    public static PropertyRetriever createProjectPropertyRetriever(File baseDir, File projectsBaseDir, String projectName) {
+        return FrameworkProject.createProjectPropertyRetriever(baseDir, projectsBaseDir, projectName);
     }
 
     /**
@@ -406,7 +407,6 @@ public class Framework extends FrameworkResourceParent {
      * supplied directory paths are null, then the value from {@link Constants} is used.
      *
      * @param rdeck_base_dir     path name to the rdeck_base
-     * @param module_base_dir      path name to the modle base
      * @param projects_base_dir path name to the projects base
      * @return a Framework instance
      */
@@ -447,8 +447,10 @@ public class Framework extends FrameworkResourceParent {
             throw new RuntimeException(
                 "Unable to determine rdeck base directory: system property rdeck.base is not set");
         }
+        //determine projects dir from properties
+        String frameworkProjectsDir = Constants.getFrameworkProjectsDir(rdeck_base_dir);
         Framework instance = new Framework(rdeck_base_dir,
-                                           Constants.getFrameworkProjectsDir(rdeck_base_dir),
+                frameworkProjectsDir,
                                            authenticator,
                                            authorization);
         return instance;

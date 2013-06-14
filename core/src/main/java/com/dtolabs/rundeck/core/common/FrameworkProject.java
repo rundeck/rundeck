@@ -146,7 +146,11 @@ public class FrameworkProject extends FrameworkResourceParent {
         //generic framework properties for a project
         final File fwkProjectPropertyFile = new File(projectResourceMgr.getFramework().getConfigDir(), PROP_FILENAME);
 
-        lookup = createProjectPropertyLookup(projectResourceMgr.getFramework().getBaseDir(), getName());
+        lookup = createProjectPropertyLookup(
+                projectResourceMgr.getFramework().getBaseDir(),
+                projectResourceMgr.getFramework().getFrameworkProjectsBaseDir(),
+                getName()
+        );
 
         if (propertyFile.exists()) {
             getLogger().debug("loading existing project.properties: " + propertyFile.getAbsolutePath());
@@ -161,11 +165,13 @@ public class FrameworkProject extends FrameworkResourceParent {
 
     /**
      * Create PropertyLookup for a project from the framework basedir
+     *
      * @param baseDir the framework basedir
+     * @param projectsBaseDir
      * @param projectName
      * @return
      */
-    private static PropertyLookup createProjectPropertyLookup(File baseDir, String projectName) {
+    private static PropertyLookup createProjectPropertyLookup(File baseDir, File projectsBaseDir, String projectName) {
         PropertyLookup lookup;
         final Properties ownProps = new Properties();
         ownProps.setProperty("project.name", projectName);
@@ -175,7 +181,7 @@ public class FrameworkProject extends FrameworkResourceParent {
         final Properties nodeWideDepotProps = PropertyLookup.fetchProperties(fwkProjectPropertyFile);
         nodeWideDepotProps.putAll(ownProps);
 
-        final File propertyFile = getProjectPropertyFile(new File(Framework.getProjectsBaseDir(baseDir), projectName));
+        final File propertyFile = getProjectPropertyFile(new File(projectsBaseDir, projectName));
 
         if (propertyFile.exists()) {
             lookup = PropertyLookup.create(propertyFile,
@@ -190,12 +196,14 @@ public class FrameworkProject extends FrameworkResourceParent {
 
     /**
      * Create a property retriever for a project given the framework basedir
+     *
      * @param baseDir the framework basedir
+     * @param projectsBaseDir
      * @param projectName
      * @return
      */
-    public static PropertyRetriever createProjectPropertyRetriever(File baseDir, String projectName) {
-        return createProjectPropertyLookup(baseDir, projectName).safe();
+    public static PropertyRetriever createProjectPropertyRetriever(File baseDir, File projectsBaseDir, String projectName) {
+        return createProjectPropertyLookup(baseDir, projectsBaseDir, projectName).safe();
     }
 
     private ArrayList<Exception> nodesSourceExceptions;
@@ -574,7 +582,6 @@ public class FrameworkProject extends FrameworkResourceParent {
     /**
      * Update the resources file given an input Nodes set
      *
-     * @param source the source nodes
      * @throws UpdateUtils.UpdateException if an error occurs while trying to update the resources file or generate
      * nodes
      *
@@ -665,8 +672,6 @@ public class FrameworkProject extends FrameworkResourceParent {
      * Creates the file structure for a project
      *
      * @param projectDir     The project base directory
-    * @param moduleDir     The project module directory    *
-     * @param createModLib Create a project module library
      * @throws IOException
      */
     public static void createFileStructure(final File projectDir) throws IOException {

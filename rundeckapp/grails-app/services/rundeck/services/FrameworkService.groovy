@@ -118,10 +118,20 @@ class FrameworkService implements ApplicationContextAware {
      * @return
      */
     def getFrameworkPropertyResolver(String projectName=null) {
+        final File rdbaseDir = new File(rundeckbase)
+        def fwk = Framework.createPropertyRetriever(rdbaseDir)
+        def projBaseDir = getFrameworkProjectsBasedir(rundeckbase)
         return PropertyResolverFactory.createResolver(
-                Framework.createPropertyRetriever(new File(rundeckbase)),
-                null!=projectName?Framework.createProjectPropertyRetriever(new File(rundeckbase),projectName):null,
+                fwk,
+                null != projectName
+                ? Framework.createProjectPropertyRetriever(rdbaseDir, new File(projBaseDir), projectName)
+                : null,
                 null)
+    }
+    static def getFrameworkProjectsBasedir(String rundeckbase){
+        def baseDir = new File(rundeckbase)
+        def fwk = Framework.createPropertyRetriever(baseDir)
+        return fwk.getProperty("framework.projects.dir") ?: Framework.getProjectsBaseDir(baseDir)
     }
     /**
      * Filter nodes for a project given the node selector
@@ -368,7 +378,7 @@ class FrameworkService implements ApplicationContextAware {
 
     def getFrameworkNodeName() {
         def rdbase= getRundeckBase()
-        def Framework fw = Framework.getInstance(rdbase)
+        def Framework fw = Framework.getInstance(rdbase, getFrameworkProjectsBasedir(rdbase))
         fw.setAuthorizationMgr(new DenyAuthorization(fw, new File(Constants.getFrameworkConfigDir(rdbase))))
         return fw.getFrameworkNodeName()
     }
@@ -393,7 +403,8 @@ class FrameworkService implements ApplicationContextAware {
         return getFrameworkForUserAndRoles(user, rolelist, getRundeckBase())
     }
     public static Framework getFrameworkForUserAndRoles(String user, List rolelist, String rundeckbase){
-        def Framework fw = Framework.getInstance(rundeckbase)
+        String projectsBase = getFrameworkProjectsBasedir(rundeckbase)
+        def Framework fw = Framework.getInstance(rundeckbase, projectsBase)
         if(null!=user && null != rolelist){
             //create fake subject
             Subject subject = new Subject()
@@ -412,7 +423,8 @@ class FrameworkService implements ApplicationContextAware {
         return fw
     }
     public static Framework getFrameworkForUserAndSubject(String user, Subject subject, String rundeckbase){
-        def Framework fw = Framework.getInstance(rundeckbase)
+        String projectsBase = getFrameworkProjectsBasedir(rundeckbase)
+        def Framework fw = Framework.getInstance(rundeckbase, projectsBase)
         if(null!=user && null!=subject){
             def authen = new SingleUserAuthentication(user,subject)
             def author = new UserSubjectAuthorization(fw,new File(Constants.getFrameworkConfigDir(rundeckbase)), user, subject)

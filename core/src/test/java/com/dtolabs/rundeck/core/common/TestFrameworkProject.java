@@ -531,6 +531,34 @@ public class TestFrameworkProject extends AbstractBaseTest {
         assertFalse(p.containsKey("test3.something"));
         assertFalse(p.containsKey("test3.somethingelse"));
     }
+
+    public void testCreateProjectPropertyRetriever() throws IOException {
+        final FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
+                new File(getFrameworkProjectsBase()),
+                getFrameworkInstance().getFrameworkProjectMgr());
+        final Properties testprops = new Properties();
+        testprops.setProperty("test1", "value1");
+        testprops.setProperty("test2", "value2");
+        testprops.setProperty("test3.something", "value3");
+        testprops.setProperty("test3.somethingelse", "value3.else");
+        boolean overwrite = true;
+        project.generateProjectPropertiesFile(overwrite, testprops);
+
+        final File propFile = new File(project.getEtcDir(), "project.properties");
+        assertTrue("project.properties file was not generated",
+                propFile.exists());
+
+        PropertyRetriever projectPropertyRetriever = FrameworkProject.createProjectPropertyRetriever(new File
+                (getBaseDir()), new File(getFrameworkProjectsBase()), PROJECT_NAME);
+        assertNotNull(projectPropertyRetriever);
+
+        assertNotNull(projectPropertyRetriever.getProperty("project.resources.file"));
+        assertEquals("value1", projectPropertyRetriever.getProperty("test1"));
+        assertEquals("value2", projectPropertyRetriever.getProperty("test2"));
+        assertEquals("value3", projectPropertyRetriever.getProperty("test3.something"));
+        assertEquals("value3.else", projectPropertyRetriever.getProperty("test3.somethingelse"));
+        assertNull(projectPropertyRetriever.getProperty("blah.does.not.exist"));
+    }
     static class testSource implements ResourceModelSource {
         INodeSet returnNodes;
         int called=0;
