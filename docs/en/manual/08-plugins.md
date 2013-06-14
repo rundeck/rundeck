@@ -61,6 +61,8 @@ Types of plugins:
 * [Resource Model Source](#resource-model-source-plugins) - defines a mechanism to retrieve Resource Model data (Node definitions) for use by a Rundeck project
 * [Resource Format](#resource-format-plugins) - defines a data format for Resource Models
 * [Notification](#notification-plugins) - defines a mechanism for notification that can be triggered when a Job starts or finishes
+* [Streaming Logging](#streaming-logging-plugins) - defines a mechanism for reading and writing log events
+* [Log File Storage](#logging-plugins) - defines a mechanism for storage of log files
 
 ## Plugin Development
 
@@ -126,6 +128,24 @@ More information:
 
 * Configuration: [Notifications](plugins.html#notifications)
 * Development: [Notification Plugin Development](../developer/notification-plugin-development.html)
+
+### Streaming Logging Plugins
+
+These plugins define logging event streams for reading or writing execution logs. Multiple writers can be enabled. Rundeck has a built-in implementation called the **Local File Log**.
+
+More information:
+
+* Configuration: [Logging](plugins.html#logging)
+* Development: [Logging Plugin Development](../developer/logging-plugin-development.html)
+
+### Log File Storage Plugins
+
+These plugins define a mechanism for storing and retrieving execution Log files, and work with Rundeck's built-in **Local File Log**.
+
+More information:
+
+* Configuration: [Logging](plugins.html#logging)
+* Development: [Logging Plugin Development](../developer/logging-plugin-development.html)
 
 ## About Services and Providers
 
@@ -388,6 +408,69 @@ In addition, you can also use these variables:
 * `${job.user.firstName}` - the first name of the executing user if set in their user profile
 * `${job.user.lastName}` - the first name of the executing user if set in their user profile
 
+### Logging
+
+Logging plugins consist of Readers and Writers, and Log File Storage.
+Rundeck has a built-in Reader/Writer called the **Local File Log** that is used by default.
+
+Logging plugins are enabled in the `rundeck-config` file.  You should add an entry identifying the plugin by its "provider name".  For Java plugins, this provider name is defined in the Java code.  For Groovy plugins, the provider name is usually just the name of the Groovy script file, such as "MyStreamingLogWriterPlugin".
+
+To add StreamingLogWriter plugins, add a comma separated list to this entry, note that this will enable these plugins in addition to the **Local File Log Writer**:
+
+* `rundeck.execution.logs.streamingWriterPlugins`
+    * example value: `MyStreamingLogWriterPlugin,otherPlugin`
+
+To change the StreamingLogReader plugin. Note that this will replace the **Local File Log Reader**, but will not disable the **Local File Log Writer**:
+
+* `rundeck.execution.logs.streamingReaderPlugin`
+    * example value: `MyStreamingLogReaderPlugin`
+
+To disable the **Local File Log Writer**:
+
+* `rundeck.execution.logs.localFileStorageEnabled`
+    * value: `false`
+
+To configure a LogFileStorage plugin:
+
+* `rundeck.execution.logs.fileStoragePlugin`
+    * example value: `MyLogFileStoragePlugin`
+
+Also, if `localFileStorageEnabled` is `false`, but no `streamingReaderPlugin` is enabled, then Rundeck will still default to using the **Local File Log Writer**.
+
+The LogFileStorage plugins also have some associated configuration values
+that can be used to tune the behavior of the plugins:
+
+* `rundeck.execution.logs.fileStorage.storageRetryCount`
+    * The number of `store` attempts to try before giving up for a single log file
+    * default value: `1` 
+* `rundeck.execution.logs.fileStorage.storageRetryDelay`
+    * Time to wait between retry attempts
+    * default value: `60` (seconds)
+* `rundeck.execution.logs.fileStorage.retrievalRetryCount`
+    * The number of `retrieve` attempts to try before giving up for a single log file
+    * default value: `3` 
+* `rundeck.execution.logs.fileStorage.retrievalRetryDelay`
+    * Time to wait between retry attempts
+    * default value: `60` (seconds)
+* `rundeck.execution.logs.fileStorage.remotePendingDelay`
+    * Grace time to allow after an execution finishes. Clients will see a "pending" message within this period after an execution finishes, even if the storage plugin is unable to find the log file. After this time period, they will see a "not found" message if the plugin is unable to find the log file.
+    * default value: `120` (seconds)
+
+### Logging Plugin Configuration
+
+Logging plugins can define configuration properties, which can be set in the `framework.properties` (system-wide) or `project.properties` (project-wide).  Project-level properties override system-level properties.
+
+To add a configuration property, add a value to the appropriate file in the following format:
+
+`SCOPE.plugin.TYPE.PROVIDER.PROPERTY=value`
+
+`SCOPE` is either `framework` or `project`.
+
+The `TYPE` is one of:
+
+* `StreamingLogReader`, `StreamingLogWriter`, or `LogFileStorage`
+
+`PROVIDER` is the provider name of the plugin.
 
 ## When Node Execution Service providers are invoked
 

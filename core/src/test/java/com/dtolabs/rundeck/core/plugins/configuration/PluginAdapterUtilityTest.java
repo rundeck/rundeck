@@ -22,20 +22,17 @@
 * Created: 11/29/12 3:22 PM
 * 
 */
-package com.dtolabs.rundeck.core.execution.workflow.steps;
+package com.dtolabs.rundeck.core.plugins.configuration;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.dtolabs.rundeck.core.plugins.configuration.*;
 import junit.framework.TestCase;
 
 import com.dtolabs.rundeck.core.plugins.Plugin;
-import com.dtolabs.rundeck.core.plugins.configuration.Description;
-import com.dtolabs.rundeck.core.plugins.configuration.Property;
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
-import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants;
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants.DisplayType;
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty;

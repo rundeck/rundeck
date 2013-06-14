@@ -82,4 +82,11 @@ class ContextualExecutionListener extends ExecutionListenerOverrideBase implemen
     public ExecutionListenerOverride createOverride() {
         return new ContextualExecutionListener(this);
     }
+
+    /**
+     */
+    public Map<String, String> getContext() {
+        return getLoggingContext();
+    }
+
 }

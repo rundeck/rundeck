@@ -26,7 +26,9 @@ import com.dtolabs.rundeck.core.dispatcher.IDispatchedScript;
 import com.dtolabs.rundeck.core.dispatcher.QueuedItem;
 import com.dtolabs.rundeck.core.dispatcher.QueuedItemResult;
 import com.dtolabs.rundeck.core.execution.*;
+import com.dtolabs.rundeck.core.execution.workflow.ContextLogger;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListenerImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandBase;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptURLCommandBase;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCommandBase;
@@ -48,8 +50,7 @@ import java.util.*;
  * Main class for <code>dispatch</code> command line tool. This command will dispatch the command either locally or
  * remotely.
  */
-public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, StepExecutionContext {
-
+public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams, StepExecutionContext, ContextLogger {
     /**
      * Short option value for filter exclude precedence option
      */
@@ -124,9 +125,9 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
         options.addOption("S", "stdin", false, "read script from stdin");
         options.addOption("N", "nodesfile", true, "Path to arbitrary nodes file (with -L/--noqueue only)");
         options.addOption(NO_QUEUE_FLAG, "noqueue", false,
-            "Run locally, do not send the execution to the command dispatcher queue");
+                "Run locally, do not send the execution to the command dispatcher queue");
         options.addOption("Q", "queue", false,
-            "Send the execution to the command dispatcher queue (default behavior)");
+                "Send the execution to the command dispatcher queue (default behavior)");
         options.addOption("z", "terse", false, "leave log messages unadorned");
         options.addOption("f", "follow", false, "Follow queued execution output");
         options.addOption("r", "progress", false, "In follow mode, print progress indicator chars");
@@ -202,7 +203,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
     public CommandLine parseArgs(String[] args) {
         inputArgs = args.clone();
         int lastArg = -1;
-        for (int i = 0 ; i < args.length ; i++) {
+        for (int i = 0; i < args.length; i++) {
             if ("--".equals(args[i])) {
                 lastArg = i;
                 break;
@@ -237,7 +238,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
             argQuiet = true;
         }
         if (cli.hasOption('z') || (System.getProperties().containsKey("rdeck.cli.terse") && "true".equalsIgnoreCase(
-            System.getProperty("rdeck.cli.terse")))) {
+                System.getProperty("rdeck.cli.terse")))) {
             argTerse = true;
         }
 
@@ -263,8 +264,8 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
         }
         if (cli.hasOption("f")) {
             argFollow = true;
-            if(cli.hasOption("r")){
-                argProgress=true;
+            if (cli.hasOption("r")) {
+                argProgress = true;
             }
         }
 
@@ -275,9 +276,9 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
         if (cli.hasOption('p')) {
             argProject = cli.getOptionValue("p");
         } else if (!cli.hasOption("p") &&
-                   framework.getFrameworkProjectMgr().listFrameworkProjects().size() == 1) {
+                framework.getFrameworkProjectMgr().listFrameworkProjects().size() == 1) {
             final FrameworkProject project =
-                (FrameworkProject) framework.getFrameworkProjectMgr().listFrameworkProjects().iterator().next();
+                    (FrameworkProject) framework.getFrameworkProjectMgr().listFrameworkProjects().iterator().next();
             argProject = project.getName();
         }
 
@@ -414,7 +415,8 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
     }
 
 
-    private  String[] inputArgs;
+    private String[] inputArgs;
+
     /**
      * The run method carries out the lifecycle of the tool, parsing args, handling exceptions, and exiting with a
      * suitable exit code.
@@ -425,8 +427,8 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
         int exitCode = 1; //pessimistic initial value
         ThreadBoundOutputStream.bindSystemOut();
         ThreadBoundOutputStream.bindSystemErr();
-        out=System.out;
-        err=System.err;
+        out = System.out;
+        err = System.err;
 
         try {
             parseArgs(args);
@@ -451,7 +453,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
                 HashMap<String, String> failmap = new HashMap<String, String>();
                 if (null != nfe.getNodeset() && nfe.getNodeset().size() > 0 && null == failedNodes) {
                     failmap.put("-I", "name=" + StringArrayUtil.asString(nfe.getNodeset().toArray(
-                        new String[nfe.getNodeset().size()]), ","));
+                            new String[nfe.getNodeset().size()]), ","));
                 }
                 error("Execute this command to retry on the failed nodes:\n\t" + generateExecLine(failmap));
                 exitCode = NodesetFailureException.EXIT_CODE;
@@ -488,7 +490,8 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
      */
     void listAction() {
         try {
-            log((argVerbose ? getNodeFormatter() : new DefaultNodeFormatter()).formatNodes(filterNodes(false).getNodes()).toString());
+            log((argVerbose ? getNodeFormatter() : new DefaultNodeFormatter()).formatNodes(filterNodes(false)
+                    .getNodes()).toString());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -501,13 +504,13 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
     /**
      * Call the CentralDispatcherMgr to submit the execution params to the central dispatch queue instead of executing
      * locally.
-     *
      */
     private void queueAction() {
         final QueuedItemResult result;
         try {
             if (inlineScript && null == inlineScriptContent) {
-                //pass input stream as the script stream so that the Queue action can serialize it for the remote request
+                //pass input stream as the script stream so that the Queue action can serialize it for the remote
+                // request
                 setScriptAsStream(instream);
             }
             result = framework.getCentralDispatcherMgr().queueDispatcherScript(this);
@@ -516,14 +519,14 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
         }
         if (null == result || !result.isSuccessful()) {
             throw new CoreException(
-                "Queued job request failed: " + (null != result ? result.getMessage() : "Result was null"));
+                    "Queued job request failed: " + (null != result ? result.getMessage() : "Result was null"));
         }
         if (null != result.getMessage()) {
             out.println(result.getMessage());
         }
         out.println("Queued Execution ID: " + result.getItem().getId() + " <" + result.getItem().getUrl() + ">");
 
-        if(argFollow) {
+        if (argFollow) {
             followOutput(result.getItem(), argQuiet, argProgress);
         }
     }
@@ -553,12 +556,14 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
     public static final String FRAMEWORK_LOG_RUNDECK_EXEC_CONSOLE_FORMAT = "framework.log.dispatch.console.format";
 
     ExecutionListener mylistener;
+
     public synchronized ExecutionListener getExecutionListener() {
-        if(null==mylistener){
-            mylistener = createExecutionListener();
+        if (null == mylistener) {
+            mylistener = createWorkflowListener();
         }
         return mylistener;
     }
+
     public ExecutionListener createExecutionListener() {
 
         final String logformat;
@@ -568,31 +573,42 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
             logformat = DEFAULT_LOG_FORMAT;
         }
         return new CLIExecutionListener(FailedNodesFilestore.createListener(getFailedNodes()), this, getAntLoglevel(),
-            argTerse,
-            logformat);
+                argTerse,
+                logformat);
+    }
+
+    public ExecutionListener createWorkflowListener() {
+
+        final String logformat;
+        if (getFramework().hasProperty(ExecTool.FRAMEWORK_LOG_RUNDECK_EXEC_CONSOLE_FORMAT)) {
+            logformat = getFramework().getProperty(ExecTool.FRAMEWORK_LOG_RUNDECK_EXEC_CONSOLE_FORMAT);
+        } else {
+            logformat = DEFAULT_LOG_FORMAT;
+        }
+        return new WorkflowExecutionListenerImpl(
+                FailedNodesFilestore.createListener(getFailedNodes()),
+                this, argTerse, logformat);
     }
 
     /**
-     *
      * Execute the script with the ExecutionService layer, using a build listener
-     *
      */
     void runAction() throws Exception {
-        ExecutionResult result=null;
-        Exception exception=null;
-        final Date startDate=new Date();
+        ExecutionResult result = null;
+        Exception exception = null;
+        final Date startDate = new Date();
         try {
             //store inline script content (via STDIN or script property) to a temp file
-            if(inlineScript){
-                File inlinefile=null;
-                if(null!=inlineScriptContent) {
+            if (inlineScript) {
+                File inlinefile = null;
+                if (null != inlineScriptContent) {
                     inlinefile = writeInlineContentToFile();
-                }else {
+                } else {
                     inlinefile = writeStdinInputToFile();
                 }
                 setScriptpath(inlinefile.getAbsolutePath());
                 setScriptAsStream(new FileInputStream(inlinefile));
-            }else if(null!=scriptpath){
+            } else if (null != scriptpath) {
                 setScriptAsStream(new FileInputStream(getScriptpath()));
             }
             //acquire ExecutionService object
@@ -600,18 +616,18 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
 
             //submit the execution request to the service layer
             result = service.executeItem(this, createExecutionItem());
-            if(null!=scriptAsStream){
-                try{
+            if (null != scriptAsStream) {
+                try {
                     scriptAsStream.close();
-                }catch(IOException e){
-                    error("Error closing stream: "+e.getMessage());
+                } catch (IOException e) {
+                    error("Error closing stream: " + e.getMessage());
                 }
             }
-            if(!result.isSuccess()){
+            if (!result.isSuccess()) {
                 if (null != result.getResultObject()) {
                     error(result.getResultObject().toString());
                 }
-                if(null!= result.getException()){
+                if (null != result.getException()) {
                     error(result.getException().getMessage());
                 }
             }
@@ -624,7 +640,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
         final String tags;
         final NodeSet filterNodeSelector = createFilterNodeSelector();
         if (null != filterNodeSelector && null != filterNodeSelector.getInclude() &&
-            filterNodeSelector.getInclude().getTags() != null) {
+                filterNodeSelector.getInclude().getTags() != null) {
             tags = filterNodeSelector.getInclude().getTags();
         } else {
             tags = null;
@@ -633,12 +649,12 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
         final Collection<INodeEntry> nodeEntryCollection = filterNodes(true).getNodes();
         if (null != result && result.isSuccess()) {
             final String resultString =
-                null != result.getResultObject() ?  result.getResultObject().toString() : "dispatch succeeded" ;
+                    null != result.getResultObject() ? result.getResultObject().toString() : "dispatch succeeded";
 
             try {
                 framework.getCentralDispatcherMgr().reportExecutionStatus(
-                    getFrameworkProject(), "dispatch", "succeeded",
-                    0, nodeEntryCollection.size(), tags, script, resultString, startDate, new Date());
+                        getFrameworkProject(), "dispatch", "succeeded",
+                        0, nodeEntryCollection.size(), tags, script, resultString, startDate, new Date());
             } catch (CentralDispatcherException e) {
                 e.printStackTrace();
             }
@@ -647,45 +663,47 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
         //log failure
 
         final String failureString =
-            null != result ? (null != result.getResultObject() ? result.getResultObject().toString()
-                                                               : null != result && result.getException() != null
-                                                                 ? result.getException().getMessage() : "")
-                           : "action failed: result was null";
+                null != result ? (null != result.getResultObject() ? result.getResultObject().toString()
+                        : null != result && result.getException() != null
+                        ? result.getException().getMessage() : "")
+                        : "action failed: result was null";
         //look for nodeset failure exception
         int failednodes = nodeEntryCollection.size();
-        if(null!=result && null!=result.getException() && result.getException() instanceof NodesetFailureException) {
+        if (null != result && null != result.getException() && result.getException() instanceof
+                NodesetFailureException) {
             NodesetFailureException failure = (NodesetFailureException) result.getException();
-            if(null!=failure.getNodeset()){
+            if (null != failure.getNodeset()) {
                 failednodes = failure.getNodeset().size();
             }
-        }else if(null!=result && null!=result.getResultObject() && null!=result.getResultObject().getResults()){
+        } else if (null != result && null != result.getResultObject() && null != result.getResultObject().getResults
+                ()) {
             for (final String node : result.getResultObject().getResults().keySet()) {
                 final StatusResult interpreterResult = result.getResultObject().getResults().get(node);
-                if(interpreterResult.isSuccess()){
+                if (interpreterResult.isSuccess()) {
                     failednodes--;
                 }
             }
         }
         try {
             framework.getCentralDispatcherMgr().reportExecutionStatus(
-                getFrameworkProject(), "dispatch", "failed",
-                failednodes, nodeEntryCollection.size() - failednodes, tags, script,
-                failureString, startDate, new Date());
+                    getFrameworkProject(), "dispatch", "failed",
+                    failednodes, nodeEntryCollection.size() - failednodes, tags, script,
+                    failureString, startDate, new Date());
         } catch (CentralDispatcherException e) {
             e.printStackTrace();
         }
-        if(null!=result && null!=result.getException()) {
+        if (null != result && null != result.getException()) {
             throw result.getException();
-        }else if(null!=exception){
+        } else if (null != exception) {
             throw exception;
-        }else {
+        } else {
             throw new CoreException(failureString);
         }
 
     }
 
     StepExecutionItem createExecutionItem() {
-        if(null!=getScript() || null!=getServerScriptFilePath() || null!=getScriptAsStream()){
+        if (null != getScript() || null != getServerScriptFilePath() || null != getScriptAsStream()) {
             return new ScriptFileCommandBase() {
                 public String getScript() {
                     return ExecTool.this.getScript();
@@ -703,7 +721,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
                     return ExecTool.this.getArgs();
                 }
             };
-        }else if(null!=scriptURLString) {
+        } else if (null != scriptURLString) {
             return new ScriptURLCommandBase() {
                 public String getURLString() {
                     return ExecTool.this.getScriptURLString();
@@ -721,9 +739,9 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
                     return false;
                 }
             };
-        }else{
+        } else {
             return new ExecCommandBase() {
-                public String[] getCommand(){
+                public String[] getCommand() {
                     return ExecTool.this.getArgs();
                 }
             };
@@ -765,13 +783,13 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
      * @param excludePrecedence if true, exclusion has precedence
      * @param threadCount       the threadcount
      * @param keepgoing         keepgoing boolean
+     * @param failedNodesfile   file indicating list of failed nodes
      *
-     * @param failedNodesfile file indicating list of failed nodes
      * @return NodeSet
      */
     protected static NodeSet createNodeSet(final Map includeMap, final Map excludeMap, final boolean excludePrecedence,
-                                           final Integer threadCount, final boolean keepgoing,
-                                           final File failedNodesfile) {
+            final Integer threadCount, final boolean keepgoing,
+            final File failedNodesfile) {
         final NodeSet nodeset = new NodeSet();
         nodeset.createExclude(excludeMap).setDominant(excludePrecedence);
         nodeset.createInclude(includeMap).setDominant(!excludePrecedence);
@@ -796,7 +814,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
          */
         File configDir = Constants.getFrameworkConfigFile();
         PropertyConfigurator.configure(new File(configDir,
-            "log4j.properties").getAbsolutePath());
+                "log4j.properties").getAbsolutePath());
         File systemBaseDir = new File(Constants.getSystemBaseDir());
         final ExecTool ExecTool = new ExecTool(systemBaseDir.getAbsolutePath());
         ExecTool.shouldExit = true;
@@ -822,20 +840,20 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
     public void help() {
         final HelpFormatter formatter = new HelpFormatter();
         formatter.printHelp(80,
-            "dispatch [-h] [-v] [-V] [-q] [-p project] " +
-            "[-I nodes] [-X xnodes] " +
-            "[--threadcount <1>] [--keepgoing] " +
-            "[--queue] " +
-            "[[-S] | [-s <>] | [-- command-args]]",
-            null,
-            options,
-            "Examples:\n"
-            + "| dispatch\n | => Prints all nodes\n"
-            + "| dispatch -p default -- whoami\n | => Runs the whoami command on all nodes\n"
-            + "| dispatch -X node1 -- uptime\n | => Runs the uptime command on all nodes except node1\n"
-            + "| dispatch -s myscript.sh\n | => Copies and then runs myscript.sh to matcing nodes\n"
-            + "\n"
-            + "[RUNDECK version " + VersionConstants.VERSION + " (" + VersionConstants.BUILD + ")]");
+                "dispatch [-h] [-v] [-V] [-q] [-p project] " +
+                        "[-I nodes] [-X xnodes] " +
+                        "[--threadcount <1>] [--keepgoing] " +
+                        "[--queue] " +
+                        "[[-S] | [-s <>] | [-- command-args]]",
+                null,
+                options,
+                "Examples:\n"
+                        + "| dispatch\n | => Prints all nodes\n"
+                        + "| dispatch -p default -- whoami\n | => Runs the whoami command on all nodes\n"
+                        + "| dispatch -X node1 -- uptime\n | => Runs the uptime command on all nodes except node1\n"
+                        + "| dispatch -s myscript.sh\n | => Copies and then runs myscript.sh to matcing nodes\n"
+                        + "\n"
+                        + "[RUNDECK version " + VersionConstants.VERSION + " (" + VersionConstants.BUILD + ")]");
     }
 
     /**
@@ -872,7 +890,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
 
     public void debug(String message) {
         if (argDebug) {
-            log("debug: " +message);
+            log("debug: " + message);
         }
     }
 
@@ -883,7 +901,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
      */
     public void verbose(String message) {
         if (argVerbose) {
-            log("verbose: "+message);
+            log("verbose: " + message);
         }
     }
 
@@ -915,19 +933,19 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
             final String logpath = framework.getProperty("framework.logs.dir");
             if (null == logpath || "".equals(logpath)) {
                 throw new CoreException("Cannot configure print stream to a file. "
-                                       + "framework.logs.dir property not set");
+                        + "framework.logs.dir property not set");
             }
             final File logsdir = new File(logpath);
             if (!logsdir.isDirectory() || !logsdir.exists()) {
                 throw new CoreException("Cannot configure print stream to a file. " +
-                                       "Path does not exist or is not a directory: " + logpath);
+                        "Path does not exist or is not a directory: " + logpath);
             }
             try {
                 final File logfile = File.createTempFile("dispatch-", ".log", logsdir);
                 ThreadBoundOutputStream.bindSystemOut().installThreadStream(new FileOutputStream(logfile));
             } catch (IOException e) {
                 throw new CoreException("Cannot configure print stream to a file. " +
-                                       "Failed created log file: " + e.getMessage());
+                        "Failed created log file: " + e.getMessage());
             }
         }
     }
@@ -1133,16 +1151,16 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
     }
 
     public int getLoglevel() {
-        if(argDebug) {
+        if (argDebug) {
             return Constants.DEBUG_LEVEL;
         }
         if (argQuiet && argVerbose) {
             return Constants.WARN_LEVEL;
         }
-        if(argVerbose) {
+        if (argVerbose) {
             return Constants.VERBOSE_LEVEL;
         }
-        if(argQuiet) {
+        if (argQuiet) {
             return Constants.ERR_LEVEL;
         }
         return Constants.INFO_LEVEL;
@@ -1162,20 +1180,22 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
 
     /**
      * Return true if exclusion should have precedence in node filter args
+     *
      * @param args all commandline args
-     * @param cli parsed CommandLine
+     * @param cli  parsed CommandLine
+     *
      * @return true if --filter-exclusion-precedence is true, or -I is not specified before -X
      */
     static boolean determineExclusionPrecedenceForArgs(String[] args, final CommandLine cli) {
         if (cli.hasOption(FILTER_EXCLUDE_PRECEDENCE_OPT)) {
-            return  "true".equals(cli.getOptionValue(FILTER_EXCLUDE_PRECEDENCE_OPT));
-        }else{
+            return "true".equals(cli.getOptionValue(FILTER_EXCLUDE_PRECEDENCE_OPT));
+        } else {
             //determine if -X or -I appears first in args list, and set precendence for first item
             for (int i = 0; i < args.length; i++) {
                 String option = args[i];
-                if("-X".equals(option) || "--xnodes".equals(option)) {
+                if ("-X".equals(option) || "--xnodes".equals(option)) {
                     return true;
-                }else if("-I".equals(option) || "--nodes".equals(option)){
+                } else if ("-I".equals(option) || "--nodes".equals(option)) {
                     return false;
                 }
             }
@@ -1184,15 +1204,16 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
     }
 
     /**
-     * Parse the values as key=value pairs, using the set of allowed keys.  If there is only
-     * one entry in the values array without a key, then the first key of the allowed keys is used as the default
+     * Parse the values as key=value pairs, using the set of allowed keys.  If there is only one entry in the values
+     * array without a key, then the first key of the allowed keys is used as the default
      *
-     * @param keys allowed keys for the key=value strings, the first key is used as the default key
+     * @param keys   allowed keys for the key=value strings, the first key is used as the default key
      * @param values array of key=value strings, or merely 1 value string if the array is size 1
+     *
      * @return map of the key to values
      */
     protected static Map<String, String> parseMultiNodeArgs(String[] keys, String[] values) {
-        HashMap<String,String> map = new HashMap<String,String>();
+        HashMap<String, String> map = new HashMap<String, String>();
 
         if (null != values && values.length > 0) {
             for (String exclude : values) {
@@ -1211,10 +1232,10 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
 
     protected static Map<String, String> parseFilterArgs(String[] keys, CommandLine cli, String opt) {
         String[] strings = cli.getOptionValues(opt);
-        if (null == strings || strings.length == 0 ) {
-            if(null!= cli.getOptionValue(opt)){
+        if (null == strings || strings.length == 0) {
+            if (null != cli.getOptionValue(opt)) {
                 strings = new String[]{
-                    cli.getOptionValue(opt)
+                        cli.getOptionValue(opt)
                 };
             }
         }
@@ -1265,7 +1286,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
         final NodeSet filterNodeSelector = createFilterNodeSelector();
         if (0 == n.getNodeNames().size()) {
             verbose("Empty node list");
-        }else{
+        } else {
             /**
              * Apply the include/exclude filters to the list
              */
@@ -1274,7 +1295,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
              * Reset collection to filter results
              */
             return NodeFilter.filterNodes(singleNodeDefault ? filterNodeSelector.nodeSelectorWithDefault(
-                framework.getFrameworkNodeName()) : filterNodeSelector.nodeSelectorWithDefaultAll(), n);
+                    framework.getFrameworkNodeName()) : filterNodeSelector.nodeSelectorWithDefaultAll(), n);
         }
 
         /**
@@ -1329,15 +1350,17 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
             return sb;
         }
     }
+
     public static interface NodeFormatter {
         public StringBuffer formatNodes(Collection nodes) throws Exception;
     }
+
     /**
      * Action to display matching nodes
      */
     static class NodeYAMLFormatter implements NodeFormatter {
 
-        public StringBuffer formatNodes(final Collection nodes) throws Exception{
+        public StringBuffer formatNodes(final Collection nodes) throws Exception {
             return generate(nodes);
         }
 
@@ -1359,7 +1382,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
      */
     public static class LogLevelConvertBuildListener implements BuildListener {
         private BuildListener listener;
-        private Map<Integer,Integer> levels = new HashMap<Integer, Integer>();
+        private Map<Integer, Integer> levels = new HashMap<Integer, Integer>();
 
         /**
          * Create a new LogLevelConvertBuildListener
@@ -1409,8 +1432,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
     }
 
 
-
-    InputStream instream=System.in;
+    InputStream instream = System.in;
 
     /**
      * Reads input from the STDIN channel and saves it to a temporary file. Files are stored in framework.var.dir (eg,
@@ -1435,7 +1457,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
             ScriptfileUtils.setExecutePermissions(tempfile);
         } catch (IOException e) {
             warn(
-                "Failed to set execute permissions on tempfile, execution may fail: " + tempfile.getAbsolutePath());
+                    "Failed to set execute permissions on tempfile, execution may fail: " + tempfile.getAbsolutePath());
         }
         return tempfile;
     }
@@ -1450,7 +1472,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
         final File tempfile;
         verbose("writing inline content to temporary file...");
         try {
-             tempfile = ScriptfileUtils.writeScriptTempfile(framework, getInlineScriptContent());
+            tempfile = ScriptfileUtils.writeScriptTempfile(framework, getInlineScriptContent());
         } catch (IOException e) {
             throw new CoreException("error while reading script input from stdin: " + e.getMessage());
         }
@@ -1459,26 +1481,27 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
             ScriptfileUtils.setExecutePermissions(tempfile);
         } catch (IOException e) {
             warn(
-                "Failed to set execute permissions on tempfile, execution may fail: " + tempfile.getAbsolutePath());
+                    "Failed to set execute permissions on tempfile, execution may fail: " + tempfile.getAbsolutePath());
         }
         return tempfile;
     }
 
     /**
      * Return the Ant loglevel equivalent to the input flags (verbose,debug,quiet).
+     *
      * @return loglevel
      */
-    public int getAntLoglevel(){
-        if(argDebug) {
+    public int getAntLoglevel() {
+        if (argDebug) {
             return Project.MSG_DEBUG;
         }
         if (argQuiet && argVerbose) {
             return Project.MSG_WARN;
         }
-        if(argVerbose) {
+        if (argVerbose) {
             return Project.MSG_VERBOSE;
         }
-        if(argQuiet) {
+        if (argQuiet) {
             return Project.MSG_ERR;
         }
         return Project.MSG_INFO;
@@ -1494,5 +1517,35 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
 
     public boolean isQuiet() {
         return argQuiet;
+    }
+
+    public void log(String message, Map<String, String> context) {
+        if (getAntLoglevel() >= Project.MSG_INFO) {
+            log(message);
+        }
+    }
+
+    public void error(String message, Map<String, String> context) {
+        if (getAntLoglevel() >= Project.MSG_ERR) {
+            log(message);
+        }
+    }
+
+    public void warn(String message, Map<String, String> context) {
+        if (getAntLoglevel() >= Project.MSG_WARN) {
+            log(message);
+        }
+    }
+
+    public void verbose(String message, Map<String, String> context) {
+        if (getAntLoglevel() >= Project.MSG_VERBOSE) {
+            log(message);
+        }
+    }
+
+    public void debug(String message, Map<String, String> context) {
+        if (getAntLoglevel() >= Project.MSG_DEBUG) {
+            log(message);
+        }
     }
 }

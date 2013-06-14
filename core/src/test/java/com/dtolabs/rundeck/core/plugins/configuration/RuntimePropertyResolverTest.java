@@ -22,10 +22,9 @@
 * Created: 12/4/12 7:00 AM
 * 
 */
-package com.dtolabs.rundeck.core.execution.workflow.steps;
+package com.dtolabs.rundeck.core.plugins.configuration;
 
 import com.dtolabs.rundeck.core.common.PropertyRetriever;
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
 import junit.framework.TestCase;
 
 import java.util.*;

@@ -453,19 +453,34 @@ var FollowControl = Class.create({
         $('commandPerform').show();
         return tbl;
     },
+    showLoading:function(message){
+        if ($('fileload')) {
+            $('fileload').show();
+            if (message != null) {
+                $('fileloadpercent').innerHTML = message;
+            }
+        }
+        if ($('fileload2')) {
+            $('fileload2').show();
+            if (message != null) {
+                $('fileload2percent').innerHTML = message;
+            }
+        }
+    },
+    hideLoading:function(){
+        if ($('fileload')) {
+            $('fileload').hide();
+        }
+        if ($('fileload2')) {
+            $('fileload2').hide();
+        }
+    },
     appendCmdOutput: function(data) {
         var orig = data;
         var needsScroll = false;
         try{
         if (!this.isAppendTop() && this.isAtBottom()) {
             needsScroll = true;
-        }
-        if (this.refresh && this.cmdoutputtbl) {
-            try {
-                this.clearTable(this.cmdoutputtbl);
-            } catch(e) {
-                this._log(e);
-            }
         }
         if (typeof(data) == "string" && data == "") {
             return;
@@ -477,6 +492,13 @@ var FollowControl = Class.create({
         try {
             if (typeof(data) == "string") {
                 eval("data=" + data);
+            }
+            if (this.refresh && this.cmdoutputtbl && data.lastlinesSupported){
+                try {
+                    this.clearTable(this.cmdoutputtbl);
+                } catch (e) {
+                    this._log(e);
+                }
             }
             if (!this.cmdoutputtbl) {
                 this.cmdoutputtbl = this.createTable();
@@ -491,8 +513,13 @@ var FollowControl = Class.create({
             return;
         }
         if (data.error) {
-            this.appendCmdOutputError("data error "+data.error);
+            this.appendCmdOutputError(data.error);
             this.finishedExecution();
+            if(this.runningcmd.count==0){
+                //hide table header
+                $(this.cmdoutputtbl).hide();
+            }
+            $('viewoptionscomplete').hide();
             return;
         }
 
@@ -503,18 +530,28 @@ var FollowControl = Class.create({
         this.runningcmd.jobstatus = data.execState;
         this.runningcmd.failednodes = data.hasFailedNodes;
         this.runningcmd.percent = data.percentLoaded;
+        this.runningcmd.pending = data.pending;
 
         var entries = $A(data.entries);
         if (null != data.execDuration) {
             this.updateDuration(data.execDuration);
         }
+        //if tail mode, count number of rows
+        var rowcount= this.countTableRows(this.cmdoutputtbl);
+        console.log("rowcount: "+rowcount+", entries: "+(entries.length));
         if (entries != null && entries.length > 0) {
 
             for (var i = 0 ; i < entries.length ; i++) {
                 var e = entries[i];
-                this.runningcmd.entries.push(e);
+                //this.runningcmd.entries.push(e);
                 this.genDataRow(e, this.cmdoutputtbl);
-
+                //if tail mode and count>last lines, remove 1 row from top
+                rowcount++;
+            }
+            if (this.refresh && rowcount > this.lastlines && !data.lastlinesSupported) {
+                //remove extra lines
+                console.log("remove: " + rowcount +" - "+ this.lastlines + " = "+ (rowcount - this.lastlines));
+                this.removeTableRows(this.cmdoutputtbl, rowcount- this.lastlines);
             }
         }
 
@@ -536,22 +573,32 @@ var FollowControl = Class.create({
             return;
         } else {
             var obj=this;
+            var time= (this.tailmode && this.taildelay > 0) ? this.taildelay * 1000 : 50;
+            if(this.runningcmd.pending != null){
+                time= (this.tailmode && this.taildelay > 0) ? this.taildelay * 5000 : 5000
+            }
             setTimeout(function() {
                 obj.loadMoreOutput(obj.runningcmd.id, obj.runningcmd.offset);
-            }, (this.tailmode && this.taildelay > 0) ? this.taildelay * 1000 : 50);
+            }, time);
         }
         if (this.runningcmd.jobcompleted && !this.runningcmd.completed) {
             this.jobFinishStatus(this.runningcmd.jobstatus);
             if ($('progressContainer')) {
                 $('progressContainer').hide();
             }
-            if ($('fileload')) {
-                $('fileload').show();
-                $('fileloadpercent').innerHTML = Math.ceil(this.runningcmd.percent) + "%";
+            var message=null
+            if(this.runningcmd.percent!=null){
+                message= "Loading Output... "+Math.ceil(this.runningcmd.percent) + "%";
+            } else if (this.runningcmd.pending != null) {
+                message = this.runningcmd.pending;
             }
-            if ($('fileload2')) {
-                $('fileload2').show();
-                $('fileload2percent').innerHTML = Math.ceil(this.runningcmd.percent) + "%";
+            this.showLoading(message);
+        }else if (!this.runningcmd.jobcompleted && !this.runningcmd.completed) {
+            //pending a remote load
+            if (this.runningcmd.pending != null) {
+                this.showLoading(this.runningcmd.pending);
+            }else {
+                this.hideLoading();
             }
         }
         if (this.runningcmd.jobcompleted) {
@@ -684,6 +731,40 @@ var FollowControl = Class.create({
                 cb();
             }
         }
+    },
+    countTableRows: function(tbl){
+        var count=0;
+        //count rows for every table body
+        for (var j = 0; j < tbl.tBodies.length; j++) {
+            for (var k = 0; k < tbl.tBodies[j].rows.length ; k++) {
+                if (!$(tbl.tBodies[j].rows[0]).hasClassName('contextRow')) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    },
+    removeTableRows: function(tbl,x){
+        var count=x;
+        //count rows for every table body
+        for (var j = 0; j < tbl.tBodies.length && count>0; j++) {
+            console.log("tbody " + j + ", original length: " + tbl.tBodies[j].rows.length);
+            for(var k=0;k<tbl.tBodies[j].rows.length && count>0;k++){
+                var row= tbl.tBodies[j].rows[k];
+                if(!$(row).hasClassName('contextRow')){
+                    tbl.tBodies[j].removeChild(row);
+                    count--;
+                    k--;
+                }
+            }
+            console.log("tbody " + j + ", new length: " + tbl.tBodies[j].rows.length);
+
+            if (tbl.tBodies[j].rows.length == 1 && $(tbl.tBodies[j].rows[0]).hasClassName('contextRow')) {
+                tbl.removeChild(tbl.tBodies[j]);
+                j--;
+            }
+        }
+        console.log("removeTableRows, final count: "+count);
     },
     reverseOutputTable: function(tbl) {
         try {
@@ -1044,11 +1125,14 @@ var FollowControl = Class.create({
             this.contextStatus[ctxid] = data.level.toLowerCase();
         }
         var tdtime = $(tr.insertCell(1));
-        tdtime.setAttribute('width', '20');
+        //tdtime.setAttribute('width', '20');
         tdtime.addClassName('info');
         tdtime.addClassName('time');
         tdtime.setAttribute('style', 'vertical-align:top;');
         tdtime.innerHTML = "<span class=\"" + data.level + "\">" + data.time + "</span>";
+        if(data.absolute_time){
+            tdtime.setAttribute('title', data.absolute_time);
+        }
         var tddata = $(tr.insertCell(2));
         tddata.addClassName('data');
         tddata.setAttribute('style', 'vertical-align:top');

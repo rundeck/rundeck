@@ -182,7 +182,7 @@ Within the Groovy script, you define your plugin by calling the `rundeckPlugin` 
         //plugin definition goes here...
     }
 
-In this case we use the same `NotificationPlugin` interface used for Java plugins.  Currently this is the only supported type that can be used.
+In this case we use the same `NotificationPlugin` interface used for Java plugins.
 
 #### Definition
 

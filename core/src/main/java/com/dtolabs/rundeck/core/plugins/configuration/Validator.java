@@ -51,6 +51,16 @@ public class Validator {
         public boolean isValid() {
             return 0 == errors.size();
         }
+
+        @Override
+        public String toString() {
+            if(isValid()) {
+                return "Property validation OK.";
+            }else{
+                return "Property validation FAILED. " +
+                        "errors=" + errors ;
+            }
+        }
     }
 
     /**
@@ -64,6 +74,11 @@ public class Validator {
     public static Report validate(final Properties props, final Description desc) {
         final Report report = new Report();
         final List<Property> properties = desc.getProperties();
+        validate(props, report, properties);
+        return report;
+    }
+
+    private static void validate(Properties props, Report report, List<Property> properties) {
         if(null!=properties){
             for (final Property property : properties) {
                 final String key = property.getName();
@@ -88,7 +103,32 @@ public class Validator {
                 }
             }
         }
+    }
+
+    /**
+     * Validate a set of properties for a description, and return a report.
+     *
+     * @param resolver     property resolver
+     * @param description  description
+     * @param defaultScope default scope for properties
+     *
+     * @return the validation report
+     */
+    public static Report validate(final PropertyResolver resolver, final Description description,
+            PropertyScope defaultScope) {
+        final Report report = new Report();
+        final List<Property> properties = description.getProperties();
+
+        final Map<String, Object> inputConfig = PluginAdapterUtility.mapDescribedProperties(resolver, description,
+                defaultScope);
+        validate(asProperties(inputConfig), report, properties);
         return report;
+    }
+
+    private static Properties asProperties(Map<String, Object> inputConfig) {
+        Properties configuration = new Properties();
+        configuration.putAll(inputConfig);
+        return configuration;
     }
 
     /**

@@ -1,20 +1,25 @@
 package rundeck.controllers
 
-import com.dtolabs.rundeck.core.common.Framework
-import java.text.SimpleDateFormat
-
 import com.dtolabs.client.utils.Constants
-import com.dtolabs.rundeck.server.authorization.AuthConstants
-
-import java.text.ParseException
+import com.dtolabs.rundeck.core.logging.LogEvent
+import com.dtolabs.rundeck.core.logging.ReverseSeekingStreamingLogReader
+import com.dtolabs.rundeck.core.logging.StreamingLogReader
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
+import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.server.authorization.AuthConstants
 import rundeck.Execution
 import rundeck.ScheduledExecution
+import rundeck.filters.ApiRequestFilters
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
+import rundeck.services.LoggingService
 import rundeck.services.ScheduledExecutionService
-import rundeck.filters.ApiRequestFilters
+import rundeck.services.logging.ExecutionLogReader
+import rundeck.services.logging.ExecutionLogState
+
+import java.text.ParseException
+import java.text.SimpleDateFormat
 
 /**
 * ExecutionController
@@ -23,6 +28,7 @@ class ExecutionController {
 
     FrameworkService frameworkService
     ExecutionService executionService
+    LoggingService loggingService
     ScheduledExecutionService scheduledExecutionService
 
 
@@ -155,32 +161,23 @@ class ExecutionController {
         }
 
         def jobcomplete = e.dateCompleted!=null
-        def file = new File(e.outputfilepath)
-        if (! file.exists()) {
-            log.error("File not found: "+e.outputfilepath)
-
+        def reader = loggingService.getLogReader(e)
+        if (reader.state==ExecutionLogState.NOT_FOUND) {
+            response.setStatus(404)
+            log.error("Output file not found")
             return
-        } else if (file.size() < 1) {
-            log.error("File is empty")
-
+        }else if (reader.state == ExecutionLogState.ERROR) {
+            response.setStatus(500)
+            def msg= g.message(code: reader.errorCode, args: reader.errorData)
+            log.error("Output file reader error: ${msg}")
+            response.outputStream << msg
+            return
+        }else if (reader.state != ExecutionLogState.AVAILABLE) {
+            //TODO: handle other states
+            response.setStatus(404)
+            log.error("Output file not available")
             return
         }
-        def offset = 0
-        def initoffset=offset
-        def lastoff=offset
-        def lastmesgoff=offset
-        def storeoffset=offset
-        def entry=[]
-        StringBuffer buf = new StringBuffer();
-        def completed=false
-        def lines=0
-        def chars=0;
-        def tot=file.length()
-        //start at offset byte.
-        RandomAccessFile raf = new RandomAccessFile(file,"r")
-        def totsize = raf.getChannel().size()
-        def size = raf.getChannel().size()
-        def tstart=System.currentTimeMillis();
         SimpleDateFormat dateFormater = new SimpleDateFormat("yyyyMMdd-HHmmss",Locale.US);
         def dateStamp= dateFormater.format(e.dateStarted);
         response.setContentType("text/plain")
@@ -192,13 +189,16 @@ class ExecutionController {
             isFormatted = "true"==params.formatted
         }
 
-        def Map result = parseOutput(file,0,-1,null){ Map msgbuf ->
-            response.outputStream << (isFormatted?"${msgbuf.time} [${msgbuf.user}@${msgbuf.node} ${msgbuf.context} ${msgbuf.command}][${msgbuf.level}] ${msgbuf.mesg}" : msgbuf.mesg)
-            true
+        SimpleDateFormat logFormater = new SimpleDateFormat("HH:mm:ss", Locale.US);
+        logFormater.timeZone= TimeZone.getTimeZone("GMT")
+        def iterator = reader.reader
+        iterator.openStream(0)
+        def lineSep=System.getProperty("line.separator")
+        iterator.each{ LogEvent msgbuf ->
+            response.outputStream << (isFormatted?"${logFormater.format(msgbuf.datetime)} [${msgbuf.metadata?.user}@${msgbuf.metadata?.node} ${msgbuf.metadata?.context} ${msgbuf.metadata?.command}][${msgbuf.loglevel}] ${msgbuf.message}" : msgbuf.message)
+            response.outputStream<<lineSep
         }
-
-        storeoffset=result.storeoffset
-        completed = result.completed
+        iterator.close()
     }
     /**
      * API: /api/execution/{id}/output, version 5
@@ -214,6 +214,7 @@ class ExecutionController {
      * Also used by apiExecutionOutput for API response
      */
     def tailExecutionOutput = {
+        log.debug("tailExecutionOutput: ${params}, format: ${request.format}")
         def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         Execution e = Execution.get(Long.parseLong(params.id))
         def api= new ApiController()
@@ -245,6 +246,7 @@ class ExecutionController {
                     }
                 }
                 text {
+                    response.setStatus(500)
                     render(contentType: "text/plain", text: request.error)
                 }
             }
@@ -253,22 +255,26 @@ class ExecutionController {
             apiError();
             return
         }
-        def long start = System.currentTimeMillis()
 
-        def jobcomplete = e.dateCompleted!=null
-        def hasFailedNodes = e.failedNodeList?true:false
+        def jobcomplete = e.dateCompleted != null
+        def hasFailedNodes = e.failedNodeList ? true : false
         def execState = getExecutionState(e)
         def execDuration = 0L
-        def file = e.outputfilepath?new File(e.outputfilepath):null
         execDuration = (e.dateCompleted ? e.dateCompleted.getTime() : System.currentTimeMillis()) - e.dateStarted.getTime()
-        if(null==file || !file.exists() || file.size() < 1) {
-            def errmsg = "No output"
-            if (null!=file && !file.exists()) {
-                errmsg = "File not found: " + e.outputfilepath
-            }
 
+        ExecutionLogReader reader
+        reader = loggingService.getLogReader(e)
+        def error = reader.state == ExecutionLogState.ERROR
+        log.debug("Reader, state: ${reader.state}, reader: ${reader.reader}")
+        if(error) {
+            request.error = g.message(code: reader.errorCode, args: reader.errorData)
+            apiError();
+            return
+        }
+        if (null == reader  || reader.state == ExecutionLogState.NOT_FOUND ) {
+            def errmsg = g.message(code: "execution.log.storage.state.NOT_FOUND")
             //execution has not be started yet
-            def renderclos= { delegate->
+            def renderclos = { delegate ->
                 if (e.dateCompleted) {
                     delegate.error(errmsg)
                 } else {
@@ -285,21 +291,21 @@ class ExecutionController {
                 delegate.entries() {
                 }
             }
-            withFormat{
+            withFormat {
                 xml {
-                    api.success({del ->
+                    api.success({ del ->
                         del.'output' {
                             renderclos(del)
                         }
                     })
                 }
-                json{
+                json {
                     render(contentType: "text/json") {
                         renderclos(delegate)
                     }
                 }
                 text {
-                    response.addHeader('X-Rundeck-ExecOutput-Offset',"0")
+                    response.addHeader('X-Rundeck-ExecOutput-Offset', "0")
                     if (e.dateCompleted) {
                         response.addHeader('X-Rundeck-ExecOutput-Error', errmsg)
                     } else {
@@ -317,7 +323,50 @@ class ExecutionController {
             }
             return;
         }
-        def totsize = file.length()
+        else if (null == reader || reader.state in [ExecutionLogState.PENDING_LOCAL, ExecutionLogState.PENDING_REMOTE, ExecutionLogState.WAITING]) {
+            //pending data
+            def renderclos = { delegate ->
+                delegate.message("Pending")
+                delegate.pending(g.message(code:'execution.log.storage.state.'+reader.state,default: "Pending"))
+                delegate.id(params.id.toString())
+                delegate.offset(params.offset ? params.offset.toString() : "0")
+                delegate.completed(false)
+                delegate.execCompleted(jobcomplete)
+                delegate.hasFailedNodes(hasFailedNodes)
+                delegate.execState(execState)
+                delegate.execDuration(execDuration)
+                delegate.entries() {
+                }
+            }
+            withFormat {
+                xml {
+                    api.success({ del ->
+                        del.'output' {
+                            renderclos(del)
+                        }
+                    })
+                }
+                json {
+                    render(contentType: "text/json") {
+                        renderclos(delegate)
+                    }
+                }
+                text {
+                    response.addHeader('X-Rundeck-ExecOutput-Message', 'Pending')
+                    response.addHeader('X-Rundeck-ExecOutput-Pending', g.message(code: 'execution.log.storage.state.' + reader.state, default: "Pending"))
+                    response.addHeader('X-Rundeck-ExecOutput-Offset', params.offset ? params.offset.toString() : "0")
+                    response.addHeader('X-Rundeck-ExecOutput-Completed', "false")
+                    response.addHeader('X-Rundeck-Exec-Completed', jobcomplete.toString())
+                    response.addHeader('X-Rundeck-Exec-State', execState)
+                    response.addHeader('X-Rundeck-Exec-Duration', execDuration.toString())
+                    render(contentType: "text/plain") {
+                        ''
+                    }
+                }
+            }
+            return
+        }
+        def StreamingLogReader logread=reader.reader
 
         def Long offset = 0
         if(params.offset){
@@ -337,8 +386,10 @@ class ExecutionController {
             }
         }
 
+        def totsize = logread.getTotalSize()
+        long lastmodl = logread.lastModified?.time
 
-        if(params.lastmod){
+        if(params.lastmod && lastmodl>0){
             def ll = 0
             if (params.lastmod) {
 
@@ -357,7 +408,6 @@ class ExecutionController {
                 }
             }
 
-            long lastmodl = file.lastModified()
             if (lastmodl <= ll && (offset==0 || totsize <= offset)) {
 
                 def renderclos = {delegate ->
@@ -409,28 +459,20 @@ class ExecutionController {
         def storeoffset=offset
         def entry=[]
         def completed=false
-        def lastlines=0
         def max= 0
-        def String lSep = System.getProperty("line.separator") ;
-        if(params.lastlines){
+        def lastlinesSupported= (ReverseSeekingStreamingLogReader.isInstance(logread))
+        if(params.lastlines && lastlinesSupported){
+            def ReverseSeekingStreamingLogReader reversing= (ReverseSeekingStreamingLogReader) logread
+            def lastlines = Long.parseLong(params.lastlines)
+            reversing.openStreamFromReverseOffset(lastlines)
             //load only the last X lines of the file, by going to the end and searching backwards for the
-            //line-end textual format X times, then reset the offset to that point.
-            //we actually search for X+1 line-ends to find the one prior to the Xth line back
-            //and we add 1 more to account for the final ^^^END^^^\n line.
-            //TODO: modify seekBack to allow rewind beyond the ^^^END^^^\n at the end prior to doing reverse search
-            lastlines=Integer.parseInt(params.lastlines)
-            def seekoffset = com.dtolabs.rundeck.core.utils.Utility.seekBack(file,lastlines+2,"^^^${lSep}")
-            if(seekoffset>=0){
-                //we found X+2 line ends.  now skip past the line-end at seekoffset, to get to the start
-                //of the next line (Xth message).
-                if(seekoffset>0){
-                    seekoffset+="^^^${lSep}".length()
-                }
-                offset=seekoffset
-                max=lastlines+1
+            max=lastlines+1
+        }else{
+            logread.openStream(offset)
+
+            if (null != params.maxlines) {
+                max = Integer.parseInt(params.maxlines)
             }
-        }else if(null!= params.maxlines){
-            max=Integer.parseInt(params.maxlines)
         }
 
         def String bufsizestr= servletContext.getAttribute("execution.follow.buffersize");
@@ -438,13 +480,19 @@ class ExecutionController {
         if(bufsize<(25*1024)){
             bufsize=25*1024
         }
-        def Map result = parseOutput(file,offset,bufsize,null){ data ->
-            entry << data
-            (0==max || entry.size()<max)
+
+        for(LogEvent data : logread){
+            log.debug("read stream event: ${data}")
+            def logdata= [mesg: data.message, time: data.datetime, level: data.loglevel.toString()] + (data.metadata?:[:])
+            entry<<logdata
+            if (!(0 == max || entry.size() < max)){
+                break
+            }
         }
-        storeoffset=result.storeoffset
-        completed = result.completed || (jobcomplete && storeoffset==totsize)
-        
+        storeoffset= logread.offset
+        completed = logread.complete || (jobcomplete && storeoffset==totsize)
+        log.debug("finish stream iterator, offset: ${storeoffset}, completed: ${completed}")
+
         if("true" == servletContext.getAttribute("output.markdown.enabled") && !params.disableMarkdown){
             entry.each{
                 if(it.mesg){
@@ -475,8 +523,8 @@ class ExecutionController {
             entry=newe
         }
         long marktime=System.currentTimeMillis()
-        def lastmodl = file.lastModified()
         def percent=100.0 * (((float)storeoffset)/((float)totsize))
+        log.debug("percent: ${percent}, store: ${storeoffset}, total: ${totsize} lastmod : ${lastmodl}")
         //via http://benjchristensen.com/2008/02/07/how-to-strip-invalid-xml-characters/
         String invalidXmlPattern = "[^" + "\\u0009\\u000A\\u000D" + "\\u0020-\\uD7FF" +
                 "\\uE000-\\uFFFD" + "\\u10000-\\u10FFFF" + "]+";
@@ -493,14 +541,16 @@ class ExecutionController {
             delegate.execDuration(execDuration)
             delegate.percentLoaded(percent)
             delegate.totalSize(totsize)
+            delegate.lastlinesSupported(lastlinesSupported)
 
-
+            def timeFmt = new SimpleDateFormat("HH:mm:ss")
             delegate.entries(){
                 entry.each{
                     def datamap = [
-                        time: it.time.toString(),
+                        time: timeFmt.format(it.time),
+                        absolute_time: g.w3cDateValue([date:it.time]),
                         level: it.level,
-                        log: it.mesg.replaceAll(/\r?\n$/,''),
+                        log: it.mesg?.replaceAll(/\r?\n$/,''),
                         user: it.user,
 //                        module: it.module,
                         command: it.command,
@@ -547,183 +597,15 @@ class ExecutionController {
                 response.addHeader('X-Rundeck-Exec-Duration', execDuration.toString())
                 response.addHeader('X-Rundeck-ExecOutput-LastModifed', lastmodl.toString())
                 response.addHeader('X-Rundeck-ExecOutput-TotalSize', totsize.toString())
+                response.addHeader('X-Rundeck-ExecOutput-LastLinesSupported', lastlinesSupported.toString())
+                def lineSep = System.getProperty("line.separator")
                 render(contentType:"text/plain"){
                     entry.each{
-                        out<<it.mesg
+                        out<<it.mesg+lineSep
                     }
                 }
             }
         }
-    }
-    /**
-     * parseOutput parses the output file starting at the given offset and with the given buffersize
-     * Calls the callback closure with a map of data each time an entry is completed.
-     * @param file the file to parse
-     * @param offset offset to start from
-     * @param bufsize maximum amount of data to read if greater than 0, otherwise read until EOF
-     * @param callback a closure that has 1 parameter, the map of data to read.  if it returns false, reading will stop
-     * @return Map containing two keys, 'storeoffset': next offset to start at, if buffersize is defined, and 'completed': boolean value if the log file has been completely read
-     */
-     public Map parseOutput ( File file, Long offset, Long bufsize = -1 ,def String encoding=null, Closure callback){
-
-
-        def initoffset=offset
-        def lastoff=offset
-        def lastmesgoff=offset
-        def Long storeoffset=offset
-        def entry=[]
-        def msgbuf =[:]
-        StringBuffer buf = new StringBuffer();
-        def completed=false
-        def lines=0
-        def chars=0;
-        def tot=file.length()
-        //start at offset byte.
-
-         //we use RandomAccessFile to call readLine and record the byte-oriented offset
-        RandomAccessFile raf = new RandomAccessFile(file,'r')
-
-         //we use InputStreamReader to read bytes to chars given encoding option
-         //in this case readLine may buffer bytes for decoding purposes, so the offset is not correct
-        final FileInputStream stream = new FileInputStream(file)
-        InputStreamReader fr
-         if(null!=encoding){
-             fr= new InputStreamReader(stream,encoding)
-         }else{
-             //use default encoding
-             fr= new InputStreamReader(stream)
-         }
-
-        def totsize = stream.getChannel().size()
-        def size = stream.getChannel().size()
-        if(offset>0){
-            stream.getChannel().position(offset)
-            raf.seek(offset)
-        }
-//        log.info("starting tailExecutionOutput: offset: "+offset+", completed: "+completed)
-        def String lSep = System.getProperty("line.separator");
-        def tstart=System.currentTimeMillis();
-        def String line = fr.readLine()
-        def oline=raf.readLine() //discarded content
-        def diff = System.currentTimeMillis()-tstart;
-
-        if(bufsize > 0  && size-offset > bufsize){
-            size = offset+bufsize
-        }
-        boolean done=false
-        while(offset<size && null != line  && !done){
-//            log.info("readLine waited: "+diff);
-            lastoff=offset
-            offset=raf.getFilePointer()
-            if(line =~ /^\^\^\^END\^\^\^/){
-                completed=true;
-                storeoffset=offset;
-                if(msgbuf){
-                    msgbuf.mesg+=buf.toString()
-                    if(!callback(msgbuf)){
-                        done=true
-                    }
-                    buf = new StringBuffer()
-                    msgbuf=[:]
-                }
-            }
-            if (line =~ /^\^\^\^/){
-                if(msgbuf){
-                    msgbuf.mesg+=buf.toString()
-                    if(!callback(msgbuf)){
-                        done=true
-                    }
-                    buf = new StringBuffer()
-                    msgbuf=[:]
-                }
-                def temp = line.substring(3,line.length())
-                def boolean full=false;
-                if(temp =~ /\^\^\^$/ || temp == ""){
-                    if(temp.length()>=3){
-                        temp = temp.substring(0,temp.length()-3)
-                    }
-                    full=true
-                }
-                def arr = temp.split("\\|",ExecutionService.EXEC_FORMAT_SEQUENCE.size()+1)
-                if (arr.size() >= 3) {
-                    def time = arr[0].trim()
-                    def level = arr[1].trim()
-                    def mesg;
-                    def list = []
-                    list.addAll(Arrays.asList(arr))
-                    if(list.size()>=ExecutionService.EXEC_FORMAT_SEQUENCE.size()){
-                        if(list.size() > ExecutionService.EXEC_FORMAT_SEQUENCE.size()){
-                            //join last sections into one message.
-                            def sb = new StringBuffer()
-                            sb.append(list.get(ExecutionService.EXEC_FORMAT_SEQUENCE.size()))
-                            for(def i=ExecutionService.EXEC_FORMAT_SEQUENCE.size()+1;i<list.size();i++){
-                                sb.append('|')
-                                sb.append(list.get(i).trim())
-                            }
-                            mesg = sb.toString()
-                        }else{
-                            mesg=''
-                            list<<mesg
-                        }
-                    }else if(list.size()>3 && list.size()<ExecutionService.EXEC_FORMAT_SEQUENCE.size()){
-                        def sb = new StringBuffer()
-                        sb.append(list.get(2).trim())
-                        for(def i=3;i<list.size();i++){
-                            sb.append('|')
-                            sb.append(list.get(i).trim())
-                        }
-                        mesg = sb.toString()
-                    }else{
-                        mesg = list[list.size()-1].trim()
-                    }
-                    msgbuf= [time:time, level:level, mesg:mesg+"\n"]
-                    if(list.size()>=ExecutionService.EXEC_FORMAT_SEQUENCE.size() ){
-                        for(def i=2;i<list.size()-1;i++){
-                            msgbuf[ExecutionService.EXEC_FORMAT_SEQUENCE[i]]=list[i].trim()
-                        }
-                    }
-                    if(full){
-                        if(!callback(msgbuf)){
-                            done=true
-                        }
-                        msgbuf=[:]
-                        buf=new StringBuffer()
-                    }
-                    lastmesgoff=lastoff
-                }
-                if(full){
-                    storeoffset=offset
-                }
-            }else if(line=~/\^\^\^$/ && msgbuf){
-                def temp = line.substring(0,line.length()-3)
-                buf << temp + "\n"
-                msgbuf.mesg+=buf.toString()
-                    if(!callback(msgbuf)){
-                        done=true
-                    }
-                buf = new StringBuffer()
-                msgbuf=[:]
-                storeoffset=offset
-            }else{
-                buf << line + "\n"
-            }
-            tstart=System.currentTimeMillis();
-            line = fr.readLine()//kept
-            oline=raf.readLine()//discarded
-            diff=System.currentTimeMillis()-tstart;
-        }
-        fr.close()
-        raf.close()
-        if(msgbuf){
-            //incomplete message entry.  We leave it until next time unless completed==true
-            if(completed){
-                msgbuf.mesg+=buf.toString()
-                callback(msgbuf)
-                buf = new StringBuffer()
-            }
-        }
-        long parsetime=System.currentTimeMillis()
-        return [storeoffset:storeoffset> totsize? totsize:storeoffset, completed:completed]
     }
 
 
@@ -738,6 +620,12 @@ class ExecutionController {
     public static String EXECUTION_ABORTED = "aborted"
     public static String getExecutionState(Execution e){
         return null==e.dateCompleted?EXECUTION_RUNNING:"true"==e.status?EXECUTION_SUCCEEDED:e.cancelled?EXECUTION_ABORTED:EXECUTION_FAILED
+    }
+    public String createExecutionUrl(def id){
+        return g.createLink(controller: 'execution', action: 'follow', id: id, absolute: true)
+    }
+    public String createServerUrl() {
+        return g.createLink(controller: 'menu', action: 'index', absolute: true)
     }
     /**
      * Render execution list xml given a List of executions, and a builder delegate

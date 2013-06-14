@@ -22,20 +22,13 @@
 * Created: 12/11/12 9:08 AM
 * 
 */
-package com.dtolabs.rundeck.core.execution.workflow.steps;
+package com.dtolabs.rundeck.core.plugins.configuration;
 
 import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import com.dtolabs.rundeck.core.common.PropertyRetriever;
 import com.dtolabs.rundeck.core.plugins.Plugin;
-import com.dtolabs.rundeck.core.plugins.configuration.Description;
-import com.dtolabs.rundeck.core.plugins.configuration.Property;
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
-import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants;
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty;
 import com.dtolabs.rundeck.plugins.descriptions.SelectValues;
@@ -206,24 +199,41 @@ public class PluginAdapterUtility {
      */
     public static Map<String, Object> configureProperties(final PropertyResolver resolver,
                                                           final Object object) {
-        return configureProperties(resolver, buildDescription(object, DescriptionBuilder.builder()), object);
+        //use a default scope of InstanceOnly if the Property doesn't specify it
+        return configureProperties(resolver, buildDescription(object, DescriptionBuilder.builder()), object,
+                PropertyScope.InstanceOnly);
     }
 
     /**
      * Set field values on a plugin object by using a Description, and setting field values to resolved property values.
      * Any resolved properties that are not mapped to a field will  be included in the return result.
      *
+     * @param resolver the property resolver
+     * @param description the property descriptions
+     * @param object the target object, which can implement {@link Configurable}, otherwise introspection will be used
+     * @param defaultScope a default property scope to assume for unspecified properties
+     *
      * @return Map of resolved properties that were not configured in the object's fields
      */
     public static Map<String, Object> configureProperties(final PropertyResolver resolver,
-                                                          final Description description,
-                                                          final Object object) {
-        //use a default scope of InstanceOnly if the Property doesn't specify it
-        final Map<String, Object> inputConfig = mapDescribedProperties(resolver, description);
-        for (final Property property : description.getProperties()) {
-            if (null != inputConfig.get(property.getName())) {
-                if (setValueForProperty(property, inputConfig.get(property.getName()), object)) {
-                    inputConfig.remove(property.getName());
+            final Description description,
+            final Object object, PropertyScope defaultScope) {
+        final Map<String, Object> inputConfig = mapDescribedProperties(resolver, description, defaultScope);
+        if (object instanceof Configurable) {
+            Configurable configObject = (Configurable) object;
+            Properties configuration = new Properties();
+            configuration.putAll(inputConfig);
+            try {
+                configObject.configure(configuration);
+            } catch (ConfigurationException e) {
+
+            }
+        } else {
+            for (final Property property : description.getProperties()) {
+                if (null != inputConfig.get(property.getName())) {
+                    if (setValueForProperty(property, inputConfig.get(property.getName()), object)) {
+                        inputConfig.remove(property.getName());
+                    }
                 }
             }
         }
@@ -243,7 +253,6 @@ public class PluginAdapterUtility {
             }
         }
 
-        @Override
         public String getProperty(final String name) {
             return properties.get(name);
         }
@@ -251,7 +260,7 @@ public class PluginAdapterUtility {
     }
 
     /**
-     * Retrieve the Description's Properties mapped to resolved values given the resolver.
+     * Retrieve the Description's Properties mapped to resolved values given the resolver, using InsanceOnly default scope.
      *
      * @return All mapped properties by name and value.
      */
@@ -259,10 +268,22 @@ public class PluginAdapterUtility {
                                                              final Description description) {
         //use a default scope of InstanceOnly if the Property doesn't specify it
         //use property default value if otherwise not resolved
+        return mapDescribedProperties(resolver, description, null);
+    }
+
+    /**
+     * Retrieve the Description's Properties mapped to resolved values given the resolver, with a default property
+     * scope
+     *
+     * @return All mapped properties by name and value.
+     */
+    public static Map<String, Object> mapDescribedProperties(final PropertyResolver resolver,
+            final Description description, final PropertyScope defaultPropertyScope) {
         final List<Property> properties = description.getProperties();
         final PropertyResolver defaulted =
                 PropertyResolverFactory.withDefaultValues(
-                        PropertyResolverFactory.withDefaultScope(PropertyScope.InstanceOnly, resolver),
+                        PropertyResolverFactory.withDefaultScope(null != defaultPropertyScope ? defaultPropertyScope
+                                : PropertyScope.InstanceOnly, resolver),
                         new PropertyDefaultValues(properties)
                 );
 

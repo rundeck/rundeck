@@ -1,14 +1,11 @@
 package com.dtolabs.rundeck.server.plugins.builder
 
-import com.dtolabs.rundeck.core.plugins.configuration.Description
-import com.dtolabs.rundeck.core.plugins.configuration.Property
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyValidator
-import com.dtolabs.rundeck.core.plugins.configuration.ValidationException
+import com.dtolabs.rundeck.plugins.logging.LogFileStoragePlugin
+import com.dtolabs.rundeck.plugins.logging.StreamingLogReaderPlugin
+import com.dtolabs.rundeck.plugins.logging.StreamingLogWriterPlugin
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
-import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import com.dtolabs.rundeck.server.plugins.services.PluginBuilder
-import org.codehaus.groovy.runtime.InvokerHelper
 
 import java.lang.reflect.Constructor
 
@@ -27,8 +24,11 @@ abstract class ScriptPluginBuilder implements GroovyObject, PluginBuilder{
     /**
      * Registry of valid Rundeck plugin classes and associated groovy DSL builders
      */
-    private static Map clazzBuilderRegistry=[
-            (NotificationPlugin):ScriptNotificationPluginBuilder
+    private static Map<Class,Class<? extends ScriptPluginBuilder>> clazzBuilderRegistry=[
+            (NotificationPlugin):ScriptNotificationPluginBuilder,
+            (StreamingLogWriterPlugin):StreamingLogWriterPluginBuilder,
+            (StreamingLogReaderPlugin):StreamingLogReaderPluginBuilder,
+            (LogFileStoragePlugin): LogFileStoragePluginBuilder,
     ]
     /**
      * Return a ScriptPluginBuilder for the given plugin class and plugin name

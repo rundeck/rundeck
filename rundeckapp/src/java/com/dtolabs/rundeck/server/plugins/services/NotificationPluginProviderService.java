@@ -2,6 +2,7 @@ package com.dtolabs.rundeck.server.plugins.services;
 
 import com.dtolabs.rundeck.core.plugins.BasePluggableProviderService;
 import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader;
+import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin;
 
 /**
@@ -11,7 +12,7 @@ import com.dtolabs.rundeck.plugins.notification.NotificationPlugin;
  * Time: 4:43 PM
  */
 public class NotificationPluginProviderService extends BasePluggableProviderService<NotificationPlugin> {
-    public static final String SERVICE_NAME = "Notification";
+    public static final String SERVICE_NAME = ServiceNameConstants.Notification;
     private ServiceProviderLoader rundeckServerServiceProviderLoader;
 
     public NotificationPluginProviderService() {

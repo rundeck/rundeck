@@ -15,6 +15,8 @@
  */
 package com.dtolabs.rundeck.core.utils;
 
+import com.dtolabs.rundeck.core.common.PropertyRetriever;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -126,6 +128,26 @@ public class PropertyLookup implements IPropertyLookup {
         } else {
             throw new PropertyLookupException("property not found: " + key);
         }
+    }
+
+    public PropertyRetriever safe() {
+        return safePropertyRetriever(this);
+    }
+    /**
+     * Create a PropertyRetriever from a PropertyLookup that will not throw exception
+     * @param lookup
+     * @return
+     */
+    public static PropertyRetriever safePropertyRetriever(final IPropertyLookup lookup){
+        return new PropertyRetriever() {
+            public String getProperty(String name) {
+                if(lookup.hasProperty(name)) {
+                    return lookup.getProperty(name);
+                }else {
+                    return null;
+                }
+            }
+        };
     }
 
     /**

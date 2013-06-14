@@ -145,6 +145,7 @@ task testGrails(type: Exec, overwrite: true, dependsOn: [installJettyPlugin, ins
 	args "-Dmaven.central.url=${mavenCentralUrl}",
             "-Dgrails.local.repo=${grailsLocalRepo}",
             "-DRUNDECK_VERSION=${version}",
+            "-Drdeck.base=${project.buildDir}/rdeck_base",
             'test-app',
             '-coverage',
             '-xml'
