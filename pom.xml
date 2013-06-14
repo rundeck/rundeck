@@ -5,7 +5,7 @@
     <groupId>org.rundeck</groupId>
     <artifactId>rundeck-project</artifactId>
     <packaging>pom</packaging>
-    <version>1.5.4-SNAPSHOT</version>
+    <version>1.6.0-SNAPSHOT</version>
     <name>RunDeck parent project</name>
     <url>http://rundeck.org</url>
 
