@@ -2,8 +2,14 @@ import com.dtolabs.rundeck.core.plugins.PluginManagerService
 import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
 import com.dtolabs.rundeck.server.plugins.PluginCustomizer
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
+import com.dtolabs.rundeck.server.plugins.services.LogFileStoragePluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.NotificationPluginProviderService
+import com.dtolabs.rundeck.server.plugins.services.StreamingLogReaderPluginProviderService
+import com.dtolabs.rundeck.server.plugins.services.StreamingLogWriterPluginProviderService
 import groovy.io.FileType
+import org.springframework.core.task.SimpleAsyncTaskExecutor
+
+import java.util.concurrent.Executors
 
 beans={
     defaultGrailsServiceInjectorJobListener(GrailsServiceInjectorJobListener){
@@ -37,6 +43,27 @@ beans={
      */
     notificationPluginProviderService(NotificationPluginProviderService){
         rundeckServerServiceProviderLoader=ref('rundeckServerServiceProviderLoader')
+    }
+    /**
+     * the StreamingLogReader plugin provider service
+     */
+    streamingLogReaderPluginProviderService(StreamingLogReaderPluginProviderService){
+        rundeckServerServiceProviderLoader=ref('rundeckServerServiceProviderLoader')
+    }
+    /**
+     * the StreamingLogReader plugin provider service
+     */
+    streamingLogWriterPluginProviderService(StreamingLogWriterPluginProviderService){
+        rundeckServerServiceProviderLoader=ref('rundeckServerServiceProviderLoader')
+    }
+    /**
+     * the LogFileStorage plugin provider service
+     */
+    logFileStoragePluginProviderService(LogFileStoragePluginProviderService) {
+        rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
+    }
+    logFileTaskExecutor(SimpleAsyncTaskExecutor,"LogFileStorage"){
+        concurrencyLimit= 2 + (application.config.rundeck?.execution?.logs?.fileStorage?.concurrencyLimit ?: 5)
     }
 
     /**

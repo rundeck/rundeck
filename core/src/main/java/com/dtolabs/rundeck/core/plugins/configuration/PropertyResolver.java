@@ -22,9 +22,7 @@
 * Created: 12/3/12 3:20 PM
 * 
 */
-package com.dtolabs.rundeck.core.execution.workflow.steps;
-
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
+package com.dtolabs.rundeck.core.plugins.configuration;
 
 
 /**

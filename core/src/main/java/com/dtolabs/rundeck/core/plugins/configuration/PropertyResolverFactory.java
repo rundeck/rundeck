@@ -22,13 +22,11 @@
 * Created: 12/3/12 4:13 PM
 * 
 */
-package com.dtolabs.rundeck.core.execution.workflow.steps;
+package com.dtolabs.rundeck.core.plugins.configuration;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.PropertyRetriever;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
-import com.dtolabs.rundeck.core.plugins.configuration.Property;
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
 
 import java.util.HashMap;
 import java.util.List;
@@ -86,12 +84,79 @@ public class PropertyResolverFactory {
         final String projectPrefix = projectPropertyPrefix(pluginPropertyPrefix(pluginType, providerName));
         final String frameworkPrefix = frameworkPropertyPrefix(pluginPropertyPrefix(pluginType, providerName));
 
-        return new RuntimePropertyResolver(instanceRetriever(instanceProperties),
+        return createResolver(instanceRetriever(instanceProperties),
                                            projectRetriever(projectPrefix,
                                                             context.getFramework(),
                                                             context.getFrameworkProject()),
-                                           frameworkRetriever(context, frameworkPrefix)
+                                           frameworkRetriever(frameworkPrefix, context.getFramework())
         );
+    }
+
+    /**
+     * Create a PropertyResolver for a plugin for resolving Framework, Project and instance scoped properties.
+     * @param framework the framework
+     * @param projectName name of the project, or null to disable project property resolution
+     * @param instanceProperties instance properties, or null
+     */
+    public static PropertyResolver createFrameworkProjectRuntimeResolver(final Framework framework,
+            final String projectName,
+            final Map<String, Object> instanceProperties,
+            final String pluginType,
+            final String providerName) {
+
+        final String projectPrefix = projectPropertyPrefix(pluginPropertyPrefix(pluginType, providerName));
+        final String frameworkPrefix = frameworkPropertyPrefix(pluginPropertyPrefix(pluginType, providerName));
+
+        return createResolver(instanceRetriever(instanceProperties),
+                null != projectName ? projectRetriever(projectPrefix, framework, projectName) : null,
+                frameworkRetriever(frameworkPrefix, framework)
+        );
+    }
+
+    /**
+     * Create a resolver from a set of retrievers, possibly null
+     *
+     * @param frameworkRetriever
+     * @param projectRetriever
+     * @param instanceRetriever
+     *
+     * @return
+     */
+    public static PropertyResolver createResolver(PropertyRetriever frameworkRetriever,
+            PropertyRetriever projectRetriever, PropertyRetriever instanceRetriever) {
+        return new RuntimePropertyResolver(instanceRetriever, projectRetriever, frameworkRetriever);
+    }
+
+    /**
+     * Create a resolver from a set of retrievers, possibly null
+     *
+     * @return
+     */
+    public static PropertyResolver createPrefixedResolver(final PropertyResolver resolver, String providerName, String pluginType) {
+        final String projectPrefix = projectPropertyPrefix(pluginPropertyPrefix(pluginType, providerName));
+        final String frameworkPrefix = frameworkPropertyPrefix(pluginPropertyPrefix(pluginType, providerName));
+        return new PropertyResolver(){
+            public Object resolvePropertyValue(String name, PropertyScope scope) {
+                String value = null;
+                if (scope.isInstanceLevel()) {
+                    value = (String)resolver.resolvePropertyValue(name,scope);
+                }
+                if (null != value || scope == PropertyScope.InstanceOnly) {
+                    return value;
+                }
+
+                if (scope.isProjectLevel()) {
+                    value = (String) resolver.resolvePropertyValue(projectPrefix + name, scope);
+                }
+                if (null != value || scope == PropertyScope.ProjectOnly) {
+                    return value;
+                }
+
+                value = (String) resolver.resolvePropertyValue(frameworkPrefix + name, scope);
+                return value;
+            }
+        };
+
     }
 
     /**
@@ -99,13 +164,11 @@ public class PropertyResolverFactory {
      */
     public static PropertyResolver createInstanceResolver(final Map<String, Object> instanceProperties) {
 
-        return new RuntimePropertyResolver(instanceRetriever(instanceProperties), null, null);
+        return createResolver(instanceRetriever(instanceProperties), null, null);
     }
 
-    private static PropertyRetriever frameworkRetriever(final StepExecutionContext context,
-                                                        final String frameworkPrefix) {
-        return prefixedRetriever(frameworkPrefix,
-                                 context.getFramework().getPropertyRetriever());
+    private static PropertyRetriever frameworkRetriever(final String frameworkPrefix, Framework framework) {
+        return prefixedRetriever(frameworkPrefix, framework.getPropertyRetriever());
     }
 
     private static PropertyRetriever projectRetriever(final String projectPrefix,
@@ -127,9 +190,8 @@ public class PropertyResolverFactory {
             this.map = map;
         }
 
-        @Override
         public String getProperty(String name) {
-            Object o = map.get(name);
+            Object o = null != map ? map.get(name) : null;
             return o != null ? o.toString() : null;
         }
 
@@ -152,7 +214,6 @@ public class PropertyResolverFactory {
             this.resolver = resolver;
         }
 
-        @Override
         public String getProperty(final String name) {
             return resolver.getProperty(prefix + name);
         }
@@ -174,7 +235,6 @@ public class PropertyResolverFactory {
             this.resolver = resolver;
         }
 
-        @Override
         public Object resolvePropertyValue(final String name, PropertyScope scope) {
             if (null == scope || scope == PropertyScope.Unspecified) {
                 scope = defaultScope;
@@ -205,7 +265,6 @@ public class PropertyResolverFactory {
             this.resolver = resolver;
         }
 
-        @Override
         public Object resolvePropertyValue(final String name, final PropertyScope scope) {
             final Object value = resolver.resolvePropertyValue(name, scope);
             return null == value ? defaults.getProperty(name) : value;

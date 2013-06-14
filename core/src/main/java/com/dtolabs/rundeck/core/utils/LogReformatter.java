@@ -56,6 +56,14 @@ public class LogReformatter implements Reformatter {
         this.messageFormat = new MessageFormat(s);
     }
 
+    public String getTail() {
+        return "";
+    }
+
+    public String getHead() {
+        return "";
+    }
+
     /**
      * Create a LogFormatter with specified format and static context data.
      *

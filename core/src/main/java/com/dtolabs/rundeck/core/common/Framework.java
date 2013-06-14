@@ -229,7 +229,7 @@ public class Framework extends FrameworkResourceParent {
                 "rdeck_base_dir was not set in constructor and system property rdeck.base was not defined");
         }
 
-        final String projectsBaseDir = null == projects_base_dir ? getBaseDir() + Constants.FILE_SEP + "projects"
+        final String projectsBaseDir = null == projects_base_dir ? getProjectsBaseDir(getBaseDir())
                                      : projects_base_dir;
         if (null == projectsBaseDir) {
             throw new CoreException("projects base dir could not be determined.");
@@ -246,9 +246,9 @@ public class Framework extends FrameworkResourceParent {
         if (!projectsBase.exists())
             throw new IllegalArgumentException("project base directory does not exist. "
                     + projectsBaseDir);
-        File propertyFile = new File(getConfigDir(), "framework.properties");
+        File propertyFile = getPropertyFile(getConfigDir());
 
-        PropertyLookup lookup1 = PropertyLookup.create(propertyFile);
+        PropertyLookup lookup1 = createPropertyLookup(propertyFile);
         lookup1.expand();
 
         lookup = lookup1;
@@ -280,6 +280,59 @@ public class Framework extends FrameworkResourceParent {
             logger.debug("Framework.initialize() time: " + (end - start) + "ms");
         }
     }
+
+    /**
+     * Get the path for the projects directory from the basedir
+     * @param baseDir
+     * @return
+     */
+    public static String getProjectsBaseDir(File baseDir) {
+        return baseDir + Constants.FILE_SEP + "projects";
+    }
+
+    /**
+     * Get the framework property file from the config dir
+     * @param configDir
+     * @return
+     */
+    public static File getPropertyFile(File configDir) {
+        return new File(configDir, "framework.properties");
+    }
+
+    /**
+     * Create a property lookup from a property file
+     * @param propertyFile
+     * @return
+     */
+    private static PropertyLookup createPropertyLookup(File propertyFile) {
+        return PropertyLookup.create(propertyFile);
+    }
+
+    /**
+     * Create a safe framework property retriever given a basedir
+     * @param baseDir
+     * @return
+     */
+    public static PropertyRetriever createPropertyRetriever(File baseDir) {
+        return PropertyLookup.create(getPropertyFile(getConfigDir(baseDir))).safe();
+    }
+    /**
+     * Create a safe framework property retriever given a basedir
+     * @param baseDir
+     * @return
+     */
+    public static PropertyLookup createPropertyLookupFromBasedir(File baseDir) {
+        return PropertyLookup.create(getPropertyFile(getConfigDir(baseDir)));
+    }
+    /**
+     * Create a safe project property retriever given a basedir and project name
+     * @param baseDir
+     * @return
+     */
+    public static PropertyRetriever createProjectPropertyRetriever(File baseDir, String projectName) {
+        return FrameworkProject.createProjectPropertyRetriever(baseDir, projectName);
+    }
+
     /**
      * Return a service by name
      */
@@ -432,21 +485,11 @@ public class Framework extends FrameworkResourceParent {
         return lookup.getProperty(name);
     }
 
-    final PropertyRetriever propertyRetriever = new PropertyRetriever() {
-        @Override
-        public String getProperty(final String name) {
-            if(hasProperty(name)){
-                return Framework.this.getProperty(name);
-            }else{
-                return null;
-            }
-        }
-    };
     /**
      * Return a PropertyRetriever interface for framework-scoped properties
      */
     public PropertyRetriever getPropertyRetriever() {
-        return propertyRetriever;
+        return PropertyLookup.safePropertyRetriever(lookup);
     }
 
     /**
@@ -624,8 +667,21 @@ public class Framework extends FrameworkResourceParent {
         return unfiltered;
     }
 
+    /**
+     * Get the config dir
+     * @return
+     */
     public File getConfigDir() {
         return new File(Constants.getFrameworkConfigDir(getBaseDir().getAbsolutePath()));
+    }
+
+    /**
+     * Return the config dir for the framework given a basedir
+     * @param baseDir
+     * @return
+     */
+    public static File getConfigDir(File baseDir) {
+        return new File(Constants.getFrameworkConfigDir(baseDir.getAbsolutePath()));
     }
     /**
      * Return the directory containing plugins/extensions for the framework.

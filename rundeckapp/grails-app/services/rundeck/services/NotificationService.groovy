@@ -55,6 +55,7 @@ public class NotificationService implements ApplicationContextAware{
     ApplicationContext applicationContext
     def grailsApplication
     def mailService
+    //TODO: use PluginService instead of registry directly
     def RundeckPluginRegistry rundeckPluginRegistry
     def NotificationPluginProviderService notificationPluginProviderService
     def FrameworkService frameworkService
@@ -123,29 +124,6 @@ public class NotificationService implements ApplicationContextAware{
         }
         return false
     }
-    private Object doWithMockRequest(Closure clos){
-
-        def requestAttributes = RequestContextHolder.getRequestAttributes()
-        boolean unbindrequest = false
-        // outside of an executing request, establish a mock version
-        if (!requestAttributes) {
-            def servletContext = ServletContextHolder.getServletContext()
-            def applicationContext = WebApplicationContextUtils.getRequiredWebApplicationContext(servletContext)
-            requestAttributes = GrailsWebUtil.bindMockWebRequest(applicationContext)
-            unbindrequest = true
-        }
-
-        //prep execution data
-        def result
-        try {
-            result = clos.call()
-        } finally {
-            if (unbindrequest) {
-                RequestContextHolder.setRequestAttributes(null)
-            }
-        }
-        result
-    }
     def boolean triggerJobNotification(String trigger,ScheduledExecution source, Map content){
         def didsend = false
         if(source.notifications && source.notifications.find{it.eventTrigger=='on'+trigger}){
@@ -206,7 +184,7 @@ public class NotificationService implements ApplicationContextAware{
                     def Execution exec = content.execution
                     //iterate through the URLs, and submit a POST to the destination with the XML Execution result
                     final state = ExecutionController.getExecutionState(exec)
-                    String xmlStr = doWithMockRequest {
+                    String xmlStr = RequestHelper.doWithMockRequest {
                         def writer = new StringWriter()
                         def xml = new MarkupBuilder(writer)
 
@@ -244,7 +222,7 @@ public class NotificationService implements ApplicationContextAware{
                 }else if (n.type) {
                     def Execution exec = content.execution
                     //prep execution data
-                    def Map execMap=doWithMockRequest {
+                    def Map execMap=RequestHelper.doWithMockRequest {
                         new ExecutionController().exportExecutionData([exec])[0]
                     }
                     //TBD: nodestatus will migrate to execution data

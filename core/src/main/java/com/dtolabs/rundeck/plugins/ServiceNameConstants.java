@@ -49,4 +49,8 @@ public class ServiceNameConstants {
     public static final String ResourceModelSource = "ResourceModelSource";
     public static final String ResourceFormatParser = "ResourceFormatParser";
     public static final String ResourceFormatGenerator = "ResourceFormatGenerator";
+    public static final String Notification = "Notification";
+    public static final String StreamingLogReader = "StreamingLogReader";
+    public static final String StreamingLogWriter = "StreamingLogWriter";
+    public static final String LogFileStorage = "LogFileStorage";
 }

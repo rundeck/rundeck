@@ -25,7 +25,7 @@
 package com.dtolabs.rundeck.plugins;
 
 /**
- * PluginLogger is ...
+ * PluginLogger provides logging to execution plugins.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
