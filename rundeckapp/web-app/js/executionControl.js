@@ -513,8 +513,13 @@ var FollowControl = Class.create({
             return;
         }
         if (data.error) {
-            this.appendCmdOutputError("data error "+data.error);
+            this.appendCmdOutputError(data.error);
             this.finishedExecution();
+            if(this.runningcmd.count==0){
+                //hide table header
+                $(this.cmdoutputtbl).hide();
+            }
+            $('viewoptionscomplete').hide();
             return;
         }
 

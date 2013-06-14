@@ -55,19 +55,84 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
 
 
         ConfigurationHolder.config = [:]
-        ConfigurationHolder.config.rundeck.execution.logs.fileStorage.retryDelay = 30
+        ConfigurationHolder.config.rundeck.execution.logs.fileStorage.storageRetryDelay = 30
 
         assertEquals(30, svc.getConfiguredStorageRetryDelay())
         assertEquals(1, svc.getConfiguredStorageRetryCount())
 
         ConfigurationHolder.config = [:]
-        ConfigurationHolder.config.rundeck.execution.logs.fileStorage.retryDelay = 30
-        ConfigurationHolder.config.rundeck.execution.logs.fileStorage.retryCount = 10
+        ConfigurationHolder.config.rundeck.execution.logs.fileStorage.storageRetryDelay = 30
+        ConfigurationHolder.config.rundeck.execution.logs.fileStorage.storageRetryCount = 10
 
         assertEquals(30, svc.getConfiguredStorageRetryDelay())
         assertEquals(10, svc.getConfiguredStorageRetryCount())
     }
+    void testConfiguredRetrievalRetry() {
+        LogFileStorageService svc = new LogFileStorageService()
 
+        ConfigurationHolder.config = [:]
+        assertEquals(60,svc.getConfiguredRetrievalRetryDelay())
+        assertEquals(3,svc.getConfiguredRetrievalRetryCount())
+
+
+        ConfigurationHolder.config = [:]
+        ConfigurationHolder.config.rundeck.execution.logs.fileStorage.retrievalRetryDelay = 30
+
+        assertEquals(30, svc.getConfiguredRetrievalRetryDelay())
+        assertEquals(3, svc.getConfiguredRetrievalRetryCount())
+
+        ConfigurationHolder.config = [:]
+        ConfigurationHolder.config.rundeck.execution.logs.fileStorage.retrievalRetryDelay = 30
+        ConfigurationHolder.config.rundeck.execution.logs.fileStorage.retrievalRetryCount = 10
+
+        assertEquals(30, svc.getConfiguredRetrievalRetryDelay())
+        assertEquals(10, svc.getConfiguredRetrievalRetryCount())
+    }
+    void testIsCachedItemFresh() {
+        LogFileStorageService svc = new LogFileStorageService()
+
+        ConfigurationHolder.config = [:]
+        assertTrue(svc.isResultCacheItemFresh([time: new Date(), count: 0]))
+        assertTrue(svc.isResultCacheItemAllowedRetry([time: new Date(), count: 0]))
+
+        assertFalse(svc.isResultCacheItemFresh([time: new Date(System.currentTimeMillis()- (61*1000)), count: 0]))
+        assertFalse(svc.isResultCacheItemAllowedRetry([time: new Date(), count: 3]))
+
+
+        ConfigurationHolder.config = [:]
+        ConfigurationHolder.config.rundeck.execution.logs.fileStorage.retrievalRetryDelay = 30
+
+        assertTrue(svc.isResultCacheItemFresh([time: new Date(System.currentTimeMillis() - (25 * 1000)), count: 0]))
+        assertFalse(svc.isResultCacheItemFresh([time: new Date(System.currentTimeMillis() - (31 * 1000)), count: 0]))
+        assertFalse(svc.isResultCacheItemAllowedRetry([time: new Date(), count: 3]))
+
+
+        ConfigurationHolder.config = [:]
+        ConfigurationHolder.config.rundeck.execution.logs.fileStorage.retrievalRetryDelay = 30
+        ConfigurationHolder.config.rundeck.execution.logs.fileStorage.retrievalRetryCount = 10
+
+        assertTrue(svc.isResultCacheItemFresh([time: new Date(System.currentTimeMillis() - (25 * 1000)), count: 0]))
+        assertFalse(svc.isResultCacheItemFresh([time: new Date(System.currentTimeMillis() - (31 * 1000)), count: 0]))
+        assertTrue(svc.isResultCacheItemAllowedRetry([time: new Date(), count: 3]))
+        assertFalse(svc.isResultCacheItemAllowedRetry([time: new Date(), count: 10]))
+    }
+    void testCacheResult(){
+        mockLogging(LogFileStorageService)
+        LogFileStorageService svc = new LogFileStorageService()
+        ConfigurationHolder.config=[:]
+        ConfigurationHolder.config.rundeck.execution.logs.fileStoragePlugin = "test1"
+        def result = svc.cacheRetrievalState("1", LogFileState.NOT_FOUND, 0, 'error')
+        assertNotNull(result)
+        assertEquals("1",result.id)
+        assertEquals(0, result.count)
+        assertEquals('error',result.error)
+        assertEquals('test1',result.name)
+        assertEquals(LogFileState.NOT_FOUND,result.state)
+        assertEquals(1, svc.getCurrentRetrievalResults().size())
+
+        Map result1 = svc.getRetrievalCacheResult("1")
+        assertNotNull(result1)
+    }
     void testgetLogFileWriterWithoutPlugin(){
         mockDomain(Execution)
         mockLogging(LogFileStorageService)
@@ -255,8 +320,8 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
     void testRunStorageRequestFailureWithRetry(){
         ConfigurationHolder.config = [:]
         ConfigurationHolder.config.rundeck.execution.logs.fileStoragePlugin = "test1"
-        ConfigurationHolder.config.rundeck.execution.logs.fileStorage.retryDelay = 30
-        ConfigurationHolder.config.rundeck.execution.logs.fileStorage.retryCount = 2
+        ConfigurationHolder.config.rundeck.execution.logs.fileStorage.storageRetryDelay = 30
+        ConfigurationHolder.config.rundeck.execution.logs.fileStorage.storageRetryCount = 2
 
 
         def test = new testStoragePlugin()

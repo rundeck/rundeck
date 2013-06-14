@@ -5,6 +5,7 @@ import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogWriter
 import com.dtolabs.rundeck.app.internal.logging.RundeckLogFormat
 import com.dtolabs.rundeck.core.logging.LogFileState
 import com.dtolabs.rundeck.core.logging.LogFileStorage
+import com.dtolabs.rundeck.core.logging.LogFileStorageException
 import com.dtolabs.rundeck.core.logging.StreamingLogReader
 import com.dtolabs.rundeck.core.logging.StreamingLogWriter
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
@@ -58,6 +59,7 @@ class LogFileStorageService implements InitializingBean{
      * Map of log retrieval actions
      */
     private ConcurrentHashMap<String, Map> logFileRetrievalRequests = new ConcurrentHashMap<String, Map>()
+    private ConcurrentHashMap<String, Map> logFileRetrievalResults = new ConcurrentHashMap<String, Map>()
     @Override
     void afterPropertiesSet() throws Exception {
         def pluginName = getConfiguredPluginName()
@@ -80,6 +82,9 @@ class LogFileStorageService implements InitializingBean{
     }
     List getCurrentRequests(){
         return new ArrayList(running)
+    }
+    Map getCurrentRetrievalResults(){
+        return new HashMap<String,Map>(logFileRetrievalResults)
     }
     /**
      * Run a storage request task, and if it fails submit a retry depending on the configured retry count and delay
@@ -120,11 +125,24 @@ class LogFileStorageService implements InitializingBean{
 
         logFileTaskExecutor.execute{
             running << task
-            def success = retrieveLogFile(task.file, task.storage,task.id)
-            logFileRetrievalRequests.remove(task.id)
+            def result = retrieveLogFile(task.file, task.storage,task.id)
+            def success=result.success
             if (!success) {
                 log.error("LogFileStorage: failed retrieval request for ${task.id}")
+                def cache = [
+                        state: result.error ? LogFileState.ERROR : LogFileState.NOT_FOUND,
+                        time: new Date(),
+                        count: task.count ? task.count + 1 : 1,
+                        errorCode: 'execution.log.storage.retrieval.ERROR',
+                        errorData: [task.name, result.error],
+                        error: result.error
+                ]
+
+                logFileRetrievalResults.put(task.id, task + cache)
+            }else{
+                logFileRetrievalResults.remove(task.id)
             }
+            logFileRetrievalRequests.remove(task.id)
             running.remove(task)
         }
     }
@@ -133,7 +151,7 @@ class LogFileStorageService implements InitializingBean{
      * @return
      */
     int getConfiguredStorageRetryCount() {
-        def count = ConfigurationHolder.config.rundeck?.execution?.logs?.fileStorage?.retryCount ?: 0
+        def count = ConfigurationHolder.config.rundeck?.execution?.logs?.fileStorage?.storageRetryCount ?: 0
         if(count instanceof String){
             count = count.toInteger()
         }
@@ -144,11 +162,44 @@ class LogFileStorageService implements InitializingBean{
      * @return
      */
     int getConfiguredStorageRetryDelay() {
-        def delay = ConfigurationHolder.config.rundeck?.execution?.logs?.fileStorage?.retryDelay ?: 0
+        def delay = ConfigurationHolder.config.rundeck?.execution?.logs?.fileStorage?.storageRetryDelay ?: 0
         if (delay instanceof String) {
             delay = delay.toInteger()
         }
         delay > 0 ? delay : 60
+    }
+    /**
+     * Return the configured retry count
+     * @return
+     */
+    int getConfiguredRetrievalRetryCount() {
+        def count = ConfigurationHolder.config.rundeck?.execution?.logs?.fileStorage?.retrievalRetryCount ?: 0
+        if(count instanceof String){
+            count = count.toInteger()
+        }
+        count > 0 ? count : 3
+    }
+    /**
+     * Return the configured retry delay in seconds
+     * @return
+     */
+    int getConfiguredRetrievalRetryDelay() {
+        def delay = ConfigurationHolder.config.rundeck?.execution?.logs?.fileStorage?.retrievalRetryDelay ?: 0
+        if (delay instanceof String) {
+            delay = delay.toInteger()
+        }
+        delay > 0 ? delay : 60
+    }
+    /**
+     * Return the configured remote pending delay in seconds
+     * @return
+     */
+    int getConfiguredRemotePendingDelay() {
+        def delay = ConfigurationHolder.config.rundeck?.execution?.logs?.fileStorage?.remotePendingDelay ?: 0
+        if (delay instanceof String) {
+            delay = delay.toInteger()
+        }
+        delay > 0 ? delay : 120
     }
 
     /**
@@ -281,23 +332,62 @@ class LogFileStorageService implements InitializingBean{
     }
 
     /**
-     * Return the state of the log file for the execution, and query a storage plugin if defined
+     * Determine the state of the log file, based on the local file and previous or current plugin requests
      * @param execution
      * @param plugin
      * @return state of the execution log
      */
     private Map getLogFileState(Execution execution, LogFileStoragePlugin plugin) {
         File file = getFileForExecution(execution)
+        def key = logFileRetrievalKey(execution)
+
+        //check local file
         LogFileState local = (file!=null && file.exists() )? LogFileState.AVAILABLE : LogFileState.NOT_FOUND
-        LogFileState remote = LogFileState.NOT_FOUND
-        ExecutionLogState remoteNotFound = null
+        if(local == LogFileState.AVAILABLE) {
+            return [state: ExecutionLogState.AVAILABLE]
+        }
+
+        LogFileState remote = null
+
+        //consider the state to be PENDING_REMOTE if not found, but we are within a pending grace period
+        // after execution completed
+        ExecutionLogState remoteNotFound = ExecutionLogState.PENDING_REMOTE
+        long pendingDelay = TimeUnit.MILLISECONDS.convert(getConfiguredRemotePendingDelay(), TimeUnit.SECONDS)
+        if (execution.dateCompleted != null &&  ((System.currentTimeMillis() - execution.dateCompleted.time) > pendingDelay)) {
+            //report NOT_FOUND if not found after execution completed and after the pending grace period
+            remoteNotFound = ExecutionLogState.NOT_FOUND
+        }
         String errorCode=null
         List errorData=null
-        if (null != plugin && local != LogFileState.AVAILABLE) {
+
+        //check results cache
+        def previous = getRetrievalCacheResult(key)
+        if (previous != null ) {
+            //retrieval result is fresh within the cache
+            remote = previous.state
+            errorCode = previous.errorCode
+            errorData = previous.errorData
+            def state = ExecutionLogState.forFileStates(local, remote, remoteNotFound)
+            log.debug("getLogFileState(${execution.id},${plugin}) (CACHE): ${state} forFileStates: ${local}, ${remote}")
+            return [state: state, errorCode: errorCode, errorData: errorData]
+        }
+
+        //check active request
+        if (null == remote) {
+            def requeststate = logFileRetrievalRequestState(execution)
+            if (null != requeststate) {
+                log.debug("getLogFileState(${execution.id},${plugin}) (RUNNING): ${requeststate}")
+                //retrieval request is already running
+                return [state: requeststate]
+            }
+        }
+
+        //query plugin to see if it is available
+        if (null == remote && null != plugin) {
             /**
              * If plugin exists, assume NOT_FOUND is actually pending
              */
-            remoteNotFound= ExecutionLogState.PENDING_REMOTE
+            def errorMessage=null
             try {
                 def newremote = plugin.isAvailable() ? LogFileState.AVAILABLE : LogFileState.NOT_FOUND
                 remote = newremote
@@ -305,15 +395,65 @@ class LogFileStorageService implements InitializingBean{
                 def pluginName = getConfiguredPluginName()
                 log.error("Failed to get state of file storage plugin ${pluginName}: " + e.message)
                 log.debug("Failed to get state of file storage plugin ${pluginName}: " + e.message, e)
-                errorCode ='execution.log.storage.state.ERROR'
-                errorData = [pluginName, e.message]
+                errorCode = 'execution.log.storage.state.ERROR'
+                errorMessage = e.message
+                errorData = [pluginName, errorMessage]
                 remote = LogFileState.ERROR
+
+            }
+            if (remote != LogFileState.AVAILABLE) {
+                cacheRetrievalState(key, remote, 0, errorMessage)
             }
         }
         def state = ExecutionLogState.forFileStates(local, remote, remoteNotFound)
 
         log.debug("getLogFileState(${execution.id},${plugin}): ${state} forFileStates: ${local}, ${remote}")
         return [state: state, errorCode: errorCode, errorData: errorData]
+    }
+
+    /**
+     * Get a previous retrieval cache result, if it is not expired, or has no more retries
+     * @param key
+     * @return task result
+     */
+    Map getRetrievalCacheResult(String key) {
+        def previous = logFileRetrievalResults.get(key)
+        if (previous != null && isResultCacheItemFresh(previous)) {
+            log.debug("getRetrievalCacheResult, previous result still cached: ${previous}")
+            //retry delay is not expired
+            return previous
+        } else if (previous != null && !isResultCacheItemAllowedRetry(previous)) {
+            //no more retries
+            log.warn("getRetrievalCacheResult, reached max retry count of ${previous.count} for ${key}, not retrying")
+            return previous
+        }else if(previous!=null){
+            log.warn("getRetrievalCacheResult, expired cache result: ${previous}")
+        }
+        return null
+    }
+
+    Map cacheRetrievalState(String key, LogFileState state, int count, String error = null) {
+        def name= getConfiguredPluginName();
+        def cache = [
+                id:key,
+                name:name,
+                state: state,
+                time: new Date(),
+                count: count,
+        ]
+        if (error) {
+            cache.errorCode = 'execution.log.storage.retrieval.ERROR'
+            cache.errorData = [name, error]
+            cache.error = error
+        }
+        def previous = logFileRetrievalResults.put(key, cache)
+        if (null != previous) {
+            log.warn("cacheRetrievalState: replacing cached state for ${key}: ${previous}")
+            cache.count=previous.count
+        }else{
+            log.debug("cacheRetrievalState: cached state for ${key}: ${cache}")
+        }
+        return cache;
     }
 
     /**
@@ -363,6 +503,8 @@ class LogFileStorageService implements InitializingBean{
      * @param resolver @return
      */
     ExecutionLogReader requestLogFileReader(Execution e, boolean performLoad = true) {
+        //handle cases where execution is still running or just started
+        //and the file may not be available yet
         if(e.dateCompleted == null && e.dateStarted != null){
             //execution is running
             if (frameworkService.isClusterModeEnabled() && e.serverNodeUUID != frameworkService.getServerUUID()) {
@@ -374,6 +516,8 @@ class LogFileStorageService implements InitializingBean{
             }
         }
         def plugin= getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolver(e.project))
+
+        //check the state via local file, cache results, and plugin
         def result = getLogFileState(e, plugin)
         def state = result.state
         def reader = null
@@ -384,11 +528,6 @@ class LogFileStorageService implements InitializingBean{
             case ExecutionLogState.AVAILABLE_REMOTE:
                 if (performLoad) {
                     state = requestLogFileRetrieval(e, plugin)
-                }else {
-                    def requeststate = logFileRetrievalRequestState(e)
-                    if(null!=requeststate) {
-                        state = requeststate
-                    }
                 }
         }
         log.debug("requestLogFileRetrieval(${e.id},${performLoad}): ${state}")
@@ -431,18 +570,45 @@ class LogFileStorageService implements InitializingBean{
     private ExecutionLogState requestLogFileRetrieval(Execution execution, LogFileStorage plugin){
         def key=logFileRetrievalKey(execution)
         def file = getFileForExecution(execution)
-        Map newstate = [state: ExecutionLogState.PENDING_LOCAL, file: file, storage: plugin, id: key]
+        Map newstate = [state: ExecutionLogState.PENDING_LOCAL, file: file, storage: plugin, id: key, name: getConfiguredPluginName(),count:0]
+        def previous = logFileRetrievalResults.get(key)
+        if(previous!=null){
+            newstate.count=previous.count
+        }
         def pending=logFileRetrievalRequests.putIfAbsent(key, newstate)
         if(pending!=null){
-            log.debug("requestLogFileRetrieval, already pending: ${pending.state}")
-            //request already in progress
+            log.debug("requestLogFileRetrieval, already pending for ${key}: ${pending.state}")
+            //request already started
             return pending.state
         }
-        log.debug("requestLogFileRetrieval, queueing a new request...")
+        //remove previous result
+        logFileRetrievalResults.remove(key)
+        log.debug("requestLogFileRetrieval, queueing a new request (attempt ${newstate.count+1}) for ${key}...")
         retrievalRequests<<newstate
         return ExecutionLogState.PENDING_LOCAL
     }
 
+    /**
+     * Return true if the retrieval task result cache time is within the retry delay
+     * @param previous
+     * @return
+     */
+     boolean isResultCacheItemFresh(Map previous){
+        int retryDelay = getConfiguredRetrievalRetryDelay()
+        long ms = TimeUnit.MILLISECONDS.convert(retryDelay, TimeUnit.SECONDS).longValue()
+        Date cacheTime = previous.time
+        return System.currentTimeMillis() < (cacheTime.time + ms)
+    }
+
+    /**
+     * Return true if the retrieval task result retry count is within the max retries
+     * @param previous
+     * @return
+     */
+     boolean isResultCacheItemAllowedRetry(Map previous){
+        int retryCount = getConfiguredRetrievalRetryCount()
+        return previous.count < retryCount
+    }
     /**
      * Asynchronously start a request to store a log file for a completed execution using the storage method
      * @param id the request id
@@ -499,38 +665,44 @@ class LogFileStorageService implements InitializingBean{
      * Retrieves a log file for the given execution using a storage method
      * @param execution
      * @param storage plugin that is already initialized
-     * @return
+     * @return Map containing success: true/false, and error: String indicating the error if there was one
      */
-    private Boolean retrieveLogFile(File file, LogFileStorage storage, String ident){
+    private Map retrieveLogFile(File file, LogFileStorage storage, String ident){
         def tempfile = File.createTempFile("temp-storage","logfile")
         tempfile.deleteOnExit()
         def success=false
         def psuccess=false
+        def errorMessage=null
         try {
             tempfile.withOutputStream { out ->
-                psuccess = storage.retrieve(out)
-            }
-            if(!file.getParentFile().isDirectory()){
-                if(!file.getParentFile().mkdirs()){
-                    log.error("Retrieval request [ID#${ident}] error: Failed to create directories for file: ${file}")
+                try {
+                    psuccess = storage.retrieve(out)
+                } catch (LogFileStorageException e) {
+                    errorMessage=e.message
                 }
             }
             if(psuccess) {
+                if (!file.getParentFile().isDirectory()) {
+                    if (!file.getParentFile().mkdirs()) {
+                        errorMessage="Failed to create directories for file: ${file}"
+                    }
+                }
                 if (!tempfile.renameTo(file)) {
-                    log.error("Retrieval request [ID#${ident}] error: Failed to move temp file to location: ${file}")
+                    errorMessage = "Failed to move temp file to location: ${file}"
                 } else {
                     success = true
                 }
             }
-            log.error("Retrieval request [ID#${ident}], result: ${success}")
+            log.debug("Retrieval request [ID#${ident}], result: ${success}, error? ${errorMessage}")
 
         } catch (Throwable t) {
-            log.error("Retrieval request [ID#${ident}]: Failed retrieve log file: ${t.message}")
+            errorMessage = "Failed retrieve log file: ${t.message}"
             log.debug("Retrieval request [ID#${ident}]: Failed retrieve log file: ${t.message}", t)
         }
         if(!success){
+            log.error("Retrieval request [ID#${ident}] error: ${errorMessage}")
             tempfile.delete()
         }
-        return success
+        return [success: success, error: errorMessage]
     }
 }

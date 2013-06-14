@@ -272,7 +272,7 @@ class ExecutionController {
             return
         }
         if (null == reader  || reader.state == ExecutionLogState.NOT_FOUND ) {
-            def errmsg = "No output"
+            def errmsg = g.message(code: "execution.log.storage.state.NOT_FOUND")
             //execution has not be started yet
             def renderclos = { delegate ->
                 if (e.dateCompleted) {
