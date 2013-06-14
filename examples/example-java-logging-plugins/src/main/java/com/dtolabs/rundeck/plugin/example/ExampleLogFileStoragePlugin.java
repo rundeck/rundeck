@@ -2,6 +2,7 @@ package com.dtolabs.rundeck.plugin.example;
 
 import com.dtolabs.rundeck.core.logging.LogFileState;
 import com.dtolabs.rundeck.core.logging.LogFileStorage;
+import com.dtolabs.rundeck.core.logging.LogFileStorageException;
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
@@ -30,32 +31,34 @@ public class ExampleLogFileStoragePlugin implements LogFileStoragePlugin {
         this.destinationDirPath = "/tmp/rundeck_cluster";
     }
 
-    public boolean store(InputStream stream, long length, Date lastModified) throws IOException {
+    public boolean store(InputStream stream, long length, Date lastModified) throws IOException,
+            LogFileStorageException {
         File storeFile = getDestinationFile();
         File tempFile = getDestinationTempFile();
         if (!storeFile.getParentFile().isDirectory() && !storeFile.getParentFile().mkdirs()) {
-            log.log(Level.SEVERE, "Failed creating dirs {0}", storeFile.getParentFile());
+            throw new LogFileStorageException(String.format("Failed creating dirs %s", storeFile.getParentFile()));
         }
         if (!tempFile.getParentFile().isDirectory() && !tempFile.getParentFile().mkdirs()) {
-            log.log(Level.SEVERE, "Failed creating dirs {0}", storeFile.getParentFile());
+            throw new LogFileStorageException(String.format("Failed creating dirs %s", storeFile.getParentFile()));
         }
+
         tempFile.deleteOnExit();
         OutputStream os = new FileOutputStream(tempFile);
-        boolean finished=false;
+        boolean finished = false;
         try {
             Streams.copyStream(stream, os);
-            finished=true;
+            finished = true;
         } finally {
             os.close();
-            if(!finished) {
+            if (!finished) {
                 tempFile.delete();
             }
         }
 
-        finished=tempFile.renameTo(storeFile);
-        if(!finished){
-            log.log(Level.SEVERE, "Failed to rename output to file {0}", storeFile);
+        finished = tempFile.renameTo(storeFile);
+        if (!finished) {
             tempFile.delete();
+            throw new LogFileStorageException(String.format("Failed to rename output to file %s ", storeFile));
         }
         return finished;
     }
@@ -67,7 +70,7 @@ public class ExampleLogFileStoragePlugin implements LogFileStoragePlugin {
         boolean finished = false;
         try {
             Streams.copyStream(is, stream);
-            finished=true;
+            finished = true;
         } finally {
             is.close();
         }
@@ -91,16 +94,14 @@ public class ExampleLogFileStoragePlugin implements LogFileStoragePlugin {
         return (String) context.get("execid");
     }
 
-    public LogFileState getState() {
+    public boolean isAvailable() {
         //introduce delay
         File storeFile = getDestinationFile();
         File tempFile = getDestinationTempFile();
-        LogFileState state = (storeFile != null && storeFile.exists()) ?
-                LogFileState.AVAILABLE :
-                (tempFile != null && tempFile.exists()) ? LogFileState.PENDING : LogFileState.NOT_FOUND;
+        boolean available = (storeFile != null && storeFile.exists());
 
-        log.log(Level.SEVERE, "call getState {0}", state);
-        return state;
+        log.log(Level.SEVERE, "call isAvailable {0}", available);
+        return available;
     }
 
 }

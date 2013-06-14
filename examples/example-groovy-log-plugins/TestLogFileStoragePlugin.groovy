@@ -11,14 +11,14 @@ rundeckPlugin(LogFileStoragePlugin){
         outputDir required:true, description: "Location of log files"
     }
     /**
-     * Called to determine the storage state, return on of: AVAILABLE, PENDING or NOT_FOUND
+     * Called to determine the file availability, return true to indicate it is available, 
+     * false to indicate it is not available. An exception indicates an error.
      */
-    state { Map execution, Map configuration->
+    available { Map execution, Map configuration->
         def id = execution.execid
         //return state of storage given the id
-        def tmpfile=new File(configuration.outputDir,"${configuration.filebase}${id}.gz.tmp")
         def outfile=new File(configuration.outputDir,"${configuration.filebase}${id}.gz")
-        outfile.exists()? AVAILABLE : tmpfile.exists()? PENDING : NOT_FOUND
+        outfile.exists()
     }
 
     /**
