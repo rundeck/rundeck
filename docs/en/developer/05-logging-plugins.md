@@ -428,7 +428,7 @@ The `LogFileStorage` system is asked to store and retrieve entire log files for 
 
 The Java interface for these plugins is:
     
-    com.dtolabs.rundeck.plugins.logging.StreamingLogWriterPlugin
+    com.dtolabs.rundeck.plugins.logging.LogFileStoragePlugin
 
 Log file storage allows Rundeck to store the log files elsewhere, in case local file storage is not suitable for long-term retention. 
 
@@ -439,6 +439,7 @@ When a LogFileStorage plugin is enabled, and the **Local File Log** streaming wr
 After an execution completes, and the **Local File Log** finishes writing, Rundeck will place a *Storage Request* in an asynchronous queue for that Execution.
 
 When triggered, the *Storage Request* will use the configured LogFileStorage plugin and invoke `store`:
+
 * If it is unsuccessful, Rundeck may re-queue the request to retry it after a delay (configurable)
 
 ### Retrieval behavior
@@ -447,20 +448,19 @@ When a client requests a log stream to read via the **Local File Log**, Rundeck 
 
 The *Retrieval Request* will use the configured LogFileStorage plugin, and invoke `retrieve`.
 
-If successful, the client requests to read the **Local File Log** should find the file available locally.  If unsuccessful, a new *Retrieval Request* may be started if requested by a client.
+If successful, the client requests to read the **Local File Log** should find the file available locally.  If unsuccessful, the result may be cached for a period of time to report to the client. After that time, a new *Retrieval Request* may be started if requested by a client.  After a certain number of attempts fail, further attempts will be disabled and return the cached status.  The retry delay and number of attempts can be configured.
 
-### Log Storage States
+### Log File Availability
 
-Your plugin will be asked what `state` the log file is in, and should report back one of:
+Your plugin will be asked if the log file is 'available', and should report back one of:
 
-* `AVAILABLE` - the plugin can retrieve the file
-* `NOT_FOUND` - the plugin cannot retrieve the file
-* `PENDING` - the plugin is currently retrieving the file
+* `true` - the plugin can retrieve the file
+* `false` - the plugin cannot retrieve the file
 
-Only if `AVAILABLE` is reported will a *Retrieval Request* be created.
+Only if `true` is reported will a *Retrieval Request* be created.
 
-Note: currently `NOT_FOUND` and `PENDING` are treated the same, and clients will receive a message that Rundeck is waiting for the remote file to be available.
- 
+If there is an error discovering availability, your plugin should throw an Exception with the error message to report.
+
 ### Java LogFileStorage
 
 Create a Java class that implements the [LogFileStoragePlugin](https://github.com/dtolabs/rundeck/tree/core/src/main/java/com/dtolabs/rundeck/plugins/logging/LogFileStoragePlugin.java) interface:
@@ -476,10 +476,11 @@ Create a Java class that implements the [LogFileStoragePlugin](https://github.co
         public void initialize(Map<String, ? extends Object> context);
 
         /**
-         * Returns the state of the log file storage
+         * Returns true if the file is available, false otherwise
          * @return
+         * @throws LogFileStorageException if there is an error determining the availability
          */
-        public LogFileState getState();
+        public boolean isAvailable() throws LogFileStorageException;
     }
 
 
@@ -500,7 +501,7 @@ This extends the the [LogFileStorage](https://github.com/dtolabs/rundeck/tree/co
          *
          * @throws IOException
          */
-        boolean store(InputStream stream, long length, Date lastModified) throws IOException;
+        boolean store(InputStream stream, long length, Date lastModified) throws IOException, LogFileStorageException;
 
         /**
          * Writes a log file to the given stream
@@ -511,7 +512,7 @@ This extends the the [LogFileStorage](https://github.com/dtolabs/rundeck/tree/co
          *
          * @throws IOException
          */
-        boolean retrieve(OutputStream stream) throws IOException;
+        boolean retrieve(OutputStream stream) throws IOException, LogFileStorageException;
     }
 
 
@@ -525,8 +526,8 @@ The plugin is used in these two conditions:
 
 When `retrieval` is needed:
 
-1. The `getState` method is called to determine if the plugin can retrieve the file
-2. If the state is `AVAILABLE`, then `retrieve` method is called.
+1. The `isAvailable` method is called to determine if the plugin can retrieve the file
+2. If the method returns true, then `retrieve` method is called.
 
 When `storage` is needed:
 
@@ -546,14 +547,15 @@ To define metadata about your plugin, and configuration properties, see the [Not
 
 Define these closures inside your definition:
 
-`state`
+`available`
 
     /**
-     * Called to determine the storage state, return on of: AVAILABLE, PENDING or NOT_FOUND
+     * Called to determine the file availability, return true to indicate it is available, 
+     * false to indicate it is not available. An exception indicates an error.
      */
-    state { Map execution, Map configuration->
+    available { Map execution, Map configuration->
         //determine state
-        isAvailable()? AVAILABLE : isPending() ? PENDING : NOT_FOUND
+        return isAvailable()
     }
 
 `store`
@@ -587,6 +589,6 @@ Define these closures inside your definition:
 
 The plugin is used in this manner:
 
-1. The `state` closure is called before retrieving the file, to determine if it is available
+1. The `available` closure is called before retrieving the file, to determine if it is available
 1. The `store` closure is called when a file needs to be stored, with the [contextual data](#execution-context-data), configuration Map, and InputStream which will produce the log data. Additionally `length` and `lastModified` properties are in the closure binding, providing the file length, and last modification Date.
 2. The `retrieve` closure is called when a file needs to be retrieved, with the [contextual data](#execution-context-data), configuration Map, and OutputStream to write the log file content

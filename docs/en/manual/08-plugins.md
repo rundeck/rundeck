@@ -437,6 +437,25 @@ To configure a LogFileStorage plugin:
 
 Also, if `localFileStorageEnabled` is `false`, but no `streamingReaderPlugin` is enabled, then Rundeck will still default to using the **Local File Log Writer**.
 
+The LogFileStorage plugins also have some associated configuration values
+that can be used to tune the behavior of the plugins:
+
+* `rundeck.execution.logs.fileStorage.storageRetryCount`
+    * The number of `store` attempts to try before giving up for a single log file
+    * default value: `1` 
+* `rundeck.execution.logs.fileStorage.storageRetryDelay`
+    * Time to wait between retry attempts
+    * default value: `60` (seconds)
+* `rundeck.execution.logs.fileStorage.retrievalRetryCount`
+    * The number of `retrieve` attempts to try before giving up for a single log file
+    * default value: `3` 
+* `rundeck.execution.logs.fileStorage.retrievalRetryDelay`
+    * Time to wait between retry attempts
+    * default value: `60` (seconds)
+* `rundeck.execution.logs.fileStorage.remotePendingDelay`
+    * Grace time to allow after an execution finishes. Clients will see a "pending" message within this period after an execution finishes, even if the storage plugin is unable to find the log file. After this time period, they will see a "not found" message if the plugin is unable to find the log file.
+    * default value: `120` (seconds)
+
 ### Logging Plugin Configuration
 
 Logging plugins can define configuration properties, which can be set in the `framework.properties` (system-wide) or `project.properties` (project-wide).  Project-level properties override system-level properties.
