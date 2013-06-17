@@ -483,7 +483,7 @@ class ExecutionController {
 
         for(LogEvent data : logread){
             log.debug("read stream event: ${data}")
-            def logdata= [mesg: data.message, time: data.datetime, level: data.loglevel.toString()] + (data.metadata?:[:])
+            def logdata= (data.metadata ?: [:]) + [mesg: data.message, time: data.datetime, level: data.loglevel.toString()]
             entry<<logdata
             if (!(0 == max || entry.size() < max)){
                 break
