@@ -121,10 +121,31 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         LogFileStorageService svc = new LogFileStorageService()
         ConfigurationHolder.config=[:]
         ConfigurationHolder.config.rundeck.execution.logs.fileStoragePlugin = "test1"
-        def result = svc.cacheRetrievalState("1", LogFileState.NOT_FOUND, 0, 'error')
+        def result = svc.cacheRetrievalState("1", LogFileState.NOT_FOUND, 0, 'error','errorCode',['errorData'])
         assertNotNull(result)
         assertEquals("1",result.id)
         assertEquals(0, result.count)
+        assertEquals('errorCode',result.errorCode)
+        assertEquals(['errorData'],result.errorData)
+        assertEquals('error',result.error)
+        assertEquals('test1',result.name)
+        assertEquals(LogFileState.NOT_FOUND,result.state)
+        assertEquals(1, svc.getCurrentRetrievalResults().size())
+
+        Map result1 = svc.getRetrievalCacheResult("1")
+        assertNotNull(result1)
+    }
+    void testCacheResultDefaults(){
+        mockLogging(LogFileStorageService)
+        LogFileStorageService svc = new LogFileStorageService()
+        ConfigurationHolder.config=[:]
+        ConfigurationHolder.config.rundeck.execution.logs.fileStoragePlugin = "test1"
+        def result = svc.cacheRetrievalState("1", LogFileState.NOT_FOUND, 0, 'error', null, null)
+        assertNotNull(result)
+        assertEquals("1",result.id)
+        assertEquals(0, result.count)
+        assertEquals('execution.log.storage.retrieval.ERROR',result.errorCode)
+        assertEquals(['test1','error'],result.errorData)
         assertEquals('error',result.error)
         assertEquals('test1',result.name)
         assertEquals(LogFileState.NOT_FOUND,result.state)

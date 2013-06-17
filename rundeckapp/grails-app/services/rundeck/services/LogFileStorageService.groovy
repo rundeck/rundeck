@@ -393,8 +393,8 @@ class LogFileStorageService implements InitializingBean{
                 remote = newremote
             } catch (Throwable e) {
                 def pluginName = getConfiguredPluginName()
-                log.error("Failed to get state of file storage plugin ${pluginName}: " + e.message)
-                log.debug("Failed to get state of file storage plugin ${pluginName}: " + e.message, e)
+                log.error("Log file availability could not be determined ${pluginName}: " + e.message)
+                log.debug("Log file availability could not be determined ${pluginName}: " + e.message, e)
                 errorCode = 'execution.log.storage.state.ERROR'
                 errorMessage = e.message
                 errorData = [pluginName, errorMessage]
@@ -402,7 +402,7 @@ class LogFileStorageService implements InitializingBean{
 
             }
             if (remote != LogFileState.AVAILABLE) {
-                cacheRetrievalState(key, remote, 0, errorMessage)
+                cacheRetrievalState(key, remote, 0, errorMessage, errorCode, errorData )
             }
         }
         def state = ExecutionLogState.forFileStates(local, remote, remoteNotFound)
@@ -432,7 +432,7 @@ class LogFileStorageService implements InitializingBean{
         return null
     }
 
-    Map cacheRetrievalState(String key, LogFileState state, int count, String error = null) {
+    Map cacheRetrievalState(String key, LogFileState state, int count, String error = null, String errorCode=null, List errorData=null) {
         def name= getConfiguredPluginName();
         def cache = [
                 id:key,
@@ -442,8 +442,8 @@ class LogFileStorageService implements InitializingBean{
                 count: count,
         ]
         if (error) {
-            cache.errorCode = 'execution.log.storage.retrieval.ERROR'
-            cache.errorData = [name, error]
+            cache.errorCode = errorCode ?: 'execution.log.storage.retrieval.ERROR'
+            cache.errorData = errorData ?: [name, error]
             cache.error = error
         }
         def previous = logFileRetrievalResults.put(key, cache)
