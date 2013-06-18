@@ -24,6 +24,11 @@ class ThreadBoundLogOutputStream extends OutputStream {
     }
     public void write(final int b) {
         if (b == '\n') {
+            if (sb.get() == null) {
+                time.set(new Date())
+                context.set(contextual.getContext())
+                sb.set(new StringBuilder())
+            }
             event();
             crchar.set(false);
         } else if (b == '\r') {
@@ -33,9 +38,9 @@ class ThreadBoundLogOutputStream extends OutputStream {
                 event()
                 crchar.set(false);
             }
-            time.set(new Date())
-            context.set(contextual.getContext())
-            if(!sb.get()){
+            if (sb.get() == null) {
+                time.set(new Date())
+                context.set(contextual.getContext())
                 sb.set(new StringBuilder())
             }
             sb.get().append((char) b)
@@ -44,15 +49,16 @@ class ThreadBoundLogOutputStream extends OutputStream {
     }
 
     private void event() {
+        def buffer = sb.get()
         logger.addEvent(
                 new DefaultLogEvent(
                         loglevel: level,
-                        metadata: context.get()?:[:],
-                        message: sb.get().toString(),
+                        metadata: context.get() ?: [:],
+                        message: buffer ? buffer.toString() : '',
                         datetime: time.get() ?: new Date(),
                         eventType: LogUtil.EVENT_TYPE_LOG)
         )
-        sb.set(new StringBuilder())
+        sb.set(null)
         time.set(null)
         context.set(null)
     }
