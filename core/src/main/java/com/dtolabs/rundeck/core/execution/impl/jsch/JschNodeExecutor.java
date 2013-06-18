@@ -173,7 +173,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         try {
 
             sshexec = SSHTaskBuilder.build(node, command, project, context.getDataContext(),
-                                           nodeAuthentication, context.getLoglevel());
+                                           nodeAuthentication, context.getLoglevel(),listener);
         } catch (SSHTaskBuilder.BuilderException e) {
             return NodeExecutorResultImpl.createFailure(StepFailureReason.ConfigurationFailure,
                                                         e.getMessage(), node);

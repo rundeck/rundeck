@@ -25,6 +25,7 @@
 
 package com.dtolabs.rundeck.core.tasks.net;
 
+import com.dtolabs.rundeck.plugins.PluginLogger;
 import com.jcraft.jsch.*;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
@@ -66,6 +67,7 @@ public class ExtSSHExec extends SSHBase {
     private InputStream inputStream=null;
     private OutputStream secondaryStream=null;
     private DisconnectHolder disconnectHolder=null;
+    private PluginLogger logger;
 
     private Resource commandResource = null;
     private List<Environment.Variable> envVars=null;
@@ -201,6 +203,22 @@ public class ExtSSHExec extends SSHBase {
      */
     public void setDisconnectHolder(final DisconnectHolder disconnectHolder) {
         this.disconnectHolder = disconnectHolder;
+    }
+
+    public PluginLogger getLogger() {
+        return logger;
+    }
+
+    public void setLogger(PluginLogger logger) {
+        this.logger = logger;
+    }
+
+    public int getAntLogLevel() {
+        return antLogLevel;
+    }
+
+    public void setAntLogLevel(int antLogLevel) {
+        this.antLogLevel = antLogLevel;
     }
 
     /**
@@ -510,17 +528,7 @@ public class ExtSSHExec extends SSHBase {
      */
     protected Session openSession() throws JSchException {
         JSch jsch = new JSch();
-        final SSHBase base = this;
-        if(getVerbose()) {
-        	JSch.setLogger(new com.jcraft.jsch.Logger(){
-        		public boolean isEnabled(int level){
-        			return true;
-        		}
-        		public void log(int level, String message){
-        			base.log(message, Project.MSG_INFO);
-        		}
-        	});
-        }
+        JSch.setLogger(ThreadBoundJschLogger.getInstance(logger, getJschLogLevel()));
         if (null != getUserInfo().getKeyfile()) {
             jsch.addIdentity(getUserInfo().getKeyfile());
         }
@@ -544,6 +552,25 @@ public class ExtSSHExec extends SSHBase {
         session.setConfig("PreferredAuthentications", "publickey,password,keyboard-interactive");
         session.connect();
         return session;
+    }
+
+    private int antLogLevel=Project.MSG_INFO;
+    private int getJschLogLevel() {
+        // reassign log levels, to quell Jsch logging at normal levels, but
+        // pass more log info at verbose levels
+        //
+        switch (antLogLevel){
+            case Project.MSG_DEBUG:
+                return Logger.DEBUG;
+            case Project.MSG_VERBOSE:
+                return Logger.INFO;
+            case Project.MSG_ERR:
+                return Logger.FATAL;
+            case Project.MSG_WARN:
+            case Project.MSG_INFO:
+            default:
+                return Logger.ERROR;
+        }
     }
 
     public InputStream getInputStream() {

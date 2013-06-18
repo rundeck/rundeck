@@ -25,6 +25,7 @@ package com.dtolabs.rundeck.core.tasks.net;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import com.dtolabs.rundeck.plugins.PluginLogger;
 import org.apache.commons.lang.StringUtils;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.taskdefs.optional.ssh.SSHBase;
@@ -190,20 +191,21 @@ public class SSHTaskBuilder {
      * @param args        arguments
      * @param project     ant project
      * @param dataContext
-     * @param finder
      *
      * @return task
      */
     public static ExtSSHExec build(final INodeEntry nodeentry, final String[] args,
                                    final Project project,
                                    final Map<String, Map<String, String>> dataContext,
-                                   final SSHConnectionInfo sshConnectionInfo, final int loglevel) throws
+                                   final SSHConnectionInfo sshConnectionInfo, final int loglevel, final PluginLogger logger) throws
         BuilderException {
 
 
         final ExtSSHExec extSSHExec = new ExtSSHExec();
         build(new SSHExecImpl(extSSHExec), nodeentry, args, project, dataContext, sshConnectionInfo,
             loglevel);
+        extSSHExec.setLogger(logger);
+        extSSHExec.setAntLogLevel(loglevel);
         return extSSHExec;
 
     }
