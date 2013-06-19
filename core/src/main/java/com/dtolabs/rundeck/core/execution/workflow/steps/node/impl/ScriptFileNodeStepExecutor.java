@@ -25,6 +25,7 @@ package com.dtolabs.rundeck.core.execution.workflow.steps.node.impl;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.execution.ExecArgList;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionService;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
@@ -123,19 +124,16 @@ public class ScriptFileNodeStepExecutor implements NodeStepExecutor {
             }
         }
 
-        //replace data references
-        final String[] newargs = ScriptExecUtil.createScriptArgs(
-                context.getDataContext(),
-                node,
+        //build arg list to execute the script
+        ExecArgList scriptArgList = ScriptExecUtil.createScriptArgList(
+                filepath,
                 null,
                 args,
                 scriptInterpreter,
-                interpreterargsquoted,
-                filepath
+                interpreterargsquoted
         );
-        //XXX: windows specific call?
 
-        return framework.getExecutionService().executeCommand(context, newargs, node);
+        return framework.getExecutionService().executeCommand(context, scriptArgList, node);
         //TODO: remove remote temp file after exec?
     }
 }
