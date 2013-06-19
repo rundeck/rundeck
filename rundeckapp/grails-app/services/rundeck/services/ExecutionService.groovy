@@ -642,7 +642,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
                 } else {
                     args = new String[0];
                 }
-                return ExecutionItemFactory.createScriptFileItem(script, args, handler, !!cmd.keepgoingOnSuccess);
+                return ExecutionItemFactory.createScriptFileItem(cmd.getScriptInterpreter(),
+                        (boolean)cmd.interpreterArgsQuoted,
+                        script, args, handler, !!cmd.keepgoingOnSuccess);
 
             } else if (null != cmd.getAdhocFilepath()) {
                 final String filepath = cmd.getAdhocFilepath();
@@ -654,9 +656,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
                     args = new String[0];
                 }
                 if(filepath ==~ /^(?i:https?|file):.*$/) {
-                    return ExecutionItemFactory.createScriptURLItem(filepath, args, handler, !!cmd.keepgoingOnSuccess)
-                }else{
-                    return ExecutionItemFactory.createScriptFileItem(new File(filepath), args, handler, !!cmd.keepgoingOnSuccess);
+                    return ExecutionItemFactory.createScriptURLItem(cmd.getScriptInterpreter(),
+                            cmd.interpreterArgsQuoted, filepath, args, handler, !!cmd.keepgoingOnSuccess)
+                }else {
+                    return ExecutionItemFactory.createScriptFileItem(cmd.getScriptInterpreter(),
+                            cmd.interpreterArgsQuoted, new File(filepath), args, handler, !!cmd.keepgoingOnSuccess);
+
                 }
             }
         }else if (step.instanceOf(JobExec)) {

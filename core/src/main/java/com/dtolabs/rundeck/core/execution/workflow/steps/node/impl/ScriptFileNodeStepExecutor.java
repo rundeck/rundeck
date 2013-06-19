@@ -71,7 +71,8 @@ public class ScriptFileNodeStepExecutor implements NodeStepExecutor {
             throw new NodeStepException(e.getMessage(), e, e.getFailureReason(), node.getNodename());
         }
 
-        return executeRemoteScript(context, context.getFramework(), node, script.getArgs(), filepath);
+        return executeRemoteScript(context, context.getFramework(), node, script.getArgs(), filepath,
+                script.getScriptInterpreter(), script.getInterpreterArgsQuoted());
     }
 
     /**

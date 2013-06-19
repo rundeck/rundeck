@@ -68,6 +68,12 @@
     <g:set var="isAdhocLocal" value="${'script'==newitemtype || item?.adhocLocalString}"/>
     <g:set var="isAdhocFileExecution" value="${'scriptfile'==newitemtype || item?.adhocFilepath}"/>
     <g:hiddenField name="adhocExecution" value="true"/>
+    <g:if test="${!isAdhocRemote}">
+        <div class="info note"><g:message code="Workflow.Step.scriptInterpreter.description"/>:</div>
+        <input type='text' name="scriptInterpreter" value="${item?.scriptInterpreter?.encodeAsHTML()}" size="80"
+               id="scriptInterpreterField" autofocus/>
+        <g:checkBox name="interpreterArgsQuoted" checked="${item?.interpreterArgsQuoted}" id="interpreterArgsQuotedField" />
+    </g:if>
     <g:if test="${isAdhocLocal}">
         <div id="localScriptDiv" class="${hasErrors(bean:item,field:'adhocExecution','fieldError')}">
             <div class="info note"><g:message code="Workflow.Step.adhocLocalString.description" />:</div>
