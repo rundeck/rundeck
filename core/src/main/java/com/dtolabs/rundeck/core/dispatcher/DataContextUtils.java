@@ -48,7 +48,32 @@ public class DataContextUtils {
      */
     public static final String ENV_VAR_PREFIX = "RD_";
 
+    /**
+     * Return a converter that can expand the property references within a string
+     *
+     * @param data property context data
+     * @return a Converter to expand property values within a string
+     */
+    public static Converter<String,String> replaceDataReferencesConverter(final Map<String, Map<String, String>> data) {
+        return replaceDataReferencesConverter(data, null, false);
+    }
 
+    /**
+     * Return a converter that can expand the property references within a string
+     * @param data property context data
+     * @param converter secondary converter to apply to property values before replacing in a string
+     * @param failOnUnexpanded if true, fail if a property value cannot be expanded
+     * @return a Converter to expand property values within a string
+     */
+    public static Converter<String,String> replaceDataReferencesConverter(final Map<String, Map<String, String>> data,
+            final Converter<String, String> converter, final boolean failOnUnexpanded){
+        return new Converter<String, String>() {
+            @Override
+            public String convert(String s) {
+                return replaceDataReferences(s,data, converter, failOnUnexpanded);
+            }
+        };
+    }
     /**
      * Replace the embedded  properties of the form '${key.name}' in the input Strings with the value from the data
      * context
