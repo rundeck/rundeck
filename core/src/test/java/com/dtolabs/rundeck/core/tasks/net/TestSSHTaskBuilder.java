@@ -209,7 +209,7 @@ public class TestSSHTaskBuilder extends TestCase {
 
     private void assertInvariable(testState state, testSSHExecInterface test) {
         //never changes
-        assertEquals("sshexec.output", test.outputproperty);
+        assertEquals(null, test.outputproperty);
         assertInvariableBase(state, test);
     }
 
