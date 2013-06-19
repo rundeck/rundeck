@@ -24,11 +24,9 @@
 package com.dtolabs.rundeck.core.execution;
 
 import com.dtolabs.rundeck.core.CoreException;
-import com.dtolabs.rundeck.core.cli.CLIUtils;
 import com.dtolabs.rundeck.core.cli.ExecTool;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
@@ -49,11 +47,12 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionI
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.utils.*;
+import org.apache.commons.collections.Predicate;
 
 import java.io.File;
-import java.io.FilterOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -265,11 +264,26 @@ class ExecutionServiceImpl implements ExecutionService {
         return result;
     }
 
+    /**
+     * evaluates to true if a string contains a property reference
+     */
+    private static final Predicate stringContainsPropertyReferencePredicate =new Predicate() {
+        @Override
+        public boolean evaluate(Object o) {
+            return ((String) o).contains("${");
+        }
+    };
+
     public NodeExecutorResult executeCommand(final ExecutionContext context, final String[] command,
+                                             final INodeEntry node) {
+        return executeCommand(context, ExecArgList.fromStrings(stringContainsPropertyReferencePredicate, command), node);
+    }
+
+    public NodeExecutorResult executeCommand(final ExecutionContext context, final ExecArgList command,
                                              final INodeEntry node) {
 
         if (null != context.getExecutionListener()) {
-            context.getExecutionListener().beginNodeExecution(context, command, node);
+            context.getExecutionListener().beginNodeExecution(context, command.asFlatStringArray(), node);
         }
         final NodeExecutor nodeExecutor;
         try {
@@ -281,24 +295,16 @@ class ExecutionServiceImpl implements ExecutionService {
         //create node context for node and substitute data references in command
         final ExecutionContextImpl nodeContext = new ExecutionContextImpl.Builder(context).nodeContextData(node).build();
 
-        final String[] nodeCommand = DataContextUtils.replaceDataReferences(command, nodeContext.getDataContext(),
-                null, false, true);
-        Converter<String,String> quote = CLIUtils.argumentQuoteForOperatingSystem(node.getOsFamily());
-        //quote args that have substituted context input, or have whitespace
-        //allow other args to be used literally
-        for (int i = 0; i < nodeCommand.length; i++) {
-            String replaced = nodeCommand[i];
-            if (!replaced.equals(command[i]) || CLIUtils.containsSpace(replaced)) {
-                nodeCommand[i] = quote.convert(replaced);
-            }
-        }
+        final ArrayList<String> commandList = command.buildCommandForNode(nodeContext.getDataContext(),
+                node.getOsFamily());
 
         NodeExecutorResult result = null;
+        String[] commandArray = commandList.toArray(new String[commandList.size()]);
         try {
-            result = nodeExecutor.executeCommand(nodeContext, nodeCommand, node);
+            result = nodeExecutor.executeCommand(nodeContext, commandArray, node);
         } finally {
             if (null != context.getExecutionListener()) {
-                context.getExecutionListener().finishNodeExecution(result, context, command, node);
+                context.getExecutionListener().finishNodeExecution(result, context, commandArray, node);
             }
         }
         return result;
