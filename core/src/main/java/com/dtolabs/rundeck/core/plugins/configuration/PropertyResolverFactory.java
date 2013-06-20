@@ -116,14 +116,14 @@ public class PropertyResolverFactory {
     /**
      * Create a resolver from a set of retrievers, possibly null
      *
-     * @param frameworkRetriever
-     * @param projectRetriever
      * @param instanceRetriever
+     * @param projectRetriever
+     * @param frameworkRetriever
      *
      * @return
      */
-    public static PropertyResolver createResolver(PropertyRetriever frameworkRetriever,
-            PropertyRetriever projectRetriever, PropertyRetriever instanceRetriever) {
+    public static PropertyResolver createResolver(PropertyRetriever instanceRetriever,
+            PropertyRetriever projectRetriever, PropertyRetriever frameworkRetriever) {
         return new RuntimePropertyResolver(instanceRetriever, projectRetriever, frameworkRetriever);
     }
 
@@ -180,13 +180,18 @@ public class PropertyResolverFactory {
             .getPropertyRetriever());
     }
 
-    private static PropertyRetriever instanceRetriever(final Map<String, Object> configuration) {
+    /**
+     * Create a basic retriever from a Map of values
+     * @param configuration
+     * @return
+     */
+    public static PropertyRetriever instanceRetriever(final Map<String, ?> configuration) {
         return new MapPropertyRetriever(configuration);
     }
     private static class MapPropertyRetriever implements PropertyRetriever{
-        private Map<String,Object> map;
+        private Map<String,?> map;
 
-        private MapPropertyRetriever(Map<String, Object> map) {
+        private MapPropertyRetriever(Map<String, ?> map) {
             this.map = map;
         }
 

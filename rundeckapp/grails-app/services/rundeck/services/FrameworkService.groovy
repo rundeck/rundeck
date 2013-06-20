@@ -122,11 +122,11 @@ class FrameworkService implements ApplicationContextAware {
         def fwk = Framework.createPropertyRetriever(rdbaseDir)
         def projBaseDir = getFrameworkProjectsBasedir(rundeckbase)
         return PropertyResolverFactory.createResolver(
-                fwk,
+                null,
                 null != projectName
                 ? Framework.createProjectPropertyRetriever(rdbaseDir, new File(projBaseDir), projectName)
                 : null,
-                null)
+                fwk)
     }
     static def getFrameworkProjectsBasedir(String rundeckbase){
         def baseDir = new File(rundeckbase)
