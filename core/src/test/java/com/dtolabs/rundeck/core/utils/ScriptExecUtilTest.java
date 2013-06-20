@@ -50,7 +50,7 @@ public class ScriptExecUtilTest {
                 "bash -c",
                 "/path/to/file",
                 true,
-                new String[]{"bash", "-c", "/path/to/file 'arg1 arg2' arg3"}
+                new String[]{"bash", "-c", "'/path/to/file '\"'\"'arg1 arg2'\"'\"' arg3'"}
         );
     }
     @Test
@@ -60,7 +60,7 @@ public class ScriptExecUtilTest {
                 "bash -c",
                 "/path/to/file",
                 true,
-                new String[]{"bash", "-c", "/path/to/file 'arg1'\"'\"'arg2' arg3"}
+                new String[]{"bash", "-c", "'/path/to/file '\"'\"'arg1'\"'\"'\"'\"'\"'\"'\"'\"'arg2'\"'\"' arg3'"}
         );
     }
     @Test
@@ -70,7 +70,7 @@ public class ScriptExecUtilTest {
                 "bash -c",
                 "/path/to/file",
                 false,
-                new String[]{"bash", "-c", "/path/to/file", "arg1 arg2", "arg3"}
+                new String[]{"bash", "-c", "/path/to/file", "'arg1 arg2'", "arg3"}
         );
     }
     @Test
@@ -80,7 +80,7 @@ public class ScriptExecUtilTest {
                 "bash -c",
                 "/path/to/file",
                 false,
-                new String[]{"bash", "-c", "/path/to/file", "arg1'arg2", "arg3"}
+                new String[]{"bash", "-c", "/path/to/file", "'arg1'\"'\"'arg2'", "arg3"}
         );
     }
 
@@ -91,7 +91,7 @@ public class ScriptExecUtilTest {
                 "bash -c",
                 "/path/to/file",
                 true,
-                new String[]{"bash", "-c", "/path/to/file arg1 arg2"}
+                new String[]{"bash", "-c", "'/path/to/file arg1 arg2'"}
         );
     }
     @Test
@@ -117,7 +117,7 @@ public class ScriptExecUtilTest {
                 "bash -c",
                 "/path/to/file",
                 true,
-                new String[]{"bash", "-c", "/path/to/file 'arg1 arg2' test1"}
+                new String[]{"bash", "-c", "'/path/to/file '\"'\"'arg1 arg2'\"'\"' test1'"}
         );
     }
     @Test
@@ -131,7 +131,7 @@ public class ScriptExecUtilTest {
                 "bash -c",
                 "/path/to/file",
                 false,
-                new String[]{"bash", "-c", "/path/to/file", "arg1 arg2", "test1"}
+                new String[]{"bash", "-c", "/path/to/file", "'arg1 arg2'", "test1"}
         );
     }
     @Test
@@ -145,7 +145,7 @@ public class ScriptExecUtilTest {
                 "bash -c",
                 "/path/to/file",
                 true,
-                new String[]{"bash", "-c", "/path/to/file 'arg1 arg2' 'test 2'"}
+                new String[]{"bash", "-c", "'/path/to/file '\"'\"'arg1 arg2'\"'\"' '\"'\"'test 2'\"'\"''"}
         );
     }
     @Test
@@ -159,7 +159,7 @@ public class ScriptExecUtilTest {
                 "bash -c",
                 "/path/to/file",
                 false,
-                new String[]{"bash", "-c", "/path/to/file", "arg1 arg2", "'test 2'"}
+                new String[]{"bash", "-c", "/path/to/file", "'arg1 arg2'", "'test 2'"}
         );
     }
 

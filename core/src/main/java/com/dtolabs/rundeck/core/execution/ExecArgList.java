@@ -47,11 +47,7 @@ public class ExecArgList {
      * @return
      */
     public static ExecArgList fromStrings(Predicate quoteDetect, String... args) {
-        ExecArgList execArgList = new ExecArgList();
-        for (String arg : args) {
-            execArgList.addArg(arg, quoteDetect.evaluate(arg));
-        }
-        return execArgList;
+        return builder().args(args, quoteDetect).build();
     }
 
     /**
@@ -63,9 +59,7 @@ public class ExecArgList {
      * @return
      */
     public static ExecArgList fromStrings(List<String> strings, boolean quoted) {
-        ExecArgList execArgList = new ExecArgList();
-        execArgList.addArgs(strings, quoted);
-        return execArgList;
+        return builder().args(strings, quoted).build();
     }
 
     /**
@@ -278,6 +272,32 @@ public class ExecArgList {
         public Builder args(List<String> args, boolean quoted) {
             argList.addArgs(args, quoted);
             return this;
+        }
+        /**
+         * Add a list of args
+         *
+         * @param args   args
+         * @param quoted true if all should be quoted
+         *
+         * @return
+         */
+        public Builder args(List<String> args, Predicate quoted) {
+            for (String arg : args) {
+                argList.addArg(arg, quoted.evaluate(arg));
+            }
+            return this;
+        }
+
+        /**
+         * Add a list of args
+         *
+         * @param args   args
+         * @param quoted true if all should be quoted
+         *
+         * @return
+         */
+        public Builder args(String[] args, Predicate quoted) {
+            return args(Arrays.asList(args), quoted);
         }
 
         /**

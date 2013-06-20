@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.cli;
 
 import com.dtolabs.rundeck.core.utils.Converter;
+import org.apache.commons.collections.Predicate;
 import org.apache.commons.lang.CharUtils;
 import org.apache.commons.lang.StringUtils;
 
@@ -115,6 +116,33 @@ public class CLIUtils {
     public static boolean containsSpace(String arg) {
         return StringUtils.containsAny(arg, " ");
     }
+    /**
+     * Return true if the string contains any whitespace
+     * @param arg
+     * @return
+     */
+    public static boolean containsQuote(String arg) {
+        return StringUtils.containsAny(arg, "'");
+    }
+
+    /**
+     * evaluates to true if a string contains a space
+     */
+    public static final Predicate stringContainsWhitespacePredicate = new Predicate() {
+        @Override
+        public boolean evaluate(Object o) {
+            return CLIUtils.containsSpace((String) o);
+        }
+    };
+    /**
+     * evaluates to true if a string contains a quote
+     */
+    public static final Predicate stringContainsQuotePredicate = new Predicate() {
+        @Override
+        public boolean evaluate(Object o) {
+            return CLIUtils.containsQuote((String) o);
+        }
+    };
     public static String quoteUnixShellArg(String arg) {
         StringBuilder stringBuilder = new StringBuilder();
         quoteUnixShellArg(stringBuilder, arg);

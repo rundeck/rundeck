@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
 import com.dtolabs.rundeck.core.utils.Converter;
+import org.apache.commons.collections.Predicate;
 import org.apache.tools.ant.taskdefs.ExecTask;
 import org.apache.tools.ant.types.Environment;
 
@@ -47,6 +48,7 @@ public class DataContextUtils {
      * Prefix string used for all environment variable names
      */
     public static final String ENV_VAR_PREFIX = "RD_";
+    public static final String PROPERTY_REF_REGEX = "\\$\\{([^\\s.]+)\\.([^\\s}]+)\\}";
 
     /**
      * Return a converter that can expand the property references within a string
@@ -74,6 +76,18 @@ public class DataContextUtils {
             }
         };
     }
+
+
+    /**
+     * evaluates to true if a string contains a property reference
+     */
+    public static final Predicate stringContainsPropertyReferencePredicate = new Predicate() {
+        Pattern match = Pattern.compile(PROPERTY_REF_REGEX);
+        @Override
+        public boolean evaluate(Object o) {
+            return ((String) o).contains("${") && match.matcher((String) o).matches();
+        }
+    };
     /**
      * Replace the embedded  properties of the form '${key.name}' in the input Strings with the value from the data
      * context
@@ -254,7 +268,7 @@ public class DataContextUtils {
         if(null==data){
             return input;
         }
-        final Pattern p = Pattern.compile("\\$\\{([^\\s.]+)\\.([^\\s}]+)\\}");
+        final Pattern p = Pattern.compile(PROPERTY_REF_REGEX);
         final Matcher m = p.matcher(input);
         final StringBuffer sb = new StringBuffer();
         while (m.find()) {

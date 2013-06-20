@@ -29,6 +29,8 @@ import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecArgList;
 import com.dtolabs.utils.Streams;
+import org.apache.commons.collections.Predicate;
+import org.apache.commons.collections.PredicateUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -134,19 +136,30 @@ public class ScriptExecUtil {
         }
         if (null != scriptinterpreter && interpreterargsquoted) {
             ExecArgList.Builder sub = builder.subList(true);
-            addScriptFileArgList(filepath, scriptargs, scriptargsarr, sub, false);
+            addScriptFileArgList(filepath, scriptargs, scriptargsarr, sub, needsQuoting);
             sub.parent();
         } else {
-            addScriptFileArgList(filepath, scriptargs, scriptargsarr, builder, false);
+            addScriptFileArgList(filepath, scriptargs, scriptargsarr, builder, needsQuoting);
         }
         return builder.build();
     }
 
+    static Predicate any(Predicate... preds) {
+        return PredicateUtils.anyPredicate(preds);
+    }
+
+    static final Predicate needsQuoting = any(
+            DataContextUtils.stringContainsPropertyReferencePredicate,
+            CLIUtils.stringContainsWhitespacePredicate,
+            CLIUtils.stringContainsQuotePredicate
+    );
+
+
     private static void addScriptFileArgList(String filepath, String scriptargs, String[] scriptargsarr,
-            ExecArgList.Builder builder, boolean quoted) {
-        builder.arg(filepath, quoted);
+            ExecArgList.Builder builder, Predicate quoted) {
+        builder.arg(filepath, false);
         if (null != scriptargs) {
-            builder.args(scriptargs.split(" "), quoted);
+            builder.args(OptsUtil.burst(scriptargs), quoted);
         } else if (null != scriptargsarr) {
             builder.args(scriptargsarr, quoted);
         }

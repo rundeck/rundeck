@@ -552,7 +552,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
         final String interpreter = "sudo -u bob";
         final String[] args = new String[]{"arg1 arg2"};
         final File testScriptFile = new File("Testfile");
-        String[] expected = {"sudo", "-u", "bob", "/test/file/path", "arg1 arg2"};
+        String[] expected = {"sudo", "-u", "bob", "/test/file/path", "'arg1 arg2'"};
         testExecute(expected, testScriptFile, interpreter, args, false, null);
     }
 
@@ -571,7 +571,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
         final String interpreter = "sudo -u bob";
         final File testScriptFile = new File("Testfile");
         String[] args = new String[]{"arg1", "arg2"};
-        testExecute(new String[]{"sudo", "-u", "bob", "/test/file/path arg1 arg2"}, testScriptFile, interpreter, args, true, null);
+        testExecute(new String[]{"sudo", "-u", "bob", "'/test/file/path arg1 arg2'"}, testScriptFile, interpreter, args, true, null);
     }
 
     /**
@@ -581,7 +581,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
         final String interpreter = "sudo -u bob";
         final File testScriptFile = new File("Testfile");
         String[] args = new String[]{"arg1 arg2"};
-        testExecute(new String[]{"sudo", "-u", "bob", "/test/file/path 'arg1 arg2'"}, testScriptFile,
+        testExecute(new String[]{"sudo", "-u", "bob", "'/test/file/path '\"'\"'arg1 arg2'\"'\"''"}, testScriptFile,
                 interpreter, args, true, null);
     }
 
@@ -594,7 +594,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             put("opt2", "other value");
         }};
         Map<String, Map<String, String>> dataContext = DataContextUtils.addContext("option", options, null);
-        testExecute(new String[]{"sudo", "-u", "bob", "/test/file/path 'arg1 arg2' somevalue"}, testScriptFile,
+        testExecute(new String[]{"sudo", "-u", "bob", "'/test/file/path '\"'\"'arg1 arg2'\"'\"' somevalue'"}, testScriptFile,
                 interpreter, args, true, dataContext);
     }
 
@@ -608,7 +608,8 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             put("opt2", "other value");
         }};
         Map<String, Map<String, String>> dataContext = DataContextUtils.addContext("option", options, null);
-        testExecute(new String[]{"sudo", "-u", "bob", "/test/file/path 'arg1 arg2' 'other value'"}, testScriptFile,
+        testExecute(new String[]{"sudo", "-u", "bob", "'/test/file/path '\"'\"'arg1 arg2'\"'\"' '\"'\"'other " +
+                "value'\"'\"''"}, testScriptFile,
                 interpreter, args, true, dataContext);
     }
 

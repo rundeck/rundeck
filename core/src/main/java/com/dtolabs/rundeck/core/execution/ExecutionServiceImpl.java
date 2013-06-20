@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.CoreException;
 import com.dtolabs.rundeck.core.cli.ExecTool;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
@@ -264,19 +265,10 @@ class ExecutionServiceImpl implements ExecutionService {
         return result;
     }
 
-    /**
-     * evaluates to true if a string contains a property reference
-     */
-    private static final Predicate stringContainsPropertyReferencePredicate =new Predicate() {
-        @Override
-        public boolean evaluate(Object o) {
-            return ((String) o).contains("${");
-        }
-    };
-
     public NodeExecutorResult executeCommand(final ExecutionContext context, final String[] command,
                                              final INodeEntry node) {
-        return executeCommand(context, ExecArgList.fromStrings(stringContainsPropertyReferencePredicate, command), node);
+        return executeCommand(context, ExecArgList.fromStrings(DataContextUtils
+                .stringContainsPropertyReferencePredicate, command), node);
     }
 
     public NodeExecutorResult executeCommand(final ExecutionContext context, final ExecArgList command,
