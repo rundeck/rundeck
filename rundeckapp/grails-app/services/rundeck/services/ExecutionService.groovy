@@ -643,7 +643,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
                     args = new String[0];
                 }
                 return ExecutionItemFactory.createScriptFileItem(cmd.getScriptInterpreter(),
-                        (boolean)cmd.interpreterArgsQuoted,
+                        !!cmd.interpreterArgsQuoted,
                         script, args, handler, !!cmd.keepgoingOnSuccess);
 
             } else if (null != cmd.getAdhocFilepath()) {
@@ -657,10 +657,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
                 }
                 if(filepath ==~ /^(?i:https?|file):.*$/) {
                     return ExecutionItemFactory.createScriptURLItem(cmd.getScriptInterpreter(),
-                            cmd.interpreterArgsQuoted, filepath, args, handler, !!cmd.keepgoingOnSuccess)
+                            !!cmd.interpreterArgsQuoted, filepath, args, handler, !!cmd.keepgoingOnSuccess)
                 }else {
                     return ExecutionItemFactory.createScriptFileItem(cmd.getScriptInterpreter(),
-                            cmd.interpreterArgsQuoted, new File(filepath), args, handler, !!cmd.keepgoingOnSuccess);
+                            !!cmd.interpreterArgsQuoted, new File(filepath), args, handler, !!cmd.keepgoingOnSuccess);
 
                 }
             }
