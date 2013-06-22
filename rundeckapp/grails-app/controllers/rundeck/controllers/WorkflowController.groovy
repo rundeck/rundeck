@@ -318,7 +318,7 @@ class WorkflowController {
      * error: any error message
      * undo: corresponding undo action map
      */
-    Map _applyWFEditAction (Workflow editwf, Map input){
+    protected Map _applyWFEditAction (Workflow editwf, Map input){
         def result = [:]
 
         def createItemFromParams={params->
@@ -648,7 +648,7 @@ class WorkflowController {
      * @param exec the WorkflowStep
      * @param type type if specified in params
      */
-     Map _validatePluginStep(WorkflowStep exec, String type = null) {
+     protected Map _validatePluginStep(WorkflowStep exec, String type = null) {
         if(exec instanceof PluginStep){
             PluginStep item = exec as PluginStep
             def framework = frameworkService.getFrameworkFromUserSession(session, request.subject)

@@ -1348,7 +1348,7 @@ class FrameworkController  {
         final INodeSet nodes = com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(ExecutionService.filtersAsNodeSet(query), pject.getNodeSet())
         return apiRenderNodeResult(nodes,framework,params.project)
     }
-    def apiRenderNodeResult={INodeSet nodes, Framework framework, String project->
+    protected String apiRenderNodeResult(INodeSet nodes, Framework framework, String project){
         if (params.format && !(params.format in ['xml', 'yaml']) || request.format && !(request.format in ['all','html', 'xml', 'yaml'])) {
             //expected another content type
             if (!new ApiController().requireVersion(ApiRequestFilters.V3)) {

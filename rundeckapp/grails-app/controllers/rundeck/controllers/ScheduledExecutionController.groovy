@@ -423,7 +423,7 @@ class ScheduledExecutionController  {
      * ${job.PROPERTY} and ${option.PROPERTY}.  available properties are
      * limited
      */
-    String expandUrl(Option opt, String url, ScheduledExecution scheduledExecution,selectedoptsmap=[:]) {
+    protected String expandUrl(Option opt, String url, ScheduledExecution scheduledExecution,selectedoptsmap=[:]) {
         def invalid = []
         String srcUrl = url.replaceAll(/(\$\{(job|option)\.([^\.}]+?(\.value)?)\})/,
             {Object[] group ->
@@ -1179,7 +1179,7 @@ class ScheduledExecutionController  {
     * Execute a transient ScheduledExecution and return execution data: [execution:Execution,id:Long]
      * if there is an error, return [error:'type',message:errormesg,...]
      */
-    Map _transientExecute(ScheduledExecution scheduledExecution, Map params, Framework framework, Subject subject){
+    private Map _transientExecute(ScheduledExecution scheduledExecution, Map params, Framework framework, Subject subject){
         def object
         def isauth = scheduledExecutionService.userAuthorizedForAdhoc(params.request,scheduledExecution,framework)
         if (!isauth){
@@ -1641,38 +1641,6 @@ class ScheduledExecutionController  {
 //            redirect(controller:"execution", action:"follow",id:result.executionId)
             return [success:true, message:"immediate execution scheduled", id:result.executionId]
         }
-    }
-
-    public Map lookupLastExecutions(List scheduledExecutions) {
-        def map = [ : ]
-        log.debug("looking up lastExecutions for ["+scheduledExecutions.size()+ "] objects")
-        scheduledExecutions.each {             
-            def last = lookupLastExecutions(it)
-            log.debug("lookupLastExecutions : found ["+last.size()+"] executions for id: "+it.id )
-            if (last.size() > 0) {
-                map[it.id] = last[0]
-            } 
-        }
-        return map
-    }
-
-    public lookupLastExecutions(ScheduledExecution se) {
-        def executions = []
-        def criteria = Execution.createCriteria()
-        def results = criteria.list {
-//            like('scheduledExecutionId',String.valueOf(se.id))
-            scheduledExecution{
-                eq('id',se.id)
-            }
-            maxResults(1)
-            order("dateCompleted", "desc")
-        }
-        log.debug("lookupLastExecutions: results count " + results.count())
-        results.each {
-            log.debug("Execution added to result: " + it)
-            executions << it
-        }
-        return executions
     }
 
     def fetchExecutionService() {

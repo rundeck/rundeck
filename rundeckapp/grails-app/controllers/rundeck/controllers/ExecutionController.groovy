@@ -714,7 +714,7 @@ class ExecutionController {
     /**
      * Render execution list into a map data structure
      */
-    public List<Map> exportExecutionData(List<Execution> execlist){
+    protected List<Map> exportExecutionData(List<Execution> execlist){
         def executions= execlist.collect { Execution e ->
             e = Execution.get(e.id)
             def emap =[
