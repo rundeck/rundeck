@@ -5,8 +5,15 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCom
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptURLCommandExecutionItem
 import grails.test.GrailsUnitTestCase
 import org.codehaus.groovy.grails.commons.ConfigurationHolder
-import rundeck.*
-import rundeck.services.*
+import rundeck.ScheduledExecution
+import rundeck.User
+import rundeck.Workflow
+import rundeck.Execution
+import rundeck.CommandExec
+import rundeck.Option
+import rundeck.services.ExecutionService
+import rundeck.services.ExecutionServiceException
+import rundeck.services.FrameworkService
 
 class ExecutionServiceTests extends GrailsUnitTestCase {
 

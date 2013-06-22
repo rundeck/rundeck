@@ -16,6 +16,8 @@ package rundeck.controllers
  */
 
 import grails.test.ControllerUnitTestCase
+import grails.test.mixin.Mock
+import grails.test.mixin.TestFor
 import org.codehaus.groovy.grails.commons.ConfigurationHolder
 import rundeck.services.NotificationService
 
@@ -38,11 +40,12 @@ import rundeck.services.ScheduledExecutionService
 * Created: Jun 11, 2008 5:12:47 PM
 * $Id$
 */
-class ScheduledExecutionControllerTests extends ControllerUnitTestCase {
-    void setUp(){
-        super.setUp()
-        
-        loadCodec(org.codehaus.groovy.grails.plugins.codecs.URLCodec)
+@TestFor(ScheduledExecutionController)
+@Mock([ScheduledExecution,Option,Workflow,CommandExec,Execution])
+class ScheduledExecutionControllerTests  {
+    public void setUp(){
+
+//        loadCodec(org.codehaus.groovy.grails.plugins.codecs.URLCodec)
     }
     void testEmpty(){
 
@@ -59,8 +62,6 @@ class ScheduledExecutionControllerTests extends ControllerUnitTestCase {
     }
 
     public void testExpandUrl() {
-        mockDomain(ScheduledExecution)
-        mockDomain(Option)
         ConfigurationHolder.metaClass.getConfig = {-> [:] }
         ScheduledExecution se = new ScheduledExecution(jobName: 'blue', groupPath:'some/where',description:'a job',project:'AProject',argString:'-a b -c d')
 
@@ -84,9 +85,6 @@ class ScheduledExecutionControllerTests extends ControllerUnitTestCase {
     }
 
     public void testSaveBasic() {
-        mockDomain(ScheduledExecution)
-        mockDomain(Workflow)
-        mockDomain(CommandExec)
         def sec = new ScheduledExecutionController()
         if (true) {//test basic copy action
 
@@ -135,9 +133,10 @@ class ScheduledExecutionControllerTests extends ControllerUnitTestCase {
 
             assertNotNull sec.flash.savedJob
             assertNotNull sec.flash.savedJobMessage
-            assertNull sec.modelAndView.viewName, sec.modelAndView.viewName
-            assertEquals("show",sec.redirectArgs.action)
-            assertEquals("scheduledExecution",sec.redirectArgs.controller)
+            assertNull view, view
+            assertEquals("/job/show/1", response.redirectedUrl)
+//            assertEquals("show",sec.redirectArgs.action)
+//            assertEquals("scheduledExecution",sec.redirectArgs.controller)
         }
     }
     public void testtransferSessionEditStateOpts() {
@@ -181,10 +180,6 @@ class ScheduledExecutionControllerTests extends ControllerUnitTestCase {
         assertEquals([], params['_sessionEditWFObject'])
     }
     public void testUpdateSessionOptsEmptyList() {
-        mockDomain(ScheduledExecution)
-        mockDomain(Workflow)
-        mockDomain(CommandExec)
-        mockDomain(Option)
         def sec = new ScheduledExecutionController()
         if (true) {//test basic copy action
 
@@ -193,7 +188,10 @@ class ScheduledExecutionControllerTests extends ControllerUnitTestCase {
                     options: [new Option(name: 'blah')],
                     workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
             )
-            se.save()
+            if(!se.validate()){
+                println(se.errors.allErrors.collect{it.toString()}.join(", "))
+            }
+            assertNotNull(se.save())
 //
             assertNotNull se.id
 
@@ -249,10 +247,6 @@ class ScheduledExecutionControllerTests extends ControllerUnitTestCase {
         }
     }
     public void testUpdateSessionWFEditEmptyList() {
-        mockDomain(ScheduledExecution)
-        mockDomain(Workflow)
-        mockDomain(CommandExec)
-        mockDomain(Option)
         def sec = new ScheduledExecutionController()
         if (true) {//test basic copy action
 
@@ -318,9 +312,6 @@ class ScheduledExecutionControllerTests extends ControllerUnitTestCase {
     }
 
     public void testSaveFail() {
-        mockDomain(ScheduledExecution)
-        mockDomain(Workflow)
-        mockDomain(CommandExec)
         def sec = new ScheduledExecutionController()
         if (true) {//test basic copy action
 
@@ -378,9 +369,6 @@ class ScheduledExecutionControllerTests extends ControllerUnitTestCase {
         }
     }
     public void testSaveUnauthorized() {
-        mockDomain(ScheduledExecution)
-        mockDomain(Workflow)
-        mockDomain(CommandExec)
         def sec = new ScheduledExecutionController()
         if (true) {//test basic copy action
 
@@ -440,9 +428,6 @@ class ScheduledExecutionControllerTests extends ControllerUnitTestCase {
     }
 
     public void testSaveAndExecBasic() {
-        mockDomain(ScheduledExecution)
-        mockDomain(Workflow)
-        mockDomain(CommandExec)
         def sec = new ScheduledExecutionController()
         if (true) {//test basic copy action
 
@@ -495,9 +480,6 @@ class ScheduledExecutionControllerTests extends ControllerUnitTestCase {
         }
     }
     public void testSaveAndExecFailed() {
-        mockDomain(ScheduledExecution)
-        mockDomain(Workflow)
-        mockDomain(CommandExec)
         def sec = new ScheduledExecutionController()
         if (true) {//test basic copy action
 
@@ -556,10 +538,6 @@ class ScheduledExecutionControllerTests extends ControllerUnitTestCase {
     }
 
     public void testRunAdhocBasic() {
-        mockDomain(ScheduledExecution)
-        mockDomain(Workflow)
-        mockDomain(CommandExec)
-        mockDomain(Execution)
         def sec = new ScheduledExecutionController()
         if (true) {//test basic copy action
 
@@ -632,10 +610,6 @@ class ScheduledExecutionControllerTests extends ControllerUnitTestCase {
     }
 
     public void testRunAdhocFailed() {
-        mockDomain(ScheduledExecution)
-        mockDomain(Workflow)
-        mockDomain(CommandExec)
-        mockDomain(Execution)
         def sec = new ScheduledExecutionController()
         if (true) {//test basic copy action
 
@@ -707,10 +681,6 @@ class ScheduledExecutionControllerTests extends ControllerUnitTestCase {
 
 
     public void testApiRunJob() {
-        mockDomain(ScheduledExecution)
-        mockDomain(Workflow)
-        mockDomain(CommandExec)
-        mockDomain(Execution)
         def sec = new ScheduledExecutionController()
 
         def se = new ScheduledExecution(
@@ -773,10 +743,6 @@ class ScheduledExecutionControllerTests extends ControllerUnitTestCase {
     }
 
     private void assertRunJobAsUser(Map job, String expectJobUser, String userName) {
-        mockDomain(ScheduledExecution)
-        mockDomain(Workflow)
-        mockDomain(CommandExec)
-        mockDomain(Execution)
         def sec = new ScheduledExecutionController()
         def se = new ScheduledExecution(job)
         se.workflow= new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
@@ -842,10 +808,6 @@ class ScheduledExecutionControllerTests extends ControllerUnitTestCase {
     }
 
     public void testApiRunCommandNoProject() {
-        mockDomain(ScheduledExecution)
-        mockDomain(Workflow)
-        mockDomain(CommandExec)
-        mockDomain(Execution)
         def sec = new ScheduledExecutionController()
 
         //try to do api job run
@@ -922,10 +884,6 @@ class ScheduledExecutionControllerTests extends ControllerUnitTestCase {
     }
 
     public void testApiRunCommand() {
-        mockDomain(ScheduledExecution)
-        mockDomain(Workflow)
-        mockDomain(CommandExec)
-        mockDomain(Execution)
         def sec = new ScheduledExecutionController()
 
         //try to do api job run
@@ -1002,10 +960,6 @@ class ScheduledExecutionControllerTests extends ControllerUnitTestCase {
     }
 
     public void testApiRunCommandAsUser() {
-        mockDomain(ScheduledExecution)
-        mockDomain(Workflow)
-        mockDomain(CommandExec)
-        mockDomain(Execution)
         def sec = new ScheduledExecutionController()
 
         //try to do api job run
