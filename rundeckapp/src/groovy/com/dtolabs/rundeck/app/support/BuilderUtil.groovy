@@ -88,8 +88,12 @@ class BuilderUtil{
                     attrmap[x]=map.remove(s)
                 }
             }
-            builder."${key}"(attrmap){
-                this.mapToDom(map,delegate)
+            if (map.size() == 1 && null != map['<text>']) {
+                builder."${key}"(attrmap, map['<text>'])
+            } else {
+                builder."${key}"(attrmap) {
+                    this.mapToDom(map, delegate)
+                }
             }
         }else if(obj.metaClass.respondsTo(obj,'toMap')){
             def map = obj.toMap()
