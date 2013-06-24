@@ -243,6 +243,36 @@ Example:
     - scripturl: http://example.com/path/to/script
       args: arguments to script
 
+### Script Interpreter
+
+For `script`, `scriptfile` and `scripturl`, you can optionally declare an "interpreter" string to use to execute the script, and whether the arguments are quoted or not.
+
+`scriptInterpreter`
+
+:     Optional string to declare an interpreter line for the script.  The script and args will be passed to this command, rather than executed directly.
+
+Example:
+
+     - script: |-
+        #!/bin/bash
+
+        echo this is a script
+        echo this is option value: @option.test@
+      args: arguments passed to the script
+      scriptInterpreter: interpreter -flag
+
+This script will then be executed as:
+
+    interpreter -flag script.sh arguments ...
+
+`interpreterArgsQuoted`
+
+:     Optional boolean, indicating whether the script and arguments should be quoted when passed to the interpreter.
+
+If `interpreterArgsQuoted` is `true`, then the script will then be executed as:
+
+    interpreter -flag 'script.sh arguments ...'
+
 ### Job Reference Entry
 
 This [Command](#command) executes another Rundeck Job.
