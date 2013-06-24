@@ -137,7 +137,7 @@ public class CommandExec extends WorkflowStep  {
         }
         if(data.scriptInterpreter != null && !ce.adhocRemoteString){
             ce.scriptInterpreter=data.scriptInterpreter
-            ce.interpreterArgsQuoted=!!data.interpreterArgsQuoted
+            ce.interpreterArgsQuoted = !!data.interpreterArgsQuoted
         }
         if(data.args != null && !ce.adhocRemoteString){
             ce.argString=data.args.toString()

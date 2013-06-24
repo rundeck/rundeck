@@ -497,6 +497,89 @@ class JobsXMLCodecTests extends GroovyTestCase {
         assertEquals 'false', jobs[0].workflow.commands[7].jobGroup
         assertEquals '123', jobs[0].workflow.commands[7].argString
     }
+    public void testDecodeBasicScriptInterpreter(){
+
+        def xml = """<joblist>
+  <job>
+    <id>8</id>
+    <name>punch2</name>
+    <description>dig it potato</description>
+    <loglevel>WARN</loglevel>
+    <context>
+      <project>zig</project>
+      <options>
+        <option name='clip' value='true' />
+      </options>
+    </context>
+    <sequence>
+        <command>
+            <script>true</script>
+            <scriptargs>true</scriptargs>
+        </command>
+        <command>
+            <script>true</script>
+            <scriptinterpreter>bash -c</scriptinterpreter>
+            <scriptargs>true</scriptargs>
+        </command>
+        <command>
+            <script>false</script>
+            <scriptinterpreter argsquoted="true">bash -c</scriptinterpreter>
+            <scriptargs>false</scriptargs>
+        </command>
+        <command>
+            <script>0</script>
+            <scriptinterpreter argsquoted="false">bash -c</scriptinterpreter>
+            <scriptargs>0</scriptargs>
+        </command>
+        <command>
+            <scriptfile>false</scriptfile>
+            <scriptargs>false</scriptargs>
+            <scriptinterpreter argsquoted="false">bash -c</scriptinterpreter>
+            <errorhandler  keepgoingOnSuccess='false'>
+                <scriptfile>false</scriptfile>
+                <scriptargs>0</scriptargs>
+            </errorhandler>
+        </command>
+    </sequence>
+    <dispatch>
+      <threadcount>2</threadcount>
+      <keepgoing>true</keepgoing>
+    </dispatch>
+  </job>
+</joblist>
+"""
+        def jobs = JobsXMLCodec.decode(xml)
+        assertNotNull jobs
+        assertEquals  5, jobs[0].workflow.commands.size()
+
+        assertEquals 'true', jobs[0].workflow.commands[0].adhocLocalString
+        assertEquals 'true', jobs[0].workflow.commands[0].argString
+        assertEquals null, jobs[0].workflow.commands[0].scriptInterpreter
+        assertEquals false, !!jobs[0].workflow.commands[0].interpreterArgsQuoted
+
+        assertEquals 'true', jobs[0].workflow.commands[1].adhocLocalString
+        assertEquals 'true', jobs[0].workflow.commands[1].argString
+        assertEquals 'bash -c', jobs[0].workflow.commands[1].scriptInterpreter
+        assertEquals false, !!jobs[0].workflow.commands[1].interpreterArgsQuoted
+
+        assertEquals 'false', jobs[0].workflow.commands[2].adhocLocalString
+        assertEquals 'false', jobs[0].workflow.commands[2].argString
+        assertEquals 'bash -c', jobs[0].workflow.commands[2].scriptInterpreter
+        assertEquals true, !!jobs[0].workflow.commands[2].interpreterArgsQuoted
+
+        assertEquals '0', jobs[0].workflow.commands[3].adhocLocalString
+        assertEquals '0', jobs[0].workflow.commands[3].argString
+        assertEquals 'bash -c', jobs[0].workflow.commands[3].scriptInterpreter
+        assertEquals false, !!jobs[0].workflow.commands[3].interpreterArgsQuoted
+
+        assertEquals 'false', jobs[0].workflow.commands[4].adhocFilepath
+        assertEquals 'false', jobs[0].workflow.commands[4].argString
+        assertEquals 'false', jobs[0].workflow.commands[4].errorHandler.adhocFilepath
+        assertEquals 'bash -c', jobs[0].workflow.commands[4].scriptInterpreter
+        assertEquals false, !!jobs[0].workflow.commands[4].interpreterArgsQuoted
+        assertEquals '0', jobs[0].workflow.commands[4].errorHandler.argString
+
+    }
     /**
      * Empty options declaration
      */
@@ -2931,6 +3014,61 @@ class JobsXMLCodecTests extends GroovyTestCase {
 
             assertEquals "incorrect dispatch threadcount",'1',doc.job[0].dispatch[0].threadcount[0].text()
             assertEquals "incorrect dispatch keepgoing",'true',doc.job[0].dispatch[0].keepgoing[0].text()
+
+
+    }
+    void testEncodeScriptInterpreter(){
+         def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName:'test job 1',
+                        description:'test descrip',
+                        loglevel: 'INFO',
+                        project:'test1',
+                        workflow: new Workflow(keepgoing: true, commands: [
+                                new CommandExec([adhocLocalString: 'test buddy', argString: '-a b']),
+                                new CommandExec([adhocLocalString: 'test buddy', argString: '-a b',scriptInterpreter:'bash -c']),
+                                new CommandExec([adhocLocalString: 'test buddy', argString: '-a b',scriptInterpreter:'bash -c', interpreterArgsQuoted:true]),
+                        ]),
+                        options:[new Option([name:'delay',defaultValue:'12']), new Option([name:'monkey',defaultValue:'cheese']), new Option([name:'particle',defaultValue:'true'])] as TreeSet,
+                        nodeThreadcount:1,
+                        nodeKeepgoing:true,
+                        doNodedispatch:true
+                )
+        ]
+        def  xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+        println(xmlstr)
+
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "wrong root node name",'joblist',doc.name()
+        assertEquals "wrong number of jobs",1,doc.job.size()
+        assertEquals "wrong name", 3, doc.job[0].sequence[0].command.size()
+
+        assertEquals "wrong script", 'test buddy', doc.job[0].sequence[0].command[0].script.text()
+        assertEquals "wrong script", '-a b', doc.job[0].sequence[0].command[0].scriptargs.text()
+        assertEquals "wrong scriptInterpreter", 0, doc.job[0].sequence[0].command[0].scriptinterpreter.size()
+
+        assertEquals "wrong script", 'test buddy', doc.job[0].sequence[0].command[1].script.text()
+        assertEquals "wrong script", '-a b', doc.job[0].sequence[0].command[1].scriptargs.text()
+        assertEquals "wrong scriptinterpreter", 1, doc.job[0].sequence[0].command[1].scriptinterpreter.size()
+        assertEquals "wrong scriptinterpreter", 'bash -c', doc.job[0].sequence[0].command[1].scriptinterpreter[0].text()
+        assertEquals "wrong argsquoted", 0, doc.job[0].sequence[0].command[1].interpreterArgsQuoted.size()
+        assertEquals "wrong argsquoted", 0, doc.job[0].sequence[0].command[1].scriptinterpreter[0].'@argsquoted'.size()
+
+
+
+        assertEquals "wrong script", 'test buddy', doc.job[0].sequence[0].command[2].script.text()
+        assertEquals "wrong script", '-a b', doc.job[0].sequence[0].command[2].scriptargs.text()
+        assertEquals "wrong scriptinterpreter", 1, doc.job[0].sequence[0].command[2].scriptinterpreter.size()
+        assertEquals "wrong scriptinterpreter", 'bash -c', doc.job[0].sequence[0].command[2].scriptinterpreter[0].text()
+        assertEquals "wrong argsquoted", 0, doc.job[0].sequence[0].command[2].interpreterArgsQuoted.size()
+        assertEquals "wrong argsquoted", 1, doc.job[0].sequence[0].command[2].scriptinterpreter[0].'@argsquoted'.size()
+        assertEquals "wrong argsquoted", 'true', doc.job[0].sequence[0].command[2].scriptinterpreter[0].'@argsquoted'.text()
+
+
 
 
     }
