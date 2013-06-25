@@ -284,14 +284,24 @@ function _wficancelnew() {
     $('wfnewbutton').show();
     _showWFItemControls();
 }
+function _findParentAttr(e,attr){
+    var value = e.getAttribute(attr);
+    while (e && !value && !e.hasAttribute(attr)) {
+        value = e.parentNode.getAttribute(attr);
+        e = e.parentNode;
+    }
+    return value;
+}
 //events handlers for add/cancel new step
 function _evtNewStepChooseType(evt) {
     var e = evt.element();
-    _wfiaddnew(e.getAttribute('data-step-type'),false);
+    var type = _findParentAttr(e,'data-step-type');
+    _wfiaddnew(type,false);
 }
 function _evtNewNodeStepChooseType(evt) {
     var e = evt.element();
-    _wfiaddnew(e.getAttribute('data-node-step-type'),true);
+    var type = _findParentAttr(e, 'data-node-step-type');
+    _wfiaddnew(type,true);
 }
 function _evtNewStepCancel(evt){
     $('wfnewtypes').hide();
@@ -326,11 +336,13 @@ function _hideWFItemControlsAddEH(num){
 
 function _evtNewEHChooseType(evt){
     var e = evt.element();
-    _wfiaddNewErrorHandler(e, e.getAttribute('data-step-type'), null, false);
+    var type = _findParentAttr(e, 'data-step-type');
+    _wfiaddNewErrorHandler(e, type, null, false);
 }
 function _evtNewEHNodeStepType(evt){
     var e = evt.element();
-    _wfiaddNewErrorHandler(e, e.getAttribute('data-node-step-type'),null, true);
+    var type = _findParentAttr(e, 'data-node-step-type');
+    _wfiaddNewErrorHandler(e, type,null, true);
 }
 function _hideAddNewEHLinks() {
     $$('span.wfitem_add_errorhandler').each(Element.hide);
