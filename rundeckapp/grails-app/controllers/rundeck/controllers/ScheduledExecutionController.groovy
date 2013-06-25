@@ -2075,7 +2075,16 @@ class ScheduledExecutionController  {
 
         //remote any input parameters that should not be used when creating the execution
         ['options','scheduled'].each{params.remove(it)}
-        params.workflow=new Workflow(commands:[new CommandExec(adhocLocalString:script, adhocExecution:true, argString:params.argString)])
+        def scriptInterpreter = null
+        def interpreterArgsQuoted = false
+        if (request.api_version >= ApiRequestFilters.V8) {
+            scriptInterpreter = params.scriptInterpreter ?: null
+            interpreterArgsQuoted = Boolean.parseBoolean(params.interpreterArgsQuoted?.toString())
+        }
+        params.workflow = new Workflow(commands: [new CommandExec(adhocLocalString: script, adhocExecution: true,
+                argString: params.argString, scriptInterpreter: scriptInterpreter,
+                interpreterArgsQuoted: interpreterArgsQuoted)])
+
         params.description=params.description?:""
 
         //convert api parameters to node filter parameters
@@ -2139,7 +2148,16 @@ class ScheduledExecutionController  {
 
         //remote any input parameters that should not be used when creating the execution
         ['options', 'scheduled'].each {params.remove(it)}
-        params.workflow = new Workflow(commands: [new CommandExec(adhocFilepath: params.scriptURL, adhocExecution: true, argString: params.argString)])
+        def scriptInterpreter = null
+        def interpreterArgsQuoted = false
+        if (request.api_version >= ApiRequestFilters.V8) {
+            scriptInterpreter = params.scriptInterpreter ?: null
+            interpreterArgsQuoted = Boolean.parseBoolean(params.interpreterArgsQuoted?.toString())
+        }
+        params.workflow = new Workflow(commands: [new CommandExec(adhocFilepath: params.scriptURL, adhocExecution: true,
+                argString: params.argString, scriptInterpreter: scriptInterpreter,
+                interpreterArgsQuoted: interpreterArgsQuoted)])
+
         params.description = params.description ?: ""
 
         //convert api parameters to node filter parameters
