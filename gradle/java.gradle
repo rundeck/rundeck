@@ -21,6 +21,12 @@ repositories {
 	mavenLocal()
 	maven {
 		url mavenCentralUrl
+		if (project.hasProperty('mavenUser') && project.hasProperty('mavenPassword')) {
+			credentials {
+				username mavenUser
+				password mavenPassword
+			}
+		}
 	}
 }
 
