@@ -173,6 +173,28 @@ This is similar to calling the script URL with <code>dispatch</code>:
 
 The URL can contain [Context Variables](#context-variables) that will be expanded at runtime.
 
+### Advanced Script options
+
+For [Script steps](#script-step), [Script file steps](#script-file-step), and [Script URL steps](#script-url-step), you can specify an optional *Interpreter* string to declare how the script should be executed.
+
+Click on the "Advanced" link to reveal the input.
+
+![Script interpreter input](../figures/job_workflow_script_interpreter.png)
+
+Enter a command that will be used as the *interpreter* to run the script.  For example, you can execute the script using `sudo` by entering:
+
+    sudo -u username
+
+This will then allow your script to make use of [Sudo authentication](plugins.html#configuring-secondary-sudo-password-authentication).
+
+The effecitve commandline for your script will become:
+
+    sudo -u username [scriptfile] arguments ...
+
+If necessary, you can check the "Quote arguments to interpreter?" checkbox, which will then quote both the scriptfile and arguments before passing to the interpreter command:
+
+    interpreter "[scriptfile] arguments ..."
+
 ### Job reference step
 
 To call another saved Job, create a Job Reference step. Enter the name
