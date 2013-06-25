@@ -68,12 +68,6 @@
     <g:set var="isAdhocLocal" value="${'script'==newitemtype || item?.adhocLocalString}"/>
     <g:set var="isAdhocFileExecution" value="${'scriptfile'==newitemtype || item?.adhocFilepath}"/>
     <g:hiddenField name="adhocExecution" value="true"/>
-    <g:if test="${!isAdhocRemote}">
-        <div class="info note"><g:message code="Workflow.Step.scriptInterpreter.description"/>:</div>
-        <input type='text' name="scriptInterpreter" value="${item?.scriptInterpreter?.encodeAsHTML()}" size="80"
-               id="scriptInterpreterField" autofocus/>
-        <g:checkBox name="interpreterArgsQuoted" checked="${item?.interpreterArgsQuoted}" id="interpreterArgsQuotedField" />
-    </g:if>
     <g:if test="${isAdhocLocal}">
         <div id="localScriptDiv" class="${hasErrors(bean:item,field:'adhocExecution','fieldError')}">
             <div class="info note"><g:message code="Workflow.Step.adhocLocalString.description" />:</div>
@@ -97,6 +91,60 @@
         <div class="info note"><g:message code="Workflow.Step.argString.description" />:</div>
         <input type='text' name="argString" value="${item?.argString?.encodeAsHTML()}" size="80" id="argStringField"/>
     </div>
+    </g:if>
+    <g:if test="${!isAdhocRemote}">
+        <g:expander key="scriptInterpreter${rkey}" open="${item?.scriptInterpreter?'true':'false'}">Advanced </g:expander>
+        <div id="scriptInterpreter${rkey}" style="${wdgt.styleVisible(if: item?.scriptInterpreter)}" class="presentation">
+            <div class="info note"><g:message code="Workflow.Step.scriptInterpreter.description"/>:</div>
+            <input type='text' name="scriptInterpreter"
+                   placeholder="${g.message(code: 'Workflow.Step.scriptInterpreter.prompt')}"
+                   value="${item?.scriptInterpreter?.encodeAsHTML()}" size="80"
+                   id="scriptInterpreterField" autofocus/>
+            <div>
+                <label>
+                    <g:checkBox name="interpreterArgsQuoted" checked="${item?.interpreterArgsQuoted}"
+                                id="interpreterArgsQuotedField" value="true"/>
+                    <g:message code="Workflow.Step.interpreterArgsQuoted.label"/>
+                </label>
+                <g:javascript>
+                    <wdgt:eventHandler for="scriptInterpreterField" state="unempty" inline="true" jsonly="true"
+                                       action="keyup">
+                        <wdgt:action target="interpreterArgsQuotedHelp${rkey}_preview" visible="true" test="true"/>
+                        <wdgt:action target="interpreterPreview" copy="tohtml" test="true"/>
+                    </wdgt:eventHandler>
+                    <wdgt:eventHandler for="argStringField" state="unempty" inline="true" jsonly="true"
+                                       action="keyup">
+                        <wdgt:action target="interpreterArgsQuotedHelp${rkey}_preview" visible="true" test="true"/>
+                        <wdgt:action target="interpreterArgsPreview" copy="tohtml" test="true"/>
+                    </wdgt:eventHandler>
+                    <wdgt:eventHandler for="interpreterArgsQuotedField" state="checked" inline="true" jsonly="true">
+                        <wdgt:action targetSelector="span.interpreterquotepreview" visible="true"/>
+                    </wdgt:eventHandler>
+
+                </g:javascript>
+                <span class="action obs_tooltip"
+                      id="interpreterArgsQuotedHelp${rkey}"><g:img file="icon-small-help.png" width="16px"
+                                                                   height="16px"/> Explain</span>
+
+                <div class="popout tooltipcontent" id="interpreterArgsQuotedHelp${rkey}_tooltip"
+                     style="display:none; background:white; position:absolute; max-width: 500px; width:500px;">
+                    <g:message code="Workflow.Step.interpreterArgsQuoted.description"/>
+                </div>
+            </div>
+        </div>
+        <div>
+        <span class="prompt">Execution Preview:</span>
+
+        <div id='interpreterArgsQuotedHelp${rkey}_preview' class="presentation">
+            <code>$
+                <span id='interpreterPreview'>${item?.scriptInterpreter?.encodeAsHTML()}</span>
+                <em>scriptfile</em>
+                <span class="interpreterquotepreview" style="${wdgt.styleVisible(if: item?.interpreterArgsQuoted)}">&quot;</span
+                    ><span id='interpreterArgsPreview'>${item?.argString?.encodeAsHTML()}</span
+                    ><span class="interpreterquotepreview" style="${wdgt.styleVisible(if: item?.interpreterArgsQuoted)}">&quot;</span>
+            </code>
+        </div>
+        </div>
     </g:if>
 </g:elseif>
 <g:elseif test="${( newitemtype || item && item.instanceOf(PluginStep) ) && newitemDescription}">
