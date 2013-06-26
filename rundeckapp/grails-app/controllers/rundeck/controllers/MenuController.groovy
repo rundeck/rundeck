@@ -115,12 +115,17 @@ class MenuController {
         if(grailsApplication.config.rundeck.gui.startpage){
             startpage=grailsApplication.config.rundeck.gui.startpage
         }
+        if(params.page){
+            startpage=params.page
+        }
         switch (startpage){
             case 'run':
+            case 'nodes':
                 return redirect(controller:'framework',action:'nodes')
             case 'jobs':
                 return redirect(controller:'menu',action:'jobs')
             case 'history':
+            case 'events':
                 return redirect(controller:'reports',action:'index')
         }
         return redirect(controller:'framework',action:'nodes')

@@ -33,12 +33,7 @@
     <g:javascript library="prototype/effects"/>
     <g:javascript library="resourceModelConfig"/>
     <g:javascript>
-    function _menuDidSelectProject(value){
-        //successfully set project value
-        if(value){
-            document.location="${createLink(action: 'index', controller: 'menu')}";
-        }
-    }
+
     var configControl;
     function init(){
         configControl=new ResourceModelConfigControl('${prefixKey.encodeAsJavaScript()}');

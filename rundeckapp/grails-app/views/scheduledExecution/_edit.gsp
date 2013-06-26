@@ -106,22 +106,7 @@ var applinks={
             $('jobChooseSpinner').hide();
         }
 
-        function _menuDidCreateProject(value){
-            var selected=$F('schedEditFrameworkProject');
-            new Ajax.Updater('schedEditFrameworkProjectHolder','${createLink(controller:'framework',action:'projectSelect')}',{
-                parameters:{callback:'_editFormSelectProject',key:'project',noselection:'-Choose a Project-',nocreate:'true',selected:selected},
-                onComplete:function(transport){
-                    if (transport.request.success()) {
-                        if($('schedEditFrameworkProjectHolder').down('select')){
-                            $('schedEditFrameworkProjectHolder').down('select').setAttribute('id','schedEditFrameworkProject');
-                        }
-                    }
-                }
-            });
-        }
-        function _menuDidSelectProject(value){
-            return true;
-        }
+
 
         var wascancelled=false;
         function jobEditCancelled(){

@@ -23,8 +23,8 @@
     <script language="javascript">
         function oopsEmbeddedLogin() {
         <%
-            if (null != controllerName && null != actionName) { %>
-                document.location = '${createLink(controller:controllerName,action:actionName,params:params)}';
+            if (g.pageProperty(name: 'meta.tabpage')) { %>
+                document.location = '${createLink(controller:"menu",params:params+[page:g.pageProperty(name: 'meta.tabpage')])}';
             <%
             } else { %>
                 document.location = '${createLink(controller:"menu")}';
