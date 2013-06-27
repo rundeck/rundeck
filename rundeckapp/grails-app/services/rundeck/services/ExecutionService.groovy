@@ -1493,12 +1493,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
     }
     def updateScheduledExecState(ScheduledExecution scheduledExecution, Execution execution){
         def schedId=scheduledExecution.id
+        def eId=execution.id
         def retry = true
 
         while (retry) {
             try {
                 ScheduledExecution.withNewSession {
-                    scheduledExecution = ScheduledExecution.lock(schedId)
+                    scheduledExecution = ScheduledExecution.get(schedId)
                     scheduledExecution.refresh()
                     execution = execution.merge()
                     if (scheduledExecution.scheduled) {
@@ -1531,10 +1532,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
                     retry = false
                 }
             } catch (org.springframework.dao.OptimisticLockingFailureException e) {
-                log.error("Caught OptimisticLockingFailure, will retry updateScheduledExecState")
+                log.error("Caught OptimisticLockingFailure, will retry updateScheduledExecState for ${eId}")
                 Thread.sleep(200)
             } catch (StaleObjectStateException e) {
-                log.error("Caught StaleObjectState, will retry updateScheduledExecState")
+                log.error("Caught StaleObjectState, will retry updateScheduledExecState for ${eId}")
                 Thread.sleep(200)
             }
         }
