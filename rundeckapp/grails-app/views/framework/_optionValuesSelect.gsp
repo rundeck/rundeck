@@ -165,6 +165,31 @@
             </g:javascript>
         </g:if>
     </g:if>
+    <g:if test="${!optionSelect.enforced && !optionSelect.multivalued && !optionSelect.secureInput && optionSelect.defaultValue}">
+        <span class="action button"
+              id="${optName.encodeAsJavaScript()}_setdefault"
+              title="Click to use default value: ${optionSelect.defaultValue.encodeAsHTML()}"
+            style="${wdgt.styleVisible(if: selectedoptsmap && selectedoptsmap[optName]!=optionSelect.defaultValue)}"
+        >
+            default: <g:truncate max="50">${optionSelect.defaultValue.encodeAsHTML()}</g:truncate>
+        </span>
+        <g:javascript>
+            fireWhenReady('${optName.encodeAsJavaScript()}_setdefault',
+            function(){ $$('${'#' + optName.encodeAsJavaScript() + '_setdefault'}').each(function(e){
+                Event.observe(e,'click',function(evt){
+                    $('${fieldwatchid}').setValue('${optionSelect.defaultValue.encodeAsJavaScript()}');
+                });
+            }); }
+            );
+            <wdgt:eventHandlerJS
+                    for="${fieldwatchid}"
+                    notequals="${optionSelect.defaultValue.encodeAsJavaScript()}"
+                    visible="true"
+                    target="${optName.encodeAsHTML() + '_setdefault'}"
+                    frequency="1"
+                    inline='true'/>
+        </g:javascript>
+    </g:if>
 
     <g:javascript>
         fireWhenReady('_commandOptions', function(){
