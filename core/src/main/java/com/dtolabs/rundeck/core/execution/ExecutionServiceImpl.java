@@ -281,7 +281,8 @@ class ExecutionServiceImpl implements ExecutionService {
         //create node context for node and substitute data references in command
         final ExecutionContextImpl nodeContext = new ExecutionContextImpl.Builder(context).nodeContextData(node).build();
 
-        final String[] nodeCommand = DataContextUtils.replaceDataReferences(command, nodeContext.getDataContext());
+        final String[] nodeCommand = DataContextUtils.replaceDataReferences(command, nodeContext.getDataContext(),
+                null, false, true);
         Converter<String,String> quote = CLIUtils.argumentQuoteForOperatingSystem(node.getOsFamily());
         //quote args that have substituted context input, or have whitespace
         //allow other args to be used literally
