@@ -196,10 +196,10 @@
             </div>
         </div>
         <div>
-            <span class="prompt">Requirement</span>
+            <span class="prompt"><g:message code="Option.required.label" /></span>
             <div class="presentation">
                 <div>
-                    <span class="info note">Require this option to be specified when running the Job</span>
+                    <span class="info note"><g:message code="Option.required.description" /></span>
                 </div>
                 <div>
                     <label><g:radio name="required" value="false" checked="${!option || !option.required}"/> No</label>
