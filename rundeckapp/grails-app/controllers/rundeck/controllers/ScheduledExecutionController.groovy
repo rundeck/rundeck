@@ -1013,7 +1013,11 @@ class ScheduledExecutionController  {
 
             def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions(framework)
             def stepTypes = frameworkService.getStepPluginDescriptions(framework)
-            return render(view:'create',model:[scheduledExecution:scheduledExecution,params:params, projects: frameworkService.projects(framework), nodeStepDescriptions: nodeStepTypes, stepDescriptions: stepTypes])
+            return render(view:'create',model:[scheduledExecution:scheduledExecution,params:params,
+                    projects: frameworkService.projects(framework), nodeStepDescriptions: nodeStepTypes,
+                    stepDescriptions: stepTypes,
+                    notificationPlugins: notificationService.listNotificationPlugins(),
+                    notificationValidation: params['notificationValidation']])
         }
     }
     /**

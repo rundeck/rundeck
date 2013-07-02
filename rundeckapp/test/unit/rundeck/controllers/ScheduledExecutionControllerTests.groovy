@@ -529,6 +529,9 @@ class ScheduledExecutionControllerTests extends ControllerUnitTestCase {
             }
             seServiceControl.demand.logJobChange {changeinfo, properties ->}
             sec.scheduledExecutionService = seServiceControl.createMock()
+            def nServiceControl = mockFor(NotificationService, true)
+            nServiceControl.demand.listNotificationPlugins { [] }
+            sec.notificationService = nServiceControl.createMock()
 
 
             sec.metaClass.message = {params -> params?.code ?: 'messageCodeMissing'}
