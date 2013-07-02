@@ -41,7 +41,7 @@
         <g:else>
             <g:textField name="${realFieldName}"
                 class="optionvaluesfield"
-                value="${selectedvalue?selectedvalue:selectedoptsmap && selectedoptsmap[optName]?selectedoptsmap[optName]:optionSelect.defaultValue?optionSelect.defaultValue:''}"
+                value="${selectedvalue?selectedvalue:selectedoptsmap && null!=selectedoptsmap[optName]?selectedoptsmap[optName]:optionSelect.defaultValue?optionSelect.defaultValue:''}"
                 maxlength="256" size="40"
                 id="${fieldwatchid}"/>
         </g:else>

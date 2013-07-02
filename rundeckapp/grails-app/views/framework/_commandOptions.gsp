@@ -35,7 +35,7 @@ used by _editOptions.gsp template
                 </g:if>
                 </td>
                 %{--determine if option has all dependencies met--}%
-                <g:set var="optionDepsMet" value="${!optiondependencies[optName] || selectedoptsmap && optiondependencies[optName].every {selectedoptsmap[it]}}" />
+                <g:set var="optionDepsMet" value="${!optiondependencies[optName] || selectedoptsmap && optiondependencies[optName].every {null!=selectedoptsmap[it]}}" />
                 <td>
                     <g:if test="${optionSelect.realValuesUrl !=null}">
                         <g:set var="holder" value="${rkey+'_'+optName+'_hold'}"/>
@@ -92,7 +92,7 @@ used by _editOptions.gsp template
             <g:set var="holder" value="${rkey + '_' + optName + '_hold'}"/>
             <g:set var="fieldhiddenid" value="${rkey + '_' + optName + '_h'}"/>
             <g:set var="optionDepsMet"
-                   value="${!optiondependencies[optName] || selectedoptsmap && optiondependencies[optName].every {selectedoptsmap[it]}}"/>
+                   value="${!optiondependencies[optName] || selectedoptsmap && optiondependencies[optName].every {null!=selectedoptsmap[it]}}"/>
             <g:if test="${optiondependencies[optName]}">
                 remoteOptions.addOptionDependencies("${optName.encodeAsJavaScript()}", ${optiondependencies[optName] as JSON});
             </g:if>
