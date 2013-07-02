@@ -1,12 +1,16 @@
 package com.dtolabs.rundeck.core.dispatcher;
 
+import org.apache.commons.collections.Predicate;
+
 import java.io.FilterReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.Arrays;
 import java.util.Map;
 
 /**
- * $INTERFACE is ... User: greg Date: 7/1/13 Time: 3:37 PM
+ * Reader that filters text to replace delimited tokens with values, the default delimiters are '@', and the default
+ * allowed token characters are alphanumeric plus punctuation characters: "+-._"
  */
 public class ReplaceTokenReader extends FilterReader {
     public static final char DEFAULT_TOKEN_START = '@';
@@ -15,6 +19,7 @@ public class ReplaceTokenReader extends FilterReader {
     boolean blankIfMissing;
     char tokenStart = DEFAULT_TOKEN_START;
     char tokenEnd = DEFAULT_TOKEN_END;
+    private Predicate tokenCharPredicate;
 
     public ReplaceTokenReader(Reader reader, Map<String, String> tokens, boolean blankIfMissing) {
         this(reader, tokens, blankIfMissing, DEFAULT_TOKEN_START, DEFAULT_TOKEN_END);
@@ -31,7 +36,21 @@ public class ReplaceTokenReader extends FilterReader {
         readBuffer = new StringBuilder();
         replaceBufferIndex = -1;
         readBufferIndex = -1;
+        tokenCharPredicate = DEFAULT_ALLOWED_PREDICATE;
     }
+
+    private static final char[] ALLOWED_CHARS = ".+-_".toCharArray();
+    static {
+        Arrays.sort(ALLOWED_CHARS);
+    }
+    public static final Predicate DEFAULT_ALLOWED_PREDICATE = new Predicate() {
+        @Override
+        public boolean evaluate(Object o) {
+            Character c = (Character) o;
+            return Character.isLetterOrDigit((int)c) || Arrays.binarySearch(ALLOWED_CHARS, c) >= 0;
+        }
+    };
+
 
     private StringBuilder replaceBuffer;
     private int replaceBufferIndex;
@@ -87,6 +106,16 @@ public class ReplaceTokenReader extends FilterReader {
                     if(readBufferIndex<0){
                         readBufferIndex=0;
                     }
+                    if (readBuffer.length() > 1 && !tokenCharPredicate.evaluate((char) read)) {
+                        //not an allowed token character
+                        //simply replace the content, and continue
+                        replaceBuffer.setLength(0);
+                        replaceBuffer.append(readBuffer);
+                        replaceBufferIndex=0;
+                        readBuffer.setLength(0);
+                        readBufferIndex=-1;
+                        return read();
+                    }
                 }
             } while (read != -1);
 
@@ -107,5 +136,13 @@ public class ReplaceTokenReader extends FilterReader {
         } else {
             replaceBuffer.append(tokenStart).append(key).append(tokenEnd);
         }
+    }
+
+    public Predicate getTokenCharPredicate() {
+        return tokenCharPredicate;
+    }
+
+    public void setTokenCharPredicate(Predicate tokenCharPredicate) {
+        this.tokenCharPredicate = tokenCharPredicate;
     }
 }

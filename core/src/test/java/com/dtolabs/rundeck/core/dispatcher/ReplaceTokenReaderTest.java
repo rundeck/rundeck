@@ -56,9 +56,21 @@ public class ReplaceTokenReaderTest {
                 "test line 2 some data @test.data2@\n", scriptTokens(), false, '@', '@');
     }
     @Test
+    public void requireTokenChars() throws IOException {
+        test("test script some data @test.data\n" +
+                "test line 2 some data \n",
+                "test script some data @test.data\n" +
+                "test line 2 some data @test.data2@\n", scriptTokens(), true, '@', '@');
+    }
+    @Test
+    public void resumeTokenChars() throws IOException {
+        test("test script some data @test.data:@\n" +
+                "test line 2 some data this is a test\n",
+                "test script some data @test.data:@\n" +
+                "test line 2 some data @test.data@\n", scriptTokens(), true, '@', '@');
+    }
+    @Test
     public void readLineDontReplaceWithBlank() throws IOException {
-//        test("test script some data this is a test\n" +
-//                "test line 2 some data @test.data2@\n");
 
         ReplaceTokenReader replaceTokenReader = new ReplaceTokenReader(new StringReader("test script some data @test.data@\n" +
                 "test line 2 some data @test.data2@\n"), scriptTokens(),
@@ -70,8 +82,6 @@ public class ReplaceTokenReaderTest {
     }
     @Test
     public void readLineReplaceWithBlank() throws IOException {
-//        test("test script some data this is a test\n" +
-//                "test line 2 some data @test.data2@\n");
 
         ReplaceTokenReader replaceTokenReader = new ReplaceTokenReader(new StringReader("test script some data @test.data@\n" +
                 "test line 2 some data @test.data2@\n"), scriptTokens(),
