@@ -24,14 +24,6 @@ class PluginService {
         return bean
     }
 
-    def Map validatePluginConfig(String name, Map config, PluggableProviderService service) {
-        def Map pluginDesc = getPluginDescriptor(name,service)
-        if (pluginDesc && pluginDesc.description instanceof Description) {
-            return frameworkService.validateDescription(pluginDesc.description, '', config)
-        } else {
-            return null
-        }
-    }
     /**
      *
      * @param name
@@ -128,15 +120,39 @@ class PluginService {
      * @param service service
      * @param resolver property resolver for configuration properties
      * @param defaultScope default plugin property scope
-     * @return configured plugin instance, or null if not found
+     * @return validation
      */
     def Map validatePlugin(String name, PluggableProviderService service, PropertyResolver resolver, PropertyScope defaultScope) {
         return rundeckPluginRegistry?.validatePluginByName(name, service,
                 PropertyResolverFactory.createPrefixedResolver(resolver, name, service.name), defaultScope)
     }
+    /**
+     * Configure a new plugin using a specific property resolver for configuration
+     * @param name provider name
+     * @param service service
+     * @param resolver property resolver for configuration properties
+     * @param defaultScope default plugin property scope
+     * @param ignoredScope ignored scope
+     * @return validation
+     */
+    def Map validatePlugin(String name, PluggableProviderService service, PropertyResolver resolver, PropertyScope defaultScope, PropertyScope ignoredScope) {
+        return rundeckPluginRegistry?.validatePluginByName(name, service,
+                PropertyResolverFactory.createPrefixedResolver(resolver, name, service.name), defaultScope, ignoredScope)
+    }
 
-    def <T> Map listPlugins(PluggableProviderService<T> service) {
-        def plugins = rundeckPluginRegistry?.listPluginDescriptors(T, service)
+    /**
+     * Configure a new plugin using a specific property resolver for configuration
+     * @param name provider name
+     * @param service service
+     * @param config instance configuration data
+     * @return validation
+     */
+    def Map validatePluginConfig(String name, PluggableProviderService service, Map config) {
+        return rundeckPluginRegistry?.validatePluginByName(name, service, config)
+    }
+
+    def <T> Map listPlugins(Class<T> clazz,PluggableProviderService<T> service) {
+        def plugins = rundeckPluginRegistry?.listPluginDescriptors(clazz, service)
         //XX: avoid groovy bug where generic types referenced in closure can cause NPE: http://jira.codehaus.org/browse/GROOVY-5034
         String svcName=service.name
         //clean up name of any Groovy plugin without annotations that ends with the service name

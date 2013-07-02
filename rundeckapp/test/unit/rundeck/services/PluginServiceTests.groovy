@@ -78,6 +78,7 @@ class PluginServiceTests extends GrailsUnitTestCase {
         boolean cpWithFrameworkCalled
         boolean cpWithResolverCalled
         boolean validateWithResolverCalled
+        boolean validateWithResolverIgnoredCalled
         boolean validateWithMapCalled
         boolean validateWithFrameworkCalled
         boolean listPluginDescriptorsCalled
@@ -109,6 +110,12 @@ class PluginServiceTests extends GrailsUnitTestCase {
         @Override
         Map validatePluginByName(String name, PluggableProviderService service, PropertyResolver resolver, PropertyScope defaultScope) {
             validateWithResolverCalled=true
+            return pluginValidation
+        }
+
+        @Override
+        Map validatePluginByName(String name, PluggableProviderService service, PropertyResolver resolver, PropertyScope defaultScope, PropertyScope ignoredScope) {
+            validateWithResolverIgnoredCalled = true
             return pluginValidation
         }
 
@@ -325,7 +332,7 @@ class PluginServiceTests extends GrailsUnitTestCase {
         def test = ['a': [description: [name:'a',title:'A']], 'b': [description: [name:'b',title:'B']]]
         testReg.pluginDescriptorMap= test
         assertFalse(testReg.listPluginDescriptorsCalled)
-        def result = service.listPlugins(new testProvider("test service"))
+        def result = service.listPlugins(String,new testProvider("test service"))
         assertTrue(testReg.listPluginDescriptorsCalled)
         assertEquals([name: 'a', title: 'A'], result['a']['description'])
         assertEquals([name: 'b', title: 'B'], result['b']['description'])
@@ -338,7 +345,7 @@ class PluginServiceTests extends GrailsUnitTestCase {
         def test = ['a': [description: [name:'alphaTestService',title:'A']], 'b': [description: [name:'bTestService',title:'B']]]
         testReg.pluginDescriptorMap= test
         assertFalse(testReg.listPluginDescriptorsCalled)
-        def result = service.listPlugins(new testProvider("TestService"))
+        def result = service.listPlugins(String,new testProvider("TestService"))
         assertTrue(testReg.listPluginDescriptorsCalled)
         assertEquals([name: 'alpha', title: 'A'], result['a']['description'])
         assertEquals([name: 'b', title: 'B'], result['b']['description'])
