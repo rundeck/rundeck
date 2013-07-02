@@ -386,7 +386,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
      * @return
      */
     def deleteScheduledExecution(ScheduledExecution scheduledExecution){
-        scheduledExecution = ScheduledExecution.lock(scheduledExecution.id)
+        scheduledExecution = ScheduledExecution.get(scheduledExecution.id)
         def jobname = scheduledExecution.generateJobScheduledName()
         def groupname = scheduledExecution.generateJobGroupName()
         def errmsg=null
@@ -416,6 +416,9 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                 deleteJob(jobname, groupname)
                 success = true
             } catch (org.springframework.dao.OptimisticLockingFailureException e) {
+                scheduledExecution.discard()
+                errmsg = 'Cannot delete Job "' + scheduledExecution.jobName + '" [' + scheduledExecution.extid + ']: it may have been modified or executed by another user'
+            } catch (StaleObjectStateException e) {
                 scheduledExecution.discard()
                 errmsg = 'Cannot delete Job "' + scheduledExecution.jobName + '" [' + scheduledExecution.extid + ']: it may have been modified or executed by another user'
             }
