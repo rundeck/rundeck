@@ -1,30 +1,23 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
-import com.dtolabs.rundeck.core.plugins.configuration.Description
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
-import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import com.dtolabs.rundeck.server.plugins.services.NotificationPluginProviderService
 import groovy.xml.MarkupBuilder
-
-import org.apache.commons.httpclient.HttpClient
-import org.apache.commons.httpclient.params.HttpClientParams
-import org.apache.commons.httpclient.methods.PostMethod
 import org.apache.commons.httpclient.Header
-
+import org.apache.commons.httpclient.HttpClient
+import org.apache.commons.httpclient.methods.PostMethod
 import org.apache.commons.httpclient.methods.StringRequestEntity
-import grails.util.GrailsWebUtil
+import org.apache.commons.httpclient.params.HttpClientParams
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
-import org.springframework.web.context.support.WebApplicationContextUtils
-import org.codehaus.groovy.grails.web.context.ServletContextHolder
-import org.springframework.web.context.request.RequestContextHolder
-import rundeck.ScheduledExecution
-import rundeck.Notification
 import rundeck.Execution
+import rundeck.Notification
+import rundeck.ScheduledExecution
 import rundeck.User
 import rundeck.controllers.ExecutionController
-import com.fasterxml.jackson.databind.ObjectMapper
 
 /*
 * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
@@ -55,26 +48,13 @@ public class NotificationService implements ApplicationContextAware{
     ApplicationContext applicationContext
     def grailsApplication
     def mailService
-    //TODO: use PluginService instead of registry directly
-    def RundeckPluginRegistry rundeckPluginRegistry
+    def pluginService
     def NotificationPluginProviderService notificationPluginProviderService
     def FrameworkService frameworkService
 
-    def NotificationPlugin getNotificationPlugin(String name) {
-        def bean= rundeckPluginRegistry?.loadPluginByName(name, notificationPluginProviderService)
-        if (bean ) {
-            return (NotificationPlugin) bean
-        }
-        log.error("Notification plugin not found: ${name}")
-        return null
-    }
-    def Map validatePluginConfig(String name, Map config){
-        def Map pluginDesc=getNotificationPluginDescriptor(name)
-        if(pluginDesc && pluginDesc.description instanceof Description){
-            return frameworkService.validateDescription(pluginDesc.description,'',config)
-        }else{
-            return null
-        }
+    def Map validatePluginConfig(String project, String name, Map config) {
+        return pluginService.validatePlugin(name, notificationPluginProviderService,
+                frameworkService.getFrameworkPropertyResolver(project, config), PropertyScope.Instance, PropertyScope.Project)
     }
     /**
      *
@@ -82,36 +62,10 @@ public class NotificationService implements ApplicationContextAware{
      * @return map containing [instance:(plugin instance), description: (map or Description), ]
      */
     def Map getNotificationPluginDescriptor(String name) {
-        def bean= rundeckPluginRegistry?.loadPluginDescriptorByName(name, notificationPluginProviderService)
-        if (bean ) {
-            return (Map) bean
-        }
-        log.error("Notification plugin not found: ${name}")
-        return null
-    }
-    private NotificationPlugin configureNotificationPlugin(String name, Map configuration) {
-        def bean= rundeckPluginRegistry?.configurePluginByName(name, notificationPluginProviderService,configuration)
-        if (bean ) {
-            return (NotificationPlugin) bean
-        }
-        log.error("Notification plugin not found: ${name}")
-        return null
+        return pluginService.getPluginDescriptor(name, notificationPluginProviderService)
     }
     def Map listNotificationPlugins(){
-        def plugins=[:]
-        plugins=rundeckPluginRegistry?.listPluginDescriptors(NotificationPlugin, notificationPluginProviderService)
-        //clean up name of any Groovy plugin without annotations that ends with "NotificationPlugin"
-        plugins.each {key,Map plugin->
-            def desc = plugin.description
-            if(desc && desc instanceof Map){
-                if(desc.name.endsWith("NotificationPlugin")){
-                    desc.name=desc.name.replaceAll(/NotificationPlugin$/,'')
-                }
-            }
-        }
-//        System.err.println("listed plugins: ${plugins}")
-
-        plugins
+        return pluginService.listPlugins(NotificationPlugin,notificationPluginProviderService)
     }
     def boolean triggerJobNotification(String trigger, schedId, Map content){
         if(trigger && schedId){
@@ -245,9 +199,14 @@ public class NotificationService implements ApplicationContextAware{
                     //pass data context
                     def dcontext= content['context']?.dataContext?:[:]
                     def mailcontext=DataContextUtils.addContext("job",userData,null)
-                    execMap['context']= DataContextUtils.merge(dcontext, mailcontext)
+                    def context = DataContextUtils.merge(dcontext, mailcontext)
+                    execMap.context=context
 
-                    didsend=triggerPlugin(trigger,execMap,n.type, n.configuration)
+                    Map config= n.configuration
+                    if (context && config) {
+                        config = DataContextUtils.replaceDataReferences(config, context)
+                    }
+                    didsend=triggerPlugin(trigger,execMap,n.type, frameworkService.getFrameworkPropertyResolver(source.project, config),config)
                 }else{
                     log.error("Unsupported notification type: " + n.type);
                 }
@@ -271,16 +230,11 @@ public class NotificationService implements ApplicationContextAware{
      * @param type plugin type
      * @param config user configuration
      */
-    private boolean triggerPlugin(String trigger, Map data,String type, Map config){
-        //replace exec info data references in config???
-        if(data.context && config){
-            config=DataContextUtils.replaceDataReferences(config,data.context)
-        }
+    private boolean triggerPlugin(String trigger, Map data,String type, PropertyResolver resolver, Map config){
 
         //load plugin and configure with config values
-        def plugin = configureNotificationPlugin(type, config)
+        def plugin = pluginService.configurePlugin(type, notificationPluginProviderService, resolver, PropertyScope.Instance)
         if (!plugin) {
-            log.error("No Notification plugin found of type: " + type)
             return false
         }
 
