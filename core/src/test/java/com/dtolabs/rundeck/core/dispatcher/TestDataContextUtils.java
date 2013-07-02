@@ -193,19 +193,28 @@ public class TestDataContextUtils extends AbstractBaseTest {
         }
         catch (NullPointerException ex) {
         }
+    }
+    public void testReplaceTokensInScript2() throws Exception {
+        Framework fwk = getFrameworkInstance();
         try {
             DataContextUtils.replaceTokensInScript("test script", null, null);
             fail("Should have thrown an Exception");
         }
         catch (NullPointerException ex) {
         }
+    }
+    public void testReplaceTokensInScript3() throws Exception {
+        Framework fwk = getFrameworkInstance();
         try {
             DataContextUtils.replaceTokensInScript("test script", new HashMap<String, Map<String, String>>(), null);
             fail("Should have thrown an Exception");
         }
         catch (NullPointerException ex) {
         }
-        {
+    }
+
+    public void testReplaceTokensInScript4() throws Exception {
+        Framework fwk = getFrameworkInstance();
             //null data context is ok
             File temp = null;
             try {
@@ -217,9 +226,11 @@ public class TestDataContextUtils extends AbstractBaseTest {
             assertNotNull(temp);
             assertTrue(temp.length() > 0);
             temp.delete();
-        }
+    }
 
-        {
+    public void testReplaceTokensInScript5() throws Exception {
+        Framework fwk = getFrameworkInstance();
+
             //test empty data context
             File temp = DataContextUtils.replaceTokensInScript("test script",
                 new HashMap<String, Map<String, String>>(),
@@ -227,8 +238,10 @@ public class TestDataContextUtils extends AbstractBaseTest {
             assertNotNull(temp);
             assertTrue(temp.length() > 0);
             temp.delete();
-        }
-        {
+    }
+
+    public void testReplaceTokensInScript6() throws Exception {
+        Framework fwk = getFrameworkInstance();
             //test content
             File temp = DataContextUtils.replaceTokensInScript("test script some data @test.data@\n"
                                                                + "test line 2 some data @test.data2@\n",
@@ -241,16 +254,18 @@ public class TestDataContextUtils extends AbstractBaseTest {
             assertTrue(br.ready());
             final String line0 = br.readLine();
             assertNotNull(line0);
-            assertEquals("test script some data @test.data@", line0);
+            assertEquals("test script some data ", line0);
             assertTrue(br.ready());
             final String line1 = br.readLine();
             assertNotNull(line1);
-            assertEquals("test line 2 some data @test.data2@", line1);
+            assertEquals("test line 2 some data ", line1);
             assertFalse(br.ready());
             assertNull(br.readLine());
 
-        }
-        {
+    }
+
+    public void testReplaceTokensInScript7() throws Exception {
+        Framework fwk = getFrameworkInstance();
             //test content
             final HashMap<String, Map<String, String>> data = new HashMap<String, Map<String, String>>();
             data.put("test", new HashMap<String, String>());
@@ -265,16 +280,18 @@ public class TestDataContextUtils extends AbstractBaseTest {
             assertTrue(br.ready());
             final String line0 = br.readLine();
             assertNotNull(line0);
-            assertEquals("test script some data @test.data@", line0);
+            assertEquals("test script some data ", line0);
             assertTrue(br.ready());
             final String line1 = br.readLine();
             assertNotNull(line1);
-            assertEquals("test line 2 some data @test.data2@", line1);
+            assertEquals("test line 2 some data ", line1);
             assertFalse(br.ready());
             assertNull(br.readLine());
 
-        }
-        {
+    }
+
+    public void testReplaceTokensInScript8() throws Exception {
+        Framework fwk = getFrameworkInstance();
             //test content
             final HashMap<String, Map<String, String>> data = new HashMap<String, Map<String, String>>();
             final HashMap<String, String> testdata = new HashMap<String, String>();
@@ -295,38 +312,39 @@ public class TestDataContextUtils extends AbstractBaseTest {
             assertTrue(br.ready());
             final String line1 = br.readLine();
             assertNotNull(line1);
-            assertEquals("test line 2 some data @test.data2@", line1);
+            assertEquals("test line 2 some data ", line1);
             assertFalse(br.ready());
             assertNull(br.readLine());
 
-        }
-        {
-            //test content
-            final HashMap<String, Map<String, String>> data = new HashMap<String, Map<String, String>>();
-            final HashMap<String, String> testdata = new HashMap<String, String>();
-            testdata.put("data", "this is a test");
-            testdata.put("data2", "2this is a test2");
-            data.put("test", testdata);
-            File temp = DataContextUtils.replaceTokensInScript("test script some data @test.data@\n"
-                                                               + "test line 2 some data @test.data2@\n",
-                data,
-                fwk);
-            assertNotNull(temp);
-            assertTrue(temp.length() > 0);
-            //test content
-            BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(temp)));
-            assertTrue(br.ready());
-            final String line0 = br.readLine();
-            assertNotNull(line0);
-            assertEquals("test script some data this is a test", line0);
-            assertTrue(br.ready());
-            final String line1 = br.readLine();
-            assertNotNull(line1);
-            assertEquals("test line 2 some data 2this is a test2", line1);
-            assertFalse(br.ready());
-            assertNull(br.readLine());
+    }
 
-        }
+    public void testReplaceTokensInScript9() throws Exception {
+        Framework fwk = getFrameworkInstance();
+        //test content
+        final HashMap<String, Map<String, String>> data = new HashMap<String, Map<String, String>>();
+        final HashMap<String, String> testdata = new HashMap<String, String>();
+        testdata.put("data", "this is a test");
+        testdata.put("data2", "2this is a test2");
+        data.put("test", testdata);
+        File temp = DataContextUtils.replaceTokensInScript("test script some data @test.data@\n"
+                                                           + "test line 2 some data @test.data2@\n",
+            data,
+            fwk);
+        assertNotNull(temp);
+        assertTrue(temp.length() > 0);
+        //test content
+        BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(temp)));
+        assertTrue(br.ready());
+        final String line0 = br.readLine();
+        assertNotNull(line0);
+        assertEquals("test script some data this is a test", line0);
+        assertTrue(br.ready());
+        final String line1 = br.readLine();
+        assertNotNull(line1);
+        assertEquals("test line 2 some data 2this is a test2", line1);
+        assertFalse(br.ready());
+        assertNull(br.readLine());
+
     }
 
     public void testReplaceTokensInFile() throws Exception {
@@ -337,19 +355,29 @@ public class TestDataContextUtils extends AbstractBaseTest {
         }
         catch (NullPointerException ex) {
         }
+    }
+    public void testReplaceTokensInFile2() throws Exception {
+        Framework fwk = getFrameworkInstance();
         try {
             DataContextUtils.replaceTokensInFile(testfile1, null, null);
             fail("Should have thrown an Exception");
         }
         catch (NullPointerException ex) {
         }
+    }
+
+    public void testReplaceTokensInFile3() throws Exception {
+        Framework fwk = getFrameworkInstance();
         try {
             DataContextUtils.replaceTokensInFile(testfile1, new HashMap<String, Map<String, String>>(), null);
             fail("Should have thrown an Exception");
         }
         catch (NullPointerException ex) {
         }
-        {
+    }
+
+    public void testReplaceTokensInFile4() throws Exception {
+        Framework fwk = getFrameworkInstance();
             assertTrue(testfile1.length() > 0);
             //null data context is ok
             File temp = null;
@@ -362,9 +390,10 @@ public class TestDataContextUtils extends AbstractBaseTest {
             assertNotNull(temp);
             assertTrue(temp.length() > 0);
             temp.delete();
-        }
+    }
 
-        {
+    public void testReplaceTokensInFile5() throws Exception {
+        Framework fwk = getFrameworkInstance();
             //test empty data context
             File temp = DataContextUtils.replaceTokensInFile(testfile1,
                 new HashMap<String, Map<String, String>>(),
@@ -372,8 +401,10 @@ public class TestDataContextUtils extends AbstractBaseTest {
             assertNotNull(temp);
             assertTrue(temp.length() > 0);
             temp.delete();
-        }
-        {
+    }
+
+    public void testReplaceTokensInFile6() throws Exception {
+        Framework fwk = getFrameworkInstance();
             //test content
             File temp = DataContextUtils.replaceTokensInFile(testfile1,
                 new HashMap<String, Map<String, String>>(),
@@ -385,16 +416,18 @@ public class TestDataContextUtils extends AbstractBaseTest {
             assertTrue(br.ready());
             final String line0 = br.readLine();
             assertNotNull(line0);
-            assertEquals("test @test.data1@", line0);
+            assertEquals("test ", line0);
             assertTrue(br.ready());
             final String line1 = br.readLine();
             assertNotNull(line1);
-            assertEquals("node test @node.test1@", line1);
+            assertEquals("node test ", line1);
             assertFalse(br.ready());
             assertNull(br.readLine());
 
-        }
-        {
+    }
+
+    public void testReplaceTokensInFile7() throws Exception {
+        Framework fwk = getFrameworkInstance();
             //test content
             final HashMap<String, Map<String, String>> data = new HashMap<String, Map<String, String>>();
             data.put("test", new HashMap<String, String>());
@@ -408,16 +441,18 @@ public class TestDataContextUtils extends AbstractBaseTest {
             assertTrue(br.ready());
             final String line0 = br.readLine();
             assertNotNull(line0);
-            assertEquals("test @test.data1@", line0);
+            assertEquals("test ", line0);
             assertTrue(br.ready());
             final String line1 = br.readLine();
             assertNotNull(line1);
-            assertEquals("node test @node.test1@", line1);
+            assertEquals("node test ", line1);
             assertFalse(br.ready());
             assertNull(br.readLine());
 
-        }
-        {
+    }
+
+    public void testReplaceTokensInFile8() throws Exception {
+        Framework fwk = getFrameworkInstance();
             //test content
             final HashMap<String, Map<String, String>> data = new HashMap<String, Map<String, String>>();
             final HashMap<String, String> testdata = new HashMap<String, String>();
@@ -437,39 +472,40 @@ public class TestDataContextUtils extends AbstractBaseTest {
             assertTrue(br.ready());
             final String line1 = br.readLine();
             assertNotNull(line1);
-            assertEquals("node test @node.test1@", line1);
+            assertEquals("node test ", line1);
             assertFalse(br.ready());
             assertNull(br.readLine());
 
-        }
-        {
-            //test content
-            final HashMap<String, Map<String, String>> data = new HashMap<String, Map<String, String>>();
-            final HashMap<String, String> testdata = new HashMap<String, String>();
-            testdata.put("data1", "this is a test");
-            data.put("test", testdata);
-            final HashMap<String, String> nodedata = new HashMap<String, String>();
-            nodedata.put("test1", "node test data");
-            data.put("node", nodedata);
-            File temp = DataContextUtils.replaceTokensInFile(testfile1,
-                data,
-                fwk);
-            assertNotNull(temp);
-            assertTrue(temp.length() > 0);
-            //test content
-            BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(temp)));
-            assertTrue(br.ready());
-            final String line0 = br.readLine();
-            assertNotNull(line0);
-            assertEquals("test this is a test", line0);
-            assertTrue(br.ready());
-            final String line1 = br.readLine();
-            assertNotNull(line1);
-            assertEquals("node test node test data", line1);
-            assertFalse(br.ready());
-            assertNull(br.readLine());
+    }
 
-        }
+    public void testReplaceTokensInFile9() throws Exception {
+        Framework fwk = getFrameworkInstance();
+        //test content
+        final HashMap<String, Map<String, String>> data = new HashMap<String, Map<String, String>>();
+        final HashMap<String, String> testdata = new HashMap<String, String>();
+        testdata.put("data1", "this is a test");
+        data.put("test", testdata);
+        final HashMap<String, String> nodedata = new HashMap<String, String>();
+        nodedata.put("test1", "node test data");
+        data.put("node", nodedata);
+        File temp = DataContextUtils.replaceTokensInFile(testfile1,
+            data,
+            fwk);
+        assertNotNull(temp);
+        assertTrue(temp.length() > 0);
+        //test content
+        BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(temp)));
+        assertTrue(br.ready());
+        final String line0 = br.readLine();
+        assertNotNull(line0);
+        assertEquals("test this is a test", line0);
+        assertTrue(br.ready());
+        final String line1 = br.readLine();
+        assertNotNull(line1);
+        assertEquals("node test node test data", line1);
+        assertFalse(br.ready());
+        assertNull(br.readLine());
+
     }
 
     public void testNodeData() throws Exception {
