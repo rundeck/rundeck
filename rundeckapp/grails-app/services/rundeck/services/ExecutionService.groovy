@@ -834,12 +834,26 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
             failedreason = "unauthorized"
             statusStr = jobstate
         }else if (scheduledExecutionService.existsJob(ident.jobname, ident.groupname)){
-            Execution e2 = Execution.lock(eid)
-            if(!e2.abortedby){
-                e2.abortedby= userIdent
-                e2.save(flush:true)
+            boolean success=false
+            try{
+                Execution.withNewSession {
+                    Execution e2 = Execution.get(eid)
+                    if (!e2.abortedby) {
+                        e2.abortedby = userIdent
+                        e2.save(flush: true)
+                        success=true
+                    }
+                }
+            } catch (org.springframework.dao.OptimisticLockingFailureException ex) {
+                log.error("Could not abort ${eId}, the execution was modified")
+            } catch (StaleObjectStateException ex) {
+                log.error("Could not abort ${eId}, the execution was modified")
             }
-            def didcancel=scheduledExecutionService.interruptJob(ident.jobname, ident.groupname)
+
+            def didcancel=false
+            if(success){
+                didcancel=scheduledExecutionService.interruptJob(ident.jobname, ident.groupname)
+            }
             abortstate=didcancel?ExecutionController.ABORT_PENDING:ExecutionController.ABORT_FAILED
             failedreason=didcancel?'':'Unable to interrupt the running job'
             jobstate=ExecutionController.EXECUTION_RUNNING
@@ -1420,12 +1434,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
     }
     def updateScheduledExecState(ScheduledExecution scheduledExecution, Execution execution){
         def schedId=scheduledExecution.id
+        def eId=execution.id
         def retry = true
 
         while (retry) {
             try {
                 ScheduledExecution.withNewSession {
-                    scheduledExecution = ScheduledExecution.lock(schedId)
+                    scheduledExecution = ScheduledExecution.get(schedId)
                     scheduledExecution.refresh()
                     execution = execution.merge()
                     if (scheduledExecution.scheduled) {
@@ -1458,10 +1473,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
                     retry = false
                 }
             } catch (org.springframework.dao.OptimisticLockingFailureException e) {
-                log.error("Caught OptimisticLockingFailure, will retry updateScheduledExecState")
+                log.error("Caught OptimisticLockingFailure, will retry updateScheduledExecState for ${eId}")
                 Thread.sleep(200)
             } catch (StaleObjectStateException e) {
-                log.error("Caught StaleObjectState, will retry updateScheduledExecState")
+                log.error("Caught StaleObjectState, will retry updateScheduledExecState for ${eId}")
                 Thread.sleep(200)
             }
         }
