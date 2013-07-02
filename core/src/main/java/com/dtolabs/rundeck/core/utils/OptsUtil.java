@@ -25,14 +25,10 @@ package com.dtolabs.rundeck.core.utils;
 
 import org.apache.commons.lang.CharUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.text.StrMatcher;
-import org.apache.commons.lang.text.StrTokenizer;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * OptsUtil is ...
@@ -41,28 +37,16 @@ import java.util.regex.Pattern;
  * @version $Revision$
  */
 public class OptsUtil {
-    static StrTokenizer TOKENIZER = new StrTokenizer();
-
-    static {
-        TOKENIZER.setDelimiterMatcher(StrMatcher.spaceMatcher());//delimit whitespace
-        TOKENIZER.setQuoteMatcher(StrMatcher.quoteMatcher());//match double or single quoted
-        TOKENIZER.setIgnoredMatcher(StrMatcher.noneMatcher());//dont ignore other chars
-        TOKENIZER.setTrimmerMatcher(StrMatcher.trimMatcher());//trim whitespace
-        TOKENIZER.setEmptyTokenAsNull(false);
-        TOKENIZER.setIgnoreEmptyTokens(true);//ignore empty strings
-    }
-
     /**
-     * Bursts input string that may have emebedded quoted text into a String array.
-     * Single quoted text is preserved as a single token
+     * Bursts input string that may have emebedded quoted text into a String array. Single quoted text is preserved as a
+     * single token
      *
      * @param argLine input string
+     *
      * @return String array of parsed tokens
      */
     public static String[] burst(final String argLine) {
-        StrTokenizer clone = (StrTokenizer) TOKENIZER.clone();
-        clone.reset(argLine);
-        return clone.getTokenArray();
+        return QuotedStringTokenizer.tokenizeToArray(argLine);
     }
 
     public static String join(String first, String[] args) {
@@ -102,7 +86,7 @@ public class OptsUtil {
     }
 
     public static void escapeChars(StringBuilder out, String str) {
-        if (StringUtils.containsNone(str, CSV_SEARCH_CHARS)) {
+        if (StringUtils.containsNone(str, CSV_SEARCH_CHARS) && !"".equals(str)) {
             if (str != null) {
                 out.append(str);
             }
@@ -119,10 +103,4 @@ public class OptsUtil {
         out.append(DBL_QUOTE);
     }
 
-    public static String unescapeChars(String str) {
-        StrTokenizer clone = (StrTokenizer) TOKENIZER.clone();
-        clone.reset(str);
-        String[] tokenArray = clone.getTokenArray();
-        return tokenArray[0];
-    }
 }

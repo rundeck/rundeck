@@ -16,7 +16,7 @@
 
 /*
 * DataContextUtils.java
-* 
+*
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: Aug 16, 2010 6:27:40 PM
 * $Id$
@@ -27,7 +27,6 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
 import com.dtolabs.rundeck.core.utils.Converter;
-import org.apache.tools.ant.filters.ReplaceTokens;
 import org.apache.tools.ant.taskdefs.ExecTask;
 import org.apache.tools.ant.types.Environment;
 
@@ -59,6 +58,18 @@ public class DataContextUtils {
      * @return string array with replaced embedded properties
      */
     public static String[] replaceDataReferences(final String[] args, final Map<String, Map<String, String>> data, Converter<String, String> converter, boolean failIfUnexpanded) {
+        return replaceDataReferences(args, data, converter, failIfUnexpanded, false);
+    }
+    /**
+     * Replace the embedded  properties of the form '${key.name}' in the input Strings with the value from the data
+     * context
+     *
+     * @param args argument string array
+     * @param data data context
+     * @return string array with replaced embedded properties
+     */
+    public static String[] replaceDataReferences(final String[] args, final Map<String, Map<String, String>> data,
+            Converter<String, String> converter, boolean failIfUnexpanded, boolean blankIfUnexpanded) {
         if (null == data || data.isEmpty()) {
             return args;
         }
@@ -69,7 +80,7 @@ public class DataContextUtils {
 
         for (int i = 0; i < args.length; i++) {
             final String arg = args[i];
-            newargs[i] = replaceDataReferences(arg, data, converter, failIfUnexpanded);
+            newargs[i] = replaceDataReferences(arg, data, converter, failIfUnexpanded, blankIfUnexpanded);
         }
 
         return newargs;
@@ -199,6 +210,22 @@ public class DataContextUtils {
      */
     public static String replaceDataReferences(final String input, final Map<String, Map<String, String>> data,
                                                final Converter<String, String> converter, boolean failOnUnexpanded) {
+        return replaceDataReferences(input, data, converter, failOnUnexpanded, false);
+    }
+    /**
+     * Replace the embedded  properties of the form '${key.name}' in the input Strings with the value from the data
+     * context
+     *
+     *
+     * @param input input string
+     * @param data  data context map
+     *              @param converter converter to encode/convert the expanded values
+     *
+     * @param failOnUnexpanded
+     * @return string with values substituted, or original string
+     */
+    public static String replaceDataReferences(final String input, final Map<String, Map<String, String>> data,
+                                               final Converter<String, String> converter, boolean failOnUnexpanded, boolean blankIfUnexpanded) {
         if(null==data){
             return input;
         }
@@ -217,6 +244,8 @@ public class DataContextUtils {
             }else if (failOnUnexpanded && null != key && null != nm && (null == data.get(key) || null == data.get(key)
                 .get(nm))) {
                 throw new UnresolvedDataReferenceException(input, m.group());
+            }else if(blankIfUnexpanded) {
+                m.appendReplacement(sb, "");
             } else {
                 String value = m.group(0);
                 if (null != converter) {
@@ -285,7 +314,7 @@ public class DataContextUtils {
     /**
      * Copies the source file to a temp file, replacing the @key.X@ tokens with the values from the data context
      *
-     * @param sourceFile  source file 
+     * @param sourceFile  source file
      * @param dataContext input data context
      * @param framework   the framework
      *
@@ -294,9 +323,9 @@ public class DataContextUtils {
     public static File replaceTokensInFile(final File sourceFile, final Map<String, Map<String, String>> dataContext,
                                            final Framework framework) throws IOException {
         //use ReplaceTokens to replace tokens within the file
-        final ReplaceTokens replaceTokens = new ReplaceTokens(new InputStreamReader(new FileInputStream(sourceFile)));
         final Map<String, String> toks = flattenDataContext(dataContext);
-        configureReplaceTokens(toks, replaceTokens);
+        final ReplaceTokenReader replaceTokens = new ReplaceTokenReader(new InputStreamReader(new FileInputStream
+                (sourceFile)), toks, true, '@', '@');
         final File temp = ScriptfileUtils.writeScriptTempfile(framework, replaceTokens);
         ScriptfileUtils.setExecutePermissions(temp);
         return temp;
@@ -315,9 +344,8 @@ public class DataContextUtils {
                                            final Framework framework) throws IOException {
         //use ReplaceTokens to replace tokens within the content
         final Reader read = new StringReader(script);
-        final ReplaceTokens replaceTokens = new ReplaceTokens(read);
         final Map<String, String> toks = flattenDataContext(dataContext);
-        configureReplaceTokens(toks, replaceTokens);
+        final ReplaceTokenReader replaceTokens = new ReplaceTokenReader(read, toks, true, '@', '@');
         final File temp = ScriptfileUtils.writeScriptTempfile(framework, replaceTokens);
         ScriptfileUtils.setExecutePermissions(temp);
         return temp;
@@ -335,9 +363,8 @@ public class DataContextUtils {
                                            final Framework framework) throws IOException {
 
         //use ReplaceTokens to replace tokens within the stream
-        final ReplaceTokens replaceTokens = new ReplaceTokens(new InputStreamReader(stream));
         final Map<String, String> toks = flattenDataContext(dataContext);
-        configureReplaceTokens(toks, replaceTokens);
+        final ReplaceTokenReader replaceTokens = new ReplaceTokenReader(new InputStreamReader(stream), toks, true, '@', '@');
         final File temp = ScriptfileUtils.writeScriptTempfile(framework, replaceTokens);
         ScriptfileUtils.setExecutePermissions(temp);
         return temp;
@@ -370,23 +397,6 @@ public class DataContextUtils {
     }
 
 
-    /**
-     * Configure the ReplaceTokens for use by filterchain or straight use.  Adds tokens for "X" for each key in the
-     *  data, uses the '@' begin/end tokens.
-     *
-     * @param data          input options
-     * @param replaceTokens ReplaceTokens object.
-     */
-    public static void configureReplaceTokens(final Map<String, String> data, final ReplaceTokens replaceTokens) {
-        replaceTokens.setBeginToken('@');
-        replaceTokens.setEndToken('@');
-        for (final Map.Entry<String, String> entry : data.entrySet()) {
-            final ReplaceTokens.Token token = new ReplaceTokens.Token();
-            token.setKey(entry.getKey());
-            token.setValue(entry.getValue());
-            replaceTokens.addConfiguredToken(token);
-        }
-    }
 
     /**
      * Convert option keys into environment variable names. Convert to uppercase and prepend "RD_"
@@ -444,7 +454,6 @@ public class DataContextUtils {
     /**
      * add Env elements to pass environment variables to the ExtSSHExec
      *
-     * @param environment environment variables
      * @param sshexecTask task
      */
     public static void addEnvVars( final EnvironmentConfigurable sshexecTask, final Map<String, Map<String, String>> dataContext) {
@@ -533,7 +542,7 @@ public class DataContextUtils {
                 for (final String name : nodeentry.getAttributes().keySet()) {
                     if (null != nodeentry.getAttributes().get(name) && !data.containsKey(name) && !skipProps.contains(
                         name)) {
-                        
+
                         data.put(name, notNull(nodeentry.getAttributes().get(name)));
                     }
                 }

@@ -165,7 +165,7 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
             Execution e=svc.createExecution(se,null,"user1",[argString:'-test1 asdf -test2 val2b -test4 asdf4'])
 
             assertNotNull(e)
-            assertEquals('-test1 asdf -test2 val2b -test3 val3',e.argString)
+            assertEquals("secure option value should not be stored",'-test1 asdf -test2 val2b -test3 val3',e.argString)
             assertEquals(se, e.scheduledExecution)
             assertNotNull(e.dateStarted)
             assertNull(e.dateCompleted)
@@ -176,7 +176,7 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
             Execution e=svc.createExecution(se,null,"user1",[argString:'-test2 val2b -test4 asdf4'])
 
             assertNotNull(e)
-            assertEquals('-test2 val2b -test3 val3',e.argString)
+            assertEquals("default value should be used",'-test1 val1 -test2 val2b -test3 val3',e.argString)
             assertEquals(se, e.scheduledExecution)
             assertNotNull(e.dateStarted)
             assertNull(e.dateCompleted)
@@ -187,7 +187,7 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
             Execution e=svc.createExecution(se,null,"user1",[argString:'-test2 val2b -test3 monkey3'])
 
             assertNotNull(e)
-            assertEquals('-test2 val2b -test3 monkey3',e.argString)
+            assertEquals('-test1 val1 -test2 val2b -test3 monkey3',e.argString)
             assertEquals(se, e.scheduledExecution)
             assertNotNull(e.dateStarted)
             assertNull(e.dateCompleted)
@@ -556,21 +556,19 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
         def frameworkService = new FrameworkService()
         testService.frameworkService = frameworkService
 
-        t: {
-            //test regex and optional value
-            ScheduledExecution se2 = new ScheduledExecution()
-            se2.addToOptions(new Option(name: 'test1', enforced: false, multivalued: true,delimiter: "+"))
-            se2.addToOptions(new Option(name: 'test2', enforced: false, multivalued: true))
-            se2.addToOptions(new Option(name: 'test3', enforced: false, multivalued: false))
-            assertNotNull(se2.options)
-            assertEquals(3, se2.options.size())
+        //test regex and optional value
+        ScheduledExecution se2 = new ScheduledExecution()
+        se2.addToOptions(new Option(name: 'test1', enforced: false, multivalued: true,delimiter: "+"))
+        se2.addToOptions(new Option(name: 'test2', enforced: false, multivalued: true))
+        se2.addToOptions(new Option(name: 'test3', enforced: false, multivalued: false))
+        assertNotNull(se2.options)
+        assertEquals(3, se2.options.size())
 
-            assertEquals "-test1 \"some value\"", ExecutionService.generateJobArgline(se2, ['test1': 'some value'])
-            //multivalue
-            assertEquals "-test1 \"some value+another value\"", ExecutionService.generateJobArgline(se2, ['test1': ['some value','another value']])
-            assertEquals "-test2 \"some value,another value\"", ExecutionService.generateJobArgline(se2, ['test2': ['some value','another value']])
-            assertEquals "-test3 \"some value,another value\"", ExecutionService.generateJobArgline(se2, ['test3': ['some value','another value']])
-        }
+        assertEquals "-test1 \"some value\"", ExecutionService.generateJobArgline(se2, ['test1': 'some value'])
+        //multivalue
+        assertEquals "-test1 \"some value+another value\"", ExecutionService.generateJobArgline(se2, ['test1': ['some value','another value']])
+        assertEquals "-test2 \"some value,another value\"", ExecutionService.generateJobArgline(se2, ['test2': ['some value','another value']])
+        assertEquals "-test3 \"some value,another value\"", ExecutionService.generateJobArgline(se2, ['test3': ['some value','another value']])
     }
     void testGenerateJobArglinePreservesOptionSortIndexOrder() {
         mockDomain(ScheduledExecution)
@@ -580,19 +578,37 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
         def frameworkService = new FrameworkService()
         testService.frameworkService = frameworkService
 
-        t: {
-            //test regex and optional value
-            ScheduledExecution se2 = new ScheduledExecution()
-            se2.addToOptions(new Option(name: 'abc', enforced: false, multivalued: true,delimiter: "+"))
-            se2.addToOptions(new Option(name: 'zyx', enforced: false, multivalued: true,sortIndex: 1))
-            se2.addToOptions(new Option(name: 'pst', enforced: false, multivalued: false,sortIndex: 0))
-            assertNotNull(se2.options)
-            assertEquals(3, se2.options.size())
+        //test regex and optional value
+        ScheduledExecution se2 = new ScheduledExecution()
+        se2.addToOptions(new Option(name: 'abc', enforced: false, multivalued: true,delimiter: "+"))
+        se2.addToOptions(new Option(name: 'zyx', enforced: false, multivalued: true,sortIndex: 1))
+        se2.addToOptions(new Option(name: 'pst', enforced: false, multivalued: false,sortIndex: 0))
+        assertNotNull(se2.options)
+        assertEquals(3, se2.options.size())
 
-            assertEquals "-zyx value", ExecutionService.generateJobArgline(se2, ['zyx': 'value'])
-            assertEquals "-pst blah -zyx value", ExecutionService.generateJobArgline(se2, ['zyx': 'value','pst':'blah'])
-            assertEquals "-pst blah -zyx value -abc elf", ExecutionService.generateJobArgline(se2, ['zyx': 'value','pst':'blah', abc:'elf'])
-        }
+        assertEquals "-zyx value", ExecutionService.generateJobArgline(se2, ['zyx': 'value'])
+        assertEquals "-pst blah -zyx value", ExecutionService.generateJobArgline(se2, ['zyx': 'value','pst':'blah'])
+        assertEquals "-pst blah -zyx value -abc elf", ExecutionService.generateJobArgline(se2, ['zyx': 'value','pst':'blah', abc:'elf'])
+    }
+    void testGenerateJobArglineQuotesBlanks() {
+        mockDomain(ScheduledExecution)
+        mockDomain(Option)
+        ScheduledExecution se = new ScheduledExecution()
+        def testService = new ExecutionService()
+        def frameworkService = new FrameworkService()
+        testService.frameworkService = frameworkService
+
+        //test regex and optional value
+        ScheduledExecution se2 = new ScheduledExecution()
+        se2.addToOptions(new Option(name: 'abc', enforced: false, multivalued: true,delimiter: "+"))
+        se2.addToOptions(new Option(name: 'zyx', enforced: false, multivalued: true,sortIndex: 1))
+        se2.addToOptions(new Option(name: 'pst', enforced: false, multivalued: false,sortIndex: 0))
+        assertNotNull(se2.options)
+        assertEquals(3, se2.options.size())
+
+        assertEquals "-zyx value", ExecutionService.generateJobArgline(se2, ['zyx': 'value'])
+        assertEquals "-pst blah -zyx value", ExecutionService.generateJobArgline(se2, ['zyx': 'value','pst':'blah'])
+        assertEquals "-pst blah -zyx value -abc elf", ExecutionService.generateJobArgline(se2, ['zyx': 'value','pst':'blah', abc:'elf'])
     }
 
     /**

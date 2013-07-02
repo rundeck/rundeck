@@ -38,7 +38,7 @@ level of procedure formalization.
 * Naming and description convention: Visualize how the user will read
   the option name and judge its purpose from the description you supply.
 * Required options: Making an option required means the Job will fail
-  if a user leaves it out.
+  if a user does not specify a non-blank value. In other words, a blank or missing value is not allowed for the option.
 * Input restrictions and validation: If you need to make the option
   value be somewhat open ended consider how you can create
   safeguards to control their choice.
@@ -108,6 +108,10 @@ Input Type
 
 :   Choose between "Plain", "Secure" and "Secure Remote Authentication". For input types other than "Plain", the multi-valued option will be disabled.
 
+Default Value
+
+:    A Default Value will automatically be set for the option if it is not otherwise specified by the user, even if not specified among the arguments when executing a job via the command-line or API.  Note that a blank value can be specified via the command-line or API, which will override the use of the Default Value.
+
 Allowed values
 
 :    Allowed values provide a model of possible choices.
@@ -128,12 +132,12 @@ Restrictions
 
 Requirement
 
-:    Indicates if the Job can only run if a choice is provided for
-     that Option. Choosing "No" states the option is not required
-     Choose "Yes" to state the option is required.
-     
-     If a Default Value is set for the option, then this value will automatically be set for the option if it is Required, even if not specified among the arguments when executing a job via the command-line or API.
+:    Indicates if the Job can only run if a non-blank value is provided for
+     that Option. Choose "No" to indicate that a blank value is allowed, and
+     choose "Yes" to indicate that a blank value is not allowed.  
 
+     If a Default Value is set, then it will be used when no value is provided, unless a blank value is allowed and is explicitly specified.
+     
 Multi-valued
 
 :    Defines if the user input can consist of multiple values. Choosing "No" states that only a single value can chosen as input. Choosing "Yes" states that the user may select multiple input values from the Allowed values and/or enter multiple values of their own.  The delimiter string will be used to separate the multiple values when the Job is run.
@@ -181,18 +185,17 @@ The output of the Job will be:
     args=howdy    
     message=howdy    
 
-It's important to know what happens if the option isn't set. This can
-happen if you define an option that is not required and do not give it
-a default value. 
+If you define the option to be *Required*, then the Job will fail to run unless the user supplies a value that is not blank.
 
-Let's imagine the Job was run without a message option supplied, the
-output would look like this:
+If you define the option to not be *Required*, then the option value is allowed to be blank, and specifying a blank value would result in:
 
     envar=
     args=
-    message=@option.message@
+    message=
 
-Here are some tips to deal with this possibility:
+You can use the *Default Value* of an option to provide a value in the case where the user doesn't specify it.  In the GUI, the *Default Value* will automatically be presented in the Job Execution page.  From the CLI or API, leaving off a `-option` argument to a job will use the default value.
+
+You can also handle default values within a script, if your option doesn't specify one, or the user specifies a blank value for the option:
 
 Environment variable:
 
@@ -209,13 +212,12 @@ Environment variable:
 
 Replacement token	 
 
-:    If the option is unset the token will be left alone inside the
-     script. You might write your script a bit more defensively and
+:    If the option is blank or unset the token will be replaced with a blank
+     string. You might write your script a bit more defensively and
      change the implementation like so:
 
-        message=@option.message@
-        atsign="@"
-        if [ "$message" == "${atsign}option.message${atsign}" ] ; then
+        message="@option.message@"
+        if [ "$message" == "" ] ; then
            message=mydefault
         fi
 

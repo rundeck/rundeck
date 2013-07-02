@@ -1197,38 +1197,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
      * evaluate the options in the input argString, and if any Options defined for the Job have required=true, have a
      * defaultValue, and have null value in the input properties, then append the default option value to the argString
      */
-    def String addArgStringOptionDefaults(ScheduledExecution scheduledExecution, args) throws ExecutionServiceException {
-        def StringBuffer sb = new StringBuffer()
-        def optparams = [:]
-        if(args && args instanceof String){
-            optparams = args?frameworkService.parseOptsFromString(args):[:]
-            sb.append(args?:"")
-        }else if(args && args instanceof String[]){
-            optparams = frameworkService.parseOptsFromArray(args)
-            sb.append(args?args.join(" "):'')
-        }
-
-        final options = scheduledExecution.options
-        if (options) {
-            def defaultoptions=[:]
-            options.each {Option opt ->
-                if (opt.required && null==optparams[opt.name] && opt.defaultValue) {
-                    defaultoptions[opt.name]=opt.defaultValue
-                }
-            }
-            if(defaultoptions){
-                if(sb.size()>0){
-                    sb.append(" ")
-                }
-                sb.append( generateArgline(defaultoptions))
-            }
-        }
-        return sb.toString()
-    }
-    /**
-     * evaluate the options in the input argString, and if any Options defined for the Job have required=true, have a
-     * defaultValue, and have null value in the input properties, then append the default option value to the argString
-     */
     def Map addOptionDefaults(ScheduledExecution scheduledExecution, Map optparams) throws ExecutionServiceException {
         def newmap = new HashMap(optparams)
 
@@ -1236,7 +1204,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
         if (options) {
             def defaultoptions=[:]
             options.each {Option opt ->
-                if (opt.required && null==optparams[opt.name] && opt.defaultValue) {
+                if (null==optparams[opt.name] && opt.defaultValue) {
                     defaultoptions[opt.name]=opt.defaultValue
                 }
             }
@@ -1247,39 +1215,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
         return newmap
     }
 
-    /**
-     * evaluate the options in the input argString, and if any Options defined for the Job have required=true, have a
-     * defaultValue, and have null value in the input properties, then append the default option value to the argString
-     */
-    def List addArgListOptionDefaults(ScheduledExecution scheduledExecution, args) throws ExecutionServiceException {
-        def sb = []
-        def optparams = [:]
-        if (args && args instanceof String) {
-            optparams = args ? frameworkService.parseOptsFromString(args) : [:]
-
-        } else if (args && args instanceof String[]) {
-            optparams = frameworkService.parseOptsFromArray(args)
-            sb.addAll(args as List)
-        }
-
-        final options = scheduledExecution.options
-        if (options) {
-            def defaultoptions = [:]
-            options.each {Option opt ->
-                if (opt.required && null == optparams[opt.name] && opt.defaultValue) {
-                    defaultoptions[opt.name] = opt.defaultValue
-                }
-            }
-            if (defaultoptions) {
-
-                for (String key: defaultoptions.keySet().sort()) {
-                    sb<< "-"+key
-                    sb<< defaultoptions[key]
-                }
-            }
-        }
-        return sb
-    }
 
     /**
      * evaluate the options in the input properties, and if any Options defined for the Job have regex constraints,
@@ -1605,7 +1540,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
             }
             newopts[key] = val
         }
-        for (Option opt : sched.options.findAll {opts[it.name]}) {
+        for (Option opt : sched.options.findAll {opts.containsKey(it.name)}) {
             addOptVal(opt.name, opts.get(opt.name),opt)
         }
         //add any input options that don't match job options, to preserve information
