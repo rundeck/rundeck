@@ -276,26 +276,28 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
     private boolean claimScheduledJob(ScheduledExecution scheduledExecution, String serverUUID, String fromServerUUID=null){
         def schedId=scheduledExecution.id
         def claimed=false
-        try {
-            scheduledExecution = ScheduledExecution.lock(schedId)
-            scheduledExecution.refresh()
-            if (!scheduledExecution.scheduled) {
-                return false
+        if (!scheduledExecution.scheduled || scheduledExecution.serverNodeUUID != fromServerUUID) {
+            return false
+        }
+        while (!claimed) {
+            try {
+                ScheduledExecution.withNewSession {
+                    scheduledExecution = ScheduledExecution.get(schedId)
+                    scheduledExecution.refresh()
+
+                    scheduledExecution.serverNodeUUID=serverUUID
+                    if (scheduledExecution.save(flush: true)) {
+                        claimed=true
+                        log.info("claimScheduledJob: schedule claimed for ${schedId} on node ${serverUUID}")
+                    } else {
+                        log.debug("claimScheduledJob: failed for ${schedId} on node ${serverUUID}")
+                    }
+                }
+            } catch (org.springframework.dao.OptimisticLockingFailureException e) {
+                log.error("claimScheduledJob: failed for ${schedId} on node ${serverUUID}: locking failure")
+            } catch (StaleObjectStateException e) {
+                log.error("claimScheduledJob: failed for ${schedId} on node ${serverUUID}: stale data")
             }
-            if(scheduledExecution.serverNodeUUID!= fromServerUUID){
-                return false
-            }
-            scheduledExecution.serverNodeUUID=serverUUID
-            if (scheduledExecution.save(flush: true)) {
-                claimed=true
-                log.info("claimScheduledJob: schedule claimed for ${schedId} on node ${serverUUID}")
-            } else {
-                log.debug("claimScheduledJob: failed for ${schedId} on node ${serverUUID}")
-            }
-        } catch (org.springframework.dao.OptimisticLockingFailureException e) {
-            log.debug("claimScheduledJob: failed for ${schedId} on node ${serverUUID}")
-        } catch (StaleObjectStateException e) {
-            log.debug("claimScheduledJob: failed for ${schedId} on node ${serverUUID}")
         }
         return claimed
     }
@@ -386,7 +388,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
      * @return
      */
     def deleteScheduledExecution(ScheduledExecution scheduledExecution){
-        scheduledExecution = ScheduledExecution.lock(scheduledExecution.id)
+        scheduledExecution = ScheduledExecution.get(scheduledExecution.id)
         def jobname = scheduledExecution.generateJobScheduledName()
         def groupname = scheduledExecution.generateJobGroupName()
         def errmsg=null
@@ -416,6 +418,9 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                 deleteJob(jobname, groupname)
                 success = true
             } catch (org.springframework.dao.OptimisticLockingFailureException e) {
+                scheduledExecution.discard()
+                errmsg = 'Cannot delete Job "' + scheduledExecution.jobName + '" [' + scheduledExecution.extid + ']: it may have been modified or executed by another user'
+            } catch (StaleObjectStateException e) {
                 scheduledExecution.discard()
                 errmsg = 'Cannot delete Job "' + scheduledExecution.jobName + '" [' + scheduledExecution.extid + ']: it may have been modified or executed by another user'
             }
