@@ -75,6 +75,8 @@ public class ScheduledExecutionServiceTests extends GrailsUnitTestCase {
         assertEquals(serverUUID2, job2.serverNodeUUID)
         assertEquals(null, job3.serverNodeUUID)
 
+        registerMetaClass(ScheduledExecution)
+        ScheduledExecution.metaClass.static.withNewSession = { clos -> clos.call([:]) }
         def resultMap = testService.claimScheduledJobs(serverUUID)
 
         assertEquals(serverUUID, job1.serverNodeUUID)
@@ -96,6 +98,9 @@ public class ScheduledExecutionServiceTests extends GrailsUnitTestCase {
         assertEquals(null, job1.serverNodeUUID)
         assertEquals(serverUUID2, job2.serverNodeUUID)
         assertEquals(null, job3.serverNodeUUID)
+
+        registerMetaClass(ScheduledExecution)
+        ScheduledExecution.metaClass.static.withNewSession = { clos -> clos.call([:]) }
 
         def resultMap = testService.claimScheduledJobs(serverUUID, serverUUID2)
 
