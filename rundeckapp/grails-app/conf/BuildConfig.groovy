@@ -19,15 +19,14 @@ if (System.env["mavenRealm"] && System.properties["maven.host"] && System.proper
     mavenCredsDefined = true
 
     /*
-     * There's a bug in grails 1.3.7 (fixed in 2.0.0) where system properties 
-     * (e.g. -Dmaven.realm="Sonatype Nexus Repository Manager") are truncated at the first space
-     * (e.g. System.properties["maven.realm"] is "Sonatype")
+     * There's a bug in grails 1.3.7 where system properties (e.g. -Dmaven.realm="Sonatype Nexus Repository Manager") 
+     * are truncated at the first space (e.g. System.properties["maven.realm"] is "Sonatype")
      */
     // mavenRealm = System.properties["maven.realm"]
 
     /*
      * Fortunately, the bug doesn't affect reading environment variables.
-     * TODO: This is a hack until grails is upgraded to something more recent...
+     * TODO: This is a hack until grails is fixed
      */
     mavenRealm = System.env["mavenRealm"]
 
