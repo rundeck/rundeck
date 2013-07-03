@@ -38,12 +38,13 @@ class LoggingService {
             HashMap<String, String> jobcontext = ExecutionService.exportContextForExecution(execution)
             log.debug("Configured log writer plugins: ${names}")
             names.each { name ->
-                def plugin = pluginService.configurePlugin(name, streamingLogWriterPluginProviderService,
+                def result = pluginService.configurePlugin(name, streamingLogWriterPluginProviderService,
                         frameworkService.getFrameworkPropertyResolver(execution.project), PropertyScope.Instance)
-                if (null == plugin) {
+                if (null == result || null==result.instance) {
                     log.error("Failed to load StreamingLogWriter plugin named ${name}")
                     return
                 }
+                def plugin=result.instance
                 try {
                     plugin.initialize(jobcontext)
                     plugins << DisablingLogWriter.create(plugin, "StreamingLogWriter(${name})")
@@ -91,22 +92,23 @@ class LoggingService {
         if(pluginName){
             HashMap<String, String> jobcontext = ExecutionService.exportContextForExecution(execution)
             log.debug("Using log reader plugin ${pluginName}")
-            def plugin = pluginService.configurePlugin(pluginName, streamingLogReaderPluginProviderService,
+            def result = pluginService.configurePlugin(pluginName, streamingLogReaderPluginProviderService,
                     frameworkService.getFrameworkPropertyResolver(execution.project), PropertyScope.Instance)
-            if (plugin != null) {
+            if (result != null && result.instance != null) {
+                def plugin = result.instance
                 try {
-                    if(plugin.initialize(jobcontext)){
+                    if (plugin.initialize(jobcontext)) {
                         return new ExecutionLogReader(state: ExecutionLogState.AVAILABLE, reader: plugin)
-                    }else{
+                    } else {
                         return new ExecutionLogReader(state: ExecutionLogState.WAITING, reader: null)
                     }
                 } catch (Throwable e) {
                     log.error("Failed to initialize reader plugin ${pluginName}: " + e.message)
                     log.debug("Failed to initialize reader plugin ${pluginName}: " + e.message, e)
                 }
-            }else[
+            } else {
                 log.error("Failed to create reader plugin ${pluginName}")
-            ]
+            }
         }
 
         if(pluginName){

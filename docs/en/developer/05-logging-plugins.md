@@ -93,12 +93,12 @@ Create a Groovy script, and define your plugin by calling the `rundeckPlugin` me
 See the source directory `examples/example-groovy-log-plugins` for
 examples of all three provider types written in Groovy.
 
-* On github: [example-groovy-log-plugins](https://github.com/dtolabs/rundeck/tree/examples/example-groovy-log-plugins) 
+* On github: [example-groovy-log-plugins](https://github.com/dtolabs/rundeck/tree/development/examples/example-groovy-log-plugins) 
 
 See the source directory `examples/example-java-logging-plugins` for
 Java examples.
 
-* On github: [example-java-logging-plugins](https://github.com/dtolabs/rundeck/tree/examples/example-java-logging-plugins) 
+* On github: [example-java-logging-plugins](https://github.com/dtolabs/rundeck/tree/development/examples/example-java-logging-plugins) 
 
 ## Execution Context Data
 

@@ -43,7 +43,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
      * @param configuration map of configuration data
      * @return
      */
-    public Object configurePluginByName(String name, PluggableProviderService service, Map configuration) {
+    public Map configurePluginByName(String name, PluggableProviderService service, Map configuration) {
         final PropertyResolver resolver = PropertyResolverFactory.createInstanceResolver(configuration);
         return configurePluginByName(name, service, resolver, PropertyScope.InstanceOnly)
     }
@@ -58,7 +58,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
      * @param instanceConfiguration configuration or null
      * @return
      */
-    public Object configurePluginByName(String name, PluggableProviderService service, Framework framework,
+    public Map configurePluginByName(String name, PluggableProviderService service, Framework framework,
                                         String project, Map instanceConfiguration) {
 
         final PropertyResolver resolver = PropertyResolverFactory.createFrameworkProjectRuntimeResolver(framework,
@@ -72,29 +72,28 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
      * @param service provider service
      * @param resolver a property resolver
      * @param defaultScope default scope to search for property values when undeclared
-     * @return
+     * @return Map of [instance: plugin instance, configuration: resolved configuration properties]
      */
-    public Object configurePluginByName(String name, PluggableProviderService service, PropertyResolver resolver, PropertyScope defaultScope) {
+    public Map configurePluginByName(String name, PluggableProviderService service, PropertyResolver resolver, PropertyScope defaultScope) {
         Map pluginDesc = loadPluginDescriptorByName(name, service)
         Object plugin = pluginDesc['instance']
 
-//        if (null != configuration) {
-//            configuration = DataContextUtils.replaceDataReferences(configuration, context.getDataContext());
-//        }
         def description = pluginDesc['description']
+        Map<String, Object> config
         if (description && description instanceof Description) {
-            final Map<String, Object> config = PluginAdapterUtility.configureProperties(resolver, description, plugin, defaultScope);
+            config = PluginAdapterUtility.configureProperties(resolver, description, plugin, defaultScope);
         }
-        plugin
+        [instance:plugin, configuration:config]
     }
     /**
-     * Create and configure a plugin instance with the given bean or provider name using the framework, project name and instance configuration map
+     *
+     * Validate a provider for a service using the framework, project name and instance configuration map
      * @param name name of bean or provider
      * @param service provider service
      * @param framework the framework
      * @param project the project name
      * @param instanceConfiguration config map
-     * @return
+     * @return Map containing valid:true/false, and report: {@link Validator.Report}
      */
     public Map validatePluginByName(String name, PluggableProviderService service, Framework framework,
                                     String project, Map instanceConfiguration) {
@@ -104,32 +103,44 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
     }
 
     /**
-     * Create and configure a plugin instance with the given bean or provider name using the instance configuration map
+     * Validate a provider for a service with an instance configuration
      * @param name name of bean or provider
      * @param service provider service
      * @param instanceConfiguration config map
-     * @return
+     * @return Map containing valid:true/false, and report: {@link Validator.Report}
      */
     Map validatePluginByName(String name, PluggableProviderService service, Map instanceConfiguration) {
         final PropertyResolver resolver = PropertyResolverFactory.createInstanceResolver(instanceConfiguration);
         return validatePluginByName(name, service, resolver, PropertyScope.InstanceOnly)
     }
-/**
-     * Create and configure a plugin instance with the given bean or provider name using a property resolver and a
+    /**
+     * Validate a provider for a service using a property resolver and a
      * default property scope
      * @param name name of bean or provider
      * @param service provider service
      * @param resolver a property resolver
      * @param defaultScope default scope to search for property values when undeclared
-     * @return
+     * @return Map containing valid:true/false, and report: {@link Validator.Report}
      */
     public Map validatePluginByName(String name, PluggableProviderService service, PropertyResolver resolver, PropertyScope defaultScope) {
+        return validatePluginByName(name, service, resolver, defaultScope, null)
+    }
+    /**
+     * Validate a provider for a service using a property resolver and a
+     * default property scope, and an ignoredScope
+     * @param name name of bean or provider
+     * @param service provider service
+     * @param resolver a property resolver
+     * @param defaultScope default scope to search for property values when undeclared
+     * @return Map containing valid:true/false, and report: {@link Validator.Report}
+     */
+    public Map validatePluginByName(String name, PluggableProviderService service, PropertyResolver resolver, PropertyScope defaultScope, PropertyScope ignoredScope) {
         Map pluginDesc = loadPluginDescriptorByName(name, service)
         Map result = [valid: true]
         def description = pluginDesc['description']
         if (description && description instanceof Description) {
-            def report = Validator.validate(resolver, description, defaultScope)
-            result.valid=report.valid
+            def report = Validator.validate(resolver, description, defaultScope, ignoredScope)
+            result.valid = report.valid
             result.report = report
         }
         result

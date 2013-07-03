@@ -1,5 +1,6 @@
 package rundeck
 
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import org.codehaus.groovy.grails.commons.ConfigurationHolder
 
 import java.text.SimpleDateFormat
@@ -633,5 +634,12 @@ class UtilityTagLib{
             helpUrl= helpBase + path + '?' + helpParams + fragment
         }
         helpUrl
+    }
+
+    def pluginPropertyProjectScopeKey={attrs,body->
+        out<< PropertyResolverFactory.projectPropertyPrefix(PropertyResolverFactory.pluginPropertyPrefix(attrs.service, attrs.provider)) + (attrs.property ?: '')
+    }
+    def pluginPropertyFrameworkScopeKey={attrs,body->
+        out << PropertyResolverFactory.frameworkPropertyPrefix(PropertyResolverFactory.pluginPropertyPrefix(attrs.service, attrs.provider))+(attrs.property?:'')
     }
 }
