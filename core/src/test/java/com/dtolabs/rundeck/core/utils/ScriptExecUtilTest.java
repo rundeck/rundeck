@@ -20,7 +20,7 @@ import java.util.Map;
 public class ScriptExecUtilTest {
 
     @Test
-    public void noOsFamilyQuoted() {
+    public void noOsFamilyQuotedDefaultUnix() {
         testCreateScriptArgs(
                 null,
                 null,
@@ -28,7 +28,7 @@ public class ScriptExecUtilTest {
                 "bash -c",
                 "/path/to/file",
                 true,
-                new String[]{"bash", "-c", "/path/to/file arg1 arg2"}
+                new String[]{"bash", "-c", "'/path/to/file arg1 arg2'"}
         );
     }
     @Test

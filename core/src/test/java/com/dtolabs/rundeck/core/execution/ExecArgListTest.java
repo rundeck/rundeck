@@ -28,13 +28,13 @@ public class ExecArgListTest {
     }
 
     @Test
-    public void buildSimpleCommand() {
+    public void buildSimpleCommandNoOSFamily() {
         testBuildCommandForNode(ExecArgList.fromStrings(true, "a", "command"), list("a", "command"), null, null);
     }
 
     @Test
-    public void buildSsimpleSpace() {
-        testBuildCommandForNode(ExecArgList.fromStrings(true, "a", "test command"), list("a", "test command"), null,
+    public void buildSsimpleSpaceNoOSFamilyUnixQuotes() {
+        testBuildCommandForNode(ExecArgList.fromStrings(true, "a", "test command"), list("a", "'test command'"), null,
                 null);
     }
 

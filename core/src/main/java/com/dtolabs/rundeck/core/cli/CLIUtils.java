@@ -163,29 +163,21 @@ public class CLIUtils {
     }
 
     public static Converter<String, String> characterEscapeForOperatingSystem(String type) {
+        Converter<String, String> defaultConverter = UNIX_SHELL_ESCAPE;
         if ("unix".equalsIgnoreCase(type)) {
             return UNIX_SHELL_ESCAPE;
-        } else if ("windows".equalsIgnoreCase(type)) {
-            //TODO
-            return null;
-        } else if (null != type) {
-            //default
-            return UNIX_SHELL_ESCAPE;
+            //TODO: windows
         } else {
-            return null;
+            return defaultConverter;
         }
     }
     public static Converter<String, String> argumentQuoteForOperatingSystem(String type) {
+        Converter<String, String> defaultConverter = UNIX_ARGUMENT_QUOTE;
         if ("unix".equalsIgnoreCase(type)) {
             return UNIX_ARGUMENT_QUOTE;
-        } else if ("windows".equalsIgnoreCase(type)) {
-            //TODO
-            return null;
-        } else if (null != type) {
-            //default
-            return UNIX_ARGUMENT_QUOTE;
+            //TODO: windows
         } else {
-            return null;
+            return defaultConverter;
         }
     }
 
