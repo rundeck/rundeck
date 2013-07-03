@@ -753,6 +753,33 @@ Script URL:
         <scriptargs>-whatever something</scriptargs>
     </command>      
 
+#### Script Interpreter
+
+When using `<script>`, or `<scriptfile>`, you can declare an interpreter to use to execute the script and its args.
+
+Add `<scriptinterpreter>` to the `<command>`:
+
+    <command >
+        <scriptinterpreter>sudo -u usera</scriptinterpreter>
+        <scripturl>http://example.com/path/to/a/script</scripturl>
+        <scriptargs>-whatever something</scriptargs>
+    </command>
+
+This will be executed effectively with this commandline:
+
+    sudo -u usera script.sh -whatever something
+
+If the filename and arguments need to be quoted when passed to the interpreter, you can declare `argsQuoted='true'`:
+
+    <command >
+        <scriptinterpreter argsquoted='true'>sudo -u usera sh -c </scriptinterpreter>
+        <scripturl>http://example.com/path/to/a/script</scripturl>
+        <scriptargs>-whatever something</scriptargs>
+    </command>
+
+This will execute as:
+
+    sudo -u usera sh -c 'script.sh -whatever something'
 
 ### Job sequence step
 

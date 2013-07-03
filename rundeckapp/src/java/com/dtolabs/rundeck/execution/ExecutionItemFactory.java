@@ -38,9 +38,9 @@ import java.util.Map;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class ExecutionItemFactory {
-    public static StepExecutionItem createScriptFileItem(final String script,
-                                                     final String[] strings,
-                                                     final StepExecutionItem handler, final boolean keepgoingOnSuccess) {
+    public static StepExecutionItem createScriptFileItem(final String scriptInterpreter, final boolean interpreterArgsQuoted,
+            final String script,
+            final String[] strings, final StepExecutionItem handler, final boolean keepgoingOnSuccess) {
         return new ScriptFileCommandBase() {
             @Override
             public String getScript() {
@@ -61,11 +61,22 @@ public class ExecutionItemFactory {
             public boolean isKeepgoingOnSuccess() {
                 return keepgoingOnSuccess;
             }
+
+            public String getScriptInterpreter() {
+                return scriptInterpreter;
+            }
+
+            public boolean getInterpreterArgsQuoted() {
+                return interpreterArgsQuoted;
+            }
         };
     }
-    public static StepExecutionItem createScriptFileItem(final File file,
-                                                     final String[] strings,
-                                                     final StepExecutionItem handler, final boolean keepgoingOnSuccess){
+
+    public static StepExecutionItem createScriptFileItem(final String scriptInterpreter, final boolean
+            interpreterArgsQuoted,
+            final File file,
+            final String[] strings,
+            final StepExecutionItem handler, final boolean keepgoingOnSuccess) {
         final String filepath = file.getAbsolutePath();
         return new ScriptFileCommandBase() {
             @Override
@@ -87,10 +98,21 @@ public class ExecutionItemFactory {
             public boolean isKeepgoingOnSuccess() {
                 return keepgoingOnSuccess;
             }
+
+            public String getScriptInterpreter() {
+                return scriptInterpreter;
+            }
+
+            public boolean getInterpreterArgsQuoted() {
+                return interpreterArgsQuoted;
+            }
         };
     }
-    public static StepExecutionItem createScriptURLItem(final String urlString, final String[] strings,
-                                                    final StepExecutionItem handler, final boolean keepgoingOnSuccess){
+
+    public static StepExecutionItem createScriptURLItem(final String scriptInterpreter, final boolean
+            interpreterArgsQuoted,
+            final String urlString, final String[] strings,
+            final StepExecutionItem handler, final boolean keepgoingOnSuccess) {
         return new ScriptURLCommandBase() {
             public String getURLString() {
                 return urlString;
@@ -109,10 +131,19 @@ public class ExecutionItemFactory {
             public boolean isKeepgoingOnSuccess() {
                 return keepgoingOnSuccess;
             }
+
+            public boolean getInterpreterArgsQuoted() {
+                return interpreterArgsQuoted;
+            }
+
+            public String getScriptInterpreter() {
+                return scriptInterpreter;
+            }
         };
     }
+
     public static StepExecutionItem createExecCommand(final String[] command,
-                                                  final StepExecutionItem handler, final boolean keepgoingOnSuccess){
+            final StepExecutionItem handler, final boolean keepgoingOnSuccess) {
 
         return new ExecCommandBase() {
             public String[] getCommand() {
@@ -130,9 +161,10 @@ public class ExecutionItemFactory {
             }
         };
     }
+
     public static StepExecutionItem createJobRef(final String jobIdentifier,
-                                             final String[] args,
-                                             final StepExecutionItem handler, final boolean keepgoingOnSuccess){
+            final String[] args,
+            final StepExecutionItem handler, final boolean keepgoingOnSuccess) {
 
         return new JobRefCommandBase() {
             public String getJobIdentifier() {
@@ -160,20 +192,21 @@ public class ExecutionItemFactory {
      * Create a workflow execution item for a plugin node step.
      */
     public static StepExecutionItem createPluginNodeStepItem(final String type,
-                                                             final Map configuration,
-                                                         final boolean keepgoingOnSuccess,
-                                                         final StepExecutionItem handler) {
+            final Map configuration,
+            final boolean keepgoingOnSuccess,
+            final StepExecutionItem handler) {
 
-        return new PluginNodeStepExecutionItemImpl(type, configuration, keepgoingOnSuccess,handler);
+        return new PluginNodeStepExecutionItemImpl(type, configuration, keepgoingOnSuccess, handler);
     }
+
     /**
      * Create a workflow execution item for a plugin step.
      */
     public static StepExecutionItem createPluginStepItem(final String type,
-                                                         final Map configuration,
-                                                         final boolean keepgoingOnSuccess,
-                                                         final StepExecutionItem handler) {
+            final Map configuration,
+            final boolean keepgoingOnSuccess,
+            final StepExecutionItem handler) {
 
-        return new PluginStepExecutionItemImpl(type, configuration, keepgoingOnSuccess,handler);
+        return new PluginStepExecutionItemImpl(type, configuration, keepgoingOnSuccess, handler);
     }
 }

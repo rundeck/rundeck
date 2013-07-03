@@ -252,8 +252,15 @@ public class TestScriptURLNodeStepExecutor extends AbstractBaseTest {
                 return null;
             }
 
-            @Override
             public boolean isKeepgoingOnSuccess() {
+                return false;
+            }
+
+            public String getScriptInterpreter() {
+                return null;
+            }
+
+            public boolean getInterpreterArgsQuoted() {
                 return false;
             }
         };

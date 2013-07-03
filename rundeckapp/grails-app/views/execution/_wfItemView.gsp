@@ -53,9 +53,21 @@
                     <span class="argString"><g:truncate max="60" showtitle="true">${item.adhocRemoteString.encodeAsHTML()}</g:truncate></span>
                 </g:if>
                 <g:elseif test="${item.adhocLocalString}">
+                    <g:if test="${item.scriptInterpreter}">
+                        <span class="argString">${item.scriptInterpreter.encodeAsHTML()}</span>
+                        <g:if test="${item.interpreterArgsQuoted}">
+                            &quot;
+                        </g:if>
+                    </g:if>
                     <g:render template="/execution/scriptDetailDisplay" model="${[script:item.adhocLocalString,label:'Script: ']}"/>
                 </g:elseif>
                 <g:elseif test="${item.adhocFilepath}">
+                    <g:if test="${item.scriptInterpreter}">
+                        <span class="argString">${item.scriptInterpreter.encodeAsHTML()}</span>
+                        <g:if test="${item.interpreterArgsQuoted}">
+                            &quot;
+                        </g:if>
+                    </g:if>
                     <g:if test="${item.adhocFilepath=~/^https?:/}">
                         <g:set var="urlString" value="${item.adhocFilepath.replaceAll('^(https?://)([^:@/]+):[^@/]*@', '$1$2:****@')}"/>
                         <span class="argString"><g:truncate max="60"
@@ -67,6 +79,9 @@
                 </g:elseif>
                 <g:if test="${item.argString}">
                    <span class="argString"><g:truncate max="45"  showtitle="true">${item.argString.encodeAsHTML()}</g:truncate></span>
+                </g:if>
+                <g:if test="${item.interpreterArgsQuoted}">
+                    &quot;
                 </g:if>
             </g:else>
             </span>

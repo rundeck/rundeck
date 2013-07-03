@@ -75,7 +75,6 @@
      * @param selector a selector expression to identify a set of elements
      */
     var initTooltipForElements=function(selector){
-        _tooltipElemSelector=selector;
         $$(selector).each(function(elem){
             var ident=elem.identify();
             if($(ident+'_tooltip')){
@@ -101,10 +100,16 @@
                 Event.observe(elem,'mouseleave', out);
             }
         });
-        Event.observe(document.body, 'click', function(evt) {
-            //click outside of popup bubble hides it
-            tooltipMouseOut();
-        }, false);
+        if(null==_tooltipElemSelector){
+            _tooltipElemSelector = selector;
+            Event.observe(document.body, 'click', function (evt) {
+                //click outside of popup bubble hides it
+                tooltipMouseOut();
+            }, false);
+        }else{
+            _tooltipElemSelector = _tooltipElemSelector+', '+selector;
+        }
+
     };
     Element.addMethods( {
       loading: _setLoading
