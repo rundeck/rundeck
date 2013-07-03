@@ -511,7 +511,9 @@ var applinks={
     </tr>
     </tbody>
 
-    <g:hiddenField name="project" value="${scheduledExecution.project ? scheduledExecution.project.toString() : projects?.size() == 1 ? projects[0].name : session.project ? session.project : ''}"/>
+    <g:hiddenField name="project" value="${scheduledExecution.project ? scheduledExecution.project.toString() : projects?.size() == 1 ? projects[0].name : session.project ? session.project : ''}"
+        id="schedEditFrameworkProject"
+    />
 
 
     <tbody id="optionsContent" class="savedJobFields" style=" ${wdgt.styleVisible(if:wasSaved)}">
