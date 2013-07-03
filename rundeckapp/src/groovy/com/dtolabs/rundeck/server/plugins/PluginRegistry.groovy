@@ -17,9 +17,9 @@ public interface PluginRegistry {
      * @param name name of bean or provider
      * @param service provider service
      * @param configuration map of configuration data
-     * @return
+     * @return Map of [instance: plugin instance, configuration: resolved configuration properties]
      */
-    Object configurePluginByName(String name, PluggableProviderService service, Map configuration);
+    Map configurePluginByName(String name, PluggableProviderService service, Map configuration);
     /**
      * Create and configure a plugin instance with the given bean or provider name, resolving properties via
      * the framework and specified project properties as well as instance configuration.
@@ -28,9 +28,9 @@ public interface PluginRegistry {
      * @param framework framework
      * @param project project name or null
      * @param instanceConfiguration configuration or null
-     * @return
+     * @return Map of [instance: plugin instance, configuration: resolved configuration properties]
      */
-    Object configurePluginByName(String name, PluggableProviderService service, Framework framework,
+    Map configurePluginByName(String name, PluggableProviderService service, Framework framework,
                                         String project, Map instanceConfiguration) ;
     /**
      * Create and configure a plugin instance with the given bean or provider name using a property resolver and a
@@ -39,9 +39,9 @@ public interface PluginRegistry {
      * @param service provider service
      * @param resolver a property resolver
      * @param defaultScope default scope to search for property values when undeclared
-     * @return
+     * @return Map of [instance: plugin instance, configuration: resolved configuration properties]
      */
-    Object configurePluginByName(String name, PluggableProviderService service, PropertyResolver resolver, PropertyScope defaultScope) ;
+    Map configurePluginByName(String name, PluggableProviderService service, PropertyResolver resolver, PropertyScope defaultScope) ;
     /**
      * Validate a provider for a service using a property resolver and a
      * default property scope

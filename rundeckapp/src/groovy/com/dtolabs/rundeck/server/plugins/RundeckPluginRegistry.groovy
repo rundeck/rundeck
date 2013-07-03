@@ -43,7 +43,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
      * @param configuration map of configuration data
      * @return
      */
-    public Object configurePluginByName(String name, PluggableProviderService service, Map configuration) {
+    public Map configurePluginByName(String name, PluggableProviderService service, Map configuration) {
         final PropertyResolver resolver = PropertyResolverFactory.createInstanceResolver(configuration);
         return configurePluginByName(name, service, resolver, PropertyScope.InstanceOnly)
     }
@@ -58,7 +58,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
      * @param instanceConfiguration configuration or null
      * @return
      */
-    public Object configurePluginByName(String name, PluggableProviderService service, Framework framework,
+    public Map configurePluginByName(String name, PluggableProviderService service, Framework framework,
                                         String project, Map instanceConfiguration) {
 
         final PropertyResolver resolver = PropertyResolverFactory.createFrameworkProjectRuntimeResolver(framework,
@@ -72,20 +72,18 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
      * @param service provider service
      * @param resolver a property resolver
      * @param defaultScope default scope to search for property values when undeclared
-     * @return
+     * @return Map of [instance: plugin instance, configuration: resolved configuration properties]
      */
-    public Object configurePluginByName(String name, PluggableProviderService service, PropertyResolver resolver, PropertyScope defaultScope) {
+    public Map configurePluginByName(String name, PluggableProviderService service, PropertyResolver resolver, PropertyScope defaultScope) {
         Map pluginDesc = loadPluginDescriptorByName(name, service)
         Object plugin = pluginDesc['instance']
 
-//        if (null != configuration) {
-//            configuration = DataContextUtils.replaceDataReferences(configuration, context.getDataContext());
-//        }
         def description = pluginDesc['description']
+        Map<String, Object> config
         if (description && description instanceof Description) {
-            final Map<String, Object> config = PluginAdapterUtility.configureProperties(resolver, description, plugin, defaultScope);
+            config = PluginAdapterUtility.configureProperties(resolver, description, plugin, defaultScope);
         }
-        plugin
+        [instance:plugin, configuration:config]
     }
     /**
      *

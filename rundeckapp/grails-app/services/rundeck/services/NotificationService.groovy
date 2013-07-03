@@ -206,12 +206,12 @@ public class NotificationService implements ApplicationContextAware{
                     if (context && config) {
                         config = DataContextUtils.replaceDataReferences(config, context)
                     }
-                    didsend=triggerPlugin(trigger,execMap,n.type, frameworkService.getFrameworkPropertyResolver(source.project, config),config)
+                    didsend=triggerPlugin(trigger,execMap,n.type, frameworkService.getFrameworkPropertyResolver(source.project, config))
                 }else{
                     log.error("Unsupported notification type: " + n.type);
                 }
                 }catch(Throwable t){
-                    log.error("Error sending notification: ${n}: "+t.message);
+                    log.error("Error sending notification: ${n}: ${t.class}: "+t.message);
                     if (log.traceEnabled) {
                         log.trace("Notification failed",t)
                     }
@@ -230,13 +230,15 @@ public class NotificationService implements ApplicationContextAware{
      * @param type plugin type
      * @param config user configuration
      */
-    private boolean triggerPlugin(String trigger, Map data,String type, PropertyResolver resolver, Map config){
+    private boolean triggerPlugin(String trigger, Map data,String type, PropertyResolver resolver){
 
         //load plugin and configure with config values
-        def plugin = pluginService.configurePlugin(type, notificationPluginProviderService, resolver, PropertyScope.Instance)
-        if (!plugin) {
+        def result = pluginService.configurePlugin(type, notificationPluginProviderService, resolver, PropertyScope.Instance)
+        if (!result?.instance) {
             return false
         }
+        def plugin=result.instance
+        def config=result.configuration
 
         //invoke plugin
         //TODO: use executor
