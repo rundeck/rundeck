@@ -51,7 +51,8 @@
             trigger:'success',
             isEmail:isSuccess,
             isUrl:isSuccessUrl,
-            definedNotifications: scheduledExecution.notifications?.findAll{it.eventTrigger=='onsuccess'}
+            definedNotifications: scheduledExecution.notifications?.findAll{it.eventTrigger=='onsuccess'},
+            adminauth: adminauth
     ]}"
     />
 <g:render template="/scheduledExecution/editNotificationsTrigger"
@@ -60,7 +61,8 @@
                   trigger: 'failure',
                   isEmail: isFailure,
                   isUrl: isFailureUrl,
-                  definedNotifications: scheduledExecution.notifications?.findAll { it.eventTrigger == 'onfailure' }
+                  definedNotifications: scheduledExecution.notifications?.findAll { it.eventTrigger == 'onfailure' },
+                  adminauth: adminauth
           ]}"/>
 
 <g:render template="/scheduledExecution/editNotificationsTrigger"
@@ -69,5 +71,6 @@
                   trigger: 'start',
                   isEmail: defStart,
                   isUrl: defStartUrl,
-                  definedNotifications: scheduledExecution.notifications?.findAll { it.eventTrigger == 'onstart' }
+                  definedNotifications: scheduledExecution.notifications?.findAll { it.eventTrigger == 'onstart' },
+                  adminauth: adminauth
           ]}"/>

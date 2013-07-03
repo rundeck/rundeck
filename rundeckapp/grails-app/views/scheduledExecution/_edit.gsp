@@ -1,3 +1,4 @@
+<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 <g:if test="${flash.message}">
     <div class="message">${flash.message}</div>
 </g:if>
@@ -570,7 +571,9 @@ var applinks={
         </tr>
     </tbody>
     <tbody class="savedJobFields" style="${wdgt.styleVisible(if:wasSaved)}" >
-        <g:render template="editNotifications" model="[scheduledExecution:scheduledExecution, notificationPlugins: notificationPlugins]"/>
+    <g:set var="adminauth"
+           value="${auth.resourceAllowedTest(type: 'project', name: session.project, action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_READ], context: 'application')}"/>
+        <g:render template="editNotifications" model="[scheduledExecution:scheduledExecution, notificationPlugins: notificationPlugins,adminauth:adminauth]"/>
 
     <tr >
         <td>
