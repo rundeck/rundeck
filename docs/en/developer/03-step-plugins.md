@@ -34,7 +34,7 @@ There are several reasons to create a Rundeck Step Plugin:
 See the source directory `examples/example-java-step-plugin` for
 examples of all three provider types.
 
-* On github: [example-java-step-plugin](https://github.com/dtolabs/rundeck/tree/examples/example-java-step-plugin) 
+* On github: [example-java-step-plugin](https://github.com/dtolabs/rundeck/tree/development/examples/example-java-step-plugin) 
 
 ## Define a plugin provider class
 

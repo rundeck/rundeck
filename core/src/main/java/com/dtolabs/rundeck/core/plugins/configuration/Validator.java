@@ -74,13 +74,25 @@ public class Validator {
     public static Report validate(final Properties props, final Description desc) {
         final Report report = new Report();
         final List<Property> properties = desc.getProperties();
-        validate(props, report, properties);
+        validate(props, report, properties, null);
         return report;
     }
 
-    private static void validate(Properties props, Report report, List<Property> properties) {
+
+    /**
+     * Validate, ignoring properties below a scope, if set
+     * @param props
+     * @param report
+     * @param properties
+     * @param ignoredScope
+     */
+    private static void validate(Properties props, Report report, List<Property> properties, PropertyScope ignoredScope) {
         if(null!=properties){
             for (final Property property : properties) {
+                if (null != ignoredScope && property.getScope() != null
+                        && property.getScope().compareTo(ignoredScope) <= 0) {
+                    continue;
+                }
                 final String key = property.getName();
                 final String value = props.getProperty(key);
                 if (null == value || "".equals(value)) {
@@ -116,12 +128,26 @@ public class Validator {
      */
     public static Report validate(final PropertyResolver resolver, final Description description,
             PropertyScope defaultScope) {
+        return validate(resolver, description, defaultScope, null);
+    }
+
+    /**
+     * Validate a set of properties for a description, and return a report.
+     *
+     * @param resolver     property resolver
+     * @param description  description
+     * @param defaultScope default scope for properties
+     * @param ignoredScope ignore properties at or below this scope, or null to ignore none
+     * @return the validation report
+     */
+    public static Report validate(final PropertyResolver resolver, final Description description,
+            PropertyScope defaultScope, PropertyScope ignoredScope) {
         final Report report = new Report();
         final List<Property> properties = description.getProperties();
 
         final Map<String, Object> inputConfig = PluginAdapterUtility.mapDescribedProperties(resolver, description,
                 defaultScope);
-        validate(asProperties(inputConfig), report, properties);
+        validate(asProperties(inputConfig), report, properties, ignoredScope);
         return report;
     }
 

@@ -1,5 +1,7 @@
 package com.dtolabs.rundeck.server.plugins.builder
 
+import com.dtolabs.rundeck.core.plugins.configuration.Configurable
+import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
@@ -12,14 +14,20 @@ import org.apache.log4j.Logger
  * Date: 4/16/13
  * Time: 4:40 PM
  */
-class ScriptNotificationPlugin implements NotificationPlugin, Describable {
+class ScriptNotificationPlugin implements NotificationPlugin, Describable, Configurable {
     static Logger logger = Logger.getLogger(ScriptNotificationPlugin)
     Map<String, Closure> triggers
+    Map configuration
     private Description description;
 
     ScriptNotificationPlugin(Map<String, Closure> triggers, Description description) {
         this.triggers = triggers
         this.description = description
+    }
+
+    @Override
+    void configure(Properties configuration) throws ConfigurationException {
+        this.configuration = new HashMap(configuration)
     }
     public static boolean validNotificationClosure(Closure closure){
         if (closure.getMaximumNumberOfParameters() == 3) {
@@ -33,21 +41,23 @@ class ScriptNotificationPlugin implements NotificationPlugin, Describable {
     }
 
     @Override
-    boolean postNotification(String trigger, Map executionData, Map config) {
+    boolean postNotification(String trigger, Map executionData, Map ignored) {
+        //nb: we can ignore the map of extra configuration properties, because all config properties will
+        //be set via the Configurable interface.
         def closure = triggers[trigger]
         if (closure) {
             if (closure.getMaximumNumberOfParameters() == 3) {
-                return closure.call(trigger, executionData, config)
+                return closure.call(trigger, executionData, this.configuration)
             } else if (closure.getMaximumNumberOfParameters() == 2) {
-                return closure.call(executionData, config)
+                return closure.call(executionData, this.configuration)
             } else if (closure.getMaximumNumberOfParameters() == 1 && closure.parameterTypes[0] == Map) {
                 def Closure newclos = closure.clone()
-                newclos.delegate = config
+                newclos.delegate = this.configuration
                 newclos.resolveStrategy = Closure.DELEGATE_ONLY
                 return newclos.call(executionData)
             } else if (closure.getMaximumNumberOfParameters() == 1 && closure.parameterTypes[0] == Object) {
                 def Closure newclos = closure.clone()
-                newclos.delegate = [configuration: config, execution: executionData, trigger: trigger]
+                newclos.delegate = [configuration: this.configuration, execution: executionData, trigger: trigger]
                 newclos.resolveStrategy=Closure.DELEGATE_ONLY
                 return newclos.call(executionData)
             } else {

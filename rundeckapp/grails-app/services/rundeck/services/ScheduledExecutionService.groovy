@@ -1339,7 +1339,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         if (!pluginDesc) {
             return //closure
         }
-        def validation = notificationService.validatePluginConfig(notif.type, notif.configuration)
+        def validation = notificationService.validatePluginConfig(scheduledExecution.project, notif.type, notif.configuration)
         if (!validation.valid) {
             failed = true
             if(params instanceof Map){

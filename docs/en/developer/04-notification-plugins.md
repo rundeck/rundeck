@@ -106,6 +106,7 @@ The following values may be available after the job is finished (not available f
 
 * `context` - this is a map containing all of the context variables available to the execution when it ran or will run, such as [Job Options](../manual/job-workflows.html#context-variables). The contents of this Map are the specific context namespaces and variables.
     * `option` - a Map containing the Job Option keys/values
+    * `job` - a Map containing the Job context data, as provided to executions.  This map will contain some duplicate information as the `execution.job` map previously described.
 
 In Groovy, you can simply reference any values in the Execution data maps using [Groovy Gpath](http://groovy.codehaus.org/GPath), e.g.:
 
@@ -116,11 +117,7 @@ In Groovy, you can simply reference any values in the Execution data maps using 
 Each plugin can define a set of "configuration" properties which allow users to specify input that the plugin can
 use when it operates.
 
-Currently, Notification plugins support "Instance"-scoped configuration properties.  This simply means that 
-any configuration variables you define in your plugin are exposed in the Rundeck GUI when the user adds or modifies
-the plugin within a Job.
-
-We plan to support more configuration scopes in the future.
+Notification plugins support scoped properties, allowing some of the configuration to be defined, or defaulted, on a per-project or per-Rundeck instance basis.
 
 ## Types of Notification plugins
 
@@ -130,6 +127,18 @@ Rundeck supports two development modes for Notification plugins:
 2. Groovy-based deployed as a single `.groovy` script.
 
 Currently "script-based" plugins (shell scripts, that is) are not supported.
+
+## Example code
+
+See the source directory `examples/example-groovy-notification-plugins` for
+examples of Notification plugins written in Groovy.
+
+* On github: [example-groovy-notification-plugins](https://github.com/dtolabs/rundeck/tree/development/examples/example-groovy-notification-plugins) 
+
+See the source directory `examples/example-java-notification-plugin` for
+Java examples.
+
+* On github: [example-java-notification-plugin](https://github.com/dtolabs/rundeck/tree/development/examples/example-java-notification-plugin) 
 
 ## Java plugins
 
@@ -234,6 +243,7 @@ Each property has several attributes you can define, but only `name` and `type` 
 * `description` - a string describing the property
 * `required` - whether the property is required to have a value
 * `defaultValue` - any default value for the property
+* `scope` - defines the scope for the property.  Allowed values are described under the chapter [Workflow Step Plugin Development - Plugin Descriptions - Property Scopes](workflow-step-plugin-development.html#property-scopes). You may also simply use a String matching the name of the scope, e.g. "Instance".  The default scope if unspecified is "Instance".
 
 In addition to these properties, for `Select` or `FreeSelect` type, you can define:
 
@@ -244,6 +254,10 @@ To define a validation check for a property, use the first form and supply a clo
     phone_number(title: "Phone number"){
         it.replaceAll(/[^\d]/,'')==~/^\d{10}$/
     }
+
+**A Note about Scopes and Validation**:
+
+The user is presented with any `Instance` scoped properties in the Rundeck GUI when defining a Job, and any invalid configuration values will present an error when saving the Job.  This includes failing to set a value for a "required" property.  However, if you have properties that are scoped for `Project` or lower, those properties will not be shown in the GUI. In that case, the validation will not be checked for the properties when saving the Job definition, and will only be performed when the Notification is triggered.
 
 ### Notification handlers
 
@@ -333,6 +347,9 @@ alternate closure parameter lists:
 
             //redefining the same property will modify it
             test11 title:"My Select Field", description:"Free Select field", defaultValue:"y", required:true
+
+            //the scope indicates the property will not show up in the GUI when configuring the Notification, but must be defined in the project.properties or framework.properties at runtime
+            test11 required:true, scope: 'Project'
             
         }
 

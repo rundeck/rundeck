@@ -93,6 +93,8 @@
                     <g:if test="${pluginDescription instanceof Description}">
                         <table class="simpleForm">
                             <g:each in="${pluginDescription?.properties}" var="prop">
+                                <g:set var="outofscope" value="${prop.scope && !prop.scope.isInstanceLevel() && !prop.scope.isUnspecified()}"/>
+                                <g:if test="${!outofscope || adminauth}">
                                 <tr>
                                     <g:render
                                             template="/framework/pluginConfigPropertyField"
@@ -100,8 +102,12 @@
                                                     error: validation?.errors ? validation?.errors[prop.name] : null,
                                                     values: definedConfig,
                                                     fieldname: prefix + prop.name,
-                                                    origfieldname: 'orig.' + prefix + prop.name]}"/>
+                                                    origfieldname: 'orig.' + prefix + prop.name,
+                                                    outofscope: outofscope,
+                                                    pluginName: pluginName
+                                            ]}"/>
                                 </tr>
+                                </g:if>
                             </g:each>
                         </table>
                     </g:if>

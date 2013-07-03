@@ -5,6 +5,8 @@ import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.StreamingLogReader
 import com.dtolabs.rundeck.core.logging.StreamingLogWriter
+import com.dtolabs.rundeck.core.plugins.PluggableProviderService
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.logging.StreamingLogReaderPlugin
 import com.dtolabs.rundeck.plugins.logging.StreamingLogWriterPlugin
@@ -125,10 +127,10 @@ class LoggingServiceTests extends GrailsUnitTestCase {
         def plugins = [plugin1: plugin1, plugin2: plugin2]
 
         def pmock = mockFor(PluginService)
-        pmock.demand.configurePlugin(2..2) { pname, svc,resolv,scope ->
+        pmock.demand.configurePlugin(2..2) { String pname, PluggableProviderService svc, PropertyResolver resolv, PropertyScope scope ->
             assertTrue (pname in ["plugin1","plugin2"])
             assert scope==PropertyScope.Instance
-            plugins[pname]
+            [instance:plugins[pname],configuration:[:]]
         }
 
         def fmock = mockFor(FrameworkService)
@@ -286,13 +288,13 @@ class LoggingServiceTests extends GrailsUnitTestCase {
         def lfsvcmock = mockFor(LogFileStorageService)
         lfsvcmock.demand.requestLogFileReader(1..1){Execution e2->
             assert e==e2
-            test
+            fail("should not be called")
         }
         def pmock = mockFor(PluginService)
-        pmock.demand.configurePlugin(1..1) { pname, psvc, resolv, scope ->
+        pmock.demand.configurePlugin(2..2) { String pname, PluggableProviderService psvc, PropertyResolver resolv, PropertyScope scope ->
             assertEquals("plugin1",pname)
             assert scope == PropertyScope.Instance
-            test
+            [instance:test,configuration:[:]]
         }
         def fmock = mockFor(FrameworkService)
         fmock.demand.getFrameworkPropertyResolver(2..2) { project ->
@@ -328,13 +330,13 @@ class LoggingServiceTests extends GrailsUnitTestCase {
         def lfsvcmock = mockFor(LogFileStorageService)
         lfsvcmock.demand.requestLogFileReader(1..1){Execution e2->
             assert e==e2
-            test
+            fail("should not be called")
         }
         def pmock = mockFor(PluginService)
-        pmock.demand.configurePlugin(1..1) { pname, psvc, resolv, scope ->
+        pmock.demand.configurePlugin(2..2) { String pname, PluggableProviderService psvc, PropertyResolver resolv, PropertyScope scope ->
             assertEquals("plugin1",pname)
             assert scope == PropertyScope.Instance
-            test
+            [instance: test, configuration: [:]]
         }
         def fmock = mockFor(FrameworkService)
         fmock.demand.getFrameworkPropertyResolver(2..2) { project ->

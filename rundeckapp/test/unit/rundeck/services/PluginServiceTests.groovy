@@ -78,6 +78,7 @@ class PluginServiceTests extends GrailsUnitTestCase {
         boolean cpWithFrameworkCalled
         boolean cpWithResolverCalled
         boolean validateWithResolverCalled
+        boolean validateWithResolverIgnoredCalled
         boolean validateWithMapCalled
         boolean validateWithFrameworkCalled
         boolean listPluginDescriptorsCalled
@@ -87,28 +88,35 @@ class PluginServiceTests extends GrailsUnitTestCase {
         Map pluginDescriptorMap
         Map pluginListMap
         Map pluginValidation
+        Map extraConfiguration
 
         @Override
-        Object configurePluginByName(String name, PluggableProviderService service, Map configuration) {
+        Map configurePluginByName(String name, PluggableProviderService service, Map configuration) {
             cpbnMapCalled = true
-            return plugin
+            return [instance:plugin,configuration: extraConfiguration]
         }
 
         @Override
-        Object configurePluginByName(String name, PluggableProviderService service, Framework framework, String project, Map instanceConfiguration) {
+        Map configurePluginByName(String name, PluggableProviderService service, Framework framework, String project, Map instanceConfiguration) {
             cpWithFrameworkCalled=true
-            return plugin
+            return [instance: plugin, configuration: extraConfiguration]
         }
 
         @Override
-        Object configurePluginByName(String name, PluggableProviderService service, PropertyResolver resolver, PropertyScope defaultScope) {
+        Map configurePluginByName(String name, PluggableProviderService service, PropertyResolver resolver, PropertyScope defaultScope) {
             cpWithResolverCalled=true
-            return plugin
+            return [instance: plugin, configuration: extraConfiguration]
         }
 
         @Override
         Map validatePluginByName(String name, PluggableProviderService service, PropertyResolver resolver, PropertyScope defaultScope) {
             validateWithResolverCalled=true
+            return pluginValidation
+        }
+
+        @Override
+        Map validatePluginByName(String name, PluggableProviderService service, PropertyResolver resolver, PropertyScope defaultScope, PropertyScope ignoredScope) {
+            validateWithResolverIgnoredCalled = true
             return pluginValidation
         }
 
@@ -232,7 +240,8 @@ class PluginServiceTests extends GrailsUnitTestCase {
         testReg.pluginValidation = [valid: true]
         assertFalse(testReg.cpbnMapCalled)
         assertFalse(testReg.validateWithMapCalled)
-        assertEquals(test, service.configurePlugin("blah", [:], new testProvider()))
+        def result = service.configurePlugin("blah", [:], new testProvider())
+        assertEquals(test, result.instance)
         assertTrue(testReg.cpbnMapCalled)
         assertTrue(testReg.validateWithMapCalled)
     }
@@ -260,7 +269,8 @@ class PluginServiceTests extends GrailsUnitTestCase {
         testReg.pluginValidation=[valid:true]
         assertFalse(testReg.cpWithFrameworkCalled)
         assertFalse(testReg.validateWithFrameworkCalled)
-        assertEquals(test, service.configurePlugin("blah",[:], "project",(Framework)null,new testProvider()))
+        def result = service.configurePlugin("blah", [:], "project", (Framework) null, new testProvider())
+        assertEquals(test, result.instance)
         assertTrue(testReg.cpWithFrameworkCalled)
         assertTrue(testReg.validateWithFrameworkCalled)
     }
@@ -288,7 +298,8 @@ class PluginServiceTests extends GrailsUnitTestCase {
         testReg.pluginValidation= [valid: true]
         assertFalse(testReg.cpWithResolverCalled)
         assertFalse(testReg.validateWithResolverCalled)
-        assertEquals(test, service.configurePlugin("blah",new testProvider(),null,null))
+        def map = service.configurePlugin("blah", new testProvider(), null, null)
+        assertEquals(test, map.instance)
         assertTrue(testReg.cpWithResolverCalled)
         assertTrue(testReg.validateWithResolverCalled)
     }
@@ -325,7 +336,7 @@ class PluginServiceTests extends GrailsUnitTestCase {
         def test = ['a': [description: [name:'a',title:'A']], 'b': [description: [name:'b',title:'B']]]
         testReg.pluginDescriptorMap= test
         assertFalse(testReg.listPluginDescriptorsCalled)
-        def result = service.listPlugins(new testProvider("test service"))
+        def result = service.listPlugins(String,new testProvider("test service"))
         assertTrue(testReg.listPluginDescriptorsCalled)
         assertEquals([name: 'a', title: 'A'], result['a']['description'])
         assertEquals([name: 'b', title: 'B'], result['b']['description'])
@@ -338,7 +349,7 @@ class PluginServiceTests extends GrailsUnitTestCase {
         def test = ['a': [description: [name:'alphaTestService',title:'A']], 'b': [description: [name:'bTestService',title:'B']]]
         testReg.pluginDescriptorMap= test
         assertFalse(testReg.listPluginDescriptorsCalled)
-        def result = service.listPlugins(new testProvider("TestService"))
+        def result = service.listPlugins(String,new testProvider("TestService"))
         assertTrue(testReg.listPluginDescriptorsCalled)
         assertEquals([name: 'alpha', title: 'A'], result['a']['description'])
         assertEquals([name: 'b', title: 'B'], result['b']['description'])

@@ -5,6 +5,8 @@ import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogWriter
 import com.dtolabs.rundeck.core.logging.LogFileState
 import com.dtolabs.rundeck.core.logging.LogFileStorageException
 import com.dtolabs.rundeck.core.logging.StreamingLogWriter
+import com.dtolabs.rundeck.core.plugins.PluggableProviderService
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.logging.LogFileStoragePlugin
 import grails.test.*
@@ -275,10 +277,10 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
             assert project == "testprojz"
         }
         def pmock = mockFor(PluginService)
-        pmock.demand.configurePlugin(1) { pname, svc, resolv, scope ->
+        pmock.demand.configurePlugin(2..2) { String pname, PluggableProviderService psvc, PropertyResolver resolv, PropertyScope scope ->
             assertEquals("test1", pname)
             assert scope == PropertyScope.Instance
-            test
+            [instance: test, configuration: [:]]
         }
         registerMetaClass(ExecutionService)
         ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
@@ -380,10 +382,10 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
             assert project == "testprojz"
         }
         def pmock = mockFor(PluginService)
-        pmock.demand.configurePlugin(1) { pname, svc, resolv, scope ->
+        pmock.demand.configurePlugin(2..2) { String pname, PluggableProviderService psvc, PropertyResolver resolv, PropertyScope scope ->
             assertEquals("test1", pname)
             assert scope == PropertyScope.Instance
-            test
+            [instance: test, configuration: [:]]
         }
         def emock = new Expando()
         emock.executeCalled=false
@@ -585,10 +587,10 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
             assert project == "testprojz"
         }
         def pmock = mockFor(PluginService)
-        pmock.demand.configurePlugin(1) { pname, svc, resolv, scope ->
+        pmock.demand.configurePlugin(2..2) { String pname, PluggableProviderService psvc, PropertyResolver resolv, PropertyScope scope ->
             assertEquals("test1", pname)
             assert scope == PropertyScope.Instance
-            test
+            [instance: test, configuration: [:]]
         }
         registerMetaClass(ExecutionService)
         ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->

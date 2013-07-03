@@ -1,6 +1,7 @@
 package com.dtolabs.rundeck.server.plugins.builder
 
 import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyValidator
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.core.plugins.configuration.ValidationException
@@ -94,7 +95,12 @@ class ScriptPluginConfigBuilder {
         if(props['renderingOptions'] instanceof Map){
             pbuilder.renderingOptions(props['renderingOptions'])
         }
-        //TODO: scopes
+        if(props['scope'] instanceof PropertyScope) {
+            pbuilder.scope((PropertyScope) props['scope'])
+        }else if(props['scope'] instanceof String){
+            String scope = props['scope']
+            pbuilder.scope(PropertyScope.valueOf(scope))
+        }
         if (validationClosure != null) {
             //validation
             pbuilder.validator(new PropertyValidator() {
