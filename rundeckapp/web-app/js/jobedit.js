@@ -172,7 +172,9 @@ function _wfiedit(key,num,isErrorHandler) {
                     if (elem.type === 'text') {
                         elem.observe('keypress', noenter);
                     }
+
                 });
+                initTooltipForElements('#wfli_' + key + ' .obs_tooltip');
             }
         }
     });
@@ -205,6 +207,7 @@ function _wfisave(key,num, formelem,iseh) {
                         _hideWFItemControlsAddEH(num);
                     }
                 }
+                initTooltipForElements('#wfli_' + key + ' .obs_tooltip')
             }
         }
     });
@@ -255,6 +258,7 @@ function _wfiaddnew(type,nodestep) {
                     }
                 });
                 $(newitemElem).down('input[type=text]').focus();
+                initTooltipForElements('#wfli_' + num+ ' .obs_tooltip');
             }
         }
     });
@@ -413,12 +417,12 @@ function _wfiaddNewErrorHandler(elem,type,num,nodestep){
             evalScripts:true,
             onComplete:function (transport) {
                 if (transport.request.success()) {
-                    $(createElement).select('input').each(function (elem) {
+                    $(wfiehli).select('input').each(function (elem) {
                         if (elem.type == 'text') {
                             elem.observe('keypress', noenter);
                         }
                     });
-
+                    initTooltipForElements('#wfli_' + key + ' .obs_tooltip');
                 }
             }
         });

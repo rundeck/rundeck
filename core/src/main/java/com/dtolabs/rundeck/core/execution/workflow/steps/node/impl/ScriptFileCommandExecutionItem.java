@@ -62,4 +62,18 @@ public interface ScriptFileCommandExecutionItem extends HandlerExecutionItem,Nod
      * Return arguments to the script
      */
     public abstract String[] getArgs();
+
+    /**
+     * Get the server-local script path
+     *
+     * @return server-side script path
+     */
+    public abstract String getScriptInterpreter();
+
+    /**
+     * Get the server-local script path
+     *
+     * @return server-side script path
+     */
+    public abstract boolean getInterpreterArgsQuoted();
 }

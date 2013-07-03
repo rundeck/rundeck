@@ -41,4 +41,18 @@ public interface ScriptURLCommandExecutionItem extends HandlerExecutionItem {
      * Return arguments to the script
      */
     public String[] getArgs();
+
+    /**
+     * Get the server-local script path
+     *
+     * @return server-side script path
+     */
+    public abstract String getScriptInterpreter();
+
+    /**
+     * Get the server-local script path
+     *
+     * @return server-side script path
+     */
+    public abstract boolean getInterpreterArgsQuoted();
 }

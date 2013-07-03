@@ -223,7 +223,6 @@ public class SSHTaskBuilder {
         final String commandString = StringUtils.join(args," ");
         sshexecTask.setCommand(commandString);
         sshexecTask.setTimeout(sshConnectionInfo.getSSHTimeout());
-        sshexecTask.setOutputproperty("sshexec.output");
 
         DataContextUtils.addEnvVars(sshexecTask, dataContext);
     }

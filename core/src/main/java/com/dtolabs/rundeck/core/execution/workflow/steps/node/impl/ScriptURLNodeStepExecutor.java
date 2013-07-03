@@ -30,6 +30,7 @@ import com.dtolabs.rundeck.core.common.UpdateUtils;
 import com.dtolabs.rundeck.core.common.impl.URLFileUpdater;
 import com.dtolabs.rundeck.core.common.impl.URLFileUpdaterBuilder;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import com.dtolabs.rundeck.core.execution.ExecArgList;
 import com.dtolabs.rundeck.core.execution.ExecutionService;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
@@ -41,6 +42,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionI
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.utils.Converter;
+import com.dtolabs.rundeck.core.utils.ScriptExecUtil;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.httpclient.URIException;
 import org.apache.commons.httpclient.util.URIUtil;
@@ -176,18 +178,19 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
         }
 
         final String[] args = script.getArgs();
-        //replace data references
-        String[] newargs = null;
-        if (null != args && args.length > 0) {
-            newargs = new String[args.length + 1];
-            final String[] replargs = DataContextUtils.replaceDataReferences(args, nodeDataContext);
-            newargs[0] = filepath;
-            System.arraycopy(replargs, 0, newargs, 1, replargs.length);
-        } else {
-            newargs = new String[]{filepath};
-        }
+        final String scriptInterpreter = script.getScriptInterpreter();
+        final boolean interpreterargsquoted = script.getInterpreterArgsQuoted();
 
-        return framework.getExecutionService().executeCommand(context, newargs, node);
+        //build arg list to execute the script
+        ExecArgList scriptArgList = ScriptExecUtil.createScriptArgList(
+                filepath, null,
+                args,
+                scriptInterpreter,
+                interpreterargsquoted
+        );
+
+        return framework.getExecutionService().executeCommand(context, scriptArgList, node);
+        //TODO: remove remote temp file after exec?
     }
 
     public static final Converter<String, String> urlPathEncoder = new Converter<String, String>() {

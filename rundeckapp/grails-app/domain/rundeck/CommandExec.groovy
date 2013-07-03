@@ -30,6 +30,8 @@ public class CommandExec extends WorkflowStep  {
     String adhocLocalString
     String adhocFilepath
     Boolean adhocExecution = false
+    String scriptInterpreter
+    Boolean interpreterArgsQuoted
     static transients = ['nodeStep']
 
     static mapping = {
@@ -37,6 +39,7 @@ public class CommandExec extends WorkflowStep  {
         adhocRemoteString type: 'text'
         adhocFilepath type: 'text'
         argString type: 'text'
+        scriptInterpreter type: 'text'
     }
     public String toString() {
         StringBuffer sb = new StringBuffer()
@@ -44,6 +47,8 @@ public class CommandExec extends WorkflowStep  {
         sb << (adhocRemoteString ? "exec: ${adhocRemoteString}" : '')
         sb << (adhocLocalString ? "script: ${adhocLocalString}" : '')
         sb << (adhocFilepath ? "scriptfile: ${adhocFilepath}" : '')
+        sb << (scriptInterpreter ? "interpreter: ${scriptInterpreter} " : '')
+        sb << (interpreterArgsQuoted ? "quoted?: ${interpreterArgsQuoted} " : '')
         sb << (argString ? "scriptargs: ${argString}" : '')
         sb << (errorHandler ? " [handler: ${errorHandler}]" : '')
         sb << (null!= keepgoingOnSuccess ? " keepgoingOnSuccess: ${keepgoingOnSuccess}" : '')
@@ -54,10 +59,13 @@ public class CommandExec extends WorkflowStep  {
 
     public String summarize(){
         StringBuffer sb = new StringBuffer()
+        sb << (scriptInterpreter ? "${scriptInterpreter}" : '')
+        sb << (interpreterArgsQuoted ? "'" : '')
         sb << (adhocRemoteString ? "${adhocRemoteString}" : '')
         sb << (adhocLocalString ? "${adhocLocalString}" : '')
         sb << (adhocFilepath ? "${adhocFilepath}" : '')
         sb << (argString ? " -- ${argString}" : '')
+        sb << (interpreterArgsQuoted ? "'" : '')
         return sb.toString()
     }
 
@@ -66,6 +74,8 @@ public class CommandExec extends WorkflowStep  {
         adhocRemoteString(nullable:true)
         adhocLocalString(nullable:true)
         adhocFilepath(nullable:true)
+        scriptInterpreter(nullable:true)
+        interpreterArgsQuoted(nullable:true)
         errorHandler(nullable: true)
         keepgoingOnSuccess(nullable: true)
     }
@@ -95,6 +105,10 @@ public class CommandExec extends WorkflowStep  {
                 map.scriptfile=adhocFilepath
             }
         }
+        if(scriptInterpreter && !adhocRemoteString) {
+            map.scriptInterpreter = scriptInterpreter
+            map.interpreterArgsQuoted = !!interpreterArgsQuoted
+        }
         if(argString && !adhocRemoteString){
             map.args=argString
         }
@@ -120,6 +134,10 @@ public class CommandExec extends WorkflowStep  {
         }else if(data.scripturl != null){
             ce.adhocExecution = true
             ce.adhocFilepath=data.scripturl.toString()
+        }
+        if(data.scriptInterpreter != null && !ce.adhocRemoteString){
+            ce.scriptInterpreter=data.scriptInterpreter
+            ce.interpreterArgsQuoted = !!data.interpreterArgsQuoted
         }
         if(data.args != null && !ce.adhocRemoteString){
             ce.argString=data.args.toString()

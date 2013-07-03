@@ -738,6 +738,14 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams, St
                 public boolean isKeepgoingOnSuccess() {
                     return false;
                 }
+
+                public String getScriptInterpreter() {
+                    return null;
+                }
+
+                public boolean getInterpreterArgsQuoted() {
+                    return false;
+                }
             };
         } else {
             return new ExecCommandBase() {

@@ -27,7 +27,10 @@ package com.dtolabs.rundeck.core.utils;
 import com.dtolabs.rundeck.core.cli.CLIUtils;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import com.dtolabs.rundeck.core.execution.ExecArgList;
 import com.dtolabs.utils.Streams;
+import org.apache.commons.collections.Predicate;
+import org.apache.commons.collections.PredicateUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -59,9 +62,9 @@ public class ScriptExecUtil {
      * @throws InterruptedException if interrupted while waiting for the command to finish
      */
     public static int runLocalCommand(final String[] command,
-                                      final Map<String, String> envMap, final File workingdir,
-                                      final OutputStream outputStream, final OutputStream errorStream)
-        throws IOException, InterruptedException {
+            final Map<String, String> envMap, final File workingdir,
+            final OutputStream outputStream, final OutputStream errorStream)
+            throws IOException, InterruptedException {
         final String[] envarr = createEnvironmentArray(envMap);
 
         final Runtime runtime = Runtime.getRuntime();
@@ -105,12 +108,61 @@ public class ScriptExecUtil {
      * @param filepath              remote filepath for the script
      */
     public static String[] createScriptArgs(final Map<String, Map<String, String>> localDataContext,
-                                            final String scriptargs,
-                                            final String[] scriptargsarr,
-                                            final String scriptinterpreter,
-                                            final boolean interpreterargsquoted, final String filepath) {
+            final String scriptargs,
+            final String[] scriptargsarr,
+            final String scriptinterpreter,
+            final boolean interpreterargsquoted, final String filepath) {
         return createScriptArgs(localDataContext, null, scriptargs, scriptargsarr, scriptinterpreter,
                 interpreterargsquoted, filepath);
+    }
+
+    /**
+     * Generate argument array for a script file invocation
+     *
+     * @param filepath              remote filepath for the script
+     * @param scriptargs            arguments to the script file
+     * @param scriptargsarr         arguments to the script file as an array
+     * @param scriptinterpreter     interpreter invocation for the file, or null to invoke it directly
+     * @param interpreterargsquoted if true, pass the script file and args as a single argument to the interpreter
+     */
+    public static ExecArgList createScriptArgList(final String filepath, final String scriptargs,
+            final String[] scriptargsarr,
+            final String scriptinterpreter,
+            final boolean interpreterargsquoted) {
+
+        ExecArgList.Builder builder = ExecArgList.builder();
+        if (null != scriptinterpreter) {
+            builder.args(Arrays.asList(OptsUtil.burst(scriptinterpreter)), false);
+        }
+        if (null != scriptinterpreter && interpreterargsquoted) {
+            ExecArgList.Builder sub = builder.subList(true);
+            addScriptFileArgList(filepath, scriptargs, scriptargsarr, sub, needsQuoting);
+            sub.parent();
+        } else {
+            addScriptFileArgList(filepath, scriptargs, scriptargsarr, builder, needsQuoting);
+        }
+        return builder.build();
+    }
+
+    static Predicate any(Predicate... preds) {
+        return PredicateUtils.anyPredicate(preds);
+    }
+
+    static final Predicate needsQuoting = any(
+            DataContextUtils.stringContainsPropertyReferencePredicate,
+            CLIUtils.stringContainsWhitespacePredicate,
+            CLIUtils.stringContainsQuotePredicate
+    );
+
+
+    private static void addScriptFileArgList(String filepath, String scriptargs, String[] scriptargsarr,
+            ExecArgList.Builder builder, Predicate quoted) {
+        builder.arg(filepath, false);
+        if (null != scriptargs) {
+            builder.args(OptsUtil.burst(scriptargs), quoted);
+        } else if (null != scriptargsarr) {
+            builder.args(scriptargsarr, quoted);
+        }
     }
 
     /**
@@ -132,40 +184,36 @@ public class ScriptExecUtil {
             final boolean interpreterargsquoted, final String filepath) {
         final ArrayList<String> arglist = new ArrayList<String>();
         if (null != scriptinterpreter) {
-            arglist.addAll(Arrays.asList(scriptinterpreter.split(" ")));
+            arglist.addAll(Arrays.asList(OptsUtil.burst(scriptinterpreter)));
         }
         if (null != scriptinterpreter && interpreterargsquoted) {
-            final StringBuilder sbuf = new StringBuilder(filepath);
-            if (null != scriptargs) {
-                sbuf.append(" ");
-                sbuf.append(DataContextUtils.replaceDataReferences(scriptargs, localDataContext));
-            } else if (null != scriptargsarr) {
-
-                final String[] strings = DataContextUtils.replaceDataReferences(scriptargsarr, localDataContext);
-                for (final String string : strings) {
-                    sbuf.append(" ");
-                    sbuf.append(string);
-                }
-            }
-            arglist.add(sbuf.toString());
+            final ArrayList<String> sublist = new ArrayList<String>();
+            sublist.add(filepath);
+            addQuotedArgs(localDataContext, node, scriptargs, scriptargsarr, sublist, true);
+            arglist.add(DataContextUtils.join(sublist, " "));
         } else {
             arglist.add(filepath);
-            if (null != scriptargs) {
-                arglist.addAll(Arrays.asList(DataContextUtils.replaceDataReferences(scriptargs.split(" "),
-                        localDataContext)));
-            } else if (null != scriptargsarr) {
+            addQuotedArgs(localDataContext, node, scriptargs, scriptargsarr, arglist, false);
+        }
+        return arglist.toArray(new String[arglist.size()]);
+    }
+
+    private static void addQuotedArgs(Map<String, Map<String, String>> localDataContext, INodeEntry node, String
+            scriptargs, String[] scriptargsarr, ArrayList<String> arglist, boolean quoted) {
+        if (null != scriptargs) {
+            arglist.addAll(Arrays.asList(DataContextUtils.replaceDataReferences(scriptargs.split(" "),
+                    localDataContext)));
+        } else if (null != scriptargsarr) {
+            if (!quoted) {
+                arglist.addAll(Arrays.asList(scriptargsarr));
+            } else {
                 final String[] newargs = DataContextUtils.replaceDataReferences(scriptargsarr, localDataContext);
-                Converter<String, String> quote;
-                if (null != node) {
-                    quote = CLIUtils.argumentQuoteForOperatingSystem(node.getOsFamily());
-                } else {
-                    quote = CLIUtils.argumentQuoteForOperatingSystem(null);
-                }
+                Converter<String, String> quote = getQuoteConverterForNode(node);
                 //quote args that have substituted context input, or have whitespace
                 //allow other args to be used literally
                 for (int i = 0; i < newargs.length; i++) {
                     String replaced = newargs[i];
-                    if (!replaced.equals(scriptargsarr[i]) || CLIUtils.containsSpace(replaced)) {
+                    if (null != quote && (!replaced.equals(scriptargsarr[i]) || CLIUtils.containsSpace(replaced))) {
                         arglist.add(quote.convert(replaced));
                     } else {
                         arglist.add(replaced);
@@ -173,6 +221,15 @@ public class ScriptExecUtil {
                 }
             }
         }
-        return arglist.toArray(new String[arglist.size()]);
+    }
+
+    private static Converter<String, String> getQuoteConverterForNode(INodeEntry node) {
+        Converter<String, String> quote;
+        if (null != node) {
+            quote = CLIUtils.argumentQuoteForOperatingSystem(node.getOsFamily());
+        } else {
+            quote = CLIUtils.argumentQuoteForOperatingSystem(null);
+        }
+        return quote;
     }
 }

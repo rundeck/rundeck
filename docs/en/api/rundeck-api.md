@@ -7,7 +7,7 @@ Rundeck provides a Web API for use with your application.
 API Version Number
 ----
 
-The current API version is `7`.
+The current API version is `8`.
 
 For API endpoints described in this document, the *minimum* API version required for their
 use is indicated by the URL used, e.g.:
@@ -34,6 +34,12 @@ If the version number is not included or if the requested version number is unsu
 ### Changes
 
 Changes introduced by API Version number:
+
+**Version 8**:
+
+* Updated endpoints 
+    * `/api/8/run/script` and `/api/8/run/url` -  [Running Adhoc Scripts](#running-adhoc-scripts) and [Running Adhoc Script URLs](#running-adhoc-script-urls)
+        * Added two optional parameters for `scriptInterpreter` and `interpreterArgsQuoted`
 
 **Version 7**:
 
@@ -1013,6 +1019,8 @@ Optional Parameters:
 * `nodeThreadcount`: threadcount to use
 * `nodeKeepgoing`: if "true", continue executing on other nodes even if some fail.
 * `asUser` : specifies a username identifying the user who ran the script. Requires `runAs` permission.
+* `scriptInterpreter`: a command to use to run the script (*since version 8*)
+* `interpreterArgsQuoted`: `true`/`false`: if true, the script file and arguments will be quoted as the last argument to the `scriptInterpreter` (*since version 8*)
 
 Node filter parameters as described under [Using Node Filters](#using-node-filters)
 
@@ -1020,6 +1028,8 @@ Result: A success message, and a single `<execution>` item identifying the
 new execution by ID:
 
     <execution id="X"/>
+
+**Since API version 8**: The script interpreter and whether the arguments to the interpreter are quoted can be specified.
 
 ### Running Adhoc Script URLs
 
@@ -1047,6 +1057,8 @@ Optional Parameters:
 * `nodeThreadcount`: threadcount to use
 * `nodeKeepgoing`: if "true", continue executing on other nodes even if some fail.
 * `asUser` : specifies a username identifying the user who ran the script. Requires `runAs` permission.
+* `scriptInterpreter`: a command to use to run the script (*since version 8*)
+* `interpreterArgsQuoted`: `true`/`false`: if true, the script file and arguments will be quoted as the last argument to the `scriptInterpreter` (*since version 8*)
 
 Node filter parameters as described under [Using Node Filters](#using-node-filters)
 
@@ -1054,6 +1066,8 @@ Result: A success message, and a single `<execution>` item identifying the
 new execution by ID:
 
     <execution id="X"/>
+
+**Since API version 8**: The script interpreter and whether the arguments to the interpreter are quoted can be specified.
 
 ### Listing Projects ###
 

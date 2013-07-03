@@ -287,6 +287,14 @@ class JobsXMLCodec {
             def fixup = { cmd ->
                 if (cmd.scriptfile!=null || cmd.script!=null || cmd.scripturl!=null) {
                     cmd.args = cmd.remove('scriptargs')?.toString()
+                    if(cmd.scriptinterpreter instanceof Map){
+                        cmd.interpreterArgsQuoted = Boolean.parseBoolean(cmd.scriptinterpreter.remove('argsquoted'))
+                        cmd.scriptInterpreter = cmd.scriptinterpreter.remove('<text>')
+                    }else if(cmd.scriptinterpreter instanceof String){
+                        cmd.scriptInterpreter = cmd.remove('scriptinterpreter')
+                    }else if(cmd.scriptinterpreter !=null){
+                        throw new JobXMLException("'command/scriptinterpreter' value incorrect: ${cmd.scriptinterpreter}, expected String or map")
+                    }
                 } else if (cmd.jobref!=null) {
                     if(!(cmd.jobref instanceof Map)){
                         throw new JobXMLException("'jobref' value incorrect: ${cmd.jobref}, expected elements: arg, group, name")
@@ -493,6 +501,13 @@ class JobsXMLCodec {
                 if (cmd.script) {
                     cmd[BuilderUtil.asCDATAName('script')] = cmd.remove('script')
                 }
+                if (cmd.scriptInterpreter) {
+                    cmd.scriptinterpreter = ['<text>': cmd.remove('scriptInterpreter')]
+                    if(!!cmd.interpreterArgsQuoted) {
+                        BuilderUtil.addAttribute(cmd.scriptinterpreter, "argsquoted", "true")
+                    }
+                }
+                cmd.remove('interpreterArgsQuoted')
             } else if (cmd.jobref) {
                 BuilderUtil.makeAttribute(cmd.jobref, 'name')
                 if (cmd.jobref.group) {
