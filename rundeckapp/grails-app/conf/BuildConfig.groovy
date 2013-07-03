@@ -1,12 +1,42 @@
 /*
  * The following allows grails to leverage a different url setting for maven central. This would
- * typically be passed along as a -D parameter to grails, ie: grails -Dmaven.central.ur=http://...
+ * typically be passed along as a -D parameter to grails, ie: grails -Dmaven.central.url=http://...
  */
 def mavenCentralUrl = "http://repo1.maven.org/maven2/"
 if (System.properties["maven.central.url"]) {
     mavenCentralUrl = System.properties["maven.central.url"]
 }
 println "Maven Central: ${mavenCentralUrl}"
+
+Boolean mavenCredsDefined = false
+def mavenRealm
+def mavenHost
+def mavenUser
+def mavenPassword
+
+// TODO: System.env["mavenRealm"] is a hack.  See comments below.
+if (System.env["mavenRealm"] && System.properties["maven.host"] && System.properties["maven.user"] && System.properties["maven.password"]) {
+    mavenCredsDefined = true
+
+    /*
+     * There's a bug in grails 1.3.7 (fixed in 2.0.0) where system properties 
+     * (e.g. -Dmaven.realm="Sonatype Nexus Repository Manager") are truncated at the first space
+     * (e.g. System.properties["maven.realm"] is "Sonatype")
+     */
+    // mavenRealm = System.properties["maven.realm"]
+
+    /*
+     * Fortunately, the bug doesn't affect reading environment variables.
+     * TODO: This is a hack until grails is upgraded to something more recent...
+     */
+    mavenRealm = System.env["mavenRealm"]
+
+    mavenHost = System.properties["maven.host"]
+    mavenUser = System.properties["maven.user"]
+    mavenPassword = System.properties["maven.password"]
+
+    println "Maven credentials:\n\tRealm: ${mavenRealm}\n\tHost: ${mavenHost}\n\tUser: ${mavenUser}"
+}
 
 def grailsLocalRepo = "grails-app/plugins"
 if (System.properties["grails.local.repo"]) {
@@ -25,6 +55,15 @@ grails.project.dependency.resolution = {
         grailsPlugins()
         mavenRepo mavenCentralUrl
         grailsCentral()
+    }
+
+    if (mavenCredsDefined) {
+        credentials {
+            realm = mavenRealm
+            host = mavenHost
+            username = mavenUser
+            password = mavenPassword
+        }
     }
 
     grails.war.resources = {def stagingDir ->

@@ -38,6 +38,8 @@ def grailsLocalRepo = hasProperty("grailsLocalRepo") ? grailsLocalRepo : "grails
 def grailsDownloadUrl = "http://dist.springframework.org.s3.amazonaws.com/release/GRAILS/grails-${grailsVersion}.zip"
 def grailsHome = "${grailsInstallLocation}/${grailsBaseName}"
 def grailsCommandLine = "${grailsHome}/bin/grails"
+def mavenCredsDefined = hasProperty("mavenUser") && hasProperty("mavenPassword") && hasProperty("mavenRealm") && hasProperty("mavenHost")
+def mavenCreds = mavenCredsDefined ? "-Dmaven.user=${mavenUser} -Dmaven.password=${mavenPassword} -Dmaven.realm=${mavenRealm} -Dmaven.host=${mavenHost}" : ""
 def warFileName = "rundeck-${version}.war"
 def warFileLocation = "${project.projectDir}/target/${warFileName}"
 
@@ -112,6 +114,7 @@ task installJettyPlugin(type: Exec, dependsOn: [extractGrails]) {
 	environment 'GRAILS_HOME', grailsHome
 	commandLine grailsCommandLine
 	args "-Dmaven.central.url=${mavenCentralUrl}",
+            "${mavenCreds}",
             "-Dgrails.local.repo=${grailsLocalRepo}",
             "-DRUNDECK_VERSION=${version}",
             'install-plugin', 
@@ -143,6 +146,7 @@ task testGrails(type: Exec, overwrite: true, dependsOn: [installJettyPlugin, ins
 	environment 'GRAILS_HOME', grailsHome
 	commandLine grailsCommandLine
 	args "-Dmaven.central.url=${mavenCentralUrl}",
+            "${mavenCreds}",
             "-Dgrails.local.repo=${grailsLocalRepo}",
             "-DRUNDECK_VERSION=${version}",
             "-Drdeck.base=${project.buildDir}/rdeck_base",
@@ -162,6 +166,7 @@ task grailsWar(type: Exec, overwrite:true, dependsOn: [installJettyPlugin, insta
 	environment 'GRAILS_HOME', grailsHome
 	commandLine grailsCommandLine
 	args "-Dmaven.central.url=${mavenCentralUrl}",
+            "${mavenCreds}",
             "-Dgrails.local.repo=${grailsLocalRepo}",
             "-DRUNDECK_VERSION=${version}",
             'prod',
@@ -191,6 +196,7 @@ task install(type: Exec, overwrite: true, dependsOn: grailsWar) {
 	workingDir project.projectDir
 	commandLine grailsCommandLine
 	args "-Dmaven.central.url=${mavenCentralUrl}",
+            "${mavenCreds}",
             "-Dgrails.local.repo=${grailsLocalRepo}",
             'maven-install'
 }
