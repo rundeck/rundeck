@@ -4,6 +4,9 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandEx
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCommandExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptURLCommandExecutionItem
 import grails.test.GrailsUnitTestCase
+import grails.test.mixin.Mock
+import grails.test.mixin.TestFor
+import groovy.mock.interceptor.MockFor
 import org.codehaus.groovy.grails.commons.ConfigurationHolder
 import rundeck.ScheduledExecution
 import rundeck.User
@@ -11,52 +14,51 @@ import rundeck.Workflow
 import rundeck.Execution
 import rundeck.CommandExec
 import rundeck.Option
+import rundeck.WorkflowStep
 import rundeck.services.ExecutionService
 import rundeck.services.ExecutionServiceException
 import rundeck.services.FrameworkService
+import rundeck.services.NotificationService
+import rundeck.services.ReportService
 
-class ExecutionServiceTests extends GrailsUnitTestCase {
+@TestFor(ExecutionService)
+@Mock([ScheduledExecution,Workflow,WorkflowStep,Execution,CommandExec,Option,User])
+class ExecutionServiceTests  {
 
     void testCreateExecutionRunning(){
-        mockDomain(ScheduledExecution)
-        mockDomain(Workflow)
-        mockDomain(Execution)
-        mockDomain(CommandExec)
 
         ScheduledExecution se = new ScheduledExecution(
             jobName: 'blue',
             project: 'AProject',
-            adhocExecution: true,
-            adhocFilepath: '/this/is/a/path',
             groupPath: 'some/where',
             description: 'a job',
             argString: '-a b -c d',
             workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
         )
-        se.save()
+        assertNotNull(se.workflow.save())
+        assertNotNull(se.save())
+        Execution e = new Execution(project:"test",user:'bob',dateStarted: new Date(),dateCompleted: null,scheduledExecution: se,workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]))
+        def valid=e.validate()
+        e.errors.allErrors.each {println it.toString() }
+        assertTrue(valid)
+        assertNotNull(e.save())
 
-        registerMetaClass(ScheduledExecution)
-        ScheduledExecution.metaClass.static.lock={id-> return se}
-        def myCriteria = new Expando();
-        myCriteria.get = {Closure cls -> return [id:123]}
-        Execution.metaClass.static.createCriteria = {myCriteria }
-        Execution.metaClass.static.executeQuery = {q,h->[[id: 123]]}
-
+//        ScheduledExecution.metaClass.static.lock={id-> return se}
+//        def myCriteria = new Expando();
+//        myCriteria.get = {Closure cls -> return [id:123]}
+//        Execution.metaClass.static.createCriteria = {myCriteria }
+//        Execution.metaClass.static.executeQuery = {q,h->[[id: 123]]}
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = new FrameworkService()
         svc.frameworkService = fsvc
         try{
             svc.createExecution(se,null,"user1")
             fail("should fail")
-        }catch(ExecutionServiceException e){
-            assertTrue(e.message.contains('is currently being executed'))
+        }catch(ExecutionServiceException ex){
+            assertTrue(ex.message.contains('is currently being executed'))
         }
     }
     void testCreateExecutionRunningMultiple(){
-        mockDomain(ScheduledExecution)
-        mockDomain(Workflow)
-        mockDomain(CommandExec)
-        mockDomain(Execution)
 
         ScheduledExecution se = new ScheduledExecution(
             jobName: 'blue',
@@ -69,15 +71,18 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
             multipleExecutions: true,
             workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
         )
-        se.save()
+        assertNotNull(se.save())
 
-        registerMetaClass(ScheduledExecution)
-        ScheduledExecution.metaClass.static.lock={id-> return se}
-        ScheduledExecution.metaClass.static.withNewSession={clos-> clos.call([clear:{}])}
-        def myCriteria = new Expando();
-        myCriteria.get = {Closure cls -> return [id:123]}
-        Execution.metaClass.static.createCriteria = {myCriteria }
-        mockLogging(ExecutionService)
+        Execution e = new Execution(project: "test", user: 'bob', dateStarted: new Date(), dateCompleted: null, scheduledExecution: se, workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]))
+        def valid = e.validate()
+        e.errors.allErrors.each { println it.toString() }
+        assertTrue(valid)
+        assertNotNull(e.save())
+//        ScheduledExecution.metaClass.static.lock={id-> return se}
+//        ScheduledExecution.metaClass.static.withNewSession={clos-> clos.call([clear:{}])}
+//        def myCriteria = new Expando();
+//        myCriteria.get = {Closure cls -> return [id:123]}
+//        Execution.metaClass.static.createCriteria = {myCriteria }
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = new FrameworkService()
@@ -87,10 +92,6 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
     }
     void testCreateExecutionSimple(){
         ConfigurationHolder.config=[:]
-        mockDomain(ScheduledExecution)
-        mockDomain(Workflow)
-        mockDomain(CommandExec)
-        mockDomain(Execution)
 
         ScheduledExecution se = new ScheduledExecution(
             jobName: 'blue',
@@ -102,21 +103,25 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
         )
         se.save()
 
-        registerMetaClass(ScheduledExecution)
-        ScheduledExecution.metaClass.static.lock={id-> return se}
-        ScheduledExecution.metaClass.static.withNewSession = {clos -> clos.call([clear: {}])}
-        def myCriteria = new Expando();
-        myCriteria.get = {Closure cls -> return null}
-        Execution.metaClass.static.createCriteria = {myCriteria }
-        Execution.metaClass.static.executeQuery = {q, h -> []}
+        Execution e = new Execution(project: "test", user: 'bob', dateStarted: new Date(), dateCompleted: new Date(),
+                scheduledExecution: se, workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]))
+        def valid = e.validate()
+        e.errors.allErrors.each { println it.toString() }
+        assertTrue(valid)
+        assertNotNull(e.save())
+//        ScheduledExecution.metaClass.static.lock={id-> return se}
+//        ScheduledExecution.metaClass.static.withNewSession = {clos -> clos.call([clear: {}])}
+//        def myCriteria = new Expando();
+//        myCriteria.get = {Closure cls -> return null}
+//        Execution.metaClass.static.createCriteria = {myCriteria }
+//        Execution.metaClass.static.executeQuery = {q, h -> []}
 
 
-        mockLogging(ExecutionService)
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = new FrameworkService()
         svc.frameworkService=fsvc
 
-        Execution e=svc.createExecution(se,null,"user1")
+        Execution e2=svc.createExecution(se,null,"user1")
 
         assertNotNull(e)
         assertEquals('-a b -c d',e.argString)
@@ -129,10 +134,6 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
     }
     void testCreateExecutionJobUser(){
         ConfigurationHolder.config=[:]
-        mockDomain(ScheduledExecution)
-        mockDomain(Workflow)
-        mockDomain(CommandExec)
-        mockDomain(Execution)
 
         ScheduledExecution se = new ScheduledExecution(
             jobName: 'blue',
@@ -172,10 +173,6 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
     }
     void testCreateExecutionAsUser(){
         ConfigurationHolder.config=[:]
-        mockDomain(ScheduledExecution)
-        mockDomain(Workflow)
-        mockDomain(CommandExec)
-        mockDomain(Execution)
 
         ScheduledExecution se = new ScheduledExecution(
             jobName: 'blue',
@@ -211,49 +208,17 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
         assertNull(e.dateCompleted)
         assertEquals('user1', e.user)
         def execs=se.executions
-        assertNull(execs)
+        assertNotNull(execs)
+        assertTrue(execs.contains(e2))
     }
     void testCreateExecutionOptionsValidation(){
-        ConfigurationHolder.config=[:]
-        mockDomain(ScheduledExecution)
-        mockDomain(Workflow)
-        mockDomain(CommandExec)
-        mockDomain(Execution)
-        mockDomain(Option)
+        ScheduledExecution se = prepare()
 
-        ScheduledExecution se = new ScheduledExecution(
-            jobName: 'blue',
-            project: 'AProject',
-            adhocExecution: true,
-            adhocFilepath: '/this/is/a/path',
-            groupPath: 'some/where',
-            description: 'a job',
-            workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
-        )
-        def opt1 = new Option(name: 'test1', defaultValue: 'val1', enforced: false, valuesUrl: "http://test.com/test")
-        def opt2 = new Option(name: 'test2', defaultValue: 'val2a', enforced: true, values: ['val2c', 'val2a', 'val2b'])
-        def opt3 = new Option(name: 'test3', defaultValue: 'val3', enforced: false, required: true, regex: '^.*3$')
-        def opt4 = new Option(name: 'test4', defaultValue: 'val4', enforced: false, required: true, secureInput: true)
-        se.addToOptions(opt1)
-        se.addToOptions(opt2)
-        se.addToOptions(opt3)
-        se.addToOptions(opt4)
-        se.save()
-
-        registerMetaClass(ScheduledExecution)
-        ScheduledExecution.metaClass.static.lock={id-> return se}
-        ScheduledExecution.metaClass.static.withNewSession = {clos -> clos.call([clear: {}])}
-        def myCriteria = new Expando();
-        myCriteria.get = {Closure cls -> return null}
-        Execution.metaClass.static.createCriteria = {myCriteria }
-        Execution.metaClass.static.executeQuery = {q, h -> []}
-
-        mockLogging(ExecutionService)
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = new FrameworkService()
         svc.frameworkService=fsvc
 
-        test:{
+            assertNull(se.executions)
             Execution e=svc.createExecution(se,null,"user1",[argString:'-test1 asdf -test2 val2b -test4 asdf4'])
 
             assertNotNull(e)
@@ -262,31 +227,54 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
             assertNotNull(e.dateStarted)
             assertNull(e.dateCompleted)
             def execs=se.executions
-            assertNull(execs)
+            assertNotNull(execs)
+            assertTrue(execs.contains(e))
         }
-        test:{
-            Execution e=svc.createExecution(se,null,"user1",[argString:'-test2 val2b -test4 asdf4'])
 
-            assertNotNull(e)
-            assertEquals("default value should be used",'-test1 val1 -test2 val2b -test3 val3',e.argString)
-            assertEquals(se, e.scheduledExecution)
-            assertNotNull(e.dateStarted)
-            assertNull(e.dateCompleted)
-            def execs=se.executions
-            assertNull(execs)
-        }
-        test:{
-            Execution e=svc.createExecution(se,null,"user1",[argString:'-test2 val2b -test3 monkey3'])
+    void testCreateExecutionOptionsValidation2() {
+        ScheduledExecution se = prepare()
 
-            assertNotNull(e)
-            assertEquals('-test1 val1 -test2 val2b -test3 monkey3',e.argString)
-            assertEquals(se, e.scheduledExecution)
-            assertNotNull(e.dateStarted)
-            assertNull(e.dateCompleted)
-            def execs=se.executions
-            assertNull(execs)
-        }
-        test: {
+        ExecutionService svc = new ExecutionService()
+        FrameworkService fsvc = new FrameworkService()
+        svc.frameworkService = fsvc
+        assertNull(se.executions)
+        Execution e=svc.createExecution(se,null,"user1",[argString:'-test2 val2b -test4 asdf4'])
+
+        assertNotNull(e)
+        assertEquals("default value should be used",'-test1 val1 -test2 val2b -test3 val3',e.argString)
+        assertEquals(se, e.scheduledExecution)
+        assertNotNull(e.dateStarted)
+        assertNull(e.dateCompleted)
+        def execs=se.executions
+        assertNotNull(execs)
+        assertTrue(execs.contains(e))
+    }
+
+    void testCreateExecutionOptionsValidation3() {
+        ScheduledExecution se = prepare()
+
+        ExecutionService svc = new ExecutionService()
+        FrameworkService fsvc = new FrameworkService()
+        svc.frameworkService = fsvc
+        assertNull(se.executions)
+        Execution e=svc.createExecution(se,null,"user1",[argString:'-test2 val2b -test3 monkey3'])
+
+        assertNotNull(e)
+        assertEquals('-test1 val1 -test2 val2b -test3 monkey3',e.argString)
+        assertEquals(se, e.scheduledExecution)
+        assertNotNull(e.dateStarted)
+        assertNull(e.dateCompleted)
+        def execs=se.executions
+        assertNotNull(execs)
+        assertTrue(execs.contains(e))
+    }
+
+    void testCreateExecutionOptionsValidation4() {
+        ScheduledExecution se = prepare()
+
+        ExecutionService svc = new ExecutionService()
+        FrameworkService fsvc = new FrameworkService()
+        svc.frameworkService = fsvc
             //enforced value failure on test2
             try {
                 Execution e = svc.createExecution(se, null, "user1", [argString: '-test2 val2D -test3 monkey4'])
@@ -295,7 +283,13 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
                 assertTrue(e.message.contains("was not in the allowed values"))
             }
         }
-        test: {
+
+    void testCreateExecutionOptionsValidation5() {
+        ScheduledExecution se = prepare()
+
+        ExecutionService svc = new ExecutionService()
+        FrameworkService fsvc = new FrameworkService()
+        svc.frameworkService = fsvc
             //regex failure on test3
             try {
                 Execution e = svc.createExecution(se, null, "user1", [argString: '-test2 val2b -test3 monkey4'])
@@ -305,12 +299,32 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
             }
         }
 
-
+    private ScheduledExecution prepare() {
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+        )
+        assertNotNull(se.save())
+        def opt1 = new Option(name: 'test1', defaultValue: 'val1', enforced: false, realValuesUrl: "http://test.com/test")
+        def opt2 = new Option(name: 'test2', defaultValue: 'val2a', enforced: true, values: ['val2c', 'val2a', 'val2b'])
+        def opt3 = new Option(name: 'test3', defaultValue: 'val3', enforced: false, required: true, regex: '^.*3$')
+        def opt4 = new Option(name: 'test4', defaultValue: 'val4', enforced: false, required: true, secureInput: true)
+        assertTrue(opt1.validate())
+        assertTrue(opt2.validate())
+        assertTrue(opt3.validate())
+        assertTrue(opt4.validate())
+        se.addToOptions(opt1)
+        se.addToOptions(opt2)
+        se.addToOptions(opt3)
+        se.addToOptions(opt4)
+        se.save()
+        se
     }
 
     void testValidateInputOptionValues(){
-		mockDomain(ScheduledExecution)
-		mockDomain(Option)
         ScheduledExecution se = new ScheduledExecution()
 		def testService = new ExecutionService()
 		def frameworkService = new FrameworkService()
@@ -594,8 +608,6 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
     }
 
     void testParseJobOptsFromString() {
-        mockDomain(ScheduledExecution)
-        mockDomain(Option)
         ScheduledExecution se = new ScheduledExecution()
         def testService = new ExecutionService()
         def frameworkService = new FrameworkService()
@@ -641,8 +653,6 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
     }
 
     void testGenerateJobArgline() {
-        mockDomain(ScheduledExecution)
-        mockDomain(Option)
         ScheduledExecution se = new ScheduledExecution()
         def testService = new ExecutionService()
         def frameworkService = new FrameworkService()
@@ -663,8 +673,6 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
         assertEquals "-test3 \"some value,another value\"", ExecutionService.generateJobArgline(se2, ['test3': ['some value','another value']])
     }
     void testGenerateJobArglinePreservesOptionSortIndexOrder() {
-        mockDomain(ScheduledExecution)
-        mockDomain(Option)
         ScheduledExecution se = new ScheduledExecution()
         def testService = new ExecutionService()
         def frameworkService = new FrameworkService()
@@ -683,8 +691,6 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
         assertEquals "-pst blah -zyx value -abc elf", ExecutionService.generateJobArgline(se2, ['zyx': 'value','pst':'blah', abc:'elf'])
     }
     void testGenerateJobArglineQuotesBlanks() {
-        mockDomain(ScheduledExecution)
-        mockDomain(Option)
         ScheduledExecution se = new ScheduledExecution()
         def testService = new ExecutionService()
         def frameworkService = new FrameworkService()
@@ -707,8 +713,6 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
      * Test createContext method
      */
     void testCreateContext(){
-        mockDomain(Execution)
-        mockDomain(User)
         ConfigurationHolder.metaClass.getConfig = {-> [:] }
 
         def testService = new ExecutionService()
@@ -742,8 +746,6 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
      * Test createContext method
      */
     void testCreateContextDatacontext() {
-        mockDomain(Execution)
-        mockDomain(User)
         ConfigurationHolder.metaClass.getConfig = {-> [:] }
 
         def testService = new ExecutionService()
@@ -775,13 +777,11 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
      * Test createContext method
      */
     void testCreateContextArgsarray() {
-        mockDomain(Execution)
-        mockDomain(User)
         ConfigurationHolder.metaClass.getConfig = {-> [:] }
 
         def testService = new ExecutionService()
         def fcontrol = mockFor(FrameworkService, true)
-        fcontrol.demand.parseOptsFromArray(1..1) {argString ->
+        fcontrol.demand.parseOptsFromArray(1..1) {String[] argString ->
             [test: 'args',test2:'monkey args']
         }
         fcontrol.demand.filterNodeSet(1..1) {fwk, sel, proj ->
@@ -809,8 +809,6 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
      * Test createContext method
      */
     void testCreateContextJobData() {
-        mockDomain(Execution)
-        mockDomain(User)
         ConfigurationHolder.metaClass.getConfig = {-> [:] }
 
         def testService = new ExecutionService()
@@ -842,8 +840,6 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
      * Test createContext method
      */
     void testCreateContextJobDataEmptyNodeset() {
-        mockDomain(Execution)
-        mockDomain(User)
         ConfigurationHolder.metaClass.getConfig = {-> [:] }
 
         def testService = new ExecutionService()
@@ -871,8 +867,6 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
      * Test createContext method
      */
     void testCreateContextJobDataNodeInclude() {
-        mockDomain(Execution)
-        mockDomain(User)
         ConfigurationHolder.metaClass.getConfig = {-> [:] }
 
         def testService = new ExecutionService()
@@ -904,8 +898,6 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
      * Test createContext method
      */
     void testCreateContextJobDataNodeExclude() {
-        mockDomain(Execution)
-        mockDomain(User)
         ConfigurationHolder.metaClass.getConfig = {-> [:] }
 
         def testService = new ExecutionService()
@@ -937,8 +929,6 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
      * Test use of ${option.x} and ${job.y} parameter expansion in node filter tag and name filters.
      */
     void testCreateContextFilters() {
-        mockDomain(Execution)
-        mockDomain(User)
         def testService = new ExecutionService()
         def fcontrol = mockFor(FrameworkService, true)
         fcontrol.demand.parseOptsFromString(1..1) {argString ->
@@ -971,8 +961,6 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
      * Test use of ${option.x} and ${job.y} parameter expansion in node filter tag and name filters.
      */
     void testCreateContextParameterizedFilters() {
-        mockDomain(Execution)
-        mockDomain(User)
         def testService = new ExecutionService()
         def fcontrol = mockFor(FrameworkService, true)
         fcontrol.demand.parseOptsFromString(1..1) {argString ->
@@ -1029,7 +1017,6 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
     }
 
     void testItemForWFCmdItem(){
-        mockDomain(CommandExec)
         def testService = new ExecutionService()
 
         t:{
@@ -1157,10 +1144,6 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
         return testService
     }
     void testCleanupRunningJobsNull(){
-        mockDomain(Execution)
-        mockDomain(Workflow)
-        mockDomain(CommandExec)
-        mockLogging(ExecutionService)
         def testService = setupCleanupService()
 
         Execution exec1 = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false,
@@ -1194,10 +1177,6 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
     }
 
     void testCleanupRunningJobsForClusterNode() {
-        mockDomain(Execution)
-        mockDomain(Workflow)
-        mockDomain(CommandExec)
-        mockLogging(ExecutionService)
         def testService = setupCleanupService()
         def uuid = UUID.randomUUID().toString()
 

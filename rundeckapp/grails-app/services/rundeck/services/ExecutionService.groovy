@@ -1148,7 +1148,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
         if (!se.multipleExecutions) {
             synchronized (this) {
                 //find any currently running executions for this job, and if so, throw exception
-                def found = Execution.executeQuery('from Execution where dateCompleted is null and scheduledExecution=:se and dateStarted is not null', [se: se])
+                def found = Execution.withCriteria {
+                    isNull('dateCompleted')
+                    eq('scheduledExecution',se)
+                    isNotNull('dateStarted')
+                }
+                //('from Execution where dateCompleted is null and scheduledExecution=:se and dateStarted is not null', [se: se])
 //                    System.err.println("multiexec check ${se.version}: ${found}")
                 if (found) {
                     throw new ExecutionServiceException('Job "' + se.jobName + '" [' + se.extid + '] is currently being executed (execution [' + found.id + '])')
