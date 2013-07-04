@@ -22,9 +22,12 @@ else
     RELEASE=$1
 fi
 shift
-if [ -n "$1" ]; then
+if [ "$1" = "GA" ]; then
     TAG=
     PTAG="GA"
+elif [ -n "$1" ]; then
+    TAG="-$1"
+    PTAG="$1"
 else
     TAG="-SNAPSHOT"
     PTAG="SNAPSHOT"
@@ -63,8 +66,10 @@ mv rundeckapp/pom_new.xml rundeckapp/pom.xml
 
 echo MODIFIED: `pwd`/rundeckapp/pom.xml
 set -x
-if [ "$TAG" == "-SNAPSHOT" ]; then
+if [ "$PTAG" == "SNAPSHOT" ]; then
     ./gradlew -PbuildNum=${RELEASE} createPom
-else
+elif [ "$PTAG" == "GA" ] ; then
     ./gradlew -PbuildNum=${RELEASE} -Penvironment=release createPom
+else
+    ./gradlew -PbuildNum=${RELEASE} -Penvironment=release -PreleaseTag=$PTAG createPom
 fi
