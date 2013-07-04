@@ -4,7 +4,7 @@
   <groupId>org.rundeck</groupId>
   <artifactId>rundeck</artifactId>
   <packaging>war</packaging>
-  <version>1.6.0-SNAPSHOT</version>
+  <version>1.6.0-rc1</version>
   
   <name>RunDeck App</name>
   <description>RunDeck Command and Job Console</description>
