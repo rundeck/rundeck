@@ -134,9 +134,7 @@ class ScheduledExecutionControllerTests  {
             assertNotNull sec.flash.savedJob
             assertNotNull sec.flash.savedJobMessage
             assertNull view, view
-            assertEquals("/job/show/1", response.redirectedUrl)
-//            assertEquals("show",sec.redirectArgs.action)
-//            assertEquals("scheduledExecution",sec.redirectArgs.controller)
+            assertEquals("/scheduledExecution/show/1", response.redirectedUrl)
         }
     }
     public void testtransferSessionEditStateOpts() {
@@ -181,11 +179,9 @@ class ScheduledExecutionControllerTests  {
     }
     public void testUpdateSessionOptsEmptyList() {
         def sec = new ScheduledExecutionController()
-        if (true) {//test basic copy action
-
             def se = new ScheduledExecution(
                     jobName: 'monkey1', project: 'testProject', description: 'blah',
-                    options: [new Option(name: 'blah')],
+                    options: [new Option(name: 'blah',enforced:false)],
                     workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
             )
             if(!se.validate()){
@@ -241,21 +237,18 @@ class ScheduledExecutionControllerTests  {
 
             assertNotNull sec.flash.savedJob
             assertNotNull sec.flash.savedJobMessage
-            assertNull sec.modelAndView.viewName, sec.modelAndView.viewName
-            assertEquals("show",sec.redirectArgs.action)
-            assertEquals("scheduledExecution",sec.redirectArgs.controller)
-        }
+            assertNull view
+            assertEquals("/scheduledExecution/show/1", response.redirectedUrl)
     }
     public void testUpdateSessionWFEditEmptyList() {
         def sec = new ScheduledExecutionController()
-        if (true) {//test basic copy action
 
             def se = new ScheduledExecution(
                     jobName: 'monkey1', project: 'testProject', description: 'blah',
-                    options: [new Option(name: 'blah')],
+                    options: [new Option(name: 'blah',enforced:false)],
                     workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
             )
-            se.save()
+            assertNotNull(se.save())
 //
             assertNotNull se.id
 
@@ -305,15 +298,12 @@ class ScheduledExecutionControllerTests  {
 
             assertNotNull sec.flash.savedJob
             assertNotNull sec.flash.savedJobMessage
-            assertNull sec.modelAndView.viewName, sec.modelAndView.viewName
-            assertEquals("show",sec.redirectArgs.action)
-            assertEquals("scheduledExecution",sec.redirectArgs.controller)
-        }
+            assertNull view
+        assertEquals("/scheduledExecution/show/1", response.redirectedUrl)
     }
 
     public void testSaveFail() {
         def sec = new ScheduledExecutionController()
-        if (true) {//test basic copy action
 
             def se = new ScheduledExecution(
                     jobName: 'monkey1', project: 'testProject', description: 'blah',
@@ -364,13 +354,11 @@ class ScheduledExecutionControllerTests  {
 
             assertNull sec.response.redirectedUrl
             assertNotNull sec.request.message
-            assertEquals 'create', sec.modelAndView.viewName
-            assertNull sec.modelAndView.model.scheduledExecution
-        }
+            assertEquals '/scheduledExecution/create', view
+            assertNull model.scheduledExecution
     }
     public void testSaveUnauthorized() {
         def sec = new ScheduledExecutionController()
-        if (true) {//test basic copy action
 
             def se = new ScheduledExecution(
                     jobName: 'monkey1', project: 'testProject', description: 'blah',
@@ -422,14 +410,12 @@ class ScheduledExecutionControllerTests  {
 
             assertNull sec.response.redirectedUrl
             assertEquals 'unauthorizedMessage',sec.request.message
-            assertEquals 'create', sec.modelAndView.viewName
-            assertNull sec.modelAndView.model.scheduledExecution
-        }
+            assertEquals '/scheduledExecution/create', view
+            assertNull model.scheduledExecution
     }
 
     public void testSaveAndExecBasic() {
         def sec = new ScheduledExecutionController()
-        if (true) {//test basic copy action
 
             def se = new ScheduledExecution(
                     jobName: 'monkey1', project: 'testProject', description: 'blah',
@@ -475,13 +461,11 @@ class ScheduledExecutionControllerTests  {
             sec.saveAndExec()
 
             assertNull sec.flash.message
-            assertNull sec.modelAndView.viewName, sec.modelAndView.viewName
-            assertEquals('execute', sec.redirectArgs.action.toString())
-        }
+            assertNull view
+            assertEquals("/scheduledExecution/execute/1", response.redirectedUrl)
     }
     public void testSaveAndExecFailed() {
         def sec = new ScheduledExecutionController()
-        if (true) {//test basic copy action
 
             def se = new ScheduledExecution(
                     jobName: 'monkey1', project: 'testProject', description: 'blah',
@@ -532,9 +516,8 @@ class ScheduledExecutionControllerTests  {
             sec.saveAndExec()
 
             assertEquals('ScheduledExecutionController.save.failed', sec.flash.message)
-            assertEquals 'create', sec.modelAndView.viewName
-            assertNull sec.redirectArgs.action
-        }
+            assertEquals '/scheduledExecution/create', view
+            assertNull  response.redirectedUrl
     }
 
     public void testRunAdhocBasic() {
@@ -724,7 +707,6 @@ class ScheduledExecutionControllerTests  {
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
         sec.request.setAttribute("subject", subject)
-        registerMetaClass(ExecutionController)
         ExecutionController.metaClass.renderApiExecutionListResultXML={List execs->
             assert 1==execs.size()
         }
@@ -794,14 +776,12 @@ class ScheduledExecutionControllerTests  {
         sec.request.setAttribute("subject", subject)
         sec.request.setAttribute("api_version", 5)
 //        sec.request.api_version = 5
-        registerMetaClass(ExecutionController)
-        ExecutionController.metaClass.renderApiExecutionListResultXML = { List execs ->
-            assert 1 == execs.size()
+        ExecutionController.metaClass.renderApiExecutionListResultXML={List execs->
+            assert 1==execs.size()
             assert execs.contains(exec)
         }
 
-        registerMetaClass(ApiController)
-        ApiController.metaClass.requireVersion = { min, max = 0 ->
+        ApiController.metaClass.requireVersion={min,max=0->
             true
         }
         sec.apiJobRun()
@@ -860,13 +840,11 @@ class ScheduledExecutionControllerTests  {
         sec.request.setAttribute("subject", subject)
         sec.request.setAttribute("api_version", 5)
 //        sec.request.api_version = 5
-        registerMetaClass(ExecutionController)
         ExecutionController.metaClass.renderApiExecutionListResultXML = { List execs ->
             assert 1 == execs.size()
             assert execs.contains(exec)
         }
         sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
-        registerMetaClass(ApiController)
         ApiController.metaClass.requireVersion = { min, max = 0 ->
             true
         }
@@ -877,8 +855,8 @@ class ScheduledExecutionControllerTests  {
         }
         def result = sec.apiRunCommand()
         assert !succeeded
-        assert null == sec.modelAndView.view
-        assert [controller:'api',action:'error'] == sec.chainArgs
+        assert null == view
+        assertEquals("/api/error", response.redirectedUrl)
         assert 'api.error.parameter.required'==sec.flash.error
         assert !sec.chainModel
     }
@@ -936,13 +914,11 @@ class ScheduledExecutionControllerTests  {
         sec.request.setAttribute("subject", subject)
         sec.request.setAttribute("api_version", 5)
 //        sec.request.api_version = 5
-        registerMetaClass(ExecutionController)
         ExecutionController.metaClass.renderApiExecutionListResultXML = { List execs ->
             assert 1 == execs.size()
             assert execs.contains(exec)
         }
         sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
-        registerMetaClass(ApiController)
         ApiController.metaClass.requireVersion = { min, max = 0 ->
             assert min==5
             true
@@ -954,9 +930,9 @@ class ScheduledExecutionControllerTests  {
         }
         def result=sec.apiRunCommand()
         assert succeeded
-        assert null==sec.modelAndView.view
-        assert !sec.chainArgs
-        assert !sec.chainModel
+        assert null==view
+        assertNull(response.redirectedUrl)
+        assert !model
     }
 
     public void testApiRunCommandAsUser() {
@@ -1012,13 +988,12 @@ class ScheduledExecutionControllerTests  {
         sec.request.setAttribute("subject", subject)
         sec.request.setAttribute("api_version", 5)
 //        sec.request.api_version = 5
-        registerMetaClass(ExecutionController)
+//        registerMetaClass(ExecutionController)
         ExecutionController.metaClass.renderApiExecutionListResultXML = { List execs ->
             assert 1 == execs.size()
             assert execs.contains(exec)
         }
         sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
-        registerMetaClass(ApiController)
         ApiController.metaClass.requireVersion = { min, max = 0 ->
             assert min == 5
             true
@@ -1030,8 +1005,8 @@ class ScheduledExecutionControllerTests  {
         }
         def result = sec.apiRunCommand()
         assert succeeded
-        assert null == sec.modelAndView.view
-        assert !sec.chainArgs
-        assert !sec.chainModel
+        assert null == view
+        assertNull(response.redirectedUrl)
+        assert !model
     }
 }
