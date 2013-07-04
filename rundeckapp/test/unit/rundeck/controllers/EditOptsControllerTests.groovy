@@ -1,22 +1,19 @@
 package rundeck.controllers
 
-import grails.test.*
+import grails.test.mixin.Mock
+import grails.test.mixin.TestFor
+import rundeck.CommandExec
+import rundeck.Execution
 import rundeck.Option
-import rundeck.controllers.EditOptsController
+import rundeck.ScheduledExecution
+import rundeck.Workflow
 
-class EditOptsControllerTests extends ControllerUnitTestCase {
-    protected void setUp() {
-        super.setUp()
-    }
+@TestFor(EditOptsController)
+@Mock([ScheduledExecution, Option, Workflow, CommandExec, Execution])
+class EditOptsControllerTests  {
 
-    protected void tearDown() {
-        super.tearDown()
-    }
-
-    void test_setOptionFromParams(){
-        mockDomain(Option)
+    void test_setOptionFromParamstestEmpty(){
         EditOptsController ctrl = new EditOptsController()
-        testEmpty:{
             Option inputOption = new Option()
             final Map testmap = [:]
             Option option = ctrl._setOptionFromParams(inputOption,testmap)
@@ -33,13 +30,16 @@ class EditOptsControllerTests extends ControllerUnitTestCase {
             assertNull option.regex
             assertNull option.defaultValue
         }
-        testValuesTypeList:{
+
+        void test_setOptionFromParamstestValuesTypeList() {
+            EditOptsController ctrl = new EditOptsController()
             //use valuesType='list', enforcedType='none'
             Option inputOption = new Option()
             final Map testmap = [name:'testopt',description:'a description',valuesType:'list',enforcedType:'none',valuesList:'a,b,c',valuesUrl:'http://test.com',regex:'testregex']
             Option option = ctrl._setOptionFromParams(inputOption,testmap)
 
             assertNotNull(option)
+            assertFalse(option.errors.hasErrors())
             //test properties
             assertEquals 'testopt', option.name
             assertEquals 'a description', option.description
@@ -55,7 +55,9 @@ class EditOptsControllerTests extends ControllerUnitTestCase {
             assertNull option.regex
             assertNull option.defaultValue
         }
-        testValuesTypeUrl:{
+
+    void test_setOptionFromParams_testValuesTypeUrl() {
+        EditOptsController ctrl = new EditOptsController()
             //use valuesType='url', enforcedType='none'
             Option inputOption = new Option()
             final Map testmap = [name:'testopt',description:'a description',valuesType:'url',enforcedType:'none',valuesList:'a,b,c',valuesUrl:'http://test.com',regex:'testregex']
@@ -74,7 +76,9 @@ class EditOptsControllerTests extends ControllerUnitTestCase {
             assertNull option.regex
             assertNull option.defaultValue
         }
-        testEnforcedType:{
+
+    void test_setOptionFromParams_testEnforcedType() {
+        EditOptsController ctrl = new EditOptsController()
             //use valuesType='url', enforcedType='enforced'
             Option inputOption = new Option()
             final Map testmap = [name:'testopt',description:'a description',valuesType:'url',enforcedType:'enforced',valuesList:'a,b,c',valuesUrl:'http://test.com',regex:'testregex']
@@ -93,7 +97,9 @@ class EditOptsControllerTests extends ControllerUnitTestCase {
             assertNull option.regex
             assertNull option.defaultValue
         }
-        testEnforcedType:{
+
+    void test_setOptionFromParams_testEnforcedType2() {
+        EditOptsController ctrl = new EditOptsController()
             //use valuesType='url', enforcedType='regex'
             Option inputOption = new Option()
             final Map testmap = [name:'testopt',description:'a description',valuesType:'url',enforcedType:'regex',valuesList:'a,b,c',valuesUrl:'http://test.com',regex:'testregex']
@@ -113,7 +119,9 @@ class EditOptsControllerTests extends ControllerUnitTestCase {
             assertEquals 'testregex',option.regex
             assertNull option.defaultValue
         }
-        testInputTypePlain:{
+
+    void test_setOptionFromParams_testInputTypePlain() {
+        EditOptsController ctrl = new EditOptsController()
             //use inputType='plain'
             Option inputOption = new Option()
             final Map testmap = [name:'testopt',description:'a description',valuesList:'a,b,c',inputType:'plain']
@@ -132,7 +140,9 @@ class EditOptsControllerTests extends ControllerUnitTestCase {
             assertFalse option.secureInput
             assertFalse option.secureExposed
         }
-        testInputTypeSecure:{
+
+    void test_setOptionFromParams_testInputTypeSecure() {
+        EditOptsController ctrl = new EditOptsController()
             //use inputType='secure'
             Option inputOption = new Option()
             final Map testmap = [name:'testopt',description:'a description',valuesList:'a,b,c',inputType:'secure']
@@ -151,7 +161,9 @@ class EditOptsControllerTests extends ControllerUnitTestCase {
             assertTrue option.secureInput
             assertFalse option.secureExposed
         }
-        testInputTypeSecureExposed:{
+
+    void test_setOptionFromParams_testInputTypeSecureExposed() {
+        EditOptsController ctrl = new EditOptsController()
             //use inputType='secureExposed'
             Option inputOption = new Option()
             final Map testmap = [name:'testopt',description:'a description',valuesList:'a,b,c',inputType:'secureExposed']
@@ -173,7 +185,8 @@ class EditOptsControllerTests extends ControllerUnitTestCase {
 
         //test on existing Option content
 
-        test:{
+    void test_setOptionFromParams_test() {
+        EditOptsController ctrl = new EditOptsController()
             Option test1 = new Option()
             ctrl._setOptionFromParams(test1,[name:'optname',description:'a description',valuesType:'url',enforcedType:'regex',valuesUrl:'http://test.com',regex:'testregex'])
 
@@ -194,10 +207,8 @@ class EditOptsControllerTests extends ControllerUnitTestCase {
             assertNull test2.valuesList
 
         }
-    }
 
     void test_applyOptionAction() {
-        mockDomain(Option)
         EditOptsController ctrl = new EditOptsController()
         test:{
             //test insert, should have remove undo action
@@ -327,7 +338,6 @@ class EditOptsControllerTests extends ControllerUnitTestCase {
      */
     void test_applyOptionActionUndo() {
 
-        mockDomain(Option)
         EditOptsController ctrl = new EditOptsController()
         test:{
             //apply insert, apply undo (remove)
