@@ -276,9 +276,6 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
     private boolean claimScheduledJob(ScheduledExecution scheduledExecution, String serverUUID, String fromServerUUID=null){
         def schedId=scheduledExecution.id
         def claimed=false
-        if (!scheduledExecution.scheduled || scheduledExecution.serverNodeUUID != fromServerUUID) {
-            return false
-        }
         while (!claimed) {
             try {
                 ScheduledExecution.withNewSession {
@@ -311,8 +308,13 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
      */
     def Map claimScheduledJobs(String toServerUUID, String fromServerUUID=null) {
         Map claimed=[:]
-        ScheduledExecution.findAllByScheduledAndServerNodeUUID(true, fromServerUUID).each { ScheduledExecution se ->
-            claimed[se.extid]=claimScheduledJob(se, toServerUUID, fromServerUUID)
+        ScheduledExecution.withTransaction {
+            ScheduledExecution.where {
+                scheduled==true
+                serverNodeUUID==fromServerUUID
+            }.each { ScheduledExecution se ->
+                claimed[se.extid]=claimScheduledJob(se, toServerUUID, fromServerUUID)
+            }
         }
         claimed
     }

@@ -15,9 +15,16 @@
  */
 
 import grails.test.GrailsUnitTestCase
+import grails.test.mixin.Mock
+import grails.test.mixin.TestFor
+import rundeck.Execution
+import rundeck.JobExec
+import rundeck.Notification
+import rundeck.Option
 import rundeck.ScheduledExecution
 import rundeck.CommandExec
 import rundeck.Workflow
+import rundeck.WorkflowStep
 import rundeck.services.FrameworkService
 import rundeck.services.ScheduledExecutionService
 
@@ -29,7 +36,9 @@ import rundeck.services.ScheduledExecutionService
 * $Id$
 */
 
-public class ScheduledExecutionServiceTests extends GrailsUnitTestCase {
+@TestFor(ScheduledExecutionService)
+@Mock([ScheduledExecution,Workflow,WorkflowStep,CommandExec,JobExec,Execution, Option,Notification])
+public class ScheduledExecutionServiceTests {
 
 
     private void assertParseParamNotifications(ArrayList<Map<String, Object>> expected, Map<String, Object> params) {
@@ -222,10 +231,8 @@ public class ScheduledExecutionServiceTests extends GrailsUnitTestCase {
         ],params.notifications)
     }
     public void testGetGroups(){
-        mockDomain(ScheduledExecution)
         def schedlist=[new ScheduledExecution(jobName:'test1',groupPath:'group1'),new ScheduledExecution(jobName:'test2',groupPath:null)]
 
-        registerMetaClass(ScheduledExecution)
         ScheduledExecution.metaClass.static.findAllByProject={proj-> return schedlist}
 
         ScheduledExecutionService test = new ScheduledExecutionService()
@@ -257,6 +264,22 @@ public class ScheduledExecutionServiceTests extends GrailsUnitTestCase {
 
     }
 
+    void testBlah() {
+
+        def (ScheduledExecution job1, String serverUUID2, ScheduledExecution job2, ScheduledExecution job3,
+        ScheduledExecutionService testService, String serverUUID) = setupTestClaimScheduledJobs()
+
+        assertEquals(null, job1.serverNodeUUID)
+        assertEquals(serverUUID2, job2.serverNodeUUID)
+        assertEquals(null, job3.serverNodeUUID)
+
+        job1.serverNodeUUID=serverUUID
+        assertNotNull(job1.save(flush: true))
+
+        job1 = ScheduledExecution.get(job1.id)
+
+        assertEquals(serverUUID, job1.serverNodeUUID)
+    }
     void testClaimScheduledJobsUnassigned() {
         def (ScheduledExecution job1, String serverUUID2, ScheduledExecution job2, ScheduledExecution job3,
         ScheduledExecutionService testService, String serverUUID) = setupTestClaimScheduledJobs()
@@ -265,32 +288,28 @@ public class ScheduledExecutionServiceTests extends GrailsUnitTestCase {
         assertEquals(serverUUID2, job2.serverNodeUUID)
         assertEquals(null, job3.serverNodeUUID)
 
-        registerMetaClass(ScheduledExecution)
-        ScheduledExecution.metaClass.static.withNewSession = { clos -> clos.call([:]) }
         def resultMap = testService.claimScheduledJobs(serverUUID)
+
+        assertTrue(resultMap[job1.extid])
+        assertEquals(null, resultMap[job2.extid])
+        assertEquals(null, resultMap[job3.extid])
+        job1=ScheduledExecution.get(job1.id)
+        job2=ScheduledExecution.get(job2.id)
+        job3=ScheduledExecution.get(job3.id)
 
         assertEquals(serverUUID, job1.serverNodeUUID)
         assertEquals(serverUUID2, job2.serverNodeUUID)
         assertEquals(null, job3.serverNodeUUID)
 
-        assertTrue(resultMap[job1.extid])
-        assertEquals(null, resultMap[job2.extid])
-        assertEquals(null, resultMap[job3.extid])
     }
 
     void testClaimScheduledJobsFromServerUUID() {
         def (ScheduledExecution job1, String serverUUID2, ScheduledExecution job2, ScheduledExecution job3,
         ScheduledExecutionService testService, String serverUUID) = setupTestClaimScheduledJobs()
 
-        assertEquals(job1, ScheduledExecution.lock(job1.id))
-        assertEquals(job2, ScheduledExecution.lock(job2.id))
-        assertEquals(job3, ScheduledExecution.lock(job3.id))
         assertEquals(null, job1.serverNodeUUID)
         assertEquals(serverUUID2, job2.serverNodeUUID)
         assertEquals(null, job3.serverNodeUUID)
-
-        registerMetaClass(ScheduledExecution)
-        ScheduledExecution.metaClass.static.withNewSession = { clos -> clos.call([:]) }
 
         def resultMap = testService.claimScheduledJobs(serverUUID, serverUUID2)
 
@@ -304,10 +323,6 @@ public class ScheduledExecutionServiceTests extends GrailsUnitTestCase {
     }
 
     private List setupTestClaimScheduledJobs() {
-        mockDomain(ScheduledExecution)
-        mockDomain(Workflow)
-        mockDomain(CommandExec)
-        mockLogging(ScheduledExecutionService)
         ScheduledExecutionService testService = new ScheduledExecutionService()
         def serverUUID = UUID.randomUUID().toString()
         def serverUUID2 = UUID.randomUUID().toString()
@@ -322,7 +337,8 @@ public class ScheduledExecutionServiceTests extends GrailsUnitTestCase {
                 serverNodeUUID: null,
                 scheduled: true
         )
-        job1.save()
+        assertTrue(job1.validate())
+        assertNotNull(job1.save())
         ScheduledExecution job2 = new ScheduledExecution(
                 jobName: 'blue2',
                 project: 'AProject2',
@@ -334,7 +350,8 @@ public class ScheduledExecutionServiceTests extends GrailsUnitTestCase {
                 serverNodeUUID: serverUUID2,
                 scheduled: true
         )
-        job2.save()
+        assertTrue(job2.validate())
+        assertNotNull(job2.save())
         ScheduledExecution job3 = new ScheduledExecution(
                 jobName: 'blue2',
                 project: 'AProject2',
@@ -345,14 +362,8 @@ public class ScheduledExecutionServiceTests extends GrailsUnitTestCase {
                         [new CommandExec([adhocRemoteString: 'test buddy2'])]),
                 scheduled: false,
         )
-        job3.save()
-        def map = [(job1.id): job1, (job2.id): job2, (job3.id): job3]
-        registerMetaClass(ScheduledExecution)
-        ScheduledExecution.metaClass.static.lock = { id ->
-            println("lock for id ${id}")
-            return map[id]
-        }
-
+        assertTrue(job3.validate())
+        assertNotNull(job3.save())
         [job1, serverUUID2, job2, job3, testService, serverUUID]
     }
 }
