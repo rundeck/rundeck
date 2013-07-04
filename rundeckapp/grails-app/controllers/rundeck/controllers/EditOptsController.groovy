@@ -383,6 +383,7 @@ class EditOptsController {
         }
 
         opt.properties = params
+        opt.valuesList = params.valuesList
         if(params.valuesType == 'list'){
             opt.realValuesUrl=null
         }else if(params.valuesType == 'url'){

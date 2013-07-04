@@ -7,9 +7,10 @@ import rundeck.Execution
 import rundeck.Option
 import rundeck.ScheduledExecution
 import rundeck.Workflow
+import rundeck.WorkflowStep
 
 @TestFor(EditOptsController)
-@Mock([ScheduledExecution, Option, Workflow, CommandExec, Execution])
+@Mock([ScheduledExecution, Option, Workflow, WorkflowStep, CommandExec, Execution])
 class EditOptsControllerTests  {
 
     void test_setOptionFromParamstestEmpty(){
