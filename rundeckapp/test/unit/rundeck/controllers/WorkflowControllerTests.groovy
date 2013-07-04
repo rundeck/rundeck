@@ -6,10 +6,11 @@ import rundeck.CommandExec
 import rundeck.JobExec
 import rundeck.PluginStep
 import rundeck.Workflow
+import rundeck.WorkflowStep
 import rundeck.services.FrameworkService
 
 @TestFor(WorkflowController)
-@Mock([Workflow, JobExec, CommandExec, PluginStep])
+@Mock([Workflow, WorkflowStep, JobExec, CommandExec, PluginStep])
 class WorkflowControllerTests {
 
 
