@@ -131,7 +131,7 @@
         /** START history
          *
          */
-        var histControl = new HistoryControl('histcontent',{compact:true,nofilters:true});
+        var histControl = new HistoryControl('histcontent',{xcompact:true,nofilters:true});
         function loadHistory(){
             histControl.loadHistory( ${(reportQueryParams?:[projFilter:session.project]).encodeAsJSON()});
         }

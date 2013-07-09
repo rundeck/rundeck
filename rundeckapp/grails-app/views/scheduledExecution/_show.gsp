@@ -33,16 +33,12 @@
 
     <div style="vertical-align:top;width: 200px;" class="toolbar small">
         <g:render template="/scheduledExecution/actionButtons" model="${[scheduledExecution:scheduledExecution,objexists:objexists,jobAuthorized:jobAuthorized]}"/>
-        <g:render template="/scheduledExecution/renderJobStats" model="${[scheduledExecution: scheduledExecution]}"/>
     </div>
     <div class="clear"></div>
 </div>
 
 <div class="pageBody" id="schedExecPage">
-
-    %{--<g:expander key="schedExDetails${scheduledExecution?.id?scheduledExecution?.id:''}" imgfirst="true">Details</g:expander>--}%
-    <span class="prompt">Details</span>
-    <div class="presentation"  id="schedExDetails${scheduledExecution?.id}" style="max-width:600px; width:600px;">
+    <div id="schedExDetails${scheduledExecution?.id}" style="">
         <g:render template="showDetail" model="[scheduledExecution:scheduledExecution]"/>
 
     </div>
@@ -59,6 +55,7 @@
 </div>
 <div class="runbox">History</div>
 <div class="pageBody">
+    <g:render template="/scheduledExecution/renderJobStats" model="${[scheduledExecution: scheduledExecution]}"/>
     <div id="histcontent"></div>
     <g:javascript>
         fireWhenReady('histcontent', loadHistory);

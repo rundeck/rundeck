@@ -35,7 +35,7 @@
                 <g:if test="${!noimgs}"><g:img file="icon-small-job.png" width="16px" height="16px"/> </g:if>${item.jobGroup?item.jobGroup.encodeAsHTML()+'/':''}${item.jobName.encodeAsHTML()}
                 </g:else>
                 <g:if test="${item.argString}">
-                   <span class="argString"><g:truncate max="50"  showtitle="true">${item.argString.encodeAsHTML()}</g:truncate></span>
+                   <span class="argString"><g:truncate max="150"  showtitle="true">${item.argString.encodeAsHTML()}</g:truncate></span>
                 </g:if>
             </g:if>
             <g:elseif test="${pluginitem}">
@@ -50,7 +50,7 @@
             <g:else>
                 <g:if test="${!noimgs}"><g:img file="icon-small-shell.png" width="16px" height="16px"/></g:if>
                 <g:if test="${item.adhocRemoteString}">
-                    <span class="argString"><g:truncate max="60" showtitle="true">${item.adhocRemoteString.encodeAsHTML()}</g:truncate></span>
+                    <span class="argString"><g:truncate max="150" showtitle="true">${item.adhocRemoteString.encodeAsHTML()}</g:truncate></span>
                 </g:if>
                 <g:elseif test="${item.adhocLocalString}">
                     <g:if test="${item.scriptInterpreter}">
@@ -70,15 +70,15 @@
                     </g:if>
                     <g:if test="${item.adhocFilepath=~/^https?:/}">
                         <g:set var="urlString" value="${item.adhocFilepath.replaceAll('^(https?://)([^:@/]+):[^@/]*@', '$1$2:****@')}"/>
-                        <span class="argString"><g:truncate max="60"
+                        <span class="argString"><g:truncate max="150"
                                                             showtitle="true">${urlString.encodeAsHTML()}</g:truncate></span>
                     </g:if>
                     <g:else>
-                        <span class="argString"><g:truncate max="60"  showtitle="true">${item.adhocFilepath.encodeAsHTML()}</g:truncate></span>
+                        <span class="argString"><g:truncate max="150"  showtitle="true">${item.adhocFilepath.encodeAsHTML()}</g:truncate></span>
                     </g:else>
                 </g:elseif>
                 <g:if test="${item.argString}">
-                   <span class="argString"><g:truncate max="45"  showtitle="true">${item.argString.encodeAsHTML()}</g:truncate></span>
+                   <span class="argString"><g:truncate max="150"  showtitle="true">${item.argString.encodeAsHTML()}</g:truncate></span>
                 </g:if>
                 <g:if test="${item.interpreterArgsQuoted}">
                     &quot;

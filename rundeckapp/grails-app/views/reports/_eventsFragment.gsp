@@ -14,7 +14,7 @@
     </g:if>
     <g:set var="wasfiltered" value="${paginateParams}"/>
     <g:set var="filtersOpen" value="${params.createFilters||params.editFilters||params.saveFilter?true:false}"/>
-    <table cellspacing="0" cellpadding="0" class="queryTable" >
+    <table cellspacing="0" cellpadding="0" class="queryTable" style="width:100%">
         <tr>
         <g:if test="${!params.nofilters}">
         <td style="text-align:left;vertical-align:top; ${wdgt.styleVisible(if:filtersOpen)}" id="${rkey}filter" >
@@ -95,7 +95,7 @@
 
                 <div class="jobsReport clear">
                     <g:if test="${reports}">
-                        <g:render template="baseReport" model="['reports':reports,options:params.compact?[tags:false]:[:],hiliteSince:params.hiliteSince]"/>
+                        <g:render template="baseReport" model="['reports':reports,options:params.compact?[tags:false, summary: false]:[summary:true],hiliteSince:params.hiliteSince]"/>
 
                             <g:if test="${total && max && total.toInteger() > max.toInteger()}">
                                 <span class="info note">Showing ${reports.size()} of ${total}</span>
