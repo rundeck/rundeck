@@ -98,7 +98,7 @@
 
 %{--<span class="label">threadcount:</span> ${workflow?.threadcount}--}%
 </div>
-<div class="pflowlist ${edit?'edit':''} rounded" style="${edit?'width:600px;':''}">
+<div class="pflowlist ${edit?'edit':''} rounded" style="">
     <g:if test="${edit}">
         <div id="wfundoredo" >
             <div style="margin-bottom:10px;">
