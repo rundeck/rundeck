@@ -1203,9 +1203,11 @@ var FollowControl = Class.create({
         this.jobFinishStatus(result);
     },
     jobFinishStatus: function(result) {
-        if (null != result && $('runstatus')) {
-            $('runstatus').innerHTML = result == 'succeeded' ? '<span class="succeed">Successful</span>'
-                : (result == 'aborted' ? '<span class="fail">Killed</span>' : '<span class="fail">Failed</span>');
+        if (null != result) {
+            if($('runstatus')){
+                $('runstatus').innerHTML = result == 'succeeded' ? '<span class="succeed">Successful</span>'
+                    : (result == 'aborted' ? '<span class="fail">Killed</span>' : '<span class="fail">Failed</span>');
+            }
             $$('.execstatus').each(function(e){
                 e.innerHTML = result == 'succeeded' ? '<span class="succeed">Successful</span>'
                 : (result == 'aborted' ? '<span class="fail">Killed</span>' : '<span class="fail">Failed</span>');

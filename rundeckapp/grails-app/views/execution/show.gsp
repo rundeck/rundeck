@@ -93,168 +93,112 @@
   <body>
     <div class="pageTop extra">
         <div class="jobHead">
-            <g:render template="/scheduledExecution/showHead" model="[scheduledExecution:scheduledExecution,execution:execution,followparams:[mode:followmode,lastlines:params.lastlines]]"/>
+            <table cellspacing="0" cellpadding="0" width="100%">
+                <tr>
+                    <td width="50%" style="vertical-align: top;">
+                        <g:render template="/scheduledExecution/showExecutionHead"
+                                  model="[scheduledExecution: scheduledExecution, execution: execution, followparams: [mode: followmode, lastlines: params.lastlines]]"/>
+                    </td>
+                    <td width="50%" style="vertical-align: top;">
+                        <g:render template="showJobHead" model="${[scheduledExecution:scheduledExecution]}"/>
+                        <div style="margin:10px;">
+                        <g:expander key="schedExDetails${scheduledExecution?.id ? scheduledExecution?.id : ''}"
+                                    imgfirst="true">Details</g:expander>
+                        <div class="presentation" style="display:none" id="schedExDetails${scheduledExecution?.id}">
+                            <g:render template="execDetails" model="[execdata: execution]"/>
+                        </div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
         </div>
         <div class="clear"></div>
     </div>
-    <div class="pageBody">
 
-        <table>
-            <tr>
-                <td>
+  <div id="commandFlow" class="commandFlow">
+      <table width="100%">
+          <tr>
+              <td >
 
-        <table class="executionInfo">
-            <tr>
-                <td>User:</td>
-                <td>${execution?.user}</td>
-            </tr>
-            <g:if test="${null!=execution.dateCompleted && null!=execution.dateStarted}">
+                  <g:if test="${null==execution.dateCompleted}">
+                      <g:if test="${authChecks[AuthConstants.ACTION_KILL]}">
+                          <span id="cancelresult" style="margin-left:10px">
+                              <span class="action button textbtn" onclick="followControl.docancel();">Kill <g:message
+                                      code="domain.ScheduledExecution.title"/> <img
+                                      src="${resource(dir: 'images', file: 'icon-tiny-removex.png')}" alt="Kill"
+                                      width="12px" height="12px"/></span>
+                          </span>
+                      </g:if>
+                  </g:if>
 
-                <tr>
-                    <td>Time:</td>
-                    <td><g:relativeDate start="${execution.dateStarted}" end="${execution.dateCompleted}" /></td>
-                </tr>
-            </g:if>
-            <g:if test="${null!=execution.dateStarted}">
-            <tr>
-                <td>Started:</td>
-                <td>
-                    <g:relativeDate elapsed="${execution.dateStarted}" agoClass="timeago"/>
-                </td>
-                <td><span class="timeabs">${execution.dateStarted}</span></td>
-            </tr>
-            </g:if>
-            <g:else>
-                <td>Started:</td>
-                <td>Just Now</td>
-            </g:else>
+                  <span id="execRetry"
+                        style="${wdgt.styleVisible(if: null != execution.dateCompleted && null != execution.failedNodeList)}; margin-right:10px;">
+                      <g:if test="${scheduledExecution}">
+                          <g:if test="${authChecks[AuthConstants.ACTION_RUN]}">
+                              <g:link controller="scheduledExecution" action="execute" id="${scheduledExecution.extid}"
+                                      params="${[retryFailedExecId: execution.id]}" title="Run Job on the failed nodes"
+                                      class="action button" style="margin-left:10px">
+                                  <img src="${resource(dir: 'images', file: 'icon-small-run.png')}" alt="run"
+                                       width="16px" height="16px"/>
+                                  Retry Failed Nodes  &hellip;
+                              </g:link>
+                          </g:if>
+                      </g:if>
+                      <g:else>
+                          <g:if test="${auth.resourceAllowedTest(kind: 'job', action: [AuthConstants.ACTION_CREATE]) || adhocRunAllowed}">
+                              <g:link controller="scheduledExecution" action="createFromExecution"
+                                      params="${[executionId: execution.id, failedNodes: true]}" class="action button"
+                                      title="Retry on the failed nodes&hellip;" style="margin-left:10px">
+                                  <img src="${resource(dir: 'images', file: 'icon-small-run.png')}" alt="run"
+                                       width="16px" height="16px"/>
+                                  Retry Failed Nodes &hellip;
+                              </g:link>
+                          </g:if>
+                      </g:else>
+                  </span>
+                  <span id="execRerun" style="${wdgt.styleVisible(if: null != execution.dateCompleted)}">
+                      <g:if test="${scheduledExecution}">
+                          <g:if test="${authChecks[AuthConstants.ACTION_RUN]}">
+                              &nbsp;
+                              <g:link controller="scheduledExecution"
+                                      action="execute"
+                                      id="${scheduledExecution.extid}"
+                                      params="${[retryExecId: execution.id]}"
+                                      class="action button"
+                                      title="Run this Job Again with the same options">
+                                  <g:img file="icon-small-run.png" alt="run" width="16px" height="16px"/>
+                                  Run Again &hellip;
+                              </g:link>
+                          </g:if>
+                      </g:if>
+                      <g:else>
+                          <g:if test="${auth.resourceAllowedTest(kind: 'job', action: [AuthConstants.ACTION_CREATE]) || adhocRunAllowed}">
+                              <g:if test="${!scheduledExecution || scheduledExecution && authChecks[AuthConstants.ACTION_READ]}">
+                                  <g:link
+                                          controller="scheduledExecution"
+                                          action="createFromExecution"
+                                          params="${[executionId: execution.id]}"
+                                          class="action button"
+                                          title="Save these Execution parameters as a Job, or run again...">
+                                      <g:img file="icon-small-run.png" alt="run" width="16px" height="16px"/>
+                                      Run Again or Save &hellip;
+                                  </g:link>
+                              </g:if>
+                          </g:if>
+                      </g:else>
+                  </span>
+              </td>
+              <td>
+                  <div id="progressContainer" class="progressContainer">
+                      <div class="progressBar" id="progressBar"
+                           title="Progress is an estimate based on average execution time for this ${g.message(code: 'domain.ScheduledExecution.title')}.">0%</div>
+                  </div>
+              </td>
+          </tr>
+      </table>
+  </div>
 
-        <g:if test="${null!=execution.dateCompleted}">
-                <tr>
-                    <td>Finished:</td>
-                    <td>
-                        <g:relativeDate elapsed="${execution.dateCompleted}" agoClass="timeago"/>
-                    </td>
-                    <td><span class="timeabs">${execution.dateCompleted}</span></td>
-                </tr>
-            </g:if>
-        </table>
 
-                </td>
-                <g:if test="${scheduledExecution}">
-                    <td style="vertical-align:top;" class="toolbar small">
-                        <g:render template="/scheduledExecution/actionButtons" model="${[scheduledExecution:scheduledExecution,objexists:objexists,jobAuthorized:jobAuthorized,execPage:true]}"/>
-                        <g:render template="/scheduledExecution/renderJobStats"
-                                  model="${[scheduledExecution: scheduledExecution]}"/>
-                    </td>
-                </g:if>
-            </tr>
-        </table>
-
-        <g:expander key="schedExDetails${scheduledExecution?.id?scheduledExecution?.id:''}" imgfirst="true">Details</g:expander>
-        <div class="presentation" style="display:none" id="schedExDetails${scheduledExecution?.id}">
-            <g:render template="execDetails" model="[execdata:execution]"/>
-
-        </div>
-    </div>
-
-
-    <div id="commandFlow" class="commandFlow">
-        <table width="100%">
-            <tr>
-                <td width="50%">
-
-        <g:if test="${null!=execution.dateCompleted}">
-
-                    Status:
-                    <span class="${execution.status=='true'?'succeed':'fail'}" >
-                        <g:if test="${execution.status=='true'}">
-                            Successful
-                        </g:if>
-                        <g:elseif test="${execution.cancelled}">
-                            Killed<g:if test="${execution.abortedby}"> by: ${execution.abortedby.encodeAsHTML()}</g:if>
-                        </g:elseif>
-                        <g:else>
-                            Failed
-                        </g:else>
-                    </span>
-            </g:if>
-            <g:else>
-                    Status:
-
-                        <span id="runstatus">
-                        <span class="nowrunning">
-                        <img src="${resource(dir:'images',file:'icon-tiny-disclosure-waiting.gif')}" alt="Spinner"/>
-                        Now Running&hellip;
-                        </span>
-                        </span>
-
-                    <g:if test="${authChecks[AuthConstants.ACTION_KILL]}">
-                        <span id="cancelresult" style="margin-left:10px">
-                            <span class="action button textbtn" onclick="followControl.docancel();">Kill <g:message code="domain.ScheduledExecution.title"/> <img src="${resource(dir:'images',file:'icon-tiny-removex.png')}" alt="Kill" width="12px" height="12px"/></span>
-                        </span>
-                    </g:if>
-
-            </g:else>
-
-                    <span id="execRetry" style="${wdgt.styleVisible(if:null!=execution.dateCompleted && null!=execution.failedNodeList)}; margin-right:10px;">
-                        <g:if test="${scheduledExecution}">
-                            <g:if test="${authChecks[AuthConstants.ACTION_RUN]}">
-                                <g:link controller="scheduledExecution" action="execute" id="${scheduledExecution.extid}" params="${[retryFailedExecId:execution.id]}" title="Run Job on the failed nodes" class="action button" style="margin-left:10px" >
-                                    <img src="${resource(dir:'images',file:'icon-small-run.png')}" alt="run" width="16px" height="16px"/>
-                                    Retry Failed Nodes  &hellip;
-                                </g:link>
-                            </g:if>
-                        </g:if>
-                        <g:else>
-                            <g:if test="${auth.resourceAllowedTest(kind: 'job', action: [AuthConstants.ACTION_CREATE]) || adhocRunAllowed}">
-                                <g:link controller="scheduledExecution" action="createFromExecution" params="${[executionId:execution.id,failedNodes:true]}" class="action button" title="Retry on the failed nodes&hellip;" style="margin-left:10px">
-                                    <img src="${resource(dir:'images',file:'icon-small-run.png')}"  alt="run" width="16px" height="16px"/>
-                                    Retry Failed Nodes &hellip;
-                                </g:link>
-                            </g:if>
-                        </g:else>
-                    </span>
-                    <span id="execRerun" style="${wdgt.styleVisible(if:null!=execution.dateCompleted)}" >
-                        <g:if test="${scheduledExecution}">
-                            <g:if test="${authChecks[AuthConstants.ACTION_RUN]}">
-                                &nbsp;
-                                <g:link controller="scheduledExecution"
-                                        action="execute"
-                                        id="${scheduledExecution.extid}"
-                                        params="${[retryExecId: execution.id]}"
-                                        class="action button"
-                                        title="Run this Job Again with the same options">
-                                    <g:img file="icon-small-run.png" alt="run" width="16px" height="16px"/>
-                                    Run Again &hellip;
-                                </g:link>
-                            </g:if>
-                        </g:if>
-                        <g:else>
-                        <g:if test="${auth.resourceAllowedTest(kind: 'job', action: [AuthConstants.ACTION_CREATE]) || adhocRunAllowed }">
-                        <g:if test="${!scheduledExecution || scheduledExecution && authChecks[AuthConstants.ACTION_READ]}">
-                            <g:link
-                                controller="scheduledExecution"
-                                action="createFromExecution"
-                                params="${[executionId:execution.id]}"
-                                class="action button"
-                                title="Save these Execution parameters as a Job, or run again..." >
-                                <g:img file="icon-small-run.png" alt="run" width="16px" height="16px"/>
-                                Run Again or Save &hellip;
-                            </g:link>
-                        </g:if>
-                        </g:if>
-                        </g:else>
-                    </span>
-                </td>
-                <td width="50%" >
-                    <div id="progressContainer" class="progressContainer" >
-                        <div class="progressBar" id="progressBar" title="Progress is an estimate based on average execution time for this ${g.message(code:'domain.ScheduledExecution.title')}.">0%</div>
-                    </div>
-                </td>
-            </tr>
-        </table>
-    </div>
 
     <div id="commandPerformOpts" class="outputdisplayopts" style="margin: 0 20px;">
         <form action="#" id="outputappendform">

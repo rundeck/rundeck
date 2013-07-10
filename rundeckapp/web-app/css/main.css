@@ -1647,26 +1647,30 @@ div.jobHead span.jobInfo{
 
 }
 div.jobHead span.jobInfoPart{
-    /*font-size: 9pt;*/
-    vertical-align:middle;
-    margin: 0 0 0 10px;
 }
-div.jobHead span.jobInfoSection{
-    /*font-size: 9pt;*/
-    display:block;
-    margin: 5px 0 5px 32px;
+div.jobHead div.jobInfoSection{
+}
+
+div.jobHead div.jobInfoSection + div.jobInfoSection {
+    margin-top: 15px;
 }
 div.jobHead span.jobInfoPart span.partContent{
     margin-top:auto;
     margin-bottom:auto;
 }
 div.jobHead span.jobIcon{
+    display: inline-block;
+    width:32px;
 }
-div.jobHead span.jobName{
-    font-size: 120%;
+div.jobHead span.primary{
+    font-size: 130%;
     font-weight: bold;
-    vertical-align:middle;
-    margin: 0 0 0 10px;
+}
+
+div.jobHead span.secondary {
+    padding:5px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
 }
 div.jobHead span.jobName.transient{
     color: #888;
@@ -1674,7 +1678,6 @@ div.jobHead span.jobName.transient{
     font-style:italic;
 }
 div.jobHead span.jobDesc{
-    /*font-size:9pt;*/
     color:#777;
 }
 div.jobHead span.jobSummary{
@@ -1698,10 +1701,6 @@ span.jobfinal{
 #commandFlow{
     padding: 10px;
     margin: 0 20px;
-    background: #fff;
-    border-width: 1px 1px 0 1px;
-    border-style:solid;
-    border-color: #ddd;
 }
 div.commandFlowError{
     padding: 10px;

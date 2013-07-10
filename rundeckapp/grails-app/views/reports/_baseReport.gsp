@@ -80,8 +80,8 @@
 
 
         <td class="eventtitle ${rpt?.jcJobId ? 'job' : 'adhoc'}">
-        <g:if test="${options.summary}">
-                #${rpt.jcExecId}
+            #${rpt.jcExecId}
+            <g:if test="${options.summary}">
             <span>
                 <g:if test="${rpt?.jcJobId}">
                     <g:set var="foundJob" value="${ScheduledExecution.getByIdOrUUID(it.jcJobId)}"/>
@@ -147,12 +147,11 @@
 
             <td style="white-space:nowrap" class="right sepL">
                 <g:if test="${it.dateCompleted}">
-
-                    <g:formatDate date="${it?.dateCompleted}" formatName="jobslist.date.format"/>
+                    <g:relativeDate elapsed="${it?.dateCompleted}" agoClass="timeago"/>
+                    <span class="timeabs"><g:formatDate date="${it?.dateCompleted}" formatName="jobslist.date.format"/></span>
                     <span title="<g:relativeDate atDate='${it?.dateStarted}'/> to <g:relativeDate
                             atDate='${it?.dateCompleted}'/> ">
-                        (<g:relativeDate elapsed="${it?.dateCompleted}"/>,
-                        <g:relativeDate end="${it?.dateCompleted}" start="${it?.dateStarted}"/>)
+                        (<g:relativeDate end="${it?.dateCompleted}" start="${it?.dateStarted}"/>)
                     </span>
                 </g:if>
             %{--</td>--}%
