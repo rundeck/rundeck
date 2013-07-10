@@ -57,7 +57,7 @@
             <g:set var="status" value="${execution.status == 'true' ? 'succeeded' : null == execution.dateCompleted ? 'running' : execution.cancelled ? 'killed' : 'failed'}"/>
         </g:if>
         <tr class="  ${it?.status != 'succeed' ? 'fail' : ''}  ${!it.dateCompleted ? 'nowrunning' : ''} ${sincetime && it.dateCompleted.time>sincetime?'newitem':''} hilite expandComponentHolder sectionhead link" onclick="$(this).down('a._defaultAction').click();">
-            <td style="width:12px;">
+            <td style="width:12px;" class="eventicon">
             %{--<img--}%
                     %{--src="${resource(dir: 'images', file: 'icon-tiny-' + (it?.status == 'succeed' ? 'ok' : 'warn') + '.png')}"--}%
                     %{--alt="" width="12px" height="12px"/>--}%
@@ -137,7 +137,7 @@
                 </g:if>
             </g:else>
         </td>
-        <td>
+        <td class="argString">
             <g:if test="${execution && execution.argString}"><span class="argString">${execution.argString.encodeAsHTML()}</span></g:if>
         </td>
 
