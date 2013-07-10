@@ -642,4 +642,8 @@ class UtilityTagLib{
     def pluginPropertyFrameworkScopeKey={attrs,body->
         out << PropertyResolverFactory.frameworkPropertyPrefix(PropertyResolverFactory.pluginPropertyPrefix(attrs.service, attrs.provider))+(attrs.property?:'')
     }
+    
+    def markdown={ attrs, body ->
+        out<<body().toString().decodeMarkdown()
+    }
 }

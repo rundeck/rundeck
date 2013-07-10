@@ -603,6 +603,9 @@ class MenuController {
         ]]
     }
 
+    def licenses = {->
+
+    }
 
 
     /**
