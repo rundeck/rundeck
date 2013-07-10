@@ -12,7 +12,7 @@
 </g:if>
 <%
     if(!options.msgsplitsize){
-        options.msgsplitsize=60
+        options.msgsplitsize=100
     }
     def j = 0;
 %>
@@ -24,11 +24,11 @@
 
     <tr>
         <g:if test="${options.summary}">
-        <th colspan="2"><g:message code="execution" /></th>
+        <th colspan="3"><g:message code="execution" /></th>
         %{--<th colspan="1"><g:message code="events.history.title.Summary"/></th>--}%
         </g:if>
         <g:else>
-            <th colspan="2"></th>
+            <th colspan="3"></th>
         </g:else>
         <th><g:message code="jobquery.title.endFilter"/></th>
 
@@ -56,7 +56,7 @@
             <g:set var="execution" value="${Execution.get(it.jcExecId)}"/>
             <g:set var="status" value="${execution.status == 'true' ? 'succeeded' : null == execution.dateCompleted ? 'running' : execution.cancelled ? 'killed' : 'failed'}"/>
         </g:if>
-        <tr class="  ${it?.status != 'succeed' ? 'fail' : ''}  ${!it.dateCompleted ? 'nowrunning' : ''} ${sincetime && it.dateCompleted.time>sincetime?'newitem':''} hilite expandComponentHolder sectionhead link" onclick="$(this).down('a').click();">
+        <tr class="  ${it?.status != 'succeed' ? 'fail' : ''}  ${!it.dateCompleted ? 'nowrunning' : ''} ${sincetime && it.dateCompleted.time>sincetime?'newitem':''} hilite expandComponentHolder sectionhead link" onclick="$(this).down('a._defaultAction').click();">
             <td style="width:12px;">
             %{--<img--}%
                     %{--src="${resource(dir: 'images', file: 'icon-tiny-' + (it?.status == 'succeed' ? 'ok' : 'warn') + '.png')}"--}%
@@ -86,15 +86,8 @@
                 <g:if test="${rpt?.jcJobId}">
                     <g:set var="foundJob" value="${ScheduledExecution.getByIdOrUUID(it.jcJobId)}"/>
                     <g:if test="${foundJob}">
-                        <g:link controller="scheduledExecution" action="show" id="${foundJob.extid}">
-                            <g:truncate max="${maxmsgsize}" front="true">
-                                ${foundJob.generateFullName().encodeAsHTML()}
-                            </g:truncate>
-                            <g:if test="${execution && execution.argString}">
-                                <g:truncate max="${maxmsgsize}" >
-                                    ${execution.argString.encodeAsHTML()}
-                                </g:truncate>
-                            </g:if>
+                        <g:link controller="scheduledExecution" action="show" id="${foundJob.extid}" params="${[fullName:foundJob.generateFullName()]}">
+                            ${foundJob.generateFullName().encodeAsHTML()}
                         </g:link>
                     </g:if>
                     <g:else>
@@ -143,7 +136,10 @@
                     by ${it.abortedByUser}
                 </g:if>
             </g:else>
-        %{--</td>--}%
+        </td>
+        <td>
+            <g:if test="${execution && execution.argString}"><span class="argString">${execution.argString.encodeAsHTML()}</span></g:if>
+        </td>
 
             <td style="white-space:nowrap" class="right sepL">
                 <g:if test="${it.dateCompleted}">
@@ -158,12 +154,7 @@
 
             %{--<td class=" sepL user">--}%
                 <em>by</em>
-                <g:if test="${it?.author == session.user}">
-                    <em>you</em>
-                </g:if>
-                <g:else>
-                ${it?.author.encodeAsHTML()}
-                </g:else>
+                <g:username user="${it?.author}"/>
             </td>
 
                 %{--<td class="project">--}%
@@ -214,7 +205,7 @@
                     </g:if>
                 </g:if>
             </td>
-            <td style="white-space:nowrap; text-align: right;" class="right sepL">
+            <td style="white-space:nowrap; text-align: right; width:30px;" class="right sepL">
             <g:if test="${rpt.jcExecId}">
                 <div class="rptitem">
                     <g:link controller="execution" action="show" id="${rpt.jcExecId}" class="_defaultAction"
