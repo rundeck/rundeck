@@ -32,7 +32,7 @@
     </div>
 
     <div style="vertical-align:top;width: 200px;" class="toolbar small">
-        <g:render template="/scheduledExecution/actionButtons" model="${[scheduledExecution:scheduledExecution,objexists:objexists,jobAuthorized:jobAuthorized]}"/>
+        <g:render template="/scheduledExecution/actionButtons" model="${[scheduledExecution:scheduledExecution,objexists:objexists,jobAuthorized:jobAuthorized,iconsize:'24px',iconname:'med']}"/>
     </div>
     <div class="clear"></div>
 </div>
