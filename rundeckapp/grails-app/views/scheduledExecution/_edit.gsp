@@ -154,6 +154,12 @@ var applinks={
         }
 
         Event.observe(window,'load',pageinit);
+    fireWhenReady('saveJobQ',function(e){
+        $$('textarea').each(function(textarea){
+            $(textarea).setStyle({ lineHeight: "20px"});
+            new Widget.Textarea(textarea,{min_height:2});
+        });
+    });
 //]>
 </script>
 <style lang="text/css">
@@ -169,6 +175,9 @@ var applinks={
         -moz-border-radius : 3px;
         -webkit-border-radius: 3px;
         border-radius: 3px;
+    }
+    #workflowContent ol li{
+        padding: 5px;
     }
     #workflowContent ol li.hoverActive{
         border-top: 2px solid blue;
@@ -190,7 +199,7 @@ var applinks={
         position:absolute;
         right:0;
         top:0;
-        width:200px;
+        width:250px;
         text-align:right;
     }
     .controls.autohide{
@@ -210,24 +219,25 @@ var applinks={
         position:absolute;
         right:0;
         top:0;
-        width:40px;
+        width:120px;
         text-align:right;
     }
     .optview{
         /*position:relative;*/
     }
     .optdetail{
-        float:left;
-        display:block;
-        width:380px;
+        /*float:left;*/
+        display:inline-block;
+        width:540px;
         overflow:hidden;
         white-space:nowrap;
         height:16px;
         line-height:16px;
     }
     .enforceSet{
-        position:absolute;
-        right: 45px;
+        /*position:absolute;*/
+        /*right: 45px;*/
+        display: inline-block;
         width:100px;
         overflow:hidden;
         white-space:nowrap;
@@ -238,8 +248,9 @@ var applinks={
         text-align:right;
     }
     .valuesSet{
-        position:absolute;
-        right: 150px;
+        /*position:absolute;*/
+        /*right: 150px;*/
+        display: inline-block;
         width: 60px;
         overflow:hidden;
         white-space:nowrap;
@@ -257,6 +268,7 @@ var applinks={
     }
     ul.options li{
         list-style:none;
+        padding: 4px;
     }
     div.inputset > div {
         clear:both;
@@ -300,7 +312,22 @@ var applinks={
         vertical-align: top;
     }
     .add_step_buttons td .action{
-        padding: 2px 0;
+    }
+
+    /**
+    job edit form table
+     */
+    table.jobeditform > tbody > tr > td:first-child{
+        width:120px;
+    }
+    /**
+    Ace editor
+    */
+    div.ace_text{
+        border:1px solid #aaa;
+    }
+    .pflowlist{
+        margin-right: 10px;
     }
 </style>
 <g:set var="wasSaved" value="${ (params?.saved=='true') || scheduledExecution?.id || scheduledExecution?.jobName || scheduledExecution?.scheduled}"/>
@@ -309,7 +336,7 @@ var applinks={
 <div class="note error" style="display: none" id="editerror">
     
 </div>
-<table class="simpleForm" cellspacing="0">
+<table class="simpleForm jobeditform" cellspacing="0" style="width:100%">
  <g:if test="${!scheduledExecution?.id}">
     <tr id="saveJobQ" style="${wdgt.styleVisible(unless:scheduledExecution?.scheduled)}">
         <td>Save this job?</td>
@@ -511,10 +538,8 @@ var applinks={
     </tr>
     </tbody>
 
-    <g:hiddenField name="project" value="${scheduledExecution.project ? scheduledExecution.project.toString() : projects?.size() == 1 ? projects[0].name : session.project ? session.project : ''}"
-        id="schedEditFrameworkProject"
-    />
-
+    <g:set var="projectName" value="${scheduledExecution.project?scheduledExecution.project.toString():projects?.size()==1?projects[0].name:session.project?session.project:''}" />
+    <g:hiddenField id="schedEditFrameworkProject" name="project" value="${projectName}" />
 
     <tbody id="optionsContent" class="savedJobFields" style=" ${wdgt.styleVisible(if:wasSaved)}">
         <tr>
@@ -814,7 +839,7 @@ var applinks={
     </tbody>
     <tbody style="${wdgt.styleVisible(if:scheduledExecution?.doNodedispatch)}" class="subfields nodeFilterFields">
     <tr>
-        <td onclick="_formUpdateMatchedNodes()"><span id="mnodeswait"></span> <span class="button action textbtn" title="click to refresh">Matched nodes</span></td>
+        <td onclick="_formUpdateMatchedNodes()"><span id="mnodeswait"></span> <span class="action textbtn" title="click to refresh">Matched nodes</span></td>
         <td id="matchednodes" class="embed matchednodes" >
             <span class="action textbtn" onclick="_formUpdateMatchedNodes()">Update...</span>
         </td>
@@ -927,4 +952,5 @@ var applinks={
         initTooltipForElements('.obs_tooltip');
     }
 </g:javascript>
+<g:javascript library="ace/ace"/>
 <div id="msg"></div>
