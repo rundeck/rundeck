@@ -646,4 +646,22 @@ class UtilityTagLib{
     def markdown={ attrs, body ->
         out<<body().toString().decodeMarkdown()
     }
+
+    /**
+     * Outputs the attribute "user", or "you" if it matches the current user,optionally wrap in span with given class if it
+     * is "you", with attribute "youclass"
+     */
+    def username={attrs,body->
+        if(attrs.user==session.user){
+            if(attrs.youclass){
+                out<<"<span class='${attrs.youclass.encodeAsHTML()}'>"
+            }
+            out << "you"
+            if (attrs.youclass) {
+                out << "</span>"
+            }
+        }else{
+            out<<attrs.user
+        }
+    }
 }
