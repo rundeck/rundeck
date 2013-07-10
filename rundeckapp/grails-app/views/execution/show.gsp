@@ -46,7 +46,8 @@
         </g:if>
         var followControl = new FollowControl('${execution?.id}','commandPerform',{
             appLinks:appLinks,
-            iconUrl: "${resource(dir: 'images', file: 'icon')}",
+            iconUrl: "${resource(dir: 'images', file: 'icon-small')}",
+            smallIconUrl: "${resource(dir: 'images', file: 'icon-small')}",
             extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>&markdown=${params.markdown}",
             lastlines: ${params.lastlines ? params.lastlines : defaultLastLines},
             maxLastLines: ${maxLastLines},
@@ -95,17 +96,52 @@
         <div class="jobHead">
             <table cellspacing="0" cellpadding="0" width="100%">
                 <tr>
-                    <td width="50%" style="vertical-align: top;">
+                    <td  style="vertical-align: top;">
                         <g:render template="/scheduledExecution/showExecutionHead"
                                   model="[scheduledExecution: scheduledExecution, execution: execution, followparams: [mode: followmode, lastlines: params.lastlines]]"/>
-                    </td>
-                    <td width="50%" style="vertical-align: top;">
-                        <g:render template="showJobHead" model="${[scheduledExecution:scheduledExecution]}"/>
-                        <div style="margin:10px;">
+                        <g:set var="isAdhoc" value="${!scheduledExecution}"/>
+                        <table>
+                        <g:if test="${scheduledExecution}">
+                            <tr>
+                                <td>
+                                    Job:
+                                </td>
+                                <td>
+                                    <g:render template="showJobHead"
+                                              model="${[scheduledExecution: scheduledExecution]}"/>
+                                </td>
+                            </tr>
+                        </g:if>
+                        <g:if test="${execution.argString}">
+                            <tr>
+                                <td>
+                                    Options:
+                                </td>
+                                <td colspan="3">
+                                    <span class="argString">${execution?.argString.encodeAsHTML()}</span>
+                                </td>
+                            </tr>
+                        </g:if>
+                        <g:if test="${isAdhoc}">
+                            <tr>
+                                <td>
+                                    Adhoc:
+                                </td>
+                                <td>
+                                    <g:render template="/execution/execDetailsWorkflow"
+                                              model="${[workflow: execution.workflow, context: execution,  project: execution.project]}"/>
+                                </td>
+                            </tr>
+                        </g:if>
+                        </table>
+                        </td>
+
+                    <td style="vertical-align: top;" width="50%">
+                        <div style="">
                         <g:expander key="schedExDetails${scheduledExecution?.id ? scheduledExecution?.id : ''}"
                                     imgfirst="true">Details</g:expander>
                         <div class="presentation" style="display:none" id="schedExDetails${scheduledExecution?.id}">
-                            <g:render template="execDetails" model="[execdata: execution]"/>
+                            <g:render template="execDetails" model="[execdata: execution,showArgString:false,hideAdhoc: isAdhoc]"/>
                         </div>
                         </div>
                     </td>

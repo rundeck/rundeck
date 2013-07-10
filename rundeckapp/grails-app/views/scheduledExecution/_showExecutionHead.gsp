@@ -21,12 +21,15 @@
                                    value="${execution.status == 'true' ? 'job-ok' : null == execution.dateCompleted ? 'job-running' : execution.cancelled ? 'job-warn' : 'job-error'}"/>
                         </g:if>
                         <g:if test="${!noimgs}"><img
-                                src="${resource(dir: 'images', file: "icon-med-" + fileName + ".png")}"
+                                src="${resource(dir: 'images', file: "icon-small-" + fileName + ".png")}"
                                 alt="job" style="border:0;"/></g:if>
                     </g:else>
                 </span><span class="primary">Execution #${execution.id}</span>
                 <g:render template="/scheduledExecution/execStatusText" model="${[execution: execution]}"/>
-
+                <g:if test="${execution.dateCompleted != null}">
+                    in <g:relativeDate start="${execution.dateStarted}" end="${execution.dateCompleted}"/>
+                    <span class="timerel">at <g:relativeDate atDate="${execution.dateCompleted}"/></span>
+                </g:if>
             %{--started at <g:relativeDate--}%
             %{--atDate="${execution.dateStarted}"/> by <span--}%
             %{--class="username">${execution.user==session.user?'you': execution.user}</span>--}%

@@ -44,7 +44,6 @@
                         class=" ${execution?.status == 'true' ? 'jobok' : null == execution?.dateCompleted ? 'jobrunning' : execution?.cancelled ? 'jobwarn' : 'joberror'}" absolute="${absolute ? 'true' :'false'}">
                 <span class="jobName">${scheduledExecution?.jobName.encodeAsHTML()}</span></g:link>
 
-                <span class="jobDesc">${execInfo?.description.encodeAsHTML()}</span>
                 <span class="jobGroup">
                     <span class="grouplabel">
                         <g:link controller="menu" action="jobs" params="${[groupPath:execInfo.groupPath]}" title="${'View '+g.message(code:'domain.ScheduledExecution.title')+'s in this group'}"  absolute="${absolute?'true':'false'}">
@@ -53,7 +52,9 @@
                         </g:link>
                     </span>
                 </span>
+
             </span>
+            <span class="jobDesc">${execInfo?.description.encodeAsHTML()}</span>
         </div>
     </g:if>
     <g:if test="${execInfo instanceof ScheduledExecution && execInfo?.uuid && !execution}">

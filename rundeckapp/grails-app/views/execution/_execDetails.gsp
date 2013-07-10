@@ -38,12 +38,14 @@
     </g:if>
 
     <g:if test="${execdata instanceof ExecutionContext && execdata?.workflow}">
+        <g:unless test="${hideAdhoc}">
         <tr>
             <td>Workflow:</td>
             <td colspan="3">
                 <g:render template="/execution/execDetailsWorkflow" model="${[workflow:execdata.workflow,context:execdata,noimgs:noimgs,project:execdata.project]}"/>
             </td>
         </tr>
+        </g:unless>
         <g:if test="${execdata instanceof ScheduledExecution && execdata.options}">
             <tr>
                 <td>Options:</td>
@@ -52,7 +54,7 @@
                 </td>
             </tr>
         </g:if>
-        <g:if test="${execdata.argString}">
+        <g:if test="${execdata.argString && (null==showArgString || showArgString)}">
             <tr>
                 <td>
                     Options:
