@@ -54,6 +54,7 @@ class UrlMappings {
         "/run/$id?"(controller: 'framework', action: 'nodes')
         "/history/$id?"(controller: 'reports', action: 'index')
         "/jobs/$groupPath**?"(controller: 'menu', action: 'jobs')
+        "/job/show/$id/$fullName**?"(controller: 'scheduledExecution',action: 'show')
         "/job/$action?/$id?"(controller: 'scheduledExecution')
         "/resources/$action?/$id?"(controller: 'framework')
         "/events/$action?/$id?"(controller: 'reports')
