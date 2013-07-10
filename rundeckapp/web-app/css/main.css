@@ -163,14 +163,26 @@ a.toptab.selected{
 a.tab,span.tab{
     padding: 3px;
     border: 1px solid #ccc;
-    color:blue !important;
+    color:blue ;
     font-weight:normal;
+}
+
+.outputButtons a.tab, .outputButtons span.tab{
+    padding: 3px;
+    border: 1px solid #eee;
+    color:blue ;
+    font-weight:normal;
+    background: #f0f0f0;
 }
 a.toptab + a.toptab{
     border-left:0;
 }
 a.tab:hover, a.toptab:hover, a.tab.selected, a.toptab.selected, span.button.selected{
     background: #ddd;
+}
+.outputButtons a.tab:hover, .outputButtons  span.button.selected {
+    background: #eee;
+    border: 1px solid #bbb;
 }
 a.tab.disabled, span.tab.disabled{
     border: 1px solid #ddd;
@@ -757,12 +769,29 @@ table.execoutput{
     font-family: Courier, monospace;
     border: 1px solid #eee;
 }
+
+table.execoutput th {
+    background: none;
+    border:none;
+}
+table.execoutput td{
+    border: 1px solid #eee;
+}
 table.execoutput td{
     padding:0;
     border: 0;
 }
 table.execoutput tr.contextRow{
-    background: #ddF;
+    background: #eee;
+}
+table.execoutput tr.contextRow.expandable:hover {
+    background: #ccF;
+}
+table.execoutput tr.contextRow.console {
+    background: #ddd;
+}
+table.execoutput tr.contextRow.expandable.console:hover {
+    background: #ccF;
 }
 table.execoutput tr.contextRow.down td{
     border-top:1px solid #bbb;
@@ -1104,7 +1133,9 @@ table.jobsList td{
 
 table.executionList tr.nowrunning a, table.jobsList tr.nowrunning a{
 }
-table.jobsList.history td{
+table.jobsList.history td.eventicon,
+table.jobsList.history td.argString,
+table.jobsList.history td.eventtitle{
     vertical-align: top;
 }
 table.jobsList.history td.eventtitle span{
@@ -1649,20 +1680,20 @@ div.filter label.additional{
 
 div.jobHead{
 }
-div.jobHead div.jobInfo{
+div.jobHead .jobInfo{
 
     margin-bottom: 10px;
 }
 div.jobHead span.jobInfoPart{
 }
-div.jobHead div.jobInfoSection{
+div.jobHead .jobInfoSection{
 }
 
 div.jobHead td{
     vertical-align: top;
 }
 
-div.jobHead div.jobInfoSection + div.jobInfoSection {
+div.jobHead .jobInfoSection + .jobInfoSection {
     margin-top: 15px;
 }
 div.jobHead span.jobInfoPart span.partContent{
@@ -1704,6 +1735,9 @@ div.jobHead span.jobSummary{
     display:block;
 }
 
+.executioncontrol a{
+    white-space: nowrap;
+}
 
 span.jobcancel{
     margin: 5px;
@@ -1716,7 +1750,7 @@ span.jobfinal{
 }
 
 #commandFlow{
-    padding: 10px;
+    padding: 10px 0;
     margin: 0 20px;
 }
 div.commandFlowError{
@@ -1813,10 +1847,17 @@ div.pflowlist ol{
     margin:0;
 }
 div.pflowlist.edit{
-    min-width: 500px;
+    width: 100%;
+    margin-right: 10px;
 }
 div.pflowlist.edit ol.flowlist li{
     padding:2px;
+}
+div.pflowlist.rounded.adhoc{
+    border:0;
+}
+div.adhoc ol.flowlist li{
+    list-style: none;
 }
 div.pflow{
     float:left;

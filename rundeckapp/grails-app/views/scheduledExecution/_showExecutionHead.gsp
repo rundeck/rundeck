@@ -1,8 +1,8 @@
 <%@ page import="rundeck.ScheduledExecution" %>
 
-<div class="jobInfo" id="jobInfo_${execution.id}">
+<span class="jobInfo" id="jobInfo_${execution.id}">
     <g:if test="${execution}">
-        <div class="jobInfoSection">
+        <span class="jobInfoSection">
             <g:link
                     controller="execution"
                     action="show"
@@ -35,7 +35,7 @@
             %{--class="username">${execution.user==session.user?'you': execution.user}</span>--}%
             </g:link>
 
-        </div>
+        </span>
     </g:if>
 
-</div>
+</span>
