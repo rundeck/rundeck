@@ -57,6 +57,7 @@ var FollowControl = Class.create({
     lastlines:20,
     maxLastLines: 100,
     iconUrl:'/images/icon',
+    smallIconUrl:'/images/icon-small',
     appLinks:{},
     
     initialize: function(eid,elem,params){
@@ -661,16 +662,16 @@ var FollowControl = Class.create({
             var ctxid = this.ctxBodySet.length - 1;
             if (null != $('ctxIcon' + (ctxid))) {
                 var status = this.contextStatus[(ctxid) + ""];
-                var iconname = "-small-ok.png";
+                var iconname = "-ok.png";
                 if (typeof(status) != "undefined") {
-                    iconname = "-small-" + status + ".png";
+                    iconname = "-" + status + ".png";
                 }
                 var img = new Element('img');
                 img.setAttribute('alt', '');
                 //                 img.setAttribute('title',status);
                 img.setAttribute('width', '16');
                 img.setAttribute('height', '16');
-                img.setAttribute('src', this.iconUrl + iconname);
+                img.setAttribute('src', this.smallIconUrl + iconname);
                 img.setAttribute('style', 'vertical-align:center');
                 $('ctxIcon' + (ctxid)).appendChild(img);
             }
@@ -965,16 +966,16 @@ var FollowControl = Class.create({
 
         if (null != $('ctxIcon' + (ctxid))) {
             var status = this.contextStatus[(ctxid) + ""];
-            var iconname = "-small-ok.png";
+            var iconname = "-ok.png";
             if (typeof(status) != "undefined") {
-                iconname = "-small-" + status + ".png";
+                iconname = "-" + status + ".png";
             }
             var img = new Element('img');
             img.setAttribute('alt', '');
             //                 img.setAttribute('title',status);
             img.setAttribute('width', '16');
             img.setAttribute('height', '16');
-            img.setAttribute('src', this.iconUrl + iconname);
+            img.setAttribute('src', this.smallIconUrl + iconname);
             img.setAttribute('style', 'vertical-align:center');
             $('ctxIcon' + (ctxid)).appendChild(img);
         }
