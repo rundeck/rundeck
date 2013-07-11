@@ -302,9 +302,6 @@ h1 {
 	color:#616161;
 }
 
-.cmdname{
-
-}
 
 .cmddescription{
     font-style: italic;
@@ -782,24 +779,33 @@ table.execoutput td{
     border: 0;
 }
 table.execoutput tr.contextRow{
-    background: #eee;
+    /*background: #eee;*/
+    color: #888;
 }
 table.execoutput tr.contextRow.expandable:hover {
-    background: #ccF;
+    /*background: #ccF;*/
 }
 table.execoutput tr.contextRow.console {
-    background: #ddd;
+    /*background: #ddd;*/
 }
 table.execoutput tr.contextRow.expandable.console:hover {
-    background: #ccF;
+    /*background: #ccF;*/
 }
 table.execoutput tr.contextRow.down td{
-    border-top:1px solid #bbb;
+    /*border-top:1px solid #bbb;*/
     border-bottom:0;
 }
 table.execoutput tr.contextRow.up td{
-    border-bottom:1px solid #bbb;
+    /*border-bottom:1px solid #bbb;*/
     border-top:0;
+}
+
+table.execoutput tr.contextRow.expandable.closed{
+    background: #eee;
+}
+
+table.execoutput tr.contextRow.expandable.closed:hover{
+    background: #e3edfa;
 }
 table.execoutput tr.contextRow td{
     padding:5px;
@@ -819,32 +825,45 @@ table.execoutput tr.contextRow span.contextInfo{
     color: #555;
 }
 table.execoutput tr.contextRow span.node{
-    margin-right:10px;
+    color:#bbb;
+    /*margin-right:2em;*/
 }
 table.execoutput tr.contextRow td.rowexpicon{
     width:16px;
     margin:0;
-    padding:0;
-
+    padding:4px;
+    vertical-align: middle;
 }
 
 table.execoutput td.info{
-    background: #eee;
+    /*background: #eee;*/
     padding: 1px 3px;
     vertical-align:top;
     font-family: courier,mono;
 }
 table.execoutput td.info.time{
-    color:#888;
+    color: #bbb;
     white-space: nowrap;
     vertical-align: top;
     width: 6em;
+}
+table.execoutput td.node{
+    color:#bbb;
+    vertical-align: top;
+    text-align: right;
+    width: 6em;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+table.execoutput span.node:after, table.execoutput td.node:after {
+    content: " > ";
 }
 table.execoutput tr.alternateRow td.info.time{
     color:#808080;
 }
 table.execoutput tr.alternateRow td.info{
-    background: #e0e0e0;
+    /*background: #e0e0e0;*/
 }
 table.execoutput td.data{
     border-left: 1px solid white;
@@ -882,6 +901,20 @@ table.execoutput .ctxcounter{
 }
 table.execoutput .ctxcounter.SEVERE, table.execoutput .ctxcounter.ERROR{
     color: red;
+}
+table.execoutput .stepident, table.execoutput .stepnum{
+    color: #bbb;
+}
+
+table.execoutput tr.contextRow .stepident {
+    display: none;
+}
+table.execoutput tr.contextRow.closed .stepident {
+    display: inline;
+}
+
+table.execoutput tr.contextRow.closed span.node {
+    color: #333;
 }
 
 .outputdisplayopts{
@@ -1134,15 +1167,17 @@ table.jobsList td{
 table.executionList tr.nowrunning a, table.jobsList tr.nowrunning a{
 }
 table.jobsList.history td.eventicon,
-table.jobsList.history td.argString,
+table.jobsList.history td.eventargs,
 table.jobsList.history td.eventtitle{
     vertical-align: top;
 }
-table.jobsList.history td.eventtitle span{
+table.jobsList.history td.eventtitle {
+    max-width: 400px;
     white-space:nowrap;
     text-overflow:ellipsis;
 }
-table.jobsList.history td.eventsummary span{
+table.jobsList.history td.eventsummary {
+    max-width: 200px;
     white-space:nowrap;
     text-overflow:ellipsis;
 }
@@ -1904,7 +1939,7 @@ div.pflow span.nodename{
     color:gray;
 }
 div.pflow span.item span.cmdname a{
-    color:blue;
+    /*color:blue;*/
     font-weight:normal;
 }
 div.pflow span.item span.cmdname a:hover{

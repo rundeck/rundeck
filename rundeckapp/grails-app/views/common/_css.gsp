@@ -23,17 +23,17 @@
     }
 
     table.execoutput tr.contextRow td.expandicon.opened{
-        background: transparent url(<g:resource dir='images' file='icon-tiny-disclosure-open.png'/>) no-repeat 2px 2px;
+        background: transparent url(<g:resource dir='images' file='icon-tiny-disclosure-open.png'/>) no-repeat 8px 8px;
     }
     table.execoutput tr.contextRow td.expandicon.closed{
-        background: transparent url(<g:resource dir='images' file='icon-tiny-disclosure.png'/>) no-repeat 2px 2px;
+        background: transparent url(<g:resource dir='images' file='icon-tiny-disclosure.png'/>) no-repeat 8px 8px;
     }
 
     table.execoutput tr.contextRow.console td.expandicon.opened{
-        background: transparent url(<g:resource dir='images' file='icon-tiny-disclosure-open.png'/>) no-repeat 2px 2px;
+        background: transparent url(<g:resource dir='images' file='icon-tiny-disclosure-open.png'/>) no-repeat 8px 8px;
     }
     table.execoutput tr.contextRow.console td.expandicon.closed{
-        background: transparent url(<g:resource dir='images' file='icon-tiny-disclosure.png'/>) no-repeat 2px 2px;
+        background: transparent url(<g:resource dir='images' file='icon-tiny-disclosure.png'/>) no-repeat 8px 8px;
     }
 
     th.sorted.asc a::after{
@@ -146,5 +146,10 @@
     .remoteoptionfield:hover .remotestatus {
         width: 12px;
         background: transparent url("${resource(dir:'images',file:'icon-tiny-refresh.png')}") center left no-repeat;
+    }
+
+    table.execoutput span.node {
+        %{--background: url("${resource(dir:'images',file:'icon-small-Node.png')}") no-repeat 2px top;--}%
+        /*padding-left: 20px;*/
     }
 </style>

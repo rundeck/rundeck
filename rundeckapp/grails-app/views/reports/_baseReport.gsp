@@ -86,9 +86,9 @@
                 <g:if test="${rpt?.jcJobId}">
                     <g:set var="foundJob" value="${ScheduledExecution.getByIdOrUUID(it.jcJobId)}"/>
                     <g:if test="${foundJob}">
-                        <g:link controller="scheduledExecution" action="show" id="${foundJob.extid}" params="${[fullName:foundJob.generateFullName()]}">
+                        %{--<g:link controller="scheduledExecution" action="show" id="${foundJob.extid}" params="${[fullName:foundJob.generateFullName()]}">--}%
                             ${foundJob.generateFullName().encodeAsHTML()}
-                        </g:link>
+                        %{--</g:link>--}%
                     </g:if>
                     <g:else>
                         <span class="warning note">(<g:message
@@ -137,8 +137,8 @@
                 </g:if>
             </g:else>
         </td>
-        <td class="argString">
-            <g:if test="${execution && execution.argString}"><span class="argString">${execution.argString.encodeAsHTML()}</span></g:if>
+        <td class="eventargs">
+            <g:if test="${execution && execution.argString}"><span class="">${execution.argString.encodeAsHTML()}</span></g:if>
         </td>
 
             <td style="white-space:nowrap" class="right sepL">

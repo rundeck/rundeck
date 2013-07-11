@@ -174,6 +174,12 @@
                             </g:else>
                         </span>
                         </span>
+<div style="display: inline-block">
+                            <div id="progressContainer" class="progressContainer" >
+                                <div class="progressBar" id="progressBar"
+                                     title="Progress is an estimate based on average execution time for this ${g.message(code: 'domain.ScheduledExecution.title')}.">0%</div>
+                            </div>
+                            </div>
                         </div>
 
                         <g:set var="isAdhoc" value="${!scheduledExecution}"/>
@@ -202,26 +208,28 @@
                         <g:if test="${isAdhoc}">
                         %{--<span class="label">Adhoc:</span>--}%
                             <tr>
-                                <td >
-                                </td>
-                                <td>
+                                <td colspan="2">
                                 <g:render template="/execution/execDetailsWorkflow"
                                           model="${[workflow: execution.workflow, context: execution, project: execution.project, isAdhoc: isAdhoc]}"/>
                                 </td>
                             </tr>
                         </g:if>
                         </table>
-                        </td>
 
-                    <td style="vertical-align: top;" width="50%">
                         <div style="">
-                        <g:expander key="schedExDetails${scheduledExecution?.id ? scheduledExecution?.id : ''}"
-                                    imgfirst="true">Details</g:expander>
+                            <g:expander key="schedExDetails${scheduledExecution?.id ? scheduledExecution?.id : ''}"
+                                        imgfirst="true">Details</g:expander>
                             <div class="presentation" style="display:none" id="schedExDetails${scheduledExecution?.id}">
-                                <g:render template="execDetails" model="[execdata: execution,showArgString:false,hideAdhoc: isAdhoc]"/>
+                                <g:render template="execDetails"
+                                          model="[execdata: execution, showArgString: false, hideAdhoc: isAdhoc]"/>
                             </div>
                         </div>
+                        <g:javascript>
+                        var workflow=${execution.workflow.commands*.toMap().encodeAsJSON()};
+                        </g:javascript>
+
                     </td>
+
                 </tr>
             </table>
         </div>
@@ -236,10 +244,7 @@
               <td >
               </td>
               <td>
-                  <div id="progressContainer" class="progressContainer">
-                      <div class="progressBar" id="progressBar"
-                           title="Progress is an estimate based on average execution time for this ${g.message(code: 'domain.ScheduledExecution.title')}.">0%</div>
-                  </div>
+
               </td>
           %{--</tr>--}%
       %{--</table>--}%

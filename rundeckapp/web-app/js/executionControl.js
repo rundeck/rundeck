@@ -54,6 +54,7 @@ var FollowControl = Class.create({
     browsemode:false,
     tailmode:false,
     refresh:false,
+    truncateToTail:false,
     lastlines:20,
     maxLastLines: 100,
     iconUrl:'/images/icon',
@@ -302,14 +303,14 @@ var FollowControl = Class.create({
         if (this.collapseCtx.value) {
             this.ctxBodySet._each(Element.hide);
             this.ctxBodyFinalSet._each(this.showFinalLine.value ? Element.show : Element.hide);
-            $$('.expandicon').each(function(e) {
+            $$('.expandicon,tr.contextRow').each(function(e) {
                 e.addClassName('closed');
                 e.removeClassName('opened');
             });
         } else {
             this.ctxBodySet._each(Element.show);
             this.ctxBodyFinalSet._each(Element.show);
-            $$('.expandicon').each(function(e) {
+            $$('.expandicon,tr.contextRow').each(function(e) {
                 e.removeClassName('closed');
                 e.addClassName('opened');
             });
@@ -483,7 +484,7 @@ var FollowControl = Class.create({
             if (typeof(data) == "string") {
                 eval("data=" + data);
             }
-            if (this.refresh && this.cmdoutputtbl && data.lastlinesSupported){
+            if (this.refresh && this.cmdoutputtbl && data.lastlinesSupported && this.truncateToTail){
                 try {
                     this.clearTable(this.cmdoutputtbl);
                 } catch (e) {
@@ -528,7 +529,6 @@ var FollowControl = Class.create({
         }
         //if tail mode, count number of rows
         var rowcount= this.countTableRows(this.cmdoutputtbl);
-        console.log("rowcount: "+rowcount+", entries: "+(entries.length));
         if (entries != null && entries.length > 0) {
 
             for (var i = 0 ; i < entries.length ; i++) {
@@ -538,9 +538,8 @@ var FollowControl = Class.create({
                 //if tail mode and count>last lines, remove 1 row from top
                 rowcount++;
             }
-            if (this.refresh && rowcount > this.lastlines && !data.lastlinesSupported) {
+            if (this.refresh && rowcount > this.lastlines && !data.lastlinesSupported && this.truncateToTail) {
                 //remove extra lines
-                console.log("remove: " + rowcount +" - "+ this.lastlines + " = "+ (rowcount - this.lastlines));
                 this.removeTableRows(this.cmdoutputtbl, rowcount- this.lastlines);
             }
         }
@@ -625,14 +624,16 @@ var FollowControl = Class.create({
                 this.ctxBodyFinalSet.push(temptbod);
                 if (0 == this.lastTBody.rows.length) {
                     var expicon = $('ctxExp' + this.contextIdCounter);
-                    if (expicon) {
-                        expicon.removeClassName('expandicon');
-                    }
+//                    if (expicon) {
+//                        expicon.removeClassName('expandicon');
+//                    }
                     var ctxgrp = $('ctxgroup' + this.contextIdCounter);
 
                     if (ctxgrp && ctxgrp.rows.length > 0) {
-                        $(ctxgrp.rows[0]).removeClassName('expandable');
-                        $(ctxgrp.rows[0]).removeClassName('action');
+//                        $(ctxgrp.rows[0]).removeClassName('expandable');
+//                        $(ctxgrp.rows[0]).removeClassName('action');
+                        $(ctxgrp.rows[0]).addClassName('expandable');
+                        $(ctxgrp.rows[0]).addClassName('action');
                     }
                 } else {
 
@@ -651,18 +652,18 @@ var FollowControl = Class.create({
             var ctxid = this.ctxBodySet.length - 1;
             if (null != $('ctxIcon' + (ctxid))) {
                 var status = this.contextStatus[(ctxid) + ""];
-                var iconname = "-ok.png";
                 if (typeof(status) != "undefined") {
+                    var iconname = "-ok.png";
                     iconname = "-" + status + ".png";
+                    var img = new Element('img');
+                    img.setAttribute('alt', '');
+                    //                 img.setAttribute('title',status);
+                    img.setAttribute('width', '16');
+                    img.setAttribute('height', '16');
+                    img.setAttribute('src', this.smallIconUrl + iconname);
+                    img.setAttribute('style', 'vertical-align:center');
+                    $('ctxIcon' + (ctxid)).appendChild(img);
                 }
-                var img = new Element('img');
-                img.setAttribute('alt', '');
-                //                 img.setAttribute('title',status);
-                img.setAttribute('width', '16');
-                img.setAttribute('height', '16');
-                img.setAttribute('src', this.smallIconUrl + iconname);
-                img.setAttribute('style', 'vertical-align:center');
-                $('ctxIcon' + (ctxid)).appendChild(img);
             }
 
         } catch(e) {
@@ -674,6 +675,8 @@ var FollowControl = Class.create({
             $('databody' + ctxid).hide();
             $('ctxExp' + ctxid).removeClassName('opened');
             $('ctxExp' + ctxid).addClassName('closed');
+            $('ctxExp' + ctxid).up('tr.contextRow').removeClassName('opened');
+            $('ctxExp' + ctxid).up('tr.contextRow').addClassName('closed');
             if ($('finaldatabody' + ctxid)) {
                 if (this.collapseCtx.value && this.showFinalLine.value) {
                     $('finaldatabody' + ctxid).show();
@@ -685,6 +688,8 @@ var FollowControl = Class.create({
             $('databody' + ctxid).show();
             $('ctxExp' + ctxid).removeClassName('closed');
             $('ctxExp' + ctxid).addClassName('opened');
+            $('ctxExp' + ctxid).up('tr.contextRow').removeClassName('closed');
+            $('ctxExp' + ctxid).up('tr.contextRow').addClassName('opened');
             if ($('finaldatabody' + ctxid)) {
                 $('finaldatabody' + ctxid).show();
             }
@@ -702,7 +707,7 @@ var FollowControl = Class.create({
         var obj=this;
         if(this.isrunning){
             new Ajax.Request(url, {
-                parameters: "id=" + id + "&offset=" + offset + ((this.tailmode && this.lastlines) ? "&lastlines=" + this.lastlines : "")
+                parameters: "id=" + id + "&offset=" + offset + ((this.tailmode && this.lastlines && this.truncateToTail) ? "&lastlines=" + this.lastlines : "")
                     + this.extraParams ,
                 onSuccess: function(transport) {
                     obj.appendCmdOutput(transport.responseText);
@@ -829,6 +834,65 @@ var FollowControl = Class.create({
         this.lastrow = data;
         return tr;
     },
+    parseOldContextString: function(context){
+        //split context into project,type,object
+        var t = context.split(':');
+        var i=0;
+        var vals= new Array();
+        for(i=0;i< t.length;i++){
+            var x = t[i];
+            var p= x.split('-',2)
+            if(p.length>0){
+                vals.push(p[0])
+            }
+        }
+        return vals;
+    },
+    escapeHtml: function escapeHtml(unsafe) {
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    },
+    renderContextStepNumber: function(data){
+        var ctx = this.parseOldContextString(data['command']);
+        var string;
+        if (ctx) {
+             string= "Step " + ctx[0];
+        }else{
+            string=data['command'];
+        }
+        return string;
+    },
+    renderContextString: function(data){
+        var ctx = this.parseOldContextString(data['command']);
+        if (ctx) {
+            var string="";
+            if(typeof(workflow)!='undefined'){
+                var step=workflow[parseInt(ctx[0])-1];
+                if(typeof(step)!='undefined'){
+                    if(step['exec']){
+                        string+=' $ '+step['exec'];
+                    }else if(step['jobref']){
+                        string+=" Job Reference: "+(step['jobref']['group']? step['jobref']['group']+'/':'')+step['jobref']['name'];
+                    }else if(step['script']){
+                        string += " Inline Script" ;
+                    }else if(step['scriptfile']){
+                        string += " "+step['scriptfile'] ;
+                    }else if(step['type']){//plugin
+                        string += " Plugin "+step['type'] ;
+                    }
+                }
+            }
+            if(ctx.length>1){
+                string += " > Step "+ctx.slice(1).join(" > Step ")
+            }
+            return string;
+        }
+        return data['command'];
+    },
     createNewNodeTbody: function(data, tbl, ctxid) {
         //create new Table body
         var newtbod = new Element("tbody");
@@ -850,24 +914,24 @@ var FollowControl = Class.create({
         } else {
             tr.addClassName("down");
         }
+        $(tr).addClassName('expandable');
+        $(tr).addClassName('action');
         iconcell.addClassName("icon");
         var cell = $(tr.insertCell(1));
         cell.setAttribute('colSpan', '2');
 
 
         if (null != data['node'] && '' != data['node']) {
-            cell.innerHTML +=
-            "<span class='node'>" + "<img src='" + AppImages.iconSmallNodeObject + "' width='16' height='16' alt=''/> "
-                + data['node'] + "</span>";
+            cell.innerHTML += "<span class='node'>" + data['node'] + "</span>";
         }
 
-        if (data['command'] || data['module'] || data['context']) {
-            if (data['module'] || data['command'] && "run" != data['command']) {
-                cell.innerHTML +=
-                "<span class='cmdname' title='" + data['command'] + "'>" + data['command'] + "</span>";
+        if (data['command']  || data['context']) {
+            if ( data['command'] && "run" != data['command']) {
+                var contextstr= this.renderContextString(data)
+//                cell.innerHTML += "<span class='stepident' title='" + this.escapeHtml(contextstr) + "'>" + this.escapeHtml(contextstr) + "</span>";
             } else if (data['command'] && "run" == data['command']) {
                 cell.innerHTML +=
-                "<span class='cmdname' title='" + data['command'] + "'>" + data['command'] + "</span>";
+                "<span class='stepident' title='" + data['command'] + "'>" + data['command'] + "</span>";
             }
             if (data['context']) {
                 //split context into project,type,object
@@ -906,6 +970,7 @@ var FollowControl = Class.create({
         //start all data tbody as closed
         Element.hide($(datatbod));
         cell2.addClassName('closed');
+        tr.addClassName('closed');
 
         return datatbod;
     },
@@ -931,14 +996,14 @@ var FollowControl = Class.create({
             }
             if (0 == this.lastTBody.rows.length) {
                 var expicon = $('ctxExp' + this.contextIdCounter);
-                if (expicon) {
-                    expicon.removeClassName('expandicon');
-                }
+//                if (expicon) {
+//                    expicon.removeClassName('expandicon');
+//                }
                 var ctxgrp = $('ctxgroup' + this.contextIdCounter);
 
                 if (ctxgrp && ctxgrp.rows.length > 0) {
-                    $(ctxgrp.rows[0]).removeClassName('expandable');
-                    $(ctxgrp.rows[0]).removeClassName('action');
+                    $(ctxgrp.rows[0]).addClassName('expandable');
+                    $(ctxgrp.rows[0]).addClassName('action');
                 }
             } else {
 
@@ -958,15 +1023,15 @@ var FollowControl = Class.create({
             var iconname = "-ok.png";
             if (typeof(status) != "undefined") {
                 iconname = "-" + status + ".png";
+                var img = new Element('img');
+                img.setAttribute('alt', '');
+                //                 img.setAttribute('title',status);
+                img.setAttribute('width', '16');
+                img.setAttribute('height', '16');
+                img.setAttribute('src', this.smallIconUrl + iconname);
+                img.setAttribute('style', 'vertical-align:center');
+                $('ctxIcon' + (ctxid)).appendChild(img);
             }
-            var img = new Element('img');
-            img.setAttribute('alt', '');
-            //                 img.setAttribute('title',status);
-            img.setAttribute('width', '16');
-            img.setAttribute('height', '16');
-            img.setAttribute('src', this.smallIconUrl + iconname);
-            img.setAttribute('style', 'vertical-align:center');
-            $('ctxIcon' + (ctxid)).appendChild(img);
         }
         this.contextIdCounter++;
     },
@@ -998,22 +1063,21 @@ var FollowControl = Class.create({
         iconcell.addClassName("icon");
         var cell = $(tr.insertCell(1));
         cell.setAttribute('colSpan', '2');
-        //         cell.colSpan=2;
 
 
         if (null != data['node'] && '' != data['node']) {
-            cell.innerHTML +=
-            "<span class='node'>" + "<img src='" + AppImages.iconSmallNodeObject + "' width='16' height='16' alt=''/> "
-                + data['node'] + "</span>";
+            cell.innerHTML += "<span class='node'>" + data['node'] + "</span>";
         }
 
-        if (data['command'] || data['module'] || data['context']) {
-            if (data['module'] || data['command'] && "run" != data['command']) {
-                cell.innerHTML +=
-                "<span class='cmdname' title='" + data['command'] + "'>" + data['command'] + "</span>";
+        if (data['command']  || data['context']) {
+            if ( data['command'] && "run" != data['command']) {
+                var contextstr = this.renderContextString(data);
+                var stepnum = this.renderContextStepNumber(data);
+                cell.innerHTML += "<span class='stepnum' title='" + this.escapeHtml(contextstr) + "'>" + this.escapeHtml(stepnum) + "</span>";
+                cell.innerHTML += "<span class='stepident'>" + this.escapeHtml(contextstr) + "</span>";
             } else if (data['command'] && "run" == data['command']) {
                 cell.innerHTML +=
-                "<span class='cmdname' title='" + data['command'] + "'>" + data['command'] + "</span>";
+                "<span class='stepident' title='" + data['command'] + "'>" + data['command'] + "</span>";
             }
             if (data['context']) {
                 //split context into project,type,object
@@ -1052,8 +1116,10 @@ var FollowControl = Class.create({
         if (this.groupOutput.value && this.collapseCtx.value) {
             Element.hide($(this.lastTBody));
             cell2.addClassName('closed');
+            tr.addClassName('closed');
         } else {
             cell2.addClassName('opened');
+            tr.addClassName('opened');
         }
     },
 
@@ -1081,7 +1147,7 @@ var FollowControl = Class.create({
         if (null == this.lastTBody) {
             this.lastTBody = tbl.tBodies[0];
         }
-        if (null == this.lastrow || this.lastrow['module'] != data['module'] || this.lastrow['command'] != data['command']
+        if (null == this.lastrow  || this.lastrow['command'] != data['command']
             || this.lastrow['node'] != data['node'] || this.lastrow['context'] != data['context']) {
             if (null != this.lastrow) {
                 this.createFinalContextTbody(data, tbl, ctxid);
@@ -1103,30 +1169,29 @@ var FollowControl = Class.create({
         var tdicon = $(tr.insertCell(0));
         tdicon.setAttribute('width', '16');
         tdicon.addClassName('info');
-        tdicon.setAttribute('style', 'vertical-align:top');
         if (data.level == 'ERROR' || data.level == 'SEVERE') {
-            var img = new Element('img');
-            img.setAttribute('alt', data.level);
-            img.setAttribute('title', data.level);
-            img.setAttribute('width', '16');
-            img.setAttribute('height', '16');
-            img.setAttribute('src', AppImages.iconSmallPrefix + data.level.toLowerCase() + '.png');
-            tdicon.appendChild(img);
             this.contextStatus[ctxid] = data.level.toLowerCase();
         }
         var tdtime = $(tr.insertCell(1));
         //tdtime.setAttribute('width', '20');
         tdtime.addClassName('info');
         tdtime.addClassName('time');
-        tdtime.setAttribute('style', 'vertical-align:top;');
         tdtime.innerHTML = "<span class=\"" + data.level + "\">" + data.time + "</span>";
         if(data.absolute_time){
             tdtime.setAttribute('title', data.absolute_time);
         }
-        var tddata = $(tr.insertCell(2));
+        var cellndx=2;
+        var colspan="2";
+        if(this.tailmode){
+            var tdnode=$(tr.insertCell(cellndx));
+            cellndx++;
+            tdnode.addClassName('node');
+            tdnode.innerHTML=data.node;
+            colspan="1";
+        }
+        var tddata = $(tr.insertCell(cellndx));
         tddata.addClassName('data');
-        tddata.setAttribute('style', 'vertical-align:top');
-        tddata.setAttribute('colspan', '2');
+        tddata.setAttribute('colspan', colspan);
         if (null != data['loghtml']) {
             tddata.innerHTML = data.loghtml;
             tddata.addClassName('datahtml log_'+ data.level.toLowerCase());
