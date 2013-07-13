@@ -30,7 +30,7 @@
         <g:else>
             <th colspan="3"></th>
         </g:else>
-        <th><g:message code="jobquery.title.endFilter"/></th>
+        <th colspan="2"><g:message code="jobquery.title.endFilter"/></th>
 
         %{--<th><g:message code="jobquery.title.userFilter"/></th>--}%
         %{--<th><g:message code="jobquery.title.projFilter"/></th>--}%
@@ -143,16 +143,16 @@
 
             <td style="white-space:nowrap" class="right sepL">
                 <g:if test="${it.dateCompleted}">
-                    <g:relativeDate elapsed="${it?.dateCompleted}" agoClass="timeago"/>
+                    %{--<g:relativeDate elapsed="${it?.dateCompleted}" agoClass="timeago"/>--}%
                     <span class="timeabs"><g:formatDate date="${it?.dateCompleted}" formatName="jobslist.date.format"/></span>
                     <span title="<g:relativeDate atDate='${it?.dateStarted}'/> to <g:relativeDate
                             atDate='${it?.dateCompleted}'/> ">
-                        (<g:relativeDate end="${it?.dateCompleted}" start="${it?.dateStarted}"/>)
+                        in <g:relativeDate end="${it?.dateCompleted}" start="${it?.dateStarted}"/>
                     </span>
                 </g:if>
-            %{--</td>--}%
+            </td>
 
-            %{--<td class=" sepL user">--}%
+            <td class="  user">
                 <em>by</em>
                 <g:username user="${it?.author}"/>
             </td>
@@ -200,8 +200,8 @@
                         <g:set var="perc" value="${0}"/>
                     </g:else>
                     <g:if test="${perc > 0}">
-                        <g:render template="/common/progressBar"
-                                  model="${[completePercent: (int) perc, title: 'Completed nodes', className: 'nodes failure', showpercent: false, innerContent: summary]}"/>
+                        %{--<g:render template="/common/progressBar"--}%
+                                  %{--model="${[completePercent: (int) perc, title: 'Completed nodes', className: 'nodes failure', showpercent: false, innerContent: summary]}"/>--}%
                     </g:if>
                 </g:if>
             </td>
