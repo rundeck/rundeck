@@ -26,6 +26,9 @@ var FollowControl = Class.create({
     collapseCtx: {value:true,changed:false},
     showFinalLine: {value:true,changed:false},
     groupOutput: {value: true},
+    colTime:{value:true},
+    colNode:{value:true},
+    colStep:{value:true},
 
     lastrow:null,
     contextIdCounter: 0,
@@ -104,6 +107,24 @@ var FollowControl = Class.create({
         $(elem).select('.opt_append_top_false').each(function(e){
             e.onclick=null;
             Event.observe(e,'click',function(evt){obj.setOutputAppendTop(false);});
+        });
+        $(elem).select('.opt_display_col_time').each(function (e) {
+            e.onclick = null;
+            Event.observe(e, 'click', function (evt) {
+                obj.setColTime(e.checked);
+            });
+        });
+        $(elem).select('.opt_display_col_node').each(function (e) {
+            e.onclick = null;
+            Event.observe(e, 'click', function (evt) {
+                obj.setColNode(e.checked);
+            });
+        });
+        $(elem).select('.opt_display_col_step').each(function (e) {
+            e.onclick = null;
+            Event.observe(e, 'click', function (evt) {
+                obj.setColStep(e.checked);
+            });
         });
         $(elem).select('.opt_auto_scroll_true').each(function(e){
             e.onclick=null;
@@ -348,6 +369,11 @@ var FollowControl = Class.create({
         }
 
         if (!this.groupOutput.value) {
+            if ($(this.cmdoutputtbl)) {
+                this.setColTime(this.colTime.value);
+                this.setColNode(this.colNode.value);
+                this.setColStep(this.colStep.value);
+            }
             if ($('ctxcollapseLabel')) {
                 $('ctxcollapseLabel').hide();
             }
@@ -356,11 +382,18 @@ var FollowControl = Class.create({
             }
 
         } else {
+            if ($(this.cmdoutputtbl)) {
+                $(this.cmdoutputtbl).removeClassName('collapse_time');
+                $(this.cmdoutputtbl).addClassName('collapse_node');
+                $(this.cmdoutputtbl).addClassName('collapse_stepnum');
+            }
             if ($('ctxcollapseLabel')) {
                 $('ctxcollapseLabel').show();
             }
             this.setCtxCollapseDisplay(this.collapseCtx.value);
         }
+        $$('.obs_grouped_true').each(val?Element.show:Element.hide);
+        $$('.obs_grouped_false').each(!val ? Element.show : Element.hide);
         if ($('ctxshowgroupoption')) {
             if (val) {
                 $('ctxshowgroupoption').addClassName('selected');
@@ -390,6 +423,44 @@ var FollowControl = Class.create({
                 $('ctxshowlastlineoption').removeClassName('selected');
             }
         }
+    },
+    setColTime: function (show) {
+        if ($(cmdoutputtbl)) {
+
+            if (show) {
+                $(cmdoutputtbl).removeClassName('collapse_time');
+            } else {
+                $(cmdoutputtbl).addClassName('collapse_time');
+            }
+        }
+
+        this.colTime.value = show;
+    },
+    setColNode: function (show) {
+
+        if ($(cmdoutputtbl)) {
+
+            if (show) {
+                $(cmdoutputtbl).removeClassName('collapse_node');
+            } else {
+                $(cmdoutputtbl).addClassName('collapse_node');
+            }
+        }
+
+        this.colNode.value = show;
+    },
+    setColStep: function (show) {
+
+        if ($(cmdoutputtbl)) {
+
+            if (show) {
+                $(cmdoutputtbl).removeClassName('collapse_stepnum');
+            } else {
+                $(cmdoutputtbl).addClassName('collapse_stepnum');
+            }
+        }
+
+        this.colStep.value = show;
     },
     setOutputAppendTop: function(istop) {
         if (this.appendtop.value != istop) {
@@ -435,6 +506,10 @@ var FollowControl = Class.create({
         tbl.setAttribute("cellPadding", "0");
         tbl.addClassName('execoutput');
         tbl.setAttribute('id', 'cmdoutputtbl');
+        if(!this.tailmode){
+            $(tbl).addClassName('collapse_node');
+            $(tbl).addClassName('collapse_stepnum');
+        }
 
         var tbod = new Element("tbody");
         tbl.appendChild(tbod);
@@ -530,17 +605,20 @@ var FollowControl = Class.create({
         //if tail mode, count number of rows
         var rowcount= this.countTableRows(this.cmdoutputtbl);
         if (entries != null && entries.length > 0) {
-
+            var tr;
             for (var i = 0 ; i < entries.length ; i++) {
                 var e = entries[i];
                 //this.runningcmd.entries.push(e);
-                this.genDataRow(e, this.cmdoutputtbl);
+                tr=this.genDataRow(e, this.cmdoutputtbl);
                 //if tail mode and count>last lines, remove 1 row from top
                 rowcount++;
             }
             if (this.refresh && rowcount > this.lastlines && !data.lastlinesSupported && this.truncateToTail) {
                 //remove extra lines
                 this.removeTableRows(this.cmdoutputtbl, rowcount- this.lastlines);
+            }
+            if(needsScroll){
+                this.scrollToBottom();
             }
         }
 
@@ -806,7 +884,11 @@ var FollowControl = Class.create({
         var a = document.documentElement.scrollHeight || document.body.scrollHeight;
         var b = document.documentElement.scrollTop || document.body.scrollTop;
         var c = document.documentElement.clientHeight || document.body.clientHeight;
-        return ((a - b) <= c);
+        return ((a - b) <= (c*1.1));
+    },
+    scrollToBottom: function()
+    {
+        window.scrollTo(0, document.documentElement.scrollHeight || document.body.scrollHeight);
     },
     genDataRowNodes: function(data, tbl) {
         this.reverseOutputTable(tbl);
@@ -861,6 +943,9 @@ var FollowControl = Class.create({
         var string;
         if (ctx) {
              string= "Step " + ctx[0];
+            if (ctx.length > 1) {
+                string += "/" + ctx.slice(1).join("/")
+            }
         }else{
             string=data['command'];
         }
@@ -1182,12 +1267,26 @@ var FollowControl = Class.create({
         }
         var cellndx=2;
         var colspan="2";
-        if(this.tailmode){
-            var tdnode=$(tr.insertCell(cellndx));
-            cellndx++;
-            tdnode.addClassName('node');
-            tdnode.innerHTML=data.node;
-            colspan="1";
+        var tdnode=$(tr.insertCell(cellndx));
+        cellndx++;
+        tdnode.addClassName('node');
+        tdnode.setAttribute('title', data.node);
+        if(this.lastrow && typeof(this.lastrow['node'])!=undefined && data.node==this.lastrow['node']){
+            tdnode.addClassName('repeat');
+        }else{
+            tdnode.innerHTML = data.node;
+        }
+        colspan="1";
+
+        //add context column
+        var tdctx = $(tr.insertCell(cellndx));
+        cellndx++;
+        tdctx.addClassName('stepnum');
+        if (this.lastrow && this.lastrow['command'] == data['command'] ) {
+//                tdctx.addClassName('repeat');
+        }else{
+            tdctx.innerHTML = this.renderContextStepNumber(data);
+            tdctx.setAttribute('title',this.renderContextString(data));
         }
         var tddata = $(tr.insertCell(cellndx));
         tddata.addClassName('data');

@@ -5,7 +5,7 @@
     <meta name="tabpage" content="jobs"/>
     <meta name="layout" content="base" />
     <title><g:message code="main.app.name"/> - <g:if test="${null==execution?.dateCompleted}">Now Running - </g:if><g:if test="${scheduledExecution}">${scheduledExecution?.jobName.encodeAsHTML()} :  </g:if><g:else>Transient <g:message code="domain.ScheduledExecution.title"/> : </g:else> Execution at <g:relativeDate atDate="${execution.dateStarted}" /> by ${execution.user}</title>
-    <g:set var="followmode" value="${params.mode in ['browse','tail','node']?params.mode:null==execution?.dateCompleted?'tail':'browse'}"/>
+    <g:set var="followmode" value="${params.mode in ['browse','tail','node']?params.mode:'tail'}"/>
       <g:set var="authKeys" value="${[AuthConstants.ACTION_KILL, AuthConstants.ACTION_READ,AuthConstants.ACTION_CREATE,AuthConstants.ACTION_RUN]}"/>
       <g:set var="authChecks" value="${[:]}"/>
       <g:each in="${authKeys}" var="actionName">
@@ -260,14 +260,28 @@
                     <g:link class="tab ${followmode=='tail'?' selected':''}" style=""
                         title="${g.message(code:'execution.show.mode.Tail.desc')}"
                         controller="execution"  action="show" id="${execution.id}" params="${[lastlines:params.lastlines,mode:'tail'].findAll{it.value}}"><g:message code="execution.show.mode.Tail.title" default="Tail Output"/></g:link>
-                    <g:link class="tab ${followmode=='browse'?' selected':''}" style=""
-                        title="${g.message(code:'execution.show.mode.Annotated.desc')}"
-                        controller="execution"  action="show" id="${execution.id}" params="[mode:'browse']"><g:message code="execution.show.mode.Annotated.title" default="Annotated"/></g:link>
+                    %{--<g:link class="tab ${followmode=='browse'?' selected':''}" style=""--}%
+                        %{--title="${g.message(code:'execution.show.mode.Annotated.desc')}"--}%
+                        %{--controller="execution"  action="show" id="${execution.id}" params="[mode:'browse']"><g:message code="execution.show.mode.Annotated.title" default="Annotated"/></g:link>--}%
                     <g:link class="tab ${followmode=='node'?' selected':''}" style=""
                         title="${g.message(code:'execution.show.mode.Compact.desc')}"
                         controller="execution"  action="show" id="${execution.id}" params="[mode:'node']"><g:message code="execution.show.mode.Compact.title" default="Compact"/></g:link>
-                    
-            <span id="fullviewopts" style="${followmode!='browse'?'display:none':''}">
+
+            <span
+                    class="action textbtn button join"
+                    title="Click to change"
+                    id="showGroupedLabel"
+                    onclick="followControl.setGroupOutput($('showGrouped').checked);">
+                <input
+                        type="checkbox"
+                        name="showGrouped"
+                        id="showGrouped"
+                        value="true"
+                    ${followmode == 'tail' ? '' :  'checked="CHECKED"' }
+                        style=""/>
+                <label for="showGrouped">Grouped</label>
+            </span>
+            <span id="fullviewopts" style="${followmode!='browse'?'display:none':''}" class="obs_grouped_true">
 
                 &nbsp;
                 <span
@@ -286,25 +300,71 @@
                 </span>
 
             </span>
-            <g:if test="${followmode=='tail'}">
-                    Show the last
-                    <span class="action textbtn button"
-                      title="Click to reduce"
-                      onmousedown="followControl.modifyLastlines(-5);return false;">-</span>
-                <input
-                    type="text"
-                    name="lastlines"
-                    id="lastlinesvalue"
-                    value="${params.lastlines?params.lastlines:defaultLastLines}"
-                    size="3"
-                    onchange="updateLastlines(this.value)"
-                    onkeypress="var x= noenter();if(!x){this.blur();};return x;"
-                    style=""/>
-                    <span class="action textbtn button"
-                      title="Click to increase"
-                      onmousedown="followControl.modifyLastlines(5);return false;">+</span>
+                    %{--Show the last--}%
+                    %{--<span class="action textbtn button"--}%
+                      %{--title="Click to reduce"--}%
+                      %{--onmousedown="followControl.modifyLastlines(-5);return false;">-</span>--}%
+                %{--<input--}%
+                    %{--type="text"--}%
+                    %{--name="lastlines"--}%
+                    %{--id="lastlinesvalue"--}%
+                    %{--value="${params.lastlines?params.lastlines:defaultLastLines}"--}%
+                    %{--size="3"--}%
+                    %{--onchange="updateLastlines(this.value)"--}%
+                    %{--onkeypress="var x= noenter();if(!x){this.blur();};return x;"--}%
+                    %{--style=""/>--}%
+                    %{--<span class="action textbtn button"--}%
+                      %{--title="Click to increase"--}%
+                      %{--onmousedown="followControl.modifyLastlines(5);return false;">+</span>--}%
 
-                    lines
+                    %{--lines--}%
+                %{--&nbsp;--}%
+
+                <span  class="obs_grouped_false" style="${wdgt.styleVisible(if: followmode == 'tail')}">
+                &nbsp;
+                <span
+                        class="action textbtn button join"
+                        title="Click to change"
+                        id="colTimeShowLabel"
+                        onclick="followControl.setColTime($('colTimeShow').checked);">
+                    <input
+                            type="checkbox"
+                            name="coltime"
+                            id="colTimeShow"
+                            value="true"
+                            checked="checked"
+                            style=""/>
+                    <label for="colTimeShow">Time</label>
+                </span>
+                <span
+                        class="action textbtn button join"
+                        title="Click to change"
+                        id="colNodeShowLabel"
+                        onclick="followControl.setColNode($('colNodeShow').checked);">
+                    <input
+                            type="checkbox"
+                            name="coltime"
+                            id="colNodeShow"
+                            value="true"
+                            checked="checked"
+                            style=""/>
+                    <label for="colNodeShow">Node</label>
+                </span>
+                <span
+                        class="action textbtn button"
+                        title="Click to change"
+                        id="colStepShowLabel"
+                        onclick="followControl.setColStep($('colStepShow').checked);">
+                    <input
+                            type="checkbox"
+                            name="coltime"
+                            id="colStepShow"
+                            value="true"
+                            checked="checked"
+                            style=""/>
+                    <label for="colStepShow">Step</label>
+                </span>
+                </span>
                 %{--<span id="taildelaycontrol" style="${execution.dateCompleted?'display:none':''}">,--}%
                     %{--and update every--}%
 
@@ -327,13 +387,23 @@
 
                     %{--seconds--}%
                 %{--</span>--}%
-            </g:if>
                 </td>
-                <td style="width:120px">
-                    <span style="${execution.dateCompleted ? '' : 'display:none'}" class="sepL" id="viewoptionscomplete">
+                <td style="width:180px;text-align: right;">
+                    <span style="${execution.dateCompleted ? '' : 'display:none'}"  id="viewoptionscomplete">
+                        <span class="sepL">
+                            <g:link class="action txtbtn" style="padding:5px;"
+                                    title="View raw text output"
+                                    controller="execution" action="downloadOutput" id="${execution.id}"
+                                    params="[view: 'inline', formatted: false]">
+                                Raw</g:link>
+                        </span>
+                        <span class="sepL">
                         <g:link class="action txtbtn" style="padding:5px;"
-                            title="Download entire output file" 
-                            controller="execution" action="downloadOutput" id="${execution.id}"><img src="${resource(dir:'images',file:'icon-small-file.png')}" alt="Download" title="Download output" width="13px" height="16px"/> <span id="outfilesize">${filesize?filesize+' bytes':''}</span></g:link>
+                            title="Download ${filesize ? filesize + ' bytes' : ''}"
+                            controller="execution" action="downloadOutput" id="${execution.id}">
+                            <img src="${resource(dir:'images',file:'icon-small-file.png')}" alt="Download" width="13px" height="16px"/>
+                            Download</g:link>
+                        </span>
                     </span>
                 </td>
             </tr>
@@ -350,9 +420,11 @@
         <div class="runbox">History</div>
         <div class="pageBody">
             <div id="histcontent"></div>
+            <g:if test="${execution.dateCompleted!=null}">
             <g:javascript>
                 fireWhenReady('histcontent',loadHistory);
             </g:javascript>
+            </g:if>
         </div>
     </g:if>
   </body>

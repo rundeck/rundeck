@@ -268,6 +268,23 @@ a.button, span.button, label.button{
     -webkit-border-radius: 3px;
     border-radius: 3px;
 }
+
+a.button.join, span.button.join, label.button.join {
+    -moz-border-radius: 3px 0 0 3px ;
+    -webkit-border-radius: 3px 0 0 3px ;
+    border-radius: 3px 0 0 3px ;
+}
+
+a.button.join + a.button.join, span.button.join + span.button.join, label.button.join + label.button.join{
+    -moz-border-radius: 0;
+    -webkit-border-radius: 0;
+    border-radius: 0;
+}
+a.button.join + a.button, span.button.join + span.button, label.button + label.button{
+    -moz-border-radius: 0 3px 3px 0;
+    -webkit-border-radius: 0 3px 3px 0;
+    border-radius: 0 3px 3px 0;
+}
 a.button.icon, span.button.icon{
     border: 1px solid #aaa;
 }
@@ -611,7 +628,7 @@ table.moduledata td.fieldName{
     background: #efefef;
     padding: 3px;
     width: 30%;
-    font-weight: normal !IMPORTANT;
+    font-weight: normal;
 }
 table.moduledata td.fieldName + td{
     border-bottom: 2px solid #eee;
@@ -765,6 +782,7 @@ div.formRemoteList tr.module_entry td.objIdent{
 table.execoutput{
     font-family: Courier, monospace;
     border: 1px solid #eee;
+    font-size:90%;
 }
 
 table.execoutput th {
@@ -773,6 +791,16 @@ table.execoutput th {
 }
 table.execoutput td{
     border: 1px solid #eee;
+    vertical-align: baseline;
+}
+table.execoutput.collapse_time td.time, table.execoutput.collapse_time td.info{
+    display: none;
+}
+table.execoutput.collapse_node td.node{
+    display: none;
+}
+table.execoutput.collapse_stepnum td.stepnum{
+    display: none;
 }
 table.execoutput td{
     padding:0;
@@ -792,7 +820,7 @@ table.execoutput tr.contextRow.expandable.console:hover {
     /*background: #ccF;*/
 }
 table.execoutput tr.contextRow.down td{
-    /*border-top:1px solid #bbb;*/
+    border-top:1px solid #dddddd;
     border-bottom:0;
 }
 table.execoutput tr.contextRow.up td{
@@ -825,7 +853,8 @@ table.execoutput tr.contextRow span.contextInfo{
     color: #555;
 }
 table.execoutput tr.contextRow span.node{
-    color:#bbb;
+    /*color:#00a;*/
+    font-weight: bold;
     /*margin-right:2em;*/
 }
 table.execoutput tr.contextRow td.rowexpicon{
@@ -842,19 +871,28 @@ table.execoutput td.info{
     font-family: courier,mono;
 }
 table.execoutput td.info.time{
-    color: #bbb;
+    color: #888;
     white-space: nowrap;
     vertical-align: top;
     width: 6em;
 }
 table.execoutput td.node{
-    color:#bbb;
+    color:#888;
     vertical-align: top;
     text-align: right;
     width: 6em;
+    max-width: 20em;
     white-space: nowrap;
+    overflow: hidden;
     text-overflow: ellipsis;
 }
+
+table.execoutput td.repeat {
+    visibility: hidden;
+}
+/*table.execoutput tr:hover td.node.repeat {*/
+    /*visibility: visible;*/
+/*}*/
 
 table.execoutput span.node:after, table.execoutput td.node:after {
     content: " > ";
@@ -871,11 +909,11 @@ table.execoutput td.data{
     font-family: "Lucida Console",courier,monospace;
     padding: 1px 3px;
     vertical-align:top;
-    color: #777;
+    color: black;
 }
 
-table.execoutput td.data.log_normal {
-    color: black;
+table.execoutput td.data.log_warn, table.execoutput td.data.log_error {
+    color: #800;
 }
 table.execoutput td.datahtml{
     white-space:normal;
@@ -890,10 +928,10 @@ table.execoutput tr.alternateRow td.data{
     background: #f0f0f0;
 }
 table.execoutput td.info .SEVERE{
-    color: red;
+    /*color: red;*/
 }
 table.execoutput td.info .ERROR{
-    color: red;
+    /*color: red;*/
 }
 table.execoutput .ctxcounter{
     margin-left:10px;
@@ -903,18 +941,30 @@ table.execoutput .ctxcounter.SEVERE, table.execoutput .ctxcounter.ERROR{
     color: red;
 }
 table.execoutput .stepident, table.execoutput .stepnum{
-    color: #bbb;
+    color: #008;
+}
+
+table.execoutput .stepident, table.execoutput .stepnum:before {
+}
+table.execoutput .stepnum.short:before {
+    content: "•";
+}
+
+table.execoutput td.stepnum{
+    padding: 0 0.5em;
+    width: 4em;
+    white-space: nowrap;
 }
 
 table.execoutput tr.contextRow .stepident {
-    display: none;
+    /*display: none;*/
 }
 table.execoutput tr.contextRow.closed .stepident {
     display: inline;
 }
 
 table.execoutput tr.contextRow.closed span.node {
-    color: #333;
+    /*color: #333;*/
 }
 
 .outputdisplayopts{
@@ -1160,16 +1210,8 @@ table.executionList tr.fail a, table.jobsList tr.fail a{
     color:red;
 }
 
-table.jobsList td{
-    padding:2px 4px;
-}
-
-table.executionList tr.nowrunning a, table.jobsList tr.nowrunning a{
-}
-table.jobsList.history td.eventicon,
-table.jobsList.history td.eventargs,
-table.jobsList.history td.eventtitle{
-    vertical-align: top;
+table.jobsList.history td {
+    vertical-align: baseline;
 }
 table.jobsList.history td.eventtitle {
     max-width: 400px;
