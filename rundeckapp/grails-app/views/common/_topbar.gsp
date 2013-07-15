@@ -86,6 +86,12 @@ function doCreateProject(){
     </g:if>
 
 </span>
+    <g:unless test="${session.frameworkProjects}">
+        <g:javascript>
+            fireWhenReady('projectSelect', loadProjectSelect);
+        </g:javascript>
+    </g:unless>
+
 </g:if>
     <a href="${grailsApplication.config.rundeck.gui.titleLink?grailsApplication.config.rundeck.gui.titleLink:g.resource(dir:'/')}"
         title="Home" class="home" style="height:29px;">
@@ -142,9 +148,3 @@ function doCreateProject(){
         </span>
     </g:else>
 </div>
-<g:unless test="${session.frameworkProjects}">
-<g:javascript>
-    fireWhenReady('projectSelect', loadProjectSelect);
-</g:javascript>
-</g:unless>
-
