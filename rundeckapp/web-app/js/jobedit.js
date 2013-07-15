@@ -174,7 +174,8 @@ function _wfiedit(key,num,isErrorHandler) {
                     }
                 });
                 initTooltipForElements('#wfli_' + key + ' .obs_tooltip');
-                $('wfli_'+key).select('textarea').each(_addAceTextarea);
+                $('wfli_' + key).select('textarea.apply_ace').each(_addAceTextarea);
+                $('wfli_' + key).select('textarea.apply_resize').each(_applyTextareaResizer);
             }
         }
     });
@@ -259,7 +260,9 @@ function _wfiaddnew(type,nodestep) {
                 });
                 $(newitemElem).down('input[type=text]').focus();
                 initTooltipForElements('#wfli_' + num+ ' .obs_tooltip');
-                $(newitemElem).select('textarea').each(_addAceTextarea);
+                $(newitemElem).select('textarea.apply_ace').each(_addAceTextarea);
+                $(newitemElem).select('textarea.apply_resize').each(_applyTextareaResizer);
+
             }
         }
     });
@@ -459,7 +462,8 @@ function _wfiaddNewErrorHandler(elem,type,num,nodestep){
                         }
                     });
                     initTooltipForElements('#wfli_' + key + ' .obs_tooltip');
-                    $(wfiehli).select('textarea').each(_addAceTextarea);
+                    $(wfiehli).select('textarea.apply_ace').each(_addAceTextarea);
+                    $(wfiehli).select('textarea.apply_resize').each(_applyTextareaResizer);
                 }
             }
         });

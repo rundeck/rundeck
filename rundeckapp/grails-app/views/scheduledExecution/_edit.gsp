@@ -155,10 +155,7 @@ var applinks={
 
         Event.observe(window,'load',pageinit);
     fireWhenReady('saveJobQ',function(e){
-        $$('textarea').each(function(textarea){
-            $(textarea).setStyle({ lineHeight: "20px"});
-            new Widget.Textarea(textarea,{min_height:2});
-        });
+        $$('textarea.apply_resize').each(_applyTextareaResizer);
     });
 //]>
 </script>
@@ -478,7 +475,7 @@ var applinks={
         </td>
         <td>
             <span class="input ${hasErrors(bean:scheduledExecution,field:'description','fieldError')}">
-                <g:textArea name="description" value="${scheduledExecution?.description}" cols="120" rows="2" />
+                <g:textArea name="description" value="${scheduledExecution?.description}" cols="120" rows="2"  class="apply_resize"/>
 
                 <g:hasErrors bean="${scheduledExecution}" field="description">
                     <img src="${resource( dir:'images',file:'icon-small-warn.png' )}" alt="Error" width="16px" height="16px"/>
@@ -706,6 +703,7 @@ var applinks={
                                 <g:set var="filtvalue" value="${scheduledExecution?.('nodeInclude'+key)?.encodeAsHTML()}"/>
                                 <g:if test="${filtvalue && filtvalue.length()>30}">
                                     <textarea  name="nodeInclude${key}" id="schedJobNodeInclude${key}" onchange="_matchNodes();"
+                                        class="apply_resize"
                                         style="vertical-align:top;"
                                         rows="6" cols="40">${filtvalue}</textarea>
                                 </g:if>
@@ -790,6 +788,7 @@ var applinks={
                                 <g:if test="${filtvalue && filtvalue.length()>30}">
                                     <textarea name="nodeExclude${key}" id="schedJobNodeExclude${key}" onchange="_matchNodes();"
                                         style="vertical-align:top;"
+                                        class="apply_resize"
                                         rows="6" cols="40">${filtvalue}</textarea>
                                 </g:if>
                                 <g:else>

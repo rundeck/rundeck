@@ -71,7 +71,7 @@
     <g:if test="${isAdhocLocal}">
         <div id="localScriptDiv" class="${hasErrors(bean:item,field:'adhocExecution','fieldError')}">
             <div class="info note"><g:message code="Workflow.Step.adhocLocalString.description" />:</div>
-            <textarea rows="10" cols="60" name="adhocLocalString" id="adhocLocalStringField" class="code" autofocus>${item?.adhocLocalString?.encodeAsHTML()}</textarea>
+            <textarea rows="10" cols="60" name="adhocLocalString" id="adhocLocalStringField" class="code apply_ace" autofocus>${item?.adhocLocalString?.encodeAsHTML()}</textarea>
         </div>
     </g:if>
     <g:elseif test="${isAdhocFileExecution}">
