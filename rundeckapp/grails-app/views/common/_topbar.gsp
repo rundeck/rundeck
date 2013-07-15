@@ -71,9 +71,16 @@ function doCreateProject(){
 
     <g:if test="${session?.project||session?.projects}">
        <span class="projects" style="font-size:9pt; line-height: 12px; margin-left:20px;">
-            <img src="${resource(dir:'images',file:'icon-tiny-rarrow-sep.png')}" alt="project: " width="7px" height="12px"/>
             <span id="projectSelect">
-               <span class="action textbtn" onclick="loadProjectSelect();" title="Select project...">${session?.project?session.project:'Select project&hellip;'}</span>
+                <g:if test="${session.frameworkProjects}">
+                    <g:render template="/framework/projectSelect" model="${[projects:session.frameworkProjects,project:session.project]}"/>
+                </g:if>
+                <g:else>
+                   <span class="action textbtn button" onclick="loadProjectSelect();" title="Select project...">${session?.project?session.project:'Select project&hellip;'}
+                    <img src="${resource(dir: 'images', file: 'icon-tiny-disclosure.png')}" alt="project: " width="12px"
+                         height="12px"/>
+                   </span>
+                </g:else>
             </span>
        </span>
     </g:if>
@@ -135,5 +142,9 @@ function doCreateProject(){
         </span>
     </g:else>
 </div>
-
+<g:unless test="${session.frameworkProjects}">
+<g:javascript>
+    fireWhenReady('projectSelect', loadProjectSelect);
+</g:javascript>
+</g:unless>
 

@@ -740,7 +740,6 @@ class ScheduledExecutionController  {
                 notificationPlugins: notificationService.listNotificationPlugins(),
                 nextExecutionTime:scheduledExecutionService.nextExecutionTime(scheduledExecution),
                 authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,framework),
-                projects: frameworkService.projects(framework),
                 nodeStepDescriptions: nodeStepTypes,
                 stepDescriptions:stepTypes]
     }
@@ -781,7 +780,6 @@ class ScheduledExecutionController  {
             def stepTypes = frameworkService.getStepPluginDescriptions(framework)
             return render(view:'edit', model: [scheduledExecution:scheduledExecution,
                        nextExecutionTime:scheduledExecutionService.nextExecutionTime(scheduledExecution),
-                    projects: frameworkService.projects(framework),
                     notificationValidation: params['notificationValidation'],
                     nodeStepDescriptions: nodeStepTypes,
                     stepDescriptions: stepTypes,
@@ -843,7 +841,7 @@ class ScheduledExecutionController  {
         render(view:'create',model: [ scheduledExecution:newScheduledExecution, crontab:crontab,params:params,
                 iscopy:true,
                 authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,framework),
-                projects: frameworkService.projects(framework), nodeStepDescriptions: nodeStepTypes,
+                nodeStepDescriptions: nodeStepTypes,
                 stepDescriptions: stepTypes,
                 notificationPlugins: notificationService.listNotificationPlugins()])
 
@@ -907,7 +905,6 @@ class ScheduledExecutionController  {
             return unauthorized("Create a Job")
         }
 
-        def projects = frameworkService.projects(framework)
         def user = (session?.user) ? session.user : "anonymous"
         log.debug("ScheduledExecutionController: create : params: " + params)
         def scheduledExecution = new ScheduledExecution()
@@ -948,7 +945,7 @@ class ScheduledExecutionController  {
         def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions(framework)
         def stepTypes = frameworkService.getStepPluginDescriptions(framework)
         log.debug("ScheduledExecutionController: create : now returning model data to view...")
-        return ['scheduledExecution':scheduledExecution,params:params,crontab:[:],projects:projects,
+        return ['scheduledExecution':scheduledExecution,params:params,crontab:[:],
                 nodeStepDescriptions: nodeStepTypes, stepDescriptions: stepTypes,
                 notificationPlugins: notificationService.listNotificationPlugins()]
     }
@@ -1177,7 +1174,8 @@ class ScheduledExecutionController  {
 
             def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions(framework)
             def stepTypes = frameworkService.getStepPluginDescriptions(framework)
-            render(view:'create',model:[scheduledExecution:scheduledExecution,params:params, projects: frameworkService.projects(framework), nodeStepDescriptions: nodeStepTypes, stepDescriptions: stepTypes])
+            render(view:'create',model:[scheduledExecution:scheduledExecution,params:params,
+                    nodeStepDescriptions: nodeStepTypes, stepDescriptions: stepTypes])
         } else {
             log.debug("ExecutionController: immediate execution scheduled (${results.id})")
             redirect(controller:"execution", action:"follow",id:results.id)

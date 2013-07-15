@@ -213,7 +213,6 @@ class MenuController {
     def jobsPicker = {ScheduledExecutionQuery query ->
 
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
-        def projects = frameworkService.projects(framework)
         def usedFilter=null
         if(!query){
             query = new ScheduledExecutionQuery()
