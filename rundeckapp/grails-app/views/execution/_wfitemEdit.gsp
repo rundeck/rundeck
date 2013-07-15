@@ -37,15 +37,15 @@
 <g:if test="${'job'==newitemtype || item instanceof JobExec || (item instanceof java.util.Map && item?.jobName)}">
     <div >
        <div class="info note">Job Name</div>
-       <input id="jobNameField" type="text" name="jobName" value="${item?.jobName}" size="40" autofocus/>
+       <input id="jobNameField" type="text" name="jobName" value="${item?.jobName}" size="100" autofocus/>
     </div>
     <div >
         <div class="info note">Job Group</div>
-        <input id="jobGroupField"  type="text" name="jobGroup" value="${item?.jobGroup}" size="40"/>
+        <input id="jobGroupField"  type="text" name="jobGroup" value="${item?.jobGroup}" size="100"/>
     </div>
     <div  >
         <div class="info note">Enter the commandline arguments for the Job:</div>
-        <input type='text' name="argString" value="${item?.argString?.encodeAsHTML()}" size="80" id="jobArgStringField"/>
+        <input type='text' name="argString" value="${item?.argString?.encodeAsHTML()}" size="100" id="jobArgStringField"/>
     </div>
     <div style="margin-top:5px;">
         <span class="action button" onclick="loadJobChooser(this,'jobChooser');" id="jobChooseBtn" title="Select an existing Job to use">Choose A Job&hellip; <g:img file="icon-tiny-disclosure.png" width="12px" height="12px"/></span>
@@ -77,19 +77,19 @@
     <g:elseif test="${isAdhocFileExecution}">
     <div id="filepathDiv" >
         <div class="info note"><g:message code="Workflow.Step.adhocFilepath.description" />:</div>
-        <input type='text' name="adhocFilepath" value="${item?.adhocFilepath?.encodeAsHTML()}" size="80" id="adhocFilepathField" autofocus/>
+        <input type='text' name="adhocFilepath" value="${item?.adhocFilepath?.encodeAsHTML()}" size="100" id="adhocFilepathField" autofocus/>
     </div>
     </g:elseif>
     <g:elseif test="${isAdhocRemote}">
     <div id="remoteScriptDiv"  class="${hasErrors(bean:item,field:'adhocExecution','fieldError')}">
         <div class="info note"><g:message code="Workflow.Step.adhocRemoteString.description" />:</div>
-        <input type='text' name="adhocRemoteString" value="${item?.adhocRemoteString?.encodeAsHTML()}" size="80" id="adhocRemoteStringField" autofocus/>
+        <input type='text' name="adhocRemoteString" value="${item?.adhocRemoteString?.encodeAsHTML()}" size="100" id="adhocRemoteStringField" autofocus/>
     </div>
     </g:elseif>
     <g:if test="${!isAdhocRemote||isAdhocFileExecution}">
     <div id="adhocScriptArgs" >
         <div class="info note"><g:message code="Workflow.Step.argString.description" />:</div>
-        <input type='text' name="argString" value="${item?.argString?.encodeAsHTML()}" size="80" id="argStringField"/>
+        <input type='text' name="argString" value="${item?.argString?.encodeAsHTML()}" size="100" id="argStringField"/>
     </div>
     </g:if>
     <g:if test="${!isAdhocRemote}">
@@ -98,7 +98,7 @@
             <div class="info note"><g:message code="Workflow.Step.scriptInterpreter.description"/>:</div>
             <input type='text' name="scriptInterpreter"
                    placeholder="${g.message(code: 'Workflow.Step.scriptInterpreter.prompt')}"
-                   value="${item?.scriptInterpreter?.encodeAsHTML()}" size="80"
+                   value="${item?.scriptInterpreter?.encodeAsHTML()}" size="100"
                    id="scriptInterpreterField" autofocus/>
             <div>
                 <label>

@@ -307,11 +307,13 @@ var applinks={
     .add_step_buttons ul{
         margin:0;
         list-style-type: none;
+        padding-left:0;
     }
-    .add_step_buttons td{
-        vertical-align: top;
+    .add_step_buttons li.action{
+        padding:5px;
+        margin:0;
     }
-    .add_step_buttons td .action{
+    .add_step_buttons li.action:hover{
     }
 
     /**
@@ -374,7 +376,8 @@ var applinks={
         </td>
         <td>
             <span class="input">
-                <input type='text' name="jobName" value="${scheduledExecution?.jobName.encodeAsHTML()}" id="schedJobName" size="40"/>
+                <g:textField name="jobName" value="${scheduledExecution?.jobName.encodeAsHTML()}" id="schedJobName"
+                       size="80"/>
                 <g:hasErrors bean="${scheduledExecution}" field="jobName">
                     <img src="${resource( dir:'images',file:'icon-small-warn.png' )}" alt="Error"  width="16px" height="16px" id="schedJobNameErr"/>
                     <wdgt:eventHandler for="schedJobName" state="unempty"  frequency="1">
@@ -396,7 +399,8 @@ var applinks={
                 <g:hasErrors bean="${scheduledExecution}" field="groupPath">
                     <img src="${resource( dir:'images',file:'icon-small-warn.png' )}" alt="Error"  width="16px" height="16px"/>
                 </g:hasErrors>
-                <input type='text' name="groupPath" value="${scheduledExecution?.groupPath?.encodeAsHTML()}" id="schedJobGroup" size="40"/>
+                <input type='text' name="groupPath" value="${scheduledExecution?.groupPath?.encodeAsHTML()}" id="schedJobGroup"
+                       size="80"/>
                 <!--<span class="action" onclick="$('schedJobGroup').setValue('');" title="Clear Group field">
                     <img src="${resource( dir:'images',file:'icon-tiny-removex-gray.png' )}" alt="Clear"  width="12px" height="12px"/>
                 </span>-->
@@ -499,7 +503,7 @@ var applinks={
             <g:else>
                 <span class="input">
                     <input type='text' name="uuid" value="${scheduledExecution?.uuid?.encodeAsHTML()}"
-                           id="schedJobUuid" size="40"/>
+                           id="schedJobUuid" size="36"/>
                     <g:hasErrors bean="${scheduledExecution}" field="uuid">
                         <img src="${resource(dir: 'images', file: 'icon-small-warn.png')}" alt="Error" width="16px"
                              height="16px" id="schedJobUuidErr"/>
