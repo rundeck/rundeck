@@ -1916,7 +1916,6 @@ div.jobGroups.subjobs, div.expandComponent.sub_group {
 div.pflowlist{
     padding: 10px 10px;
     border:1px solid #ddd;
-    float:left;
     width:auto;
 
 }

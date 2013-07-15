@@ -933,6 +933,17 @@ function nochars(chars,e) {
     }
     return !(e && e.charCode!=0 && chars.indexOf(String.fromCharCode(e.charCode))>=0);
 }
+function _applyAce(e){
+    $(e).setStyle({
+        width: "100%",
+        height: "200px"
+    });
+    $(e).addClassName('ace_editor');
+    var editor = ace.edit(e.identify());
+    editor.setTheme("ace/theme/chrome");
+    editor.getSession().setMode("ace/mode/sh");
+    editor.setReadOnly(true);
+}
 /**
  * keypress handler which allows only chars matching the input regular expression
  * @param regex string to match allowed chars

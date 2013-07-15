@@ -29,5 +29,5 @@
 <g:else>
     <g:expander key="${rkey}">${label ? label : ''}${split.size()} lines</g:expander>
     <g:set var="encoded" value="${split.collect { it.encodeAsHTML() }}"/>
-    <div class="scriptContent expanded" id="${rkey}" style="display:none">${encoded.join('&nbsp;<br>')}</div>
+    <div class="scriptContent expanded _ace" id="${rkey}" style="display: none;">${script.encodeAsHTML()}</div>
 </g:else>

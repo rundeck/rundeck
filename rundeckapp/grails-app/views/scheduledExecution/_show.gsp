@@ -61,3 +61,12 @@
         fireWhenReady('histcontent', loadHistory);
     </g:javascript>
 </div>
+
+<g:javascript library="ace/ace"/>
+<g:javascript>
+    fireWhenReady('schedExecPage', function (z) {
+        $$('._ace').each(function (t) {
+            _applyAce(t);
+        })
+    });
+</g:javascript>
