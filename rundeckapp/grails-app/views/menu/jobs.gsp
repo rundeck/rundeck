@@ -9,6 +9,7 @@
     <g:javascript library="pagehistory"/>
     <g:javascript library="prototype/effects"/>
     <g:javascript library="executionOptions"/>
+    <g:javascript library="ace/ace"/>
     <script type="text/javascript">
 
         function showError(message){
@@ -281,6 +282,9 @@
                 onComplete: function(trans){
                     if(trans.request.success()){
                         popJobDetails(elem);
+                        $('jobIdDetailContent').select('.apply_ace').each(function (t) {
+                            _applyAce(t);
+                        })
                     }
                 },
                 onFailure: function(trans){

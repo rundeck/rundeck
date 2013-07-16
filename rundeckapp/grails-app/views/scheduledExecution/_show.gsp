@@ -65,8 +65,8 @@
 <g:javascript library="ace/ace"/>
 <g:javascript>
     fireWhenReady('schedExecPage', function (z) {
-        $$('._ace').each(function (t) {
-            _applyAce(t);
+        $$('.apply_ace').each(function (t) {
+            _applyAce(t,'400px');
         })
     });
 </g:javascript>
