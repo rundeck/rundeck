@@ -92,7 +92,7 @@
       </style>
   </head>
 
-  <body>
+  <body id="executionShowPage">
     <div class="pageTop extra">
         <div class="jobHead">
             <table cellspacing="0" cellpadding="0" width="100%">
@@ -440,6 +440,16 @@
             </g:if>
         </div>
     </g:if>
+
+    <g:javascript library="ace/ace"/>
+    <g:javascript>
+      fireWhenReady('executionShowPage', function (z) {
+          $$('.apply_ace').each(function (t) {
+              _applyAce(t);
+          })
+      });
+    </g:javascript>
+
   </body>
 </html>
 
