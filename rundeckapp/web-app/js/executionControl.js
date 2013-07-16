@@ -1362,11 +1362,11 @@ var FollowControl = Class.create({
     jobFinishStatus: function(result) {
         if (null != result) {
             if($('runstatus')){
-                $('runstatus').innerHTML = result == 'succeeded' ? '<span class="succeed">Successful</span>'
+                $('runstatus').innerHTML = result == 'succeeded' ? '<span class="succeed">Succeeded</span>'
                     : (result == 'aborted' ? '<span class="fail">Killed</span>' : '<span class="fail">Failed</span>');
             }
             $$('.execstatus').each(function(e){
-                e.innerHTML = result == 'succeeded' ? '<span class="succeed">Successful</span>'
+                e.innerHTML = result == 'succeeded' ? '<span class="succeed">Succeeded</span>'
                 : (result == 'aborted' ? '<span class="fail">Killed</span>' : '<span class="fail">Failed</span>');
             });
             if ($('jobInfo_' + this.executionId)) {

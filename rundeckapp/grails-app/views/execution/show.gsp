@@ -4,7 +4,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="tabpage" content="events"/>
     <meta name="layout" content="base" />
-    <title><g:message code="main.app.name"/> - <g:if test="${null==execution?.dateCompleted}">Now Running - </g:if><g:if test="${scheduledExecution}">${scheduledExecution?.jobName.encodeAsHTML()} :  </g:if><g:else>Transient <g:message code="domain.ScheduledExecution.title"/> : </g:else> Execution at <g:relativeDate atDate="${execution.dateStarted}" /> by ${execution.user}</title>
+    <title><g:message code="main.app.name"/> - <g:if test="${null==execution?.dateCompleted}">Now Running - </g:if><g:if test="${scheduledExecution}">${scheduledExecution?.jobName.encodeAsHTML()} :  </g:if><g:else>Adhoc</g:else> Execution at <g:relativeDate atDate="${execution.dateStarted}" /> by ${execution.user}</title>
     <g:set var="followmode" value="${params.mode in ['browse','tail','node']?params.mode:'tail'}"/>
       <g:set var="authKeys" value="${[AuthConstants.ACTION_KILL, AuthConstants.ACTION_READ,AuthConstants.ACTION_CREATE,AuthConstants.ACTION_RUN]}"/>
       <g:set var="authChecks" value="${[:]}"/>
@@ -58,6 +58,7 @@
             nodemode: ${followmode == 'node'},
             execData: {node:"${session.Framework.getFrameworkNodeHostname()}"},
             groupOutput:{value:${followmode == 'browse'}},
+            updatepagetitle:${null == execution?.dateCompleted},
             <g:if test="${authChecks[AuthConstants.ACTION_KILL]}">
             killjobhtml: '<span class="action button textbtn" onclick="followControl.docancel();">Kill <g:message code="domain.ScheduledExecution.title"/> <img src="${resource(dir: 'images', file: 'icon-tiny-removex.png')}" alt="Kill" width="12px" height="12px"/></span>',
             </g:if>

@@ -1,4 +1,4 @@
-
+    by <g:username user="${execution.user}"/>
     <g:if test="${execution.dateCompleted == null}">
         <span class="execstatus">
         <span class="nowrunning">
@@ -9,7 +9,6 @@
         </span>
     </g:if>
     <g:else>
-        by <g:username user="${execution.user}"/>
         <span class="${execution.status == 'true' ? 'succeed' : 'fail'}">
             <g:if test="${execution.status == 'true'}">
                 Succeeded
