@@ -1011,3 +1011,16 @@ Widget.Textarea = Class.create({
         }
     }
 });
+
+function selectTab(elem){
+    $(elem).up('.tabset').select('.tab').each(function(e){
+        $(e).removeClassName('selected');
+        if($(e).hasAttribute('data-behavior-tab-deselected')){
+            eval($(e).getAttribute('data-behavior-tab-deselected'));
+        }
+    });
+    $(elem).addClassName('selected');
+    if ($(elem).hasAttribute('data-behavior-tab-selected')) {
+        eval($(elem).getAttribute('data-behavior-tab-selected'));
+    }
+}

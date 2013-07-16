@@ -6,7 +6,7 @@
                     class=" ${execution?.status == 'true' ? 'jobok' : null == execution?.dateCompleted ? 'jobrunning' : execution?.cancelled ? 'jobwarn' : 'joberror'}" absolute="${absolute ? 'true' :'false'}"
                 title="${scheduledExecution?.description.encodeAsHTML()}"
             >
-                <span class="jobName">${scheduledExecution?.generateFullName().encodeAsHTML()}</span></g:link>
+                <span class="jobName">${scheduledExecution?.groupPath? scheduledExecution?.groupPath.encodeAsHTML()+'/':''}${scheduledExecution?.jobName.encodeAsHTML()}</span></g:link>
 
             %{--<span class="jobGroup">--}%
                 %{--<span class="grouplabel">--}%

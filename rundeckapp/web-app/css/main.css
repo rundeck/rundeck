@@ -162,27 +162,55 @@ a.toptab.selected{
 }
 a.tab,span.tab{
     padding: 3px;
-    border: 1px solid #ccc;
-    color:blue ;
+    border: 1px solid #fff;
     font-weight:normal;
 }
 
 .outputButtons a.tab, .outputButtons span.tab{
-    padding: 3px;
-    border: 1px solid #eee;
-    color:blue ;
+    padding: 3px 5px;
+    border-radius: 3px 3px 0 0;
     font-weight:normal;
-    background: #f0f0f0;
+    border-bottom: 0;
+    background: #eee;
+    color: #888;
+    cursor: pointer;
 }
 a.toptab + a.toptab{
     border-left:0;
 }
-a.tab:hover, a.toptab:hover, a.tab.selected, a.toptab.selected, span.button.selected{
+.tabset{
+    margin: 0 5px;
+}
+a.tab + a.tab, a.tab + span.tab, span.tab + a.tab, span.tab + span.tab{
+    margin-left: 5px;
+}
+a.toptab:hover, a.toptab.selected{
     background: #ddd;
 }
-.outputButtons a.tab:hover, .outputButtons  span.button.selected {
+a.tab.selected, span.tab.selected, span.button.selected, a.button.selected{
+    background: #fff;
+    border: 1px solid #eee;
+    border-bottom: 0;
+    color: black;
+}
+.outputButtons a.tab:hover,.outputButtons span.tab:hover{
+    background: #eee;
+    border: 1px solid #ddd;
+    border-bottom: 0;
+}
+.outputButtons a.tab.selected:hover,.outputButtons span.tab.selected:hover{
+    background: #fff;
+    border: 1px solid #ddd;
+    border-bottom: 0;
+}
+.outputButtons a.action {
+    color: #888;
+}
+.outputButtons a.action.selected {
+    color: blue;
     background: #eee;
     border: 1px solid #bbb;
+    border-bottom: 0;
 }
 a.tab.disabled, span.tab.disabled{
     border: 1px solid #ddd;
@@ -1827,7 +1855,6 @@ span.jobfinal{
 }
 
 #commandFlow{
-    padding: 10px 0;
     margin: 0 20px;
 }
 div.commandFlowError{

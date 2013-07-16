@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-    <meta name="tabpage" content="jobs"/>
+    <meta name="tabpage" content="events"/>
     <meta name="layout" content="base" />
     <title><g:message code="main.app.name"/> - <g:if test="${null==execution?.dateCompleted}">Now Running - </g:if><g:if test="${scheduledExecution}">${scheduledExecution?.jobName.encodeAsHTML()} :  </g:if><g:else>Transient <g:message code="domain.ScheduledExecution.title"/> : </g:else> Execution at <g:relativeDate atDate="${execution.dateStarted}" /> by ${execution.user}</title>
     <g:set var="followmode" value="${params.mode in ['browse','tail','node']?params.mode:'tail'}"/>
@@ -57,6 +57,7 @@
             browsemode: ${followmode == 'browse'},
             nodemode: ${followmode == 'node'},
             execData: {node:"${session.Framework.getFrameworkNodeHostname()}"},
+            groupOutput:{value:${followmode == 'browse'}},
             <g:if test="${authChecks[AuthConstants.ACTION_KILL]}">
             killjobhtml: '<span class="action button textbtn" onclick="followControl.docancel();">Kill <g:message code="domain.ScheduledExecution.title"/> <img src="${resource(dir: 'images', file: 'icon-tiny-removex.png')}" alt="Kill" width="12px" height="12px"/></span>',
             </g:if>
@@ -239,53 +240,63 @@
   <div id="commandFlow" class="commandFlow">
 
   <form action="#" id="outputappendform">
-      <table width="100%">
+      <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; border-spacing: 0;">
           <tr>
-              <td >
-              </td>
-              <td>
-
-              </td>
-          %{--</tr>--}%
-      %{--</table>--}%
-  %{--</div>--}%
 
 
 
-    %{--<div id="commandPerformOpts" class="" style="margin: 0 20px;">--}%
 
-        %{--<table width="100%">--}%
-            %{--<tr>--}%
-                <td class="outputButtons" style="padding:10px; ;text-align: right;">
-                    <g:link class="tab ${followmode=='tail'?' selected':''}" style=""
+                <td class="outputButtons" style="padding:0">
+                    <span class="tabset">
+
+                    <g:link class="tab ${followmode=='tail'?' selected':''}"
                         title="${g.message(code:'execution.show.mode.Tail.desc')}"
-                        controller="execution"  action="show" id="${execution.id}" params="${[lastlines:params.lastlines,mode:'tail'].findAll{it.value}}"><g:message code="execution.show.mode.Tail.title" default="Tail Output"/></g:link>
-                    %{--<g:link class="tab ${followmode=='browse'?' selected':''}" style=""--}%
-                        %{--title="${g.message(code:'execution.show.mode.Annotated.desc')}"--}%
-                        %{--controller="execution"  action="show" id="${execution.id}" params="[mode:'browse']"><g:message code="execution.show.mode.Annotated.title" default="Annotated"/></g:link>--}%
-                    <g:link class="tab ${followmode=='node'?' selected':''}" style=""
-                        title="${g.message(code:'execution.show.mode.Compact.desc')}"
-                        controller="execution"  action="show" id="${execution.id}" params="[mode:'node']"><g:message code="execution.show.mode.Compact.title" default="Compact"/></g:link>
+                        controller="execution"  action="show" id="${execution.id}"
+                        params="${[lastlines:params.lastlines,mode:'tail'].findAll{it.value}}"
+                        data-behavior-tab-selected="followControl.setGroupOutput(false);"
+                        onclick="selectTab(this); return followControl.nodemode;"
+                    >
+                        <g:message code="execution.show.mode.Tail.title" default="Tail Output"/>
+                    </g:link>
+                    <g:link class="tab ${followmode=='browse'?' selected':''}"
+                        title="${g.message(code:'execution.show.mode.Annotated.desc')}"
+                        controller="execution"  action="show" id="${execution.id}" params="[mode:'browse']"
+                        data-behavior-tab-selected="followControl.setGroupOutput(true);"
+                        onclick="selectTab(this); return followControl.nodemode;"
+                    >
+                        <g:message code="execution.show.mode.Annotated.title" default="Grouped"/>
+                    </g:link>
 
-            <span
-                    class="action textbtn button join"
-                    title="Click to change"
-                    id="showGroupedLabel"
-                    onclick="followControl.setGroupOutput($('showGrouped').checked);">
-                <input
-                        type="checkbox"
-                        name="showGrouped"
-                        id="showGrouped"
-                        value="true"
-                    ${followmode == 'tail' ? '' :  'checked="CHECKED"' }
-                        style=""/>
-                <label for="showGrouped">Grouped</label>
-            </span>
+                    <g:link class="tab ${followmode == 'node' ? ' selected' : ''}" style=""
+                            title="${g.message(code: 'execution.show.mode.Compact.desc')}"
+                            controller="execution" action="show" id="${execution.id}" params="[mode: 'node']"
+                    >
+                        <g:message code="execution.show.mode.Compact.title" default="Compact"/>
+                    </g:link>
+                    </span>
+
+                <span id="viewoptions" style="${wdgt.styleVisible(unless:followmode=='node')}">
+
+
+            %{--<span--}%
+                    %{--class="action  join"--}%
+                    %{--title="Click to change"--}%
+                    %{--id="showGroupedLabel"--}%
+                    %{--style="${wdgt.styleVisible(if: followmode=='tail')}"--}%
+                    %{--onclick="followControl.setGroupOutput($('showGrouped').checked);">--}%
+                %{--<input--}%
+                        %{--type="checkbox"--}%
+                        %{--name="showGrouped"--}%
+                        %{--id="showGrouped"--}%
+                        %{--value="true"--}%
+                    %{--${followmode == 'tail' ? '' :  'checked="CHECKED"' }--}%
+                        %{--style=""/>--}%
+                %{--<label for="showGrouped">Grouped</label>--}%
+            %{--</span>--}%
             <span id="fullviewopts" style="${followmode!='browse'?'display:none':''}" class="obs_grouped_true">
-
-                &nbsp;
+                <span class="info note">View options:</span>
                 <span
-                    class="action textbtn button"
+                    class="action "
                     title="Click to change"
                     id="ctxcollapseLabel"
                     onclick="followControl.setCollapseCtx($('ctxcollapse').checked);">
@@ -321,9 +332,10 @@
                 %{--&nbsp;--}%
 
                 <span  class="obs_grouped_false" style="${wdgt.styleVisible(if: followmode == 'tail')}">
-                &nbsp;
+                <span class="info note">Show columns:</span>
+
                 <span
-                        class="action textbtn button join"
+                        class="action  join"
                         title="Click to change"
                         id="colTimeShowLabel"
                         onclick="followControl.setColTime($('colTimeShow').checked);">
@@ -337,7 +349,7 @@
                     <label for="colTimeShow">Time</label>
                 </span>
                 <span
-                        class="action textbtn button join"
+                        class="action  join"
                         title="Click to change"
                         id="colNodeShowLabel"
                         onclick="followControl.setColNode($('colNodeShow').checked);">
@@ -351,7 +363,7 @@
                     <label for="colNodeShow">Node</label>
                 </span>
                 <span
-                        class="action textbtn button"
+                        class="action  "
                         title="Click to change"
                         id="colStepShowLabel"
                         onclick="followControl.setColStep($('colStepShow').checked);">
@@ -365,7 +377,8 @@
                     <label for="colStepShow">Step</label>
                 </span>
                 </span>
-                %{--<span id="taildelaycontrol" style="${execution.dateCompleted?'display:none':''}">,--}%
+
+                    %{--<span id="taildelaycontrol" style="${execution.dateCompleted?'display:none':''}">,--}%
                     %{--and update every--}%
 
 
@@ -386,7 +399,7 @@
                       %{--onmousedown="followControl.modifyTaildelay(1);return false;">+</span>--}%
 
                     %{--seconds--}%
-                %{--</span>--}%
+                </span>
                 </td>
                 <td style="width:180px;text-align: right;">
                     <span style="${execution.dateCompleted ? '' : 'display:none'}"  id="viewoptionscomplete">
