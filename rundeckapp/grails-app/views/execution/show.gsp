@@ -175,7 +175,7 @@
                             </g:else>
                         </span>
                         </span>
-<div style="display: inline-block">
+                        <div style="display: inline-block; margin-left: 10px;">
                             <div id="progressContainer" class="progressContainer" >
                                 <div class="progressBar" id="progressBar"
                                      title="Progress is an estimate based on average execution time for this ${g.message(code: 'domain.ScheduledExecution.title')}.">0%</div>
@@ -183,7 +183,7 @@
                             </div>
                         </div>
 
-                        <g:set var="isAdhoc" value="${!scheduledExecution}"/>
+                        <g:set var="isAdhoc" value="${!scheduledExecution && execution.workflow.commands.size() == 1}"/>
                         <table>
                         <g:if test="${scheduledExecution}">
                             <tr>
@@ -403,7 +403,7 @@
                 </td>
                 <td style="width:180px;text-align: right;">
                     <span style="${execution.dateCompleted ? '' : 'display:none'}"  id="viewoptionscomplete">
-                        <span class="sepL">
+                        <span>
                             <g:link class="action txtbtn" style="padding:5px;"
                                     title="View raw text output"
                                     controller="execution" action="downloadOutput" id="${execution.id}"
