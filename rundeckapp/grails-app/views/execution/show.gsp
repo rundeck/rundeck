@@ -44,7 +44,7 @@
             });
         }
         </g:if>
-        var followControl = new FollowControl('${execution?.id}','commandPerform',{
+        var followControl = new FollowControl('${execution?.id}','outputappendform',{
             appLinks:appLinks,
             iconUrl: "${resource(dir: 'images', file: 'icon-small')}",
             smallIconUrl: "${resource(dir: 'images', file: 'icon-small')}",
@@ -238,45 +238,46 @@
         <div class="clear"></div>
     </div>
 
-  <div id="commandFlow" class="commandFlow">
+  %{--<div id="commandFlow" class="commandFlow">--}%
 
-  <form action="#" id="outputappendform">
-      <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; border-spacing: 0;">
-          <tr>
-
-
+  %{--<form action="#" id="outputappendform">--}%
+      %{--<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; border-spacing: 0;">--}%
+          %{--<tr>--}%
 
 
-                <td class="outputButtons" style="padding:0">
-                    <span class="tabset">
 
-                    <g:link class="tab ${followmode=='tail'?' selected':''}"
-                        title="${g.message(code:'execution.show.mode.Tail.desc')}"
-                        controller="execution"  action="show" id="${execution.id}"
-                        params="${[lastlines:params.lastlines,mode:'tail'].findAll{it.value}}"
-                        data-behavior-tab-selected="followControl.setGroupOutput(false);"
-                        onclick="selectTab(this); return followControl.nodemode;"
-                    >
-                        <g:message code="execution.show.mode.Tail.title" default="Tail Output"/>
-                    </g:link>
-                    <g:link class="tab ${followmode=='browse'?' selected':''}"
-                        title="${g.message(code:'execution.show.mode.Annotated.desc')}"
-                        controller="execution"  action="show" id="${execution.id}" params="[mode:'browse']"
-                        data-behavior-tab-selected="followControl.setGroupOutput(true);"
-                        onclick="selectTab(this); return followControl.nodemode;"
-                    >
-                        <g:message code="execution.show.mode.Annotated.title" default="Grouped"/>
-                    </g:link>
 
-                    <g:link class="tab ${followmode == 'node' ? ' selected' : ''}" style=""
-                            title="${g.message(code: 'execution.show.mode.Compact.desc')}"
-                            controller="execution" action="show" id="${execution.id}" params="[mode: 'node']"
-                    >
-                        <g:message code="execution.show.mode.Compact.title" default="Compact"/>
-                    </g:link>
-                    </span>
+                %{--<td class="outputButtons" style="padding:0">--}%
+                    %{--<span class="tabset">--}%
 
-                <span id="viewoptions" style="${wdgt.styleVisible(unless:followmode=='node')}">
+                    %{--<g:link class="tab ${followmode=='tail'?' selected':''} out_setmode_tail"--}%
+                        %{--title="${g.message(code:'execution.show.mode.Tail.desc')}"--}%
+                        %{--controller="execution"  action="show" id="${execution.id}"--}%
+                        %{--params="${[lastlines:params.lastlines,mode:'tail'].findAll{it.value}}"--}%
+                        %{--data-behavior-tab-selected="followControl.setGroupOutput(false);"--}%
+                        %{--onclick="selectTab(this); "--}%
+                    %{-->--}%
+                        %{--<g:message code="execution.show.mode.Tail.title" default="Tail Output"/>--}%
+                    %{--</g:link>--}%
+                    %{--<g:link class="tab ${followmode=='browse'?' selected':''} out_setmode_browse"--}%
+                        %{--title="${g.message(code:'execution.show.mode.Annotated.desc')}"--}%
+                        %{--controller="execution"  action="show" id="${execution.id}" params="[mode:'browse']"--}%
+                        %{--data-behavior-tab-selected="followControl.setGroupOutput(true);"--}%
+                        %{--onclick="selectTab(this); "--}%
+                    %{-->--}%
+                        %{--<g:message code="execution.show.mode.Annotated.title" default="Grouped"/>--}%
+                    %{--</g:link>--}%
+
+                    %{--<g:link class="tab ${followmode == 'node' ? ' selected' : ''} out_setmode_node" style=""--}%
+                            %{--title="${g.message(code: 'execution.show.mode.Compact.desc')}"--}%
+                            %{--controller="execution" action="show" id="${execution.id}" params="[mode: 'node']"--}%
+                            %{--onclick="selectTab(this);"--}%
+                    %{-->--}%
+                        %{--<g:message code="execution.show.mode.Compact.title" default="Compact"/>--}%
+                    %{--</g:link>--}%
+                    %{--</span>--}%
+
+                %{--<span id="viewoptions" style="${wdgt.styleVisible(unless:followmode=='node')}">--}%
 
 
             %{--<span--}%
@@ -294,24 +295,24 @@
                         %{--style=""/>--}%
                 %{--<label for="showGrouped">Grouped</label>--}%
             %{--</span>--}%
-            <span id="fullviewopts" style="${followmode!='browse'?'display:none':''}" class="obs_grouped_true">
-                <span class="info note">View options:</span>
-                <span
-                    class="action "
-                    title="Click to change"
-                    id="ctxcollapseLabel"
-                    onclick="followControl.setCollapseCtx($('ctxcollapse').checked);">
-                <input
-                    type="checkbox"
-                    name="ctxcollapse"
-                    id="ctxcollapse"
-                    value="true"
-                    ${followmode=='tail'?'':null==execution?.dateCompleted?'checked="CHECKED"':''}
-                    style=""/>
-                    <label for="ctxcollapse">Collapse</label>
-                </span>
+            %{--<span id="fullviewopts" style="${followmode!='browse'?'display:none':''}" class="obs_grouped_true">--}%
+                %{--<span class="info note">View options:</span>--}%
+                %{--<span--}%
+                    %{--class="action "--}%
+                    %{--title="Click to change"--}%
+                    %{--id="ctxcollapseLabel"--}%
+                    %{--onclick="followControl.setCollapseCtx($('ctxcollapse').checked);">--}%
+                %{--<input--}%
+                    %{--type="checkbox"--}%
+                    %{--name="ctxcollapse"--}%
+                    %{--id="ctxcollapse"--}%
+                    %{--value="true"--}%
+                    %{--${followmode=='tail'?'':null==execution?.dateCompleted?'checked="CHECKED"':''}--}%
+                    %{--style=""/>--}%
+                    %{--<label for="ctxcollapse">Collapse</label>--}%
+                %{--</span>--}%
 
-            </span>
+            %{--</span>--}%
                     %{--Show the last--}%
                     %{--<span class="action textbtn button"--}%
                       %{--title="Click to reduce"--}%
@@ -332,52 +333,52 @@
                     %{--lines--}%
                 %{--&nbsp;--}%
 
-                <span  class="obs_grouped_false" style="${wdgt.styleVisible(if: followmode == 'tail')}">
-                <span class="info note">Show columns:</span>
+                %{--<span  class="obs_grouped_false" style="${wdgt.styleVisible(if: followmode == 'tail')}">--}%
+                %{--<span class="info note">Show columns:</span>--}%
 
-                <span
-                        class="action  join"
-                        title="Click to change"
-                        id="colTimeShowLabel"
-                        onclick="followControl.setColTime($('colTimeShow').checked);">
-                    <input
-                            type="checkbox"
-                            name="coltime"
-                            id="colTimeShow"
-                            value="true"
-                            checked="checked"
-                            style=""/>
-                    <label for="colTimeShow">Time</label>
-                </span>
-                <span
-                        class="action  join"
-                        title="Click to change"
-                        id="colNodeShowLabel"
-                        onclick="followControl.setColNode($('colNodeShow').checked);">
-                    <input
-                            type="checkbox"
-                            name="coltime"
-                            id="colNodeShow"
-                            value="true"
-                            checked="checked"
-                            style=""/>
-                    <label for="colNodeShow">Node</label>
-                </span>
-                <span
-                        class="action  "
-                        title="Click to change"
-                        id="colStepShowLabel"
-                        onclick="followControl.setColStep($('colStepShow').checked);">
-                    <input
-                            type="checkbox"
-                            name="coltime"
-                            id="colStepShow"
-                            value="true"
-                            checked="checked"
-                            style=""/>
-                    <label for="colStepShow">Step</label>
-                </span>
-                </span>
+                %{--<label--}%
+                        %{--class="action  join"--}%
+                        %{--title="Click to change"--}%
+                        %{--id="colTimeShowLabel">--}%
+                    %{--<input--}%
+                            %{--type="checkbox"--}%
+                            %{--name="coltime"--}%
+                            %{--id="colTimeShow"--}%
+                            %{--value="true"--}%
+                            %{--checked="checked"--}%
+                            %{--class="opt_display_col_time"--}%
+                            %{--style=""/>--}%
+                    %{--Time--}%
+                %{--</label>--}%
+                %{--<label--}%
+                        %{--class="action  join"--}%
+                        %{--title="Click to change"--}%
+                        %{--id="colNodeShowLabel">--}%
+                    %{--<input--}%
+                            %{--type="checkbox"--}%
+                            %{--name="coltime"--}%
+                            %{--id="colNodeShow"--}%
+                            %{--value="true"--}%
+                            %{--checked="checked"--}%
+                            %{--class="opt_display_col_node"--}%
+                            %{--style=""/>--}%
+                    %{--Node--}%
+                %{--</label>--}%
+                %{--<label--}%
+                        %{--class="action  "--}%
+                        %{--title="Click to change"--}%
+                        %{--id="colStepShowLabel">--}%
+                    %{--<input--}%
+                            %{--type="checkbox"--}%
+                            %{--name="coltime"--}%
+                            %{--id="colStepShow"--}%
+                            %{--value="true"--}%
+                            %{--checked="checked"--}%
+                            %{--class="opt_display_col_step"--}%
+                            %{--style=""/>--}%
+                    %{--Step--}%
+                %{--</label>--}%
+                %{--</span>--}%
 
                     %{--<span id="taildelaycontrol" style="${execution.dateCompleted?'display:none':''}">,--}%
                     %{--and update every--}%
@@ -400,36 +401,39 @@
                       %{--onmousedown="followControl.modifyTaildelay(1);return false;">+</span>--}%
 
                     %{--seconds--}%
-                </span>
-                </td>
-                <td style="width:180px;text-align: right;">
-                    <span style="${execution.dateCompleted ? '' : 'display:none'}"  id="viewoptionscomplete">
-                        <span>
-                            <g:link class="action txtbtn" style="padding:5px;"
-                                    title="View raw text output"
-                                    controller="execution" action="downloadOutput" id="${execution.id}"
-                                    params="[view: 'inline', formatted: false]">
-                                Raw</g:link>
-                        </span>
-                        <span class="sepL">
-                        <g:link class="action txtbtn" style="padding:5px;"
-                            title="Download ${filesize ? filesize + ' bytes' : ''}"
-                            controller="execution" action="downloadOutput" id="${execution.id}">
-                            <img src="${resource(dir:'images',file:'icon-small-file.png')}" alt="Download" width="13px" height="16px"/>
-                            Download</g:link>
-                        </span>
-                    </span>
-                </td>
-            </tr>
-            </table>
-        </form>
-    </div>
-    <div id="fileload2" style="display:none;" class="outputdisplayopts"><img src="${resource(dir:'images',file:'icon-tiny-disclosure-waiting.gif')}" alt="Spinner"/> <span id="fileloadpercent"></span></div>
-    <div
-        id="commandPerform"
-        style="display:none; margin: 0 20px; "></div>
-    <div id="fileload" style="display:none;" class="outputdisplayopts"><img src="${resource(dir:'images',file:'icon-tiny-disclosure-waiting.gif')}" alt="Spinner"/> <span id="fileload2percent"></span></div>
-    <div id="log"></div>
+                %{--</span>--}%
+                %{--</td>--}%
+                %{--<td style="width:180px;text-align: right;">--}%
+                    %{--<span style="${execution.dateCompleted ? '' : 'display:none'}"  id="viewoptionscomplete">--}%
+                        %{--<span>--}%
+                            %{--<g:link class="action txtbtn" style="padding:5px;"--}%
+                                    %{--title="View raw text output"--}%
+                                    %{--controller="execution" action="downloadOutput" id="${execution.id}"--}%
+                                    %{--params="[view: 'inline', formatted: false]">--}%
+                                %{--Raw</g:link>--}%
+                        %{--</span>--}%
+                        %{--<span class="sepL">--}%
+                        %{--<g:link class="action txtbtn" style="padding:5px;"--}%
+                            %{--title="Download ${filesize ? filesize + ' bytes' : ''}"--}%
+                            %{--controller="execution" action="downloadOutput" id="${execution.id}">--}%
+                            %{--<img src="${resource(dir:'images',file:'icon-small-file.png')}" alt="Download" width="13px" height="16px"/>--}%
+                            %{--Download</g:link>--}%
+                        %{--</span>--}%
+                    %{--</span>--}%
+                %{--</td>--}%
+            %{--</tr>--}%
+            %{--</table>--}%
+        %{--</form>--}%
+    %{--</div>--}%
+    %{--<div id="fileload2" style="display:none;" class="outputdisplayopts"><img src="${resource(dir:'images',file:'icon-tiny-disclosure-waiting.gif')}" alt="Spinner"/> <span id="fileloadpercent"></span></div>--}%
+    %{--<div--}%
+        %{--id="commandPerform"--}%
+        %{--style="display:none; margin: 0 20px; "></div>--}%
+    %{--<div id="fileload" style="display:none;" class="outputdisplayopts"><img src="${resource(dir:'images',file:'icon-tiny-disclosure-waiting.gif')}" alt="Spinner"/> <span id="fileload2percent"></span></div>--}%
+    %{--<div id="log"></div>--}%
+
+  <g:render template="/execution/showFragment" model="[execution:execution,scheduledExecution: scheduledExecution,inlineView:false,followmode:followmode]"/>
+
     <g:if test="${scheduledExecution}">
         <div class="runbox">History</div>
         <div class="pageBody">
@@ -449,6 +453,9 @@
               _applyAce(t);
           })
       });
+        fireWhenReady('outputappendform',function(z){
+            followControl.bindActions('outputappendform');
+        });
     </g:javascript>
 
   </body>

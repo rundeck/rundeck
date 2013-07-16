@@ -370,6 +370,7 @@
                     try{
                     startRunFollow(data);
                     }catch(e){
+                        console.log(e);
                         runError(e);
                     }
                 },
@@ -394,11 +395,12 @@
                 onComplete: function(transport) {
                     if (transport.request.success()) {
                         Element.show('runcontent');
-                        try{
+//                        try{
                         continueRunFollow(data);
-                        }catch(e){
-                            runError(e);
-                        }
+//                        }catch(e){
+//                            console.log(e,e);
+//                            runError(e);
+//                        }
                     }
                 },
                 onFailure:requestFailure
@@ -412,9 +414,11 @@
         function continueRunFollow(data){
              var followControl = new FollowControl(data.id,'runcontent',{
                 extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>",
-                iconUrl: "${resource(dir: 'images', file: 'icon')}",
+                smallIconUrl: "${resource(dir: 'images', file: 'icon-small')}",
+                iconUrl: "${resource(dir: 'images', file: 'icon-small')}",
                 lastlines: ${params.lastlines ? params.lastlines : defaultLastLines},
                 maxLastLines: ${maxLastLines},
+                 showFinalLine: {value: false, changed: false},
                 tailmode: true,
                  taildelay:1,
                 execData: {node:"test"},

@@ -92,10 +92,26 @@ var FollowControl = Class.create({
     bindActions: function(elem){
         var obj=this;
         $(elem).select('a.out_setmode_tail').each(function(e){
-            Event.observe(e,'click',function(evt){Event.stop(evt);obj.setMode('tail');obj.reload();});
+            Event.observe(e,'click',function(evt){Event.stop(evt);
+                if(!obj.nodemode){
+                    obj.setMode('tail');
+                    obj.setGroupOutput(false);
+                }else{
+                    obj.setMode('tail');
+                    obj.reload();
+                }
+            });
         });
         $(elem).select('a.out_setmode_browse').each(function(e){
-            Event.observe(e,'click',function(evt){Event.stop(evt);obj.setMode('browse');obj.reload();});
+            Event.observe(e,'click',function(evt){Event.stop(evt);
+                if (!obj.nodemode) {
+                    obj.setMode('browse');
+                    obj.setGroupOutput(true);
+                } else {
+                    obj.setMode('browse');
+                    obj.reload();
+                }
+            });
         });
         $(elem).select('a.out_setmode_node').each(function(e){
             Event.observe(e,'click',function(evt){Event.stop(evt);obj.setMode('node');obj.reload();});
@@ -195,6 +211,8 @@ var FollowControl = Class.create({
         var obj=this;
         this.setGroupOutput(this.browsemode||this.nodemode);
         if(this.targetElement && $(this.targetElement)){
+            $(this.targetElement).select('.obs_node_false').each(!this.nodemode?Element.show:Element.hide);
+            $(this.targetElement).select('.obs_node_true').each(this.nodemode?Element.show:Element.hide);
             $(this.targetElement).select('.opt_mode').each(Element.hide);
             $(this.targetElement).select('.out_setmode').each(function(e){e.removeClassName('selected')});
             if(this.tailmode){
@@ -1325,7 +1343,9 @@ var FollowControl = Class.create({
         $('commandPerform').show();
 
         this.displayCompletion(0);
-        $('progressContainer').show();
+        if ($('progressContainer')) {
+            $('progressContainer').show();
+        }
 //        this.setOutputAppendTop($F('outputappendtop') == "top");
 //        this.setOutputAutoscroll($F('outputautoscrolltrue') == "true");
 //        this.setGroupOutput($F('ctxshowgroup') == 'true');
@@ -1353,7 +1373,9 @@ var FollowControl = Class.create({
         if (this.runningcmd.failednodes && $('execRetry')) {
             $('execRetry').show();
         }
-        $('execRerun').show();
+        if($('execRerun')){
+            $('execRerun').show();
+        }
         if(typeof(this.onComplete)=='function'){
             this.onComplete();
         }
@@ -1380,7 +1402,9 @@ var FollowControl = Class.create({
                 document.title =
                 (result == 'succeeded' ? '[OK] ' : result == 'aborted' ? '[KILLED] ' : '[FAILED] ') + document.title;
             }
-            $('cancelresult').hide();
+            if($('cancelresult')){
+                $('cancelresult').hide();
+            }
         }
     },
     beginFollowingOutput: function(id) {
@@ -1465,14 +1489,18 @@ var FollowControl = Class.create({
             if ($('avgDuration')) {
                 $('avgDuration').innerHTML = "???";
             }
-            $('progressContainer').hide();
+            if ($('progressContainer')) {
+                $('progressContainer').hide();
+            }
         }
     },
     displayCompletion: function(pct) {
         if ($('execDurationPct')) {
             $('execDurationPct').innerHTML = pct + "%";
         }
-        $('progressBar').style.width = (Math.floor(pct) * 4);
-        $('progressBar').innerHTML = (Math.floor(pct)) + "%";
+        if($('progressBar')){
+            $('progressBar').style.width = (Math.floor(pct) * 4);
+            $('progressBar').innerHTML = (Math.floor(pct)) + "%";
+        }
     }
 });
