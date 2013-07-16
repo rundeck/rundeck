@@ -917,6 +917,9 @@ var FollowControl = Class.create({
         return tr;
     },
     parseOldContextString: function(context){
+        if(context==null){
+            return null;
+        }
         //split context into project,type,object
         var t = context.split(':');
         var i=0;
