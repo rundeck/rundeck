@@ -220,7 +220,7 @@
 
                         <div style="">
                             <g:expander key="schedExDetails${scheduledExecution?.id ? scheduledExecution?.id : ''}"
-                                        imgfirst="true">Details</g:expander>
+                                        imgfirst="true">Definition</g:expander>
                             <div class="presentation" style="display:none" id="schedExDetails${scheduledExecution?.id}">
                                 <g:render template="execDetails"
                                           model="[execdata: execution, showArgString: false, hideAdhoc: isAdhoc]"/>
