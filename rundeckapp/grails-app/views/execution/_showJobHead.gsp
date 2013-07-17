@@ -1,3 +1,4 @@
+<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 <g:if test="${scheduledExecution}">
     <div class="jobInfoSection">
         <span class="jobInfoPart secondary">
@@ -22,5 +23,9 @@
                 %{--</span>--}%
             %{--</span>--}%
         </span>
+        <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_UPDATE)}">
+            <g:link controller="scheduledExecution" title="Edit Job" action="edit" id="${scheduledExecution.extid}"
+                class="action textbtn">edit</g:link>
+        </g:if>
     </div>
 </g:if>
