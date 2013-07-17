@@ -1234,10 +1234,6 @@ table.executionList td{
     padding: 3px;
 }
 
-table.executionList tr.fail a, table.jobsList tr.fail a{
-    color:red;
-}
-
 table.jobsList.history td {
     vertical-align: baseline;
 }
