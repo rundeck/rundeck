@@ -36,7 +36,7 @@ export RDECK_JVM="-Djava.security.auth.login.config=/etc/rundeck/jaas-loginmodul
 #
 # Set min/max heap size
 #
-RDECK_JVM="$RDECK_JVM -Xmx1024m -Xms256m"
+RDECK_JVM="$RDECK_JVM -Xmx1024m -Xms256m -server"
 #
 # SSL Configuration - Uncomment the following to enable.  Check SSL.properties for details.
 # 
