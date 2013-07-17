@@ -267,6 +267,15 @@ function _wfiaddnew(type,nodestep) {
         }
     });
 }
+
+function escapeHtml(unsafe) {
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
 function _addAceTextarea(textarea){
     textarea.hide();
     var _shadow = new Element('div');
@@ -275,7 +284,7 @@ function _addAceTextarea(textarea){
         height: "560px"
     });
     _shadow.addClassName('ace_text');
-    _shadow.innerHTML=$F(textarea);
+    _shadow.innerHTML= escapeHtml($F(textarea));
     textarea.insert({ after: _shadow });
     var editor = ace.edit(_shadow.identify());
     editor.setTheme("ace/theme/chrome");
