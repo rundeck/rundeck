@@ -11,7 +11,7 @@
                 <th>Name</th>
                 <th>Description</th>
                 <th>Tags</th>
-                <th>Username</th>
+                <th style="text-align:right;">Username @</th>
                 <th>Hostname</th>
                 <th></th>
             </tr>
