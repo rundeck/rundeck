@@ -1815,6 +1815,10 @@ div.jobHead span.primary{
 }
 
 div.jobHead span.secondary {
+
+}
+div.jobHead span.secondary {
+    font-size: 115%;
     /*display: inline-block;*/
     /*padding:5px;*/
     /*border: 1px solid #ddd;*/
@@ -1851,7 +1855,7 @@ span.jobfinal{
 }
 
 #commandFlow{
-    margin: 0 20px;
+    margin: 20px 20px 0 20px;
 }
 div.commandFlowError{
     padding: 10px;
