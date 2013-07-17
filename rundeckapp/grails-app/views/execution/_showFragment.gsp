@@ -223,7 +223,7 @@
             %{--seconds--}%
         </span>
     </td>
-    <td style="width:180px;text-align: right;">
+    <td style="width:300px;text-align: right;">
         <span style="${execution.dateCompleted ? '' : 'display:none'}" id="viewoptionscomplete">
             <span>
                 <g:link class="action txtbtn" style="padding:5px;"
@@ -231,6 +231,13 @@
                         controller="execution" action="downloadOutput" id="${execution.id}"
                         params="[view: 'inline', formatted: false]">
                     Raw</g:link>
+            </span>
+            <span class="sepL">
+                <g:link class="action txtbtn" style="padding:5px;"
+                        title="View raw text output"
+                        controller="execution" action="follow" id="${execution.id}"
+                        params="[markdown: params.markdown=='group'?'none':'group',mode:params.mode]">
+                    ${params.markdown == 'group'?'No Markdown':'Markdown'}</g:link>
             </span>
             <span class="sepL">
                 <g:link class="action txtbtn" style="padding:5px;"
