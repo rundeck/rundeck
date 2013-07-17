@@ -24,13 +24,22 @@
 <g:set var="rkey" value="${g.rkey()}"/>
 <g:unless test="${isAdhoc}">
 <div>
-    <span class="label" title="Continue execution if any steps fail.">Keepgoing:</span>
+    <span class="label"><g:message code="Workflow.property.keepgoing.prompt" /></span>
     <g:if test="${edit}">
-        <label><input type="radio" name="workflow.keepgoing" value="false" ${workflow?.keepgoing?'':'checked'}/> No</label>
-        <label><input type="radio" name="workflow.keepgoing" value="true" ${workflow?.keepgoing?'checked':''}/> Yes</label>
+        <label>
+            <input type="radio" name="workflow.keepgoing" value="false" ${workflow?.keepgoing?'':'checked'}/>
+            <g:message code="Workflow.property.keepgoing.false.description"/>
+        </label>
+        <label>
+            <input type="radio" name="workflow.keepgoing" value="true" ${workflow?.keepgoing?'checked':''}/>
+            <g:message code="Workflow.property.keepgoing.true.description"/>
+        </label>
     </g:if>
     <g:else>
-        ${workflow?.keepgoing?true:false}
+        <g:message code="${workflow?.keepgoing ? 'Yes' : 'No'}"/>
+        <span class="info note">
+            <g:message code="Workflow.property.keepgoing.${workflow?.keepgoing ? true : false}.description"/>
+        </span>
     </g:else>
     </div>
 <div>

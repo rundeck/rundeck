@@ -918,19 +918,21 @@ var applinks={
             </td>
         </tr>
         <tr>
-            <td>Keep going on error?</td>
+            <td><g:message code="scheduledExecution.property.nodeKeepgoing.prompt" /></td>
             <td>
-                <label>
+                <div><label>
                 <g:radio name="nodeKeepgoing" value="false"
                     checked="${!scheduledExecution?.nodeKeepgoing}"
                     id="nodeKeepgoingFalse"/>
-                No</label>
+                    <g:message code="scheduledExecution.property.nodeKeepgoing.false.description"/>
+                </label></div>
 
-                <label>
+                <div><label>
                 <g:radio name="nodeKeepgoing" value="true"
                     checked="${scheduledExecution?.nodeKeepgoing}"
                     id="nodeKeepgoingTrue"/>
-                Yes</label>
+                    <g:message code="scheduledExecution.property.nodeKeepgoing.true.description"/>
+                </label></div>
             </td>
         </tr>
     </tbody>
