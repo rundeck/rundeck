@@ -635,7 +635,7 @@ var FollowControl = Class.create({
                 //remove extra lines
                 this.removeTableRows(this.cmdoutputtbl, rowcount- this.lastlines);
             }
-            if(needsScroll){
+            if(needsScroll && !this.runningcmd.jobcompleted){
                 this.scrollToBottom();
             }
         }
