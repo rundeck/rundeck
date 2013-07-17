@@ -99,12 +99,12 @@
                 <g:message code="execution.show.mode.Tail.title" default="Tail Output"/>
             </g:link>
 
-            <g:link class="tab ${followmode == 'browse' ? ' selected' : ''} out_setmode_browse"
-                    title="${g.message(code: 'execution.show.mode.Annotated.desc')}"
-                    controller="execution" action="show" id="${execution.id}" params="[mode: 'browse']"
-                    onclick="selectTab(this);">
-                <g:message code="execution.show.mode.Annotated.title" default="Grouped"/>
-            </g:link>
+            %{--<g:link class="tab ${followmode == 'browse' ? ' selected' : ''} out_setmode_browse"--}%
+                    %{--title="${g.message(code: 'execution.show.mode.Annotated.desc')}"--}%
+                    %{--controller="execution" action="show" id="${execution.id}" params="[mode: 'browse']"--}%
+                    %{--onclick="selectTab(this);">--}%
+                %{--<g:message code="execution.show.mode.Annotated.title" default="Grouped"/>--}%
+            %{--</g:link>--}%
 
             <g:link class="tab ${followmode == 'node' ? ' selected' : ''} out_setmode_node"
                     title="${g.message(code: 'execution.show.mode.Compact.desc')}"
