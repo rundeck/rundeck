@@ -41,6 +41,16 @@ class ExecutionController {
     def followFragment ={
         return render(view:'showFragment',model:show())
     }
+
+    private unauthorized(String action, boolean fragment = false) {
+        if (!fragment) {
+            response.setStatus(403)
+        }
+        flash.title = "Unauthorized"
+        flash.error = "${request.remoteUser} is not authorized to: ${action}"
+        response.setHeader(Constants.X_RUNDECK_ACTION_UNAUTHORIZED_HEADER, flash.error)
+        render(template: fragment ? '/common/errorFragment' : '/common/error', model: [:])
+    }
     def show ={
         def Execution e = Execution.get(params.id)
         if(!e){
@@ -56,12 +66,40 @@ class ExecutionController {
             }
         }
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
-        if(e.scheduledExecution){
-            def ScheduledExecution scheduledExecution = e.scheduledExecution //ScheduledExecution.get(e.scheduledExecutionId)
 
-            return [scheduledExecution: scheduledExecution, execution:e, filesize:filesize]
+        if (e && !frameworkService.authorizeProjectExecutionAll(framework, e, [AuthConstants.ACTION_READ])) {
+            return unauthorized("Read Execution ${params.id}")
+        }
+
+        def enext,eprev
+        def result= Execution.withCriteria {
+            gt('dateStarted', e.dateStarted)
+            if (e.scheduledExecution) {
+                eq('scheduledExecution',e.scheduledExecution)
+            }else{
+                isNull('scheduledExecution')
+            }
+            eq('project',e.project)
+            maxResults(1)
+            order('dateStarted','asc')
+        }
+        enext=result?result[0]:null
+        result = Execution.withCriteria {
+            lt('dateStarted', e.dateStarted)
+            if (e.scheduledExecution) {
+                eq('scheduledExecution', e.scheduledExecution)
+            }else{
+                isNull('scheduledExecution')
+            }
+            eq('project', e.project)
+            maxResults(1)
+            order('dateStarted', 'desc')
+        }
+        eprev = result ? result[0] : null
+        if(e.scheduledExecution){
+            return [scheduledExecution: e.scheduledExecution, execution:e, filesize:filesize,enext:enext,eprev:eprev]
         }else{
-            return [execution:e, filesize:filesize]
+            return [execution:e, filesize:filesize, enext: enext, eprev: eprev]
         }
     }
     def mail ={

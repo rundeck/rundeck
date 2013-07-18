@@ -175,6 +175,36 @@
                                 </g:if>
                             </g:else>
                         </span>
+
+                            <g:if test="${eprev || enext}">
+                                <span style="margin-left:10px; float:right; white-space: nowrap">
+                                    <g:if test="${eprev}">
+                                        <g:link action="show" controller="execution" id="${eprev.id}"
+                                            title="Previous Execution #${eprev.id}">
+                                            <g:message code="${scheduledExecution ? 'job' : 'adhoc'}.previous.execution"
+                                                args="${[eprev.id]}"/>
+                                        </g:link>
+                                    </g:if>
+                                    <g:else>
+                                        <span class="info note">
+                                            <g:message code="no.previous.executions" />
+                                        </span>
+                                    </g:else>
+                                    <g:if test="${enext}">
+                                        <g:link action="show" controller="execution" class="sepL"
+                                                title="Next Execution #${enext.id}"
+                                            id="${enext.id}">
+                                            <g:message code="${scheduledExecution ? 'job' : 'adhoc'}.next.execution"
+                                                       args="${[enext.id]}"/>
+                                        </g:link>
+                                    </g:if>
+                                    <g:else>
+                                        <span class="sepL info note">
+                                            <g:message code="no.more.executions" />
+                                        </span>
+                                    </g:else>
+                                </span>
+                            </g:if>
                         </span>
                         <div style="display: inline-block; margin-left: 10px;">
                             <div id="progressContainer" class="progressContainer" >
