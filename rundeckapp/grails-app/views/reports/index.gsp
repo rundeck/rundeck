@@ -6,7 +6,7 @@
     <g:ifServletContextAttribute attribute="RSS_ENABLED" value="true">
     <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="${createLink(controller:"feed",action:"index",params:paginateParams?paginateParams:[:])}"/>
     </g:ifServletContextAttribute>
-    <title><g:message code="gui.menu.Events"/></title>
+    <title><g:message code="gui.menu.Events"/> - ${session.project.encodeAsHTML()}</title>
     <g:javascript>
                 
 
@@ -40,19 +40,9 @@
         var boxctl ;
         function _pageInit() {
             try{
-            boxctl = new WBoxController({views:{db2:'evtsholder'},key:'nowrunning'});
-            //eventsparams.filterName=bfilters['events'];
             if(pageparams && pageparams.offset){
                 Object.extend(eventsparams,pageparams);
             }
-            boxctl.addBox('db2', new WBox('box2', {noTitle:true,noTabs:true,tabs:[
-                {   name:'events',
-                    url:links['events'],
-                    notitle:true,
-                    params:eventsparams
-                },
-            ]}));
-            boxctl._pageInit();
             }catch(e){
                 console.log("error: "+e);
             }
@@ -116,14 +106,14 @@
             var data=eval("("+response.responseText+")"); // evaluate the JSON;
             if(data){
                 var bfilters=data['filterpref'];
-                boxctl.updateDataForTab(name,{params:{filterName:bfilters[name]}});
+//                boxctl.updateDataForTab(name,{params:{filterName:bfilters[name]}});
                 //reload page
-                //document.location="${createLink(controller:'reports',action:'index')}"+(bfilters[name]?"?filterName="+bfilters[name]:'');
-                try{
-                    boxctl.reloadTabForName(name);
-                }catch(e){
-                    console.log("error: "+e);
-                }
+                document.location="${createLink(controller:'reports',action:'index')}"+(bfilters[name]?"?filterName="+bfilters[name]:'');
+//                try{
+//                    boxctl.reloadTabForName(name);
+//                }catch(e){
+//                    console.log("error: "+e);
+//                }
 
             }
         }
@@ -191,7 +181,7 @@
 
     <span class="badgeholder"  id="eventsCountBadge" style="display:none"><span class="badge newcontent active" id="eventsCountContent" onclick="boxctl.reloadTabForName('events');" title="click to load new events"></span></span>
     <div id="evtsholder">
-    <g:render template="eventsFragment" model="${[paginateParams:paginateParams,params:params,reports:reports,filterName:filterName]}"/>
+    <g:render template="eventsFragment" model="${[paginateParams:paginateParams,params:params,reports:reports,filterName:filterName, filtersOpen: true]}"/>
     </div>
 
     </div>

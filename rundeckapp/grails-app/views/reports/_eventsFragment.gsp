@@ -13,40 +13,38 @@
         </span>
     </g:if>
     <g:set var="wasfiltered" value="${paginateParams}"/>
-    <g:set var="filtersOpen" value="${params.createFilters||params.editFilters||params.saveFilter?true:false}"/>
+    <g:set var="filtersOpen" value="${true}"/>
     <table cellspacing="0" cellpadding="0" class="queryTable" style="width:100%">
-        <tr>
         <g:if test="${!params.nofilters}">
+            <tr>
         <td style="text-align:left;vertical-align:top; ${wdgt.styleVisible(if:filtersOpen)}" id="${rkey}filter" >
-            <g:form >
+            <g:form action="index">
                 <g:if test="${params.compact}">
                     <g:hiddenField name="compact" value="${params.compact}"/>
                 </g:if>
                 <g:hiddenField name="formInput" value="true"/>
-                        <span class="prompt action" onclick="['${rkey}filter','${rkey}filterdispbtn'].each(Element.toggle);if(${isCompact}){$('${rkey}evtscontent').toggle();}">
-                            Filter
-                            <img src="${resource(dir:'images',file:'icon-tiny-disclosure-open.png')}" width="12px" height="12px"/>
-                        </span>
-
+                <g:hiddenField name="projFilter" value="${session.project}"/>
                 <g:render template="/common/queryFilterManager" model="${[rkey:rkey,filterName:filterName,filterset:filterset,update:rkey+'evtsForm',deleteActionSubmitRemote:[controller:'reports',action:'deleteFilter',params:[fragment:true]],storeActionSubmitRemote:[controller:'reports',action:'storeFilter',params:[fragment:true]]]}"/>
                 <div class="presentation filter">
 
                     <g:hiddenField name="max" value="${max}"/>
                     <g:hiddenField name="offset" value="${offset}"/>
-                    <table class="simpleForm">
-                        <g:render template="recentDateFilters" model="${[params:params,query:query]}"/>
-                        <g:render template="advDateFilters" model="${[params:params,query:query]}"/>
-                        <g:render template="baseFilters" model="${[params:params,query:query]}"/>
-                    </table>
+                        <g:render template="baseFiltersPlain" model="${[params: params, query: query]}"/>
+                        <g:render template="recentDateFiltersPlain" model="${[params:params,query:query]}"/>
+                        <g:render template="advDateFiltersPlain" model="${[params:params,query:query]}"/>
 
-                    <div style="text-align:right;">
-                        <g:submitToRemote  value="Clear" name="clearFilter" url="[controller:'reports',action:'clearFragment']" update="${rkey}evtsForm" />
-                        <g:submitToRemote  value="Filter Events" name="filterAll" url="[controller:'reports',action:'eventsFragment']" update="${rkey}evtsForm" />
-                    </div>
+                    <span style="text-align:right;">
+                        <g:submitButton value="Clear" name="clearFilter"/>
+                        <g:submitButton value="Filter" name="filterAll"/>
+                    %{--<g:submitToRemote  value="Clear" name="clearFilter" url="[controller:'reports',action:'clearFragment']" update="${rkey}evtsForm" />--}%
+                        %{--<g:submitToRemote  value="Filter Events" name="filterAll" url="[controller:'reports',action:'eventsFragment']" update="${rkey}evtsForm" />--}%
+                    </span>
                 </div>
                 </g:form>
         </td>
+            </tr>
             </g:if>
+        <tr>
             <td style="text-align:left;vertical-align:top;" id="${rkey}evtscontent">
                 <g:if test="${!params.nofilters}">
                 <div>
@@ -54,7 +52,7 @@
 
 
                         <g:if test="${!params.compact}">
-                            <span class="prompt">${total} Events</span>
+                            <span class="prompt">${total} Results</span>
                             matching ${filterName?'filter':'your query'}
                         </g:if>
 

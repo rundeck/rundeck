@@ -19,7 +19,7 @@
 <g:set var="maxmsgsize" value="${options.evtmaxsize?options.evtmaxsize:options.msgsplitsize?options.msgsplitsize:-1}"/>
 <g:set var="maxtitlesize" value="${30}"/>
 <table cellpadding="0" cellspacing="0" class="jobsList list history" style="width:100%">
-<g:if test="${options.summary}">
+<g:if test="${false}">
     <thead>
 
     <tr>
@@ -139,6 +139,9 @@
         </td>
         <td class="eventargs">
             <g:if test="${execution && execution.argString}"><span class="">${execution.argString.encodeAsHTML()}</span></g:if>
+            <g:if test="${params.debug}">
+                ${rpt.toMap()}
+            </g:if>
         </td>
 
             <td style="white-space:nowrap" class="right sepL">
