@@ -97,10 +97,6 @@
       background: transparent url("${resource(dir:'images', file:'bg-right-2.png')}") repeat-y top right;
     }
 
-    span.badgeholder{
-        background: url("${resource(dir:'images', file:'badge-left-tri.png')}") 0px center no-repeat;
-
-    }
     tr.subsection > td {
         background: white url("${resource(dir:'images', file:'bg-bottom-2.png')}") repeat-x bottom left;
 
