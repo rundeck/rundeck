@@ -27,7 +27,7 @@ class ReportsController {
         response.setHeader(Constants.X_RUNDECK_ACTION_UNAUTHORIZED_HEADER, flash.error)
         render(template: fragment ? '/common/errorFragment' : '/common/error', model: [:])
     }
-    def index = { ReportQuery query->
+    def index = { ExecQuery query->
        //find previous executions
         def usedFilter
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
@@ -70,7 +70,7 @@ class ReportsController {
         }
 
         if(params['Clear']){
-            query=new ReportQuery()
+            query=new ExecQuery()
             //no default filter
             params.recentFilter=null
             usedFilter=null
@@ -86,7 +86,7 @@ class ReportsController {
             query.configureFilter()
         }
         def curdate=new Date()
-        def model= reportService.getCombinedReports(query)
+        def model= reportService.getExecutionReports(query,true)
 //        System.err.println("("+actionName+"): lastDate: "+model.lastDate);
 //        System.err.println("("+actionName+"): usedFilter: "+usedFilter+", p: "+params.filterName);
         if(model.lastDate<1 && query.recentFilter ){
@@ -216,7 +216,7 @@ class ReportsController {
         results.params=params
         render(view:'eventsFragment',model:results)
     }
-    def eventsFragment={ ReportQuery query ->
+    def eventsFragment={ ExecQuery query ->
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
 
         if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'event'], ['read'],
@@ -509,7 +509,7 @@ class ReportsController {
     /**
      * API, /api/history, version 1
      */
-    def apiHistory={ReportQuery query->
+    def apiHistory={ExecQuery query->
         if(!params.project){
             flash.error=g.message(code:'api.error.parameter.required',args:['project'])
             return chain(controller:'api',action:'error')
@@ -559,7 +559,7 @@ class ReportsController {
         if(null!=query){
             query.configureFilter()
         }
-        def model=reportService.getCombinedReports(query)
+        def model=reportService.getExecutionReports(query,true)
         model = reportService.finishquery(query,params,model)
 
         def statusMap=[succeed:ExecutionController.EXECUTION_SUCCEEDED,

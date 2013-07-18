@@ -27,8 +27,6 @@ class ExecReport extends BaseReport{
     }
 
     public static final ArrayList<String> exportProps = BaseReport.exportProps +[
-            'ctxCommand',
-            'ctxController',
             'jcExecId',
             'jcJobId',
             'adhocExecution',

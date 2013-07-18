@@ -337,21 +337,16 @@ class ReportService  {
 
     def getExecutionReports(ExecQuery query, boolean isJobs) {
         def eqfilters = [
-            maprefUri:'maprefUri',
             stat:'status',
             reportId:'reportId',
             jobId:'jcJobId',
         ]
         def txtfilters = [
-            obj:'ctxName',
-            type:'ctxType',
-            controller:'ctxController',
             proj:'ctxProject',
-            cmd:'ctxCommand',
             user:'author',
             node:'node',
             message:'message',
-            job:'title',
+            job:'reportId',
             title:'title',
             tags:'tags',
         ]
@@ -382,6 +377,12 @@ class ReportService  {
                 eqfilters.each{ key,val ->
                     if(query["${key}Filter"]){
                         eq(val,query["${key}Filter"])
+                    }
+                }
+                if(query.titleFilter){
+                    or {
+                        eq('jcJobId', '')
+                        isNull('jcJobId')
                     }
                 }
 
@@ -441,6 +442,13 @@ class ReportService  {
                         eq(val,query["${key}Filter"])
                     }
                 }
+                if (query.titleFilter) {
+                    or{
+                        eq('jcJobId','')
+                        isNull('jcJobId')
+                    }
+                }
+
 
                 if(query.dostartafterFilter && query.dostartbeforeFilter && query.startbeforeFilter && query.startafterFilter){
                     between('dateStarted',query.startafterFilter,query.startbeforeFilter)
