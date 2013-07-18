@@ -895,18 +895,15 @@ table.execoutput tr.contextRow td.rowexpicon{
 table.execoutput td.info{
     /*background: #eee;*/
     padding: 1px 3px;
-    vertical-align:top;
     font-family: courier,mono;
 }
 table.execoutput td.info.time{
     color: #888;
     white-space: nowrap;
-    vertical-align: top;
     width: 6em;
 }
 table.execoutput td.node{
     color:#888;
-    vertical-align: top;
     text-align: right;
     width: 6em;
     max-width: 20em;
@@ -931,12 +928,14 @@ table.execoutput tr.alternateRow td.info.time{
 table.execoutput tr.alternateRow td.info{
     /*background: #e0e0e0;*/
 }
+table.execoutput td{
+    vertical-align: baseline;
+}
 table.execoutput td.data{
     border-left: 1px solid white;
     white-space: pre;
     font-family: "Lucida Console",courier,monospace;
     padding: 1px 3px;
-    vertical-align:top;
     color: black;
 }
 
