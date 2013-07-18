@@ -34,7 +34,7 @@
                         <g:render template="advDateFiltersPlain" model="${[params:params,query:query]}"/>
 
                     <span style="text-align:right;">
-                        <g:submitButton value="Clear" name="clearFilter"/>
+                        %{--<g:submitButton value="Clear" name="clearFilter"/>--}%
                         <g:submitButton value="Filter" name="filterAll"/>
                     %{--<g:submitToRemote  value="Clear" name="clearFilter" url="[controller:'reports',action:'clearFragment']" update="${rkey}evtsForm" />--}%
                         %{--<g:submitToRemote  value="Filter Events" name="filterAll" url="[controller:'reports',action:'eventsFragment']" update="${rkey}evtsForm" />--}%
@@ -111,14 +111,6 @@
 
                 </tr>
             </table>
-<g:javascript>
-
-$$('#${rkey}evtsForm input').each(function(elem){
-    if(elem.type=='text'){
-        elem.observe('keypress',noenter);
-    }
-});
-</g:javascript>
 <g:if test="${lastDate}">
 <g:set var="checkUpdatedParams" value="${[since:lastDate]}"/>
 %{
