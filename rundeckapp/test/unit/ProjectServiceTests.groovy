@@ -250,8 +250,11 @@ class ProjectServiceTests extends GrailsUnitTestCase {
     def assertPropertiesEquals(Map data, Object obj){
         data.each{k,v->
             def test=obj[k]
+            if(null==test){
+                fail("key:'${k}' Expected value '${v}' of type ${v.class}, but value was null")
+            }
             if(!(v.class.isAssignableFrom(test.class))){
-                fail("Expected value of type ${v.class}, but value was ${test.class}")
+                fail("key:'${k}' Expected value of type ${v.class}, but value was ${test.class}")
             }
             assert v==test, "unexpected value ${test} for key ${k}"
         }
@@ -263,16 +266,12 @@ class ProjectServiceTests extends GrailsUnitTestCase {
   <status>succeed</status>
   <actionType>succeed</actionType>
   <ctxProject>testproj1</ctxProject>
-  <ctxType />
-  <ctxName />
   <reportId>test/job</reportId>
   <tags>a,b,c</tags>
   <author>admin</author>
   <message>Report message</message>
   <dateStarted>1970-01-01T00:00:00Z</dateStarted>
   <dateCompleted>1970-01-01T01:00:00Z</dateCompleted>
-  <ctxCommand />
-  <ctxController>ct</ctxController>
   <jcExecId>123</jcExecId>
   <jcJobId>test-job-uuid</jcJobId>
   <adhocExecution />
@@ -346,7 +345,6 @@ class ProjectServiceTests extends GrailsUnitTestCase {
         def ExecReport result = svc.loadHistoryReport(REPORT_XML_TEST1,[(123):'456'],[(oldUuid):se],'test')
         assertNotNull result
         def expected = [
-                ctxController: 'ct',
                 jcExecId: '456',
                 jcJobId: newJobId.toString(),
                 node: '1/0/0',
@@ -403,7 +401,6 @@ class ProjectServiceTests extends GrailsUnitTestCase {
         def ExecReport result = svc.loadHistoryReport(str,null,null,'test')
         assertNotNull result
         def keys = [
-                ctxController: 'ct',
                 jcExecId: '123',
                 jcJobId: '321',
                 node: '1/0/0',
