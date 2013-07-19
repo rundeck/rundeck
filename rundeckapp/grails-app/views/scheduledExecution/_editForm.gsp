@@ -1,4 +1,4 @@
-<div class="pageBody form">
+<div class="pageBody ">
     <g:render template="/common/errorFragment"/>
     <g:form controller="scheduledExecution" method="post" onsubmit="if(typeof(validateJobEditForm)=='function'){return validateJobEditForm(this);}">
         <g:render template="edit" model="[scheduledExecution:scheduledExecution, crontab:crontab, command:command,authorized:authorized]"/>

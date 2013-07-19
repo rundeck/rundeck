@@ -37,17 +37,22 @@ function doCreateProject(){
 <g:if test="${session?.user && request.subject}">
 <!--<div class="secondbar">-->
 
+    <a href="${grailsApplication.config.rundeck.gui.titleLink ? grailsApplication.config.rundeck.gui.titleLink : g.resource(dir: '/')}"
+       title="Home" class="home" style="height:29px;">
+        <g:set var="appTitle"
+               value="${grailsApplication.config.rundeck.gui.title ? grailsApplication.config.rundeck.gui.title : g.message(code: 'main.app.name')}"/>
+        <g:set var="appLogo"
+               value="${grailsApplication.config.rundeck.gui.logo ? grailsApplication.config.rundeck.gui.logo : g.message(code: 'main.app.logo')}"/>
+        <g:set var="appLogoW"
+               value="${grailsApplication.config.rundeck.gui.'logo-width' ? grailsApplication.config.rundeck.gui.'logo-width' : g.message(code: 'main.app.logo.width')}"/>
+        <g:set var="appLogoH"
+               value="${grailsApplication.config.rundeck.gui.'logo-height' ? grailsApplication.config.rundeck.gui.'logo-height' : g.message(code: 'main.app.logo.height')}"/>
+        <img src="${resource(dir: 'images', file: appLogo)}" alt="${appTitle}" width="${appLogoW}"
+             height="${appLogoH}"/>
+        ${appTitle}
+    </a>
    <span id="top_tabs">
 
-        <g:set var="resselected" value=""/>
-        <g:ifPageProperty name='meta.tabpage' >
-        <g:ifPageProperty name='meta.tabpage' equals='nodes'>
-           <g:set var="resselected" value="selected"/>
-        </g:ifPageProperty>
-        </g:ifPageProperty>
-        <g:link controller="framework" action="nodes" class=" toptab ${resselected}"  style="height:29px">
-           <g:message code="gui.menu.Run"/>
-        </g:link>
 
         <g:set var="wfselected" value=""/>
         <g:ifPageProperty name='meta.tabpage' >
@@ -58,6 +63,16 @@ function doCreateProject(){
         <g:link controller="menu" action="jobs" class=" toptab ${wfselected}" style="height:29px">
            <g:message code="gui.menu.Workflows"/>
         </g:link>
+
+       <g:set var="resselected" value=""/>
+       <g:ifPageProperty name='meta.tabpage'>
+           <g:ifPageProperty name='meta.tabpage' equals='nodes'>
+               <g:set var="resselected" value="selected"/>
+           </g:ifPageProperty>
+       </g:ifPageProperty>
+       <g:link controller="framework" action="nodes" class=" toptab ${resselected}" style="height:29px">
+           <g:message code="gui.menu.Nodes"/>
+       </g:link>
 
         <g:set var="eventsselected" value=""/>
         <g:ifPageProperty name='meta.tabpage' >
@@ -71,24 +86,28 @@ function doCreateProject(){
 
     <g:if test="${session?.project||session?.projects}">
        <span class="projects" style="font-size:9pt; line-height: 12px; margin-left:20px;">
-            <img src="${resource(dir:'images',file:'icon-tiny-rarrow-sep.png')}" alt="project: " width="7px" height="12px"/>
             <span id="projectSelect">
-               <span class="action textbtn" onclick="loadProjectSelect();" title="Select project...">${session?.project?session.project:'Select project&hellip;'}</span>
+                <g:if test="${session.frameworkProjects}">
+                    <g:render template="/framework/projectSelect" model="${[projects:session.frameworkProjects,project:session.project]}"/>
+                </g:if>
+                <g:else>
+                   <span class="action textbtn button" onclick="loadProjectSelect();" title="Select project...">${session?.project?session.project:'Select project&hellip;'}
+                    <img src="${resource(dir: 'images', file: 'icon-tiny-disclosure.png')}" alt="project: " width="12px"
+                         height="12px"/>
+                   </span>
+                </g:else>
             </span>
        </span>
     </g:if>
 
 </span>
+    <g:unless test="${session.frameworkProjects}">
+        <g:javascript>
+            fireWhenReady('projectSelect', loadProjectSelect);
+        </g:javascript>
+    </g:unless>
+
 </g:if>
-    <a href="${grailsApplication.config.rundeck.gui.titleLink?grailsApplication.config.rundeck.gui.titleLink:g.resource(dir:'/')}"
-        title="Home" class="home" style="height:29px;">
-        <g:set var="appTitle" value="${grailsApplication.config.rundeck.gui.title?grailsApplication.config.rundeck.gui.title:g.message(code:'main.app.name')}"/>
-        <g:set var="appLogo" value="${grailsApplication.config.rundeck.gui.logo?grailsApplication.config.rundeck.gui.logo:g.message(code:'main.app.logo')}"/>
-        <g:set var="appLogoW" value="${grailsApplication.config.rundeck.gui.'logo-width'?grailsApplication.config.rundeck.gui.'logo-width':g.message(code:'main.app.logo.width')}"/>
-        <g:set var="appLogoH" value="${grailsApplication.config.rundeck.gui.'logo-height'?grailsApplication.config.rundeck.gui.'logo-height':g.message(code:'main.app.logo.height')}"/>
-        <img src="${resource(dir:'images',file:appLogo)}" alt="${appTitle}" width="${appLogoW}" height="${appLogoH}"/>
-        ${appTitle}
-    </a>
 
 <!--</div>-->
     %{--<g:if test="${session?.project}">
@@ -135,5 +154,3 @@ function doCreateProject(){
         </span>
     </g:else>
 </div>
-
-

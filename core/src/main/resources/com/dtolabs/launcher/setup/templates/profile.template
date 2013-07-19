@@ -35,7 +35,7 @@ export CLI_CP
 #
 # Set min/max heap size
 #
-export RDECK_JVM="$RDECK_JVM -Xmx1024m -Xms256m"
+export RDECK_JVM="$RDECK_JVM -Xmx1024m -Xms256m -server"
 
 export RDECK_SSL_OPTS="-Djavax.net.ssl.trustStore=$RDECK_BASE/etc/truststore -Djavax.net.ssl.trustStoreType=jks -Djava.protocol.handler.pkgs=com.sun.net.ssl.internal.www.protocol"
 

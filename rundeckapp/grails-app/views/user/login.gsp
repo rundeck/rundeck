@@ -45,11 +45,14 @@
 
 <div class="login">
     <form action="j_security_check" method="post">
+        <g:set var="loginmsg" value="${grailsApplication.config.rundeck?.gui?.login?.welcome ?: g.message(code: 'gui.login.welcome', default: '')}"/>
+        <g:if test="${loginmsg}">
         <div class="row">
             <span class="login welcome">
-                ${grailsApplication.config.rundeck?.gui?.login?.welcome ?: g.message(code: 'gui.login.welcome',default: '')}
+               ${loginmsg}
             </span>
         </div>
+        </g:if>
         <div class="row">
             <label for="login">Username: </label>
             <span class="input"><input type="text" name="j_username" id="login"/></span>
