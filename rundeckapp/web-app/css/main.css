@@ -1497,19 +1497,13 @@ span.dragHandle{
 
 /** login page */
 #loginpage{
-
 }
 div.login{
     margin: 50px auto;
     width: 355px;
     background: white;
     padding: 5px;
-    border: 1px solid black;
-    border-radius:5px;
-    -moz-border-radius : 5px;
-    -webkit-border-radius: 5px;
-    -moz-box-shadow:#888 3px 3px 4px;
-    -webkit-box-shadow:#aaa 2px 2px 7px;
+    border: 2px solid #000000;
 }
 div.login div.row{
     clear:both;
