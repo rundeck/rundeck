@@ -5,7 +5,7 @@
     
 </div>
 <div class="pageSubtitle subtitleAction">
-        Choose Execution Options
+<g:message code="job.run.execOptionsPage.subtitle" />
 </div>
     <div class="clear"></div>
 </div>
