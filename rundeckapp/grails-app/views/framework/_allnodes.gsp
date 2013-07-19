@@ -15,5 +15,5 @@
     </div>
 <g:if test="${!params.view || params.view!='tableContent'}">
     </div>
-    <g:render template="/common/boxinfo" model="${[name:'nodes',model:[title:'Nodes',total:total,linkUrl:createLink(controller:'framework',action:'nodes')]]}"/>
+    <g:render template="/common/boxinfo" model="${[name:'nodes',model:[title:'Nodes',total:total,allcount:allcount,linkUrl:createLink(controller:'framework',action:'nodes')]]}"/>
 </g:if>

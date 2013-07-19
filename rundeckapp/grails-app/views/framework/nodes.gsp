@@ -486,6 +486,16 @@
                 }else{
                     disableRunBar();
                 }
+                if(null !=data.total){
+                    $$('.obs_nodes_page_total').each(function(e){
+                        e.innerHTML=data.total;
+                    });
+                }
+                if(null!=data.allcount){
+                    $$('.obs_nodes_allcount').each(function (e) {
+                        e.innerHTML = data.allcount;
+                    });
+                }
             }
         }
         /**
@@ -648,54 +658,14 @@
 <div id="nodesContent">
     <g:set var="run_authorized" value="${auth.adhocAllowedTest( action:AuthConstants.ACTION_RUN)}"/>
 
-    <g:if test="${session.project && run_authorized}">
-        <div class="runbox" id="runbox">
-        %{--<g:form action="execAndForget" controller="scheduledExecution" method="post" style="display:inline" onsubmit="return runFormSubmit(this);">--}%
-            Command:
-            <g:img file="icon-small-shell.png" width="16px" height="16px"/>
-            <g:if test="${run_authorized}">
-                <g:hiddenField name="project" value="${session.project}"/>
-                <g:hiddenField name="doNodedispatch" value="true"/>
-                <g:hiddenField name="nodeKeepgoing" value="true"/>
-                <g:hiddenField name="nodeThreadcount" value="1"/>
-                <g:hiddenField name="description" value=""/>
-
-                <g:hiddenField name="workflow.commands[0].adhocExecution" value="true"/>
-                <g:hiddenField name="workflow.threadcount" value="1"/>
-                <g:hiddenField name="workflow.keepgoing" value="false"/>
-                <g:hiddenField name="workflow.project" value="${session.project}"/>
-                <g:render template="nodeFiltersHidden" model="${[params:params,query:query]}"/>
-            </g:if>
-            <g:if test="${run_authorized}">
-                <g:textField name="workflow.commands[0].adhocRemoteString" size="80" placeholder="Enter a shell command" autofocus="true" />
-            </g:if>
-            <g:else>
-                <input type="text" name="workflow.commands[0].adhocRemoteString" size="80" placeholder="Enter a shell command" autofocus="true" disabled/>
-            </g:else>
-        %{--</g:form>--}%
-            <g:if test="${run_authorized}">
-                <button onclick="runFormSubmit('runbox');" ${run_authorized?'':'disabled'}>Run</button>
-            </g:if>
-            <g:else>
-                <span class="button disabled" title="You are not authorized to run ad-hoc jobs">Run</span>
-            </g:else>
-
-            <div class="hiderun" id="runerror" style="display:none"></div>
-        </div>
-    </g:if>
 
 <g:render template="/common/messages"/>
-
-<div id="runcontent"></div>
-
     <g:if test="${session.project}">
         <div class="runbox nodesummary ">
             <g:expander classnames="button obs_shownodes" key="${rkey}nodeForm" open="true">
-                <span class="match">${total} Node${1 != total ? 's' : ''}</span>
+                <span class="match"><span class="obs_nodes_allcount">${total}</span> Node${1 != total ? 's' : ''}</span>
             </g:expander>
-            <g:if test="${null != allcount}">
-                (of ${allcount})
-            </g:if>
+
             <span class="type">
                 <g:if test="${!filterName}">
                     matching filter input
@@ -703,6 +673,9 @@
                 <g:else>
                     matching filter '${filterName}'
                 </g:else>
+            </span>
+            <span id='nodedetaillist'>
+
             </span>
         </div>
     </g:if>
@@ -824,7 +797,47 @@
 
                 </tr>
             </table>
+
 </div>
+    <g:if test="${session.project && run_authorized}">
+        <div class="runbox" id="runbox">
+        %{--<g:form action="execAndForget" controller="scheduledExecution" method="post" style="display:inline" onsubmit="return runFormSubmit(this);">--}%
+            Command:
+            <g:img file="icon-small-shell.png" width="16px" height="16px"/>
+            <g:if test="${run_authorized}">
+                <g:hiddenField name="project" value="${session.project}"/>
+                <g:hiddenField name="doNodedispatch" value="true"/>
+                <g:hiddenField name="nodeKeepgoing" value="true"/>
+                <g:hiddenField name="nodeThreadcount" value="1"/>
+                <g:hiddenField name="description" value=""/>
+
+                <g:hiddenField name="workflow.commands[0].adhocExecution" value="true"/>
+                <g:hiddenField name="workflow.threadcount" value="1"/>
+                <g:hiddenField name="workflow.keepgoing" value="false"/>
+                <g:hiddenField name="workflow.project" value="${session.project}"/>
+                <g:render template="nodeFiltersHidden" model="${[params: params, query: query]}"/>
+            </g:if>
+            <g:if test="${run_authorized}">
+                <g:textField name="workflow.commands[0].adhocRemoteString" size="80" placeholder="Enter a shell command"
+                             autofocus="true"/>
+            </g:if>
+            <g:else>
+                <input type="text" name="workflow.commands[0].adhocRemoteString" size="80"
+                       placeholder="Enter a shell command" autofocus="true" disabled/>
+            </g:else>
+        %{--</g:form>--}%
+            <g:if test="${run_authorized}">
+                <button onclick="runFormSubmit('runbox');" ${run_authorized ? '' : 'disabled'}>Run</button>
+            </g:if>
+            <g:else>
+                <span class="button disabled" title="You are not authorized to run ad-hoc jobs">Run</span>
+            </g:else>
+
+            <div class="hiderun" id="runerror" style="display:none"></div>
+        </div>
+    </g:if>
+
+    <div id="runcontent"></div>
     <div class="runbox">History</div>
     <div class="pageBody">
         <div id="histcontent"></div>
