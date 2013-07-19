@@ -18,9 +18,6 @@
         border:1px solid #999;
     }
 
-    div.progressBar{
-        background: #eee url(<g:resource dir='images' file='bggrad-blue2.png'/>) repeat-x 0px 0px;
-    }
 
     table.execoutput tr.contextRow td.expandicon.opened{
         background: transparent url(<g:resource dir='images' file='icon-tiny-disclosure-open.png'/>) no-repeat 8px 8px;

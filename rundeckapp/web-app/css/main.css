@@ -1037,15 +1037,21 @@ span.optgroup.secure{
 }
 
 div.progressContainer{
-    width:406px;
-    background: #ddd;
-    height:14px;
+    width:409px;
+    background: #eee;
+    height:16px;
     border:1px solid #aaa;
     position:relative;
 }
 
 div.progressContainer.small{
-    width:106px;
+    width:109px;
+}
+
+div.progressContainer.small div.progressBar{
+    font-size: 9px;
+    line-height: 9px;
+    padding: 1px 5px 1px 4px;
 }
 div.progressContainer.indefinite{
     background: #eee;
@@ -1053,14 +1059,15 @@ div.progressContainer.indefinite{
 }
 div.progressBar{
     width:0px;
-    background:#88f;
-    height:12px;
-    color:black;
-    text-shadow: 1px 1px 1px #fff;
-    font-size:9px;
-    line-height:9px;
-    padding:1px 3px;
-    border-right: 1px solid #999;
+    background:#bbb;
+    height:14px;
+    color:white;
+    text-shadow: 1px 1px 1px #000;
+    font-size:10px;
+    line-height:10px;
+    font-weight: bold;
+    padding:1px 3px 1px 6px;
+    border-right: 1px solid #aaa;
     white-space:nowrap;
     overflow-x:hidden;
     overflow-y:hidden;
