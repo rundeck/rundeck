@@ -40,7 +40,7 @@
                         <g:else>
                         <tr class="sectionhead expandComponentHolder ${paginateParams?.idlist==scheduledExecution.id.toString()?'expanded':''}" id="jobrow_${scheduledExecution.id}">
                             <td class="jobname">
-                                <div style="overflow:hidden; text-overflow: ellipsis; height:16px;">
+                                <div style="overflow:hidden; text-overflow: ellipsis; height: 21px ">
                                 %{--<g:expander key="${ukey+'jobDisplay'+scheduledExecution.id}" open="${paginateParams?.idlist==scheduledExecution.id.toString()?'true':'false'}" imgfirst="true">${scheduledExecution.jobName.encodeAsHTML()}</g:expander>--}%
                                     <span class="jobbulkeditfield" style="display: none">
                                     <g:if test="${jobauthorizations && jobauthorizations[AuthConstants.ACTION_DELETE]?.contains(scheduledExecution.id.toString())}">
@@ -53,7 +53,12 @@
                                                 width="12px" height="12px"/></span>
                                     </g:else>
                                 </span>
-                                <g:link action="show" controller="scheduledExecution" id="${scheduledExecution.extid}" class="jobIdLink">
+                                    <span class="inlinebuttons jobbuttons">
+                                        <g:render template="/scheduledExecution/actionButtons"
+                                          model="${[scheduledExecution: scheduledExecution, authMap: authMap, jobauthorizations: jobauthorizations, small: true]}"/>
+                                    </span>
+
+                                    <g:link action="show" controller="scheduledExecution" id="${scheduledExecution.extid}" class="jobIdLink">
                                     ${scheduledExecution.jobName.encodeAsHTML()}</g:link>
 
                                 <g:if test="${!session.project}">
@@ -91,9 +96,6 @@
                             </g:elseif>
                             <g:else>&nbsp;
                             </g:else>
-                        </td>
-                        <td style="width: 80px; vertical-align: top; white-space:nowrap; text-align:right" class="jobbuttons right">
-                            <g:render template="/scheduledExecution/actionButtons" model="${[scheduledExecution:scheduledExecution,authMap:authMap,jobauthorizations:jobauthorizations,small:true]}"/>
                         </td>
 
                         </tr>

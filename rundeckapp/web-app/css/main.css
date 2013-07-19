@@ -474,6 +474,16 @@ label{
 .actionButtons {
 	width:100px;
 }
+table.jobsList .inlinebuttons div.buttons{
+    display: inline-block;
+    margin:0;
+    vertical-align: middle;
+}
+.inlinebuttons .floatr,.inlinebuttons .floatl{
+    float: none;
+}
+.inlinebuttons a.button,.inlinebuttons span.button{
+}
 div .errors {
     color:red;
     padding: 5px;
@@ -1216,7 +1226,7 @@ table.jobsList td.jobbuttons div.buttons{
     margin: 0 0 4px 0;
 }
 
-table.jobsList td.jobbuttons div.buttons a.button, table.jobsList td.jobbuttons div.buttons span.button{
+table.jobsList .jobbuttons div.buttons a.button, table.jobsList .jobbuttons div.buttons span.button{
     padding: 1px;
     -moz-border-radius:1px;
     -webkit-border-radius:1px;
