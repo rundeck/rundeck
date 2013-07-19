@@ -76,12 +76,7 @@
             <g:if test="${jobAuthorized || jobAuths[AuthConstants.ACTION_RUN]?.contains(idKey) }">
                 <g:link controller="scheduledExecution" action="execute" id="${scheduledExecution.extid}" class="icon button floatl" onclick="if(typeof(loadExec)=='function'){loadExec(${scheduledExecution.id});return false;}"><img src="${resource(dir:'images',file: iname +'-run.png')}" title="Run ${g.message(code:'domain.ScheduledExecution.title')}&hellip;" alt="run" width="${width}" height="${width}"/></g:link>
             </g:if>
-            <g:elseif test="${ !jobAuthorized }">
-                <span class="info note floatl" style="width:${width};padding: 2px;" title="${message(code:'unauthorized.job.run')}"><img src="${resource(dir:'images',file: iname +'-warn.png')}" alt="" width="${width}" height="${width}"/></span>
-            </g:elseif>
-            <g:else>
-                %{--<span class="floatl" style="width:${width};padding: 2px;"></span>--}%
-            </g:else>
+
         </span>
         <div id="${ukey}jobDisplayDeleteConf${scheduledExecution.id}" class="confirmBox popout" style="display:none;">
             <g:form controller="scheduledExecution" action="delete" method="post" id="${scheduledExecution.extid}">
