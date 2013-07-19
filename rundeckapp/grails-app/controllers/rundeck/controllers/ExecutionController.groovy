@@ -233,7 +233,7 @@ class ExecutionController {
         iterator.openStream(0)
         def lineSep=System.getProperty("line.separator")
         iterator.each{ LogEvent msgbuf ->
-            response.outputStream << (isFormatted?"${logFormater.format(msgbuf.datetime)} [${msgbuf.metadata?.user}@${msgbuf.metadata?.node} ${msgbuf.metadata?.context} ${msgbuf.metadata?.command}][${msgbuf.loglevel}] ${msgbuf.message}" : msgbuf.message)
+            response.outputStream << (isFormatted?"${logFormater.format(msgbuf.datetime)} [${msgbuf.metadata?.user}@${msgbuf.metadata?.node} ${msgbuf.metadata?.command?:'_'}][${msgbuf.loglevel}] ${msgbuf.message}" : msgbuf.message)
             response.outputStream<<lineSep
         }
         iterator.close()
