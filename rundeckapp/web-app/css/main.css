@@ -639,7 +639,6 @@ div.pageBody.form{
     -moz-border-radius:5px;
     -webkit-border-radius:5px;
     border-radius:5px;
-    -webkit-box-shadow: 5px 5px 5px #bbb;
 }
 
 div.pageBody.frame {
@@ -1696,10 +1695,9 @@ div.pageSubtitle{
     /*font-size: 12pt;*/
     font-weight: bold;
     margin: 10px 0 0 10px;
-    text-shadow:2px 2px 3px #bbb;
 }
 div.pageSubtitle.subtitleAction{
-    color: blue;
+    color: #444;
 }
 
 /* pagination links */
