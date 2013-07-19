@@ -421,6 +421,7 @@
                  showFinalLine: {value: false, changed: false},
                 tailmode: true,
                  taildelay:1,
+                 truncateToTail:true,
                 execData: {node:"test"},
                 appLinks:appLinks,
                 onComplete:onRunComplete,
@@ -593,7 +594,18 @@
 
         #runcontent{
             overflow-x:auto;
-            margin:10px 0;
+        }
+
+        .commandcontent{
+            margin:0;
+        }
+        .inlinestatus{
+            padding: 10px;
+            background: #ddd;
+        }
+
+        table.execoutput {
+            font-size: 100%;
         }
         div.header{
             padding:3px 10px;
@@ -671,28 +683,30 @@
             <div class="hiderun" id="runerror" style="display:none"></div>
         </div>
     </g:if>
-    <g:elseif test="${session.project}">
+
+<g:render template="/common/messages"/>
+
+<div id="runcontent"></div>
+
+    <g:if test="${session.project}">
         <div class="runbox nodesummary ">
             <g:expander classnames="button obs_shownodes" key="${rkey}nodeForm" open="true">
-            <span class="match">${total} Node${1 != total ? 's' : ''}</span>
+                <span class="match">${total} Node${1 != total ? 's' : ''}</span>
             </g:expander>
-            <g:if test="${null!=allcount}">
+            <g:if test="${null != allcount}">
                 (of ${allcount})
             </g:if>
             <span class="type">
-            <g:if test="${!filterName}">
-                matching filter input
-            </g:if>
-            <g:else>
-                matching filter '${filterName}'
-            </g:else>
+                <g:if test="${!filterName}">
+                    matching filter input
+                </g:if>
+                <g:else>
+                    matching filter '${filterName}'
+                </g:else>
             </span>
         </div>
-     </g:elseif>
-<div class="pageBody">
-
-<g:render template="/common/messages"/>
-<div id="${rkey}nodeForm" class="nodeview">
+    </g:if>
+<div id="${rkey}nodeForm" class="nodeview pageBody">
     <g:set var="wasfiltered" value="${paginateParams?.keySet().grep(~/(?!proj).*Filter|groupPath|project$/)||(query && !query.nodeFilterIsEmpty())}"/>
     <g:set var="filtersOpen" value="${params.createFilters||params.editFilters||params.saveFilter || filterErrors?true:false}"/>
 
@@ -811,9 +825,6 @@
                 </tr>
             </table>
 </div>
-<div id="runcontent"></div>
-
-    </div>
     <div class="runbox">History</div>
     <div class="pageBody">
         <div id="histcontent"></div>
