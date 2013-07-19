@@ -12,7 +12,7 @@
 %{--</span>--}%
 <span class="formItem">
     <label for="jobFilter"><g:message code="jobquery.title.jobFilter"/></label>:
-    <span><g:textField name="jobFilter" value="${query.jobFilter}"/></span>
+    <span><g:textField name="jobFilter" value="${query.jobFilter}" autofocus="true"/></span>
 </span>
 <g:if test="${query.jobIdFilter}">
     <span class="formItem">

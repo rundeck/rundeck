@@ -151,13 +151,15 @@
 <div>
 
 
-<div class="pageBody solo">
-    <g:ifServletContextAttribute attribute="RSS_ENABLED" value="true">
-    <a title="RSS 2.0" class="floatr" href="${createLink(controller:"feed",action:"index",params:paginateParams)}" id="rsslink"><img src="${resource(dir:'images',file:'feed.png')}" width="14px" height="14px" alt=""/> RSS</a>
-    </g:ifServletContextAttribute>
+<div class="pageBody">
     <g:render template="/common/messages"/>
 
-    <span class="badgeholder"  id="eventsCountBadge" style="display:none"><span class="badge newcontent active" id="eventsCountContent" onclick="boxctl.reloadTabForName('events');" title="click to load new events"></span></span>
+    <span class="badgeholder"  id="eventsCountBadge" style="display:none">
+    <g:link action="index"
+            title="click to load new events"
+            params="${filterName?[filterName:filterName]:params}"><span class="badge newcontent active" id="eventsCountContent" onclick="boxctl.reloadTabForName('events');" title="click to load new events"></span>
+    </g:link>
+    </span>
     <div id="evtsholder">
     <g:render template="eventsFragment" model="${[paginateParams:paginateParams,params:params,reports:reports,filterName:filterName, filtersOpen: true]}"/>
     </div>

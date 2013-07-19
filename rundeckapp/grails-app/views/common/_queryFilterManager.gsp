@@ -28,7 +28,7 @@
     <span class="prompt action floatr" style="${wdgt.styleVisible(unless: params.saveFilter)}" onclick="['${rkey}fsave','${rkey}fsavebtn'].each(Element.toggle);" id="${rkey}fsavebtn" title="Click to save this filter with a name">
         save this filter&hellip;
     </span>
-    <div id="${rkey}fsave" style="${params.saveFilter ? '' : 'display:none;'} " class="filterdef">
+    <div id="${rkey}fsave" style="${params.saveFilter ? '' : 'display:none;'} " class="filterdef clear">
         <span class="prompt">Save Filter</span>
         <div><label for="existsFilterName">Filter:</label>
             <g:select
@@ -49,7 +49,7 @@
     </div>
 </g:if>
 <g:if test="${filterName}">
-    <div class="filterdef saved">
+    <div class="filterdef saved clear">
         <span class="prompt">${filterName.encodeAsHTML()}</span>
         <span class="prompt action floatr" onclick="['${rkey}fdel','${rkey}fdelbtn'].each(Element.toggle);" id="${rkey}fdelbtn" title="Click to delete this saved filter">
             delete&hellip;
