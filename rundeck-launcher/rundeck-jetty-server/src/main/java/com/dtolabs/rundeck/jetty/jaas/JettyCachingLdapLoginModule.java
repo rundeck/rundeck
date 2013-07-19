@@ -17,6 +17,8 @@
 package com.dtolabs.rundeck.jetty.jaas;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Hashtable;
@@ -98,131 +100,131 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
     /**
      * Provider URL
      */
-    private String _providerUrl;
+    protected String _providerUrl;
     
     /**
      * Role prefix to remove from ldap group name.
      */
-    private String _rolePrefix = "";
+    protected String _rolePrefix = "";
 
     /**
      * Duration of storing the user in memory.
      */
-    private int _cacheDuration = 0;
+    protected int _cacheDuration = 0;
 
     /**
      * hostname of the ldap server
      */
-    private String _hostname;
+    protected String _hostname;
 
     /**
      * port of the ldap server
      */
-    private int _port = 389;
+    protected int _port = 389;
 
     /**
      * Context.SECURITY_AUTHENTICATION
      */
-    private String _authenticationMethod;
+    protected String _authenticationMethod;
 
     /**
      * Context.INITIAL_CONTEXT_FACTORY
      */
-    private String _contextFactory;
+    protected String _contextFactory;
 
     /**
      * root DN used to connect to
      */
-    private String _bindDn;
+    protected String _bindDn;
 
     /**
      * password used to connect to the root ldap context
      */
-    private String _bindPassword;
+    protected String _bindPassword;
 
     /**
      * object class of a user
      */
-    private String _userObjectClass = "inetOrgPerson";
+    protected String _userObjectClass = "inetOrgPerson";
 
     /**
      * attribute that the principal is located
      */
-    private String _userRdnAttribute = "uid";
+    protected String _userRdnAttribute = "uid";
 
     /**
      * attribute that the principal is located
      */
-    private String _userIdAttribute = "cn";
+    protected String _userIdAttribute = "cn";
 
     /**
      * name of the attribute that a users password is stored under
      * <p/>
      * NOTE: not always accessible, see force binding login
      */
-    private String _userPasswordAttribute = "userPassword";
+    protected String _userPasswordAttribute = "userPassword";
 
     /**
      * base DN where users are to be searched from
      */
-    private String _userBaseDn;
+    protected String _userBaseDn;
 
     /**
      * base DN where role membership is to be searched from
      */
-    private String _roleBaseDn;
+    protected String _roleBaseDn;
 
     /**
      * object class of roles
      */
-    private String _roleObjectClass = "groupOfUniqueNames";
+    protected String _roleObjectClass = "groupOfUniqueNames";
 
     /**
      * name of the attribute that a user DN would be under a role class
      */
-    private String _roleMemberAttribute = "uniqueMember";
+    protected String _roleMemberAttribute = "uniqueMember";
 
     /**
      * name of the attribute that a username would be under a role class
      */
-    private String _roleUsernameMemberAttribute=null;
+    protected String _roleUsernameMemberAttribute=null;
 
     /**
      * the name of the attribute that a role would be stored under
      */
-    private String _roleNameAttribute = "roleName";
+    protected String _roleNameAttribute = "roleName";
 
-    private boolean _debug;
+    protected boolean _debug;
 
     /**
      * if the getUserInfo can pull a password off of the user then password
      * comparison is an option for authn, to force binding login checks, set
      * this to true
      */
-    private boolean _forceBindingLogin = false;
+    protected boolean _forceBindingLogin = false;
 
     /**
      * if _forceFindingLogin is true, and _forceBindingLoginUseRootContextForRoles
      * is true, then role memberships are obtained using _rootContext
      */
-    private boolean _forceBindingLoginUseRootContextForRoles = false;
+    protected boolean _forceBindingLoginUseRootContextForRoles = false;
 
-    private DirContext _rootContext;
+    protected DirContext _rootContext;
 
-    private boolean _reportStatistics;
+    protected boolean _reportStatistics;
 
-    private static final ConcurrentHashMap<String, CachedUserInfo> USERINFOCACHE = 
+    protected static final ConcurrentHashMap<String, CachedUserInfo> USERINFOCACHE = 
         new ConcurrentHashMap<String, CachedUserInfo>();
     
     /**
      * The number of cache hits for UserInfo objects.
      */
-    private static long userInfoCacheHits;
+    protected static long userInfoCacheHits;
     
     /**
      * The number of login attempts for this particular module.
      */
-    private static long loginAttempts;
+    protected static long loginAttempts;
 
     /**
      * get the available information about the user
@@ -691,19 +693,20 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         Properties env = new Properties();
 
         env.put(Context.INITIAL_CONTEXT_FACTORY, _contextFactory);
+        String url = null;
         if(_providerUrl != null) {
-            env.put(Context.PROVIDER_URL, _providerUrl);
+            url =  _providerUrl;
         } else {
             if (_hostname != null) {
-                String url = "ldap://" + _hostname + "/";
+                url = "ldap://" + _hostname + "/";
                 if (_port != 0) {
                     url += ":" + _port + "/";
                 } 
             
                 Log.warn("Using hostname and port.  Use providerUrl instead: " + url);
-                env.put(Context.PROVIDER_URL, url);
             }
         }
+        env.put(Context.PROVIDER_URL, url);
         
         if (_authenticationMethod != null) {
             env.put(Context.SECURITY_AUTHENTICATION, _authenticationMethod);
@@ -715,6 +718,19 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
         if (_bindPassword != null) {
             env.put(Context.SECURITY_CREDENTIALS, _bindPassword);
+        }
+        
+        // Set the SSLContextFactory to implementation that validates cert subject
+        if (url != null && url.startsWith("ldaps")) {
+            try {
+                URI uri = new URI(url);
+                HostnameVerifyingSSLSocketFactory.setTargetHost(uri.getHost());
+                env.put("java.naming.ldap.factory.socket",
+                        "com.dtolabs.rundeck.jetty.jaas.HostnameVerifyingSSLSocketFactory");
+            }
+            catch (URISyntaxException e) {
+                throw new RuntimeException(e);
+            }
         }
 
         return env;
