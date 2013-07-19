@@ -51,7 +51,8 @@ class UrlMappings {
         "/api/$api_version/$action?"(controller: 'api', action: 'invalid')
 
         //simplified url mappings for link generation
-        "/run/$id?"(controller: 'framework', action: 'nodes')
+        "/nodes/"(controller: 'framework', action: 'nodes')
+        "/run/"(controller: 'framework', action: 'nodes')
         "/history/$id?"(controller: 'reports', action: 'index')
         "/jobs/$groupPath**?"(controller: 'menu', action: 'jobs')
         "/job/show/$id/$fullName**?"(controller: 'scheduledExecution',action: 'show')
