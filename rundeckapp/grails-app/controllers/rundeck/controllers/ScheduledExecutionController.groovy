@@ -1651,6 +1651,9 @@ class ScheduledExecutionController  {
             scheduledExecution.project)) {
             return [success:false,failed:true,error:'unauthorized',message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
         }
+        if(params.extra?.debug=='true'){
+            params.extra.loglevel='DEBUG'
+        }
         def result = executionService.executeScheduledExecution(scheduledExecution,framework, request.subject,params)
 
         if (result.error){
