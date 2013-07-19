@@ -185,7 +185,7 @@ class ExecutionControllerTests extends ControllerUnitTestCase {
         assertNotNull(ec.response.getHeader('Content-Disposition'))
         def strings = ec.response.contentAsString.split("[\r\n]+") as List
         println strings
-        assertEquals(["03:21:50 [admin@centos5  ][NORMAL] blah blah test monkey","03:21:51 [null@null null null][ERROR] Execution failed on the following 1 nodes: [centos5]"], strings)
+        assertEquals(["03:21:50 [admin@centos5 _][NORMAL] blah blah test monkey","03:21:51 [null@null _][ERROR] Execution failed on the following 1 nodes: [centos5]"], strings)
     }
 
 }
