@@ -111,7 +111,7 @@ class MenuController {
         /**
         * redirect to configured start page, or default to Run page
          */
-        def startpage='run'
+        def startpage='jobs'
         if(grailsApplication.config.rundeck.gui.startpage){
             startpage=grailsApplication.config.rundeck.gui.startpage
         }
