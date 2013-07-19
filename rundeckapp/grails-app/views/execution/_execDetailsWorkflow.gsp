@@ -22,17 +22,28 @@
    $Id$
 --%>
 <g:set var="rkey" value="${g.rkey()}"/>
+<g:unless test="${isAdhoc}">
 <div>
-    <span class="label" title="Continue execution if any steps fail.">Keepgoing:</span>
+    <span class="label"><g:message code="Workflow.property.keepgoing.prompt" /></span>
     <g:if test="${edit}">
-        <label><input type="radio" name="workflow.keepgoing" value="false" ${workflow?.keepgoing?'':'checked'}/> No</label>
-        <label><input type="radio" name="workflow.keepgoing" value="true" ${workflow?.keepgoing?'checked':''}/> Yes</label>
+        <label>
+            <input type="radio" name="workflow.keepgoing" value="false" ${workflow?.keepgoing?'':'checked'}/>
+            <g:message code="Workflow.property.keepgoing.false.description"/>
+        </label>
+        <label>
+            <input type="radio" name="workflow.keepgoing" value="true" ${workflow?.keepgoing?'checked':''}/>
+            <g:message code="Workflow.property.keepgoing.true.description"/>
+        </label>
     </g:if>
     <g:else>
-        ${workflow?.keepgoing?true:false}
+        <g:message code="${workflow?.keepgoing ? 'Yes' : 'No'}"/>
+        <span class="info note">
+            <g:message code="Workflow.property.keepgoing.${workflow?.keepgoing ? true : false}.description"/>
+        </span>
     </g:else>
     </div>
 <div>
+
     <span class="label" title="Strategy for iteration">Strategy:</span>
     <g:if test="${edit}">
         <label title="Execute the full workflow on each node before the next node">
@@ -95,10 +106,10 @@
     <g:else>
         <g:message code="Workflow.strategy.label.${workflow?.strategy}"/>
     </g:else>
-
+</g:unless>
 %{--<span class="label">threadcount:</span> ${workflow?.threadcount}--}%
 </div>
-<div class="pflowlist ${edit?'edit':''} rounded" style="${edit?'width:600px;':''}">
+<div class="pflowlist ${edit?'edit':''} rounded ${isAdhoc?'adhoc':''}" style="">
     <g:if test="${edit}">
         <div id="wfundoredo" >
             <div style="margin-bottom:10px;">

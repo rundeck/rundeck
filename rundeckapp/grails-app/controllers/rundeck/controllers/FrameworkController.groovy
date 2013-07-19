@@ -598,7 +598,6 @@ class FrameworkController  {
                 log.error(projectNameError)
                 errors << projectNameError
             }else if(!errors){
-
                 log.debug("create project, properties: ${projProps}");
                 def proj
                 try {
@@ -609,6 +608,7 @@ class FrameworkController  {
                 }
                 if(!errors && proj){
                     session.project=proj.name
+                    session.frameworkProjects = frameworkService.projects(framework)
                     def result=userService.storeFilterPref(session.user, [project:proj.name])
                     return redirect(controller:'menu',action:'index')
                 }
@@ -618,7 +618,6 @@ class FrameworkController  {
 //            request.error=errors.join("\n")
             request.errors=errors
         }
-        def projects=frameworkService.projects(framework)
         final descriptions = framework.getResourceModelSourceService().listDescriptions()
 
         //get list of node executor, and file copier services
@@ -627,7 +626,8 @@ class FrameworkController  {
 
 
 
-        return [projects:projects,project:params.project,
+        return [
+                project:params.project,
             projectNameError: projectNameError,
             resourcesUrl: resourcesUrl,
             resourceModelConfigDescriptions: descriptions,
@@ -992,7 +992,13 @@ class FrameworkController  {
 
     def projectSelect={
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
-        def projects=frameworkService.projects(framework)
+        def projects
+        if(session.frameworkProjects){
+            projects=session.frameworkProjects
+        }else{
+            projects = frameworkService.projects(framework)
+            session.frameworkProjects=projects
+        }
         [projects:projects,project:session.project]
     }
     def selectProject= {

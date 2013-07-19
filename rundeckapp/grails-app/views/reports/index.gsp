@@ -6,7 +6,7 @@
     <g:ifServletContextAttribute attribute="RSS_ENABLED" value="true">
     <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="${createLink(controller:"feed",action:"index",params:paginateParams?paginateParams:[:])}"/>
     </g:ifServletContextAttribute>
-    <title><g:message code="gui.menu.Events"/></title>
+    <title><g:message code="gui.menu.Events"/> - ${session.project.encodeAsHTML()}</title>
     <g:javascript>
                 
 
@@ -34,25 +34,11 @@
         <g:set var="eventsparams" value="${paginateParams}"/>
         var eventsparams=${eventsparams.encodeAsJSON()};
         var pageparams=${pageparams.encodeAsJSON()};
-        var links = {
-            events:'${createLink(controller:"reports",action:"eventsFragment")}'
-        };
-        var boxctl ;
         function _pageInit() {
             try{
-            boxctl = new WBoxController({views:{db2:'evtsholder'},key:'nowrunning'});
-            //eventsparams.filterName=bfilters['events'];
             if(pageparams && pageparams.offset){
                 Object.extend(eventsparams,pageparams);
             }
-            boxctl.addBox('db2', new WBox('box2', {noTitle:true,noTabs:true,tabs:[
-                {   name:'events',
-                    url:links['events'],
-                    notitle:true,
-                    params:eventsparams
-                },
-            ]}));
-            boxctl._pageInit();
             }catch(e){
                 console.log("error: "+e);
             }
@@ -60,17 +46,6 @@
 
         var checkUpdatedUrl='';
         function _updateBoxInfo(name, data) {
-            if(boxctl){
-                try{
-                    if(data.url && data.url.indexOf("?")>0){
-                        //remove params
-                        data.params={};
-                    }
-                boxctl.updateDataForTab(name, data);
-                }catch(e){
-
-                }
-            }
             if(name=='events' && data.checkUpdatedUrl){
                 checkUpdatedUrl=data.checkUpdatedUrl;
                 _updateEventsCount(0);
@@ -116,15 +91,8 @@
             var data=eval("("+response.responseText+")"); // evaluate the JSON;
             if(data){
                 var bfilters=data['filterpref'];
-                boxctl.updateDataForTab(name,{params:{filterName:bfilters[name]}});
                 //reload page
-                //document.location="${createLink(controller:'reports',action:'index')}"+(bfilters[name]?"?filterName="+bfilters[name]:'');
-                try{
-                    boxctl.reloadTabForName(name);
-                }catch(e){
-                    console.log("error: "+e);
-                }
-
+                document.location="${createLink(controller:'reports',action:'index')}"+(bfilters[name]?"?filterName="+bfilters[name]:'');
             }
         }
 
@@ -183,15 +151,17 @@
 <div>
 
 
-<div class="pageBody solo">
-    <g:ifServletContextAttribute attribute="RSS_ENABLED" value="true">
-    <a title="RSS 2.0" class="floatr" href="${createLink(controller:"feed",action:"index",params:paginateParams)}" id="rsslink"><img src="${resource(dir:'images',file:'feed.png')}" width="14px" height="14px" alt=""/> RSS</a>
-    </g:ifServletContextAttribute>
+<div class="pageBody">
     <g:render template="/common/messages"/>
 
-    <span class="badgeholder"  id="eventsCountBadge" style="display:none"><span class="badge newcontent active" id="eventsCountContent" onclick="boxctl.reloadTabForName('events');" title="click to load new events"></span></span>
+    <span class="badgeholder"  id="eventsCountBadge" style="display:none">
+    <g:link action="index"
+            title="click to load new events"
+            params="${filterName?[filterName:filterName]:params}"><span class="badge newcontent active" id="eventsCountContent" onclick="boxctl.reloadTabForName('events');" title="click to load new events"></span>
+    </g:link>
+    </span>
     <div id="evtsholder">
-    <g:render template="eventsFragment" model="${[paginateParams:paginateParams,params:params,reports:reports,filterName:filterName]}"/>
+    <g:render template="eventsFragment" model="${[paginateParams:paginateParams,params:params,reports:reports,filterName:filterName, filtersOpen: true]}"/>
     </div>
 
     </div>

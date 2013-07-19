@@ -28,18 +28,13 @@
 </div>
 
 
-<span class="prompt">Log level:</span>
-<div class="presentation">
-    <g:select name="extra.loglevel"
-              from="${['1. Debug','2. Verbose','3. Information','4. Warning','5. Error']}"
-              keys="${['DEBUG','VERBOSE','INFO','WARN','ERROR']}"
-              value="${scheduledExecution.loglevel?scheduledExecution.loglevel:'WARN'}"
-        />
-
-    <div class="info note">
-        Higher numbers produce less output.
+<g:if test="${scheduledExecution.loglevel != 'DEBUG'}">
+    <div class="presentation">
+        <label><g:checkBox name="extra.debug" value="true" checked="false"/>
+            <g:message code="enable.verbose.logging" />
+        </label>
     </div>
-</div>
+</g:if>
 
 <g:if test="${failedNodes}">
     <g:hiddenField name="_replaceNodeFilters" value="true"/>

@@ -7,13 +7,12 @@
 
                 </td>
                 <td class="statvalue">
-                    by <span class="username">${lastrun.user}</span>,
+                    <g:link action="show" controller="execution" id="${lastrun.id}" title="View execution output">
+                    by <span class="username"><g:username user="${lastrun.user}"/></span>,
                     <span class="when">
                         <g:relativeDate elapsed="${lastrun.dateCompleted}"/>
                     </span>
-                </td>
-                <td style="width:12px">
-                    <g:link action="show" controller="execution" id="${lastrun.id}" title="View execution output"><img
+                    <img
                         src="${resource(dir: 'images', file: 'icon-tiny-' + (lastrun?.status == 'true' ? 'ok' : 'warn') + '.png')}"
                         alt="" width="12px" height="12px"/></g:link>
                 </td>

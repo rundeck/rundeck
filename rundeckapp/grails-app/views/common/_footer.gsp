@@ -4,7 +4,9 @@
     <span style="color:red;">#Simplify</span>Ops</a>.
 
     All rights reserved.
-    
+
+    <g:link controller="menu" action="licenses">Licenses</g:link>
+
     <span class="num">${grailsApplication.metadata['build.ident']}</span>
 <g:if test="${grails.util.Environment.current==grails.util.Environment.DEVELOPMENT}">
     <g:timerSummary/>

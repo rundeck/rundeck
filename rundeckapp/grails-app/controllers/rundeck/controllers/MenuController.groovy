@@ -111,7 +111,7 @@ class MenuController {
         /**
         * redirect to configured start page, or default to Run page
          */
-        def startpage='run'
+        def startpage='jobs'
         if(grailsApplication.config.rundeck.gui.startpage){
             startpage=grailsApplication.config.rundeck.gui.startpage
         }
@@ -213,7 +213,6 @@ class MenuController {
     def jobsPicker = {ScheduledExecutionQuery query ->
 
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
-        def projects = frameworkService.projects(framework)
         def usedFilter=null
         if(!query){
             query = new ScheduledExecutionQuery()
@@ -603,6 +602,9 @@ class MenuController {
         ]]
     }
 
+    def licenses = {->
+
+    }
 
 
     /**

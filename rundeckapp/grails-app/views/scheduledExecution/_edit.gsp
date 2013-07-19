@@ -170,6 +170,9 @@ var applinks={
         -webkit-border-radius: 3px;
         border-radius: 3px;
     }
+    #workflowContent ol li{
+        padding: 5px;
+    }
     #workflowContent ol li.hoverActive{
         border-top: 2px solid blue;
     }
@@ -190,7 +193,7 @@ var applinks={
         position:absolute;
         right:0;
         top:0;
-        width:200px;
+        width:250px;
         text-align:right;
     }
     .controls.autohide{
@@ -210,24 +213,25 @@ var applinks={
         position:absolute;
         right:0;
         top:0;
-        width:40px;
+        width:120px;
         text-align:right;
     }
     .optview{
         /*position:relative;*/
     }
     .optdetail{
-        float:left;
-        display:block;
-        width:380px;
+        /*float:left;*/
+        display:inline-block;
+        width:540px;
         overflow:hidden;
         white-space:nowrap;
         height:16px;
         line-height:16px;
     }
     .enforceSet{
-        position:absolute;
-        right: 45px;
+        /*position:absolute;*/
+        /*right: 45px;*/
+        display: inline-block;
         width:100px;
         overflow:hidden;
         white-space:nowrap;
@@ -238,8 +242,9 @@ var applinks={
         text-align:right;
     }
     .valuesSet{
-        position:absolute;
-        right: 150px;
+        /*position:absolute;*/
+        /*right: 150px;*/
+        display: inline-block;
         width: 60px;
         overflow:hidden;
         white-space:nowrap;
@@ -257,6 +262,7 @@ var applinks={
     }
     ul.options li{
         list-style:none;
+        padding: 4px;
     }
     div.inputset > div {
         clear:both;
@@ -295,12 +301,29 @@ var applinks={
     .add_step_buttons ul{
         margin:0;
         list-style-type: none;
+        padding-left:0;
     }
-    .add_step_buttons td{
-        vertical-align: top;
+    .add_step_buttons li.action{
+        padding:5px;
+        margin:0;
     }
-    .add_step_buttons td .action{
-        padding: 2px 0;
+    .add_step_buttons li.action:hover{
+    }
+
+    /**
+    job edit form table
+     */
+    table.jobeditform > tbody > tr > td:first-child{
+        width:120px;
+    }
+    /**
+    Ace editor
+    */
+    div.ace_text{
+        border:1px solid #aaa;
+    }
+    .pflowlist{
+        margin-right: 10px;
     }
 </style>
 <g:set var="wasSaved" value="${ (params?.saved=='true') || scheduledExecution?.id || scheduledExecution?.jobName || scheduledExecution?.scheduled}"/>
@@ -309,7 +332,7 @@ var applinks={
 <div class="note error" style="display: none" id="editerror">
     
 </div>
-<table class="simpleForm" cellspacing="0">
+<table class="simpleForm jobeditform" cellspacing="0" style="width:100%">
  <g:if test="${!scheduledExecution?.id}">
     <tr id="saveJobQ" style="${wdgt.styleVisible(unless:scheduledExecution?.scheduled)}">
         <td>Save this job?</td>
@@ -347,7 +370,8 @@ var applinks={
         </td>
         <td>
             <span class="input">
-                <input type='text' name="jobName" value="${scheduledExecution?.jobName.encodeAsHTML()}" id="schedJobName" size="40"/>
+                <g:textField name="jobName" value="${scheduledExecution?.jobName.encodeAsHTML()}" id="schedJobName"
+                       size="80"/>
                 <g:hasErrors bean="${scheduledExecution}" field="jobName">
                     <img src="${resource( dir:'images',file:'icon-small-warn.png' )}" alt="Error"  width="16px" height="16px" id="schedJobNameErr"/>
                     <wdgt:eventHandler for="schedJobName" state="unempty"  frequency="1">
@@ -369,7 +393,8 @@ var applinks={
                 <g:hasErrors bean="${scheduledExecution}" field="groupPath">
                     <img src="${resource( dir:'images',file:'icon-small-warn.png' )}" alt="Error"  width="16px" height="16px"/>
                 </g:hasErrors>
-                <input type='text' name="groupPath" value="${scheduledExecution?.groupPath?.encodeAsHTML()}" id="schedJobGroup" size="40"/>
+                <input type='text' name="groupPath" value="${scheduledExecution?.groupPath?.encodeAsHTML()}" id="schedJobGroup"
+                       size="80"/>
                 <!--<span class="action" onclick="$('schedJobGroup').setValue('');" title="Clear Group field">
                     <img src="${resource( dir:'images',file:'icon-tiny-removex-gray.png' )}" alt="Clear"  width="12px" height="12px"/>
                 </span>-->
@@ -447,7 +472,7 @@ var applinks={
         </td>
         <td>
             <span class="input ${hasErrors(bean:scheduledExecution,field:'description','fieldError')}">
-                <g:textArea name="description" value="${scheduledExecution?.description}" cols="70" rows="2" />
+                <g:textArea name="description" value="${scheduledExecution?.description}" cols="120" rows="2" />
 
                 <g:hasErrors bean="${scheduledExecution}" field="description">
                     <img src="${resource( dir:'images',file:'icon-small-warn.png' )}" alt="Error" width="16px" height="16px"/>
@@ -472,7 +497,7 @@ var applinks={
             <g:else>
                 <span class="input">
                     <input type='text' name="uuid" value="${scheduledExecution?.uuid?.encodeAsHTML()}"
-                           id="schedJobUuid" size="40"/>
+                           id="schedJobUuid" size="36"/>
                     <g:hasErrors bean="${scheduledExecution}" field="uuid">
                         <img src="${resource(dir: 'images', file: 'icon-small-warn.png')}" alt="Error" width="16px"
                              height="16px" id="schedJobUuidErr"/>
@@ -511,10 +536,8 @@ var applinks={
     </tr>
     </tbody>
 
-    <g:hiddenField name="project" value="${scheduledExecution.project ? scheduledExecution.project.toString() : projects?.size() == 1 ? projects[0].name : session.project ? session.project : ''}"
-        id="schedEditFrameworkProject"
-    />
-
+    <g:set var="projectName" value="${scheduledExecution.project?scheduledExecution.project.toString():projects?.size()==1?projects[0].name:session.project?session.project:''}" />
+    <g:hiddenField id="schedEditFrameworkProject" name="project" value="${projectName}" />
 
     <tbody id="optionsContent" class="savedJobFields" style=" ${wdgt.styleVisible(if:wasSaved)}">
         <tr>
@@ -814,7 +837,7 @@ var applinks={
     </tbody>
     <tbody style="${wdgt.styleVisible(if:scheduledExecution?.doNodedispatch)}" class="subfields nodeFilterFields">
     <tr>
-        <td onclick="_formUpdateMatchedNodes()"><span id="mnodeswait"></span> <span class="button action textbtn" title="click to refresh">Matched nodes</span></td>
+        <td onclick="_formUpdateMatchedNodes()"><span id="mnodeswait"></span> <span class="action textbtn" title="click to refresh">Matched nodes</span></td>
         <td id="matchednodes" class="embed matchednodes" >
             <span class="action textbtn" onclick="_formUpdateMatchedNodes()">Update...</span>
         </td>
@@ -890,19 +913,21 @@ var applinks={
             </td>
         </tr>
         <tr>
-            <td>Keep going on error?</td>
+            <td><g:message code="scheduledExecution.property.nodeKeepgoing.prompt" /></td>
             <td>
-                <label>
+                <div><label>
                 <g:radio name="nodeKeepgoing" value="false"
                     checked="${!scheduledExecution?.nodeKeepgoing}"
                     id="nodeKeepgoingFalse"/>
-                No</label>
+                    <g:message code="scheduledExecution.property.nodeKeepgoing.false.description"/>
+                </label></div>
 
-                <label>
+                <div><label>
                 <g:radio name="nodeKeepgoing" value="true"
                     checked="${scheduledExecution?.nodeKeepgoing}"
                     id="nodeKeepgoingTrue"/>
-                Yes</label>
+                    <g:message code="scheduledExecution.property.nodeKeepgoing.true.description"/>
+                </label></div>
             </td>
         </tr>
     </tbody>
@@ -927,4 +952,5 @@ var applinks={
         initTooltipForElements('.obs_tooltip');
     }
 </g:javascript>
+<g:javascript library="ace/ace"/>
 <div id="msg"></div>

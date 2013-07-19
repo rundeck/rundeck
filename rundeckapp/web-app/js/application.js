@@ -933,6 +933,21 @@ function nochars(chars,e) {
     }
     return !(e && e.charCode!=0 && chars.indexOf(String.fromCharCode(e.charCode))>=0);
 }
+function _applyAce(e,height){
+    $(e).setStyle({
+        width: "100%",
+        height: height!=null ? height : "200px"
+    });
+    $(e).addClassName('ace_editor');
+    var editor = ace.edit(e.identify());
+    editor.setTheme("ace/theme/chrome");
+    editor.getSession().setMode("ace/mode/sh");
+    editor.setReadOnly(true);
+}
+function _applyTextareaResizer(textarea){
+    $(textarea).setStyle({ lineHeight: "20px"});
+    new Widget.Textarea(textarea, {min_height: 2});
+}
 /**
  * keypress handler which allows only chars matching the input regular expression
  * @param regex string to match allowed chars
@@ -949,5 +964,18 @@ function fireWhenReady(elem,func){
         func();
     }else{
         Event.observe(document,'dom:loaded', function(e){func();});
+    }
+}
+
+function selectTab(elem){
+    $(elem).up('.tabset').select('.tab').each(function(e){
+        $(e).removeClassName('selected');
+        if($(e).hasAttribute('data-behavior-tab-deselected')){
+            eval($(e).getAttribute('data-behavior-tab-deselected'));
+        }
+    });
+    $(elem).addClassName('selected');
+    if ($(elem).hasAttribute('data-behavior-tab-selected')) {
+        eval($(elem).getAttribute('data-behavior-tab-selected'));
     }
 }

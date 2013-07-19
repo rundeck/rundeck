@@ -9,6 +9,7 @@
     <g:javascript library="pagehistory"/>
     <g:javascript library="prototype/effects"/>
     <g:javascript library="executionOptions"/>
+    <g:javascript library="ace/ace"/>
     <script type="text/javascript">
 
         function showError(message){
@@ -131,7 +132,7 @@
         /** START history
          *
          */
-        var histControl = new HistoryControl('histcontent',{compact:true,nofilters:true});
+        var histControl = new HistoryControl('histcontent',{xcompact:true,nofilters:true});
         function loadHistory(){
             histControl.loadHistory( ${(reportQueryParams?:[projFilter:session.project]).encodeAsJSON()});
         }
@@ -281,6 +282,9 @@
                 onComplete: function(trans){
                     if(trans.request.success()){
                         popJobDetails(elem);
+                        $('jobIdDetailContent').select('.apply_ace').each(function (t) {
+                            _applyAce(t);
+                        })
                     }
                 },
                 onFailure: function(trans){

@@ -263,6 +263,7 @@
             $$('.jobbulkeditfield').each(Element.show);
             $$('.bulk_edit_controls').each(Element.show);
             $$('.bulk_edit_invoke').each(Element.hide);
+            $$('.expandComponent').each(Element.show);
         });
     });
     $$('.job_bulk_edit_hide').each(function(elem){
@@ -279,6 +280,7 @@
     });
     $$('.job_bulk_select_all').each(function(elem){
         Event.observe(elem,'click',function(e){
+            $$('.expandComponent').each(Element.show);
             $$('.jobbulkeditfield').each(function(z){
                 z.select('input[type=checkbox]').each(function(box){
                     box.checked=true;
@@ -288,6 +290,7 @@
     });
     $$('.job_bulk_select_none').each(function(elem){
         Event.observe(elem,'click',function(e){
+            $$('.expandComponent').each(Element.show);
             $$('.jobbulkeditfield').each(function(z){
                 z.select('input[type=checkbox]').each(function(box){
                     box.checked=false;

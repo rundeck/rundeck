@@ -31,10 +31,10 @@ body:before {
 }
 
 html, body{
-	
+
 	padding: 0 0 0 0;
 	margin: 0 0 0 0;
-    font: 81.25%/1.5em verdana, arial, helvetica, sans-serif;
+    font: 90%/1.5em verdana, arial, helvetica, sans-serif;
 
 }
 
@@ -100,7 +100,7 @@ code{
 
 .mainContent {
     margin: 15px;
-    
+
 }
 .pageContent{
     padding: 10px;
@@ -162,15 +162,55 @@ a.toptab.selected{
 }
 a.tab,span.tab{
     padding: 3px;
-    border: 1px solid #ccc;
-    color:blue !important;
+    border: 1px solid #fff;
     font-weight:normal;
+}
+
+.outputButtons a.tab, .outputButtons span.tab{
+    padding: 3px 5px;
+    border-radius: 3px 3px 0 0;
+    font-weight:normal;
+    border-bottom: 0;
+    background: #eee;
+    color: #888;
+    cursor: pointer;
 }
 a.toptab + a.toptab{
     border-left:0;
 }
-a.tab:hover, a.toptab:hover, a.tab.selected, a.toptab.selected, span.button.selected{
+.tabset{
+    margin: 0 5px;
+}
+a.tab + a.tab, a.tab + span.tab, span.tab + a.tab, span.tab + span.tab{
+    margin-left: 5px;
+}
+a.toptab:hover, a.toptab.selected{
     background: #ddd;
+}
+a.tab.selected, span.tab.selected, span.button.selected, a.button.selected{
+    background: #fff;
+    border: 1px solid #eee;
+    border-bottom: 0;
+    color: black;
+}
+.outputButtons a.tab:hover,.outputButtons span.tab:hover{
+    background: #eee;
+    border: 1px solid #ddd;
+    border-bottom: 0;
+}
+.outputButtons a.tab.selected:hover,.outputButtons span.tab.selected:hover{
+    background: #fff;
+    border: 1px solid #ddd;
+    border-bottom: 0;
+}
+.outputButtons a.action {
+    color: #888;
+}
+.outputButtons a.action.selected {
+    color: blue;
+    background: #eee;
+    border: 1px solid #bbb;
+    border-bottom: 0;
 }
 a.tab.disabled, span.tab.disabled{
     border: 1px solid #ddd;
@@ -202,10 +242,10 @@ div.pageMessage.error{
     position:relative;
 }
 a:active,a:link,a:visited{
-    
+
 }
 a:hover {
-    
+
     color:blue;
     text-decoration: none;
 }
@@ -220,7 +260,7 @@ tr.header {
 }
 .actionButton a:active,.actionButton a:link,.actionButton a:visited,.actionButton a:hover {
 	font-weight:bold;
-	color: #578BB8;	
+	color: #578BB8;
 }
 .action, span.button{
     cursor:pointer;
@@ -256,6 +296,23 @@ a.button, span.button, label.button{
     -webkit-border-radius: 3px;
     border-radius: 3px;
 }
+
+a.button.join, span.button.join, label.button.join {
+    -moz-border-radius: 3px 0 0 3px ;
+    -webkit-border-radius: 3px 0 0 3px ;
+    border-radius: 3px 0 0 3px ;
+}
+
+a.button.join + a.button.join, span.button.join + span.button.join, label.button.join + label.button.join{
+    -moz-border-radius: 0;
+    -webkit-border-radius: 0;
+    border-radius: 0;
+}
+a.button.join + a.button, span.button.join + span.button, label.button + label.button{
+    -moz-border-radius: 0 3px 3px 0;
+    -webkit-border-radius: 0 3px 3px 0;
+    border-radius: 0 3px 3px 0;
+}
 a.button.icon, span.button.icon{
     border: 1px solid #aaa;
 }
@@ -290,9 +347,6 @@ h1 {
 	color:#616161;
 }
 
-.cmdname{
-
-}
 
 .cmddescription{
     font-style: italic;
@@ -379,11 +433,11 @@ h1 {
 	background-color:#eee;
 	height: 30px;
 	border: 2px solid #A49CF7;
-	border-style: solid none none none ;	
+	border-style: solid none none none ;
 }
 
 th {
-	padding:5px;	
+	padding:5px;
 }
 td {
 
@@ -394,11 +448,11 @@ label{
 #loginpage label{
     text-decoration:none;
 }
-.dialog 
+.dialog
 {
 	padding: 15px;
 	background-color:#F0F0F0;
-	
+
 }
 .dialog label{
 	width: 120px;
@@ -420,6 +474,16 @@ label{
 .actionButtons {
 	width:100px;
 }
+table.jobsList .inlinebuttons div.buttons{
+    display: inline-block;
+    margin:0;
+    vertical-align: middle;
+}
+.inlinebuttons .floatr,.inlinebuttons .floatl{
+    float: none;
+}
+.inlinebuttons a.button,.inlinebuttons span.button{
+}
 div .errors {
     color:red;
     padding: 5px;
@@ -427,7 +491,7 @@ div .errors {
 	margin-bottom:10px;
 }
 td .errors {
-  
+
 }
 .message {
 	padding: 5px;
@@ -545,7 +609,7 @@ div.container {
 }
 
 .smlabel {
-    
+
 }
 
  #P2P_selector {
@@ -575,7 +639,6 @@ div.pageBody.form{
     -moz-border-radius:5px;
     -webkit-border-radius:5px;
     border-radius:5px;
-    -webkit-box-shadow: 5px 5px 5px #bbb;
 }
 
 div.pageBody.frame {
@@ -602,7 +665,7 @@ table.moduledata td.fieldName{
     background: #efefef;
     padding: 3px;
     width: 30%;
-    font-weight: normal !IMPORTANT;
+    font-weight: normal;
 }
 table.moduledata td.fieldName + td{
     border-bottom: 2px solid #eee;
@@ -636,7 +699,7 @@ div.datasection{
         border: 1px solid #ddd;
         border-bottom:1px solid #bbb;
     }
-    
+
     html>body tbody.scrollContent, html>body tbody.listContent {
     overflow-x: hidden;
     overflow-y: auto;
@@ -757,20 +820,56 @@ table.execoutput{
     font-family: Courier, monospace;
     border: 1px solid #eee;
 }
+
+table.execoutput th {
+    background: none;
+    border:none;
+}
+table.execoutput td{
+    border: 1px solid #eee;
+    vertical-align: baseline;
+}
+table.execoutput.collapse_time td.time, table.execoutput.collapse_time td.info{
+    display: none;
+}
+table.execoutput.collapse_node td.node{
+    display: none;
+}
+table.execoutput.collapse_stepnum td.stepnum{
+    display: none;
+}
 table.execoutput td{
     padding:0;
     border: 0;
 }
 table.execoutput tr.contextRow{
-    background: #ddF;
+    /*background: #eee;*/
+    color: #888;
+}
+table.execoutput tr.contextRow.expandable:hover {
+    /*background: #ccF;*/
+}
+table.execoutput tr.contextRow.console {
+    /*background: #ddd;*/
+}
+table.execoutput tr.contextRow.expandable.console:hover {
+    /*background: #ccF;*/
 }
 table.execoutput tr.contextRow.down td{
-    border-top:1px solid #bbb;
+    border-top:1px solid #dddddd;
     border-bottom:0;
 }
 table.execoutput tr.contextRow.up td{
-    border-bottom:1px solid #bbb;
+    /*border-bottom:1px solid #bbb;*/
     border-top:0;
+}
+
+table.execoutput tr.contextRow.expandable.closed{
+    background: #eee;
+}
+
+table.execoutput tr.contextRow.expandable.closed:hover{
+    background: #e3edfa;
 }
 table.execoutput tr.contextRow td{
     padding:5px;
@@ -790,44 +889,80 @@ table.execoutput tr.contextRow span.contextInfo{
     color: #555;
 }
 table.execoutput tr.contextRow span.node{
-    margin-right:10px;
+    /*color:#00a;*/
+    font-weight: bold;
+    /*margin-right:2em;*/
 }
 table.execoutput tr.contextRow td.rowexpicon{
     width:16px;
     margin:0;
-    padding:0;
-    
+    padding:4px;
+    vertical-align: middle;
 }
 
 table.execoutput td.info{
-    background: #eee;
+    /*background: #eee;*/
     padding: 1px 3px;
-    vertical-align:top;
     font-family: courier,mono;
 }
 table.execoutput td.info.time{
-    color:#888;
+    color: #888;
     white-space: nowrap;
-    vertical-align: top;
     width: 6em;
+}
+table.execoutput td.node{
+    color:#888;
+    text-align: right;
+    width: 6em;
+    max-width: 20em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+table.execoutput td.repeat {
+    visibility: hidden;
+}
+/*table.execoutput tr:hover td.node.repeat {*/
+    /*visibility: visible;*/
+/*}*/
+
+table.execoutput span.node:after, table.execoutput td.node:after {
+    content: " > ";
 }
 table.execoutput tr.alternateRow td.info.time{
     color:#808080;
 }
 table.execoutput tr.alternateRow td.info{
-    background: #e0e0e0;
+    /*background: #e0e0e0;*/
+}
+table.execoutput td{
+    vertical-align: baseline;
 }
 table.execoutput td.data{
     border-left: 1px solid white;
     white-space: pre;
     font-family: "Lucida Console",courier,monospace;
     padding: 1px 3px;
-    vertical-align:top;
-    color: #777;
+    color: black;
+}
+table.execoutput td.data.datahtml{
+    font-family: verdana, arial, helvetica, sans-serif;
 }
 
-table.execoutput td.data.log_normal {
-    color: black;
+table.execoutput td.data.datahtml a{
+    text-decoration: underline;
+    color: blue;
+}
+table.execoutput td.data.datahtml code{
+    font-family: "Lucida Console", courier, monospace;
+}
+
+table.execoutput td.data.log_warn, table.execoutput td.data.log_error {
+    color: #800;
+}
+table.execoutput td.data.log_verbose, table.execoutput td.data.log_debug {
+    color: #888;
 }
 table.execoutput td.datahtml{
     white-space:normal;
@@ -842,10 +977,10 @@ table.execoutput tr.alternateRow td.data{
     background: #f0f0f0;
 }
 table.execoutput td.info .SEVERE{
-    color: red;
+    /*color: red;*/
 }
 table.execoutput td.info .ERROR{
-    color: red;
+    /*color: red;*/
 }
 table.execoutput .ctxcounter{
     margin-left:10px;
@@ -853,6 +988,32 @@ table.execoutput .ctxcounter{
 }
 table.execoutput .ctxcounter.SEVERE, table.execoutput .ctxcounter.ERROR{
     color: red;
+}
+table.execoutput .stepident, table.execoutput .stepnum{
+    color: #008;
+}
+
+table.execoutput .stepident, table.execoutput .stepnum:before {
+}
+table.execoutput .stepnum.short:before {
+    content: "•";
+}
+
+table.execoutput td.stepnum{
+    padding: 0 0.5em;
+    width: 4em;
+    white-space: nowrap;
+}
+
+table.execoutput tr.contextRow .stepident {
+    /*display: none;*/
+}
+table.execoutput tr.contextRow.closed .stepident {
+    display: inline;
+}
+
+table.execoutput tr.contextRow.closed span.node {
+    /*color: #333;*/
 }
 
 .outputdisplayopts{
@@ -887,15 +1048,21 @@ span.optgroup.secure{
 }
 
 div.progressContainer{
-    width:406px;
-    background: #ddd;
-    height:14px;
+    width:409px;
+    background: #eee;
+    height:16px;
     border:1px solid #aaa;
     position:relative;
 }
 
 div.progressContainer.small{
-    width:106px;
+    width:109px;
+}
+
+div.progressContainer.small div.progressBar{
+    font-size: 9px;
+    line-height: 9px;
+    padding: 1px 5px 1px 4px;
 }
 div.progressContainer.indefinite{
     background: #eee;
@@ -903,14 +1070,15 @@ div.progressContainer.indefinite{
 }
 div.progressBar{
     width:0px;
-    background:#88f;
-    height:12px;
-    color:black;
-    text-shadow: 1px 1px 1px #fff;
-    font-size:9px;
-    line-height:9px;
-    padding:1px 3px;
-    border-right: 1px solid #999;
+    background:#bbb;
+    height:14px;
+    color:white;
+    text-shadow: 1px 1px 1px #000;
+    font-size:10px;
+    line-height:10px;
+    font-weight: bold;
+    padding:1px 3px 1px 6px;
+    border-right: 1px solid #aaa;
     white-space:nowrap;
     overflow-x:hidden;
     overflow-y:hidden;
@@ -993,7 +1161,7 @@ table.executionList td.dateCompletedlabel, table.executionInfo td.dateCompletedl
 }
 span.timelabel{
     color: #888;
-    
+
 }
 span.fail{
     color:red;
@@ -1006,18 +1174,18 @@ span.succeed{
 
 /* Jobs table */
 table.jobsList{
-    
+
 }
 table.jobsList td{
-    
-    
+
+
     text-align:left;
 }
 table.jobsList td.extended{
-    
+
 }
 table.jobsList td.jobDetail{
-    
+
 }
 table.jobsList td.jobDetail > div span.prompt{
     font-weight: normal;
@@ -1026,7 +1194,7 @@ table.jobsList td.jobDetail > div span.prompt{
     font-style:italic;
 }
 table.jobsList td.jobDetail > div{
-    
+
 }
 table.jobsList td.jobname{
     /*width: 495px;*/
@@ -1059,7 +1227,7 @@ table.jobsList td.jobbuttons div.buttons{
     margin: 0 0 4px 0;
 }
 
-table.jobsList td.jobbuttons div.buttons a.button, table.jobsList td.jobbuttons div.buttons span.button{
+table.jobsList .jobbuttons div.buttons a.button, table.jobsList .jobbuttons div.buttons span.button{
     padding: 1px;
     -moz-border-radius:1px;
     -webkit-border-radius:1px;
@@ -1081,7 +1249,7 @@ table.executionList{
 
 }
 table.jobsList td.jobDetail table.executionList{
-    width: 100%;    
+    width: 100%;
 }
 table.executionList caption{
     font-weight: normal;
@@ -1090,25 +1258,20 @@ table.executionList caption{
     text-align:left;
 }
 table.executionList td{
-    
+
     padding: 3px;
 }
 
-table.executionList tr.fail a, table.jobsList tr.fail a{
-    color:red;
+table.jobsList.history td {
+    vertical-align: baseline;
 }
-
-table.jobsList td{
-    padding:2px 4px;
-}
-
-table.executionList tr.nowrunning a, table.jobsList tr.nowrunning a{
-}
-table.jobsList.history td.eventtitle span{
+table.jobsList.history td.eventtitle {
+    max-width: 400px;
     white-space:nowrap;
     text-overflow:ellipsis;
 }
-table.jobsList.history td.eventsummary span{
+table.jobsList.history td.eventsummary {
+    max-width: 200px;
     white-space:nowrap;
     text-overflow:ellipsis;
 }
@@ -1122,7 +1285,7 @@ div.buttons span.group {
 
 div.jobslist{
     margin: 0 0px 5px 0;
-    
+
 }
 div.jobslist.small{
     margin: 0 0px 5px 0;
@@ -1163,13 +1326,13 @@ tr.execution.failed td.outputlink a,tr.execution.killed td.outputlink a{
     font-family:courier,monospace;
     max-width:500px;
     white-space:nowrap;
-    max-height:300px; 
+    max-height:300px;
     overflow:hidden;
 }
 
 .scriptContent.expanded{
     max-width:none;
-    max-height:none; 
+    max-height:none;
     overflow:auto;
     white-space:pre;
 }
@@ -1277,10 +1440,10 @@ span.dragHandle{
     -moz-border-radius : 5px;
     -webkit-border-radius: 5px;
     border-radius: 5px;
-    
+
 }
 .note.warn{
-    
+
     font-style: normal;
     color: #F55;
 }
@@ -1347,24 +1510,18 @@ span.dragHandle{
     text-align:center;
     color:#888;
     border-bottom: 2px solid #bbb;
-    
+
 }
 
 /** login page */
 #loginpage{
-  
 }
 div.login{
     margin: 50px auto;
     width: 355px;
     background: white;
     padding: 5px;
-    border: 1px solid black;
-    border-radius:5px;
-    -moz-border-radius : 5px;
-    -webkit-border-radius: 5px;
-    -moz-box-shadow:#888 3px 3px 4px;
-    -webkit-box-shadow:#aaa 2px 2px 7px;
+    border: 2px solid #000000;
 }
 div.login div.row{
     clear:both;
@@ -1471,7 +1628,7 @@ div.presentation{
     padding: 8px 16px 8px 16px;
 }
 .mainArea{
-    
+
 }
 .timeuntil{
     color: green;
@@ -1486,6 +1643,9 @@ div.presentation{
 }
 .timeabs{
     color: #555;
+}
+.timerel{
+    color: #888;
 }
 
 /* crontab page */
@@ -1506,7 +1666,7 @@ div.crontab{
 .cronselected{
     font-weight: bold;
     color: #55a;
-    
+
 }
 .crondeselected{
     color: #999;
@@ -1537,10 +1697,9 @@ div.pageSubtitle{
     /*font-size: 12pt;*/
     font-weight: bold;
     margin: 10px 0 0 10px;
-    text-shadow:2px 2px 3px #bbb;
 }
 div.pageSubtitle.subtitleAction{
-    color: blue;
+    color: #444;
 }
 
 /* pagination links */
@@ -1549,7 +1708,7 @@ span.paginate{
     padding: 2px;
     display:block;
     /*font-size: 10pt; */
-    font-variant: small-caps; 
+    font-variant: small-caps;
 }
 span.paginate a{
     color: #aaa;
@@ -1584,7 +1743,7 @@ th.sortable a:hover{
 
 /* query output showing */
 span.query,a.query{
-    
+
     padding: 3px;
     -moz-border-radius : 3px;
     -webkit-border-radius: 3px;
@@ -1596,7 +1755,7 @@ span.query span.querykey,a.query span.querykey{
     color: #555;
 }
 span.query span.queryvalue.text,a.query span.queryvalue.text{
- 
+
 }
 span.query span.queryvalue.date,a.query span.queryvalue.date{
     font-weight:bold;
@@ -1643,30 +1802,48 @@ div.filter label.additional{
 
 div.jobHead{
 }
-div.jobHead span.jobInfo{
+div.jobHead .jobInfo{
 
+    margin-bottom: 10px;
 }
 div.jobHead span.jobInfoPart{
-    /*font-size: 9pt;*/
-    vertical-align:middle;
-    margin: 0 0 0 10px;
 }
-div.jobHead span.jobInfoSection{
-    /*font-size: 9pt;*/
-    display:block;
-    margin: 5px 0 5px 32px;
+div.jobHead .jobInfoSection{
+}
+
+div.jobHead td{
+    vertical-align: top;
+}
+
+div.jobHead .jobInfoSection + .jobInfoSection {
+    margin-top: 15px;
 }
 div.jobHead span.jobInfoPart span.partContent{
     margin-top:auto;
     margin-bottom:auto;
 }
 div.jobHead span.jobIcon{
+    display: inline-block;
+    width:16px;
 }
-div.jobHead span.jobName{
-    font-size: 120%;
+
+div.jobHead span.jobIcon +span{
+    margin-left: 10px;
+}
+div.jobHead span.primary{
+    font-size: 130%;
     font-weight: bold;
-    vertical-align:middle;
-    margin: 0 0 0 10px;
+}
+
+div.jobHead span.secondary {
+
+}
+div.jobHead span.secondary {
+    font-size: 115%;
+    /*display: inline-block;*/
+    /*padding:5px;*/
+    /*border: 1px solid #ddd;*/
+    /*border-radius: 5px;*/
 }
 div.jobHead span.jobName.transient{
     color: #888;
@@ -1674,8 +1851,8 @@ div.jobHead span.jobName.transient{
     font-style:italic;
 }
 div.jobHead span.jobDesc{
-    /*font-size:9pt;*/
-    color:#777;
+    display: block;
+    color:#999;
 }
 div.jobHead span.jobSummary{
     /*font-size: 14pt;*/
@@ -1684,6 +1861,9 @@ div.jobHead span.jobSummary{
     display:block;
 }
 
+.executioncontrol a{
+    white-space: nowrap;
+}
 
 span.jobcancel{
     margin: 5px;
@@ -1696,12 +1876,7 @@ span.jobfinal{
 }
 
 #commandFlow{
-    padding: 10px;
-    margin: 0 20px;
-    background: #fff;
-    border-width: 1px 1px 0 1px;
-    border-style:solid;
-    border-color: #ddd;
+    margin: 20px 20px 0 20px;
 }
 div.commandFlowError{
     padding: 10px;
@@ -1710,6 +1885,9 @@ div.commandFlowError{
     border-width: 1px ;
     border-style:solid;
     border-color: #F00;
+}
+.commandcontent{
+    margin: 0 20px;
 }
 
 #schedExecPage > div.schedExecPagePart {
@@ -1789,15 +1967,24 @@ div.jobGroups.subjobs, div.expandComponent.sub_group {
 div.pflowlist{
     padding: 10px 10px;
     border:1px solid #ddd;
-    float:left;
     width:auto;
 
 }
 div.pflowlist ol{
     margin:0;
 }
+div.pflowlist.edit{
+    width: 100%;
+    margin-right: 10px;
+}
 div.pflowlist.edit ol.flowlist li{
     padding:2px;
+}
+div.pflowlist.rounded.adhoc{
+    border:0;
+}
+div.adhoc ol.flowlist li{
+    list-style: none;
 }
 div.pflow{
     float:left;
@@ -1844,7 +2031,7 @@ div.pflow span.nodename{
     color:gray;
 }
 div.pflow span.item span.cmdname a{
-    color:blue;
+    /*color:blue;*/
     font-weight:normal;
 }
 div.pflow span.item span.cmdname a:hover{
@@ -1927,6 +2114,7 @@ tr.sectionhead td.eventtitle{
     overflow:hidden;
     white-space:nowrap;
     width:50px;
+    max-width: 400px;
 }
 tr.sectionhead td.eventsummary{
     overflow:hidden;
@@ -2050,7 +2238,7 @@ div.filterdef div.inputline{
     border-radius:5px;
     -moz-border-radius : 5px;
     -webkit-border-radius: 5px;
-    
+
 }
 .nodedetail tr td.key{
     width: 110px;
@@ -2107,7 +2295,7 @@ div.nodesummary span.type{
     color: #888;
 }
 
-/** class matchednodes.embed used when showing an embedded list of matched nodes 
+/** class matchednodes.embed used when showing an embedded list of matched nodes
 */
 .allnodes{
 
@@ -2210,7 +2398,7 @@ div.nodesummary span.type{
             font-weight:normal;
         }
         div.obox{
-            clear:both;    
+            clear:both;
             background: #efefef;
         }
         div.obox div.wbox{
@@ -2230,7 +2418,7 @@ div.nodesummary span.type{
             background: #e3edfa;
         }
         div.boxctl.full{
-            
+
         }
         td.dashbox div.boxctl:hover span.titlegroup{
             padding:4px ;
@@ -2264,7 +2452,7 @@ table.userauth td.section{
 }
 table.userauth td.section.admin{
     border:1px solid #f00;
-    
+
 }
 table.userauth td.section table{
     border:0;
@@ -2276,7 +2464,7 @@ table.userauth td.section table th{
     padding:5px;
 }
 table.userauth tr.allowed td.accesslabel{
-    
+
 }
 table.userauth tr.disallowed td.accesslabel{
     text-decoration:line-through;
@@ -2327,7 +2515,6 @@ div.jobstats  span.username{
 
 .receiver{
     padding:2px;
-    text-shadow:#888 2px 2px 3px;
     border-radius:3px;
     -moz-border-radius : 3px;
     -webkit-border-radius: 3px;
@@ -2352,7 +2539,7 @@ span.badgeholder{
     /*font-size:9pt;*/
     padding:0;
     padding-left:9px;
-    
+
 }
 
 /** project chooser listing */

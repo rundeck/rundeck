@@ -11,7 +11,7 @@
                 <th>Name</th>
                 <th>Description</th>
                 <th>Tags</th>
-                <th>Username</th>
+                <th style="text-align:right;">Username @</th>
                 <th>Hostname</th>
                 <th></th>
             </tr>
@@ -25,7 +25,7 @@
             <g:if test="${remainCount>max}">
             <span id="nextPageButton" class="action button" onclick="_loadNextNodesPageTable(${max},${total},'nodesTable','nodesPaging');" title="Load next ${max} nodes...">Next ${max}&hellip;</span>
             </g:if>
-            <span class="action button" onclick="_loadNextNodesPageTable(${max},-1,'nodesTable','nodesPaging');" title="Load all remaining nodes...">Load all <span id="moreCount">${remainCount}</span>&hellip;</span>
+            <span class="action button" onclick="_loadNextNodesPageTable(${max},-1,'nodesTable','nodesPaging');" title="Load all remaining nodes...">Load <span id="moreCount">${remainCount}</span> remaining&hellip;</span>
         </div>
     </g:if>
 
@@ -35,7 +35,7 @@
         }
     </g:javascript>
 </g:if>
-<g:render template="/common/boxinfo" model="${[name:'nodetable',model:[total:nodes?.size()]]}"/>
+<g:render template="/common/boxinfo" model="${[name:'nodetable',model:[total:nodes?.size(),allcount:total]]}"/>
 
 <div id="remoteEditholder" style="display:none" class="popout">
     <span id="remoteEditHeader">

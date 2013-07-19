@@ -94,13 +94,13 @@ class ScheduledExecutionController  {
         render(template:"/menu/groupTree",model:[jobgroups:tree,jscallback:params.jscallback])
     }
 
-    def error={
+    private void error(){
         withFormat{
             html{
                 return render(template:"/common/error")
             }
             xml {
-                return xmlerror.call()
+                return xmlerror()
             }
         }
     }
@@ -151,7 +151,7 @@ class ScheduledExecutionController  {
             log.error("No Job found for id: " + params.id)
             flash.error="No Job found for id: " + params.id
             response.setStatus (404)
-            return error.call()
+            return error()
         }
         crontab = scheduledExecution.timeAndDateAsBooleanMap()
         def User user = User.findByLogin(session.user)
@@ -182,7 +182,7 @@ class ScheduledExecutionController  {
             log.error("No Job found for id: " + params.id)
             flash.error="No Job found for id: " + params.id
             response.setStatus (404)
-            return error.call()
+            return error()
         }
         if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_READ], scheduledExecution.project)) {
             return unauthorized("Read Job ${params.id}")
@@ -269,13 +269,13 @@ class ScheduledExecutionController  {
             log.error("No Job found for id: " + params.id)
             flash.error="No Job found for id: " + params.id
             response.setStatus (404)
-            return error.call()
+            return error()
         }
         if(!params.option){
             log.error("option missing")
             flash.error="option missing"
             response.setStatus (404)
-            return error.call()
+            return error()
         }
         
         //see if option specified, and has url
@@ -356,10 +356,10 @@ class ScheduledExecutionController  {
                 }
                 return render(template: "/framework/optionValuesSelect", model: model);
             } else {
-                return error.call()
+                return error()
             }
         }else{
-            return error.call()
+            return error()
         }
 
     }
@@ -740,7 +740,6 @@ class ScheduledExecutionController  {
                 notificationPlugins: notificationService.listNotificationPlugins(),
                 nextExecutionTime:scheduledExecutionService.nextExecutionTime(scheduledExecution),
                 authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,framework),
-                projects: frameworkService.projects(framework),
                 nodeStepDescriptions: nodeStepTypes,
                 stepDescriptions:stepTypes]
     }
@@ -781,7 +780,6 @@ class ScheduledExecutionController  {
             def stepTypes = frameworkService.getStepPluginDescriptions(framework)
             return render(view:'edit', model: [scheduledExecution:scheduledExecution,
                        nextExecutionTime:scheduledExecutionService.nextExecutionTime(scheduledExecution),
-                    projects: frameworkService.projects(framework),
                     notificationValidation: params['notificationValidation'],
                     nodeStepDescriptions: nodeStepTypes,
                     stepDescriptions: stepTypes,
@@ -843,7 +841,7 @@ class ScheduledExecutionController  {
         render(view:'create',model: [ scheduledExecution:newScheduledExecution, crontab:crontab,params:params,
                 iscopy:true,
                 authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,framework),
-                projects: frameworkService.projects(framework), nodeStepDescriptions: nodeStepTypes,
+                nodeStepDescriptions: nodeStepTypes,
                 stepDescriptions: stepTypes,
                 notificationPlugins: notificationService.listNotificationPlugins()])
 
@@ -907,7 +905,6 @@ class ScheduledExecutionController  {
             return unauthorized("Create a Job")
         }
 
-        def projects = frameworkService.projects(framework)
         def user = (session?.user) ? session.user : "anonymous"
         log.debug("ScheduledExecutionController: create : params: " + params)
         def scheduledExecution = new ScheduledExecution()
@@ -948,7 +945,7 @@ class ScheduledExecutionController  {
         def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions(framework)
         def stepTypes = frameworkService.getStepPluginDescriptions(framework)
         log.debug("ScheduledExecutionController: create : now returning model data to view...")
-        return ['scheduledExecution':scheduledExecution,params:params,crontab:[:],projects:projects,
+        return ['scheduledExecution':scheduledExecution,params:params,crontab:[:],
                 nodeStepDescriptions: nodeStepTypes, stepDescriptions: stepTypes,
                 notificationPlugins: notificationService.listNotificationPlugins()]
     }
@@ -1177,7 +1174,8 @@ class ScheduledExecutionController  {
 
             def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions(framework)
             def stepTypes = frameworkService.getStepPluginDescriptions(framework)
-            render(view:'create',model:[scheduledExecution:scheduledExecution,params:params, projects: frameworkService.projects(framework), nodeStepDescriptions: nodeStepTypes, stepDescriptions: stepTypes])
+            render(view:'create',model:[scheduledExecution:scheduledExecution,params:params,
+                    nodeStepDescriptions: nodeStepTypes, stepDescriptions: stepTypes])
         } else {
             log.debug("ExecutionController: immediate execution scheduled (${results.id})")
             redirect(controller:"execution", action:"follow",id:results.id)
@@ -1351,7 +1349,7 @@ class ScheduledExecutionController  {
             log.error("Parameter id is required")
             flash.error = "Parameter id is required"
             response.setStatus(500)
-            return error.call()
+            return error()
         }
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         def scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
@@ -1359,7 +1357,7 @@ class ScheduledExecutionController  {
             log.error("No Job found for id: " + params.id)
             flash.error = "No Job found for id: " + params.id
             response.setStatus(404)
-            return error.call()
+            return error()
         }
         if(!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_RUN], scheduledExecution.project)){
             return unauthorized("Execute Job ${scheduledExecution.extid}")
@@ -1652,6 +1650,9 @@ class ScheduledExecutionController  {
         if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_RUN],
             scheduledExecution.project)) {
             return [success:false,failed:true,error:'unauthorized',message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
+        }
+        if(params.extra?.debug=='true'){
+            params.extra.loglevel='DEBUG'
         }
         def result = executionService.executeScheduledExecution(scheduledExecution,framework, request.subject,params)
 
