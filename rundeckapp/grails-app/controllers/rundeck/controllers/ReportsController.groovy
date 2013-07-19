@@ -107,7 +107,7 @@ class ReportsController {
         return model
     }
 
-    def since = { ReportQuery query->
+    def since = { ExecQuery query->
        //find previous executions
         def usedFilter
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
@@ -163,7 +163,7 @@ class ReportsController {
         def curdate=new Date()
 
 
-        def count= reportService.countCombinedReports(query)
+        def count= reportService.countExecutionReports(query)
 //        System.err.println("checking query for reports from: "+(curdate.time-time) + " objFilter: "+query.objFilter+", result: "+count);
 
         withFormat{

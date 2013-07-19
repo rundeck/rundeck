@@ -335,92 +335,127 @@ class ReportService  {
         }
     }
 
-    def getExecutionReports(ExecQuery query, boolean isJobs) {
+    /**
+     * Count the query results matching the filter
+     */
+    def countExecutionReports(ExecQuery query) {
+
+        def total = ExecReport.createCriteria().count {
+
+            applyExecutionCriteria(query, delegate)
+
+        }
+        return total
+    }
+    def applyExecutionCriteria(ExecQuery query, delegate, boolean isJobs=true){
         def eqfilters = [
-            stat:'status',
-            reportId:'reportId',
-            jobId:'jcJobId',
+                stat: 'status',
+                reportId: 'reportId',
+                jobId: 'jcJobId',
         ]
         def txtfilters = [
-            proj:'ctxProject',
-            user:'author',
-            node:'node',
-            message:'message',
-            job:'reportId',
-            title:'title',
-            tags:'tags',
+                proj: 'ctxProject',
+                user: 'author',
+                node: 'node',
+                message: 'message',
+                job: 'reportId',
+                title: 'title',
+                tags: 'tags',
         ]
 
-        def filters = [ :]
+        def filters = [:]
         filters.putAll(txtfilters)
         filters.putAll(eqfilters)
 
 
-        def crit = ExecReport.createCriteria()
-        def runlist = crit.list{
-            if(query?.max){
-                maxResults(query?.max.toInteger())
-            }else{
-                maxResults(grailsApplication.config.reportservice.pagination.default?grailsApplication.config.reportservice.pagination.default.toInteger():20)
-            }
-            if(query?.offset){
-                firstResult(query.offset.toInteger())
-            }
+        delegate.with {
 
-            if(query ){
-                txtfilters.each{ key,val ->
-                    if(query["${key}Filter"]){
-                        ilike(val,'%'+query["${key}Filter"]+'%')
+            if (query) {
+                txtfilters.each { key, val ->
+                    if (query["${key}Filter"]) {
+                        ilike(val, '%' + query["${key}Filter"] + '%')
                     }
                 }
 
-                eqfilters.each{ key,val ->
-                    if(query["${key}Filter"]){
-                        eq(val,query["${key}Filter"])
+                eqfilters.each { key, val ->
+                    if (query["${key}Filter"]) {
+                        eq(val, query["${key}Filter"])
                     }
                 }
-                if(query.titleFilter){
+                if (query.titleFilter) {
                     or {
                         eq('jcJobId', '')
                         isNull('jcJobId')
                     }
                 }
 
-                if(query.dostartafterFilter && query.dostartbeforeFilter && query.startbeforeFilter && query.startafterFilter){
-                    between('dateStarted',query.startafterFilter,query.startbeforeFilter)
-                }
-                else if(query.dostartbeforeFilter && query.startbeforeFilter ){
-                    le('dateStarted',query.startbeforeFilter)
-                }else if (query.dostartafterFilter && query.startafterFilter ){
-                    ge('dateStarted',query.startafterFilter)
+                if (query.dostartafterFilter && query.dostartbeforeFilter && query.startbeforeFilter && query.startafterFilter) {
+                    between('dateStarted', query.startafterFilter, query.startbeforeFilter)
+                } else if (query.dostartbeforeFilter && query.startbeforeFilter) {
+                    le('dateStarted', query.startbeforeFilter)
+                } else if (query.dostartafterFilter && query.startafterFilter) {
+                    ge('dateStarted', query.startafterFilter)
                 }
 
-                if(query.doendafterFilter && query.doendbeforeFilter && query.endafterFilter && query.endbeforeFilter){
-                    between('dateCompleted',query.endafterFilter,query.endbeforeFilter)
+                if (query.doendafterFilter && query.doendbeforeFilter && query.endafterFilter && query.endbeforeFilter) {
+                    between('dateCompleted', query.endafterFilter, query.endbeforeFilter)
+                } else if (query.doendbeforeFilter && query.endbeforeFilter) {
+                    le('dateCompleted', query.endbeforeFilter)
                 }
-                else if(query.doendbeforeFilter && query.endbeforeFilter ){
-                    le('dateCompleted',query.endbeforeFilter)
-                }
-                if(query.doendafterFilter && query.endafterFilter ){
-                    ge('dateCompleted',query.endafterFilter)
+                if (query.doendafterFilter && query.endafterFilter) {
+                    ge('dateCompleted', query.endafterFilter)
                 }
             }
 
-            if(query && query.sortBy && filters[query.sortBy]){
-                order(filters[query.sortBy],query.sortOrder=='ascending'?'asc':'desc')
-            }else{
-                order("dateCompleted",'desc')
-            }
-            if(isJobs){
-                or{
+            if (isJobs) {
+                or {
                     isNotNull("jcJobId")
                     isNotNull("jcExecId")
                 }
-            }else{
+            } else {
                 isNull("jcJobId")
                 isNull("jcExecId")
             }
-        };
+        }
+    }
+    def getExecutionReports(ExecQuery query, boolean isJobs) {
+        def eqfilters = [
+                stat: 'status',
+                reportId: 'reportId',
+                jobId: 'jcJobId',
+        ]
+        def txtfilters = [
+                proj: 'ctxProject',
+                user: 'author',
+                node: 'node',
+                message: 'message',
+                job: 'reportId',
+                title: 'title',
+                tags: 'tags',
+        ]
+
+        def filters = [:]
+        filters.putAll(txtfilters)
+        filters.putAll(eqfilters)
+        def runlist=ExecReport.createCriteria().list {
+
+            if (query?.max) {
+                maxResults(query?.max.toInteger())
+            } else {
+                maxResults(grailsApplication.config.reportservice.pagination.default ? grailsApplication.config.reportservice.pagination.default.toInteger() : 20)
+            }
+            if (query?.offset) {
+                firstResult(query.offset.toInteger())
+            }
+
+            applyExecutionCriteria(query, delegate,isJobs)
+
+            if (query && query.sortBy && filters[query.sortBy]) {
+                order(filters[query.sortBy], query.sortOrder == 'ascending' ? 'asc' : 'desc')
+            } else {
+                order("dateCompleted", 'desc')
+            }
+        }
         def executions=[]
         def lastDate = -1
         runlist.each{
@@ -432,57 +467,7 @@ class ReportService  {
 
 
         def total = ExecReport.createCriteria().count{
-
-
-            if(query ){
-                txtfilters.each{ key,val ->
-                    if(query["${key}Filter"]){
-                        ilike(val,'%'+query["${key}Filter"]+'%')
-                    }
-                }
-
-                eqfilters.each{ key,val ->
-                    if(query["${key}Filter"]){
-                        eq(val,query["${key}Filter"])
-                    }
-                }
-                if (query.titleFilter) {
-                    or{
-                        eq('jcJobId','')
-                        isNull('jcJobId')
-                    }
-                }
-
-
-                if(query.dostartafterFilter && query.dostartbeforeFilter && query.startbeforeFilter && query.startafterFilter){
-                    between('dateStarted',query.startafterFilter,query.startbeforeFilter)
-                }
-                else if(query.dostartbeforeFilter && query.startbeforeFilter ){
-                    le('dateStarted',query.startbeforeFilter)
-                }else if (query.dostartafterFilter && query.startafterFilter ){
-                    ge('dateStarted',query.startafterFilter)
-                }
-
-                if(query.doendafterFilter && query.doendbeforeFilter && query.endafterFilter && query.endbeforeFilter){
-                    between('dateCompleted',query.endafterFilter,query.endbeforeFilter)
-                }
-                else if(query.doendbeforeFilter && query.endbeforeFilter ){
-                    le('dateCompleted',query.endbeforeFilter)
-                }
-                if(query.doendafterFilter && query.endafterFilter ){
-                    ge('dateCompleted',query.endafterFilter)
-                }
-            }
-
-            if(isJobs){
-                or{
-                    isNotNull("jcJobId")
-                    isNotNull("jcExecId")
-                }
-            }else{
-                isNull("jcJobId")
-                isNull("jcExecId")
-            }
+            applyExecutionCriteria(query, delegate,isJobs)
         };
 
         return [
