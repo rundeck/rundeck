@@ -819,7 +819,6 @@ div.formRemoteList tr.module_entry td.objIdent{
 table.execoutput{
     font-family: Courier, monospace;
     border: 1px solid #eee;
-    font-size:90%;
 }
 
 table.execoutput th {
