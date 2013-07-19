@@ -34,10 +34,6 @@
         <g:set var="eventsparams" value="${paginateParams}"/>
         var eventsparams=${eventsparams.encodeAsJSON()};
         var pageparams=${pageparams.encodeAsJSON()};
-        var links = {
-            events:'${createLink(controller:"reports",action:"eventsFragment")}'
-        };
-        var boxctl ;
         function _pageInit() {
             try{
             if(pageparams && pageparams.offset){
@@ -50,17 +46,6 @@
 
         var checkUpdatedUrl='';
         function _updateBoxInfo(name, data) {
-            if(boxctl){
-                try{
-                    if(data.url && data.url.indexOf("?")>0){
-                        //remove params
-                        data.params={};
-                    }
-                boxctl.updateDataForTab(name, data);
-                }catch(e){
-
-                }
-            }
             if(name=='events' && data.checkUpdatedUrl){
                 checkUpdatedUrl=data.checkUpdatedUrl;
                 _updateEventsCount(0);
@@ -106,15 +91,8 @@
             var data=eval("("+response.responseText+")"); // evaluate the JSON;
             if(data){
                 var bfilters=data['filterpref'];
-//                boxctl.updateDataForTab(name,{params:{filterName:bfilters[name]}});
                 //reload page
                 document.location="${createLink(controller:'reports',action:'index')}"+(bfilters[name]?"?filterName="+bfilters[name]:'');
-//                try{
-//                    boxctl.reloadTabForName(name);
-//                }catch(e){
-//                    console.log("error: "+e);
-//                }
-
             }
         }
 
