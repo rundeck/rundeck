@@ -422,8 +422,12 @@ class ReportService  {
             }
         };
         def executions=[]
+        def lastDate = -1
         runlist.each{
             executions<<it
+            if (it.dateCompleted.time > lastDate) {
+                lastDate = it.dateCompleted.time
+            }
         }
 
 
@@ -485,6 +489,7 @@ class ReportService  {
             query:query,
             reports:executions,
             total: total,
+            lastDate: lastDate,
             _filters:filters
             ]
 	}
