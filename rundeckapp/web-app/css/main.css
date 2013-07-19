@@ -1875,6 +1875,9 @@ div.commandFlowError{
     border-style:solid;
     border-color: #F00;
 }
+.commandcontent{
+    margin: 0 20px;
+}
 
 #schedExecPage > div.schedExecPagePart {
     margin: 15px 0;
