@@ -307,12 +307,16 @@
             }
         }
         function disableRunBar(){
-            $('runbox').down('input[type="text"]').disable();
-            $('runbox').down('button').disabled=true;
+            if($('runbox')){
+                $('runbox').down('input[type="text"]').disable();
+                $('runbox').down('button').disabled=true;
+            }
         }
         function enableRunBar(){
-            $('runbox').down('input[type="text"]').enable();
-            $('runbox').down('button').disabled=false;
+            if ($('runbox')) {
+                $('runbox').down('input[type="text"]').enable();
+                $('runbox').down('button').disabled=false;
+            }
         }
         function collapseNodeView(){
 //            $$('.obs_shownodes').each(Element.show);
@@ -604,6 +608,7 @@
 
         #runcontent{
             overflow-x:auto;
+            margin-bottom: 20px;;
         }
 
         .commandcontent{
@@ -662,21 +667,60 @@
 <g:render template="/common/messages"/>
     <g:if test="${session.project}">
         <div class="runbox nodesummary ">
-            <g:expander classnames="button obs_shownodes" key="${rkey}nodeForm" open="true">
-                <span class="match"><span class="obs_nodes_allcount">${total}</span> Node${1 != total ? 's' : ''}</span>
-            </g:expander>
+            <g:if test="${run_authorized}">
+                <g:expander classnames="button obs_shownodes" key="${rkey}nodeForm" open="true">
+                    <span class="match"><span class="obs_nodes_allcount">${total}</span> Node${1 != total ? 's' : ''}
+                    </span>
+                </g:expander>
+            </g:if>
+            <g:else>
+                <span class="match"><span class="obs_nodes_allcount">${total}</span> Node${1 != total ? 's' : ''}
+                </span>
+            </g:else>
 
             <span class="type">
-                <g:if test="${!filterName}">
-                    matching filter input
+                <g:if test="${filterName}">
+                    for filter '${filterName}'
                 </g:if>
-                <g:else>
-                    matching filter '${filterName}'
-                </g:else>
             </span>
             <span id='nodedetaillist'>
 
             </span>
+            <g:if test="${session.project && run_authorized}">
+                <span class="runbox" id="runbox">
+                    <g:img file="icon-small-shell.png" width="16px" height="16px"/>
+                    <g:if test="${run_authorized}">
+                        <g:hiddenField name="project" value="${session.project}"/>
+                        <g:hiddenField name="doNodedispatch" value="true"/>
+                        <g:hiddenField name="nodeKeepgoing" value="true"/>
+                        <g:hiddenField name="nodeThreadcount" value="1"/>
+                        <g:hiddenField name="description" value=""/>
+
+                        <g:hiddenField name="workflow.commands[0].adhocExecution" value="true"/>
+                        <g:hiddenField name="workflow.threadcount" value="1"/>
+                        <g:hiddenField name="workflow.keepgoing" value="false"/>
+                        <g:hiddenField name="workflow.project" value="${session.project}"/>
+                        <g:render template="nodeFiltersHidden" model="${[params: params, query: query]}"/>
+                    </g:if>
+                    <g:if test="${run_authorized}">
+                        <g:textField name="workflow.commands[0].adhocRemoteString" size="50"
+                                     placeholder="Enter a shell command"
+                                     autofocus="true"/>
+                    </g:if>
+                    <g:else>
+                        <input type="text" name="workflow.commands[0].adhocRemoteString" size="80"
+                               placeholder="Enter a shell command" autofocus="true" disabled/>
+                    </g:else>
+                    <g:if test="${run_authorized}">
+                        <button onclick="runFormSubmit('runbox');" ${run_authorized ? '' : 'disabled'}>Run</button>
+                    </g:if>
+                    <g:else>
+                        <span class="button disabled" title="You are not authorized to run ad-hoc jobs">Run</span>
+                    </g:else>
+
+                    <div class="hiderun" id="runerror" style="display:none"></div>
+                </span>
+            </g:if>
         </div>
     </g:if>
 <div id="${rkey}nodeForm" class="nodeview pageBody">
@@ -799,43 +843,7 @@
             </table>
 
 </div>
-    <g:if test="${session.project && run_authorized}">
-        <div class="runbox" id="runbox">
-        %{--<g:form action="execAndForget" controller="scheduledExecution" method="post" style="display:inline" onsubmit="return runFormSubmit(this);">--}%
-            Command:
-            <g:img file="icon-small-shell.png" width="16px" height="16px"/>
-            <g:if test="${run_authorized}">
-                <g:hiddenField name="project" value="${session.project}"/>
-                <g:hiddenField name="doNodedispatch" value="true"/>
-                <g:hiddenField name="nodeKeepgoing" value="true"/>
-                <g:hiddenField name="nodeThreadcount" value="1"/>
-                <g:hiddenField name="description" value=""/>
 
-                <g:hiddenField name="workflow.commands[0].adhocExecution" value="true"/>
-                <g:hiddenField name="workflow.threadcount" value="1"/>
-                <g:hiddenField name="workflow.keepgoing" value="false"/>
-                <g:hiddenField name="workflow.project" value="${session.project}"/>
-                <g:render template="nodeFiltersHidden" model="${[params: params, query: query]}"/>
-            </g:if>
-            <g:if test="${run_authorized}">
-                <g:textField name="workflow.commands[0].adhocRemoteString" size="80" placeholder="Enter a shell command"
-                             autofocus="true"/>
-            </g:if>
-            <g:else>
-                <input type="text" name="workflow.commands[0].adhocRemoteString" size="80"
-                       placeholder="Enter a shell command" autofocus="true" disabled/>
-            </g:else>
-        %{--</g:form>--}%
-            <g:if test="${run_authorized}">
-                <button onclick="runFormSubmit('runbox');" ${run_authorized ? '' : 'disabled'}>Run</button>
-            </g:if>
-            <g:else>
-                <span class="button disabled" title="You are not authorized to run ad-hoc jobs">Run</span>
-            </g:else>
-
-            <div class="hiderun" id="runerror" style="display:none"></div>
-        </div>
-    </g:if>
 
     <div id="runcontent"></div>
     <div class="runbox">History</div>
