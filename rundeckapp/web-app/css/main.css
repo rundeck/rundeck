@@ -961,6 +961,9 @@ table.execoutput td.data.datahtml code{
 table.execoutput td.data.log_warn, table.execoutput td.data.log_error {
     color: #800;
 }
+table.execoutput td.data.log_verbose, table.execoutput td.data.log_debug {
+    color: #888;
+}
 table.execoutput td.datahtml{
     white-space:normal;
 }
