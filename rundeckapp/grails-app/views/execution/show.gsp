@@ -90,6 +90,11 @@
         #log{
             margin-bottom:20px;
         }
+
+        .inline_only {
+            display: none;
+        }
+
       </style>
   </head>
 

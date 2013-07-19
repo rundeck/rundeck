@@ -1,92 +1,100 @@
 <%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 
 
+<g:if test="${inlineView}">
+    <div class="inlinestatus">
+            <div>
+                <span class="inline_only ">
+                    <g:link class="action txtbtn" style="padding:5px;"
+                            title="Show execution #${execution.id}"
+                            controller="execution" action="show" id="${execution.id}"
+                            params="">
+                        Execution #${execution.id} &raquo;</g:link>
+                </span>
+            <g:if test="${null != execution.dateCompleted}">
+
+                Status:
+                <span class="${execution.status == 'true' ? 'succeed' : 'fail'}">
+                    <g:if test="${execution.status == 'true'}">
+                        Succeeded
+                    </g:if>
+                    <g:elseif test="${execution.cancelled}">
+                        Killed
+                    </g:elseif>
+                    <g:else>
+                        Failed
+                    </g:else>
+                </span>
+            </g:if>
+            <g:else>
+                Status:
+
+                <span id="runstatus">
+                    <span class="nowrunning">
+                        <img src="${resource(dir: 'images', file: 'icon-tiny-disclosure-waiting.gif')}"
+                             alt="Spinner"/>
+                        Now Running&hellip;
+                    </span>
+                </span>
+                <g:if test="${authChecks[AuthConstants.ACTION_KILL]}">
+                    <span id="cancelresult" style="margin-left:10px">
+                        <span class="action button textbtn act_cancel" onclick="docancel();">Kill <g:message
+                                code="domain.ScheduledExecution.title"/> <img
+                                src="${resource(dir: 'images', file: 'icon-tiny-removex.png')}" alt="Kill"
+                                width="12px" height="12px"/></span>
+                    </span>
+                </g:if>
+
+            </g:else>
+
+            <span id="execRerun" style="${wdgt.styleVisible(if: null != execution.dateCompleted)}">
+                <g:if test="${scheduledExecution}">
+                    <g:if test="${authChecks[AuthConstants.ACTION_RUN]}">
+                        &nbsp;
+                        <g:link controller="scheduledExecution"
+                                action="execute"
+                                id="${scheduledExecution.extid}"
+                                params="${[retryExecId: execution.id]}"
+                                class="action button"
+                                title="Run this Job Again with the same options">
+                            <g:img file="icon-small-run.png" alt="run" width="16px" height="16px"/>
+                            Run Again &hellip;
+                        </g:link>
+                    </g:if>
+                </g:if>
+                <g:else>
+                    <g:if
+                            test="${jobCreateAllowed || adhocRunAllowed}">
+                        <g:if
+                                test="${!scheduledExecution || scheduledExecution && authChecks[AuthConstants.ACTION_READ]}">
+                            <g:link
+                                    controller="scheduledExecution"
+                                    action="createFromExecution"
+                                    params="${[executionId: execution.id]}"
+                                    class="action button"
+                                    title="${g.message(code: 'execution.action.saveAsJob', default: 'Save as Job')}&hellip;">
+                                <g:img file="icon-small-run.png" alt="run" width="16px" height="16px"/>
+                                <g:message code="execution.action.saveAsJob" default="Save as Job"/>&hellip;
+                            </g:link>
+                        </g:if>
+                    </g:if>
+                </g:else>
+            </span>
+        </div>
+        %{--<td width="50%">--}%
+            %{--<div id="progressContainer" class="progressContainer">--}%
+                %{--<div class="progressBar" id="progressBar"--}%
+                     %{--title="Progress is an estimate based on average execution time for this ${g.message(code: 'domain.ScheduledExecution.title')}.">0%</div>--}%
+            %{--</div>--}%
+        %{--</td>--}%
+    </div>
+</g:if>
+
 <div id="commandFlow" class="commandFlow">
 
 <form action="#" id="outputappendform">
 <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; border-spacing: 0;">
-<g:if test="${inlineView}">
-<tr>
-    <td width="50%">
 
-        <g:if test="${null != execution.dateCompleted}">
-
-            Status:
-            <span class="${execution.status == 'true' ? 'succeed' : 'fail'}">
-                <g:if test="${execution.status == 'true'}">
-                    Succeeded
-                </g:if>
-                <g:elseif test="${execution.cancelled}">
-                    Killed
-                </g:elseif>
-                <g:else>
-                    Failed
-                </g:else>
-            </span>
-        </g:if>
-        <g:else>
-            Status:
-
-            <span id="runstatus">
-                <span class="nowrunning">
-                    <img src="${resource(dir: 'images', file: 'icon-tiny-disclosure-waiting.gif')}"
-                         alt="Spinner"/>
-                    Now Running&hellip;
-                </span>
-            </span>
-            <g:if test="${authChecks[AuthConstants.ACTION_KILL]}">
-                <span id="cancelresult" style="margin-left:10px">
-                    <span class="action button textbtn act_cancel" onclick="docancel();">Kill <g:message
-                            code="domain.ScheduledExecution.title"/> <img
-                            src="${resource(dir: 'images', file: 'icon-tiny-removex.png')}" alt="Kill"
-                            width="12px" height="12px"/></span>
-                </span>
-            </g:if>
-
-        </g:else>
-
-        <span id="execRerun" style="${wdgt.styleVisible(if: null != execution.dateCompleted)}">
-            <g:if test="${scheduledExecution}">
-                <g:if test="${authChecks[AuthConstants.ACTION_RUN]}">
-                    &nbsp;
-                    <g:link controller="scheduledExecution"
-                            action="execute"
-                            id="${scheduledExecution.extid}"
-                            params="${[retryExecId: execution.id]}"
-                            class="action button"
-                            title="Run this Job Again with the same options">
-                        <g:img file="icon-small-run.png" alt="run" width="16px" height="16px"/>
-                        Run Again &hellip;
-                    </g:link>
-                </g:if>
-            </g:if>
-            <g:else>
-                <g:if
-                        test="${jobCreateAllowed || adhocRunAllowed}">
-                    <g:if
-                            test="${!scheduledExecution || scheduledExecution && authChecks[AuthConstants.ACTION_READ]}">
-                        <g:link
-                                controller="scheduledExecution"
-                                action="createFromExecution"
-                                params="${[executionId: execution.id]}"
-                                class="action button"
-                                title="${g.message(code: 'execution.action.saveAsJob', default: 'Save as Job')}&hellip;">
-                            <g:img file="icon-small-run.png" alt="run" width="16px" height="16px"/>
-                            <g:message code="execution.action.saveAsJob" default="Save as Job"/>&hellip;
-                        </g:link>
-                    </g:if>
-                </g:if>
-            </g:else>
-        </span>
-    </td>
-    <td width="50%">
-        <div id="progressContainer" class="progressContainer">
-            <div class="progressBar" id="progressBar"
-                 title="Progress is an estimate based on average execution time for this ${g.message(code: 'domain.ScheduledExecution.title')}.">0%</div>
-        </div>
-    </td>
-</tr>
-</g:if>
 <tr>
 
     <td class="outputButtons" style="padding:0">
@@ -96,7 +104,12 @@
                     controller="execution" action="show" id="${execution.id}"
                     params="${[lastlines: params.lastlines, mode: 'tail'].findAll { it.value }}"
                     onclick="selectTab(this);">
-                <g:message code="execution.show.mode.Tail.title" default="Tail Output"/>
+                <g:if test="${inlineView}">
+                    <g:message code="execution.show.mode.Tail.title" default="Tail Output"/>
+                </g:if>
+                <g:else>
+                    <g:message code="execution.show.mode.Log.title" default="Log Output"/>
+                </g:else>
             </g:link>
 
             %{--<g:link class="tab ${followmode == 'browse' ? ' selected' : ''} out_setmode_browse"--}%
@@ -223,7 +236,7 @@
             %{--seconds--}%
         </span>
     </td>
-    <td style="width:300px;text-align: right;">
+    <td style="width:50%; text-align: right;">
         <span style="${execution.dateCompleted ? '' : 'display:none'}" id="viewoptionscomplete">
             <span>
                 <g:link class="action txtbtn" style="padding:5px;"
@@ -260,7 +273,8 @@
 
 <div
         id="commandPerform"
-        style="display:none; margin: 0 20px; "></div>
+        class="commandcontent"
+        style="display:none;  "></div>
 
 <div id="fileload" style="display:none;" class="outputdisplayopts"><img
         src="${resource(dir: 'images', file: 'icon-tiny-disclosure-waiting.gif')}" alt="Spinner"/> <span
