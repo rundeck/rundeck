@@ -3,6 +3,7 @@ package rundeck
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import org.codehaus.groovy.grails.commons.ConfigurationHolder
 
+import java.text.MessageFormat
 import java.text.SimpleDateFormat
 import rundeck.ScheduledExecution
 
@@ -641,5 +642,42 @@ class UtilityTagLib{
     }
     def pluginPropertyFrameworkScopeKey={attrs,body->
         out << PropertyResolverFactory.frameworkPropertyPrefix(PropertyResolverFactory.pluginPropertyPrefix(attrs.service, attrs.provider))+(attrs.property?:'')
+    }
+
+    def markdown={ attrs, body ->
+        out<<body().toString().decodeMarkdown()
+    }
+
+    /**
+     * Outputs the attribute "user", or "you" if it matches the current user,optionally wrap in span with given class if it
+     * is "you", with attribute "youclass"
+     */
+    def username={attrs,body->
+        if(attrs.user==session.user){
+            if(attrs.youclass){
+                out<<"<span class='${attrs.youclass.encodeAsHTML()}'>"
+            }
+            out << "you"
+            if (attrs.youclass) {
+                out << "</span>"
+            }
+        }else{
+            out<<attrs.user
+        }
+    }
+
+    /**
+     * Render plural text for a count of items
+     * attributes: count,
+     */
+    def plural={attrs,body->
+        def singular=attrs.code?g.message(code:attrs.code):attrs.singular?:body()
+        def plural=attrs.code?g.message(code:(attrs.code+'.plural')):attrs.plural?:(singular+'s')
+        def count=null!=attrs.count?attrs.count:null!=attrs.for?attrs.for.size():0
+        def text= count == 1 ? singular.encodeAsHTML() : plural.encodeAsHTML()
+        def parts = [count,text]
+        def code=attrs.verb&&!attrs.textOnly?'plural.count.verb.format':attrs.verb?'plural.verb.format':!attrs.textOnly?'plural.count.format':'plural.format'
+        parts << (count == 1 ? g.message(code: attrs.verb, default: attrs.verb).encodeAsHTML() : g.message(code: attrs.verb + '.plural', default: attrs.verbPlural).encodeAsHTML())
+        out << (new MessageFormat(g.message(code: code, default: '{0} {1} {2}'))).format(parts as Object[], new StringBuffer(), null).toString()
     }
 }

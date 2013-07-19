@@ -16,11 +16,6 @@
     </tr>
 </g:if>
 
-<tr>
-<td><label for="projFilter"><g:message code="jobquery.title.projFilter"/></label>:</td>
-<td><g:textField name="projFilter" value="${query.projFilter}"/></td>
-</tr>
-
     <tr>
 <td><label for="userFilter"><g:message code="jobquery.title.userFilter"/></label>:</td>
 <td><g:textField name="userFilter" value="${query.userFilter}"/></td>

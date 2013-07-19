@@ -1,5 +1,6 @@
 package rundeck
 
+import com.dtolabs.rundeck.app.support.ExecQuery
 import com.dtolabs.rundeck.app.support.ReportQuery
 /*
  * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
@@ -87,8 +88,8 @@ class ReportFilter {
         }
     }
 
-    public ReportQuery createQuery(){
-        ReportQuery query = new ReportQuery(this.properties.findAll{it.key=~/.*Filter$/})
+    public ExecQuery createQuery(){
+        ExecQuery query = new ExecQuery(this.properties.findAll{it.key=~/.*Filter$/})
         return query
     }
 }

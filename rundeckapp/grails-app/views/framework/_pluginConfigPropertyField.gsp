@@ -48,7 +48,7 @@
     <g:hiddenField name="${origfieldname}" value="${values&&values[prop.name]?values[prop.name]:''}"/>
     <g:if test="${prop.type.toString()=='FreeSelect'}">
         <g:textField name="${fieldname}" value="${values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue}"
-                     id="${fieldid}" size="40"/>
+                     id="${fieldid}" size="100"/>
 
         <g:select name="${fieldid+'_sel'}" from="${prop.selectValues}" id="${fieldid}"
                   value="${values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue}"
@@ -75,11 +75,11 @@
     <g:hiddenField name="${origfieldname}" value="${values&&values[prop.name]?values[prop.name]:''}"/>
     <g:if test="${prop.renderingOptions?.('displayType') == StringRenderingConstants.DisplayType.MULTI_LINE}">
         <g:textArea name="${fieldname}" value="${values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue}"
-                 id="${fieldid}" rows="10" cols="80"/>
+                 id="${fieldid}" rows="10" cols="100"/>
     </g:if>
     <g:else>
         <g:textField name="${fieldname}" value="${values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue}"
-                 id="${fieldid}" size="80"/>
+                 id="${fieldid}" size="100"/>
     </g:else>
 </g:else>
     <div class="info note">${prop.description?.encodeAsHTML()}</div>

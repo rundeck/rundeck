@@ -37,8 +37,6 @@ class BaseReport {
             'status',
             'actionType',
             'ctxProject',
-            'ctxType',
-            'ctxName',
             'reportId',
             'tags',
             'author',

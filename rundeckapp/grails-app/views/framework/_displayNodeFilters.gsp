@@ -21,7 +21,7 @@
     Created: Apr 15, 2010 12:45:18 PM
     $Id$
  --%>
-<g:each in="${displayParams.properties.keySet().grep{it=~/^(project|node(Include|Exclude)(?!Precedence).*)$/}.sort()}" var="qparam">
+<g:each in="${displayParams.properties.keySet().grep{it=~/^(node(Include|Exclude)(?!Precedence).*)$/}.sort()}" var="qparam">
     <g:if test="${displayParams[qparam]}">
     <span class="querykey ${qparam=~/Exclude/?'exclude':'include'}"><g:message code="BaseNodeFilters.title.${qparam}"/></span>:
     <span class="queryvalue text ${qparam=~/Exclude/?'exclude':'include'}">

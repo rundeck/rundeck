@@ -172,9 +172,10 @@ function _wfiedit(key,num,isErrorHandler) {
                     if (elem.type === 'text') {
                         elem.observe('keypress', noenter);
                     }
-
                 });
                 initTooltipForElements('#wfli_' + key + ' .obs_tooltip');
+                $('wfli_' + key).select('textarea.apply_ace').each(_addAceTextarea);
+                $('wfli_' + key).select('textarea.apply_resize').each(_applyTextareaResizer);
             }
         }
     });
@@ -259,9 +260,56 @@ function _wfiaddnew(type,nodestep) {
                 });
                 $(newitemElem).down('input[type=text]').focus();
                 initTooltipForElements('#wfli_' + num+ ' .obs_tooltip');
+                $(newitemElem).select('textarea.apply_ace').each(_addAceTextarea);
+                $(newitemElem).select('textarea.apply_resize').each(_applyTextareaResizer);
+
             }
         }
     });
+}
+
+function escapeHtml(unsafe) {
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+function _addAceTextarea(textarea){
+    textarea.hide();
+    var _shadow = new Element('div');
+    _shadow.setStyle({
+        width: "100%",
+        height: "560px"
+    });
+    _shadow.addClassName('ace_text');
+    _shadow.innerHTML= escapeHtml($F(textarea));
+    textarea.insert({ after: _shadow });
+    var editor = ace.edit(_shadow.identify());
+    editor.setTheme("ace/theme/chrome");
+    editor.getSession().setMode("ace/mode/sh");
+    editor.getSession().on('change', function (e) {
+        textarea.setValue(editor.getValue());
+    });
+    editor.focus();
+
+    //add controls
+    var _ctrls = new Element('div');
+    _ctrls.addClassName('ace_text_controls');
+
+    var _soft = new Element('input');
+    _soft.setAttribute('type', 'checkbox');
+    _soft.observe('change', function (e) {
+        editor.getSession().setUseWrapMode(_soft.checked);
+    });
+    var _soft_label = new Element('label');
+    _soft_label.appendChild(_soft);
+    _soft_label.appendChild(document.createTextNode('Soft Wrap'));
+
+    _ctrls.appendChild(_soft_label);
+
+    textarea.insert({before:_ctrls});
 }
 function _wfisavenew(formelem) {
     var params = Form.serialize(formelem);
@@ -423,6 +471,8 @@ function _wfiaddNewErrorHandler(elem,type,num,nodestep){
                         }
                     });
                     initTooltipForElements('#wfli_' + key + ' .obs_tooltip');
+                    $(wfiehli).select('textarea.apply_ace').each(_addAceTextarea);
+                    $(wfiehli).select('textarea.apply_resize').each(_applyTextareaResizer);
                 }
             }
         });
