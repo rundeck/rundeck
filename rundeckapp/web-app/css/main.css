@@ -938,6 +938,17 @@ table.execoutput td.data{
     padding: 1px 3px;
     color: black;
 }
+table.execoutput td.data.datahtml{
+    font-family: verdana, arial, helvetica, sans-serif;
+}
+
+table.execoutput td.data.datahtml a{
+    text-decoration: underline;
+    color: blue;
+}
+table.execoutput td.data.datahtml code{
+    font-family: "Lucida Console", courier, monospace;
+}
 
 table.execoutput td.data.log_warn, table.execoutput td.data.log_error {
     color: #800;
