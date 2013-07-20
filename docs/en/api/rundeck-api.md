@@ -40,6 +40,9 @@ Changes introduced by API Version number:
 * Updated endpoints 
     * `/api/8/run/script` and `/api/8/run/url` -  [Running Adhoc Scripts](#running-adhoc-scripts) and [Running Adhoc Script URLs](#running-adhoc-script-urls)
         * Added two optional parameters for `scriptInterpreter` and `interpreterArgsQuoted`
+* Removed endpoints
+    * `/api/1/report/create` - [Creating History Event Reports](#creating-history-event-reports)
+      * Removed due to History no longer supporting arbitrary event reports.
 
 **Version 7**:
 
@@ -1279,30 +1282,13 @@ The `events` element will also have `max`, `offset`, and `total` attributes, to 
 
 ### Creating History Event Reports
 
-Create a history event report for any external process.
+**REMOVED in version 8**
 
 URL:
 
     /api/1/report/create
 
-Required Parameters:
-
-* `project` : project name
-* `status` : report status, one of "succeeded", "failed" or "aborted"
-* `title` : Title of the report. This should be a short string identifying the process that was run.  E.g. Rundeck jobs use the Job Group and Job Name, and adhoc commands use the string "adhoc".
-* `summary` : A descriptive summary of the result.
-* `nodesuccesscount`:  number of successful nodes: how many nodes the process succeeded on.
-* `nodefailedcount`: number of failed nodes: how many nodes the process failed on.
-
-Optional Parameters:
-
-* `start`: Specify exact date for beginning of the process (defaults to the same as end).
-* `end`: Specify exact date for end of the process (defaults to time the report is received).
-* `script`: Full adhoc command or script that was run, if applicable.
-* `jobID`: Any associated Rundeck Job ID
-* `execID`: Any associated Rundeck Execution ID.
-
-The format for the `end`, and `start` values is either:  a unix millisecond timestamp, or a W3C dateTime string in the format "yyyy-MM-ddTHH:mm:ssZ".
+Requests will now return HTTP status code `404`.
 
 ### Listing Resources
 
