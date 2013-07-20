@@ -29,12 +29,6 @@ on a set of nodes which are specified by the filter options.
 -q, \--quiet
 : Show only error messages.
 
--z, \--terse
-: Leave log messages unadorned
-
--N, \--nodesfile *FILE*
-: Use specified file containing nodes resource model.
-
 -C, \--threadcount *COUNT*
 : Dispatch execution to Nodes using *COUNT* threads.
 
@@ -65,12 +59,6 @@ on a set of nodes which are specified by the filter options.
 -S, \--stdin
 : Execute input read from *STDIN*
 
--Q, \--queue
-: Queue this command to the dispatcher service and run it (default behavior)
-
--L, \--noqueue
-: Execute the command locally not through the central dispatcher
-
 -f, \--follow
 : Follow queued execution output
 
@@ -83,7 +71,7 @@ Command mode occurs when the -p option is present (or there is only
 one Project), and one (and only one) of the following options are
 specified: \--, -s, or -S
 
-The default behavior is to invoke the "queue" mode (`-Q`/`--queue`), 
+The default behavior is to invoke the "queue" mode,
 which will send the desired command to the Rundeck server for execution, 
 and return the ID of the queued Execution.
 
@@ -178,7 +166,8 @@ content is called with the -s script mode described above to transfer and invoke
 
 # QUEUED EXECUTION #
 
-If `-Q`/`--queue`
+The execution will be sent to the Rundeck server, and the execution ID
+echoed.
 
 # LISTING MODE #
 

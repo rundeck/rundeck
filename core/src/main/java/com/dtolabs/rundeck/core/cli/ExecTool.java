@@ -50,7 +50,7 @@ import java.util.*;
  * Main class for <code>dispatch</code> command line tool. This command will dispatch the command either locally or
  * remotely.
  */
-public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams, StepExecutionContext, ContextLogger {
+public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
     /**
      * Short option value for filter exclude precedence option
      */
@@ -69,18 +69,12 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams, St
 
     private boolean argKeepgoing;
 
-    private String argIncludeNodes;
-
-    private String argExcludeNodes;
-
     private File failedNodes;
 
     private Integer argThreadCount = 1;
 
     private String argProject;
 
-    private boolean argNoQueue;
-    private boolean argTerse;
     private boolean argFollow;
     private boolean argProgress;
 
@@ -100,10 +94,6 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams, St
      */
     protected static final Options options = new Options();
 
-    /**
-     * Flag for --noqueue option
-     */
-    public static final String NO_QUEUE_FLAG = "L";
 
     static {
         options.addOption("h", "help", false, "print usage");
@@ -123,12 +113,6 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams, St
         options.addOption("s", "scriptfile", true, "scriptfile script file");
         options.addOption("u", "url", true, "script URL");
         options.addOption("S", "stdin", false, "read script from stdin");
-        options.addOption("N", "nodesfile", true, "Path to arbitrary nodes file (with -L/--noqueue only)");
-        options.addOption(NO_QUEUE_FLAG, "noqueue", false,
-                "Run locally, do not send the execution to the command dispatcher queue");
-        options.addOption("Q", "queue", false,
-                "Send the execution to the command dispatcher queue (default behavior)");
-        options.addOption("z", "terse", false, "leave log messages unadorned");
         options.addOption("f", "follow", false, "Follow queued execution output");
         options.addOption("r", "progress", false, "In follow mode, print progress indicator chars");
     }
@@ -153,10 +137,6 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams, St
     private boolean inlineScript;
     private String inlineScriptContent;
     private String scriptURLString;
-
-    // Set to the value of -N,--nodeslist
-    private String argNodesFile;
-    private File nodesFile;
 
     /**
      * Create a new ExecTool initialized at the RDECK_BASE location via System property
@@ -201,7 +181,6 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams, St
      * @return a new instance of CommandLine
      */
     public CommandLine parseArgs(String[] args) {
-        inputArgs = args.clone();
         int lastArg = -1;
         for (int i = 0; i < args.length; i++) {
             if ("--".equals(args[i])) {
@@ -236,14 +215,6 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams, St
 
         if (cli.hasOption("q")) {
             argQuiet = true;
-        }
-        if (cli.hasOption('z') || (System.getProperties().containsKey("rdeck.cli.terse") && "true".equalsIgnoreCase(
-                System.getProperty("rdeck.cli.terse")))) {
-            argTerse = true;
-        }
-
-        if (cli.hasOption(NO_QUEUE_FLAG)) {
-            argNoQueue = true;
         }
 
         if (cli.hasOption("S") && cli.hasOption("s")) {
@@ -290,16 +261,6 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams, St
             }
         }
 
-        if (cli.hasOption('N')) {
-            if (!argNoQueue) {
-                throw new IllegalArgumentException("-N option requires -L/--noqueue");
-            }
-            if (!new File(cli.getOptionValue('N')).exists()) {
-                throw new IllegalArgumentException("specified nodes file does not exist");
-            }
-            argNodesFile = cli.getOptionValue('N');
-            nodesFile = new File(argNodesFile);
-        }
         if (cli.hasOption("h")) {
             help();
             exit(1);
@@ -371,10 +332,6 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams, St
             list.add("-C");
             list.add(argThreadCount.toString());
         }
-        if (null != argNodesFile) {
-            list.add("-N");
-            list.add(argNodesFile);
-        }
         if (null != filterArgs) {
             for (final Map.Entry<String, String> entry : filterArgs.entrySet()) {
                 list.add(entry.getKey());
@@ -415,8 +372,6 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams, St
     }
 
 
-    private String[] inputArgs;
-
     /**
      * The run method carries out the lifecycle of the tool, parsing args, handling exceptions, and exiting with a
      * suitable exit code.
@@ -437,8 +392,6 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams, St
 
             if (!hasNecessaryRunArgs()) {
                 listAction();
-            } else if (argNoQueue) {
-                runAction();
             } else {
                 queueAction();
             }
@@ -555,207 +508,6 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams, St
     public static final String DEFAULT_LOG_FORMAT = "[%user@%node %command][%level] %message";
     public static final String FRAMEWORK_LOG_RUNDECK_EXEC_CONSOLE_FORMAT = "framework.log.dispatch.console.format";
 
-    ExecutionListener mylistener;
-
-    public synchronized ExecutionListener getExecutionListener() {
-        if (null == mylistener) {
-            mylistener = createWorkflowListener();
-        }
-        return mylistener;
-    }
-
-    public ExecutionListener createExecutionListener() {
-
-        final String logformat;
-        if (getFramework().hasProperty(ExecTool.FRAMEWORK_LOG_RUNDECK_EXEC_CONSOLE_FORMAT)) {
-            logformat = getFramework().getProperty(ExecTool.FRAMEWORK_LOG_RUNDECK_EXEC_CONSOLE_FORMAT);
-        } else {
-            logformat = DEFAULT_LOG_FORMAT;
-        }
-        return new CLIExecutionListener(FailedNodesFilestore.createListener(getFailedNodes()), this, getAntLoglevel(),
-                argTerse,
-                logformat);
-    }
-
-    public ExecutionListener createWorkflowListener() {
-
-        final String logformat;
-        if (getFramework().hasProperty(ExecTool.FRAMEWORK_LOG_RUNDECK_EXEC_CONSOLE_FORMAT)) {
-            logformat = getFramework().getProperty(ExecTool.FRAMEWORK_LOG_RUNDECK_EXEC_CONSOLE_FORMAT);
-        } else {
-            logformat = DEFAULT_LOG_FORMAT;
-        }
-        return new WorkflowExecutionListenerImpl(
-                FailedNodesFilestore.createListener(getFailedNodes()),
-                this, argTerse, logformat);
-    }
-
-    /**
-     * Execute the script with the ExecutionService layer, using a build listener
-     */
-    void runAction() throws Exception {
-        ExecutionResult result = null;
-        Exception exception = null;
-        final Date startDate = new Date();
-        try {
-            //store inline script content (via STDIN or script property) to a temp file
-            if (inlineScript) {
-                File inlinefile = null;
-                if (null != inlineScriptContent) {
-                    inlinefile = writeInlineContentToFile();
-                } else {
-                    inlinefile = writeStdinInputToFile();
-                }
-                setScriptpath(inlinefile.getAbsolutePath());
-                setScriptAsStream(new FileInputStream(inlinefile));
-            } else if (null != scriptpath) {
-                setScriptAsStream(new FileInputStream(getScriptpath()));
-            }
-            //acquire ExecutionService object
-            final ExecutionService service = framework.getExecutionService();
-
-            //submit the execution request to the service layer
-            result = service.executeItem(this, createExecutionItem());
-            if (null != scriptAsStream) {
-                try {
-                    scriptAsStream.close();
-                } catch (IOException e) {
-                    error("Error closing stream: " + e.getMessage());
-                }
-            }
-            if (!result.isSuccess()) {
-                if (null != result.getResultObject()) {
-                    error(result.getResultObject().toString());
-                }
-                if (null != result.getException()) {
-                    error(result.getException().getMessage());
-                }
-            }
-        } catch (ExecutionException e) {
-            error("Unable to perform the execution: " + e.getMessage());
-            exception = e;
-        }
-
-
-        final String tags;
-        final NodeSet filterNodeSelector = createFilterNodeSelector();
-        if (null != filterNodeSelector && null != filterNodeSelector.getInclude() &&
-                filterNodeSelector.getInclude().getTags() != null) {
-            tags = filterNodeSelector.getInclude().getTags();
-        } else {
-            tags = null;
-        }
-        final String script = OptsUtil.join("dispatch", inputArgs);
-        final Collection<INodeEntry> nodeEntryCollection = filterNodes(true).getNodes();
-        if (null != result && result.isSuccess()) {
-            final String resultString =
-                    null != result.getResultObject() ? result.getResultObject().toString() : "dispatch succeeded";
-
-            try {
-                framework.getCentralDispatcherMgr().reportExecutionStatus(
-                        getFrameworkProject(), "dispatch", "succeeded",
-                        0, nodeEntryCollection.size(), tags, script, resultString, startDate, new Date());
-            } catch (CentralDispatcherException e) {
-                e.printStackTrace();
-            }
-            return;
-        }
-        //log failure
-
-        final String failureString =
-                null != result ? (null != result.getResultObject() ? result.getResultObject().toString()
-                        : null != result && result.getException() != null
-                        ? result.getException().getMessage() : "")
-                        : "action failed: result was null";
-        //look for nodeset failure exception
-        int failednodes = nodeEntryCollection.size();
-        if (null != result && null != result.getException() && result.getException() instanceof
-                NodesetFailureException) {
-            NodesetFailureException failure = (NodesetFailureException) result.getException();
-            if (null != failure.getNodeset()) {
-                failednodes = failure.getNodeset().size();
-            }
-        } else if (null != result && null != result.getResultObject() && null != result.getResultObject().getResults
-                ()) {
-            for (final String node : result.getResultObject().getResults().keySet()) {
-                final StatusResult interpreterResult = result.getResultObject().getResults().get(node);
-                if (interpreterResult.isSuccess()) {
-                    failednodes--;
-                }
-            }
-        }
-        try {
-            framework.getCentralDispatcherMgr().reportExecutionStatus(
-                    getFrameworkProject(), "dispatch", "failed",
-                    failednodes, nodeEntryCollection.size() - failednodes, tags, script,
-                    failureString, startDate, new Date());
-        } catch (CentralDispatcherException e) {
-            e.printStackTrace();
-        }
-        if (null != result && null != result.getException()) {
-            throw result.getException();
-        } else if (null != exception) {
-            throw exception;
-        } else {
-            throw new CoreException(failureString);
-        }
-
-    }
-
-    StepExecutionItem createExecutionItem() {
-        if (null != getScript() || null != getServerScriptFilePath() || null != getScriptAsStream()) {
-            return new ScriptFileCommandBase() {
-                public String getScript() {
-                    return ExecTool.this.getScript();
-                }
-
-                public InputStream getScriptAsStream() {
-                    return ExecTool.this.getScriptAsStream();
-                }
-
-                public String getServerScriptFilePath() {
-                    return ExecTool.this.getServerScriptFilePath();
-                }
-
-                public String[] getArgs() {
-                    return ExecTool.this.getArgs();
-                }
-            };
-        } else if (null != scriptURLString) {
-            return new ScriptURLCommandBase() {
-                public String getURLString() {
-                    return ExecTool.this.getScriptURLString();
-                }
-
-                public String[] getArgs() {
-                    return ExecTool.this.getArgs();
-                }
-
-                public StepExecutionItem getFailureHandler() {
-                    return null;
-                }
-
-                public boolean isKeepgoingOnSuccess() {
-                    return false;
-                }
-
-                public String getScriptInterpreter() {
-                    return null;
-                }
-
-                public boolean getInterpreterArgsQuoted() {
-                    return false;
-                }
-            };
-        } else {
-            return new ExecCommandBase() {
-                public String[] getCommand() {
-                    return ExecTool.this.getArgs();
-                }
-            };
-        }
-
-    }
 
     public String getUser() {
         return getFramework().getAuthenticationMgr().getUserInfo().getUsername();
@@ -851,15 +603,15 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams, St
                 "dispatch [-h] [-v] [-V] [-q] [-p project] " +
                         "[-I nodes] [-X xnodes] " +
                         "[--threadcount <1>] [--keepgoing] " +
-                        "[--queue] " +
-                        "[[-S] | [-s <>] | [-- command-args]]",
+                        "[[-S] | [-s <>] | [-u <url>] | [-- command-args]]",
                 null,
                 options,
                 "Examples:\n"
                         + "| dispatch\n | => Prints all nodes\n"
-                        + "| dispatch -p default -- whoami\n | => Runs the whoami command on all nodes\n"
-                        + "| dispatch -X node1 -- uptime\n | => Runs the uptime command on all nodes except node1\n"
-                        + "| dispatch -s myscript.sh\n | => Copies and then runs myscript.sh to matcing nodes\n"
+                        + "| dispatch -p default -f -- whoami\n | => Runs the whoami command on all nodes\n"
+                        + "| dispatch -X node1 -f -- uptime\n | => Runs the uptime command on all nodes except node1\n"
+                        + "| dispatch -s myscript.sh -f\n | => Copies and then runs myscript.sh to matching nodes\n"
+                        + "| dispatch -u http://server/script.sh\n | => Downloads script URL, then runs on matching nodes\n"
                         + "\n"
                         + "[RUNDECK version " + VersionConstants.VERSION + " (" + VersionConstants.BUILD + ")]");
     }
@@ -914,22 +666,6 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams, St
     }
 
 
-    /**
-     * Creates a command logger appropriate for the message level
-     *
-     * @param level log level
-     *
-     * @return Creates a new CommandLogger
-     */
-    protected BuildListener createExecToolCommandLogger(final int level, final Reformatter gen) {
-        // add the build listeners
-        final ExecToolCommandLogger logger = new ExecToolCommandLogger(gen);
-        logger.setMessageOutputLevel(level);
-        logger.setOutputPrintStream(out);
-        logger.setErrorPrintStream(err);
-        logger.setEmacsMode(true);
-        return logger;
-    }
 
     /**
      * Reconfigures the System.out PrintStream to write to a file output stream.
@@ -958,148 +694,25 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams, St
         }
     }
 
-    public boolean isArgKeepgoing() {
-        return argKeepgoing;
-    }
-
-    public void setArgKeepgoing(boolean argKeepgoing) {
-        this.argKeepgoing = argKeepgoing;
-    }
-
-    public boolean isArgQuiet() {
-        return argQuiet;
-    }
-
-    public void setArgQuiet(boolean argQuiet) {
-        this.argQuiet = argQuiet;
-    }
-
-    public boolean isArgDebug() {
-        return argDebug;
-    }
-
-    public void setArgDebug(boolean argDebug) {
-        this.argDebug = argDebug;
-    }
-
-    public boolean isArgVerbose() {
-        return argVerbose;
-    }
-
-    public void setArgVerbose(boolean argVerbose) {
-        this.argVerbose = argVerbose;
-    }
-
-    public String getArgIncludeNodes() {
-        return argIncludeNodes;
-    }
-
-    public void setArgIncludeNodes(String argIncludeNodes) {
-        this.argIncludeNodes = argIncludeNodes;
-    }
-
-    public String getArgExcludeNodes() {
-        return argExcludeNodes;
-    }
-
-    public void setArgExcludeNodes(String argExcludeNodes) {
-        this.argExcludeNodes = argExcludeNodes;
-    }
-
-    public Integer getArgThreadCount() {
-        return argThreadCount;
-    }
-
-    public void setArgThreadCount(Integer argThreadCount) {
-        this.argThreadCount = argThreadCount;
-    }
-
-    public String getArgDepot() {
-        return getArgFrameworkProject();
-    }
-
-    public void setArgDepot(String argProject) {
-        setArgFrameworkProject(argProject);
-    }
 
     public String getArgFrameworkProject() {
         return argProject;
-    }
-
-    public void setArgFrameworkProject(String argProject) {
-        this.argProject = argProject;
-    }
-
-    public Map getExcludeMap() {
-        return excludeMap;
-    }
-
-    public void setExcludeMap(Map excludeMap) {
-        this.excludeMap = excludeMap;
-    }
-
-    public Map getIncludeMap() {
-        return includeMap;
-    }
-
-    public void setIncludeMap(Map includeMap) {
-        this.includeMap = includeMap;
     }
 
     public String[] getArgsDeferred() {
         return null != argsDeferred ? argsDeferred.clone() : null;
     }
 
-    public void setArgsDeferred(String[] argsDeferred) {
-        this.argsDeferred = null != argsDeferred ? argsDeferred.clone() : null;
-    }
-
-    public boolean isArgExcludePrecedence() {
-        return argExcludePrecedence;
-    }
-
-    public void setArgExcludePrecedence(boolean argExcludePrecedence) {
-        this.argExcludePrecedence = argExcludePrecedence;
-    }
-
     public String getScriptpath() {
         return scriptpath;
-    }
-
-    public void setScriptpath(String scriptpath) {
-        this.scriptpath = scriptpath;
     }
 
     public boolean isInlineScript() {
         return inlineScript;
     }
 
-    public void setInlineScript(boolean inlineScript) {
-        this.inlineScript = inlineScript;
-    }
-
     public String getInlineScriptContent() {
         return inlineScriptContent;
-    }
-
-    public void setInlineScriptContent(String inlineScriptContent) {
-        this.inlineScriptContent = inlineScriptContent;
-    }
-
-    public File getFailedNodes() {
-        return failedNodes;
-    }
-
-    public void setFailedNodes(File failedNodes) {
-        this.failedNodes = failedNodes;
-    }
-
-    public boolean isArgNoQueue() {
-        return argNoQueue;
-    }
-
-    public void setArgNoQueue(boolean argNoQueue) {
-        this.argNoQueue = argNoQueue;
     }
 
     public Framework getFramework() {
@@ -1178,14 +791,6 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams, St
         return null;
     }
 
-    public Map<String, Map<String, String>> getPrivateDataContext() {
-        return null;
-    }
-
-    public File getNodesFile() {
-        return nodesFile;
-    }
-
     /**
      * Return true if exclusion should have precedence in node filter args
      *
@@ -1260,25 +865,12 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams, St
         FrameworkProject project = framework.getFrameworkProjectMgr().getFrameworkProject(argProject);
 
         try {
-            if (null != argNodesFile) {
-                return loadLocalFile(argNodesFile);
-            } else {
-                return project.getNodeSet();
-            }
+            return project.getNodeSet();
         } catch (NodeFileParserException e) {
             throw new CoreException("Error parsing nodes resource file: " + e.getMessage(), e);
         }
     }
 
-    private INodeSet loadLocalFile(String argNodesFile) {
-        try {
-            return FileResourceModelSource.parseFile(argNodesFile, framework, argProject);
-        } catch (ConfigurationException e) {
-            throw new CoreException("Error parsing nodes resource file: " + e.getMessage(), e);
-        } catch (ResourceModelSourceException e) {
-            throw new CoreException("Error parsing nodes resource file: " + e.getMessage(), e);
-        }
-    }
 
 
     INodeSet filterNodes() {
@@ -1320,19 +912,6 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams, St
     public String getScriptURLString() {
         return scriptURLString;
     }
-
-    public void setScriptURLString(String scriptURLString) {
-        this.scriptURLString = scriptURLString;
-    }
-
-    public int getStepNumber() {
-        return 1;
-    }
-
-    public List<Integer> getStepContext() {
-        return null;
-    }
-
 
     /**
      * Action to display matching nodes
@@ -1384,73 +963,7 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams, St
         }
     }
 
-    /**
-     * This BuildListener repeats all events to a secondary BuildListener, but converts messageLogged events' priorities
-     * (log level) based on the values given in the levels Map.
-     */
-    public static class LogLevelConvertBuildListener implements BuildListener {
-        private BuildListener listener;
-        private Map<Integer, Integer> levels = new HashMap<Integer, Integer>();
-
-        /**
-         * Create a new LogLevelConvertBuildListener
-         *
-         * @param listener existing BuildListener that will receive all messages
-         * @param levels   map of Integer to Integer values, converting one log level into another.  See {@link
-         *                 Project}
-         */
-        public LogLevelConvertBuildListener(final BuildListener listener, final Map<Integer, Integer> levels) {
-            this.listener = listener;
-            this.levels = levels;
-        }
-
-        public void messageLogged(final BuildEvent event) {
-            final int prio = event.getPriority();
-
-            if (levels.containsKey(prio)) {
-                final int newprio = levels.get(prio);
-                event.setMessage(event.getMessage(), newprio);
-            }
-            listener.messageLogged(event);
-        }
-
-        public void buildStarted(BuildEvent event) {
-            listener.buildStarted(event);
-        }
-
-        public void buildFinished(BuildEvent event) {
-            listener.buildFinished(event);
-        }
-
-        public void targetStarted(BuildEvent event) {
-            listener.targetStarted(event);
-        }
-
-        public void targetFinished(BuildEvent event) {
-            listener.targetFinished(event);
-        }
-
-        public void taskStarted(BuildEvent event) {
-            listener.taskStarted(event);
-        }
-
-        public void taskFinished(BuildEvent event) {
-            listener.taskFinished(event);
-        }
-    }
-
-
     InputStream instream = System.in;
-
-    /**
-     * Reads input from the STDIN channel and saves it to a temporary file. Files are stored in framework.var.dir (eg,
-     * RDECK_BASE/var)
-     *
-     * @return File containing the user input from stdin
-     */
-    protected File writeStdinInputToFile() {
-        return writeInputToFile(instream);
-    }
 
     protected File writeInputToFile(final InputStream input) {
         verbose("reading stdin and saving it to file...");
@@ -1461,30 +974,6 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams, St
             throw new CoreException("error while reading script input from stdin: " + e.getMessage());
         }
         verbose("Wrote stdin input to file: " + tempfile);
-        try {
-            ScriptfileUtils.setExecutePermissions(tempfile);
-        } catch (IOException e) {
-            warn(
-                    "Failed to set execute permissions on tempfile, execution may fail: " + tempfile.getAbsolutePath());
-        }
-        return tempfile;
-    }
-
-    /**
-     * Reads input from the STDIN channel and saves it to a temporary file. Files are stored in framework.var.dir (eg,
-     * RDECK_BASE/var)
-     *
-     * @return File containing the user input from stdin
-     */
-    protected File writeInlineContentToFile() {
-        final File tempfile;
-        verbose("writing inline content to temporary file...");
-        try {
-            tempfile = ScriptfileUtils.writeScriptTempfile(framework, getInlineScriptContent());
-        } catch (IOException e) {
-            throw new CoreException("error while reading script input from stdin: " + e.getMessage());
-        }
-        verbose("Wrote inline script content to file: " + tempfile);
         try {
             ScriptfileUtils.setExecutePermissions(tempfile);
         } catch (IOException e) {

@@ -451,17 +451,12 @@ The ``uptime`` command is queued and executed. The output can be followed by
 going to the URL returned in the output (eg, http://strongbad:4440/execution/follow/7). 
 
 Sometimes it is desirable to execute the command
-directly, and not queue it. Use the ``--noqueue`` option to execute
-and follow the output from the console.
+and follow the output from the console. Use the `-f` flag to echo the output as the command is executed by the server:
 
-    $ dispatch -I os-family=unix  --noqueue -- uptime
+    $ dispatch -I os-family=unix -f -- uptime
     [demo@centos54 dispatch][INFO]  10:34:54 up 46 min,  2 users,  load average: 0.00, 0.00, 0.00
     [alexh@strongbad dispatch][INFO] 10:34  up 2 days, 18:51, 2 users, load averages: 0.55 0.80 0.75
     [examples@ubuntu dispatch][INFO]  10:35:01 up 2 days, 18:40,  2 users,  load average: 0.00, 0.01, 0.00
-
-**Note**: The "--noqueue" flag is useful for testing and debugging execution
-but undermines visibility since execution is not managed through the central execution
-queue.
 
 Notice, the `dispatch` command prepends the message output
 with a header that helps understand from where the output originates. The header
@@ -471,7 +466,7 @@ occurred.
 Execute the Unix `whomi` command to see what user ID is
 used by that Node to run dispatched commands:
 
-    $ dispatch -I os-family=unix --noqueue -- whoami
+    $ dispatch -I os-family=unix -f -- whoami
     [demo@centos54 dispatch][INFO] demo
     [alexh@strongbad dispatch][INFO] alexh
     [examples@ubuntu dispatch][INFO] examples
@@ -626,7 +621,7 @@ exit with code 1.
 Commands or scripts that exit with a non-zero exit code will cause the
 dispatch to fail unless the keepgoing flag is set.
 
-    $ dispatch -I os-family=unix -s /tmp/listening.sh --noqueue
+    $ dispatch -I os-family=unix -s /tmp/listening.sh -f
     [alexh@strongbad dispatch][INFO] Connecting to centos54:22
     [alexh@strongbad dispatch][INFO] done.
     [demo@centos54 dispatch][INFO] not listening on 4440
@@ -638,7 +633,7 @@ Running the command again, but this time with the "-K" keepgoing flag
 will cause dispatch to continue and print on which nodes the script
 failed:
 
-    $ dispatch  --noqueue -K -I tags=web -s /tmp/listening.sh
+    $ dispatch -f -K -I tags=web -s /tmp/listening.sh
     [alexh@strongbad dispatch][INFO] Connecting to centos54:22
     [alexh@strongbad dispatch][INFO] done.
     [demo@centos54 dispatch][INFO] not listening on 4440
