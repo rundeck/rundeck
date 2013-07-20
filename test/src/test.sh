@@ -109,17 +109,10 @@ if [ 0 != $? ] ; then
 fi
 
 
-# try dispatch
-echo "dispatch --noqueue option"
-dispatch -p test --noqueue -- uptime
-if [ 0 != $? ] ; then
-	echo Failed to dispatch uptime via cli : $!
-	exit 2
-fi
 
-dispatch -p test -Q -- uptime > $DIR/exec.out 
+dispatch -p test -- uptime > $DIR/exec.out 
 if [ 0 != $? ] ; then
-	echo Failed: dispatch -Q -- uptime : $!
+	echo Failed: dispatch -- uptime : $!
 	exit 2
 fi
 grep 'Succeeded queueing' -q $DIR/exec.out 
