@@ -34,8 +34,6 @@ function doCreateProject(){
 //-->
 </script>
 <div  class="topbar solo" >
-<g:if test="${session?.user && request.subject}">
-<!--<div class="secondbar">-->
 
     <a href="${grailsApplication.config.rundeck.gui.titleLink ? grailsApplication.config.rundeck.gui.titleLink : g.resource(dir: '/')}"
        title="Home" class="home" style="height:29px;">
@@ -51,6 +49,7 @@ function doCreateProject(){
              height="${appLogoH}"/>
         ${appTitle}
     </a>
+<g:if test="${session?.user && request.subject}">
    <span id="top_tabs">
 
 
@@ -109,13 +108,6 @@ function doCreateProject(){
 
 </g:if>
 
-<!--</div>-->
-    %{--<g:if test="${session?.project}">
-        <img src="${resource(dir:'images',file:'icon-tiny-rarrow-sep.png')}" alt="project: " width="7px" height="12px"/>
-        <span class="projectinfo">
-            <g:link controller="framework" action="showFrameworkProject" params="[project:session.project]" title="Select a project">${session.project}</g:link>
-        </span>
-    </g:if>--}%
     <g:set var="helpLinkUrl" value="${g.helpLinkUrl()}"/>
     <g:if test="${session?.user && request.subject}">
         <span class="headright">
