@@ -118,6 +118,9 @@ class ProjectService {
             }
             //convert dates
             convertStringsToDates(object, ['dateStarted', 'dateCompleted'],"Report ${identity}")
+            if (!(object.dateCompleted instanceof Date)) {
+                object.dateCompleted = new Date()
+            }
             def report
             try {
                 report = ExecReport.fromMap(object)
@@ -179,6 +182,12 @@ class ProjectService {
                 }
                 //convert dates
                 convertStringsToDates(object, ['dateStarted', 'dateCompleted'], "Execution($ecount) ID ${object.id}")
+                if(!(object.dateCompleted instanceof Date)){
+                    object.dateCompleted=new Date()
+                    object.status='false'
+                    object.cancelled=true
+                    object.abortedby='system'
+                }
                 try {
                     def newexec = Execution.fromMap(object, se)
                     execidmap[newexec]=object.id
@@ -393,6 +402,7 @@ class ProjectService {
         log.info("Loaded ${loadexecresults.size()} executions, map: ${execidmap}")
         //load reports
         def loadedreports=[]
+        def execids = loadexecresults*.id*.toString()
         reportxml.each{rxml->
             def report=loadHistoryReport(rxml,execidmap, jobsByOldId,reportxmlnames[rxml])
             report.ctxProject = projectName
@@ -400,7 +410,18 @@ class ProjectService {
                 log.error("Unable to save report: ${report.errors} (file ${rxml})")
                 return
             }
+            execids.remove(report.jcExecId)
             loadedreports<<report
+        }
+        //generate reports for executions without matching reports
+        execids.each{ eid->
+            Execution newe=Execution.get(Long.parseLong(eid))
+            def report=ExecReport.fromExec(newe)
+            if (!report.save()) {
+                log.error("Unable to save generated report: ${report.errors} (execution ${eid})")
+                return
+            }
+            loadedreports << report
         }
         log.info("Loaded ${loadedreports.size()} reports")
     }
