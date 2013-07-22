@@ -307,7 +307,7 @@ div.progressContainer div.progressContent{
                 <g:if test="${nodestatus }">
                         <g:set var="vals" value="${[nodestatus.succeeded,nodestatus.failed,nodestatus.total]}"/>
                         <g:set var="summary" value=""/>
-                        <g:if test="${vals && vals.size()>2 && vals[2]!='0'}">
+                        <g:if test="${vals && vals.size()>2 && vals[2]!='0' && vals[2]!=0}">
                             <g:set var="a" value="${vals[0] instanceof String? Integer.parseInt(vals[0]):vals[0]}"/>
                             <g:set var="fai" value="${vals[1] instanceof String? Integer.parseInt(vals[1]):vals[1]}"/>
                             <g:set var="den" value="${vals[2] instanceof String? Integer.parseInt(vals[2]):vals[2]}"/>
