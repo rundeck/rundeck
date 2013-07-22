@@ -771,12 +771,12 @@
                     </g:if>
                 </g:if>
                 <g:if test="${!params.nofilters}">
-                <div style="margin: 10px 0 5px 0;" id="${rkey}nodesfilterholder" >
+                <div id="${rkey}nodesfilterholder" >
                     %{--<g:if test="${wasfiltered}">--}%
 
 
-                        <div style="margin:5px 0; padding:5px 0;">
-                            <span style="padding:5px 0;margin:5px 0;${!filtersOpen?'':'display:none;'} " id='${rkey}filterdispbtn' >
+                        <div >
+                            <span style="${!filtersOpen?'':'display:none;'} " id='${rkey}filterdispbtn' >
                             <span title="Click to modify filter" class="info textbtn query action obs_filtertoggle" >
                                 <g:render template="displayNodeFilters" model="${[displayParams:query]}"/>
                                 <img src="${resource(dir:'images',file:'icon-tiny-disclosure.png')}" width="12px" height="12px"/></span>
