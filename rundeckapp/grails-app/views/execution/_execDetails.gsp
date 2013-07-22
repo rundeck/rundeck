@@ -75,7 +75,7 @@
     <g:set var="NODE_FILTER_MAP" value="${['':'Hostname','OsName':'OS Name','OsFamily':'OS Family','OsArch':'OS Architecture','OsVersion':'OS Version']}"/>
 
     <g:if test="${execdata?.doNodedispatch}">
-    <tbody class="section">
+    <tbody>
     <g:if test="${!nomatchednodes}">
             <tr>
                 <td>Node Filters:</td>
@@ -145,7 +145,7 @@
     </g:if>
     <g:else>
         <g:if test="${!nomatchednodes}">
-        <tbody class="section">
+        <tbody>
         <tr>
             <td>Node:</td>
             <td id="matchednodes_${rkey}" class="matchednodes embed"  colspan="3">
