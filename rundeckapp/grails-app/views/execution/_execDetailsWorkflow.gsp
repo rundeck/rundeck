@@ -36,10 +36,7 @@
         </label>
     </g:if>
     <g:else>
-        <g:message code="${workflow?.keepgoing ? 'Yes' : 'No'}"/>
-        <span class="info note">
-            <g:message code="Workflow.property.keepgoing.${workflow?.keepgoing ? true : false}.description"/>
-        </span>
+        <g:message code="Workflow.property.keepgoing.${workflow?.keepgoing ? true : false}.description"/>
     </g:else>
     </div>
 <div>
