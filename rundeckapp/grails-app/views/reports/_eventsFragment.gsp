@@ -46,9 +46,9 @@
         </div>
         </g:if>
     </div>
-            <div style="padding-top:20px;text-align:left;vertical-align:top;" id="${rkey}evtscontent">
+            <div id="${rkey}evtscontent">
                 <g:if test="${!params.nofilters}">
-                <div>
+                <div class="queryresultsinfo">
                         <g:if test="${!params.compact}">
                             <span class="prompt">${total} Results</span>
                             matching ${filterName?'filter':'your query'}

@@ -1782,8 +1782,12 @@ span.query.textbtn  span.querykey.exclude{
 span.query.textbtn span.querykey.include{
     color:blue;
 }
-div.jobsReport{
+
+div.eventspage div.jobsReport {
     margin:10px 0;
+}
+div.eventspage div.queryresultsinfo{
+    margin: 10px 0;
 }
 
 /* filter fields */

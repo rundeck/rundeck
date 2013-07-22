@@ -160,7 +160,7 @@
             params="${filterName?[filterName:filterName]:params}"><span class="badge newcontent active" id="eventsCountContent" onclick="boxctl.reloadTabForName('events');" title="click to load new events"></span>
     </g:link>
     </span>
-    <div id="evtsholder">
+    <div id="evtsholder" class="eventspage">
     <g:render template="eventsFragment" model="${[paginateParams:paginateParams,params:params,reports:reports,filterName:filterName, filtersOpen: true]}"/>
     </div>
 
