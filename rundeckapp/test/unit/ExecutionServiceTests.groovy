@@ -1096,8 +1096,8 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
         assertNotNull(exec1.dateCompleted)
         assertEquals("false", exec1.status)
 
-        assertNotNull(exec2.dateCompleted)
-        assertEquals("false", exec2.status)
+        assertNull(exec2.dateCompleted)
+        assertEquals(null, exec2.status)
 
     }
 

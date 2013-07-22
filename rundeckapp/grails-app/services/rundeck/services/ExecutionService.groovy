@@ -428,7 +428,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
      * @param serverUUID if not null, only match executions assigned to the given serverUUID
      */
     def cleanupRunningJobs(String serverUUID=null) {
-        def found = serverUUID ? Execution.findAllByDateCompletedAndServerNodeUUID(null, serverUUID) : Execution.findAllByDateCompleted(null)
+        def found = Execution.findAllByDateCompletedAndServerNodeUUID(null, serverUUID)
         found.each { Execution e ->
             saveExecutionState(e.scheduledExecution?.id, e.id, [status: String.valueOf(false), dateCompleted: new Date(), cancelled: true], null)
             log.error("Stale Execution cleaned up: [${e.id}]")
