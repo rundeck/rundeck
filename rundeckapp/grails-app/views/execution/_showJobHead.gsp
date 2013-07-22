@@ -9,6 +9,7 @@
             >
                 <span class="jobName">${scheduledExecution?.jobName.encodeAsHTML()}</span></g:link>
 
+            <g:if test="${scheduledExecution.groupPath}">
             <span class="jobGroup">
                 <span class="grouplabel">
                     <g:link controller="menu" action="jobs"
@@ -22,6 +23,7 @@
                     </g:link>
                 </span>
             </span>
+            </g:if>
         </span>
         <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_UPDATE)}">
             <g:link controller="scheduledExecution" title="Edit Job" action="edit" id="${scheduledExecution.extid}"

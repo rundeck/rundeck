@@ -44,14 +44,16 @@
                         class=" ${execution?.status == 'true' ? 'jobok' : null == execution?.dateCompleted ? 'jobrunning' : execution?.cancelled ? 'jobwarn' : 'joberror'}" absolute="${absolute ? 'true' :'false'}">
                 <span class="jobName">${scheduledExecution?.jobName.encodeAsHTML()}</span></g:link>
 
+                <g:if test="${execInfo.groupPath}">
                 <span class="jobGroup">
                     <span class="grouplabel">
                         <g:link controller="menu" action="jobs" params="${[groupPath:execInfo.groupPath]}" title="${'View '+g.message(code:'domain.ScheduledExecution.title')+'s in this group'}"  absolute="${absolute?'true':'false'}">
                             <g:if test="${!noimgs}"><img src="${resource(dir:'images',file:'icon-small-folder.png')}" width="16px" height="15px" alt=""/></g:if>
-                            ${execInfo.groupPath}
+                            ${execInfo.groupPath.encodeAsHTML()}
                         </g:link>
                     </span>
                 </span>
+                </g:if>
 
             </span>
             <span class="jobDesc">${execInfo?.description.encodeAsHTML()}</span>
