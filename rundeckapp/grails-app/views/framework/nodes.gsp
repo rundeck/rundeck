@@ -423,6 +423,7 @@
                 lastlines: ${params.lastlines ? params.lastlines : defaultLastLines},
                 maxLastLines: ${maxLastLines},
                  showFinalLine: {value: false, changed: false},
+                 colStep:{value:false},
                 tailmode: true,
                  taildelay:1,
                  truncateToTail:true,

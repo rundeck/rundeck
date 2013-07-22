@@ -586,6 +586,9 @@ var FollowControl = Class.create({
             }
             if (!this.cmdoutputtbl) {
                 this.cmdoutputtbl = this.createTable();
+                this.setColNode(this.colNode.value);
+                this.setColStep(this.colStep.value);
+                this.setColTime(this.colTime.value);
             }
             if (!this.runningcmd) {
                 this.runningcmd = new Object();

@@ -173,42 +173,39 @@
                         class="action  join"
                         title="Click to change"
                         id="colTimeShowLabel">
-                    <input
-                            type="checkbox"
+                    <g:checkBox
                             name="coltime"
                             id="colTimeShow"
                             value="true"
-                            checked="checked"
+                            checked="true"
                             class="opt_display_col_time"
-                            style=""/>
+                            />
                     Time
                 </label>
                 <label
                         class="action  join"
                         title="Click to change"
                         id="colNodeShowLabel">
-                    <input
-                            type="checkbox"
+                    <g:checkBox
                             name="coltime"
                             id="colNodeShow"
                             value="true"
-                            checked="checked"
+                            checked="true"
                             class="opt_display_col_node"
-                            style=""/>
+                            />
                     Node
                 </label>
                 <label
                         class="action  "
                         title="Click to change"
                         id="colStepShowLabel">
-                    <input
-                            type="checkbox"
+                    <g:checkBox
                             name="coltime"
                             id="colStepShow"
                             value="true"
-                            checked="checked"
+                            checked="${!inlineView}"
                             class="opt_display_col_step"
-                            style=""/>
+                            />
                     Step
                 </label>
             </span>
