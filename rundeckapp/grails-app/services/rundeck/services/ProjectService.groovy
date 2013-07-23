@@ -115,6 +115,9 @@ class ProjectService {
             //remap exec id if necessary
             if (object.jcExecId && execIdMap && execIdMap[object.jcExecId]) {
                 object.jcExecId= execIdMap[object.jcExecId]
+            }else {
+                //skip report for exec id that cannot be found
+                return null
             }
             //convert dates
             convertStringsToDates(object, ['dateStarted', 'dateCompleted'],"Report ${identity}")
@@ -153,10 +156,11 @@ class ProjectService {
      * Parse Execution objects from an XML file, and return the set of parsed executions
      * @param xmlfile input file
      * @param jobIdMap map of UUID/ScheduledExecution IDs to new UUIDs for reassigning execution to jobs
+     * @param skipJobIds list of UUID/job id to skip execution import
      * @return map data: 'executions' list of Executions that were parsed, 'execidmap' map of new Executions to the input IDs from the XML
      * @throws ProjectServiceException if an error occurs
      */
-    def loadExecutions(xmlinput,Map jobIdMap=null) throws ProjectServiceException {
+    def loadExecutions(xmlinput,Map jobIdMap=null, skipJobIds = []) throws ProjectServiceException {
         Node doc = parseXml(xmlinput)
         if (!doc) {
             throw new ProjectServiceException("XML Document could not be parsed.")
@@ -179,6 +183,9 @@ class ProjectService {
                 def se=null
                 if(object.jobId && jobIdMap && jobIdMap[object.jobId]){
                     se=scheduledExecutionService.getByIDorUUID(jobIdMap[object.jobId])
+                }else if(object.jobId && skipJobIds && skipJobIds.contains(object.jobId)){
+                    log.debug("Execution skipped ${object.id} for job ${object.jobId}")
+                    return
                 }
                 //convert dates
                 convertStringsToDates(object, ['dateStarted', 'dateCompleted'], "Execution($ecount) ID ${object.id}")
@@ -282,7 +289,10 @@ class ProjectService {
         }
 
     }
-    def importToProject(FrameworkProject project,String user, String roleList, Framework framework, ZipInputStream input) throws ProjectServiceException{
+    def importToProject(FrameworkProject project,String user, String roleList, Framework framework, ZipInputStream input) throws ProjectServiceException {
+        return importToProject(project, user, roleList, framework, input, [:])
+    }
+    def importToProject(FrameworkProject project,String user, String roleList, Framework framework, ZipInputStream input, Map options) throws ProjectServiceException{
         ZipReader zip = new ZipReader(input)
 //        zip.debug=true
         def jobxml=[]
@@ -291,6 +301,8 @@ class ProjectService {
         def Map<String,File> execout=[:]
         def reportxml=[]
         def reportxmlnames=[:]
+        def executionImportBehavior = options.executionImportBehavior ?: 'import'
+        def importExecutions = executionImportBehavior == 'import'
         zip.read{
             '*/'{ //rundeck-<projectname>/
                 'jobs/'{
@@ -300,18 +312,20 @@ class ProjectService {
                         jobxmlmap[tempfile]=[path:path,name:name]
                     }
                 }
-                'executions/'{
-                    'execution-.*\\.xml' {path, name, inputs ->
-                        execxml << copyToTemp()
+                if(importExecutions){
+                    'executions/'{
+                        'execution-.*\\.xml' {path, name, inputs ->
+                            execxml << copyToTemp()
+                        }
+                        'output-.*\\.txt' {path, name, inputs ->
+                            execout[name]= copyToTemp()
+                        }
                     }
-                    'output-.*\\.txt' {path, name, inputs ->
-                        execout[name]= copyToTemp()
-                    }
-                }
-                'reports/'{
-                    'report-.*\\.xml' {path, name, inputs ->
-                        reportxml<< copyToTemp()
-                        reportxmlnames[reportxml[-1]]=name
+                    'reports/'{
+                        'report-.*\\.xml' {path, name, inputs ->
+                            reportxml<< copyToTemp()
+                            reportxmlnames[reportxml[-1]]=name
+                        }
                     }
                 }
             }
@@ -323,6 +337,7 @@ class ProjectService {
         def loadjoberrors=[]
         def jobIdMap=[:]
         def jobsByOldId=[:]
+        def skipJobIds=[]
         def projectName= project.name
         //load jobs
         jobxml.each { File jxml->
@@ -340,13 +355,25 @@ class ProjectService {
                 //change project name to the current project
                 jobset*.project= projectName
                 //remove uuid to reset it
-                jobset*.uuid=null
+                def uuidBehavior=options.jobUUIDBehavior?:'preserve'
+                switch (uuidBehavior){
+                    case 'remove':
+                        jobset*.uuid = null
+                        break;
+                    case 'preserve':
+                        //no-op, leave UUIDs and attempt to import
+                        break;
+                    break;
+                }
                 def results=scheduledExecutionService.loadJobs(jobset,'update',user,roleList,[:],framework)
                 if(results.errjobs){
-                    log.warn("Failed loading (${results.errjobs.size()}) jobs from XML at archive path: ${path}${name}")
-                    loadjoberrors.addAll(results.errjobs)
+                    log.error("Failed loading (${results.errjobs.size()}) jobs from XML at archive path: ${path}${name}")
                     results.errjobs.each {
-                        log.warn("Job at index [${it.entrynum}] had errors: ${it.errmsg}")
+                        loadjoberrors<< "Job at index [${it.entrynum}] at archive path: ${path}${name} had errors: ${it.errmsg}"
+                        log.error("Job at index [${it.entrynum}] had errors: ${it.errmsg}")
+                        if(it.entrynum!=null && oldids[it.entrynum-1]){
+                            skipJobIds<< oldids[it.entrynum - 1]
+                        }
                     }
                 }
                 loadjobresults.addAll(results.jobs)
@@ -361,62 +388,44 @@ class ProjectService {
 
         log.info("Loaded ${loadjobresults.size()} jobs")
 
-        // map from old execution ID to new ID
-        def execidmap=[:]
-        def loadexecresults=[]
-        //load executions, and move/rewrite outputfile names
-        execxml.each { File exml->
-            def results=loadExecutions(exml,jobIdMap)
-            def execlist=results.executions
-            def oldids=results.execidmap
-            //check outputfile exists in mapping
-            execlist.each{Execution e->
-                e.project=projectName
-                if (e.workflow && !e.workflow.save()) {
-                    log.error("Unable to save workflow for execution: ${e.workflow.errors} (file ${exml})")
-                    return
-                }
-                if(!e.save()){
-                    log.error("Unable to save new execution: ${e.errors} (file ${exml})")
-                    return
-                }
-                loadexecresults<<e
-                if(oldids[e]){
-                    execidmap[oldids[e]]=e.id
-                }
-                if(e.outputfilepath && execout[e.outputfilepath]){
-                    File oldfile = execout[e.outputfilepath]
-                    //move to appropriate location and update outputfilepath
-                    String filename=executionService.createOutputFilepathForExecution(e,framework)
-                    File newfile = new File(filename)
-                    if(!oldfile.renameTo(newfile)){
-                        log.error("Unable to move temp log file to destination: ${newfile.absolutePath} (old id ${oldids[e]})")
-                    }else{
-                        e.outputfilepath=newfile.absolutePath
-                    }
-                }else{
-                    log.error("New execution ${e.id}, NO matching outfile: ${e.outputfilepath}")
-                }
-            }
+        if(importExecutions){
+            Map execidmap = importExecutionsToProject(execxml, execout, projectName, framework, jobIdMap,skipJobIds)
+            //load reports
+            importReportsToProject(reportxml, jobsByOldId, reportxmlnames, execidmap, projectName)
         }
-        log.info("Loaded ${loadexecresults.size()} executions, map: ${execidmap}")
-        //load reports
-        def loadedreports=[]
-        def execids = loadexecresults*.id*.toString()
-        reportxml.each{rxml->
-            def report=loadHistoryReport(rxml,execidmap, jobsByOldId,reportxmlnames[rxml])
+        (jobxml + execxml + execout.values() + reportxml).each { it.delete() }
+        return [success:loadjoberrors?false:true,joberrors: loadjoberrors]
+    }
+
+    /**
+     * Import reports, and generate new reports for any executions with a missing report.
+     * @param reportxml
+     * @param jobsByOldId
+     * @param reportxmlnames
+     * @param execidmap
+     * @param projectName
+     */
+    private void importReportsToProject(ArrayList reportxml, jobsByOldId, reportxmlnames, Map execidmap, projectName) {
+        def loadedreports = []
+        def execids = new ArrayList<Long>(execidmap.values())
+        reportxml.each { rxml ->
+            def report = loadHistoryReport(rxml, execidmap, jobsByOldId, reportxmlnames[rxml])
+            if(!report){
+                log.debug("Report skipped: no matching execution imported. (file ${rxml})")
+                return
+            }
             report.ctxProject = projectName
             if (!report.save()) {
                 log.error("Unable to save report: ${report.errors} (file ${rxml})")
                 return
             }
-            execids.remove(report.jcExecId)
-            loadedreports<<report
+            execids.remove(Long.parseLong(report.jcExecId))
+            loadedreports << report
         }
         //generate reports for executions without matching reports
-        execids.each{ eid->
-            Execution newe=Execution.get(Long.parseLong(eid))
-            def report=ExecReport.fromExec(newe)
+        execids.each { eid ->
+            Execution newe = Execution.get(eid)
+            def report = ExecReport.fromExec(newe)
             if (!report.save()) {
                 log.error("Unable to save generated report: ${report.errors} (execution ${eid})")
                 return
@@ -424,6 +433,59 @@ class ProjectService {
             loadedreports << report
         }
         log.info("Loaded ${loadedreports.size()} reports")
+    }
+
+    /**
+     * import executions, return a map from old execution ID to new ID
+     * @param execxml
+     * @param execout
+     * @param projectName
+     * @param framework
+     * @param jobIdMap
+     * @param skipJobIds list of Job IDs to skip execution import
+     * @return map from old execution ID to new ID
+     */
+    private Map importExecutionsToProject(ArrayList execxml, Map<String, File> execout, projectName, Framework framework, jobIdMap, skipJobIds=[]) {
+        // map from old execution ID to new ID
+        def execidmap = [:]
+        def loadexecresults = []
+        //load executions, and move/rewrite outputfile names
+        execxml.each { File exml ->
+            def results = loadExecutions(exml, jobIdMap,skipJobIds)
+            def execlist = results.executions
+            def oldids = results.execidmap
+            execlist.each { Execution e ->
+                e.project = projectName
+                if (e.workflow && !e.workflow.save()) {
+                    log.error("Unable to save workflow for execution: ${e.workflow.errors} (file ${exml})")
+                    return
+                }
+                if (!e.save()) {
+                    log.error("Unable to save new execution: ${e.errors} (file ${exml})")
+                    return
+                }
+                loadexecresults << e
+                if (oldids[e]) {
+                    execidmap[oldids[e]] = e.id
+                }
+                //check outputfile exists in mapping
+                if (e.outputfilepath && execout[e.outputfilepath]) {
+                    File oldfile = execout[e.outputfilepath]
+                    //move to appropriate location and update outputfilepath
+                    String filename = executionService.createOutputFilepathForExecution(e, framework)
+                    File newfile = new File(filename)
+                    if (!oldfile.renameTo(newfile)) {
+                        log.error("Unable to move temp log file to destination: ${newfile.absolutePath} (old id ${oldids[e]})")
+                    } else {
+                        e.outputfilepath = newfile.absolutePath
+                    }
+                } else {
+                    log.error("New execution ${e.id}, NO matching outfile: ${e.outputfilepath}")
+                }
+            }
+        }
+        log.info("Loaded ${loadexecresults.size()} executions, map: ${execidmap}")
+        execidmap
     }
 }
 

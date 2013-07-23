@@ -80,9 +80,14 @@ class ProjectController {
                 return
             }
             String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
-            projectService.importToProject(project1,session.user,roleList,framework,new ZipInputStream(file.getInputStream()))
+            def result=projectService.importToProject(project1,session.user,roleList,framework,new ZipInputStream(file.getInputStream()),params.import)
 
-            flash.message="Archive successfully imported"
+            if(result.success){
+                flash.message="Archive successfully imported"
+            }else{
+                flash.error="Failed to import some jobs"
+                flash.joberrors=result.joberrors
+            }
             return redirect(controller: 'menu',action: 'admin')
         }
     }
