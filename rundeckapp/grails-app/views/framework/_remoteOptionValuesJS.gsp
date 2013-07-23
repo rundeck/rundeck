@@ -307,11 +307,8 @@ var RemoteOptionControl = Class.create({
         this.stopObserving(name);
         var id = this.ids[name];
 
-        if (!id) {
+        if (!id || !$(id)) {
             return;
-        }
-        if (!$(id)) {
-            throw "not found: " + id;
         }
         var roc = this;
         //observe field value change and trigger reloads

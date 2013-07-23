@@ -70,7 +70,7 @@
                 <g:set var="sellabel" value="${selentry}"/>
                 <g:set var="selvalue" value="${valuesMap?valuesMap[sellabel]:sellabel}"/>
             </g:else>
-            <g:hiddenField name="${realFieldName}" value="${selvalue.encodeAsHTML()}"/>
+            <g:hiddenField name="${realFieldName}" value="${selvalue}" id="${fieldwatchid}"/>
             <span class="singlelabel">${sellabel.encodeAsHTML()}</span>
         </g:if>
         <g:else>
