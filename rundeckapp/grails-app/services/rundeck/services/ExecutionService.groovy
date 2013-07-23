@@ -1085,7 +1085,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
 
         se = ScheduledExecution.get(se.id)
         props.putAll(se.properties)
-        if (!props.user) {
+        if (user) {
             props.user = user
         }
         if (extra && 'true' == extra['_replaceNodeFilters']) {

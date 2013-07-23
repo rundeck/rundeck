@@ -88,8 +88,6 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
         ScheduledExecution se = new ScheduledExecution(
             jobName: 'blue',
             project: 'AProject',
-            adhocExecution: true,
-            adhocFilepath: '/this/is/a/path',
             groupPath: 'some/where',
             description: 'a job',
             argString: '-a b -c d',
@@ -118,6 +116,93 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
         assertEquals(se, e.scheduledExecution)
         assertNotNull(e.dateStarted)
         assertNull(e.dateCompleted)
+        assertEquals('user1',e.user)
+        def execs=se.executions
+        assertNull(execs)
+    }
+    void testCreateExecutionJobUser(){
+        ConfigurationHolder.config=[:]
+        mockDomain(ScheduledExecution)
+        mockDomain(Workflow)
+        mockDomain(CommandExec)
+        mockDomain(Execution)
+
+        ScheduledExecution se = new ScheduledExecution(
+            jobName: 'blue',
+            project: 'AProject',
+            user:'bob',
+            groupPath: 'some/where',
+            description: 'a job',
+            argString: '-a b -c d',
+            workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+        )
+        se.save()
+
+        registerMetaClass(ScheduledExecution)
+        ScheduledExecution.metaClass.static.lock={id-> return se}
+        ScheduledExecution.metaClass.static.withNewSession = {clos -> clos.call([clear: {}])}
+        def myCriteria = new Expando();
+        myCriteria.get = {Closure cls -> return null}
+        Execution.metaClass.static.createCriteria = {myCriteria }
+        Execution.metaClass.static.executeQuery = {q, h -> []}
+
+
+        mockLogging(ExecutionService)
+        ExecutionService svc = new ExecutionService()
+        FrameworkService fsvc = new FrameworkService()
+        svc.frameworkService=fsvc
+
+        Execution e=svc.createExecution(se,null,null)
+
+        assertNotNull(e)
+        assertEquals('-a b -c d',e.argString)
+        assertEquals(se, e.scheduledExecution)
+        assertNotNull(e.dateStarted)
+        assertNull(e.dateCompleted)
+        assertEquals('bob',e.user)
+        def execs=se.executions
+        assertNull(execs)
+    }
+    void testCreateExecutionAsUser(){
+        ConfigurationHolder.config=[:]
+        mockDomain(ScheduledExecution)
+        mockDomain(Workflow)
+        mockDomain(CommandExec)
+        mockDomain(Execution)
+
+        ScheduledExecution se = new ScheduledExecution(
+            jobName: 'blue',
+            project: 'AProject',
+            user:'bob',//created or scheduled job has user setting
+            groupPath: 'some/where',
+            description: 'a job',
+            argString: '-a b -c d',
+            workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+        )
+        se.save()
+
+        registerMetaClass(ScheduledExecution)
+        ScheduledExecution.metaClass.static.lock={id-> return se}
+        ScheduledExecution.metaClass.static.withNewSession = {clos -> clos.call([clear: {}])}
+        def myCriteria = new Expando();
+        myCriteria.get = {Closure cls -> return null}
+        Execution.metaClass.static.createCriteria = {myCriteria }
+        Execution.metaClass.static.executeQuery = {q, h -> []}
+
+
+        mockLogging(ExecutionService)
+        ExecutionService svc = new ExecutionService()
+        FrameworkService fsvc = new FrameworkService()
+        svc.frameworkService=fsvc
+
+        Execution e=svc.createExecution(se,null,"user1")
+
+        assertNotNull(e)
+        assertEquals('-a b -c d',e.argString)
+        assertEquals(se, e.scheduledExecution)
+        assertNotNull(e.dateStarted)
+        assertNull(e.dateCompleted)
+        assertEquals('user1', e.user)
         def execs=se.executions
         assertNull(execs)
     }

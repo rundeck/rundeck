@@ -30,7 +30,6 @@ import rundeck.Execution
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.ScheduledExecutionService
-import rundeck.controllers.ScheduledExecutionController
 
 /*
 * ScheduledExecutionControllerTests.java
@@ -762,30 +761,39 @@ class ScheduledExecutionControllerTests extends ControllerUnitTestCase {
 
         sec.apiJobRun()
     }
-    public void testApiRunJobRunAs() {
+    public void testApiRunJob_AsUser() {
+        assertRunJobAsUser([jobName: 'monkey1', project: 'testProject', description: 'blah',],
+                null,
+                'differentUser')
+    }
+    public void testApiRunJob_ScheduledJob_AsUser() {
+        assertRunJobAsUser([scheduled: true, user: 'bob', jobName: 'monkey1', project: 'testProject', description: 'blah',],
+                'bob',
+                'differentUser')
+    }
+
+    private void assertRunJobAsUser(Map job, String expectJobUser, String userName) {
         mockDomain(ScheduledExecution)
         mockDomain(Workflow)
         mockDomain(CommandExec)
         mockDomain(Execution)
         def sec = new ScheduledExecutionController()
-
-        def se = new ScheduledExecution(
-                jobName: 'monkey1', project: 'testProject', description: 'blah',
-                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
-        )
+        def se = new ScheduledExecution(job)
+        se.workflow= new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         se.save()
         assertNotNull se.id
+        assertEquals(expectJobUser,se.user)
 
         //try to do api job run
         def fwkControl = mockFor(FrameworkService, true)
         fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
 
-        def x=0
-        fwkControl.demand.authorizeProjectJobAll(2){ framework, resource, List actions, project ->
-            if(0==x){
+        def x = 0
+        fwkControl.demand.authorizeProjectJobAll(2) { framework, resource, List actions, project ->
+            if (0 == x) {
                 assert 'run' in actions
                 x++
-            }else{
+            } else {
                 assert 'runAs' in actions
             }
             return true
@@ -803,7 +811,7 @@ class ScheduledExecutionControllerTests extends ControllerUnitTestCase {
         )
         assertNotNull exec.save()
         eServiceControl.demand.executeScheduledExecution { scheduledExecution, framework, subject, inparams ->
-            assert 'differentUser'==inparams.user
+            assert userName == inparams.user
             return [executionId: exec.id, name: scheduledExecution.jobName, execution: exec]
 
         }
@@ -812,7 +820,7 @@ class ScheduledExecutionControllerTests extends ControllerUnitTestCase {
 
         sec.metaClass.message = { params -> params?.code ?: 'messageCodeMissing' }
 
-        def params = [id: se.id.toString(),asUser:'differentUser']
+        def params = [id: se.id.toString(), asUser: userName]
         sec.params.putAll(params)
         final subject = new Subject()
         subject.principals << new Username('test')
@@ -821,13 +829,13 @@ class ScheduledExecutionControllerTests extends ControllerUnitTestCase {
         sec.request.setAttribute("api_version", 5)
 //        sec.request.api_version = 5
         registerMetaClass(ExecutionController)
-        ExecutionController.metaClass.renderApiExecutionListResultXML={List execs->
-            assert 1==execs.size()
+        ExecutionController.metaClass.renderApiExecutionListResultXML = { List execs ->
+            assert 1 == execs.size()
             assert execs.contains(exec)
         }
 
         registerMetaClass(ApiController)
-        ApiController.metaClass.requireVersion={min,max=0->
+        ApiController.metaClass.requireVersion = { min, max = 0 ->
             true
         }
         sec.apiJobRun()
