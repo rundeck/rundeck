@@ -296,6 +296,23 @@ File listing: restart_user.aclpolicy example
     by:
       group: [restart_user]
 
+    ---
+    
+    description: Limited user access for adm restart action.
+    context:
+      application: 'rundeck'
+    for:
+      resource:
+        - equals:
+            kind: system
+          allow: [read] # allow read of system info
+      project:
+        - match:
+            name: '.*'
+          allow: [read] # allow view of all projects
+    by:
+      group: [restart_user]
+
 ### Troubleshooting access control policy
 
 After defining an aclpolicy file to grant access to a particular group
