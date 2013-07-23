@@ -808,12 +808,12 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                 def schedlist
                 //first look for uuid
                 if (jobdata.uuid) {
-                    schedlist = ScheduledExecution.findAllByUuid(jobdata.uuid)
+                    scheduledExecution = ScheduledExecution.findByUuidAndProject(jobdata.uuid,jobdata.project)
                 } else {
                     schedlist = ScheduledExecution.findAllScheduledExecutions(jobdata.groupPath, jobdata.jobName, jobdata.project)
-                }
-                if (schedlist && 1 == schedlist.size()) {
-                    scheduledExecution = schedlist[0]
+                    if (schedlist && 1 == schedlist.size()) {
+                        scheduledExecution = schedlist[0]
+                    }
                 }
             }
             if (option == "skip" && scheduledExecution) {

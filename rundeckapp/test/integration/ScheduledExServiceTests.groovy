@@ -5616,6 +5616,69 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
         }
     }
 
+    /**
+     * Import job with same UUID, and different project, should fail due to uniqueness of uuid
+     */
+    public void testUploadShouldNotUpdateUUIDWrongProjectDupeOptionUpdate() {
+
+        def sec = new ScheduledExecutionService()
+
+        //create mock of FrameworkService
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.existsFrameworkProject {project, framework -> return true }
+        fwkControl.demand.authorizeProjectJobAll {framework, job, actions, project -> return true}
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.authorizeProjectResourceAll { framework, job, actions, project -> return true }
+        sec.frameworkService = fwkControl.createMock()
+        def ms = mockFor(MessageSource)
+        ms.demand.getMessage { key, data, locale -> key }
+        ms.demand.getMessage { error, locale -> error.toString() }
+        sec.messageSource = ms.createMock()
+
+        //create original job
+        final CommandExec exec = new CommandExec(adhocExecution: true, adhocRemoteString: "echo original test")
+        exec.save()
+        def wf = new Workflow(commands: [exec])
+        wf.save()
+        def se = new ScheduledExecution(jobName: 'testUploadShouldUpdateSameNameDupeOptionUpdate',
+                groupPath: "testgroup", project: 'project1', description: 'new desc',
+                                        workflow: wf,
+                uuid:UUID.randomUUID().toString()
+        )
+        if(!se.validate()){
+            se.errors.allErrors.each{
+                println it.toString()
+            }
+        }
+        assertNotNull(se.save())
+        assertNotNull(se.id)
+
+
+        def upload = new ScheduledExecution(
+                jobName: 'testUploadShouldUpdateSameNameDupeOptionUpdate',
+                groupPath: "testgroup",
+                project: 'project2',
+                description: 'desc',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: "echo test")]),
+                uuid:se.uuid
+        )
+        def result=sec.loadJobs([upload], 'update', 'test', 'userrole,test', [:], null)
+        assertNotNull result
+        assertNotNull result.jobs
+        assertNotNull result.errjobs
+        assertNotNull result.skipjobs
+        assertEquals "shouldn't have error jobs: ${result.errjobs}", 1, result.errjobs.size()
+        ScheduledExecution errorjob = result.errjobs[0].scheduledExecution
+        assertTrue(errorjob.hasErrors())
+        assertTrue(errorjob.errors.hasFieldErrors('uuid'))
+        assertEquals "shouldn't have skipped jobs: ${result.skipjobs}", 0, result.skipjobs.size()
+        assertEquals 0, result.jobs.size()
+
+        se.delete()
+    }
     public void testUploadShouldUpdateSameNameDupeOptionUpdate() {
 
         def sec = new ScheduledExecutionService()
