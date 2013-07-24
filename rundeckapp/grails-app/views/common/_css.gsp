@@ -133,7 +133,7 @@
     }
     .remotestatus.error {
         width: 12px;
-        background: transparent url("${resource(dir:'images',file:'icon-tiny-warn.png')}") center left no-repeat;
+        background: transparent url("${resource(dir:'images',file:'icon-tiny-error.png')}") center left no-repeat;
     }
 
     .remoteoptionfield:hover .remotestatus {
