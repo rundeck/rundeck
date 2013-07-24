@@ -14,6 +14,3 @@
 <g:select from="${projectSet}" optionKey='key' optionValue='value' name="${params.key ? params.key : 'projectSelect'}"
           onchange="${params.callback ? params.callback : 'selectProject'}(this.value);"
           value="${params.selected ? params.selected : project}"/>
-<g:if test="${error}">
-    <span class="error message">${error}</span>
-</g:if>
