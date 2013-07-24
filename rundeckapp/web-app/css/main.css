@@ -423,6 +423,10 @@ h1 {
     padding-right:4px;
     background:none;
 }
+span.reqwarning{
+    font-style: italic;
+    color: orange;
+}
 
 .body {
 	padding: 25px;
