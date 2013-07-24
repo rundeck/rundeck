@@ -165,7 +165,7 @@
             </g:javascript>
         </g:if>
     </g:if>
-    <g:if test="${!optionSelect.enforced && !optionSelect.multivalued && !optionSelect.secureInput && optionSelect.defaultValue}">
+    <g:if test="${!optionSelect.enforced && !optionSelect.multivalued && !optionSelect.secureInput && optionSelect.defaultValue && !(optionSelect.values.contains(optionSelect.defaultValue))}">
         <span class="action button"
               id="${optName.encodeAsJavaScript()}_setdefault"
               title="Click to use default value: ${optionSelect.defaultValue.encodeAsHTML()}"
