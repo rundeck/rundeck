@@ -4,7 +4,6 @@
   User: greg
   Date: Aug 7, 2008
   Time: 10:32:26 AM
-  To change this template use File | Settings | File Templates.
 --%>
 <g:set var="rkey" value="${g.rkey()}"/>
 <g:if test="${!options}">
@@ -19,27 +18,7 @@
 <g:set var="maxmsgsize" value="${options.evtmaxsize?options.evtmaxsize:options.msgsplitsize?options.msgsplitsize:-1}"/>
 <g:set var="maxtitlesize" value="${30}"/>
 <table cellpadding="0" cellspacing="0" class="jobsList list history" style="width:100%">
-<g:if test="${false}">
-    <thead>
 
-    <tr>
-        <g:if test="${options.summary}">
-        <th colspan="3"><g:message code="execution" /></th>
-        %{--<th colspan="1"><g:message code="events.history.title.Summary"/></th>--}%
-        </g:if>
-        <g:else>
-            <th colspan="3"></th>
-        </g:else>
-        <th colspan="2"><g:message code="jobquery.title.endFilter"/></th>
-
-        %{--<th><g:message code="jobquery.title.userFilter"/></th>--}%
-        %{--<th><g:message code="jobquery.title.projFilter"/></th>--}%
-        <th colspan="2"><g:message code="events.history.title.Nodes"/></th>
-        %{--<th ><g:message code="jobquery.title.duration"/></th>--}%
-        <th></th>
-    </tr>
-    </thead>
-    </g:if>
     <g:set var="sincetime" value="${0}"/>
     <g:if test="${hiliteSince}">
         <g:set var="sincetime" value="${hiliteSince instanceof String? Long.parseLong(hiliteSince) : hiliteSince}"/>
@@ -58,9 +37,6 @@
         </g:if>
         <tr class="  ${it?.status != 'succeed' ? 'fail' : ''}  ${!it.dateCompleted ? 'nowrunning' : ''} ${sincetime && it.dateCompleted.time>sincetime?'newitem':''} hilite expandComponentHolder sectionhead link" onclick="$(this).down('a._defaultAction').click();">
             <td style="width:12px;" class="eventicon">
-            %{--<img--}%
-                    %{--src="${resource(dir: 'images', file: 'icon-tiny-' + (it?.status == 'succeed' ? 'ok' : 'warn') + '.png')}"--}%
-                    %{--alt="" width="12px" height="12px"/>--}%
                 <g:if test="${execution}">
                     <g:set var="fileName"
                            value="${execution.status == 'true' ? 'job-ok' : null == execution.dateCompleted ? 'job-running' : execution.cancelled ? 'job-warn' : 'job-error'}"/>
@@ -86,9 +62,7 @@
                 <g:if test="${rpt?.jcJobId}">
                     <g:set var="foundJob" value="${ScheduledExecution.getByIdOrUUID(it.jcJobId)}"/>
                     <g:if test="${foundJob}">
-                        %{--<g:link controller="scheduledExecution" action="show" id="${foundJob.extid}" params="${[fullName:foundJob.generateFullName()]}">--}%
-                            ${foundJob.generateFullName().encodeAsHTML()}
-                        %{--</g:link>--}%
+                        ${foundJob.groupPath?foundJob.groupPath+'/':''}${foundJob.jobName.encodeAsHTML()}
                     </g:if>
                     <g:else>
                         <span class="warning note">(<g:message
@@ -155,7 +129,7 @@
                 </g:if>
             </td>
 
-            <td class="  user">
+            <td class="  user" style="white-space: nowrap">
                 <em>by</em>
                 <g:username user="${it?.author}"/>
             </td>
