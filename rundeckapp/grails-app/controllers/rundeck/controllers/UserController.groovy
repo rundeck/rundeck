@@ -24,10 +24,12 @@ class UserController {
     }
     def logout = {
         session.invalidate()
-        if(params.refLink && grailsApplication.config.grails.serverURL && params.refLink.startsWith(grailsApplication.config.grails.serverURL)){
-            return redirect(url:params.refLink)
-        }else{
-            return redirect(controller:'menu', action:'index')
+        if (params.refLink && grailsApplication.config.grails.serverURL
+                && params.refLink.startsWith(grailsApplication.config.grails.serverURL)
+                && !params.refLink.contains("noProjectAccess")) {
+            return redirect(url: params.refLink)
+        } else {
+            return redirect(controller: 'menu', action: 'index')
         }
     }
     
