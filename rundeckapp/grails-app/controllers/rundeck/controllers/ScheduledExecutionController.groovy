@@ -1121,7 +1121,7 @@ class ScheduledExecutionController  {
             }
         }
     }
-    def runAdhoc={
+    private def runAdhoc(){
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         params["user"] = (session?.user) ? session.user : "anonymous"
         params.request = request
@@ -1136,6 +1136,13 @@ class ScheduledExecutionController  {
                 return [failed:true,error: 'unauthorized', message: msg]
             }
             params['user'] = params.asUser
+        }
+        if(params.exec){
+            params.doNodedispatch=true
+            params.nodeKeepgoing=true
+            params.nodeThreadcount=1
+            params.workflow = new Workflow(commands: [new CommandExec(adhocRemoteString: params.remove('exec'), adhocExecution: true)])
+            params.description = params.description ?: ""
         }
 
         //pass session-stored edit state in params map

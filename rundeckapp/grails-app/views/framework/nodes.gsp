@@ -37,6 +37,10 @@
             $$('.nfilteritem input').each(function(e){e.value='';});
             return false;
         }
+        function _submitNodeFilters(){
+            $$('.execCommand').each(function(e){e.setValue($F('runFormExec'));});
+            return true;
+        }
 
         /*********
          *  remote editor
@@ -690,34 +694,15 @@
             <g:if test="${session.project && run_authorized}">
                 <span class="runbox" id="runbox">
                     <g:img file="icon-small-shell.png" width="16px" height="16px"/>
-                    <g:if test="${run_authorized}">
-                        <g:hiddenField name="project" value="${session.project}"/>
-                        <g:hiddenField name="doNodedispatch" value="true"/>
-                        <g:hiddenField name="nodeKeepgoing" value="true"/>
-                        <g:hiddenField name="nodeThreadcount" value="1"/>
-                        <g:hiddenField name="description" value=""/>
 
-                        <g:hiddenField name="workflow.commands[0].adhocExecution" value="true"/>
-                        <g:hiddenField name="workflow.threadcount" value="1"/>
-                        <g:hiddenField name="workflow.keepgoing" value="false"/>
-                        <g:hiddenField name="workflow.project" value="${session.project}"/>
-                        <g:render template="nodeFiltersHidden" model="${[params: params, query: query]}"/>
-                    </g:if>
-                    <g:if test="${run_authorized}">
-                        <g:textField name="workflow.commands[0].adhocRemoteString" size="50"
-                                     placeholder="Enter a shell command"
-                                     autofocus="true"/>
-                    </g:if>
-                    <g:else>
-                        <input type="text" name="workflow.commands[0].adhocRemoteString" size="80"
-                               placeholder="Enter a shell command" autofocus="true" disabled/>
-                    </g:else>
-                    <g:if test="${run_authorized}">
-                        <button onclick="runFormSubmit('runbox');" ${run_authorized ? '' : 'disabled'}>Run</button>
-                    </g:if>
-                    <g:else>
-                        <span class="button disabled" title="You are not authorized to run ad-hoc jobs">Run</span>
-                    </g:else>
+                    <g:hiddenField name="project" value="${session.project}"/>
+                    <g:render template="nodeFiltersHidden" model="${[params: params, query: query]}"/>
+                    <g:textField name="exec" size="50" placeholder="Enter a shell command"
+                                 value="${runCommand}"
+                                 id="runFormExec"
+                                 autofocus="true"/>
+
+                    <button onclick="runFormSubmit('runbox');" ${run_authorized ? '' : 'disabled'}>Run</button>
 
                     <div class="hiderun" id="runerror" style="display:none"></div>
                 </span>
@@ -732,7 +717,7 @@
         <tr>
         <g:if test="${!params.nofilters}">
         <td style="text-align:left;vertical-align:top; width:400px; ${wdgt.styleVisible(if:filtersOpen)}" id="${rkey}filter">
-            <g:form action="nodes" controller="framework" >
+            <g:form action="nodes" controller="framework">
                 <g:if test="${params.compact}">
                     <g:hiddenField name="compact" value="${params.compact}"/>
                 </g:if>
@@ -749,16 +734,16 @@
                     <table class="simpleForm">
                         <g:render template="nodeFilterInputs" model="${[params:params,query:query]}"/>
                     </table>
+                    <g:hiddenField name="exec" value="" class="execCommand"/>
                     <div>
-
                         <div class=" " style="text-align:right;">
-                            <g:submitButton  name="Filter" id="nodefiltersubmit" value="Filter"/>
+                            <g:submitButton  name="Filter" onclick="return _submitNodeFilters();" id="nodefiltersubmit" value="Filter"/>
 
                             <g:submitButton name="Clear" onclick="return _clearNodeFilters();" value="Clear"/>
                         </div>
                     </div>
                 </div>
-                </g:form>
+            </g:form>
         </td>
             </g:if>
             <td style="text-align:left;vertical-align:top;" id="${rkey}nodescontent">
@@ -796,7 +781,8 @@
                         <g:if test="${!params.Clear && !params.formInput}">
                             <g:form action="nodes" style="display: inline">
                                 <g:hiddenField name="formInput" value="true"/>
-                                <button name="Clear" value="Clear">Show all nodes</button>
+                                <g:hiddenField name="exec" value="" class="execCommand"/>
+                                <button name="Clear" value="Clear" onclick="return _submitNodeFilters();">Show all nodes</button>
                             </g:form>
                         </g:if>
                         </div>

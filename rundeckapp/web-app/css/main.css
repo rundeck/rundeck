@@ -1868,7 +1868,9 @@ div.jobHead span.jobSummary{
     padding-left:5px;
     display:block;
 }
-
+.retrybuttons a{
+    margin-left: 10px;
+}
 .executioncontrol a{
     white-space: nowrap;
 }

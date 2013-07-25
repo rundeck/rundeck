@@ -47,36 +47,42 @@
 
             </g:else>
 
-            <span id="execRerun" style="${wdgt.styleVisible(if: null != execution.dateCompleted)}">
+            <span id="execRerun" class="retrybuttons" style="${wdgt.styleVisible(if: null != execution.dateCompleted)}">
                 <g:if test="${scheduledExecution}">
                     <g:if test="${authChecks[AuthConstants.ACTION_RUN]}">
-                        &nbsp;
                         <g:link controller="scheduledExecution"
                                 action="execute"
                                 id="${scheduledExecution.extid}"
                                 params="${[retryExecId: execution.id]}"
                                 class="action button"
-                                title="Run this Job Again with the same options">
+                                title="${g.message(code: 'execution.job.action.runAgain')}">
                             <g:img file="icon-small-run.png" alt="run" width="16px" height="16px"/>
-                            Run Again &hellip;
+                            <g:message code="execution.action.runAgain"/>&hellip;
                         </g:link>
                     </g:if>
                 </g:if>
                 <g:else>
-                    <g:if
-                            test="${jobCreateAllowed || adhocRunAllowed}">
-                        <g:if
-                                test="${!scheduledExecution || scheduledExecution && authChecks[AuthConstants.ACTION_READ]}">
+                    <g:if test="${jobCreateAllowed}">
+                        <g:link
+                                controller="scheduledExecution"
+                                action="createFromExecution"
+                                params="${[executionId: execution.id]}"
+                                class="action button"
+                                title="${g.message(code: 'execution.action.saveAsJob', default: 'Save as Job')}&hellip;">
+                            <g:img file="icon-small-run.png" alt="run" width="16px" height="16px"/>
+                            <g:message code="execution.action.saveAsJob" default="Save as Job"/>&hellip;
+                        </g:link>
+                    </g:if>
+                    <g:if test="${adhocRunAllowed && !inlineView}">
                             <g:link
-                                    controller="scheduledExecution"
-                                    action="createFromExecution"
-                                    params="${[executionId: execution.id]}"
+                                    controller="framework"
+                                    action="nodes"
+                                    params="${[fromExecId: execution.id]}"
                                     class="action button"
-                                    title="${g.message(code: 'execution.action.saveAsJob', default: 'Save as Job')}&hellip;">
+                                    title="${g.message(code: 'execution.action.runAgain')}">
                                 <g:img file="icon-small-run.png" alt="run" width="16px" height="16px"/>
-                                <g:message code="execution.action.saveAsJob" default="Save as Job"/>&hellip;
+                                <g:message code="execution.action.runAgain"/>&hellip;
                             </g:link>
-                        </g:if>
                     </g:if>
                 </g:else>
             </span>
