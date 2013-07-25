@@ -41,7 +41,7 @@
                     <g:set var="fileName"
                            value="${execution.status == 'true' ? 'job-ok' : null == execution.dateCompleted ? 'job-running' : execution.cancelled ? 'job-warn' : 'job-error'}"/>
                 </g:if>
-                <img src="${resource(dir: 'images', file: "icon-small-" + fileName + ".png")}" alt="job" style="border:0;"
+                <img src="${resource(dir: 'images', file: "icon-small-" + fileName + ".png",absolute: absoluteLinks)}" alt="job" style="border:0;"
                      width="12px" height="12px"/>
             </td>
             <g:set var="vals" value="${['?','?','?']}"/>
@@ -58,7 +58,6 @@
         <td class="eventtitle ${rpt?.jcJobId ? 'job' : 'adhoc'}">
             #${rpt.jcExecId}
             <g:if test="${options.summary}">
-            <span>
                 <g:if test="${rpt?.jcJobId}">
                     <g:set var="foundJob" value="${ScheduledExecution.getByIdOrUUID(it.jcJobId)}"/>
                     <g:if test="${foundJob}">
@@ -70,38 +69,9 @@
                     </g:else>
 
                 </g:if>
-                %{--<g:else>--}%
-                    %{--<g:truncate max="${maxtitlesize}" front="true">${rpt?.reportId.encodeAsHTML()}</g:truncate>--}%
-                %{--</g:else>--}%
-                %{--<g:elseif test="${it.jcJobId }">--}%
-                    %{--<g:set var="jobname" value="${job?.generateFullName()}"/>--}%
-                    %{--<g:truncate max="${maxtitlesize}" front="true">${jobname.encodeAsHTML()}</g:truncate>--}%
-                %{--</g:elseif>--}%
                 <g:else>
-                    <g:if test="${it instanceof ExecReport && it.adhocScript}">
-                        <g:truncate max="${maxmsgsize}">${rpt.adhocScript.encodeAsHTML()}</g:truncate>
-                    </g:if>
-                    <g:else>
-                        <g:truncate max="${maxmsgsize}">${rpt.title.encodeAsHTML()}</g:truncate>
-                    </g:else>
+                    <g:truncate max="${maxmsgsize}">${rpt.title.encodeAsHTML()}</g:truncate>
                 </g:else>
-                </span>
-            %{--</td>--}%
-
-            %{--<td style="" class="eventsummary ${rpt?.jcJobId?'job':'adhoc'}">--}%
-
-                %{--<span class="actiontitle ${it?.status != 'succeed' ? '' : ''} ">--}%
-                    %{--<g:if test="${it.jcJobId || it.jcExecId}">--}%
-                        %{--<g:truncate max="${maxmsgsize}">${rpt.title.encodeAsHTML()}</g:truncate>--}%
-                    %{--</g:if>--}%
-                    %{--<g:elseif test="${it instanceof ExecReport && it.adhocScript}">--}%
-                        %{--<g:truncate max="${maxmsgsize}">${rpt.adhocScript.encodeAsHTML()}</g:truncate>--}%
-                    %{--</g:elseif>--}%
-                    %{--<g:else>--}%
-                        %{--<g:truncate max="${maxmsgsize}">${rpt.title.encodeAsHTML()}</g:truncate>--}%
-                    %{--</g:else>--}%
-                %{--</span>--}%
-            %{--</td>--}%
             </g:if>
             <g:else>
                     <g:message code="status.label.${it.status}"/>
@@ -121,7 +91,9 @@
             <td style="white-space:nowrap" class="right sepL">
                 <g:if test="${it.dateCompleted}">
                     %{--<g:relativeDate elapsed="${it?.dateCompleted}" agoClass="timeago"/>--}%
+                    <g:unless test="${hideDate}">
                     <span class="timeabs"><g:formatDate date="${it?.dateCompleted}" formatName="jobslist.date.format"/></span>
+                    </g:unless>
                     <span title="<g:relativeDate atDate='${it?.dateStarted}'/> to <g:relativeDate
                             atDate='${it?.dateCompleted}'/> ">
                         in <g:relativeDate end="${it?.dateCompleted}" start="${it?.dateStarted}"/>
@@ -182,14 +154,16 @@
                     </g:if>
                 </g:if>
             </td>
-            <td style="white-space:nowrap; text-align: right; width:30px;" class="right sepL">
+            <g:unless test="${hideShowLink}">
+            <td style="white-space:nowrap; text-align: right; width:30px;" class="sepL">
             <g:if test="${rpt.jcExecId}">
                 <div class="rptitem">
                     <g:link controller="execution" action="show" id="${rpt.jcExecId}" class="_defaultAction"
-                            title="View execution output">Show &raquo;</g:link>
+                            title="View execution output" absolute="${absoluteLinks}">Show &raquo;</g:link>
                 </div>
             </g:if>
             </td>
+            </g:unless>
         </tr>
         %{--<g:render template="expandedReportContent" model="[it:it,colspan:9,subkey:rkey+'subsect',index:j]"/>--}%
         <% j++; %>
