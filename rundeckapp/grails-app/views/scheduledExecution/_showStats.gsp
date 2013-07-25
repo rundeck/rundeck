@@ -44,9 +44,6 @@
 
             </td>
             <td class="statvalue">
-                <g:if test="${scheduledExecution.user}">
-                    by <span class="username">${scheduledExecution.user}</span>
-                </g:if>
                 <span class="when">
                     <g:relativeDate elapsed="${scheduledExecution.dateCreated}"/>
                 </span>
