@@ -769,9 +769,15 @@ class ExecutionController {
      */
     def apiExecution={
         def Execution e = Execution.get(params.id)
+        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         if (!e) {
             flash.errorCode = "api.error.item.doesnotexist"
             flash.errorArgs = ['Execution ID',params.id]
+            return chain(controller: 'api', action: 'renderError')
+        } else if (!frameworkService.authorizeProjectExecutionAll(framework,e,[AuthConstants.ACTION_READ])){
+            flash.responseCode = 403
+            flash.errorCode = 'api.error.item.unauthorized'
+            flash.errorArgs = [AuthConstants.ACTION_READ, "Execution",params.id]
             return chain(controller: 'api', action: 'renderError')
         }
         def filesize=-1
@@ -792,13 +798,18 @@ class ExecutionController {
      */
     def apiExecutionAbort={
         def Execution e = Execution.get(params.id)
+        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         if (!e) {
             flash.errorCode = "api.error.item.doesnotexist"
             flash.errorArgs = ['Execution ID',params.id]
             return chain(controller: 'api', action: 'renderError')
+        } else if (!frameworkService.authorizeProjectExecutionAll(framework,e,[AuthConstants.ACTION_KILL])){
+            flash.responseCode = 403
+            flash.errorCode = 'api.error.item.unauthorized'
+            flash.errorArgs = [AuthConstants.ACTION_KILL, "Execution",params.id]
+            return chain(controller: 'api', action: 'renderError')
         }
         def ScheduledExecution se = e.scheduledExecution
-        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         def user=session.user
         def killas=null
         if (params.asUser && new ApiController().requireVersion(ApiRequestFilters.V5)) {
@@ -839,6 +850,7 @@ class ExecutionController {
             request.error = g.message(code: 'api.error.parameter.required', args: ['project'])
             return new ApiController().error()
         }
+        
         query.projFilter=params.project
         if (null != query) {
             query.configureFilter()
