@@ -1214,10 +1214,6 @@ table.jobsList td.jobname.transient{
     font-weight:normal;
     font-style:italic;
 }
-table.jobsList td.jobdesc,table.jobsList span.jobdesc{
-    /*font-size:8pt;*/
-    color:#999;
-}
 
 table.jobsList td.jobname a{
     color:black;
@@ -1858,9 +1854,12 @@ div.jobHead span.jobName.transient{
     font-weight:normal;
     font-style:italic;
 }
-div.jobHead span.jobDesc{
+span.jobdesc{
+    color: #555;
+    font-style: italic;
+}
+div.jobHead span.jobdesc{
     display: block;
-    color:#999;
 }
 div.jobHead span.jobSummary{
     /*font-size: 14pt;*/

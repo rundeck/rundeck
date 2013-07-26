@@ -58,7 +58,7 @@
             </span>
         </div>
         <div class="jobInfoSection">
-            <span class="jobDesc">${execInfo?.description?.encodeAsHTML()}</span>
+            <span class="jobdesc">${execInfo?.description?.encodeAsHTML()}</span>
         </div>
     </g:if>
     <g:if test="${execInfo instanceof ScheduledExecution && execInfo?.uuid && !execution}">
