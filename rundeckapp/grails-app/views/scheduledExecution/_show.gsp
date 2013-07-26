@@ -53,7 +53,10 @@
 <div class="runbox">History</div>
 <div class="pageBody">
     <g:render template="/scheduledExecution/renderJobStats" model="${[scheduledExecution: scheduledExecution]}"/>
-    <div id="histcontent"></div>
+
+    <table cellpadding="0" cellspacing="0" class="jobsList list history" style="width:100%">
+        <tbody id="histcontent"></tbody>
+    </table>
     <g:javascript>
         fireWhenReady('histcontent', loadHistory);
     </g:javascript>

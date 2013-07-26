@@ -63,7 +63,11 @@
 
                 <div class="jobsReport clear">
                     <g:if test="${reports}">
+                        <table cellpadding="0" cellspacing="0" class="jobsList list history" style="width:100%">
+
                         <g:render template="baseReport" model="['reports':reports,options:params.compact?[tags:false, summary: false]:[summary:true],hiliteSince:params.hiliteSince]"/>
+
+                        </table>
 
                             <g:if test="${total && max && total.toInteger() > max.toInteger()}">
                                 <span class="info note">Showing ${reports.size()} of ${total}</span>
