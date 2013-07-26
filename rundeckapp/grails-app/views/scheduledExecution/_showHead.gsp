@@ -70,13 +70,10 @@
                 </g:if>
 
             </span>
+
         </div>
         <div class="jobInfoSection">
             <span class="jobdesc">${execInfo?.description?.encodeAsHTML()}</span>
         </div>
-    </g:if>
-    <g:if test="${execInfo instanceof ScheduledExecution && execInfo?.uuid && !execution}">
-        <div class="jobInfoSection"><span class="jobuuid desc" title="UUID for this job">UUID: ${execInfo?.uuid.encodeAsHTML()}</span></div>
-    %{--<div><span class="jobid desc" title="internal ID for this job">ID: ${execInfo?.id}</span></div>--}%
     </g:if>
     </div>

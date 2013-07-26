@@ -209,6 +209,16 @@
         </td>
     </tr>
     </g:if>
-   
+    <g:if test="${execdata instanceof rundeck.ScheduledExecution}">
+        <tr>
+            <td>
+                <span class="jobuuid desc">UUID:</span>
+            </td>
+            <td>
+                <span class="jobuuid desc" title="UUID for this job">${scheduledExecution.uuid.encodeAsHTML()}</span>
+            </td>
+        </tr>
+    </g:if>
+
     
 </table>

@@ -26,7 +26,4 @@
 <div >
     <g:render template="/execution/execDetails" model="[execdata:scheduledExecution]"/>
     <g:render template="/scheduledExecution/renderJobStats" model="${[scheduledExecution: scheduledExecution]}"/>
-    <g:if test="${scheduledExecution.uuid}">
-       <span class="desc">UUID: ${scheduledExecution.uuid.encodeAsHTML()}</span>
-    </g:if>
 </div>
