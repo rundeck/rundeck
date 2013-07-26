@@ -171,7 +171,7 @@ var applinks={
         border-radius: 3px;
     }
     #workflowContent ol li{
-        padding: 5px;
+        padding:0;
     }
     #workflowContent ol li.hoverActive{
         border-top: 2px solid blue;
@@ -186,7 +186,11 @@ var applinks={
     /*** ***/
     div.wfctrlholder{
         position:relative;
-        padding-right:100px;
+        padding-right:200px;
+    }
+    .wfitem{
+        display: block;
+        padding: 5px;
     }
     .wfitemcontrols{
         margin-left:10px;
@@ -441,7 +445,7 @@ var applinks={
         </td>
         <td>
             <span class="input ${hasErrors(bean:scheduledExecution,field:'description','fieldError')}">
-                <g:textArea name="description" value="${scheduledExecution?.description}" cols="120" rows="2" />
+                <g:textArea name="description" value="${scheduledExecution?.description}" cols="80" rows="3" />
 
                 <g:hasErrors bean="${scheduledExecution}" field="description">
                     <img src="${resource( dir:'images',file:'icon-small-warn.png' )}" alt="Error" width="16px" height="16px"/>

@@ -1,6 +1,6 @@
 <%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 
-<div class="pageBody form">
+<div class="pageBody">
     <g:render template="/common/errorFragment"/>
     <g:form method="post" onsubmit="if(typeof(validateJobEditForm)=='function'){return validateJobEditForm(this);}">
         <g:render template="edit" model="['scheduledExecution':scheduledExecution, 'crontab':crontab,authorized:authorized]"/>
