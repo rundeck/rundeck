@@ -654,14 +654,6 @@
 </head>
 <body>
 
-<div class="pageBody">
-    <span class="prompt">Now running <span class="nowrunningcount">(0)</span></span>
-    <div id="nowrunning">
-        <span class="note empty">No running Jobs</span>
-    </div>
-
-    <div id="error" class="error message" style="display:none;"></div>
-</div>
 <g:if test="${session.user && User.findByLogin(session.user)?.nodefilters}">
     <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters}"/>
 </g:if>
@@ -833,9 +825,13 @@
 
 
     <div id="runcontent"></div>
-    <div class="runbox">History</div>
+    <div class="runbox"><g:message code="page.section.Activity" /></div>
+
     <div class="pageBody">
-        <div id="histcontent"></div>
+        <table cellpadding="0" cellspacing="0" class="jobsList list history" style="width:100%">
+            <tbody id="nowrunning"></tbody>
+            <tbody id="histcontent"></tbody>
+        </table>
         <g:javascript>
             fireWhenReady('histcontent',loadHistory);
         </g:javascript>

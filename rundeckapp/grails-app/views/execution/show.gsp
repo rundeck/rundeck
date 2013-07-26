@@ -288,7 +288,9 @@
     <g:if test="${scheduledExecution}">
         <div class="runbox">History</div>
         <div class="pageBody">
-            <div id="histcontent"></div>
+            <table cellpadding="0" cellspacing="0" class="jobsList list history" style="width:100%">
+                <tbody id="histcontent"></tbody>
+            </table>
             <g:if test="${execution.dateCompleted!=null}">
             <g:javascript>
                 fireWhenReady('histcontent',loadHistory);

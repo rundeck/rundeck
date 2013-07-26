@@ -354,12 +354,6 @@
 <body>
 
 
-<div class="pageBody solo" >
-    <span class="prompt">Now running <span class="nowrunningcount">(0)</span></span>
-    <div id="nowrunning"><span class="note empty">No running Jobs</span></div>
-
-    <div id="error" class="error message" style="display:none;"></div>
-</div>
 <g:if test="${flash.bulkDeleteResult?.errors}">
     <span class="error note">
         <ul>
@@ -378,23 +372,22 @@
         </ul>
     </span>
 </g:if>
-<div class="runbox jobs" id="indexMain">
+<div class="runbox primary jobs" id="indexMain">
+    <div id="error" class="error message" style="display:none;"></div>
     <g:render template="workflowsFull" model="${[jobgroups:jobgroups,wasfiltered:wasfiltered?true:false,nowrunning:nowrunning, clusterMap: clusterMap,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true,rkey:rkey]}"/>
 </div>
 <div id="execDiv" style="display:none">
-
     <div id="execDivContent" >
 
     </div>
 </div>
-<div class="runbox">
-    <g:if test="${reportQueryParams}">
-        <g:link controller="reports" action="index" params="${reportQueryParams ?: [:]}">History</g:link>
-    </g:if>
-    <g:else>History</g:else>
-</div>
+
+    <div class="runbox"><g:message code="page.section.Activity"/></div>
     <div class="pageBody">
-        <div id="histcontent"></div>
+        <table cellpadding="0" cellspacing="0" class="jobsList list history" style="width:100%">
+        <tbody id="nowrunning"></tbody>
+        <tbody id="histcontent"></tbody>
+    </table>
         <g:javascript>
             fireWhenReady('histcontent',loadHistory);
         </g:javascript>
