@@ -50,7 +50,7 @@
     <g:render template="/common/messages"/>
 
 </div>
-<div class="runbox">History</div>
+<div class="runbox"><g:message code="page.section.Activity"/></div>
 <div class="pageBody">
     <g:render template="/scheduledExecution/renderJobStats" model="${[scheduledExecution: scheduledExecution]}"/>
 

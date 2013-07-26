@@ -4,7 +4,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="jobs"/>
-    <title><g:message code="gui.menu.Workflows"/></title>
+    <title><g:message code="gui.menu.Workflows"/> - ${session.project.encodeAsHTML()}</title>
     <g:javascript library="yellowfade"/>
     <g:javascript library="pagehistory"/>
     <g:javascript library="prototype/effects"/>

@@ -5,7 +5,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="nodes"/>
-    <title><g:message code="gui.menu.Run"/></title>
+    <title><g:message code="gui.menu.Nodes"/> - ${session.project.encodeAsHTML()}</title>
     <g:javascript library="executionControl"/>
     <g:javascript library="yellowfade"/>
     <g:javascript library="pagehistory"/>

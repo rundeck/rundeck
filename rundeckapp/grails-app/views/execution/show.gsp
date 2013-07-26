@@ -286,7 +286,7 @@
   <g:render template="/execution/showFragment" model="[execution:execution,scheduledExecution: scheduledExecution,inlineView:false,followmode:followmode]"/>
 
     <g:if test="${scheduledExecution}">
-        <div class="runbox">History</div>
+        <div class="runbox"><g:message code="page.section.Activity"/></div>
         <div class="pageBody">
             <table cellpadding="0" cellspacing="0" class="jobsList list history" style="width:100%">
                 <tbody id="histcontent"></tbody>
