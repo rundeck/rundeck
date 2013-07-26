@@ -504,6 +504,9 @@
                     $$('.obs_nodes_allcount').each(function (e) {
                         e.innerHTML = data.allcount;
                     });
+                    $$('.obs_nodes_allcount_plural').each(function (e) {
+                        e.innerHTML = data.allcount==1?'':'s';
+                    });
                 }
             }
         }
@@ -662,16 +665,17 @@
 
 
 <g:render template="/common/messages"/>
+    <div id="error" class="error message" style="display:none;"></div>
     <g:if test="${session.project}">
-        <div class="runbox nodesummary ">
+        <div class="runbox primary nodesummary ">
             <g:if test="${run_authorized}">
                 <g:expander classnames="button obs_shownodes" key="${rkey}nodeForm" open="true">
-                    <span class="match"><span class="obs_nodes_allcount">${total}</span> Node${1 != total ? 's' : ''}
+                    <span class="match"><span class="obs_nodes_allcount">${total}</span> Node<span class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span>
                     </span>
                 </g:expander>
             </g:if>
             <g:else>
-                <span class="match"><span class="obs_nodes_allcount">${total}</span> Node${1 != total ? 's' : ''}
+                <span class="match"><span class="obs_nodes_allcount">${total}</span> Node<span class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span>
                 </span>
             </g:else>
 
@@ -684,7 +688,7 @@
 
             </span>
             <g:if test="${session.project && run_authorized}">
-                <span class="runbox" id="runbox">
+                <span class="runbox primary" id="runbox">
                     <g:img file="icon-small-shell.png" width="16px" height="16px"/>
 
                     <g:hiddenField name="project" value="${session.project}"/>
@@ -770,7 +774,7 @@
                         <g:if test="${filterset}">
                             <g:render template="/common/selectFilter" model="[filterset:filterset,filterName:filterName,prefName:'nodes',noSelection:filterName?'-Server Node-':null]"/>
                         </g:if>
-                        <g:if test="${!params.Clear && !params.formInput}">
+                        <g:if test="${params.formInput}">
                             <g:form action="nodes" style="display: inline">
                                 <g:hiddenField name="formInput" value="true"/>
                                 <g:hiddenField name="exec" value="" class="execCommand"/>
@@ -779,38 +783,15 @@
                         </g:if>
                         </div>
 
-                    %{--</g:if>--}%
-                    %{--<g:else>
-                        <span class="prompt action" onclick="['${rkey}filter','${rkey}filterdispbtn','runbox'].each(Element.toggle);if(${isCompact}){$('${rkey}nodescontent').toggle();}" id="${rkey}filterdispbtn"  style="${!filtersOpen?'':'display:none;'}">
-                            Filter
-                            <img src="${resource(dir:'images',file:'icon-tiny-disclosure.png')}" width="12px" height="12px"/></span>
-                        <g:if test="${filterset}">
-                            <span style="margin-left:10px;">
-                                <span class="info note">Filter:</span>
-                                <g:render template="/common/selectFilter" model="[filterset:filterset,filterName:filterName,prefName:'nodes']"/>
-                            </span>
-                        </g:if>
-                    </g:else>--}%
+
                 </div>
                 </g:if>
 
-                %{--<div class="nodesummary clear nodeview">--}%
-                    %{--<span class="match">${total}/${allcount} Node${1 != allcount ? 's' : ''}</span>--}%
-                    %{--<span class="type">--}%
-                    %{--<g:if test="${!filterName}">--}%
-                        %{--matching filter input--}%
-                    %{--</g:if>--}%
-                    %{--<g:else>--}%
-                        %{--matching saved filter--}%
-                    %{--</g:else>--}%
-                    %{--</span>--}%
-                %{--</div>--}%
+
 
                 <div class=" clear matchednodes " id="nodelist" >
                     <span class="button action receiver" onclick="expandResultNodes();">Show ${total} Node${1 != total ? 's' : ''}...</span>
-                    %{--<g:render template="nodes" model="${[nodes:allnodes,totalexecs:totalexecs,jobs:jobs,params:params,expanddetail:true]}"/>--}%
                     <g:javascript>
-
                         fireWhenReady('nodelist',expandResultNodes);
                     </g:javascript>
 
