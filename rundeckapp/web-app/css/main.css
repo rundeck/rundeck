@@ -1181,9 +1181,14 @@ table.jobsList{
 
 }
 table.jobsList td{
-
-
     text-align:left;
+}
+table.jobsList tr.nowrunning td, table.jobsList tr.nowrunning td.eventtitle.adhoc{
+    background: #ffe;
+}
+
+table.jobsList tr.nowrunning.hilite:hover td{
+    background: #e3edfa;
 }
 table.jobsList td.extended{
 
@@ -1262,20 +1267,25 @@ table.executionList td{
     padding: 3px;
 }
 
-table.jobsList.history td {
+table.jobsList td {
     vertical-align: baseline;
 }
-table.jobsList.history td.eventtitle {
+table.jobsList td.eventtitle {
     max-width: 400px;
     white-space:nowrap;
     text-overflow:ellipsis;
 }
-table.jobsList.history td.eventsummary {
+table.jobsList td.eventsummary {
     max-width: 200px;
     white-space:nowrap;
     text-overflow:ellipsis;
 }
-table.jobsList.history tr.fail td.eventtitle{
+table.jobsList td.date {
+    max-width: 200px;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+}
+table.jobsList tr.fail td.eventtitle{
     color:red;
 }
 div.buttons span.group {
@@ -1290,6 +1300,16 @@ div.jobslist{
 div.jobslist.small{
     margin: 0 0px 5px 0;
     width: auto;
+}
+.jobsList td.outputlink{
+    padding: 0px;
+    white-space: nowrap;
+    text-align: right;
+    width: 30px;
+}
+.jobsList td.outputlink a{
+    display: block;
+    padding: 10px;
 }
 
 span.grouplabel a{
@@ -2130,9 +2150,9 @@ tr.sectionhead td.eventsummary{
     white-space:nowrap;
     width:50px;
 }
-tr.sectionhead td.eventtitle.job{
+table.jobsList td.eventtitle.job{
 }
-tr.sectionhead td.eventtitle.adhoc{
+table.jobsList td.eventtitle.adhoc{
     font-style:italic;
     color: #888;
 }
@@ -2572,6 +2592,12 @@ fieldset{
 .runbox{
     background: #ddd;
     padding:10px ;
+}
+.runbox.primary{
+    background: none;
+}
+.runbox.sub{
+    background: #eee;
 }
 .runbox.sepT{
     border-top:1px solid #bbb;
