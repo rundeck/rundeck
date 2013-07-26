@@ -31,15 +31,12 @@
         <g:render template="/scheduledExecution/showHead" model="[scheduledExecution:scheduledExecution,execution:execution,followparams:[mode:followmode,lastlines:params.lastlines]]"/>
     </div>
 
-    <div style="vertical-align:top;width: 200px;" class="toolbar small">
-        <g:render template="/scheduledExecution/actionButtons" model="${[scheduledExecution:scheduledExecution,objexists:objexists,jobAuthorized:jobAuthorized,iconsize:'24px',iconname:'med']}"/>
-    </div>
     <div class="clear"></div>
 </div>
 
 <div class="pageBody" id="schedExecPage">
     <div id="schedExDetails${scheduledExecution?.id}" style="">
-        <g:render template="showDetail" model="[scheduledExecution:scheduledExecution]"/>
+        <g:render template="showDetail" model="[scheduledExecution:scheduledExecution,showEdit:true]"/>
 
     </div>
 

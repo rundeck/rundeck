@@ -1,4 +1,4 @@
-<%@ page import="rundeck.ScheduledExecution" %>
+<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants; rundeck.ScheduledExecution" %>
     <g:set var="execInfo" value="${scheduledExecution?scheduledExecution:execution}"/>
     <g:set var="jobPrimary" value="${scheduledExecution && !execution ? 'primary':'secondary'}"/>
     <g:set var="execPrimary" value="${execution ? 'primary':''}"/>
@@ -40,6 +40,20 @@
     <g:if test="${scheduledExecution}">
         <div class="jobInfoSection">
             <span class="jobInfoPart ${jobPrimary}">
+            <g:if test="${!runPage}">
+                <span style="vertical-align:middle;margin-right: 10px;" class="floatl toolbar small">
+
+                    <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_RUN)}">
+                        <g:link controller="scheduledExecution" action="execute" id="${scheduledExecution.extid}"
+                                class="icon button floatl"
+                                onclick="if(typeof(loadExec)=='function'){loadExec(${scheduledExecution.id});return false;}"><img
+                                src="${resource(dir: 'images', file:  'icon-run.png')}"
+                                title="Run ${g.message(code: 'domain.ScheduledExecution.title')}&hellip;" alt="run"
+                                width="32" height="32"/></g:link>
+                    </g:if>
+
+                </span>
+                </g:if>
                 <g:link controller="scheduledExecution" action="show" id="${scheduledExecution.extid}"
                         class=" ${execution?.status == 'true' ? 'jobok' : null == execution?.dateCompleted ? 'jobrunning' : execution?.cancelled ? 'jobwarn' : 'joberror'}" absolute="${absolute ? 'true' :'false'}">
                 <span class="jobName">${scheduledExecution?.jobName.encodeAsHTML()}</span></g:link>

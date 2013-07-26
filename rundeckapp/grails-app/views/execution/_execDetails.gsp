@@ -2,7 +2,17 @@
 <g:set var="rkey" value="${g.rkey()}"/>
 
 <table class="simpleForm" style="width:100%" cellpadding="0" cellspacing="0">
-
+    <g:if test="${showEdit}">
+        <tr>
+        <td>Definition:</td>
+            <td>
+                <div style="vertical-align:top;width: 200px; display: inline-block;" class="toolbar small">
+                    <g:render template="/scheduledExecution/actionButtons"
+                              model="${[scheduledExecution: scheduledExecution, objexists: objexists, jobAuthorized: jobAuthorized, iconsize: '24px', iconname: 'med', noRunButton: true]}"/>
+                </div>
+            </td>
+        </tr>
+    </g:if>
     <g:if test="${execdata!=null && execdata.id && execdata instanceof ScheduledExecution && execdata.scheduled}">
         <tr>
         <td >Schedule:</td>

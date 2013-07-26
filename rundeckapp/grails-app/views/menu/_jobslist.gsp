@@ -54,8 +54,10 @@
                                     </g:else>
                                 </span>
                                     <span class="inlinebuttons jobbuttons">
+                                        <div class="buttons">
                                         <g:render template="/scheduledExecution/actionButtons"
                                           model="${[scheduledExecution: scheduledExecution, authMap: authMap, jobauthorizations: jobauthorizations, small: true]}"/>
+                                        </div>
                                     </span>
 
                                     <g:link action="show" controller="scheduledExecution" id="${scheduledExecution.extid}" class="jobIdLink">

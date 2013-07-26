@@ -44,8 +44,7 @@
     %>
 </g:if>
 <g:set var="jobAuths" value="${ jobauthorizations }"/>
-<div class="buttons">
-        <span class="group floatr" id="${ukey}jobDisplayButtons${scheduledExecution.id}">
+        <span class="group " id="${ukey}jobDisplayButtons${scheduledExecution.id}">
             <g:if test="${!small }">
                 <g:if test="${!execPage}">
                     <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE}">
@@ -62,7 +61,7 @@
                     <g:link controller="scheduledExecution" title="Edit Job" action="edit" id="${scheduledExecution.extid}" class="icon button floatl"><img src="${resource(dir:'images',file: iname +'-edit.png')}" alt="edit" width="${width}" height="${width}"/></g:link>
                 </g:if>
                 </g:if>
-                <g:if test="${jobAuths[AuthConstants.ACTION_READ]?.contains(idKey) }">
+                <g:if test="${jobAuths[AuthConstants.ACTION_READ]?.contains(idKey)}">
                     <span class="icon action button textbtn floatl obs_bubblepopup" id="downloadlink" title="Download Job definition file"><img src="${resource(dir: 'images', file: iname +'-file.png')}" alt="download" width="19px" height="${width}"/></span>
                     <div  id="downloadlink_popup" style="display:none;">
                         <span class="prompt">Select a format:</span>
@@ -73,7 +72,7 @@
                     </div>
                 </g:if>
             </g:if>
-            <g:if test="${jobAuthorized || jobAuths[AuthConstants.ACTION_RUN]?.contains(idKey) }">
+            <g:if test="${!noRunButton && (jobAuthorized || jobAuths[AuthConstants.ACTION_RUN]?.contains(idKey)) }">
                 <g:link controller="scheduledExecution" action="execute" id="${scheduledExecution.extid}" class="icon button floatl" onclick="if(typeof(loadExec)=='function'){loadExec(${scheduledExecution.id});return false;}"><img src="${resource(dir:'images',file: iname +'-run.png')}" title="Run ${g.message(code:'domain.ScheduledExecution.title')}&hellip;" alt="run" width="${width}" height="${width}"/></g:link>
             </g:if>
 
@@ -86,5 +85,4 @@
             </g:form>
         </div>
         <span class="clear"></span>
-</div>
 <g:timerEnd key="actionButtonsNew"/>

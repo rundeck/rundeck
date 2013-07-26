@@ -1,6 +1,6 @@
 <div class="pageTop extra">
 <div class="jobHead">
-    <tmpl:showHead scheduledExecution="${scheduledExecution}" iconName="icon-job" subtitle="Choose Execution Options"/>
+    <tmpl:showHead scheduledExecution="${scheduledExecution}" iconName="icon-job" subtitle="Choose Execution Options" runPage="true"/>
     <div class="clear"></div>
     
 </div>
