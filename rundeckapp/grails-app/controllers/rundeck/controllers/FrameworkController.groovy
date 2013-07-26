@@ -147,10 +147,10 @@ class FrameworkController  {
         }
 
         if (query.nodeFilterIsEmpty()) {
-            if (params.formInput == 'true' && 'true' != params.defaultLocalNode) {
-                query.nodeIncludeName = '.*'
-            } else {
+            if ('true' == params.defaultLocalNode) {
                 query.nodeIncludeName = framework.getFrameworkNodeName()
+            } else {
+                query.nodeIncludeName = '.*'
             }
         }
         if (query && !query.project && session.project) {
