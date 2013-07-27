@@ -1,6 +1,8 @@
 package rundeck
 
 import grails.test.GrailsUnitTestCase
+import grails.test.mixin.Mock
+import grails.test.mixin.TestFor
 
 /**
  * $INTERFACE is ...
@@ -8,11 +10,11 @@ import grails.test.GrailsUnitTestCase
  * Date: 4/19/13
  * Time: 6:06 PM
  */
-class ScheduledExecutionTest extends GrailsUnitTestCase {
+@TestFor(ScheduledExecution)
+@Mock([ Option, Workflow, CommandExec, Execution])
+class ScheduledExecutionTest  {
 
     void testToMapOptions() {
-        mockDomain(Option)
-        mockDomain(ScheduledExecution)
         ScheduledExecution se = createBasicScheduledExecution()
         se.options.addAll([
                 new Option(name: 'abc-4', defaultValue: '12', sortIndex: 4),
@@ -27,20 +29,17 @@ class ScheduledExecutionTest extends GrailsUnitTestCase {
     }
 
     void testValidateBasic() {
-        mockDomain(ScheduledExecution)
         ScheduledExecution se = createBasicScheduledExecution()
         assertTrue(se.validate())
     }
 
     void testValidateServerNodeUUID() {
-        mockDomain(ScheduledExecution)
         ScheduledExecution se = createBasicScheduledExecution()
         se.serverNodeUUID = UUID.randomUUID().toString()
         assertTrue(se.validate())
     }
 
     void testInvalidServerNodeUUID() {
-        mockDomain(ScheduledExecution)
         ScheduledExecution se = createBasicScheduledExecution()
         se.serverNodeUUID = "blah"
         assertFalse(se.validate())

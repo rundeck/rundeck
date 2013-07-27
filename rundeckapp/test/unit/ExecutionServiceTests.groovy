@@ -124,13 +124,14 @@ class ExecutionServiceTests  {
         Execution e2=svc.createExecution(se,null,"user1")
 
         assertNotNull(e)
-        assertEquals('-a b -c d',e.argString)
-        assertEquals(se, e.scheduledExecution)
-        assertNotNull(e.dateStarted)
-        assertNull(e.dateCompleted)
-        assertEquals('user1',e.user)
-        def execs=se.executions
-        assertNull(execs)
+        assertEquals('-a b -c d', e2.argString)
+        assertEquals(se, e2.scheduledExecution)
+        assertNotNull(e2.dateStarted)
+        assertNull(e2.dateCompleted)
+        assertEquals('user1', e2.user)
+        def execs = se.executions
+        assertNotNull(execs)
+        assertTrue(execs.contains(e2))
     }
     void testCreateExecutionJobUser(){
         ConfigurationHolder.config=[:]
@@ -146,7 +147,6 @@ class ExecutionServiceTests  {
         )
         se.save()
 
-        registerMetaClass(ScheduledExecution)
         ScheduledExecution.metaClass.static.lock={id-> return se}
         ScheduledExecution.metaClass.static.withNewSession = {clos -> clos.call([clear: {}])}
         def myCriteria = new Expando();
@@ -155,7 +155,6 @@ class ExecutionServiceTests  {
         Execution.metaClass.static.executeQuery = {q, h -> []}
 
 
-        mockLogging(ExecutionService)
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = new FrameworkService()
         svc.frameworkService=fsvc
@@ -168,8 +167,9 @@ class ExecutionServiceTests  {
         assertNotNull(e.dateStarted)
         assertNull(e.dateCompleted)
         assertEquals('bob',e.user)
-        def execs=se.executions
-        assertNull(execs)
+        def execs = se.executions
+        assertNotNull(execs)
+        assertTrue(execs.contains(e))
     }
     void testCreateExecutionAsUser(){
         ConfigurationHolder.config=[:]
@@ -185,7 +185,6 @@ class ExecutionServiceTests  {
         )
         se.save()
 
-        registerMetaClass(ScheduledExecution)
         ScheduledExecution.metaClass.static.lock={id-> return se}
         ScheduledExecution.metaClass.static.withNewSession = {clos -> clos.call([clear: {}])}
         def myCriteria = new Expando();
@@ -194,7 +193,6 @@ class ExecutionServiceTests  {
         Execution.metaClass.static.executeQuery = {q, h -> []}
 
 
-        mockLogging(ExecutionService)
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = new FrameworkService()
         svc.frameworkService=fsvc
@@ -209,7 +207,7 @@ class ExecutionServiceTests  {
         assertEquals('user1', e.user)
         def execs=se.executions
         assertNotNull(execs)
-        assertTrue(execs.contains(e2))
+        assertTrue(execs.contains(e))
     }
     void testCreateExecutionOptionsValidation(){
         ScheduledExecution se = prepare()

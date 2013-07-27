@@ -1,6 +1,9 @@
 import grails.test.GrailsUnitTestCase
 import com.dtolabs.rundeck.util.ZipBuilder
+import grails.test.mixin.Mock
+import grails.test.mixin.TestFor
 import rundeck.Execution
+import rundeck.Option
 import rundeck.Workflow
 import rundeck.CommandExec
 import rundeck.ScheduledExecution
@@ -32,7 +35,9 @@ import rundeck.services.ScheduledExecutionService
  * Created: 10/16/12 9:57 AM
  * 
  */
-class ProjectServiceTests extends GrailsUnitTestCase {
+@TestFor(ProjectService)
+@Mock([ScheduledExecution, Option, Workflow, CommandExec, Execution])
+class ProjectServiceTests  {
     static String EXEC_XML_TEST1_START = '''<executions>
   <execution id='1'>
     <dateStarted>1970-01-01T00:00:00Z</dateStarted>
@@ -203,11 +208,6 @@ class ProjectServiceTests extends GrailsUnitTestCase {
      * Imported execution where jobId should be skipped, should not be loaded
      */
     def testImportExecutionSkipJob(){
-        mockDomain(ScheduledExecution)
-        mockDomain(Execution)
-        mockDomain(Workflow)
-        mockDomain(CommandExec)
-        mockLogging(ProjectService)
         ProjectService svc = new ProjectService()
         def result = svc.loadExecutions(EXEC_XML_TEST3,null,['jobid1'])
         assertNotNull result
@@ -217,10 +217,6 @@ class ProjectServiceTests extends GrailsUnitTestCase {
         assertEquals 0,result.execidmap.size()
     }
     def testImportExecutionRemappedJob(){
-        mockDomain(ScheduledExecution)
-        mockDomain(Execution)
-        mockDomain(Workflow)
-        mockDomain(CommandExec)
         def testJobId='test-id1'
 
         def newJobId = 'test-id2'

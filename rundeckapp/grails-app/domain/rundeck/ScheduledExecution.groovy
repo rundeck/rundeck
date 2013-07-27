@@ -2,6 +2,7 @@ package rundeck
 import com.dtolabs.rundeck.app.support.BaseNodeFilters
 
 class ScheduledExecution extends ExecutionContext {
+    Long id
     SortedSet options
     static hasMany = [executions:Execution,options:Option,notifications:Notification]
 
