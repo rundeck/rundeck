@@ -46,20 +46,28 @@
 <g:set var="jobAuths" value="${ jobauthorizations }"/>
         <span class="group " id="${ukey}jobDisplayButtons${scheduledExecution.id}">
             <g:if test="${!small }">
+
+                <g:if test="${!execPage}">
+                    <g:if test="${jobAuths[AuthConstants.ACTION_UPDATE]?.contains(idKey)}">
+                        <g:link controller="scheduledExecution" title="Edit Job" action="edit"
+                                id="${scheduledExecution.extid}" class="icon button floatl"><img
+                                src="${resource(dir: 'images', file: iname + '-edit.png')}" alt="edit" width="${width}"
+                                height="${width}"/></g:link>
+                    </g:if>
+                </g:if>
+
+                <g:if test="${jobAuths[AuthConstants.ACTION_CREATE] && jobAuths[AuthConstants.ACTION_READ]?.contains(idKey)}">
+                    <g:link controller="scheduledExecution" title="Copy Job" action="copy"
+                            id="${scheduledExecution.extid}" class="icon button floatl"><img
+                            src="${resource(dir: 'images', file: iname + '-copy.png')}" alt="copy" width="${width}"
+                            height="${width}"/></g:link>
+                </g:if>
                 <g:if test="${!execPage}">
                     <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE}">
                         <g:if test="${jobAuths[AuthConstants.ACTION_DELETE]?.contains(idKey) }">
                             <span class="icon button floatl" title="Delete ${g.message(code:'domain.ScheduledExecution.title')}" onclick="menus.showRelativeTo(this,'${ukey}jobDisplayDeleteConf${scheduledExecution.id}',-2,-2);return false;"><img src="${resource(dir:'images',file: iname+'-removex.png')}" alt="delete" width="${width}" height="${width}"/></span>
                         </g:if>
                     </auth:resourceAllowed>
-                </g:if>
-                <g:if test="${jobAuths[AuthConstants.ACTION_CREATE] && jobAuths[AuthConstants.ACTION_READ]?.contains(idKey) }">
-                    <g:link controller="scheduledExecution" title="Copy Job" action="copy" id="${scheduledExecution.extid}" class="icon button floatl"><img src="${resource(dir:'images',file: iname +'-copy.png')}" alt="copy" width="${width}" height="${width}"/></g:link>
-                </g:if>
-                <g:if test="${!execPage}">
-                <g:if test="${jobAuths[AuthConstants.ACTION_UPDATE]?.contains(idKey) }">
-                    <g:link controller="scheduledExecution" title="Edit Job" action="edit" id="${scheduledExecution.extid}" class="icon button floatl"><img src="${resource(dir:'images',file: iname +'-edit.png')}" alt="edit" width="${width}" height="${width}"/></g:link>
-                </g:if>
                 </g:if>
                 <g:if test="${jobAuths[AuthConstants.ACTION_READ]?.contains(idKey)}">
                     <span class="icon action button textbtn floatl obs_bubblepopup" id="downloadlink" title="Download Job definition file"><img src="${resource(dir: 'images', file: iname +'-file.png')}" alt="download" width="19px" height="${width}"/></span>
