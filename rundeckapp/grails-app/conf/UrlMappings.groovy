@@ -59,6 +59,7 @@ class UrlMappings {
         "/job/$action?/$id?"(controller: 'scheduledExecution')
         "/resources/$action?/$id?"(controller: 'framework')
         "/events/$action?/$id?"(controller: 'reports')
+        "/configure"(controller: 'menu', action: 'admin')
         "500"(view: '/error')
     }
 }
