@@ -69,16 +69,7 @@
                         </g:if>
                     </auth:resourceAllowed>
                 </g:if>
-                <g:if test="${jobAuths[AuthConstants.ACTION_READ]?.contains(idKey)}">
-                    <span class="icon action button textbtn floatl obs_bubblepopup" id="downloadlink" title="Download Job definition file"><img src="${resource(dir: 'images', file: iname +'-file.png')}" alt="download" width="19px" height="${width}"/></span>
-                    <div  id="downloadlink_popup" style="display:none;">
-                        <span class="prompt">Select a format:</span>
-                        <ul>
-                            <li><g:link controller="scheduledExecution" title="Download XML" action="show" id="${scheduledExecution.extid}.xml">XML</g:link></li>
-                            <li><g:link controller="scheduledExecution" title="Download YAML" action="show" id="${scheduledExecution.extid}.yaml">YAML</g:link></li>
-                        </ul>
-                    </div>
-                </g:if>
+                
             </g:if>
             <g:if test="${!noRunButton && (jobAuthorized || jobAuths[AuthConstants.ACTION_RUN]?.contains(idKey)) }">
                 <g:link controller="scheduledExecution" action="execute" id="${scheduledExecution.extid}" class="icon button floatl" onclick="if(typeof(loadExec)=='function'){loadExec(${scheduledExecution.id});return false;}"><img src="${resource(dir:'images',file: iname +'-run.png')}" title="Run ${g.message(code:'domain.ScheduledExecution.title')}&hellip;" alt="run" width="${width}" height="${width}"/></g:link>

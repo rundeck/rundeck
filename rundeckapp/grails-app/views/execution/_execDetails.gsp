@@ -1,4 +1,4 @@
-<%@ page import="com.dtolabs.rundeck.core.plugins.configuration.Description; rundeck.ExecutionContext; rundeck.ScheduledExecution" %>
+<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants; com.dtolabs.rundeck.core.plugins.configuration.Description; rundeck.ExecutionContext; rundeck.ScheduledExecution" %>
 <g:set var="rkey" value="${g.rkey()}"/>
 
 <table class="simpleForm" style="width:100%" cellpadding="0" cellspacing="0">
@@ -219,6 +219,30 @@
             </td>
         </tr>
     </g:if>
+<g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_READ])}">
+    <tr>
+        <td>
+
+        </td>
+        <td>
+            <span class="desc">
+
+                <g:link controller="scheduledExecution" title="Download Job definition in  XML" action="show"
+                        id="${scheduledExecution.extid}.xml">
+                    <img src="${resource(dir: 'images', file: 'icon-small-file.png')}" alt="download xml" width="10px"
+                         height="12px"/>
+                    xml
+                </g:link>
+                <g:link controller="scheduledExecution" title="Download Job definition in YAML" action="show"
+                        id="${scheduledExecution.extid}.yaml">
+                    <img src="${resource(dir: 'images', file: 'icon-small-file.png')}" alt="download yaml" width="10px"
+                         height="12px"/>
+                    yaml
+                </g:link>
+            </span>
+        </td>
+    </tr>
+</g:if>
 
     
 </table>
