@@ -47,7 +47,7 @@
         </tr>
     </g:if>
 
-    <g:if test="${execdata instanceof ExecutionContext && execdata?.workflow}">
+    <g:if test="${execdata instanceof com.dtolabs.rundeck.app.support.ExecutionContext && execdata?.workflow}">
         <g:unless test="${hideAdhoc}">
         <tr>
             <td>Workflow:</td>

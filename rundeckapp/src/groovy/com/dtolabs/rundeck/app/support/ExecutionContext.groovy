@@ -1,4 +1,4 @@
-package rundeck
+package com.dtolabs.rundeck.app.support
 
 import com.dtolabs.rundeck.app.support.BaseNodeFilters
 /**

@@ -1,5 +1,6 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.app.support.ExecutionContext
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.app.support.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.QueueQuery
