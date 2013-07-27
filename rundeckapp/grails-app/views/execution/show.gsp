@@ -101,9 +101,6 @@
   <body id="executionShowPage">
     <div class="pageTop extra">
         <div class="jobHead">
-            <table cellspacing="0" cellpadding="0" width="100%">
-                <tr>
-                    <td  style="vertical-align: top;">
                         <div class="jobInfo">
                         <g:render template="/scheduledExecution/showExecutionHead"
                                   model="[scheduledExecution: scheduledExecution, execution: execution, followparams: [mode: followmode, lastlines: params.lastlines]]"/>
@@ -230,7 +227,7 @@
                         </div>
 
                         <g:set var="isAdhoc" value="${!scheduledExecution && execution.workflow.commands.size() == 1}"/>
-                        <table>
+                        <table class="jobInfo">
                         <g:if test="${scheduledExecution}">
                             <tr>
                                 <td>
@@ -263,7 +260,7 @@
                         </g:if>
                         </table>
 
-                        <div style="">
+                        <div class="jobInfo">
                             <g:expander key="schedExDetails${scheduledExecution?.id ? scheduledExecution?.id : ''}"
                                         imgfirst="true">Definition</g:expander>
                             <div class="presentation" style="display:none" id="schedExDetails${scheduledExecution?.id}">
@@ -275,10 +272,6 @@
                         var workflow=${execution.workflow.commands*.toMap().encodeAsJSON()};
                         </g:javascript>
 
-                    </td>
-
-                </tr>
-            </table>
         </div>
         <div class="clear"></div>
     </div>
