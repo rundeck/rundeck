@@ -53,7 +53,7 @@
             </g:if>
 
 
-        <td class="eventtitle ${rpt?.jcJobId ? 'job' : 'adhoc'}">
+        <td class="eventtitle ${rpt?.jcJobId ? 'job' : 'adhoc'}" colspan="${rpt?.jcJobId?1:2}">
             #${rpt.jcExecId}
             <g:if test="${options.summary}">
                 <g:if test="${rpt?.jcJobId}">
@@ -68,7 +68,7 @@
 
                 </g:if>
                 <g:else>
-                    <g:truncate max="${maxmsgsize}">${rpt.title.encodeAsHTML()}</g:truncate>
+                    ${rpt.title.encodeAsHTML()}
                 </g:else>
             </g:if>
             <g:else>
@@ -79,12 +79,14 @@
                 </g:if>
             </g:else>
         </td>
+            <g:if test="${rpt?.jcJobId}">
         <td class="eventargs">
             <g:if test="${execution && execution.argString}"><span class="">${execution.argString.encodeAsHTML()}</span></g:if>
             <g:if test="${params.debug}">
                 ${rpt.toMap()}
             </g:if>
         </td>
+            </g:if>
 
             <td style="white-space:nowrap" class="right sepL date">
                 <g:if test="${it.dateCompleted}">

@@ -1273,7 +1273,8 @@ table.jobsList td {
 table.jobsList td.eventtitle {
     max-width: 400px;
     white-space:nowrap;
-    text-overflow:ellipsis;
+    text-overflow:clip;
+    overflow-x: hidden;
 }
 table.jobsList td.eventsummary {
     max-width: 200px;
