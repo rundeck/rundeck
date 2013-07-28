@@ -126,3 +126,20 @@
         </tr>
         <% j++; %>
     </g:each>
+<g:if test="${lastDate}">
+    <g:set var="checkUpdatedParams" value="${[since: lastDate]}"/>
+    %{
+        if (filterName) {
+            checkUpdatedParams.filterName = filterName
+        } else {
+            checkUpdatedParams.putAll(paginateParams)
+        }
+    }%
+    <g:set var="checkUpdatedUrl" value="${g.createLink(action: 'since.json', params: checkUpdatedParams)}"/>
+</g:if>
+<g:set var="refreshUrl"
+       value="${g.createLink(action: 'eventsFragment', params: filterName ? [filterName: filterName] : paginateParams)}"/>
+<g:set var="rssUrl"
+       value="${g.createLink(controller: 'feed', action: 'index', params: filterName ? [filterName: filterName] : paginateParams)}"/>
+<g:render template="/common/boxinfo"
+          model="${[name: 'events', model: [title: 'History', total: total, url: refreshUrl, checkUpdatedUrl: checkUpdatedUrl, rssUrl: rssUrl, lastDate: lastDate]]}"/>
