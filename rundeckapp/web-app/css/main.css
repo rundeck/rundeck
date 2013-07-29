@@ -1220,11 +1220,11 @@ table.jobsList td.jobname.transient{
     font-style:italic;
 }
 
-table.jobsList td.jobname a{
+table.jobsList td.jobname a.primary{
     color:black;
     font-weight:normal;
 }
-table.jobsList td.jobname a:hover{
+table.jobsList td.jobname a.primary:hover{
     color:blue;
     text-decoration:underline;
 }

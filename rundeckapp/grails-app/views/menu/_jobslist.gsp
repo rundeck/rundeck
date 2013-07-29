@@ -58,14 +58,16 @@
                                         </div>
                                     </span>
 
-                                    <g:link action="show" controller="scheduledExecution" id="${scheduledExecution.extid}" class="jobIdLink">
+                                    <g:link action="show" controller="scheduledExecution" id="${scheduledExecution.extid}" class="primary" >
                                     ${scheduledExecution.jobName.encodeAsHTML()}</g:link>
 
-                                <g:if test="${!session.project}">
-                                <span class="project">
-                                    &bull; <span class="action textbtn" onclick="selectProject('${scheduledExecution.project.encodeAsJavaScript()}');" title="Select this project">${scheduledExecution.project.encodeAsHTML()}</span> 
-                                </span>
+                                <g:if test="${jobauthorizations && jobauthorizations[AuthConstants.ACTION_UPDATE]?.contains(scheduledExecution.id.toString())}">
+                                    <g:link action="edit" controller="scheduledExecution"
+                                            id="${scheduledExecution.extid}"
+                                            class="jobIdLink action textbtn">
+                                        edit</g:link>
                                 </g:if>
+
                                 <span class="jobdesc" title="${scheduledExecution.description?.encodeAsHTML()}">${scheduledExecution.description?.encodeAsHTML()}</span>
 
                                 </div>

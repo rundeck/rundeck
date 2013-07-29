@@ -242,7 +242,7 @@
         function showJobDetails(elem){
             //get url
             var href=elem.href;
-            var match=href.match(/\/job\/show\/(.+)$/);
+            var match=href.match(/\/job\/.+?\/(.+)$/);
             if(!match){
                 return;
             }
