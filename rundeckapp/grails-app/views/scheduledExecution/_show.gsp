@@ -41,8 +41,9 @@
 </div>
 
 <div class="pageBody" id="schedExecPage">
-    <div id="schedExDetails${scheduledExecution?.id}" style="">
-        <g:render template="showDetail" model="[scheduledExecution:scheduledExecution,showEdit:true]"/>
+    <g:expander key="schedExDetails${scheduledExecution?.id}">Definition </g:expander>
+    <div id="schedExDetails${scheduledExecution?.id}" style="display: none">
+        <g:render template="showDetail" model="[scheduledExecution:scheduledExecution,showEdit:true,hideOptions:true]"/>
 
     </div>
 
