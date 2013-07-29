@@ -1841,7 +1841,7 @@ div.jobHead td{
 }
 
 div.jobHead .jobInfoSection + .jobInfoSection {
-    margin-top: 15px;
+    margin-top: 10px;
 }
 div.jobHead span.jobInfoPart span.partContent{
     margin-top:auto;

@@ -28,7 +28,7 @@
 
 <div class="pageTop extra">
     <div class="jobHead">
-        <g:render template="/scheduledExecution/showHead" model="[scheduledExecution:scheduledExecution,execution:execution,followparams:[mode:followmode,lastlines:params.lastlines]]"/>
+        <g:render template="/scheduledExecution/showHead" model="[scheduledExecution:scheduledExecution,followparams:[mode:followmode,lastlines:params.lastlines]]"/>
     </div>
 
     <div class="clear"></div>
