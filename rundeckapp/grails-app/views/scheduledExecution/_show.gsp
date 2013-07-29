@@ -61,6 +61,7 @@
     <g:render template="/scheduledExecution/renderJobStats" model="${[scheduledExecution: scheduledExecution]}"/>
 
     <table cellpadding="0" cellspacing="0" class="jobsList list history" style="width:100%">
+        <tbody id="nowrunning"></tbody>
         <tbody id="histcontent"></tbody>
     </table>
     <g:javascript>

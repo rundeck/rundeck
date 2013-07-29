@@ -114,7 +114,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
             groupPath: 'groupPath'
         ]
         def schedExactFilters= [
-            groupPathExact:'groupPath'
+            groupPathExact:'groupPath',
+            jobId:'uuid'
         ]
         def schedFilterKeys= (schedExactFilters.keySet() + schedTxtFilters.keySet() + schedPathFilters.keySet())
 
