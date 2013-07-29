@@ -64,7 +64,9 @@
                 <div class="jobsReport clear">
                     <g:if test="${reports}">
                         <table cellpadding="0" cellspacing="0" class="jobsList list history" style="width:100%">
-
+                        <g:if test="${includeNowRunning}">
+                            <tbody id="nowrunning"></tbody>
+                        </g:if>
                         <g:render template="baseReport" model="['reports':reports,options:params.compact?[tags:false, summary: false]:[summary:true],hiliteSince:params.hiliteSince]"/>
 
                         </table>

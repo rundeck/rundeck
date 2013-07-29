@@ -29,12 +29,29 @@
                 $("loaderror").show();
             }
         }
+
         var bfilters=${filterPref.encodeAsJSON()};
         <g:set var="pageparams" value="${[offset:params.offset,max:params.max]}"/>
         <g:set var="eventsparams" value="${paginateParams}"/>
         var eventsparams=${eventsparams.encodeAsJSON()};
         var pageparams=${pageparams.encodeAsJSON()};
+        var runupdate;
+        function loadNowRunning(){
+            runupdate=new Ajax.PeriodicalUpdater({ success:'nowrunning'},'${createLink(controller: "menu", action: "nowrunningFragment")}',{
+                evalScripts:true,
+                parameters:eventsparams,
+                frequency:5,
+                onFailure:function (response) {
+                    showError("AJAX error: Now Running [" + runupdate.url + "]: " + response.status + " "
+                                      + response.statusText);
+                    runupdate.stop();
+                }
+            });
+        }
+
+
         function _pageInit() {
+            loadNowRunning();
             try{
             if(pageparams && pageparams.offset){
                 Object.extend(eventsparams,pageparams);
@@ -42,6 +59,7 @@
             }catch(e){
                 console.log("error: "+e);
             }
+
         }
 
         var checkUpdatedUrl='';
@@ -157,11 +175,11 @@
     <span class="badgeholder"  id="eventsCountBadge" style="display:none">
     <g:link action="index"
             title="click to load new events"
-            params="${filterName?[filterName:filterName]:params}"><span class="badge newcontent active" id="eventsCountContent" onclick="boxctl.reloadTabForName('events');" title="click to load new events"></span>
+            params="${filterName?[filterName:filterName]:params}"><span class="badge newcontent active" id="eventsCountContent"  title="click to load new events"></span>
     </g:link>
     </span>
     <div id="evtsholder" class="eventspage">
-    <g:render template="eventsFragment" model="${[paginateParams:paginateParams,params:params,reports:reports,filterName:filterName, filtersOpen: true]}"/>
+    <g:render template="eventsFragment" model="${[paginateParams:paginateParams,params:params,reports:reports,filterName:filterName, filtersOpen: true, includeNowRunning:true]}"/>
     </div>
 
     </div>
