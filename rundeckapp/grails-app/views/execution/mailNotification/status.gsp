@@ -214,7 +214,7 @@ div.progressContainer div.progressContent{
 <g:set var="execfailed" value="${execstate in ['failed','aborted']}"/>
 <div class="content">
     <div class="report">
-        <g:render template="/scheduledExecution/showHead" model="[scheduledExecution:scheduledExecution,execution:execution,noimgs:true,absolute:true]"/>
+        <g:render template="/scheduledExecution/showExecutionHead" model="[scheduledExecution:scheduledExecution,execution:execution,noimgs:true,absolute:true]"/>
 
         <div class="presentation">
             &bull; <span class="result ${execfailed ? 'fail' : ''}"><g:message code="status.label.${execstate}"/></span>

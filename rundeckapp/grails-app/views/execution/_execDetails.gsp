@@ -219,7 +219,7 @@
             </td>
         </tr>
     </g:if>
-<g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_READ])}">
+<g:if test="${scheduledExecution && auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_READ])}">
     <tr>
         <td>
 
