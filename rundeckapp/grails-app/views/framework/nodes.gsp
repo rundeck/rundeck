@@ -315,9 +315,8 @@
                 $('runbox').down('input[type="text"]').disable();
                 if ($('runbox').down('button')) {
                     $('runbox').down('button').disabled = true;
-                }
-                if ($('runbox').down('.button')) {
-                    $('runbox').down('.button').addClassName('disabled');
+                    $('runbox').down('button').addClassName('disabled');
+                    $('runbox').down('button').innerHTML="Running…";
                 }
             }
         }
@@ -326,9 +325,8 @@
                 $('runbox').down('input[type="text"]').enable();
                 if($('runbox').down('button')){
                     $('runbox').down('button').disabled=false;
-                }
-                if($('runbox').down('.button')){
-                    $('runbox').down('.button').removeClassName('disabled');
+                    $('runbox').down('button').removeClassName('disabled');
+                    $('runbox').down('button').innerHTML = "Run";
                 }
             }
         }
@@ -355,6 +353,7 @@
             running=false;
             $$('.showafterrun').each(Element.show);
             $$('.hideafterrun').each(Element.hide);
+            $('runFormExec').focus();
         }
         function runError(msg){
             $('runerror').innerHTML=msg;
@@ -371,7 +370,7 @@
          * @param elem
          */
         function runFormSubmit(elem){
-            if(running){
+            if(running || !$F('runFormExec')){
                 return false;
             }
             var data = Form.serialize(elem);
@@ -708,13 +707,9 @@
                                  id="runFormExec"
                                  autofocus="true"/>
 
-                    <span class="button action header"
-                          onclick="runFormSubmit('runbox');" ${run_authorized ? '' : 'disabled'}>
-                        <img src="${resource(dir: 'images', file: 'icon-med-run.png')}"
-                             alt="run"
-                             width="24px" height="24px"/>
+                    <button class="runbutton" onclick="runFormSubmit('runbox');" >
                         Run
-                    </span>
+                    </button>
 
                     <div class="hiderun" id="runerror" style="display:none"></div>
                 </span>
@@ -822,6 +817,8 @@
 
 
     <div id="runcontent"></div>
+
+    <g:if test="${run_authorized}">
     <div class="runbox"><g:message code="page.section.Activity" /></div>
 
     <div class="pageBody">
@@ -833,6 +830,8 @@
             fireWhenReady('histcontent',loadHistory);
         </g:javascript>
     </div>
+    </g:if>
+
 </div>
 <div id="loaderror"></div>
 </body>

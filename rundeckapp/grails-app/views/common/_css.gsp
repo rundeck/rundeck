@@ -74,6 +74,27 @@
         background:url(<g:resource dir="images" file="icon-tiny-warn.png"/>)  2px 5px no-repeat;
     }
 
+    button.runbutton, input[type='submit'].runbutton, button.runbutton.disabled:hover, input[type='submit'].runbutton.disabled:hover {
+        background: #eee url(<g:resource dir="images" file="icon-med-run.png"/>) 3px 3px no-repeat;
+        padding-left: 30px;
+        height: 30px;
+        text-decoration: none;
+    }
+    button.runbutton:hover, input[type='submit'].runbutton:hover{
+        background: #ccc url(<g:resource dir="images" file="icon-med-run.png"/>) 3px 3px no-repeat;
+    }
+
+    button.runbutton.disabled, input[type='submit'].runbutton.disabled {
+        color: #888;
+        border: 1px solid #eee;
+    }
+
+    button.runbutton.disabled:hover, input[type='submit'].runbutton.disabled:hover {
+        cursor: default;
+        color: #888;
+        border: 1px solid #eee;
+    }
+
 
 
     /**
