@@ -190,7 +190,7 @@
                                 <span class="action textbtn job_bulk_select_all" ><g:message code="select.all" /></span>
                                 <span class="action textbtn job_bulk_edit_hide " style="margin-left: 10px" >
                                     <g:message code="cancel" />
-                                    <g:img file="icon-tiny-removex.png" width="12px" height="12px" />
+                                    <g:img file="icon-tiny-removex-gray.png" width="12px" height="12px" />
                                 </span>
                             </div>
                             <div class="bulk_edit_controls " style="display: none; margin: 5px;">

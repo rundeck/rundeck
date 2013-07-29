@@ -132,7 +132,6 @@ function doCreateProject(){
             </span>
             <a href="${helpLinkUrl}" class="help">
                 help
-                <img src="${resource(dir:'images',file:'icon-small-help.png')}" width="16px" height="16px" alt=""/>
             </a>
         </span>
     </g:if>
@@ -140,7 +139,6 @@ function doCreateProject(){
         <span class="headright">
             <a href="${helpLinkUrl}" class="help">
                 help
-                <img src="${resource(dir:'images',file:'icon-small-help.png')}" width="16px" height="16px" alt=""/>
             </a>
         </span>
     </g:else>
