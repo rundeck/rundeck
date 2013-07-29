@@ -115,17 +115,16 @@ function doCreateProject(){
             <g:if test="${session.project}">
             <g:set var="adminauth" value="${auth.resourceAllowedTest(type:'project',name:session.project,action:[AuthConstants.ACTION_ADMIN,AuthConstants.ACTION_READ],context:'application')}"/>
             <g:if test="${adminauth}">
-                <g:link controller="menu" action="admin"><img src="${resource(dir:'images',file:'icon-small-admin.png')}" width="16px" height="16px" alt=""/>
-                    <g:message code="gui.menu.Admin"/></g:link>
+                <g:ifPageProperty name='meta.tabpage'>
+                    <g:ifPageProperty name='meta.tabpage' equals='configure'>
+                        <g:set var="cfgselected" value="selected"/>
+                    </g:ifPageProperty>
+                </g:ifPageProperty>
+                <g:link controller="menu" action="admin" class=" toptab ${cfgselected}"><g:message code="gui.menu.Admin"/></g:link>
             </g:if>
             </g:if>
             <span class="logininfo">
-                <g:if test="${adminauth}">
-                    <img src="${resource(dir:'images',file:'icon-small-user-admin.png')}" width="16px" height="16px" alt=""/>
-                </g:if>
-                <g:else>
-                    <img src="${resource(dir:'images',file:'icon-small-user.png')}" width="16px" height="16px" alt=""/>
-                </g:else>
+
                 <span class="userName" title="User ${session.user} is currently logged in.">
                     <g:link controller="user" action="profile">${session.user}</g:link>
                 </span> &raquo;

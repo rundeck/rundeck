@@ -25,18 +25,11 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
-    <title>Administration</title>
+    <meta name="tabpage" content="configure"/>
+    <title>Configure</title>
 </head>
 
 <body>
-
-<div class="pageTop">
-    <div class="floatl">
-        <span class="welcomeMessage">Administration</span>
-    </div>
-
-    <div class="clear"></div>
-</div>
 
 <div class="pageBody">
     <g:render template="/common/messages"/>
