@@ -126,9 +126,10 @@
                                             id="${scheduledExecution.extid}"
                                             params="${[retryFailedExecId: execution.id]}"
                                             title="${g.message(code: 'retry.job.failed.nodes')}"
-                                            class="action button">
-                                        <img src="${resource(dir: 'images', file: 'icon-small-run.png')}" alt="run"
-                                             width="16px" height="16px"/>
+                                            class=" action button header"
+                                    >
+                                        <img src="${resource(dir: 'images', file: 'icon-med-run.png')}" alt="run"
+                                             width="24px" height="24px"/>
                                         <g:message code="retry.failed.nodes" />&hellip;
                                     </g:link>
                                 </g:if>
@@ -139,10 +140,10 @@
                                             controller="framework"
                                             action="nodes"
                                             params="${[retryFailedExecId: execution.id]}"
-                                            class="action button"
+                                            class=" action button header"
                                             title="${g.message(code:'retry.failed.nodes.description')}">
-                                        <img src="${resource(dir: 'images', file: 'icon-small-run.png')}" alt="run"
-                                             width="16px" height="16px"/>
+                                        <img src="${resource(dir: 'images', file: 'icon-med-run.png')}" alt="run"
+                                             width="24px" height="24px"/>
                                         <g:message code="retry.failed.nodes"/>&hellip;
                                     </g:link>
                                 </g:if>
@@ -155,9 +156,9 @@
                                             action="execute"
                                             id="${scheduledExecution.extid}"
                                             params="${[retryExecId: execution.id]}"
-                                            class="action button"
+                                            class=" action button header"
                                             title="${g.message(code: 'execution.job.action.runAgain')}">
-                                        <g:img file="icon-small-run.png" alt="run" width="16px" height="16px"/>
+                                        <g:img file="icon-med-run.png" alt="run" width="24px" height="24px"/>
                                         <g:message code="execution.action.runAgain"/>&hellip;
                                     </g:link>
                                 </g:if>
@@ -168,7 +169,7 @@
                                             controller="scheduledExecution"
                                             action="createFromExecution"
                                             params="${[executionId: execution.id]}"
-                                            class="action button"
+                                            class=" action button header"
                                             title="${g.message(code:'execution.action.saveAsJob')}">
                                         <g:message code="execution.action.saveAsJob" default="Save as Job"/>&hellip;
                                     </g:link>
@@ -179,9 +180,9 @@
                                             controller="framework"
                                             action="nodes"
                                             params="${[fromExecId: execution.id]}"
-                                            class="action button"
+                                            class=" action button header"
                                             title="${g.message(code: 'execution.action.runAgain')}">
-                                        <g:img file="icon-small-run.png" alt="run" width="16px" height="16px"/>
+                                        <g:img file="icon-med-run.png" alt="run" width="24px" height="24px"/>
                                         <g:message code="execution.action.runAgain" />&hellip;
                                     </g:link>
                                 </g:if>
@@ -235,8 +236,14 @@
                                 </td>
                                 <td>
                                     <g:render template="showJobHead"
-                                              model="${[scheduledExecution: scheduledExecution]}"/>
-                                </td>
+                                              model="${[scheduledExecution: scheduledExecution,nameOnly:true]}"/>
+
+                                    <g:render template="showJobHead"
+                                              model="${[scheduledExecution: scheduledExecution, groupOnly: true]}"/>
+
+                                    <span class="jobdesc jobInfoSection">
+                                        ${scheduledExecution?.description?.encodeAsHTML()}
+                                    </span>
                             </tr>
                         </g:if>
                         <g:if test="${execution.argString}">
@@ -250,9 +257,11 @@
                             </tr>
                         </g:if>
                         <g:if test="${isAdhoc}">
-                        %{--<span class="label">Adhoc:</span>--}%
                             <tr>
-                                <td colspan="2">
+                                <td >
+                                    <span class="label">Command:</span>
+                                </td>
+                                <td>
                                 <g:render template="/execution/execDetailsWorkflow"
                                           model="${[workflow: execution.workflow, context: execution, project: execution.project, isAdhoc: isAdhoc]}"/>
                                 </td>

@@ -339,7 +339,9 @@ a.button.disabled:hover, span.button.disabled:hover{
 div.buttonholder, td.buttonholder, span.buttonholder{
     padding:5px;
 }
-
+.button.header{
+    display: inline-block;
+}
 .objdesc{
     color: #777;
 }
@@ -2002,6 +2004,7 @@ div.pflowlist{
 }
 div.pflowlist ol{
     margin:0;
+    padding-left:0;
 }
 div.pflowlist.edit{
     width: 100%;
@@ -2012,6 +2015,8 @@ div.pflowlist.edit ol.flowlist li{
 }
 div.pflowlist.rounded.adhoc{
     border:0;
+    padding:0;
+    margin:0;
 }
 div.adhoc ol.flowlist li{
     list-style: none;

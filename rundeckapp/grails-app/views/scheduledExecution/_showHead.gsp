@@ -17,11 +17,11 @@
 
                 <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_RUN)}">
                     <g:link controller="scheduledExecution" action="execute" id="${scheduledExecution.extid}"
-                            class=" action button "
+                            class=" action button header"
                             onclick="if(typeof(loadExec)=='function'){loadExec(${scheduledExecution.extid});return false;}"
-                            title="Run this Job…"><img src="${resource(dir: 'images', file: 'icon-small-run.png')}"
+                            title="Run this Job…"><img src="${resource(dir: 'images', file: 'icon-med-run.png')}"
                                                        alt="run"
-                                                       width="16px" height="16px"/> Run…</g:link>
+                                                       width="24px" height="24px"/> Run…</g:link>
                 </g:if>
 
             </span>

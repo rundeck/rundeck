@@ -313,13 +313,23 @@
         function disableRunBar(){
             if($('runbox')){
                 $('runbox').down('input[type="text"]').disable();
-                $('runbox').down('button').disabled=true;
+                if ($('runbox').down('button')) {
+                    $('runbox').down('button').disabled = true;
+                }
+                if ($('runbox').down('.button')) {
+                    $('runbox').down('.button').addClassName('disabled');
+                }
             }
         }
         function enableRunBar(){
             if ($('runbox')) {
                 $('runbox').down('input[type="text"]').enable();
-                $('runbox').down('button').disabled=false;
+                if($('runbox').down('button')){
+                    $('runbox').down('button').disabled=false;
+                }
+                if($('runbox').down('.button')){
+                    $('runbox').down('.button').removeClassName('disabled');
+                }
             }
         }
         function collapseNodeView(){
@@ -698,7 +708,13 @@
                                  id="runFormExec"
                                  autofocus="true"/>
 
-                    <button onclick="runFormSubmit('runbox');" ${run_authorized ? '' : 'disabled'}>Run</button>
+                    <span class="button action header"
+                          onclick="runFormSubmit('runbox');" ${run_authorized ? '' : 'disabled'}>
+                        <img src="${resource(dir: 'images', file: 'icon-med-run.png')}"
+                             alt="run"
+                             width="24px" height="24px"/>
+                        Run
+                    </span>
 
                     <div class="hiderun" id="runerror" style="display:none"></div>
                 </span>
