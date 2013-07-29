@@ -31,7 +31,7 @@
                             src="${resource(dir: 'images', file: 'feed.png')}" width="14px" height="14px"
                             alt=""/> RSS</a>
                 </g:ifServletContextAttribute>
-                <g:render template="/common/queryFilterManager" model="${[rkey:rkey,filterName:filterName,filterset:filterset,update:rkey+'evtsForm',deleteActionSubmitRemote:[controller:'reports',action:'deleteFilter',params:[fragment:true]],storeActionSubmitRemote:[controller:'reports',action:'storeFilter',params:[fragment:true]]]}"/>
+                <g:render template="/common/queryFilterManager" model="${[rkey:rkey,filterName:filterName,filterset:filterset,update:rkey+'evtsForm',deleteActionSubmitRemote:[controller:'reports',action:'deleteFilter',params:[fragment:true]], storeActionSubmit:'storeFilter']}"/>
                 <div class="filter">
                     <g:hiddenField name="max" value="${max}"/>
                         <g:render template="baseFiltersPlain" model="${[params: params, query: query]}"/>
