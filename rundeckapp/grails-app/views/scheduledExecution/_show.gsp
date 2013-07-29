@@ -47,14 +47,7 @@
 
     </div>
 
-    <g:if test="${flash.message}">
-        <div class="message">${flash.message}</div>
-    </g:if>
-    <g:if test="${message}">
-        <div class="message">${message}</div>
-    </g:if>
     <div class="pageMessage" id="showPageMessage" style="display: none;"></div>
-    <g:render template="/common/messages"/>
 
 </div>
 <div class="runbox"><g:message code="page.section.Activity"/></div>
