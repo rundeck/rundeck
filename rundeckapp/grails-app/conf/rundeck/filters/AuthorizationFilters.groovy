@@ -9,7 +9,6 @@ import rundeck.User
 import rundeck.AuthToken
 
 import rundeck.services.FrameworkService
-import rundeck.filters.ApiRequestFilters
 
 /*
  * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
@@ -38,6 +37,8 @@ import rundeck.filters.ApiRequestFilters
 public class AuthorizationFilters {
     def userService
     def FrameworkService frameworkService
+    
+    def dependsOn = [ApiRequestFilters]
 
     def filters = {
         /**
@@ -124,8 +125,7 @@ public class AuthorizationFilters {
          */
         postLoginAuthorizationCheck(controller: '*', action: '*') {
             before = {
-               
-                if (request.invalidApiAuthentication ) {
+                if (request.invalidApiAuthentication) {
                     response.setStatus(403)
                     def authid = session.user ?: "(${request.invalidAuthToken ?: 'unauthenticated'})"
                     log.error("${authid} UNAUTHORIZED for ${controllerName}/${actionName}");
