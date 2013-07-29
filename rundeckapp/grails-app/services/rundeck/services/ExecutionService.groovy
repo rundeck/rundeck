@@ -1077,7 +1077,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
         } catch (ExecutionServiceException exc) {
             def msg = exc.getMessage()
             log.error("exception: " + exc)
-            return [error: 'failed', message: msg]
+            return [error: 'failed', message: msg, options:extra.option]
         }
     }
     private Execution int_createExecution(ScheduledExecution se,framework,user,extra){

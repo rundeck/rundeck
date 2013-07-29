@@ -1,4 +1,4 @@
-<%@ page import="rundeck.Execution" %>
+<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants; rundeck.Execution" %>
 <g:javascript>
 /** START history
          *
@@ -31,6 +31,12 @@
         <g:render template="/scheduledExecution/showHead" model="[scheduledExecution:scheduledExecution,followparams:[mode:followmode,lastlines:params.lastlines]]"/>
     </div>
 
+    <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_RUN)}">
+    <tmpl:execOptionsForm model="${[scheduledExecution: scheduledExecution, crontab: crontab, authorized: authorized]}"
+                          hideHead="${true}"
+        hideCancel="${true}"
+    />
+    </g:if>
     <div class="clear"></div>
 </div>
 

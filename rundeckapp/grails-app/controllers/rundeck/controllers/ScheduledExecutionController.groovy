@@ -210,7 +210,7 @@ class ScheduledExecutionController  {
                         remoteClusterNodeUUID: remoteClusterNodeUUID,
             notificationPlugins: notificationService.listNotificationPlugins(),
             max: params.max?params.max:10,
-            offset:params.offset?params.offset:0]
+            offset:params.offset?params.offset:0] + _prepareExecute(scheduledExecution, framework)
 
             }
             yaml{
@@ -1624,17 +1624,14 @@ class ScheduledExecutionController  {
             log.error(results.message)
             if(results.error=='unauthorized'){
                 return render(view:"/common/execUnauthorized",model:results)
-            }else if(results.error=='invalid'){
+            }else {
                 def model=execute.call()
-
+                results.error = results.remove('message')
                 results.jobexecOptionErrors=results.errors
                 results.selectedoptsmap=results.options
                 results.putAll(model)
                 results.options=null
-                return render(view:'execute',model:results)
-            }else{
-                results.error= results.message
-                return render(template:"/common/error",model:results)
+                return render(view:'show',model:results)
             }
         }else if (results.error){
             log.error(results.error)
@@ -1665,7 +1662,7 @@ class ScheduledExecutionController  {
 
         if (result.error){
             result.failed=true
-            flash.error = result.message
+
             return result
         }else{
             log.debug("ExecutionController: immediate execution scheduled")

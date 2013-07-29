@@ -1,12 +1,14 @@
+<g:if test="${!hideHead}">
 <div class="pageTop extra">
 <div class="jobHead">
     <tmpl:showHead scheduledExecution="${scheduledExecution}" iconName="icon-job" subtitle="Choose Execution Options" runPage="true"/>
     <div class="clear"></div>
-    
+
 </div>
 
     <div class="clear"></div>
 </div>
+</g:if>
 <div class="pageBody form">
     <g:form controller="scheduledExecution" method="post">
         <g:render template="editOptions" model="${[scheduledExecution:scheduledExecution, selectedoptsmap:selectedoptsmap, selectedargstring:selectedargstring,authorized:authorized,jobexecOptionErrors:jobexecOptionErrors, optiondependencies: optiondependencies, dependentoptions: dependentoptions, optionordering: optionordering]}"/>
@@ -206,9 +208,10 @@
             </g:javascript>
         </g:elseif>
         <div class="buttons" id="formbuttons">
-
+            <g:if test="${!hideCancel}">
             <g:actionSubmit id="execFormCancelButton" value="Cancel"/>
-            <g:actionSubmit value="Run ${g.message(code:'domain.ScheduledExecution.title')} Now" id="execFormRunButton"/>
+            </g:if>
+            <g:actionSubmit value="Run ${g.message(code:'domain.ScheduledExecution.title')} Now" id="execFormRunButton" class="runbutton"/>
 
         </div>
         <div class="error note" id="formerror" style="display:none">

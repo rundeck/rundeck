@@ -297,6 +297,23 @@ a.button, span.button, label.button{
     border-radius: 3px;
 }
 
+button.runbutton:hover, input[type='submit'].runbutton:hover{
+    text-decoration: underline;
+    background: #ccc;
+}
+button.runbutton, input[type='submit'].runbutton{
+
+    font: 90%/1.5em verdana, arial, helvetica, sans-serif;
+    padding: 3px;
+    background: #eee;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
+    border:0;
+    color: blue;
+    cursor: pointer;
+}
+
 a.button.join, span.button.join, label.button.join {
     -moz-border-radius: 3px 0 0 3px ;
     -webkit-border-radius: 3px 0 0 3px ;
