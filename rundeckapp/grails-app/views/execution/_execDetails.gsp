@@ -2,17 +2,6 @@
 <g:set var="rkey" value="${g.rkey()}"/>
 
 <table class="simpleForm" style="width:100%" cellpadding="0" cellspacing="0">
-    <g:if test="${showEdit}">
-        <tr>
-        <td>Definition:</td>
-            <td>
-                <div style="vertical-align:top;width: 200px; display: inline-block;" class="toolbar small">
-                    <g:render template="/scheduledExecution/actionButtons"
-                              model="${[scheduledExecution: scheduledExecution, objexists: objexists, jobAuthorized: jobAuthorized, iconsize: '24px', iconname: 'med', noRunButton: true]}"/>
-                </div>
-            </td>
-        </tr>
-    </g:if>
     <g:if test="${execdata!=null && execdata.id && execdata instanceof ScheduledExecution && execdata.scheduled}">
         <tr>
         <td >Schedule:</td>
@@ -102,55 +91,6 @@
 
             </tr>
         </g:if>
-        %{--<tr>--}%
-    %{--<g:if test="${NODE_FILTERS.find{execdata?.('nodeInclude'+it)}}">--}%
-
-        %{--<td>Include Nodes:</td>--}%
-        %{--<td>--}%
-            %{--<table>--}%
-                %{--<g:each var="key" in="${NODE_FILTERS}">--}%
-                    %{--<g:if test="${execdata?.('nodeInclude'+key)}">--}%
-                        %{--<tr>--}%
-                            %{--<td>--}%
-                        %{--${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}:--}%
-                        %{--</td>--}%
-                            %{--<td>--}%
-                        %{--${execdata?.('nodeInclude'+key).encodeAsHTML()}--}%
-                            %{--</td>--}%
-                        %{--</tr>--}%
-                    %{--</g:if>--}%
-
-                %{--</g:each>--}%
-            %{--</table>--}%
-
-        %{--</td>--}%
-    %{--<!--</tr>-->--}%
-    %{--</g:if>--}%
-    %{--<g:if test="${NODE_FILTERS.find{execdata?.('nodeExclude'+it)}}">--}%
-        %{--<!--<tr>-->--}%
-            %{--<td class="displabel">Exclude Nodes:</td>--}%
-            %{--<td>--}%
-
-                %{--<table>--}%
-                    %{--<g:each var="key" in="${NODE_FILTERS}">--}%
-                        %{--<g:if test="${execdata?.('nodeExclude'+key)}">--}%
-                            %{--<tr>--}%
-                                %{--<td>--}%
-                            %{--${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}:--}%
-                            %{--</td>--}%
-                                %{--<td>--}%
-                            %{--${execdata?.('nodeExclude'+key).encodeAsHTML()}--}%
-                                %{--</td>--}%
-                            %{--</tr>--}%
-                        %{--</g:if>--}%
-
-                    %{--</g:each>--}%
-                %{--</table>--}%
-            %{--</td>--}%
-
-    %{--</g:if>--}%
-    %{--</tr>--}%
-
     </tbody>
     </g:if>
     <g:else>
@@ -166,10 +106,6 @@
         </tbody>
         </g:if>
     </g:else>
-    %{--<tr>--}%
-        %{--<td>Project:</td>--}%
-        %{--<td  colspan="3">${execdata?.project}</td>--}%
-    %{--</tr>--}%
     <g:if test="${execdata?.doNodedispatch}">
 
         <tr>
@@ -239,6 +175,14 @@
                          height="12px"/>
                     yaml
                 </g:link>
+
+                <g:if test="${auth.resourceAllowedTest(kind: 'job', action: AuthConstants.ACTION_CREATE)}">
+                    <g:link controller="scheduledExecution" title="Duplicate Job" action="copy"
+                            id="${scheduledExecution.extid}" class="action textbtn">
+                        <img
+                                src="${resource(dir: 'images', file: 'icon-tiny-copy.png')}" alt="edit" width="12px"
+                                height="12px"/> duplicate to a new job</g:link>
+                </g:if>
             </span>
         </td>
     </tr>

@@ -14,17 +14,17 @@
         </span>
         <g:if test="${!runPage}">
             <span>
-
-                <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_RUN)}">
-                    <g:link controller="scheduledExecution" action="execute" id="${scheduledExecution.extid}"
-                            class=" action button header"
-                            onclick="if(typeof(loadExec)=='function'){loadExec(${scheduledExecution.extid});return false;}"
-                            title="Run this Job…"><img src="${resource(dir: 'images', file: 'icon-med-run.png')}"
-                                                       alt="run"
-                                                       width="24px" height="24px"/> Run…</g:link>
-                </g:if>
-
+            <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_UPDATE)}">
+                <g:link controller="scheduledExecution" title="Edit or Delete this Job" action="edit"
+                        id="${scheduledExecution.extid}" class="action textbtn">
+                <img
+                src="${resource(dir: 'images', file: 'icon-tiny-edit.png')}" alt="edit" width="12px"
+                height="12px"/>
+                    edit job</g:link>
+            </g:if>
             </span>
+            <span>
+
         </g:if>
     </div>
 

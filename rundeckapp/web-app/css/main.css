@@ -494,6 +494,9 @@ label{
 	margin-top: 15px;
     clear:both;
 }
+.buttons.primary button, .buttons.primary input[type='submit']{
+    font-size: 150%;
+}
 .actionButtons {
 	width:100px;
 }
@@ -1507,7 +1510,7 @@ span.dragHandle{
     background:white;
     border:1px solid #aaa;
     padding:5px;
-    width:220px;
+    width:250px;
 }
 
 
