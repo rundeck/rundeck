@@ -1351,26 +1351,7 @@ class ScheduledExecutionController  {
 
 
     def execute = {
-
-        if (!params.id) {
-            log.error("Parameter id is required")
-            flash.error = "Parameter id is required"
-            response.setStatus(500)
-            return error()
-        }
-        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
-        def scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
-        if (!scheduledExecution) {
-            log.error("No Job found for id: " + params.id)
-            flash.error = "No Job found for id: " + params.id
-            response.setStatus(404)
-            return error()
-        }
-        if(!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_RUN], scheduledExecution.project)){
-            return unauthorized("Execute Job ${scheduledExecution.extid}")
-        }
-        def model = _prepareExecute(scheduledExecution, framework)
-        return model
+        return redirect(action: 'show',params:params)
     }
 
     private _prepareExecute(ScheduledExecution scheduledExecution, final def framework){
@@ -1612,6 +1593,8 @@ class ScheduledExecutionController  {
             }else{
                 success(true)
                 id(results.id)
+                href(createLink(controller: "execution",action: "follow",id: results.id))
+                follow(params.follow == 'true')
             }
         }
     }
@@ -1625,7 +1608,7 @@ class ScheduledExecutionController  {
             if(results.error=='unauthorized'){
                 return render(view:"/common/execUnauthorized",model:results)
             }else {
-                def model=execute.call()
+                def model=show.call()
                 results.error = results.remove('message')
                 results.jobexecOptionErrors=results.errors
                 results.selectedoptsmap=results.options
@@ -1639,11 +1622,13 @@ class ScheduledExecutionController  {
                 response.setStatus (results.code)
             }
             return render(template:"/common/error",model:results)
-        }else{
+        }else if(params.follow=='true'){
             redirect(controller:"execution", action:"follow",id:results.id)
+        }else {
+            redirect(controller: "scheduledExecution", action: "show", id: params.id)
         }
     }
-    def runJob = {
+    private Map runJob () {
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         params["user"] = (session?.user) ? session.user : "anonymous"
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
