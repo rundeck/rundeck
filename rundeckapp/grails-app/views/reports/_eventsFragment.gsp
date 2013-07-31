@@ -50,7 +50,7 @@
                 <g:if test="${!params.nofilters}">
                 <div class="queryresultsinfo">
                         <g:if test="${!params.compact}">
-                            <span class="prompt">${total} Results</span>
+                            <span class="prompt"><span class="_obs_histtotal">${total}</span> Results</span>
                             matching ${filterName?'filter':'your query'}
                         </g:if>
 
@@ -58,6 +58,23 @@
                             <span class="info note">or choose a saved filter:</span>
                         </g:if>
                         <g:render template="/common/selectFilter" model="[noSelection:'-Within 1 Day-',filterset:filterset,filterName:filterName,prefName:'events']"/>
+                        <g:if test="${includeBadge}">
+
+                            <span class="badgeholder" id="eventsCountBadge" style="display:none">
+                                <g:link action="index"
+                                        title="click to load new events"
+                                        params="${filterName ? [filterName: filterName] : params}"><span
+                                        class="badge newcontent active" id="eventsCountContent"
+                                        title="click to load new events"></span>
+                                </g:link>
+                            </span>
+                        </g:if>
+                        <g:if test="${includeAutoRefresh}">
+                            <label>
+                                <g:checkBox name="refresh" value="true" checked="${params.refresh=='true'}" class="autorefresh"/>
+                                Auto refresh
+                            </label>
+                        </g:if>
                 </div>
                 </g:if>
 
@@ -67,12 +84,13 @@
                         <g:if test="${includeNowRunning}">
                             <tbody id="nowrunning"></tbody>
                         </g:if>
-                        <g:render template="baseReport" model="['reports':reports,options:params.compact?[tags:false, summary: false]:[summary:true],hiliteSince:params.hiliteSince]"/>
-
+                        <tbody id="histcontent">
+                            <g:render template="baseReport" model="['reports':reports,options:params.compact?[tags:false, summary: false]:[summary:true],hiliteSince:params.hiliteSince]"/>
+                        </tbody>
                         </table>
 
                             <g:if test="${total && max && total.toInteger() > max.toInteger()}">
-                                <span class="info note">Showing ${reports.size()} of ${total}</span>
+                                <span class="info note">Showing ${reports.size()} of <span class="_obs_histtotal">${total}</span></span>
                                 <g:if test="${params.compact}">
                                     <a href="${createLink(controller:'reports',action:params.moreLinkAction?params.moreLinkAction:'index',params:filterName?[filterName:filterName]:paginateParams?paginateParams:[:])}">More&hellip;</a>
                                 </g:if>
