@@ -72,7 +72,11 @@
                         result=eval(trans.responseText);
                     }
                     if(result.id){
-                        unloadExec();
+                        if (result.follow && result.href) {
+                            document.location = result.href;
+                        }else{
+                            unloadExec();
+                        }
                     }else if(result.error==='invalid'){
                         //reload form for validation
                         loadExec(null,params+"&dovalidate=true");

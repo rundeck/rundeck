@@ -35,6 +35,7 @@
     <tmpl:execOptionsForm model="${[scheduledExecution: scheduledExecution, crontab: crontab, authorized: authorized]}"
                           hideHead="${true}"
         hideCancel="${true}"
+        defaultFollow="${true}"
     />
     </g:if>
     <div class="clear"></div>
