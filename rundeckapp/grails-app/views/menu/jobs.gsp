@@ -27,9 +27,10 @@
                 }
                 _jobExecUnloadHandlers.clear();
             }
-            $('execDiv').hide();
-            $('indexMain').show();
-            $('execDivContent').innerHTML='';
+            new Effect.BlindDown('indexMain', {duration: 0.2});
+            new Effect.BlindUp('execDiv', {duration: 0.2, afterFinish:function(e){
+                $('execDivContent').innerHTML = '';
+            }});
             $('busy').hide();
         }
         function requestError(item,trans){
@@ -37,8 +38,6 @@
             showError("Failed request: "+item+" . Result: "+trans.getStatusText());
         }
         function loadExec(id,eparams) {
-            $('busy').innerHTML = '<img src="' + appLinks.iconSpinner + '" alt=""/> Loading...';
-            $('busy').show();
             $("error").hide();
             var params=eparams;
             if(!params){
@@ -101,11 +100,12 @@
                 Event.observe($('execFormRunButton'),'click', function(evt) {
                     Event.stop(evt);
                     execSubmit('execDivContent');
+                    $('formbuttons').loading("Starting Execution…");
                     return false;
                 },false);
             }
-            $('indexMain').hide();
-            $('execDiv').show();
+            new Effect.BlindUp('indexMain', {duration: 0.2});
+            new Effect.BlindDown('execDiv', {duration: 0.2});
             $('busy').hide();
         }
 
