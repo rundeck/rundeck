@@ -306,8 +306,13 @@ class LogFileStorageService implements InitializingBean{
      * @param key
      * @return
      */
-    private File getFileForKey(String key) {
-        new File(new File(frameworkService.rundeckBase, "var/logs/rundeck"), key)
+    def File getFileForKey(String key) {
+        def props=frameworkService.getFrameworkProperties()
+        def dir = props.getProperty('framework.logs.dir')
+        if(!dir){
+            throw new IllegalStateException("framework.logs.dir is not set in framework.properties")
+        }
+        new File(new File(dir,'rundeck'), key)
     }
 
     /**
