@@ -142,4 +142,4 @@
 <g:set var="rssUrl"
        value="${g.createLink(controller: 'feed', action: 'index', params: filterName ? [filterName: filterName] : paginateParams)}"/>
 <g:render template="/common/boxinfo"
-          model="${[name: 'events', model: [title: 'History', total: total, url: refreshUrl, checkUpdatedUrl: checkUpdatedUrl, rssUrl: rssUrl, lastDate: lastDate]]}"/>
+          model="${[name: 'events', model: [total: total, max: max, offset: offset, url: refreshUrl, checkUpdatedUrl: checkUpdatedUrl, rssUrl: rssUrl, lastDate: lastDate]]}"/>
