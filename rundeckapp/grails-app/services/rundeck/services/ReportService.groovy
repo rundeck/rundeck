@@ -337,6 +337,27 @@ class ReportService  {
                         isNull('jcJobId')
                     }
                 }
+                if (query.jobListFilter || query.excludeJobListFilter) {
+                    and {
+                        if (query.jobListFilter) {
+                            or {
+                                query.jobListFilter.each {
+                                    eq('reportId', it)
+                                }
+                            }
+                        }
+                        if (query.excludeJobListFilter) {
+                            not {
+                                or {
+                                    query.excludeJobListFilter.each {
+                                        eq('reportId', it)
+                                    }
+
+                                }
+                            }
+                        }
+                    }
+                }
 
                 if (query.dostartafterFilter && query.dostartbeforeFilter && query.startbeforeFilter && query.startafterFilter) {
                     between('dateStarted', query.startafterFilter, query.startbeforeFilter)
