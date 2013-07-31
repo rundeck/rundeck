@@ -139,5 +139,11 @@ public class TestFramework extends AbstractBaseTest {
 
     }
 
+    public void testCreatePropertyRetriever() {
+        PropertyRetriever propertyRetriever = Framework.createPropertyRetriever(new File(getBaseDir()));
+        assertNotNull(propertyRetriever.getProperty("framework.tmp.dir"));
+        assertFalse(propertyRetriever.getProperty("framework.tmp.dir").contains("${"));
+    }
+
 
 }

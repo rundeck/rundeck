@@ -74,7 +74,8 @@ public class TestPropertyLookup extends TestCase {
         p.store(new FileOutputStream(pFile), "test properties");
         final PropertyLookup lookup = PropertyLookup.create(pFile);
         assertEquals("test precondition not met", lookup.getProperty("foo"), "shizzler");
-        lookup.expand();
+        PropertyLookup lookup2 = lookup.expand();
+        assertEquals(lookup, lookup2);
         assertEquals("shizzler-madizzler", lookup.getProperty("bar"));
     }
 
