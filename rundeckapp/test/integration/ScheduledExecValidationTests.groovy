@@ -17,6 +17,9 @@ import grails.test.GrailsUnitTestCase
 
 import org.springframework.mock.web.MockMultipartHttpServletRequest
 import org.springframework.mock.web.MockMultipartFile
+import rundeck.services.NotificationService
+import rundeck.services.PluginService
+
 import javax.security.auth.Subject
 import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authentication.Group
@@ -457,6 +460,12 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             seServiceControl.demand.getByIDorUUID {id -> return se }
             seServiceControl.demand.userAuthorizedForJob {user,schedexec, framework -> return true }
             sec.scheduledExecutionService = seServiceControl.createMock()
+
+            def pControl = mockFor(NotificationService)
+            pControl.demand.listNotificationPlugins(){->
+                []
+            }
+            sec.notificationService=pControl.createMock()
 
             def params = [id: se.id.toString()]
             sec.params.putAll(params)
