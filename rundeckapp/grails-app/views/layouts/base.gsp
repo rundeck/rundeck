@@ -1,12 +1,9 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-
-
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <title>
         <g:layoutTitle default="${g.message(code:'main.app.name')}"/>
     </title>
-    <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7" >
     <link rel="SHORTCUT ICON" href="${resource(dir:'images',file:'app-logo-small.png')}"/>
     <link rel="favicon" href="${resource(dir:'images',file:'app-logo-small.png')}"/>
     <link rel="icon" href="${resource(dir:'images',file:'app-logo-small.png')}" type="image/x-icon" />

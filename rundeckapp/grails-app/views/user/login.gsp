@@ -1,10 +1,9 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!DOCTYPE html>
 
 
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<html lang="en">
 <head>
     <title><g:message code="main.app.name"/> - Login</title>
-    <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7" >
     <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
     <META HTTP-EQUIV="Expires" CONTENT="-1">
 
