@@ -83,7 +83,12 @@
                 Event.observe(e,'change',function(evt){
                     Object.extend(eventsparams,{refresh:e.checked});
                     autoLoad=e.checked;
-                    window.history.pushState(eventsparams, pageTitle, _genUrl(links.baseUrl,eventsparams));
+                    url=_genUrl(links.baseUrl,eventsparams);
+                    if(typeof(history.pushState)=='function'){
+                        history.pushState(eventsparams, pageTitle, url);
+                    }else{
+                        document.location=url;
+                    }
                     if(autoLoad){
                         loadHistory();
                         $('eventsCountBadge').hide();
@@ -139,7 +144,7 @@
                     var pagefunc=function(e,params){
                         Object.extend(eventsparams,params);
                         loadHistory();
-                        window.history.pushState(params, pageTitle, e.href);
+                        history.pushState(params, pageTitle, e.href);
                     };
                     paginate(e,data.offset,data.total,data.max,{
                         baseUrl:links.baseUrl,
