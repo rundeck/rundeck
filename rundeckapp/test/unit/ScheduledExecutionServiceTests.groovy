@@ -31,6 +31,196 @@ import rundeck.services.ScheduledExecutionService
 
 public class ScheduledExecutionServiceTests extends GrailsUnitTestCase {
 
+
+    private void assertParseParamNotifications(ArrayList<Map<String, Object>> expected, Map<String, Object> params) {
+        def result = ScheduledExecutionService.parseParamNotifications(params)
+        assertNotNull(result)
+        assertEquals(expected, result)
+    }
+    public void testParseParamNotificationsSuccess() {
+        assertParseParamNotifications(
+                [[eventTrigger: 'onsuccess', type: 'email', content: 'c@example.com,d@example.com']],
+                [notifyOnsuccess: 'true', notifySuccessRecipients: 'c@example.com,d@example.com']
+        )
+    }
+
+    public void testParseParamNotificationsSuccessUrl() {
+        assertParseParamNotifications(
+                [[eventTrigger: 'onsuccess', type: 'url', content: 'http://blah.com']],
+                [notifyOnsuccessUrl: 'true', notifySuccessUrl: 'http://blah.com']
+        )
+    }
+    public void testParseParamNotificationsFailure() {
+        assertParseParamNotifications(
+                [[eventTrigger: 'onfailure', type: 'email', content: 'c@example.com,d@example.com']],
+                [notifyOnfailure: 'true', notifyFailureRecipients: 'c@example.com,d@example.com']
+        )
+    }
+
+    public void testParseParamNotificationsFailureUrl() {
+        assertParseParamNotifications(
+                [[eventTrigger: 'onfailure', type: 'url', content: 'http://blah.com']],
+                [notifyOnfailureUrl: 'true', notifyFailureUrl: 'http://blah.com']
+        )
+    }
+    public void testParseParamNotificationsStart() {
+        assertParseParamNotifications(
+                [[eventTrigger: 'onfailure', type: 'email', content: 'c@example.com,d@example.com']],
+                [notifyOnfailure: 'true', notifyFailureRecipients: 'c@example.com,d@example.com']
+        )
+    }
+
+    public void testParseParamNotificationsStartUrl() {
+        assertParseParamNotifications(
+                [[eventTrigger: 'onstart', type: 'url', content: 'http://blah.com']],
+                [notifyOnstartUrl: 'true', notifyStartUrl: 'http://blah.com']
+        )
+    }
+    public void testParseParamNotificationsSuccessPluginEnabled() {
+        assertParseParamNotifications(
+                [[eventTrigger: 'onsuccess', type: 'plugin1', configuration: [:]]],
+                [
+                        notifyPlugin: [
+                                'success': [
+                                        type: 'plugin1',
+                                        enabled: [
+                                                'plugin1': 'true'
+                                        ],
+                                        'plugin1': [
+                                                config: [:]
+                                        ]
+                                ]
+                        ],
+                ]
+        )
+    }
+    public void testParseParamNotificationsFailurePluginEnabled() {
+        assertParseParamNotifications(
+                [[eventTrigger: 'onfailure', type: 'plugin1', configuration: [:]]],
+                [
+                        notifyPlugin: [
+                                'failure': [
+                                        type: 'plugin1',
+                                        enabled: [
+                                                'plugin1': 'true'
+                                        ],
+                                        'plugin1': [
+                                                config: [:]
+                                        ]
+                                ]
+                        ],
+                ]
+        )
+    }
+    public void testParseParamNotificationsStartPluginEnabled() {
+        assertParseParamNotifications(
+                [[eventTrigger: 'onstart', type: 'plugin1', configuration: [:]]],
+                [
+                        notifyPlugin: [
+                                'start': [
+                                        type: 'plugin1',
+                                        enabled: [
+                                                'plugin1': 'true'
+                                        ],
+                                        'plugin1': [
+                                                config: [:]
+                                        ]
+                                ]
+                        ],
+                ]
+        )
+    }
+    public void testParseParamNotificationsSuccessPluginDisabled() {
+        assertParseParamNotifications(
+                [],
+                [
+                        notifyPlugin: [
+                                'success': [
+                                        type: 'plugin1',
+                                        enabled: [
+                                                'plugin1': 'false'
+                                        ],
+                                        'plugin1': [
+                                                config: [:]
+                                        ]
+                                ]
+                        ],
+                ]
+        )
+    }
+    public void testParseParamNotificationsSuccessPluginConfiguration() {
+        assertParseParamNotifications(
+                [[eventTrigger: 'onsuccess', type: 'plugin1', configuration: [a:'b',c:'def']]],
+                [
+                        notifyPlugin: [
+                                'success': [
+                                        type: 'plugin1',
+                                        enabled: [
+                                                'plugin1': 'true'
+                                        ],
+                                        'plugin1': [
+                                                config: [a:'b',c:'def']
+                                        ]
+                                ]
+                        ],
+                ]
+        )
+    }
+    public void testParseParamNotificationsSuccessPluginMultiple() {
+        assertParseParamNotifications(
+                [
+                        [eventTrigger: 'onsuccess', type: 'plugin1', configuration: [a:'b',c:'def']],
+                        [eventTrigger: 'onsuccess', type: 'plugin2', configuration: [g: 'h', i: 'jkl']]
+                ],
+                [
+                        notifyPlugin: [
+                                'success': [
+                                        type: ['plugin1','plugin2'],
+                                        enabled: [
+                                                'plugin1': 'true',
+                                                'plugin2': 'true'
+                                        ],
+                                        'plugin1': [
+                                                config: [a:'b',c:'def']
+                                        ],
+                                        'plugin2': [
+                                                config: [g:'h',i:'jkl']
+                                        ]
+                                ]
+                        ],
+                ]
+        )
+    }
+    public void testParseNotificationsFromParamsSuccess() {
+        def params = [
+                notifyOnsuccess: 'true', notifySuccessRecipients: 'c@example.com,d@example.com',
+        ]
+        ScheduledExecutionService.parseNotificationsFromParams(params)
+        assertNotNull(params.notifications)
+        assertEquals([
+            [eventTrigger: 'onsuccess', type: 'email', content: 'c@example.com,d@example.com'],
+        ],params.notifications)
+    }
+    public void testParseNotificationsFromParamsFailure() {
+        def params = [
+                notifyOnfailure: 'true', notifyFailureRecipients: 'monkey@example.com',
+        ]
+        ScheduledExecutionService.parseNotificationsFromParams(params)
+        assertNotNull(params.notifications)
+        assertEquals([
+                [eventTrigger: 'onfailure', type: 'email', content: 'monkey@example.com'],
+        ],params.notifications)
+    }
+    public void testParseNotificationsFromParamsStart() {
+        def params = [
+                notifyOnstart: 'true', notifyStartRecipients: 'monkey@example.com',
+        ]
+        ScheduledExecutionService.parseNotificationsFromParams(params)
+        assertNotNull(params.notifications)
+        assertEquals([
+                [eventTrigger: 'onstart', type: 'email', content: 'monkey@example.com'],
+        ],params.notifications)
+    }
     public void testGetGroups(){
         mockDomain(ScheduledExecution)
         def schedlist=[new ScheduledExecution(jobName:'test1',groupPath:'group1'),new ScheduledExecution(jobName:'test2',groupPath:null)]
