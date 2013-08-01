@@ -267,7 +267,7 @@ var RemoteOptionControl = Class.create({
                 //wrap elem contents and hide it
                 elem.innerHTML = "<div style='display:none' class='fieldcontent'>"+elem.innerHTML+"</div>";
                 //insert note
-                var note = new Element('div',{class:'info note emptyMessage'});
+                var note = new Element('div',{'class':'info note emptyMessage'});
                 note.appendChild(document.createTextNode('No values to choose from. Make sure to set a value for the following input options: '));
                 if(this.dependencies[name]){
                     note.appendChild(document.createTextNode(this.dependencies[name].join(', ')));
