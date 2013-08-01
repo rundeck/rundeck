@@ -54,7 +54,7 @@
         </li>
     </ul>
 
-    <div class="rounded" style="width:600px;">
+    <div class="rounded" style="width:200px;margin-bottom: 20px;">
     <ul>
         <li>
             <g:set var="pluginParams"
@@ -70,13 +70,11 @@
     </ul>
     </div>
 
-    <div class="rounded" style="width:600px;">
-        Project: <span class="prompt">${session.project.encodeAsHTML()}</span>
-        -
-        <g:link controller="framework" action="editProject" params="[project:session.project]" class="action textbtn">
-            <g:message code="gui.menu.ProjectEdit" default="Configure Project"/>
-        </g:link>
-
+    Project: <span class="prompt">${session.project.encodeAsHTML()}</span> -
+    <g:link controller="framework" action="editProject" params="[project: session.project]" class="textbtn">
+        <g:message code="gui.menu.ProjectEdit" default="Configure Project"/>
+    </g:link>
+    <div class="presentation rounded" style="margin-right: 20px;">
         <div class="presentation ">
             <table class="simpleform">
 
