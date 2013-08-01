@@ -36,11 +36,6 @@
             </wdgt:eventHandlerJS>
             <wdgt:eventHandlerJS for="notifiedFalse" state="unempty">
                 <wdgt:action visible="false" targetSelector="tr.notifyFields"/>
-
-                <wdgt:action check="false" target="notifyOnsuccess"/>
-                <wdgt:action visible="false" target="notifSuccessholder"/>
-                <wdgt:action check="false" target="notifyOnfailure"/>
-                <wdgt:action visible="false" target="notifFailureholder"/>
             </wdgt:eventHandlerJS>
         </g:javascript>
     </td>
