@@ -140,6 +140,8 @@ a.toptab{
     margin:0;
     vertical-align:middle;
     color:#000;
+    min-width:48px;
+    text-align: center;
     /*font-weight: bold;*/
 }
 
