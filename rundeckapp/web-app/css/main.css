@@ -126,11 +126,8 @@ code{
     vertical-align: middle;
 }
 
-.topbar a:hover {
-    /*text-decoration: underline;*/
-}
 .topbar a.home:hover{
-    /*text-decoration: none;*/
+    text-decoration: none;
 }
 .topbar .sepL{
     margin-left:0;
@@ -664,6 +661,10 @@ div.pageBody.form{
 
 div.pageBody.frame {
     padding: 0;
+}
+div.pageBody.licenses a{
+    color:blue;
+    text-decoration: underline;
 }
 
 table.moduledata th, table.moduledata td.sectionname{
