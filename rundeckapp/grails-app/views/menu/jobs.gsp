@@ -260,7 +260,7 @@
                 viewdom = $(document.createElement('div'));
                 viewdom.addClassName('bubblewrap');
                 viewdom.setAttribute('id','jobIdDetailHolder');
-                viewdom.setAttribute('style','display:none;');
+                viewdom.setAttribute('style','display:none;width:600px;height:250px;');
 
                 Event.observe(viewdom,'click',function(evt){
                     evt.stopPropagation();
@@ -345,11 +345,6 @@
         color:red;
     }
 
-    .bubblewrap {
-        position: absolute;
-        width: 600px;
-        height: 250px;
-    }
         #histcontent table{
             width:100%;
         }

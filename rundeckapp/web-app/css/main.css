@@ -111,59 +111,64 @@ code{
 }
 
 .topbar{
-    height:33px;
+    height:34px;
     margin:0 0 0 0;
-    padding: 4px;
-    line-height:29px;
     background: white;
+    line-height: 32px;
 }
 .topbar.solo{
     border-bottom:2px solid black;
 }
-.secondbar{
-    height:32px;
-    margin:0 0 0 0;
-    padding: 4px 8px;
-    line-height:32px;
-    background:#f0f0f0;
-    border-bottom:2px solid black;
+.topbar a{
+    display: inline-block;
+    padding: 0 10px;
+    height: 34px;
+    vertical-align: middle;
 }
-@-moz-document url-prefix() {
-    .secondbar {
-        /*elf!*/
-        /* add 1px height for firefox */
-        height:33px;
-    }
+
+.topbar a:hover {
+    /*text-decoration: underline;*/
 }
-.topbar a.home{
-    padding: 10px;
+.topbar a.home:hover{
+    /*text-decoration: none;*/
+}
+.topbar .sepL{
+    margin-left:0;
 }
 .topbar #top_tabs + a.home{
     margin-left: 20px;
 }
 a.toptab{
-    /*border-left: 1px solid #ccc;*/
     border-right: 1px solid #ccc;
-    padding: 8px 10px;
     margin:0;
-    height:32px;
-    line-height:32px;
     vertical-align:middle;
     color:#000;
+    /*font-weight: bold;*/
 }
-a.toptab.selected{
+
+a.toptab:hover, a.toptab.selected {
     border-style: none;
     border-right: 1px solid #ccc;
 
-    /*text-shadow:#aaa 3px 3px 5px;*/
-    font-weight:bold;
     color:#000;
-    background: #ddd;
+    background: #eee;
 }
+a.toptab.selected{
+    font-weight: bold;
+}
+
 a.tab,span.tab{
     padding: 3px;
     border: 1px solid #fff;
     font-weight:normal;
+}
+
+.headright {
+    position: absolute;
+    right: 0;
+}
+.headright a{
+    padding:0 10px;
 }
 
 .outputButtons a.tab, .outputButtons span.tab{
@@ -183,9 +188,6 @@ a.toptab + a.toptab{
 }
 a.tab + a.tab, a.tab + span.tab, span.tab + a.tab, span.tab + span.tab{
     margin-left: 5px;
-}
-a.toptab:hover, a.toptab.selected{
-    background: #ddd;
 }
 a.tab.selected, span.tab.selected, span.button.selected, a.button.selected{
     background: #fff;
@@ -562,12 +564,6 @@ td .errors {
 }
 .logininfo span.userName{
     font-weight:bold;
-}
-.headright{
-    position:absolute;
-    right:10px;
-
-    padding-top:2px;
 }
 span.wblink{
     margin-right:30px;

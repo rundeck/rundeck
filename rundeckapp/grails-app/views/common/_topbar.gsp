@@ -36,7 +36,7 @@ function doCreateProject(){
 <div  class="topbar solo" >
 
     <a href="${grailsApplication.config.rundeck.gui.titleLink ? grailsApplication.config.rundeck.gui.titleLink : g.resource(dir: '/')}"
-       title="Home" class="home" style="height:29px;">
+       title="Home" class="home">
         <g:set var="appTitle"
                value="${grailsApplication.config.rundeck.gui.title ? grailsApplication.config.rundeck.gui.title : g.message(code: 'main.app.name')}"/>
         <g:set var="appLogo"
@@ -50,7 +50,6 @@ function doCreateProject(){
         ${appTitle}
     </a>
 <g:if test="${session?.user && request.subject}">
-   <span id="top_tabs">
 
 
         <g:set var="wfselected" value=""/>
@@ -59,27 +58,26 @@ function doCreateProject(){
            <g:set var="wfselected" value="selected"/>
         </g:ifPageProperty>
         </g:ifPageProperty>
-        <g:link controller="menu" action="jobs" class=" toptab ${wfselected}" style="height:29px">
-           <g:message code="gui.menu.Workflows"/>
-        </g:link>
-
-       <g:set var="resselected" value=""/>
-       <g:ifPageProperty name='meta.tabpage'>
-           <g:ifPageProperty name='meta.tabpage' equals='nodes'>
-               <g:set var="resselected" value="selected"/>
-           </g:ifPageProperty>
-       </g:ifPageProperty>
-       <g:link controller="framework" action="nodes" class=" toptab ${resselected}" style="height:29px">
-           <g:message code="gui.menu.Nodes"/>
-       </g:link>
-
+        <g:set var="resselected" value=""/>
+        <g:ifPageProperty name='meta.tabpage'>
+            <g:ifPageProperty name='meta.tabpage' equals='nodes'>
+                <g:set var="resselected" value="selected"/>
+            </g:ifPageProperty>
+        </g:ifPageProperty>
         <g:set var="eventsselected" value=""/>
-        <g:ifPageProperty name='meta.tabpage' >
-        <g:ifPageProperty name='meta.tabpage' equals='events'>
-            <g:set var="eventsselected" value="selected"/>
+        <g:ifPageProperty name='meta.tabpage'>
+            <g:ifPageProperty name='meta.tabpage' equals='events'>
+                <g:set var="eventsselected" value="selected"/>
+            </g:ifPageProperty>
         </g:ifPageProperty>
-        </g:ifPageProperty>
-        <g:link controller="reports"  action="index" class=" toptab ${eventsselected}"  style="height:29px">
+
+        <g:link controller="menu" action="jobs" class=" toptab ${wfselected}" >
+           <g:message code="gui.menu.Workflows"/>
+        </g:link><!--
+        --><g:link controller="framework" action="nodes" class=" toptab ${resselected}" >
+           <g:message code="gui.menu.Nodes"/>
+       </g:link><!--
+        --><g:link controller="reports"  action="index" class=" toptab ${eventsselected}"  >
             <g:message code="gui.menu.Events"/>
         </g:link>
 
@@ -99,7 +97,6 @@ function doCreateProject(){
        </span>
     </g:if>
 
-</span>
     <g:unless test="${session.frameworkProjects}">
         <g:javascript>
             fireWhenReady('projectSelect', loadProjectSelect);
@@ -114,32 +111,43 @@ function doCreateProject(){
             <g:set var="adminauth" value="${false}"/>
             <g:if test="${session.project}">
             <g:set var="adminauth" value="${auth.resourceAllowedTest(type:'project',name:session.project,action:[AuthConstants.ACTION_ADMIN,AuthConstants.ACTION_READ],context:'application')}"/>
-            <g:if test="${adminauth}">
-                <g:ifPageProperty name='meta.tabpage'>
-                    <g:ifPageProperty name='meta.tabpage' equals='configure'>
-                        <g:set var="cfgselected" value="selected"/>
-                    </g:ifPageProperty>
+            <g:ifPageProperty name='meta.tabpage'>
+                <g:ifPageProperty name='meta.tabpage' equals='configure'>
+                    <g:set var="cfgselected" value="selected"/>
                 </g:ifPageProperty>
-                <g:link controller="menu" action="admin" class=" toptab ${cfgselected}"><g:message code="gui.menu.Admin"/></g:link>
-            </g:if>
-            </g:if>
-            <span class="logininfo">
-
-                <span class="userName" title="User ${session.user} is currently logged in.">
-                    <g:link controller="user" action="profile">${session.user}</g:link>
-                </span> &raquo;
-                <g:link action="logout" controller="user" title="Logout user: ${session.user}" params="${[refLink:controllerName&&actionName?createLink(controller:controllerName,action:actionName,params:params,absolute:true):'']}">logout</g:link>
-            </span>
-            <a href="${helpLinkUrl}" class="help">
+            </g:ifPageProperty>
+            <g:if test="${adminauth}"><g:link controller="menu" action="admin" class=" toptab ${cfgselected?:''}"><g:message code="gui.menu.Admin"/></g:link><!-- --></g:if><!--
+        --></g:if><!--
+            --><a href="${g.createLink(controller : "user", action : "profile")}" class="action username obs_bubblepopup"
+                        id="useraccount" title="User ${session.user.encodeAsHTML()} is currently logged in.">
+                    ${session.user.encodeAsHTML()}
+                </a><!--
+        --><a href="${helpLinkUrl.encodeAsHTML()}" class="help sepL">
                 help
             </a>
         </span>
     </g:if>
     <g:else>
         <span class="headright">
-            <a href="${helpLinkUrl}" class="help">
+            <a href="${helpLinkUrl.encodeAsHTML()}" class="help  sepL">
                 help
             </a>
         </span>
     </g:else>
 </div>
+
+<g:if test="${session?.user && request.subject}">
+<span id="useraccount_popup" style="display:none;" class="useraccount">
+    <ul>
+        <li><g:link controller="user" action="profile">Profile</g:link></li>
+        <li><g:link action="logout" controller="user" title="Logout user: ${session.user}"
+                    params="${[refLink: controllerName && actionName ? createLink(controller: controllerName, action: actionName, params: params, absolute: true) : '']}">logout</g:link>
+        </li>
+    </ul>
+</span>
+<script>
+    $$('.obs_bubblepopup').each(function (e) {
+        new BubbleController(e, null, {offx: -14, offy: null}).startObserving();
+    });
+</script>
+</g:if>
