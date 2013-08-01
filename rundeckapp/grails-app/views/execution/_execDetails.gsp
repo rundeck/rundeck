@@ -1,18 +1,18 @@
 <%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants; com.dtolabs.rundeck.core.plugins.configuration.Description; rundeck.ExecutionContext; rundeck.ScheduledExecution" %>
 <g:set var="rkey" value="${g.rkey()}"/>
 
-<table class="simpleForm" style="width:100%" cellpadding="0" cellspacing="0">
+<table class="simpleForm execdetails">
     <g:if test="${execdata!=null && execdata.id && execdata instanceof ScheduledExecution && execdata.scheduled}">
         <tr>
         <td >Schedule:</td>
-        <td colspan="3">
+        <td>
             <g:render template="/scheduledExecution/showCrontab" model="${[scheduledExecution:execdata,crontab:crontab]}"/>
         </td>
         </tr>
         <g:if test="${nextExecution}">
             <tr>
             <td></td>
-            <td colspan="3">
+            <td>
             <g:if test="${remoteClusterNodeUUID}">
                   Expecting another cluster server to run
                   <g:relativeDate elapsed="${nextExecution}" untilClass="desc"/>
@@ -30,7 +30,7 @@
     <g:if test="${execdata!=null && execdata.id && execdata instanceof ScheduledExecution && execdata.multipleExecutions}">
         <tr>
         <td ><g:message code="scheduledExecution.property.multipleExecutions.label"/></td>
-        <td colspan="3">
+        <td >
             <g:message code="yes" />
         </td>
         </tr>
@@ -40,7 +40,7 @@
         <g:unless test="${hideAdhoc}">
         <tr>
             <td>Workflow:</td>
-            <td colspan="3">
+            <td >
                 <g:render template="/execution/execDetailsWorkflow" model="${[workflow:execdata.workflow,context:execdata,noimgs:noimgs,project:execdata.project]}"/>
             </td>
         </tr>
@@ -48,7 +48,7 @@
         <g:if test="${execdata instanceof ScheduledExecution && execdata.options}">
             <tr>
                 <td>Options:</td>
-                <td  colspan="3">
+                <td >
                     <g:render template="/scheduledExecution/optionsSummary" model="${[options:execdata.options]}"/>
                 </td>
             </tr>
@@ -58,7 +58,7 @@
                 <td>
                     Options:
                 </td>
-                <td colspan="3">
+                <td >
                     <span class="argString">${execdata?.argString.encodeAsHTML()}</span>
                 </td>
             </tr>
@@ -66,7 +66,7 @@
     </g:if>
     <tr>
         <td>Log level:</td>
-        <td colspan="3">
+        <td >
             ${execdata?.loglevel}
         </td>
     </tr>
@@ -78,7 +78,7 @@
     <g:if test="${!nomatchednodes}">
             <tr>
                 <td>Node Filters:</td>
-                <td id="matchednodes_${rkey}" class="matchednodes embed" colspan="3">
+                <td id="matchednodes_${rkey}" class="matchednodes embed" >
                     <g:set var="jsdata" value="${execdata.properties.findAll{it.key==~/^node(In|Ex)clude.*$/ &&it.value}}"/>
                     <g:javascript>
                         _g_nodeFilterData['${rkey}']=${jsdata.encodeAsJSON()};
@@ -98,7 +98,7 @@
         <tbody>
         <tr>
             <td>Node:</td>
-            <td id="matchednodes_${rkey}" class="matchednodes embed"  colspan="3">
+            <td id="matchednodes_${rkey}" class="matchednodes embed" >
                 <span class="action textbtn depress2 receiver"  title="Display matching nodes" onclick="_updateMatchedNodes({},'matchednodes_${rkey}','${execdata?.project}', true, {requireRunAuth:true})">Show Matches</span>
                 
             </td>
@@ -178,7 +178,7 @@
 
                 <g:if test="${auth.resourceAllowedTest(kind: 'job', action: AuthConstants.ACTION_CREATE)}">
                     <g:link controller="scheduledExecution" title="Duplicate Job" action="copy"
-                            id="${scheduledExecution.extid}" class="action textbtn">
+                            id="${scheduledExecution.extid}" class="textbtn">
                         <img
                                 src="${resource(dir: 'images', file: 'icon-tiny-copy.png')}" alt="edit" width="12px"
                                 height="12px"/> duplicate to a new job</g:link>

@@ -39,7 +39,6 @@
                         <g:else>
                         <tr class="sectionhead expandComponentHolder ${paginateParams?.idlist==scheduledExecution.id.toString()?'expanded':''}" id="jobrow_${scheduledExecution.id}">
                             <td class="jobname">
-                                <div style="overflow:hidden; text-overflow: ellipsis; height: 21px ">
                                     <span class="jobbulkeditfield" style="display: none">
                                     <g:if test="${jobauthorizations && jobauthorizations[AuthConstants.ACTION_DELETE]?.contains(scheduledExecution.id.toString())}">
                                         <input type="checkbox" name="ids" value="${scheduledExecution.extid}"/>
@@ -52,10 +51,14 @@
                                     </g:else>
                                 </span>
                                     <span class="inlinebuttons jobbuttons">
-                                        <div class="buttons">
-                                        <g:render template="/scheduledExecution/actionButtons"
-                                          model="${[scheduledExecution: scheduledExecution, authMap: authMap, jobauthorizations: jobauthorizations, small: true]}"/>
-                                        </div>
+                                        <g:if test="${jobauthorizations && jobauthorizations[AuthConstants.ACTION_RUN]?.contains(scheduledExecution.id.toString())}">
+                                            <g:link controller="scheduledExecution" action="execute"
+                                                    id="${scheduledExecution.extid}" class="icon button "
+                                                    onclick="if(typeof(loadExec)=='function'){loadExec(${scheduledExecution.id});return false;}"><img
+                                                    src="${resource(dir: 'images', file:  'icon-small-run.png')}"
+                                                    title="Run ${g.message(code: 'domain.ScheduledExecution.title')}&hellip;"
+                                                    alt="run" width="16" height="16"/></g:link>
+                                        </g:if>
                                     </span>
 
                                     <g:link action="show" controller="scheduledExecution" id="${scheduledExecution.extid}" class="primary" >
@@ -64,13 +67,12 @@
                                 <g:if test="${jobauthorizations && jobauthorizations[AuthConstants.ACTION_UPDATE]?.contains(scheduledExecution.id.toString())}">
                                     <g:link action="edit" controller="scheduledExecution"
                                             id="${scheduledExecution.extid}"
-                                            class="jobIdLink action textbtn">
+                                            class="jobIdLink textbtn">
                                         edit</g:link>
                                 </g:if>
 
                                 <span class="jobdesc" title="${scheduledExecution.description?.encodeAsHTML()}">${scheduledExecution.description?.encodeAsHTML()}</span>
 
-                                </div>
                             </td>
 
 

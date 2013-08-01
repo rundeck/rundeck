@@ -7,7 +7,6 @@ html, body {
 }
 
 #main {
-    overflow:auto;
 	padding-bottom: 18px;
 }  /* must be same height as the footer */
 
@@ -76,6 +75,7 @@ a {
 
 a:hover {
 	color:blue;
+    text-decoration: underline;
 }
 a.external{
     color:green;
@@ -243,14 +243,6 @@ div.pageMessage.error{
     display:block;
     position:relative;
 }
-a:active,a:link,a:visited{
-
-}
-a:hover {
-
-    color:blue;
-    text-decoration: none;
-}
 /* list of messages */
 #listPane tr:hover, #listPane td:hover {
 	background: gray;
@@ -274,7 +266,7 @@ img{
     vertical-align: middle;
     border: 0;
 }
-a.action, .action.textbtn, td.action.textbtn{
+a.action,a.textbtn, .action.textbtn, td.action.textbtn{
     color:blue;
     font-weight:normal;
 }
@@ -1936,6 +1928,7 @@ div.commandFlowError{
 }
 .commandcontent{
     margin: 0 20px;
+    overflow-x: auto;
 }
 
 #schedExecPage > div.schedExecPagePart {

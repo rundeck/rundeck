@@ -201,10 +201,10 @@ var applinks={
         text-align:right;
     }
     .controls.autohide{
-        display:none;
+        visibility: hidden;
     }
     li:hover .controls.autohide{
-        display:block;
+        visibility: visible;
     }
 
     /** option controls and view layout **/

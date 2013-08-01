@@ -27,8 +27,8 @@
         <g:elseif test="${nodes}">
             <g:set var="COLS" value="${6}"/>
             <span class="prompt">Nodes:</span>
-            <label><input name="extra._replaceNodeFilters" value="true" type="checkbox"
-                          id="doReplaceFilters"/> Change the Target Nodes</label>
+            <input name="extra._replaceNodeFilters" value="true" type="checkbox"
+                          id="doReplaceFilters"/> <label for="doReplaceFilters">Change the Target Nodes</label>
             <div class="presentation matchednodes embed jobmatchednodes group_section">
                 <%--
                  split node names into groups, in several patterns
@@ -212,8 +212,8 @@
             <g:actionSubmit id="execFormCancelButton" value="Cancel"/>
             </g:if>
             <g:actionSubmit value="Run ${g.message(code:'domain.ScheduledExecution.title')} Now" id="execFormRunButton" class="runbutton"/>
-            <label>
-            <g:checkBox name="follow" checked="${defaultFollow|| params.follow == 'true'}" value="true"/>
+            <g:checkBox id="followoutputcheck" name="follow" checked="${defaultFollow|| params.follow == 'true'}" value="true"/>
+            <label for="followoutputcheck">
             <g:message code="job.run.watch.output" />
             </label>
         </div>

@@ -116,7 +116,7 @@
             </td>
 
             <g:unless test="${hideShowLink}">
-            <td style="" class="sepL outputlink">
+            <td class="sepL outputlink">
             <g:if test="${rpt.jcExecId}">
                 <g:link controller="execution" action="show" id="${rpt.jcExecId}" class="_defaultAction"
                         title="View execution output" absolute="${absoluteLinks}">Show &raquo;</g:link>
