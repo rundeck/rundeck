@@ -885,11 +885,11 @@ var BubbleController = Class.create({
     },
     show: function (evt) {
         if ($(this._target) && $(this._elem)) {
+            $(evt).stop();
             var bubble = this._getTargetBubble();
 
             new MenuController().showRelativeTo(this._target, $(bubble), this._offx, this._offy);
             $(this._target).addClassName('glow');
-            evt.stopPropagation();
 
             var hidefunc = this.hide.bind(this);
             this._popClickHandler = function(evt) {
@@ -943,10 +943,6 @@ function _applyAce(e,height){
     editor.setTheme("ace/theme/chrome");
     editor.getSession().setMode("ace/mode/sh");
     editor.setReadOnly(true);
-}
-function _applyTextareaResizer(textarea){
-    $(textarea).setStyle({ lineHeight: "20px"});
-    new Widget.Textarea(textarea, {min_height: 2});
 }
 /**
  * keypress handler which allows only chars matching the input regular expression
