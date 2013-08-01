@@ -12,5 +12,6 @@
     </g:if>
 </auth:resourceAllowed>
 <g:select from="${projectSet}" optionKey='key' optionValue='value' name="${params.key ? params.key : 'projectSelect'}"
+            id="projectSelectInput"
           onchange="${params.callback ? params.callback : 'selectProject'}(this.value);"
           value="${params.selected ? params.selected : project}"/>
