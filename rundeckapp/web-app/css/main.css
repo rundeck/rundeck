@@ -494,15 +494,22 @@ label{
 .actionButtons {
 	width:100px;
 }
-table.jobsList .inlinebuttons div.buttons{
-    display: inline-block;
+table.jobsList span.inlinebuttons {
+    display: inline;
     margin:0;
     vertical-align: middle;
 }
-.inlinebuttons .floatr,.inlinebuttons .floatl{
+
+span.inlinebuttons .floatr, span.inlinebuttons .floatl{
     float: none;
 }
-.inlinebuttons a.button,.inlinebuttons span.button{
+
+span.inlinebuttons a.button, span.inlinebuttons span.button{
+    padding: 1px;
+    -moz-border-radius: 1px;
+    -webkit-border-radius: 1px;
+    border-radius: 1px;
+
 }
 div .errors {
     color:red;
@@ -1015,7 +1022,7 @@ table.execoutput .stepnum.short:before {
 
 table.execoutput td.stepnum{
     padding: 0 0.5em;
-    width: 4em;
+    width: 5em;
     white-space: nowrap;
 }
 
@@ -1242,13 +1249,6 @@ table.jobsList td.jobbuttons div.buttons{
     margin: 0 0 4px 0;
 }
 
-table.jobsList .jobbuttons div.buttons a.button, table.jobsList .jobbuttons div.buttons span.button{
-    padding: 1px;
-    -moz-border-radius:1px;
-    -webkit-border-radius:1px;
-    border-radius:1px;
-
-}
 span.button.small, a.button.small,.toolbar.small span.button, .toolbar.small a.button{
     padding: 1px;
     -moz-border-radius:1px;
@@ -1312,15 +1312,17 @@ div.jobslist.small{
     margin: 0 0px 5px 0;
     width: auto;
 }
-.jobsList td.outputlink{
+
+table.jobsList td.outputlink{
     padding: 0px;
     white-space: nowrap;
     text-align: right;
-    width: 30px;
+    width: 50px;
 }
-.jobsList td.outputlink a{
+table.jobsList td.outputlink a{
     display: block;
     padding: 10px;
+    white-space: nowrap;
 }
 
 span.grouplabel a{
