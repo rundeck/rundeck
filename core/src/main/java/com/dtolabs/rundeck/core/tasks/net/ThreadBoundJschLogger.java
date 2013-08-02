@@ -115,7 +115,7 @@ public class ThreadBoundJschLogger implements Logger {
                     break;
                 case Logger.INFO:
                 default:
-                    pluginLogger1.log(2, message);
+                    pluginLogger1.log(5, message);
                     break;
             }
         }
