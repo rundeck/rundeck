@@ -229,11 +229,11 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
         /**
          * load action
          */
-        load(ACTION_PURGE),
+        load(ACTION_LOAD),
         /**
          * load action
          */
-        purge(ACTION_LOAD);
+        purge(ACTION_PURGE);
         private String name;
 
         Actions(final String name) {
