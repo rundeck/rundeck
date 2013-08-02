@@ -76,6 +76,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
     public static final String RUNDECK_API_VERSION = "2";
     public static final String RUNDECK_API_VERSION_4 = "4";
     public static final String RUNDECK_API_VERSION_5 = "5";
+    public static final String RUNDECK_API_VERSION_8 = "8";
     /**
      * RUNDECK API base path
      */
@@ -89,6 +90,10 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
      * RUNDECK API Base for v5
      */
     public static final String RUNDECK_API_BASE_v5 = "/api/" + RUNDECK_API_VERSION_5;
+    /**
+     * RUNDECK API Base for v8
+     */
+    public static final String RUNDECK_API_BASE_v8 = "/api/" + RUNDECK_API_VERSION_8;
 
     /**
      * API endpoint for execution report
@@ -141,7 +146,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
     /**
      * upload path
      */
-    public static final String RUNDECK_API_JOBS_UPLOAD = RUNDECK_API_BASE + "/jobs/import";
+    public static final String RUNDECK_API_JOBS_UPLOAD = RUNDECK_API_BASE_v8 + "/jobs/import";
     /**
      * Webservice endpoint for running job by name or id
      */
