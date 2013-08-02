@@ -1328,6 +1328,9 @@ var FollowControl = Class.create({
             txt = txt.replace(/[\\\n\\\r]+$/, '');
             txt = txt.replace(/</g, '&lt;');
             txt = txt.replace(/>/g, '&gt;');
+            if(txt==''){
+                txt="\n";
+            }
             tddata.innerHTML = txt;
             tddata.addClassName('log_'+data.level.toLowerCase());
         }
