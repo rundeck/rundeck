@@ -841,19 +841,26 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
             statusStr = jobstate
         }else if (scheduledExecutionService.existsJob(ident.jobname, ident.groupname)){
             boolean success=false
-            try{
-                Execution.withNewSession {
-                    Execution e2 = Execution.get(eid)
-                    if (!e2.abortedby) {
-                        e2.abortedby = userIdent
-                        e2.save(flush: true)
-                        success=true
+            int repeat=3;
+            while(!success && repeat>0){
+                try{
+                    Execution.withNewSession {
+                        Execution e2 = Execution.get(eid)
+                        if (!e2.abortedby) {
+                            e2.abortedby = userIdent
+                            e2.save(flush: true)
+                            success=true
+                        }
                     }
+                } catch (org.springframework.dao.OptimisticLockingFailureException ex) {
+                    log.error("Could not abort ${eid}, the execution was modified")
+                } catch (StaleObjectStateException ex) {
+                    log.error("Could not abort ${eid}, the execution was modified")
                 }
-            } catch (org.springframework.dao.OptimisticLockingFailureException ex) {
-                log.error("Could not abort ${eId}, the execution was modified")
-            } catch (StaleObjectStateException ex) {
-                log.error("Could not abort ${eId}, the execution was modified")
+                if(!success){
+                    Thread.sleep(200)
+                    repeat--
+                }
             }
 
             def didcancel=false
