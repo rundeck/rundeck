@@ -161,11 +161,17 @@ class ScheduledExecutionController  {
 
         def total = Execution.countByScheduledExecution(scheduledExecution)
 
+        def remoteClusterNodeUUID = null
+        if (scheduledExecution.scheduled && frameworkService.isClusterModeEnabled()
+                && scheduledExecution.serverNodeUUID != frameworkService.getServerUUID()) {
+            remoteClusterNodeUUID = scheduledExecution.serverNodeUUID
+        }
 
         return render(view:'jobDetailFragment',model: [scheduledExecution:scheduledExecution, crontab:crontab, params:params,
             executions:executions,
             total:total,
             nextExecution:scheduledExecutionService.nextExecutionTime(scheduledExecution),
+                remoteClusterNodeUUID: remoteClusterNodeUUID,
             max: params.max?params.max:10,
                 notificationPlugins: notificationService.listNotificationPlugins(),
             offset:params.offset?params.offset:0])
