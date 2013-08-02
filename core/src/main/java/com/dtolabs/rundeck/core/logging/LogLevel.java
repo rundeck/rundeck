@@ -44,6 +44,8 @@ public enum LogLevel {
             return LogLevel.ERROR;
         } else if (value.equals("INFO")) {
             return LogLevel.NORMAL;
+        } else if (value.equals("CONFIG")) {
+            return LogLevel.DEBUG;
         } else {
             try {
                 return LogLevel.valueOf(value);

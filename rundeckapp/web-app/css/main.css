@@ -947,6 +947,12 @@ table.execoutput td.node{
 table.execoutput td.repeat {
     visibility: hidden;
 }
+table.execoutput td.node.empty {
+    color: #eee;
+}
+table.execoutput td.node.empty:before {
+    content: 'console';
+}
 /*table.execoutput tr:hover td.node.repeat {*/
     /*visibility: visible;*/
 /*}*/

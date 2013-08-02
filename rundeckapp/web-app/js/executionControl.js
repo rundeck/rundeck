@@ -965,7 +965,7 @@ var FollowControl = Class.create({
     renderContextStepNumber: function(data){
         var ctx = this.parseOldContextString(data['command']);
         var string;
-        if (ctx) {
+        if (ctx && ctx[0]) {
              string= "Step " + ctx[0];
             if (ctx.length > 1) {
                 string += "/" + ctx.slice(1).join("/")
@@ -1294,11 +1294,16 @@ var FollowControl = Class.create({
         var tdnode=$(tr.insertCell(cellndx));
         cellndx++;
         tdnode.addClassName('node');
-        tdnode.setAttribute('title', data.node);
-        if(this.lastrow && typeof(this.lastrow['node'])!=undefined && data.node==this.lastrow['node']){
+        var shownode=false;
+        if (this.lastrow && typeof(this.lastrow['node'])!=undefined && data.node==this.lastrow['node']){
             tdnode.addClassName('repeat');
-        }else{
+        }else if (!data.node) {
+            tdnode.addClassName('empty');
+            shownode = true;
+        } else{
+            tdnode.setAttribute('title', data.node);
             tdnode.innerHTML = data.node;
+            shownode=true;
         }
         colspan="1";
 
@@ -1306,7 +1311,7 @@ var FollowControl = Class.create({
         var tdctx = $(tr.insertCell(cellndx));
         cellndx++;
         tdctx.addClassName('stepnum');
-        if (this.lastrow && this.lastrow['command'] == data['command'] ) {
+        if (!shownode && this.lastrow && this.lastrow['command'] == data['command'] ) {
 //                tdctx.addClassName('repeat');
         }else{
             tdctx.innerHTML = this.renderContextStepNumber(data);
