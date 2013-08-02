@@ -26,6 +26,28 @@
             <span>
 
         </g:if>
+
+        <g:if test="${nextExecution}">
+            <span class="scheduletime">
+                <img src="${resource(dir: 'images', file: 'icon-med-clock.png')}" alt="schedule"
+                     width="24"
+                     height="24"/>
+                <g:set var="titleHint"
+                       value="${remoteClusterNodeUUID ? g.message(code: "expecting.another.cluster.server.to.run") : ''}"/>
+                <span title="${clusterUUID ? g.message(code: "expecting.another.cluster.server.to.run") : ''} at ${g.relativeDate(atDate:nextExecution)}">
+                    <g:relativeDate elapsed="${nextExecution}"
+                                    untilClass="timeuntil"/>
+                </span>
+            </span>
+        </g:if>
+        <g:elseif test="${scheduledExecution.scheduled && !nextExecution}">
+            <span class="scheduletime">
+                <img src="${resource(dir: 'images', file: 'icon-med-clock-gray.png')}" alt=""
+                     width="24"
+                     height="24"/>
+                <span class="warn note" title="${g.message(code: 'job.schedule.will.never.fire')}"><g:message code="never" /></span>
+            </span>
+        </g:elseif>
     </div>
 
     <div class="jobInfoSection">

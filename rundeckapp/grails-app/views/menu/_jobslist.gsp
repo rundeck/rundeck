@@ -74,8 +74,23 @@
                                 <span class="jobdesc" title="${scheduledExecution.description?.encodeAsHTML()}">${scheduledExecution.description?.encodeAsHTML()}</span>
 
                             </td>
-
-
+                            <td class="scheduletime">
+                                <g:if test="${nextExecution}">
+                                    <img src="${resource(dir: 'images', file: 'icon-small-clock.png')}" alt="schedule"
+                                         width="16"
+                                         height="16"/>
+                                    <span title="${remoteClusterNodeUUID ? g.message(code: "expecting.another.cluster.server.to.run") : ''} at ${g.relativeDate(atDate: nextExecution)}">
+                                        <g:relativeDate elapsed="${nextExecution}" untilClass="timeuntil"/>
+                                    </span>
+                                </g:if>
+                                <g:elseif test="${scheduledExecution.scheduled && !nextExecution}">
+                                    <img src="${resource(dir: 'images', file: 'icon-small-clock-gray.png')}" alt=""
+                                         width="16"
+                                         height="16"/>
+                                    <span class="warn note" title="${g.message(code: 'job.schedule.will.never.fire')}">
+                                        <g:message code="never" /></span>
+                                </g:elseif>
+                            </td>
                         </tr>
                         </g:else>
                         <% j++ %>
