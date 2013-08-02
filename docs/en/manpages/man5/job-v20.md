@@ -351,7 +351,7 @@ The [job](#job) context.
 
 [project](#project)
 
-:    the project name (required)
+:    the project name (optional)
 
 [options](#options)
 
@@ -360,7 +360,7 @@ The [job](#job) context.
 
 ### project 
 
-The [context](#context) project name.
+The [context](#context) project name.  Optional. If a project is not specified at import time, this value will be used.
 
 ### options
      
