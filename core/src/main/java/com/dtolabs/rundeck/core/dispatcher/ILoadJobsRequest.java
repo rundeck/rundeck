@@ -36,4 +36,11 @@ public interface ILoadJobsRequest {
      * @return duplicate option
      */
     public StoredJobsRequestDuplicateOption getDuplicateOption();
+
+    /**
+     * Return project name for imported jobs, optional
+     *
+     * @return project name or null
+     */
+    public String getProject();
 }

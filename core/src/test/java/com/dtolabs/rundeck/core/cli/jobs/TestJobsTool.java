@@ -25,6 +25,7 @@ package com.dtolabs.rundeck.core.cli.jobs;
 
 import com.dtolabs.client.services.DeleteJobResultImpl;
 import com.dtolabs.client.services.StoredJobImpl;
+import com.dtolabs.client.services.StoredJobLoadResultImpl;
 import com.dtolabs.rundeck.core.cli.CLIToolException;
 import com.dtolabs.rundeck.core.cli.CLIToolOptionsException;
 import com.dtolabs.rundeck.core.cli.SingleProjectResolver;
@@ -361,6 +362,50 @@ public class TestJobsTool extends AbstractBaseTest {
         }
     }
 
+    public void testLoad() throws Exception {
+        final Framework framework = getFrameworkInstance();
+
+        final JobsTool tool = new JobsTool(framework);
+        final testCentralDispatcher1 centralDispatcher1 = new testCentralDispatcher1();
+        framework.setCentralDispatcherMgr(centralDispatcher1);
+
+        final ArrayList<IStoredJob> jobs = new ArrayList<IStoredJob>();
+        centralDispatcher1.loadJobsResult = new ArrayList<IStoredJobLoadResult>();
+
+        File test = File.createTempFile("blah", ".xml");
+        tool.run(new String[]{"load", "-f", test.getAbsolutePath()});
+        assertFalse("list action was not called", centralDispatcher1.listStoredJobsCalled);
+        assertTrue("load action should be called", centralDispatcher1.loadJobsCalled);
+        assertNull(centralDispatcher1.listStoredJobsOutput);
+        assertNull(centralDispatcher1.listStoredJobsQuery);
+        assertNotNull(centralDispatcher1.loadRequest);
+        assertNull(centralDispatcher1.loadRequest.getProject());
+        assertEquals(StoredJobsRequestDuplicateOption.update, centralDispatcher1.loadRequest.getDuplicateOption());
+        assertNotNull(centralDispatcher1.loadInput);
+        assertEquals(JobDefinitionFileFormat.xml, centralDispatcher1.loadFormat);
+    }
+    public void testLoadWithProject() throws Exception {
+        final Framework framework = getFrameworkInstance();
+
+        final JobsTool tool = new JobsTool(framework);
+        final testCentralDispatcher1 centralDispatcher1 = new testCentralDispatcher1();
+        framework.setCentralDispatcherMgr(centralDispatcher1);
+
+        final ArrayList<IStoredJob> jobs = new ArrayList<IStoredJob>();
+        centralDispatcher1.loadJobsResult = new ArrayList<IStoredJobLoadResult>();
+
+        File test = File.createTempFile("blah", ".xml");
+        tool.run(new String[]{"load", "-f", test.getAbsolutePath(), "-p", "project1"});
+        assertFalse("list action was not called", centralDispatcher1.listStoredJobsCalled);
+        assertTrue("load action should be called", centralDispatcher1.loadJobsCalled);
+        assertNull(centralDispatcher1.listStoredJobsOutput);
+        assertNull(centralDispatcher1.listStoredJobsQuery);
+        assertNotNull(centralDispatcher1.loadRequest);
+        assertEquals("project1", centralDispatcher1.loadRequest.getProject());
+        assertEquals(StoredJobsRequestDuplicateOption.update, centralDispatcher1.loadRequest.getDuplicateOption());
+        assertNotNull(centralDispatcher1.loadInput);
+        assertEquals(JobDefinitionFileFormat.xml, centralDispatcher1.loadFormat);
+    }
     public void testPurge() throws Exception{
         final Framework framework = getFrameworkInstance();
         {

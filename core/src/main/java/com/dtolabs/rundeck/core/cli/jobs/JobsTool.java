@@ -164,6 +164,11 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
         return duplicateOption;
     }
 
+    @Override
+    public String getProject() {
+        return getArgProject();
+    }
+
     /**
      * Return group option value
      *
@@ -435,6 +440,8 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
             options.addOption(VERBOSE_OPTION, VERBOSE_OPTION_LONG, false, "Enable verbose output");
             options.addOption(FORMAT_OPTION, FORMAT_OPTION_LONG, true,
                 "Format for input/output file. One of: " + Arrays.toString(JobDefinitionFileFormat.values()));
+            options.addOption(PROJECT_OPTION, PROJECT_OPTION_LONG, true,
+                    "Project name. List jobs within this project, or import jobs to this project.");
         }
 
         public void parseArgs(final CommandLine cli, final String[] original) throws CLIToolOptionsException {
@@ -492,10 +499,6 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
                     warn("load action: -" + IDLIST_OPTION + "/--" + IDLIST_OPTION_LONG
                          + " option only valid with list action");
                 }
-                if (null != argProject) {
-                    warn("load action: -" + PROJECT_OPTION + "/--" + PROJECT_OPTION_LONG
-                         + " option only valid with list action");
-                }
                 if (null == argFile) {
                     throw new CLIToolOptionsException(
                         "load action: -" + FILE_OPTION + "/--" + FILE_OPTION_LONG + " option is required");
@@ -522,8 +525,6 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
                 "Group name. List jobs within this group or sub-group (list/purge action)");
             options.addOption(IDLIST_OPTION, IDLIST_OPTION_LONG, true,
                 "Job ID List. List Jobs with these IDs explicitly. Comma-separated, e.g.: 1,2,3. (list/purge action)");
-            options.addOption(PROJECT_OPTION, PROJECT_OPTION_LONG, true,
-                "Project name. List jobs within this project. (list/purge action)");
 
         }
 
@@ -644,7 +645,8 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
                + "rd-jobs purge -p <project> [query options] : Delete jobs from the project matching the options\n"
                + "rd-jobs purge -p <project> --file <file> [query options] : Delete jobs from the project matching the options, after saving them to a file\n"
                + "\tLoad action:\n"
-               + "rd-jobs load --file <file> : load jobs stored in XML file\n"
+               + "rd-jobs load --file <file> : load jobs stored in XML file, require each to define its project\n"
+               + "rd-jobs load -p <project> --file <file> : load jobs stored in XML file to specific project\n"
                + "rd-jobs load --file <file> -F yaml : load jobs stored in YAML file";
     }
 
