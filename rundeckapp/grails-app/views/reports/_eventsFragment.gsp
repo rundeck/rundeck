@@ -70,8 +70,8 @@
                             </span>
                         </g:if>
                         <g:if test="${includeAutoRefresh}">
-                            <label>
-                                <g:checkBox name="refresh" value="true" checked="${params.refresh=='true'}" class="autorefresh"/>
+                            <g:checkBox name="refresh" value="true" checked="${params.refresh=='true'}" class="autorefresh" id="autorefresh"/>
+                            <label for="autorefresh">
                                 Auto refresh
                             </label>
                         </g:if>

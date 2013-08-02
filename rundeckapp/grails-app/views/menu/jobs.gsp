@@ -9,7 +9,7 @@
     <g:javascript library="pagehistory"/>
     <g:javascript library="prototype/effects"/>
     <g:javascript library="executionOptions"/>
-    <g:javascript library="ace/ace"/>
+    <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
     <script type="text/javascript">
 
         function showError(message){

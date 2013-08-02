@@ -301,7 +301,7 @@
         </div>
     </g:if>
 
-    <g:javascript library="ace/ace"/>
+  <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
     <g:javascript>
       fireWhenReady('executionShowPage', function (z) {
           $$('.apply_ace').each(function (t) {

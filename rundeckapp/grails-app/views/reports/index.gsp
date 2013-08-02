@@ -80,7 +80,7 @@
             }
             loadNowRunning();
             $$('input.autorefresh').each(function(e){
-                Event.observe(e,'change',function(evt){
+                var changeHandler=function(evt){
                     Object.extend(eventsparams,{refresh:e.checked});
                     autoLoad=e.checked;
                     url=_genUrl(links.baseUrl,eventsparams);
@@ -95,7 +95,14 @@
                     }else{
                         _scheduleSinceCheck();
                     }
-                });
+                };
+                Event.observe(e,'change',  changeHandler);
+                if(Prototype.Browser.IE
+                    && $(e).tagName.toLowerCase()=='input'
+                    && ($(e).type.toLowerCase()=='radio' ||$(e).type.toLowerCase()=='checkbox')){
+                    Event.observe(e,'click',  changeHandler);
+                }
+
             });
         }
 

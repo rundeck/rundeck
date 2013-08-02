@@ -246,6 +246,9 @@ if(Prototype.Version=="1.6.0.2"  && Prototype.Browser.IE){
    });
 }
 
+function _isIe(version) {
+    return Prototype.Browser.IE && $$('html')[0].hasClassName('ie' + version);
+}
 /**
  * WidgetBox controller
  * Create a new WBoxController({views:{key:value}}). Each view key is an identifier, and each value is the ID of
@@ -934,6 +937,9 @@ function nochars(chars,e) {
     return !(e && e.charCode!=0 && chars.indexOf(String.fromCharCode(e.charCode))>=0);
 }
 function _applyAce(e,height){
+    if (_isIe(8) || _isIe(7) || _isIe(6)) {
+        return;
+    }
     $(e).setStyle({
         width: "100%",
         height: height!=null ? height : "200px"

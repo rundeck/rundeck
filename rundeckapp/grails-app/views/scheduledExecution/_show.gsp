@@ -64,7 +64,7 @@
     </g:javascript>
 </div>
 
-<g:javascript library="ace/ace"/>
+<!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
 <g:javascript>
     fireWhenReady('schedExecPage', function (z) {
         $$('.apply_ace').each(function (t) {
