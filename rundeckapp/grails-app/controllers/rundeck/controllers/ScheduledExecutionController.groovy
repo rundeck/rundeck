@@ -1322,6 +1322,7 @@ class ScheduledExecutionController  {
             }
         }
         jobset=parseresult.jobset
+        jobset*.project=params.project
         def changeinfo = [user: session.user,method:'upload']
         String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
         def loadresults = scheduledExecutionService.loadJobs(jobset,params.dupeOption,session.user, roleList, changeinfo,framework)
@@ -1827,6 +1828,12 @@ class ScheduledExecutionController  {
             return chain(controller: 'api', action: 'error')
         }
         def jobset = parseresult.jobset
+        if(request.api_version >= ApiRequestFilters.V8){
+            //v8 override project using parameter
+            if(params.project){
+                jobset*.project=params.project
+            }
+        }
         def changeinfo = [user: session.user,method:'apiJobsImport']
         def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")

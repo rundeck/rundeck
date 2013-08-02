@@ -45,6 +45,83 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         super.setUp();
     }
 
+    public void testUploadProjectParameter() {
+        def sec = new ScheduledExecutionController()
+
+        sec.metaClass.request = new MockMultipartHttpServletRequest()
+
+        ScheduledExecution expectedJob = new ScheduledExecution(
+                uuid: 'testUUID',
+                jobName: 'blue',
+                project: 'BProject',
+                adhocExecution: true,
+                adhocFilepath: '/this/is/a/path',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+                options: [new Option(name: 'testopt', defaultValue: '`ls -t1 /* | head -n1`', values: ['a', 'b', 'c'])]
+        )
+
+        //create mock of FrameworkService
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.existsFrameworkProject { project, framework -> return true }
+        fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
+        fwkControl.demand.authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        sec.frameworkService = fwkControl.createMock()
+        //mock the scheduledExecutionService
+        def mock2 = mockFor(ScheduledExecutionService, true)
+        mock2.demand.nextExecutionTimes { joblist -> return [] }
+        mock2.demand.loadJobs { jobset, dupeOption, user, roleList, changeinfo, framework ->
+            assertEquals('BProject',jobset[0].project)
+            [
+                    jobs: [expectedJob],
+                    jobsi: [scheduledExecution: expectedJob, entrynum: 0],
+                    errjobs: [],
+                    skipjobs: []
+            ]
+        }
+        sec.scheduledExecutionService = mock2.createMock()
+
+        def xml = '''
+<joblist>
+    <job>
+        <name>test1</name>
+        <group>testgroup</group>
+        <description>desc</description>
+        <context>
+            <project>AProject</project>
+             <options>
+                <option name='testopt' value='`ls -t1 /* | head -n1`' values="a,b,c" />
+              </options>
+        </context>
+        <sequence>
+            <command><exec>echo test</exec></command>
+        </sequence>
+    </job>
+</joblist>
+'''
+        final subject = new Subject()
+        subject.principals << new Username('test')
+        subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
+        sec.request.setAttribute("subject", subject)
+        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
+        sec.params.project="BProject"
+        def result = sec.upload()
+        //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
+        assertNotNull result
+        assertTrue result.didupload
+        assertNotNull result.jobs
+        assertNotNull result.errjobs
+        assertNotNull result.skipjobs
+        assertEquals "shouldn't have error jobs: ${result.errjobs}", 0, result.errjobs.size()
+        assertEquals "shouldn't have skipped jobs: ${result.skipjobs}", 0, result.skipjobs.size()
+        assertEquals 1, result.jobs.size()
+    }
+
     public void testUploadOptions() {
         def sec = new ScheduledExecutionController()
 
