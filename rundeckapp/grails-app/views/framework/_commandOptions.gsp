@@ -42,7 +42,7 @@ used by _editOptions.gsp template
                         <span id="${holder}" >
                             <g:if test="${!optionDepsMet}">
                                 <span class="info note">
-                                    <g:message code="option.remote.dependency.emptyresult" /> ${optiondependencies[optName].join(', ').encodeAsHTML()}
+                                    <g:message code="option.remote.dependency.emptyresult"/>
                                 </span>
                             </g:if>
                                 <g:hiddenField name="${fieldName}" value="${selectedoptsmap?selectedoptsmap[optName]:''}" id="${fieldhiddenid}"/>
