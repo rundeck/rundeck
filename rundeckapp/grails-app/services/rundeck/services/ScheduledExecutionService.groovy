@@ -707,7 +707,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         def trigger = createTrigger(se)
         List<Date> times = TriggerUtils.computeFireTimes(trigger,
                 quartzScheduler.getCalendar(trigger.getCalendarName()), 1)
-        return times?.first()
+        return times?times.first():null
     }
 
     /**
