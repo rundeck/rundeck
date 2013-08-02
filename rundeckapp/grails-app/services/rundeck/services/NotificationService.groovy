@@ -90,7 +90,7 @@ public class NotificationService implements ApplicationContextAware{
                     def destarr=n.content.split(",") as List
                     final state = ExecutionController.getExecutionState(exec)
                     def statMsg=[
-                            (ExecutionController.EXECUTION_ABORTED):'KILLING',
+                            (ExecutionController.EXECUTION_ABORTED):'KILLED',
                             (ExecutionController.EXECUTION_FAILED):'FAILURE',
                             (ExecutionController.EXECUTION_RUNNING):'STARTING',
                             (ExecutionController.EXECUTION_SUCCEEDED):'SUCCESS',
