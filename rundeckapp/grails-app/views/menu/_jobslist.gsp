@@ -75,7 +75,7 @@
 
                             </td>
                             <td class="scheduletime">
-                                <g:if test="${nextExecution}">
+                                <g:if test="${scheduledExecution.scheduled && nextExecution}">
                                     <img src="${resource(dir: 'images', file: 'icon-small-clock.png')}" alt="schedule"
                                          width="16"
                                          height="16"/>

@@ -27,7 +27,7 @@
 
         </g:if>
 
-        <g:if test="${nextExecution}">
+        <g:if test="${scheduledExecution.scheduled && nextExecution}">
             <span class="scheduletime">
                 <img src="${resource(dir: 'images', file: 'icon-med-clock.png')}" alt="schedule"
                      width="24"
