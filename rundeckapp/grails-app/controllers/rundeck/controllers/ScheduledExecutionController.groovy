@@ -575,9 +575,6 @@ class ScheduledExecutionController  {
             writer.flush()
             final string = writer.toString()
             final JSONElement parse = grails.converters.JSON.parse(string)
-            if(!parse ){
-                throw new Exception("JSON was empty")
-            }
             if (string) {
                 stats.contentSHA1 = string.encodeAsSHA1()
             }else{
