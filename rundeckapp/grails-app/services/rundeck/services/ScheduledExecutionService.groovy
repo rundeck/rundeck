@@ -803,13 +803,18 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             log.debug("saving job data: ${jobdata}")
             def ScheduledExecution scheduledExecution
             def jobchange = new HashMap(changeinfo)
+            if(!jobdata.project){
+                errjobs << [scheduledExecution: jobdata, entrynum: i, errmsg: "Project was not specified"]
+                i++
+                return
+            }
             if (option == "update" || option == "skip") {
                 //look for dupe by name and group path and project
                 def schedlist
                 //first look for uuid
-                if (jobdata.uuid) {
+                if (jobdata.uuid && jobdata.project) {
                     scheduledExecution = ScheduledExecution.findByUuidAndProject(jobdata.uuid,jobdata.project)
-                } else {
+                } else if(jobdata.jobName && jobdata.project){
                     schedlist = ScheduledExecution.findAllScheduledExecutions(jobdata.groupPath, jobdata.jobName, jobdata.project)
                     if (schedlist && 1 == schedlist.size()) {
                         scheduledExecution = schedlist[0]

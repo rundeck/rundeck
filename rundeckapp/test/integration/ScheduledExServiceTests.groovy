@@ -5751,7 +5751,7 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
     /**
      * Import job with same UUID, and different project, should fail due to uniqueness of uuid
      */
-    public void testUploadShouldNotUpdateUUIDWrongProjectDupeOptionUpdate() {
+    public void testLoadJobsShouldNotUpdateUUIDWrongProjectDupeOptionUpdate() {
 
         def sec = new ScheduledExecutionService()
 
@@ -6271,6 +6271,41 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
         assertNotNull test
         assertEquals "original desc", test.description
         assertEquals "echo original test", test.workflow.commands[0].adhocRemoteString
+    }
+
+    public void testLoadJobs_JobShouldRequireProject() {
+        def sec = new ScheduledExecutionService()
+
+        //create mock of FrameworkService
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.existsFrameworkProject { project, framework -> return true }
+        fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
+        fwkControl.demand.authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        sec.frameworkService = fwkControl.createMock()
+
+        //null project
+
+        def upload = new ScheduledExecution(
+                jobName: 'test1',
+                groupPath: "testgroup",
+                project: null,
+                description: 'desc',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: "echo test")])
+        )
+
+        def result = sec.loadJobs([upload], 'create', 'test', 'test,userrole', [:], null)
+        assertNotNull result
+        assertNotNull result.jobs
+        assertNotNull result.errjobs
+        assertNotNull result.skipjobs
+        assertEquals "shouldn't have skipped jobs: ${result.skipjobs}", 0, result.skipjobs.size()
+        assertEquals "shouldn't have error jobs: ${result.errjobs}", 1, result.errjobs.size()
+        assertEquals "should have success jobs: ${result.jobs}", 0, result.jobs.size()
+        assertEquals "Project was not specified",result.errjobs[0].errmsg
     }
 
     public void testUploadShouldOverwriteFilters() {
