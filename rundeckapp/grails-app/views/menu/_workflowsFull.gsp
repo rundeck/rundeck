@@ -190,7 +190,7 @@
                                 <span class="action textbtn job_bulk_select_all" ><g:message code="select.all" /></span>
                                 <span class="action textbtn job_bulk_edit_hide " style="margin-left: 10px" >
                                     <g:message code="cancel" />
-                                    <g:img file="icon-tiny-removex.png" width="12px" height="12px" />
+                                    <g:img file="icon-tiny-removex-gray.png" width="12px" height="12px" />
                                 </span>
                             </div>
                             <div class="bulk_edit_controls " style="display: none; margin: 5px;">
@@ -214,6 +214,21 @@
                     </g:form>
                     <g:timerEnd key="groupTree"/>
                 </g:if>
+                <g:else>
+                    <div class="presentation">
+                        No Jobs have been defined.
+
+                        <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_CREATE}">
+                            <ul>
+                            <li style="padding:5px"><g:link controller="scheduledExecution" action="create"
+                                                            class="button">Create a new Job&hellip;</g:link></li>
+                            <li style="padding:5px"><g:link controller="scheduledExecution" action="upload"
+                                                            class="button">Upload a Job definition&hellip;</g:link></li>
+                            </ul>
+                        </auth:resourceAllowed>
+
+                    </div>
+                </g:else>
     <g:timerStart key="tail"/>
             </td>
         </tr>

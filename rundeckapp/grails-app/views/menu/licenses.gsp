@@ -13,12 +13,12 @@
   <title>Licenses</title>
 </head>
 <body>
-<div class="pageBody solo">
+<div class="pageBody solo licenses">
 <g:markdown>
 
 **[Rundeck](http://rundeck.org)**
 
-    Copyright 2013 DTO Solutions
+    Copyright 2013 SimplifyOps, Inc.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.

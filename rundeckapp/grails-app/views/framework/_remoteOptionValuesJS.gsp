@@ -267,8 +267,8 @@ var RemoteOptionControl = Class.create({
                 //wrap elem contents and hide it
                 elem.innerHTML = "<div style='display:none' class='fieldcontent'>"+elem.innerHTML+"</div>";
                 //insert note
-                var note = new Element('div',{class:'info note emptyMessage'});
-                note.appendChild(document.createTextNode('Select a value for these options: '));
+                var note = new Element('div',{'class':'info note emptyMessage'});
+                note.appendChild(document.createTextNode('No values to choose from. Make sure to set a value for the following input options: '));
                 if(this.dependencies[name]){
                     note.appendChild(document.createTextNode(this.dependencies[name].join(', ')));
                 }
@@ -307,11 +307,8 @@ var RemoteOptionControl = Class.create({
         this.stopObserving(name);
         var id = this.ids[name];
 
-        if (!id) {
+        if (!id || !$(id)) {
             return;
-        }
-        if (!$(id)) {
-            throw "not found: " + id;
         }
         var roc = this;
         //observe field value change and trigger reloads

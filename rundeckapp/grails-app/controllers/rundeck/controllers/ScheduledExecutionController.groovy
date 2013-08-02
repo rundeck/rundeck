@@ -141,8 +141,6 @@ class ScheduledExecutionController  {
         }
     }
     def detailFragment = {
-//        def model=show()
-
         log.debug("ScheduledExecutionController: show : params: " + params)
         def crontab = [:]
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
@@ -153,22 +151,27 @@ class ScheduledExecutionController  {
             response.setStatus (404)
             return error()
         }
+        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_READ], scheduledExecution.project)) {
+            return unauthorized("Read Job ${params.id}")
+        }
         crontab = scheduledExecution.timeAndDateAsBooleanMap()
-        def User user = User.findByLogin(session.user)
         //list executions using query params and pagination params
 
         def executions=Execution.findAllByScheduledExecution(scheduledExecution,[offset: params.offset?params.offset:0, max: params.max?params.max:10, sort:'dateStarted', order:'desc'])
 
         def total = Execution.countByScheduledExecution(scheduledExecution)
 
-        //todo: authorize job for workflow_read
-
-
+        def remoteClusterNodeUUID = null
+        if (scheduledExecution.scheduled && frameworkService.isClusterModeEnabled()
+                && scheduledExecution.serverNodeUUID != frameworkService.getServerUUID()) {
+            remoteClusterNodeUUID = scheduledExecution.serverNodeUUID
+        }
 
         return render(view:'jobDetailFragment',model: [scheduledExecution:scheduledExecution, crontab:crontab, params:params,
             executions:executions,
             total:total,
             nextExecution:scheduledExecutionService.nextExecutionTime(scheduledExecution),
+                remoteClusterNodeUUID: remoteClusterNodeUUID,
             max: params.max?params.max:10,
                 notificationPlugins: notificationService.listNotificationPlugins(),
             offset:params.offset?params.offset:0])
@@ -210,7 +213,7 @@ class ScheduledExecutionController  {
                         remoteClusterNodeUUID: remoteClusterNodeUUID,
             notificationPlugins: notificationService.listNotificationPlugins(),
             max: params.max?params.max:10,
-            offset:params.offset?params.offset:0]
+            offset:params.offset?params.offset:0] + _prepareExecute(scheduledExecution, framework)
 
             }
             yaml{
@@ -604,21 +607,7 @@ class ScheduledExecutionController  {
     /**
     */
     def delete = {
-        log.debug("ScheduledExecutionController: delete : params: " + params)
-        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        def result = scheduledExecutionService.deleteScheduledExecutionById(params.id, framework, session.user, 'delete')
-
-        if(result.error?.errorCode=='notfound'){
-            flash.message = "ScheduledExecution not found with id ${params.id}"
-            return redirect(action: index, params: params)
-        }else if (result.error) {
-            flash.error = result.error.message
-            return redirect(action: show, id: params.id)
-        } else {
-            flash.message = result.success.message
-            redirect(action: index, params: [:])
-        }
-
+        return deleteBulk(new ApiBulkJobDeleteRequest(ids: [params.id]))
     }
     /**
      * Delete a set of jobs as specified in the idlist parameter.
@@ -1121,7 +1110,7 @@ class ScheduledExecutionController  {
             }
         }
     }
-    def runAdhoc={
+    private def runAdhoc(){
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         params["user"] = (session?.user) ? session.user : "anonymous"
         params.request = request
@@ -1136,6 +1125,13 @@ class ScheduledExecutionController  {
                 return [failed:true,error: 'unauthorized', message: msg]
             }
             params['user'] = params.asUser
+        }
+        if(params.exec){
+            params.doNodedispatch=true
+            params.nodeKeepgoing=true
+            params.nodeThreadcount=1
+            params.workflow = new Workflow(commands: [new CommandExec(adhocRemoteString: params.remove('exec'), adhocExecution: true)])
+            params.description = params.description ?: ""
         }
 
         //pass session-stored edit state in params map
@@ -1315,6 +1311,7 @@ class ScheduledExecutionController  {
             }
         }
         jobset=parseresult.jobset
+        jobset*.project=params.project
         def changeinfo = [user: session.user,method:'upload']
         String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
         def loadresults = scheduledExecutionService.loadJobs(jobset,params.dupeOption,session.user, roleList, changeinfo,framework)
@@ -1344,26 +1341,7 @@ class ScheduledExecutionController  {
 
 
     def execute = {
-
-        if (!params.id) {
-            log.error("Parameter id is required")
-            flash.error = "Parameter id is required"
-            response.setStatus(500)
-            return error()
-        }
-        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
-        def scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
-        if (!scheduledExecution) {
-            log.error("No Job found for id: " + params.id)
-            flash.error = "No Job found for id: " + params.id
-            response.setStatus(404)
-            return error()
-        }
-        if(!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_RUN], scheduledExecution.project)){
-            return unauthorized("Execute Job ${scheduledExecution.extid}")
-        }
-        def model = _prepareExecute(scheduledExecution, framework)
-        return model
+        return redirect(action: 'show',params:params)
     }
 
     private _prepareExecute(ScheduledExecution scheduledExecution, final def framework){
@@ -1605,6 +1583,8 @@ class ScheduledExecutionController  {
             }else{
                 success(true)
                 id(results.id)
+                href(createLink(controller: "execution",action: "follow",id: results.id))
+                follow(params.follow == 'true')
             }
         }
     }
@@ -1617,17 +1597,14 @@ class ScheduledExecutionController  {
             log.error(results.message)
             if(results.error=='unauthorized'){
                 return render(view:"/common/execUnauthorized",model:results)
-            }else if(results.error=='invalid'){
-                def model=execute.call()
-
+            }else {
+                def model=show.call()
+                results.error = results.remove('message')
                 results.jobexecOptionErrors=results.errors
                 results.selectedoptsmap=results.options
                 results.putAll(model)
                 results.options=null
-                return render(view:'execute',model:results)
-            }else{
-                results.error= results.message
-                return render(template:"/common/error",model:results)
+                return render(view:'show',model:results)
             }
         }else if (results.error){
             log.error(results.error)
@@ -1635,11 +1612,13 @@ class ScheduledExecutionController  {
                 response.setStatus (results.code)
             }
             return render(template:"/common/error",model:results)
-        }else{
+        }else if(params.follow=='true'){
             redirect(controller:"execution", action:"follow",id:results.id)
+        }else {
+            redirect(controller: "scheduledExecution", action: "show", id: params.id)
         }
     }
-    def runJob = {
+    private Map runJob () {
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         params["user"] = (session?.user) ? session.user : "anonymous"
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
@@ -1658,7 +1637,7 @@ class ScheduledExecutionController  {
 
         if (result.error){
             result.failed=true
-            flash.error = result.message
+
             return result
         }else{
             log.debug("ExecutionController: immediate execution scheduled")
@@ -1838,6 +1817,12 @@ class ScheduledExecutionController  {
             return chain(controller: 'api', action: 'error')
         }
         def jobset = parseresult.jobset
+        if(request.api_version >= ApiRequestFilters.V8){
+            //v8 override project using parameter
+            if(params.project){
+                jobset*.project=params.project
+            }
+        }
         def changeinfo = [user: session.user,method:'apiJobsImport']
         def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")

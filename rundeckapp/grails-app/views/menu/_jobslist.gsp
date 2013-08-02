@@ -20,7 +20,6 @@
                         </g:if>
                     <% def j=0 %>
                     <g:each in="${runAuthRequired?jobslist.findAll{ jobauthorizations&&jobauthorizations[AuthConstants.ACTION_RUN]?.contains(it.id.toString())}:jobslist}" var="scheduledExecution">
-                        <g:set var="execCount" value="${scheduledExecution.id?Execution.countByScheduledExecution(scheduledExecution):0}"/>
                         <g:set var="nextExecution"
                                value="${ (nextExecutions)? nextExecutions[scheduledExecution.id] : null}"/>
                         <g:set var="clusterUUID"
@@ -40,8 +39,6 @@
                         <g:else>
                         <tr class="sectionhead expandComponentHolder ${paginateParams?.idlist==scheduledExecution.id.toString()?'expanded':''}" id="jobrow_${scheduledExecution.id}">
                             <td class="jobname">
-                                <div style="overflow:hidden; text-overflow: ellipsis; height: 21px ">
-                                %{--<g:expander key="${ukey+'jobDisplay'+scheduledExecution.id}" open="${paginateParams?.idlist==scheduledExecution.id.toString()?'true':'false'}" imgfirst="true">${scheduledExecution.jobName.encodeAsHTML()}</g:expander>--}%
                                     <span class="jobbulkeditfield" style="display: none">
                                     <g:if test="${jobauthorizations && jobauthorizations[AuthConstants.ACTION_DELETE]?.contains(scheduledExecution.id.toString())}">
                                         <input type="checkbox" name="ids" value="${scheduledExecution.extid}"/>
@@ -54,50 +51,46 @@
                                     </g:else>
                                 </span>
                                     <span class="inlinebuttons jobbuttons">
-                                        <g:render template="/scheduledExecution/actionButtons"
-                                          model="${[scheduledExecution: scheduledExecution, authMap: authMap, jobauthorizations: jobauthorizations, small: true]}"/>
+                                        <g:if test="${jobauthorizations && jobauthorizations[AuthConstants.ACTION_RUN]?.contains(scheduledExecution.id.toString())}">
+                                            <g:link controller="scheduledExecution" action="execute"
+                                                    id="${scheduledExecution.extid}" class="icon button "
+                                                    onclick="if(typeof(loadExec)=='function'){loadExec(${scheduledExecution.id});return false;}"><img
+                                                    src="${resource(dir: 'images', file:  'icon-small-run.png')}"
+                                                    title="Run ${g.message(code: 'domain.ScheduledExecution.title')}&hellip;"
+                                                    alt="run" width="16" height="16"/></g:link>
+                                        </g:if>
                                     </span>
 
-                                    <g:link action="show" controller="scheduledExecution" id="${scheduledExecution.extid}" class="jobIdLink">
+                                    <g:link action="show" controller="scheduledExecution" id="${scheduledExecution.extid}" class="primary" >
                                     ${scheduledExecution.jobName.encodeAsHTML()}</g:link>
 
-                                <g:if test="${!session.project}">
-                                <span class="project">
-                                    &bull; <span class="action textbtn" onclick="selectProject('${scheduledExecution.project.encodeAsJavaScript()}');" title="Select this project">${scheduledExecution.project.encodeAsHTML()}</span> 
-                                </span>
+                                <g:if test="${jobauthorizations && jobauthorizations[AuthConstants.ACTION_UPDATE]?.contains(scheduledExecution.id.toString())}">
+                                    <g:link action="edit" controller="scheduledExecution"
+                                            id="${scheduledExecution.extid}"
+                                            class="jobIdLink textbtn">
+                                        edit</g:link>
                                 </g:if>
+
                                 <span class="jobdesc" title="${scheduledExecution.description?.encodeAsHTML()}">${scheduledExecution.description?.encodeAsHTML()}</span>
-                                <span class="info note ${!execCount?'none':''}" style="margin-left:10px;">
-                                    <g:link controller="reports" action="index" params="${[jobIdFilter:scheduledExecution.id]}" title="View all Executions of this job">Executions (${execCount})</g:link>
-                                </span>
-                                </div>
+
                             </td>
-
-                        <td class="jobrunning " >
-                            <g:if test="${nowrunning && nowrunning[scheduledExecution.id.toString()]}">
-                                %{--<g:link class="timenow"
-                                    controller="execution"
-                                    action="show"
-                                    id="${nowrunning[scheduledExecution.id.toString()]}">
-                                        <img src="${resource(dir:'images',file:'icon-tiny-disclosure-waiting.gif')}" alt=""/>
-                                        now
-                                </g:link>--}%
-                            </g:if>
-                            <g:elseif test="${nextExecution}">
-                                    <img src="${resource(dir:'images',file:'icon-clock-small.png')}" alt=""  width="16px" height="16px"/>
-                                    <g:set var="titleHint" value="${clusterUUID ? 'Expecting another cluster server to run ' : ''}"/>
-                                    <span title="${titleHint}at <g:relativeDate atDate='${nextExecution}'/>">
-                                    <g:relativeDate elapsed="${nextExecution}" untilClass="${clusterUUID?'desc':'timeuntil'}"/>
+                            <td class="scheduletime">
+                                <g:if test="${scheduledExecution.scheduled && nextExecution}">
+                                    <img src="${resource(dir: 'images', file: 'icon-small-clock.png')}" alt="schedule"
+                                         width="16"
+                                         height="16"/>
+                                    <span title="${remoteClusterNodeUUID ? g.message(code: "expecting.another.cluster.server.to.run") : ''} at ${g.relativeDate(atDate: nextExecution)}">
+                                        <g:relativeDate elapsed="${nextExecution}" untilClass="timeuntil"/>
                                     </span>
-                            </g:elseif>
-                            <g:elseif test="${scheduledExecution.scheduled && !nextExecution}">
-                                    <img src="${resource(dir:'images',file:'icon-clock-small.png')}" alt=""  width="16px" height="16px"/>
-                                    <span class="warn note" title="Job schedule will never fire">Never</span>
-                            </g:elseif>
-                            <g:else>&nbsp;
-                            </g:else>
-                        </td>
-
+                                </g:if>
+                                <g:elseif test="${scheduledExecution.scheduled && !nextExecution}">
+                                    <img src="${resource(dir: 'images', file: 'icon-small-clock-gray.png')}" alt=""
+                                         width="16"
+                                         height="16"/>
+                                    <span class="warn note" title="${g.message(code: 'job.schedule.will.never.fire')}">
+                                        <g:message code="never" /></span>
+                                </g:elseif>
+                            </td>
                         </tr>
                         </g:else>
                         <% j++ %>
@@ -110,5 +103,4 @@
                 <g:if test="${total && max && total.toInteger() > max.toInteger() && max.toInteger() > 0}">
                     <span class="info note">Showing ${jobslist.size()} of ${total}</span>
                 </g:if>
-            %{--<span class="paginate"><g:paginate total="${total}" action="list" max="${max}" params="${paginateParams}"/></span>--}%
         </div>

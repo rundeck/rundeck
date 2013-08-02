@@ -312,7 +312,7 @@ public class Framework extends FrameworkResourceParent {
      * @return
      */
     public static PropertyRetriever createPropertyRetriever(File baseDir) {
-        return PropertyLookup.create(getPropertyFile(getConfigDir(baseDir))).safe();
+        return createPropertyLookupFromBasedir(baseDir).expand().safe();
     }
     /**
      * Create a safe framework property retriever given a basedir

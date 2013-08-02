@@ -1,3 +1,4 @@
+import com.dtolabs.rundeck.app.support.ExecQuery
 import com.dtolabs.rundeck.app.support.ReportQuery
 import rundeck.ExecReport
 import rundeck.BaseReport
@@ -36,19 +37,19 @@ class ReportServiceTests extends GroovyTestCase {
         message:'message',title:'title']
         return new ExecReport(repprops+props)
     }
-    void testgetCombinedReportsReportIdFilter(){
+    void testgetExecReportsReportIdFilter(){
         def r1,r2,r3
 
         ExecReport.withNewSession {
-            r1=proto(reportId:'blah')
+            r1=proto(reportId:'blah', jcExecId: '123')
             assert r1.validate()
             assert null!=r1.save(flush: true)
             assert 'blah'==r1.reportId
             assertNotNull(r1.id)
-            r2 = proto(reportId: 'blah2')
+            r2 = proto(reportId: 'blah2', jcExecId: '124')
             assert r2.validate()
             assert null != r2.save(flush: true)
-            r3 = proto(reportId: 'blah3')
+            r3 = proto(reportId: 'blah3', jcExecId: '125')
             assert r3.validate()
             println r3.save(flush: true)
 
@@ -58,9 +59,9 @@ class ReportServiceTests extends GroovyTestCase {
         r2=r2.refresh()
         r3=r3.refresh()
         assertEquals(3,ExecReport.count())
-        def query = new ReportQuery(reportIdFilter: 'blah')
+        def query = new ExecQuery(reportIdFilter: 'blah')
 
-        def result=reportService.getCombinedReports(query)
+        def result=reportService.getExecutionReports(query,true)
         assert result.total==1
         assert result.reports.size()==1
         assert result.reports.contains(r1)
@@ -70,14 +71,14 @@ class ReportServiceTests extends GroovyTestCase {
         assertQueryResult([reportIdFilter: 'blah3'], [r3])
         assertQueryResult([reportIdFilter: 'blah4'], [])
     }
-    void testgetCombinedReportsJobListFilter(){
-        def r1=proto(reportId:'group/name')
+    void testgetExecReportsJobListFilter(){
+        def r1=proto(reportId:'group/name',jcExecId:'1')
         assert null!=r1.save(flush: true)
-        def r2 = proto(reportId: 'group/name2')
+        def r2 = proto(reportId: 'group/name2', jcExecId: '2')
         assert null != r2.save(flush: true)
-        def r3 = proto(reportId: 'group/name3')
+        def r3 = proto(reportId: 'group/name3', jcExecId: '3')
         assert null != r3.save(flush: true)
-        def r4 = proto(reportId: 'group/monkey')
+        def r4 = proto(reportId: 'group/monkey', jcExecId: '4')
         assert null != r4.save(flush: true)
 
         assertQueryResult([jobListFilter: ['group/name']],[r1])
@@ -87,11 +88,11 @@ class ReportServiceTests extends GroovyTestCase {
         assertQueryResult([jobListFilter: ['group/name','group/name2','group/name3']],[r1,r2,r3])
     }
     void testgetCombinedReportsExcludeJobListFilter(){
-        def r1=proto(reportId:'group/name')
+        def r1=proto(reportId:'group/name', jcExecId: '1')
         assert null!=r1.save(flush: true)
-        def r2 = proto(reportId: 'group/name2')
+        def r2 = proto(reportId: 'group/name2', jcExecId: '2')
         assert null != r2.save(flush: true)
-        def r3 = proto(reportId: 'group/name3')
+        def r3 = proto(reportId: 'group/name3', jcExecId: '3')
         assert null != r3.save(flush: true)
 
         assertQueryResult([excludeJobListFilter: ['group/name']],[r2,r3])
@@ -103,9 +104,9 @@ class ReportServiceTests extends GroovyTestCase {
     }
 
     private assertQueryResult(Map props, Collection<BaseReport> results,Integer total=null) {
-        def query = new ReportQuery(props)
+        def query = new ExecQuery(props)
 
-        def result = reportService.getCombinedReports(query)
+        def result = reportService.getExecutionReports(query,true)
         assert result.total == (null != total ? total : results.size())
         assert result.reports.size() == results.size()
         assert result.reports.containsAll(results)

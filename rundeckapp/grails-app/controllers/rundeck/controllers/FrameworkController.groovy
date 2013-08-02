@@ -8,6 +8,8 @@ import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.shared.resources.ResourceXMLGenerator
 
 import grails.converters.JSON
+import rundeck.Execution
+
 import java.util.regex.PatternSyntaxException
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.common.INodeSet
@@ -66,10 +68,12 @@ class FrameworkController  {
 
     def noProjectAccess = {
         response.setStatus(403)
+        def roles = request.subject?.getPrincipals(com.dtolabs.rundeck.core.authentication.Group.class)?.collect { it.name }?.join(", ")
         request.title = "Unauthorized"
-        request.error = "No authorized access to projects. Contact your administrator."
+        request.error = "No authorized access to projects. Contact your administrator. (User roles: " + roles + ")"
         response.setHeader(Constants.X_RUNDECK_ACTION_UNAUTHORIZED_HEADER, request.error)
-        log.error("'${request.remoteUser}' has no authorized access. Roles: "+ request.subject?.getPrincipals(com.dtolabs.rundeck.core.authentication.Group.class)?.collect { it.name }?.join(", "))
+
+        log.error("'${request.remoteUser}' has no authorized access. Roles: "+ roles)
         return render(template:  '/common/error', model: [:])
     }
     /**
@@ -91,7 +95,29 @@ class FrameworkController  {
     }
 
     def nodes ={ ExtNodeFilters query ->
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        String runCommand;
+        if(params.fromExecId|| params.retryFailedExecId) {
+            Execution e = Execution.get(params.fromExecId?: params.retryFailedExecId)
+            if (e && !frameworkService.authorizeProjectExecutionAll(framework, e, [AuthConstants.ACTION_READ])) {
+                return unauthorized("Read Execution ${params.fromExecId ?: params.retryFailedExecId}")
+            }
 
+            if (e && !e.scheduledExecution && e.workflow.commands.size() == 1) {
+                def cmd = e.workflow.commands[0]
+                if (cmd.adhocRemoteString) {
+                    runCommand = cmd.adhocRemoteString
+                    //configure node filters
+                    if (params.retryFailedExecId) {
+                        query = new ExtNodeFilters(nodeIncludeName: e.failedNodeList, project: e.project)
+                    }else{
+                        query = ExtNodeFilters.from(e, e.project)
+                    }
+                }
+            }
+        }else if(params.exec){
+            runCommand=params.exec
+        }
         def User u = userService.findOrCreateUser(session.user)
         def usedFilter = null
         if (!params.filterName && u && query.nodeFilterIsEmpty() && params.formInput != 'true') {
@@ -119,12 +145,12 @@ class FrameworkController  {
             query = new ExtNodeFilters()
             usedFilter = null
         }
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+
         if (query.nodeFilterIsEmpty()) {
-            if (params.formInput == 'true' && 'true' != params.defaultLocalNode) {
-                query.nodeIncludeName = '.*'
-            } else {
+            if ('true' == params.defaultLocalNode) {
                 query.nodeIncludeName = framework.getFrameworkNodeName()
+            } else {
+                query.nodeIncludeName = '.*'
             }
         }
         if (query && !query.project && session.project) {
@@ -135,7 +161,7 @@ class FrameworkController  {
         if (usedFilter) {
             model['filterName'] = usedFilter
         }
-        return model
+        return model + [runCommand: runCommand]
     }
     /**
      * Nodes action lists nodes in resources view, also called by nodesFragment to

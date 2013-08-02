@@ -76,6 +76,14 @@ class ProjectServiceTests extends GrailsUnitTestCase {
      */
     static String EXEC_XML_TEST2 = EXEC_XML_TEST1_START+ '''
     <outputfilepath>output-1.txt</outputfilepath>''' + EXEC_XML_TEST1_REST
+
+    /**
+     * Execution xml with associated job ID
+     */
+    static String EXEC_XML_TEST3 = EXEC_XML_TEST1_START + '''
+    <outputfilepath />''' + '''
+    <jobId>jobid1</jobId>''' + EXEC_XML_TEST1_REST
+
     def testExportExecution(){
         mockDomain(ScheduledExecution)
         mockDomain(Execution)
@@ -190,6 +198,23 @@ class ProjectServiceTests extends GrailsUnitTestCase {
         assertNotNull e.workflow.commands
         assertEquals 1,e.workflow.commands.size()
         assertPropertiesEquals( [adhocRemoteString: 'exec command'],e.workflow.commands[0])
+    }
+    /**
+     * Imported execution where jobId should be skipped, should not be loaded
+     */
+    def testImportExecutionSkipJob(){
+        mockDomain(ScheduledExecution)
+        mockDomain(Execution)
+        mockDomain(Workflow)
+        mockDomain(CommandExec)
+        mockLogging(ProjectService)
+        ProjectService svc = new ProjectService()
+        def result = svc.loadExecutions(EXEC_XML_TEST3,null,['jobid1'])
+        assertNotNull result
+        assertNotNull result.executions
+        assertNotNull result.execidmap
+        assertEquals 0,result.executions.size()
+        assertEquals 0,result.execidmap.size()
     }
     def testImportExecutionRemappedJob(){
         mockDomain(ScheduledExecution)
@@ -361,6 +386,24 @@ class ProjectServiceTests extends GrailsUnitTestCase {
         ]
         assertPropertiesEquals expected, result
     }
+    def testLoadReportSkippedExecution() {
+        mockDomain(BaseReport)
+        mockDomain(ExecReport)
+        mockDomain(ScheduledExecution)
+
+        ScheduledExecution se = new ScheduledExecution(jobName: 'blue', project: 'AProject', adhocExecution: true,
+                                                       uuid: 'new-job-uuid',
+                                                       adhocFilepath: '/this/is/a/path', groupPath: 'some/where', description: 'a job', argString: '-a b -c d',
+                                                       workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+                                                       )
+        assertNotNull se.save()
+        def newJobId = se.id
+        def oldUuid= 'test-job-uuid'
+
+        ProjectService svc = new ProjectService()
+        def ExecReport result = svc.loadHistoryReport(REPORT_XML_TEST1,[:],[(oldUuid):se],'test')
+        assertNull result
+    }
     def testReportRoundtrip() {
         mockDomain(BaseReport)
         mockDomain(ExecReport)
@@ -398,10 +441,10 @@ class ProjectServiceTests extends GrailsUnitTestCase {
         svc.exportHistoryReport(zip, exec, outfilename)
         def str = outwriter.toString()
 
-        def ExecReport result = svc.loadHistoryReport(str,null,null,'test')
+        def ExecReport result = svc.loadHistoryReport(str,[(123):123],null,'test')
         assertNotNull result
         def keys = [
-                jcExecId: '123',
+                jcExecId: '456',
                 jcJobId: '321',
                 node: '1/0/0',
                 title: 'blah',

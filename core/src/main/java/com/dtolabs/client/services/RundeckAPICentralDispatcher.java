@@ -1449,6 +1449,10 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
             params.put("format", format.getName());
         }
 
+        if (null != iLoadJobsRequest.getProject()) {
+            params.put("project", iLoadJobsRequest.getProject());
+        }
+
         /*
          * Send the request bean and the file as a multipart request.
          */

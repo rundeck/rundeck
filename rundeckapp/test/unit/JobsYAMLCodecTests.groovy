@@ -485,7 +485,103 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
 
     }
 
-    void testDecodeErrorHandlers(){
+    void testDecodeBasicWithoutProject() {
+            def ymlstr1 = """- id: null
+  loglevel: INFO
+  sequence:
+    keepgoing: false
+    strategy: node-first
+    commands:
+    - exec: test script
+    - script: A Monkey returns
+  description: ''
+  name: test job 1
+  group: my group
+  nodefilters:
+    dispatch:
+      threadcount: 1
+      keepgoing: true
+      excludePrecedence: true
+    include:
+      hostname: testhost1
+    exclude:
+      name: x1
+  schedule:
+    time:
+      seconds: 9
+      hour: 8
+      minute: 5
+    month: 11
+    weekday:
+      day: 0
+    year: 2011
+  options:
+    opt1:
+      enforced: true
+      required: true
+      description: an opt
+      value: xyz
+      values:
+      - a
+      - b
+"""
+            def list = JobsYAMLCodec.decode(ymlstr1)
+            assertNotNull list
+            assertEquals(1, list.size())
+            def obj = list[0]
+            assertTrue(obj instanceof ScheduledExecution)
+            ScheduledExecution se = (ScheduledExecution) list[0]
+            assertEquals "wrong name", "test job 1", se.jobName
+            assertEquals "wrong description", "", se.description
+            assertEquals "wrong groupPath", "my group", se.groupPath
+            assertEquals "wrong project", null, se.project
+            assertEquals "wrong loglevel", "INFO", se.loglevel
+            assertTrue "wrong doNodedispatch", se.doNodedispatch
+            assertEquals "wrong nodeThreadcount", 1, se.nodeThreadcount
+            assertTrue "wrong nodeKeepgoing", se.nodeKeepgoing
+            assertTrue "wrong nodeExcludePrecedence", se.nodeExcludePrecedence
+            assertEquals "wrong nodeInclude", "testhost1", se.nodeInclude
+            assertEquals "wrong nodeExcludeName", "x1", se.nodeExcludeName
+
+            //schedule
+            assertTrue "wrong scheduled", se.scheduled
+            assertEquals "wrong seconds", "9", se.seconds
+            assertEquals "wrong minute", "5", se.minute
+            assertEquals "wrong minute", "8", se.hour
+            assertEquals "wrong minute", "11", se.month
+            assertEquals "wrong minute", "0", se.dayOfWeek
+            assertEquals "wrong minute", "?", se.dayOfMonth
+            assertEquals "wrong minute", "2011", se.year
+
+            //workflow
+            assertNotNull "missing workflow", se.workflow
+            assertNotNull "missing workflow", se.workflow.commands
+            assertFalse "wrong workflow.keepgoing", se.workflow.keepgoing
+            assertEquals "wrong workflow.strategy", "node-first", se.workflow.strategy
+            assertEquals "wrong workflow size", 2, se.workflow.commands.size()
+            assertEquals "wrong workflow item", "test script", se.workflow.commands[0].adhocRemoteString
+            assertTrue "wrong workflow item", se.workflow.commands[0].adhocExecution
+            assertEquals "wrong workflow item", "A Monkey returns", se.workflow.commands[1].adhocLocalString
+            assertTrue "wrong workflow item", se.workflow.commands[1].adhocExecution
+
+            //options
+            assertNotNull "missing options", se.options
+            assertEquals "wrong options size", 1, se.options.size()
+            def opt1 = se.options.iterator().next()
+            assertEquals "wrong option name", "opt1", opt1.name
+            assertEquals "wrong option description", "an opt", opt1.description
+            assertEquals "wrong option defaultValue", "xyz", opt1.defaultValue
+            assertTrue "wrong option name", opt1.enforced
+            assertTrue "wrong option name", opt1.required
+            assertNotNull "wrong option values", opt1.values
+            assertEquals "wrong option values size", 2, opt1.values.size()
+            ArrayList valuesList = new ArrayList(opt1.values)
+            assertEquals "wrong option values[0]", 'a', valuesList[0]
+            assertEquals "wrong option values[1]", 'b', valuesList[1]
+
+        }
+
+        void testDecodeErrorHandlers(){
         def ymlstr1 = """- id: myid
   project: test1
   loglevel: INFO

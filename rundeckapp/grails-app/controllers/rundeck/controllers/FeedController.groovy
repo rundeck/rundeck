@@ -7,7 +7,7 @@ import rundeck.services.ReportService
 class FeedController {
     ReportService reportService
 
-    def index = {ReportQuery query ->
+    def index = {ExecQuery query ->
         if(!checkEnabled()){
             return 
         }
@@ -18,40 +18,7 @@ class FeedController {
         if(null!=query){
             query.configureFilter()
         }
-        def model=reportService.getCombinedReports(query)
-        model = reportService.finishquery(query,params,model)
-        return model
-    }
-
-
-    def commands = {ExecQuery query ->
-        if (!checkEnabled()) {
-            return
-        }
-        if(null!=query && !params.find{ it.key.endsWith('Filter')}){
-            //no default filter
-        }
-
-        if(null!=query){
-            query.configureFilter()
-        }
-        def model=reportService.getExecutionReports(query, false)
-        model = reportService.finishquery(query,params,model)
-        return model
-    }
-
-    def jobs = {ExecQuery query ->
-        if (!checkEnabled()) {
-            return
-        }
-        if(null!=query && !params.find{ it.key.endsWith('Filter')}){
-            //no default filter
-        }
-
-        if(null!=query){
-            query.configureFilter()
-        }
-        def model = reportService.getExecutionReports(query, true)
+        def model=reportService.getExecutionReports(query,true)
         model = reportService.finishquery(query,params,model)
         return model
     }

@@ -7,6 +7,7 @@ import com.dtolabs.rundeck.core.logging.LogFileStorageException
 import com.dtolabs.rundeck.core.logging.StreamingLogWriter
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.logging.LogFileStoragePlugin
 import grails.test.*
@@ -118,6 +119,33 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         assertTrue(svc.isResultCacheItemAllowedRetry([time: new Date(), count: 3]))
         assertFalse(svc.isResultCacheItemAllowedRetry([time: new Date(), count: 10]))
     }
+    void testGetFileForKey(){
+        mockLogging(LogFileStorageService)
+        LogFileStorageService svc = new LogFileStorageService()
+        def fmock = mockFor(FrameworkService)
+        fmock.demand.getFrameworkProperties() {->
+            PropertyResolverFactory.instanceRetriever('framework.logs.dir': '/tmp/logs')
+        }
+        svc.frameworkService = fmock.createMock()
+        def result = svc.getFileForKey("abc")
+        assertNotNull(result)
+        assertEquals(new File("/tmp/logs/rundeck/abc"),result)
+    }
+    void testGetFileForKeyNotFound(){
+        mockLogging(LogFileStorageService)
+        def fmock = mockFor(FrameworkService)
+        fmock.demand.getFrameworkProperties() {->
+            PropertyResolverFactory.instanceRetriever([:])
+        }
+        LogFileStorageService svc = new LogFileStorageService()
+        svc.frameworkService = fmock.createMock()
+        try {
+            def result = svc.getFileForKey("abc")
+            fail("Expected exception")
+        } catch (IllegalStateException e) {
+            assertEquals("framework.logs.dir is not set in framework.properties", e.message)
+        }
+    }
     void testCacheResult(){
         mockLogging(LogFileStorageService)
         LogFileStorageService svc = new LogFileStorageService()
@@ -163,6 +191,9 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         Execution e = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
         assertNotNull(e.save())
         def fmock = mockFor(FrameworkService)
+        fmock.demand.getFrameworkProperties() {->
+            PropertyResolverFactory.instanceRetriever('framework.logs.dir': '/tmp/logs')
+        }
         fmock.demand.getFrameworkPropertyResolver() { project ->
             assert project == "testproj"
         }
@@ -172,8 +203,6 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         }
         LogFileStorageService svc = new LogFileStorageService()
         svc.frameworkService=fmock.createMock()
-        svc.frameworkService.initialized=true
-        svc.frameworkService.rundeckbase='/tmp'
 
         def writer = svc.getLogFileWriterForExecution(e, [:])
         assertNotNull(writer)
@@ -273,6 +302,9 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         mockLogging(LogFileStorageService)
         assertNotNull(e.save())
         def fmock = mockFor(FrameworkService)
+        fmock.demand.getFrameworkProperties() {->
+            PropertyResolverFactory.instanceRetriever('framework.logs.dir': '/tmp/logs')
+        }
         fmock.demand.getFrameworkPropertyResolver() { project ->
             assert project == "testprojz"
         }
@@ -288,8 +320,6 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         }
         LogFileStorageService svc = new LogFileStorageService()
         svc.frameworkService = fmock.createMock()
-        svc.frameworkService.initialized = true
-        svc.frameworkService.rundeckbase = '/tmp'
         svc.pluginService = pmock.createMock()
 
         assertEquals(0, LogFileStorageRequest.list().size())
@@ -395,8 +425,6 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         }
         LogFileStorageService svc = new LogFileStorageService()
         svc.frameworkService = fmock.createMock()
-        svc.frameworkService.initialized = true
-        svc.frameworkService.rundeckbase = '/tmp'
         svc.pluginService = pmock.createMock()
         svc.executorService=emock
 
@@ -598,8 +626,6 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         }
         LogFileStorageService svc = new LogFileStorageService()
         svc.frameworkService = fmock.createMock()
-        svc.frameworkService.initialized = true
-        svc.frameworkService.rundeckbase = '/tmp'
         svc.frameworkService.serverUUID = null
         svc.frameworkService.metaClass.isClusterModeEnabled = {
             return isClustered

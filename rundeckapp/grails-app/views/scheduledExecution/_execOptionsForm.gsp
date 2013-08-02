@@ -1,14 +1,14 @@
+<g:if test="${!hideHead}">
 <div class="pageTop extra">
 <div class="jobHead">
-    <tmpl:showHead scheduledExecution="${scheduledExecution}" iconName="icon-job" subtitle="Choose Execution Options"/>
+    <tmpl:showHead scheduledExecution="${scheduledExecution}" iconName="icon-job" subtitle="Choose Execution Options" runPage="true"/>
     <div class="clear"></div>
-    
+
 </div>
-<div class="pageSubtitle subtitleAction">
-<g:message code="job.run.execOptionsPage.subtitle" />
-</div>
+
     <div class="clear"></div>
 </div>
+</g:if>
 <div class="pageBody form">
     <g:form controller="scheduledExecution" method="post">
         <g:render template="editOptions" model="${[scheduledExecution:scheduledExecution, selectedoptsmap:selectedoptsmap, selectedargstring:selectedargstring,authorized:authorized,jobexecOptionErrors:jobexecOptionErrors, optiondependencies: optiondependencies, dependentoptions: dependentoptions, optionordering: optionordering]}"/>
@@ -27,8 +27,8 @@
         <g:elseif test="${nodes}">
             <g:set var="COLS" value="${6}"/>
             <span class="prompt">Nodes:</span>
-            <label><input name="extra._replaceNodeFilters" value="true" type="checkbox"
-                          id="doReplaceFilters"/> Change the Target Nodes</label>
+            <input name="extra._replaceNodeFilters" value="true" type="checkbox"
+                          id="doReplaceFilters"/> <label for="doReplaceFilters">Change the Target Nodes</label>
             <div class="presentation matchednodes embed jobmatchednodes group_section">
                 <%--
                  split node names into groups, in several patterns
@@ -208,10 +208,14 @@
             </g:javascript>
         </g:elseif>
         <div class="buttons" id="formbuttons">
-
+            <g:if test="${!hideCancel}">
             <g:actionSubmit id="execFormCancelButton" value="Cancel"/>
-            <g:actionSubmit value="Run ${g.message(code:'domain.ScheduledExecution.title')} Now" id="execFormRunButton"/>
-
+            </g:if>
+            <g:actionSubmit value="Run ${g.message(code:'domain.ScheduledExecution.title')} Now" id="execFormRunButton" class="runbutton"/>
+            <g:checkBox id="followoutputcheck" name="follow" checked="${defaultFollow|| params.follow == 'true'}" value="true"/>
+            <label for="followoutputcheck">
+            <g:message code="job.run.watch.output" />
+            </label>
         </div>
         <div class="error note" id="formerror" style="display:none">
 

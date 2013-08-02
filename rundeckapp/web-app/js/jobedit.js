@@ -277,6 +277,9 @@ function escapeHtml(unsafe) {
         .replace(/'/g, "&#039;");
 }
 function _addAceTextarea(textarea){
+    if (_isIe(8)||_isIe(7)||_isIe(6)) {
+        return;
+    }
     textarea.hide();
     var _shadow = new Element('div');
     _shadow.setStyle({

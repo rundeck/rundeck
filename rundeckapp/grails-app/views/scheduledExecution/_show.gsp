@@ -1,4 +1,4 @@
-<%@ page import="rundeck.Execution" %>
+<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants; rundeck.Execution" %>
 <g:javascript>
 /** START history
          *
@@ -28,41 +28,43 @@
 
 <div class="pageTop extra">
     <div class="jobHead">
-        <g:render template="/scheduledExecution/showHead" model="[scheduledExecution:scheduledExecution,execution:execution,followparams:[mode:followmode,lastlines:params.lastlines]]"/>
+        <g:render template="/scheduledExecution/showHead" model="[scheduledExecution:scheduledExecution,followparams:[mode:followmode,lastlines:params.lastlines]]"/>
     </div>
 
-    <div style="vertical-align:top;width: 200px;" class="toolbar small">
-        <g:render template="/scheduledExecution/actionButtons" model="${[scheduledExecution:scheduledExecution,objexists:objexists,jobAuthorized:jobAuthorized,iconsize:'24px',iconname:'med']}"/>
-    </div>
+    <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_RUN)}">
+    <tmpl:execOptionsForm model="${[scheduledExecution: scheduledExecution, crontab: crontab, authorized: authorized]}"
+                          hideHead="${true}"
+        hideCancel="${true}"
+        defaultFollow="${true}"
+    />
+    </g:if>
     <div class="clear"></div>
 </div>
 
 <div class="pageBody" id="schedExecPage">
-    <div id="schedExDetails${scheduledExecution?.id}" style="">
-        <g:render template="showDetail" model="[scheduledExecution:scheduledExecution]"/>
+    <g:expander key="schedExDetails${scheduledExecution?.id}">Definition </g:expander>
+    <div id="schedExDetails${scheduledExecution?.id}" style="display: none">
+        <g:render template="showDetail" model="[scheduledExecution:scheduledExecution,showEdit:true,hideOptions:true]"/>
 
     </div>
 
-    <g:if test="${flash.message}">
-        <div class="message">${flash.message}</div>
-    </g:if>
-    <g:if test="${message}">
-        <div class="message">${message}</div>
-    </g:if>
     <div class="pageMessage" id="showPageMessage" style="display: none;"></div>
-    <g:render template="/common/messages"/>
 
 </div>
-<div class="runbox">History</div>
+<div class="runbox"><g:message code="page.section.Activity"/></div>
 <div class="pageBody">
     <g:render template="/scheduledExecution/renderJobStats" model="${[scheduledExecution: scheduledExecution]}"/>
-    <div id="histcontent"></div>
+
+    <table cellpadding="0" cellspacing="0" class="jobsList list history" style="width:100%">
+        <tbody id="nowrunning"></tbody>
+        <tbody id="histcontent"></tbody>
+    </table>
     <g:javascript>
         fireWhenReady('histcontent', loadHistory);
     </g:javascript>
 </div>
 
-<g:javascript library="ace/ace"/>
+<!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
 <g:javascript>
     fireWhenReady('schedExecPage', function (z) {
         $$('.apply_ace').each(function (t) {

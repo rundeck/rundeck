@@ -40,7 +40,37 @@ class ExecReport extends BaseReport{
     static buildFromMap(ExecReport obj, Map map) {
         BaseReport.buildFromMap(obj, map)
     }
-
+    /**
+     * Generate an ExecReport based off of an existing execution
+     * @param exec
+     * @return
+     */
+    static ExecReport fromExec(Execution exec){
+        def failedCount = exec.failedNodeList ?exec.failedNodeList.split(',').size():0
+        def successCount=exec.failedNodeList?0:1;
+        def totalCount = exec.failedNodeList ? failedCount : 1;
+        def adhocScript = (null == exec.scheduledExecution) ? exec.workflow.commands[0].adhocRemoteString : null
+        def summary = "[${exec.workflow.commands.size()} steps]"
+        def issuccess = exec.status == 'true'
+        def iscancelled = exec.cancelled
+        return fromMap([
+                jcExecId:exec.id,
+                jcJobId: exec.scheduledExecution?.id,
+                adhocExecution: null==exec.scheduledExecution,
+                adhocScript: adhocScript,
+                abortedByUser: iscancelled? exec.abortedby ?: exec.user:null,
+                node:"${failedCount}/${successCount}/${totalCount}",
+                title: adhocScript?adhocScript:summary,
+                status: issuccess ? "succeed" : iscancelled ? "cancel" : "fail",
+                ctxProject: exec.project,
+                reportId: exec.scheduledExecution?( exec.scheduledExecution.groupPath ? exec.scheduledExecution.generateFullName() : exec.scheduledExecution.jobName): 'adhoc',
+                author: exec.user,
+                message: (issuccess ? 'Job completed successfully' : iscancelled ? ('Job killed by: ' + (exec.abortedby ?: exec.user)) : 'Job failed'),
+                dateStarted: exec.dateStarted,
+                dateCompleted: exec.dateCompleted,
+                actionType: issuccess ? "succeed" : iscancelled ? "cancel" : "fail"
+        ])
+    }
     static ExecReport fromMap(Map map) {
         def report = new ExecReport()
         buildFromMap(report, map.subMap( exportProps))

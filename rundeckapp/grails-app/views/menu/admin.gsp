@@ -25,21 +25,21 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
-    <title>Administration</title>
+    <meta name="tabpage" content="configure"/>
+    <title>Configure</title>
 </head>
 
 <body>
 
-<div class="pageTop">
-    <div class="floatl">
-        <span class="welcomeMessage">Administration</span>
-    </div>
-
-    <div class="clear"></div>
-</div>
-
 <div class="pageBody">
     <g:render template="/common/messages"/>
+    <g:if test="${flash.joberrors}">
+        <ul class="error note">
+            <g:each in="${flash.joberrors}" var="errmsg">
+                <li>${errmsg.encodeAsHTML()}</li>
+            </g:each>
+        </ul>
+    </g:if>
 
     <ul>
         <li>
@@ -54,7 +54,7 @@
         </li>
     </ul>
 
-    <div class="rounded" style="width:600px;">
+    <div class="rounded" style="width:200px;margin-bottom: 20px;">
     <ul>
         <li>
             <g:set var="pluginParams"
@@ -70,13 +70,11 @@
     </ul>
     </div>
 
-    <div class="rounded" style="width:600px;">
-        Project: <span class="prompt">${session.project.encodeAsHTML()}</span>
-        -
-        <g:link controller="framework" action="editProject" params="[project:session.project]" class="action textbtn">
-            <g:message code="gui.menu.ProjectEdit" default="Configure Project"/>
-        </g:link>
-
+    Project: <span class="prompt">${session.project.encodeAsHTML()}</span> -
+    <g:link controller="framework" action="editProject" params="[project: session.project]" class="textbtn">
+        <g:message code="gui.menu.ProjectEdit" default="Configure Project"/>
+    </g:link>
+    <div class="presentation rounded" style="margin-right: 20px;">
         <div class="presentation ">
             <table class="simpleform">
 
@@ -122,19 +120,53 @@
         <g:expander key="projectImport" classnames="prompt section">Import Archive</g:expander>
         <div style="display:none" id="projectImport" class="presentation ">
             <g:form controller="project" action="importArchive" enctype="multipart/form-data">
-                <label>
-                    Choose a Rundeck archive
-                    <input type="file" name="zipFile"/>
-                </label>
+                <div>
+                    <label>
+                        Choose a Rundeck archive
+                        <input type="file" name="zipFile"/>
+                    </label>
+                </div>
 
-                <div class="info note">
-                    Importing an archive:
-                    <ul>
-                        <li>Creates any Jobs in the archive not found in this project with a new unique UUID</li>
-                        <li>Updates any Jobs in the archive that match Jobs found in the project (group and name match)</li>
-                        <li>Creates new Executions for the imported Jobs</li>
-                        <li>Creates new History reports for imported Executions and Jobs</li>
-                    </ul>
+                <ul>
+                    <li>Existing Jobs in this project that match imported Jobs (group and name match, or UUID matches) will be updated.</li>
+                </ul>
+                <span class="prompt">New Jobs</span>
+                <div class="presentation">
+                    <div>
+                        <label title="Original UUIDs will be preserved, conflicting UUIDs will be replaced">
+                            <input type="radio" name="import.jobUUIDBehavior" value="preserve" checked/>
+                            <g:message code="project.archive.import.jobUUIDBehavior.preserve.label" />
+                        </label>
+                        <span class="info note"><g:message code="project.archive.import.jobUUIDBehavior.preserve.description" /></span>
+                    </div>
+
+                    <div>
+                        <label title="New UUIDs will be generated for every imported Job">
+                            <input type="radio" name="import.jobUUIDBehavior" value="remove"/>
+                            <g:message code="project.archive.import.jobUUIDBehavior.remove.label" />
+                        </label>
+                        <span class="info note"><g:message code="project.archive.import.jobUUIDBehavior.remove.description" /></span>
+                    </div>
+                </div>
+
+                <span class="prompt">Executions</span>
+
+                <div class="presentation">
+                    <div>
+                        <label title="All executions and reports will be imported">
+                            <input type="radio" name="import.executionImportBehavior" value="import" checked/>
+                            Import All
+                        </label>
+                        <span class="info note">Creates new Executions and History reports from the archive</span>
+                    </div>
+
+                    <div>
+                        <label title="No executions or reports will be imported">
+                            <input type="radio" name="import.executionImportBehavior" value="skip"/>
+                            Do Not Import
+                        </label>
+                        <span class="info note">Does not import any Executions or History</span>
+                    </div>
                 </div>
 
                 <g:hiddenField name="name" value="${session.project}"/>

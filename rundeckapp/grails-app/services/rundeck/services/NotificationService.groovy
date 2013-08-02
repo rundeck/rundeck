@@ -129,11 +129,14 @@ public class NotificationService implements ApplicationContextAware{
                                       scheduledExecution:source, msgtitle:subjectmsg,execstate: state,
                                       nodestatus:content.nodestatus])
                             }
-                        }catch(Exception e){
-                            log.error("Error sending notification email: "+e.getMessage());
+                            didsend = true
+                        }catch(Throwable t){
+                            log.error("Error sending notification email to ${sendTo} for Execution ${exec.id}: "+t.getMessage());
+                            if (log.traceEnabled) {
+                                log.trace("Error sending notification email to ${sendTo} for Execution ${exec.id}: " + t.getMessage(), t)
+                            }
                         }
                     }
-                    didsend= true
                 }else if(n.type=='url'){    //sending notification of a status trigger for the Job
                     def Execution exec = content.execution
                     //iterate through the URLs, and submit a POST to the destination with the XML Execution result

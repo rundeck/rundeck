@@ -34,11 +34,9 @@ function doCreateProject(){
 //-->
 </script>
 <div  class="topbar solo" >
-<g:if test="${session?.user && request.subject}">
-<!--<div class="secondbar">-->
 
     <a href="${grailsApplication.config.rundeck.gui.titleLink ? grailsApplication.config.rundeck.gui.titleLink : g.resource(dir: '/')}"
-       title="Home" class="home" style="height:29px;">
+       title="Home" class="home">
         <g:set var="appTitle"
                value="${grailsApplication.config.rundeck.gui.title ? grailsApplication.config.rundeck.gui.title : g.message(code: 'main.app.name')}"/>
         <g:set var="appLogo"
@@ -51,7 +49,7 @@ function doCreateProject(){
              height="${appLogoH}"/>
         ${appTitle}
     </a>
-   <span id="top_tabs">
+<g:if test="${session?.user && request.subject}">
 
 
         <g:set var="wfselected" value=""/>
@@ -60,27 +58,26 @@ function doCreateProject(){
            <g:set var="wfselected" value="selected"/>
         </g:ifPageProperty>
         </g:ifPageProperty>
-        <g:link controller="menu" action="jobs" class=" toptab ${wfselected}" style="height:29px">
-           <g:message code="gui.menu.Workflows"/>
-        </g:link>
-
-       <g:set var="resselected" value=""/>
-       <g:ifPageProperty name='meta.tabpage'>
-           <g:ifPageProperty name='meta.tabpage' equals='nodes'>
-               <g:set var="resselected" value="selected"/>
-           </g:ifPageProperty>
-       </g:ifPageProperty>
-       <g:link controller="framework" action="nodes" class=" toptab ${resselected}" style="height:29px">
-           <g:message code="gui.menu.Nodes"/>
-       </g:link>
-
+        <g:set var="resselected" value=""/>
+        <g:ifPageProperty name='meta.tabpage'>
+            <g:ifPageProperty name='meta.tabpage' equals='nodes'>
+                <g:set var="resselected" value="selected"/>
+            </g:ifPageProperty>
+        </g:ifPageProperty>
         <g:set var="eventsselected" value=""/>
-        <g:ifPageProperty name='meta.tabpage' >
-        <g:ifPageProperty name='meta.tabpage' equals='events'>
-            <g:set var="eventsselected" value="selected"/>
+        <g:ifPageProperty name='meta.tabpage'>
+            <g:ifPageProperty name='meta.tabpage' equals='events'>
+                <g:set var="eventsselected" value="selected"/>
+            </g:ifPageProperty>
         </g:ifPageProperty>
-        </g:ifPageProperty>
-        <g:link controller="reports"  action="index" class=" toptab ${eventsselected}"  style="height:29px">
+
+        <g:link controller="menu" action="jobs" class=" toptab ${wfselected}" >
+           <g:message code="gui.menu.Workflows"/>
+        </g:link><!--
+        --><g:link controller="framework" action="nodes" class=" toptab ${resselected}" >
+           <g:message code="gui.menu.Nodes"/>
+       </g:link><!--
+        --><g:link controller="reports"  action="index" class=" toptab ${eventsselected}"  >
             <g:message code="gui.menu.Events"/>
         </g:link>
 
@@ -100,7 +97,6 @@ function doCreateProject(){
        </span>
     </g:if>
 
-</span>
     <g:unless test="${session.frameworkProjects}">
         <g:javascript>
             fireWhenReady('projectSelect', loadProjectSelect);
@@ -109,48 +105,49 @@ function doCreateProject(){
 
 </g:if>
 
-<!--</div>-->
-    %{--<g:if test="${session?.project}">
-        <img src="${resource(dir:'images',file:'icon-tiny-rarrow-sep.png')}" alt="project: " width="7px" height="12px"/>
-        <span class="projectinfo">
-            <g:link controller="framework" action="showFrameworkProject" params="[project:session.project]" title="Select a project">${session.project}</g:link>
-        </span>
-    </g:if>--}%
     <g:set var="helpLinkUrl" value="${g.helpLinkUrl()}"/>
     <g:if test="${session?.user && request.subject}">
         <span class="headright">
             <g:set var="adminauth" value="${false}"/>
             <g:if test="${session.project}">
             <g:set var="adminauth" value="${auth.resourceAllowedTest(type:'project',name:session.project,action:[AuthConstants.ACTION_ADMIN,AuthConstants.ACTION_READ],context:'application')}"/>
-            <g:if test="${adminauth}">
-                <g:link controller="menu" action="admin"><img src="${resource(dir:'images',file:'icon-small-admin.png')}" width="16px" height="16px" alt=""/>
-                    Admin</g:link>
-            </g:if>
-            </g:if>
-            <span class="logininfo">
-                <g:if test="${adminauth}">
-                    <img src="${resource(dir:'images',file:'icon-small-user-admin.png')}" width="16px" height="16px" alt=""/>
-                </g:if>
-                <g:else>
-                    <img src="${resource(dir:'images',file:'icon-small-user.png')}" width="16px" height="16px" alt=""/>
-                </g:else>
-                <span class="userName" title="User ${session.user} is currently logged in.">
-                    <g:link controller="user" action="profile">${session.user}</g:link>
-                </span> &raquo;
-                <g:link action="logout" controller="user" title="Logout user: ${session.user}" params="${[refLink:controllerName&&actionName?createLink(controller:controllerName,action:actionName,params:params,absolute:true):'']}">logout</g:link>
-            </span>
-            <a href="${helpLinkUrl}" class="help">
+            <g:ifPageProperty name='meta.tabpage'>
+                <g:ifPageProperty name='meta.tabpage' equals='configure'>
+                    <g:set var="cfgselected" value="selected"/>
+                </g:ifPageProperty>
+            </g:ifPageProperty>
+            <g:if test="${adminauth}"><g:link controller="menu" action="admin" class=" toptab ${cfgselected?:''}"><g:message code="gui.menu.Admin"/></g:link><!-- --></g:if><!--
+        --></g:if><!--
+            --><a href="${g.createLink(controller : "user", action : "profile")}" class="action username obs_bubblepopup"
+                        id="useraccount" title="User ${session.user.encodeAsHTML()} is currently logged in.">
+                    ${session.user.encodeAsHTML()}
+                </a><!--
+        --><a href="${helpLinkUrl.encodeAsHTML()}" class="help sepL">
                 help
-                <img src="${resource(dir:'images',file:'icon-small-help.png')}" width="16px" height="16px" alt=""/>
             </a>
         </span>
     </g:if>
     <g:else>
         <span class="headright">
-            <a href="${helpLinkUrl}" class="help">
+            <a href="${helpLinkUrl.encodeAsHTML()}" class="help  sepL">
                 help
-                <img src="${resource(dir:'images',file:'icon-small-help.png')}" width="16px" height="16px" alt=""/>
             </a>
         </span>
     </g:else>
 </div>
+
+<g:if test="${session?.user && request.subject}">
+<span id="useraccount_popup" style="display:none;" class="useraccount">
+    <ul>
+        <li><g:link controller="user" action="profile">Profile</g:link></li>
+        <li><g:link action="logout" controller="user" title="Logout user: ${session.user}"
+                    params="${[refLink: controllerName && actionName ? createLink(controller: controllerName, action: actionName, params: params, absolute: true) : '']}">logout</g:link>
+        </li>
+    </ul>
+</span>
+<script>
+    $$('.obs_bubblepopup').each(function (e) {
+        new BubbleController(e, null, {offx: -14, offy: null}).startObserving();
+    });
+</script>
+</g:if>

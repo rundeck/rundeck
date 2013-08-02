@@ -70,7 +70,7 @@
                 <g:set var="sellabel" value="${selentry}"/>
                 <g:set var="selvalue" value="${valuesMap?valuesMap[sellabel]:sellabel}"/>
             </g:else>
-            <g:hiddenField name="${realFieldName}" value="${selvalue.encodeAsHTML()}"/>
+            <g:hiddenField name="${realFieldName}" value="${selvalue}" id="${fieldwatchid}"/>
             <span class="singlelabel">${sellabel.encodeAsHTML()}</span>
         </g:if>
         <g:else>
@@ -165,7 +165,7 @@
             </g:javascript>
         </g:if>
     </g:if>
-    <g:if test="${!optionSelect.enforced && !optionSelect.multivalued && !optionSelect.secureInput && optionSelect.defaultValue}">
+    <g:if test="${!optionSelect.enforced && !optionSelect.multivalued && !optionSelect.secureInput && optionSelect.defaultValue && !(optionSelect.values.contains(optionSelect.defaultValue))}">
         <span class="action button"
               id="${optName.encodeAsJavaScript()}_setdefault"
               title="Click to use default value: ${optionSelect.defaultValue.encodeAsHTML()}"

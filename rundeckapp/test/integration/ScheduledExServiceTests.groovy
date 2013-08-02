@@ -849,7 +849,6 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertEquals 'test args', execution.argString
         }
     }
-
     public void testDoValidateNotifications() {
 
         def sec = new ScheduledExecutionService()
@@ -3956,9 +3955,9 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
         assertNull execution.options
     }
 
-    public void testDoUpdateNotificationsShouldUpdate() {
+    public void testDoUpdateNotificationsAddOnsuccess() {
         def sec = new ScheduledExecutionService()
-        if (true) {//test update job  notifications, disabling onsuccess
+        //test update job, add onsuccess
             def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2', adhocExecution: true, adhocRemoteString: 'test command',)
             def na1 = new Notification(eventTrigger: 'onsuccess', type: 'email', content: 'c@example.com,d@example.com')
             def na2 = new Notification(eventTrigger: 'onfailure', type: 'email', content: 'monkey@example.com')
@@ -3992,8 +3991,8 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
 
             def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah2', adhocExecution: true, adhocRemoteString: 'test command',
                     notified: 'true',
+                    notifyOnsuccess: 'true',
                     notifySuccessRecipients: 'spaghetti@nowhere.com',
-                    notifyOnfailure: 'true', notifyFailureRecipients: 'milk@store.com',
             ]
             def results = sec._doupdate(params,'test','test',null)
             def succeeded = results.success
@@ -4028,14 +4027,145 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             execution.notifications.each {not1 ->
                 nmap[not1.eventTrigger] = not1
             }
-            assertNull(nmap.onsuccess)
+        assertNotNull(nmap.onsuccess)
+        assertNull(nmap.onfailure)
+        assertTrue(nmap.onsuccess instanceof Notification)
+        def Notification n2 = nmap.onsuccess
+        assertEquals "onsuccess", n2.eventTrigger
+        assertEquals "email", n2.type
+        assertEquals "spaghetti@nowhere.com", n2.content
+    }
+    public void testDoUpdateNotificationsShouldUpdateOnSuccess() {
+        assertUpdateNotifications([notified: 'true',
+                notifySuccessRecipients: 'spaghetti@nowhere.com',
+                notifyOnsuccess: 'true',
+                notifyFailureRecipients: 'milk@store.com'
+        ]){ScheduledExecution execution->
+
+            assertEquals 1, execution.notifications.size()
+            def nmap = [:]
+            execution.notifications.each { not1 ->
+                nmap[not1.eventTrigger] = not1
+            }
+            assertNotNull(nmap.onsuccess)
+            assertNull(nmap.onfailure)
+            assertNull(nmap.onstart)
+            assertTrue(nmap.onsuccess instanceof Notification)
+            def Notification n2 = nmap.onsuccess
+            assertEquals "onsuccess", n2.eventTrigger
+            assertEquals "email", n2.type
+            assertEquals "spaghetti@nowhere.com", n2.content
+        }
+    }
+
+    public void testDoUpdateNotificationsShouldUpdateOnFailure() {
+        assertUpdateNotifications([notified: 'true',
+                notifyOnfailure: 'true',
+                notifyFailureRecipients: 'milk@store.com'
+        ]){ScheduledExecution execution->
+
+            assertEquals 1, execution.notifications.size()
+            def nmap = [:]
+            execution.notifications.each { not1 ->
+                nmap[not1.eventTrigger] = not1
+            }
             assertNotNull(nmap.onfailure)
+            assertNull(nmap.onsuccess)
+            assertNull(nmap.onstart)
             assertTrue(nmap.onfailure instanceof Notification)
             def Notification n2 = nmap.onfailure
             assertEquals "onfailure", n2.eventTrigger
             assertEquals "email", n2.type
             assertEquals "milk@store.com", n2.content
         }
+    }
+    public void testDoUpdateNotificationsShouldUpdateOnStart() {
+        assertUpdateNotifications([notified: 'true',
+                notifyOnstart: 'true',
+                notifyStartRecipients: 'avbdf@zzdf.com'
+        ]){ScheduledExecution execution->
+
+            assertEquals 1, execution.notifications.size()
+            def nmap = [:]
+            execution.notifications.each { not1 ->
+                nmap[not1.eventTrigger] = not1
+            }
+            assertNotNull(nmap.onstart)
+            assertNull(nmap.onsuccess)
+            assertNull(nmap.onfailure)
+            assertTrue(nmap.onstart instanceof Notification)
+            def Notification n2 = nmap.onstart
+            assertEquals "onstart", n2.eventTrigger
+            assertEquals "email", n2.type
+            assertEquals "avbdf@zzdf.com", n2.content
+        }
+    }
+
+    private void assertUpdateNotifications(LinkedHashMap<String, String> inputParams, Closure tests=null) {
+        def sec = new ScheduledExecutionService()
+        //test update job  notifications, disabling onsuccess
+        def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2',
+                adhocExecution: true, adhocRemoteString: 'test command',)
+        se.save()
+
+        assertNotNull se.id
+
+        //try to do update of the ScheduledExecution
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.existsFrameworkProject { project, framework ->
+            assertEquals 'testProject', project
+            return true
+        }
+        fwkControl.demand.getCommand { project, type, command, framework ->
+            assertEquals 'testProject', project
+            assertEquals 'aType', type
+            assertEquals 'aCommand', command
+            return null
+        }
+        fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        sec.frameworkService = fwkControl.createMock()
+
+        def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah2',
+                adhocExecution: true, adhocRemoteString: 'test command',
+        ] + inputParams
+        def results = sec._doupdate(params, 'test', 'test', null)
+        def succeeded = results.success
+        def scheduledExecution = results.scheduledExecution
+        if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
+            scheduledExecution.errors.allErrors.each {
+                System.err.println(it);
+            }
+        }
+        assertTrue succeeded
+        assertNotNull(scheduledExecution)
+        assertTrue(scheduledExecution instanceof ScheduledExecution)
+        final ScheduledExecution execution = scheduledExecution
+        assertNotNull(execution)
+        assertNotNull(execution.errors)
+        assertFalse(execution.errors.hasErrors())
+        assertEquals 'monkey1', execution.jobName
+        assertEquals 'testProject', execution.project
+        assertEquals 'blah2', execution.description
+        assertNotNull execution.workflow
+        assertNotNull execution.workflow.commands
+        assertEquals 1, execution.workflow.commands.size()
+        def CommandExec cexec = execution.workflow.commands[0]
+        assertTrue cexec.adhocExecution
+        assertEquals 'test command', cexec.adhocRemoteString
+        assertNull cexec.adhocFilepath
+        assertNull execution.argString
+
+        assertNotNull execution.notifications
+        if(tests){
+            tests.call(execution)
+        }
+    }
+
+    public void testDoUpdateNotificationsReplace() {
+        def sec = new ScheduledExecutionService()
         if (true) {//test update job  notifications, replacing onsuccess, and removing onfailure
             def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2', adhocExecution: true, adhocRemoteString: 'test command',)
             def na1 = new Notification(eventTrigger: 'onsuccess', type: 'email', content: 'c@example.com,d@example.com')
@@ -4367,7 +4497,9 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
 //            sesControl.demand.getByIDorUUID {id -> return se }
 //            sec.scheduledExecutionService = sesControl.createMock()
 
-            def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: true, adhocRemoteString: 'test command',
+            def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah',
+                    adhocExecution: true, adhocRemoteString: 'test command',
+                    notified: 'true',
                     notifyOnsuccess: 'true', notifySuccessRecipients: 'spaghetti@nowhere.com',
                     notifyOnfailure: 'true', notifyFailureRecipients: 'milk@store.com',
             ]
@@ -5616,6 +5748,69 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
         }
     }
 
+    /**
+     * Import job with same UUID, and different project, should fail due to uniqueness of uuid
+     */
+    public void testLoadJobsShouldNotUpdateUUIDWrongProjectDupeOptionUpdate() {
+
+        def sec = new ScheduledExecutionService()
+
+        //create mock of FrameworkService
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.existsFrameworkProject {project, framework -> return true }
+        fwkControl.demand.authorizeProjectJobAll {framework, job, actions, project -> return true}
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.authorizeProjectResourceAll { framework, job, actions, project -> return true }
+        sec.frameworkService = fwkControl.createMock()
+        def ms = mockFor(MessageSource)
+        ms.demand.getMessage { key, data, locale -> key }
+        ms.demand.getMessage { error, locale -> error.toString() }
+        sec.messageSource = ms.createMock()
+
+        //create original job
+        final CommandExec exec = new CommandExec(adhocExecution: true, adhocRemoteString: "echo original test")
+        exec.save()
+        def wf = new Workflow(commands: [exec])
+        wf.save()
+        def se = new ScheduledExecution(jobName: 'testUploadShouldUpdateSameNameDupeOptionUpdate',
+                groupPath: "testgroup", project: 'project1', description: 'new desc',
+                                        workflow: wf,
+                uuid:UUID.randomUUID().toString()
+        )
+        if(!se.validate()){
+            se.errors.allErrors.each{
+                println it.toString()
+            }
+        }
+        assertNotNull(se.save())
+        assertNotNull(se.id)
+
+
+        def upload = new ScheduledExecution(
+                jobName: 'testUploadShouldUpdateSameNameDupeOptionUpdate',
+                groupPath: "testgroup",
+                project: 'project2',
+                description: 'desc',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: "echo test")]),
+                uuid:se.uuid
+        )
+        def result=sec.loadJobs([upload], 'update', 'test', 'userrole,test', [:], null)
+        assertNotNull result
+        assertNotNull result.jobs
+        assertNotNull result.errjobs
+        assertNotNull result.skipjobs
+        assertEquals "shouldn't have error jobs: ${result.errjobs}", 1, result.errjobs.size()
+        ScheduledExecution errorjob = result.errjobs[0].scheduledExecution
+        assertTrue(errorjob.hasErrors())
+        assertTrue(errorjob.errors.hasFieldErrors('uuid'))
+        assertEquals "shouldn't have skipped jobs: ${result.skipjobs}", 0, result.skipjobs.size()
+        assertEquals 0, result.jobs.size()
+
+        se.delete()
+    }
     public void testUploadShouldUpdateSameNameDupeOptionUpdate() {
 
         def sec = new ScheduledExecutionService()
@@ -6076,6 +6271,41 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
         assertNotNull test
         assertEquals "original desc", test.description
         assertEquals "echo original test", test.workflow.commands[0].adhocRemoteString
+    }
+
+    public void testLoadJobs_JobShouldRequireProject() {
+        def sec = new ScheduledExecutionService()
+
+        //create mock of FrameworkService
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.existsFrameworkProject { project, framework -> return true }
+        fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
+        fwkControl.demand.authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        sec.frameworkService = fwkControl.createMock()
+
+        //null project
+
+        def upload = new ScheduledExecution(
+                jobName: 'test1',
+                groupPath: "testgroup",
+                project: null,
+                description: 'desc',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: "echo test")])
+        )
+
+        def result = sec.loadJobs([upload], 'create', 'test', 'test,userrole', [:], null)
+        assertNotNull result
+        assertNotNull result.jobs
+        assertNotNull result.errjobs
+        assertNotNull result.skipjobs
+        assertEquals "shouldn't have skipped jobs: ${result.skipjobs}", 0, result.skipjobs.size()
+        assertEquals "shouldn't have error jobs: ${result.errjobs}", 1, result.errjobs.size()
+        assertEquals "should have success jobs: ${result.jobs}", 0, result.jobs.size()
+        assertEquals "Project was not specified",result.errjobs[0].errmsg
     }
 
     public void testUploadShouldOverwriteFilters() {

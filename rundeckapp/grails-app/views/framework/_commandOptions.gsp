@@ -35,14 +35,14 @@ used by _editOptions.gsp template
                 </g:if>
                 </td>
                 %{--determine if option has all dependencies met--}%
-                <g:set var="optionDepsMet" value="${!optiondependencies[optName] || selectedoptsmap && optiondependencies[optName].every {null!=selectedoptsmap[it]}}" />
+                <g:set var="optionDepsMet" value="${!optiondependencies[optName] || selectedoptsmap && optiondependencies[optName].every {selectedoptsmap[it]}}" />
                 <td>
                     <g:if test="${optionSelect.realValuesUrl !=null}">
                         <g:set var="holder" value="${rkey+'_'+optName+'_hold'}"/>
                         <span id="${holder}" >
                             <g:if test="${!optionDepsMet}">
                                 <span class="info note">
-                                    Select a value for these options: ${optiondependencies[optName].join(', ').encodeAsHTML()}
+                                    <g:message code="option.remote.dependency.emptyresult" /> ${optiondependencies[optName].join(', ').encodeAsHTML()}
                                 </span>
                             </g:if>
                                 <g:hiddenField name="${fieldName}" value="${selectedoptsmap?selectedoptsmap[optName]:''}" id="${fieldhiddenid}"/>
@@ -60,11 +60,14 @@ used by _editOptions.gsp template
                     <span id="${optName.encodeAsHTML()+'_state'}">
                         <g:if test="${ optRequired }">
                             <span class="reqwarning" style="${wdgt.styleVisible(unless:optionHasValue)}">
-                            <img src="${resource( dir:'images',file:'icon-small-warn.png' )}" class="warnimg"
-                                 alt="Required Option" title="Required Option"  width="16px" height="16px" />
                                 <g:if test="${hasError && hasError.contains('required')}">
-                                    <span class="error label">${hasError.encodeAsHTML()}</span>
+                                <img src="${resource( dir:'images',file:'icon-tiny-warn.png' )}" class="warnimg"
+                                alt="Required Option" title="Required Option"  width="12px" height="11px" />
+                                    ${hasError.encodeAsHTML()}
                                 </g:if>
+                                <g:else>
+                                    <g:message code="option.value.required"/>
+                                </g:else>
                             </span>
                         </g:if>
                         <g:if test="${hasError && !hasError.contains('required')}">
@@ -92,7 +95,7 @@ used by _editOptions.gsp template
             <g:set var="holder" value="${rkey + '_' + optName + '_hold'}"/>
             <g:set var="fieldhiddenid" value="${rkey + '_' + optName + '_h'}"/>
             <g:set var="optionDepsMet"
-                   value="${!optiondependencies[optName] || selectedoptsmap && optiondependencies[optName].every {null!=selectedoptsmap[it]}}"/>
+                   value="${!optiondependencies[optName] || selectedoptsmap && optiondependencies[optName].every {selectedoptsmap[it]}}"/>
             <g:if test="${optiondependencies[optName]}">
                 remoteOptions.addOptionDependencies("${optName.encodeAsJavaScript()}", ${optiondependencies[optName] as JSON});
             </g:if>
@@ -101,7 +104,7 @@ used by _editOptions.gsp template
                 remoteOptions.addOptionDeps("${optName.encodeAsJavaScript()}", ${dependentoptions[optName] as JSON});
 
 
-                <g:if test="${optionSelect.enforced}">
+                <g:if test="${optionSelect.enforced || selectedoptsmap && selectedoptsmap[optName]}">
                 <%-- Will be a drop down list, so trigger change automatically. --%>
                     remoteOptions.setOptionAutoReload("${optName.encodeAsJavaScript()}",true);
                 </g:if>

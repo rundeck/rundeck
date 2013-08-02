@@ -214,7 +214,7 @@ div.progressContainer div.progressContent{
 <g:set var="execfailed" value="${execstate in ['failed','aborted']}"/>
 <div class="content">
     <div class="report">
-        <g:render template="/scheduledExecution/showHead" model="[scheduledExecution:scheduledExecution,execution:execution,noimgs:true,absolute:true]"/>
+        <g:render template="/scheduledExecution/showExecutionHead" model="[scheduledExecution:scheduledExecution,execution:execution,noimgs:true,absolute:true]"/>
 
         <div class="presentation">
             &bull; <span class="result ${execfailed ? 'fail' : ''}"><g:message code="status.label.${execstate}"/></span>
@@ -307,7 +307,7 @@ div.progressContainer div.progressContent{
                 <g:if test="${nodestatus }">
                         <g:set var="vals" value="${[nodestatus.succeeded,nodestatus.failed,nodestatus.total]}"/>
                         <g:set var="summary" value=""/>
-                        <g:if test="${vals && vals.size()>2 && vals[2]!='0'}">
+                        <g:if test="${vals && vals.size()>2 && vals[2]!='0' && vals[2]!=0}">
                             <g:set var="a" value="${vals[0] instanceof String? Integer.parseInt(vals[0]):vals[0]}"/>
                             <g:set var="fai" value="${vals[1] instanceof String? Integer.parseInt(vals[1]):vals[1]}"/>
                             <g:set var="den" value="${vals[2] instanceof String? Integer.parseInt(vals[2]):vals[2]}"/>
@@ -345,7 +345,7 @@ div.progressContainer div.progressContent{
 </div>
 <div class="foot">
     <g:message code="main.app.name"/> :
-    <g:link absolute="true" controller="framework" action="nodes"><g:message code="gui.menu.Run"/> &raquo;</g:link>
+    <g:link absolute="true" controller="framework" action="nodes"><g:message code="gui.menu.Nodes"/> &raquo;</g:link>
     <g:link absolute="true" controller="menu" action="jobs"><g:message code="gui.menu.Workflows"/> &raquo;</g:link>
     <g:link absolute="true" controller="reports" action="index"><g:message code="gui.menu.Events"/> &raquo;</g:link>
 </div>

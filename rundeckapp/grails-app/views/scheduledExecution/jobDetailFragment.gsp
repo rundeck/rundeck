@@ -23,32 +23,7 @@
  --%>
 
 <!--Display job details-->
-<div class="left">
-    <div class="right">
-        <table width="100%" cellpadding="0" cellspacing="0">
-            <tr>
-                <td>
-                    <g:render template="/execution/execDetails" model="[execdata:scheduledExecution]"/>
-                </td>
-            </tr>
-            <tbody class="section">
-            <tr>
-                <td style="" class="jobbuttons ">
-                    <div class="right">
-                        <g:render template="/scheduledExecution/renderJobStats" model="${[scheduledExecution: scheduledExecution]}"/>
-                    </div>
-                </td>
-            </tr>
-            </tbody>
-            <g:if test="${scheduledExecution.uuid}">
-                <tbody class="section">
-                    <tr>
-                       <td>
-                           <span class="desc">UUID: ${scheduledExecution.uuid.encodeAsHTML()}</span>
-                        </td>
-                    </tr>
-                </tbody>
-            </g:if>
-        </table>
-    </div>
+<div >
+    <g:render template="/execution/execDetails" model="[execdata:scheduledExecution]"/>
+    <g:render template="/scheduledExecution/renderJobStats" model="${[scheduledExecution: scheduledExecution]}"/>
 </div>

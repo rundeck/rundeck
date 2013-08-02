@@ -173,6 +173,7 @@
 </g:if>
 <div style="margin-top:10px;" class="pageBody form">
     <g:form method="post" action="upload" enctype="multipart/form-data">
+        <g:hiddenField name="project" value="${session.project}"/>
         <g:if test="${!didupload}">
         <span class="prompt">Upload File</span>
         </g:if>
@@ -224,7 +225,6 @@
                 <div id="uploadFormButtons">
                     <g:actionSubmit id="createFormCancelButton" value="Cancel"/>
                     <g:actionSubmit action="upload" value="Upload" id="uploadFormUpload" onclick="['uploadFormButtons','schedUploadSpinner'].each(Element.toggle)" />
-                    <g:actionSubmit action="uploadAndExecute" value="Upload And Run" id="uploadFormUploadAndExec" onclick="['uploadFormButtons','schedUploadSpinner'].each(Element.toggle)" />
                 </div>
                 <div id="schedUploadSpinner" class="spinner block" style="display:none;">
                     <img src="${resource(dir:'images',file:'icon-tiny-disclosure-waiting.gif')}" alt="Spinner"/>

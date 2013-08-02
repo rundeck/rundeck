@@ -157,57 +157,6 @@ class ReportService  {
     }
 
     boolean transactional = true
-    def getCombinedReports(ReportQuery query) {
-        def eqfilters = getEqFilters()
-        def txtfilters = getTxtFilters()
-        def startfilters = getStartsWithFilters()
-
-        def filters = [ :]
-        filters.putAll(txtfilters)
-        filters.putAll(eqfilters)
-        filters.putAll(startfilters)
-
-
-        def crit = BaseReport.createCriteria()
-        def runlist = crit.list{
-            if(query?.max){
-                maxResults(query?.max.toInteger())
-            }else{
-                maxResults(grailsApplication.config.reportservice.pagination.default?grailsApplication.config.reportservice.pagination.default.toInteger():20)
-            }
-            if(query?.offset){
-                firstResult(query.offset.toInteger())
-            }
-
-            applyReportsCriteria(query, delegate)
-
-            if(query && query.sortBy && filters[query.sortBy]){
-                order(filters[query.sortBy],query.sortOrder=='ascending'?'asc':'desc')
-            }else{
-                order("dateCompleted",'desc')
-            }
-
-        };
-        def executions=[]
-        def lastDate=-1
-        runlist.each{
-            executions<<it
-            if(it.dateCompleted.time>lastDate){
-                lastDate=it.dateCompleted.time
-            }
-        }
-
-        def total=countCombinedReports(query);
-        filters.remove('proj')
-
-        return [
-            query:query,
-            reports:executions,
-            total: total,
-            lastDate:lastDate,
-            _filters:filters
-            ]
-	}
 
     private def getStartsWithFilters() {
         return [
@@ -388,6 +337,27 @@ class ReportService  {
                         isNull('jcJobId')
                     }
                 }
+                if (query.jobListFilter || query.excludeJobListFilter) {
+                    and {
+                        if (query.jobListFilter) {
+                            or {
+                                query.jobListFilter.each {
+                                    eq('reportId', it)
+                                }
+                            }
+                        }
+                        if (query.excludeJobListFilter) {
+                            not {
+                                or {
+                                    query.excludeJobListFilter.each {
+                                        eq('reportId', it)
+                                    }
+
+                                }
+                            }
+                        }
+                    }
+                }
 
                 if (query.dostartafterFilter && query.dostartbeforeFilter && query.startbeforeFilter && query.startafterFilter) {
                     between('dateStarted', query.startafterFilter, query.startbeforeFilter)
@@ -454,6 +424,8 @@ class ReportService  {
                 order(filters[query.sortBy], query.sortOrder == 'ascending' ? 'asc' : 'desc')
             } else {
                 order("dateCompleted", 'desc')
+                order("dateStarted",'desc')
+                order("id", 'desc')
             }
         }
         def executions=[]

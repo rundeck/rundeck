@@ -128,6 +128,14 @@ class FrameworkService implements ApplicationContextAware {
                 : null,
                 fwk)
     }
+    /**
+     * Return the property retriever for framework properties from the base dir.
+     * @return
+     */
+    def getFrameworkProperties(){
+        final File rdbaseDir = new File(rundeckbase)
+        return Framework.createPropertyRetriever(rdbaseDir)
+    }
     static def getFrameworkProjectsBasedir(String rundeckbase){
         def baseDir = new File(rundeckbase)
         def fwk = Framework.createPropertyRetriever(baseDir)

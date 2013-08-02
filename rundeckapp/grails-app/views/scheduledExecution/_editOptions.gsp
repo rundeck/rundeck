@@ -6,10 +6,11 @@
         <g:renderErrors bean="${scheduledExecution}" as="list"/>
     </div>
 </g:hasErrors>
+<g:render template="/common/messages"/>
 
 <g:set var="rkey" value="${g.rkey()}"/>
 
-<input type="hidden" name="id" value="${scheduledExecution?.id}"/>
+<input type="hidden" name="id" value="${scheduledExecution?.extid}"/>
 <div class="note error" style="display: none" id="editerror">
 
 </div>

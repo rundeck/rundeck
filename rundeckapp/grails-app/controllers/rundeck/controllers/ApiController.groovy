@@ -19,6 +19,9 @@ class ApiController {
         return error()
     }
     def renderError={
+        if (flash.responseCode) {
+            response.setStatus(flash.responseCode)
+        }
         if(flash.errorCode||request.errorCode){
             request.error=g.message(code:flash.errorCode?:request.errorCode,args:flash.errorArgs?:request.errorArgs)
         }else{

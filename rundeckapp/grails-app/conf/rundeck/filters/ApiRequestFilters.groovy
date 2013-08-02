@@ -1,4 +1,5 @@
 package rundeck.filters
+
 /*
  * Copyright 2011 DTO Labs, Inc. (http://dtolabs.com)
  * 
@@ -47,6 +48,7 @@ public class ApiRequestFilters {
             apiVersion(uri:'/api/**') {
                 before = {
                     if(controllerName=='api' && allowed_actions.contains(actionName) || request.api_version){
+                        request.is_allowed_api_request = true
                         return true
                     }
 

@@ -200,13 +200,14 @@ public class PropertyLookup implements IPropertyLookup {
     /**
      * Calls {@link PropertyUtil#expand(Map)} to expand all properties.
      */
-    public void expand() {
+    public PropertyLookup expand() {
         try {
             final Properties expanded = PropertyUtil.expand(properties);
             properties.putAll(expanded);
         } catch (Exception e) {
             throw new PropertyLookupException("failed expanding properties", e);
         }
+        return this;
     }
 
     /**

@@ -4,12 +4,12 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="jobs"/>
-    <title><g:message code="gui.menu.Workflows"/></title>
+    <title><g:message code="gui.menu.Workflows"/> - ${session.project.encodeAsHTML()}</title>
     <g:javascript library="yellowfade"/>
     <g:javascript library="pagehistory"/>
     <g:javascript library="prototype/effects"/>
     <g:javascript library="executionOptions"/>
-    <g:javascript library="ace/ace"/>
+    <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
     <script type="text/javascript">
 
         function showError(message){
@@ -27,9 +27,10 @@
                 }
                 _jobExecUnloadHandlers.clear();
             }
-            $('execDiv').hide();
-            $('indexMain').show();
-            $('execDivContent').innerHTML='';
+            new Effect.BlindDown('indexMain', {duration: 0.2});
+            new Effect.BlindUp('execDiv', {duration: 0.2, afterFinish:function(e){
+                $('execDivContent').innerHTML = '';
+            }});
             $('busy').hide();
         }
         function requestError(item,trans){
@@ -37,8 +38,6 @@
             showError("Failed request: "+item+" . Result: "+trans.getStatusText());
         }
         function loadExec(id,eparams) {
-            $('busy').innerHTML = '<img src="' + appLinks.iconSpinner + '" alt=""/> Loading...';
-            $('busy').show();
             $("error").hide();
             var params=eparams;
             if(!params){
@@ -72,7 +71,11 @@
                         result=eval(trans.responseText);
                     }
                     if(result.id){
-                        unloadExec();
+                        if (result.follow && result.href) {
+                            document.location = result.href;
+                        }else{
+                            unloadExec();
+                        }
                     }else if(result.error==='invalid'){
                         //reload form for validation
                         loadExec(null,params+"&dovalidate=true");
@@ -97,11 +100,12 @@
                 Event.observe($('execFormRunButton'),'click', function(evt) {
                     Event.stop(evt);
                     execSubmit('execDivContent');
+                    $('formbuttons').loading("Starting Execution…");
                     return false;
                 },false);
             }
-            $('indexMain').hide();
-            $('execDiv').show();
+            new Effect.BlindUp('indexMain', {duration: 0.2});
+            new Effect.BlindDown('execDiv', {duration: 0.2});
             $('busy').hide();
         }
 
@@ -242,7 +246,7 @@
         function showJobDetails(elem){
             //get url
             var href=elem.href;
-            var match=href.match(/\/job\/show\/(.+)$/);
+            var match=href.match(/\/job\/.+?\/(.+)$/);
             if(!match){
                 return;
             }
@@ -256,7 +260,7 @@
                 viewdom = $(document.createElement('div'));
                 viewdom.addClassName('bubblewrap');
                 viewdom.setAttribute('id','jobIdDetailHolder');
-                viewdom.setAttribute('style','display:none;');
+                viewdom.setAttribute('style','display:none;width:600px;height:250px;');
 
                 Event.observe(viewdom,'click',function(evt){
                     evt.stopPropagation();
@@ -341,11 +345,6 @@
         color:red;
     }
 
-    .bubblewrap {
-        position: absolute;
-        width: 600px;
-        height: 250px;
-    }
         #histcontent table{
             width:100%;
         }
@@ -354,12 +353,6 @@
 <body>
 
 
-<div class="pageBody solo" >
-    <span class="prompt">Now running <span class="nowrunningcount">(0)</span></span>
-    <div id="nowrunning"><span class="note empty">No running Jobs</span></div>
-
-    <div id="error" class="error message" style="display:none;"></div>
-</div>
 <g:if test="${flash.bulkDeleteResult?.errors}">
     <span class="error note">
         <ul>
@@ -378,23 +371,22 @@
         </ul>
     </span>
 </g:if>
-<div class="runbox jobs" id="indexMain">
+<div class="runbox primary jobs" id="indexMain">
+    <div id="error" class="error message" style="display:none;"></div>
     <g:render template="workflowsFull" model="${[jobgroups:jobgroups,wasfiltered:wasfiltered?true:false,nowrunning:nowrunning, clusterMap: clusterMap,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true,rkey:rkey]}"/>
 </div>
 <div id="execDiv" style="display:none">
-
     <div id="execDivContent" >
 
     </div>
 </div>
-<div class="runbox">
-    <g:if test="${reportQueryParams}">
-        <g:link controller="reports" action="index" params="${reportQueryParams ?: [:]}">History</g:link>
-    </g:if>
-    <g:else>History</g:else>
-</div>
+
+    <div class="runbox"><g:message code="page.section.Activity"/></div>
     <div class="pageBody">
-        <div id="histcontent"></div>
+        <table cellpadding="0" cellspacing="0" class="jobsList list history" style="width:100%">
+        <tbody id="nowrunning"></tbody>
+        <tbody id="histcontent"></tbody>
+    </table>
         <g:javascript>
             fireWhenReady('histcontent',loadHistory);
         </g:javascript>

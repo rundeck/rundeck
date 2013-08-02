@@ -171,7 +171,7 @@ var applinks={
         border-radius: 3px;
     }
     #workflowContent ol li{
-        padding: 5px;
+        padding:0;
     }
     #workflowContent ol li.hoverActive{
         border-top: 2px solid blue;
@@ -186,7 +186,11 @@ var applinks={
     /*** ***/
     div.wfctrlholder{
         position:relative;
-        padding-right:100px;
+        padding-right:200px;
+    }
+    .wfitem{
+        display: block;
+        padding: 5px;
     }
     .wfitemcontrols{
         margin-left:10px;
@@ -197,10 +201,10 @@ var applinks={
         text-align:right;
     }
     .controls.autohide{
-        display:none;
+        visibility: hidden;
     }
     li:hover .controls.autohide{
-        display:block;
+        visibility: visible;
     }
 
     /** option controls and view layout **/
@@ -326,42 +330,14 @@ var applinks={
         margin-right: 10px;
     }
 </style>
-<g:set var="wasSaved" value="${ (params?.saved=='true') || scheduledExecution?.id || scheduledExecution?.jobName || scheduledExecution?.scheduled}"/>
-    
+
 <input type="hidden" name="id" value="${scheduledExecution?.id}"/>
 <div class="note error" style="display: none" id="editerror">
     
 </div>
 <table class="simpleForm jobeditform" cellspacing="0" style="width:100%">
- <g:if test="${!scheduledExecution?.id}">
-    <tr id="saveJobQ" style="${wdgt.styleVisible(unless:scheduledExecution?.scheduled)}">
-        <td>Save this job?</td>
-        <td>
-            <label>
-            <g:radio name="saved" value="false"
-                checked="${!wasSaved}"
-                id="savedFalse" />
-            No</label>
 
-            <label>
-            <g:radio name="saved" value="true"
-                checked="${wasSaved}"
-                id="savedTrue"/>
-            Yes</label>
-            <g:javascript>
-                <wdgt:eventHandlerJS for="savedFalse" state="unempty" >
-                    <wdgt:action visible="false" targetSelector="tbody.savedJobFields"/>
-                    <wdgt:action check="true" target="scheduledFalse"/>
-                    <wdgt:action visible="false" target="scheduledExecutionEditCrontab"/>
-                </wdgt:eventHandlerJS>
-                <wdgt:eventHandlerJS for="savedTrue" state="unempty" >
-                    <wdgt:action visible="true" targetSelector="tbody.savedJobFields"/>
-                </wdgt:eventHandlerJS>
-            </g:javascript>
-        </td>
-    </tr>
-    </g:if>
-    <tbody class="savedJobFields" style=" ${wdgt.styleVisible(if:wasSaved)}" >
+    <tbody class="savedJobFields"  >
     <tr>
         <td>
             <label for="schedJobName" class=" ${hasErrors(bean:scheduledExecution,field:'jobName','fieldError')} required" id="schedJobNameLabel">
@@ -395,9 +371,6 @@ var applinks={
                 </g:hasErrors>
                 <input type='text' name="groupPath" value="${scheduledExecution?.groupPath?.encodeAsHTML()}" id="schedJobGroup"
                        size="80"/>
-                <!--<span class="action" onclick="$('schedJobGroup').setValue('');" title="Clear Group field">
-                    <img src="${resource( dir:'images',file:'icon-tiny-removex-gray.png' )}" alt="Clear"  width="12px" height="12px"/>
-                </span>-->
             </span>
 
             <span class="action button" onclick="loadGroupChooser(this);" id="groupChooseBtn" title="Select an existing group to use">Choose &hellip; <g:img file="icon-tiny-disclosure.png" width="12px" height="12px"/></span>
@@ -472,7 +445,7 @@ var applinks={
         </td>
         <td>
             <span class="input ${hasErrors(bean:scheduledExecution,field:'description','fieldError')}">
-                <g:textArea name="description" value="${scheduledExecution?.description}" cols="120" rows="2" />
+                <g:textArea name="description" value="${scheduledExecution?.description}" cols="80" rows="3" />
 
                 <g:hasErrors bean="${scheduledExecution}" field="description">
                     <img src="${resource( dir:'images',file:'icon-small-warn.png' )}" alt="Error" width="16px" height="16px"/>
@@ -539,7 +512,7 @@ var applinks={
     <g:set var="projectName" value="${scheduledExecution.project?scheduledExecution.project.toString():projects?.size()==1?projects[0].name:session.project?session.project:''}" />
     <g:hiddenField id="schedEditFrameworkProject" name="project" value="${projectName}" />
 
-    <tbody id="optionsContent" class="savedJobFields" style=" ${wdgt.styleVisible(if:wasSaved)}">
+    <tbody id="optionsContent" class="savedJobFields" >
         <tr>
             <td><span id="optsload"></span>Options:</td>
             <td>
@@ -595,7 +568,7 @@ var applinks={
             </td>
         </tr>
     </tbody>
-    <tbody class="savedJobFields" style="${wdgt.styleVisible(if:wasSaved)}" >
+    <tbody class="savedJobFields"  >
     <g:set var="adminauth"
            value="${auth.resourceAllowedTest(type: 'project', name: session.project, action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_READ], context: 'application')}"/>
         <g:render template="editNotifications" model="[scheduledExecution:scheduledExecution, notificationPlugins: notificationPlugins,adminauth:adminauth]"/>
@@ -625,15 +598,6 @@ var applinks={
                 <g:render template="editCrontab" model="[scheduledExecution:scheduledExecution, crontab:crontab]"/>
 
                 <div class="clear"></div>
-                <%--
-                <div class="floatl clear crontab" style="margin-top: 5px;">
-                    Execute as user:
-                    <g:textField name="user" value="${scheduledExecution?.user}" size="12"/>
-                </div>
-
-                <div class="clear"></div>
-
-                --%>
             </div>
             <g:javascript>
                 <wdgt:eventHandlerJS for="scheduledTrue" state="unempty">
@@ -952,5 +916,5 @@ var applinks={
         initTooltipForElements('.obs_tooltip');
     }
 </g:javascript>
-<g:javascript library="ace/ace"/>
+<!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
 <div id="msg"></div>

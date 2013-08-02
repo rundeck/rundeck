@@ -34,6 +34,9 @@ The tool works in one of two *ACTION* modes:
 -v
 : Run verbosely.
 
+-p, \--project *PROJECT*
+: Project name to Load, List or Purge jobs.
+
 ## LIST ACTION OPTIONS
 
 -g, \--group *GROUP*
@@ -44,9 +47,6 @@ The tool works in one of two *ACTION* modes:
 
 -n, \--name *NAME*
 : Job Name. List jobs matching this name.
-
--p, \--project *PROJECT*
-: Project name. List jobs within this project.
 
 -f, \--file *FILE*
 : File path. For list action, path to store the job definitions found in XML/Yaml.
@@ -122,6 +122,8 @@ on the server. The default option is "update", which means to
 overwrite the existing definitions with the new version. "skip" means
 to ignore the uploaded definition. "create" means to create a new Job
 with the uploaded definition (hence making the Group+Name non-unique).
+
+The `-p,--project` option specifies the Project to import jobs to. If unspecified, each Job definition in the imported file must define a valid project.
 
 *Examples*
 

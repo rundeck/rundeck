@@ -46,7 +46,7 @@ Each Job definition requires these values:
 
 `project`
 
-:    the Project name
+:    the Project name (optional)
 
 `loglevel`
 
@@ -66,7 +66,6 @@ A minimal job definition example:
 
     name: job name
     description: ''
-    project: project1
     loglevel: INFO
     sequence: 
       - exec: a command

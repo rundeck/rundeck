@@ -7,7 +7,6 @@ html, body {
 }
 
 #main {
-    overflow:auto;
 	padding-bottom: 18px;
 }  /* must be same height as the footer */
 
@@ -76,6 +75,7 @@ a {
 
 a:hover {
 	color:blue;
+    text-decoration: underline;
 }
 a.external{
     color:green;
@@ -111,59 +111,63 @@ code{
 }
 
 .topbar{
-    height:33px;
+    height:34px;
     margin:0 0 0 0;
-    padding: 4px;
-    line-height:29px;
     background: white;
+    line-height: 32px;
 }
 .topbar.solo{
     border-bottom:2px solid black;
 }
-.secondbar{
-    height:32px;
-    margin:0 0 0 0;
-    padding: 4px 8px;
-    line-height:32px;
-    background:#f0f0f0;
-    border-bottom:2px solid black;
+.topbar a{
+    display: inline-block;
+    padding: 0 10px;
+    height: 34px;
+    vertical-align: middle;
 }
-@-moz-document url-prefix() {
-    .secondbar {
-        /*elf!*/
-        /* add 1px height for firefox */
-        height:33px;
-    }
+
+.topbar a.home:hover{
+    text-decoration: none;
 }
-.topbar a.home{
-    padding: 10px;
+.topbar .sepL{
+    margin-left:0;
 }
 .topbar #top_tabs + a.home{
     margin-left: 20px;
 }
 a.toptab{
-    /*border-left: 1px solid #ccc;*/
     border-right: 1px solid #ccc;
-    padding: 8px 10px;
     margin:0;
-    height:32px;
-    line-height:32px;
     vertical-align:middle;
     color:#000;
+    min-width:48px;
+    text-align: center;
+    /*font-weight: bold;*/
 }
-a.toptab.selected{
+
+a.toptab:hover, a.toptab.selected {
     border-style: none;
     border-right: 1px solid #ccc;
 
-    /*text-shadow:#aaa 3px 3px 5px;*/
-    font-weight:bold;
     color:#000;
-    background: #ddd;
+    background: #eee;
 }
+a.toptab.selected{
+    font-weight: bold;
+}
+
 a.tab,span.tab{
     padding: 3px;
     border: 1px solid #fff;
     font-weight:normal;
+}
+
+.headright {
+    position: absolute;
+    right: 0;
+}
+.headright a{
+    padding:0 10px;
 }
 
 .outputButtons a.tab, .outputButtons span.tab{
@@ -183,9 +187,6 @@ a.toptab + a.toptab{
 }
 a.tab + a.tab, a.tab + span.tab, span.tab + a.tab, span.tab + span.tab{
     margin-left: 5px;
-}
-a.toptab:hover, a.toptab.selected{
-    background: #ddd;
 }
 a.tab.selected, span.tab.selected, span.button.selected, a.button.selected{
     background: #fff;
@@ -241,14 +242,6 @@ div.pageMessage.error{
     display:block;
     position:relative;
 }
-a:active,a:link,a:visited{
-
-}
-a:hover {
-
-    color:blue;
-    text-decoration: none;
-}
 /* list of messages */
 #listPane tr:hover, #listPane td:hover {
 	background: gray;
@@ -272,7 +265,7 @@ img{
     vertical-align: middle;
     border: 0;
 }
-a.action, .action.textbtn, td.action.textbtn{
+a.action,a.textbtn, .action.textbtn, td.action.textbtn{
     color:blue;
     font-weight:normal;
 }
@@ -295,6 +288,23 @@ a.button, span.button, label.button{
     -moz-border-radius: 3px;
     -webkit-border-radius: 3px;
     border-radius: 3px;
+}
+
+button.runbutton:hover, input[type='submit'].runbutton:hover{
+    text-decoration: underline;
+    background: #ccc;
+}
+button.runbutton, input[type='submit'].runbutton{
+
+    font: 90%/1.5em verdana, arial, helvetica, sans-serif;
+    padding: 3px;
+    background: #eee;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
+    border:0;
+    color: blue;
+    cursor: pointer;
 }
 
 a.button.join, span.button.join, label.button.join {
@@ -339,7 +349,9 @@ a.button.disabled:hover, span.button.disabled:hover{
 div.buttonholder, td.buttonholder, span.buttonholder{
     padding:5px;
 }
-
+.button.header{
+    display: inline-block;
+}
 .objdesc{
     color: #777;
 }
@@ -423,6 +435,10 @@ h1 {
     padding-right:4px;
     background:none;
 }
+span.reqwarning{
+    font-style: italic;
+    color: orange;
+}
 
 .body {
 	padding: 25px;
@@ -471,18 +487,28 @@ label{
 	margin-top: 15px;
     clear:both;
 }
+.buttons.primary button, .buttons.primary input[type='submit']{
+    font-size: 150%;
+}
 .actionButtons {
 	width:100px;
 }
-table.jobsList .inlinebuttons div.buttons{
-    display: inline-block;
+table.jobsList span.inlinebuttons {
+    display: inline;
     margin:0;
     vertical-align: middle;
 }
-.inlinebuttons .floatr,.inlinebuttons .floatl{
+
+span.inlinebuttons .floatr, span.inlinebuttons .floatl{
     float: none;
 }
-.inlinebuttons a.button,.inlinebuttons span.button{
+
+span.inlinebuttons a.button, span.inlinebuttons span.button{
+    padding: 1px;
+    -moz-border-radius: 1px;
+    -webkit-border-radius: 1px;
+    border-radius: 1px;
+
 }
 div .errors {
     color:red;
@@ -536,12 +562,6 @@ td .errors {
 }
 .logininfo span.userName{
     font-weight:bold;
-}
-.headright{
-    position:absolute;
-    right:10px;
-
-    padding-top:2px;
 }
 span.wblink{
     margin-right:30px;
@@ -643,6 +663,10 @@ div.pageBody.form{
 
 div.pageBody.frame {
     padding: 0;
+}
+div.pageBody.licenses a{
+    color:blue;
+    text-decoration: underline;
 }
 
 table.moduledata th, table.moduledata td.sectionname{
@@ -1001,7 +1025,7 @@ table.execoutput .stepnum.short:before {
 
 table.execoutput td.stepnum{
     padding: 0 0.5em;
-    width: 4em;
+    width: 5em;
     white-space: nowrap;
 }
 
@@ -1177,9 +1201,14 @@ table.jobsList{
 
 }
 table.jobsList td{
-
-
     text-align:left;
+}
+table.jobsList tr.nowrunning td, table.jobsList tr.nowrunning td.eventtitle.adhoc{
+    background: #ffe;
+}
+
+table.jobsList tr.nowrunning.hilite:hover td{
+    background: #e3edfa;
 }
 table.jobsList td.extended{
 
@@ -1210,16 +1239,12 @@ table.jobsList td.jobname.transient{
     font-weight:normal;
     font-style:italic;
 }
-table.jobsList td.jobdesc,table.jobsList span.jobdesc{
-    /*font-size:8pt;*/
-    color:#999;
-}
 
-table.jobsList td.jobname a{
+table.jobsList td.jobname a.primary{
     color:black;
     font-weight:normal;
 }
-table.jobsList td.jobname a:hover{
+table.jobsList td.jobname a.primary:hover{
     color:blue;
     text-decoration:underline;
 }
@@ -1227,13 +1252,6 @@ table.jobsList td.jobbuttons div.buttons{
     margin: 0 0 4px 0;
 }
 
-table.jobsList .jobbuttons div.buttons a.button, table.jobsList .jobbuttons div.buttons span.button{
-    padding: 1px;
-    -moz-border-radius:1px;
-    -webkit-border-radius:1px;
-    border-radius:1px;
-
-}
 span.button.small, a.button.small,.toolbar.small span.button, .toolbar.small a.button{
     padding: 1px;
     -moz-border-radius:1px;
@@ -1262,20 +1280,26 @@ table.executionList td{
     padding: 3px;
 }
 
-table.jobsList.history td {
+table.jobsList td {
     vertical-align: baseline;
 }
-table.jobsList.history td.eventtitle {
+table.jobsList td.eventtitle {
     max-width: 400px;
     white-space:nowrap;
-    text-overflow:ellipsis;
+    text-overflow:clip;
+    overflow-x: hidden;
 }
-table.jobsList.history td.eventsummary {
+table.jobsList td.eventsummary {
     max-width: 200px;
     white-space:nowrap;
     text-overflow:ellipsis;
 }
-table.jobsList.history tr.fail td.eventtitle{
+table.jobsList td.date {
+    max-width: 200px;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+}
+table.jobsList tr.fail td.eventtitle{
     color:red;
 }
 div.buttons span.group {
@@ -1290,6 +1314,18 @@ div.jobslist{
 div.jobslist.small{
     margin: 0 0px 5px 0;
     width: auto;
+}
+
+table.jobsList td.outputlink{
+    padding: 0px;
+    white-space: nowrap;
+    text-align: right;
+    width: 50px;
+}
+table.jobsList td.outputlink a{
+    display: block;
+    padding: 10px;
+    white-space: nowrap;
 }
 
 span.grouplabel a{
@@ -1467,7 +1503,7 @@ span.dragHandle{
     background:white;
     border:1px solid #aaa;
     padding:5px;
-    width:220px;
+    width:250px;
 }
 
 
@@ -1762,7 +1798,7 @@ span.query span.queryvalue.date,a.query span.queryvalue.date{
 }
 span.query.textbtn,a.query.textbtn{
     border:1px solid blue;
-    display:block;float:left;
+    display:inline-block;
     margin: 5px 5px 5px 0;
 }
 span.query.textbtn span.querykey,a.query.textbtn span.querykey{
@@ -1782,8 +1818,12 @@ span.query.textbtn  span.querykey.exclude{
 span.query.textbtn span.querykey.include{
     color:blue;
 }
-div.jobsReport{
+
+div.eventspage div.jobsReport {
     margin:10px 0;
+}
+div.eventspage div.queryresultsinfo{
+    margin: 10px 0;
 }
 
 /* filter fields */
@@ -1816,7 +1856,7 @@ div.jobHead td{
 }
 
 div.jobHead .jobInfoSection + .jobInfoSection {
-    margin-top: 15px;
+    margin-top: 10px;
 }
 div.jobHead span.jobInfoPart span.partContent{
     margin-top:auto;
@@ -1850,9 +1890,12 @@ div.jobHead span.jobName.transient{
     font-weight:normal;
     font-style:italic;
 }
-div.jobHead span.jobDesc{
+span.jobdesc{
+    color: #555;
+    font-style: italic;
+}
+div.jobHead span.jobdesc{
     display: block;
-    color:#999;
 }
 div.jobHead span.jobSummary{
     /*font-size: 14pt;*/
@@ -1860,7 +1903,9 @@ div.jobHead span.jobSummary{
     padding-left:5px;
     display:block;
 }
-
+.retrybuttons a{
+    margin-left: 10px;
+}
 .executioncontrol a{
     white-space: nowrap;
 }
@@ -1888,6 +1933,7 @@ div.commandFlowError{
 }
 .commandcontent{
     margin: 0 20px;
+    overflow-x: auto;
 }
 
 #schedExecPage > div.schedExecPagePart {
@@ -1972,6 +2018,7 @@ div.pflowlist{
 }
 div.pflowlist ol{
     margin:0;
+    padding-left:0;
 }
 div.pflowlist.edit{
     width: 100%;
@@ -1982,6 +2029,8 @@ div.pflowlist.edit ol.flowlist li{
 }
 div.pflowlist.rounded.adhoc{
     border:0;
+    padding:0;
+    margin:0;
 }
 div.adhoc ol.flowlist li{
     list-style: none;
@@ -2121,9 +2170,9 @@ tr.sectionhead td.eventsummary{
     white-space:nowrap;
     width:50px;
 }
-tr.sectionhead td.eventtitle.job{
+table.jobsList td.eventtitle.job{
 }
-tr.sectionhead td.eventtitle.adhoc{
+table.jobsList td.eventtitle.adhoc{
     font-style:italic;
     color: #888;
 }
@@ -2215,8 +2264,6 @@ div.filterdef{
     border-radius:5px;
     -moz-border-radius : 5px;
     -webkit-border-radius: 5px;
-    -moz-box-shadow:#888 3px 3px 4px;
-    -webkit-box-shadow:#aaa 2px 2px 7px;
 
 }
 div.filterdef div.inputline{
@@ -2563,6 +2610,12 @@ fieldset{
 .runbox{
     background: #ddd;
     padding:10px ;
+}
+.runbox.primary{
+    background: none;
+}
+.runbox.sub{
+    background: #eee;
 }
 .runbox.sepT{
     border-top:1px solid #bbb;

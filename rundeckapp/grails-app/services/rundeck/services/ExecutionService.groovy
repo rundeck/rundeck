@@ -114,7 +114,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
             groupPath: 'groupPath'
         ]
         def schedExactFilters= [
-            groupPathExact:'groupPath'
+            groupPathExact:'groupPath',
+            jobId:'uuid'
         ]
         def schedFilterKeys= (schedExactFilters.keySet() + schedTxtFilters.keySet() + schedPathFilters.keySet())
 
@@ -428,7 +429,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
      * @param serverUUID if not null, only match executions assigned to the given serverUUID
      */
     def cleanupRunningJobs(String serverUUID=null) {
-        def found = serverUUID ? Execution.findAllByDateCompletedAndServerNodeUUID(null, serverUUID) : Execution.findAllByDateCompleted(null)
+        def found = Execution.findAllByDateCompletedAndServerNodeUUID(null, serverUUID)
         found.each { Execution e ->
             saveExecutionState(e.scheduledExecution?.id, e.id, [status: String.valueOf(false), dateCompleted: new Date(), cancelled: true], null)
             log.error("Stale Execution cleaned up: [${e.id}]")
@@ -840,19 +841,26 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
             statusStr = jobstate
         }else if (scheduledExecutionService.existsJob(ident.jobname, ident.groupname)){
             boolean success=false
-            try{
-                Execution.withNewSession {
-                    Execution e2 = Execution.get(eid)
-                    if (!e2.abortedby) {
-                        e2.abortedby = userIdent
-                        e2.save(flush: true)
-                        success=true
+            int repeat=3;
+            while(!success && repeat>0){
+                try{
+                    Execution.withNewSession {
+                        Execution e2 = Execution.get(eid)
+                        if (!e2.abortedby) {
+                            e2.abortedby = userIdent
+                            e2.save(flush: true)
+                            success=true
+                        }
                     }
+                } catch (org.springframework.dao.OptimisticLockingFailureException ex) {
+                    log.error("Could not abort ${eid}, the execution was modified")
+                } catch (StaleObjectStateException ex) {
+                    log.error("Could not abort ${eid}, the execution was modified")
                 }
-            } catch (org.springframework.dao.OptimisticLockingFailureException ex) {
-                log.error("Could not abort ${eId}, the execution was modified")
-            } catch (StaleObjectStateException ex) {
-                log.error("Could not abort ${eId}, the execution was modified")
+                if(!success){
+                    Thread.sleep(200)
+                    repeat--
+                }
             }
 
             def didcancel=false
@@ -1077,7 +1085,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
         } catch (ExecutionServiceException exc) {
             def msg = exc.getMessage()
             log.error("exception: " + exc)
-            return [error: 'failed', message: msg]
+            return [error: 'failed', message: msg, options:extra.option]
         }
     }
     private Execution int_createExecution(ScheduledExecution se,framework,user,extra){
@@ -1085,7 +1093,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
 
         se = ScheduledExecution.get(se.id)
         props.putAll(se.properties)
-        if (!props.user) {
+        if (user) {
             props.user = user
         }
         if (extra && 'true' == extra['_replaceNodeFilters']) {

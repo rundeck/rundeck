@@ -31,7 +31,7 @@
                             src="${resource(dir: 'images', file: 'feed.png')}" width="14px" height="14px"
                             alt=""/> RSS</a>
                 </g:ifServletContextAttribute>
-                <g:render template="/common/queryFilterManager" model="${[rkey:rkey,filterName:filterName,filterset:filterset,update:rkey+'evtsForm',deleteActionSubmitRemote:[controller:'reports',action:'deleteFilter',params:[fragment:true]],storeActionSubmitRemote:[controller:'reports',action:'storeFilter',params:[fragment:true]]]}"/>
+                <g:render template="/common/queryFilterManager" model="${[rkey:rkey,filterName:filterName,filterset:filterset,update:rkey+'evtsForm',deleteActionSubmitRemote:[controller:'reports',action:'deleteFilter',params:[fragment:true]], storeActionSubmit:'storeFilter']}"/>
                 <div class="filter">
                     <g:hiddenField name="max" value="${max}"/>
                         <g:render template="baseFiltersPlain" model="${[params: params, query: query]}"/>
@@ -46,11 +46,11 @@
         </div>
         </g:if>
     </div>
-            <div style="padding-top:20px;text-align:left;vertical-align:top;" id="${rkey}evtscontent">
+            <div id="${rkey}evtscontent">
                 <g:if test="${!params.nofilters}">
-                <div>
+                <div class="queryresultsinfo">
                         <g:if test="${!params.compact}">
-                            <span class="prompt">${total} Results</span>
+                            <span class="prompt"><span class="_obs_histtotal">${total}</span> Results</span>
                             matching ${filterName?'filter':'your query'}
                         </g:if>
 
@@ -58,15 +58,39 @@
                             <span class="info note">or choose a saved filter:</span>
                         </g:if>
                         <g:render template="/common/selectFilter" model="[noSelection:'-Within 1 Day-',filterset:filterset,filterName:filterName,prefName:'events']"/>
+                        <g:if test="${includeBadge}">
+
+                            <span class="badgeholder" id="eventsCountBadge" style="display:none">
+                                <g:link action="index"
+                                        title="click to load new events"
+                                        params="${filterName ? [filterName: filterName] : params}"><span
+                                        class="badge newcontent active" id="eventsCountContent"
+                                        title="click to load new events"></span>
+                                </g:link>
+                            </span>
+                        </g:if>
+                        <g:if test="${includeAutoRefresh}">
+                            <g:checkBox name="refresh" value="true" checked="${params.refresh=='true'}" class="autorefresh" id="autorefresh"/>
+                            <label for="autorefresh">
+                                Auto refresh
+                            </label>
+                        </g:if>
                 </div>
                 </g:if>
 
                 <div class="jobsReport clear">
                     <g:if test="${reports}">
-                        <g:render template="baseReport" model="['reports':reports,options:params.compact?[tags:false, summary: false]:[summary:true],hiliteSince:params.hiliteSince]"/>
+                        <table cellpadding="0" cellspacing="0" class="jobsList list history" style="width:100%">
+                        <g:if test="${includeNowRunning}">
+                            <tbody id="nowrunning"></tbody>
+                        </g:if>
+                        <tbody id="histcontent">
+                            <g:render template="baseReport" model="['reports':reports,options:params.compact?[tags:false, summary: false]:[summary:true],hiliteSince:params.hiliteSince]"/>
+                        </tbody>
+                        </table>
 
                             <g:if test="${total && max && total.toInteger() > max.toInteger()}">
-                                <span class="info note">Showing ${reports.size()} of ${total}</span>
+                                <span class="info note">Showing ${reports.size()} of <span class="_obs_histtotal">${total}</span></span>
                                 <g:if test="${params.compact}">
                                     <a href="${createLink(controller:'reports',action:params.moreLinkAction?params.moreLinkAction:'index',params:filterName?[filterName:filterName]:paginateParams?paginateParams:[:])}">More&hellip;</a>
                                 </g:if>
@@ -92,6 +116,6 @@
 </g:if>
 <g:set var="refreshUrl" value="${g.createLink(action:'eventsFragment',params:filterName?[filterName:filterName]:paginateParams)}"/>
 <g:set var="rssUrl" value="${g.createLink(controller:'feed',action:'index',params:filterName?[filterName:filterName]:paginateParams)}"/>
-<g:render template="/common/boxinfo" model="${[name:'events',model:[title:'History',total:total,url:refreshUrl,checkUpdatedUrl:checkUpdatedUrl,rssUrl:rssUrl,lastDate:lastDate]]}"/>
+<g:render template="/common/boxinfo" model="${[name:'events',model:[title:'History',total:total, max: max, offset: offset,url:refreshUrl,checkUpdatedUrl:checkUpdatedUrl,rssUrl:rssUrl,lastDate:lastDate]]}"/>
 
 </div>

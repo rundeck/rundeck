@@ -707,7 +707,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         def trigger = createTrigger(se)
         List<Date> times = TriggerUtils.computeFireTimes(trigger,
                 quartzScheduler.getCalendar(trigger.getCalendarName()), 1)
-        return times?.first()
+        return times?times.first():null
     }
 
     /**
@@ -803,17 +803,22 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             log.debug("saving job data: ${jobdata}")
             def ScheduledExecution scheduledExecution
             def jobchange = new HashMap(changeinfo)
+            if(!jobdata.project){
+                errjobs << [scheduledExecution: jobdata, entrynum: i, errmsg: "Project was not specified"]
+                i++
+                return
+            }
             if (option == "update" || option == "skip") {
                 //look for dupe by name and group path and project
                 def schedlist
                 //first look for uuid
-                if (jobdata.uuid) {
-                    schedlist = ScheduledExecution.findAllByUuid(jobdata.uuid)
-                } else {
+                if (jobdata.uuid && jobdata.project) {
+                    scheduledExecution = ScheduledExecution.findByUuidAndProject(jobdata.uuid,jobdata.project)
+                } else if(jobdata.jobName && jobdata.project){
                     schedlist = ScheduledExecution.findAllScheduledExecutions(jobdata.groupPath, jobdata.jobName, jobdata.project)
-                }
-                if (schedlist && 1 == schedlist.size()) {
-                    scheduledExecution = schedlist[0]
+                    if (schedlist && 1 == schedlist.size()) {
+                        scheduledExecution = schedlist[0]
+                    }
                 }
             }
             if (option == "skip" && scheduledExecution) {
@@ -935,8 +940,14 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             MDC.remove(k)
         }
     }
-
-    private List parseParamNotifications(params){
+    static def parseNotificationsFromParams(params){
+        def notifyParamKeys = ['notifyPlugin', 'notifyOnstart', 'notifyOnstartUrl', 'notifyOnsuccess',
+                'notifyOnfailure', 'notifyOnsuccessUrl', 'notifyOnfailureUrl']
+        if (!params.notifications && params.subMap(notifyParamKeys).any { it.value }) {
+            params.notifications = parseParamNotifications(params)
+        }
+    }
+    static List parseParamNotifications(params){
         List nots=[]
         if ('true' == params.notifyOnsuccess) {
             nots << [eventTrigger: 'onsuccess', type: 'email', content: params.notifySuccessRecipients]
@@ -961,11 +972,13 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             ['success', 'failure', 'start'].each { trig ->
 //                params.notifyPlugin.each { trig, plug ->
                 def plugs = params.notifyPlugin[trig]
-                def types=[plugs['type']].flatten()
-                types.each { pluginType ->
-                    def config = plugs[pluginType]?.config
-                    if (plugs['enabled'][pluginType] == 'true') {
-                        nots << [eventTrigger: 'on' + trig, type: pluginType, configuration: config]
+                if(plugs){
+                    def types=[plugs['type']].flatten()
+                    types.each { pluginType ->
+                        def config = plugs[pluginType]?.config
+                        if (plugs['enabled'][pluginType] == 'true') {
+                            nots << [eventTrigger: 'on' + trig, type: pluginType, configuration: config]
+                        }
                     }
                 }
             }
@@ -1261,9 +1274,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
 
         }
 
-        if (!params.notifications && (params.notifyPlugin ||params.notifyOnsuccess || params.notifyOnfailure || params.notifyOnsuccessUrl || params.notifyOnfailureUrl)) {
-            params.notifications=parseParamNotifications(params)
-        }
+        parseNotificationsFromParams(params)
         if (!params.notifications) {
             params.notified = 'false'
         }
@@ -2107,9 +2118,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             }
         }
 
-        if (!params.notifications && (params.notifyPlugin || params.notifyOnsuccess || params.notifyOnfailure || params.notifyOnsuccessUrl || params.notifyOnfailureUrl)) {
-            params.notifications = parseParamNotifications(params)
-        }
+        parseNotificationsFromParams(params)
         if (params.notifications) {
             //create notifications
             def result = _updateNotificationsData(params, scheduledExecution)
