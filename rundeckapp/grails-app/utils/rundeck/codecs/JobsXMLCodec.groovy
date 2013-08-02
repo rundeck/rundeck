@@ -107,16 +107,7 @@ class JobsXMLCodec {
 
         //perform structure conversions for expected input for populating ScheduledExecution
 
-        if(!map.context|| !(map.context instanceof Map)){
-            throw new JobXMLException("'context' element not found")
-        }
-        map.project=map.context.remove('project')
-        if(!map.project && map.context.depot){
-            map.project=map.context.remove('depot')
-        }
-        if(!map.project){
-            throw new JobXMLException("'context/project' element not found")
-        }
+        map.project=map.context?.remove('project')
         if(!map.name){
             throw new JobXMLException("'name' element not found")
         }

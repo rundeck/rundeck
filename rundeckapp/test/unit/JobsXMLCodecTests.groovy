@@ -88,14 +88,14 @@ class JobsXMLCodecTests extends GroovyTestCase {
   </wrong>
 </joblist>
 """
-    /** should fail job 1*/
+    /** should fail job 1. no sequence*/
     def fail1 = """<joblist>
   <job>
     <id>5</id>
     <name>wait1</name>
     <description>a simple desc</description>
     <loglevel>INFO</loglevel>
-    <!-- no context-->
+    <!-- no sequence -->
     <dispatch>
       <threadcount>1</threadcount>
       <keepgoing>false</keepgoing>
@@ -103,7 +103,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
   </job>
 </joblist>
 """
-    /** should fail job 2 */
+    /** should fail job 2 missing: sequence */
     def fail2 = """<joblist>
   <job>
     <id>5</id>
@@ -111,9 +111,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <description>a simple desc</description>
     <loglevel>INFO</loglevel>
     <context>
-      <!-- no project -->
-      <type>MyService</type>
-      <command>dowait</command>
       <options>
         <option name='delay' value='60' />
         <option name='monkey' value='bluefish' />
@@ -123,6 +120,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
       <threadcount>1</threadcount>
       <keepgoing>false</keepgoing>
     </dispatch>
+      <!-- no sequence -->
   </job>
 </joblist>
 """
@@ -192,7 +190,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
         }catch(JobXMLException e){
             assertNotNull e
             e.printStackTrace(System.err)
-            assertEquals "failed: ${e.getMessage()}","'context' element not found",e.getMessage()
+            assertEquals "failed: ${e.getMessage()}","'sequence' element not found",e.getMessage()
         }
         try{
             JobsXMLCodec.decode(fail2)
@@ -200,7 +198,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
         }catch(JobXMLException e){
             assertNotNull e
             e.printStackTrace(System.err)
-            assertEquals "failed: ${e.getMessage()}","'context/project' element not found",e.getMessage()
+            assertEquals "failed: ${e.getMessage()}","'sequence' element not found",e.getMessage()
         }
             def jobs = JobsXMLCodec.decode(okxml0)
             assertNotNull jobs
@@ -496,6 +494,74 @@ class JobsXMLCodecTests extends GroovyTestCase {
         assertEquals 'false', jobs[0].workflow.commands[7].jobName
         assertEquals 'false', jobs[0].workflow.commands[7].jobGroup
         assertEquals '123', jobs[0].workflow.commands[7].argString
+    }
+    public void testDecodeWithoutProject(){
+
+        def xml = """<joblist>
+  <job>
+    <id>5</id>
+    <name>wait1</name>
+    <description></description>
+    <loglevel>INFO</loglevel>
+    <context>
+      <options>
+        <option name='delay' value='60' />
+        <option name='monkey' value='bluefish' />
+      </options>
+    </context>
+    <sequence><command><exec>test</exec></command></sequence>
+    <dispatch>
+      <threadcount>1</threadcount>
+      <keepgoing>false</keepgoing>
+    </dispatch>
+  </job>
+</joblist>
+"""
+        def jobs = JobsXMLCodec.decode(xml)
+        assertNotNull jobs
+        assertEquals "incorrect size", 1, jobs.size()
+        assertEquals "incorrect jobName", "wait1", jobs[0].jobName
+        assertEquals "incorrect description", "", jobs[0].description
+        assertEquals "incorrect loglevel", "INFO", jobs[0].loglevel
+        assertEquals "incorrect project", null, jobs[0].project
+        assertNotNull jobs[0].options
+        assertEquals 2, jobs[0].options.size()
+        def iter = jobs[0].options.iterator()
+        def opt1 = iter.next()
+        assertEquals 'delay', opt1.name
+        assertEquals '60', opt1.defaultValue
+        def opt2 = iter.next()
+        assertEquals 'monkey', opt2.name
+        assertEquals 'bluefish', opt2.defaultValue
+        assertFalse "incorrect doNodedispatch: ${jobs[0].doNodedispatch}", jobs[0].doNodedispatch
+        assertEquals "incorrect nodeThreadcount", 1, jobs[0].nodeThreadcount
+        assertFalse "incorrect nodeKeepgoing", jobs[0].nodeKeepgoing
+        assertNull "incorrect groupPath", jobs[0].groupPath
+
+        assertEquals "incorrect scheduled", "false", jobs[0].scheduled.toString()
+
+        jobs = JobsXMLCodec.decode(okxml1)
+        assertNotNull jobs
+        assertEquals "incorrect size", 1, jobs.size()
+        assertEquals "incorrect jobName", "wait1", jobs[0].jobName
+        assertEquals "incorrect description", "a simple desc", jobs[0].description
+        assertEquals "incorrect loglevel", "INFO", jobs[0].loglevel
+        assertEquals "incorrect project", "test1", jobs[0].project
+        assertNotNull jobs[0].options
+        assertEquals 2, jobs[0].options.size()
+        def iter2 = jobs[0].options.iterator()
+        def opt1_1 = iter2.next()
+        assertEquals 'delay', opt1_1.name
+        assertEquals '60', opt1_1.defaultValue
+        def opt2_2 = iter2.next()
+        assertEquals 'monkey', opt2_2.name
+        assertEquals 'bluefish', opt2_2.defaultValue
+        assertFalse "incorrect doNodedispatch: ${jobs[0].doNodedispatch}", jobs[0].doNodedispatch
+        assertEquals "incorrect nodeThreadcount", 1, jobs[0].nodeThreadcount
+        assertFalse "incorrect nodeKeepgoing", jobs[0].nodeKeepgoing
+        assertEquals "incorrect groupPath", "some/group", jobs[0].groupPath
+
+        assertFalse "incorrect scheduled", jobs[0].scheduled
     }
     public void testDecodeBasicScriptInterpreter(){
 
@@ -877,49 +943,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
         assertEquals false, opts[1].required
         assertEquals '9000636026', opts[1].defaultValue
     }
-    void testDecodeBackwardsCompatibility(){
-        /**
-         * Backwards compatibility test, using pre 3.5 format for input
-         */
-
-        def example1 = """<joblist>
-  <job>
-    <id>1</id>
-    <name>XYZ Monthly WNP Report</name>
-    <description />
-    <loglevel>VERBOSE</loglevel>
-    <context>
-      <depot>demo</depot> <!-- "depot" should be interpreted as "project" -->
-    </context>
-    <sequence><command><exec>cd /home/test/nagios_sla_report/1.0.9 &amp;&amp;
-    export ORACLE_HOME=/tools/oracle &amp;&amp; export
-    LD_LIBRARY_PATH=/tools/oracle/lib &amp;&amp; /usr/bin/env
-    python run_monthly.py test-prod</exec></command></sequence>
-    <nodefilters excludeprecedence="true">
-      <include>
-        <hostname>cypress.hill.com</hostname>
-        <tags />
-        <os-name />
-        <os-family />
-        <os-arch />
-        <os-version />
-        <name />
-      </include>
-    </nodefilters>
-    <dispatch>
-      <threadcount>1</threadcount>
-      <keepgoing>false</keepgoing>
-    </dispatch>
-  </job>
-</joblist>
-"""
-            def jobs = JobsXMLCodec.decode(example1)
-            assertNotNull jobs
-            assertNull "incorrect groupPath",jobs[0].groupPath
-            assertEquals "incorrect nodeExcludePrecedence","true",jobs[0].nodeExcludePrecedence.toString()
-            assertEquals "incorrect nodeInclude","cypress.hill.com",jobs[0].nodeInclude
-            assertEquals "incorrect project","demo",jobs[0].project
-    }
     void testDecodeNodefilter(){
          /** node filter job */
     def filter1 = """<joblist>
@@ -931,9 +954,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <group>simple</group>
     <context>
       <project>zig</project>
-      <type>RoboDog</type>
-      <object>myDog1</object>
-      <command>Excel</command>
       <options>
         <option name='clip' value='true' />
       </options>
@@ -982,9 +1002,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <group>simple</group>
     <context>
       <project>zig</project>
-      <type>RoboDog</type>
-      <object>myDog1</object>
-      <command>Excel</command>
       <options>
         <option name='clip' value='true' />
       </options>
@@ -1039,9 +1056,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <group>simple</group>
     <context>
       <project>zig</project>
-      <type>RoboDog</type>
-      <object>myDog1</object>
-      <command>Excel</command>
       <options>
         <option name='clip' value='true' />
       </options>
@@ -1098,9 +1112,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <group>simple</group>
     <context>
       <project>zig</project>
-      <type>RoboDog</type>
-      <object>myDog1</object>
-      <command>Excel</command>
       <options>
         <option name='clip' value='true' />
       </options>
@@ -1137,9 +1148,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <group>simple</group>
     <context>
       <project>zig</project>
-      <type>RoboDog</type>
-      <object>myDog1</object>
-      <command>Excel</command>
       <options>
         <option name='clip' value='true' />
       </options>
@@ -1184,9 +1192,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <group>simple</group>
     <context>
       <project>zig</project>
-      <type>RoboDog</type>
-      <object>myDog1</object>
-      <command>Excel</command>
       <options>
         <option name='clip' value='true' />
       </options>
@@ -1234,9 +1239,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <group>some/group</group>
     <context>
       <project>test1</project>
-      <type>MyService</type>
-      <object>elfblister</object>
-      <command>dowait</command>
       <options>
         <option name='delay' value='60' />
       </options>
@@ -1274,9 +1276,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <group>some/group</group>
     <context>
       <project>test1</project>
-      <type>MyService</type>
-      <object>elfblister</object>
-      <command>dowait</command>
       <options>
         <option name='delay' value='60' />
       </options>
@@ -1333,9 +1332,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <group>some/group</group>
     <context>
       <project>test1</project>
-      <type>MyService</type>
-      <object>elfblister</object>
-      <command>dowait</command>
       <options>
         <option name='delay' value='60' />
       </options>
@@ -1395,9 +1391,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <group>some/group</group>
     <context>
       <project>test1</project>
-      <type>MyService</type>
-      <object>elfblister</object>
-      <command>dowait</command>
       <options>
         <option name='delay' value='60' />
       </options>
@@ -1457,9 +1450,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <group>some/group</group>
     <context>
       <project>test1</project>
-      <type>MyService</type>
-      <object>elfblister</object>
-      <command>dowait</command>
       <options>
         <option name='delay' value='60' />
       </options>
