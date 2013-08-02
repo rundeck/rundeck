@@ -40,6 +40,8 @@ Changes introduced by API Version number:
 * Updated endpoints 
     * `/api/8/run/script` and `/api/8/run/url` -  [Running Adhoc Scripts](#running-adhoc-scripts) and [Running Adhoc Script URLs](#running-adhoc-script-urls)
         * Added two optional parameters for `scriptInterpreter` and `interpreterArgsQuoted`
+    * `/api/8/jobs/import` -  [Importing Jobs](#importing-jobs)
+        * Added an optional parameter `project` which will override any project defined in the Job definition contexts.  If used, the job definitions do not need a `project` value in them.
 * Removed endpoints
     * `/api/1/report/create` - [Creating History Event Reports](#creating-history-event-reports)
       * Removed due to History no longer supporting arbitrary event reports.
@@ -523,6 +525,7 @@ Optional parameters:
 
 * `format` : can be "xml" or "yaml" to specify the output format. Default is "xml"
 * `dupeOption`: A value to indicate the behavior when importing jobs which already exist.  Value can be "skip", "create", or "update". Default is "create".
+* `project` : (**since v8**) Specify the project that all job definitions should be imported to. If not specified, each job definition must define the project to import to.
 
 Result:
 
