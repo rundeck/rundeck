@@ -23,32 +23,32 @@ class ThreadBoundLogOutputStream extends OutputStream {
         this.contextual = contextual
     }
     public void write(final int b) {
+        if (sb.get() == null) {
+            createEventBuffer()
+        }
         if (b == '\n') {
-            if (sb.get() == null) {
-                time.set(new Date())
-                context.set(contextual.getContext())
-                sb.set(new StringBuilder())
-            }
-            event();
+            flushEventBuffer();
             crchar.set(false);
         } else if (b == '\r') {
             crchar.set(true);
         } else {
             if (crchar.get()) {
-                event()
+                flushEventBuffer()
                 crchar.set(false);
-            }
-            if (sb.get() == null) {
-                time.set(new Date())
-                context.set(contextual.getContext())
-                sb.set(new StringBuilder())
+                createEventBuffer()
             }
             sb.get().append((char) b)
         }
 
     }
 
-    private void event() {
+    private void createEventBuffer() {
+        time.set(new Date())
+        context.set(contextual.getContext())
+        sb.set(new StringBuilder())
+    }
+
+    private void flushEventBuffer() {
         def buffer = sb.get()
         logger.addEvent(
                 new DefaultLogEvent(
@@ -65,7 +65,7 @@ class ThreadBoundLogOutputStream extends OutputStream {
 
     public void flush() {
         if (sb.get().size() > 0) {
-            event();
+            flushEventBuffer();
         }
     }
 }
