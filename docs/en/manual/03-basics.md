@@ -38,8 +38,8 @@ The default username and password are `admin`/`admin`.
 #### Navigation
 
 The Rundeck page header contains global navigation control to move
-between tabbed pages: Run,  Jobs and History. It also has links to
-logout, view your user profile and a link to this online help.
+between tabbed pages: Jobs, Nodes and Activity. It also has links to
+Configure the project, logout, view your user profile and a link to this online help.
 
 ![Top navigation bar](../figures/fig0201.png)
 

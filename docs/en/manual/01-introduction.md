@@ -9,10 +9,12 @@ you quickly become productive with the Rundeck service and tools.
 
 ## What is Rundeck?
 
-Rundeck is open source software that helps you automate ad-hoc and routine
+Rundeck is open source software that helps you automate routine operational
 procedures in data center or cloud environments. Rundeck provides a number 
 of features that will alleviate time-consuming grunt work and make it easy for
-you to scale up your automation efforts.
+you to scale up your automation efforts and create self service for others. 
+Teams can collaborate to share how processes are automated while
+others are given trust to view operational activity or execute tasks.
 
 Rundeck allows you to run tasks on any number of nodes from a web-based 
 or command-line interface. Rundeck also includes other features that make 
@@ -27,7 +29,7 @@ Already itching to install it? Jump ahead to
 ### Who makes the Rundeck software?
 
 Rundeck is developed on GitHub as a project called
-[dtolabs/rundeck](https://github.com/dtolabs/rundeck)
+[rundeck](https://github.com/dtolabs/rundeck)
 by [SimplifyOps](http://simplifyops.com) and the Rundeck community.
 All new users are welcomed to participate in the project and contribute.
 Please vote on feature ideas on the [Rundeck Trello Board](https://trello.com/b/sn3g9nOr/rundeck-development).
@@ -53,7 +55,7 @@ Rundeck is free software and is public under the [Apache Software License].
 * pluggable execution system (SSH by default)
 * multi-step workflows 
 * job execution with on demand or scheduled runs
-* graphical console for command and job execution
+* graphical web console for command and job execution
 * role-based access control policy with support for LDAP/ActiveDirectory
 * history and auditing logs
 * open integration to external host inventory tools
@@ -90,18 +92,19 @@ tools and  in return enable a push button interface you can hand off to others.
 Rundeck is a server application you host on a system you designate 
 a central administrative control point. Internally, Rundeck stores job
 definitions and execution history in a relational database. Output
-from command and job executions is saved on disk. 
+from command and job executions is saved on disk but can be forwarded
+to remote stores like S3 or Logstash. 
 
 Rundeck distributed command execution is performed using a pluggable
-node execution layer but defaults to SSH. 
+node execution layer that defaults to SSH but plugins allow you
+to use other means like MCollective, Salt, WinRM, or your custom method. 
 Rundeck server configuration includes settings to define the outbound
 user allowed by the remote hosts. Remote machines
 are not required to make connections back to the server.
 
 ![Rundeck architecture](../figures/fig0001.png)
 
-The Rundeck application itself is a Java-based webapp that runs in its
-own embedded servlet container. The application provides both
+The Rundeck application itself is a Java-based webapp. The application provides both
 graphical interface and network interfaces used by the Rundeck shell
 tools. 
 
@@ -119,13 +122,15 @@ granted if a user's group membership meets the requirements of the policy.
 
 Two installation methods are supported:
 
-* RPM: The RPM is intended for managed installation and provides
+* System package: RPM and Debian packaging is intended for managed installation and provides
   robust tools that integrate with your environment, man pages, shell
-  tool set in your path, init.d startup and shutdown  
+  tool set in your path, init.d startup and shutdown.
   
 * Launcher: The launcher is intended for quick setup, to get you
   running right away.  Perfect for bootstrapping a project or trying
   a new feature.  
+
+Rundeck can also install as a WAR file into an external container like Tomcat.
 
 ## Feedback
 
@@ -137,8 +142,9 @@ ideas about it, please send an email to the Rundeck mailing list,
 
 The remainder of the manual will give you a quick conceptual overview,
 and take you through installation and setup. After you are set up, you
-will learn about the distributed command dispatcher and how to use it
-to run ad-hoc commands. From there, you will learn about Jobs,
+will learn about the Rundeck interfaces, how to navigate to Jobs,
+Nodes and History. How to use the command dispatcher
+to run ad-hoc commands. From there, you will learn more about Jobs,
 defining multi-step procedures with Job workflows and how to
 parameterize them with options.
 

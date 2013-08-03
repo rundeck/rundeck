@@ -17,9 +17,10 @@ help you use and integrate Rundeck into your environment.
 ### Plugins
 
 Most of what Rundeck does is via one of its plugins. Plugins exist
-to execute commands on nodes, perform a step in a workflow, gather
+to execute commands on nodes, perform a step in a workflow, 
+send a notification about job status, gather
 information about the hosts in your network, copy a file to a remote
-server, or talk to a user directory.
+server, store and stream logs, or talk to a user directory.
 
 ### Node execution
 
@@ -31,7 +32,9 @@ A *node executor* is a Rundeck plugin that implements how to
 communicate with the Node and how to invoke the command action.
 
 The command executes in a data context that contains information 
-about the Node resource, job, and job option data. 
+about the Node resource, job, and job option data. Your command
+can use this data and thus avoid hard coding node or environment
+specific values.
 
 
 ### Jobs
@@ -39,7 +42,7 @@ about the Node resource, job, and job option data.
 *Jobs* encapsulate a sequence of steps, node filter and job options
 to provide a single executable action. Jobs can be given a unique
 ID, a name and group to organize them to run any time 
-or they may be declared and executed just once and forgotten.
+or they may be scheduled to run periodically.
 
 Jobs take a number of parameters to control execution, including
 what to do when an error occurs in one of the steps or
@@ -71,7 +74,8 @@ accessible via the HTTP GET method that returns data in one of the supported
 resource document formats.
 
 Rundeck currently supports XML and YAML document formats. 
-See [Resource Model Document formats](rundeck-basics.html#resource-model-document-formats)).
+See [Resource Model Document formats](rundeck-basics.html#resource-model-document-formats))
+to learn how to introduce your own format.
 
 Each project can be configured to have multiple sources of Resource Model data. 
 See [Resource Model Sources](plugins.html#resource-model-sources).
@@ -110,12 +114,16 @@ and Job execution. (See the [Rundeck API](../api/index.html).)
 
 For more detailed install instructions, see the [Administration - Installation](../administration/installation.html) chapter.
 
-The simplest way to install is using the Launcher jar.  
+The simplest way to try Rundeck is by using the Launcher jar.  
 Simply download it, and place it into a directory that will be the `RDECK_BASE` base directory.
 
 Start the Rundeck server by running the jar using java:
 
     java -jar rundeck-launcher-1.6.0.jar
+
+This will extract the contents into the current working directory and start the service.
+You can Ctl-C the process and then start and stop it using the `rundeckd` script
+(see [startup and shutdown](../administration/startup-and-shutdown.html)).
 
 ## Upgrading Rundeck
 
