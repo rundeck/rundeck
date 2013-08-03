@@ -204,45 +204,11 @@ From the Jobs, page press the "New Job" button to begin creating a Job.
 
 ![New Job button](../figures/fig0301.png)
 
-### Temporary Jobs
 
-A temporary job is a bit like an ad-hoc command except you get more
-control over how the commands will execute plus the execution can be
-better tracked within the Rundeck webapp.
-
-To create a temporary job, begin by logging in to the Rundeck
-graphical console, and press the "Jobs" tab.
-
-1.  Locate the "New Job" button in the right hand corner and press it to display the "Create New Job" form.
-1.  A job is defined in terms of one or more workflow steps. In the Workflows area, click the "Add a step" link.
-1.  Workflow steps can be one of several types. Click the "Script" workflow step type.
-1.  A script type can be any script that can be executed on the target
-hosts. Type in the "info" shell script we executed earlier using
-dispatch.
-1.  At the bottom of the form, push the "Run and Forget" button to begin execution.
-1.  Execution output can be followed on the subsequent page.
-
-![Temporary job form](../figures/fig0302.png)
-
-### Saved Jobs
-
-Running ad hoc commands and temporary jobs are a typical part of day
-to day administrative work. Occasionally, ad-hoc commands become
-routine procedures and if were reusable, would become more valuable. These jobs
-could be handed off to others in the team or invoked from within other
-Jobs. Rundeck provides an interface to declare and save jobs, both
-graphically or declared with an XML file.
-
-
-### Simple saved job
-
-For the first saved Job example, create a Job that calls the info script.
+For the first Job example, create a Job that calls the info script.
 
 1.   Like in the earlier example, begin by pressing the "New Job" button.
 1.   Within the new job form:
-     -   Select "Yes" for the "Save this job?"
-     prompt. Pressing Yes reveals a form to define a name, group and
-     description for the job. 
      -   For "Job Name", enter "info" and for the "Group", enter
      "adm/resources". 
      -   If you want to specify your own UUID you can enter it in the field. 
@@ -514,7 +480,7 @@ See also: [rd-queue](../manpages/man1/rd-queue.html).
 
 ## Deleting Jobs
 
-In the Job detail page, click the red "X" icon for to delete the Job.
+In the Job edit page, click the red "X" icon for to delete the Job.
 
 ![Job delete button](../figures/fig0311.png)
 

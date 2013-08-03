@@ -43,13 +43,6 @@ logout, view your user profile and a link to this online help.
 
 ![Top navigation bar](../figures/fig0201.png)
 
-Run
-
-:    The Run page is used to execute ad hoc commands. It
-     displays filtered Node resources configured in your
-     Project resource model. A filter  control can be used to 
-     limit the listing to just the Node resources
-     matching the filter criteria.
 
 Jobs
 
@@ -58,57 +51,47 @@ Jobs
      Jobs matching the filtering criteria. These filter settings can be
      saved to a Users profile. Only authorized jobs will be visible.
 
-History
+Nodes
 
-:    From the History page, one can view currently executing commands
-     in the "Now Running" area or browse execution history. The execution
+:    The Nodes page is used to browse your Nodes configured in your
+     Project resource model. A filter  control can be used to 
+     limit the listing to just the Node resources
+     matching the filter criteria. Given the appropriate authorization
+     you can also execute ad hoc commands to your filtered node set.
+
+Activity
+
+:    From the Activity page, one can view currently executing commands
+     and Jobs or browse execution history. The execution
      history can be filtered based on user selected parameters. Once the
      filter has been set, the matching history is displayed. The current
      filter settings also configure an RSS link, found in the top right of
-     the page.
+     the page (see Rundeck Administration to enable RSS). 
 
 Project menu
 
 :    The top navigation bar contains a menu to select the
      desired project. If only one project exists, the menu will
-     automatically be defaulted. You can create new projects from
+     automatically be selected. You can create new projects from
      this menu, too.
      
-Admin
+Configure
 
 :    If your login belongs to the "admin" group and therefore granted
-     "admin" privileges, a wrench icon will be displayed next to your login
-     name. This page allows the admin to view group memberships for all
-     users, as well as, edit their profile data. Project configuration includes
-     adding plugins and exporting/importing project archives.
+     "admin" privileges, a "Configure" tab will be displayed next to your login
+     name. This page allows the admin to manage Project configuration. 
+     From the Configure page you can also export and import project archives.
+     The Configure page also allows the admin to view group memberships for all
+     users, as well as, edit their profile data.
 
-User profile
+User
 
-:    Shows a page showing group memberships.
-
-Logout
-
-:    Pressing this link ends the login session and will require a subsequent login.
+:    Shows a popup menu to logout and view your profile page showing group memberships.
 
 Help
 
 :    Opens a page to this user manual.
 
-
-#### Now running
-
-The "Now running" section appears at the top of the Run and Jobs pages
-and provides a view into the execution queue.
-Any currently executing command executed from the Run page
-or any Job executed in the Jobs page will be listed.
-The "Now running" section will 
-include information like the name of the job, when it started,
-who ran it, and a link to the execution output.
-
-![Now running](../figures/fig0215.png)
-
-Jobs that have been run before also have a progress bar approximating 
-duration.
 
 ### Shell Tools 
 
@@ -156,10 +139,10 @@ create a new project.
 
 To start with, the only field you need to enter is the Project Name. You can
 change the other values later from the 
-[GUI Admin Page](../administration/configuration.html#gui-admin-page).
+[GUI Configure Page](../administration/configuration.html#gui-admin-page).
 
 After entering your project name, Rundeck initializes it and returns
-you to the "Run" page.
+you to the "Jobs" page.
 
 Projects can be created at any time by going back to the Project menu 
 and selecting the "Create a new project..." item.
@@ -198,7 +181,7 @@ Each Rundeck Project has its own Resource Model.
 The initial resource model will contain
 information just about the Rundeck server host and is useful just for
 running local commands on the Rundeck server. 
-You can browse the project resource model by going to the "Run" page.
+You can browse the project resource model by going to the "Jobs" page.
 
 In the shell, you can list the Node resources in a resource
 model using the shell tool, `dispatch`. 
@@ -314,7 +297,7 @@ Rundeck currently has two resource model document formats built in:
 
 You can enable more formats using [Resource Format Plugins](plugins.html#resource-format-plugins).
 
-## Pluggable Resource Model Sources
+### Pluggable Resource Model Sources
 
 Each project can have multiple sources for Resource model information, and
 you can use or write plugins to enable new sources for entries in the Resource model.
@@ -324,35 +307,30 @@ You can configure the sources via the GUI from the Admin page, see
 or by modifying the project configuration file,
 see [Resource Model Sources](plugins.html#resource-model-sources).
 
-## Command Execution
-
-Rundeck supports two modes of execution: *ad-hoc commands* and *Job*.
-
-An *ad-hoc command* is any system command or shell script executed
-via a node executor. Ad hoc commands can be executed via a
-command line utility named `dispatch` or run from
-the graphical console.
+## Jobs
 
 A *Job* specifies a sequence of one or more steps that
 can be run once (i.e, is temporary) or named and stored for later use.
 
 See [Jobs](jobs.html) to learn how to execute Rundeck jobs.
 
-### Execution options
+### Job Workflows
 
-Execution can be controlled by various types of options.
+See [Job Workflows](job-workflows.html).
 
-Execution control
+### Job Options
 
-:    Concurrency
-     is controlled by setting the "threadcount". Execution can continue even if
-     some node fails if the "keepgoing" option is set to true.
+See [Job Options](job-options.html).
 
-Node Filters
+## Nodes
 
-:    Filtering options specify include and exclude filters to
-     determine which nodes from the project resource model to distribute
-     commands to.
+
+### Node filtering
+
+
+Filtering options specify include and exclude filters to
+determine which nodes from the project resource model to distribute
+commands to.
 
 Filter Keywords
 
@@ -428,13 +406,14 @@ case an error occurs :
 
 Consult the [rd-options(1)](../manpages/man1/rd-options.html) 
 manual page for the complete reference on available dispatch options.
-  
+
+
 ### Ad-hoc commands 
 
 Typically, an ad-hoc command is a shell script or system executable
 that you run at an interactive terminal. Ad-hoc commands can be
-executed via the `dispatch` shell command or a graphical
-shell.
+executed via the `dispatch` shell command or from the Nodes page
+in the GUI.
 
 #### Shell tool command execution
 
@@ -519,23 +498,22 @@ below (see [output](rundeck-basics.html#following-execution-output)).
 
 ![Ad hoc execution output](../figures/fig0208.png)
 
-You will also notice the ad hoc execution listed in the "Now running" 
-part of the page, located above the command prompt.
+You will also notice the ad hoc execution listed in the "Activity" 
+part of the page, located below the command output.
 All running executions are listed there. Each running execution
 is listed, showing the start time, the user running it, and a link
 to follow execution output on a separate page.
 
 ![Now running ad hoc command](../figures/fig0207-b.png)
 
-At the bottom of the page, you will see a "History" section containing
+The "Activity" section also contains
 all executions in the selected project for the last 24 hours. After the execution
-completes, a new event will be added to the history. A yellow highlight
-indicates when the command leaves the Now running section and enters
-the history table.
+completes, a new event will be added to the list. A yellow highlight
+indicates when the command completes.
 
 ![Run history](../figures/fig0207-c.png)
 
-History is organized in summary form using a table layout. The "Summary" column
+Activity is organized in summary form using a table layout. The first column
 shows the command or script executed. The "Node Failure Count" contains
 the number of nodes where an error in execution occurred. If no errors occurred,
 "ok" will be displayed. The "User" and "Time" columns show the user that executed
@@ -551,21 +529,9 @@ Tail Output
 
 :   Displays output messages from the command execution as if you were
     running the Unix `tail -f` command on the output log file. 
-    By default, only the last 20 lines of output is displayed but this
-    can be expanded or reduced by pressing the "-" or "+" buttons. You
-    can also type in an exact number into the textfield.
     ![Ad hoc execution output](../figures/fig0208.png)
 
-Annotated
-
-:   The annotated mode displays the output messages in the order they
-    are received but labels the each line with the Node from which the
-    message originated. Through its additional controls each Node
-    context can be expanded to show the output it produced, or
-    completely collapsed to hide the textual detail.    
-    ![Annotated output](../figures/fig0209.png)
-
-Compact
+By Node
 
 :   Output messages are sorted into Node specific sections and are not
     interlaced. By default, the messages are collapsed but can be
@@ -576,8 +542,8 @@ Compact
 
 Sometimes it is useful to have a page where just the execution output
 is displayed separately. One purpose is to share a link to others 
-interested in following the output messages. Click the "output >>"
-link in the "Now running" section to go to the execution follow page.
+interested in following the output messages. Click the "Show >>"
+link in the "Activity" section to go to the execution follow page.
 
 Also, notice the URL in the location bar of your browser. This URL can
 be shared to others interested in the progress of execution. The URL
@@ -594,7 +560,7 @@ After execution completes, the command will have a status:
   Failed Nodes..." in case you would like to retry the command.
 
 You can download the entire output as a text file from this
-page. Press the "Download" link to retrieve the file to your desk top.
+page. Press the "Download" link to retrieve the file to your desktop.
 
 ### Controlling command execution
 
@@ -652,7 +618,7 @@ failed:
 
 By default, commands or scripts executed on the command line by `dispatch` are
 queued as temporary jobs in Rundeck. The `dispatch` command
-is equivalent to a "Run and Forget" action in the graphical console.
+is equivalent to a "Run and Forget".
 
 The script below is a long running check that will conduct a check periodically
 waiting a set time between each pass. The script can be run with or without
@@ -689,9 +655,8 @@ dash):
 
 ### Tracking execution
 
-Queued ad-hoc command and temporary or saved Job executions can be
-tracked from the "Run" page in the "[Now Running](rundeck-basics.html#now-running)" area at the top of
-the page.
+Queued ad-hoc command and Job executions can be
+tracked from the "Activity" page.
 
 Execution can also be tracked using the [rd-queue](../manpages/man1/rd-queue.html) shell tool.
 
@@ -752,56 +717,55 @@ Two plugin files are included with the default Rundeck installation for your use
 * [Stub plugin](plugins.html#stub-plugin): simply prints the command or script instead of running it.
 * [Script plugin](plugins.html#script-plugin): executes an external script file to perform the command, useful for developing your own plugin with the [Script Plugin Development](../developer/plugin-development.html#script-plugin-development) model.
 
-## History
+## Activity
 
 History for queued ad-hoc commands, as well as, 
 Job executions  is stored by the Rundeck server. History data
-can be filtered and viewed inside the "History" page.
+can be filtered and viewed inside the "Activity" page.
 
-![History page](../figures/fig0211.png)
+![Activity page](../figures/fig0211.png)
 
-### Filtering event history
+### Filtering Activity
 
-By default, the History page will list history for the 8
-executions. The page contains a filter control that can be used to
+By default, the Activity page will list running executions and history 
+recent executions. The page contains a filter control that can be used to
 expand or limit the executions.
 
 The filter form contains a number of fields to limit search:
 
 * Within: Time range. Choices include 1 day, 1 week, 1 month or other
   (given a start after/before to ended after/before).
-* Name: Job title name.
-* Project: Project name. This may be set if the project menu was used.
+* Job Name: Job title name.
 * User: User initiating action.
-* Summary: Message text.
+* Ad hoc command: Command typed into the command bar or via `dispatch`.
 * Result: Success or failure status.
 
 ![History filter form](../figures/fig0212.png)
 
 After filling the form pressing the "Filter" button, the page will
-display events matching the search.
+display executions matching the search.
 
 Filters can be saved to a menu that makes repeating searches more
 convenient. Click the "save this filter..." link to save the filter
 configuration.
 
-### Event view
+### Execution listings
 
-History for each execution contains the command(s) executed,
-dispatcher options, success status and a link to a file containing all
+Information for each execution contains the command or Job executed,
+options, success status and a link to a file containing all
 the output messages.
 
-![Event view](../figures/fig0213.png)
+![Execution view](../figures/fig0213.png)
 
 If any errors occurred, the "Node Failure Count" column will show
 the number of nodes in red text. A bar chart indicates the percent
 failed.
 
-![Event view](../figures/fig0216.png)
+![Execution view](../figures/fig0216.png)
 
 ### RSS link
 
-An RSS icon provides a link to an RSS view of the events that match
+If configured, an RSS icon provides a link to an RSS view of the events that match
 the current filtering criteria.
 
 ![RSS link](../figures/fig0214.png)

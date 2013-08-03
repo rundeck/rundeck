@@ -27,10 +27,10 @@ Already itching to install it? Jump ahead to
 ### Who makes the Rundeck software?
 
 Rundeck is developed on GitHub as a project called
-[dtolabs/rundeck](https://github.com/dtolabs/rundeck).
-Many ideas for Rundeck come from [DTO Solutions](http://www.dtosolutions.com)
-consultants working in the field, however all are welcome to join the project
-and contribute.
+[dtolabs/rundeck](https://github.com/dtolabs/rundeck)
+by [SimplifyOps](http://simplifyops.com) and the Rundeck community.
+All new users are welcomed to participate in the project and contribute.
+Please vote on feature ideas on the [Rundeck Trello Board](https://trello.com/b/sn3g9nOr/rundeck-development).
 
 Rundeck is free software and is public under the [Apache Software License].
 
