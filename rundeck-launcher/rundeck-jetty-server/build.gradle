@@ -17,6 +17,8 @@ dependencies {
         [group: 'org.mortbay.jetty', name: 'jetty-util', version: jettyVersion,ext:'jar'],
         [group: 'org.mortbay.jetty', name: 'jetty-plus', version: jettyVersion,ext:'jar'],
         [group: 'org.kohsuke', name:'libpam4j', version:'1.5', ext:'jar']
+        // This is in httpcomponents 4+ but stuck on 3.x for now.
+        [group: 'ca.juliusdavies', name: 'not-yet-commons-ssl', version: '0.3.11', ext: 'jar'],
     )
     runtime(
         [group: 'org.mortbay.jetty', name: 'servlet-api', version: '2.5-20081211',ext:'jar'],
