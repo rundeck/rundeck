@@ -503,6 +503,41 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
         }
     }
 
+    public void testDoValidateScheduledWithNotifications() {
+        def testService = new ScheduledExecutionService()
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.existsFrameworkProject { project, framework ->
+            assertEquals 'testProject', project
+            return true
+        }
+        fwkControl.demand.isClusterModeEnabled {->
+            return false
+        }
+        testService.frameworkService = fwkControl.createMock()
+
+        def crontabString = '0 0 2 ? 12 1975'
+        def params = [jobName: 'monkey1', project: 'testProject', description: 'blah',
+                scheduled: true, crontabString: crontabString, useCrontabString: 'true',
+                workflow:new Workflow(commands: [new CommandExec(adhocRemoteString: 'asdf')]),
+                notifications: [[eventTrigger: 'onsuccess', type: 'email', content: 'c@example.com,d@example.com']]
+        ]
+        def results = testService._dovalidate(params, 'test', 'test', null)
+
+        assertTrue(results.failed)
+        assertNotNull(results.scheduledExecution)
+        assertTrue(results.scheduledExecution instanceof ScheduledExecution)
+        final ScheduledExecution execution = results.scheduledExecution
+        assertNotNull(execution)
+        assertNotNull(execution.errors)
+
+        assertTrue(execution.errors.hasErrors())
+        assertTrue(execution.errors.hasFieldErrors('crontabString'))
+        assertNotNull execution.workflow
+        assertNotNull execution.workflow.commands
+        assertEquals 1, execution.workflow.commands.size()
+    }
+
     public void testDoValidateAdhoc() {
         def testService = new ScheduledExecutionService()
 
@@ -2184,562 +2219,199 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
     }
 
 
-    public void testDoUpdateScheduled() {
-        if (true) {//test set scheduled with crontabString
-            def sec = new ScheduledExecutionService()
-            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand')
-            se.save()
+    public void testDoUpdateScheduledOk() {
+        //test set scheduled with crontabString
+        LinkedHashMap<String, Object> results = assertUpdateCrontabSuccess('0 21 */4 */4 */6 ? 2010-2040')
+        final ScheduledExecution execution = results.scheduledExecution
+        assertEquals '0', execution.seconds
+        assertEquals '21', execution.minute
+        assertEquals '*/4', execution.hour
+        assertEquals '*/4', execution.dayOfMonth
+        assertEquals '*/6', execution.month
+        assertEquals '?', execution.dayOfWeek
+        assertEquals '2010-2040', execution.year
+        assertTrue execution.userRoles.contains('userrole')
+        assertTrue execution.userRoles.contains('test')
 
-            assertNotNull se.id
-            assertFalse se.scheduled
+    }
 
-            //try to do update of the ScheduledExecution
-            def fwkControl = mockFor(FrameworkService, true)
-            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
-            fwkControl.demand.existsFrameworkProject {project, framework ->
-                assertEquals 'testProject', project
-                return true
-            }
-            fwkControl.demand.getCommand {project, type, command, framework ->
-                assertEquals 'testProject', project
-                assertEquals 'aType', type
-                assertEquals 'aCommand', command
-                return null
-            }
-            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
-            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
-            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
-            fwkControl.demand.getRundeckBase {'test-base'}
-            sec.frameworkService = fwkControl.createMock()
-            sec.frameworkService.metaClass.isClusterModeEnabled={
-                return false
-            }
-//            def sesControl = mockFor(ScheduledExecutionService, true)
-//            sesControl.demand.getByIDorUUID {id -> return se }
-//            sesControl.demand.scheduleJob {schedEx, oldname, oldgroup ->
-//                //scheduledExecution, renamed ? oldjobname : null, renamed ? oldjobgroup : null
-//                assertNotNull(schedEx)
-//            }
-//            sec.scheduledExecutionService = sesControl.createMock()
-//            sec.metaClass.scheduleJob= {schedEx, oldname, oldgroup ->
-                //scheduledExecution, renamed ? oldjobname : null, renamed ? oldjobgroup : null
-//                assertNotNull(schedEx)
-//            }
+    public void testDoUpdateScheduledInvalidDayOfMonth() {
+        //test set scheduled with invalid crontabString (invalid dayOfMonth/dayOfWeek combo)
+        def results = assertUpdateCrontabFailure('0 21 */4 */4 */6 3 2010-2040')
 
-            def qtzControl = mockFor(FakeScheduler, true)
-            qtzControl.demand.getJobNames{name->[]}
-            qtzControl.demand.scheduleJob{jobDetail,trigger-> new Date()}
-            sec.quartzScheduler=qtzControl.createMock()
-//            final subject = new Subject()
-//            subject.principals << new Username('test')
-//            ['userrole', 'test'].each { group ->
-//                subject.principals << new Group(group);
-//            }
-            //sec.request.setAttribute("subject", subject)
-            def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand', scheduled: true, crontabString: '0 21 */4 */4 */6 ? 2010-2040', useCrontabString: 'true']
-            def results = sec._doupdate(params,'test','userrole,test',null)
-            def succeeded = results.success
-            def scheduledExecution = results.scheduledExecution
-            if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
-                scheduledExecution.errors.allErrors.each {
-                    System.err.println(it);
-                }
-            }
-            assertTrue succeeded
-            assertNotNull(scheduledExecution)
-            assertTrue(scheduledExecution instanceof ScheduledExecution)
-            final ScheduledExecution execution = scheduledExecution
-            assertNotNull(execution)
-            assertNotNull(execution.errors)
-            assertFalse(execution.errors.hasErrors())
-            assertTrue execution.scheduled
-            assertEquals '0', execution.seconds
-            assertEquals '21', execution.minute
-            assertEquals '*/4', execution.hour
-            assertEquals '*/4', execution.dayOfMonth
-            assertEquals '*/6', execution.month
-            assertEquals '?', execution.dayOfWeek
-            assertEquals '2010-2040', execution.year
-            assertTrue execution.userRoles.contains('userrole')
-            assertTrue execution.userRoles.contains('test')
+    }
+
+    public void testDoUpdateScheduledInvalidDayOfMonth2() {
+        //test set scheduled with invalid crontabString (invalid dayOfMonth/dayOfWeek combo, two ?)
+        def results = assertUpdateCrontabFailure('0 21 */4 ? */6 ? 2010-2040')
+
+    }
+
+    public void testDoUpdateScheduledInvalidYearChar() {
+        //test set scheduled with invalid crontabString (invalid year char)
+        def results = assertUpdateCrontabFailure('0 21 */4 */4 */6 ? z2010-2040')
+
+    }
+
+    public void testDoUpdateScheduledInvalidTooFewComponents() {
+        //test set scheduled with invalid crontabString  (too few components)
+        def results = assertUpdateCrontabFailure('0 21 */4 */4 */6')
+
+    }
+
+    public void testDoUpdateScheduledInvalidWrongSeconds() {
+    //test set scheduled with invalid crontabString  (wrong seconds value)
+            def results = assertUpdateCrontabFailure('70 21 */4 */4 */6 ?')
 
         }
-        if (true) {//test set scheduled with invalid crontabString (invalid dayOfMonth/dayOfWeek combo)
-            def sec = new ScheduledExecutionService()
-            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand')
-            se.save()
 
-            assertNotNull se.id
-            assertFalse se.scheduled
+    public void testDoUpdateScheduledInvalidWrongMinutes() {
+        //test set scheduled with invalid crontabString  (wrong minutes value)
+        def results = assertUpdateCrontabFailure('0 70 */4 */4 */6 ?')
 
-            //try to do update of the ScheduledExecution
-            def fwkControl = mockFor(FrameworkService, true)
-            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
-            fwkControl.demand.existsFrameworkProject {project, framework ->
-                assertEquals 'testProject', project
-                return true
-            }
-            fwkControl.demand.getCommand {project, type, command, framework ->
-                assertEquals 'testProject', project
-                assertEquals 'aType', type
-                assertEquals 'aCommand', command
-                return null
-            }
-            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
-            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
-            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
-            sec.frameworkService = fwkControl.createMock()
-            sec.frameworkService.metaClass.isClusterModeEnabled = {
-                return false
-            }
-//            def sesControl = mockFor(ScheduledExecutionService, true)
-//            sesControl.demand.getByIDorUUID {id -> return se }
-//            sesControl.demand.scheduleJob {schedEx, oldname, oldgroup ->
-                //scheduledExecution, renamed ? oldjobname : null, renamed ? oldjobgroup : null
-//                assertNotNull(schedEx)
-//            }
-//            sec.scheduledExecutionService = sesControl.createMock()
+    }
 
-            def params = [id: se.id.toString(), scheduled: true, crontabString: '0 21 */4 */4 */6 3 2010-2040', useCrontabString: 'true', jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand']
-            def results = sec._doupdate(params,'test','test',null)
-            def succeeded = results.success
-            def scheduledExecution = results.scheduledExecution
-            if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
-                scheduledExecution.errors.allErrors.each {
-                    System.err.println(it);
-                }
-            }
-            assertFalse succeeded
-            assertTrue scheduledExecution.errors.hasErrors()
-            assertTrue scheduledExecution.errors.hasFieldErrors('crontabString')
+    public void testDoUpdateScheduledInvalidWrongHour() {
+        //test set scheduled with invalid crontabString  (wrong hour value)
+        def results = assertUpdateCrontabFailure('0 0 25 */4 */6 ?')
+
+    }
+
+    public void testDoUpdateScheduledInvalidWrongDayOfMonth() {
+    //test set scheduled with invalid crontabString  (wrong day of month value)
+            def results = assertUpdateCrontabFailure('0 0 2 32 */6 ?')
 
         }
-        if (true) {//test set scheduled with invalid crontabString (invalid dayOfMonth/dayOfWeek combo, two ?)
-            def sec = new ScheduledExecutionService()
-            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand')
-            se.save()
 
-            assertNotNull se.id
-            assertFalse se.scheduled
+    public void testDoUpdateScheduledInvalidWrongMonth() {
+        //test set scheduled with invalid crontabString  (wrong month value)
+        def results = assertUpdateCrontabFailure('0 0 2 3 13 ?')
 
-            //try to do update of the ScheduledExecution
-            def fwkControl = mockFor(FrameworkService, true)
-            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
-            fwkControl.demand.existsFrameworkProject {project, framework ->
-                assertEquals 'testProject', project
-                return true
-            }
-            fwkControl.demand.getCommand {project, type, command, framework ->
-                assertEquals 'testProject', project
-                assertEquals 'aType', type
-                assertEquals 'aCommand', command
-                return null
-            }
-            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
-            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
-            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
-            sec.frameworkService = fwkControl.createMock()
-            sec.frameworkService.metaClass.isClusterModeEnabled = {
-                return false
-            }
-//            def sesControl = mockFor(ScheduledExecutionService, true)
-//            sesControl.demand.getByIDorUUID {id -> return se }
-//            sesControl.demand.scheduleJob {schedEx, oldname, oldgroup ->
-                //scheduledExecution, renamed ? oldjobname : null, renamed ? oldjobgroup : null
-//                assertNotNull(schedEx)
-//            }
-//            sec.scheduledExecutionService = sesControl.createMock()
+    }
 
-            def params = [id: se.id.toString(), scheduled: true, crontabString: '0 21 */4 ? */6 ? 2010-2040', useCrontabString: 'true', jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand']
-            def results = sec._doupdate(params,'test','test',null)
-            def succeeded = results.success
-            def scheduledExecution = results.scheduledExecution
-            if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
-                scheduledExecution.errors.allErrors.each {
-                    System.err.println(it);
-                }
-            }
-            assertFalse succeeded
-            assertTrue scheduledExecution.errors.hasErrors()
-            assertTrue scheduledExecution.errors.hasFieldErrors('crontabString')
+    public void testDoUpdateScheduledInvalidWrongDayOfWeek() {
+        //test set scheduled with invalid crontabString  (wrong day of week value)
+        def results = assertUpdateCrontabFailure('0 0 2 ? 12 8')
+    }
 
+    public void testDoUpdateScheduledInvalidTriggerInPast() {
+
+        //test set scheduled with invalid crontabString  will not fire in future
+        def results = assertUpdateCrontabFailure('0 0 2 ? 12 1975')
+
+    }
+    public void testDoUpdateScheduledInvalidTriggerInPastNotification() {
+
+        //test set scheduled with invalid crontabString  will not fire in future
+        LinkedHashMap<String, Object> results = assertUpdateCrontabFailure('0 0 2 ? 12 1975'){ScheduledExecution se->
+            def na1 = new Notification(eventTrigger: 'onsuccess', type: 'email', content: 'c@example.com,d@example.com')
+            def na2 = new Notification(eventTrigger: 'onfailure', type: 'email', content: 'monkey@example.com')
+            se.addToNotifications(na1)
+            se.addToNotifications(na2)
+            [notifications: [[eventTrigger: 'onsuccess', type: 'email', content: 'spaghetti@nowhere.com'], [eventTrigger: 'onfailure', type: 'email', content: 'milk@store.com']]]
         }
-        if (true) {//test set scheduled with invalid crontabString (invalid year char)
-            def sec = new ScheduledExecutionService()
-            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand')
-            se.save()
+        ScheduledExecution se = results.scheduledExecution
+        assertNotNull(se.notifications)
+        assertEquals(2,se.notifications.size())
 
-            assertNotNull se.id
-            assertFalse se.scheduled
+    }
 
-            //try to do update of the ScheduledExecution
-            def fwkControl = mockFor(FrameworkService, true)
-            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
-            fwkControl.demand.existsFrameworkProject {project, framework ->
-                assertEquals 'testProject', project
-                return true
-            }
-            fwkControl.demand.getCommand {project, type, command, framework ->
-                assertEquals 'testProject', project
-                assertEquals 'aType', type
-                assertEquals 'aCommand', command
-                return null
-            }
-            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
-            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
-            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
-            sec.frameworkService = fwkControl.createMock()
+    private LinkedHashMap<String, Object> assertUpdateCrontabSuccess(String crontabString) {
+        def sec = new ScheduledExecutionService()
+        def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah',
+                adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand')
+        se.save()
 
-            sec.frameworkService.metaClass.isClusterModeEnabled = {
-                return false
-            }
-//            def sesControl = mockFor(ScheduledExecutionService, true)
-//            sesControl.demand.getByIDorUUID {id -> return se }
-//            sec.scheduledExecutionService = sesControl.createMock()
+        assertNotNull se.id
+        assertFalse se.scheduled
 
-            def params = [id: se.id.toString(), scheduled: true, crontabString: '0 21 */4 */4 */6 ? z2010-2040', useCrontabString: 'true']
-            def results = sec._doupdate(params,'test','test',null)
-            def succeeded = results.success
-            def scheduledExecution = results.scheduledExecution
-            if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
-                scheduledExecution.errors.allErrors.each {
-                    System.err.println(it);
-                }
-            }
-            assertFalse succeeded
-            assertTrue scheduledExecution.errors.hasErrors()
-            assertTrue scheduledExecution.errors.hasFieldErrors('crontabString')
-
+        //try to do update of the ScheduledExecution
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.existsFrameworkProject { project, framework ->
+            assertEquals 'testProject', project
+            return true
         }
-        if (true) {//test set scheduled with invalid crontabString  (too few components)
-            def sec = new ScheduledExecutionService()
-            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand')
-            se.save()
-
-            assertNotNull se.id
-            assertFalse se.scheduled
-
-            //try to do update of the ScheduledExecution
-            def fwkControl = mockFor(FrameworkService, true)
-            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
-            fwkControl.demand.existsFrameworkProject {project, framework ->
-                assertEquals 'testProject', project
-                return true
-            }
-            fwkControl.demand.getCommand {project, type, command, framework ->
-                assertEquals 'testProject', project
-                assertEquals 'aType', type
-                assertEquals 'aCommand', command
-                return null
-            }
-            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
-            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
-            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
-            sec.frameworkService = fwkControl.createMock()
-            sec.frameworkService.metaClass.isClusterModeEnabled = {
-                return false
-            }
-
-//            def sesControl = mockFor(ScheduledExecutionService, true)
-//            sesControl.demand.getByIDorUUID {id -> return se }
-//            sec.scheduledExecutionService = sesControl.createMock()
-
-            def params = [id: se.id.toString(), scheduled: true, crontabString: '0 21 */4 */4 */6', useCrontabString: 'true', jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand']
-            def results = sec._doupdate(params,'test','test',null)
-            def succeeded = results.success
-            def scheduledExecution = results.scheduledExecution
-            if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
-                scheduledExecution.errors.allErrors.each {
-                    System.err.println(it);
-                }
-            }
-            assertFalse succeeded
-            assertTrue scheduledExecution.errors.hasErrors()
-            assertTrue scheduledExecution.errors.hasFieldErrors('crontabString')
-
+        fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.getRundeckBase { 'test-base' }
+        sec.frameworkService = fwkControl.createMock()
+        sec.frameworkService.metaClass.isClusterModeEnabled = {
+            return false
         }
-        if (true) {//test set scheduled with invalid crontabString  (wrong seconds value)
-            def sec = new ScheduledExecutionService()
-            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand')
-            se.save()
 
-            assertNotNull se.id
-            assertFalse se.scheduled
-
-            //try to do update of the ScheduledExecution
-            def fwkControl = mockFor(FrameworkService, true)
-            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
-            fwkControl.demand.existsFrameworkProject {project, framework ->
-                assertEquals 'testProject', project
-                return true
+        def qtzControl = mockFor(FakeScheduler, true)
+        qtzControl.demand.getJobNames { name -> [] }
+        qtzControl.demand.scheduleJob { jobDetail, trigger -> new Date() }
+        sec.quartzScheduler = qtzControl.createMock()
+        def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah',
+                adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand', scheduled: true,
+                crontabString: crontabString, useCrontabString: 'true']
+        def results = sec._doupdate(params, 'test', 'userrole,test', null)
+        def succeeded = results.success
+        def scheduledExecution = results.scheduledExecution
+        if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
+            scheduledExecution.errors.allErrors.each {
+                System.err.println(it);
             }
-            fwkControl.demand.getCommand {project, type, command, framework ->
-                assertEquals 'testProject', project
-                assertEquals 'aType', type
-                assertEquals 'aCommand', command
-                return null
-            }
-            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
-            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
-            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
-            sec.frameworkService = fwkControl.createMock()
-
-            sec.frameworkService.metaClass.isClusterModeEnabled = {
-                return false
-            }
-//            def sesControl = mockFor(ScheduledExecutionService, true)
-//            sesControl.demand.getByIDorUUID {id -> return se }
-//            sec.scheduledExecutionService = sesControl.createMock()
-
-            def params = [id: se.id.toString(), scheduled: true, crontabString: '70 21 */4 */4 */6 ?', useCrontabString: 'true', jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand']
-            def results = sec._doupdate(params,'test','test',null)
-            def succeeded = results.success
-            def scheduledExecution = results.scheduledExecution
-            if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
-                scheduledExecution.errors.allErrors.each {
-                    System.err.println(it);
-                }
-            }
-            assertFalse succeeded
-            assertTrue scheduledExecution.errors.hasErrors()
-            assertTrue scheduledExecution.errors.hasFieldErrors('crontabString')
-
         }
-        if (true) {//test set scheduled with invalid crontabString  (wrong minutes value)
-            def sec = new ScheduledExecutionService()
-            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand')
-            se.save()
+        assertTrue succeeded
+        assertNotNull(scheduledExecution)
+        assertTrue(scheduledExecution instanceof ScheduledExecution)
+        final ScheduledExecution execution = scheduledExecution
+        assertNotNull(execution)
+        assertNotNull(execution.errors)
+        assertFalse(execution.errors.hasErrors())
+        assertTrue execution.scheduled
+        results
+    }
 
-            assertNotNull se.id
-            assertFalse se.scheduled
 
-            //try to do update of the ScheduledExecution
-            def fwkControl = mockFor(FrameworkService, true)
-            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
-            fwkControl.demand.existsFrameworkProject {project, framework ->
-                assertEquals 'testProject', project
-                return true
-            }
-            fwkControl.demand.getCommand {project, type, command, framework ->
-                assertEquals 'testProject', project
-                assertEquals 'aType', type
-                assertEquals 'aCommand', command
-                return null
-            }
-            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
-            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
-            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
-            sec.frameworkService = fwkControl.createMock()
-
-            sec.frameworkService.metaClass.isClusterModeEnabled = {
-                return false
-            }
-//            def sesControl = mockFor(ScheduledExecutionService, true)
-//            sesControl.demand.getByIDorUUID {id -> return se }
-//            sec.scheduledExecutionService = sesControl.createMock()
-
-            def params = [id: se.id.toString(), scheduled: true, crontabString: '0 70 */4 */4 */6 ?', useCrontabString: 'true', jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand']
-            def results = sec._doupdate(params,'test','test',null)
-            def succeeded = results.success
-            def scheduledExecution = results.scheduledExecution
-            if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
-                scheduledExecution.errors.allErrors.each {
-                    System.err.println(it);
-                }
-            }
-            assertFalse succeeded
-            assertTrue scheduledExecution.errors.hasErrors()
-            assertTrue scheduledExecution.errors.hasFieldErrors('crontabString')
-
+    private LinkedHashMap<String, Object> assertUpdateCrontabFailure(String crontabString,Closure jobConfigure=null) {
+        def sec = new ScheduledExecutionService()
+        def jobMap=[jobName: 'monkey1', project: 'testProject', description: 'blah',]
+        def se = new ScheduledExecution(jobMap)
+        def extraParams=[:]
+        if(jobConfigure){
+            extraParams=jobConfigure.call(se)
         }
-        if (true) {//test set scheduled with invalid crontabString  (wrong hour value)
-            def sec = new ScheduledExecutionService()
-            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand')
-            se.save()
+        assertNotNull se.save()
 
-            assertNotNull se.id
-            assertFalse se.scheduled
+        assertNotNull se.id
+        assertFalse se.scheduled
 
-            //try to do update of the ScheduledExecution
-            def fwkControl = mockFor(FrameworkService, true)
-            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
-            fwkControl.demand.existsFrameworkProject {project, framework ->
-                assertEquals 'testProject', project
-                return true
-            }
-            fwkControl.demand.getCommand {project, type, command, framework ->
-                assertEquals 'testProject', project
-                assertEquals 'aType', type
-                assertEquals 'aCommand', command
-                return null
-            }
-            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
-            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
-            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
-            sec.frameworkService = fwkControl.createMock()
-
-            sec.frameworkService.metaClass.isClusterModeEnabled = {
-                return false
-            }
-//            def sesControl = mockFor(ScheduledExecutionService, true)
-//            sesControl.demand.getByIDorUUID {id -> return se }
-//            sec.scheduledExecutionService = sesControl.createMock()
-
-            def params = [id: se.id.toString(), scheduled: true, crontabString: '0 0 25 */4 */6 ?', useCrontabString: 'true', jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand']
-            def results = sec._doupdate(params,'test','test',null)
-            def succeeded = results.success
-            def scheduledExecution = results.scheduledExecution
-            if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
-                scheduledExecution.errors.allErrors.each {
-                    System.err.println(it);
-                }
-            }
-            assertFalse succeeded
-            assertTrue scheduledExecution.errors.hasErrors()
-            assertTrue scheduledExecution.errors.hasFieldErrors('crontabString')
-
+        //try to do update of the ScheduledExecution
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.existsFrameworkProject { project, framework ->
+            assertEquals 'testProject', project
+            return true
         }
-        if (true) {//test set scheduled with invalid crontabString  (wrong day of month value)
-            def sec = new ScheduledExecutionService()
-            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand')
-            se.save()
+        fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        sec.frameworkService = fwkControl.createMock()
 
-            assertNotNull se.id
-            assertFalse se.scheduled
-
-            //try to do update of the ScheduledExecution
-            def fwkControl = mockFor(FrameworkService, true)
-            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
-            fwkControl.demand.existsFrameworkProject {project, framework ->
-                assertEquals 'testProject', project
-                return true
-            }
-            fwkControl.demand.getCommand {project, type, command, framework ->
-                assertEquals 'testProject', project
-                assertEquals 'aType', type
-                assertEquals 'aCommand', command
-                return null
-            }
-            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
-            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
-            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
-            sec.frameworkService = fwkControl.createMock()
-
-            sec.frameworkService.metaClass.isClusterModeEnabled = {
-                return false
-            }
-//            def sesControl = mockFor(ScheduledExecutionService, true)
-//            sesControl.demand.getByIDorUUID {id -> return se }
-//            sec.scheduledExecutionService = sesControl.createMock()
-
-            def params = [id: se.id.toString(), scheduled: true, crontabString: '0 0 2 32 */6 ?', useCrontabString: 'true', jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand']
-            def results = sec._doupdate(params,'test','test',null)
-            def succeeded = results.success
-            def scheduledExecution = results.scheduledExecution
-            if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
-                scheduledExecution.errors.allErrors.each {
-                    System.err.println(it);
-                }
-            }
-            assertFalse succeeded
-            assertTrue scheduledExecution.errors.hasErrors()
-            assertTrue scheduledExecution.errors.hasFieldErrors('crontabString')
-
+        sec.frameworkService.metaClass.isClusterModeEnabled = {
+            return false
         }
-        if (true) {//test set scheduled with invalid crontabString  (wrong month value)
-            def sec = new ScheduledExecutionService()
-            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand')
-            se.save()
 
-            assertNotNull se.id
-            assertFalse se.scheduled
+        def params = [id: se.id.toString(), scheduled: true, crontabString: crontabString, useCrontabString: 'true', jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: false, ]
+        def results = sec._doupdate(params + (extraParams?:[:]), 'test', 'test', null)
 
-            //try to do update of the ScheduledExecution
-            def fwkControl = mockFor(FrameworkService, true)
-            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
-            fwkControl.demand.existsFrameworkProject {project, framework ->
-                assertEquals 'testProject', project
-                return true
+        def succeeded = results.success
+        def scheduledExecution = results.scheduledExecution
+        if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
+            scheduledExecution.errors.allErrors.each {
+                System.err.println(it);
             }
-            fwkControl.demand.getCommand {project, type, command, framework ->
-                assertEquals 'testProject', project
-                assertEquals 'aType', type
-                assertEquals 'aCommand', command
-                return null
-            }
-            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
-            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
-            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
-            sec.frameworkService = fwkControl.createMock()
-
-            sec.frameworkService.metaClass.isClusterModeEnabled = {
-                return false
-            }
-//            def sesControl = mockFor(ScheduledExecutionService, true)
-//            sesControl.demand.getByIDorUUID {id -> return se }
-//            sec.scheduledExecutionService = sesControl.createMock()
-
-            def params = [id: se.id.toString(), scheduled: true, crontabString: '0 0 2 3 13 ?', useCrontabString: 'true', jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand']
-            def results = sec._doupdate(params,'test','test',null)
-            def succeeded = results.success
-            def scheduledExecution = results.scheduledExecution
-            if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
-                scheduledExecution.errors.allErrors.each {
-                    System.err.println(it);
-                }
-            }
-            assertFalse succeeded
-            assertTrue scheduledExecution.errors.hasErrors()
-            assertTrue scheduledExecution.errors.hasFieldErrors('crontabString')
-
         }
-        if (true) {//test set scheduled with invalid crontabString  (wrong day of week value)
-            def sec = new ScheduledExecutionService()
-            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand')
-            se.save()
+        assertFalse succeeded
+        assertTrue scheduledExecution.errors.hasErrors()
+        assertTrue scheduledExecution.errors.hasFieldErrors('crontabString')
 
-            assertNotNull se.id
-            assertFalse se.scheduled
-
-            //try to do update of the ScheduledExecution
-            def fwkControl = mockFor(FrameworkService, true)
-            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
-            fwkControl.demand.existsFrameworkProject {project, framework ->
-                assertEquals 'testProject', project
-                return true
-            }
-            fwkControl.demand.getCommand {project, type, command, framework ->
-                assertEquals 'testProject', project
-                assertEquals 'aType', type
-                assertEquals 'aCommand', command
-                return null
-            }
-            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
-            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
-            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
-            sec.frameworkService = fwkControl.createMock()
-
-            sec.frameworkService.metaClass.isClusterModeEnabled = {
-                return false
-            }
-//            def sesControl = mockFor(ScheduledExecutionService, true)
-//            sesControl.demand.getByIDorUUID {id -> return se }
-//            sec.scheduledExecutionService = sesControl.createMock()
-
-            def params = [id: se.id.toString(), scheduled: true, crontabString: '0 0 2 ? 12 8', useCrontabString: 'true', jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand']
-            def results = sec._doupdate(params,'test','test',null)
-            def succeeded = results.success
-            def scheduledExecution = results.scheduledExecution
-            if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
-                scheduledExecution.errors.allErrors.each {
-                    System.err.println(it);
-                }
-            }
-            assertFalse succeeded
-            assertTrue scheduledExecution.errors.hasErrors()
-            assertTrue scheduledExecution.errors.hasFieldErrors('crontabString')
-
-        }
+        results
     }
 
     public void testDoUpdateClusterModeNotEnabledShouldNotSetServerUUID() {
@@ -4414,7 +4086,8 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
 //            sesControl.demand.getByIDorUUID {id -> return se }
 //            sec.scheduledExecutionService = sesControl.createMock()
 
-            def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: true, adhocRemoteString: 'test command',
+            def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah',
+                    adhocExecution: true, adhocRemoteString: 'test command',
                     notifications: [[eventTrigger: 'onsuccess', type: 'email', content: 'spaghetti@nowhere.com'], [eventTrigger: 'onfailure', type: 'email', content: 'milk@store.com']]
             ]
             def results = sec._doupdate(params,'test','test',null)

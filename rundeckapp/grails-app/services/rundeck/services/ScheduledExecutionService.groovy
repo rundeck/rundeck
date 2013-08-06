@@ -1283,7 +1283,9 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         if (params.notifications && 'false' != params.notified) {
             //create notifications
             def result = _updateNotificationsData(params, scheduledExecution)
-            failed=result.failed
+            if(result.failed){
+                failed = result.failed
+            }
             modifiednotifs=result.modified
         }
         //delete notifications that are not part of the modified set
@@ -1684,7 +1686,9 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         if (params.notifications) {
             //create notifications
             def result = _updateNotificationsData(params, scheduledExecution)
-            failed=result.failed
+            if (result.failed) {
+                failed = result.failed
+            }
             modifiednotifs=result.modified
         }
 
@@ -2122,7 +2126,9 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         if (params.notifications) {
             //create notifications
             def result = _updateNotificationsData(params, scheduledExecution)
-            failed=result.failed
+            if (result.failed) {
+                failed = result.failed
+            }
         }
         if (scheduledExecution.doNodedispatch) {
             if (       !scheduledExecution.nodeInclude
