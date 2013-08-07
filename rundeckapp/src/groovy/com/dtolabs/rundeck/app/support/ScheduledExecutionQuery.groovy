@@ -22,7 +22,7 @@ package com.dtolabs.rundeck.app.support
  * Created: Feb 12, 2010 1:02:43 PM
  * $Id$
  */
-
+@grails.validation.Validateable
 public class ScheduledExecutionQuery extends BaseQuery{
 
     String jobFilter

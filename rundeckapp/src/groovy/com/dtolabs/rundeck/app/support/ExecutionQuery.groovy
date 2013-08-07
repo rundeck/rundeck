@@ -26,6 +26,7 @@ import rundeck.controllers.ExecutionController
  * Created: 9/10/12 3:49 PM
  * 
  */
+@grails.validation.Validateable
 class ExecutionQuery extends ScheduledExecutionQuery{
 
     String statusFilter
