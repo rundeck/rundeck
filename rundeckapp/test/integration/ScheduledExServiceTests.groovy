@@ -2315,6 +2315,20 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
         assertEquals(2,se.notifications.size())
 
     }
+    public void testDoUpdateScheduledInvalidTriggerInPastRemoveNotification() {
+
+        //test set scheduled with invalid crontabString  will not fire in future
+        LinkedHashMap<String, Object> results = assertUpdateCrontabFailure('0 0 2 ? 12 1975'){ScheduledExecution se->
+            def na1 = new Notification(eventTrigger: 'onsuccess', type: 'email', content: 'c@example.com,d@example.com')
+            def na2 = new Notification(eventTrigger: 'onfailure', type: 'email', content: 'monkey@example.com')
+            se.addToNotifications(na1)
+            se.addToNotifications(na2)
+            [notified:'false']
+        }
+        ScheduledExecution se = results.scheduledExecution
+        assertNotNull(se.notifications)
+        assertEquals(2,se.notifications.size())
+    }
 
     private LinkedHashMap<String, Object> assertUpdateCrontabSuccess(String crontabString) {
         def sec = new ScheduledExecutionService()

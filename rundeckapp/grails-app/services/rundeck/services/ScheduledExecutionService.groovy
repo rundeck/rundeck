@@ -25,7 +25,7 @@ import java.text.SimpleDateFormat
  *  ScheduledExecutionService manages scheduling jobs with the Quartz scheduler
  */
 class ScheduledExecutionService /*implements ApplicationContextAware*/{
-    boolean transactional = false
+    boolean transactional = true
 
     def FrameworkService frameworkService
     def NotificationService notificationService
@@ -1296,10 +1296,13 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                     todelete << note
                 }
             }
-            todelete.each {
-                it.delete()
-                scheduledExecution.removeFromNotifications(it)
-                todiscard << it
+
+            if(!failed){
+                todelete.each {
+                    it.delete()
+                    scheduledExecution.removeFromNotifications(it)
+                    todiscard << it
+                }
             }
         }
 
@@ -1700,10 +1703,12 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                     todelete << note
                 }
             }
-            todelete.each {
-                it.delete()
-                scheduledExecution.removeFromNotifications(it)
-                todiscard << it
+            if(!failed){
+                todelete.each {
+                    it.delete()
+                    scheduledExecution.removeFromNotifications(it)
+                    todiscard << it
+                }
             }
         }
 
