@@ -1283,16 +1283,16 @@ class ScheduledExecutionController  {
         
         def fileformat = params.fileformat ?: 'xml'
         def parseresult
-        if(request instanceof MultipartHttpServletRequest){
+        if (params.xmlBatch) {
+            String fileContent = params.xmlBatch
+            parseresult = parseUploadedFile(fileContent, fileformat)
+        } else if(request instanceof MultipartHttpServletRequest){
             def file = request.getFile("xmlBatch")
             if (!file || file.empty) {
                 flash.message = "No file was uploaded."
                 return
             }
             parseresult = parseUploadedFile(file.getInputStream(), fileformat)
-        }else if(params.xmlBatch){
-            String fileContent=params.xmlBatch
-            parseresult = parseUploadedFile(fileContent, fileformat)
         }else{
             return
         }

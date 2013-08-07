@@ -477,7 +477,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         sec.scheduledExecutionService = mock2.createMock()
 
         def result = sec.upload()
-        assertNull sec.flash.message
+        assertEquals('No file was uploaded.',sec.flash.message)
         assertNull result
 
     }
@@ -513,10 +513,11 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
 
     public void testCopy(){
+        mockDomain(ScheduledExecution)
         def sec = new ScheduledExecutionController()
         if (true) {//test basic copy action
 
-            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand')
+            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2')
             se.save()
 
             assertNotNull se.id
