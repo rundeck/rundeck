@@ -1,4 +1,4 @@
-<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants; com.dtolabs.rundeck.core.plugins.configuration.Description; rundeck.ExecutionContext; rundeck.ScheduledExecution" %>
+<%@ page import="com.dtolabs.rundeck.app.support.ExecutionContext; com.dtolabs.rundeck.server.authorization.AuthConstants; com.dtolabs.rundeck.core.plugins.configuration.Description; rundeck.ScheduledExecution" %>
 <g:set var="rkey" value="${g.rkey()}"/>
 
 <table class="simpleForm execdetails">
@@ -47,7 +47,7 @@
         </tr>
     </g:if>
 
-    <g:if test="${execdata instanceof com.dtolabs.rundeck.app.support.ExecutionContext && execdata?.workflow}">
+    <g:if test="${execdata instanceof ExecutionContext && execdata?.workflow}">
         <g:unless test="${hideAdhoc}">
         <tr>
             <td>Workflow:</td>
