@@ -3,7 +3,7 @@ class WebrealmsGrailsPlugin {
     def DEFAULT_CONFIG_FILE = "DefaultWebrealmsConfig"
     def APP_CONFIG_FILE     = "WebrealmsConfig"
 
-    def version = 0.3
+    def version = 0.4
     def dependsOn = [:]
 
     // TODO Fill in these fields

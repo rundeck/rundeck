@@ -80,7 +80,9 @@ grails.project.dependency.resolution = {
 
     rundeckVersion = System.getProperty("RUNDECK_VERSION", appVersion)
     println "Application Version: ${rundeckVersion}"
-	
+    plugins {
+        runtime ':webrealms:0.4'
+    }
     dependencies {
         
         test 'org.yaml:snakeyaml:1.9', 'org.apache.ant:ant:1.7.1', 'org.apache.ant:ant-jsch:1.7.1', 
