@@ -105,7 +105,7 @@ task installDependencies(dependsOn: [project(":core").install, project(":rundeck
  */
 task installJettyPlugin(type: Exec, dependsOn: [extractGrails]) {
 
-    def jettyPluginVersion = '1.2-SNAPSHOT'
+    def jettyPluginVersion = '2.0.3'
 	def jettyPluginInstalled = "${System.properties['user.home']}/.grails/${grailsVersion}/projects/rundeckapp/plugins/jetty-${jettyPluginVersion}"
 	
 	outputs.dir file(jettyPluginInstalled)
