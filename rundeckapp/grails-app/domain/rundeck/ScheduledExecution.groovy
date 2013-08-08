@@ -81,6 +81,7 @@ class ScheduledExecution extends ExecutionContext {
                 return false
             }
         })
+        crontabString(bindable: true,nullable: true)
     }
 
     static mapping = {
