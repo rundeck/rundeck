@@ -13,6 +13,7 @@ import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils
 import rundeck.*
 import rundeck.controllers.EditOptsController
+import rundeck.controllers.JobXMLException
 import rundeck.controllers.WorkflowController
 import rundeck.quartzjobs.ExecutionJob
 
@@ -1819,7 +1820,44 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             return [success: false, scheduledExecution: scheduledExecution]
         }
     }
+    /**
+     * Parse some kind of job input request using the specified format
+     * @param input either an inputStream, a File, or a String
+     */
+    def parseUploadedFile (input, fileformat){
+        def jobset
+        if ('xml' == fileformat) {
+            try {
+                jobset = input.decodeJobsXML()
+            } catch (JobXMLException e) {
+                log.error("Error parsing upload Job XML: ${e}")
+                log.warn("Error parsing upload Job XML", e)
+                return [error: "${e}"]
+            } catch (Exception e) {
+                log.error("Error parsing upload Job XML", e)
+                return [error: "${e}"]
+            }
+        } else if ('yaml' == fileformat) {
 
+            try {
+                //load file into string
+                jobset = input.decodeJobsYAML()
+            } catch (JobXMLException e) {
+                log.error("Error parsing upload Job Yaml: ${e}")
+                log.warn("Error parsing upload Job Yaml", e)
+                return [error: "${e}"]
+            } catch (Exception e) {
+                log.error("Error parsing upload Job Yaml", e)
+                return [error: "${e}"]
+            }
+        } else {
+            return [errorCode: 'api.error.jobs.import.format.unsupported', args: [fileformat]]
+        }
+        if (null == jobset) {
+            return [errorCode: 'api.error.jobs.import.empty']
+        }
+        return [jobset: jobset]
+    }
     /**
      * Validate workflow command error handler types, return true if valid
      * @param workflow

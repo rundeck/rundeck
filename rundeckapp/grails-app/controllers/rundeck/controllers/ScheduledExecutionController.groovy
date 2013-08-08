@@ -1016,15 +1016,17 @@ class ScheduledExecutionController  {
                 flash.message = "No file was uploaded."
                 return
             }
-            parseresult = parseUploadedFile(file.getInputStream(), fileformat)
+            parseresult = scheduledExecutionService.parseUploadedFile(file.getInputStream(), fileformat)
         } else if (params.xmlBatch) {
             String fileContent = params.xmlBatch
-            parseresult = parseUploadedFile(fileContent, fileformat)
+            parseresult = scheduledExecutionService.parseUploadedFile(fileContent, fileformat)
         } else {
             return
         }
         def jobset
-
+        if (parseresult.errorCode) {
+            parseresult.error = message(code: parseresult.errorCode, args: parseresult.args)
+        }
         if (parseresult.error) {
             flash.error = parseresult.error
             if (params.xmlreq) {
@@ -1237,44 +1239,7 @@ class ScheduledExecutionController  {
                 notificationValidation:params['notificationValidation']
         ])
     }
-    /**
-     * Parse some kind of job input request using the specified format
-     * @param input either an inputStream, a File, or a String
-     */
-    private def parseUploadedFile={  input, fileformat->
-        def jobset
-        if('xml'==fileformat){
-            try{
-                jobset= input.decodeJobsXML()
-            } catch (JobXMLException e) {
-                log.error("Error parsing upload Job XML: ${e}")
-                log.warn("Error parsing upload Job XML", e)
-                return [error: "${e}"]
-            }catch(Exception e){
-                log.error("Error parsing upload Job XML",e)
-                return [error:"${e}"]
-            }
-        }else if ('yaml'==fileformat){
 
-            try{
-                //load file into string
-                jobset = input.decodeJobsYAML()
-            } catch (JobXMLException e) {
-                log.error("Error parsing upload Job Yaml: ${e}")
-                log.warn("Error parsing upload Job Yaml", e)
-                return [error: "${e}"]
-            }catch (Exception e){
-                log.error("Error parsing upload Job Yaml", e)
-                return [error:"${e}"]
-            }
-        }else{
-            return [error:g.message(code:'api.error.jobs.import.format.unsupported',args:[fileformat])]
-        }
-        if(null==jobset){
-            return [error:g.message(code:'api.error.jobs.import.empty')]
-        }
-        return [jobset:jobset]
-    }
 
     def upload ={
         log.debug("ScheduledExecutionController: upload " + params)
@@ -1285,19 +1250,21 @@ class ScheduledExecutionController  {
         def parseresult
         if (params.xmlBatch) {
             String fileContent = params.xmlBatch
-            parseresult = parseUploadedFile(fileContent, fileformat)
+            parseresult = scheduledExecutionService.parseUploadedFile(fileContent, fileformat)
         } else if(request instanceof MultipartHttpServletRequest){
             def file = request.getFile("xmlBatch")
             if (!file || file.empty) {
                 flash.message = "No file was uploaded."
                 return
             }
-            parseresult = parseUploadedFile(file.getInputStream(), fileformat)
+            parseresult = scheduledExecutionService.parseUploadedFile(file.getInputStream(), fileformat)
         }else{
             return
         }
         def jobset
-
+        if(parseresult.errorCode){
+            parseresult.error=message(code:parseresult.errorCode,args:parseresult.args)
+        }
         if(parseresult.error){
             if(params.xmlreq){
                 flash.error = parseresult.error
@@ -1768,13 +1735,16 @@ class ScheduledExecutionController  {
                 flash.errorCode = "api.error.jobs.import.missing-file"
                 return chain(controller: 'api', action: 'renderError')
             }
-            parseresult = parseUploadedFile(file.getInputStream(), fileformat)
+            parseresult = scheduledExecutionService.parseUploadedFile(file.getInputStream(), fileformat)
         }else if (params.xmlBatch) {
             String fileContent = params.xmlBatch
-            parseresult = parseUploadedFile(fileContent, fileformat)
+            parseresult = scheduledExecutionService.parseUploadedFile(fileContent, fileformat)
         }else{
             flash.errorCode = "api.error.jobs.import.missing-file"
             return chain(controller: 'api', action: 'renderError')
+        }
+        if (parseresult.errorCode) {
+            parseresult.error = message(code: parseresult.errorCode, args: parseresult.args)
         }
 
         if (parseresult.error) {
