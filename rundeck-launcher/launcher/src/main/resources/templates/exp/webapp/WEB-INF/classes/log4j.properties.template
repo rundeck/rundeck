@@ -16,6 +16,10 @@ log4j.additivity.com.dtolabs.rundeck.remoteservice.http.options=false
 log4j.logger.com.dtolabs.rundeck.data.jobs.changes=INFO, jobchanges
 log4j.additivity.com.dtolabs.rundeck.data.jobs.changes=false
 
+# Enable API request logging
+log4j.logger.org.rundeck.api.requests=INFO,apirequests
+log4j.additivity.org.rundeck.api.requests=false
+
 # Enable this logger to log Hibernate output
 # handy to see its database interaction activity
 #log4j.logger.org.hibernate=debug,stdout
@@ -89,3 +93,14 @@ log4j.appender.jobchanges.file=${rundeck.log.dir}/rundeck.jobs.log
 log4j.appender.jobchanges.append=true
 log4j.appender.jobchanges.layout=org.apache.log4j.PatternLayout
 log4j.appender.jobchanges.layout.ConversionPattern=${logger.jobchanges.format}
+
+#
+# api request log
+#
+# Logs all API requests
+#
+log4j.appender.apirequests=org.apache.log4j.DailyRollingFileAppender
+log4j.appender.apirequests.file=${rundeck.log.dir}/rundeck.api.log
+log4j.appender.apirequests.append=true
+log4j.appender.apirequests.layout=org.apache.log4j.PatternLayout
+log4j.appender.apirequests.layout.ConversionPattern=${logger.apirequests.format}
