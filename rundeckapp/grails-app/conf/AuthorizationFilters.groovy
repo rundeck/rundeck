@@ -87,6 +87,7 @@ public class AuthorizationFilters {
                     if (tokenobj && user){
                         session.user = user.login
                         request.authenticatedToken=authtoken
+                        request.authenticatedUser=user.login
                         log.debug("loginCheck found user ${user} via token: ${authtoken}");
                         def subject = new Subject();
                         subject.principals << new Username(user.login)
@@ -103,6 +104,7 @@ public class AuthorizationFilters {
                             request.invalidAuthToken = "Token:" + (authtoken.size()>5?authtoken.substring(0, 5):'') + "****"
                         }
                         request.authenticatedToken = null
+                        request.authenticatedUser = null
                         request.invalidApiAuthentication = true
                         if(authtoken){
                             log.error("Invalid API token used: ${authtoken}");
