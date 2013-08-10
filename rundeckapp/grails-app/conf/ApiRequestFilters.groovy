@@ -2,6 +2,7 @@
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
 import org.codehaus.groovy.grails.web.util.WebUtils
+import rundeck.filters.AA_TimerFilters
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -88,6 +89,7 @@ public class ApiRequestFilters {
                 if (!params.api_version) {
                     flash.errorCode = 'api.error.api-version.required'
                     redirect(controller: 'api', action: 'renderError')
+                    AA_TimerFilters.afterRequest(request, response, session)
                     logDetail(request, params.toString(), actionName, controllerName, 'api.error.api-version.required')
                     return false
                 }
@@ -100,6 +102,7 @@ public class ApiRequestFilters {
                             }
                         }
                     }
+                    AA_TimerFilters.afterRequest(request, response, session)
                     logDetail(request, params.toString(), actionName, controllerName, 'api.error.api-version.unsupported')
                     return false;
                 }

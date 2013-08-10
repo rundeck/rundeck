@@ -1,4 +1,5 @@
 import com.dtolabs.rundeck.core.common.Framework
+import rundeck.filters.AA_TimerFilters
 
 /*
 * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
@@ -113,6 +114,7 @@ public class ProjectSelectFilters {
                         }else{
                             redirect(action: 'createProject', controller: 'framework')
                         }
+                        AA_TimerFilters.afterRequest(request, response, session)
                         return false
                     }
                 }
