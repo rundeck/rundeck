@@ -11,7 +11,7 @@ eclipse.project.name = "${project.getParent().eclipse.project.name}:launcher"
 subprojects{
     apply from: "${rootDir}/gradle/java.gradle"
     defaultTasks 'clean','assemble'
-    ext.jettyVersion='6.1.21'
+    ext.jettyVersion='7.6.0.v20120127'
 }
 
 task createPom << {

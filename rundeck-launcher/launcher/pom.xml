@@ -98,7 +98,7 @@
     </dependency>
   </dependencies>
   <properties>
-    <jettyVersion>6.1.21</jettyVersion>
+    <jettyVersion>7.6.0.v20120127</jettyVersion>
     <launcherJettyLibPath>pkgs/webapp/WEB-INF/lib</launcherJettyLibPath>
     <launcherMainClass>com.dtolabs.rundeck.ExpandRunServer</launcherMainClass>
     <launcherStartClass>com.dtolabs.rundeck.RunServer</launcherStartClass>
