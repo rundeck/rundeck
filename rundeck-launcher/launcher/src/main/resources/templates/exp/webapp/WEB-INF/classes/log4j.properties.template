@@ -115,7 +115,7 @@ log4j.appender.apirequests.layout.ConversionPattern=${logger.apirequests.format}
 # Logs all Web requests
 #
 log4j.appender.access=org.apache.log4j.DailyRollingFileAppender
-log4j.appender.access.file=${rundeck.log.dir}/rundeck.api.log
+log4j.appender.access.file=${rundeck.log.dir}/rundeck.access.log
 log4j.appender.access.append=true
 log4j.appender.access.layout=org.apache.log4j.PatternLayout
 log4j.appender.access.layout.ConversionPattern=${logger.access.format}
