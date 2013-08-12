@@ -50,11 +50,7 @@
     <dependency>
       <groupId>org.rundeck</groupId>
       <artifactId>rundeck-core</artifactId>
-<<<<<<< HEAD
-      <version>1.6.0</version>
-=======
       <version>2.0.0-SNAPSHOT</version>
->>>>>>> Update version to 2.0.0 0 SNAPSHOT
     </dependency>
   </dependencies>
 </project>

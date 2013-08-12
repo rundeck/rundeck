@@ -243,14 +243,8 @@
     </dependency>
   </dependencies>
   <properties>
-<<<<<<< HEAD
-    <version_ident>1.6.0-1</version_ident>
-    <version>1.6.0</version>
-    <version_build>1</version_build>
-=======
     <version_ident>2.0.0-SNAPSHOT-0</version_ident>
     <version>2.0.0-SNAPSHOT</version>
     <version_build>0</version_build>
->>>>>>> Update version to 2.0.0 0 SNAPSHOT
   </properties>
 </project>
