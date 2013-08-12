@@ -24,8 +24,11 @@
 package com.dtolabs.rundeck.jetty.jaas;
 
 import org.apache.log4j.Logger;
-import org.mortbay.jetty.security.Credential;
-import org.mortbay.jetty.plus.jaas.callback.ObjectCallback;
+import org.eclipse.jetty.plus.jaas.callback.ObjectCallback;
+import org.eclipse.jetty.plus.jaas.spi.AbstractLoginModule;
+import org.eclipse.jetty.plus.jaas.spi.UserInfo;
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.security.Credential;
 
 import javax.security.auth.Subject;
 import javax.security.auth.login.LoginException;
@@ -49,8 +52,8 @@ import javax.naming.directory.*;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision$
  */
-public class JNDILoginModule extends AbstractLoginModule{
-    public static final Logger logger = Logger.getLogger(JNDILoginModule.class);
+public class JNDILoginModule extends AbstractLoginModule {
+    private static final org.eclipse.jetty.util.log.Logger log = Log.getLogger(JNDILoginModule.class);
 
     /**
      * Get the UserInfo for a specified username
@@ -182,12 +185,12 @@ public class JNDILoginModule extends AbstractLoginModule{
         }else if ("bind".equals(connectionAuth)) {
             log.debug("login using bind");
             try {
-                if (callbackHandler == null) {
+                if (getCallbackHandler() == null) {
                     throw new LoginException("No callback handler");
                 }
 
                 Callback[] callbacks = configureCallbacks();
-                callbackHandler.handle(callbacks);
+                getCallbackHandler().handle(callbacks);
 
                 String webUserName = ((NameCallback) callbacks[0]).getName();
                 Object webCredential = ((ObjectCallback) callbacks[1]).getObject();
@@ -205,7 +208,7 @@ public class JNDILoginModule extends AbstractLoginModule{
                     return isAuthenticated();
                 }
 
-                currentUser = new JAASUserInfo(userInfo);
+                setCurrentUser(new JAASUserInfo(userInfo));
                 //bind with user info
                 setAuthenticated(authbindContext(webUserName, (String) webCredential));
                 log.debug("login returning: isAuthenticated? " + isAuthenticated());
@@ -213,15 +216,15 @@ public class JNDILoginModule extends AbstractLoginModule{
                 return isAuthenticated();
             }
             catch (IOException e) {
-                log.error(e);
+                log.warn(e);
                 throw new LoginException(e.toString());
             }
             catch (UnsupportedCallbackException e) {
-                log.error(e);
+                log.warn(e);
                 throw new LoginException(e.toString());
             }
             catch (Exception e) {
-                log.error(e);
+                log.warn(e);
                 throw new LoginException(e.toString());
             }
         } else {
@@ -243,7 +246,7 @@ public class JNDILoginModule extends AbstractLoginModule{
 
         //give up, can't find a property file to load
         if (!propsFile.exists()) {
-            logger.warn("No property file found: " + propsFile.getAbsolutePath());
+            log.warn("No property file found: " + propsFile.getAbsolutePath());
             throw new IllegalStateException("No property file specified in login module configuration file, or it does not exist");
         }
 
@@ -251,8 +254,8 @@ public class JNDILoginModule extends AbstractLoginModule{
         try {
             this.propertyFileName = propsFile.getCanonicalPath();
             if (fileMap.get(propertyFileName) != null) {
-                if (logger.isDebugEnabled()) {
-                    logger.debug("Properties file " + propertyFileName + " already in cache, skipping load");
+                if (log.isDebugEnabled()) {
+                    log.debug("Properties file " + propertyFileName + " already in cache, skipping load");
                 }
                 return (Properties) fileMap.get(propertyFileName);
             }
@@ -264,7 +267,7 @@ public class JNDILoginModule extends AbstractLoginModule{
             return props;
         }
         catch (Exception e) {
-            logger.warn("Error loading properties from file", e);
+            log.warn("Error loading properties from file", e);
             throw new RuntimeException(e);
         }
     }
@@ -280,7 +283,7 @@ public class JNDILoginModule extends AbstractLoginModule{
      * @throws javax.naming.NamingException
      */
     private Collection getUserRoles(String userName) throws NamingException {
-        logger.debug("Obtaining roles for userName: " + userName);
+        log.debug("Obtaining roles for userName: " + userName);
 
         // filter expression: all roles with uniqueMember matching user DN
         // (uniqueMember=cn=userName,dc=company,dc=com)
@@ -310,7 +313,7 @@ public class JNDILoginModule extends AbstractLoginModule{
 
 
     private String getUserCredentials(String userName) throws NamingException{
-        logger.debug("Obtaining credentials for userName: " + userName);
+        log.debug("Obtaining credentials for userName: " + userName);
         DirContext dirContext = context();
         String userDN = userNameRDN + "=" + userName + "," + userBase;
         Attributes roleAttrs = dirContext.getAttributes(userDN);
@@ -362,7 +365,7 @@ public class JNDILoginModule extends AbstractLoginModule{
                     name = value.substring(0, value.length() - userBase.length() - 1);
                     name = name.split("=")[1];
                 } else {
-                    logger.debug("found unrecognized DN: " + value);
+                    log.debug("found unrecognized DN: " + value);
                     continue;
                 }
 

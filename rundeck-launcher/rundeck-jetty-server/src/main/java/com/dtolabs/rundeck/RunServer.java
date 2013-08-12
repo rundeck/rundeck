@@ -16,13 +16,15 @@
 
 package com.dtolabs.rundeck;
 
-import org.mortbay.jetty.Server;
-import org.mortbay.jetty.bio.SocketConnector;
-import org.mortbay.jetty.plus.jaas.JAASUserRealm;
-import org.mortbay.jetty.security.HashUserRealm;
-import org.mortbay.jetty.security.SslSocketConnector;
-import org.mortbay.jetty.webapp.WebAppContext;
-
+import org.eclipse.jetty.plus.jaas.JAASLoginService;
+import org.eclipse.jetty.security.HashLoginService;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.ContextHandlerCollection;
+import org.eclipse.jetty.server.nio.SelectChannelConnector;
+import org.eclipse.jetty.server.ssl.SslSelectChannelConnector;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.eclipse.jetty.webapp.WebAppContext;
+import org.eclipse.jetty.server.Handler;
 import java.io.*;
 import java.util.Properties;
 
@@ -94,7 +96,9 @@ public class RunServer {
 
         server.setStopAtShutdown(true);
         final WebAppContext context = createWebAppContext(new File(serverdir, "exp/webapp"));
-        server.addHandler(context);
+
+        server.setHandler(context);
+
         configureRealms(server);
         try {
             
@@ -127,7 +131,7 @@ public class RunServer {
     }
 
     private void configureHTTPConnector(final Server server) {
-        final SocketConnector connector = new SocketConnector();
+        final SelectChannelConnector connector = new SelectChannelConnector();
         connector.setPort(port);
         connector.setHost(System.getProperty(SERVER_HTTP_HOST, null));
         server.addConnector(connector);
@@ -135,14 +139,15 @@ public class RunServer {
 
     private void configureSSLConnector(final Server server) {
         //configure ssl
-        final SslSocketConnector connector = new SslSocketConnector();
+        final SslSelectChannelConnector connector = new SslSelectChannelConnector();
         connector.setPort(httpsPort);
         connector.setMaxIdleTime(30000);
-        connector.setKeystore(keystore);
-        connector.setPassword(keystorePassword);
-        connector.setKeyPassword(keyPassword);
-        connector.setTruststore(truststore);
-        connector.setTrustPassword(truststorePassword);
+        SslContextFactory cf = connector.getSslContextFactory();
+        cf.setKeyStorePath(keystore);
+        cf.setKeyStorePassword(keystorePassword);
+        cf.setKeyManagerPassword(keyPassword);
+        cf.setTrustStore(truststore);
+        cf.setTrustStorePassword(truststorePassword);
         connector.setHost(System.getProperty(SERVER_HTTP_HOST, null));
         server.addConnector(connector);
     }
@@ -171,11 +176,11 @@ public class RunServer {
      * @throws IOException
      */
     private void configureHashRealms(final Server server) throws IOException {
-        final HashUserRealm realm = new HashUserRealm();
+        HashLoginService realm = new HashLoginService();
         realm.setName(REALM_NAME);
         final File conffile = new File(configdir, "realm.properties");
         realm.setConfig(conffile.getAbsolutePath());
-        server.addUserRealm(realm);
+        server.addBean(realm);
     }
 
     /**
@@ -184,8 +189,7 @@ public class RunServer {
      * @param server
      */
     private void configureJAASRealms(final Server server) {
-        final JAASUserRealm realm = new JAASUserRealm();
-        realm.setCallbackHandlerClass("org.mortbay.jetty.plus.jaas.callback.DefaultCallbackHandler");
+        final JAASLoginService realm = new JAASLoginService();
         realm.setName(REALM_NAME);
         realm.setLoginModuleName(loginmodulename);
 
@@ -194,7 +198,7 @@ public class RunServer {
             realm.setRoleClassNames(strings);
         }
 
-        server.addUserRealm(realm);
+        server.addBean(realm);
     }
 
     /**

@@ -43,11 +43,12 @@ import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.auth.login.LoginException;
 
-import org.mortbay.jetty.plus.jaas.callback.ObjectCallback;
-import org.mortbay.jetty.plus.jaas.spi.AbstractLoginModule;
-import org.mortbay.jetty.plus.jaas.spi.UserInfo;
-import org.mortbay.jetty.security.Credential;
-import org.mortbay.log.Log;
+import org.eclipse.jetty.plus.jaas.callback.ObjectCallback;
+import org.eclipse.jetty.plus.jaas.spi.AbstractLoginModule;
+import org.eclipse.jetty.plus.jaas.spi.UserInfo;
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.log.Logger;
+import org.eclipse.jetty.util.security.Credential;
 
 /**
  * 
@@ -97,6 +98,7 @@ import org.mortbay.log.Log;
  */
 public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
+    private static final Logger LOG = Log.getLogger(JettyCachingLdapLoginModule.class);
     /**
      * Provider URL
      */

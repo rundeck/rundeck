@@ -13,12 +13,11 @@ dependencies {
     compile( 
         [group: 'log4j', name: 'log4j', version: '1.2.16',ext:'jar'],
         [group: 'commons-cli', name: 'commons-cli', version: '1.0',ext:'jar'],
-        [group: 'org.mortbay.jetty', name: 'jetty', version: jettyVersion,ext:'jar'],
-        [group: 'org.mortbay.jetty', name: 'jetty-util', version: jettyVersion,ext:'jar'],
-        [group: 'org.mortbay.jetty', name: 'jetty-plus', version: jettyVersion,ext:'jar'],
+        [group: 'org.eclipse.jetty.aggregate', name: 'jetty-all', version: jettyVersion,ext:'jar'],
     )
     runtime(
-        [group: 'org.mortbay.jetty', name: 'servlet-api', version: '2.5-20081211',ext:'jar'],
+        [group: 'org.eclipse.jetty.aggregate', name: 'jetty-all', version: jettyVersion, ext: 'jar'],
+        [group: 'javax.servlet', name: 'servlet-api', version: '2.5', ext: 'jar'],
     )
     testCompile (
         [group: 'junit', name: 'junit', version: '4.8.1',ext:'jar'],
