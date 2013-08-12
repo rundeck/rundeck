@@ -55,25 +55,26 @@ public class ApiRequestFilters {
     public final static int API_MIN_VERSION = API_EARLIEST_VERSION
     public final static int API_MAX_VERSION = API_CURRENT_VERSION
 
-    static def logDetail(HttpServletRequest request,  params, String action, String controller, String message = null) {
+    static def logDetail(HttpServletRequest request,  project, String action, String controller, String message = null) {
         Map context = [
                 remoteHost: request.remoteHost,
                 version: request.api_version ?: '?',
-                remoteUser:request.remoteUser?: request.authenticatedUser,
-                valid:!(request.invalidApiAuthentication),
-                authToken:(request.authenticatedToken?(request.authenticatedToken?.size() > 5 ? request.authenticatedToken.substring(0, 5) :'') + "****":'-'),
+                remoteUser: request.remoteUser ?: request.authenticatedUser,
+                valid: !(request.invalidApiAuthentication),
+                authToken: (request.authenticatedToken ? 'token' : 'form'),
                 controller: controller,
                 action: action,
-                params: params,
-                uri: request.getAttribute(WebUtils.FORWARD_REQUEST_URI_ATTRIBUTE)?: request.getRequestURI(),
-                userAgent:request.getHeader('User-Agent')?:'-',
-                method:request.method,
-                secure:Boolean.toString(request.isSecure())
+                uri: request.getAttribute(WebUtils.FORWARD_REQUEST_URI_ATTRIBUTE) ?: request.getRequestURI(),
+                userAgent: request.getHeader('User-Agent') ?: '-',
+                method: request.method,
+                secure: request.isSecure() ? 'https' : 'http',
+                duration: System.currentTimeMillis() - request['ApiRequestFilters._TIMER'],
+                project: project
         ]
         MDC.clear()
-        context.each {MDC.put(it.key,it.value?:'')}
+        context.each { MDC.put(it.key, it.value ?: '') }
         try {
-            logger.info(message ?: context.toString())
+            logger.info(message ? message + context : context.toString())
         } finally {
             MDC.clear()
         }
@@ -86,6 +87,7 @@ public class ApiRequestFilters {
          */
         apiVersion(uri: '/api/**') {
             before = {
+                request['ApiRequestFilters._TIMER']=System.currentTimeMillis()
                 if (controllerName == 'api' && allowed_actions.contains(actionName) || request.api_version) {
                     request.is_allowed_api_request = true
                     return true
@@ -112,11 +114,11 @@ public class ApiRequestFilters {
                     return false;
                 }
                 request.api_version = VersionMap[params.api_version]
-                request['ApiRequestFilters.request.parameters']=params.toString()
+                request['ApiRequestFilters.request.parameters.project']=params.project?:''
                 return true
             }
             after = {
-                logDetail(request, request['ApiRequestFilters.request.parameters'], actionName, controllerName)
+                logDetail(request, request['ApiRequestFilters.request.parameters.project']?:session.project?:'', actionName, controllerName)
             }
         }
     }
