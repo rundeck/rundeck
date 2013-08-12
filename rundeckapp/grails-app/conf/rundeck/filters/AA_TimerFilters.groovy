@@ -72,9 +72,9 @@ class AA_TimerFilters {
                     remoteUser: request.remoteUser ?: request.authenticatedUser,
                     remoteHost: request.remoteHost,
                     userAgent: request.getHeader('User-Agent') ?: '-',
-                    authToken: (request.authenticatedToken ? (request.authenticatedToken?.size() > 5 ? request.authenticatedToken.substring(0, 5) : '') + "****" : '-'),
+                    authToken: (request.authenticatedToken ? 'token' : 'form'),
                     method: request.method,
-                    secure: Boolean.toString(request.isSecure()),
+                    secure: request.isSecure() ? 'https' : 'http',
                     contentType: response.getContentType(),
                     project: session.project
             ]
