@@ -49,7 +49,7 @@ webrealms{
 
     server{
         addrealm{
-            classname="org.mortbay.jetty.plus.jaas.JAASUserRealm"
+            classname="org.eclipse.jetty.plus.jaas.JAASLoginService"
             name="rundeckrealm"
             LoginModuleName="rundecklogin"
         }

@@ -81,7 +81,9 @@ grails.project.dependency.resolution = {
     rundeckVersion = System.getProperty("RUNDECK_VERSION", appVersion)
     println "Application Version: ${rundeckVersion}"
     plugins {
+        runtime ":hibernate:$grailsVersion"
         runtime ':webrealms:0.4'
+        build ':jetty:2.0.3'
     }
     dependencies {
         
