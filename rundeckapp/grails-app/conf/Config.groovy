@@ -57,7 +57,7 @@ environments {
     test {
     }
 }
-
+grails.json.legacy.builder = false
 grails.mail.default.from="rundeck-server@localhost"
 
 // log4j configuration
