@@ -930,11 +930,12 @@ function noenter(e) {
  * @param chars string containing chars to disallow
  * @param e event
  */
-function nochars(chars,e) {
-    if(e && e.charCode!=0 && chars.indexOf(String.fromCharCode(e.charCode))>=0){
+function nochars(chars, e) {
+    var kCode = e.keyCode ? e.keyCode : e.charCode;
+    if (e && kCode != 0 && chars.indexOf(String.fromCharCode(kCode)) >= 0) {
         Event.stop(e);
     }
-    return !(e && e.charCode!=0 && chars.indexOf(String.fromCharCode(e.charCode))>=0);
+    return !(e && kCode != 0 && chars.indexOf(String.fromCharCode(kCode)) >= 0);
 }
 function _applyAce(e,height){
     if (_isIe(8) || _isIe(7) || _isIe(6)) {
@@ -955,11 +956,12 @@ function _applyAce(e,height){
  * @param regex string to match allowed chars
  * @param e event
  */
-function onlychars(regex,e) {
-    if(e && e.charCode!=0 && !String.fromCharCode(e.charCode).match(regex)){
+function onlychars(regex, e) {
+    var kCode = e.keyCode ? e.keyCode : e.charCode;
+    if (e && kCode != 0 && !String.fromCharCode(kCode).match(regex)) {
         Event.stop(e);
     }
-    return !(e && e.charCode!=0 && !String.fromCharCode(e.charCode).match(regex));
+    return !(e && kCode != 0 && !String.fromCharCode(kCode).match(regex));
 }
 function fireWhenReady(elem,func){
     if($(elem)){
