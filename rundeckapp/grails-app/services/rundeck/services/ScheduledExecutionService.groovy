@@ -404,7 +404,6 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                 }
                 isNotNull('dateStarted')
                 isNull('dateCompleted')
-                lock true
             }
 
             if (found) {
