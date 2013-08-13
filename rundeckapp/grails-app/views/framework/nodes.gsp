@@ -1,7 +1,7 @@
 <%@ page import="rundeck.User; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 <html>
 <head>
-    <g:set var="rkey" value="${g.rkey()}" />
+    <g:set var="ukey" value="${g.rkey()}" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="nodes"/>
@@ -125,7 +125,7 @@
 
             $('remoteEditResultHolder').hide();
             $('nodesTable').hide();
-            $('${rkey}nodesfilterholder').hide();
+            $('${ukey}nodesfilterholder').hide();
         }
 
         /**
@@ -137,7 +137,7 @@
 
             $('remoteEditToolbar').show();
             $('nodesTable').show();
-            $('${rkey}nodesfilterholder').show();
+            $('${ukey}nodesfilterholder').show();
         }
 
         /**
@@ -271,7 +271,7 @@
          */
         <g:set var="jsdata" value="${query?.properties.findAll{it.key==~/^(node(In|Ex)clude.*|project)$/ &&it.value}}"/>
 
-        var nodeFilterData_${rkey}=${jsdata.encodeAsJSON()};
+        var nodeFilterData_${ukey}=${jsdata.encodeAsJSON()};
         var nodespage=0;
         var pagingMax=20;
         function expandResultNodes(page,elem){
@@ -283,7 +283,7 @@
                 elem='nodelist';
             }
             var view=page==0?'table':'tableContent';
-            _updateMatchedNodes(nodeFilterData_${rkey},elem,'${session.project}',false,{view:view,expanddetail:true,inlinepaging:true,page:page,max:pagingMax});
+            _updateMatchedNodes(nodeFilterData_${ukey},elem,'${session.project}',false,{view:view,expanddetail:true,inlinepaging:true,page:page,max:pagingMax});
         }
         function _loadNextNodesPageTable(max,total,tbl,elem){
             if(!nodespage){
@@ -463,20 +463,20 @@
                 $('schedJobNodeIncludeTags').value=value;
 
             }
-            $('${rkey}filter').down('form').submit();
+            $('${ukey}filter').down('form').submit();
         }
 
         /**
          * filter toggle
          */
         function filterToggle(evt) {
-            ['${rkey}filter','${rkey}filterdispbtn'].each(Element.toggle);
-            ['outsidefiltersave'].each($('${rkey}filter').visible()?Element.hide:Element.show);
+            ['${ukey}filter','${ukey}filterdispbtn'].each(Element.toggle);
+            ['outsidefiltersave'].each($('${ukey}filter').visible()?Element.hide:Element.show);
         }
         function filterToggleSave(evt) {
-            ['${rkey}filter','${rkey}fsave'].each(Element.show);
-            ['${rkey}filterdispbtn','${rkey}fsavebtn'].each(Element.hide);
-            ['outsidefiltersave'].each($('${rkey}filter').visible()?Element.hide:Element.show);
+            ['${ukey}filter','${ukey}fsave'].each(Element.show);
+            ['${ukey}filterdispbtn','${ukey}fsavebtn'].each(Element.hide);
+            ['outsidefiltersave'].each($('${ukey}filter').visible()?Element.hide:Element.show);
         }
 
         /** START history
@@ -571,7 +571,7 @@
 //                Event.observe(e, 'click', showNodeView);
 //            });
 
-            $$('#${rkey}filter div.filter input').each(function(elem) {
+            $$('#${ukey}filter div.filter input').each(function(elem) {
                 if (elem.type == 'text') {
                     elem.observe('keypress', function(evt) {
                         if (!noenter(evt)) {
@@ -678,7 +678,7 @@
     <g:if test="${session.project}">
         <div class="runbox primary nodesummary ">
             <g:if test="${run_authorized}">
-                <g:expander classnames="button obs_shownodes" key="${rkey}nodeForm" open="true">
+                <g:expander classnames="button obs_shownodes" key="${ukey}nodeForm" open="true">
                     <span class="match"><span class="obs_nodes_allcount">${total}</span> Node<span class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span>
                     </span>
                 </g:expander>
@@ -716,14 +716,14 @@
             </g:if>
         </div>
     </g:if>
-<div id="${rkey}nodeForm" class="nodeview pageBody">
+<div id="${ukey}nodeForm" class="nodeview pageBody">
     <g:set var="wasfiltered" value="${paginateParams?.keySet().grep(~/(?!proj).*Filter|groupPath|project$/)||(query && !query.nodeFilterIsEmpty())}"/>
     <g:set var="filtersOpen" value="${params.createFilters||params.editFilters||params.saveFilter || filterErrors?true:false}"/>
 
 <table cellspacing="0" cellpadding="0" class="queryTable" width="100%">
         <tr>
         <g:if test="${!params.nofilters}">
-        <td style="text-align:left;vertical-align:top; width:400px; ${wdgt.styleVisible(if:filtersOpen)}" id="${rkey}filter">
+        <td style="text-align:left;vertical-align:top; width:400px; ${wdgt.styleVisible(if:filtersOpen)}" id="${ukey}filter">
             <g:form action="nodes" controller="framework">
                 <g:if test="${params.compact}">
                     <g:hiddenField name="compact" value="${params.compact}"/>
@@ -733,7 +733,7 @@
                     <img src="${resource(dir: 'images', file: 'icon-tiny-disclosure-open.png')}" width="12px" height="12px"/>
                 </span>
 
-                <g:render template="/common/queryFilterManager" model="${[rkey:rkey,filterName:filterName,filterset:filterset,deleteActionSubmit:'deleteNodeFilter',storeActionSubmit:'storeNodeFilter']}"/>
+                <g:render template="/common/queryFilterManager" model="${[rkey:ukey,filterName:filterName,filterset:filterset,deleteActionSubmit:'deleteNodeFilter',storeActionSubmit:'storeNodeFilter']}"/>
                 <div class="presentation filter">
 
                     <g:hiddenField name="max" value="${max}"/>
@@ -753,7 +753,7 @@
             </g:form>
         </td>
             </g:if>
-            <td style="text-align:left;vertical-align:top;" id="${rkey}nodescontent">
+            <td style="text-align:left;vertical-align:top;" id="${ukey}nodescontent">
 
 
                 <g:set var="adminauth"
@@ -764,12 +764,12 @@
                     </g:if>
                 </g:if>
                 <g:if test="${!params.nofilters}">
-                <div id="${rkey}nodesfilterholder" >
+                <div id="${ukey}nodesfilterholder" >
                     %{--<g:if test="${wasfiltered}">--}%
 
 
                         <div >
-                            <span style="${!filtersOpen?'':'display:none;'} " id='${rkey}filterdispbtn' >
+                            <span style="${!filtersOpen?'':'display:none;'} " id='${ukey}filterdispbtn' >
                             <span title="Click to modify filter" class="info textbtn query action obs_filtertoggle" >
                                 <g:render template="displayNodeFilters" model="${[displayParams:query]}"/>
                                 <img src="${resource(dir:'images',file:'icon-tiny-disclosure.png')}" width="12px" height="12px"/></span>
