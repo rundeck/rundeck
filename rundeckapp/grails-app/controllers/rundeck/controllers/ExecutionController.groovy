@@ -613,6 +613,41 @@ class ExecutionController {
                 }
             }
         }
+        def renderw3c={date->
+            return g.w3cDateValue([date: date])
+        }
+        def timeFmt = new SimpleDateFormat("HH:mm:ss")
+        def renderclosjson ={ outf, delegate->
+            delegate.'id'=idstr
+            delegate.'offset'=storeoffset.toString()
+            delegate.'completed' =completed
+            delegate.'execCompleted' =jobcomplete
+            delegate.'hasFailedNodes' =hasFailedNodes
+            delegate.'execState' =execState
+            delegate.'lastModified' =lastmodl.toString()
+            delegate.'execDuration' =execDuration
+            delegate.'percentLoaded' =percent
+            delegate.'totalSize' =totsize
+            delegate.'lastlinesSupported' =lastlinesSupported
+
+            delegate.'entries' = delegate.array{
+                entry.each { xent ->
+                    def datamap = [
+                            time: timeFmt.format(xent.time),
+                            absolute_time: g.w3cDateValue([date: xent.time]),
+                            level: xent.level,
+                            log: xent.mesg?.replaceAll(/\r?\n$/, ''),
+                            user: xent.user,
+                            command: xent.command,
+                            node: xent.node,
+                    ]
+                    if (xent.loghtml) {
+                        datamap.loghtml = xent.loghtml
+                    }
+                    delegate.entry(datamap)
+                }
+            }
+        }
 
         withFormat {
             xml {
@@ -624,7 +659,7 @@ class ExecutionController {
             }
             json {
                 render(contentType: "text/json") {
-                    renderclos('json',delegate)
+                    renderclosjson('json',delegate)
                 }
             }
             text{
