@@ -5,7 +5,6 @@ import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.ReverseSeekingStreamingLogReader
 import com.dtolabs.rundeck.core.logging.StreamingLogReader
 import com.dtolabs.rundeck.app.support.ExecutionQuery
-import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import rundeck.Execution
@@ -247,6 +246,64 @@ class ExecutionController {
         }
         return tailExecutionOutput()
     }
+    static final String invalidXmlPattern = "[^" + "\\u0009\\u000A\\u000D" + "\\u0020-\\uD7FF" +
+            "\\uE000-\\uFFFD" + "\\u10000-\\u10FFFF" + "]+";
+
+    /**
+     * Use a builder delegate to render tailExecutionOutput result in XML or JSON
+     */
+    private def renderOutputClosure= {String outf, Map data, List outputData, apiVersion,delegate ->
+        def keys= ['id','offset','completed','empty','unmodified', 'error','message','execCompleted', 'hasFailedNodes',
+                'execState', 'lastModified', 'execDuration', 'percentLoaded', 'totalSize', 'lastLinesSupported']
+        def setProp={k,v->
+            if(outf=='json'){
+                delegate[k]=v
+            }else{
+                delegate."${k}"(v)
+            }
+        }
+        keys.each{
+            if(null!=data[it]){
+                setProp(it,data[it])
+            }
+        }
+
+
+        def timeFmt = new SimpleDateFormat("HH:mm:ss")
+        def dataClos= {
+            outputData.each {
+                def datamap = [
+                        time: timeFmt.format(it.time),
+                        absolute_time: g.w3cDateValue([date: it.time]),
+                        level: it.level,
+                        log: it.mesg?.replaceAll(/\r?\n$/, ''),
+                        user: it.user,
+                        command: it.command,
+                        node: it.node,
+                ]
+                if (it.loghtml) {
+                    datamap.loghtml = it.loghtml
+                }
+                if (outf == 'json') {
+                    delegate.'entries'(datamap)
+                } else {
+                    datamap.log = datamap.log.replaceAll(invalidXmlPattern, '')
+                    //xml
+                    if (apiVersion <= ApiRequestFilters.V5) {
+                        def text = datamap.remove('log')
+                        delegate.'entry'(datamap, text)
+                    } else {
+                        delegate.'entry'(datamap)
+                    }
+                }
+            }
+        }
+        if(outf=='json'){
+            delegate.'entries' = delegate.array(dataClos)
+        }else{
+            delegate.entries(dataClos)
+        }
+    }
     /**
      * tailExecutionOutput action, used by execution/show.gsp view to display output inline
      * Also used by apiExecutionOutput for API response
@@ -275,12 +332,12 @@ class ExecutionController {
                 }
                 json {
                     render(contentType: "text/json") {
-                        error(request.error)
-                        id(params.id.toString())
-                        offset("0")
-                        completed(false)
-                        entries() {
-                        }
+                        renderOutputClosure('json',[
+                                error: request.error,
+                                id:params.id.toString(),
+                                offset:"0",
+                                completed:false
+                        ],[],request.api_version,delegate)
                     }
                 }
                 text {
@@ -312,48 +369,46 @@ class ExecutionController {
         if (null == reader  || reader.state == ExecutionLogState.NOT_FOUND ) {
             def errmsg = g.message(code: "execution.log.storage.state.NOT_FOUND")
             //execution has not be started yet
-            def renderclos = { delegate ->
-                if (e.dateCompleted) {
-                    delegate.error(errmsg)
-                } else {
-                    delegate.message(errmsg)
-                }
-                delegate.empty(true)
-                delegate.id(params.id.toString())
-                delegate.offset("0")
-                delegate.completed(jobcomplete)
-                delegate.execCompleted(jobcomplete)
-                delegate.hasFailedNodes(hasFailedNodes)
-                delegate.execState(execState)
-                delegate.execDuration(execDuration)
-                delegate.entries() {
-                }
+            def dataMap= [
+                    empty:true,
+                    id: params.id.toString(),
+                    offset: "0",
+                    completed: jobcomplete,
+                    execCompleted: jobcomplete,
+                    hasFailedNodes: hasFailedNodes,
+                    execState: execState,
+                    execDuration: execDuration
+            ]
+            if (e.dateCompleted) {
+                dataMap.error=errmsg
+            } else {
+                dataMap.message=errmsg
             }
             withFormat {
                 xml {
                     api.success({ del ->
                         del.'output' {
-                            renderclos(del)
+                            renderOutputClosure('xml', dataMap, [], request.api_version, del)
                         }
                     })
                 }
                 json {
                     render(contentType: "text/json") {
-                        renderclos(delegate)
+                        renderOutputClosure('json', dataMap, [], request.api_version, delegate)
                     }
                 }
                 text {
                     response.addHeader('X-Rundeck-ExecOutput-Offset', "0")
                     if (e.dateCompleted) {
-                        response.addHeader('X-Rundeck-ExecOutput-Error', errmsg)
+                        response.addHeader('X-Rundeck-ExecOutput-Error', errmsg.toString())
                     } else {
-                        response.addHeader('X-Rundeck-ExecOutput-Message', errmsg)
+                        response.addHeader('X-Rundeck-ExecOutput-Message', errmsg.toString())
                     }
-                    response.addHeader('X-Rundeck-ExecOutput-Empty', 'true')
-                    response.addHeader('X-Rundeck-ExecOutput-Completed', jobcomplete.toString())
-                    response.addHeader('X-Rundeck-Exec-Completed', jobcomplete.toString())
-                    response.addHeader('X-Rundeck-Exec-State', execState)
-                    response.addHeader('X-Rundeck-Exec-Duration', execDuration.toString())
+                    response.addHeader('X-Rundeck-ExecOutput-Empty', dataMap.empty.toString())
+                    response.addHeader('X-Rundeck-ExecOutput-Completed', dataMap.execCompleted.toString())
+                    response.addHeader('X-Rundeck-Exec-Completed', dataMap.completed.toString())
+                    response.addHeader('X-Rundeck-Exec-State', dataMap.execState.toString())
+                    response.addHeader('X-Rundeck-Exec-Duration', dataMap.execDuration.toString())
                     render(contentType: "text/plain") {
                         ''
                     }
@@ -363,40 +418,38 @@ class ExecutionController {
         }
         else if (null == reader || reader.state in [ExecutionLogState.PENDING_LOCAL, ExecutionLogState.PENDING_REMOTE, ExecutionLogState.WAITING]) {
             //pending data
-            def renderclos = { delegate ->
-                delegate.message("Pending")
-                delegate.pending(g.message(code:'execution.log.storage.state.'+reader.state,default: "Pending"))
-                delegate.id(params.id.toString())
-                delegate.offset(params.offset ? params.offset.toString() : "0")
-                delegate.completed(false)
-                delegate.execCompleted(jobcomplete)
-                delegate.hasFailedNodes(hasFailedNodes)
-                delegate.execState(execState)
-                delegate.execDuration(execDuration)
-                delegate.entries() {
-                }
-            }
+            def dataMap=[
+                    message:"Pending",
+                    pending: g.message(code: 'execution.log.storage.state.' + reader.state, default: "Pending"),
+                    id:params.id.toString(),
+                    offset: params.offset ? params.offset.toString() : "0",
+                    completed:false,
+                    execCompleted:jobcomplete,
+                    hasFailedNodes:hasFailedNodes,
+                    execState:execState,
+                    execDuration:execDuration
+            ]
             withFormat {
                 xml {
                     api.success({ del ->
                         del.'output' {
-                            renderclos(del)
+                            renderOutputClosure('xml', dataMap, [], request.api_version, del)
                         }
                     })
                 }
                 json {
                     render(contentType: "text/json") {
-                        renderclos(delegate)
+                        renderOutputClosure('json', dataMap, [], request.api_version, delegate)
                     }
                 }
                 text {
-                    response.addHeader('X-Rundeck-ExecOutput-Message', 'Pending')
-                    response.addHeader('X-Rundeck-ExecOutput-Pending', g.message(code: 'execution.log.storage.state.' + reader.state, default: "Pending"))
-                    response.addHeader('X-Rundeck-ExecOutput-Offset', params.offset ? params.offset.toString() : "0")
-                    response.addHeader('X-Rundeck-ExecOutput-Completed', "false")
-                    response.addHeader('X-Rundeck-Exec-Completed', jobcomplete.toString())
-                    response.addHeader('X-Rundeck-Exec-State', execState)
-                    response.addHeader('X-Rundeck-Exec-Duration', execDuration.toString())
+                    response.addHeader('X-Rundeck-ExecOutput-Message', dataMap.message.toString())
+                    response.addHeader('X-Rundeck-ExecOutput-Pending', dataMap.pending.toString())
+                    response.addHeader('X-Rundeck-ExecOutput-Offset', dataMap.offset.toString())
+                    response.addHeader('X-Rundeck-ExecOutput-Completed', dataMap.execCompleted.toString())
+                    response.addHeader('X-Rundeck-Exec-Completed', dataMap.completed.toString())
+                    response.addHeader('X-Rundeck-Exec-State', dataMap.execState.toString())
+                    response.addHeader('X-Rundeck-Exec-Duration', dataMap.execDuration.toString())
                     render(contentType: "text/plain") {
                         ''
                     }
@@ -447,45 +500,43 @@ class ExecutionController {
             }
 
             if (lastmodl <= ll && (offset==0 || totsize <= offset)) {
+                def dataMap=[
+                        message:"Unmodified",
+                        unmodified:true,
+                        id:params.id.toString(),
+                        offset:params.offset ? params.offset.toString() : "0",
+                        completed:jobcomplete,
+                        execCompleted:jobcomplete,
+                        hasFailedNodes:hasFailedNodes,
+                        execState:execState,
+                        lastModified:lastmodl.toString(),
+                        execDuration:execDuration,
+                        totalSize:totsize
+                ]
 
-                def renderclos = {delegate ->
-                    delegate.message("Unmodified")
-                    delegate.unmodified(true)
-                    delegate.id(params.id.toString())
-                    delegate.offset(params.offset ? params.offset.toString() : "0")
-                    delegate.completed(jobcomplete)
-                    delegate.execCompleted(jobcomplete)
-                    delegate.hasFailedNodes(hasFailedNodes)
-                    delegate.execState(execState)
-                    delegate.lastModified(lastmodl.toString())
-                    delegate.execDuration(execDuration)
-                    delegate.totalSize(totsize)
-                    delegate.entries() {
-                    }
-                }
                 withFormat {
                     xml {
                         api.success({del ->
                             del.'output' {
-                                renderclos(del)
+                                renderOutputClosure('json', dataMap, [], request.api_version, del)
                             }
                         })
                     }
                     json {
                         render(contentType: "text/json") {
-                            renderclos(delegate)
+                            renderOutputClosure('json', dataMap, [], request.api_version, delegate)
                         }
                     }
                     text {
-                        response.addHeader('X-Rundeck-ExecOutput-Message', 'Unmodified')
-                        response.addHeader('X-Rundeck-ExecOutput-Unmodified', 'true')
-                        response.addHeader('X-Rundeck-ExecOutput-Offset', params.offset ? params.offset.toString() : "0")
-                        response.addHeader('X-Rundeck-ExecOutput-Completed', jobcomplete.toString())
-                        response.addHeader('X-Rundeck-Exec-Completed', jobcomplete.toString())
-                        response.addHeader('X-Rundeck-Exec-State', execState)
-                        response.addHeader('X-Rundeck-Exec-Duration', execDuration.toString())
-                        response.addHeader('X-Rundeck-ExecOutput-LastModifed', lastmodl.toString())
-                        response.addHeader('X-Rundeck-ExecOutput-TotalSize', totsize.toString())
+                        response.addHeader('X-Rundeck-ExecOutput-Message', dataMap.message.toString())
+                        response.addHeader('X-Rundeck-ExecOutput-Unmodified', dataMap.unmodified.toString())
+                        response.addHeader('X-Rundeck-ExecOutput-Offset', dataMap.offset.toString())
+                        response.addHeader('X-Rundeck-ExecOutput-Completed', dataMap.execCompleted.toString())
+                        response.addHeader('X-Rundeck-Exec-Completed', dataMap.completed.toString())
+                        response.addHeader('X-Rundeck-Exec-State', dataMap.execState.toString())
+                        response.addHeader('X-Rundeck-Exec-Duration', dataMap.execDuration.toString())
+                        response.addHeader('X-Rundeck-ExecOutput-LastModifed', dataMap.lastModified.toString())
+                        response.addHeader('X-Rundeck-ExecOutput-TotalSize', dataMap.totalSize.toString())
                         render(contentType: "text/plain") {
                             ''
                         }
@@ -564,109 +615,38 @@ class ExecutionController {
         def percent=100.0 * (((float)storeoffset)/((float)totsize))
         log.debug("percent: ${percent}, store: ${storeoffset}, total: ${totsize} lastmod : ${lastmodl}")
         //via http://benjchristensen.com/2008/02/07/how-to-strip-invalid-xml-characters/
-        String invalidXmlPattern = "[^" + "\\u0009\\u000A\\u000D" + "\\u0020-\\uD7FF" +
-                "\\uE000-\\uFFFD" + "\\u10000-\\u10FFFF" + "]+";
 
-        def idstr=e.id.toString()
-        def renderclos ={ outf, delegate->
-            delegate.id(idstr)
-            delegate.offset(storeoffset.toString())
-            delegate.completed(completed)
-            delegate.execCompleted(jobcomplete)
-            delegate.hasFailedNodes(hasFailedNodes)
-            delegate.execState(execState)
-            delegate.lastModified(lastmodl.toString())
-            delegate.execDuration(execDuration)
-            delegate.percentLoaded(percent)
-            delegate.totalSize(totsize)
-            delegate.lastlinesSupported(lastlinesSupported)
-
-            def timeFmt = new SimpleDateFormat("HH:mm:ss")
-            delegate.entries(){
-                entry.each{
-                    def datamap = [
-                        time: timeFmt.format(it.time),
-                        absolute_time: g.w3cDateValue([date:it.time]),
-                        level: it.level,
-                        log: it.mesg?.replaceAll(/\r?\n$/,''),
-                        user: it.user,
-//                        module: it.module,
-                        command: it.command,
-                        node: it.node,
-//                        context: it.context
-                    ]
-                    if(it.loghtml){
-                        datamap.loghtml=it.loghtml
-                    }
-                    if(outf=='json'){
-                        delegate.'entries'(datamap)
-                    }else{
-                        datamap.log=datamap.log.replaceAll(invalidXmlPattern,'')
-                        //xml
-                        if(request.api_version <= ApiRequestFilters.V5){
-                            def text= datamap.remove('log')
-                            delegate.'entry'(datamap,text)
-                        }else{
-                            delegate.'entry'(datamap)
-                        }
-                    }
-                }
-            }
-        }
-        def renderw3c={date->
-            return g.w3cDateValue([date: date])
-        }
-        def timeFmt = new SimpleDateFormat("HH:mm:ss")
-        def renderclosjson ={ outf, delegate->
-            delegate.'id'=idstr
-            delegate.'offset'=storeoffset.toString()
-            delegate.'completed' =completed
-            delegate.'execCompleted' =jobcomplete
-            delegate.'hasFailedNodes' =hasFailedNodes
-            delegate.'execState' =execState
-            delegate.'lastModified' =lastmodl.toString()
-            delegate.'execDuration' =execDuration
-            delegate.'percentLoaded' =percent
-            delegate.'totalSize' =totsize
-            delegate.'lastlinesSupported' =lastlinesSupported
-
-            delegate.'entries' = delegate.array{
-                entry.each { xent ->
-                    def datamap = [
-                            time: timeFmt.format(xent.time),
-                            absolute_time: g.w3cDateValue([date: xent.time]),
-                            level: xent.level,
-                            log: xent.mesg?.replaceAll(/\r?\n$/, ''),
-                            user: xent.user,
-                            command: xent.command,
-                            node: xent.node,
-                    ]
-                    if (xent.loghtml) {
-                        datamap.loghtml = xent.loghtml
-                    }
-                    delegate.entry(datamap)
-                }
-            }
-        }
-
+        def resultData= [
+                id: e.id.toString(),
+                offset: storeoffset.toString(),
+                completed: completed,
+                execCompleted: jobcomplete,
+                hasFailedNodes: hasFailedNodes,
+                execState: execState,
+                lastModified: lastmodl.toString(),
+                execDuration: execDuration,
+                percentLoaded: percent,
+                totalSize: totsize,
+                lastlinesSupported: lastlinesSupported
+        ]
         withFormat {
             xml {
                 api.success({del ->
                     del.'output' {
-                        renderclos('xml',del)
+                        renderOutputClosure('xml', resultData, entry, request.api_version, del)
                     }
                 })
             }
             json {
                 render(contentType: "text/json") {
-                    renderclosjson('json',delegate)
+                    renderOutputClosure('json', resultData, entry, request.api_version, delegate)
                 }
             }
             text{
                 response.addHeader('X-Rundeck-ExecOutput-Offset', storeoffset.toString())
                 response.addHeader('X-Rundeck-ExecOutput-Completed', completed.toString())
                 response.addHeader('X-Rundeck-Exec-Completed', jobcomplete.toString())
-                response.addHeader('X-Rundeck-Exec-State', execState)
+                response.addHeader('X-Rundeck-Exec-State', execState.toString())
                 response.addHeader('X-Rundeck-Exec-Duration', execDuration.toString())
                 response.addHeader('X-Rundeck-ExecOutput-LastModifed', lastmodl.toString())
                 response.addHeader('X-Rundeck-ExecOutput-TotalSize', totsize.toString())
