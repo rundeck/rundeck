@@ -479,6 +479,7 @@ class ExecutionController {
 
         def totsize = logread.getTotalSize()
         long lastmodl = logread.lastModified?.time
+        long reqlastmod=0
 
         if(params.lastmod && lastmodl>0){
             def ll = 0
@@ -498,6 +499,7 @@ class ExecutionController {
                     return
                 }
             }
+            reqlastmod=ll
 
             if (lastmodl <= ll && (offset==0 || totsize <= offset)) {
                 def dataMap=[
@@ -518,7 +520,7 @@ class ExecutionController {
                     xml {
                         api.success({del ->
                             del.'output' {
-                                renderOutputClosure('json', dataMap, [], request.api_version, del)
+                                renderOutputClosure('xml', dataMap, [], request.api_version, del)
                             }
                         })
                     }
@@ -581,6 +583,10 @@ class ExecutionController {
         storeoffset= logread.offset
         completed = logread.complete || (jobcomplete && storeoffset==totsize)
         log.debug("finish stream iterator, offset: ${storeoffset}, completed: ${completed}")
+        if (storeoffset == offset) {
+            //don't change last modified unless new data has been read
+            lastmodl = reqlastmod
+        }
 
         if("true" == servletContext.getAttribute("output.markdown.enabled") && !params.disableMarkdown){
             entry.each{
