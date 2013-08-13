@@ -175,9 +175,13 @@ Generally, the architecture is composed of the following units:
 
 Several examples of clustering and HA are included below. The Amazon example represents what can be done in a cloud environment. The Apache-Tomcat cluster example reflects what users have done in datacenter environments. Finally, some users have implemented their own solutions using basic methods and Rundeck itself. 
 
-##### Amazon EC2/S3/ELB/RDS
+##### Amazon Cloud
 
-A scalable and available Rundeck service can be created using the standalone Rundeck installation and common AWS services. 
+A scalable and available Rundeck service can be created using the standalone Rundeck installation and common Amazon web services. 
+
+A very large SaaS company uses Rundeck as a backend service within a suite of cloud operations tools. Users access Rundeck indirectly via a specialized graphic interface which more or less is a pass through, calling various Rundeck WebAPI methods. Because these cloud operations tools must support both developers, testers and ops teams around the world, the Rundeck service must be highly available.
+
+The following frontend and backend services are used in conjunction with Rundeck:
 
 * Load balancer: Elastic load balancer (sticky session, SSL terminator)
 * Database: RDS (Mysql instance)
@@ -192,6 +196,7 @@ Note, if all your deployments run in EC2, you might also consider using the
 
 One of Rundeck's largest deployments is based on Tomcat clusters, Oracle RAC and a SAN logstore. 
 This configuration uses two pairs of 2 node clusters in two data centers. Each cluster is load balanced using an F5 with a GLB managing failover across data centers.
+Each Rundeck project supports a particular line of business, with each customer environment containing dozens to small hundreds of hosts. Each user has a login to the Rundeck GUI and conducts the work through the console.
 This Rundeck service supports 500 users in over 200 projects and 10,000 job executions a month. 
 
 If Oracle RAC and SAN storage is not available to you, here's a similar architecture using Mysql and a WebDAV store:
