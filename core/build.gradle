@@ -38,7 +38,8 @@ dependencies {
     compile ('commons-httpclient:commons-httpclient:3.0.1') {
         exclude group:'junit', module: 'junit'
     }
-    testCompile 'junit:junit:4.8.1'
+    testCompile 'junit:junit:4.8.1',
+        'org.mockito:mockito-all:1.8.5'
 }
 
 def rundeckToolsDependencies = configurations.runtime.files.collect { "$it.name" }.join(" ")
