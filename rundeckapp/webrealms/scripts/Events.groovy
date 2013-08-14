@@ -20,9 +20,6 @@ eventConfigureJetty = { Server server ->
                     realm.setName(config.server.addrealm.name)
                     realm.setLoginModuleName(config.server.addrealm.LoginModuleName)
                     server.addBean(realm)
-                    System.err.println("Added JAAS login service: ${o} (${config.server.addrealm.name} ${config.server.addrealm.LoginModuleName}")
-                }else{
-                    System.err.println "DID NOT ADD JAAS login service: ${o}"
                 }
             } catch (Exception e) {
                 System.err.println "Failed to add login service: ${e}"
