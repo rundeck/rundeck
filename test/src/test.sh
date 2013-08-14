@@ -312,18 +312,21 @@ if [ -d "$RDECK_BASE/projects/test2" ] ; then
 	exit 2
 fi
 
+RDECK_URL=$(grep framework.server.url $RDECK_ETC/framework.properties  | cut -d' ' -f3)
+
 egrep 'https://' $RDECK_ETC/framework.properties > /dev/null
 https=$?
 
 if [ 0 = $https ] ; then
     # call api/testall.sh and use -k curl option to ignore server certificate
-    sh $SRC_DIR/../api/testall.sh "https://localhost:4443" -k
+    # 
+    sh $SRC_DIR/../api/testall.sh "$RDECK_URL" -k
     #################
     # alternate args to curl to use a pem formatted cert to verify server cert:
     #sh $SRC_DIR/testweb.sh "https://localhost:4443" "--cacert $RDECK_ETC/rundeck.server.pem"
     ################
 else
-    sh $SRC_DIR/../api/testall.sh "http://localhost:4440"
+    sh $SRC_DIR/../api/testall.sh "$RDECK_URL"
 fi
 
 if [ 0 != $? ] ; then

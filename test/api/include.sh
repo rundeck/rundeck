@@ -24,6 +24,7 @@ XMLSTARLET=${XMLSTARLET:-xmlstarlet}
 
 RDECK_PROJECTS=${RDECK_PROJECTS:-$RDECK_BASE/projects}
 RDECK_ETC=${RDECK_ETC:-$RDECK_BASE/etc}
+RDECK_URL=$(grep framework.server.url $RDECK_ETC/framework.properties  | cut -d' ' -f3)
 
 # xmlstarlet select xpath
 # usage: xmlsel XPATH file
@@ -63,7 +64,7 @@ docurl(){
 # accept url argument on commandline, if '-' use default
 RDURL="$1"
 if [ "-" == "$1" ] ; then
-    RDURL='http://localhost:4440'
+    RDURL=${RDECK_URL:-http://localhost:4440}
 fi
 shift
 
