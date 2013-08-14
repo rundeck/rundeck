@@ -43,6 +43,8 @@ if (System.properties["grails.local.repo"]) {
 }
 println "Grails Local Repo: ${grailsLocalRepo}"
 
+grails.plugin.location.webrealms = "webrealms"
+
 grails.project.dependency.resolution = {
     inherits "global" // inherit Grails' default dependencies
     log "warn" // log level of Ivy resolver, either 'error', 'warn', 'info', 'debug' or 'verbose'
@@ -82,7 +84,7 @@ grails.project.dependency.resolution = {
     println "Application Version: ${rundeckVersion}"
     plugins {
         runtime ":hibernate:$grailsVersion"
-        runtime ':webrealms:0.4'
+        compile ":code-coverage:1.2.6"
         build ':jetty:2.0.3'
     }
     dependencies {
@@ -113,6 +115,4 @@ grails.project.dependency.resolution = {
             changing = true
         }
     }
-    
-    grails.plugin.location.'webrealms' = "webrealms"
 }
