@@ -179,9 +179,14 @@ class ReportsController {
             json{
                 render(contentType:"text/json"){
                     if(errmsg){
-                        delegate.'error'(message:flash.error)
+                        delegate.error={
+                            delegate.message= flash.error
+                        }
                     }else{
-                        delegate.'since'('count':count,'time' :time)
+                        delegate.since={
+                            deelegate.count=count
+                            delegate.time= time
+                        }
                     }
                 }
             }

@@ -149,8 +149,8 @@ class ExecutionController {
             return withFormat {
                 json{
                     render(contentType:"text/json"){
-                        delegate.cancelled(false)
-                        delegate.status(statusStr?statusStr:(didcancel?'killed':'failed'))
+                        delegate.cancelled=false
+                        delegate.status=(statusStr?statusStr:(didcancel?'killed':'failed'))
                     }
                 }
                 xml {
@@ -169,10 +169,10 @@ class ExecutionController {
         withFormat{
             json{
                 render(contentType:"text/json"){
-                    delegate.cancelled(didcancel)
-                    delegate.status(abortresult.statusStr?abortresult.statusStr:(didcancel?'killed':'failed'))
+                    delegate.cancelled=didcancel
+                    delegate.status=(abortresult.statusStr?abortresult.statusStr:(didcancel?'killed':'failed'))
                     if(reasonstr){
-                        delegate.'reason'(reasonstr)
+                        delegate.'reason'=reasonstr
                     }
                 }
             }

@@ -337,8 +337,8 @@ class UserController {
         u.save()
 
         render(contentType:"text/json"){
-            result("success")
-            dashboard(u.dashboardPref)
+            delegate.result="success"
+            delegate.dashboard=u.dashboardPref
         }
     }
 
@@ -351,8 +351,8 @@ class UserController {
         def storedpref=result.storedpref
 
         render(contentType:"text/json"){
-            delegate.'result'("success")
-            filterpref(storedpref)
+            delegate.result="success"
+            delegate.filterpref=storedpref
         }
     }
 

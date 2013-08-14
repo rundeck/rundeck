@@ -1542,13 +1542,13 @@ class ScheduledExecutionController  {
         }
         return render(contentType:'application/json'){
             if(results.failed){
-                delegate.'error'(results.error)
-                message(results.message)
+                delegate.error=results.error
+                delegate.message=results.message
             }else{
-                success(true)
-                id(results.id)
-                href(createLink(controller: "execution",action: "follow",id: results.id))
-                follow(params.follow == 'true')
+                delegate.success=true
+                delegate.id=results.id
+                delegate.href=createLink(controller: "execution",action: "follow",id: results.id)
+                delegate.follow=(params.follow == 'true')
             }
         }
     }
