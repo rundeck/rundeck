@@ -3,6 +3,8 @@
 #test /api/resource/name output.
 
 DIR=$(cd `dirname $0` && pwd)
+set -- - 
+
 source $DIR/include.sh
 
 file=$DIR/curl.out
@@ -63,7 +65,8 @@ fi
 #Check projects list
 itemcount=$(xmlsel "count(/project/node)" ${file})
 if [ "1" != "$itemcount" ] ; then
-    errorMsg "FAIL: expected single /project/node element"
+    errorMsg "FAIL: expected single /project/node element ${runurl}?${params}"
+    cat $file
     exit 2
 fi
 
@@ -113,8 +116,12 @@ echo "OK"
 ####
 
 # temporarily move actual resources.xml out of the way, and replace with our own
+# 
 
 cp $RDECK_PROJECTS/test/etc/resources.xml $RDECK_PROJECTS/test/etc/resources.xml.backup
+
+# sleep to force file mtime to change
+sleep 1
 
 cat <<END > $RDECK_PROJECTS/test/etc/resources.xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -149,7 +156,8 @@ fi
 #Check projects list
 itemcount=$(xmlsel "count(/project/node)" ${file})
 if [ "1" != "$itemcount" ] ; then
-    errorMsg "FAIL: expected single /project/node element"
+    errorMsg "FAIL: expected single /project/node element ${runurl}?${params}"
+    cat $file
     exit 2
 fi
 itemname=$(xmlsel "/project/node/@name" ${file})
@@ -180,7 +188,8 @@ fi
 #Check projects list
 itemcount=$(xmlsel "count(/project/node)" ${file})
 if [ "1" != "$itemcount" ] ; then
-    errorMsg "FAIL: expected single /project/node element"
+    errorMsg "FAIL: expected single /project/node element ${runurl}?${params}"
+    cat $file
     exit 2
 fi
 itemname=$(xmlsel "/project/node/@name" ${file})

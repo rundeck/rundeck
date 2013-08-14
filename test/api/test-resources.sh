@@ -135,6 +135,9 @@ echo "OK"
 
 cp $RDECK_PROJECTS/test/etc/resources.xml $RDECK_PROJECTS/test/etc/resources.xml.backup
 
+# sleep to force file mtime to change
+sleep 1
+
 cat <<END > $RDECK_PROJECTS/test/etc/resources.xml
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE project PUBLIC "-//DTO Labs Inc.//DTD Resources Document 1.0//EN" "project.dtd">
@@ -166,7 +169,8 @@ fi
 #Check results list
 itemcount=$($XMLSTARLET sel -T -t -v "count(/project/node)" ${file})
 if [ "1" != "$itemcount" ] ; then
-    errorMsg "FAIL: expected single /project/node element"
+    errorMsg "FAIL: expected single /project/node element ${runurl}?${params}"
+    cat $file
     exit 2
 fi
 itemname=$($XMLSTARLET sel -T -t -v "/project/node/@name" ${file})
@@ -197,7 +201,8 @@ fi
 #Check results list
 itemcount=$($XMLSTARLET sel -T -t -v "count(/project/node)" ${file})
 if [ "1" != "$itemcount" ] ; then
-    errorMsg "FAIL: expected single /project/node element"
+    errorMsg "FAIL: expected single /project/node element ${runurl}?${params}"
+    cat $file
     exit 2
 fi
 itemname=$($XMLSTARLET sel -T -t -v "/project/node/@name" ${file})
@@ -289,7 +294,8 @@ fi
 #Check results list
 itemcount=$($XMLSTARLET sel -T -t -v "count(/project/node)" ${file})
 if [ "1" != "$itemcount" ] ; then
-    errorMsg "FAIL: expected single /project/node element"
+    errorMsg "FAIL: expected single /project/node element ${runurl}?${params}"
+    cat $file
     exit 2
 fi
 itemname=$($XMLSTARLET sel -T -t -v "/project/node/@name" ${file})
