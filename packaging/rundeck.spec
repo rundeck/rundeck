@@ -67,24 +67,21 @@ fi
 
 # Server Bootstrap
 %dir /var/lib/rundeck/bootstrap
-/var/lib/rundeck/bootstrap/jetty-6.1.21.jar
-/var/lib/rundeck/bootstrap/jetty-naming-6.1.21.jar
-/var/lib/rundeck/bootstrap/jetty-plus-6.1.21.jar
-/var/lib/rundeck/bootstrap/jetty-util-6.1.21.jar
+/var/lib/rundeck/bootstrap/jetty-all-7.6.0.v20120127.jar
 /var/lib/rundeck/bootstrap/rundeck-jetty-server-%{_vname}.jar
-/var/lib/rundeck/bootstrap/servlet-api-2.5-20081211.jar
+/var/lib/rundeck/bootstrap/servlet-api-2.5.jar
 
 # CLI Lib Support
 %dir /var/lib/rundeck/cli
 /var/lib/rundeck/cli/ant-1.7.1.jar
 /var/lib/rundeck/cli/ant-jsch-1.7.1.jar
 /var/lib/rundeck/cli/ant-launcher-1.7.1.jar
-/var/lib/rundeck/cli/commons-beanutils-1.8.0.jar
+/var/lib/rundeck/cli/commons-beanutils-1.8.3.jar
 /var/lib/rundeck/cli/commons-cli-1.0.jar
 /var/lib/rundeck/cli/commons-codec-1.5.jar
 /var/lib/rundeck/cli/commons-collections-3.2.1.jar
 /var/lib/rundeck/cli/commons-httpclient-3.0.1.jar
-/var/lib/rundeck/cli/commons-lang-2.4.jar
+/var/lib/rundeck/cli/commons-lang-2.6.jar
 /var/lib/rundeck/cli/commons-logging-1.1.1.jar
 /var/lib/rundeck/cli/dom4j-1.6.1.jar
 /var/lib/rundeck/cli/icu4j-2.6.1.jar
