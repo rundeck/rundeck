@@ -806,7 +806,9 @@ var FollowControl = Class.create({
         var obj=this;
         if(this.isrunning){
             new Ajax.Request(url, {
-                parameters: "id=" + id + "&offset=" + offset + ((this.tailmode && this.lastlines && this.truncateToTail) ? "&lastlines=" + this.lastlines : "")
+                parameters: "id=" + id + "&offset=" + offset
+                    + ((this.tailmode && this.lastlines && this.truncateToTail && offset==0) ? "&lastlines=" + this.lastlines : "")
+                    + "&maxlines="+this.lastlines
                     + this.extraParams ,
                 onSuccess: function(transport) {
                     obj.appendCmdOutput(transport.responseText);
