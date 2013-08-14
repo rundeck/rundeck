@@ -52,7 +52,8 @@ class ExecutionQuery extends ScheduledExecutionQuery{
     String userFilter
 
     static constraints={
-        statusFilter(inList: [ExecutionController.EXECUTION_RUNNING, ExecutionController.EXECUTION_ABORTED, ExecutionController.EXECUTION_FAILED, ExecutionController.EXECUTION_SUCCEEDED])
+        statusFilter(nullable:true,inList: [ExecutionController.EXECUTION_RUNNING, ExecutionController.EXECUTION_ABORTED, ExecutionController.EXECUTION_FAILED, ExecutionController.EXECUTION_SUCCEEDED])
+        sortOrder(nullable: true)
     }
 
 
