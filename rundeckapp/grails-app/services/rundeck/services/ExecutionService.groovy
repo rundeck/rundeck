@@ -1399,7 +1399,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
         if (scheduledExecution) {
             jobname = scheduledExecution.groupPath ? scheduledExecution.generateFullName() : scheduledExecution.jobName
             jobid = scheduledExecution.id
-            updateScheduledExecState(scheduledExecution,execution)
         }
         if(execSaved) {
             //summarize node success
@@ -1445,54 +1444,47 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
             return sb.toString()
 //        }
     }
-    def updateScheduledExecState(ScheduledExecution scheduledExecution, Execution execution){
-        def schedId=scheduledExecution.id
-        def eId=execution.id
-        def retry = true
+    /**
+     * Update a scheduledExecution statistics with a successful execution duration
+     * @param schedId
+     * @param execution
+     * @return
+     */
+    def updateScheduledExecStatistics(Long schedId, eId, long time){
+        def success = false
+        try {
+            ScheduledExecution.withNewSession {
+                def scheduledExecution = ScheduledExecution.get(schedId)
 
-        while (retry) {
-            try {
-                ScheduledExecution.withNewSession {
-                    scheduledExecution = ScheduledExecution.get(schedId)
-                    scheduledExecution.refresh()
-                    execution = execution.merge()
-                    if (scheduledExecution.scheduled) {
-                        scheduledExecution.nextExecution = scheduledExecutionService.nextExecutionTime(scheduledExecution)
-                    }
-//                    scheduledExecution.addToExecutions(execution)
-                    //if execution has valid timing data, update the scheduledExecution timing info
-                    if (!execution.cancelled && "true".equals(execution.status)) {
-                        if (execution.dateStarted && execution.dateCompleted) {
-                            def long time = execution.dateCompleted.getTime() - execution.dateStarted.getTime()
-                            if (null == scheduledExecution.execCount || 0 == scheduledExecution.execCount || null == scheduledExecution.totalTime || 0 == scheduledExecution.totalTime) {
-                                scheduledExecution.execCount = 1
-                                scheduledExecution.totalTime = time
-                            } else if (scheduledExecution.execCount > 0 && scheduledExecution.execCount < 10) {
-                                scheduledExecution.execCount++
-                                scheduledExecution.totalTime += time
-                            } else if (scheduledExecution.execCount >= 10) {
-                                def popTime = scheduledExecution.totalTime.intdiv(scheduledExecution.execCount)
-                                scheduledExecution.totalTime -= popTime
-                                scheduledExecution.totalTime += time
-                            }
-                        }
-                    }
-                    if (scheduledExecution.save(flush:true)) {
-                        log.info("updated scheduled Execution")
-                    } else {
-                        scheduledExecution.errors.allErrors.each {log.warn(it.defaultMessage)}
-                        log.warn("failed saving execution to history")
-                    }
-                    retry = false
+                if (scheduledExecution.scheduled) {
+                    scheduledExecution.nextExecution = scheduledExecutionService.nextExecutionTime(scheduledExecution)
                 }
-            } catch (org.springframework.dao.OptimisticLockingFailureException e) {
-                log.error("Caught OptimisticLockingFailure, will retry updateScheduledExecState for ${eId}")
-                Thread.sleep(200)
-            } catch (StaleObjectStateException e) {
-                log.error("Caught StaleObjectState, will retry updateScheduledExecState for ${eId}")
-                Thread.sleep(200)
+                //TODO: record job stats in separate domain class
+                if (null == scheduledExecution.execCount || 0 == scheduledExecution.execCount || null == scheduledExecution.totalTime || 0 == scheduledExecution.totalTime) {
+                    scheduledExecution.execCount = 1
+                    scheduledExecution.totalTime = time
+                } else if (scheduledExecution.execCount > 0 && scheduledExecution.execCount < 10) {
+                    scheduledExecution.execCount++
+                    scheduledExecution.totalTime += time
+                } else if (scheduledExecution.execCount >= 10) {
+                    def popTime = scheduledExecution.totalTime.intdiv(scheduledExecution.execCount)
+                    scheduledExecution.totalTime -= popTime
+                    scheduledExecution.totalTime += time
+                }
+                if (scheduledExecution.save(flush:true)) {
+                    log.info("updated scheduled Execution")
+                } else {
+                    scheduledExecution.errors.allErrors.each {log.warn(it.defaultMessage)}
+                    log.warn("failed saving execution to history")
+                }
+                success = true
             }
+        } catch (org.springframework.dao.OptimisticLockingFailureException e) {
+            log.error("Caught OptimisticLockingFailure, will retry updateScheduledExecStatistics for ${eId}")
+        } catch (StaleObjectStateException e) {
+            log.error("Caught StaleObjectState, will retry updateScheduledExecStatistics for ${eId}")
         }
+        return success
     }
 
     def File maybeCreateAdhocLogDir(Execution execution, Framework framework) {
