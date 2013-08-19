@@ -100,7 +100,7 @@ log4j={
     environments {
         development {
             info 'org.rundeck.api.requests'
-            info 'org.rundeck.web.requests'
+//            info 'org.rundeck.web.requests'
         }
     }
 }
