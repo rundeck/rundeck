@@ -320,7 +320,6 @@ class WorkflowController {
      */
     Map _applyWFEditAction (Workflow editwf, Map input){
         def result = [:]
-
         def createItemFromParams={params->
             def item
             if (params.pluginItem) {
@@ -331,6 +330,9 @@ class WorkflowController {
                 item.configuration = params.pluginConfig
             } else if (params.jobName || 'job' == params.newitemtype) {
                 item = new JobExec(params)
+                if (params.nodeStep instanceof String) {
+                    item.nodeStep = params.nodeStep == 'true'
+                }
             } else {
                 item = new CommandExec(params)
 
@@ -347,14 +349,19 @@ class WorkflowController {
                 moditem.properties=params.subMap(['keepgoingOnSuccess'])
                 moditem.configuration = params.pluginConfig
             } else {
+                if(params.nodeStep instanceof String) {
+                    params.nodeStep = params.nodeStep == 'true'
+                }
                 moditem.properties = params
+                if (params.jobName) {
+                    moditem.nodeStep=params.nodeStep
+                }
                 def optsmap = ExecutionService.filterOptParams(input.params)
                 if (optsmap) {
                     moditem.argString = ExecutionService.generateArgline(optsmap)
                     //TODO: validate input options
                 }
             }
-
 
         }
 

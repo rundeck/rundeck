@@ -203,18 +203,17 @@ class ScheduledExecutionController  {
                 && scheduledExecution.serverNodeUUID != frameworkService.getServerUUID()) {
             remoteClusterNodeUUID = scheduledExecution.serverNodeUUID
         }
-
+        def dataMap= [scheduledExecution: scheduledExecution, crontab: crontab, params: params,
+                executions: executions,
+                total: total,
+                nextExecution: scheduledExecutionService.nextExecutionTime(scheduledExecution),
+                remoteClusterNodeUUID: remoteClusterNodeUUID,
+                notificationPlugins: notificationService.listNotificationPlugins(),
+                max: params.max ? params.max : 10,
+                offset: params.offset ? params.offset : 0] + _prepareExecute(scheduledExecution, framework)
         withFormat{
             html{
-                [scheduledExecution:scheduledExecution, crontab:crontab, params:params,
-            executions:executions,
-            total:total,
-            nextExecution:scheduledExecutionService.nextExecutionTime(scheduledExecution),
-                        remoteClusterNodeUUID: remoteClusterNodeUUID,
-            notificationPlugins: notificationService.listNotificationPlugins(),
-            max: params.max?params.max:10,
-            offset:params.offset?params.offset:0] + _prepareExecute(scheduledExecution, framework)
-
+                dataMap
             }
             yaml{
                 render(text:JobsYAMLCodec.encode([scheduledExecution] as List),contentType:"text/yaml",encoding:"UTF-8")
@@ -239,6 +238,7 @@ class ScheduledExecutionController  {
                 render(text:writer.toString(),contentType:"text/xml",encoding:"UTF-8")
             }
         }
+        dataMap
     }
 
 
@@ -1595,7 +1595,7 @@ class ScheduledExecutionController  {
             if(results.error=='unauthorized'){
                 return render(view:"/common/execUnauthorized",model:results)
             }else {
-                def model=show.call()
+                def model=show()
                 results.error = results.remove('message')
                 results.jobexecOptionErrors=results.errors
                 results.selectedoptsmap=results.options

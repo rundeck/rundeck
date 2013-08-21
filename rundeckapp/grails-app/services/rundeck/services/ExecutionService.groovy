@@ -1,5 +1,12 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.core.common.INodeEntry
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionService
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.app.support.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.QueueQuery
@@ -46,7 +53,7 @@ import static org.apache.tools.ant.util.StringUtils.*
 /**
  * Coordinates Command executions via Ant Project objects
  */
-class ExecutionService implements ApplicationContextAware, StepExecutor{
+class ExecutionService implements ApplicationContextAware, StepExecutor, NodeStepExecutor{
 
     static transactional = true
     def FrameworkService frameworkService
@@ -536,8 +543,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
             //create listener to handle log messages and Ant build events
             WorkflowExecutionListenerImpl executionListener = new WorkflowExecutionListenerImpl(recorder, new ContextLogWriter(loghandler),false,null);
             StepExecutionContext executioncontext = createContext(execution, null,framework, execution.user, jobcontext, executionListener, null,extraParams, extraParamsExposed)
+
+            //ExecutionService handles Job reference steps
             final cis = StepExecutionService.getInstanceForFramework(framework);
             cis.registerInstance(JobExecutionItem.STEP_EXECUTION_TYPE, this)
+            //ExecutionService handles Job reference node steps
+            final nis = NodeStepExecutionService.getInstanceForFramework(framework);
+            nis.registerInstance(JobExecutionItem.STEP_EXECUTION_TYPE, this)
 
             if (scheduledExecution) {
                 //send onstart notification
@@ -628,7 +640,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
     }
 
     public StepExecutionItem itemForWFCmdItem(final WorkflowStep step,final StepExecutionItem handler=null) throws FileNotFoundException {
-        if(step.instanceOf(CommandExec)){
+        if(step instanceof CommandExec || step.instanceOf(CommandExec)){
             CommandExec cmd=step.asType(CommandExec)
             if (null != cmd.getAdhocRemoteString()) {
 
@@ -668,7 +680,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
 
                 }
             }
-        }else if (step.instanceOf(JobExec)) {
+        }else if (step instanceof JobExec || step.instanceOf(JobExec)) {
             final JobExec jobcmditem = step as JobExec;
 
             final String[] args;
@@ -679,8 +691,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
                 args = new String[0];
             }
 
-            return ExecutionItemFactory.createJobRef(jobcmditem.getJobIdentifier(), args, handler, !!jobcmditem.keepgoingOnSuccess)
-        }else if(step.instanceOf(PluginStep)){
+            return ExecutionItemFactory.createJobRef(jobcmditem.getJobIdentifier(), args, !!jobcmditem.nodeStep, handler, !!jobcmditem.keepgoingOnSuccess)
+        }else if(step instanceof PluginStep || step.instanceOf(PluginStep)){
             final PluginStep stepitem = step as PluginStep
             if(stepitem.nodeStep){
                 return ExecutionItemFactory.createPluginNodeStepItem(stepitem.type, stepitem.configuration, !!stepitem.keepgoingOnSuccess, handler)
@@ -810,6 +822,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
                 }
             }else {
                 log.error("Execution failed: " + execMap.execution.id + ": " + thread.resultObject?.toString())
+                loghandler.logError("Execution failed: " + execMap.execution.id + ": " + thread.resultObject?.toString())
             }
 
         }else{
@@ -1611,155 +1624,32 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
 
     @Override
     public boolean isNodeDispatchStep(StepExecutionItem item) {
-        return false
+        if (!(item instanceof JobExecutionItem)) {
+            throw new IllegalArgumentException("Unsupported item type: " + item.getClass().getName());
+        }
+        JobExecutionItem jitem = (JobExecutionItem) item;
+        return jitem.isNodeStep()
     }
 
+    /**
+     * Execute the workflow step, the executionItem is expected to be a {@link JobExecutionItem} to execute a Job reference workflow step.
+     * @param executionContext
+     * @param executionItem
+     * @return
+     * @throws StepException
+     */
     StepExecutionResult executeWorkflowStep(StepExecutionContext executionContext, StepExecutionItem executionItem) throws StepException{
         if (!(executionItem instanceof JobExecutionItem)) {
             throw new IllegalArgumentException("Unsupported item type: " + executionItem.getClass().getName());
         }
-        def requestAttributes = RequestContextHolder.getRequestAttributes()
-        boolean unbindrequest = false
-        // outside of an executing request, establish a mock version
-        if (!requestAttributes) {
-            def servletContext = ServletContextHolder.getServletContext()
-            def applicationContext = WebApplicationContextUtils.getRequiredWebApplicationContext(servletContext)
-            requestAttributes = GrailsWebUtil.bindMockWebRequest(applicationContext)
-            unbindrequest = true
+        def createFailure = { FailureReason reason, String msg ->
+            return new StepExecutionResultImpl(null, reason, msg)
         }
-        def id
-        //lookup job, create item, submit to ExecutionService
+        def createSuccess = {
+            return new StepExecutionResultImpl()
+        }
         JobExecutionItem jitem = (JobExecutionItem) executionItem
-        def StepExecutionResult result = null
-        try{
-
-            def group = null
-            def name = null
-            def m = jitem.jobIdentifier =~ '^/?(.+)/([^/]+)$'
-            if (m.matches()) {
-                group = m.group(1)
-                name = m.group(2)
-            } else {
-                name = jitem.jobIdentifier
-            }
-            def schedlist = ScheduledExecution.findAllScheduledExecutions(group,name,executionContext.getFrameworkProject())
-            if (!schedlist || 1 != schedlist.size()) {
-                def msg= "Job [${jitem.jobIdentifier}] not found, project: ${executionContext.getFrameworkProject()}"
-                executionContext.getExecutionListener().log(0,msg)
-                throw new StepException(msg,JobReferenceFailureReason.NotFound)
-            }
-            id = schedlist[0].id
-            def StepExecutionContext newContext
-            def WorkflowExecutionItem newExecItem
-
-            ScheduledExecution.withTransaction{status->
-                ScheduledExecution se = ScheduledExecution.get(id)
-
-                if (!frameworkService.authorizeProjectJobAll(executionContext.getFramework(), se, [AuthConstants.ACTION_RUN], se.project)) {
-                    def msg= "Unauthorized to execute job [${jitem.jobIdentifier}}: ${se.extid}"
-                    executionContext.getExecutionListener().log(0, msg);
-                    result = new StepExecutionResultImpl(null,JobReferenceFailureReason.Unauthorized,msg)
-                    return
-                }
-                String[] newargs = jitem.args
-                //substitute any data context references in the arguments
-                if (null != newargs && executionContext.dataContext) {
-                    newargs = DataContextUtils.replaceDataReferences(newargs, executionContext.dataContext)
-                }
-
-                final jobOptsMap = frameworkService.parseOptsFromArray(newargs)
-                jobOptsMap = addOptionDefaults(se, jobOptsMap)
-
-                //select secureAuth and secure options from the args to pass
-                def secAuthOpts = selectSecureOptionInput(se, [optparams: jobOptsMap], false)
-                def secOpts = selectSecureOptionInput(se, [optparams: jobOptsMap], true)
-
-                //for secAuthOpts, evaluate each in context of original private data context
-                def evalSecAuthOpts = [:]
-                secAuthOpts.each {k, v ->
-                    def newv=DataContextUtils.replaceDataReferences(v, executionContext.privateDataContext)
-                    if(newv!=v || !v.startsWith('${option.')){
-                        evalSecAuthOpts[k] = newv
-                    }
-                }
-
-                //for secOpts, evaluate each in context of original secure option data context
-                def evalSecOpts = [:]
-                secOpts.each {k, v ->
-                    def newv = DataContextUtils.replaceDataReferences(v, [option:executionContext.dataContext['secureOption']])
-                    if (newv != v || !v.startsWith('${option.')) {
-                        evalSecOpts[k] = newv
-                    }
-                }
-
-                //for plain opts, evaluate in context of non secure data context
-                final plainOpts = removeSecureOptionEntries(se, jobOptsMap)
-
-                //define nonsecure opts entries
-                def plainOptsContext= executionContext.dataContext['option']?.findAll{!executionContext.dataContext['secureOption'] || null== executionContext.dataContext['secureOption'][it.key]}
-                def evalPlainOpts = [:]
-                plainOpts.each {k, v ->
-                    evalPlainOpts[k] = DataContextUtils.replaceDataReferences(v, [option:plainOptsContext] )
-                    //XXX: missing option references could be removed instead of passed on
-                }
-
-                //validate the option values
-                try {
-                    validateOptionValues(se, evalPlainOpts + evalSecOpts + evalSecAuthOpts)
-                } catch (ExecutionServiceValidationException e) {
-                    executionContext.getExecutionListener().log(0, "Option input was not valid for [${jitem.jobIdentifier}]: ${e.message}");
-                    def msg = "Invalid options: ${e.errors.keySet()}"
-                    result = new StepExecutionResultImpl(e,JobReferenceFailureReason.InvalidOptions, msg)
-                    return
-                }
-
-
-                //arg list for new context
-                def stringList= evalPlainOpts.collect {["-" + it.key, it.value]}.flatten()
-                newargs = stringList.toArray(new String[stringList.size()]);
-
-                //construct job data context
-                def jobcontext = new HashMap<String, String>()
-                jobcontext.id = se.extid
-                jobcontext.execid = executionContext.dataContext.job?.execid?:null;
-                jobcontext.loglevel= mappedLogLevels[executionContext.loglevel]
-                jobcontext.name = se.jobName
-                jobcontext.group = se.groupPath
-                jobcontext.project = se.project
-                jobcontext.username = executionContext.getUser()
-                jobcontext['user.name'] = jobcontext.username
-                newExecItem = createExecutionItemForExecutionContext(se, executionContext.getFramework(), executionContext.getUser())
-                newContext= createContext(se, executionContext, jobcontext, newargs, evalSecAuthOpts, evalSecOpts)
-                return
-            }
-
-            if(null!=result){
-                return result
-            }
-
-            if (newContext.getNodes().getNodeNames().size()<1){
-                String msg = "No nodes matched for the filters: " + newContext.getNodeSelector()
-                executionContext.getExecutionListener().log(0, msg)
-                throw new StepException(msg, JobReferenceFailureReason.NoMatchedNodes)
-            }
-
-            def WorkflowExecutionService service = executionContext.getFramework().getWorkflowExecutionService()
-
-            def wresult = service.getExecutorForItem(newExecItem).executeWorkflow(newContext, newExecItem)
-
-            if(!wresult || !wresult.success ){
-                result = new StepExecutionResultImpl(null, JobReferenceFailureReason.JobFailed, "Job [${jitem.jobIdentifier}] failed")
-            }else{
-                result=new StepExecutionResultImpl()
-            }
-            result.sourceResult = wresult
-
-        } finally {
-            if (unbindrequest) {
-                RequestContextHolder.setRequestAttributes (null)
-            }
-        }
-        return result
+        return runJobRefExecutionItem(executionContext, jitem, null, null, createFailure, createSuccess)
     }
 
     ///////////////
@@ -1811,6 +1701,178 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
       private HttpSession getSession() {
           return RequestContextHolder.currentRequestAttributes().getSession()
       }
+
+    /**
+     * Execute a job reference workflow with a particular context, optionally overriding the target node set,
+     * and return the result based on the createFailure/createSuccess closures
+     * @param executionContext
+     * @param jitem
+     * @param nodeselector
+     * @param nodeSet
+     * @param createFailure closure that takes {@link FailureReason} and String as arguments, and returns a {@link StepExecutionResult} or {@link NodeStepResult}
+     * @param createSuccess closure that returns a {@link StepExecutionResult} or {@link NodeStepResult}
+     * @return
+     */
+    private def runJobRefExecutionItem(StepExecutionContext executionContext, JobExecutionItem jitem,
+            NodesSelector nodeselector, INodeSet nodeSet, Closure createFailure, Closure createSuccess) {
+        RequestHelper.doWithMockRequest {
+            def id
+            def result
+
+            def group = null
+            def name = null
+            def m = jitem.jobIdentifier =~ '^/?(.+)/([^/]+)$'
+            if (m.matches()) {
+                group = m.group(1)
+                name = m.group(2)
+            } else {
+                name = jitem.jobIdentifier
+            }
+            def schedlist = ScheduledExecution.findAllScheduledExecutions(group, name, executionContext.getFrameworkProject())
+            if (!schedlist || 1 != schedlist.size()) {
+                def msg = "Job [${jitem.jobIdentifier}] not found, project: ${executionContext.getFrameworkProject()}"
+                executionContext.getExecutionListener().log(0, msg)
+                throw new StepException(msg, JobReferenceFailureReason.NotFound)
+            }
+            id = schedlist[0].id
+            def StepExecutionContext newContext
+            def WorkflowExecutionItem newExecItem
+
+            ScheduledExecution.withTransaction { status ->
+                ScheduledExecution se = ScheduledExecution.get(id)
+
+                if (!frameworkService.authorizeProjectJobAll(executionContext.getFramework(), se, [AuthConstants.ACTION_RUN], se.project)) {
+                    def msg = "Unauthorized to execute job [${jitem.jobIdentifier}}: ${se.extid}"
+                    executionContext.getExecutionListener().log(0, msg);
+                    result = createFailure(JobReferenceFailureReason.Unauthorized, msg)
+                    return
+                }
+                String[] newargs = jitem.args
+                //substitute any data context references in the arguments
+                if (null != newargs && executionContext.dataContext) {
+                    newargs = DataContextUtils.replaceDataReferences(newargs, executionContext.dataContext)
+                }
+
+                final jobOptsMap = frameworkService.parseOptsFromArray(newargs)
+                jobOptsMap = addOptionDefaults(se, jobOptsMap)
+
+                //select secureAuth and secure options from the args to pass
+                def secAuthOpts = selectSecureOptionInput(se, [optparams: jobOptsMap], false)
+                def secOpts = selectSecureOptionInput(se, [optparams: jobOptsMap], true)
+
+                //for secAuthOpts, evaluate each in context of original private data context
+                def evalSecAuthOpts = [:]
+                secAuthOpts.each { k, v ->
+                    def newv = DataContextUtils.replaceDataReferences(v, executionContext.privateDataContext)
+                    if (newv != v || !v.startsWith('${option.')) {
+                        evalSecAuthOpts[k] = newv
+                    }
+                }
+
+                //for secOpts, evaluate each in context of original secure option data context
+                def evalSecOpts = [:]
+                secOpts.each { k, v ->
+                    def newv = DataContextUtils.replaceDataReferences(v, [option: executionContext.dataContext['secureOption']])
+                    if (newv != v || !v.startsWith('${option.')) {
+                        evalSecOpts[k] = newv
+                    }
+                }
+
+                //for plain opts, evaluate in context of non secure data context
+                final plainOpts = removeSecureOptionEntries(se, jobOptsMap)
+
+                //define nonsecure opts entries
+                def plainOptsContext = executionContext.dataContext['option']?.findAll { !executionContext.dataContext['secureOption'] || null == executionContext.dataContext['secureOption'][it.key] }
+                def evalPlainOpts = [:]
+                plainOpts.each { k, v ->
+                    evalPlainOpts[k] = DataContextUtils.replaceDataReferences(v, [option: plainOptsContext])
+                    //XXX: missing option references could be removed instead of passed on
+                }
+
+                //validate the option values
+                try {
+                    validateOptionValues(se, evalPlainOpts + evalSecOpts + evalSecAuthOpts)
+                } catch (ExecutionServiceValidationException e) {
+                    executionContext.getExecutionListener().log(0, "Option input was not valid for [${jitem.jobIdentifier}]: ${e.message}");
+                    def msg = "Invalid options: ${e.errors.keySet()}"
+                    result = createFailure(JobReferenceFailureReason.InvalidOptions, msg.toString())
+                    return
+                }
+
+                //arg list for new context
+                def stringList = evalPlainOpts.collect { ["-" + it.key, it.value] }.flatten()
+                newargs = stringList.toArray(new String[stringList.size()]);
+
+                //construct job data context
+                def jobcontext = new HashMap<String, String>()
+                jobcontext.id = se.extid
+                jobcontext.execid = executionContext.dataContext.job?.execid ?: null;
+                jobcontext.loglevel = mappedLogLevels[executionContext.loglevel]
+                jobcontext.name = se.jobName
+                jobcontext.group = se.groupPath
+                jobcontext.project = se.project
+                jobcontext.username = executionContext.getUser()
+                jobcontext['user.name'] = jobcontext.username
+                newExecItem = createExecutionItemForExecutionContext(se, executionContext.getFramework(), executionContext.getUser())
+                newContext = createContext(se, executionContext, jobcontext, newargs, evalSecAuthOpts, evalSecOpts)
+                return
+            }
+            if (null != result) {
+                return result
+            }
+
+            if(null!=nodeSet && null!=nodeselector){
+                //override the node set from the filter
+                newContext = com.dtolabs.rundeck.core.execution.ExecutionContextImpl.builder(newContext)
+                        .nodes(nodeSet)
+                        .nodeSelector(nodeselector)
+                        .build()
+            }
+
+            if (newContext.getNodes().getNodeNames().size() < 1) {
+                String msg = "No nodes matched for the filters: " + newContext.getNodeSelector()
+                executionContext.getExecutionListener().log(0, msg)
+                throw new StepException(msg, JobReferenceFailureReason.NoMatchedNodes)
+            }
+
+            def WorkflowExecutionService service = executionContext.getFramework().getWorkflowExecutionService()
+
+            def wresult = service.getExecutorForItem(newExecItem).executeWorkflow(newContext, newExecItem)
+
+            if (!wresult || !wresult.success) {
+                result = createFailure(JobReferenceFailureReason.JobFailed, "Job [${jitem.jobIdentifier}] failed")
+            } else {
+                result = createSuccess()
+            }
+            result.sourceResult = wresult
+
+            return result
+        }
+    }
+    /**
+     * Execute the node step, the executionItem is expected to be a {@link JobExecutionItem} to execute a Job reference
+     * as a node step on a single node.
+     * @param executionContext
+     * @param executionItem
+     * @return
+     * @throws StepException
+     */
+    @Override
+    NodeStepResult executeNodeStep(StepExecutionContext executionContext, NodeStepExecutionItem executionItem,
+                                   INodeEntry node) throws NodeStepException {
+        if (!(executionItem instanceof JobExecutionItem)) {
+            throw new IllegalArgumentException("Unsupported item type: " + executionItem.getClass().getName());
+        }
+        def createFailure= { FailureReason reason, String msg ->
+            return NodeExecutorResultImpl.createFailure(reason, msg, node)
+        }
+        def createSuccess={
+            return NodeExecutorResultImpl.createSuccess(node)
+        }
+        JobExecutionItem jitem = (JobExecutionItem) executionItem
+        //don't override node filters, to allow option inputs to be used in the filters
+        return runJobRefExecutionItem(executionContext, jitem, null, null, createFailure, createSuccess)
+    }
 }
 
 /**

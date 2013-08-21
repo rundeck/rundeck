@@ -41,6 +41,11 @@ public class JobRefCommandBase extends JobRefCommand implements HasFailureHandle
         return new String[0];
     }
 
+    @Override
+    public boolean isNodeStep() {
+        return false;
+    }
+
     public StepExecutionItem getFailureHandler() {
         return null;
     }

@@ -31,12 +31,14 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
     String jobGroup
     String jobIdentifier
     String argString
-    static transients=['jobIdentifier','nodeStep']
+    Boolean nodeStep
+    static transients=['jobIdentifier']
 
     static constraints = {
         jobName(nullable: false, blank: false)
         jobGroup(nullable: true, blank: true)
         argString(nullable: true, blank: true)
+        nodeStep(nullable: true)
     }
 
     static mapping = {
@@ -46,7 +48,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
     }
 
     public String toString() {
-        return "jobref(name=\"${jobName}\" group=\"${jobGroup}\" argString=\"${argString}\")" + (errorHandler ? " [handler: ${errorHandler}" : '')
+        return "jobref(name=\"${jobName}\" group=\"${jobGroup}\" argString=\"${argString}\" nodeStep=\"${nodeStep}\")" + (errorHandler ? " [handler: ${errorHandler}" : '')
     }
 
     public String summarize() {
@@ -60,10 +62,6 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
     public void setJobIdentifier(){
         //noop
     }
-    public boolean isNodeStep(){
-        return false;
-    }
-
 
     public JobExec createClone(){
         Map properties = new HashMap(this.properties)
@@ -79,6 +77,9 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         if(argString){
             map.jobref.args=argString
         }
+        if(nodeStep){
+            map.jobref.nodeStep="true"
+        }
         if (errorHandler) {
             map.errorhandler = errorHandler.toMap()
         } else if (keepgoingOnSuccess) {
@@ -93,6 +94,9 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         exec.jobName=map.jobref.name
         if(map.jobref.args){
             exec.argString=map.jobref.args
+        }
+        if(map.jobref.nodeStep in ['true',true]){
+            exec.nodeStep=true
         }
         exec.keepgoingOnSuccess = !!map.keepgoingOnSuccess
         //nb: error handler is created inside Workflow.fromMap

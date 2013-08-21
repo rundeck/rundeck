@@ -797,6 +797,10 @@ group
 
 :    the group name
 
+nodeStep
+
+:    `true/false` whether the Job reference step should run for each node
+
 
 *Nested elements*
 
@@ -813,6 +817,10 @@ Example passing arguments to the job:
            <arg line="-option value -option2 value2"/>
         </jobref>
     </command>      
+
+If `nodeStep` is set to "true", then the Job Reference step will operate as a *Node Step* instead of the
+default.  As a *Node Step* it will execute once for each matched node in the containing Job workflow, and
+can use node attribute variable expansion in the arguments to the job reference.
 
 ### Plugin step
 

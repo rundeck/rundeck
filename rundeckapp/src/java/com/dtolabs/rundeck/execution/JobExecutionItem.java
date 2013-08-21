@@ -36,8 +36,9 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionI
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision$
  */
-public interface JobExecutionItem extends HandlerExecutionItem {
+public interface JobExecutionItem extends HandlerExecutionItem, NodeStepExecutionItem {
     public final static String STEP_EXECUTION_TYPE = "rundeck-jobref";
     public String getJobIdentifier();
     public String[] getArgs();
+    public boolean isNodeStep();
 }

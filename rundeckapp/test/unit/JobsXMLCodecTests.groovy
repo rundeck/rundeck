@@ -1695,6 +1695,8 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertNull "incorrect argString", cmd1.argString
             assertEquals "incorrect jobName", 'bob', cmd1.jobName
             assertNull "incorrect jobGroup", cmd1.jobGroup
+            assertEquals "incorrect nodeStep", false, !!cmd1.nodeStep
+
         //simple workflow with jobref
             jobs = JobsXMLCodec.decode("""<joblist>
   <job>
@@ -1734,6 +1736,8 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertNull "incorrect adhocRemoteString", cmd1.argString
             assertEquals "incorrect jobName", 'bob', cmd1.jobName
             assertEquals "incorrect jobGroup", '/some/path', cmd1.jobGroup
+            assertEquals "incorrect nodeStep", false, !!cmd1.nodeStep
+
         //simple workflow with step-first strategy
             jobs = JobsXMLCodec.decode("""<joblist>
   <job>
@@ -1773,6 +1777,8 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertNull "incorrect adhocRemoteString", cmd1.argString
             assertEquals "incorrect jobName", 'bob', cmd1.jobName
             assertEquals "incorrect jobGroup", '/some/path', cmd1.jobGroup
+            assertEquals "incorrect nodeStep", false, !!cmd1.nodeStep
+
         //jobref item with args
             jobs = JobsXMLCodec.decode("""<joblist>
   <job>
@@ -1815,6 +1821,51 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect adhocRemoteString", "-test1 1 -test2 2",cmd1.argString
             assertEquals "incorrect jobName", 'bob', cmd1.jobName
             assertEquals "incorrect jobGroup", '/some/path', cmd1.jobGroup
+            assertEquals "incorrect nodeStep", false, !!cmd1.nodeStep
+
+        //jobref item nodeStep=true
+            jobs = JobsXMLCodec.decode("""<joblist>
+  <job>
+    <id>5</id>
+    <name>wait1</name>
+    <description></description>
+    <loglevel>INFO</loglevel>
+    <context>
+        <project>test1</project>
+    </context>
+    <sequence>
+        <command>
+            <jobref name="bob" group="/some/path" nodeStep="true">
+                <arg line="-test1 1 -test2 2"/>
+            </jobref>
+        </command>
+    </sequence>
+    <dispatch>
+      <threadcount>1</threadcount>
+      <keepgoing>false</keepgoing>
+    </dispatch>
+    <schedule>
+      <time hour='11' minute='21' />
+      <weekday day='*' />
+      <month month='*' />
+    </schedule>
+  </job>
+</joblist>
+""")
+            assertNotNull jobs
+            assertEquals "incorrect size", 1, jobs.size()
+            assertNotNull "incorrect workflow", jobs[0].workflow
+            assertEquals "incorrect workflow strategy", "node-first", jobs[0].workflow.strategy
+            assertNotNull "incorrect workflow strategy", jobs[0].workflow.commands
+            assertEquals "incorrect workflow strategy", 1, jobs[0].workflow.commands.size()
+            cmd1 = jobs[0].workflow.commands[0]
+            assertNotNull "incorrect workflow", cmd1
+            assertTrue "incorrect type: ${cmd1}", (cmd1 instanceof JobExec)
+            assertNotNull "incorrect adhocRemoteString", cmd1.argString
+            assertEquals "incorrect adhocRemoteString", "-test1 1 -test2 2",cmd1.argString
+            assertEquals "incorrect jobName", 'bob', cmd1.jobName
+            assertEquals "incorrect jobGroup", '/some/path', cmd1.jobGroup
+            assertEquals "incorrect nodeStep", true, !!cmd1.nodeStep
 
         //simple workflow with script content
         jobs = JobsXMLCodec.decode("""<joblist>
@@ -4071,7 +4122,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "wrong command/jobref/@name",'a Job',doc.job[0].sequence[0].command[0].jobref[0]['@name']
             assertEquals "wrong command/jobref/@group",'/some/path',doc.job[0].sequence[0].command[0].jobref[0]['@group']
 
-        //test simple job ref workflow item, with a group
+        //test simple job ref workflow item, with a group, with argString
         def job10 = [
                 new ScheduledExecution(
                         jobName:'test job 1',
@@ -4111,6 +4162,51 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "missing command/jobref",1,doc.job[0].sequence[0].command[0].jobref.size()
             assertEquals "wrong command/jobref/@name",'a Job',doc.job[0].sequence[0].command[0].jobref[0]['@name']
             assertEquals "wrong command/jobref/@group",'/some/path',doc.job[0].sequence[0].command[0].jobref[0]['@group']
+            assertEquals "wrong arg count",1,doc.job[0].sequence[0].command.jobref.arg.size()
+            assertEquals "wrong arg @line",'-test1 1 -test2 2',doc.job[0].sequence[0].command[0].jobref[0].arg[0]['@line']
+
+        //test simple job ref workflow item, with a group, with argString, nodeStep=true
+        def jobref10 = [
+                new ScheduledExecution(
+                        jobName:'test job 1',
+                        description:'test descrip',
+                        loglevel: 'INFO',
+                        project:'test1',
+                        argString:'',
+                        nodeThreadcount:1,
+                        nodeKeepgoing:true,
+                        doNodedispatch:true,
+                        workflow: new Workflow(keepgoing: true, commands: [new JobExec(
+                                    jobName:'a Job',
+                                    jobGroup:'/some/path',
+                                    argString:'-test1 1 -test2 2',
+                                    nodeStep: true
+                                )]
+                        )
+                )
+        ]
+
+            xmlstr = JobsXMLCodec.encode(jobref10)
+            assertNotNull xmlstr
+            assertTrue xmlstr instanceof String
+
+
+            doc = parser.parse(new StringReader(xmlstr))
+            assertNotNull doc
+            assertEquals "missing job",1,doc.job.size()
+            assertEquals "missing context",1,doc.job[0].context.size()
+            assertEquals "missing context/project",1,doc.job[0].context[0].project.size()
+            assertEquals "wrong project",'test1',doc.job[0].context[0].project[0].text()
+            assertEquals "missing sequence",1,doc.job.sequence.size()
+            assertEquals "wrong keepgoing","node-first",doc.job[0].sequence[0]['@strategy']
+            assertEquals "wrong command count",1,doc.job[0].sequence[0].command.size()
+            assertNull "wrong command @resource",doc.job[0].sequence[0].command[0]['@resource']
+            assertNull "wrong command @name",doc.job[0].sequence[0].command[0]['@name']
+            assertNull "wrong command @module",doc.job[0].sequence[0].command[0]['@module']
+            assertEquals "missing command/jobref",1,doc.job[0].sequence[0].command[0].jobref.size()
+            assertEquals "wrong command/jobref/@name",'a Job',doc.job[0].sequence[0].command[0].jobref[0]['@name']
+            assertEquals "wrong command/jobref/@group",'/some/path',doc.job[0].sequence[0].command[0].jobref[0]['@group']
+            assertEquals "wrong command/jobref/@nodeStep",'true',doc.job[0].sequence[0].command[0].jobref[0]['@nodeStep']
             assertEquals "wrong arg count",1,doc.job[0].sequence[0].command.jobref.arg.size()
             assertEquals "wrong arg @line",'-test1 1 -test2 2',doc.job[0].sequence[0].command[0].jobref[0].arg[0]['@line']
 

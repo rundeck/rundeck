@@ -162,8 +162,17 @@ public class ExecutionItemFactory {
         };
     }
 
+    /**
+     * Create step execution item for a job reference
+     * @param jobIdentifier
+     * @param args
+     * @param nodeStep
+     * @param handler
+     * @param keepgoingOnSuccess
+     * @return
+     */
     public static StepExecutionItem createJobRef(final String jobIdentifier,
-            final String[] args,
+            final String[] args, final boolean nodeStep,
             final StepExecutionItem handler, final boolean keepgoingOnSuccess) {
 
         return new JobRefCommandBase() {
@@ -174,6 +183,11 @@ public class ExecutionItemFactory {
             @Override
             public String[] getArgs() {
                 return args;
+            }
+
+            @Override
+            public boolean isNodeStep() {
+                return nodeStep;
             }
 
             @Override

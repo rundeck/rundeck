@@ -292,12 +292,21 @@ This [Command](#command) executes another Rundeck Job.
 
     :    Arguments to pass to the job when executed
 
+    `nodeStep`
+
+    :    Execute as a Node Step (optional). `true/false`.
+
 Example:
 
     - jobref:
         group: test
         name: simple job test
         args: args for the job
+
+
+If `nodeStep` is set to "true", then the Job Reference step will operate as a *Node Step* instead of the
+default.  As a *Node Step* it will execute once for each matched node in the containing Job workflow, and
+can use node attribute variable expansion in the arguments to the job reference.
 
 ### Plugin Step Entry
 
