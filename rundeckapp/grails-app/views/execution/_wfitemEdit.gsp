@@ -62,6 +62,16 @@
         <div id="jobChooserContent" style="overflow-y:auto;">
         </div>
     </div>
+
+    <div>
+        <div class="info note">Step Behavior</div>
+        <label>
+        <g:radio id="jobNodeStepField" type="checkbox" name="nodeStep" value="true" checked="${item ? item.nodeStep : newitemnodestep == 'true'}"/>
+        Execute for each Node</label>
+        <label>
+        <g:radio id="jobNodeStepField" type="checkbox" name="nodeStep" value="false" checked="${item ? !item.nodeStep : newitemnodestep != 'true'}"/>
+        Execute once</label>
+    </div>
 </g:if>
 <g:elseif test="${'script'==newitemtype || 'scriptfile'==newitemtype || 'command'==newitemtype || item instanceof CommandExec }">
     <g:set var="isAdhocRemote" value="${'command'==newitemtype || item?.adhocRemoteString}"/>
