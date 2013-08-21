@@ -48,7 +48,7 @@ rpm:
 	@mkdir -p rpmdist/SOURCES/usr/bin
 	@mkdir -p rpmdist/SOURCES/var/lib/rundeck
 	@mkdir -p rpmdist/SOURCES/var/lib/rundeck/exp/webapp
-	@mkdir -p rpmdist/SOURCES/var/lib/rundeck/{data,work,logs,cli,libext}
+	@mkdir -p rpmdist/SOURCES/var/lib/rundeck/{data,work,logs,cli,libext,bootstrap}
 	@mkdir -p rpmdist/SOURCES/var/log/rundeck
 	@mkdir -p rpmdist/SOURCES/var/lib/rundeck/var/tmp
 	@mkdir -p rpmdist/SOURCES/tmp/rundeck
@@ -72,7 +72,7 @@ deb:
 	@mkdir -p debdist/
 	@mkdir -p debdist/usr/bin
 	@mkdir -p debdist/var/lib/rundeck/exp/webapp
-	@mkdir -p debdist/var/lib/rundeck/{data,work,logs,cli,libext}
+	@mkdir -p debdist/var/lib/rundeck/{data,work,logs,cli,libext,bootstrap}
 	@mkdir -p debdist/var/log/rundeck
 	@mkdir -p debdist/var/lib/rundeck/var/tmp
 	@mkdir -p debdist/tmp/rundeck
