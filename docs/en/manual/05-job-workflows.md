@@ -200,7 +200,7 @@ If necessary, you can check the "Quote arguments to interpreter?" checkbox, whic
 To call another saved Job, create a Job Reference step. Enter the name
 of the Job and its group. 
 
-![Job step type](../figures/fig0407.png)
+![Job reference step type](../figures/fig0407.png)
 
 The Job Reference form provides a Job browser to make it easier to
 select from the existing set of saved Jobs. 
@@ -230,7 +230,8 @@ then a "defaultValue" of that option will be used if it is defined.  If a
 required option does not have a default value, then the execution will fail
 because the option is not specified.
 
-Job References are *Workflow Steps*, and only operate once within a workflow.
+Job References can be run as either *Node Steps* or  *Workflow Steps* (see [Workflow Steps : Types of Steps](#workflow-steps)).
+ When you choose to use a Job Reference as a *Node Step*, you can use the Node context variables within the arguments string to the Job.
 
 ## Quoting arguments to steps
 
