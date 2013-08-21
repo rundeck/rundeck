@@ -7,7 +7,7 @@ Rundeck provides a Web API for use with your application.
 API Version Number
 ----
 
-The current API version is `8`.
+The current API version is `9`.
 
 For API endpoints described in this document, the *minimum* API version required for their
 use is indicated by the URL used, e.g.:
@@ -35,6 +35,13 @@ If the version number is not included or if the requested version number is unsu
 
 Changes introduced by API Version number:
 
+**Version 9**:
+
+* Updated endpoints 
+    * `/api/9/executions/running` - [Listing Running Executions](#listing-running-executions)
+        * Allow `project=*` to list running executions across all projects
+        * Result data now includes `project` attribute for each `<execution>`.
+        
 **Version 8**:
 
 * Updated endpoints 
@@ -679,11 +686,11 @@ URL:
 
 Required Parameters:
 
-* `project`: the project name
+* `project`: the project name, or '*' for all projects (**Since API v9**)
 
 Result: An Item List of `executions`.  Each `execution` of the form:
 
-    <execution id="[ID]" href="[url]" status="[status]">
+    <execution id="[ID]" href="[url]" status="[status]" project="[project]">
         <user>[user]</user>
         <date-started unixtime="[unixtime]">[datetime]</date-started>
         
@@ -724,6 +731,8 @@ The `[url]` value is a URL to the Rundeck server page to view the execution outp
 `[unixtime]` is the millisecond unix timestamp, and `[datetime]` is a W3C dateTime string in the format "yyyy-MM-ddTHH:mm:ssZ".
 
 If known, the average duration of the associated Job will be indicated (in milliseconds) as `averageDuration`. (Since API v5)
+
+**API v9 and above**: `project="[project]"` is the project name of the execution.
 
 ### Getting Execution Info
 
