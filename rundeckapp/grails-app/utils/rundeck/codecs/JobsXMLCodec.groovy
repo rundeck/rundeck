@@ -297,6 +297,9 @@ class JobsXMLCodec {
                         cmd.jobref.args = cmd.jobref.arg.remove('line')?.toString()
                         cmd.jobref.remove('arg')
                     }
+                    if (null != cmd.jobref.nodeStep) {
+                        cmd.jobref.nodeStep = Boolean.parseBoolean(cmd.jobref.nodeStep)
+                    }
                 }else if(cmd['node-step-plugin'] || cmd['step-plugin']){
                     def parsePluginConfig={ plc->
                         def outconf=[:]
@@ -509,6 +512,9 @@ class JobsXMLCodec {
                 final def remove = cmd.jobref.remove('args')
                 if (null != remove) {
                     cmd.jobref.arg = BuilderUtil.toAttrMap('line', remove)
+                }
+                if (cmd.jobref.nodeStep) {
+                    BuilderUtil.makeAttribute(cmd.jobref, 'nodeStep')
                 }
             }else if(cmd.exec){
                 //no change
