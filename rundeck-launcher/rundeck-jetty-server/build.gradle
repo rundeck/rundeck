@@ -16,6 +16,7 @@ dependencies {
         [group: 'org.mortbay.jetty', name: 'jetty', version: jettyVersion,ext:'jar'],
         [group: 'org.mortbay.jetty', name: 'jetty-util', version: jettyVersion,ext:'jar'],
         [group: 'org.mortbay.jetty', name: 'jetty-plus', version: jettyVersion,ext:'jar'],
+        [group: 'org.kohsuke', name:'libpam4j', version:'1.5', ext:'jar']
     )
     runtime(
         [group: 'org.mortbay.jetty', name: 'servlet-api', version: '2.5-20081211',ext:'jar'],

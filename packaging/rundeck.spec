@@ -71,6 +71,8 @@ fi
 /var/lib/rundeck/bootstrap/jetty-naming-6.1.21.jar
 /var/lib/rundeck/bootstrap/jetty-plus-6.1.21.jar
 /var/lib/rundeck/bootstrap/jetty-util-6.1.21.jar
+/var/lib/rundeck/bootstrap/jna-3.2.2.jar
+/var/lib/rundeck/bootstrap/libpam4j-1.5.jar
 /var/lib/rundeck/bootstrap/rundeck-jetty-server-%{_vname}.jar
 /var/lib/rundeck/bootstrap/servlet-api-2.5-20081211.jar
 

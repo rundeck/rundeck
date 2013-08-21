@@ -58,7 +58,7 @@ rpm:
 	@cp -R root/* rpmdist/SOURCES
 	@cp -R ../core/build/tools/lib/*.jar rpmdist/SOURCES/var/lib/rundeck/cli
 	@cp ../core/build/libs/rundeck-core-$(JVERS).jar rpmdist/SOURCES/var/lib/rundeck/cli
-	@cp ../rundeck-launcher/rundeck-jetty-server/build/libs/rundeck-jetty-server-$(JVERS).jar rpmdist/SOURCES/var/lib/rundeck/bootstrap
+	@cp ../rundeck-launcher/launcher/build/launcher-contents/lib/*.jar rpmdist/SOURCES/var/lib/rundeck/bootstrap/
 	@cp ../plugins/*-plugin/build/libs/*-plugin-$(JVERS).jar rpmdist/SOURCES/var/lib/rundeck/libext
 	@cp ../core/src/main/resources/com/dtolabs/launcher/setup/templates/admin.aclpolicy.template rpmdist/SOURCES/etc/rundeck/admin.aclpolicy
 	@cp ../core/src/main/resources/com/dtolabs/launcher/setup/templates/apitoken.aclpolicy.template rpmdist/SOURCES/etc/rundeck/apitoken.aclpolicy
@@ -84,7 +84,7 @@ deb:
 	@cat debroot/DEBIAN/control | sed -e "s/%VERSION%/$(VERSION)/" > debdist/DEBIAN/control
 	@cp -R ../core/build/tools/lib/*.jar debdist/var/lib/rundeck/cli
 	@cp ../core/build/libs/rundeck-core-$(JVERS).jar debdist/var/lib/rundeck/cli
-	@cp ../rundeck-launcher/rundeck-jetty-server/build/libs/rundeck-jetty-server-$(JVERS).jar debdist/var/lib/rundeck/bootstrap
+	@cp ../rundeck-launcher/launcher/build/launcher-contents/lib/*.jar debdist/SOURCES/var/lib/rundeck/bootstrap/
 	@cp ../plugins/*-plugin/build/libs/*-plugin-$(JVERS).jar debdist/var/lib/rundeck/libext
 	@cp ../core/src/main/resources/com/dtolabs/launcher/setup/templates/admin.aclpolicy.template debdist/etc/rundeck/admin.aclpolicy
 	@cp ../core/src/main/resources/com/dtolabs/launcher/setup/templates/apitoken.aclpolicy.template debdist/etc/rundeck/apitoken.aclpolicy
