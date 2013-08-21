@@ -31,21 +31,22 @@
                 <g:if test="${foundjob}">
                 <g:link controller="scheduledExecution" action="show" id="${foundjob.extid}">
                     <g:if test="${!noimgs}"><g:img file="icon-small-job.png" width="16px" height="16px"/></g:if>
-                    <g:if test="${!noimgs&& item.nodeStep}"><g:img file="icon-small-Node.png" width="16px" height="16px"/></g:if>
                     ${item.jobGroup?item.jobGroup.encodeAsHTML()+'/':''}${item.jobName.encodeAsHTML()}
                 </g:link>
                 </g:if>
                 <g:else>
                     <g:if test="${!noimgs}"><g:img file="icon-small-job.png" width="16px" height="16px"/></g:if>
-                    <g:if test="${!noimgs && item.nodeStep}"><g:img file="icon-small-Node.png" width="16px"
-                                                                    height="16px"/></g:if>
                     ${item.jobGroup?item.jobGroup.encodeAsHTML()+'/':''}${item.jobName.encodeAsHTML()}
                 </g:else>
                 <g:if test="${item.argString}">
                    <span class="argString"><g:truncate max="150"  showtitle="true">${item.argString.encodeAsHTML()}</g:truncate></span>
                 </g:if>
                 <g:if test="${item.nodeStep}">
-                    <span class="argString">(Node Step)</span>
+                    <g:if test="${!noimgs && item.nodeStep}"><g:img file="icon-small-Node.png" width="16px"
+                                                                    height="16px"/></g:if>
+                    <span class="info note" title="${g.message(code:'JobExec.nodeStep.true.description').encodeAsHTML()}">
+                        <g:message code="JobExec.nodeStep.true.label" />
+                    </span>
                 </g:if>
             </g:if>
             <g:elseif test="${pluginitem}">

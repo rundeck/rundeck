@@ -63,14 +63,27 @@
         </div>
     </div>
 
-    <div>
-        <div class="info note">Step Behavior</div>
-        <label>
-        <g:radio id="jobNodeStepField" type="checkbox" name="nodeStep" value="true" checked="${item ? item.nodeStep : newitemnodestep == 'true'}"/>
-        Execute for each Node</label>
-        <label>
-        <g:radio id="jobNodeStepField" type="checkbox" name="nodeStep" value="false" checked="${item ? !item.nodeStep : newitemnodestep != 'true'}"/>
-        Execute once</label>
+    <div style="margin-top:5px;">
+        <g:set var="isNodeStep" value="${item ? item.nodeStep : newitemnodestep == 'true'}"/>
+        <div class="prompt"><g:message code="JobExec.nodeStep.title" /></div>
+        <div class="presentation">
+            <div>
+                <g:radio id="jobNodeStepFieldTrue" type="checkbox" name="nodeStep" value="true"
+                         checked="${isNodeStep}"/>
+                <label for="jobNodeStepFieldTrue">
+                    <g:message code="JobExec.nodeStep.true.label" />
+                </label>
+                <span class="info note"><g:message code="JobExec.nodeStep.true.description"/></span>
+            </div>
+            <div>
+                <g:radio id="jobNodeStepFieldFalse" type="checkbox" name="nodeStep" value="false"
+                         checked="${!isNodeStep}"/>
+                <label for="jobNodeStepFieldFalse">
+                    <g:message code="JobExec.nodeStep.false.label" />
+                </label>
+                <span class="info note"><g:message code="JobExec.nodeStep.false.description"/></span>
+            </div>
+        </div>
     </div>
 </g:if>
 <g:elseif test="${'script'==newitemtype || 'scriptfile'==newitemtype || 'command'==newitemtype || item instanceof CommandExec }">
