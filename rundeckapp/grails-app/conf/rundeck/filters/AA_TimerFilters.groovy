@@ -75,7 +75,7 @@ class AA_TimerFilters {
                     authToken: (request.authenticatedToken ? 'token' : 'form'),
                     method: request.method,
                     secure: request.isSecure() ? 'https' : 'http',
-                    contentType: response.getContentType(),
+                    contentType: response.isCommitted()?response.getContentType():null,
                     project: session.project
             ]
             map.findAll {it.value!=null}.each{ MDC.put(it.key,it.value)}

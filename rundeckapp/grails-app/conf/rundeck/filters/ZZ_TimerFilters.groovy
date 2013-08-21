@@ -3,7 +3,7 @@ package rundeck.filters
 class ZZ_TimerFilters {
 
     def filters = {
-        all(controller:'*', action:'*') {
+        all(controller:'user', action:'logout',invert:true) {
             after = {
                 AA_TimerFilters.afterRequest(request,response,session)
             }
