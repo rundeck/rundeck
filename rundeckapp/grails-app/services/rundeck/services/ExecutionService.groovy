@@ -129,6 +129,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
         }
         def Date nowDate = new Date()
 
+        def allProjectsQuery=query.projFilter=='*';
+
         def crit = Execution.createCriteria()
         def runlist = crit.list{
             if(query?.max){
@@ -147,10 +149,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
                         ilike(val,'%'+query["${key}Filter"]+'%')
                     }
                 }
-
-                eqfilters.each{ key,val ->
-                    if(query["${key}Filter"]){
-                        eq(val,query["${key}Filter"])
+                if(!allProjectsQuery){
+                    eqfilters.each{ key,val ->
+                        if(query["${key}Filter"]){
+                            eq(val,query["${key}Filter"])
+                        }
                     }
                 }
 
