@@ -1863,9 +1863,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if (!(executionItem instanceof JobExecutionItem)) {
             throw new IllegalArgumentException("Unsupported item type: " + executionItem.getClass().getName());
         }
-        def nodeselector = SelectorUtils.singleNode(node.nodename)
-        def INodeSet nodeSet = frameworkService.filterNodeSet(executionContext.framework, nodeselector,
-                executionContext.getFrameworkProject())
         def createFailure= { FailureReason reason, String msg ->
             return NodeExecutorResultImpl.createFailure(reason, msg, node)
         }
@@ -1873,8 +1870,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             return NodeExecutorResultImpl.createSuccess(node)
         }
         JobExecutionItem jitem = (JobExecutionItem) executionItem
-        return runJobRefExecutionItem(executionContext, jitem, nodeselector, nodeSet, createFailure, createSuccess)
-
+        //don't override node filters, to allow option inputs to be used in the filters
+        return runJobRefExecutionItem(executionContext, jitem, null, null, createFailure, createSuccess)
     }
 }
 
