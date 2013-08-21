@@ -2,10 +2,11 @@
 
 **Note:** The underlying security mechanism relies on JAAS, so you are free to use what ever JAAS provider you feel is suitable for your environment. See [JAAS](http://en.wikipedia.org/wiki/Java_Authentication_and_Authorization_Service) and specifically for Jetty, [JAAS for Jetty](http://docs.codehaus.org/display/JETTY/JAAS).
 
-Rundeck has two basic ways of defining authentication.
+Rundeck has three basic ways of defining authentication.
 
 1. A text file containing usernames, passwords and role definitions. Usually called [realm.properties](#realm.properties).
 2. [LDAP](#ldap)
+3. [PAM](#pam)
 
 By default a new installation uses the realm.properties method.
 
@@ -391,6 +392,81 @@ Finally, in your `ldap-activedirectory.conf` be sure to change the *providerUrl*
      providerUrl=ldaps://ad1 ldaps://ad2  
 
 Use this to provide connection redundancy if a particular host is unavailable.
+
+### PAM
+
+Rundeck includes a [PAM](https://en.wikipedia.org/wiki/Pluggable_authentication_module) JAAS login module, which uses [libpam4j](https://github.com/kohsuke/libpam4j) to authenticate.
+
+This module can work with existing properties-file based authorization roles by enabling shared credentials between the modules, and introducing a Property file module that can be used only for authorization.
+
+Modules:
+
+* `org.rundeck.jaas.jetty.JettyPamLoginModule` authenticates via PAM, can add a default set of roles to authenticated users, and can use local unix group membership for role info.
+* `org.rundeck.jaas.jetty.JettyAuthPropertyFileLoginModule` authenticates via property file, but does not supply user authorization information.
+* `org.rundeck.jaas.jetty.JettyRolePropertyFileLoginModule` does not authenticate and only uses authorization roles from a property file. Can be combined with previous modules.
+
+sample jaas config:
+
+    RDpropertyfilelogin {
+      org.rundeck.jaas.jetty.JettyPamLoginModule requisite
+            debug="true"
+            service="sshd"
+            supplementalRoles="readonly"
+            storePass="true";
+
+        org.rundeck.jaas.jetty.JettyRolePropertyFileLoginModule required
+            debug="true"
+            useFirstPass="true"
+            file="/etc/rundeck/realm.properties";
+
+    };
+
+When combining the two login modules, note that the `storePass` and 
+`useFirstPass` are set to true, allowing the two modules to share the user information necessary for the second module to load the user roles.
+
+**Common configuration properties:**
+
+These JAAS configuration properties are used by all of the Jetty PAM modules:
+
+* `useFirstPass`
+* `tryFirstPass`
+* `storePass`
+* `clearPass`
+* `debug`
+
+#### JettyPamLoginModule
+
+Configuration properties:
+
+* `serviceName` - name of the PAM service configuration to use. (Required). Example: "sshd".
+* `useUnixGroups` - true/false. If true, the unix Groups defined for the user will be included as authorization roles. Default: false.
+* `supplementalRoles` - a comma-separated list of additional user roles to add to any authenticated user. Example: 'user,readonly'
+
+
+#### JettyRolePropertyFileLoginModule
+
+This module does not authenticate, and requires that `useFirstPass` or `tryFirstPass` is set to `true`, and that a previous module has `storePass` set to `true`.
+
+It then looks the username up in the Properties file, and applies any roles for the matching user, if found.
+
+Configuration properties:
+
+* `file` - path to a Java Property formatted file in the format defined under [realm.properties](#realm.properties)
+
+Note that since the user password is not used for authentication, you can have a dummy value in the password field of the file, but *some value is required* in that position.
+
+Example properties file with dummy passwords and roles:
+
+    admin: -,user,admin
+    user1: -,user,readonly
+
+#### JettyAuthPropertyFileLoginModule
+
+This module provides authentication in the same way as the [realm.properties](#realm.properties) mechanism, but does not use any of the role names found in the file.  It can be combined with `JettyRolePropertyFileLoginModule` by using `storePass=true`.
+
+Configuration properties:
+
+* `file` - path to a Java Property formatted file in the format defined under [realm.properties](#realm.properties)
 
 ### Multiple Authentication Modules
 
