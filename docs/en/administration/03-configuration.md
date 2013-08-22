@@ -86,6 +86,20 @@ Other settings:
 
 * `framework.log.dispatch.console.format`: Default format for non-terse node execution logging run by the `dispatch` CLI tool.
 
+Static authentication tokens for API access:
+
+You can define the location of a .properties file in framework.properties:
+
+* `rundeck.tokens.file=/etc/rundeck/tokens.properties`
+
+The `tokens.properties` file should contain static authentication tokens you wish to use, keyed by the associated username:
+
+    username: token_string
+    username2: token_string2
+    ...
+
+The token_strings can be used as Authentication tokens to the [API](../api/index.html#token-authentication).
+
 ### log4j.properties
 
 Rundeck uses [log4j] as its application logging facility. This file

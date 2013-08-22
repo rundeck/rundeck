@@ -144,6 +144,8 @@ request to the Rundeck API.
 To obtain an API Token, you must first log in to the Rundeck GUI using a user account
 that has "admin" credentials. Click on your username in the header of the page, and you will be shown your User Profile page.  From this page you can manage your API Tokens.  Click "Generate API Token" to create a new one.  The unique string that is shown is the API Token.
 
+Alternately you can define tokens in static file, by setting the `rundeck.tokens.file` in [framework.properties](../administration/configuration.html#framework.properties).
+
 You must include one of the following with every HTTP request to the API:
 
 * HTTP Header `X-Rundeck-Auth-Token` set to the API Token string
