@@ -40,7 +40,7 @@
         <g:if test="${flash.error}">
             <span class="error note">${flash.error}</span>
         </g:if>
-    <g:set var="wasfiltered" value="${paginateParams.keySet().grep(~/(?!proj).*Filter|groupPath|idlist$/)}"/>
+    <g:set var="wasfiltered" value="${paginateParams?.keySet().grep(~/(?!proj).*Filter|groupPath|idlist$/)}"/>
     <g:if test="${params.createFilters}">
         <span class="note help">
             Enter filter parameters below and click "save this filter" to set a name and save it.
