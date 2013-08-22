@@ -10,6 +10,8 @@ import rundeck.AuthToken
 
 import rundeck.services.FrameworkService
 
+import javax.servlet.ServletContext
+
 /*
  * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
  *
@@ -89,15 +91,14 @@ public class AuthorizationFilters {
                 } else if (request.api_version) {
                     //allow authentication token to be used 
                     def authtoken = params.authtoken? params.authtoken : request.getHeader('X-RunDeck-Auth-Token')
-                    def tokenobj=authtoken?AuthToken.findByToken(authtoken):null
-                    User user = tokenobj?.user
-                    if (tokenobj && user){
-                        session.user = user.login
+                    String user = lookupToken(authtoken, servletContext)
+
+                    if (user){
+                        session.user = user
                         request.authenticatedToken=authtoken
-                        request.authenticatedUser=user.login
-                        log.debug("loginCheck found user ${user} via token: ${authtoken}");
+                        request.authenticatedUser=user
                         def subject = new Subject();
-                        subject.principals << new Username(user.login)
+                        subject.principals << new Username(user)
 
                         ['api_token_group'].each{role->
                             subject.principals << new Group(role.trim());
@@ -158,5 +159,29 @@ public class AuthorizationFilters {
                 }
             }
         }
+    }
+
+    /**
+     * Look up the given authToken and return the associated username, or null
+     * @param authtoken
+     * @param context
+     * @return
+     */
+    private String lookupToken(String authtoken, ServletContext context) {
+        if (context.getAttribute("TOKENS_FILE_PROPS")) {
+            Properties tokens = (Properties) context.getAttribute("TOKENS_FILE_PROPS")
+            if (tokens[authtoken]) {
+                def user = tokens[authtoken]
+                log.debug("loginCheck found user ${user} via tokens file, token: ${authtoken}");
+                return user
+            }
+        }
+        def tokenobj = authtoken ? AuthToken.findByToken(authtoken) : null
+        if (tokenobj) {
+            User user = tokenobj?.user
+            log.debug("loginCheck found user ${user} via DB, token: ${authtoken}");
+            return user.login
+        }
+        null
     }
 }

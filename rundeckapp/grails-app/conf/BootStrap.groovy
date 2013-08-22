@@ -125,6 +125,28 @@ class BootStrap {
                  servletContext.setAttribute("SERVER_UUID", serverNodeUUID)
                  log.warn("Cluster mode enabled, this server's UUID: ${serverNodeUUID}")
              }
+             //auth tokens stored in file
+             def tokensfile = properties.getProperty("rundeck.tokens.file")
+             if (tokensfile) {
+                 Properties userTokens = new Properties()
+                 try {
+                     new File(tokensfile).withInputStream {
+                         userTokens.load(it)
+                     }
+                 } catch (IOException e) {
+                     log.error("Unable to load static tokens file: "+e.getMessage())
+                 }
+                 Properties tokens = new Properties()
+                 userTokens.each { k, v ->
+                    tokens[v]=k
+                 }
+                 servletContext.setAttribute("TOKENS_FILE_PATH", new File(tokensfile).absolutePath)
+                 servletContext.setAttribute("TOKENS_FILE_PROPS", tokens)
+                 if (tokens) {
+                     log.debug("Loaded ${tokens.size} tokens from tokens file: ${tokensfile}...")
+                 }
+             }
+
          }
 
 
