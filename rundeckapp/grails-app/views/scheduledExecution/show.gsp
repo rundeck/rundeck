@@ -6,7 +6,8 @@
     <title><g:message code="main.app.name"/> - ${scheduledExecution?.jobName.encodeAsHTML()} : ${scheduledExecution?.description?.encodeAsHTML()}</title>
     <g:javascript library="prototype/effects"/>
     <g:render template="/framework/remoteOptionValuesJS"/>
-      <g:javascript>
+    <g:javascript library="executionOptions"/>
+    <g:javascript>
 
         var runupdate;
         function loadNowRunning(){
