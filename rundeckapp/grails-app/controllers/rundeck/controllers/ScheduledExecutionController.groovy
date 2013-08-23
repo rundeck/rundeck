@@ -1311,7 +1311,9 @@ class ScheduledExecutionController  {
         jobset*.project=params.project
         def changeinfo = [user: session.user,method:'upload']
         String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
-        def loadresults = scheduledExecutionService.loadJobs(jobset,params.dupeOption,session.user, roleList, changeinfo,framework)
+        def loadresults = scheduledExecutionService.loadJobs(jobset, params.dupeOption, params.uuidOption,
+                session.user, roleList, changeinfo, framework)
+
 
         def jobs = loadresults.jobs
         def jobsi = loadresults.jobsi
@@ -1823,7 +1825,11 @@ class ScheduledExecutionController  {
         def changeinfo = [user: session.user,method:'apiJobsImport']
         def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
-        def loadresults = scheduledExecutionService.loadJobs(jobset,params.dupeOption,session.user, roleList, changeinfo,framework)
+        def option = params.uuidOption
+        if (request.api_version < ApiRequestFilters.V9) {
+            option = null
+        }
+        def loadresults = scheduledExecutionService.loadJobs(jobset,params.dupeOption, option,session.user, roleList, changeinfo,framework)
 
         def jobs = loadresults.jobs
         def jobsi = loadresults.jobsi

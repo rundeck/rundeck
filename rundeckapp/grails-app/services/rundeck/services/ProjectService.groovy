@@ -371,7 +371,7 @@ class ProjectService {
                         break;
                     break;
                 }
-                def results=scheduledExecutionService.loadJobs(jobset,'update',user,roleList,[:],framework)
+                def results=scheduledExecutionService.loadJobs(jobset,'update',null,user,roleList,[:],framework)
                 if(results.errjobs){
                     log.error("Failed loading (${results.errjobs.size()}) jobs from XML at archive path: ${path}${name}")
                     results.errjobs.each {

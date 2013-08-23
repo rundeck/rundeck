@@ -75,7 +75,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         //mock the scheduledExecutionService
         def mock2 = mockFor(ScheduledExecutionService, true)
         mock2.demand.nextExecutionTimes { joblist -> return [] }
-        mock2.demand.loadJobs { jobset, dupeOption, user, roleList, changeinfo, framework ->
+        mock2.demand.loadJobs { jobset, dupeOption,uuidOption, user, roleList, changeinfo, framework ->
             assertEquals('BProject',jobset[0].project)
             [
                     jobs: [expectedJob],
@@ -131,8 +131,6 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 uuid: 'testUUID',
                 jobName: 'blue',
                 project: 'AProject',
-                adhocExecution: true,
-                adhocFilepath: '/this/is/a/path',
                 groupPath: 'some/where',
                 description: 'a job',
                 argString: '-a b -c d',
@@ -152,7 +150,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         //mock the scheduledExecutionService
         def mock2 = mockFor(ScheduledExecutionService, true)
         mock2.demand.nextExecutionTimes {joblist -> return [] }
-        mock2.demand.loadJobs {jobset, dupeOption, user, roleList, changeinfo, framework ->
+        mock2.demand.loadJobs {jobset, dupeOption,uuidOption, user, roleList, changeinfo, framework ->
             [
                     jobs:[expectedJob],
                     jobsi:[scheduledExecution:expectedJob,entrynum:0],
@@ -238,7 +236,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         //mock the scheduledExecutionService
         def mock2 = mockFor(ScheduledExecutionService, true)
         mock2.demand.nextExecutionTimes {joblist -> return [] }
-        mock2.demand.loadJobs {jobset, dupeOption, user, roleList, changeinfo, framework ->
+        mock2.demand.loadJobs {jobset, dupeOption, uuidOption, user, roleList, changeinfo, framework ->
             [
                     jobs: [expectedJob],
                     jobsi: [scheduledExecution: expectedJob, entrynum: 0],
@@ -326,7 +324,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         //mock the scheduledExecutionService
         def mock2 = mockFor(ScheduledExecutionService, true)
         mock2.demand.nextExecutionTimes{joblist-> return [] }
-        mock2.demand.loadJobs {jobset, dupeOption, user, roleList, changeinfo, framework ->
+        mock2.demand.loadJobs {jobset, dupeOption, uuidOption, user, roleList, changeinfo, framework ->
             [
                     jobs: [expectedJob],
                     jobsi: [scheduledExecution: expectedJob, entrynum: 0],
@@ -408,7 +406,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         //mock the scheduledExecutionService
         def mock2 = mockFor(ScheduledExecutionService, true)
         mock2.demand.nextExecutionTimes {joblist -> return [] }
-        mock2.demand.loadJobs {jobset, dupeOption, user, roleList, changeinfo, framework ->
+        mock2.demand.loadJobs {jobset, dupeOption, uuidOption, user, roleList, changeinfo, framework ->
             [
                     jobs: [expectedJob],
                     jobsi: [scheduledExecution: expectedJob, entrynum: 0],

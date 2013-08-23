@@ -793,7 +793,15 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
      * Given list of imported jobs, create, update or skip them as defined by the dupeOption parameter.
      * @return map of load results, [jobs: List of ScheduledExecutions, jobsi: list of maps [scheduledExecution: (job), entrynum: (index)], errjobs: List of maps [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg], skipjobs: list of maps [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg]]
      */
-    def loadJobs ( jobset, option, user, String roleList, changeinfo = [:], Framework framework ){
+    def loadJobs ( jobset, option, user, String roleList, changeinfo = [:], Framework framework ) {
+        return loadJobs(jobset, option, null, user, roleList, changeinfo, framework)
+    }
+
+    /**
+     * Given list of imported jobs, create, update or skip them as defined by the dupeOption parameter.
+     * @return map of load results, [jobs: List of ScheduledExecutions, jobsi: list of maps [scheduledExecution: (job), entrynum: (index)], errjobs: List of maps [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg], skipjobs: list of maps [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg]]
+     */
+    def loadJobs ( jobset, option, String uuidOption, user, String roleList, changeinfo = [:], Framework framework ){
         def jobs = []
         def jobsi = []
         def i = 1
@@ -807,6 +815,10 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                 errjobs << [scheduledExecution: jobdata, entrynum: i, errmsg: "Project was not specified"]
                 i++
                 return
+            }
+            if (uuidOption == 'remove') {
+                jobdata.uuid = null
+                jobdata.id = null
             }
             if (option == "update" || option == "skip") {
                 //look for dupe by name and group path and project

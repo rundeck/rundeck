@@ -5498,6 +5498,133 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
 
         se.delete()
     }
+    /**
+     * Import job with same UUID, and different project, should fail due to uniqueness of uuid
+     */
+    public void testLoadJobsUUIDOptionNull() {
+
+        def uuid1 = UUID.randomUUID().toString()
+        assertLoadJobs('create', null, uuid1, uuid1, 'project1', 'project2', { Map result ->
+            assertEquals "should have error jobs: ${result.errjobs}", 1, result.errjobs.size()
+            ScheduledExecution errorjob = result.errjobs[0].scheduledExecution
+            assertTrue(errorjob.hasErrors())
+            assertTrue(errorjob.errors.hasFieldErrors('uuid'))
+            assertEquals "shouldn't have skipped jobs: ${result.skipjobs}", 0, result.skipjobs.size()
+            assertEquals 0, result.jobs.size()
+        })
+    }
+    /**
+     * Import job with same UUID, and different project, should fail due to uniqueness of uuid
+     */
+    public void testLoadJobsUUIDOptionPreserve() {
+
+        def uuid1 = UUID.randomUUID().toString()
+        assertLoadJobs('create', 'preserve', uuid1, uuid1, 'project1', 'project2', { Map result ->
+            assertEquals "should have error jobs: ${result.errjobs}", 1, result.errjobs.size()
+            ScheduledExecution errorjob = result.errjobs[0].scheduledExecution
+            assertTrue(errorjob.hasErrors())
+            assertTrue(errorjob.errors.hasFieldErrors('uuid'))
+            assertEquals "shouldn't have skipped jobs: ${result.skipjobs}", 0, result.skipjobs.size()
+            assertEquals 0, result.jobs.size()
+        })
+    }
+    /**
+     * Import job with same UUID, and different project, should fail due to uniqueness of uuid
+     */
+    public void testLoadJobsUUIDOptionRemove() {
+
+        def uuid1 = UUID.randomUUID().toString()
+        assertLoadJobs('create', 'remove', uuid1, uuid1, 'project1', 'project2', { Map result ->
+            assertEquals "shouldn't have error jobs: ${result.errjobs}", 0, result.errjobs.size()
+            assertEquals "shouldn't have skipped jobs: ${result.skipjobs}", 0, result.skipjobs.size()
+            assertEquals 1, result.jobs.size()
+        })
+    }
+    /**
+     * Import job with same UUID, and different project, should fail due to uniqueness of uuid
+     */
+    public void testLoadJobsUpdateUUIDOptionPreserve() {
+
+        def uuid1 = UUID.randomUUID().toString()
+        assertLoadJobs('update', 'preserve', uuid1, uuid1, 'project1', 'project2', { Map result ->
+            assertEquals "should have error jobs: ${result.errjobs}", 1, result.errjobs.size()
+            ScheduledExecution errorjob = result.errjobs[0].scheduledExecution
+            assertTrue(errorjob.hasErrors())
+            assertTrue(errorjob.errors.hasFieldErrors('uuid'))
+            assertEquals "shouldn't have skipped jobs: ${result.skipjobs}", 0, result.skipjobs.size()
+            assertEquals 0, result.jobs.size()
+        })
+    }
+    /**
+     * Import job with same UUID, and different project, should fail due to uniqueness of uuid
+     */
+    public void testLoadJobsUpdateUUIDOptionRemove() {
+
+        def uuid1 = UUID.randomUUID().toString()
+        assertLoadJobs('update', 'remove', uuid1, uuid1, 'project1', 'project2', { Map result ->
+            assertEquals "shouldn't have error jobs: ${result.errjobs}", 0, result.errjobs.size()
+            assertEquals "shouldn't have skipped jobs: ${result.skipjobs}", 0, result.skipjobs.size()
+            assertEquals 1, result.jobs.size()
+        })
+    }
+
+    private void assertLoadJobs(String importOption, String uuidOption, String uuid1, String uuid2, String project1, String project2, Closure test) {
+        def sec = new ScheduledExecutionService()
+
+        //create mock of FrameworkService
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.existsFrameworkProject { project, framework -> return true }
+        fwkControl.demand.authorizeProjectJobAll { framework, job, actions, project -> return true }
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.authorizeProjectResourceAll { framework, job, actions, project -> return true }
+        sec.frameworkService = fwkControl.createMock()
+        def ms = mockFor(MessageSource)
+        ms.demand.getMessage { key, data, locale -> key }
+        ms.demand.getMessage { error, locale -> error.toString() }
+        sec.messageSource = ms.createMock()
+
+        //create original job
+        final CommandExec exec = new CommandExec(adhocExecution: true, adhocRemoteString: "echo original test")
+        exec.save()
+        def wf = new Workflow(commands: [exec])
+        wf.save()
+        def se = new ScheduledExecution(jobName: 'testjob',
+                groupPath: "testgroup", project: project1?: 'project1', description: 'new desc',
+                workflow: wf,
+                uuid: uuid1
+        )
+        if (!se.validate()) {
+            se.errors.allErrors.each {
+                println it.toString()
+            }
+        }
+        assertNotNull(se.save())
+        assertNotNull(se.id)
+
+
+        def upload = new ScheduledExecution(
+                jobName: 'testjob',
+                groupPath: "testgroup",
+                project: project2?: 'project2',
+                description: 'desc',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: "echo test")]),
+                uuid: uuid2
+        )
+        def result = sec.loadJobs([upload], importOption,uuidOption, 'test', 'userrole,test', [:], null)
+        assertNotNull result
+        assertNotNull result.jobs
+        assertNotNull result.errjobs
+        assertNotNull result.skipjobs
+        if(test){
+            test.call(result)
+        }
+
+        se.delete()
+    }
+
     public void testUploadShouldUpdateSameNameDupeOptionUpdate() {
 
         def sec = new ScheduledExecutionService()

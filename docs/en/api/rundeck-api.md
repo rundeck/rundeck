@@ -41,6 +41,8 @@ Changes introduced by API Version number:
     * `/api/9/executions/running` - [Listing Running Executions](#listing-running-executions)
         * Allow `project=*` to list running executions across all projects
         * Result data now includes `project` attribute for each `<execution>`.
+    * `/api/9/jobs/import` - [Importing Jobs](#importing-jobs)
+        * Add `uuidOption` parameter to allow removing imported UUIDs to avoid creation conflicts.
         
 **Version 8**:
 
@@ -535,6 +537,9 @@ Optional parameters:
 * `format` : can be "xml" or "yaml" to specify the output format. Default is "xml"
 * `dupeOption`: A value to indicate the behavior when importing jobs which already exist.  Value can be "skip", "create", or "update". Default is "create".
 * `project` : (**since v8**) Specify the project that all job definitions should be imported to. If not specified, each job definition must define the project to import to.
+* `uuidOption`: Whether to preserve or remove UUIDs from the imported jobs. Allowed values (**since V9**):
+    *  `preserve`: Preserve the UUIDs in imported jobs.  This may cause the import to fail if the UUID is already used. (Default value).
+    *  `remove`: Remove the UUIDs from imported jobs. Allows update/create to succeed without conflict on UUID.
 
 Result:
 
