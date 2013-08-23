@@ -137,7 +137,8 @@ public class BaseFileCopier {
      */
     public static String getRemoteDirForNode(final INodeEntry node) {
         if (null != node.getAttributes() && null != node.getAttributes().get(FILE_COPY_DESTINATION_DIR)) {
-            return node.getAttributes().get(FILE_COPY_DESTINATION_DIR);
+            String s = node.getAttributes().get(FILE_COPY_DESTINATION_DIR);
+            return s.endsWith("/") ? s : s + "/";
         }
         String remotedir = "/tmp/";
         if (null != node.getOsFamily() && "windows".equalsIgnoreCase(node.getOsFamily().trim())) {
@@ -158,9 +159,13 @@ public class BaseFileCopier {
      */
     public static String generateRemoteFilepathForNode(final INodeEntry node, final String scriptfileName) {
         final String remoteFilename = appendRemoteFileExtensionForNode(node,
-            System.currentTimeMillis() + "-" + node.getNodename() + "-" + scriptfileName);
+                cleanFileName((System.currentTimeMillis() + "-" + node.getNodename() + "-" + scriptfileName)));
         final String remotedir = getRemoteDirForNode(node);
 
         return remotedir + remoteFilename;
+    }
+
+    private static String cleanFileName(String nodename) {
+        return nodename.replaceAll("[^a-zA-Z0-9_.-]", "_");
     }
 }
