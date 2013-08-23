@@ -1,5 +1,7 @@
 package rundeck
 import com.dtolabs.rundeck.app.support.BaseNodeFilters
+import com.dtolabs.rundeck.util.XmlParserUtil
+
 /**
 * Execution
 */
@@ -130,7 +132,7 @@ class Execution extends ExecutionContext {
         map.doNodedispatch= this.doNodedispatch
         if(doNodedispatch){
             def yfilters = ["": "hostname"]
-            map.nodefilters = [dispatch: [threadcount: nodeThreadcount, keepgoing: nodeKeepgoing, excludePrecedence: nodeExcludePrecedence]]
+            map.nodefilters = [dispatch: [threadcount: nodeThreadcount?:1, keepgoing: nodeKeepgoing, excludePrecedence: nodeExcludePrecedence]]
             if (nodeRankAttribute) {
                 map.nodefilters.dispatch.rankAttribute = nodeRankAttribute
             }
@@ -166,22 +168,22 @@ class Execution extends ExecutionContext {
         exec.outputfilepath = data.outputfilepath
         exec.failedNodeList = data.failedNodeList
         exec.abortedby = data.abortedby
-        exec.cancelled = data.cancelled
+        exec.cancelled = XmlParserUtil.stringToBool(data.cancelled,false)
         exec.argString = data.argString
         exec.loglevel = data.loglevel
         exec.doNodedispatch = data.doNodedispatch
         if (data.nodefilters) {
-            exec.nodeThreadcount = data.nodefilters.dispatch.threadcount
-            if (data.nodefilters.dispatch.containsKey('keepgoing')) {
-                exec.nodeKeepgoing = data.nodefilters.dispatch.keepgoing
+            exec.nodeThreadcount = XmlParserUtil.stringToInt(data.nodefilters.dispatch?.threadcount,1)
+            if (data.nodefilters.dispatch?.containsKey('keepgoing')) {
+                exec.nodeKeepgoing = XmlParserUtil.stringToBool(data.nodefilters.dispatch.keepgoing, false)
             }
-            if (data.nodefilters.dispatch.containsKey('excludePrecedence')) {
-                exec.nodeExcludePrecedence = data.nodefilters.dispatch.excludePrecedence
+            if (data.nodefilters.dispatch?.containsKey('excludePrecedence')) {
+                exec.nodeExcludePrecedence = XmlParserUtil.stringToBool(data.nodefilters.dispatch.excludePrecedence, true)
             }
-            if (data.nodefilters.dispatch.containsKey('rankAttribute')) {
+            if (data.nodefilters.dispatch?.containsKey('rankAttribute')) {
                 exec.nodeRankAttribute = data.nodefilters.dispatch.rankAttribute
             }
-            if (data.nodefilters.dispatch.containsKey('rankOrder')) {
+            if (data.nodefilters.dispatch?.containsKey('rankOrder')) {
                 exec.nodeRankOrderAscending = data.nodefilters.dispatch.rankOrder == 'ascending'
             }
             if (data.nodefilters.include) {

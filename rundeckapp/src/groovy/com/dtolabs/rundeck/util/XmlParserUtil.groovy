@@ -1,5 +1,7 @@
 package com.dtolabs.rundeck.util
 
+import org.apache.commons.lang.StringUtils
+
 /*
 * Copyright 2011 DTO Labs, Inc. (http://dtolabs.com)
 *
@@ -92,5 +94,26 @@ public class XmlParserUtil {
             return Boolean.parseBoolean(text)
         }
         return text
+    }
+
+    static int stringToInt(Object obj, int defValue) {
+        if (null != obj && obj instanceof Integer) {
+            return obj
+        } else if (null != obj && obj instanceof String && !StringUtils.isBlank(obj)) {
+            try {
+                return Integer.parseInt((String) obj)
+            } catch (NumberFormatException e) {
+            }
+        }
+        return defValue
+    }
+
+    static boolean stringToBool(Object obj, boolean defValue) {
+        if (null != obj && obj instanceof Boolean) {
+            return obj
+        } else if (null != obj && obj instanceof String && !StringUtils.isBlank(obj)) {
+            return Boolean.parseBoolean((String) obj)
+        }
+        return defValue
     }
 }
