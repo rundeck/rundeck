@@ -1131,6 +1131,8 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             scheduledExecution.errors.rejectValue('project', 'scheduledExecution.project.invalid.message', [scheduledExecution.project].toArray(), 'Project was not found: {0}')
         }
 
+        def todiscard = []
+        def wftodelete = []
         if (scheduledExecution.workflow && params['_sessionwf'] && params['_sessionEditWFObject']) {
             //load the session-stored modified workflow and replace the existing one
             def Workflow wf = params['_sessionEditWFObject']//session.editWF[scheduledExecution.id.toString()]
@@ -1161,9 +1163,9 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                     final Workflow newworkflow = new Workflow(wf)
                     scheduledExecution.workflow = newworkflow
                     if (oldwf) {
-                        oldwf.delete()
+                        wftodelete << oldwf
                     }
-                    wf.discard()
+                    todiscard<<wf
                 } else {
                     failed = true
                     scheduledExecution.errors.rejectValue('workflow', 'scheduledExecution.workflow.invalidstepslist.message', [failedlist.toString()].toArray(), "Invalid workflow steps: {0}")
@@ -1290,7 +1292,6 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         if (!params.notifications) {
             params.notified = 'false'
         }
-        def todiscard = []
         def modifiednotifs = []
         if (params.notifications && 'false' != params.notified) {
             //create notifications
@@ -1325,7 +1326,10 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                 failed = true;
             } else {
                 scheduledExecution.workflow.save(flush: true)
+                wftodelete.each{it.delete()}
             }
+        }else if (failed && null!=scheduledExecution.workflow){
+            todiscard<< scheduledExecution.workflow
         }
         if (!failed) {
             if (!scheduledExecution.validate()) {
