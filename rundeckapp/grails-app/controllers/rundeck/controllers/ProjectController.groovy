@@ -3,6 +3,7 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import rundeck.services.ProjectServiceException
 
 import java.text.SimpleDateFormat
 import org.apache.commons.fileupload.util.Streams
@@ -40,7 +41,13 @@ class ProjectController {
         def project1 = frameworkService.getFrameworkProject(project, framework)
 
         //temp file
-        def outfile= projectService.exportProjectToFile(project1,framework)
+        def outfile
+        try {
+            outfile = projectService.exportProjectToFile(project1,framework)
+        } catch (ProjectServiceException exc) {
+            request.error = exc.message
+            return render(template: "/common/error")
+        }
         SimpleDateFormat dateFormater = new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US);
         def dateStamp = dateFormater.format(new Date());
         //output the file as an attachment
