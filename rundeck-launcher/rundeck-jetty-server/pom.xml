@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.rundeck</groupId>
   <artifactId>rundeck-jetty-server</artifactId>
-  <version>1.6.1-SNAPSHOT</version>
+  <version>1.6.1</version>
   <name>RunDeck Jetty Server</name>
   <url>http://rundeck.org</url>
   <inceptionYear>2011</inceptionYear>
@@ -31,7 +31,7 @@
         <configuration>
           <archive>
             <manifestEntries>
-              <Rundeck-Version>1.6.1-SNAPSHOT</Rundeck-Version>
+              <Rundeck-Version>1.6.1</Rundeck-Version>
               <Main-Class>com.dtolabs.rundeck.RunServer</Main-Class>
             </manifestEntries>
           </archive>
@@ -56,6 +56,12 @@
       <groupId>org.mortbay.jetty</groupId>
       <artifactId>jetty-util</artifactId>
       <version>6.1.21</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.kohsuke</groupId>
+      <artifactId>libpam4j</artifactId>
+      <version>1.5</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
