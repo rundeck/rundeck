@@ -425,11 +425,11 @@ class ScheduledExecutionController  {
      */
     String expandUrl(Option opt, String url, ScheduledExecution scheduledExecution,selectedoptsmap=[:]) {
         def invalid = []
-        String srcUrl = url.replaceAll(/(\$\{(job|option|session)\.([^\.}]+?(\.value)?)\})/,
+        String srcUrl = url.replaceAll(/(\$\{(job|option)\.([^}]+?(\.value)?)\})/,
             {Object[] group ->
                 if(group[2]=='job' && jobprops[group[3]] && scheduledExecution.properties.containsKey(jobprops[group[3]])) {
                     scheduledExecution.properties.get(jobprops[group[3]]).toString().encodeAsURL()
-                }else if(group[2]=='session' && group[3]=='user' ) {
+                }else if(group[2]=='job' && group[3]=='user.name' ) {
                     def amlSessUser = (session?.user) ? session.user : "anonymous"
                     amlSessUser.toString().encodeAsURL()
                 }else if(group[2]=='option' && optprops[group[3]] && opt.properties.containsKey(optprops[group[3]])) {
