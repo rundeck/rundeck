@@ -58,6 +58,8 @@ The tool works in one of two *ACTION* modes:
 
 -d, \--duplicate *update|skip|create*
 : Duplicate job behavior option. When loading jobs, treat definitions that already exist on the server in the given manner: 'update' existing jobs,'skip' the uploaded definitions, or 'create' them anyway. (load action. default: update)
+-r, \--remove-uuids
+: When loading jobs, remove UUIDs to avoid conflicts. (load action. default: false)
 
 -f, \--file *FILE*
 : File path. For load action, path to a FILE to upload.
