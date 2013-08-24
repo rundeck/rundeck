@@ -100,11 +100,32 @@ public interface ExecutionService extends FrameworkSupportService {
         FileCopierException;
 
     /**
-     * Copy file to the node.
+     * Copy inputstream as a file to the node to a specific path
+     *
+     * @return filepath on the node for the destination file.
+     */
+    public String fileCopyFileStream(final ExecutionContext context, InputStream input, INodeEntry node,
+            String destinationPath) throws
+            FileCopierException;
+
+    /**
+     * Copy file to the node as a script file to the temp file location.
      *
      * @return filepath for the copied file on the node.
      */
     public String fileCopyFile(final ExecutionContext context, File file, INodeEntry node) throws FileCopierException;
+
+    /**
+     * Copy file to the node to a specific path
+     * @param context
+     * @param file
+     * @param node
+     * @param destinationPath
+     * @return
+     * @throws FileCopierException
+     */
+    public String fileCopyFile(final ExecutionContext context, File file, INodeEntry node,
+            String destinationPath) throws FileCopierException;
 
     /**
      * Copy string as a file to the node,
@@ -113,6 +134,14 @@ public interface ExecutionService extends FrameworkSupportService {
      */
     public String fileCopyScriptContent(final ExecutionContext context, String script,
                                         INodeEntry node) throws
+        FileCopierException;
+    /**
+     * Copy string as a file to the node to a specific path
+     *
+     * @return filepath for the copied file on the node
+     */
+    public String fileCopyScriptContent(final ExecutionContext context, String script,
+                                        INodeEntry node, String destinationPath) throws
         FileCopierException;
 
     /**

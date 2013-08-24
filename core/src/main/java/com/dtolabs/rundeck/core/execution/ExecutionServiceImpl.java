@@ -32,11 +32,7 @@ import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
 import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcher;
-import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
-import com.dtolabs.rundeck.core.execution.service.FileCopier;
-import com.dtolabs.rundeck.core.execution.service.FileCopierException;
-import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
-import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
+import com.dtolabs.rundeck.core.execution.service.*;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
@@ -199,6 +195,12 @@ class ExecutionServiceImpl implements ExecutionService {
 
     public String fileCopyFileStream(ExecutionContext context, InputStream input, INodeEntry node) throws
         FileCopierException {
+        return fileCopyFileStream(context, input, node, null);
+    }
+
+    public String fileCopyFileStream(ExecutionContext context, InputStream input, INodeEntry node,
+            String destinationPath) throws
+            FileCopierException {
 
 
         if (null != context.getExecutionListener()) {
@@ -212,7 +214,12 @@ class ExecutionServiceImpl implements ExecutionService {
         }
         String result = null;
         try {
-            result = copier.copyFileStream(context, input, node);
+            if (null != destinationPath && copier instanceof DestinationFileCopier) {
+                DestinationFileCopier dcopier = (DestinationFileCopier) copier;
+                result = dcopier.copyFileStream(context, input, node, destinationPath);
+            } else {
+                result = copier.copyFileStream(context, input, node);
+            }
         } finally {
             if (null != context.getExecutionListener()) {
                 context.getExecutionListener().finishFileCopy(result, context, node);
@@ -223,6 +230,12 @@ class ExecutionServiceImpl implements ExecutionService {
 
     public String fileCopyFile(ExecutionContext context, File file,
                                INodeEntry node) throws FileCopierException {
+        return fileCopyFile(context, file, node, null);
+    }
+
+    public String fileCopyFile(ExecutionContext context, File file, INodeEntry node,
+            String destinationPath) throws FileCopierException {
+
         if (null != context.getExecutionListener()) {
             context.getExecutionListener().beginFileCopyFile(context, file, node);
         }
@@ -234,7 +247,12 @@ class ExecutionServiceImpl implements ExecutionService {
         }
         String result = null;
         try {
-            result = copier.copyFile(context, file, node);
+            if (null != destinationPath && copier instanceof DestinationFileCopier) {
+                DestinationFileCopier dcopier = (DestinationFileCopier) copier;
+                result = dcopier.copyFile(context, file, node, destinationPath);
+            }else{
+                result = copier.copyFile(context, file, node);
+            }
         } finally {
             if (null != context.getExecutionListener()) {
                 context.getExecutionListener().finishFileCopy(result, context, node);
@@ -244,7 +262,12 @@ class ExecutionServiceImpl implements ExecutionService {
     }
 
     public String fileCopyScriptContent(ExecutionContext context, String script,
-                                        INodeEntry node) throws FileCopierException {
+            INodeEntry node) throws FileCopierException {
+        return fileCopyScriptContent(context,script,node,null);
+    }
+
+    public String fileCopyScriptContent(ExecutionContext context, String script, INodeEntry node, String
+            destinationPath) throws FileCopierException {
         if (null != context.getExecutionListener()) {
             context.getExecutionListener().beginFileCopyScriptContent(context, script, node);
         }
@@ -256,7 +279,12 @@ class ExecutionServiceImpl implements ExecutionService {
         }
         String result = null;
         try {
-            result = copier.copyScriptContent(context, script, node);
+            if (null != destinationPath && copier instanceof DestinationFileCopier) {
+                DestinationFileCopier dcopier = (DestinationFileCopier) copier;
+                result = dcopier.copyScriptContent(context, script, node, destinationPath);
+            }else{
+                result = copier.copyScriptContent(context, script, node);
+            }
         } finally {
             if (null != context.getExecutionListener()) {
                 context.getExecutionListener().finishFileCopy(result, context, node);
