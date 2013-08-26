@@ -18,7 +18,8 @@ class ProjectController {
             importArchive: ['POST'],
     ]
 
-    def index (){
+    def index () {
+        return redirect(controller: 'menu', action: 'jobs')
     }
 
     def export={

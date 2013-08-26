@@ -131,9 +131,6 @@ class MenuController {
         return redirect(controller:'framework',action:'nodes')
     }
     
-    def workflows = {ScheduledExecutionQuery query ->
-        return render(view:'jobs',model:jobs(query))
-    }
     def jobs = {ScheduledExecutionQuery query ->
         
         def User u = userService.findOrCreateUser(session.user)
@@ -167,9 +164,6 @@ class MenuController {
         }
     }
     
-    def workflowsFragment = {ScheduledExecutionQuery query ->
-        return render(view:'jobsFragment',model:jobsFragment(query))
-    }
     def jobsFragment = {ScheduledExecutionQuery query ->
         long start=System.currentTimeMillis()
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
@@ -231,7 +225,7 @@ class MenuController {
         }
         return results + [runAuthRequired:params.runAuthRequired]
     }
-    def listWorkflows(ScheduledExecutionQuery query,Framework framework,String user) {
+    private def listWorkflows(ScheduledExecutionQuery query,Framework framework,String user) {
         long start=System.currentTimeMillis()
         def projects = frameworkService.projects(framework)
         if(null!=query){

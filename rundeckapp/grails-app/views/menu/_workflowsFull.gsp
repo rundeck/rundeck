@@ -87,8 +87,8 @@
 
                             <tr>
                                 <td colspan="2">
-                                    <g:actionSubmit  value="Filter" name="filterAll" controller='menu' action='workflows'  />
-                                    <g:actionSubmit  value="Clear" name="clearFilter" controller='menu' action='workflows' />
+                                    <g:actionSubmit  value="Filter" name="filterAll" controller='menu' action='jobs'  />
+                                    <g:actionSubmit  value="Clear" name="clearFilter" controller='menu' action='jobs' />
                                 </td>
                             </tr>
                             </table>

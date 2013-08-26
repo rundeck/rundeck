@@ -955,7 +955,7 @@ class ScheduledExecutionController  {
         session.redoWF?.remove(id)
     }
 
-    void transferSessionEditState(session,params,id){
+    static void transferSessionEditState(session,params,id){
         //pass session-stored edit state in params map
         if (params['_sessionwf'] && session.editWF && null != session.editWF[id]) {
             params['_sessionEditWFObject'] = session.editWF[id]
@@ -1612,32 +1612,6 @@ class ScheduledExecutionController  {
             log.debug("ExecutionController: immediate execution scheduled")
 //            redirect(controller:"execution", action:"follow",id:result.executionId)
             return [success:true, message:"immediate execution scheduled", id:result.executionId]
-        }
-    }
-
-    def fetchExecutionService() {
-        if (!executionService) throw new IllegalStateException("ExecutionService bean not found. Not injected?")
-        return executionService
-    }
-
-    // Various methods to interact with the Scheduler
-
-   def fetchScheduler() {
-        if (!quartzScheduler) throw new IllegalStateException("Quartz Scheduler bean not found. Not injected?")
-        return quartzScheduler
-    }
-
-
-
-
-
-
-    def Date nextExecutionTime(ScheduledExecution se) {
-        def trigger = fetchScheduler().getTrigger(se.generateJobScheduledName(), se.generateJobGroupName())
-        if(trigger){
-            return trigger.getNextFireTime()
-        }else{
-            return null;
         }
     }
 
