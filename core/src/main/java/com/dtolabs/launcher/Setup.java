@@ -34,14 +34,10 @@ import java.util.Properties;
 
 /**
  * Setup which replaces old command line parsing at the shell layer which leaves the old setup/setup.bat to only
- * blindly pass arguments along with the java.home, rdeck.base, rdeck.home, and ant.home environment
+ * blindly pass arguments along with the java.home, rdeck.base, and ant.home environment
  */
 public class Setup implements CLIToolLogger {
     public static final Logger logger = Logger.getLogger(Setup.class);
-    /**
-     * basic bootstrapped rdeck.home
-     */
-    public static String RDECK_HOME = Constants.getSystemHomeDir();
     /**
      * basic bootstrapped rdeck.base
      */
@@ -115,7 +111,6 @@ public class Setup implements CLIToolLogger {
     private void performSetup(String[] args) throws SetupException {
         parameters.validate();
         validateInstall();
-        final File homedir = new File(parameters.getHomeDir());
         final File basedir = new File(parameters.getBaseDir());
         if(!basedir.exists()){
             if(!basedir.mkdirs()) {
@@ -124,10 +119,10 @@ public class Setup implements CLIToolLogger {
         }
 
         generatePreferences(args, parameters.getProperties());
-        newImpl( homedir, basedir);
+        newImpl(basedir);
     }
 
-    private void newImpl( File homedir, File basedir) throws SetupException {
+    private void newImpl(File basedir) throws SetupException {
         // create dirs
         File etcdir = new File(Constants.getFrameworkConfigDir(basedir.getAbsolutePath()));
         if(!etcdir.exists() && !etcdir.mkdir()){
@@ -157,7 +152,7 @@ public class Setup implements CLIToolLogger {
         try {
             for (final String filename : templates) {
                 final File destFile = new File(etcdir, filename);
-                final File templFile = getTemplateFile(homedir, filename+".template");
+                final File templFile = getTemplateFile(filename+".template");
                 if (overwrite  && destFile.isFile()) {
                     //create backup
                     final File backup = new File(etcdir, filename + ".backup-" + time);
@@ -237,11 +232,10 @@ public class Setup implements CLIToolLogger {
 
     /**
      * Look for template in the jar resources, otherwise look for it on filepath
-     * @param homedir
      * @param filename
      * @return
      */
-    private File getTemplateFile(File homedir, String filename) throws IOException {
+    private File getTemplateFile(String filename) throws IOException {
         File templateFile=null;
         final String resource = TEMPLATE_RESOURCES_PATH + "/" + filename;
         InputStream is = Setup.class.getClassLoader().getResourceAsStream(resource);
@@ -262,7 +256,7 @@ public class Setup implements CLIToolLogger {
         if (null == parameters.getBaseDir() || parameters.getBaseDir().equals("")) {
             throw new SetupException("rdeck.base property not defined or is the empty string");
         }
-        if (!checkIfDir("rdeck.home", parameters.getBaseDir())) {
+        if (!checkIfDir("rdeck.base", parameters.getBaseDir())) {
             throw new SetupException(parameters.getBaseDir() + " is not a valid rdeck install");
         }
     }
@@ -347,7 +341,6 @@ public class Setup implements CLIToolLogger {
         private String serverHostname;
         private String serverName;
         private String baseDir;
-        private String homeDir;
         private Properties properties;
 
         public Parameters() {
@@ -412,9 +405,6 @@ public class Setup implements CLIToolLogger {
                 }else if (args[i].equals("-d")) {
                     baseDir = getOptParam(args, i);
                     i++;
-                }else if (args[i].equals("-H")) {
-                    homeDir = getOptParam(args, i);
-                    i++;
                 } else if (args[i].startsWith("--")) {
                     continue;
                 } else
@@ -444,17 +434,9 @@ public class Setup implements CLIToolLogger {
             if (null == baseDir) {
                 baseDir = Constants.getSystemBaseDir();
             }
-            if (null == homeDir) {
-                homeDir = Constants.getSystemHomeDir();
-            }
-            if (null == homeDir) {
-                homeDir = baseDir;
-            }
 
             System.out.println("Using basedir: " + Preferences.forwardSlashPath(baseDir));
             properties.setProperty("rdeck.base", Preferences.forwardSlashPath(baseDir));
-            System.out.println("Using homedir: " + Preferences.forwardSlashPath(homeDir));
-            properties.setProperty("rdeck.home", Preferences.forwardSlashPath(homeDir));
             properties.setProperty("framework.node.name", nodeArg);
             properties.setProperty("framework.node.hostname", nodeHostnameArg);
             if (null != serverHostname) {
@@ -505,14 +487,6 @@ public class Setup implements CLIToolLogger {
             this.baseDir = baseDir;
         }
 
-        public String getHomeDir() {
-            return homeDir;
-        }
-
-        public void setHomeDir(String homeDir) {
-            this.homeDir = homeDir;
-        }
-        
         public void setProperty(String name, String value) {
             properties.setProperty(name, value);
         }

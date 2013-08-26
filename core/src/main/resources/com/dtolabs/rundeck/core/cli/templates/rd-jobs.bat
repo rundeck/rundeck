@@ -21,25 +21,11 @@ GOTO:Start
 
 :Start
 
-IF NOT DEFINED RDECK_HOME (
-   ECHO RDECK_HOME not set
-   GOTO:EOF
-)
-
 IF NOT DEFINED RDECK_BASE (
    ECHO RDECK_BASE not set
    GOTO:EOF
 )
 
-
-IF "%RDECK_HOME%"=="%RDECK_BASE%" (
-   ECHO RDECK_HOME and RDECK_BASE cannot be the same directory path, RDECK_HOME and RDECK_BASE are set to %RDECK_HOME%
-   GOTO:EOF
-)
-
-IF NOT DEFINED ANT_HOME (
-	SET ANT_HOME=%RDECK_HOME%\pkgs\apache-ant-1.8.1
-)
 
 IF "%JAVA_HOME%" =="" (
    echo JAVA_HOME not set
@@ -50,7 +36,7 @@ IF NOT EXIST "%JAVA_HOME%\bin\java.exe" (
    GOTO:EOF
 )
 
-set LIBDIR=%RDECK_HOME%\tools\lib
+set LIBDIR=%RDECK_BASE%\tools\lib
 set _CLASSPATH=%CLASSPATH%
 
 set CLASSPATH=%1
@@ -60,12 +46,11 @@ if "%_CLASSPATH%" == "" goto END
 set CLASSPATH=%_CLASSPATH%;%CLASSPATH%
 
 :END
-"%RDECK_HOME%\classes;%ANT_HOME%\lib\ant.jar;%ANT_HOME%\lib\ant-launcher.jar;%ANT_HOME%\lib\regexp-1.5.jar;%ANT_HOME%\lib\ant-apache-regexp.jar"
+"%RDECK_BASE%\classes;%ANT_HOME%\lib\ant.jar;%ANT_HOME%\lib\ant-launcher.jar;%ANT_HOME%\lib\regexp-1.5.jar;%ANT_HOME%\lib\ant-apache-regexp.jar"
 set Path=%JAVA_HOME%\bin:%ANT_HOME%\bin:%Path%
 
 CALL %JAVA_HOME%\bin\java "-Dant.home=%ANT_HOME%" ^
                           "-Duser.java_home=%JAVA_HOME%" ^
-                          "-Drdeck.home=%RDECK_HOME%" ^
                           "-Drdeck.base=%RDECK_BASE%" ^
                           %RDECK_SSL_OPTS% ^
                           -cp  ^

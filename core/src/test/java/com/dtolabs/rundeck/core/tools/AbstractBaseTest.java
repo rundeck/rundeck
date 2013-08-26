@@ -24,7 +24,6 @@ import org.apache.tools.ant.BuildException;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -38,15 +37,12 @@ public abstract class AbstractBaseTest extends TestCase {
     //
     // junit exported java properties (e.g. from maven's project.properties)
     //
-    public static String RDECK_HOME = System.getProperty("rdeck.home","target");
     public static String RDECK_BASE = System.getProperty("rdeck.base","target/rdeck_base");
 
     //
     // derived modules and projects base
     //
     private static String PROJECTS_BASE = RDECK_BASE + "/" + "projects";
-
-    private static String EXTENSIONS_BASE = RDECK_HOME + "/" + "lib" + "/" + "extensions";
 
 
     /** hostname used for local node in test environment */
@@ -56,11 +52,6 @@ public abstract class AbstractBaseTest extends TestCase {
         "-n", localNodeHostname
     };
 
-    private static String homeDir;
-
-    public String getHomeDir() {
-        return homeDir;
-    }
 
     private static String baseDir;
 
@@ -109,7 +100,6 @@ public abstract class AbstractBaseTest extends TestCase {
     protected void configureFramework()
             throws BuildException {
 
-        homeDir = RDECK_HOME;
         baseDir = RDECK_BASE;
         projectsBase = PROJECTS_BASE;
         new File(baseDir,"etc").mkdirs();
@@ -130,8 +120,6 @@ public abstract class AbstractBaseTest extends TestCase {
         argsList.add("--framework.ssh.keypath=" + dummykey.getAbsolutePath());
         argsList.add("-d");
         argsList.add(new File(baseDir).getAbsolutePath());
-        argsList.add("-H" );
-        argsList.add(new File(homeDir).getAbsolutePath());
 
 
         try {

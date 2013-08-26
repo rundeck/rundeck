@@ -1,13 +1,10 @@
-RDECK_HOME=@rdeck.home@
-export RDECK_HOME
-
 RDECK_BASE=@rdeck.base@
 export RDECK_BASE
 
 JAVA_HOME=@user.java_home@
 export JAVA_HOME
 
-PATH=$JAVA_HOME/bin:$RDECK_HOME/tools/bin:$PATH
+PATH=$JAVA_HOME/bin:$RDECK_BASE/tools/bin:$PATH
 export PATH
 
 export JAVA_CMD=$JAVA_HOME/bin/java
@@ -23,7 +20,7 @@ then
    unset JRE_HOME
 fi
 
-LIBDIR=$RDECK_HOME/tools/lib
+LIBDIR=$RDECK_BASE/tools/lib
 
 CLI_CP=
 for i in `ls $LIBDIR/*.jar`

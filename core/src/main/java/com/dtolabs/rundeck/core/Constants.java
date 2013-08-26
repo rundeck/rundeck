@@ -49,13 +49,6 @@ public final class Constants {
     public static final String JAVA_HOME = System.getProperty("java.home");
 
     /**
-     * Get the value of the "rdeck.home" system property, home directory of the rdeck installation
-     */
-    public static String getSystemHomeDir() {
-        return System.getProperty("rdeck.home");
-    }
-
-    /**
      * RDECK_BASE, base directory patch for instance of client, equivalent to ${rdeck.base}
      */
     public static String getSystemBaseDir() {

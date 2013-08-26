@@ -30,7 +30,7 @@ IF NOT EXIST "%ANT_HOME%\bin\ant.bat" (
 
 
 ::echo Classpath is %cp%
-SET cp=%RDECK_HOME%\classes;%ANT_HOME%\lib\xerces-2.6.0.jar;%ANT_HOME%\lib\xml-apis.jar
+SET cp=%RDECK_BASE%\classes;%ANT_HOME%\lib\xerces-2.6.0.jar;%ANT_HOME%\lib\xml-apis.jar
 
 
 
@@ -41,7 +41,6 @@ call "%JAVA_HOME%\bin\java.exe" ^
     -Xms64m -Xmx128m ^
 	-classpath "%cp%" ^
     -Drdeck.base="%RDECK_BASE%" ^
-	-Drdeck.home="%RDECK_HOME%" ^
 	-Dant.home="%ANT_HOME%" ^
     %RDECK_SSL_OPTS% ^
     -Drdeck.traceExceptions="%RUNDECK_TRACE_EXCEPTIONS%" ^

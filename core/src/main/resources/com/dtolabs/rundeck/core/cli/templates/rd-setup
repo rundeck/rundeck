@@ -15,25 +15,11 @@ errorMsg() {
 #
 if [ -n "$OS" -a "$OS" = "Windows_NT" ]
 then
-   exec cmd.exe /C $RDECK_HOME/bin/rd-setup.bat "$@"
+   exec cmd.exe /C $RDECK_BASE/bin/rd-setup.bat "$@"
 fi
 
 argsOrig=$*
 
-if [ "${RDECK_HOME}X" = "X" ]
-then
-   #determine base
-   PDIR=$(cd `dirname $0/`/../.. && pwd)
-   if [ -f "$PDIR/etc/framework.properties" ]
-   then
-       export RDECK_HOME=$PDIR
-   fi
-fi
-if [ "${RDECK_HOME}X" = "X" ]
-then
-    errorMsg "RDECK_HOME was not set"
-    exit 1
-fi
 
 if [ "${RDECK_BASE}X" = "X" ]
 then
@@ -61,18 +47,17 @@ then
    exit 1
 fi
 
-LIBDIR=$RDECK_HOME/tools/lib
+LIBDIR=$RDECK_BASE/tools/lib
 cp=
 for i in `ls $LIBDIR/*.jar`
 do
   cp=${cp}:${i}
 done
-PATH=$JAVA_HOME/bin:$RDECK_HOME/bin:/usr/bin:/bin:/usr/sbin:/sbin
+PATH=$JAVA_HOME/bin:$RDECK_BASE/bin:/usr/bin:/bin:/usr/sbin:/sbin
 export PATH
 
 exec ${JAVA_CMD:-java} -Dant.home=$ANT_HOME \
                     -Duser.java_home=$JAVA_HOME \
-                    -Drdeck.home=$RDECK_HOME \
                     -Drdeck.base=$RDECK_BASE \
                     -cp $cp \
                     com.dtolabs.launcher.Setup "$@"

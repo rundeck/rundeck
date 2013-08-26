@@ -13,7 +13,7 @@ log () {
 #
 if [ -n "$OS" -a "$OS" = "Windows_NT" ]
 then
-   exec cmd.exe /C $RDECK_HOME/bin/dispatch.bat "$@"
+   exec cmd.exe /C $RDECK_BASE/bin/dispatch.bat "$@"
 fi
 
 # Look for parent directory
@@ -38,6 +38,5 @@ fi
 exec ${JAVA_CMD:-java} ${RDECK_JVM} -classpath ${CLI_CP} \
      -Duser.java_home=$JAVA_HOME \
      -Drdeck.base=$RDECK_BASE \
-     -Drdeck.home=$RDECK_HOME \
      $RDECK_SSL_OPTS \
      com.dtolabs.rundeck.core.cli.run.RunTool "$@"

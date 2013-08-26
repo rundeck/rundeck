@@ -39,7 +39,6 @@ public class Preferences {
     public static final String ENV_JAVA_HOME = System.getProperty("user.java_home");
 
     // required properties
-    public static final String SYSTEM_RDECK_HOME = Constants.getSystemHomeDir();
     public static final String SYSTEM_RDECK_BASE = Constants.getSystemBaseDir();
 
     // location of default properties file which some of them can be overridden at setup time
@@ -50,20 +49,13 @@ public class Preferences {
      */
     public static void generate(String args[], String preferences, Properties inputProps) throws Exception {
         String base;
-        String homedir;
         base = inputProps.getProperty("rdeck.base");
-        homedir = inputProps.getProperty("rdeck.home");
         if ((null == ENV_JAVA_HOME || "".equals(ENV_JAVA_HOME)) && (null == JAVA_HOME || "".equals(JAVA_HOME))){
             throw new Exception("property: java.home, not defined");
         }
         if(null==base) {
             base = SYSTEM_RDECK_BASE;
         }
-        if(null==homedir) {
-            homedir = SYSTEM_RDECK_HOME;
-        }
-        if (null == homedir || "".equals(homedir))
-            throw new Exception("property: rdeck.home, not defined");
         if (null == base || "".equals(base))
             throw new Exception("property: rdeck.base, not defined");
 
@@ -82,7 +74,7 @@ public class Preferences {
         Properties defaultProperties = new Properties();
 
         //
-        // bootstrap the rdeck.home, rdeck.base, ant.home, and java.home
+        // bootstrap the rdeck.base, ant.home, and java.home
         //
         String jhome = ENV_JAVA_HOME;
         if(null==jhome) {
@@ -90,7 +82,6 @@ public class Preferences {
         }
         defaultProperties.setProperty("user.java_home", forwardSlashPath(jhome));
         defaultProperties.setProperty("java.home", forwardSlashPath(jhome));
-        defaultProperties.setProperty("rdeck.home", forwardSlashPath(homedir));
         defaultProperties.setProperty("rdeck.base", forwardSlashPath(base));
 
         //

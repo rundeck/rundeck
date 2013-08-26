@@ -1,6 +1,3 @@
-RDECK_HOME=/var/lib/rundeck
-export RDECK_HOME
-
 RDECK_BASE=/var/lib/rundeck
 export RDECK_BASE
 

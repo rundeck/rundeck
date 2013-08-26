@@ -9,7 +9,6 @@
 
 java.home = @user.java_home@
 rdeck.base =@rdeck.base@
-rdeck.home =@rdeck.home@
 user.home =@user.home@
 
 framework.application.libpath =@framework.application.libpath@
@@ -74,7 +73,7 @@ framework.rdeck.version = @framework.rdeck.version@
 #
 # Root directory of the framework pkg
 #
-framework.rdeck.dir = ${rdeck.home}
+framework.rdeck.dir = ${rdeck.base}
 
 #
 # Root directory of the framework instance

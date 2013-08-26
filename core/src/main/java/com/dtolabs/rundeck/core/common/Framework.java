@@ -85,7 +85,6 @@ public class Framework extends FrameworkResourceParent {
 
     private final IPropertyLookup lookup;
     private final File projectsBase;
-    private final File homeDir;
     private FrameworkProjectMgr projectResourceMgr;
     private boolean allowUserInput = true;
     private static final String FRAMEWORK_USERINPUT_DISABLED = "framework.userinput.disabled";
@@ -260,14 +259,6 @@ public class Framework extends FrameworkResourceParent {
             logger.warn("\"" + CENTRALDISPATCHER_CLS_PROP + "\" property not set, using default");
         }
 
-        if(lookup.hasProperty("rdeck.home")) {
-            homeDir = new File(lookup.getProperty("rdeck.home"));
-
-        }else {
-            final String ctlhome = Constants.getSystemHomeDir();
-            if (null==ctlhome) throw new FrameworkResourceException("failed looking up value for rdeck.home ",this);
-            homeDir = new File(ctlhome);
-        }
 
         this.authenticationMgr = authentication;
         this.authorizationMgr=authorization;
@@ -461,7 +452,7 @@ public class Framework extends FrameworkResourceParent {
      * rdeck.base, projects.base and modules.base are retrieved via {@link Constants}.
      *
      * @return returns Framework singleton instance. Creates it using info from
-     * {@link Constants} data. Assumes rdeck.home and rdeck.base System props are set
+     * {@link Constants} data. Assumes rdeck.base System props are set
      */
     public static Framework getInstance() {
         logger.debug("creating new Framework using info from com.dtolabs.rundeck.core.Constants");
@@ -722,10 +713,6 @@ public class Framework extends FrameworkResourceParent {
 
     public void setAuthenticationMgr(Authenticator authenticationMgr) {
         this.authenticationMgr = authenticationMgr;
-    }
-
-    public File getHomeDir() {
-        return homeDir;
     }
 
     /**

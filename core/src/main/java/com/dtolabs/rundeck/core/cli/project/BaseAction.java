@@ -132,11 +132,6 @@ public class BaseAction implements Action {
      * Check if software was installed and setup process was run
      */
     protected void validateInstall() {
-        final File adHome = framework.getHomeDir();
-        if (null==adHome || !adHome.exists()) {
-            throw new ProjectToolException(
-                "rdeck home now found: " + (null == adHome ? "(null)" : adHome.getAbsolutePath()));
-        }
         final File baseDir = framework.getBaseDir();
         if (null == baseDir || !baseDir.exists()) {
             throw new ProjectToolException(
