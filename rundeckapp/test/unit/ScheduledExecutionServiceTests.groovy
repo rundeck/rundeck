@@ -18,9 +18,10 @@ import grails.test.GrailsUnitTestCase
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import rundeck.Execution
-import rundeck.JobExec
 import rundeck.Notification
 import rundeck.Option
+import rundeck.JobExec
+import rundeck.PluginStep
 import rundeck.ScheduledExecution
 import rundeck.CommandExec
 import rundeck.Workflow
@@ -385,5 +386,89 @@ public class ScheduledExecutionServiceTests {
         assertTrue(job3.validate())
         assertNotNull(job3.save())
         [job1, serverUUID2, job2, job3, serverUUID]
+    }
+
+    public void testValidateWorkflow() {
+        mockDomain(ScheduledExecution)
+        mockDomain(Workflow)
+        mockDomain(CommandExec)
+        mockDomain(JobExec)
+        mockDomain(PluginStep)
+        mockLogging(ScheduledExecutionService)
+        ScheduledExecutionService testService = new ScheduledExecutionService()
+
+        def cmdExecProps = [adhocRemoteString: 'test buddy2']
+        def jobrefWorkflowStepProps = [jobName: "name", jobGroup: "group"]
+        def jobrefNodeStepProps = [jobName: "name2", jobGroup: "group2", nodeStep: true]
+        def pluginNodeStepProps = [type: 'plug1', nodeStep: true,]
+        def pluginWorkflowStepProps = [type: 'plug1', nodeStep: false]
+
+        //simple
+        assertValidateWorkflow([new CommandExec(cmdExecProps)], testService, true)
+
+        //exec step cannot have a workflow step jobref error handler
+        assertValidateWorkflow(
+                [new CommandExec(cmdExecProps + [errorHandler: new JobExec(jobrefWorkflowStepProps)])],
+                testService, false)
+
+        //exec step can have a job ref (node step) error handler
+        assertValidateWorkflow(
+                [new CommandExec(cmdExecProps + [errorHandler: new JobExec(jobrefNodeStepProps)])],
+                testService, true)
+
+        //exec step cannot have a workflow step plugin error handler
+        assertValidateWorkflow(
+                [new CommandExec(cmdExecProps + [errorHandler: new PluginStep(pluginWorkflowStepProps)])],
+                testService, false)
+
+        //exec step can have a node step plugin error handler
+        assertValidateWorkflow(
+                [new CommandExec(cmdExecProps + [errorHandler: new PluginStep(pluginNodeStepProps)])],
+                testService, true)
+
+        //node step plugin cannot have a workflow step error handler
+        assertValidateWorkflow(
+                [new PluginStep(pluginNodeStepProps + [errorHandler: new JobExec(jobrefWorkflowStepProps)])],
+                testService, false)
+
+        //workflow step plugin can have a workflow step error handler
+        assertValidateWorkflow(
+                [new PluginStep(pluginWorkflowStepProps + [ errorHandler: new JobExec(jobrefWorkflowStepProps)])],
+                testService, true)
+
+        //job ref(workflow step) can have another as error handler
+        assertValidateWorkflow(
+                [new JobExec(jobrefWorkflowStepProps + [ errorHandler: new JobExec(jobrefWorkflowStepProps)])],
+                testService, true)
+
+        //job ref(workflow step) can have a plugin workflow step handler
+        assertValidateWorkflow(
+                [new JobExec(jobrefWorkflowStepProps + [ errorHandler: new PluginStep(pluginWorkflowStepProps)])],
+                testService, true)
+
+        //job ref(workflow step) can have a node step plugin erro handler
+        assertValidateWorkflow(
+                [new JobExec(jobrefWorkflowStepProps + [ errorHandler: new PluginStep(pluginNodeStepProps)])],
+                testService, true)
+
+
+    }
+
+    private void assertValidateWorkflow(List<WorkflowStep> commands, ScheduledExecutionService testService, boolean valid) {
+        def workflow = new Workflow(keepgoing: true, commands: commands, strategy: 'node-first')
+        ScheduledExecution scheduledExecution = new ScheduledExecution(
+                jobName: 'blue2',
+                project: 'AProject2',
+                groupPath: 'some/where2',
+                description: 'a job2',
+                argString: '-a b -c d2',
+                workflow: workflow,
+                scheduled: false,
+        )
+        assert valid == testService.validateWorkflow(workflow, scheduledExecution)
+        assert !valid == scheduledExecution.hasErrors()
+        assert !valid == scheduledExecution.errors.hasFieldErrors('workflow')
+        assert !valid == workflow.commands[0].hasErrors()
+        assert !valid == workflow.commands[0].errors.hasFieldErrors('errorHandler')
     }
 }

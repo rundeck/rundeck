@@ -708,10 +708,14 @@ class MenuController {
         //test valid project
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
 
-        def exists=frameworkService.existsFrameworkProject(params.project,framework)
-        if(!exists){
-            flash.error=g.message(code:'api.error.item.doesnotexist',args:['project',params.project])
-            return chain(controller:'api',action:'error')
+        //allow project='*' to indicate all projects
+        def allProjects = request.api_version >= ApiRequestFilters.V9 && params.project == '*'
+        if(!allProjects){
+            def exists=frameworkService.existsFrameworkProject(params.project,framework)
+            if(!exists){
+                flash.error=g.message(code:'api.error.item.doesnotexist',args:['project',params.project])
+                return chain(controller:'api',action:'error')
+            }
         }
 
         QueueQuery query = new QueueQuery(runningFilter:'running',projFilter:params.project)

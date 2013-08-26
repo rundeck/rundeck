@@ -88,8 +88,21 @@ log4j={
 
     warn 'org.mortbay.log'
     warn 'grails.app.filters.AuthorizationFilters'
-    
 //    info 'com.dtolabs.rundeck.core.authorization.providers.SAREAuthorization'
+
+    appenders {
+        environments {
+            development {
+                console name: "access", layout: pattern(conversionPattern: "[%d{ISO8601}] \"%X{method} %X{uri}\" %X{duration} %X{remoteHost} %X{secure} %X{remoteUser} %X{authToken} %X{project} [%X{contentType}] (%X{userAgent})%n")
+            }
+        }
+    }
+    environments {
+        development {
+            info 'org.rundeck.api.requests'
+//            info 'org.rundeck.web.requests'
+        }
+    }
 }
 
 

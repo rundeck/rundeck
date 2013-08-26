@@ -70,6 +70,7 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
      */
     public static final String ACTION_PURGE = "purge";
     private StoredJobsRequestDuplicateOption duplicateOption = StoredJobsRequestDuplicateOption.update;
+    private boolean uuidOptionRemove;
 
     /**
      * Get action
@@ -164,9 +165,12 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
         return duplicateOption;
     }
 
-    @Override
     public String getProject() {
         return getArgProject();
+    }
+
+    public StoredJobsRequestUUIDOption getUUIDOption() {
+        return uuidOptionRemove ? StoredJobsRequestUUIDOption.remove : StoredJobsRequestUUIDOption.preserve;
     }
 
     /**
@@ -335,6 +339,15 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
     public static final String DUPLICATE_OPTION_LONG = "duplicate";
 
     /**
+     * long option to remove UUIDs when importing jobs
+     */
+    public static final String REMOVE_UUID_OPTION_SHORT = "r";
+    /**
+     * long option to remove UUIDs when importing jobs
+     */
+    public static final String REMOVE_UUID_OPTION_LONG = "remove-uuids";
+
+    /**
      * short option string for load option: format
      */
     public static final String FORMAT_OPTION = "F";
@@ -470,6 +483,8 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
         public void addOptions(final Options options) {
             options.addOption(DUPLICATE_OPTION, DUPLICATE_OPTION_LONG, true,
                 "Duplicate job behavior option. When loading jobs, treat definitions that already exist on the server in the given manner: 'update' existing jobs,'skip' the uploaded definitions, or 'create' them anyway. (load action. default: update)");
+            options.addOption(REMOVE_UUID_OPTION_SHORT, REMOVE_UUID_OPTION_LONG, false,
+                "When loading jobs, remove any UUIDs while importing. (load action. default: false)");
         }
 
         public void parseArgs(final CommandLine cli, final String[] original) throws CLIToolOptionsException {
@@ -483,6 +498,7 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
                         + Arrays.toString(StoredJobsRequestDuplicateOption.values()));
                 }
             }
+            uuidOptionRemove = cli.hasOption(REMOVE_UUID_OPTION_SHORT);
         }
 
         public void validate(final CommandLine cli, final String[] original) throws CLIToolOptionsException {

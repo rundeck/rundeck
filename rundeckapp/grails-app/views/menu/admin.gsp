@@ -130,7 +130,7 @@
                 <ul>
                     <li>Existing Jobs in this project that match imported Jobs (group and name match, or UUID matches) will be updated.</li>
                 </ul>
-                <span class="prompt">New Jobs</span>
+                <span class="prompt">Imported Jobs</span>
                 <div class="presentation">
                     <div>
                         <label title="Original UUIDs will be preserved, conflicting UUIDs will be replaced">

@@ -12,8 +12,8 @@ archivesBaseName = 'rundeck-launcher'
 defaultTasks 'clean','launcherJar'
 ext.launcherMainClass = mainClassName
 ext.launcherStartClass = "com.dtolabs.rundeck.RunServer"
-ext.launcherJettyLibs = "servlet-api-2.5-20081211.jar jetty-${jettyVersion}.jar jetty-util-${jettyVersion}.jar jetty-naming-${jettyVersion}.jar jetty-plus-${jettyVersion}.jar"
-ext.launcherJettyLibsUnexpanded = 'servlet-api-2.5-20081211.jar jetty-${jettyVersion}.jar jetty-util-${jettyVersion}.jar jetty-naming-${jettyVersion}.jar jetty-plus-${jettyVersion}.jar'
+ext.launcherJettyLibs = "servlet-api-2.5-20081211.jar jetty-${jettyVersion}.jar jetty-util-${jettyVersion}.jar jetty-naming-${jettyVersion}.jar jetty-plus-${jettyVersion}.jar jna-3.2.2.jar libpam4j-1.5.jar"
+ext.launcherJettyLibsUnexpanded = 'servlet-api-2.5-20081211.jar jetty-${jettyVersion}.jar jetty-util-${jettyVersion}.jar jetty-naming-${jettyVersion}.jar jetty-plus-${jettyVersion}.jar jna-3.2.2.jar libpam4j-1.5.jar'
 ext.launcherJettyLibPath = "pkgs/webapp/WEB-INF/lib"
 
 ext.launcherContentsDir = new File("$projectDir/build/launcher-contents")
@@ -40,6 +40,9 @@ dependencies {
 
     jettyServerLib(project(path:":rundeck-launcher:rundeck-jetty-server", configuration:'runtime')) {
         exclude module:'commons-cli'
+        transitive = true
+    }
+    jettyServerLib("org.kohsuke:libpam4j:1.5"){
         transitive = true
     }
 }

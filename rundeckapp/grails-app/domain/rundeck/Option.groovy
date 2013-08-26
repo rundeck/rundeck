@@ -59,7 +59,7 @@ public class Option implements Comparable{
     static transients=['valuesList','realValuesUrl']
 
     static constraints={
-        name(nullable:false,blank:false)
+        name(nullable:false,blank:false,matches: '[a-zA-Z_0-9.-]+')
         description(nullable:true)
         defaultValue(nullable:true)
         enforced(nullable:false)

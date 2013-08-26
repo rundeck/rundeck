@@ -43,4 +43,10 @@ public interface ILoadJobsRequest {
      * @return project name or null
      */
     public String getProject();
+
+    /**
+     * Return option used for preserving UUIDs
+     * @return option
+     */
+    public StoredJobsRequestUUIDOption getUUIDOption();
 }

@@ -406,6 +406,52 @@ public class TestJobsTool extends AbstractBaseTest {
         assertNotNull(centralDispatcher1.loadInput);
         assertEquals(JobDefinitionFileFormat.xml, centralDispatcher1.loadFormat);
     }
+    public void testLoadWithRemoveUUIDs() throws Exception {
+        final Framework framework = getFrameworkInstance();
+
+        final JobsTool tool = new JobsTool(framework);
+        final testCentralDispatcher1 centralDispatcher1 = new testCentralDispatcher1();
+        framework.setCentralDispatcherMgr(centralDispatcher1);
+
+        final ArrayList<IStoredJob> jobs = new ArrayList<IStoredJob>();
+        centralDispatcher1.loadJobsResult = new ArrayList<IStoredJobLoadResult>();
+
+        File test = File.createTempFile("blah", ".xml");
+        tool.run(new String[]{"load", "-f", test.getAbsolutePath(), "-p", "project1", "-r"});
+        assertFalse("list action was not called", centralDispatcher1.listStoredJobsCalled);
+        assertTrue("load action should be called", centralDispatcher1.loadJobsCalled);
+        assertNull(centralDispatcher1.listStoredJobsOutput);
+        assertNull(centralDispatcher1.listStoredJobsQuery);
+        assertNotNull(centralDispatcher1.loadRequest);
+        assertEquals("project1", centralDispatcher1.loadRequest.getProject());
+        assertEquals(StoredJobsRequestDuplicateOption.update, centralDispatcher1.loadRequest.getDuplicateOption());
+        assertEquals(StoredJobsRequestUUIDOption.remove, centralDispatcher1.loadRequest.getUUIDOption());
+        assertNotNull(centralDispatcher1.loadInput);
+        assertEquals(JobDefinitionFileFormat.xml, centralDispatcher1.loadFormat);
+    }
+    public void testLoadWithWithoutRemoveUUIDs() throws Exception {
+        final Framework framework = getFrameworkInstance();
+
+        final JobsTool tool = new JobsTool(framework);
+        final testCentralDispatcher1 centralDispatcher1 = new testCentralDispatcher1();
+        framework.setCentralDispatcherMgr(centralDispatcher1);
+
+        final ArrayList<IStoredJob> jobs = new ArrayList<IStoredJob>();
+        centralDispatcher1.loadJobsResult = new ArrayList<IStoredJobLoadResult>();
+
+        File test = File.createTempFile("blah", ".xml");
+        tool.run(new String[]{"load", "-f", test.getAbsolutePath(), "-p", "project1"});
+        assertFalse("list action was not called", centralDispatcher1.listStoredJobsCalled);
+        assertTrue("load action should be called", centralDispatcher1.loadJobsCalled);
+        assertNull(centralDispatcher1.listStoredJobsOutput);
+        assertNull(centralDispatcher1.listStoredJobsQuery);
+        assertNotNull(centralDispatcher1.loadRequest);
+        assertEquals("project1", centralDispatcher1.loadRequest.getProject());
+        assertEquals(StoredJobsRequestDuplicateOption.update, centralDispatcher1.loadRequest.getDuplicateOption());
+        assertEquals(StoredJobsRequestUUIDOption.preserve, centralDispatcher1.loadRequest.getUUIDOption());
+        assertNotNull(centralDispatcher1.loadInput);
+        assertEquals(JobDefinitionFileFormat.xml, centralDispatcher1.loadFormat);
+    }
     public void testPurge() throws Exception{
         final Framework framework = getFrameworkInstance();
         {

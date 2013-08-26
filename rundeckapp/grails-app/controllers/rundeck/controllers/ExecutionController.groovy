@@ -701,7 +701,8 @@ class ExecutionController {
                     /** attributes   **/
                     id: e.id,
                     href: g.createLink(controller: 'execution', action: 'follow', id: e.id, absolute: true),
-                    status: getExecutionState(e)
+                    status: getExecutionState(e),
+                    project: e.project
                 ) {
                     /** elements   */
                     user(e.user)

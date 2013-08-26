@@ -709,7 +709,7 @@ function _configureInputRestrictions(target) {
     });
     $(target).select('input.restrictOptName').each(function(elem) {
         if (elem.type == 'text') {
-            elem.observe('keypress', onlychars.curry('[a-zA-Z_0-9.\\t]'));
+            elem.observe('keypress', onlychars.curry('[a-zA-Z_0-9.\\t-]'));
         }
     });
 }

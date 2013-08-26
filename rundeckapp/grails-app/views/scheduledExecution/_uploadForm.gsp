@@ -217,9 +217,29 @@
 
                 <div>
                     <g:radio name="dupeOption" value="create" id="dupeOption3"  checked="${params.dupeOption=='create'}"/>
-                    <label for="dupeOption3"><em>Create</em> a new <g:message code="domain.ScheduledExecution.title"/></label>
+                    <label for="dupeOption3">Always <em>Create</em> a new <g:message code="domain.ScheduledExecution.title"/></label>
+                </div>
+            </div>
+
+            <span class="prompt">Imported Jobs:</span>
+            <div class="presentation">
+                <div>
+                    <label title="Original UUIDs will be preserved, conflicting UUIDs will be replaced">
+                        <input type="radio" name="createUUIDOption" value="preserve" checked/>
+                        <g:message code="project.archive.import.jobUUIDBehavior.preserve.label"/>
+                    </label>
+                    <span class="info note"><g:message
+                            code="project.archive.import.jobUUIDBehavior.preserve.description"/></span>
                 </div>
 
+                <div>
+                    <label title="New UUIDs will be generated for every imported Job">
+                        <input type="radio" name="createUUIDOption" value="remove"/>
+                        <g:message code="project.archive.import.jobUUIDBehavior.remove.label"/>
+                    </label>
+                    <span class="info note"><g:message
+                            code="project.archive.import.jobUUIDBehavior.remove.description"/></span>
+                </div>
             </div>
             <div class="buttons">
                 <div id="uploadFormButtons">

@@ -137,7 +137,8 @@ public class BaseFileCopier {
      */
     public static String getRemoteDirForNode(final INodeEntry node) {
         if (null != node.getAttributes() && null != node.getAttributes().get(FILE_COPY_DESTINATION_DIR)) {
-            return node.getAttributes().get(FILE_COPY_DESTINATION_DIR);
+            String s = node.getAttributes().get(FILE_COPY_DESTINATION_DIR);
+            return s.endsWith("/") ? s : s + "/";
         }
         String remotedir = "/tmp/";
         if (null != node.getOsFamily() && "windows".equalsIgnoreCase(node.getOsFamily().trim())) {
@@ -158,9 +159,69 @@ public class BaseFileCopier {
      */
     public static String generateRemoteFilepathForNode(final INodeEntry node, final String scriptfileName) {
         final String remoteFilename = appendRemoteFileExtensionForNode(node,
-            System.currentTimeMillis() + "-" + node.getNodename() + "-" + scriptfileName);
+                cleanFileName((System.currentTimeMillis() + "-" + node.getNodename() + "-" + scriptfileName)));
         final String remotedir = getRemoteDirForNode(node);
 
         return remotedir + remoteFilename;
+    }
+
+    private static String cleanFileName(String nodename) {
+        return nodename.replaceAll("[^a-zA-Z0-9_.-]", "_");
+    }
+
+    protected static File writeTempFile(ExecutionContext context, File original, InputStream input,
+            String script) throws FileCopierException {
+        File tempfile = null;
+        try {
+            tempfile = ScriptfileUtils.createTempFile(context.getFramework());
+        } catch (IOException e) {
+            throw new FileCopierException("error writing to tempfile: " + e.getMessage(),
+                    StepFailureReason.IOFailure, e);
+        }
+        return writeLocalFile(original, input, script, tempfile);
+    }
+
+    protected static File writeLocalFile(File original, InputStream input, String script,
+            File destinationFile) throws FileCopierException {
+        try {
+
+            if (null != original) {
+                final InputStream in = new FileInputStream(original);
+                try {
+                    final FileOutputStream out = new FileOutputStream(destinationFile);
+                    try {
+                        Streams.copyStream(in, out);
+                    } finally {
+                        out.close();
+                    }
+                } finally {
+                    in.close();
+                }
+            } else if (null != input) {
+                final InputStream in = input;
+                final FileOutputStream out = new FileOutputStream(destinationFile);
+                try {
+                    Streams.copyStream(in, out);
+                } finally {
+                    out.close();
+                }
+            } else if (null != script) {
+                Reader in = new StringReader(script);
+                final FileOutputStream out = new FileOutputStream(destinationFile);
+                final Writer write = new OutputStreamWriter(out);
+                try {
+                    Streams.copyWriterCount(in, write);
+                    write.flush();
+                } finally {
+                    out.close();
+                }
+            }
+
+            return destinationFile;
+        } catch (IOException e) {
+            throw new FileCopierException("error writing to tempfile: " + e.getMessage(),
+                    StepFailureReason.IOFailure, e);
+        }
+
     }
 }

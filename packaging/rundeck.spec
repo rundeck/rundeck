@@ -68,6 +68,9 @@ fi
 # Server Bootstrap
 %dir /var/lib/rundeck/bootstrap
 /var/lib/rundeck/bootstrap/jetty-all-7.6.0.v20120127.jar
+/var/lib/rundeck/bootstrap/log4j-1.2.16.jar
+/var/lib/rundeck/bootstrap/jna-3.2.2.jar
+/var/lib/rundeck/bootstrap/libpam4j-1.5.jar
 /var/lib/rundeck/bootstrap/rundeck-jetty-server-%{_vname}.jar
 /var/lib/rundeck/bootstrap/servlet-api-2.5.jar
 /var/lib/rundeck/bootstrap/log4j-1.2.16.jar

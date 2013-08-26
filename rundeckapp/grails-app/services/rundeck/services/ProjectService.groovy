@@ -7,6 +7,7 @@ import com.dtolabs.rundeck.util.XmlParserUtil
 import com.dtolabs.rundeck.util.ZipBuilder
 import com.dtolabs.rundeck.util.ZipReader
 import groovy.xml.MarkupBuilder
+import org.apache.commons.io.FileUtils
 import rundeck.BaseReport
 import rundeck.ExecReport
 import rundeck.Execution
@@ -240,7 +241,12 @@ class ProjectService {
     def exportProjectToFile(FrameworkProject project, Framework framework) throws ProjectServiceException{
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
         sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
-        def outfile=File.createTempFile("export-${project.name}", ".jar")
+        def outfile
+        try {
+            outfile = File.createTempFile("export-${project.name}", ".jar")
+        } catch (IOException exc) {
+            throw new ProjectServiceException("Could not create temp file for archive: " + exc.message, exc)
+        }
         def Manifest manifest = new Manifest()
         manifest.mainAttributes.put(Attributes.Name.MANIFEST_VERSION,'1.0')
         manifest.mainAttributes.putValue('Rundeck-Application-Version', grailsApplication.metadata['app.version'])
@@ -365,7 +371,7 @@ class ProjectService {
                         break;
                     break;
                 }
-                def results=scheduledExecutionService.loadJobs(jobset,'update',user,roleList,[:],framework)
+                def results=scheduledExecutionService.loadJobs(jobset,'update',null,user,roleList,[:],framework)
                 if(results.errjobs){
                     log.error("Failed loading (${results.errjobs.size()}) jobs from XML at archive path: ${path}${name}")
                     results.errjobs.each {
@@ -474,11 +480,12 @@ class ProjectService {
                     //move to appropriate location and update outputfilepath
                     String filename = executionService.createOutputFilepathForExecution(e, framework)
                     File newfile = new File(filename)
-                    if (!oldfile.renameTo(newfile)) {
-                        log.error("Unable to move temp log file to destination: ${newfile.absolutePath} (old id ${oldids[e]})")
-                    } else {
-                        e.outputfilepath = newfile.absolutePath
+                    try{
+                        FileUtils.moveFile(oldfile, newfile)
+                    }catch (IOException exc) {
+                        log.error("Failed to move temp log file to destination: ${newfile.absolutePath} (old id ${oldids[e]})", exc)
                     }
+                    e.outputfilepath = newfile.absolutePath
                 } else {
                     log.error("New execution ${e.id}, NO matching outfile: ${e.outputfilepath}")
                 }

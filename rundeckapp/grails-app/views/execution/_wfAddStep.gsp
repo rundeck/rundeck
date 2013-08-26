@@ -29,6 +29,10 @@
                             Script file or URL
                             <span class="info note">- Execute a local script file or a script from a URL</span>
                     </li>
+                    <li class="action textbtn add_node_step_type" data-node-step-type="job">
+                        <g:img file="icon-small-job.png" width="16px" height="16px"/>
+                        Job Reference <span class="info note">- Execute another Job for each Node</span>
+                    </li>
                 <g:if test="${nodeStepDescriptions}">
                     <li class="note">
                         <g:plural for="${nodeStepDescriptions}" code="node.step.plugin" verb="is" /> <g:message

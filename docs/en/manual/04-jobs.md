@@ -555,11 +555,16 @@ Choose an option where it says "When a job with the same name already
 exists:":
 
 * Update - this means that a job defined in the xml will overwrite any
-  existing job with the same name  
+  existing job with the same name.
 * Skip - this means that a job defined in the xml will be skipped over
   if there is an existing job with the same name  
 * Create - this means that the job defined in the xml will be used to
   create a new job if there is an existing job with the same name.  
+
+Choose an option where it says "Imported Jobs:":
+
+* Preserve UUIDs - this means that UUIDs defined in the imported jobs will be used when importing them.  UUIDs must be unique, so if you have a Job with the same UUID defined in any project, your import may fail.
+* Remove UUIDs - this means that imported Job UUIDs will be ignored, and the imported jobs will either *update* an existing job, or be created with a new UUID.
 
 Click the Upload button. If there are any errors with the Job
 definitions in the XML file, they will show up on the page.  

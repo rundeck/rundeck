@@ -1,7 +1,4 @@
-% Scaling Rundeck
-
-
-Note: This section is early in its development.
+% Tuning Rundeck
 
 ### File descriptors
 

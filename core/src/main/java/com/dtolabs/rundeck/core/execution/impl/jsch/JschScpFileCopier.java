@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
+import com.dtolabs.rundeck.core.execution.service.DestinationFileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
@@ -51,7 +52,7 @@ import java.io.InputStream;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class JschScpFileCopier extends BaseFileCopier implements FileCopier, Describable {
+public class JschScpFileCopier extends BaseFileCopier implements FileCopier, Describable, DestinationFileCopier {
     public static final String SERVICE_PROVIDER_TYPE = "jsch-scp";
 
 
@@ -94,37 +95,51 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier, Des
 
     private String copyFile(final ExecutionContext context, final File scriptfile, final InputStream input,
                             final String script, final INodeEntry node) throws FileCopierException {
+        return copyFile(context, scriptfile, input, script, node, null, true);
+
+    }
+
+    private String copyFile(final ExecutionContext context, final File scriptfile, final InputStream input,
+            final String script, final INodeEntry node, final String destinationPath,
+            final boolean expandTokens) throws FileCopierException {
 
         Project project = new Project();
         final Sequential seq = new Sequential();
         seq.setProject(project);
 
-        final String remotefile = generateRemoteFilepathForNode(node, (null != scriptfile ? scriptfile.getName()
-                                                                                          : "dispatch-script"));
+        final String remotefile;
+        if(null==destinationPath) {
+            remotefile = generateRemoteFilepathForNode(node, (null != scriptfile ? scriptfile.getName()
+                    : "dispatch-script"));
+        }else {
+            remotefile = destinationPath;
+        }
         //write the temp file and replace tokens in the script with values from the dataContext
-        final File localTempfile = writeScriptTempFile(context, scriptfile, input, script, node);
+        final File localTempfile = expandTokens ? writeScriptTempFile(context, scriptfile, input, script,
+                node) : writeTempFile(context, scriptfile, input, script);
 
 
-//        logger.debug("temp file for node " + node.getNodename() + ": " + temp.getAbsolutePath() + ", datacontext: " + dataContext);
+//        logger.debug("temp file for node " + node.getNodename() + ": " + temp.getAbsolutePath() + ",
+// datacontext: " + dataContext);
         final Task scp;
         final JschNodeExecutor.NodeSSHConnectionInfo nodeAuthentication = new JschNodeExecutor.NodeSSHConnectionInfo(
-            node,
-            framework,
-            context);
+                node,
+                framework,
+                context);
         try {
 
             scp = SSHTaskBuilder.buildScp(node, project, remotefile, localTempfile, nodeAuthentication,
-                                          context.getLoglevel());
+                    context.getLoglevel());
         } catch (SSHTaskBuilder.BuilderException e) {
             throw new FileCopierException("Configuration error: " + e.getMessage(),
-                                          StepFailureReason.ConfigurationFailure, e);
+                    StepFailureReason.ConfigurationFailure, e);
         }
 
         /**
          * Copy the file over
          */
         seq.addTask(createEchoVerbose("copying scriptfile: '" + localTempfile.getAbsolutePath()
-                                      + "' to: '" + node.getNodename() + ":" + remotefile + "'", project));
+                + "' to: '" + node.getNodename() + ":" + remotefile + "'", project));
         seq.addTask(scp);
 
         String errormsg = null;
@@ -132,9 +147,9 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier, Des
             seq.execute();
         } catch (BuildException e) {
             JschNodeExecutor.ExtractFailure failure = JschNodeExecutor.extractFailure(e,
-                                                                                      node,
-                                                                                      nodeAuthentication.getSSHTimeout(),
-                                                                                      framework);
+                    node,
+                    nodeAuthentication.getSSHTimeout(),
+                    framework);
             errormsg = failure.getErrormsg();
             FailureReason failureReason = failure.getReason();
             context.getExecutionListener().log(0, errormsg);
@@ -143,7 +158,7 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier, Des
         }
         if (!localTempfile.delete()) {
             context.getExecutionListener().log(Constants.WARN_LEVEL,
-                                               "Unable to remove local temp file: " + localTempfile.getAbsolutePath());
+                    "Unable to remove local temp file: " + localTempfile.getAbsolutePath());
         }
         return remotefile;
     }
@@ -160,5 +175,20 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier, Des
 
     private Echo createEchoVerbose(final String message, final Project project) {
         return createEcho(message, project, "debug");
+    }
+
+    public String copyFileStream(ExecutionContext context, InputStream input, INodeEntry node,
+            String destination) throws FileCopierException {
+        return copyFile(context, null, input, null, node, destination, false);
+    }
+
+    public String copyFile(ExecutionContext context, File file, INodeEntry node,
+            String destination) throws FileCopierException {
+        return copyFile(context, file, null, null, node, destination, false);
+    }
+
+    public String copyScriptContent(ExecutionContext context, String script, INodeEntry node,
+            String destination) throws FileCopierException {
+        return copyFile(context, null, null, script, node, destination, false);
     }
 }

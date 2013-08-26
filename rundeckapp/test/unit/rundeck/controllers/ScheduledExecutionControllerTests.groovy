@@ -83,7 +83,9 @@ class ScheduledExecutionControllerTests  {
         assertEquals '${job.noexist}', ctrl.expandUrl(option, '${job.noexist}', se)
         assertEquals 'http://test/action?name=blue&option=test1&project=AProject',
             ctrl.expandUrl(option, 'http://test/action?name=${job.name}&option=${option.name}&project=${job.project}', se)
-
+        assertEquals 'anonymous', ctrl.expandUrl(option, '${job.user.name}', se)
+        ctrl.session.user='bob'
+        assertEquals 'bob', ctrl.expandUrl(option, '${job.user.name}', se)
     }
 
     public void testSaveBasic() {

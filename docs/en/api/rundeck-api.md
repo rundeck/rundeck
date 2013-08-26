@@ -7,7 +7,7 @@ Rundeck provides a Web API for use with your application.
 API Version Number
 ----
 
-The current API version is `8`.
+The current API version is `9`.
 
 For API endpoints described in this document, the *minimum* API version required for their
 use is indicated by the URL used, e.g.:
@@ -35,6 +35,15 @@ If the version number is not included or if the requested version number is unsu
 
 Changes introduced by API Version number:
 
+**Version 9**:
+
+* Updated endpoints 
+    * `/api/9/executions/running` - [Listing Running Executions](#listing-running-executions)
+        * Allow `project=*` to list running executions across all projects
+        * Result data now includes `project` attribute for each `<execution>`.
+    * `/api/9/jobs/import` - [Importing Jobs](#importing-jobs)
+        * Add `uuidOption` parameter to allow removing imported UUIDs to avoid creation conflicts.
+        
 **Version 8**:
 
 * Updated endpoints 
@@ -136,6 +145,8 @@ request to the Rundeck API.
 
 To obtain an API Token, you must first log in to the Rundeck GUI using a user account
 that has "admin" credentials. Click on your username in the header of the page, and you will be shown your User Profile page.  From this page you can manage your API Tokens.  Click "Generate API Token" to create a new one.  The unique string that is shown is the API Token.
+
+Alternately you can define tokens in static file, by setting the `rundeck.tokens.file` in [framework.properties](../administration/configuration.html#framework.properties).
 
 You must include one of the following with every HTTP request to the API:
 
@@ -526,6 +537,9 @@ Optional parameters:
 * `format` : can be "xml" or "yaml" to specify the output format. Default is "xml"
 * `dupeOption`: A value to indicate the behavior when importing jobs which already exist.  Value can be "skip", "create", or "update". Default is "create".
 * `project` : (**since v8**) Specify the project that all job definitions should be imported to. If not specified, each job definition must define the project to import to.
+* `uuidOption`: Whether to preserve or remove UUIDs from the imported jobs. Allowed values (**since V9**):
+    *  `preserve`: Preserve the UUIDs in imported jobs.  This may cause the import to fail if the UUID is already used. (Default value).
+    *  `remove`: Remove the UUIDs from imported jobs. Allows update/create to succeed without conflict on UUID.
 
 Result:
 
@@ -679,11 +693,11 @@ URL:
 
 Required Parameters:
 
-* `project`: the project name
+* `project`: the project name, or '*' for all projects (**Since API v9**)
 
 Result: An Item List of `executions`.  Each `execution` of the form:
 
-    <execution id="[ID]" href="[url]" status="[status]">
+    <execution id="[ID]" href="[url]" status="[status]" project="[project]">
         <user>[user]</user>
         <date-started unixtime="[unixtime]">[datetime]</date-started>
         
@@ -724,6 +738,8 @@ The `[url]` value is a URL to the Rundeck server page to view the execution outp
 `[unixtime]` is the millisecond unix timestamp, and `[datetime]` is a W3C dateTime string in the format "yyyy-MM-ddTHH:mm:ssZ".
 
 If known, the average duration of the associated Job will be indicated (in milliseconds) as `averageDuration`. (Since API v5)
+
+**API v9 and above**: `project="[project]"` is the project name of the execution.
 
 ### Getting Execution Info
 

@@ -70,6 +70,29 @@ public class Streams {
         }
         return tot;
     }
+    /**
+     * Read the data from the reader and copy to the writer.
+     *
+     * @param in  inputstream
+     * @param out outpustream
+     *            @return number of bytes copied
+     *
+     * @throws java.io.IOException if thrown by underlying io operations
+     */
+    public static int copyWriterCount(final Reader in, final Writer out) throws IOException {
+        final char[] buffer = new char[10240];
+        int tot=0;
+        int c;
+        c = in.read(buffer);
+        while (c >= 0) {
+            if (c > 0) {
+                out.write(buffer, 0, c);
+                tot += c;
+            }
+            c = in.read(buffer);
+        }
+        return tot;
+    }
 
     /**
      * A simple Thread subclass that performs a stream copy from an InputStream to an OutputStream.  If an IOException

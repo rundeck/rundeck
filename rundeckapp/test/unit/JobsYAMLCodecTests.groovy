@@ -44,7 +44,7 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
             workflow: new Workflow([keepgoing: false, threadcount: 1, commands: [new CommandExec([adhocRemoteString: 'test script']),
                 new CommandExec([adhocLocalString: "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'\n"]),
                 new CommandExec([adhocFilepath: 'some file path']),
-                new JobExec([jobName: 'another job', jobGroup: 'agroup']),
+                new JobExec([jobName: 'another job', jobGroup: 'agroup', nodeStep:true]),
                 new CommandExec([adhocFilepath: 'http://example.com/blah']),
             ]]),
             options: [new Option(name: 'opt1', description: "an opt", defaultValue: "xyz", enforced: true, required: true, values: new TreeSet(["a", "b"]))] as TreeSet,
@@ -88,6 +88,7 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
             assertNotNull "missing command jobref", doc[0].sequence.commands[3].jobref
             assertEquals "missing command jobref.name", "another job", doc[0].sequence.commands[3].jobref.name
             assertEquals "missing command jobref.group", "agroup", doc[0].sequence.commands[3].jobref.group
+            assertEquals "missing command jobref.group", 'true', doc[0].sequence.commands[3].jobref.nodeStep
 
             assertEquals "missing command scriptfile", "http://example.com/blah", doc[0].sequence.commands[4].scripturl
             assertNotNull "missing options", doc[0].options
@@ -354,6 +355,7 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
         name: some job
         group: another group
         args: yankee doodle
+        nodeStep: true
     - scripturl: http://example.com/path/to/file
       args: -blah bloo -blee
   description: test descrip
@@ -451,6 +453,7 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
         assertEquals "wrong workflow item", "some job", se.workflow.commands[3].jobName
         assertEquals "wrong workflow item", "another group", se.workflow.commands[3].jobGroup
         assertEquals "wrong workflow item", "yankee doodle", se.workflow.commands[3].argString
+        assertEquals "wrong workflow item", true, se.workflow.commands[3].nodeStep
             assertTrue "wrong exec type", se.workflow.commands[4] instanceof CommandExec
             assertEquals "wrong workflow item", "http://example.com/path/to/file", se.workflow.commands[4].adhocFilepath
             assertEquals "wrong workflow item", "-blah bloo -blee", se.workflow.commands[4].argString

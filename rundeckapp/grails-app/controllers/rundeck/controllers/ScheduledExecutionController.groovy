@@ -203,18 +203,17 @@ class ScheduledExecutionController  {
                 && scheduledExecution.serverNodeUUID != frameworkService.getServerUUID()) {
             remoteClusterNodeUUID = scheduledExecution.serverNodeUUID
         }
-
+        def dataMap= [scheduledExecution: scheduledExecution, crontab: crontab, params: params,
+                executions: executions,
+                total: total,
+                nextExecution: scheduledExecutionService.nextExecutionTime(scheduledExecution),
+                remoteClusterNodeUUID: remoteClusterNodeUUID,
+                notificationPlugins: notificationService.listNotificationPlugins(),
+                max: params.max ? params.max : 10,
+                offset: params.offset ? params.offset : 0] + _prepareExecute(scheduledExecution, framework)
         withFormat{
             html{
-                [scheduledExecution:scheduledExecution, crontab:crontab, params:params,
-            executions:executions,
-            total:total,
-            nextExecution:scheduledExecutionService.nextExecutionTime(scheduledExecution),
-                        remoteClusterNodeUUID: remoteClusterNodeUUID,
-            notificationPlugins: notificationService.listNotificationPlugins(),
-            max: params.max?params.max:10,
-            offset:params.offset?params.offset:0] + _prepareExecute(scheduledExecution, framework)
-
+                dataMap
             }
             yaml{
                 render(text:JobsYAMLCodec.encode([scheduledExecution] as List),contentType:"text/yaml",encoding:"UTF-8")
@@ -239,6 +238,7 @@ class ScheduledExecutionController  {
                 render(text:writer.toString(),contentType:"text/xml",encoding:"UTF-8")
             }
         }
+        dataMap
     }
 
 
@@ -425,10 +425,13 @@ class ScheduledExecutionController  {
      */
     protected String expandUrl(Option opt, String url, ScheduledExecution scheduledExecution,selectedoptsmap=[:]) {
         def invalid = []
-        String srcUrl = url.replaceAll(/(\$\{(job|option)\.([^\.}]+?(\.value)?)\})/,
+        String srcUrl = url.replaceAll(/(\$\{(job|option)\.([^}]+?(\.value)?)\})/,
             {Object[] group ->
                 if(group[2]=='job' && jobprops[group[3]] && scheduledExecution.properties.containsKey(jobprops[group[3]])) {
                     scheduledExecution.properties.get(jobprops[group[3]]).toString().encodeAsURL()
+                }else if(group[2]=='job' && group[3]=='user.name' ) {
+                    def amlSessUser = (session?.user) ? session.user : "anonymous"
+                    amlSessUser.toString().encodeAsURL()
                 }else if(group[2]=='option' && optprops[group[3]] && opt.properties.containsKey(optprops[group[3]])) {
                     opt.properties.get(optprops[group[3]]).toString().encodeAsURL()
                 }else if(group[2]=='option' && group[4]=='.value' ) {
@@ -1278,7 +1281,9 @@ class ScheduledExecutionController  {
         jobset*.project=params.project
         def changeinfo = [user: session.user,method:'upload']
         String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
-        def loadresults = scheduledExecutionService.loadJobs(jobset,params.dupeOption,session.user, roleList, changeinfo,framework)
+        def loadresults = scheduledExecutionService.loadJobs(jobset, params.dupeOption, params.uuidOption,
+                session.user, roleList, changeinfo, framework)
+
 
         def jobs = loadresults.jobs
         def jobsi = loadresults.jobsi
@@ -1562,7 +1567,7 @@ class ScheduledExecutionController  {
             if(results.error=='unauthorized'){
                 return render(view:"/common/execUnauthorized",model:results)
             }else {
-                def model=show.call()
+                def model=show()
                 results.error = results.remove('message')
                 results.jobexecOptionErrors=results.errors
                 results.selectedoptsmap=results.options
@@ -1761,7 +1766,11 @@ class ScheduledExecutionController  {
         def changeinfo = [user: session.user,method:'apiJobsImport']
         def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
-        def loadresults = scheduledExecutionService.loadJobs(jobset,params.dupeOption,session.user, roleList, changeinfo,framework)
+        def option = params.uuidOption
+        if (request.api_version < ApiRequestFilters.V9) {
+            option = null
+        }
+        def loadresults = scheduledExecutionService.loadJobs(jobset,params.dupeOption, option,session.user, roleList, changeinfo,framework)
 
         def jobs = loadresults.jobs
         def jobsi = loadresults.jobsi

@@ -1,7 +1,7 @@
 Rundeck
 ========
 
-RunDeck is an open source automation service with a web console, 
+Rundeck is an open source automation service with a web console, 
 command line tools and a WebAPI.
 It lets you easily run automation tasks across a set of nodes.
 
@@ -12,7 +12,7 @@ See the [Release Notes](RELEASE.md) for the latest version information.
 To Build:
 =====
 
-Primary build is supported with either gradle or maven2+. (Note: to include docs for the launcher, do `make clean docs` first.)
+Primary build is supported with either gradle or maven2+. 
 
 Gradle Build
 =====
@@ -34,7 +34,10 @@ Artifacts:
 * `rundeckapp/target/rundeck-X.Y.war`
 * `rundeck-launcher/launcher/target/rundeck-launcher-X.Y.jar`
 
-Note: the underlying Grails build requires the MaxPermSize to be increased in the MAVEN_OPTS as shown above.
+Notes: 
+
+* the underlying Grails build requires the MaxPermSize to be increased in the MAVEN_OPTS as shown above.
+* to include docs for the launcher, do `make clean docs` first.)
 
 
 Other builds
@@ -68,7 +71,7 @@ There are several install options: a self-contained jar file, or RPM, or Debian.
 
 To start from the rundeck-launcher.jar, put it in a directory named ~/rundeck, then execute:
 
-    java -jar rundeck-launcher-1.5.0.jar
+    java -jar rundeck-launcher-1.6.0.jar
 
 If you'd like to install via RPM, you can use Yum:
 
@@ -77,7 +80,7 @@ If you'd like to install via RPM, you can use Yum:
 
 OR install directly from RPM:
 
-    rpm -ivh rundeck-1.5.0-xxx.rpm rundeck-config-1.5.0-xxx.rpm
+    rpm -ivh rundeck-1.6.0-xxx.rpm rundeck-config-1.6.0-xxx.rpm
 
 Once the RPM is installed, execute:
 
@@ -87,9 +90,9 @@ The server should launch on port 4440, with default username/password of `admin/
 
 For Debian, download the .deb from the [downloads page](http://rundeck.org/downloads.html), then run:
 
-    dpkg -i rundeck-1.5.x-x.deb
+    dpkg -i rundeck-1.6.x-x.deb
 
-* For more info and configuration information, see the [RunDeck Guide](http://rundeck.org/docs/RunDeck-Guide.html)
+* For more info and configuration information, see the [Rundeck docs](http://docs.rundeck.org).
 
 Requirements
 =======
@@ -116,7 +119,7 @@ Do you have changes to contribute? Please see the [Development](https://github.c
 License
 ======
 
-Copyright 2013 DTO Solutions
+Copyright 2013 SimplifyOps
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

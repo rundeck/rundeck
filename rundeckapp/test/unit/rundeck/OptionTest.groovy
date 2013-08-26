@@ -49,4 +49,28 @@ public class OptionTest extends GrailsUnitTestCase {
         assertEquals 1,Option.fromMap('test',[sortIndex: 1]).sortIndex
         assertEquals null, Option.fromMap('test', [sortIndex: null]).sortIndex
     }
+    void testConstraints() {
+        mockDomain(Option)
+        def option = new Option(name: 'ABCdef-4._12390', defaultValue: '12',enforced: true)
+        def validate = option.validate()
+        if(!validate){
+            option.errors.allErrors.each {println it}
+        }
+        assertEquals(true, validate)
+        assertEquals(false, option.errors.hasErrors())
+        assertEquals(false, option.errors.hasFieldErrors('name'))
+    }
+    void testInvalidName() {
+        mockDomain(Option)
+        assertInvalidName(new Option(name: 'abc def', defaultValue: '12',enforced: true))
+        assertInvalidName(new Option(name: 'abc+def', defaultValue: '12',enforced: true))
+        assertInvalidName(new Option(name: 'abc/def', defaultValue: '12',enforced: true))
+        assertInvalidName(new Option(name: 'abc!@#$%^&*()def', defaultValue: '12',enforced: true))
+    }
+
+    private void assertInvalidName(Option option) {
+        assertEquals(false, option.validate())
+        assertEquals(true, option.errors.hasErrors())
+        assertEquals(true, option.errors.hasFieldErrors('name'))
+    }
 }

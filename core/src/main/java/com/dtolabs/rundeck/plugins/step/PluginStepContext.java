@@ -24,7 +24,9 @@
 */
 package com.dtolabs.rundeck.plugins.step;
 
+import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeSet;
+import com.dtolabs.rundeck.core.execution.ExecutionService;
 import com.dtolabs.rundeck.plugins.PluginLogger;
 
 import java.util.List;
@@ -41,10 +43,12 @@ public interface PluginStepContext {
      * Return the logger
      */
     public PluginLogger getLogger();
+
     /**
      * Return the project name
      */
     public String getFrameworkProject();
+
     /**
      * Return the data context
      */
@@ -54,12 +58,19 @@ public interface PluginStepContext {
      * Return the nodes used for this execution
      */
     public INodeSet getNodes();
+
     /**
      * Return the step number within the current workflow
      */
     public int getStepNumber();
+
     /**
      * Return the context path of step numbers within the larger workflow context.
      */
     public List<Integer> getStepContext();
+
+    /**
+     * Return the Framework object
+     */
+    public Framework getFramework();
 }

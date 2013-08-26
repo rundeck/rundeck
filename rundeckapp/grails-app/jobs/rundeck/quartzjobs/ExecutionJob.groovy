@@ -12,23 +12,11 @@ import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
-import rundeck.services.ScheduledExecutionService
 
 class ExecutionJob implements InterruptableJob {
-
-//    def Logger log = Logger.getLogger(ExecutionJob.class)
-//    def ScheduledExecution scheduledExecution
-//    def scheduledExecutionId
-//    def executionId
-
-//    def Execution execution
-
-//    def ExecutionService executionService
-//    def String adbase
-//    def Framework framework
-//    def isTemp
+    public static final int STATS_RETRY_MAX = Integer.getInteger(ExecutionJob.class.name+".STATS_RETRY_MAX", 5)
+    public static final int STATS_RETRY_DELAY = Long.getLong(ExecutionJob.class.name+".STATS_RETRY_DELAY", 500)
     def boolean _interrupted
-//    def boolean success
 
     static triggers = {
         /** define no triggers here */
@@ -222,35 +210,40 @@ class ExecutionJob implements InterruptableJob {
 
     }
 
-    def saveState(ExecutionService executionService,Execution execution, boolean success, boolean _interrupted, boolean isTemp, long scheduledExecutionId=-1, Map execmap=null) {
+    def saveState(ExecutionService executionService,Execution execution, boolean success, boolean _interrupted,
+                  boolean isTemp, long scheduledExecutionId=-1, Map execmap=null) {
         Map<String,Object> failedNodes=extractFailedNodes(execmap)
-        if(isTemp){
-            executionService.saveExecutionState(
-                            null,
-                            execution.id,
-                                [
-                                status:String.valueOf(success),
-                                dateCompleted:new Date(),
-                                cancelled:_interrupted,
-                                failedNodes:failedNodes?.keySet(),
-                                failedNodesMap:failedNodes,
-                                ],
-                            execmap
-                            )
 
-        }else{
-            executionService.saveExecutionState(
-                scheduledExecutionId,
+        //save Execution state
+        def dateCompleted = new Date()
+        executionService.saveExecutionState(
+                scheduledExecutionId>0?scheduledExecutionId:null,
                 execution.id,
-                    [
-                    status:String.valueOf(success),
-                    dateCompleted:new Date(),
-                    cancelled:_interrupted,
-                    failedNodes:failedNodes?.keySet(),
-                    failedNodesMap: failedNodes,
-                    ],
-                    execmap
-                )
+                [
+                        status: String.valueOf(success),
+                        dateCompleted: dateCompleted,
+                        cancelled: _interrupted,
+                        failedNodes: failedNodes?.keySet(),
+                        failedNodesMap: failedNodes,
+                ],
+                execmap
+        )
+        if(!isTemp && scheduledExecutionId && success) {
+            //update ScheduledExecution statistics for successful execution
+            def time = dateCompleted.time - execution.dateStarted.time
+            def retry = STATS_RETRY_MAX
+            def savedJobState = false
+            while (retry > 0 && !savedJobState) {
+                savedJobState = executionService.updateScheduledExecStatistics(scheduledExecutionId, execution.id, time)
+                retry--
+                if (!savedJobState) {
+                    log.error("ExecutionJob: Failed to update job statistics, retrying...")
+                    Thread.sleep(STATS_RETRY_DELAY)
+                }
+            }
+            if (!savedJobState) {
+                log.error("ExecutionJob: Failed to update job statistics, after retrying ${STATS_RETRY_MAX} times")
+            }
 
         }
     }

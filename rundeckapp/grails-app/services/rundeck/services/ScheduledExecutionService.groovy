@@ -795,7 +795,15 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
      * Given list of imported jobs, create, update or skip them as defined by the dupeOption parameter.
      * @return map of load results, [jobs: List of ScheduledExecutions, jobsi: list of maps [scheduledExecution: (job), entrynum: (index)], errjobs: List of maps [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg], skipjobs: list of maps [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg]]
      */
-    def loadJobs ( jobset, option, user, String roleList, changeinfo = [:], Framework framework ){
+    def loadJobs ( jobset, option, user, String roleList, changeinfo = [:], Framework framework ) {
+        return loadJobs(jobset, option, null, user, roleList, changeinfo, framework)
+    }
+
+    /**
+     * Given list of imported jobs, create, update or skip them as defined by the dupeOption parameter.
+     * @return map of load results, [jobs: List of ScheduledExecutions, jobsi: list of maps [scheduledExecution: (job), entrynum: (index)], errjobs: List of maps [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg], skipjobs: list of maps [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg]]
+     */
+    def loadJobs ( jobset, option, String uuidOption, user, String roleList, changeinfo = [:], Framework framework ){
         def jobs = []
         def jobsi = []
         def i = 1
@@ -809,6 +817,10 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                 errjobs << [scheduledExecution: jobdata, entrynum: i, errmsg: "Project was not specified"]
                 i++
                 return
+            }
+            if (uuidOption == 'remove') {
+                jobdata.uuid = null
+                jobdata.id = null
             }
             if (option == "update" || option == "skip") {
                 //look for dupe by name and group path and project
@@ -1121,6 +1133,8 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             scheduledExecution.errors.rejectValue('project', 'scheduledExecution.project.invalid.message', [scheduledExecution.project].toArray(), 'Project was not found: {0}')
         }
 
+        def todiscard = []
+        def wftodelete = []
         if (scheduledExecution.workflow && params['_sessionwf'] && params['_sessionEditWFObject']) {
             //load the session-stored modified workflow and replace the existing one
             def Workflow wf = params['_sessionEditWFObject']//session.editWF[scheduledExecution.id.toString()]
@@ -1151,9 +1165,9 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                     final Workflow newworkflow = new Workflow(wf)
                     scheduledExecution.workflow = newworkflow
                     if (oldwf) {
-                        oldwf.delete()
+                        wftodelete << oldwf
                     }
-                    wf.discard()
+                    todiscard<<wf
                 } else {
                     failed = true
                     scheduledExecution.errors.rejectValue('workflow', 'scheduledExecution.workflow.invalidstepslist.message', [failedlist.toString()].toArray(), "Invalid workflow steps: {0}")
@@ -1280,7 +1294,6 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         if (!params.notifications) {
             params.notified = 'false'
         }
-        def todiscard = []
         def modifiednotifs = []
         if (params.notifications && 'false' != params.notified) {
             //create notifications
@@ -1315,7 +1328,10 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                 failed = true;
             } else {
                 scheduledExecution.workflow.save(flush: true)
+                wftodelete.each{it.delete()}
             }
+        }else if (failed && null!=scheduledExecution.workflow){
+            todiscard<< scheduledExecution.workflow
         }
         if (!failed) {
             if (!scheduledExecution.validate()) {
@@ -1863,33 +1879,23 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
      * @param scheduledExecution
      * @return
      */
-    private boolean validateWorkflow(Workflow workflow, ScheduledExecution scheduledExecution){
-        def failed=false
+    def boolean validateWorkflow(Workflow workflow, ScheduledExecution scheduledExecution){
+        def valid=true
         //validate error handler types
         if (workflow?.strategy == 'node-first') {
             //if a step is a Node step and has an error handler
             def cmdi = 1;
-            workflow.commands
-                    .findAll { WorkflowStep step -> step.errorHandler }
-            .findAll { it.instanceOf(CommandExec) || it.instanceOf(PluginStep) }
-            .each { WorkflowStep step ->
-                def isNodeStepEh = false;
-                if (step.errorHandler.instanceOf(PluginStep)) {
-                    PluginStep pseh = step.errorHandler.asType(PluginStep)
-                    isNodeStepEh = pseh.nodeStep
-                } else {
-                    isNodeStepEh = step.errorHandler.instanceOf(CommandExec)
-                }
-                //reject if the Error Handler is not a node step
-                if (!isNodeStepEh) {
+            workflow.commands.each { WorkflowStep step ->
+                if(step.errorHandler && step.nodeStep && !step.errorHandler.nodeStep){
+                    //reject if the Error Handler is not a node step
                     step.errors.rejectValue('errorHandler', 'WorkflowStep.errorHandler.nodeStep.invalid', [cmdi] as Object[], "Step {0}: Must have a Node Step as an Error Handler")
                     scheduledExecution?.errors.rejectValue('workflow', 'Workflow.stepErrorHandler.nodeStep.invalid', [cmdi] as Object[], "Step {0}: Must have a Node Step as an Error Handler")
-                    failed = true
+                    valid = false
                 }
                 cmdi++
             }
         }
-        return !failed
+        return valid
     }
 
     def _dovalidate (Map params, user, String roleList, Framework framework ){

@@ -47,7 +47,7 @@
               <Rundeck-Version>${project.version}</Rundeck-Version>
               <Rundeck-Start-Class>${launcherStartClass}</Rundeck-Start-Class>
               <Main-Class>${launcherMainClass}</Main-Class>
-              <Rundeck-Jetty-Libs>servlet-api-2.5-20081211.jar jetty-${jettyVersion}.jar jetty-util-${jettyVersion}.jar jetty-naming-${jettyVersion}.jar jetty-plus-${jettyVersion}.jar</Rundeck-Jetty-Libs>
+              <Rundeck-Jetty-Libs>servlet-api-2.5-20081211.jar jetty-${jettyVersion}.jar jetty-util-${jettyVersion}.jar jetty-naming-${jettyVersion}.jar jetty-plus-${jettyVersion}.jar jna-3.2.2.jar libpam4j-1.5.jar</Rundeck-Jetty-Libs>
               <Rundeck-Jetty-Lib-Path>${launcherJettyLibPath}</Rundeck-Jetty-Lib-Path>
             </manifestEntries>
           </archive>
