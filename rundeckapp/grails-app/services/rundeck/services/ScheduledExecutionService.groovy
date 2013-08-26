@@ -1030,7 +1030,6 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         def oldjobname = scheduledExecution.generateJobScheduledName()
         def oldjobgroup = scheduledExecution.generateJobGroupName()
         def oldsched = scheduledExecution.scheduled
-        def optparams = params.findAll { it.key.startsWith("option.")}
         def nonopts = params.findAll { !it.key.startsWith("option.") && it.key != 'workflow' && it.key != 'options' && it.key != 'notifications'}
         if (scheduledExecution.uuid) {
             nonopts.uuid = scheduledExecution.uuid//don't modify uuid if it exists
@@ -1055,33 +1054,6 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             scheduledExecution.description = ''
         }
 
-        final Map oldopts = params.findAll {it.key =~ /^(name|command|type|adhocExecution|adhocFilepath|adhoc.*String)$/}
-        if (oldopts && !params.workflow) {
-            //construct workflow with one item from these options
-            oldopts.project = scheduledExecution.project
-            if (optparams) {
-                def optsmap = ExecutionService.filterOptParams(optparams)
-                if (optsmap) {
-                    def optsmap2 = [:]
-                    optsmap.each {k, v ->
-                        optsmap2[k] = '${option.' + k + '}'
-                    }
-                    oldopts.argString = ExecutionService.generateArgline(optsmap2)
-                }
-            }
-            if (oldopts.command && oldopts.type && !oldopts.adhocRemoteString) {
-                //convert old defined command to ctl dispatch
-                if (oldopts.name) {
-                    oldopts.adhocRemoteString = "ctl -p ${oldopts.project} -t ${oldopts.type} -r ${oldopts.name} -c ${oldopts.command} -- ${oldopts.argString}"
-                } else {
-                    oldopts.adhocRemoteString = "ctl -p ${oldopts.project} -m ${oldopts.type} -c ${oldopts.command} -- ${oldopts.argString}"
-                }
-            }
-            params.workflow = ["commands[0]": oldopts]
-            params.workflow.threadcount = 1
-            params.workflow.keepgoing = true
-            params['_workflow_data'] = true
-        }
 
         if (!scheduledExecution.validate()) {
             failed = true
@@ -1902,9 +1874,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         log.debug("ScheduledExecutionController: save : params: " + params)
         boolean failed = false;
         def scheduledExecution = new ScheduledExecution()
-        def optparams = params.findAll {it.key.startsWith("option.")}
         final Map nonopts = params.findAll {!it.key.startsWith("option.") && it.key != 'workflow' && it.key != 'options' && it.key != 'notifications'}
-        final Map oldopts = params.findAll {it.key =~ /^(name|command|type|adhocExecution|adhocFilepath|adhoc.*String)$/}
         scheduledExecution.properties = nonopts
 
         //fix potential null/blank issue after upgrading rundeck to 1.3.1/1.4
@@ -1912,31 +1882,6 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             scheduledExecution.description = ''
         }
 
-        if (oldopts && !params.workflow) {
-            //construct workflow with one item from these options
-            oldopts.project = scheduledExecution.project
-            if (optparams) {
-                def optsmap = ExecutionService.filterOptParams(optparams)
-                if (optsmap) {
-                    def optsmap2 = [:]
-                    optsmap.each {k, v ->
-                        optsmap2[k] = '${option.' + k + '}'
-                    }
-                    oldopts.argString = ExecutionService.generateArgline(optsmap2)
-                }
-            }
-            if (oldopts.command && oldopts.type && !oldopts.adhocRemoteString) {
-                //convert old defined command to ctl dispatch
-                if (oldopts.name) {
-                    oldopts.adhocRemoteString = "ctl -p ${oldopts.project} -t ${oldopts.type} -r ${oldopts.name} -c ${oldopts.command} -- ${oldopts.argString}"
-                } else {
-                    oldopts.adhocRemoteString = "ctl -p ${oldopts.project} -m ${oldopts.type} -c ${oldopts.command} -- ${oldopts.argString}"
-                }
-            }
-            params.workflow = ["commands[0]": oldopts]
-            params.workflow.threadcount = 1
-            params.workflow.keepgoing = true
-        }
 
         def valid = scheduledExecution.validate()
         if (scheduledExecution.scheduled) {
