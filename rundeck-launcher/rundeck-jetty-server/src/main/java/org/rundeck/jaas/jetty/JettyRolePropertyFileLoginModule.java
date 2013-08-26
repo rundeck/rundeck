@@ -16,8 +16,8 @@
 
 package org.rundeck.jaas.jetty;
 
-import org.mortbay.jetty.plus.jaas.spi.PropertyFileLoginModule;
-import org.mortbay.jetty.plus.jaas.spi.UserInfo;
+import org.eclipse.jetty.plus.jaas.spi.PropertyFileLoginModule;
+import org.eclipse.jetty.plus.jaas.spi.UserInfo;
 import org.rundeck.jaas.AbstractSharedLoginModule;
 
 import javax.security.auth.Subject;
