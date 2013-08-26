@@ -30,7 +30,6 @@ function getCurSEID(){
     return curSEID;
 }
 var applinks={
-    frameworkTestScriptAuth:'${createLink(controller:"framework",action:"testScriptAuth")}',
     frameworkNodesFragment:"${createLink(controller:'framework',action:'nodesFragment')}",
     workflowEdit:'${createLink(controller:"workflow",action:"edit")}',
     workflowRender:'${createLink(controller:"workflow",action:"render")}',

@@ -42,28 +42,6 @@ function prepJobType(data) {
         $('scriptAuthWarn').show();
     }
 }
-function testScriptAuth(project) {
-    if (!project) {
-        selFrameworkProject = '';
-        return;
-    }
-    selFrameworkProject = project;
-    new Ajax.Request(
-        applinks.frameworkTestScriptAuth, {
-        parameters: "project=" + project,
-        onSuccess: function(transport) {
-            var data = transport.responseText;
-            var orig = data;
-            if (typeof(data) === "string") {
-                eval("data=" + data);
-                prepJobType(data);
-            }
-        },
-        onFailure: function() {
-            showError("Error performing request: testScriptAuth for [" + project + "]");
-        }
-    });
-}
 
 /** Nodeset matching */
 var mnodetimer = null;

@@ -76,23 +76,6 @@ class FrameworkController  {
         log.error("'${request.remoteUser}' has no authorized access. Roles: "+ roles)
         return render(template:  '/common/error', model: [:])
     }
-    /**
-     * This action returns a json object informing about whether the user is authorized
-     * to run scripts in the current project context.
-     * @param project the project name
-     * @return object [authorized:true/false, found:true/false, project:project]
-     */
-    def testScriptAuth = {
-        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
-        def projectexists=true
-        def auth=false
-        if(!params.project || !frameworkService.existsFrameworkProject(params.project,framework)){
-            projectexists=false
-        } else {
-            auth = frameworkService.userAuthorizedForScript(session.user,params.project,"*",framework)
-        }
-        render( [authorized:auth,found:projectexists,project:params.project] as JSON)
-    }
 
     def nodes ={ ExtNodeFilters query ->
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
