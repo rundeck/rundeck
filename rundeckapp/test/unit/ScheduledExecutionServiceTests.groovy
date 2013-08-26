@@ -389,12 +389,6 @@ public class ScheduledExecutionServiceTests {
     }
 
     public void testValidateWorkflow() {
-        mockDomain(ScheduledExecution)
-        mockDomain(Workflow)
-        mockDomain(CommandExec)
-        mockDomain(JobExec)
-        mockDomain(PluginStep)
-        mockLogging(ScheduledExecutionService)
         ScheduledExecutionService testService = new ScheduledExecutionService()
 
         def cmdExecProps = [adhocRemoteString: 'test buddy2']

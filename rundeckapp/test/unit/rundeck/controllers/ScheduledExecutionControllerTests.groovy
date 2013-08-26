@@ -1090,7 +1090,7 @@ class ScheduledExecutionControllerTests  {
         mock2.demand.parseUploadedFile { input,format ->
             [jobset:[expectedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, user, roleList, changeinfo, framework ->
+        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, user, roleList, changeinfo, framework ->
             assert jobset==[expectedJob]
             [
                     jobs: [expectedJob],
@@ -1176,7 +1176,7 @@ class ScheduledExecutionControllerTests  {
         mock2.demand.parseUploadedFile { input,format ->
             [jobset: [expectedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, user, roleList, changeinfo, framework ->
+        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, user, roleList, changeinfo, framework ->
             assertEquals('BProject', jobset[0].project)
             [
                     jobs: [expectedJob],
@@ -1256,7 +1256,7 @@ class ScheduledExecutionControllerTests  {
         mock2.demand.parseUploadedFile { input, format ->
             [jobset: [expectedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, user, roleList, changeinfo, framework ->
+        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, user, roleList, changeinfo, framework ->
             [
                     jobs: [expectedJob],
                     jobsi: [scheduledExecution: expectedJob, entrynum: 0],
@@ -1346,7 +1346,7 @@ class ScheduledExecutionControllerTests  {
         mock2.demand.parseUploadedFile { input, format ->
             [jobset: [expectedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, user, roleList, changeinfo, framework ->
+        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, user, roleList, changeinfo, framework ->
             [
                     jobs: [expectedJob],
                     jobsi: [scheduledExecution: expectedJob, entrynum: 0],
@@ -1438,7 +1438,7 @@ class ScheduledExecutionControllerTests  {
         mock2.demand.parseUploadedFile { input, format ->
             [jobset: [expectedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, user, roleList, changeinfo, framework ->
+        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, user, roleList, changeinfo, framework ->
             [
                     jobs: [expectedJob],
                     jobsi: [scheduledExecution: expectedJob, entrynum: 0],
