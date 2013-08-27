@@ -1,5 +1,7 @@
 package rundeck.quartzjobs
 
+import com.yammer.metrics.core.TimerContext
+import org.grails.plugins.yammermetrics.groovy.GroovierMetrics
 import org.quartz.JobExecutionContext
 
 import org.quartz.JobDataMap
@@ -21,8 +23,14 @@ class ExecutionJob implements InterruptableJob {
     static triggers = {
         /** define no triggers here */
     }
+    private static com.yammer.metrics.core.Timer executionTimer = GroovierMetrics.newTimer('executionTimer')
     // Implements the Job interface, execute
     void execute(JobExecutionContext context) {
+        executionTimer.time {
+            execute_internal(context)
+        }
+    }
+    private void execute_internal(JobExecutionContext context) {
         def boolean success=false
         def Map initMap
         try{
