@@ -59,7 +59,6 @@ class BootStrap {
                  //setup the base dir
                  Setup setup = new Setup()
                  setup.getParameters().setBaseDir(basedir.getAbsolutePath())
-                 setup.getParameters().setHomeDir(basedir.getAbsolutePath())
                  //determine hostname and port from grails config if available
                  String hostname
                  String port
