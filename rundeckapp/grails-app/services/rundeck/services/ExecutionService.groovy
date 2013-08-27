@@ -527,6 +527,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     /**
      * starts an execution in a separate thread, returning a map of [thread:Thread, loghandler:LogHandler]
      */
+    @org.grails.plugins.yammermetrics.groovy.Metered
     def Map executeAsyncBegin(Framework framework, Execution execution, ScheduledExecution scheduledExecution=null, Map extraParams = null, Map extraParamsExposed = null){
         execution.refresh()
         def ExecutionLogWriter loghandler= loggingService.openLogWriter(execution,

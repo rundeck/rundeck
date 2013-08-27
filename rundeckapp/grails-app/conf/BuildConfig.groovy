@@ -86,6 +86,7 @@ grails.project.dependency.resolution = {
         runtime ":hibernate:$grailsVersion"
         compile ":code-coverage:1.2.6"
         build ':jetty:2.0.3'
+        compile ":yammer-metrics:2.1.2-6"
     }
     dependencies {
         

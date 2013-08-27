@@ -106,3 +106,4 @@ log4j={
 }
 
 
+metrics.servletUrlPattern='/metrics/*'
