@@ -179,10 +179,9 @@ class ReportService  {
 
     private def getEqFilters() {
         def eqfilters = [
-            maprefUri: 'maprefUri',
             stat: 'status',
-                jobFullName: 'jobFullName',
-            jobId:'jcJobId',
+            jobFullName: 'jobFullName',
+            jobId:'jobId',
             proj: 'ctxProject',
         ]
         return eqfilters
@@ -297,7 +296,7 @@ class ReportService  {
         def eqfilters = [
                 stat: 'status',
                 jobFullName: 'jobFullName',
-                jobId: 'jcJobId',
+                jobId: 'jobId',
         ]
         def txtfilters = [
                 proj: 'ctxProject',
@@ -330,8 +329,8 @@ class ReportService  {
                 }
                 if (query.titleFilter) {
                     or {
-                        eq('jcJobId', '')
-                        isNull('jcJobId')
+                        eq('jobId', '')
+                        isNull('jobId')
                     }
                 }
                 if (query.jobListFilter || query.excludeJobListFilter) {
