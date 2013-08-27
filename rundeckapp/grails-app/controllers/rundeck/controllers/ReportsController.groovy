@@ -311,41 +311,6 @@ class ReportsController {
         redirect(controller:'reports',action:params.fragment?'eventsFragment':'index')
     }
    
-    def commands = {ExecQuery query ->
-        //find previous executions
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-
-        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'event'], ['read'],
-            session.project)) {
-            return unauthorized("Read Events for project ${session.project}")
-        }
-        def options = [:]
-        if (params['execRptCustomView']) {
-            params.each {String k, v ->
-                def m = k =~ /^(.*)Show$/
-                if (m.matches() && (v == 'true' || v == 'on')) {
-                    log.info("saw view option: ${m.group(1)}")
-                    options[m.group(1)] = true
-                }
-            }
-            session['exec_reports_options'] = options
-        }
-
-        if(params['Clear']){
-            query=null
-        }
-        if(null!=query && !params.find{ it.key.endsWith('Filter')}){
-            //no default filter
-        }
-
-        if(null!=query){
-            query.configureFilter()
-        }
-        def model= reportService.getExecutionReports(query,false)
-        model = reportService.finishquery(query,params,model)
-        return model
-    }
-
     def jobs = {ExecQuery query ->
         //find previous executions
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
