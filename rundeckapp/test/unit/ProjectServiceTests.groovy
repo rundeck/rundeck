@@ -1,4 +1,3 @@
-import grails.test.GrailsUnitTestCase
 import com.dtolabs.rundeck.util.ZipBuilder
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
@@ -36,7 +35,7 @@ import rundeck.services.ScheduledExecutionService
  * 
  */
 @TestFor(ProjectService)
-@Mock([ScheduledExecution, Option, Workflow, CommandExec, Execution])
+@Mock([ScheduledExecution, Option, Workflow, CommandExec, Execution,BaseReport, ExecReport])
 class ProjectServiceTests  {
     static String EXEC_XML_TEST1_START = '''<executions>
   <execution id='1'>
@@ -90,10 +89,6 @@ class ProjectServiceTests  {
     <jobId>jobid1</jobId>''' + EXEC_XML_TEST1_REST
 
     def testExportExecution(){
-        mockDomain(ScheduledExecution)
-        mockDomain(Execution)
-        mockDomain(Workflow)
-        mockDomain(CommandExec)
         ProjectService svc = new ProjectService()
 
         def outfilename = "blahfile.xml"
@@ -128,10 +123,6 @@ class ProjectServiceTests  {
         assertEquals EXEC_XML_TEST1, str
     }
     def testExportExecutionOutputFile(){
-        mockDomain(ScheduledExecution)
-        mockDomain(Execution)
-        mockDomain(Workflow)
-        mockDomain(CommandExec)
         ProjectService svc = new ProjectService()
 
         def outfilename = "blahfile.xml"
@@ -173,10 +164,6 @@ class ProjectServiceTests  {
         assertEquals EXEC_XML_TEST2, str
     }
     def testImportExecution(){
-        mockDomain(ScheduledExecution)
-        mockDomain(Execution)
-        mockDomain(Workflow)
-        mockDomain(CommandExec)
         ProjectService svc = new ProjectService()
         def result = svc.loadExecutions(EXEC_XML_TEST1)
         assertNotNull result
@@ -287,22 +274,19 @@ class ProjectServiceTests  {
   <status>succeed</status>
   <actionType>succeed</actionType>
   <ctxProject>testproj1</ctxProject>
-  <reportId>test/job</reportId>
   <tags>a,b,c</tags>
   <author>admin</author>
   <message>Report message</message>
   <dateStarted>1970-01-01T00:00:00Z</dateStarted>
   <dateCompleted>1970-01-01T01:00:00Z</dateCompleted>
-  <jcExecId>123</jcExecId>
-  <jcJobId>test-job-uuid</jcJobId>
+  <execId>123</execId>
+  <jobId>test-job-uuid</jobId>
+  <jobFullName>test/job</jobFullName>
   <adhocExecution />
   <adhocScript />
   <abortedByUser />
 </report>'''
     def testExportReport() {
-        mockDomain(BaseReport)
-        mockDomain(ExecReport)
-        mockDomain(ScheduledExecution)
 
         def newJobId = 'test-job-uuid'
         ScheduledExecution se = new ScheduledExecution(jobName: 'blue', project: 'AProject', adhocExecution: true,
@@ -325,15 +309,14 @@ class ProjectServiceTests  {
         }
         def zip = zipmock.createMock()
         ExecReport exec = new ExecReport(
-                ctxController:'ct',
-                 jcExecId:'123',
-                 jcJobId: oldJobId.toString(),
+                 execId:'123',
+                 jobId: oldJobId.toString(),
                  node:'1/0/0',
                  title: 'blah',
                  status: 'succeed',
                  actionType: 'succeed',
                  ctxProject: 'testproj1',
-                 reportId: 'test/job',
+                 jobFullName: 'test/job',
                  tags: 'a,b,c',
                  author: 'admin',
                  dateStarted: new Date(0),
@@ -349,9 +332,6 @@ class ProjectServiceTests  {
     }
 
     def testLoadReport() {
-        mockDomain(BaseReport)
-        mockDomain(ExecReport)
-        mockDomain(ScheduledExecution)
 
         ScheduledExecution se = new ScheduledExecution(jobName: 'blue', project: 'AProject', adhocExecution: true,
                                                        uuid: 'new-job-uuid',
@@ -366,14 +346,64 @@ class ProjectServiceTests  {
         def ExecReport result = svc.loadHistoryReport(REPORT_XML_TEST1,[(123):'456'],[(oldUuid):se],'test')
         assertNotNull result
         def expected = [
-                jcExecId: '456',
-                jcJobId: newJobId.toString(),
+                execId: '456',
+                jobId: newJobId.toString(),
                 node: '1/0/0',
                 title: 'blah',
                 status: 'succeed',
                 actionType: 'succeed',
                 ctxProject: 'testproj1',
-                reportId: 'test/job',
+                jobFullName: 'test/job',
+                tags: 'a,b,c',
+                author: 'admin',
+                dateStarted: new Date(0),
+                dateCompleted: new Date(3600000),
+                message: 'Report message',
+        ]
+        assertPropertiesEquals expected, result
+    }
+
+    static String REPORT_LEGACY_XML_TEST1 = '''<report>
+  <node>1/0/0</node>
+  <title>blah</title>
+  <status>succeed</status>
+  <actionType>succeed</actionType>
+  <ctxProject>testproj1</ctxProject>
+  <tags>a,b,c</tags>
+  <author>admin</author>
+  <message>Report message</message>
+  <dateStarted>1970-01-01T00:00:00Z</dateStarted>
+  <dateCompleted>1970-01-01T01:00:00Z</dateCompleted>
+  <jcExecId>123</jcExecId>
+  <jcJobId>test-job-uuid</jcJobId>
+  <reportId>test/job</reportId>
+  <adhocExecution />
+  <adhocScript />
+  <abortedByUser />
+</report>'''
+    def testLoadReportLegacy1_6() {
+
+        ScheduledExecution se = new ScheduledExecution(jobName: 'blue', project: 'AProject', adhocExecution: true,
+                                                       uuid: 'new-job-uuid',
+                                                       adhocFilepath: '/this/is/a/path', groupPath: 'some/where', description: 'a job', argString: '-a b -c d',
+                                                       workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+                                                       )
+        assertNotNull se.save()
+        def newJobId = se.id
+        def oldUuid= 'test-job-uuid'
+
+        ProjectService svc = new ProjectService()
+        def ExecReport result = svc.loadHistoryReport(REPORT_LEGACY_XML_TEST1,[(123):'456'],[(oldUuid):se],'test')
+        assertNotNull result
+        def expected = [
+                execId: '456',
+                jobId: newJobId.toString(),
+                node: '1/0/0',
+                title: 'blah',
+                status: 'succeed',
+                actionType: 'succeed',
+                ctxProject: 'testproj1',
+                jobFullName: 'test/job',
                 tags: 'a,b,c',
                 author: 'admin',
                 dateStarted: new Date(0),
@@ -383,9 +413,6 @@ class ProjectServiceTests  {
         assertPropertiesEquals expected, result
     }
     def testLoadReportSkippedExecution() {
-        mockDomain(BaseReport)
-        mockDomain(ExecReport)
-        mockDomain(ScheduledExecution)
 
         ScheduledExecution se = new ScheduledExecution(jobName: 'blue', project: 'AProject', adhocExecution: true,
                                                        uuid: 'new-job-uuid',
@@ -401,9 +428,6 @@ class ProjectServiceTests  {
         assertNull result
     }
     def testReportRoundtrip() {
-        mockDomain(BaseReport)
-        mockDomain(ExecReport)
-        mockDomain(ScheduledExecution)
         ProjectService svc = new ProjectService()
 
         def outfilename = "reportout.xml"
@@ -418,14 +442,14 @@ class ProjectServiceTests  {
         def zip = zipmock.createMock()
         ExecReport exec = new ExecReport(
                 ctxController: 'ct',
-                jcExecId: '123',
-                jcJobId: '321',
+                execId: '123',
+                jobId: '321',
                 node: '1/0/0',
                 title: 'blah',
                 status: 'succeed',
                 actionType: 'succeed',
                 ctxProject: 'testproj1',
-                reportId: 'test/job',
+                jobFullName: 'test/job',
                 tags: 'a,b,c',
                 author: 'admin',
                 dateStarted: new Date(0),
@@ -440,14 +464,14 @@ class ProjectServiceTests  {
         def ExecReport result = svc.loadHistoryReport(str,[(123):123],null,'test')
         assertNotNull result
         def keys = [
-                jcExecId: '456',
-                jcJobId: '321',
+                execId: '456',
+                jobId: '321',
                 node: '1/0/0',
                 title: 'blah',
                 status: 'succeed',
                 actionType: 'succeed',
                 ctxProject: 'testproj1',
-                reportId: 'test/job',
+                jobFullName: 'test/job',
                 tags: 'a,b,c',
                 author: 'admin',
                 dateStarted: new Date(0),

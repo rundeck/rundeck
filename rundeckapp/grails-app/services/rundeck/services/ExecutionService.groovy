@@ -461,18 +461,19 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         if(execId){
-            reportMap.jcExecId=execId
+            reportMap.execId=execId
         }
         if(startDate){
             reportMap.dateStarted=startDate
         }
         if(jobExecId){
-            reportMap.jcJobId=jobExecId
+            reportMap.jobId=jobExecId
         }
         if(jobName){
-            reportMap.reportId=jobName
+            reportMap.jobFullName=jobName
+            reportMap.adhocExecution = false
         }else{
-            reportMap.reportId='adhoc'
+            reportMap.adhocExecution=true
         }
         reportMap.ctxProject=project
 

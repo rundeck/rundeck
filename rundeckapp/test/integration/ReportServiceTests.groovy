@@ -1,5 +1,4 @@
 import com.dtolabs.rundeck.app.support.ExecQuery
-import com.dtolabs.rundeck.app.support.ReportQuery
 import rundeck.ExecReport
 import rundeck.BaseReport
 import rundeck.services.ReportService
@@ -37,19 +36,19 @@ class ReportServiceTests extends GroovyTestCase {
         message:'message',title:'title']
         return new ExecReport(repprops+props)
     }
-    void testgetExecReportsReportIdFilter(){
+    void testgetExecReportsJobFullNameFilter(){
         def r1,r2,r3
 
         ExecReport.withNewSession {
-            r1=proto(reportId:'blah', jcExecId: '123')
+            r1=proto(jobFullName:'blah', execId: '123')
             assert r1.validate()
             assert null!=r1.save(flush: true)
-            assert 'blah'==r1.reportId
+            assert 'blah'==r1.jobFullName
             assertNotNull(r1.id)
-            r2 = proto(reportId: 'blah2', jcExecId: '124')
+            r2 = proto(jobFullName: 'blah2', execId: '124')
             assert r2.validate()
             assert null != r2.save(flush: true)
-            r3 = proto(reportId: 'blah3', jcExecId: '125')
+            r3 = proto(jobFullName: 'blah3', execId: '125')
             assert r3.validate()
             println r3.save(flush: true)
 
@@ -59,26 +58,26 @@ class ReportServiceTests extends GroovyTestCase {
         r2=r2.refresh()
         r3=r3.refresh()
         assertEquals(3,ExecReport.count())
-        def query = new ExecQuery(reportIdFilter: 'blah')
+        def query = new ExecQuery(jobFullNameFilter: 'blah')
 
         def result=reportService.getExecutionReports(query,true)
         assert result.total==1
         assert result.reports.size()==1
         assert result.reports.contains(r1)
 
-        assertQueryResult([reportIdFilter: 'blah'], [r1])
-        assertQueryResult([reportIdFilter: 'blah2'], [r2])
-        assertQueryResult([reportIdFilter: 'blah3'], [r3])
-        assertQueryResult([reportIdFilter: 'blah4'], [])
+        assertQueryResult([jobFullNameFilter: 'blah'], [r1])
+        assertQueryResult([jobFullNameFilter: 'blah2'], [r2])
+        assertQueryResult([jobFullNameFilter: 'blah3'], [r3])
+        assertQueryResult([jobFullNameFilter: 'blah4'], [])
     }
     void testgetExecReportsJobListFilter(){
-        def r1=proto(reportId:'group/name',jcExecId:'1')
+        def r1=proto(jobFullName:'group/name',execId:'1')
         assert null!=r1.save(flush: true)
-        def r2 = proto(reportId: 'group/name2', jcExecId: '2')
+        def r2 = proto(jobFullName: 'group/name2', execId: '2')
         assert null != r2.save(flush: true)
-        def r3 = proto(reportId: 'group/name3', jcExecId: '3')
+        def r3 = proto(jobFullName: 'group/name3', execId: '3')
         assert null != r3.save(flush: true)
-        def r4 = proto(reportId: 'group/monkey', jcExecId: '4')
+        def r4 = proto(jobFullName: 'group/monkey', execId: '4')
         assert null != r4.save(flush: true)
 
         assertQueryResult([jobListFilter: ['group/name']],[r1])
@@ -88,11 +87,11 @@ class ReportServiceTests extends GroovyTestCase {
         assertQueryResult([jobListFilter: ['group/name','group/name2','group/name3']],[r1,r2,r3])
     }
     void testgetCombinedReportsExcludeJobListFilter(){
-        def r1=proto(reportId:'group/name', jcExecId: '1')
+        def r1=proto(jobFullName:'group/name', execId: '1')
         assert null!=r1.save(flush: true)
-        def r2 = proto(reportId: 'group/name2', jcExecId: '2')
+        def r2 = proto(jobFullName: 'group/name2', execId: '2')
         assert null != r2.save(flush: true)
-        def r3 = proto(reportId: 'group/name3', jcExecId: '3')
+        def r3 = proto(jobFullName: 'group/name3', execId: '3')
         assert null != r3.save(flush: true)
 
         assertQueryResult([excludeJobListFilter: ['group/name']],[r2,r3])

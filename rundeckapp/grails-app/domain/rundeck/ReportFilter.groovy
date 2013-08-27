@@ -1,7 +1,7 @@
 package rundeck
 
 import com.dtolabs.rundeck.app.support.ExecQuery
-import com.dtolabs.rundeck.app.support.ReportQuery
+
 /*
  * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
  *
@@ -54,7 +54,7 @@ class ReportFilter {
     String userFilter
     String messageFilter
     String statFilter
-    String reportIdFilter
+    String jobFullNameFilter
     String tagsFilter
 
     static belongsTo = [user:User]
@@ -67,7 +67,7 @@ class ReportFilter {
         typeFilter(nullable:true)
         titleFilter(nullable:true)
         tagsFilter(nullable:true)
-        reportIdFilter(nullable:true)
+        jobFullNameFilter(nullable:true)
         objFilter(nullable:true)
         messageFilter(nullable:true)
         maprefUriFilter(nullable:true)
@@ -81,7 +81,7 @@ class ReportFilter {
         endbeforeFilter(nullable:true)
     }
     public void fillProperties(){
-        ['type','title','tags','reportId','obj','message','maprefUri','cmd','user','stat','recent'].each{
+        ['type','title','tags','jobFullName','obj','message','maprefUri','cmd','user','stat','recent'].each{
             if(!this[it+'Filter']){
                 this[it+'Filter']=''
             }

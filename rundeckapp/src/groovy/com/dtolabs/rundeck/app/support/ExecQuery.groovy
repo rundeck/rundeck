@@ -41,7 +41,7 @@ class ExecQuery extends ReportQuery{
             "userFilter",
             "maprefUriFilter",
             "messageFilter",
-            "reportIdFilter",
+            "jobFullNameFilter",
             "abortedByFilter",
         ])
 

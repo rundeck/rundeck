@@ -51,7 +51,7 @@ class ReportQuery extends BaseQuery{
     String userFilter
     String messageFilter
     String statFilter
-    String reportIdFilter
+    String jobFullNameFilter
     String tagsFilter
     String abortedByFilter
 

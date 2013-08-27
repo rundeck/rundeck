@@ -43,13 +43,13 @@ class ProjectService {
         }
         BuilderUtil builder = new BuilderUtil(converters:[(Date): dateConvert, (java.sql.Timestamp): dateConvert])
         def map = report.toMap()
-        if(map.jcJobId){
-            //convert internal job ID to extid
+        if(map.jobId){
+            //LEGACY: convert internal job ID to extid
             def se
             try{
-                se = ScheduledExecution.get(Long.parseLong(map.jcJobId))
+                se = ScheduledExecution.get(Long.parseLong(map.jobId))
                 if(se){
-                    map.jcJobId=se.extid
+                    map.jobId=se.extid
                 }
             }catch(NumberFormatException e){
 
@@ -110,15 +110,25 @@ class ProjectService {
         def object = XmlParserUtil.toObject(doc)
         if (object instanceof Map) {
             //remap job id if necessary
-            if (object.jcJobId && jobsByOldIdMap && jobsByOldIdMap[object.jcJobId]) {
-                object.jcJobId= jobsByOldIdMap[object.jcJobId].id
+            if (object.jobId && jobsByOldIdMap && jobsByOldIdMap[object.jobId]) {
+                object.jobId= jobsByOldIdMap[object.jobId].id
+            }else if (object.jcJobId && jobsByOldIdMap && jobsByOldIdMap[object.jcJobId]) {
+                //LEGACY: support jcJobId input synonym for jobId
+                object.jobId= jobsByOldIdMap[object.jcJobId].id
             }
             //remap exec id if necessary
-            if (object.jcExecId && execIdMap && execIdMap[object.jcExecId]) {
-                object.jcExecId= execIdMap[object.jcExecId]
+            if (object.execId && execIdMap && execIdMap[object.execId]) {
+                object.execId = execIdMap[object.execId]
+            }else if (object.jcExecId && execIdMap && execIdMap[object.jcExecId]) {
+                //LEGACY: support jcExecID synonym for execId.
+                object.execId= execIdMap[object.jcExecId]
             }else {
                 //skip report for exec id that cannot be found
                 return null
+            }
+            if (object.reportId) {
+                //LEGACY: support reportId synonym for jobFullName.
+                object.jobFullName = object.remove('reportId')
             }
             //convert dates
             convertStringsToDates(object, ['dateStarted', 'dateCompleted'],"Report ${identity}")
@@ -425,7 +435,7 @@ class ProjectService {
                 log.error("Unable to save report: ${report.errors} (file ${rxml})")
                 return
             }
-            execids.remove(Long.parseLong(report.jcExecId))
+            execids.remove(Long.parseLong(report.execId))
             loadedreports << report
         }
         //generate reports for executions without matching reports
