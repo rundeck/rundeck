@@ -3,6 +3,7 @@ package rundeck.filters
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
 import org.codehaus.groovy.grails.web.util.WebUtils
+import org.grails.plugins.yammermetrics.groovy.GroovierMetrics
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -11,10 +12,12 @@ class AA_TimerFilters {
     static final Logger logger = Logger.getLogger('org.rundeck.web.requests')
     static requests=[:]
     public static final String _TIMER = 'AA_TimerFilters._TIMER'
+    public static final String _METRICS_TIMER = 'AA_TimerFilters._METRICS_TIMER'
     public static final String _TIMER_ITEM = 'AA_TimerFilters._timer_item'
     public static final String _REPORTS = 'AA_TimerFilters._reports'
     public static final String _REQ_URI = 'AA_TimerFilters._req_uri'
 
+    private static com.yammer.metrics.core.Timer requestTimer = GroovierMetrics.newTimer('requestTimer')
     /**
      * Mark recording request for ident
      * @param request
@@ -56,6 +59,7 @@ class AA_TimerFilters {
         all(controller:'*', action:'*') {
             before = {
                 request[_TIMER]=System.currentTimeMillis()
+                request[_METRICS_TIMER]= requestTimer.time()
                 def ident= (request.getAttribute(WebUtils.FORWARD_REQUEST_URI_ATTRIBUTE) ?: request.getRequestURI())
                 request[_REQ_URI]=ident
                 record(request, ident)
@@ -64,6 +68,7 @@ class AA_TimerFilters {
     }
 
     static def afterRequest(HttpServletRequest request,HttpServletResponse response,session) {
+        request[_METRICS_TIMER].stop()
         def duration = System.currentTimeMillis() - request[_TIMER]
         time(request, request[_REQ_URI], duration)
         report(request) {Map data->
