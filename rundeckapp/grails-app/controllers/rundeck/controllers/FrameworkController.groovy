@@ -8,6 +8,7 @@ import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.shared.resources.ResourceXMLGenerator
 
 import grails.converters.JSON
+import org.grails.plugins.yammermetrics.groovy.Metered
 import rundeck.Execution
 
 import java.util.regex.PatternSyntaxException
@@ -505,153 +506,181 @@ class FrameworkController  {
         redirect(controller:'framework',action:params.fragment?'nodesFragment':'nodes',params:[compact:params.compact?'true':''])
     }
 
-    def createProject={
-        def prefixKey= 'plugin'
-        def project=params.project
-        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
-        if(!frameworkService.authorizeApplicationResourceTypeAll(framework,'project',['create'])){
+    /**
+     * Handles POST when creating a new project
+     * @return
+     */
+    @Metered
+    def createProjectPost() {
+        //only attempt project create if form POST is used
+        def prefixKey = 'plugin'
+        def project = params.project
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        if (!frameworkService.authorizeApplicationResourceTypeAll(framework, 'project', ['create'])) {
             return unauthorized("Create a Project")
         }
-        def errors=[]
+        def nodeexec, nodeexecreport
+        def fcopy, fcopyreport
+        def resourcesUrl
+        def projectNameError
+        def Properties projProps = new Properties()
+        def errors = []
         def configs
         final defaultNodeExec = NodeExecutorService.DEFAULT_REMOTE_PROVIDER
         final defaultFileCopy = FileCopierService.DEFAULT_REMOTE_PROVIDER
         final sshkeypath = new File(System.getProperty("user.home"), ".ssh/id_rsa").getAbsolutePath()
-        def nodeexec,nodeexecreport
-        def fcopy,fcopyreport
-        def resourcesUrl
-        def projectNameError
-        if(request.method=='POST'){
-            //only attempt project create if form POST is used
-            def Properties projProps = new Properties()
-            if (params.resourcesUrl) {
-                resourcesUrl=params.resourcesUrl
-                projProps[FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY] = params.resourcesUrl
-            }
-            if (params.defaultNodeExec) {
-                def ndx = params.defaultNodeExec
-                (defaultNodeExec, nodeexec) = parseServiceConfigInput(params, "nodeexec", ndx)
-                final validation = frameworkService.validateServiceConfig(framework, defaultNodeExec, "nodeexec.${ndx}.config.", params, framework.getNodeExecutorService())
-                if (!validation.valid) {
-                    nodeexecreport = validation.report
-                    errors<< (validation.error ?: "Default Node Executor configuration was invalid")
-                } else {
-                    try {
-                        addProjectServiceProperties(params, projProps, ndx, "nodeexec", NodeExecutorService.SERVICE_DEFAULT_PROVIDER_PROPERTY, framework.getNodeExecutorService())
-                    } catch (ExecutionServiceException e) {
-                        log.error(e.message)
-                        errors <<e.getMessage()
-                    }
-                }
-            }
-            if (params.defaultFileCopy) {
-                def ndx = params.defaultFileCopy
-                (defaultFileCopy, fcopy) = parseServiceConfigInput(params, "fcopy", ndx)
-                final validation = frameworkService.validateServiceConfig(framework, defaultFileCopy, "fcopy.${ndx}.config.", params, framework.getFileCopierService())
-                if (!validation.valid) {
-                    fcopyreport = validation.report
-                    errors << (validation.error ?: "Default File copier configuration was invalid")
-                } else {
-                    try {
-                        addProjectServiceProperties(params, projProps, ndx, "fcopy", FileCopierService.SERVICE_DEFAULT_PROVIDER_PROPERTY, framework.getFileCopierService())
-                    } catch (ExecutionServiceException e) {
-                        log.error(e.message)
-                        errors << e.getMessage()
-                    }
-                }
-            }
-
-            if (params.sshkeypath) {
-                sshkeypath = params.sshkeypath
-                projProps[JschNodeExecutor.PROJ_PROP_SSH_KEYPATH] = sshkeypath
-            }
-
-            //parse plugin config properties, and convert to project.properties
-            def sourceConfigPrefix = FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX
-            def ndxes = [params.list('index')].flatten()
-
-            def count = 1
-            configs = []
-            ndxes.each {ndx ->
-                def String type = params[prefixKey + '.' + ndx + '.type']
-                if(!type) {
-                    log.warn("missing type def for prefix: " + prefixKey + '.' + ndx);
-                    return
-                }
-                final service = framework.getResourceModelSourceService()
-                final provider = service.providerOfType(type)
-                if (!(provider instanceof Describable)) {
-                    errors << "Invalid provider type: ${params.type}, not available for configuration"
-                } else {
-                    projProps[sourceConfigPrefix + '.' + count + '.type'] = type
-                    def mapprops = frameworkService.parseResourceModelConfigInput(provider.description, prefixKey + '.' + ndx + '.'+ 'config.', params)
-                    def props = new Properties()
-                    props.putAll(mapprops)
-                    props.keySet().each {k ->
-                        if (props[k]) {
-                            projProps[sourceConfigPrefix + '.' + count + '.config.' + k] = props[k]
-                        }
-                    }
-                    count++
-                    configs << [type: type, props: props]
-                }
-            }
-            if(!project){
-                projectNameError= "Project name is required"
-                errors << projectNameError
-            }else if(!(project=~FrameworkResource.VALID_RESOURCE_NAME_REGEX)){
-                projectNameError= message(code:"project.name.can.only.contain.these.characters")
-                errors << projectNameError
-            }else if (framework.getFrameworkProjectMgr().existsFrameworkProject(project)){
-                projectNameError= "Project already exists: ${project}"
-                log.error(projectNameError)
-                errors << projectNameError
-            }else if(!errors){
-                log.debug("create project, properties: ${projProps}");
-                def proj
+        if (params.resourcesUrl) {
+            resourcesUrl = params.resourcesUrl
+            projProps[FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY] = params.resourcesUrl
+        }
+        if (params.defaultNodeExec) {
+            def ndx = params.defaultNodeExec
+            (defaultNodeExec, nodeexec) = parseServiceConfigInput(params, "nodeexec", ndx)
+            final validation = frameworkService.validateServiceConfig(framework, defaultNodeExec, "nodeexec.${ndx}.config.", params, framework.getNodeExecutorService())
+            if (!validation.valid) {
+                nodeexecreport = validation.report
+                errors << (validation.error ?: "Default Node Executor configuration was invalid")
+            } else {
                 try {
-                    proj=framework.getFrameworkProjectMgr().createFrameworkProject(project,projProps)
-                } catch (Error e) {
+                    addProjectServiceProperties(params, projProps, ndx, "nodeexec", NodeExecutorService.SERVICE_DEFAULT_PROVIDER_PROPERTY, framework.getNodeExecutorService())
+                } catch (ExecutionServiceException e) {
                     log.error(e.message)
-                    errors<<e.getMessage()
-                }
-                if(!errors && proj){
-                    session.project=proj.name
-                    session.frameworkProjects = frameworkService.projects(framework)
-                    def result=userService.storeFilterPref(session.user, [project:proj.name])
-                    return redirect(controller:'menu',action:'index')
+                    errors << e.getMessage()
                 }
             }
         }
-        if(errors){
-//            request.error=errors.join("\n")
-            request.errors=errors
+        if (params.defaultFileCopy) {
+            def ndx = params.defaultFileCopy
+            (defaultFileCopy, fcopy) = parseServiceConfigInput(params, "fcopy", ndx)
+            final validation = frameworkService.validateServiceConfig(framework, defaultFileCopy, "fcopy.${ndx}.config.", params, framework.getFileCopierService())
+            if (!validation.valid) {
+                fcopyreport = validation.report
+                errors << (validation.error ?: "Default File copier configuration was invalid")
+            } else {
+                try {
+                    addProjectServiceProperties(params, projProps, ndx, "fcopy", FileCopierService.SERVICE_DEFAULT_PROVIDER_PROPERTY, framework.getFileCopierService())
+                } catch (ExecutionServiceException e) {
+                    log.error(e.message)
+                    errors << e.getMessage()
+                }
+            }
         }
-        final descriptions = framework.getResourceModelSourceService().listDescriptions()
 
+        if (params.sshkeypath) {
+            sshkeypath = params.sshkeypath
+            projProps[JschNodeExecutor.PROJ_PROP_SSH_KEYPATH] = sshkeypath
+        }
+
+        //parse plugin config properties, and convert to project.properties
+        def sourceConfigPrefix = FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX
+        def ndxes = [params.list('index')].flatten()
+
+        def count = 1
+        configs = []
+        ndxes.each { ndx ->
+            def String type = params[prefixKey + '.' + ndx + '.type']
+            if (!type) {
+                log.warn("missing type def for prefix: " + prefixKey + '.' + ndx);
+                return
+            }
+            final service = framework.getResourceModelSourceService()
+            final provider = service.providerOfType(type)
+            if (!(provider instanceof Describable)) {
+                errors << "Invalid provider type: ${params.type}, not available for configuration"
+            } else {
+                projProps[sourceConfigPrefix + '.' + count + '.type'] = type
+                def mapprops = frameworkService.parseResourceModelConfigInput(provider.description, prefixKey + '.' + ndx + '.' + 'config.', params)
+                def props = new Properties()
+                props.putAll(mapprops)
+                props.keySet().each { k ->
+                    if (props[k]) {
+                        projProps[sourceConfigPrefix + '.' + count + '.config.' + k] = props[k]
+                    }
+                }
+                count++
+                configs << [type: type, props: props]
+            }
+        }
+        if (!project) {
+            projectNameError = "Project name is required"
+            errors << projectNameError
+        } else if (!(project =~ FrameworkResource.VALID_RESOURCE_NAME_REGEX)) {
+            projectNameError = message(code: "project.name.can.only.contain.these.characters")
+            errors << projectNameError
+        } else if (framework.getFrameworkProjectMgr().existsFrameworkProject(project)) {
+            projectNameError = "Project already exists: ${project}"
+            log.error(projectNameError)
+            errors << projectNameError
+        } else if (!errors) {
+            log.debug("create project, properties: ${projProps}");
+            def proj
+            try {
+                proj = framework.getFrameworkProjectMgr().createFrameworkProject(project, projProps)
+            } catch (Error e) {
+                log.error(e.message)
+                errors << e.getMessage()
+            }
+            if (!errors && proj) {
+                session.project = proj.name
+                session.frameworkProjects = frameworkService.projects(framework)
+                def result = userService.storeFilterPref(session.user, [project: proj.name])
+                return redirect(controller: 'menu', action: 'index')
+            }
+        }
+        if (errors) {
+//            request.error=errors.join("\n")
+            request.errors = errors
+        }
         //get list of node executor, and file copier services
         final nodeexecdescriptions = framework.getNodeExecutorService().listDescriptions()
+        final descriptions = framework.getResourceModelSourceService().listDescriptions()
+        final filecopydescs = framework.getFileCopierService().listDescriptions()
+        return chain(action: 'createProject',
+                model:         [
+                project: params.project,
+                projectNameError: projectNameError,
+                resourcesUrl: resourcesUrl,
+                resourceModelConfigDescriptions: descriptions,
+                sshkeypath: sshkeypath,
+                defaultNodeExec: defaultNodeExec,
+                defaultFileCopy: defaultFileCopy,
+                nodeExecDescriptions: nodeexecdescriptions,
+                fileCopyDescriptions: filecopydescs,
+
+                nodeexecconfig: nodeexec,
+                fcopyconfig: fcopy,
+                nodeexecreport: nodeexecreport,
+                fcopyreport: fcopyreport,
+
+                prefixKey: prefixKey, configs: configs])
+    }
+    /**
+     * Shows form to create a new project
+     * @return
+     */
+    def createProject(){
+        def prefixKey= 'plugin'
+        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        if(!frameworkService.authorizeApplicationResourceTypeAll(framework,'project',['create'])){
+            return unauthorized("Create a Project")
+        }
+        final defaultNodeExec = NodeExecutorService.DEFAULT_REMOTE_PROVIDER
+        final defaultFileCopy = FileCopierService.DEFAULT_REMOTE_PROVIDER
+        final sshkeypath = new File(System.getProperty("user.home"), ".ssh/id_rsa").getAbsolutePath()
+        //get list of node executor, and file copier services
+        final nodeexecdescriptions = framework.getNodeExecutorService().listDescriptions()
+        final descriptions = framework.getResourceModelSourceService().listDescriptions()
         final filecopydescs = framework.getFileCopierService().listDescriptions()
 
-
-
         return [
-                project:params.project,
-            projectNameError: projectNameError,
-            resourcesUrl: resourcesUrl,
+            project:params.project,
             resourceModelConfigDescriptions: descriptions,
             sshkeypath:sshkeypath,
             defaultNodeExec:defaultNodeExec,
             defaultFileCopy: defaultFileCopy,
             nodeExecDescriptions: nodeexecdescriptions,
             fileCopyDescriptions: filecopydescs,
-
-            nodeexecconfig: nodeexec,
-            fcopyconfig: fcopy,
-            nodeexecreport: nodeexecreport,
-            fcopyreport: fcopyreport,
-
-            prefixKey:prefixKey,configs:configs]
+            prefixKey:prefixKey]
     }
 
     private def addProjectServiceProperties(GrailsParameterMap params, Properties projProps, final def ndx, final String param, final String default_provider_prop, final ProviderService service, Set removePrefixes=null) {

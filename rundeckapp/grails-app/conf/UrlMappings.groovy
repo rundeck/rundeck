@@ -58,6 +58,9 @@ class UrlMappings {
         "/jobs/$groupPath**?"(controller: 'menu', action: 'jobs')
         "/job/show/$id/$fullName**?"(controller: 'scheduledExecution',action: 'show')
         "/job/$action?/$id?"(controller: 'scheduledExecution')
+        "/resources/createProject"(controller: 'framework') {
+            action = [GET: 'createProject', POST: 'createProjectPost']
+        }
         "/resources/$action?/$id?"(controller: 'framework')
         "/events/$action?/$id?"(controller: 'reports')
         "/configure"(controller: 'menu', action: 'admin')
