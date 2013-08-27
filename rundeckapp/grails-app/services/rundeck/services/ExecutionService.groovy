@@ -595,23 +595,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         List levels= LogLevel.values() as List
         return levels.indexOf(loglevel)
     }
-    /**
-     * create the path to the execution output file based on the Execution object.
-     *
-     * Uses the execution ID if present as the filename, otherwise generates a unique
-     * filename based on the type of execution.
-     *
-     * Sets the directory based on associated ScheduledExecution,
-     * and if that does not exist then based on execution type and context.
-     */
-    def String createOutputFilepathForExecution(Execution execution, Framework framework){
-        String name=execution.id.toString()+".txt"
-        if(execution.scheduledExecution){
-            return new File(maybeCreateJobLogDir(execution.scheduledExecution,framework),name).getAbsolutePath()
-        }else{
-            return new File(maybeCreateAdhocLogDir(execution,framework),name).getAbsolutePath()
-        }
-    }
 
     /**
      * Return an appropriate StepExecutionItem object for the stored Execution
@@ -1513,44 +1496,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return success
     }
 
-    def File maybeCreateAdhocLogDir(Execution execution, Framework framework) {
-        return maybeCreateAdhocLogDir(execution.project,framework)
-    }
-
-
-    /**
-     * create a log dir for the ScheduledExecution job based on group and jobname
-     */
-    def File maybeCreateJobLogDir(ScheduledExecution job, Framework framework){
-        def logdir = new File(Constants.getFrameworkLogsDir(framework.getBaseDir().getAbsolutePath()),
-            "rundeck/${job.project}/${job.groupPath?job.groupPath+'/':''}${job.jobName}")
-
-        if (!logdir.exists()) {
-            log.info("Creating log dir: " + logdir.getAbsolutePath())
-            logdir.mkdirs()
-        }
-        return logdir
-    }
-    def File maybeCreateLogDir(String project, String type, String name, Framework framework){
-        def logdir = new File(Constants.getFrameworkLogsDir(framework.getBaseDir().getAbsolutePath()),
-            "rundeck/${project}/deployments/${type}/${name}/logs")
-
-        if (!logdir.exists()) {
-            log.info("Creating log dir: " + logdir.getAbsolutePath())
-            logdir.mkdirs()
-        }
-        return logdir
-    }
-    def File maybeCreateAdhocLogDir(String project, Framework framework){
-        def logdir = new File(Constants.getFrameworkLogsDir(framework.getBaseDir().getAbsolutePath()),
-            "rundeck/${project}/run/logs")
-
-        if (!logdir.exists()) {
-            log.info("Creating log dir: " + logdir.getAbsolutePath())
-            logdir.mkdirs()
-        }
-        return logdir
-    }
 
 
 

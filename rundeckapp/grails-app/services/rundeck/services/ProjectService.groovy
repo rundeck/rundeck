@@ -26,6 +26,7 @@ class ProjectService {
     def grailsApplication
     def scheduledExecutionService
     def executionService
+    def logFileStorageService
     static transactional = false
 
     private exportJob(ScheduledExecution job, Writer writer)
@@ -488,7 +489,7 @@ class ProjectService {
                 if (e.outputfilepath && execout[e.outputfilepath]) {
                     File oldfile = execout[e.outputfilepath]
                     //move to appropriate location and update outputfilepath
-                    String filename = executionService.createOutputFilepathForExecution(e, framework)
+                    String filename = logFileStorageService.generateFilepathForExecution(e)
                     File newfile = new File(filename)
                     try{
                         FileUtils.moveFile(oldfile, newfile)
