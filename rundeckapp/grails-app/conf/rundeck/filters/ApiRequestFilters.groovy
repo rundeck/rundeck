@@ -1,12 +1,11 @@
 package rundeck.filters
 
+import com.codahale.metrics.MetricRegistry
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
 import org.codehaus.groovy.grails.web.util.WebUtils
-import rundeck.filters.AA_TimerFilters
 
 import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
 
 /*
  * Copyright 2011 DTO Labs, Inc. (http://dtolabs.com)
@@ -35,6 +34,9 @@ import javax.servlet.http.HttpServletResponse
 
 public class ApiRequestFilters {
     static final Logger logger = Logger.getLogger('org.rundeck.api.requests')
+    private static final String METRIC_TIMER = 'ApiRequestFilters._METRIC_TIMER'
+    private static final String REQUEST_TIME = 'ApiRequestFilters._TIMER'
+    def MetricRegistry metricRegistry
     public static final int V1 = 1
     public static final int V2 = 2
     public static final int V3 = 3
@@ -57,6 +59,8 @@ public class ApiRequestFilters {
     public final static int API_MAX_VERSION = API_CURRENT_VERSION
 
     static def logDetail(HttpServletRequest request,  project, String action, String controller, String message = null) {
+        request[METRIC_TIMER].stop()
+        
         Map context = [
                 remoteHost: request.remoteHost,
                 version: request.api_version ?: '?',
@@ -69,7 +73,7 @@ public class ApiRequestFilters {
                 userAgent: request.getHeader('User-Agent') ?: '-',
                 method: request.method,
                 secure: request.isSecure() ? 'https' : 'http',
-                duration: System.currentTimeMillis() - request['ApiRequestFilters._TIMER'],
+                duration: System.currentTimeMillis() - request[REQUEST_TIME],
                 project: project
         ]
         MDC.clear()
@@ -88,7 +92,8 @@ public class ApiRequestFilters {
          */
         apiVersion(uri: '/api/**') {
             before = {
-                request['ApiRequestFilters._TIMER']=System.currentTimeMillis()
+                request[REQUEST_TIME]=System.currentTimeMillis()
+                request[METRIC_TIMER]= timer()
                 if (controllerName == 'api' && allowed_actions.contains(actionName) || request.api_version) {
                     request.is_allowed_api_request = true
                     return true
@@ -122,5 +127,9 @@ public class ApiRequestFilters {
                 logDetail(request, request['ApiRequestFilters.request.parameters.project']?:session.project?:'', actionName, controllerName)
             }
         }
+    }
+
+    private com.codahale.metrics.Timer.Context timer() {
+        metricRegistry.timer(MetricRegistry.name('rundeck.api.requests', 'requestTimer')).time()
     }
 }
