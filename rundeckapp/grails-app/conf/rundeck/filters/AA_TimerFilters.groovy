@@ -1,9 +1,9 @@
 package rundeck.filters
 
+import com.codahale.metrics.MetricRegistry
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
 import org.codehaus.groovy.grails.web.util.WebUtils
-import org.grails.plugins.yammermetrics.groovy.GroovierMetrics
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -16,8 +16,8 @@ class AA_TimerFilters {
     public static final String _TIMER_ITEM = 'AA_TimerFilters._timer_item'
     public static final String _REPORTS = 'AA_TimerFilters._reports'
     public static final String _REQ_URI = 'AA_TimerFilters._req_uri'
+    def MetricRegistry metricRegistry
 
-    private static com.yammer.metrics.core.Timer requestTimer = GroovierMetrics.newTimer('requestTimer')
     /**
      * Mark recording request for ident
      * @param request
@@ -59,7 +59,7 @@ class AA_TimerFilters {
         all(controller:'*', action:'*') {
             before = {
                 request[_TIMER]=System.currentTimeMillis()
-                request[_METRICS_TIMER]= requestTimer.time()
+                request[_METRICS_TIMER]= metricRegistry.timer(MetricRegistry.name('rundeck.web.requests','requestTimer')).time()
                 def ident= (request.getAttribute(WebUtils.FORWARD_REQUEST_URI_ATTRIBUTE) ?: request.getRequestURI())
                 request[_REQ_URI]=ident
                 record(request, ident)

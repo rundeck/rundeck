@@ -1,3 +1,4 @@
+import com.codahale.metrics.JmxReporter
 import com.dtolabs.launcher.Setup
 import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
@@ -16,6 +17,7 @@ class BootStrap {
     def loggingService
     def logFileStorageService
     def filterInterceptor
+    def metricRegistry
 
      def init = { servletContext ->
 
@@ -203,6 +205,11 @@ class BootStrap {
              grailsApplication.config.rundeck.gui.execution.tail.lines.max = 100
          }
 
+         def metricsJmx = grailsApplication.config.rundeck.metrics.jmxEnabled in ['true',true]
+         if(metricsJmx && metricRegistry){
+             final JmxReporter reporter = JmxReporter.forRegistry(metricRegistry).build();
+             reporter.start();
+         }
 
          //configure System.out and System.err so that remote command execution will write to a specific print stream
          if(Environment.getCurrent() != Environment.TEST){

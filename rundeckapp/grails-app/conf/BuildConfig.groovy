@@ -86,7 +86,6 @@ grails.project.dependency.resolution = {
         runtime ":hibernate:$grailsVersion"
         compile ":code-coverage:1.2.6"
         build ':jetty:2.0.3'
-        compile ":yammer-metrics:2.1.2-6"
     }
     dependencies {
         
@@ -99,7 +98,9 @@ grails.project.dependency.resolution = {
              
         compile 'org.yaml:snakeyaml:1.9', 'org.apache.ant:ant:1.7.1', 'org.apache.ant:ant-jsch:1.7.1', 
                 'com.jcraft:jsch:0.1.50','log4j:log4j:1.2.16','commons-collections:commons-collections:3.2.1',
-                'commons-codec:commons-codec:1.5', 'com.fasterxml.jackson.core:jackson-databind:2.0.2'
+                'commons-codec:commons-codec:1.5', 'com.fasterxml.jackson.core:jackson-databind:2.0.2',
+                'com.codahale.metrics:metrics-core:3.0.1',
+                'com.codahale.metrics:metrics-servlet:3.0.1'
         compile("org.rundeck:rundeck-core:${rundeckVersion}") {
             changing = true
             excludes("xalan")

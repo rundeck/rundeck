@@ -1,5 +1,6 @@
 package rundeck.services
 
+import com.codahale.metrics.MetricRegistry
 import com.dtolabs.rundeck.app.support.ExecutionContext
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
@@ -13,7 +14,6 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.app.support.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.QueueQuery
-import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.logging.ContextLogWriter
 import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.common.Framework
@@ -32,9 +32,7 @@ import com.dtolabs.rundeck.execution.ExecutionItemFactory
 import com.dtolabs.rundeck.execution.JobExecutionItem
 import com.dtolabs.rundeck.execution.JobReferenceFailureReason
 import com.dtolabs.rundeck.server.authorization.AuthConstants
-import com.yammer.metrics.core.Meter
-import org.grails.plugins.yammermetrics.groovy.GroovierMetrics
-import org.grails.plugins.yammermetrics.groovy.Metered
+import com.codahale.metrics.Meter
 import org.hibernate.StaleObjectStateException
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
@@ -70,6 +68,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def String defaultLogLevel
 
     def ApplicationContext applicationContext
+    def MetricRegistry metricRegistry
 
     // implement ApplicationContextAware interface
 
@@ -437,7 +436,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return [jobs: jobs, nowrunning:currunning, total: total, max: max]
     }
 
-    private Meter executionCleanupMeter = GroovierMetrics.newMeter('executionCleanupMeter')
+    private Meter markMeter(String name) {
+        metricRegistry.meter(MetricRegistry.name(ExecutionService, name)).mark()
+    }
     /**
      * Set the result status to FAIL for any Executions that are not complete
      * @param serverUUID if not null, only match executions assigned to the given serverUUID
@@ -447,7 +448,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         found.each { Execution e ->
             saveExecutionState(e.scheduledExecution?.id, e.id, [status: String.valueOf(false), dateCompleted: new Date(), cancelled: true], null)
             log.error("Stale Execution cleaned up: [${e.id}]")
-            executionCleanupMeter.mark()
+            markMeter('executionCleanupMeter')
         }
     }
 
@@ -526,13 +527,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
     }
 
-    private Meter executionJobStartMeter = GroovierMetrics.newMeter('executionJobStartMeter')
-    private Meter executionAdhocStartMeter = GroovierMetrics.newMeter('executionAdhocStartMeter')
     /**
      * starts an execution in a separate thread, returning a map of [thread:Thread, loghandler:LogHandler]
      */
-    @Metered(name = 'executionStartMeter')
     def Map executeAsyncBegin(Framework framework, Execution execution, ScheduledExecution scheduledExecution=null, Map extraParams = null, Map extraParamsExposed = null){
+        markMeter('executionStartMeter')
         execution.refresh()
         def ExecutionLogWriter loghandler= loggingService.openLogWriter(execution,
                                                                           logLevelForString(execution.loglevel),
@@ -541,9 +540,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         execution.outputfilepath= loghandler.filepath?.getAbsolutePath()
         execution.save(flush:true)
         if(execution.scheduledExecution){
-            executionJobStartMeter.mark()
+            markMeter('executionJobStartMeter')
         }else{
-            executionAdhocStartMeter.mark()
+            markMeter('executionAdhocStartMeter')
         }
         try{
             def jobcontext=exportContextForExecution(execution)
@@ -786,8 +785,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return builder.build()
     }
 
-    private Meter execSuccessMeter = GroovierMetrics.newMeter('executionSuccessMeter')
-    private Meter execFailureMeter = GroovierMetrics.newMeter('executionFailureMeter')
     /**
      * cleans up executed job
      * @param framework the framework
@@ -799,7 +796,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if(!thread.isSuccessful() ){
             Throwable exc = thread.getThrowable()
             def errmsgs = []
-            execFailureMeter.mark()
+            markMeter('executionFailureMeter')
 
             if (exc && (exc instanceof com.dtolabs.rundeck.core.NodesetFailureException
                 || exc instanceof com.dtolabs.rundeck.core.NodesetEmptyException)) {
@@ -825,7 +822,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
 
         }else{
-            execSuccessMeter.mark()
+            markMeter('executionSuccessMeter')
             log.info("Execution successful: " + execMap.execution.id )
         }
         sysThreadBoundOut.removeThreadStream()
@@ -835,9 +832,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
 
-    @Metered(name = 'abortExecutionMeter')
     def abortExecution(ScheduledExecution se, Execution e, String user, final def framework, String killAsUser=null
     ){
+        markMeter('executionAbortMeter')
         def eid=e.id
         def dateCompleted = e.dateCompleted
         e.discard()

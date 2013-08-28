@@ -107,3 +107,5 @@ log4j={
 
 
 metrics.servletUrlPattern='/metrics/*'
+
+rundeck.metrics.jmxEnabled=true

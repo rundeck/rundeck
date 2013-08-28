@@ -1,5 +1,6 @@
 package rundeck.controllers
 
+import com.codahale.metrics.MetricRegistry
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 
@@ -8,7 +9,6 @@ import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.shared.resources.ResourceXMLGenerator
 
 import grails.converters.JSON
-import org.grails.plugins.yammermetrics.groovy.Metered
 import rundeck.Execution
 
 import java.util.regex.PatternSyntaxException
@@ -46,6 +46,7 @@ class FrameworkController  {
     FrameworkService frameworkService
     ExecutionService executionService
     UserService userService
+    MetricRegistry metricRegistry
     // the delete, save and update actions only
     // accept POST requests
     def static allowedMethods = [
@@ -510,8 +511,9 @@ class FrameworkController  {
      * Handles POST when creating a new project
      * @return
      */
-    @Metered
+
     def createProjectPost() {
+        markMeter(actionName)
         //only attempt project create if form POST is used
         def prefixKey = 'plugin'
         def project = params.project
@@ -653,6 +655,10 @@ class FrameworkController  {
                 fcopyreport: fcopyreport,
 
                 prefixKey: prefixKey, configs: configs])
+    }
+
+    private void markMeter(String name) {
+        metricRegistry.meter(MetricRegistry.name(FrameworkController, name)).mark()
     }
     /**
      * Shows form to create a new project

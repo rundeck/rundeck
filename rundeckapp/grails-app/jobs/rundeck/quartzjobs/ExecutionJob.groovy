@@ -1,7 +1,7 @@
 package rundeck.quartzjobs
 
-import com.yammer.metrics.core.TimerContext
-import org.grails.plugins.yammermetrics.groovy.GroovierMetrics
+import com.codahale.metrics.MetricRegistry
+import com.codahale.metrics.Timer
 import org.quartz.JobExecutionContext
 
 import org.quartz.JobDataMap
@@ -19,14 +19,18 @@ class ExecutionJob implements InterruptableJob {
     public static final int STATS_RETRY_MAX = Integer.getInteger(ExecutionJob.class.name+".STATS_RETRY_MAX", 5)
     public static final int STATS_RETRY_DELAY = Long.getLong(ExecutionJob.class.name+".STATS_RETRY_DELAY", 500)
     def boolean _interrupted
-
     static triggers = {
         /** define no triggers here */
     }
-    private static com.yammer.metrics.core.Timer executionTimer = GroovierMetrics.newTimer('executionTimer')
     // Implements the Job interface, execute
     void execute(JobExecutionContext context) {
-        executionTimer.time {
+        MetricRegistry metricRegistry=context.jobDetail.jobDataMap.get('metricRegistry')
+        if(metricRegistry){
+            Timer executionTimer=metricRegistry.timer(MetricRegistry.name(ExecutionJob, 'executionTimer'))
+            executionTimer.time {
+                execute_internal(context)
+            }
+        }else{
             execute_internal(context)
         }
     }

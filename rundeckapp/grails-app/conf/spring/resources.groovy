@@ -1,3 +1,4 @@
+import com.codahale.metrics.MetricRegistry
 import com.dtolabs.rundeck.core.plugins.PluginManagerService
 import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
 import com.dtolabs.rundeck.server.plugins.PluginCustomizer
@@ -14,7 +15,7 @@ import java.util.concurrent.Executors
 beans={
     defaultGrailsServiceInjectorJobListener(GrailsServiceInjectorJobListener){
         name= 'defaultGrailsServiceInjectorJobListener'
-        services=[executionService: ref('executionService')]
+        services=[executionService: ref('executionService'),metricRegistry:ref('metricRegistry')]
         quartzScheduler=ref('quartzScheduler')
     }
     def rdeckBase
@@ -93,4 +94,6 @@ beans={
         pluginDirectory=pluginDir
         pluginCacheDirectory=cacheDir
     }
+
+    metricRegistry(MetricRegistry)
 }
