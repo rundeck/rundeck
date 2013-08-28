@@ -94,6 +94,4 @@ beans={
         pluginDirectory=pluginDir
         pluginCacheDirectory=cacheDir
     }
-
-    metricRegistry(MetricRegistry)
 }

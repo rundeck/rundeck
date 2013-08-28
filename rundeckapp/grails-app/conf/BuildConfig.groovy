@@ -44,6 +44,7 @@ if (System.properties["grails.local.repo"]) {
 println "Grails Local Repo: ${grailsLocalRepo}"
 
 grails.plugin.location.webrealms = "webrealms"
+grails.plugin.location.metricsweb = "metricsweb"
 
 grails.project.dependency.resolution = {
     inherits "global" // inherit Grails' default dependencies
@@ -99,8 +100,7 @@ grails.project.dependency.resolution = {
         compile 'org.yaml:snakeyaml:1.9', 'org.apache.ant:ant:1.7.1', 'org.apache.ant:ant-jsch:1.7.1', 
                 'com.jcraft:jsch:0.1.50','log4j:log4j:1.2.16','commons-collections:commons-collections:3.2.1',
                 'commons-codec:commons-codec:1.5', 'com.fasterxml.jackson.core:jackson-databind:2.0.2',
-                'com.codahale.metrics:metrics-core:3.0.1',
-                'com.codahale.metrics:metrics-servlet:3.0.1'
+                'com.codahale.metrics:metrics-core:3.0.1'
         compile("org.rundeck:rundeck-core:${rundeckVersion}") {
             changing = true
             excludes("xalan")
