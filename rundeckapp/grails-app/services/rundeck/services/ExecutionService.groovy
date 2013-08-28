@@ -437,7 +437,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     private Meter markMeter(String name) {
-        metricRegistry.meter(MetricRegistry.name(ExecutionService, name)).mark()
+        metricRegistry?.meter(MetricRegistry.name(ExecutionService, name))?.mark()
     }
     /**
      * Set the result status to FAIL for any Executions that are not complete
