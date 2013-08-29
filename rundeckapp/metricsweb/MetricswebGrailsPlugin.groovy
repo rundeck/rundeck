@@ -1,6 +1,7 @@
 import com.codahale.metrics.JmxReporter
 import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.health.HealthCheckRegistry
+import org.codehaus.groovy.grails.commons.GrailsClass
 
 class MetricswebGrailsPlugin {
     // the plugin version
@@ -18,7 +19,8 @@ class MetricswebGrailsPlugin {
     def author = "Greg Schueler"
     def authorEmail = ""
     def description = '''\
-Adds the Metrics 3.x AdminServlet at a configurable path
+Adds the Metrics 3.x AdminServlet at a configurable path, adds the InstrumentedFilter to add metrics around
+each HTTP reqest, and provides some utility methods to Controllers and Services for using metrics.
 '''
 
     // URL to the plugin's documentation
@@ -42,10 +44,15 @@ Adds the Metrics 3.x AdminServlet at a configurable path
     def scm = [ url: "http://github.com/dtolabs/rundeck" ]
 
     def doWithWebDescriptor = { xml ->
+        if(!(application.config.rundeck.metrics.enabled in [true,'true'])){
+            return
+        }
         if(application.config.rundeck.metrics.servletUrlPattern){
             addServlets(application.config,xml)
         }
-        addFilters(application.config,xml)
+        if (application.config.rundeck.metrics.requestFilterEnabled in [true,'true']) {
+            addFilters(application.config,xml)
+        }
     }
     def addFilters(ConfigObject config,def xml) {
         def filterNodes = xml.'context-param'
@@ -105,8 +112,71 @@ Adds the Metrics 3.x AdminServlet at a configurable path
         healthCheckRegistry(HealthCheckRegistry)
     }
 
-    def doWithDynamicMethods = { ctx ->
-        // TODO Implement registering dynamic methods to classes (optional)
+    def doWithDynamicMethods = { applicationContext ->
+        def metricRegistry = applicationContext.getBean(MetricRegistry)
+        def metricsEnabled = application.config.rundeck.metrics.enabled in [true, 'true']
+        def disabledClasses = application.config.rundeck.metrics.disabledClasses?:[]
+        if(disabledClasses instanceof String){
+            disabledClasses= disabledClasses.split(/,\s*/) as List
+        }
+        for (domainClass in application.domainClasses) {
+            addDynamicMetricMethods(domainClass, metricRegistry, metricsEnabled && !disabledClasses.contains(domainClass.clazz.name))
+        }
+        for (serviceClass in application.serviceClasses) {
+            addDynamicMetricMethods(serviceClass, metricRegistry, metricsEnabled && !disabledClasses.contains(serviceClass.clazz.name))
+        }
+    }
+
+    /**
+     * Adds methods to controllers and services for using metrics library
+     * @param grailsClass
+     * @param metricRegistry
+     * @param enabled if false, all added methods are noop or passthru
+     */
+    private static void addDynamicMetricMethods(GrailsClass grailsClass, MetricRegistry metricRegistry, Boolean enabled) {
+        def cname = grailsClass.clazz.name
+
+        def noopString = { String classname = cname, String metricName -> }
+
+        def mrMeter = enabled ? { String classname = cname, String metricName ->
+            metricRegistry.meter(MetricRegistry.name(classname, metricName))
+        } : noopString
+
+
+        def mrCounter = enabled ? { String classname = cname, String metricName ->
+            metricRegistry.counter(MetricRegistry.name(classname, metricName))
+        } : noopString
+
+
+        def mrTimer = enabled ? {String classname = cname, String metricName ->
+            metricRegistry.timer(MetricRegistry.name(classname, metricName))
+        } : noopString
+
+        grailsClass.metaClass.static.metricMeter = mrMeter
+        grailsClass.metaClass.static.metricMeterMark = { String metricName -> mrMeter(metricName)?.mark() }
+        grailsClass.metaClass.static.metricMeterMark = { String className, String metricName -> mrMeter(className,metricName)?.mark() }
+        grailsClass.metaClass.static.metricCounter =  mrCounter
+        grailsClass.metaClass.static.metricCounterInc =  { String metricName -> mrCounter(metricName)?.inc() }
+        grailsClass.metaClass.static.metricCounterInc =  { String className, String metricName -> mrCounter(className, metricName)?.inc() }
+        grailsClass.metaClass.static.metricCounterDec =  { String metricName -> mrCounter(metricName)?.dec() }
+        grailsClass.metaClass.static.metricCounterDec =  { String className, String metricName -> mrCounter(className, metricName)?.dec() }
+        grailsClass.metaClass.static.metricTimer =  mrTimer
+
+        grailsClass.metaClass.static.withTimer = enabled ? { Closure clos ->
+            metricRegistry.timer(MetricRegistry.name(cname, 'Timer')).time(clos)
+        } : { Closure clos -> clos.call() }
+
+        grailsClass.metaClass.static.withTimer = enabled ? { String name, Closure clos ->
+            metricRegistry.timer(MetricRegistry.name(cname, name)).time(clos)
+        } : { String name, Closure clos -> clos.call() }
+
+        grailsClass.metaClass.static.withTimer = enabled ? { String className, String name, Closure clos ->
+            metricRegistry.timer(MetricRegistry.name(className, name)).time(clos)
+        } : { String className, String name, Closure clos -> clos.call() }
+
+        grailsClass.metaClass.static.getMetricRegistry = {->
+            metricRegistry
+        }
     }
 
     def doWithApplicationContext = { applicationContext ->
@@ -118,6 +188,9 @@ Adds the Metrics 3.x AdminServlet at a configurable path
         applicationContext.servletContext.setAttribute('com.codahale.metrics.servlets.HealthCheckServlet.registry',
                 applicationContext.getBean(HealthCheckRegistry))
 
+        if (!(application.config.rundeck.metrics.enabled in [true, 'true'])) {
+            return
+        }
         def metricsJmx = application.config.rundeck.metrics.jmxEnabled in ['true', true]
         if (metricsJmx && applicationContext.getBean(MetricRegistry)) {
             final JmxReporter reporter = JmxReporter.forRegistry(applicationContext.getBean(MetricRegistry)).build();
