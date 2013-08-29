@@ -10,11 +10,65 @@
     <resource>DefaultWebrealmsConfig</resource>
   </resources>
   <repositories>
+    <repository name='http://repo1.maven.org/maven2/' url='http://repo1.maven.org/maven2/' />
     <repository name='grailsCentral' url='http://grails.org/plugins' />
     <repository name='mavenCentral' url='http://repo1.maven.org/maven2/' />
   </repositories>
-  <dependencies />
-  <plugins />
+  <dependencies>
+    <test>
+      <dependency group='log4j' name='log4j' version='1.2.16' />
+      <dependency group='org.rundeck' name='rundeck-core' version='2.0.0-SNAPSHOT' />
+      <dependency group='commons-collections' name='commons-collections' version='3.2.1' />
+      <dependency group='com.fasterxml.jackson.core' name='jackson-databind' version='2.0.2' />
+      <dependency group='org.apache.ant' name='ant-jsch' version='1.7.1' />
+      <dependency group='commons-codec' name='commons-codec' version='1.5' />
+      <dependency group='org.apache.ant' name='ant' version='1.7.1' />
+      <dependency group='org.yaml' name='snakeyaml' version='1.9' />
+      <dependency group='com.jcraft' name='jsch' version='0.1.50' />
+    </test>
+    <compile>
+      <dependency group='commons-codec' name='commons-codec' version='1.5' />
+      <dependency group='org.apache.ant' name='ant-jsch' version='1.7.1' />
+      <dependency group='org.yaml' name='snakeyaml' version='1.9' />
+      <dependency group='commons-collections' name='commons-collections' version='3.2.1' />
+      <dependency group='org.rundeck' name='rundeck-core' version='2.0.0-SNAPSHOT' />
+      <dependency group='com.fasterxml.jackson.core' name='jackson-databind' version='2.0.2' />
+      <dependency group='org.apache.ant' name='ant' version='1.7.1' />
+      <dependency group='com.jcraft' name='jsch' version='0.1.50' />
+      <dependency group='log4j' name='log4j' version='1.2.16' />
+      <dependency group='com.codahale.metrics' name='metrics-core' version='3.0.1' />
+    </compile>
+    <runtime>
+      <dependency group='org.yaml' name='snakeyaml' version='1.9' />
+      <dependency group='org.apache.ant' name='ant-launcher' version='1.7.1' />
+      <dependency group='org.rundeck' name='rundeck-jetty-server' version='2.0.0-SNAPSHOT' />
+      <dependency group='log4j' name='log4j' version='1.2.16' />
+      <dependency group='com.fasterxml.jackson.core' name='jackson-databind' version='2.0.2' />
+      <dependency group='org.springframework' name='spring-test' version='3.0.5.RELEASE' />
+      <dependency group='postgresql' name='postgresql' version='9.1-901.jdbc4' />
+      <dependency group='org.apache.ant' name='ant' version='1.7.1' />
+      <dependency group='commons-codec' name='commons-codec' version='1.5' />
+      <dependency group='com.jcraft' name='jsch' version='0.1.50' />
+      <dependency group='org.rundeck' name='rundeck-core' version='2.0.0-SNAPSHOT' />
+      <dependency group='commons-collections' name='commons-collections' version='3.2.1' />
+      <dependency group='org.apache.ant' name='ant-jsch' version='1.7.1' />
+    </runtime>
+  </dependencies>
+  <plugins>
+    <compile>
+      <plugin group='org.grails.plugins' name='code-coverage' version='1.2.6' />
+    </compile>
+    <runtime>
+      <plugin group='org.grails.plugins' name='hibernate' version='2.2.4' />
+      <plugin group='org.grails.plugins' name='quartz' version='0.4.2' />
+      <plugin group='org.grails.plugins' name='codenarc' version='0.16.1' />
+      <plugin group='org.grails.plugins' name='mail' version='0.9' />
+      <plugin group='org.grails.plugins' name='executor' version='0.3' />
+    </runtime>
+    <build>
+      <plugin group='org.grails.plugins' name='jetty' version='2.0.3' />
+    </build>
+  </plugins>
   <runtimePluginRequirements />
   <behavior />
 </plugin>
