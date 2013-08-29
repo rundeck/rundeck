@@ -1,10 +1,13 @@
-import com.codahale.metrics.JmxReporter
+import com.codahale.metrics.MetricRegistry
 import com.dtolabs.launcher.Setup
 import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
+import com.dtolabs.rundeck.util.quartz.MetricsSchedulerListener
 import grails.util.Environment
 import org.codehaus.groovy.grails.plugins.web.filters.FilterConfig
 import org.codehaus.groovy.grails.plugins.web.filters.FilterToHandlerAdapter
+import org.grails.plugins.metricsweb.CallableGauge
+import org.quartz.Scheduler
 import org.springframework.web.context.WebApplicationContext
 import org.springframework.web.context.support.WebApplicationContextUtils
 
@@ -17,7 +20,8 @@ class BootStrap {
     def loggingService
     def logFileStorageService
     def filterInterceptor
-    def metricRegistry
+    Scheduler quartzScheduler
+    MetricRegistry metricRegistry
 
      def init = { servletContext ->
 
@@ -204,6 +208,13 @@ class BootStrap {
              }
              grailsApplication.config.rundeck.gui.execution.tail.lines.max = 100
          }
+
+         //set up some metrics collection for the Quartz scheduler
+         metricRegistry.register(MetricRegistry.name("rundeck.scheduler.quartz","runningExecutions"),new CallableGauge<Integer>({
+             quartzScheduler.getCurrentlyExecutingJobs().size()
+         }))
+         def counter = metricRegistry.counter(MetricRegistry.name("rundeck.scheduler.quartz", "scheduledJobs"))
+         quartzScheduler.addSchedulerListener(new MetricsSchedulerListener(counter))
 
          //configure System.out and System.err so that remote command execution will write to a specific print stream
          if(Environment.getCurrent() != Environment.TEST){

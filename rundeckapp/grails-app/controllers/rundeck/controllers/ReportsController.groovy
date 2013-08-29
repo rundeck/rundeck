@@ -184,7 +184,7 @@ class ReportsController {
                         }
                     }else{
                         delegate.since={
-                            deelegate.count=count
+                            delegate.count=count
                             delegate.time= time
                         }
                     }

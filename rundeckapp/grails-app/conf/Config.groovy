@@ -106,5 +106,7 @@ log4j={
 }
 
 
+rundeck.metrics.enabled=true
 rundeck.metrics.jmxEnabled=true
+rundeck.metrics.requestFilterEnabled=true
 rundeck.metrics.servletUrlPattern='/metrics/*'

@@ -68,9 +68,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def String defaultLogLevel
 
     def ApplicationContext applicationContext
-    def MetricRegistry metricRegistry
-
-    // implement ApplicationContextAware interface
 
     def listLastExecutionsPerProject(Framework framework, int max=5){
         def projects = frameworkService.projects(framework).collect{ it.name }
@@ -436,9 +433,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return [jobs: jobs, nowrunning:currunning, total: total, max: max]
     }
 
-    private Meter markMeter(String name) {
-        metricRegistry?.meter(MetricRegistry.name(ExecutionService, name))?.mark()
-    }
     /**
      * Set the result status to FAIL for any Executions that are not complete
      * @param serverUUID if not null, only match executions assigned to the given serverUUID
@@ -448,7 +442,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         found.each { Execution e ->
             saveExecutionState(e.scheduledExecution?.id, e.id, [status: String.valueOf(false), dateCompleted: new Date(), cancelled: true], null)
             log.error("Stale Execution cleaned up: [${e.id}]")
-            markMeter('executionCleanupMeter')
+            metricMeterMark('executionCleanupMeter')
         }
     }
 
@@ -531,7 +525,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * starts an execution in a separate thread, returning a map of [thread:Thread, loghandler:LogHandler]
      */
     def Map executeAsyncBegin(Framework framework, Execution execution, ScheduledExecution scheduledExecution=null, Map extraParams = null, Map extraParamsExposed = null){
-        markMeter('executionStartMeter')
+        metricMeterMark('executionStartMeter')
         execution.refresh()
         def ExecutionLogWriter loghandler= loggingService.openLogWriter(execution,
                                                                           logLevelForString(execution.loglevel),
@@ -540,9 +534,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         execution.outputfilepath= loghandler.filepath?.getAbsolutePath()
         execution.save(flush:true)
         if(execution.scheduledExecution){
-            markMeter('executionJobStartMeter')
+            metricMeterMark('executionJobStartMeter')
         }else{
-            markMeter('executionAdhocStartMeter')
+            metricMeterMark('executionAdhocStartMeter')
         }
         try{
             def jobcontext=exportContextForExecution(execution)
@@ -796,7 +790,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if(!thread.isSuccessful() ){
             Throwable exc = thread.getThrowable()
             def errmsgs = []
-            markMeter('executionFailureMeter')
+            metricMeterMark('executionFailureMeter')
 
             if (exc && (exc instanceof com.dtolabs.rundeck.core.NodesetFailureException
                 || exc instanceof com.dtolabs.rundeck.core.NodesetEmptyException)) {
@@ -822,7 +816,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
 
         }else{
-            markMeter('executionSuccessMeter')
+            metricMeterMark('executionSuccessMeter')
             log.info("Execution successful: " + execMap.execution.id )
         }
         sysThreadBoundOut.removeThreadStream()
@@ -834,7 +828,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     def abortExecution(ScheduledExecution se, Execution e, String user, final def framework, String killAsUser=null
     ){
-        markMeter('executionAbortMeter')
+        metricMeterMark('executionAbortMeter')
         def eid=e.id
         def dateCompleted = e.dateCompleted
         e.discard()
@@ -1803,7 +1797,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             def WorkflowExecutionService service = executionContext.getFramework().getWorkflowExecutionService()
 
-            def wresult = service.getExecutorForItem(newExecItem).executeWorkflow(newContext, newExecItem)
+            def wresult = withTimer('runJobReference'){
+                service.getExecutorForItem(newExecItem).executeWorkflow(newContext, newExecItem)
+            }
 
             if (!wresult || !wresult.success) {
                 result = createFailure(JobReferenceFailureReason.JobFailed, "Job [${jitem.jobIdentifier}] failed")
