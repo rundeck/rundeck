@@ -157,9 +157,22 @@ task testGrails(type: Exec, overwrite: true, dependsOn: [installJettyPlugin, ins
 test.dependsOn testGrails
 
 /**
+ * Run grails asset-precompile
+ */
+task assetCompile(type: Exec, overwrite: true) {
+    workingDir project.projectDir
+    environment 'GRAILS_HOME', grailsHome
+    commandLine grailsCommandLine
+    args "-Dmaven.central.url=${mavenCentralUrl}",
+            "${mavenCreds}",
+            "-Dgrails.local.repo=${grailsLocalRepo}",
+            "-DRUNDECK_VERSION=${version}",
+            'asset-precompile'
+}
+/**
  * Builds the rundeck war file
  */
-task grailsWar(type: Exec, overwrite:true, dependsOn: [installJettyPlugin, installDependencies,extractGrails]) {
+task grailsWar(type: Exec, overwrite:true, dependsOn: [installJettyPlugin, installDependencies,extractGrails,assetCompile]) {
 	inputs.sourceDir file("${projectDir}/src")
 	outputs.file file(warFileLocation)
 	workingDir project.projectDir

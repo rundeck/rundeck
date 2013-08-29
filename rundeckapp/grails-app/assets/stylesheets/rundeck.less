@@ -1,0 +1,19 @@
+  /*
+  *= require bootstrap
+  *= require_self
+  *= require non_responsive
+  */
+@import "variables.less";
+
+  @brand-primary: #ff00ee;
+ body{
+   padding-bottom: ((32px + @navbar-margin-bottom));
+ }
+.footer{
+  position: fixed;
+  bottom: 0;
+  height: 32px;
+  margin-top: @navbar-margin-bottom;
+  font-size: @font-size-small;
+  color: @gray-light;
+}

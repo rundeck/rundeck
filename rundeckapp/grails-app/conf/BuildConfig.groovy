@@ -87,6 +87,9 @@ grails.project.dependency.resolution = {
         runtime ":hibernate:$grailsVersion"
         compile ":code-coverage:1.2.6"
         build ':jetty:2.0.3'
+        runtime ":twitter-bootstrap:3.0.0-SNAPSHOT"
+        compile ":asset-pipeline:0.5.3"
+        compile ":less-asset-pipeline:0.1.2"
     }
     dependencies {
         

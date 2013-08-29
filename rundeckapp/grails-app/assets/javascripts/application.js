@@ -1,3 +1,7 @@
+//= require jquery
+//= require bootstrap
+//= require prototype-1.7.0.0
+
 var Ajax;
 if (Ajax && (Ajax != null)) {
 	Ajax.Responders.register({

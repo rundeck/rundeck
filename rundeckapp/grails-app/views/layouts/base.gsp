@@ -8,17 +8,15 @@
     <title>
         <g:layoutTitle default="${g.message(code:'main.app.name')}"/>
     </title>
-    <link rel="SHORTCUT ICON" href="${resource(dir:'images',file:'app-logo-small.png')}"/>
-    <link rel="favicon" href="${resource(dir:'images',file:'app-logo-small.png')}"/>
-    <link rel="icon" href="${resource(dir:'images',file:'app-logo-small.png')}" type="image/x-icon" />
-    <link rel="shortcut icon" href="${resource(dir:'images',file:'app-logo-small.png')}" type="image/x-icon" />
-    <link rel="stylesheet" href="${resource(dir:'css',file:'main.css')}"/>
-    <link rel="stylesheet" href="${resource(dir:'css',file:'menus.css')}"/>
-    <g:javascript library="prototype-1.7.0.0"/>
+    <asset:link rel="SHORTCUT" href="images/app-logo-small.png"/>
+    <asset:link rel="favicon" href="images/app-logo-small.png"/>
+    <asset:link rel="shortcut icon" href="images/app-logo-small.png"/>
+    <asset:stylesheet href="rundeck.less"/>
+    <asset:javascript src="application.js"/>
     <g:render template="/common/js"/>
     <g:render template="/common/css"/>
     <!--[if IE 7]>
-    <link rel="stylesheet" type="text/css" href="${resource(dir:'css',file:'ie7css.css')}" />
+    <asset:stylesheet href="ie7css.less"/>
     <![endif]-->
     
     <script language="javascript">
@@ -35,9 +33,6 @@
         }
     </script>
 
-
-    <script type="text/javascript" src="${resource(dir:'js',file:'application.js')}"></script>
-    <script type="text/javascript" src="${resource(dir:'js',file:'menus.js')}"></script>
     <g:if test="${pageProperty(name:'meta.rssfeed')}">
         <g:ifServletContextAttribute attribute="RSS_ENABLED" value="true">
             <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="${pageProperty(name:'meta.rssfeed')}"/>
@@ -46,21 +41,14 @@
     <g:layoutHead/>
 </head>
 <body>
-<div id="wrap">
-
-	<div id="main">
-
 <g:render template="/common/topbar"/>
-<g:render template="/common/pageMessage"/>
-
+<div class="container">
+    <g:render template="/common/pageMessage"/>
     <g:layoutBody/>
-	</div>
-
 </div>
 
-<div id="footer">
+<div class="container footer">
 <g:render template="/common/footer"/>
-
 </div>
 
 </body>

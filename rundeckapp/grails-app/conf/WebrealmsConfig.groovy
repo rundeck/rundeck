@@ -34,6 +34,7 @@ webrealms{
         Test.urlpattern='/test/*'
         Api.urlpattern='/api/*'
         Static.urlpattern='/static/*'
+        Assets.urlpattern='/assets/*'
         all{
             urlpattern='/*'
             authconstraint{

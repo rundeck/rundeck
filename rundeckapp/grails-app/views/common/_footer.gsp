@@ -7,6 +7,3 @@
     <g:link controller="menu" action="licenses">Licenses</g:link>
 
     <span class="version">${grailsApplication.metadata['build.ident']}</span>
-<g:if test="${grails.util.Environment.current==grails.util.Environment.DEVELOPMENT}">
-    <g:timerSummary/>
-</g:if>
