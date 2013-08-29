@@ -1,8 +1,11 @@
 import com.dtolabs.rundeck.core.authorization.Attribute
+import grails.test.mixin.TestFor
+import org.grails.plugins.metricsweb.MetricService
 import rundeck.ScheduledExecution
 import rundeck.services.FrameworkService
 
-class FrameworkServiceTests extends GroovyTestCase {
+@TestFor(FrameworkService)
+class FrameworkServiceTests  {
 
     Properties props1
     void setUp(){
@@ -60,7 +63,7 @@ class FrameworkServiceTests extends GroovyTestCase {
             def m1 = testService.parseOptsFromString("-test 1")
             assertNotNull(m1)
             assertTrue(m1 instanceof Map<String, String>)
-            assertLength(1, m1)
+            assertEquals(1, m1.size())
             assertNotNull(m1['test'])
             assertEquals("1", m1['test'])
         }
@@ -109,7 +112,7 @@ class FrameworkServiceTests extends GroovyTestCase {
         def m1 = testService.parseOptsFromString("-test -blah")
         assertNotNull(m1)
         assertTrue(m1 instanceof Map<String, String>)
-        assertLength(1, m1)
+        assertEquals(1, m1.size())
         assertNotNull(m1['test'])
         assertEquals("-blah", m1['test'])
     }
@@ -118,13 +121,18 @@ class FrameworkServiceTests extends GroovyTestCase {
         def m1 = testService.parseOptsFromArray(["-test","-blah"] as String[])
         assertNotNull(m1)
         assertTrue(m1 instanceof Map<String, String>)
-        assertLength(1, m1)
+        assertEquals(1, m1.size())
         assertNotNull(m1['test'])
         assertEquals("-blah", m1['test'])
     }
 
     void testAuthorizeProjectJobAll(){
         FrameworkService test= new FrameworkService();
+        def mcontrol = mockFor(MetricService, false)
+        mcontrol.demand.withTimer() { String argString, Closure clos ->
+            clos.call()
+        }
+        test.metricService = mcontrol.createMock()
         test:{
             //single authorization is true
             ScheduledExecution job = new ScheduledExecution(jobName: 'name1',groupPath:'blah/blee')
@@ -146,6 +154,15 @@ class FrameworkServiceTests extends GroovyTestCase {
             tfwk.getAuthorizationMgr= { return [ evaluate:evalClos] }
             assertTrue(test.authorizeProjectJobAll(tfwk,job,['test'],'testProject'))
         }
+    }
+
+    void testAuthorizeProjectJobAllSingleAuthFalse() {
+        FrameworkService test = new FrameworkService();
+        def mcontrol = mockFor(MetricService, false)
+        mcontrol.demand.withTimer() { String argString, Closure clos ->
+            clos.call()
+        }
+        test.metricService = mcontrol.createMock()
         test:{
             //single authorization is false
             ScheduledExecution job = new ScheduledExecution(jobName: 'name1',groupPath:'blah/blee')
@@ -167,6 +184,15 @@ class FrameworkServiceTests extends GroovyTestCase {
             tfwk.getAuthorizationMgr= { return [ evaluate:evalClos] }
             assertFalse(test.authorizeProjectJobAll(tfwk,job,['test'],'testProject'))
         }
+    }
+
+    void testAuthorizeProjectJobAllMultipleAuthFalse() {
+        FrameworkService test = new FrameworkService();
+        def mcontrol = mockFor(MetricService, false)
+        mcontrol.demand.withTimer() { String argString, Closure clos ->
+            clos.call()
+        }
+        test.metricService = mcontrol.createMock()
         test:{
             //one of multiple authorization is false
             ScheduledExecution job = new ScheduledExecution(jobName: 'name1',groupPath:'blah/blee')
@@ -188,6 +214,15 @@ class FrameworkServiceTests extends GroovyTestCase {
             tfwk.getAuthorizationMgr= { return [ evaluate:evalClos] }
             assertFalse(test.authorizeProjectJobAll(tfwk,job,['test'],'testProject'))
         }
+    }
+
+    void testAuthorizeProjectJobAllAllMultipleAuthFalse() {
+        FrameworkService test = new FrameworkService();
+        def mcontrol = mockFor(MetricService, false)
+        mcontrol.demand.withTimer() { String argString, Closure clos ->
+            clos.call()
+        }
+        test.metricService = mcontrol.createMock()
         test:{
             //all of multiple authorization is false
             ScheduledExecution job = new ScheduledExecution(jobName: 'name1',groupPath:'blah/blee')
@@ -209,6 +244,15 @@ class FrameworkServiceTests extends GroovyTestCase {
             tfwk.getAuthorizationMgr= { return [ evaluate:evalClos] }
             assertFalse(test.authorizeProjectJobAll(tfwk,job,['test'],'testProject'))
         }
+    }
+
+    void testAuthorizeProjectJobAllAllMultipleAuthTrue() {
+        FrameworkService test = new FrameworkService();
+        def mcontrol = mockFor(MetricService, false)
+        mcontrol.demand.withTimer() { String argString, Closure clos ->
+            clos.call()
+        }
+        test.metricService = mcontrol.createMock()
         test:{
             //all of multiple authorization is true
             ScheduledExecution job = new ScheduledExecution(jobName: 'name1',groupPath:'blah/blee')
@@ -233,6 +277,11 @@ class FrameworkServiceTests extends GroovyTestCase {
     }
     void testAuthorizeProjectResources(){
         FrameworkService test= new FrameworkService();
+        def mcontrol = mockFor(MetricService, false)
+        mcontrol.demand.withTimer() { String argString, Closure clos ->
+            clos.call()
+        }
+        test.metricService = mcontrol.createMock()
         test:{
             def expected=[type:'job',name:'name1',group:'blah/blee']
             def tfwk = new Expando()
@@ -256,6 +305,11 @@ class FrameworkServiceTests extends GroovyTestCase {
     }
     void testAuthorizeProjectResource(){
         FrameworkService test= new FrameworkService();
+        def mcontrol = mockFor(MetricService, false)
+        mcontrol.demand.withTimer() { String argString, Closure clos ->
+            clos.call()
+        }
+        test.metricService = mcontrol.createMock()
         test:{
             def expected=[type:'job',name:'name1',group:'blah/blee']
             def tfwk = new Expando()
@@ -274,8 +328,13 @@ class FrameworkServiceTests extends GroovyTestCase {
             assertTrue test.authorizeProjectResource(tfwk, resource, 'test', 'testProject')
         }
     }
-    void testAuthorizeProjectResourceAll(){
+    void testAuthorizeProjectResourceAllSuccess(){
         FrameworkService test= new FrameworkService();
+        def mcontrol = mockFor(MetricService, false)
+        mcontrol.demand.withTimer() { String argString, Closure clos ->
+            clos.call()
+        }
+        test.metricService = mcontrol.createMock()
         test:{
             def expected=[type:'job',name:'name1',group:'blah/blee']
             def tfwk = new Expando()
@@ -297,6 +356,15 @@ class FrameworkServiceTests extends GroovyTestCase {
             def resource = [type: 'job', name: 'name1', group: 'blah/blee']
             assertTrue test.authorizeProjectResourceAll(tfwk, resource, ['test','test2'], 'testProject')
         }
+    }
+
+    void testAuthorizeProjectResourceAllFailure() {
+        FrameworkService test = new FrameworkService();
+        def mcontrol = mockFor(MetricService, false)
+        mcontrol.demand.withTimer() { String argString, Closure clos ->
+            clos.call()
+        }
+        test.metricService = mcontrol.createMock()
         test:{
             def expected=[type:'job',name:'name1',group:'blah/blee']
             def tfwk = new Expando()
@@ -318,6 +386,15 @@ class FrameworkServiceTests extends GroovyTestCase {
             def resource = [type: 'job', name: 'name1', group: 'blah/blee']
             assertFalse test.authorizeProjectResourceAll(tfwk, resource, ['test','test2'], 'testProject')
         }
+    }
+
+    void testAuthorizeProjectResourceAllMixedFailure() {
+        FrameworkService test = new FrameworkService();
+        def mcontrol = mockFor(MetricService, false)
+        mcontrol.demand.withTimer() { String argString, Closure clos ->
+            clos.call()
+        }
+        test.metricService = mcontrol.createMock()
         test:{
             def expected=[type:'job',name:'name1',group:'blah/blee']
             def tfwk = new Expando()
@@ -339,6 +416,15 @@ class FrameworkServiceTests extends GroovyTestCase {
             def resource = [type: 'job', name: 'name1', group: 'blah/blee']
             assertFalse test.authorizeProjectResourceAll(tfwk, resource, ['test','test2'], 'testProject')
         }
+    }
+
+    void testAuthorizeProjectResourceAllAllFailure() {
+        FrameworkService test = new FrameworkService();
+        def mcontrol = mockFor(MetricService, false)
+        mcontrol.demand.withTimer() { String argString, Closure clos ->
+            clos.call()
+        }
+        test.metricService = mcontrol.createMock()
         test:{
             def expected=[type:'job',name:'name1',group:'blah/blee']
             def tfwk = new Expando()
@@ -360,6 +446,15 @@ class FrameworkServiceTests extends GroovyTestCase {
             def resource = [type: 'job', name: 'name1', group: 'blah/blee']
             assertFalse test.authorizeProjectResourceAll(tfwk, resource, ['test','test2'], 'testProject')
         }
+    }
+
+    void testAuthorizeProjectResourceAllMultiSuccess() {
+        FrameworkService test = new FrameworkService();
+        def mcontrol = mockFor(MetricService, false)
+        mcontrol.demand.withTimer() { String argString, Closure clos ->
+            clos.call()
+        }
+        test.metricService = mcontrol.createMock()
         test:{
             def expected=[type:'job',name:'name1',group:'blah/blee']
             def tfwk = new Expando()
@@ -426,8 +521,13 @@ class FrameworkServiceTests extends GroovyTestCase {
             assertEquals expected,test.authResourceForJob('name1',null)
         }
     }
-    void testAuthorizeApplicationResource(){
+    void testAuthorizeApplicationResourceSuccess(){
         FrameworkService test= new FrameworkService();
+        def mcontrol = mockFor(MetricService, false)
+        mcontrol.demand.withTimer() { String argString, Closure clos ->
+            clos.call()
+        }
+        test.metricService = mcontrol.createMock()
         test:{
             def expected=[type:'job',name:'name1',group:'blah/blee']
             def tfwk = new Expando()
@@ -445,6 +545,15 @@ class FrameworkServiceTests extends GroovyTestCase {
             def resource = [type: 'job', name: 'name1', group: 'blah/blee']
             assertTrue test.authorizeApplicationResource(tfwk, resource, 'testAction')
         }
+    }
+
+    void testAuthorizeApplicationResourceFailure() {
+        FrameworkService test = new FrameworkService();
+        def mcontrol = mockFor(MetricService, false)
+        mcontrol.demand.withTimer() { String argString, Closure clos ->
+            clos.call()
+        }
+        test.metricService = mcontrol.createMock()
         test:{
             def expected=[type:'job',name:'name1',group:'blah/blee']
             def tfwk = new Expando()
@@ -463,8 +572,13 @@ class FrameworkServiceTests extends GroovyTestCase {
             assertFalse test.authorizeApplicationResource(tfwk, resource, 'testAction')
         }
     }
-    void testAuthorizeApplicationResourceAll(){
+    void testAuthorizeApplicationResourceAllSuccess(){
         FrameworkService test= new FrameworkService();
+        def mcontrol = mockFor(MetricService, false)
+        mcontrol.demand.withTimer() { String argString, Closure clos ->
+            clos.call()
+        }
+        test.metricService = mcontrol.createMock()
         test:{
             def expected=[type:'job',name:'name1',group:'blah/blee']
             def tfwk = new Expando()
@@ -486,6 +600,15 @@ class FrameworkServiceTests extends GroovyTestCase {
             def resource = [type: 'job', name: 'name1', group: 'blah/blee']
             assertTrue test.authorizeApplicationResourceAll(tfwk, resource, ['testAction','testAction2'])
         }
+    }
+
+    void testAuthorizeApplicationResourceAllFailure() {
+        FrameworkService test = new FrameworkService();
+        def mcontrol = mockFor(MetricService, false)
+        mcontrol.demand.withTimer() { String argString, Closure clos ->
+            clos.call()
+        }
+        test.metricService = mcontrol.createMock()
         test: {
             def expected = [type: 'job', name: 'name1', group: 'blah/blee']
             def tfwk = new Expando()
@@ -507,6 +630,15 @@ class FrameworkServiceTests extends GroovyTestCase {
             def resource = [type: 'job', name: 'name1', group: 'blah/blee']
             assertFalse test.authorizeApplicationResourceAll(tfwk, resource, ['testAction', 'testAction2'])
         }
+    }
+
+    void testAuthorizeApplicationResourceAllMultiMixed() {
+        FrameworkService test = new FrameworkService();
+        def mcontrol = mockFor(MetricService, false)
+        mcontrol.demand.withTimer() { String argString, Closure clos ->
+            clos.call()
+        }
+        test.metricService = mcontrol.createMock()
         test: {
             def expected = [type: 'job', name: 'name1', group: 'blah/blee']
             def tfwk = new Expando()
@@ -528,6 +660,15 @@ class FrameworkServiceTests extends GroovyTestCase {
             def resource = [type: 'job', name: 'name1', group: 'blah/blee']
             assertFalse test.authorizeApplicationResourceAll(tfwk, resource, ['testAction', 'testAction2'])
         }
+    }
+
+    void testAuthorizeApplicationResourceAllMultiFail() {
+        FrameworkService test = new FrameworkService();
+        def mcontrol = mockFor(MetricService, false)
+        mcontrol.demand.withTimer() { String argString, Closure clos ->
+            clos.call()
+        }
+        test.metricService = mcontrol.createMock()
         test: {
             def expected = [type: 'job', name: 'name1', group: 'blah/blee']
             def tfwk = new Expando()
@@ -549,6 +690,15 @@ class FrameworkServiceTests extends GroovyTestCase {
             def resource = [type: 'job', name: 'name1', group: 'blah/blee']
             assertFalse test.authorizeApplicationResourceAll(tfwk, resource, ['testAction', 'testAction2'])
         }
+    }
+
+    void testAuthorizeApplicationResourceAllMultiSuccess() {
+        FrameworkService test = new FrameworkService();
+        def mcontrol = mockFor(MetricService, false)
+        mcontrol.demand.withTimer() { String argString, Closure clos ->
+            clos.call()
+        }
+        test.metricService = mcontrol.createMock()
         test: {
             def expected = [type: 'job', name: 'name1', group: 'blah/blee']
             def tfwk = new Expando()
@@ -574,6 +724,11 @@ class FrameworkServiceTests extends GroovyTestCase {
 
     void testAuthorizeApplicationResourceType() {
         FrameworkService test = new FrameworkService();
+        def mcontrol = mockFor(MetricService, false)
+        mcontrol.demand.withTimer() { String argString, Closure clos ->
+            clos.call()
+        }
+        test.metricService = mcontrol.createMock()
         test: {
             def expected = [type: 'resource', kind:'aType']
             def tfwk = new Expando()
@@ -591,8 +746,13 @@ class FrameworkServiceTests extends GroovyTestCase {
             assertTrue test.authorizeApplicationResourceType(tfwk, 'aType', 'testAction')
         }
     }
-    void testAuthorizeApplicationResourceTypeAll() {
+    void testAuthorizeApplicationResourceTypeAllSuccess() {
         FrameworkService test = new FrameworkService();
+        def mcontrol = mockFor(MetricService, false)
+        mcontrol.demand.withTimer() { String argString, Closure clos ->
+            clos.call()
+        }
+        test.metricService = mcontrol.createMock()
         test: {
             def expected = [type: 'resource', kind:'aType']
             def tfwk = new Expando()
@@ -613,6 +773,15 @@ class FrameworkServiceTests extends GroovyTestCase {
             tfwk.getAuthorizationMgr = { return [evaluate: evalClos] }
             assertTrue test.authorizeApplicationResourceTypeAll(tfwk, 'aType', ['testAction','testAction2'])
         }
+    }
+
+    void testAuthorizeApplicationResourceTypeAllFailure() {
+        FrameworkService test = new FrameworkService();
+        def mcontrol = mockFor(MetricService, false)
+        mcontrol.demand.withTimer() { String argString, Closure clos ->
+            clos.call()
+        }
+        test.metricService = mcontrol.createMock()
         test: {
             def expected = [type: 'resource', kind:'aType']
             def tfwk = new Expando()
@@ -633,6 +802,15 @@ class FrameworkServiceTests extends GroovyTestCase {
             tfwk.getAuthorizationMgr = { return [evaluate: evalClos] }
             assertFalse test.authorizeApplicationResourceTypeAll(tfwk, 'aType', ['testAction','testAction2'])
         }
+    }
+
+    void testAuthorizeApplicationResourceTypeAllMultiFailure() {
+        FrameworkService test = new FrameworkService();
+        def mcontrol = mockFor(MetricService, false)
+        mcontrol.demand.withTimer() { String argString, Closure clos ->
+            clos.call()
+        }
+        test.metricService = mcontrol.createMock()
         test: {
             def expected = [type: 'resource', kind:'aType']
             def tfwk = new Expando()
@@ -653,6 +831,15 @@ class FrameworkServiceTests extends GroovyTestCase {
             tfwk.getAuthorizationMgr = { return [evaluate: evalClos] }
             assertFalse test.authorizeApplicationResourceTypeAll(tfwk, 'aType', ['testAction','testAction2'])
         }
+    }
+
+    void testAuthorizeApplicationResourceTypeAllMixedFailure() {
+        FrameworkService test = new FrameworkService();
+        def mcontrol = mockFor(MetricService, false)
+        mcontrol.demand.withTimer() { String argString, Closure clos ->
+            clos.call()
+        }
+        test.metricService = mcontrol.createMock()
         test: {
             def expected = [type: 'resource', kind:'aType']
             def tfwk = new Expando()
@@ -673,6 +860,15 @@ class FrameworkServiceTests extends GroovyTestCase {
             tfwk.getAuthorizationMgr = { return [evaluate: evalClos] }
             assertFalse test.authorizeApplicationResourceTypeAll(tfwk, 'aType', ['testAction','testAction2'])
         }
+    }
+
+    void testAuthorizeApplicationResourceTypeAllMultiSuccess() {
+        FrameworkService test = new FrameworkService();
+        def mcontrol = mockFor(MetricService, false)
+        mcontrol.demand.withTimer() { String argString, Closure clos ->
+            clos.call()
+        }
+        test.metricService = mcontrol.createMock()
         test: {
             def expected = [type: 'resource', kind:'aType']
             def tfwk = new Expando()

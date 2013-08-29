@@ -8,6 +8,7 @@ import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import groovy.mock.interceptor.MockFor
 import org.codehaus.groovy.grails.commons.ConfigurationHolder
+import org.grails.plugins.metricsweb.MetricService
 import rundeck.ScheduledExecution
 import rundeck.User
 import rundeck.Workflow
@@ -1121,6 +1122,10 @@ class ExecutionServiceTests  {
 
     private ExecutionService setupCleanupService(){
         def testService = new ExecutionService()
+        def mcontrol = mockFor(MetricService, true)
+        mcontrol.demand.markMeter(1..1) { argString ->
+        }
+        testService.metricService = mcontrol.createMock()
 
         def fcontrol = mockFor(FrameworkService, true)
         fcontrol.demand.getFrameworkNodeName(2..2) {

@@ -46,6 +46,7 @@ class FrameworkController  {
     FrameworkService frameworkService
     ExecutionService executionService
     UserService userService
+    def metricService
     // the delete, save and update actions only
     // accept POST requests
     def static allowedMethods = [
@@ -512,7 +513,7 @@ class FrameworkController  {
      */
 
     def createProjectPost() {
-        metricMeterMark(actionName)
+        metricService.markMeter(actionName)
         //only attempt project create if form POST is used
         def prefixKey = 'plugin'
         def project = params.project

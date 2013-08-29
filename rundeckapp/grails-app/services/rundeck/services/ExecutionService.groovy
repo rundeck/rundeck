@@ -1,6 +1,5 @@
 package rundeck.services
 
-import com.codahale.metrics.MetricRegistry
 import com.dtolabs.rundeck.app.support.ExecutionContext
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
@@ -32,7 +31,6 @@ import com.dtolabs.rundeck.execution.ExecutionItemFactory
 import com.dtolabs.rundeck.execution.JobExecutionItem
 import com.dtolabs.rundeck.execution.JobReferenceFailureReason
 import com.dtolabs.rundeck.server.authorization.AuthConstants
-import com.codahale.metrics.Meter
 import org.hibernate.StaleObjectStateException
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
@@ -68,6 +66,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def String defaultLogLevel
 
     def ApplicationContext applicationContext
+    def metricService
 
     def listLastExecutionsPerProject(Framework framework, int max=5){
         def projects = frameworkService.projects(framework).collect{ it.name }
@@ -442,7 +441,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         found.each { Execution e ->
             saveExecutionState(e.scheduledExecution?.id, e.id, [status: String.valueOf(false), dateCompleted: new Date(), cancelled: true], null)
             log.error("Stale Execution cleaned up: [${e.id}]")
-            metricMeterMark('executionCleanupMeter')
+            metricService.markMeter('executionCleanupMeter')
         }
     }
 
@@ -525,7 +524,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * starts an execution in a separate thread, returning a map of [thread:Thread, loghandler:LogHandler]
      */
     def Map executeAsyncBegin(Framework framework, Execution execution, ScheduledExecution scheduledExecution=null, Map extraParams = null, Map extraParamsExposed = null){
-        metricMeterMark('executionStartMeter')
+        metricService.markMeter('executionStartMeter')
         execution.refresh()
         def ExecutionLogWriter loghandler= loggingService.openLogWriter(execution,
                                                                           logLevelForString(execution.loglevel),
@@ -534,9 +533,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         execution.outputfilepath= loghandler.filepath?.getAbsolutePath()
         execution.save(flush:true)
         if(execution.scheduledExecution){
-            metricMeterMark('executionJobStartMeter')
+            metricService.markMeter('executionJobStartMeter')
         }else{
-            metricMeterMark('executionAdhocStartMeter')
+            metricService.markMeter('executionAdhocStartMeter')
         }
         try{
             def jobcontext=exportContextForExecution(execution)
@@ -790,7 +789,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if(!thread.isSuccessful() ){
             Throwable exc = thread.getThrowable()
             def errmsgs = []
-            metricMeterMark('executionFailureMeter')
+            metricService.markMeter('executionFailureMeter')
 
             if (exc && (exc instanceof com.dtolabs.rundeck.core.NodesetFailureException
                 || exc instanceof com.dtolabs.rundeck.core.NodesetEmptyException)) {
@@ -816,7 +815,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
 
         }else{
-            metricMeterMark('executionSuccessMeter')
+            metricService.markMeter('executionSuccessMeter')
             log.info("Execution successful: " + execMap.execution.id )
         }
         sysThreadBoundOut.removeThreadStream()
@@ -828,7 +827,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     def abortExecution(ScheduledExecution se, Execution e, String user, final def framework, String killAsUser=null
     ){
-        metricMeterMark('executionAbortMeter')
+        metricService.markMeter('executionAbortMeter')
         def eid=e.id
         def dateCompleted = e.dateCompleted
         e.discard()
@@ -1797,7 +1796,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             def WorkflowExecutionService service = executionContext.getFramework().getWorkflowExecutionService()
 
-            def wresult = withTimer('runJobReference'){
+            def wresult = metricService.withTimer('runJobReference'){
                 service.getExecutorForItem(newExecItem).executeWorkflow(newContext, newExecItem)
             }
 
