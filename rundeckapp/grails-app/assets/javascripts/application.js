@@ -1,6 +1,6 @@
 //= require jquery
 //= require bootstrap
-//= require prototype-1.7.0.0
+//= require prototype
 
 var Ajax;
 if (Ajax && (Ajax != null)) {
