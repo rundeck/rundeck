@@ -117,12 +117,12 @@ function doCreateProject(){
             <g:set var="adminauth" value="${auth.resourceAllowedTest(type:'project',name:session.project,action:[AuthConstants.ACTION_ADMIN,AuthConstants.ACTION_READ],context:'application')}"/>
             <g:ifPageProperty name='meta.tabpage'>
                 <g:ifPageProperty name='meta.tabpage' equals='configure'>
-                    <g:set var="cfgselected" value="selected"/>
+                    <g:set var="cfgselected" value="active"/>
                 </g:ifPageProperty>
             </g:ifPageProperty>
             <g:if test="${adminauth}">
-            <li>
-                <g:link controller="menu" action="admin" class=" toptab ${cfgselected?:''}"><g:message code="gui.menu.Admin"/></g:link>
+            <li class="${cfgselected ?: ''}">
+                <g:link controller="menu" action="admin" ><g:message code="gui.menu.Admin"/></g:link>
             </li>
                 <!-- --></g:if><!--
         --></g:if><!--
