@@ -110,3 +110,5 @@ rundeck.metrics.enabled=true
 rundeck.metrics.jmxEnabled=true
 rundeck.metrics.requestFilterEnabled=true
 rundeck.metrics.servletUrlPattern='/metrics/*'
+
+grails.plugins.twitterbootstrap.fixtaglib = true
