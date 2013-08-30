@@ -1,21 +1,8 @@
 //= require jquery
 //= require bootstrap
 //= require prototype
-
-var Ajax;
-if (Ajax && (Ajax != null)) {
-	Ajax.Responders.register({
-	  onCreate: function() {
-        if($('spinner') && Ajax.activeRequestCount>0)
-          Effect.Appear('spinner',{duration:0.5,queue:'end'});
-	  },
-	  onComplete: function() {
-        if($('spinner') && Ajax.activeRequestCount==0)
-          Effect.Fade('spinner',{duration:0.5,queue:'end'});
-	  }
-	});
-}
-
+//= require_self
+//= require menus
 
 
 function selectTopTab(name){
@@ -144,9 +131,14 @@ var Expander = {
         if (content) {
             value=!Element.visible(content);
         }else if(icnh){
-            var icn = icnh.down("img");
-            if(icn){
-                value=icn.src == AppImages.disclosure;
+            var icn = icnh.down('.glyphicon');
+            if (icn) {
+                value = icn.hasClassName('glyphicon-chevron-down');
+            } else {
+                icn = icnh.down("img");
+                if(icn){
+                    value=icn.src == AppImages.disclosure;
+                }
             }
         }
         Expander.setOpen(elem,contain,value,expression);
@@ -216,9 +208,20 @@ var Expander = {
             }
         }
         if (icnh) {
-            var icn = icnh.down("img");
-            if(icn){
-                icn.src = value ? AppImages.disclosureOpen : AppImages.disclosure;
+            var icn = icnh.down('.glyphicon');
+            if (icn) {
+                if (value) {
+                    icn.addClassName('glyphicon-chevron-down');
+                    icn.removeClassName('glyphicon-chevron-right');
+                } else {
+                    icn.addClassName('glyphicon-chevron-right');
+                    icn.removeClassName('glyphicon-chevron-down');
+                }
+            } else {
+                 icn = icnh.down("img");
+                if(icn){
+                    icn.src = value ? AppImages.disclosureOpen : AppImages.disclosure;
+                }
             }
         }
     },
@@ -968,10 +971,11 @@ function onlychars(regex, e) {
     return !(e && kCode != 0 && !String.fromCharCode(kCode).match(regex));
 }
 function fireWhenReady(elem,func){
-    if($(elem)){
+    if(jQuery('#'+elem)){
         func();
     }else{
-        Event.observe(document,'dom:loaded', function(e){func();});
+        jQuery.ready(func);
+//        Event.observe(document,'dom:loaded', function(e){func();});
     }
 }
 
