@@ -1,98 +1,177 @@
-// Spacelab 3.0.0
+// Flatly 3.0.0
 // Bootswatch
 // -----------------------------------------------------
 
-@import url("//fonts.googleapis.com/css?family=Open+Sans:400italic,700italic,400,700");
-
-.btn-shadow(@color) {
-	#gradient > .vertical-three-colors(lighten(@color, 15%), @color, 50%, darken(@color, 4%));
-	border: 1px solid darken(@color, 10%);
-}
+@import url("//fonts.googleapis.com/css?family=Lato:400,700,900,400italic");
 
 // Navbar =====================================================================
 
-.navbar {
-
-	.btn-shadow(@navbar-default-bg);
-	text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3);
-
-	&-inverse {
-		.btn-shadow(@navbar-inverse-bg);
-		text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.3);
-	}
-
-	&-nav > li > a,
-	&-nav > li > a:hover {
-		padding-top: @navbar-padding-vertical + 2px;
-		padding-bottom: @navbar-padding-vertical - 2px;
-		.transition(color ease-in-out .2s);
-	}
-	
-	&-brand,
-	&-brand:hover {
-		.transition(color ease-in-out .2s);
-	}
-
-	.caret,
-	.caret:hover {
-		.transition(border-color ease-in-out .2s);
-	}
-
-	.dropdown-menu {
-		text-shadow: none;
-	}
-}
-
 // Buttons ====================================================================
 
-.btn {
-	text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.3);
+.btn:active {
+	.box-shadow(none);
 }
 
-.btn-default,
-.btn-default:hover {
-	.btn-shadow(@btn-default-bg);
-}
-
-.btn-primary,
-.btn-primary:hover {
-	.btn-shadow(@btn-primary-bg);
-}
-
-.btn-success,
-.btn-success:hover {
-	.btn-shadow(@btn-success-bg);
-}
-
-.btn-info,
-.btn-info:hover {
-	.btn-shadow(@btn-info-bg);
-}
-
-.btn-warning,
-.btn-warning:hover {
-	.btn-shadow(@btn-warning-bg);
-}
-
-.btn-danger,
-.btn-danger:hover {
-	.btn-shadow(@btn-danger-bg);
+.btn-group.open .dropdown-toggle {
+	.box-shadow(none);
 }
 
 // Typography =================================================================
 
-h1, h2, h3, h4, h5, h6 {
-	color: @gray-darker;
+.text-primary {
+	color: @brand-primary;
+}
+
+.text-success {
+	color: @brand-success;
+}
+
+.text-danger {
+	color: @brand-danger;
+}
+
+.text-warning {
+	color: @brand-warning;
+}
+
+.text-info {
+	color: @brand-info;
 }
 
 // Tables =====================================================================
 
+.table {
+
+	tr.success,
+	tr.warning,
+	tr.danger {
+		color: #fff;
+	}
+}
+
 // Forms ======================================================================
+
+.form-control,textarea.form-control,
+input[type="text"],
+input[type="password"],
+input[type="datetime"],
+input[type="datetime-local"],
+input[type="date"],
+input[type="month"],
+input[type="time"],
+input[type="week"],
+input[type="number"],
+input[type="email"],
+input[type="url"],
+input[type="search"],
+input[type="tel"],
+input[type="color"],
+.uneditable-input {
+	border-width: 2px;
+	.box-shadow(none);
+
+	&:focus {
+		.box-shadow(none);
+	}
+}
+
+.has-warning {
+	.help-block,
+	.control-label {
+		color: @brand-warning;
+	}
+
+	.form-control,
+	.form-control:focus {
+		border: 2px solid @brand-warning;
+	}
+}
+
+.has-error {
+	.help-block,
+	.control-label {
+		color: @brand-danger;
+	}
+
+	.form-control,
+	.form-control:focus {
+		border: 2px solid @brand-danger;
+	}
+}
+
+.has-success {
+	.help-block,
+	.control-label {
+		color: @brand-success;
+	}
+
+	.form-control,
+	.form-control:focus {
+		border: 2px solid @brand-success;
+	}
+}
 
 // Navs =======================================================================
 
+.pagination {
+	
+	a {
+		color: #fff;
+
+		&:hover {
+			color: @text-color;
+		}
+	}
+
+	.disabled {
+		&>a,
+		&>a:hover,
+		&>a:focus,
+		&>span {
+			background-color: lighten(@brand-success, 15%);
+		}
+	}
+}
+
+.pager {
+	a {
+		color: #fff;
+		&:hover {
+			color: @text-color;
+		}
+	}
+
+	.disabled {
+		&>a,
+		&>a:hover,
+		&>a:focus,
+		&>span {
+			background-color: lighten(@brand-success, 15%);
+		}
+	}
+}
+
 // Indicators =================================================================
+
+.alert {
+
+	a,
+	.alert-link {
+		color: #fff;
+		text-decoration: underline;
+	}
+}
 
 // Progress bars ==============================================================
 
+.progress {
+	height: 10px;
+	.box-shadow(none);
+}
+
 // Containers =================================================================
+
+.well {
+	.box-shadow(none);
+	border-width: 0;
+}

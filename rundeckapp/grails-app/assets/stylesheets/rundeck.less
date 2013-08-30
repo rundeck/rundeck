@@ -1,18 +1,108 @@
   /*
   *= require_self
-  *= require non_responsive
+  *= require rundeck1
   */
-@import "bootstrap.less";
-@import "bootswatch.less";
+  @import "bootstrap.less";
+  @import "bootswatch.less";
 
- body{
-   padding-bottom: ((32px + @navbar-margin-bottom));
- }
-.footer{
-  position: fixed;
-  bottom: 0;
-  height: 32px;
-  margin-top: @navbar-margin-bottom;
-  font-size: @font-size-small;
-  color: @gray-light;
+  body {
+    //   padding-bottom: ((32px + @navbar-margin-bottom));
+  }
+
+    /* Reset the container */
+  .container {
+    max-width: none !important;
+    /*width: 970px;*/
+  }
+  .footer {
+    margin-top: @navbar-margin-bottom;
+    font-size: @font-size-small;
+    color: @gray-light;
+    position: relative;
+    clear: both;
+    padding: 10px 20px;
+  }
+
+  .expandComponentHolder  > div > span.expandComponentControl.jobgroupexpand span.foldertoggle{
+      .glyphicon();
+      &:before {
+        content: "\e117";
+      }
+  }
+  .expandComponentHolder.expanded  > div > span.expandComponentControl.jobgroupexpand span.foldertoggle{
+      .glyphicon();
+      &:before {
+        content: "\e118";
+      }
+  }
+
+  .expandComponentControl.toggle .glyphicon{
+  }
+
+  // Button variants
+  // -------------------------
+  // Easily pump out default styles, as well as :hover, :focus, :active,
+  // and disabled options for all buttons
+.textbtn-variant( @color ; @background-color ; @background-higlight) {
+    color: @color ;
+    background-color: @background-color ;
+
+  &:hover,
+  &:focus,
+  &:active,
+  &.active,
+   {
+    color: darken(@color, 8%);
+    background-color: @background-higlight;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
+  &:active,
+  &.active,
+  .open .dropdown-toggle& {
+    background-image: none;
+  }
+
+  &.disabled,
+  &[disabled],
+  fieldset[disabled] & {
+    &,
+    &:hover,
+    &:focus,
+    &:active,
+    &.active {
+      color: lighten(@color, 8%);
+    }
+  }
+
+  &.query.textbtn {
+    border: 1px solid darken(@color, 12%);
+    display: inline-block;
+    margin: 5px 5px 5px 0;
+  }
+
+}
+.textbtn-default {
+  .textbtn-variant(lighten(@brand-primary, 30%),#fff,lighten(@brand-primary, 70%));
+}
+
+.textbtn-primary {
+  .textbtn-variant(@brand-primary,#fff,lighten(@brand-primary, 50%));
+}
+// Warning appears as orange
+.textbtn-warning {
+  .textbtn-variant(@brand-warning,#fff,lighten(@brand-warning, 50%));
+}
+// Danger and error appear as red
+.textbtn-danger {
+  .textbtn-variant(@brand-danger,#fff,lighten(@brand-danger, 50%));
+}
+// Success appears as green
+.textbtn-success {
+  .textbtn-variant(@brand-success,#fff,lighten(@brand-success, 50%));
+}
+// Info appears as blue-green
+.textbtn-info {
+  .textbtn-variant(@brand-info,#fff,lighten(@brand-info, 50%));
 }
