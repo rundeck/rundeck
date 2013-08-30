@@ -73,6 +73,6 @@
             </div>
 </div>
 
-<div style="margin:10px; text-align:right;">
-    <span class="action button small cancel_add_step_type" >Cancel</span>
+<div style="margin:10px; ">
+    <span class="btn btn-default btn-sm cancel_add_step_type" >Cancel</span>
 </div>

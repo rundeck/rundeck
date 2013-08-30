@@ -16,7 +16,7 @@
     <div class="queryTable">
         <g:if test="${!params.nofilters}">
         <div id="${rkey}filter" >
-            <g:form action="index">
+            <g:form action="index" class="form-inline" role="form">
                 <g:if test="${params.compact}">
                     <g:hiddenField name="compact" value="${params.compact}"/>
                 </g:if>
@@ -32,16 +32,12 @@
                             alt=""/> RSS</a>
                 </g:ifServletContextAttribute>
                 <g:render template="/common/queryFilterManager" model="${[rkey:rkey,filterName:filterName,filterset:filterset,update:rkey+'evtsForm',deleteActionSubmitRemote:[controller:'reports',action:'deleteFilter',params:[fragment:true]], storeActionSubmit:'storeFilter']}"/>
-                <div class="filter">
-                    <g:hiddenField name="max" value="${max}"/>
-                        <g:render template="baseFiltersPlain" model="${[params: params, query: query]}"/>
-                        <g:render template="recentDateFiltersPlain" model="${[params:params,query:query]}"/>
-                        <g:render template="advDateFiltersPlain" model="${[params:params,query:query]}"/>
+                <g:hiddenField name="max" value="${max}"/>
+                <g:render template="baseFiltersPlain" model="${[params: params, query: query]}"/>
+                <g:render template="recentDateFiltersPlain" model="${[params:params,query:query]}"/>
+                <g:render template="advDateFiltersPlain" model="${[params:params,query:query]}"/>
 
-                    <span style="text-align:right;">
-                        <g:submitButton value="Filter" name="filterAll"/>
-                    </span>
-                </div>
+                <g:submitButton value="Filter" name="filterAll" class="btn btn-default btn-sm"/>
             </g:form>
         </div>
         </g:if>

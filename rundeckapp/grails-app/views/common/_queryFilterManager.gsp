@@ -25,45 +25,50 @@
     <g:set var="rkey" value="${g.rkey()}" />
 </g:if>
 <g:if test="${!filterName}">
-    <span class="prompt action floatr" style="${wdgt.styleVisible(unless: params.saveFilter)}" onclick="['${rkey}fsave','${rkey}fsavebtn'].each(Element.toggle);" id="${rkey}fsavebtn" title="Click to save this filter with a name">
+    <span class="textbtn textbtn-success floatr" style="${wdgt.styleVisible(unless: params.saveFilter)}" onclick="['${rkey}fsave','${rkey}fsavebtn'].each(Element.toggle);" id="${rkey}fsavebtn" title="Click to save this filter with a name">
         save this filter&hellip;
     </span>
     <div id="${rkey}fsave" style="${params.saveFilter ? '' : 'display:none;'} " class="filterdef clear">
-        <span class="prompt">Save Filter</span>
-        <div><label for="existsFilterName">Filter:</label>
-            <g:select
+        <p class="prompt">Save Filter</p>
+        <div class="form-group">
+            <label for="existsFilterName">Filter:</label>
+            <g:select class="form-control input-sm"
                 name="existsFilterName" optionKey="name" optionValue="name" from="${filterset?filterset.sort({a,b->a.name.compareTo(b.name)}):filterset}" value="${filterName}" noSelection="['':'-New-']"
                 onchange="if(this.value){\$('newFilterInput').hide();}else{\$('newFilterInput').show();}"/>
         </div>
-        <div id="newFilterInput"><label for="newFilterName">Name:</label> <g:textField name="newFilterName"/></div>
+        <div id="newFilterInput" class="form-group">
+            <label for="newFilterName">Name:</label>
+            <g:textField name="newFilterName" class="form-control input-sm"/>
+        </div>
 
-        <input type="button" onclick="['${rkey}fsave','${rkey}fsavebtn'].each(Element.toggle); return false;" value="Cancel"/>
+        <input type="button" onclick="['${rkey}fsave','${rkey}fsavebtn'].each(Element.toggle); return false;" value="Cancel" class="btn btn-default btn-sm"/>
         %{--<g:actionSubmit value="Save Filter" name="nodesForm" url="[controller:'framework',action:'storeNodeFilter',params:[fragment:true]]" update="${rkey}nodeForm"/>--}%
         
         <g:if test="${storeActionSubmit}">
-            <g:actionSubmit value="Save Filter" action="${storeActionSubmit}" />
+            <g:actionSubmit value="Save Filter" action="${storeActionSubmit}" class="btn btn-primary btn-sm" />
         </g:if>
         <g:elseif test="${storeActionSubmitRemote}">
-            <g:submitToRemote value="Save Filter" url="${storeActionSubmitRemote}" update="${update}"/>
+            <g:submitToRemote value="Save Filter" url="${storeActionSubmitRemote}" update="${update}" class="btn btn-primary btn-sm"/>
         </g:elseif>
     </div>
 </g:if>
 <g:if test="${filterName}">
     <div class="filterdef saved clear">
         <span class="prompt">${filterName.encodeAsHTML()}</span>
-        <span class="prompt action floatr" onclick="['${rkey}fdel','${rkey}fdelbtn'].each(Element.toggle);" id="${rkey}fdelbtn" title="Click to delete this saved filter">
+        <span class="textbtn textbtn-danger pull-right" onclick="['${rkey}fdel','${rkey}fdelbtn'].each(Element.toggle);" id="${rkey}fdelbtn" title="Click to delete this saved filter">
+            <b class="glyphicon glyphicon-remove"></b>
             delete&hellip;
         </span>
         <div id="${rkey}fdel" style="display:none">
             <g:hiddenField name="delFilterName" value="${filterName}"/>
             <span class="confirmMessage">Are you sure you want to delete this filter?</span>
             <input type="button" onclick="['${rkey}fdel','${rkey}fdelbtn'].each(Element.toggle);
-            return false;" value="No"/>
+            return false;" value="No" class="btn btn-default btn-sm"/>
             <g:if test="${deleteActionSubmit}">
-                <g:actionSubmit  action="${deleteActionSubmit}" value="Yes" />
+                <g:actionSubmit  action="${deleteActionSubmit}" value="Yes" class="btn btn-danger btn-sm"/>
             </g:if>
             <g:elseif test="${deleteActionSubmitRemote}">
-                <g:submitToRemote value="Yes" url="${deleteActionSubmitRemote}" update="${update}"/>
+                <g:submitToRemote value="Yes" url="${deleteActionSubmitRemote}" update="${update}" class="btn btn-danger btn-sm"/>
             </g:elseif>
         </div>
     </div>

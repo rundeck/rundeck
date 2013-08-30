@@ -14,7 +14,7 @@ e<html>
 
         <g:if test="${auth.resourceAllowedTest(kind:'user',action:[AuthConstants.ACTION_ADMIN],context:'application')}">
         <span class="buttons">
-            <g:link action="create" class="button textaction">New Profile &hellip;</g:link>
+            <g:link action="create" class="btn btn-default">New Profile &hellip;</g:link>
         </span>
         </g:if>
     </div>

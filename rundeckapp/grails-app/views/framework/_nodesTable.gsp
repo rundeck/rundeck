@@ -7,7 +7,7 @@
     <g:render template="tagsummary" model="${[tagsummary:tagsummary,link:[action:'nodes',controller:'framework',param:'nodeIncludeTags']]}"/>
     </div>
     </g:if>
-    <table cellpadding="0" cellspacing="0" width="100%" id="nodesTable">
+    <table cellpadding="0" cellspacing="0" width="100%" id="nodesTable" class="table">
         <g:if test="${!page || page=='0'}">
             <tr>
                 <th>Name</th>

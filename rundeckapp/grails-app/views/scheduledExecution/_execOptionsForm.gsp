@@ -10,7 +10,7 @@
 </div>
 </g:if>
 <div class="pageBody form">
-    <g:form controller="scheduledExecution" method="post">
+    <g:form controller="scheduledExecution" method="post" action="runJobNow">
         <g:render template="editOptions" model="${[scheduledExecution:scheduledExecution, selectedoptsmap:selectedoptsmap, selectedargstring:selectedargstring,authorized:authorized,jobexecOptionErrors:jobexecOptionErrors, optiondependencies: optiondependencies, dependentoptions: dependentoptions, optionordering: optionordering]}"/>
 
 
@@ -209,10 +209,13 @@
         </g:elseif>
         <div class="buttons" id="formbuttons">
             <g:if test="${!hideCancel}">
-            <g:actionSubmit id="execFormCancelButton" value="Cancel"/>
+            <g:actionSubmit id="execFormCancelButton" value="Cancel" class="btn btn-default"/>
             </g:if>
-            <g:actionSubmit value="Run ${g.message(code:'domain.ScheduledExecution.title')} Now" id="execFormRunButton" class="runbutton"/>
-            <g:checkBox id="followoutputcheck" name="follow" checked="${defaultFollow|| params.follow == 'true'}" value="true"/>
+            <button type="submit"
+                    title="${g.message(code:'domain.ScheduledExecution.title')} Now" id="execFormRunButton" class=" btn btn-primary">
+                <b class="glyphicon glyphicon-play"></b> Run Job Now
+            </button>
+            <g:checkBox id="followoutputcheck" name="follow" checked="${defaultFollow|| params.follow == 'true'}" value="true" class="checkbox checkbox-inline"/>
             <label for="followoutputcheck">
             <g:message code="job.run.watch.output" />
             </label>

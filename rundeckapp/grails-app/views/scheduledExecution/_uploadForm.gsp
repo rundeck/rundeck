@@ -178,7 +178,7 @@
         <span class="prompt">Upload File</span>
         </g:if>
         <g:else>
-            <span class="prompt action" onclick="toggleDisclosure('uploadFormDiv','uploadFormDiv-toggle','${resource(dir:"images",file:"icon-tiny-disclosure.png")}','${resource(dir:"images",file:"icon-tiny-disclosure-open.png")}')">
+            <span class="textbtn textbtn-default" onclick="toggleDisclosure('uploadFormDiv','uploadFormDiv-toggle','${resource(dir:"images",file:"icon-tiny-disclosure.png")}','${resource(dir:"images",file:"icon-tiny-disclosure-open.png")}')">
                 Upload File
                 <img src="${resource(dir:'images',file:'icon-tiny-disclosure'+(errjobs?.size()>0?'-open':'')+'.png')}" id="uploadFormDiv-toggle"/>
             </span>
@@ -243,8 +243,10 @@
             </div>
             <div class="buttons">
                 <div id="uploadFormButtons">
-                    <g:actionSubmit id="createFormCancelButton" value="Cancel"/>
-                    <g:actionSubmit action="upload" value="Upload" id="uploadFormUpload" onclick="['uploadFormButtons','schedUploadSpinner'].each(Element.toggle)" />
+                    <g:actionSubmit id="createFormCancelButton" value="Cancel" class="btn btn-default"/>
+                    <g:actionSubmit action="upload" value="Upload" id="uploadFormUpload" onclick="['uploadFormButtons','schedUploadSpinner'].each(Element.toggle)"
+                        class="btn btn-primary"
+                    />
                 </div>
                 <div id="schedUploadSpinner" class="spinner block" style="display:none;">
                     <img src="${resource(dir:'images',file:'icon-tiny-disclosure-waiting.gif')}" alt="Spinner"/>

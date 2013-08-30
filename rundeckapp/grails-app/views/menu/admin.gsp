@@ -71,7 +71,7 @@
     </div>
 
     Project: <span class="prompt">${session.project.encodeAsHTML()}</span> -
-    <g:link controller="framework" action="editProject" params="[project: session.project]" class="textbtn">
+    <g:link controller="framework" action="editProject" params="[project: session.project]" class="btn btn-default btn-sm">
         <g:message code="gui.menu.ProjectEdit" default="Configure Project"/>
     </g:link>
     <div class="presentation rounded" style="margin-right: 20px;">
@@ -173,9 +173,11 @@
 
                 <div class="buttons">
                     <div id="uploadFormButtons">
-                        <g:actionSubmit id="createFormCancelButton" value="Cancel"/>
+                        <g:actionSubmit id="createFormCancelButton" value="Cancel" class="btn btn-default"/>
                         <g:actionSubmit action="importArchive" value="Import" id="uploadFormUpload"
-                                        onclick="['uploadFormButtons','importUploadSpinner'].each(Element.toggle)"/>
+                                        onclick="['uploadFormButtons','importUploadSpinner'].each(Element.toggle)"
+                            class="btn btn-primary"
+                        />
                     </div>
 
                     <div id="importUploadSpinner" class="spinner block" style="display:none;">

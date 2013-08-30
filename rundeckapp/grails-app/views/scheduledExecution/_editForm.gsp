@@ -1,25 +1,24 @@
 <%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
-<div class="pageTop obs_delete_show" style="display: none;">
-    <span class="welcomeMessage">
-        Delete <g:message code="domain.ScheduledExecution.title"/>
-    </span>
-</div>
 <div class="pageBody ">
     <g:render template="/common/errorFragment"/>
     <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE}">
         <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_DELETE)}">
-            <div id="${ukey}jobDisplayDeleteConf${scheduledExecution.id}" class="confirmBox popout obs_delete_show"
-                 style="display:none; width: 300px; padding:20px; margin: 20px;">
+            <div class="panel panel-danger obs_delete_show" style="display:none; ">
+            <div class="panel-heading">Delete <g:message code="domain.ScheduledExecution.title"/></div>
+            <div id="${ukey}jobDisplayDeleteConf${scheduledExecution.id}" class="panel-body " >
                 <g:form controller="scheduledExecution" action="delete" method="post">
                     <g:hiddenField name="id" value="${scheduledExecution.id}"/>
                     <g:render template="/scheduledExecution/showHead" model="${[scheduledExecution:scheduledExecution, runPage:true]}"/>
-                    <div class="confirmMessage sepT">Really delete this <g:message
-                            code="domain.ScheduledExecution.title"/>?</div>
+                    <p class=" ">Really delete this <g:message
+                            code="domain.ScheduledExecution.title"/>?</p>
                     <div class="buttons primary ">
-                        <input type="submit" value="No" class="behavior_delete_hide"/>
-                        <input type="submit" value="Yes"/>
+                        <button type="submit" class="behavior_delete_hide btn btn-default btn-sm ">
+                            Cancel
+                        </button>
+                        <input type="submit" value="Delete" class="btn btn-danger btn-sm"/>
                     </div>
                 </g:form>
+            </div>
             </div>
         </g:if>
     </auth:resourceAllowed>
@@ -27,28 +26,29 @@
     <g:form controller="scheduledExecution" method="post" onsubmit="if(typeof(validateJobEditForm)=='function'){return validateJobEditForm(this);}">
         <g:render template="edit" model="[scheduledExecution:scheduledExecution, crontab:crontab, command:command,authorized:authorized]"/>
 
-        <div class="buttons primary obs_delete_hide" >
+        <div class="row">
+            <div class="buttons primary col-sm-10" >
 
-            <g:actionSubmit id="editFormCancelButton" value="Cancel"  onclick="if(typeof(jobEditCancelled)=='function'){jobEditCancelled();}"/>
-            <g:actionSubmit value="Save" action="Update"/>
+                <g:actionSubmit id="editFormCancelButton" value="Cancel"  onclick="if(typeof(jobEditCancelled)=='function'){jobEditCancelled();}" class="btn btn-default"/>
+                <g:actionSubmit value="Save" action="Update" class="btn btn-primary "/>
 
+            </div>
+
+            <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE}">
+                <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_DELETE)}">
+                    <div class="  col-sm-2">
+                        <span class="textbtn textbtn-danger pull-right behavior_delete_show"
+                              title="Delete ${g.message(code: 'domain.ScheduledExecution.title')}">
+                            <b class="glyphicon glyphicon-remove-circle"></b>
+                            Delete this Job
+                        </span>
+                    </div>
+                </g:if>
+            </auth:resourceAllowed>
         </div>
 
     </g:form>
     </div>
-    <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE}">
-        <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_DELETE)}">
-            <div>
-                <span class="action textbtn obs_delete_hide behavior_delete_show"
-                      title="Delete ${g.message(code: 'domain.ScheduledExecution.title')}"
-                      >
-                    <img
-                            src="${resource(dir: 'images', file: 'icon-tiny-removex.png')}" alt="edit" width="12px"
-                            height="12px"/> delete this Job</span>
-
-            </div>
-        </g:if>
-    </auth:resourceAllowed>
 </div>
 <g:javascript>
 fireWhenReady('editForm',function(){

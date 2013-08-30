@@ -31,12 +31,7 @@
                     <g:if test="${totalexecs && totalexecs[node.nodename]}">
                         (${totalexecs[node.nodename]})
                     </g:if>
-                    <g:if test="${!session.project}">
-                    <span class="project">
-                        &bull; <span class="action textbtn" onclick="selectProject('${nodedata.project.name.encodeAsJavaScript()}');" title="Select this project">${nodedata.project.name}</span> 
-                    </span>
-                    </g:if>
-                    
+
                     <g:if test="${node.tags}">
                         <span class="nodetags">
                             <g:each var="tag" in="${node.tags.sort()}">

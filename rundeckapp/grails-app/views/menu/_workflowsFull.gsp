@@ -51,13 +51,14 @@
         <tr>
 
             <td style="text-align:left;vertical-align:top;width:200px; ${wdgt.styleVisible(if:filtersOpen)}" id="${rkey}filter" class="wffilter" >
-            <g:form action="jobs" method="get">
+
+            <g:form action="jobs" method="get" class="form">
                 <g:if test="${params.compact}">
                     <g:hiddenField name="compact" value="${params.compact}"/>
                 </g:if>
-                <span class="prompt action obs_filtertoggle">
+                <span class="textbtn textbtn-default obs_filtertoggle">
                     Filter
-                    <img src="${resource(dir:'images',file:'icon-tiny-disclosure-open.png')}" width="12px" height="12px"/>
+                    <b class="glyphicon glyphicon-chevron-down"></b>
                 </span>
                 <g:render template="/common/queryFilterManager" model="${[rkey:rkey,filterName:filterName,filterset:filterset,update:rkey+'wffilterform',deleteActionSubmit:'deleteJobfilter',storeActionSubmit:'storeJobfilter']}"/>
                 
@@ -65,33 +66,36 @@
 
                             <g:hiddenField name="max" value="${max}"/>
                             <g:hiddenField name="offset" value="${offset}"/>
-                        <table class="simpleForm">
                             <g:if test="${params.idlist}">
-                                <tr>
-                                    <td><label for="${rkey}idlist"><g:message code="jobquery.title.idlist"/></label>:</td>
-                                    <td><g:textField name="idlist" id="${rkey}idlist" value="${params.idlist}" /></td>
-                                </tr>
+                                <div class="form-group">
+                                    <label for="${rkey}idlist"><g:message code="jobquery.title.idlist"/></label>:
+                                    <g:textField name="idlist" id="${rkey}idlist" value="${params.idlist}"
+                                                 class="form-control" />
+                                </div>
                             </g:if>
-                            <tr>
-                                <td><label for="${rkey}jobFilter"><g:message code="jobquery.title.jobFilter"/></label>:</td>
-                                <td><g:textField name="jobFilter" id="${rkey}jobFilter" value="${params.jobFilter}" /></td>
-                            </tr>
-                            <tr>
-                                <td><label for="${rkey}groupPath"><g:message code="jobquery.title.groupPath"/></label>:</td>
-                                <td><g:textField name="groupPath" id="${rkey}groupPath" value="${params.groupPath}"/></td>
-                            </tr>
-                            <tr>
-                                <td><label for="${rkey}descFilter"><g:message code="jobquery.title.descFilter"/></label>:</td>
-                                <td><g:textField name="descFilter" id="${rkey}descFilter" value="${params.descFilter}"/></td>
-                            </tr>
+                            <div class="form-group">
+                                <label for="${rkey}jobFilter"><g:message code="jobquery.title.jobFilter"/></label>:
+                                <g:textField name="jobFilter" id="${rkey}jobFilter" value="${params.jobFilter}"
+                                             class="form-control" />
+                            </div>
 
-                            <tr>
-                                <td colspan="2">
-                                    <g:actionSubmit  value="Filter" name="filterAll" controller='menu' action='jobs'  />
-                                    <g:actionSubmit  value="Clear" name="clearFilter" controller='menu' action='jobs' />
-                                </td>
-                            </tr>
-                            </table>
+                            <div class="form-group">
+                                <label for="${rkey}groupPath"><g:message code="jobquery.title.groupPath"/></label>:
+                                <g:textField name="groupPath" id="${rkey}groupPath" value="${params.groupPath}"
+                                             class="form-control"/>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="${rkey}descFilter"><g:message code="jobquery.title.descFilter"/></label>:
+                                <g:textField name="descFilter" id="${rkey}descFilter" value="${params.descFilter}"
+                                             class="form-control"/>
+                            </div>
+
+
+                            <div class="form-group">
+                                    <g:actionSubmit  value="Filter" name="filterAll" controller='menu' action='jobs'  class="btn btn-primary btn-sm"/>
+                                    <g:actionSubmit  value="Clear" name="clearFilter" controller='menu' action='jobs' class="btn btn-default btn-sm"/>
+                            </div>
                 </div>
             </g:form>
 
@@ -102,7 +106,7 @@
     <g:if test="${!params.compact}">
         <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_CREATE}">
         <div class=" floatr" >
-            <g:link controller="scheduledExecution" action="create" class="button ">New <g:message code="domain.ScheduledExecution.title"/>&hellip;</g:link>
+            <g:link controller="scheduledExecution" action="create" class="btn btn-default btn-sm ">New <g:message code="domain.ScheduledExecution.title"/>&hellip;</g:link>
         </div>
         </auth:resourceAllowed>
     </g:if>
@@ -119,12 +123,12 @@
                         <!--<span class="info note">Filter:</span>-->
                     </g:if>
                     <g:if test="${!filterName}">
-                        <span class="prompt action obs_filtersave" id="outsidefiltersave" title="Click to save this filter with a name">
+                        <span class="textbtn textbtn-success obs_filtersave" id="outsidefiltersave" title="Click to save this filter with a name">
                             save this filter&hellip;
                         </span>
                     </g:if></div>
 
-                            <span title="Click to modify filter" class="info textbtn query action obs_filtertoggle"  id='${rkey}filter-toggle'>
+                            <span title="Click to modify filter" class="info textbtn textbtn-default query obs_filtertoggle"  id='${rkey}filter-toggle'>
                                 <g:each in="${wasfiltered.sort()}" var="qparam">
                                     <span class="querykey"><g:message code="jobquery.title.${qparam}"/></span>:
 
@@ -140,7 +144,8 @@
                                     </g:else>
 
                                 </g:each>
-                                <img src="${resource(dir:'images',file:'icon-tiny-disclosure.png')}" width="12px" height="12px"/>
+
+                                <b class="glyphicon glyphicon-chevron-right"></b>
                             </span>
                 </g:if>
                 <g:else>
@@ -148,9 +153,10 @@
                     <span class="prompt"><g:message code="domain.ScheduledExecution.title"/>s (${total})</span>
                     </g:if>
 
-                    <span class="prompt action obs_filtertoggle"  id="${rkey}filter-toggle">
+                    <span class="textbtn textbtn-default obs_filtertoggle"  id="${rkey}filter-toggle">
                         Filter
-                        <img src="${resource(dir:'images',file:'icon-tiny-disclosure'+(wasfiltered?'-open':'')+'.png')}"  width="12px" height="12px"/></span>
+                        <b class="glyphicon glyphicon-chevron-${wasfiltered?'down':'right'}"></b>
+                    </span>
                     <g:if test="${filterset}">
                         <span style="margin-left:10px;">
                             <span class="info note">Choose a Filter:</span>
@@ -182,27 +188,25 @@
                     <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE  }">
                     <div class="floatr" style="padding: 10px">
                         <div>
-                            <span class="action textbtn job_bulk_edit bulk_edit_invoke"><g:message code="bulk.delete" /></span>
+                            <span class="btn btn-danger btn-sm job_bulk_edit bulk_edit_invoke"><g:message code="bulk.delete" /></span>
                         </div>
                         <div class="bulk_edit_controls popout" style="display: none">
                             <div style="border-bottom: 1px solid #aaa;padding-bottom: 4px;">
-                                <span class="action textbtn job_bulk_select_none" ><g:message code="select.none" /></span>
-                                <span class="action textbtn job_bulk_select_all" ><g:message code="select.all" /></span>
-                                <span class="action textbtn job_bulk_edit_hide " style="margin-left: 10px" >
-                                    <g:message code="cancel" />
-                                    <g:img file="icon-tiny-removex-gray.png" width="12px" height="12px" />
-                                </span>
+                                <button type="button" class="close job_bulk_edit_hide " aria-hidden="true">&times;</button>
+                                <span class="btn btn-default btn-sm job_bulk_select_none" ><g:message code="select.none" /></span>
+                                <span class="btn btn-default btn-sm job_bulk_select_all" ><g:message code="select.all" /></span>
+
                             </div>
                             <div class="bulk_edit_controls " style="display: none; margin: 5px;">
                                 <div class="info note"><g:message code="select.jobs.to.delete" /></div>
 
-                                <span id="bulk_del_prompt" class="button confirm_action floatr" data-confirm="bulk_del_confirm"><g:message code="delete.selected.jobs" /></span>
+                                <span id="bulk_del_prompt" class="btn btn-warning btn-sm confirm_action pull-right" data-confirm="bulk_del_confirm"><g:message code="delete.selected.jobs" /></span>
 
                                 <div id="bulk_del_confirm" class="confirmMessage popout confirmbox" style="display:none; height: auto;">
                                     <g:message code="really.delete.these.jobs" />
                                     <div>
                                         <button class="confirm_decline" data-confirm="bulk_del_prompt" data-confirm-view="bulk_del_confirm"><g:message code="no" /></button>
-                                        <g:submitButton name="${g.message(code:'yes')}" class="button"/>
+                                        <g:submitButton name="${g.message(code:'yes')}" class="btn btn-warning"/>
                                     </div>
                                 </div>
                             </div>
@@ -221,9 +225,9 @@
                         <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_CREATE}">
                             <ul>
                             <li style="padding:5px"><g:link controller="scheduledExecution" action="create"
-                                                            class="button">Create a new Job&hellip;</g:link></li>
+                                                            class="btn btn-default btn-sm">Create a new Job&hellip;</g:link></li>
                             <li style="padding:5px"><g:link controller="scheduledExecution" action="upload"
-                                                            class="button">Upload a Job definition&hellip;</g:link></li>
+                                                            class="btn btn-default btn-sm">Upload a Job definition&hellip;</g:link></li>
                             </ul>
                         </auth:resourceAllowed>
 

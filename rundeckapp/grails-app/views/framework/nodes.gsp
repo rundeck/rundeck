@@ -310,12 +310,14 @@
                 }
             }
         }
+        var _runBtnHtml;
         function disableRunBar(){
             if($('runbox')){
                 $('runbox').down('input[type="text"]').disable();
                 if ($('runbox').down('button')) {
                     $('runbox').down('button').disabled = true;
                     $('runbox').down('button').addClassName('disabled');
+                    _runBtnHtml= $('runbox').down('button').innerHTML;
                     $('runbox').down('button').innerHTML="Running…";
                 }
             }
@@ -326,7 +328,7 @@
                 if($('runbox').down('button')){
                     $('runbox').down('button').disabled=false;
                     $('runbox').down('button').removeClassName('disabled');
-                    $('runbox').down('button').innerHTML = "Run";
+                    $('runbox').down('button').innerHTML = 'Run <span class="glyphicon glyphicon-play"></span>';
                 }
             }
         }
@@ -624,7 +626,6 @@
         }
 
         #runcontent{
-            overflow-x:auto;
             margin-bottom: 20px;;
         }
 
@@ -633,7 +634,6 @@
         }
         .inlinestatus{
             padding: 10px;
-            background: #ddd;
         }
 
         table.execoutput {
@@ -676,7 +676,7 @@
 <g:render template="/common/messages"/>
     <div id="error" class="error message" style="display:none;"></div>
     <g:if test="${session.project}">
-        <div class="runbox primary nodesummary ">
+        <div class=" nodesummary ">
             <g:if test="${run_authorized}">
                 <g:expander classnames="button obs_shownodes" key="${ukey}nodeForm" open="true">
                     <span class="match"><span class="obs_nodes_allcount">${total}</span> Node<span class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span>
@@ -697,40 +697,46 @@
 
             </span>
             <g:if test="${session.project && run_authorized}">
-                <span class="runbox primary" id="runbox">
-                    <g:img file="icon-small-shell.png" width="16px" height="16px"/>
-
+                <div class=" form-inline clearfix" id="runbox">
                     <g:hiddenField name="project" value="${session.project}"/>
                     <g:render template="nodeFiltersHidden" model="${[params: params, query: query]}"/>
-                    <g:textField name="exec" size="50" placeholder="Enter a shell command"
-                                 value="${runCommand}"
-                                 id="runFormExec"
-                                 autofocus="true"/>
+                    <div class=" col-sm-12">
+                        <div class="input-group">
+                            <g:textField name="exec" size="50" placeholder="Enter a shell command"
+                                         value="${runCommand}"
+                                         id="runFormExec"
+                                        class="form-control"
+                                         autofocus="true"/>
 
-                    <button class="runbutton" onclick="runFormSubmit('runbox');" >
-                        Run
-                    </button>
+                            <span class="input-group-btn">
+
+                                <button class="btn btn-success  " onclick="runFormSubmit('runbox');">
+                                    Run <span class="glyphicon glyphicon-play"></span>
+                                </button>
+                            </span>
+                        </div>
+                    </div>
 
                     <div class="hiderun" id="runerror" style="display:none"></div>
-                </span>
+                </div>
             </g:if>
         </div>
     </g:if>
-<div id="${ukey}nodeForm" class="nodeview pageBody">
+<div id="${ukey}nodeForm" class="nodeview pageBody clearfix">
     <g:set var="wasfiltered" value="${paginateParams?.keySet().grep(~/(?!proj).*Filter|groupPath|project$/)||(query && !query.nodeFilterIsEmpty())}"/>
     <g:set var="filtersOpen" value="${params.createFilters||params.editFilters||params.saveFilter || filterErrors?true:false}"/>
 
-<table cellspacing="0" cellpadding="0" class="queryTable" width="100%">
+<table cellspacing="0" cellpadding="0" width="100%">
         <tr>
         <g:if test="${!params.nofilters}">
-        <td style="text-align:left;vertical-align:top; width:400px; ${wdgt.styleVisible(if:filtersOpen)}" id="${ukey}filter">
-            <g:form action="nodes" controller="framework">
+        <td style=" ${wdgt.styleVisible(if:filtersOpen)}" id="${ukey}filter">
+            <g:form action="nodes" controller="framework" class="form">
                 <g:if test="${params.compact}">
                     <g:hiddenField name="compact" value="${params.compact}"/>
                 </g:if>
-                <span class="prompt action obs_filtertoggle" >
+                <span class="textbtn textbtn-default obs_filtertoggle" >
                     Filter
-                    <img src="${resource(dir: 'images', file: 'icon-tiny-disclosure-open.png')}" width="12px" height="12px"/>
+                    <b class="glyphicon glyphicon-chevron-down"></b>
                 </span>
 
                 <g:render template="/common/queryFilterManager" model="${[rkey:ukey,filterName:filterName,filterset:filterset,deleteActionSubmit:'deleteNodeFilter',storeActionSubmit:'storeNodeFilter']}"/>
@@ -744,9 +750,12 @@
                     <g:hiddenField name="exec" value="" class="execCommand"/>
                     <div>
                         <div class=" " style="text-align:right;">
-                            <g:submitButton  name="Filter" onclick="return _submitNodeFilters();" id="nodefiltersubmit" value="Filter"/>
+                            <g:submitButton  name="Filter" onclick="return _submitNodeFilters();"
+                                             id="nodefiltersubmit" value="Filter" class="btn btn-primary btn-sm"/>
 
-                            <g:submitButton name="Clear" onclick="return _clearNodeFilters();" value="Clear"/>
+                            <g:submitButton name="Clear" onclick="return _clearNodeFilters();" value="Clear"
+                                class="btn btn-default btn-sm"
+                            />
                         </div>
                     </div>
                 </div>
@@ -770,14 +779,15 @@
 
                         <div >
                             <span style="${!filtersOpen?'':'display:none;'} " id='${ukey}filterdispbtn' >
-                            <span title="Click to modify filter" class="info textbtn query action obs_filtertoggle" >
+                            <span title="Click to modify filter" class="textbtn textbtn-default query  obs_filtertoggle" >
                                 <g:render template="displayNodeFilters" model="${[displayParams:query]}"/>
-                                <img src="${resource(dir:'images',file:'icon-tiny-disclosure.png')}" width="12px" height="12px"/></span>
+                                <b class="glyphicon glyphicon-chevron-right"></b>
+                            </span>
                             </span>
 
 
                         <g:if test="${!filterName}">
-                            <span class="prompt action obs_filtersave" title="Click to save this filter with a name" id="outsidefiltersave">
+                            <span class="textbtn textbtn-success obs_filtersave" title="Click to save this filter with a name" id="outsidefiltersave">
                                 save this filter&hellip;
                             </span>
                         </g:if>
@@ -789,7 +799,7 @@
                             <g:form action="nodes" style="display: inline">
                                 <g:hiddenField name="formInput" value="true"/>
                                 <g:hiddenField name="exec" value="" class="execCommand"/>
-                                <button name="Clear" value="Clear" onclick="return _submitNodeFilters();">Show all nodes</button>
+                                <button name="Clear" value="Clear" class="btn btn-default btn-sm" onclick="return _submitNodeFilters();">Show all nodes</button>
                             </g:form>
                         </g:if>
                         </div>
@@ -816,7 +826,7 @@
 </div>
 
 
-    <div id="runcontent"></div>
+    <div id="runcontent" class="clearfix"></div>
 
     <g:if test="${run_authorized}">
     <div class="runbox"><g:message code="page.section.Activity" /></div>

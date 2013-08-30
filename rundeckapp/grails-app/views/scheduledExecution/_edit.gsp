@@ -372,15 +372,14 @@ var applinks={
                        size="80"/>
             </span>
 
-            <span class="action button" onclick="loadGroupChooser(this);" id="groupChooseBtn" title="Select an existing group to use">Choose &hellip; <g:img file="icon-tiny-disclosure.png" width="12px" height="12px"/></span>
+            <span class="btn btn-default btn-sm" onclick="loadGroupChooser(this);" id="groupChooseBtn" title="Select an existing group to use">
+                Choose &hellip; <i class="caret"></i>
+            </span>
             <span id="groupChooseSpinner"></span>
             <div class="popout" id="groupChooser" style="display:none; width:300px; padding: 5px; background:white; position:absolute;">
                 <div style="margin-bottom:5px;">
                     <span class="info note">Click on the name of the group to use</span>
-                    <span class=" floatr action textbtn" style="text-align:right" onclick="hideGroupChooser();">
-                        Close
-                        <g:img file="icon-tiny-removex-gray.png" width="12px" height="12px"/>
-                    </span>
+                    <button type="button" class=" close" onclick="hideGroupChooser();">&times;</button>
                 </div>
                 <div id="groupChooserContent" style="overflow-y:auto;">
                 </div>
@@ -400,7 +399,9 @@ var applinks={
                     }
                     $('groupChooserContent').innerHTML='<img src="'+ appLinks.iconSpinner+'" alt=""/> Loading...';
                     $(elem).addClassName('selected');
-                    $('groupChooseBtn').down('img').src=AppImages.disclosureOpen;
+                    if($('groupChooseBtn').down('img')){
+                        $('groupChooseBtn').down('img').src=AppImages.disclosureOpen;
+                    }
                     var project = $F('schedEditFrameworkProject');
                     if (!project) {
                         $('groupChooseSpinner').innerHTML = "Please choose a project";
@@ -428,7 +429,9 @@ var applinks={
                 function hideGroupChooser(){
                     $('groupChooser').hide();
                     $('groupChooseBtn').removeClassName('selected');
-                    $('groupChooseBtn').down('img').src=AppImages.disclosure;
+                    if($('groupChooseBtn').down('img')){
+                        $('groupChooseBtn').down('img').src=AppImages.disclosure;
+                    }
                 }
 
             </script>
@@ -691,7 +694,7 @@ var applinks={
                         <span
                             style="${wdgt.styleVisible(unless:scheduledExecution?.('nodeInclude'+key))}"
                             title="Add Filter for ${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}"
-                            class="filterAdd button textbtn action"
+                            class="filterAdd btn btn-default btn-sm"
                             id="filterAddInclude${key}"
                             onclick="addFilter('${key}',true,'${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}');"
                             >${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}</span>
@@ -703,7 +706,7 @@ var applinks={
                         <span
                             style="${wdgt.styleVisible(unless:scheduledExecution?.('nodeInclude'+key))}"
                             title="Add Filter for ${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}"
-                            class="filterAdd button textbtn action"
+                            class="filterAdd btn btn-default btn-sm"
                             id="filterAddInclude${key}"
                             onclick="addFilter('${key}',true,'${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}');"
                             >${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}</span>
@@ -773,7 +776,7 @@ var applinks={
                             <span
                                 style="${wdgt.styleVisible(unless:scheduledExecution?.('nodeExclude'+key))}"
                             title="Add Filter: ${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}"
-                            class="filterAdd button textbtn action"
+                            class="filterAdd btn btn-default btn-sm"
                             id="filterAddExclude${key}"
                             onclick="addFilter('${key}',false,'${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}');"
                             >${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}</span>

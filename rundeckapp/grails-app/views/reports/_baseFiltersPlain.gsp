@@ -10,32 +10,31 @@
     %{--<label for="textFilter"><g:message code="jobquery.title.textFilter"/></label>:--}%
     %{--<span><g:textField name="textFilter" value="${query.textFilter}"/></span>--}%
 %{--</span>--}%
-<span class="formItem">
-    <label for="jobFilter"><g:message code="jobquery.title.jobFilter"/></label>:
-    <span><g:textField name="jobFilter" value="${query.jobFilter}" autofocus="true"/></span>
-</span>
+<div class="form-group">
+    <label for="jobIdFilter" class="sr-only"><g:message code="jobquery.title.jobFilter"/></label>
+    <g:textField name="jobFilter" value="${query.jobFilter}" autofocus="true" class="form-control input-sm"
+                 placeholder="${g.message(code:'jobquery.title.jobFilter')}"/>
+</div>
 <g:if test="${query.jobIdFilter}">
-    <span class="formItem">
-        <label for="jobIdFilter"><g:message code="jobquery.title.jobIdFilter"/></label>:
-        <span><g:textField name="jobIdFilter" value="${query.jobIdFilter}"/></span>
-    </span>
+    <div class="form-group">
+        <label for="jobIdFilter" class="sr-only"><g:message code="jobquery.title.jobIdFilter"/></label>
+        <g:textField name="jobIdFilter" value="${query.jobIdFilter}" class="form-control input-sm"
+                           placeholder="${g.message(code: 'jobquery.title.jobIdFilter')}"/>
+    </div>
 </g:if>
 
-<span class="formItem">
-    <label for="userFilter"><g:message code="jobquery.title.userFilter"/></label>:
-    <span><g:textField name="userFilter" value="${query.userFilter}"/></span>
-</span>
-<span class="formItem">
-    <label for="titleFilter"><g:message code="jobquery.title.titleFilter"/></label>:
-    <span><g:textField name="titleFilter" value="${query.titleFilter}"/></span>
-</span>
-<span class="formItem">
-    <span class="label"><g:message code="jobquery.title.statFilter"/>:</span>
-    <span>
-        %{--<g:radio name="statFilter" value="succeed" checked="${query.statFilter=='succeed'}" id="statFilterTrue"/> <label for="statFilterTrue">Succeeded</label>--}%
-        %{--<g:radio name="statFilter" value="fail" checked="${query.statFilter=='fail'}" id="statFilterFalse"/> <label for="statFilterFalse">Failed</label>--}%
-        %{--<g:radio name="statFilter" value="" checked="${!query.statFilter}"  id="statFilter"/> <label for="statFilter">Either</label>--}%
-        <g:select name="statFilter" from="${['succeed', 'fail', 'cancel']}" value="${query.statFilter}"
-                  noSelection="['': 'Any']" valueMessagePrefix="status.label"/>
-    </span>
-</span>
+<div class="form-group">
+    <label for="userFilter" class="sr-only"><g:message code="jobquery.title.userFilter"/></label>
+    <g:textField name="userFilter" value="${query.userFilter}" class="form-control input-sm"
+                 placeholder="${g.message(code: 'jobquery.title.userFilter')}"/>
+</div>
+<div class="form-group">
+    <label for="titleFilter" class="sr-only"><g:message code="jobquery.title.titleFilter"/></label>
+    <g:textField name="titleFilter" value="${query.titleFilter}" class="form-control input-sm"
+                 placeholder="${g.message(code: 'jobquery.title.titleFilter')}"/>
+</div>
+<div class="form-group">
+    <label for="statFilter" class="sr-only"><g:message code="jobquery.title.statFilter"/></label>
+    <g:select name="statFilter" from="${['succeed', 'fail', 'cancel']}" value="${query.statFilter}"
+              noSelection="['': 'Any']" valueMessagePrefix="status.label" class="form-control input-sm"/>
+</div>

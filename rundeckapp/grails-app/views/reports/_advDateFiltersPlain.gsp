@@ -11,14 +11,17 @@
     def CUR_YEAR = gcal.get(java.util.GregorianCalendar.YEAR)
 %>
     <div id="extDateFilters"
-        style="${!params.recentFilter || params.recentFilter != '-' ? 'display:none;' : ''} background: #ccc; border:1px solid #aaa; text-align:left;">
+        class="panel panel-default"
+        style="${!params.recentFilter || params.recentFilter != '-' ? 'display:none;' : ''}">
+        <div class="panel-body">
         <g:if test="${!hidestart}">
             <div>
-                <span class="prompt">
+                <span class="checkbox">
 
                     <g:checkBox name="dostartafterFilter"
                                 value="${query?.dostartafterFilter}"
                                 id="dostartafterFilter"
+                                class="checkbox"
                                 onclick="if(this.checked){\$('startafterfilterCtrls').show()}else{\$('startafterfilterCtrls').hide()}"/>
                     <label for="dostartafterFilter">Started After:</label>
                 </span>
@@ -33,10 +36,11 @@
             </div>
 
             <div>
-                <span class="prompt">
+                <span class="checkbox">
                     <g:checkBox name="dostartbeforeFilter"
                                 value="${query?.dostartbeforeFilter}"
                                 id="dostartbeforeFilter"
+                                class="checkbox"
                                 onclick="if(this.checked){\$('startbeforefilterCtrls').show()}else{\$('startbeforefilterCtrls').hide()}"/>
                     <label for="dostartbeforeFilter">Started Before:</label>
                 </span>
@@ -51,10 +55,11 @@
             </div>
         </g:if>
         <div>
-            <span class="prompt">
+            <span class="checkbox">
                 <g:checkBox name="doendafterFilter"
                             value="${query?.doendafterFilter}"
                             id="doendafterFilter"
+                            class="checkbox"
                             onclick="if(this.checked){\$('endafterfilterCtrls').show()}else{\$('endafterfilterCtrls').hide()}"/>
                 <label for="doendafterFilter">Ended After:</label>
             </span>
@@ -70,10 +75,11 @@
         </div>
 
         <div>
-            <span class="prompt">
+            <span class="checkbox">
                 <g:checkBox name="doendbeforeFilter"
                             value="${query?.doendbeforeFilter}"
                             id="doendbeforeFilter"
+                            class="checkbox"
                             onclick="if(this.checked){\$('endbeforefilterCtrls').show()}else{\$('endbeforefilterCtrls').hide()}"/>
                 <label for="doendbeforeFilter">Ended Before:</label>
             </span>
@@ -88,4 +94,5 @@
             </div>
 
         </div>
+    </div>
     </div>

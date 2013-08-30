@@ -21,15 +21,15 @@
 <div class="pageBody">
 
     <g:set var="wasfiltered" value="${paginateParams}"/>
-    <g:form action="jobs">
+    <g:form action="jobs" class="form-inline">
     <table cellspacing="10" cellpadding="0" class="queryTable">
         <tr>
         <td style="text-align:left;vertical-align:top; display:none;" id="filter" >
 
-                        <span class="prompt action" onclick="Element.toggle('filter');if($('filterdispbtn')){Element.toggle('filterdispbtn');}">
-                            Filter
-                            <img src="${resource(dir:'images',file:'icon-tiny-disclosure-open.png')}" width="12px" height="12px"/>
-                        </span>
+                <span class="textbtn textbtn-default" onclick="Element.toggle('filter');if($('filterdispbtn')){Element.toggle('filterdispbtn');}">
+                    Filter
+                    <b class="glyphicon glyphicon-chevron-down"></b>
+                </span>
                 <div class="presentation filter">
                     <g:hiddenField name="max" value="${max}"/>
                     <g:hiddenField name="offset" value="${offset}"/>
@@ -37,10 +37,10 @@
                         <g:render template="recentDateFilters" model="${[params:params]}"/>
                         <g:render template="advDateFilters" model="${[params:params,query:query]}"/>
                         <g:render template="baseFilters" model="${[params:params,isJobsPage:true]}"/>
-                </table>
+                    </table>
 
                         <div style="text-align:right;">
-                            <g:actionSubmit value="${'Filter '+g.message(code:'domain.ScheduledExecution.title')+'s'}" action="Jobs"/>
+                            <g:actionSubmit value="${'Filter '+g.message(code:'domain.ScheduledExecution.title')+'s'}" action="Jobs" class="btn btn-default btn-sm"/>
                         </div>
                         <span class="prompt">Restrict to:</span>
                         <div class="presentation">
@@ -68,15 +68,15 @@
                         <div style="padding:5px 0;margin:5px 0;" id='filterdispbtn'>
                             <span title="Click to modify filter" class="info textbtn query action" onclick="Element.toggle('filter');if($('filterdispbtn')){Element.toggle('filterdispbtn');}" >
                                 <g:render template="displayFilters" model="${[displayParams:displayParams]}"/>
-                                <img src="${resource(dir:'images',file:'icon-tiny-disclosure.png')}" width="12px" height="12px"/>
+                                <b class="glyphicon glyphicon-chevron-right"></b>
                             </span>
                         </div>
                     </g:if>
                     <g:else>
                         <span class="prompt">Completed <g:message code="domain.ScheduledExecution.title"/>s (${total})</span>
-                        <span class="prompt action" onclick="Element.toggle('filter');if($('filterdispbtn')){Element.toggle('filterdispbtn');}" id="filterdispbtn"  style="">
+                        <span class="textbtn textbtn-default" onclick="Element.toggle('filter');if($('filterdispbtn')){Element.toggle('filterdispbtn');}" id="filterdispbtn"  style="">
                             Filter
-                            <img src="${resource(dir:'images',file:'icon-tiny-disclosure.png')}" width="12px" height="12px"/>
+                            <b class="glyphicon glyphicon-chevron-down"></b>
                         </span>
                     </g:else>
                 </div>

@@ -1,9 +1,8 @@
 <%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 <script type="text/javascript">
 //<!--
-var menus = new MenuController();
 function loadProjectSelect(){
-    new Ajax.Updater('projectSelect','${createLink(controller:'framework',action:'projectSelect')}',{
+    jQuery('#projectSelect').load('${createLink(controller:'framework',action:'projectSelect')}',{
         evalScripts:true
     });
 }
@@ -85,19 +84,17 @@ function doCreateProject(){
         </g:link></li>
 
     <g:if test="${session?.project||session?.projects}">
-       <li><span class="navbar-text" >
-            <span id="projectSelect">
-                <g:if test="${session.frameworkProjects}">
-                    <g:render template="/framework/projectSelect" model="${[projects:session.frameworkProjects,project:session.project]}"/>
-                </g:if>
-                <g:else>
-                   <span class="action textbtn button" onclick="loadProjectSelect();" title="Select project...">${session?.project?session.project:'Select project&hellip;'}
-                    <img src="${resource(dir: 'images', file: 'icon-tiny-disclosure.png')}" alt="project: " width="12px"
-                         height="12px"/>
-                   </span>
-                </g:else>
-            </span>
-       </span></li>
+        <g:if test="${session.frameworkProjects}">
+            <li class="dropdown" id="projectSelect" >
+            <g:render template="/framework/projectSelect" model="${[projects:session.frameworkProjects,project:session.project]}"/>
+            </li>
+        </g:if>
+        <g:else>
+            <li id="projectSelect" class="dropdown">
+               <span class="action textbtn button" onclick="loadProjectSelect();" title="Select project...">${session?.project?session.project:'Select project&hellip;'}
+               </span>
+            </li>
+        </g:else>
     </g:if>
 
     <g:unless test="${session.frameworkProjects}">
@@ -128,27 +125,31 @@ function doCreateProject(){
         --></g:if><!--
             -->
         <li class="dropdown">
-            <a class="dropdown-toggle" data-toggle="dropdown">
-                ${session.user.encodeAsHTML()} <span class="glyphicon glyphicon-chevron-down"></span>
-            </a>
-            <ul class="dropdown-menu">
+            <g:link controller="user" action="profile" class="dropdown-toggle" data-toggle="dropdown" data-target="#" id="userLabel"
+                    role="button">
+                ${session.user.encodeAsHTML()} <span class="caret"></span>
+            </g:link>
+            <ul class="dropdown-menu" role="menu" aria-labelledby="userLabel">
                 <li><g:link controller="user" action="profile">Profile</g:link></li>
+                <li class="divider"></li>
                 <li><g:link action="logout" controller="user" title="Logout user: ${session.user}"
-                            params="${[refLink: controllerName && actionName ? createLink(controller: controllerName, action: actionName, params: params, absolute: true) : '']}">logout</g:link>
+                            params="${[refLink: controllerName && actionName ? createLink(controller: controllerName, action: actionName, params: params, absolute: true) : '']}">
+                    Logout
+                    <b class="glyphicon glyphicon-remove"></b>
+                </g:link>
                 </li>
             </ul>
         </li>
         <li>
-            <!--
-        --><a href="${helpLinkUrl.encodeAsHTML()}" class="help sepL">
-                help
+            <a href="${helpLinkUrl.encodeAsHTML()}" class="help ">
+                help <b class="glyphicon glyphicon-question-sign"></b>
             </a>
         </li>
     </g:if>
     <g:else>
-        <li class="headright">
-            <a href="${helpLinkUrl.encodeAsHTML()}" class="help  sepL">
-                help
+        <li >
+            <a href="${helpLinkUrl.encodeAsHTML()}" class="help ">
+                help <b class="glyphicon glyphicon-question-sign"></b>
             </a>
         </li>
     </g:else>

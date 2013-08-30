@@ -17,9 +17,7 @@
             <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_UPDATE)}">
                 <g:link controller="scheduledExecution" title="Edit or Delete this Job" action="edit"
                         id="${scheduledExecution.extid}" class="textbtn">
-                <img
-                src="${resource(dir: 'images', file: 'icon-tiny-edit.png')}" alt="edit" width="12px"
-                height="12px"/>
+                <b class="glyphicon glyphicon-pencil"></b>
                     edit job</g:link>
             </g:if>
             </span>
@@ -59,8 +57,7 @@
                         <g:link controller="menu" action="jobs" params="${[groupPath: execInfo.groupPath]}"
                                 title="${'View ' + g.message(code: 'domain.ScheduledExecution.title') + 's in this group'}"
                                 absolute="${absolute ? 'true' : 'false'}">
-                            <g:if test="${!noimgs}"><img src="${resource(dir: 'images', file: 'icon-small-folder.png')}"
-                                                         width="16px" height="15px" alt=""/></g:if>
+                            <g:if test="${!noimgs}"><b class="glyphicon glyphicon-folder-close"></b></g:if>
                             ${execInfo.groupPath.encodeAsHTML()}
                         </g:link>
                     </span>

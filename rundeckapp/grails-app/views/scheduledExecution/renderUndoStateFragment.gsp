@@ -27,24 +27,24 @@
 
 <div style="margin-bottom:10px; ">
     <g:if test="${undo}">
-        <span class="action button small" onclick="_doUndoAction();">Undo</span>
+        <span class="btn btn-default btn-sm" onclick="_doUndoAction();">Undo</span>
     </g:if>
     <g:else>
-        <span class="button disabled small">Undo</span>
+        <span class="btn btn-default btn-sm disabled">Undo</span>
     </g:else>
     <g:if test="${redo}">
-        <span class="action button small" onclick="_doRedoAction();">Redo</span>
+        <span class="btn btn-default btn-sm" onclick="_doRedoAction();">Redo</span>
     </g:if>
     <g:else>
-        <span class="button disabled small">Redo</span>
+        <span class="btn btn-default btn-sm disabled">Redo</span>
     </g:else>
 <g:if test="${undo || redo}">
-        <span class="action button small" onclick="menus.showRelativeTo(this,'wfchangerevert');">Revert All Changes</span>
+        <span class="btn btn-warning btn-sm" onclick="menus.showRelativeTo(this,'wfchangerevert');">Revert All Changes</span>
 
         <div id="wfchangerevert" class="confirmMessage popout confirmbox" style="display:none">
             Really revert the Workflow?
-            <span class="action button small textbtn" onclick="['wfchangerevert'].each(Element.hide);">No</span>
-            <span class="action button small textbtn" onclick="_doResetWFAction();">Yes</span>
+            <span class="btn btn-default btn-sm" onclick="['wfchangerevert'].each(Element.hide);">No</span>
+            <span class="btn btn-warning btn-sm" onclick="_doResetWFAction();">Yes</span>
         </div>
     </g:if>
 </div>

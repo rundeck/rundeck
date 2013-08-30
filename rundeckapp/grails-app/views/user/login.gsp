@@ -37,35 +37,39 @@
 <g:render template="/common/topbar"/>
 <div class="container">
 
-<div class="login col-sm-4 col-sm-push-4">
-    <form action="j_security_check" method="post" class="form-horizontal" role="form">
-        <g:set var="loginmsg" value="${grailsApplication.config.rundeck?.gui?.login?.welcome ?: g.message(code: 'gui.login.welcome', default: '')}"/>
-        <g:if test="${loginmsg}">
-        <div class="row">
-            <span class="login welcome">
-               ${loginmsg}
-            </span>
-        </div>
-        </g:if>
-        <div class="form-group">
-            <label for="login">Username</label>
-            <input type="text" name="j_username" id="login" class="form-control" autofocus="true"/>
-        </div>
+<div class="col-sm-4 col-sm-push-4">
+    <div class="panel panel-primary ">
+        <div class="panel-body">
+        <form action="j_security_check" method="post" class="form " role="form">
+            <g:set var="loginmsg" value="${grailsApplication.config.rundeck?.gui?.login?.welcome ?: g.message(code: 'gui.login.welcome', default: '')}"/>
+            <g:if test="${loginmsg}">
+            <div class="row">
+                <span class="login welcome">
+                   ${loginmsg}
+                </span>
+            </div>
+            </g:if>
+            <div class="form-group">
+                <label for="login">Username</label>
+                <input type="text" name="j_username" id="login" class="form-control" autofocus="true"/>
+            </div>
 
-        <div class="form-group">
-            <label for="password">Password</label>
-            <input type="password" name="j_password" id="password" class="form-control"/>
-        </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" name="j_password" id="password" class="form-control"/>
+            </div>
 
-        <div class="form-group">
-            <button type="submit" class="btn btn-default">Login</button>
+            <div class="form-group">
+                <button type="submit" class="btn btn-default">Login</button>
+            </div>
+        </form>
         </div>
         <g:if test="${flash.error}">
-            <div class="alert alert-danger">
+            <div class="panel-footer panel-danger">
                 ${flash.error}
             </div>
         </g:if>
-    </form>
+    </div>
 </div>
 </div>
 <div class="container footer">

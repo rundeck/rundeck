@@ -259,8 +259,7 @@
                 <g:link class="textbtn" style="padding:5px;"
                         title="Download ${filesize > 0 ? filesize + ' bytes' : ''}"
                         controller="execution" action="downloadOutput" id="${execution.id}">
-                    <img src="${resource(dir: 'images', file: 'icon-small-file.png')}" alt="Download"
-                         width="13px" height="16px"/>
+                    <b class="glyphicon glyphicon-file"></b>
                     Download</g:link>
             </span>
         </span>

@@ -176,23 +176,21 @@
 
                 <g:link controller="scheduledExecution" title="Download Job definition in  XML" action="show"
                         id="${scheduledExecution.extid}.xml">
-                    <img src="${resource(dir: 'images', file: 'icon-small-file.png')}" alt="download xml" width="10px"
-                         height="12px"/>
+                    <b class="glyphicon glyphicon-file"></b>
                     xml
                 </g:link>
                 <g:link controller="scheduledExecution" title="Download Job definition in YAML" action="show"
                         id="${scheduledExecution.extid}.yaml">
-                    <img src="${resource(dir: 'images', file: 'icon-small-file.png')}" alt="download yaml" width="10px"
-                         height="12px"/>
+                    <b class="glyphicon glyphicon-file"></b>
                     yaml
                 </g:link>
 
                 <g:if test="${auth.resourceAllowedTest(kind: 'job', action: AuthConstants.ACTION_CREATE)}">
                     <g:link controller="scheduledExecution" title="Duplicate Job" action="copy"
                             id="${scheduledExecution.extid}" class="textbtn">
-                        <img
-                                src="${resource(dir: 'images', file: 'icon-tiny-copy.png')}" alt="edit" width="12px"
-                                height="12px"/> duplicate to a new job</g:link>
+                        <b class="glyphicon glyphicon-plus"></b>
+                        duplicate to a new job
+                    </g:link>
                 </g:if>
             </span>
         </td>

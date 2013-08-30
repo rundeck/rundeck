@@ -5,8 +5,8 @@
   Time: 5:24:57 PM
   To change this template use File | Settings | File Templates.
 --%>
-<span class="formItem">
-    <span class="label"><g:message code="jobquery.title.recentFilter"/>:</span>
+<span class="form-group">
+    <label for="recentFilter" class="sr-only"><g:message code="jobquery.title.recentFilter"/></label>
     <span class="radiolist">
         <%
             def recentfilts = [[value: '1d', label: g.recentDescription(value: '1d')], [value: '1w', label: g.recentDescription(value: '1w')], [value: '1m', label: g.recentDescription(value: '1m')]]
@@ -20,7 +20,9 @@
         %>
         <g:select name="recentFilter" from="${recentfilts}" value="${params.recentFilter}"
                   noSelection="['': 'Any Time']" optionKey="value" optionValue="label"
-                  onchange="if(this.value=='-'){Element.show('extDateFilters')}else{Element.hide('extDateFilters')};"/>
+                  onchange="if(this.value=='-'){Element.show('extDateFilters')}else{Element.hide('extDateFilters')};"
+            class="form-control input-sm"
+        />
 
     </span>
 </span>

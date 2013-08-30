@@ -87,19 +87,19 @@
                         <span
                             style="${query?.('nodeInclude'+key)?'display:none':''}"
                             title="Add Filter for ${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}"
-                            class="filterAdd button textbtn action"
+                            class="filterAdd btn btn-default btn-sm"
                             id="filterAddInclude${key}"
                             onclick="_addNodeFilterInput('${key}',true,'${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}');"
                             >${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}</span>
                     </g:each>
                 </div>
-                <span class="filterAdd button textbtn action" onclick="Element.show('${rkey}moreIncludeFilters');Element.hide(this);">more&hellip;</span>
+                <span class="filterAdd btn btn-default btn-sm" onclick="Element.show('${rkey}moreIncludeFilters');Element.hide(this);">more&hellip;</span>
                 <div class="filterSetButtons" id="${rkey}moreIncludeFilters" style="display:none">
                     <g:each var="key" in="${NODE_FILTERS_X}">
                         <span
                             style="${query?.('nodeInclude'+key)?'display:none':''}"
                             title="Add Filter for ${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}"
-                            class="filterAdd button textbtn action"
+                            class="filterAdd btn btn-default btn-sm"
                             id="filterAddInclude${key}"
                             onclick="_addNodeFilterInput('${key}',true,'${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}');"
                             >${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}</span>
@@ -152,7 +152,7 @@
                             <span
                                 style="${query?.('nodeExclude'+key)?'display:none':''}"
                             title="Add Filter: ${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}"
-                            class="filterAdd button textbtn action"
+                            class="filterAdd btn btn-default btn-sm"
                             id="filterAddExclude${key}"
                             onclick="_addNodeFilterInput('${key}',false,'${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}');"
                             >${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}</span>

@@ -63,7 +63,7 @@
         <g:form action="createProject" method="post" onsubmit="return configControl.checkForm();">
             <tmpl:editProjectForm/>
             <div class="buttons">
-                <g:submitButton name="create" value="${g.message(code: 'button.action.Create', default: 'Create')}"/>
+                <g:submitButton name="create" value="${g.message(code: 'button.action.Create', default: 'Create')}" class="btn btn-default"/>
             </div>
         </g:form>
     </div>

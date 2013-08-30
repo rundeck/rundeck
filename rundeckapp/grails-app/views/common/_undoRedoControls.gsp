@@ -24,24 +24,24 @@
 <g:set var="rkey" value="${g.rkey()}"/>
 <div style="margin-bottom:10px; ">
     <g:if test="${undo}">
-        <span class="action button small" onclick="_doUndoAction('${key?.encodeAsJavaScript()}');">Undo</span>
+        <span class="btn btn-sm btn-default " onclick="_doUndoAction('${key?.encodeAsJavaScript()}');">Undo</span>
     </g:if>
     <g:else>
-        <span class="button disabled small">Undo</span>
+        <span class="btn btn-sm btn-default disabled ">Undo</span>
     </g:else>
     <g:if test="${redo}">
-        <span class="action button small" onclick="_doRedoAction('${key?.encodeAsJavaScript()}');">Redo</span>
+        <span class="btn btn-sm btn-default " onclick="_doRedoAction('${key?.encodeAsJavaScript()}');">Redo</span>
     </g:if>
     <g:else>
-        <span class="button disabled small">Redo</span>
+        <span class="btn btn-sm btn-default disabled ">Redo</span>
     </g:else>
     <g:if test="${undo || redo}">
-        <span class="action button small" onclick="menus.showRelativeTo(this,'revert_${rkey}');">Revert All Changes</span>
+        <span class="btn btn-sm btn-default " onclick="menus.showRelativeTo(this,'revert_${rkey}');">Revert All Changes</span>
 
         <div id="revert_${rkey}" class="confirmMessage popout confirmbox" style="display:none">
             Really revert ${revertConfirm?revertConfirm:'all changes'}?
-            <span class="action button small textbtn" onclick="['revert_${rkey}'].each(Element.hide);">No</span>
-            <span class="action button small textbtn" onclick="_doRevertAction('${key?.encodeAsJavaScript()}');">Yes</span>
+            <span class="btn btn-sm btn-default " onclick="['revert_${rkey}'].each(Element.hide);">No</span>
+            <span class="btn btn-sm btn-default " onclick="_doRevertAction('${key?.encodeAsJavaScript()}');">Yes</span>
         </div>
     </g:if>
 </div>

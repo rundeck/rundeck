@@ -12,13 +12,13 @@
                 </wdgt:eventHandlerJS>
             </g:javascript>
             <div id="schedCreateButtons">
-                <g:actionSubmit id="createFormCancelButton" value="Cancel" onclick="if(typeof(jobEditCancelled)=='function'){jobEditCancelled();}"/>
+                <g:actionSubmit id="createFormCancelButton" value="Cancel" onclick="if(typeof(jobEditCancelled)=='function'){jobEditCancelled();}" class="btn btn-default"/>
                 <g:if test="${auth.resourceAllowedTest( kind:'job',action:[AuthConstants.ACTION_CREATE])}">
-                    <g:actionSubmit action="save" value="Create"  class="cformAllowSave cformAllowSaveOnly" />
+                    <g:actionSubmit action="save" value="Create"  class="cformAllowSave cformAllowSaveOnly btn btn-default" />
                 </g:if>
 
                 <g:if test="${auth.resourceAllowedTest( kind:'job', action:[AuthConstants.ACTION_CREATE])}">
-                    <g:actionSubmit action="saveAndExec" value="Create And Run"  class="cformAllowSave cformAllowRun"/>
+                    <g:actionSubmit action="saveAndExec" value="Create And Run"  class="cformAllowSave cformAllowRun btn btn-default"/>
                 </g:if>
 
                 <g:if test="${auth.resourceAllowedTest( has:false, kind:'job', action:[AuthConstants.ACTION_CREATE])}">

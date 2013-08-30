@@ -18,9 +18,7 @@
                             params="${[groupPath: scheduledExecution.groupPath]}"
                             title="${'View ' + g.message(code: 'domain.ScheduledExecution.title') + 's in this group'}"
                             absolute="${absolute ? 'true' : 'false'}">
-                        <g:if test="${!noimgs}"><img
-                                src="${resource(dir: 'images', file: 'icon-small-folder.png')}"
-                                width="16px" height="15px" alt=""/></g:if>
+                        <g:if test="${!noimgs}"><b class="glyphicon glyphicon-folder-close"></b></g:if>
                         ${scheduledExecution.groupPath.encodeAsHTML()}
                     </g:link>
                 </span>

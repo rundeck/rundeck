@@ -54,10 +54,9 @@
     <div class="popout" id="jobChooser" style="display:none; width:300px; padding: 5px; background:white; position:absolute;">
         <div style="margin-bottom:5px;">
             <span class="info note">Click on the name of the Job to use</span>
-            <span class=" floatr action textbtn" style="text-align:right" onclick="hideJobChooser();">
-                Close
-                <g:img file="icon-tiny-removex-gray.png" width="12px" height="12px"/>
-            </span>
+            <button type="button" class=" close" style="text-align:right" onclick="hideJobChooser();">
+                &times;
+            </button>
         </div>
         <div id="jobChooserContent" style="overflow-y:auto;">
         </div>
@@ -220,22 +219,22 @@
 
             <g:if test="${isErrorHandler}">
                 <g:hiddenField name="num" value="${num}"/>
-                <span class="action button small textbtn" onclick="_wficancelnewEH(this);"
+                <span class="btn btn-default btn-sm" onclick="_wficancelnewEH(this);"
                       title="Cancel adding new ${g.message(code: 'Workflow.'+ msgItem+'.label')}">Cancel</span>
-                <span class="action button small textbtn" onclick="_wfisave('${key}', ${num}, 'wfiedit_${rkey}',${
+                <span class="btn btn-primary btn-sm" onclick="_wfisave('${key}', ${num}, 'wfiedit_${rkey}',${
                         isErrorHandler?true:false});" title="Save the new ${g.message(code:'Workflow.'+ msgItem+'.label')}">Save</span>
             </g:if>
             <g:else>
 
-                <span class="action button small textbtn" onclick="_wficancelnew(${num});"
+                <span class="btn btn-default btn-sm" onclick="_wficancelnew(${num});"
                       title="Cancel adding new ${g.message(code: 'Workflow.step.label')}">Cancel</span>
-                <span class="action button small textbtn" onclick="_wfisavenew('wfiedit_${rkey}');" title="Save the new ${g.message(code:'Workflow.step.label')}">Save</span>
+                <span class="btn btn-primary btn-sm" onclick="_wfisavenew('wfiedit_${rkey}');" title="Save the new ${g.message(code:'Workflow.step.label')}">Save</span>
             </g:else>
         </g:if>
         <g:else>
             <g:hiddenField name="num" value="${num}"/>
-            <span class="action button small textbtn" onclick="_wfiview('${key}',${num},${isErrorHandler?true:false});" title="Discard changes to the ${g.message(code:'Workflow.'+ msgItem+'.label')}">Discard</span>
-            <span class="action button small textbtn" onclick="_wfisave('${key}',${num}, 'wfiedit_${rkey}', ${
+            <span class="btn btn-default btn-sm" onclick="_wfiview('${key}',${num},${isErrorHandler?true:false});" title="Discard changes to the ${g.message(code:'Workflow.'+ msgItem+'.label')}">Discard</span>
+            <span class="btn btn-primary btn-sm" onclick="_wfisave('${key}',${num}, 'wfiedit_${rkey}', ${
                     isErrorHandler?true:false});"
                   title="Save changes to the ${g.message(code:'Workflow.'+ msgItem+'.label')}">Save</span>
         </g:else>

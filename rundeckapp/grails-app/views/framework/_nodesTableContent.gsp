@@ -46,11 +46,7 @@
                         </span>
                     </g:else>
 
-                    <g:if test="${!session.project}">
-                    <span class="project">
-                        &bull; <span class="action textbtn" onclick="selectProject('${nodedata.project.name.encodeAsJavaScript()}');" title="Select this project">${nodedata.project.name.encodeAsHTML()}</span>
-                    </span>
-                    </g:if>
+
                     </td>
                 <td class="desc"  title="Description">
                         <span class="desc">${node.description?.encodeAsHTML()}</span>

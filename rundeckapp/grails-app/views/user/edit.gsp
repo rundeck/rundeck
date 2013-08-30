@@ -19,8 +19,8 @@
         <tmpl:edit user="${user}"/>
         <div class="buttons">
 
-            <g:actionSubmit id="editFormCancelButton" value="Cancel"/>
-            <g:actionSubmit value="Update"/>
+            <g:actionSubmit id="editFormCancelButton" value="Cancel" class="btn btn-default"/>
+            <g:actionSubmit value="Update" class="btn btn-primary"/>
 
         </div>
 </g:form>

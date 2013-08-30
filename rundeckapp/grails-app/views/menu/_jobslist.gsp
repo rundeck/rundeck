@@ -53,11 +53,10 @@
                                     <span class="inlinebuttons jobbuttons">
                                         <g:if test="${jobauthorizations && jobauthorizations[AuthConstants.ACTION_RUN]?.contains(scheduledExecution.id.toString())}">
                                             <g:link controller="scheduledExecution" action="execute"
-                                                    id="${scheduledExecution.extid}" class="icon button "
-                                                    onclick="if(typeof(loadExec)=='function'){loadExec(${scheduledExecution.id});return false;}"><img
-                                                    src="${resource(dir: 'images', file:  'icon-small-run.png')}"
-                                                    title="Run ${g.message(code: 'domain.ScheduledExecution.title')}&hellip;"
-                                                    alt="run" width="16" height="16"/></g:link>
+                                                    id="${scheduledExecution.extid}" class=" "
+                                                    onclick="if(typeof(loadExec)=='function'){loadExec(${scheduledExecution.id});return false;}">
+                                                <b class="glyphicon glyphicon-play"></b>
+                                            </g:link>
                                         </g:if>
                                     </span>
 

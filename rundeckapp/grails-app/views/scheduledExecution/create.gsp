@@ -13,7 +13,7 @@
         </span>
 
         <span class="floatr buttonholder">
-        <g:link controller="scheduledExecution" action="upload" class="button textbtn">Upload Definition&hellip;</g:link>
+        <g:link controller="scheduledExecution" action="upload" class="btn btn-default btn-sm">Upload Definition&hellip;</g:link>
         </span>
 
     </div>

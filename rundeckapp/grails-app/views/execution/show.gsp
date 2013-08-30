@@ -60,7 +60,7 @@
             groupOutput:{value:${followmode == 'browse'}},
             updatepagetitle:${null == execution?.dateCompleted},
             <g:if test="${authChecks[AuthConstants.ACTION_KILL]}">
-            killjobhtml: '<span class="action button textbtn" onclick="followControl.docancel();">Kill <g:message code="domain.ScheduledExecution.title"/> <img src="${resource(dir: 'images', file: 'icon-tiny-removex.png')}" alt="Kill" width="12px" height="12px"/></span>',
+            killjobhtml: '<span class="btn btn-danger btn-sm textbtn" onclick="followControl.docancel();">Kill <g:message code="domain.ScheduledExecution.title"/> <img src="${resource(dir: 'images', file: 'icon-tiny-removex.png')}" alt="Kill" width="12px" height="12px"/></span>',
             </g:if>
             <g:if test="${!authChecks[AuthConstants.ACTION_KILL]}">
             killjobhtml: "",
@@ -109,7 +109,7 @@
                         <g:if test="${null == execution.dateCompleted}">
                             <g:if test="${authChecks[AuthConstants.ACTION_KILL]}">
                                 <span id="cancelresult" style="margin-left:10px">
-                                    <span class="action button textbtn"
+                                    <span class="btn btn-danger btn-sm"
                                           onclick="followControl.docancel();">Kill <g:message
                                             code="domain.ScheduledExecution.title"/> <img
                                             src="${resource(dir: 'images', file: 'icon-tiny-removex.png')}" alt="Kill"
@@ -126,10 +126,9 @@
                                             id="${scheduledExecution.extid}"
                                             params="${[retryFailedExecId: execution.id]}"
                                             title="${g.message(code: 'retry.job.failed.nodes')}"
-                                            class=" action button header"
+                                            class=" btn btn-default btn-sm header"
                                     >
-                                        <img src="${resource(dir: 'images', file: 'icon-med-run.png')}" alt="run"
-                                             width="24px" height="24px"/>
+                                        <b class="glyphicon glyphicon-play"></b>
                                         <g:message code="retry.failed.nodes" />&hellip;
                                     </g:link>
                                 </g:if>
@@ -140,10 +139,10 @@
                                             controller="framework"
                                             action="nodes"
                                             params="${[retryFailedExecId: execution.id]}"
-                                            class=" action button header"
+                                            class=" btn btn-default btn-sm header"
                                             title="${g.message(code:'retry.failed.nodes.description')}">
-                                        <img src="${resource(dir: 'images', file: 'icon-med-run.png')}" alt="run"
-                                             width="24px" height="24px"/>
+
+                                        <b class="glyphicon glyphicon-play"></b>
                                         <g:message code="retry.failed.nodes"/>&hellip;
                                     </g:link>
                                 </g:if>
@@ -156,9 +155,9 @@
                                             action="execute"
                                             id="${scheduledExecution.extid}"
                                             params="${[retryExecId: execution.id]}"
-                                            class=" action button header"
+                                            class=" btn btn-default btn-sm header"
                                             title="${g.message(code: 'execution.job.action.runAgain')}">
-                                        <g:img file="icon-med-run.png" alt="run" width="24px" height="24px"/>
+                                        <b class="glyphicon glyphicon-play"></b>
                                         <g:message code="execution.action.runAgain"/>&hellip;
                                     </g:link>
                                 </g:if>
@@ -169,7 +168,7 @@
                                             controller="scheduledExecution"
                                             action="createFromExecution"
                                             params="${[executionId: execution.id]}"
-                                            class=" action button header"
+                                            class=" btn btn-default btn-sm header"
                                             title="${g.message(code:'execution.action.saveAsJob')}">
                                         <g:message code="execution.action.saveAsJob" default="Save as Job"/>&hellip;
                                     </g:link>
@@ -180,9 +179,10 @@
                                             controller="framework"
                                             action="nodes"
                                             params="${[fromExecId: execution.id]}"
-                                            class=" action button header"
+                                            class=" btn btn-default btn-sm header"
                                             title="${g.message(code: 'execution.action.runAgain')}">
-                                        <g:img file="icon-med-run.png" alt="run" width="24px" height="24px"/>
+
+                                        <b class="glyphicon glyphicon-play"></b>
                                         <g:message code="execution.action.runAgain" />&hellip;
                                     </g:link>
                                 </g:if>

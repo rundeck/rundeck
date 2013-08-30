@@ -42,7 +42,7 @@
     <g:hiddenField name="extra.nodeIncludeName" value="${failedNodes}"/>
     <span class="prompt">Retry On Nodes</span>
     <div class="presentation matchednodes embed" id="matchednodes_${rkey}" >
-        <span class="action textbtn depress2 receiver" title="Display matching nodes" onclick="_EOUpdateMatchedNodes()">Show Matches</span>
+        <span class="btn btn-default btn-sm depress2 receiver" title="Display matching nodes" onclick="_EOUpdateMatchedNodes()">Show Matches</span>
     </div>
     <g:set var="jsdata" value="${[nodeIncludeName:failedNodes]}"/>
     <g:javascript>

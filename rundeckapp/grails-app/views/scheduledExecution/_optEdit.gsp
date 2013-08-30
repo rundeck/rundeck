@@ -272,8 +272,8 @@
             </span>
             <g:if test="${newoption}">
                 <g:hiddenField name="newoption" value="true"/>
-                <span class="action button small textbtn" onclick="_optcancelnew('${option?.name?.encodeAsJavaScript()}');" title="Cancel adding new option">Cancel</span>
-                <span class="action button small textbtn" onclick="_optsavenew('optedit_${rkey}');" title="Save the new option">Save</span>
+                <span class="action btn btn-default btn-sm" onclick="_optcancelnew('${option?.name?.encodeAsJavaScript()}');" title="Cancel adding new option">Cancel</span>
+                <span class="action btn btn-primary btn-sm" onclick="_optsavenew('optedit_${rkey}');" title="Save the new option">Save</span>
                 <g:javascript>
                     fireWhenReady('optname_${rkey}',function(){
                         $('optname_${rkey}').focus();
@@ -281,8 +281,8 @@
                 </g:javascript>
             </g:if>
             <g:else>
-                <span class="action button small textbtn" onclick="_optview('${(origName?origName:option?.name).encodeAsJavaScript()}',$(this).up('li.optEntry'));" title="Discard changes to the option">Discard</span>
-                <span class="action button small textbtn" onclick="_optsave('optedit_${rkey}',$(this).up('li.optEntry'));" title="Save changes to the option">Save</span>
+                <span class="action btn btn-default btn-sm" onclick="_optview('${(origName?origName:option?.name).encodeAsJavaScript()}',$(this).up('li.optEntry'));" title="Discard changes to the option">Discard</span>
+                <span class="action btn btn-primary btn-sm" onclick="_optsave('optedit_${rkey}',$(this).up('li.optEntry'));" title="Save changes to the option">Save</span>
             </g:else>
         </div>
         <div class="clear"></div>

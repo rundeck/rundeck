@@ -78,7 +78,7 @@
         <div style="margin-bottom:4px;">
         <g:if test="${jscallback}">
             <span class="expandComponentControl textbtn action groupname jobgroupexpand" onclick="${jscallback + '(\'' + (prefix ? prefix + '/' + group.key : group.key) + '\');return false;' }" title="${jscallback ? 'Select this group' : 'Expand/Collapse this group'}" style="padding-left:4px;"><%--
-            --%><g:img file="icon-small-folder-open.png" width="16px" height="14px"/> ${displaygroup}<%--
+            --%> ${displaygroup}<%--
         --%></span>
         </g:if>
         <g:else>

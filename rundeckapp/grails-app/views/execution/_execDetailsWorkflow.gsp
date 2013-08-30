@@ -110,8 +110,8 @@
     <g:if test="${edit}">
         <div id="wfundoredo" >
             <div style="margin-bottom:10px;">
-                <span class="button disabled small">Undo</span>
-                <span class="button disabled small">Redo</span>
+                <span class="btn btn-sm btn-default disabled ">Undo</span>
+                <span class="btn btn-sm btn-default disabled ">Redo</span>
             </div>
         </div>
     </g:if>
@@ -124,8 +124,9 @@
     </div>
     <g:if test="${edit}">
     <div >
-    <div id="wfnewbutton" style="margin-top:5px; padding-left:20px;">
-        <span class="action textbtn ready" onclick="$('wfnewtypes').show();$('wfnewbutton').hide();" title="Add a new Workflow ${g.message(code:'Workflow.step.label')} to the end">
+    <div id="wfnewbutton" style="margin-top:5px;">
+        <span class="btn btn-default btn-sm ready" onclick="$('wfnewtypes').show();$('wfnewbutton').hide();" title="Add a new Workflow ${g.message(code:'Workflow.step.label')} to the end">
+            <b class="glyphicon glyphicon-plus"></b>
             Add a ${g.message(code:'Workflow.step.label')}
         </span>
     </div>

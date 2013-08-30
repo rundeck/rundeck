@@ -27,8 +27,8 @@
     <g:if test="${edit}">
         <div id="optundoredo" >
             <div style="margin-bottom:10px;">
-                <span class="button disabled small">Undo</span>
-                <span class="button disabled small">Redo</span>
+                <span class="btn btn-default btn-sm disabled">Undo</span>
+                <span class="btn btn-default btn-sm disabled">Redo</span>
             </div>
         </div>
     </g:if>
@@ -60,8 +60,9 @@
     </div>
 
     <g:if test="${edit}">
-        <div id="optnewbutton" style="margin:5px 0 15px 0; padding-left:20px;">
-            <span class="action textbtn ready" onclick="_optaddnew();" title="Add a new Option">
+        <div id="optnewbutton" style="margin:5px 0 15px 0; ">
+            <span class="btn btn-default btn-sm ready" onclick="_optaddnew();" title="Add a new Option">
+                <b class="glyphicon glyphicon-plus"></b>
                 Add an option
             </span>
         </div>

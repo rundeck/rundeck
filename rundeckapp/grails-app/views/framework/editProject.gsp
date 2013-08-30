@@ -84,8 +84,8 @@
         <g:form action="saveProject" method="post" onsubmit="return configControl.checkForm();">
             <g:render template="editProjectForm" model="${[editOnly:true,project:session.project]}"/>
             <div class="buttons primary">
-                <g:submitButton name="cancel" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" />
-                <g:submitButton name="save" value="${g.message(code:'button.action.Save',default:'Save')}" />
+                <g:submitButton name="cancel" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default"/>
+                <g:submitButton name="save" value="${g.message(code:'button.action.Save',default:'Save')}" class="btn btn-primary"/>
             </div>
         </g:form>
     </div>
