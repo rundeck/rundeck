@@ -153,7 +153,6 @@ function _wfiedit(key,num,isErrorHandler) {
                 });
                 initTooltipForElements('#wfli_' + key + ' .obs_tooltip');
                 $('wfli_' + key).select('textarea.apply_ace').each(_addAceTextarea);
-                $('wfli_' + key).select('textarea.apply_resize').each(_applyTextareaResizer);
             }
         }
     });
