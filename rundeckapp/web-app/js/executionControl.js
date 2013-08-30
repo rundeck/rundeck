@@ -1511,8 +1511,10 @@ var FollowControl = Class.create({
         if ($('execDurationPct')) {
             $('execDurationPct').innerHTML = pct + "%";
         }
-        if($('progressBar')){
-            $('progressBar').style.width = (Math.floor(pct) * 4);
+
+        if ($('progressBar')){
+//            jQuery('#progressBar').width((Math.floor(pct)) + "%");
+            $('progressBar').style.width = (Math.floor(pct) +'%');
             $('progressBar').innerHTML = (Math.floor(pct)) + "%";
         }
     }

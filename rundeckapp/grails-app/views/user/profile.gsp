@@ -14,8 +14,8 @@
             parameters:{login:login,token:token},
             onComplete:function(req2){
                 if(req2.request.success()){
-                    addRowBehavior(row);
-                    Effect.Appear(row);
+                    addRowBehavior($(row));
+                    Effect.Appear($(row));
                 }
             }
 
@@ -49,10 +49,9 @@
                 var json=req.responseJSON;
                 var error = !success?req:json.error?json.error:null;
                 if( !error && json.result){
-                    $(elem).down('.clearconfirm').hide();
-                    $(elem).down('.cleartokenbtn').hide();
+                    jQuery('#'+elem.identify()+' .modal').modal('hide');
                     //remove element
-                    Effect.DropOut($(elem));
+                    Effect.DropOut(elem);
                 }else{
                     $(elem).up('.userapitoken').down('.gentokenerror').innerHTML="Error: "+error;
                     $(elem).up('.userapitoken').down('.gentokenerror').show();
@@ -61,20 +60,18 @@
         });
     }
     function clearShow(elem){
-        $(elem).down('.clearconfirm').show();
-        $(elem).down('.cleartokenbtn').hide();
+//        $(elem).down('.clearconfirm').show();
+//        $(elem).down('.cleartokenbtn').hide();
     }
     function clearHide(elem){
-        $(elem).down('.clearconfirm').hide();
-        $(elem).down('.cleartokenbtn').show();
+//        $(elem).down('.clearconfirm').hide();
+//        $(elem).down('.cleartokenbtn').show();
     }
     function mkhndlr(func){
         return function(e){e.stop();func();return false;};
     }
     function addRowBehavior(e){
-        Event.observe($(e).down('.cleartokenbtn'),'click',mkhndlr(clearShow.curry(e)));
-        Event.observe($(e).down('.clearconfirm input.no'),'click',mkhndlr(clearHide.curry(e)));
-        Event.observe($(e).down('.clearconfirm input.yes'),'click',mkhndlr(clearToken.curry(e)));
+        Event.observe(e.down('.clearconfirm input.yes'),'click',mkhndlr(clearToken.curry(e)));
     }
     function addBehavior(elem,login){
         Event.observe($(elem).down('.gentokenbtn'),'click',mkhndlr(generateToken.curry(login,elem)));
@@ -87,21 +84,20 @@
 </head>
 <body>
 
-<div class="pageTop">
-    <div class="floatl">
-        <span class="welcomeMessage">User Profile: ${user.login}</span>
+<div class="row">
+    <div class="col-sm-10">
+        <h3>User Profile: ${user.login}
+            <small>
+            <g:link action="edit" params="[login: params.login]" class=" textbtn textbtn-default btn-sm">
+                <i class="glyphicon-pencil glyphicon"></i>
+                Edit
+            </g:link>
+            </small>
+        </h3>
     </div>
-    <span class="floatr">
+    <div class="col-sm-2">
 
-        <g:form controller="user">
-            <input type="hidden" name="login" value="${params.login}"/>
-            <div id="schedShowButtons">
-                <g:actionSubmit value="Edit"/>
-            </div>
-
-        </g:form>
-    </span>
-    <div class="clear"></div>
+    </div>
 </div>
 
 <div class="pageBody" id="userProfilePage">

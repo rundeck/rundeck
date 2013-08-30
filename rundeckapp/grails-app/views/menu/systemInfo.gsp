@@ -30,16 +30,13 @@
 
 <body>
 
-<div class="pageTop">
-    <div class="floatl">
-        <span class="welcomeMessage">System Info</span>
-    </div>
-
-    <div class="clear"></div>
+<div class="row">
+<div class="col-sm-3">
+    <g:render template="configNav" model="[selected: 'sysinfo']"/>
 </div>
+<div class="col-sm-9">
 
-<div class="pageBody">
-
+    <h3>System Info</h3>
     <g:set var="datapercol" value="${5.0}"/>
     <g:set var="colcount" value="${(int)Math.ceil((float)systemInfo.size()/datapercol)}"/>
     <table>
@@ -87,6 +84,7 @@
             </g:each>
         </tr>
     </table>
+</div>
 </div>
 </body>
 </html>

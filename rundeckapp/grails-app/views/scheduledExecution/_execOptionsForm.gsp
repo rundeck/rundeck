@@ -212,7 +212,7 @@
             <g:actionSubmit id="execFormCancelButton" value="Cancel" class="btn btn-default"/>
             </g:if>
             <button type="submit"
-                    title="${g.message(code:'domain.ScheduledExecution.title')} Now" id="execFormRunButton" class=" btn btn-primary">
+                    title="${g.message(code:'domain.ScheduledExecution.title')} Now" id="execFormRunButton" class=" btn btn-success">
                 <b class="glyphicon glyphicon-play"></b> Run Job Now
             </button>
             <g:checkBox id="followoutputcheck" name="follow" checked="${defaultFollow|| params.follow == 'true'}" value="true" class="checkbox checkbox-inline"/>

@@ -78,8 +78,9 @@
                         </tbody>
                     </table>
                     <div style="margin-top:10px;" >
-                        <a class="gentokenbtn action button"
+                        <a class="gentokenbtn textbtn textbtn-default btn-xs"
                            href="${createLink(controller: 'user', action: 'generateApiToken', params: [login: user.login])}">
+                            <i class="glyphicon glyphicon-plus"></i>
                             Generate New Token
                         </a>
                     </div>
@@ -88,8 +89,8 @@
                     </div>
 
                     <g:javascript>
-                    fireWhenReady($('${rkeytok}'),function(){addBehavior('${rkeytok}',"${user.login.encodeAsJavaScript()}");});
-                    fireWhenReady($('${rkeytok}'),function(){highlightNew('${rkeytok}');});
+                    fireWhenReady('${rkeytok}',function(){addBehavior('${rkeytok}',"${user.login.encodeAsJavaScript()}");});
+                    fireWhenReady('${rkeytok}',function(){highlightNew('${rkeytok}');});
                     </g:javascript>
                 </td>
             </tr>

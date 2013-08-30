@@ -111,9 +111,9 @@
                                 <span id="cancelresult" style="margin-left:10px">
                                     <span class="btn btn-danger btn-sm"
                                           onclick="followControl.docancel();">Kill <g:message
-                                            code="domain.ScheduledExecution.title"/> <img
-                                            src="${resource(dir: 'images', file: 'icon-tiny-removex.png')}" alt="Kill"
-                                            width="12px" height="12px"/></span>
+                                            code="domain.ScheduledExecution.title"/>
+                                        <i class="glyphicons glyphicons-remove"></i>
+                                    </span>
                                 </span>
                             </g:if>
                         </g:if>
@@ -155,7 +155,7 @@
                                             action="execute"
                                             id="${scheduledExecution.extid}"
                                             params="${[retryExecId: execution.id]}"
-                                            class=" btn btn-default btn-sm header"
+                                            class=" btn btn-success btn-sm header"
                                             title="${g.message(code: 'execution.job.action.runAgain')}">
                                         <b class="glyphicon glyphicon-play"></b>
                                         <g:message code="execution.action.runAgain"/>&hellip;
@@ -168,7 +168,7 @@
                                             controller="scheduledExecution"
                                             action="createFromExecution"
                                             params="${[executionId: execution.id]}"
-                                            class=" btn btn-default btn-sm header"
+                                            class=" btn btn-primary btn-sm header"
                                             title="${g.message(code:'execution.action.saveAsJob')}">
                                         <g:message code="execution.action.saveAsJob" default="Save as Job"/>&hellip;
                                     </g:link>
@@ -179,7 +179,7 @@
                                             controller="framework"
                                             action="nodes"
                                             params="${[fromExecId: execution.id]}"
-                                            class=" btn btn-default btn-sm header"
+                                            class=" btn btn-success btn-sm header"
                                             title="${g.message(code: 'execution.action.runAgain')}">
 
                                         <b class="glyphicon glyphicon-play"></b>
@@ -194,6 +194,7 @@
                                     <g:if test="${eprev}">
                                         <g:link action="show" controller="execution" id="${eprev.id}"
                                             title="Previous Execution #${eprev.id}">
+                                            <i class="glyphicon glyphicon-arrow-left"></i>
                                             <g:message code="${scheduledExecution ? 'job' : 'adhoc'}.previous.execution"
                                                 args="${[eprev.id]}"/>
                                         </g:link>
@@ -209,6 +210,7 @@
                                             id="${enext.id}">
                                             <g:message code="${scheduledExecution ? 'job' : 'adhoc'}.next.execution"
                                                        args="${[enext.id]}"/>
+                                            <i class="glyphicon glyphicon-arrow-right"></i>
                                         </g:link>
                                     </g:if>
                                     <g:else>
@@ -219,12 +221,11 @@
                                 </span>
                             </g:if>
                         </span>
-                        <div style="display: inline-block; margin-left: 10px;">
-                            <div id="progressContainer" class="progressContainer" >
-                                <div class="progressBar" id="progressBar"
-                                     title="Progress is an estimate based on average execution time for this ${g.message(code: 'domain.ScheduledExecution.title')}.">0%</div>
-                            </div>
-                            </div>
+                        <div style="display: inline-block; margin-left: 10px; width: 200px;">
+                            <g:render template="/common/progressBar"
+                                      model="[completePercent:execution.dateCompleted?100:0, height: '24',
+                                              progressType:'progress-bar-info',
+                                              containerId:'progressContainer', progressId:'progressBar']"/>
                         </div>
 
                         <g:set var="isAdhoc" value="${!scheduledExecution && execution.workflow.commands.size() == 1}"/>

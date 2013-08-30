@@ -22,7 +22,7 @@
 --%>
 <tr class="${index!=null && (index%2)==1?'alternateRow':''}">
     <td  style="width:16px">
-        <g:expander key="udetail_${user.login}"/>
+        <g:expander key="udetail_${user.login}" text=""/>
     </td>
     <td>
         <span class="userlogin" >
@@ -40,7 +40,9 @@
         <g:set var="adminauth" value="${auth.resourceAllowedTest(kind:'user',action:[AuthConstants.ACTION_ADMIN],context:'application')}"/>
         <g:if test="${adminauth}">
         <span class="useredit">
-            <g:link action="edit" params="[login:user.login]"><g:img file="icon-tiny-edit.png" width="12px" height="12px"/></g:link>
+            <g:link action="edit" params="[login:user.login]" class="textbtn textbtn-info">
+                <i class="glyphicon glyphicon-pencil"></i> edit
+            </g:link>
         </span>
         </g:if>
     </td>

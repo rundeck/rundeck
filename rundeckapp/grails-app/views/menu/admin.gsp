@@ -31,7 +31,7 @@
 
 <body>
 
-<div class="pageBody">
+<div class="row">
     <g:render template="/common/messages"/>
     <g:if test="${flash.joberrors}">
         <ul class="error note">
@@ -40,39 +40,14 @@
             </g:each>
         </ul>
     </g:if>
-
-    <ul>
-        <li>
-            <g:link controller="menu" action="systemInfo">
-                <g:message code="gui.menu.SystemInfo" default="System Information"/>
-            </g:link>
-        </li>
-        <li>
-            <g:link controller="user" action="list">
-                <g:message code="gui.menu.UserProfiles" default="User Profiles"/>
-            </g:link>
-        </li>
-    </ul>
-
-    <div class="rounded" style="width:200px;margin-bottom: 20px;">
-    <ul>
-        <li>
-            <g:set var="pluginParams"
-                   value="${[utm_source: 'rundeckapp', utm_medium: 'app', utm_campaign: 'getpluginlink'].collect { k, v -> k + '=' + v }.join('&')}"/>
-
-            <g:set var="pluginUrl" value="http://rundeck.org/plugins/?${pluginParams}"/>
-            <g:set var="pluginLinkUrl"
-                   value="${org.codehaus.groovy.grails.commons.ConfigurationHolder.config.rundeck?.gui?.pluginLink ?: pluginUrl}"/>
-            <a href="${pluginLinkUrl}">
-                <g:message code="gui.admin.GetPlugins" default="Get Plugins"/>
-            </a>
-        </li>
-    </ul>
-    </div>
-
-    Project: <span class="prompt">${session.project.encodeAsHTML()}</span> -
-    <g:link controller="framework" action="editProject" params="[project: session.project]" class="btn btn-default btn-sm">
-        <g:message code="gui.menu.ProjectEdit" default="Configure Project"/>
+<div class="col-sm-3">
+    <g:render template="configNav" model="[selected:'project']"/>
+</div>
+<div class="col-sm-9">
+    Project: <span class="prompt">${session.project.encodeAsHTML()}</span>
+    <g:link controller="framework" action="editProject" params="[project: session.project]" class="textbtn textbtn-default">
+        <i class="glyphicon glyphicon-pencil"></i>
+        <g:message code="gui.menu.ProjectEdit" default="Edit Configuration"/>
     </g:link>
     <div class="presentation rounded" style="margin-right: 20px;">
         <div class="presentation ">
@@ -107,8 +82,7 @@
 
         <div class="presentation">
             <g:link controller="project" action="export" params="[name: session.project]">
-                <img src="${resource(dir: 'images', file: 'icon-small-file.png')}" alt="download" width="13px"
-                     height="16px"/>
+                <i class="glyphicon glyphicon-file"></i>
                 ${session.project.encodeAsHTML()}.rdproject.jar
             </g:link>
             -
@@ -275,6 +249,7 @@
             </g:if>
         </div>
     </div>
+</div>
 </div>
 </body>
 </html>

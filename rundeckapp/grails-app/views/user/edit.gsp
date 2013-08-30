@@ -5,25 +5,26 @@
     <title><g:message code="main.app.name"/> - User Profile</title>
 
 </head>
+
 <body>
 
-<div class="pageTop">
-        <div class="floatl">
-            <span class="welcomeMessage">Edit User Profile</span>
-        </div>
+<div class="row">
+    <div class="col-sm-12">
+        <h3>Edit User Profile</h3>
+    </div>
 </div
-<div class="pageBody" id="userProfilePage">
+
+<div class="row" id="userProfilePage">
     <g:render template="/common/messages"/>
-
-        <g:form action="update">
-        <tmpl:edit user="${user}"/>
-        <div class="buttons">
-
-            <g:actionSubmit id="editFormCancelButton" value="Cancel" class="btn btn-default"/>
-            <g:actionSubmit value="Update" class="btn btn-primary"/>
-
+    <div class="col-sm-6 col-sm-push-1">
+        <g:form action="update" class="form">
+            <tmpl:edit user="${user}"/>
+            <div class="form-group">
+                <g:actionSubmit id="editFormCancelButton" value="Cancel" class="btn btn-default"/>
+                <g:submitButton name="Update" class="btn btn-primary"/>
+            </div>
+        </g:form>
         </div>
-</g:form>
 </div>
 </body>
 </html>
