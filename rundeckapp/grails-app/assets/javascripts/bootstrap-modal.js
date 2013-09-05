@@ -90,7 +90,7 @@
   Modal.prototype.hide = function (e) {
     if (e) e.preventDefault()
 
-    e = $.Event('hide.bs.modal')
+    e = $.Event('bs:hide.bs.modal')
 
     this.$element.trigger(e)
 

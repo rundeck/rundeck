@@ -258,7 +258,7 @@
   Tooltip.prototype.hide = function () {
     var that = this
     var $tip = this.tip()
-    var e    = $.Event('hide.bs.' + this.type)
+    var e    = $.Event('bs:hide.bs.' + this.type)
 
     function complete() {
       if (that.hoverState != 'in') $tip.detach()
