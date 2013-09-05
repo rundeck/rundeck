@@ -8,12 +8,14 @@
     <title><g:message code="main.app.name"/> - Login</title>
     <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
     <META HTTP-EQUIV="Expires" CONTENT="-1">
-
-    <asset:link rel="SHORTCUT" href="images/app-logo-small.png"/>
-    <asset:link rel="favicon" href="images/app-logo-small.png"/>
-    <asset:link rel="shortcut icon" href="images/app-logo-small.png"/>
+    <link rel="SHORTCUT" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
+    <link rel="favicon" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
+    <link rel="shortcut icon" href="${g.resource(dir: 'images', file: 'favicon.ico')}"/>
+    <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
     <asset:stylesheet href="rundeck.css"/>
-    <asset:javascript src="application.js"/>
+    <g:javascript library="prototype"/>
+    <g:javascript library="application"/>
+    <g:javascript library="menus"/>
     <g:render template="/common/js"/>
     <g:render template="/common/css"/>
     <script language="javascript">

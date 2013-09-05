@@ -8,9 +8,10 @@
     <title>
         <g:layoutTitle default="${g.message(code:'main.app.name')}"/>
     </title>
-    <asset:link rel="SHORTCUT" href="images/app-logo-small.png"/>
-    <asset:link rel="favicon" href="images/app-logo-small.png"/>
-    <asset:link rel="shortcut icon" href="images/app-logo-small.png"/>
+    <link rel="SHORTCUT" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
+    <link rel="favicon" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
+    <link rel="shortcut icon" href="${g.resource(dir: 'images', file: 'favicon.ico')}"/>
+    <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
     <asset:stylesheet href="rundeck.css"/>
     <asset:javascript src="bootstrap.js"/>
     <g:javascript library="prototype"/>
