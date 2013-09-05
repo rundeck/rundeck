@@ -13,7 +13,9 @@
     <asset:link rel="shortcut icon" href="images/app-logo-small.png"/>
     <asset:stylesheet href="rundeck.css"/>
     <asset:javascript src="bootstrap.js"/>
-    <asset:javascript src="application.js"/>
+    <g:javascript library="prototype"/>
+    <g:javascript library="application"/>
+    <g:javascript library="menus"/>
     <g:render template="/common/js"/>
     <g:render template="/common/css"/>
 
