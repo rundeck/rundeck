@@ -305,12 +305,16 @@
         }
          function filterToggle(evt) {
             ['${rkey}filter','${rkey}filter-toggle'].each(Element.toggle);
-            ['outsidefiltersave'].each($('${rkey}filter').visible()?Element.hide:Element.show);
+            if($('outsidefiltersave')){
+                $('${rkey}filter').visible()? $('outsidefiltersave').hide: $('outsidefiltersave').show;
+            }
         }
         function filterToggleSave(evt) {
             ['${rkey}filter','${rkey}fsave'].each(Element.show);
             ['${rkey}filter-toggle','${rkey}fsavebtn'].each(Element.hide);
-            ['outsidefiltersave'].each($('${rkey}filter').visible()?Element.hide:Element.show);
+            if ($('outsidefiltersave')) {
+                $('${rkey}filter').visible() ? $('outsidefiltersave').hide : $('outsidefiltersave').show;
+            }
         }
         function init(){
             loadNowRunning();
