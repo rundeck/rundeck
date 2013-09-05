@@ -3,7 +3,7 @@
 <!--[if IE 7 ]>    <html class="ie7"> <![endif]-->
 <!--[if IE 8 ]>    <html class="ie8"> <![endif]-->
 <!--[if IE 9 ]>    <html class="ie9"> <![endif]-->
-<!--[if (gt IE 9)|!(IE)]><!--> <html class="" lang="en"><!--<![endif]-->
+<!--[if (gt IE 9)|!(IE)]><!--> <html lang="en"><!--<![endif]-->
 <head>
     <title><g:message code="main.app.name"/> - Login</title>
     <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
@@ -12,13 +12,10 @@
     <asset:link rel="SHORTCUT" href="images/app-logo-small.png"/>
     <asset:link rel="favicon" href="images/app-logo-small.png"/>
     <asset:link rel="shortcut icon" href="images/app-logo-small.png"/>
-    <asset:stylesheet href="rundeck.less"/>
+    <asset:stylesheet href="rundeck.css"/>
     <asset:javascript src="application.js"/>
     <g:render template="/common/js"/>
     <g:render template="/common/css"/>
-    <!--[if IE 7]>
-    <asset:stylesheet href="ie7css.less"/>
-    <![endif]-->
     <script language="javascript">
         //<!--
         Event.observe(window, 'load', loadFocus, false);

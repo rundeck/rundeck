@@ -35,6 +35,7 @@ webrealms{
         Api.urlpattern='/api/*'
         Static.urlpattern='/static/*'
         Assets.urlpattern='/assets/*'
+        Fonts.urlpattern='/fonts/*'
         all{
             urlpattern='/*'
             authconstraint{

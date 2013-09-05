@@ -133,8 +133,11 @@ task cleanGrails(type: Exec, dependsOn: [extractGrails]) {
 	commandLine grailsCommandLine
 	args "-DRUNDECK_VERSION=${version}", 'clean'
 }
+task cleanAssets(type: Delete) {
+    delete file("${project.projectDir}/web-app/assets")
+}
 
-task clean(overwrite: true, dependsOn: [cleanEclipse, cleanWar]) {
+task clean(overwrite: true, dependsOn: [cleanEclipse, cleanWar, cleanGrails, cleanAssets]) {
 }
 
 /**
@@ -157,9 +160,9 @@ task testGrails(type: Exec, overwrite: true, dependsOn: [installJettyPlugin, ins
 test.dependsOn testGrails
 
 /**
- * Run grails asset-precompile
+ * Run grails compile
  */
-task assetCompile(type: Exec, overwrite: true) {
+task grailsCompile(type: Exec, overwrite: true, dependsOn: [extractGrails]) {
     workingDir project.projectDir
     environment 'GRAILS_HOME', grailsHome
     commandLine grailsCommandLine
@@ -167,12 +170,35 @@ task assetCompile(type: Exec, overwrite: true) {
             "${mavenCreds}",
             "-Dgrails.local.repo=${grailsLocalRepo}",
             "-DRUNDECK_VERSION=${version}",
+            'prod',
+            'compile'
+}
+/**
+ * Run grails asset-precompile
+ */
+task assetCompileX(type: Exec, overwrite: true, dependsOn: [extractGrails,grailsCompile]) {
+    workingDir project.projectDir
+    environment 'GRAILS_HOME', grailsHome
+    commandLine grailsCommandLine
+    args "-Dmaven.central.url=${mavenCentralUrl}",
+            "${mavenCreds}",
+            "-Dgrails.local.repo=${grailsLocalRepo}",
+            "-DRUNDECK_VERSION=${version}",
+            'prod',
             'asset-precompile'
+}
+/**
+ * Run grails asset-precompile
+ */
+task assetCompile(type: Exec, overwrite: true, dependsOn: [extractGrails, assetCompileX]) {
+    workingDir project.projectDir
+    commandLine 'test'
+    args "-f","${project.projectDir}/web-app/assets/rundeck.css"
 }
 /**
  * Builds the rundeck war file
  */
-task grailsWar(type: Exec, overwrite:true, dependsOn: [installJettyPlugin, installDependencies,extractGrails,assetCompile]) {
+task grailsWar(type: Exec, overwrite:true, dependsOn: [installJettyPlugin, installDependencies,extractGrails]) {
 	inputs.sourceDir file("${projectDir}/src")
 	outputs.file file(warFileLocation)
 	workingDir project.projectDir
@@ -187,6 +213,7 @@ task grailsWar(type: Exec, overwrite:true, dependsOn: [installJettyPlugin, insta
             warFileLocation
 }
 
+grailsWar.dependsOn assetCompile
 // add the war to default configuration for this project
 artifacts{
 	'default'(file(warFileLocation)){
