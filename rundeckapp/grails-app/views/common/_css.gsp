@@ -146,20 +146,6 @@
         display: inline-block;
     }
 
-    .remotestatus.ok {
-        width: 12px;
-        background: transparent url("${resource(dir:'images',file:'icon-tiny-ok.png')}") center left no-repeat;
-    }
-    .remotestatus.error {
-        width: 12px;
-        background: transparent url("${resource(dir:'images',file:'icon-tiny-error.png')}") center left no-repeat;
-    }
-
-    .remoteoptionfield:hover .remotestatus {
-        width: 12px;
-        background: transparent url("${resource(dir:'images',file:'icon-tiny-refresh.png')}") center left no-repeat;
-    }
-
     table.execoutput span.node {
         %{--background: url("${resource(dir:'images',file:'icon-small-Node.png')}") no-repeat 2px top;--}%
         /*padding-left: 20px;*/

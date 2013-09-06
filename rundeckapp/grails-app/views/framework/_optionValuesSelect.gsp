@@ -25,37 +25,47 @@
 <g:set var="rkey" value="${g.rkey()}"/>
 <g:set var="fkey" value="${rkey}"/>
 <g:set var="realFieldName" value="${(fieldPrefix?fieldPrefix:'')+(fieldName?fieldName:'option.'+optionSelect.name)}"/>
+
 <g:if test="${optionSelect}">
+    <div class="row">
     <g:set var="optName" value="${optionSelect.name}"/>
     <g:set var="fieldwatchid" value="${(fieldhiddenid?:rkey+'_'+optName+'_h')}"/>
-
+    <g:set var="hasExtended" value="${!optionSelect.secureInput && (values || optionSelect.values || optionSelect.multivalued) && !err}"/>
+    <g:set var="hasTextfield" value="${!optionSelect.enforced && !optionSelect.multivalued || optionSelect.secureInput || !optionSelect.enforced && err}"/>
+    <g:set var="hasDefaulter" value="${!optionSelect.enforced && !optionSelect.multivalued && !optionSelect.secureInput && optionSelect.defaultValue && !(optionSelect.values.contains(optionSelect.defaultValue))}"/>
+    <g:set var="textcolsize" value="${hasExtended?'8':'12'}"/>
+    <g:set var="extcolsize" value="${hasTextfield?'4':'12'}"/>
     <%-- Print out the input box for random input --%>
-    <g:if test="${!optionSelect.enforced && !optionSelect.multivalued || optionSelect.secureInput || !optionSelect.enforced && err }">
+    <g:if test="${hasTextfield }">
+        <div class=" col-sm-${textcolsize}">
         <g:if test="${optionSelect.secureInput}">
             <g:passwordField name="${realFieldName}"
-                class="optionvaluesfield"
+                class="optionvaluesfield  form-control"
                 value="${optionSelect.defaultValue?optionSelect.defaultValue:''}"
                 maxlength="256" size="40"
                 id="${fieldwatchid}"/>
         </g:if>
         <g:else>
             <g:textField name="${realFieldName}"
-                class="optionvaluesfield"
+                class="optionvaluesfield form-control"
                 value="${selectedvalue?selectedvalue:selectedoptsmap && null!=selectedoptsmap[optName]?selectedoptsmap[optName]:optionSelect.defaultValue?optionSelect.defaultValue:''}"
                 maxlength="256" size="40"
                 id="${fieldwatchid}"/>
         </g:else>
             <%-- event handler: when text field is empty, show required option value warning icon if it exists--%>
             <wdgt:eventHandler for="${fieldwatchid}" state="empty" visible="true" targetSelector="${'#'+optName.encodeAsHTML()+'_state span.reqwarning'}" frequency="1"  inline='true'/>
+        </div>
     </g:if>
     <g:elseif test="${optionSelect.enforced && err}">
+        <div class=" col-sm-${textcolsize}">
         <span class="info note"><g:message code="Execution.option.enforced.values.could.not.be.loaded" /></span>
         <input type="hidden" name="${realFieldName.encodeAsHTML()}" id="${fieldwatchid.encodeAsHTML()}" value=""/>
+        </div>
     </g:elseif>
-
     <%-- The Dropdown list --%>
-    <g:if test="${!optionSelect.secureInput && (values || optionSelect.values || optionSelect.multivalued) && !err}">
-        
+    <g:if test="${hasExtended}">
+
+        <div class=" col-sm-${extcolsize}">
     
         <g:set var="labelsSet" value="${values && values instanceof Map?values.keySet():values?values:optionSelect.values?optionSelect.values:[]}"/>
         <g:set var="valuesMap" value="${values && values instanceof Map?values:null}"/>
@@ -71,22 +81,26 @@
                 <g:set var="selvalue" value="${valuesMap?valuesMap[sellabel]:sellabel}"/>
             </g:else>
             <g:hiddenField name="${realFieldName}" value="${selvalue}" id="${fieldwatchid}"/>
-            <span class="singlelabel">${sellabel.encodeAsHTML()}</span>
+            <p class="form-control-static"><span class="singlelabel">${sellabel.encodeAsHTML()}</span></p>
         </g:if>
         <g:else>
 
             <g:if test="${optionSelect.multivalued}">
                 <!-- use checkboxes -->
-                <div class="optionmultiarea" id="${fieldwatchid.encodeAsHTML()}">
+                <div class="optionmultiarea container" id="${fieldwatchid.encodeAsHTML()}">
                     <g:if test="${!optionSelect.enforced}">
                         <%-- variable input text fields --%>
-                        <div class="optionvaluemulti ">
-                            <span class="action button obs_addvar" >
-                                New Value&hellip;
+                        <div class="row">
+                        <div class="optionvaluemulti col-sm-12">
+                            <span class="btn btn-default btn-xs obs_addvar" >
+                                New Value <i class="glyphicon glyphicon-plus"></i>
                             </span>
                         </div>
-                        <div id="${rkey.encodeAsHTML()}varinput">
+                        </div>
+                        <div class="row">
+                        <div id="${rkey.encodeAsHTML()}varinput" class="col-sm-12">
 
+                        </div>
                         </div>
                         <g:if test="${selectedoptsmap && selectedoptsmap[optName] && selectedoptsmap[optName] instanceof String}">
                             %{
@@ -112,10 +126,15 @@
                     </g:if>
                     <g:each in="${labelsSet}" var="sellabel">
                         <g:set var="entry" value="${sellabel instanceof Map?sellabel:[name:sellabel,value:sellabel]}"/>
-                        <div class="optionvaluemulti">
+                        <div class="row">
+                        <div class="col-sm-12">
+                        <div class="optionvaluemulti checkbox">
                             <label>
-                                <input type="checkbox" name="${realFieldName.encodeAsHTML()}" value="${entry.value.encodeAsHTML()}" ${selectedvalue && entry.value == selectedvalue || entry.value == optionSelect.defaultValue || selectedoptsmap && entry.value in selectedoptsmap[optName] ? 'checked' : ''} /> ${entry.name.encodeAsHTML()}
+                                <input type="checkbox" name="${realFieldName.encodeAsHTML()}" value="${entry.value.encodeAsHTML()}" ${selectedvalue && entry.value == selectedvalue || entry.value == optionSelect.defaultValue || selectedoptsmap && entry.value in selectedoptsmap[optName] ? 'checked' : ''} />
+                                ${entry.name.encodeAsHTML()}
                             </label>
+                        </div>
+                        </div>
                         </div>
 
                     </g:each>
@@ -137,7 +156,7 @@
             </g:if>
             <g:else>
                 <g:set var="usesTextField" value="${!optionSelect.enforced || err}"/>
-                <select class="optionvalues" id="${!usesTextField? fieldwatchid.encodeAsHTML(): (rkey + '_sel').encodeAsHTML()}"
+                <select class="optionvalues  form-control" id="${!usesTextField? fieldwatchid.encodeAsHTML(): (rkey + '_sel').encodeAsHTML()}"
                     ${!usesTextField ? 'name="' + realFieldName.encodeAsHTML() + '"' : ''}>
                     <g:if test="${!optionSelect.enforced && !optionSelect.multivalued}">
                         <option value="">-choose-</option>
@@ -164,9 +183,10 @@
 
             </g:javascript>
         </g:if>
+        </div>
     </g:if>
-    <g:if test="${!optionSelect.enforced && !optionSelect.multivalued && !optionSelect.secureInput && optionSelect.defaultValue && !(optionSelect.values.contains(optionSelect.defaultValue))}">
-        <span class="action button"
+    <g:if test="${hasDefaulter}">
+        <span class="textbtn textbtn-default"
               id="${optName.encodeAsJavaScript()}_setdefault"
               title="Click to use default value: ${optionSelect.defaultValue.encodeAsHTML()}"
             style="${wdgt.styleVisible(if: selectedoptsmap && selectedoptsmap[optName]!=optionSelect.defaultValue)}"
@@ -203,8 +223,12 @@
     </g:javascript>
 
     <span class="loading"></span>
+    </div>
+
 </g:if>
 <g:if test="${err}">
+    <div class="row">
+    <div class="col-sm-12">
     <g:if test="${err.code=='empty'}">
        <g:javascript>
         fireWhenReady('_commandOptions', function(){
@@ -212,16 +236,18 @@
         });
         </g:javascript>
     </g:if>
-    <g:expander key="${rkey}_error_detail" classnames="error label">${err.message.encodeAsHTML()}</g:expander>
-    
-    <span class="error note" style="display:none" id="${rkey}_error_detail">
+    <g:expander key="${rkey}_error_detail" classnames="textbtn-warning">${err.message.encodeAsHTML()}</g:expander>
+
+    <div class="alert alert-warning" style="display:none" id="${rkey}_error_detail">
         <g:if test="${err.exception}">
             <div>Exception: ${err.exception.message.encodeAsHTML()}</div>
         </g:if>
         <g:if test="${srcUrl}">
             <div>URL: ${srcUrl.encodeAsHTML()}</div>
         </g:if>
-    </span>
+    </div>
+    </div>
+    </div>
 </g:if>
 <g:elseif test="${values}">
     %{--<g:img file="icon-tiny-ok.png" title="Remote option values loaded from URL: ${srcUrl.encodeAsHTML()}"/>--}%

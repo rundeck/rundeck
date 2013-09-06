@@ -34,15 +34,32 @@
   /* use glyphicon folder icons */
   .expandComponentHolder  > div > span.expandComponentControl.jobgroupexpand span.foldertoggle{
       .glyphicon();
-      &:before {
-        content: "\e117";
-      }
+      .glyphicon-folder-close();
   }
   .expandComponentHolder.expanded  > div > span.expandComponentControl.jobgroupexpand span.foldertoggle{
       .glyphicon();
-      &:before {
-        content: "\e118";
-      }
+      .glyphicon-folder-open();
+  }
+  /* use glyphicon for remote option url loading status indicator */
+  .remote .remotestatus{
+    .glyphicon();
+    &.ok{
+      color: @brand-success;
+      .glyphicon-ok-sign();
+    }
+    &.error{
+      color: @brand-warning;
+      .glyphicon-warning-sign();
+    }
+  }
+
+  .remote .remoteoptionfield:hover{
+    background-color: lighten(@brand-info,30%);
+    .remotestatus {
+      .glyphicon();
+      color: @gray;
+      .glyphicon-refresh();
+    }
   }
 
   /**

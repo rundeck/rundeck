@@ -15,10 +15,7 @@ used by _editOptions.gsp template
             }
         }
     %>
-    <table>
-        <tr>
-            <td style="vertical-align:top">
-    <table class="simpleForm" id="_commandOptions">
+    <div id="_commandOptions">
         <g:each var="optName" in="${optionordering?:optsmap.keySet().sort()}">
             <g:set var="optionSelect" value="${optsmap[optName].selopt }"/>
             <g:set var="optRequired" value="${optionSelect.required}"/>
@@ -28,16 +25,20 @@ used by _editOptions.gsp template
             <g:set var="hasError" value="${jobexecOptionErrors?jobexecOptionErrors[optName]:null}"/>
             <g:set var="fieldNamekey" value="${rkey+'_'+optName+'_label'}"/>
             <g:set var="fieldhiddenid" value="${rkey+'_'+optName+'_h'}"/>
-            <tr>
-                <td class="${hasError?'fieldError':''} remoteoptionfield" id="${fieldNamekey}"><span style="display:none;" class="remotestatus"></span> ${optName.encodeAsHTML()}:
-                <g:if test="${Environment.current == Environment.DEVELOPMENT && grailsApplication.config.rundeck?.debug}">
-                    (${optiondependencies? optiondependencies[optName]:'-'})(${dependentoptions? dependentoptions[optName]:'-'})
-                </g:if>
-                </td>
+            <g:set var="hasRemote" value="${optionSelect.realValuesUrl != null}"/>
+            <div class="form-group ${hasError ? 'has-warning' : ''} ${hasRemote?'remote':''}" >
+              <label class="remoteoptionfield col-sm-2 control-label" for="${fieldName}" id="${fieldNamekey}">
+                  <span style="display:none;" class="remotestatus"></span>
+                  ${optName.encodeAsHTML()}
+                  <g:if test="${Environment.current == Environment.DEVELOPMENT && grailsApplication.config.rundeck?.debug}">
+                      (${optiondependencies ? optiondependencies[optName] : '-'})(${dependentoptions ? dependentoptions[optName] : '-'})
+                  </g:if>
+              </label>
                 %{--determine if option has all dependencies met--}%
                 <g:set var="optionDepsMet" value="${!optiondependencies[optName] || selectedoptsmap && optiondependencies[optName].every {selectedoptsmap[it]}}" />
-                <td>
+
                     <g:if test="${optionSelect.realValuesUrl !=null}">
+                        <div class=" col-sm-9">
                         <g:set var="holder" value="${rkey+'_'+optName+'_hold'}"/>
                         <span id="${holder}" >
                             <g:if test="${!optionDepsMet}">
@@ -51,18 +52,20 @@ used by _editOptions.gsp template
                         <g:if test="${Environment.current == Environment.DEVELOPMENT && grailsApplication.config.rundeck?.debug}">
                         <a onclick="_remoteOptionControl('_commandOptions').loadRemoteOptionValues('${optName.encodeAsJavaScript()}');return false;" href="#">${optName.encodeAsHTML()} reload</a>
                         </g:if>
+                        </div>
                     </g:if>
                     <g:else>
+                        <div class=" col-sm-9">
                         <g:render template="/framework/optionValuesSelect"
                             model="${[elemTarget:rkey+'_'+optName,optionSelect:optionSelect, fieldPrefix:usePrefix,fieldName:'option.'+optName,selectedoptsmap:selectedoptsmap,fieldkey: fieldhiddenid]}"/>
+                        </div>
                     </g:else>
-
+                <div class="col-sm-1">
                     <span id="${optName.encodeAsHTML()+'_state'}">
                         <g:if test="${ optRequired }">
                             <span class="reqwarning" style="${wdgt.styleVisible(unless:optionHasValue)}">
                                 <g:if test="${hasError && hasError.contains('required')}">
-                                <img src="${resource( dir:'images',file:'icon-tiny-warn.png' )}" class="warnimg"
-                                alt="Required Option" title="Required Option"  width="12px" height="11px" />
+                                    <i class="glyphicon glyphicon-warning-sign"></i>
                                     ${hasError.encodeAsHTML()}
                                 </g:if>
                                 <g:else>
@@ -71,12 +74,15 @@ used by _editOptions.gsp template
                             </span>
                         </g:if>
                         <g:if test="${hasError && !hasError.contains('required')}">
-                            <span class="error label">${hasError.encodeAsHTML()}</span>
+                            <span class="error ">${hasError.encodeAsHTML()}</span>
                         </g:if>
                     </span>
-                    <div class="info note">${optDescription?.encodeAsHTML()}</div>
-                </td>
-            </tr>
+                </div>
+
+                <div class="col-sm-10 col-sm-offset-2">
+                    <span class="help-block">${optDescription?.encodeAsHTML()}</span>
+                </div>
+            </div>
         </g:each>
 
         <%--
@@ -137,13 +143,10 @@ used by _editOptions.gsp template
                 }
             });
         </g:javascript>
-    </table>
         <g:if test="${optionsDependenciesCyclic}">
             <g:message code="remote.options.warning.cyclicDependencies" />
         </g:if>
-    </td>
    <g:if test="${showDTFormat}">
-       <td style="vertical-align:top" >
      <div class="info note help">
 
         <g:expander key="argStringDateFormatHelp">datestamp format</g:expander>
@@ -187,11 +190,8 @@ used by _editOptions.gsp template
             <!--<tr><td>Z</td> 	<td>Time zone</td></tr>-->
         </table>
     </div>
-    </td>
     </g:if>
 
-        </tr>
-    </table>
 </g:if>
 <g:elseif test="${notfound}">
     <div class="info note">Choose a valid command (notfound).</div>

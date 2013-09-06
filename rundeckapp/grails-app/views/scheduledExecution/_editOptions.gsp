@@ -30,10 +30,15 @@
 
 
 <g:if test="${scheduledExecution.loglevel != 'DEBUG'}">
-    <div class="presentation">
-        <label><g:checkBox name="extra.debug" value="true" checked="false"/>
+    <div class="form-group">
+      <div class="col-sm-offset-2 col-sm-10">
+      <div class="checkbox">
+          <label>
+            <g:checkBox name="extra.debug" value="true" checked="false"/>
             <g:message code="enable.verbose.logging" />
         </label>
+    </div>
+    </div>
     </div>
 </g:if>
 

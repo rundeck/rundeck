@@ -172,10 +172,9 @@ div.buttonholder, td.buttonholder, span.buttonholder {
 
 .optionmultiarea {
     overflow-y: auto;
+    overflow-x: hidden;
     max-height: 11em;
     border: 1px solid #ddd;
-    padding: 0;
-    min-width: 200px;
 }
 
 .enforceSet {
@@ -208,12 +207,6 @@ div.buttonholder, td.buttonholder, span.buttonholder {
 
 .valuesSet span.valuesUrl {
     color: blue;
-}
-
-.remotestatus {
-    padding-left: 12px;
-    padding-right: 4px;
-    background: none;
 }
 
 span.reqwarning {
