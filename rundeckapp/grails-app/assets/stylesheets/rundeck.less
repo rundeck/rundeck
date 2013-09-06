@@ -71,10 +71,18 @@
   }
 
 
-  // Button variants
-  // -------------------------
-  // Easily pump out default styles, as well as :hover, :focus, :active,
-  // and disabled options for all buttons
+  // Text button
+.textbtn {
+
+  &:hover,
+  &:focus,
+  &:active,
+  &.active,
+  {
+    cursor: pointer;
+    text-decoration: underline;
+  }
+}
 .textbtn-variant( @color ; @background-color ; @background-higlight) {
     color: @color ;
     background-color: @background-color ;
@@ -116,27 +124,27 @@
 
 }
 .textbtn-default {
-  .textbtn-variant(lighten(@brand-primary, 30%),#fff,lighten(@brand-primary, 70%));
+  .textbtn-variant(lighten(@brand-primary, 30%),clear,lighten(@brand-primary, 70%));
 }
 
 .textbtn-primary {
-  .textbtn-variant(@brand-primary,#fff,lighten(@brand-primary, 50%));
+  .textbtn-variant(@brand-primary,clear,lighten(@brand-primary, 50%));
 }
 // Warning appears as orange
 .textbtn-warning {
-  .textbtn-variant(@brand-warning,#fff,lighten(@brand-warning, 50%));
+  .textbtn-variant(@brand-warning,clear,lighten(@brand-warning, 50%));
 }
 // Danger and error appear as red
 .textbtn-danger {
-  .textbtn-variant(@brand-danger,#fff,lighten(@brand-danger, 50%));
+  .textbtn-variant(@brand-danger,clear,lighten(@brand-danger, 50%));
 }
 // Success appears as green
 .textbtn-success {
-  .textbtn-variant(@brand-success,#fff,lighten(@brand-success, 50%));
+  .textbtn-variant(@brand-success,clear,lighten(@brand-success, 50%));
 }
 // Info appears as blue-green
 .textbtn-info {
-  .textbtn-variant(@brand-info,#fff,lighten(@brand-info, 50%));
+  .textbtn-variant(@brand-info,clear,lighten(@brand-info, 50%));
 }
 
 .progress{
@@ -152,3 +160,17 @@
     color:@brand-warning;
   }
 }
+
+//tags for nodes
+
+  span.tag, a.tag {
+    color: @label-color;
+    background: @label-default-bg;
+    border: 1px solid @gray;
+  }
+
+  span.tag.tagselected, a.tag.tagselected {
+    color: @label-color;
+    border: 1px solid @brand-primary;
+    background: @label-primary-bg;
+  }

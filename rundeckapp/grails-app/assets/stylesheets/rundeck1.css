@@ -1837,16 +1837,12 @@ div.commandFlowError {
 
 span.tag, a.tag {
     padding: 0 2px;
-    background: #ccf;
-    border: 1px solid #ccc;
     -moz-border-radius: 3px;
     -webkit-border-radius: 3px;
     border-radius: 3px;
 }
 
 span.tag.tagselected, a.tag.tagselected {
-    background: #fff;
-    border: 1px solid #ccf;
 }
 
 span.tag.rundeckserver, a.tag.rundeckserver {

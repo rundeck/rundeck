@@ -14,41 +14,50 @@
     <g:form controller="scheduledExecution" method="post" action="runJobNow" class="form-horizontal" role="form">
     <g:render template="editOptions" model="${[scheduledExecution:scheduledExecution, selectedoptsmap:selectedoptsmap, selectedargstring:selectedargstring,authorized:authorized,jobexecOptionErrors:jobexecOptionErrors, optiondependencies: optiondependencies, dependentoptions: dependentoptions, optionordering: optionordering]}"/>
     <div class="row">
-    <div class="col-sm-12">
+    <div class="col-sm-2 control-label">
+        Nodes
+    </div>
+    <div class="col-sm-10">
         <g:if test="${nodesetvariables }">
-            <div class="message note">
+            <div class="alert alert-info">
                 <g:message code="scheduledExecution.nodeset.variable.warning" default="Note: The Node filters specified for this Job contain variable references, and the runtime nodeset cannot be determined."/>
             </div>
         </g:if>
         <g:elseif test="${nodesetempty }">
-            <div class="error note">
+            <div class="alert alert-warning">
                 <g:message code="scheduledExecution.nodeset.empty.warning"/>
             </div>
         </g:elseif>
         <g:elseif test="${nodes}">
             <g:set var="COLS" value="${6}"/>
-            <span class="prompt">Nodes:</span>
-            <input name="extra._replaceNodeFilters" value="true" type="checkbox"
-                          id="doReplaceFilters"/> <label for="doReplaceFilters">Change the Target Nodes</label>
-            <div class="presentation matchednodes embed jobmatchednodes group_section">
+            <div class="container">
+            <div class="row">
+                <div class="col-sm-12 checkbox">
+                <input name="extra._replaceNodeFilters" value="true" type="checkbox"
+                              id="doReplaceFilters"/> <label for="doReplaceFilters">Change the Target Nodes</label>
+                </div>
+            </div>
+            </div>
+            <div class=" matchednodes embed jobmatchednodes group_section">
                 <%--
                  split node names into groups, in several patterns
                   .*\D(\d+)
                   (\d+)\D.*
                 --%>
                 <g:if test="${namegroups}">
-                    <div class="group_select_control" style="display:none">
+                    <div class=" group_select_control" style="display:none">
                         Select:
-                        <span class="action button selectall">All</span>
-                        <span class="action button selectnone">None</span>
+                        <span class="textbtn textbtn-default selectall">All</span>
+                        <span class="textbtn textbtn-default selectnone">None</span>
                         <g:if test="${tagsummary}">
                             <g:render template="/framework/tagsummary"
-                                      model="${[tagsummary:tagsummary,action:[classnames:'tag tagselected action button obs_tag_group',onclick:'']]}"/>
+                                      model="${[tagsummary:tagsummary,action:[classnames:'tag tagselected textbtn obs_tag_group',onclick:'']]}"/>
                         </g:if>
                     </div>
                     <g:each in="${namegroups.keySet().sort()}" var="group">
-                        <div>
-                            <g:set var="expkey" value="${g.rkey()}"/>
+                        <div class="panel panel-default">
+                      <div class="panel-heading">
+                          <g:set var="expkey" value="${g.rkey()}"/>
                             <g:expander key="${expkey}">
                                 <g:if test="${group!='other'}">
                                     <span class="prompt">
@@ -63,15 +72,15 @@
                                 </g:else>
                                 (${namegroups[group].size()})
                             </g:expander>
-
-                            <div id="${expkey}" style="display:none;" class="presentation group_section rounded">
+                        </div>
+                        <div id="${expkey}" style="display:none;" class="group_section panel-body">
                                 <g:if test="${namegroups.size()>1}">
                                 <div class="group_select_control" style="display:none">
                                     Select:
-                                    <span class="action button selectall" >All</span>
-                                    <span class="action button selectnone" >None</span>
+                                    <span class="textbtn textbtn-default selectall" >All</span>
+                                    <span class="textbtn textbtn-default selectnone" >None</span>
                                     <g:if test="${grouptags && grouptags[group]}">
-                                        <g:render template="/framework/tagsummary" model="${[tagsummary:grouptags[group],action:[classnames:'tag tagselected action button obs_tag_group',onclick:'']]}"/>
+                                        <g:render template="/framework/tagsummary" model="${[tagsummary:grouptags[group],action:[classnames:'tag tagselected textbtn  obs_tag_group',onclick:'']]}"/>
                                     </g:if>
                                 </div>
                                 </g:if>
@@ -130,33 +139,33 @@
                 if (typeof(initTooltipForElements) == 'function') {
                     initTooltipForElements('.obs_tooltip');
                 }
-                $$('div.jobmatchednodes span.action.selectall').each(function(e) {
+                $$('div.jobmatchednodes span.textbtn.selectall').each(function(e) {
                     Event.observe(e, 'click', function(evt) {
                         $(e).up('.group_section').select('input').each(function(el) {
                             if (el.type == 'checkbox') {
                                 el.checked = true;
                             }
                         });
-                        $(e).up('.group_section').select('span.action.obs_tag_group').each(function(e) {
+                        $(e).up('.group_section').select('span.textbtn.obs_tag_group').each(function(e) {
                             $(e).setAttribute('tagselected', 'true');
                             $(e).addClassName('tagselected');
                         });
                     });
                 });
-                $$('div.jobmatchednodes span.action.selectnone').each(function(e) {
+                $$('div.jobmatchednodes span.textbtn.selectnone').each(function(e) {
                     Event.observe(e, 'click', function(evt) {
                         $(e).up('.group_section').select('input').each(function(el) {
                             if (el.type == 'checkbox') {
                                 el.checked = false;
                             }
                         });
-                        $(e).up('.group_section').select('span.action.obs_tag_group').each(function(e) {
+                        $(e).up('.group_section').select('span.textbtn.obs_tag_group').each(function(e) {
                             $(e).setAttribute('tagselected', 'false');
                             $(e).removeClassName('tagselected');
                         });
                     });
                 });
-                $$('div.jobmatchednodes span.action.obs_tag_group').each(function(e) {
+                $$('div.jobmatchednodes span.textbtn.obs_tag_group').each(function(e) {
                     Event.observe(e, 'click', function(evt) {
                         var ischecked = e.getAttribute('tagselected') != 'false';
                         e.setAttribute('tagselected', ischecked ? 'false' : 'true');
@@ -171,7 +180,7 @@
                                 el.checked = !ischecked;
                             }
                         });
-                        $(e).up('.group_section').select('span.action.obs_tag_group[tag="' + e.getAttribute('tag') + '"]').each(function(
+                        $(e).up('.group_section').select('span.textbtn.obs_tag_group[tag="' + e.getAttribute('tag') + '"]').each(function(
                         el) {
                             el.setAttribute('tagselected', ischecked ? 'false' : 'true');
                             if (!ischecked) {
@@ -208,9 +217,9 @@
 
             </g:javascript>
         </g:elseif>
-        </div>
-        </div>
-        <div class="form-group " id="formbuttons">
+    </div>
+    </div>
+    <div class="form-group " id="formbuttons">
         <div class="col-sm-3 col-sm-offset-2">
             <g:if test="${!hideCancel}">
                 <g:actionSubmit id="execFormCancelButton" value="Cancel" class="btn btn-default"/>
