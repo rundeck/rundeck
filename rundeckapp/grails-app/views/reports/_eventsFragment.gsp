@@ -92,7 +92,7 @@
                                 </g:if>
                             </g:if>
                             <g:if test="${!params.compact}">
-                                <span class="paginate"><g:paginate controller="reports" action="index" total="${total}" max="${max}" params="${paginateParams}"/></span>
+                                <div class="paginate"><g:paginate controller="reports" action="index" total="${total}" max="${max}" params="${paginateParams}"/></div>
                             </g:if>
                     </g:if>
                 </div>

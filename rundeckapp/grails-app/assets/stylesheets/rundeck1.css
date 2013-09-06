@@ -1697,41 +1697,7 @@ div.pageSubtitle.subtitleAction {
     color: #444;
 }
 
-/* pagination links */
-span.paginate {
-    margin: 5px 0;
-    padding: 2px;
-    display: block;
-    /*font-size: 10pt; */
-    font-variant: small-caps;
-}
 
-span.paginate a {
-    color: #aaa;
-}
-
-span.paginate:hover a {
-    color: blue;
-}
-
-span.paginate a:hover {
-    background: #aaf;
-}
-
-span.paginate a, span.paginate span.currentStep {
-    margin: 1px;
-    padding: 2px;
-}
-
-span.paginate span.currentStep {
-    color: white;
-    font-weight: bold;
-    background: #aaa;
-}
-
-span.paginate:hover span.currentStep {
-    background: blue;
-}
 
 /* sortable column */
 th.sortable a {

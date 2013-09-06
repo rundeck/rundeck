@@ -1059,7 +1059,7 @@ function paginate(elem,offset,total,max,options){
         //message text
         'paginate.next':'Next','paginate.prev':'Previous',
         //css classes
-        nextClass:'nextLink',prevClass:'prevLink', stepClass:'step', currentStepClass:'currentStep',
+        nextClass:'',prevClass:'', stepClass:'', currentStepClass:'active',
         //url parameter names
         offsetParam:'offset',maxParam:'max',
         //variables
@@ -1078,35 +1078,46 @@ function paginate(elem,offset,total,max,options){
         pages+=1;
     }
     var curpage = Math.floor(offset/max) + 1;
-    var page=new Element('span');
+    var page=new Element('ul');
+    page.addClassName('pagination');
+    page.addClassName('pagination-sm');
 
     //generate paginate links
     var firststep=1
-
+    var a;
+    var li = new Element('li');
     if(curpage>firststep){
         //previous
-        var a= _pageLink(opts.baseUrl, {offset: (offset - max), max: max}, opts['paginate.prev'], opts['prevClass'], opts.prevBehavior);
-        page.appendChild(a);
+        a= _pageLink(opts.baseUrl, {offset: (offset - max), max: max}, opts['paginate.prev'], opts['prevClass'], opts.prevBehavior);
+    }else{
+        a=new Element('span');
+        a.innerHTML=opts['paginate.prev'];
+        li.addClassName('disabled');
     }
+    li.appendChild(a);
+    page.appendChild(li);
     //generate intermediate pages
     var step=1;
     for(var i=0;i<opts.maxsteps && (max * i)<total;i++){
-        var a;
-        if(i+1== curpage){
-            a = new Element('span');
-            a.addClassName(opts.currentStepClass);
-            a.innerHTML=curpage;
-        }else{
-            a = _pageLink(opts.baseUrl, {offset: max * i , max: max}, i+1, opts['stepClass'], opts.stepBehavior);
+        var a = _pageLink(opts.baseUrl, {offset: max * i , max: max}, i+1, opts['stepClass'], opts.stepBehavior);
+        var li = new Element('li');
+        if (i + 1 == curpage) {
+            li.addClassName(opts['currentStepClass']);
         }
-        page.appendChild(a);
+        li.appendChild(a);
+        page.appendChild(li);
     }
+    li = new Element('li');
     if (offset<total-max) {
         //next
-        var a = _pageLink(opts.baseUrl, {offset: (offset + max), max: max}, opts['paginate.next'], opts['nextClass'], opts.nextBehavior);
-        page.appendChild(a);
+        a = _pageLink(opts.baseUrl, {offset: (offset + max), max: max}, opts['paginate.next'], opts['nextClass'], opts.nextBehavior);
+    } else {
+        a = new Element('span');
+        a.innerHTML = opts['paginate.next'];
+        li.addClassName('disabled');
     }
-
+    li.appendChild(a);
+    page.appendChild(li);
     if(pages>opts.maxsteps){
 
     }
