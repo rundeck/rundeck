@@ -475,7 +475,7 @@ class ScheduledExecutionController  {
      * @return Map of data, [json: parsed json or null, stats: stats data, error: error message]
      *
      */
-    def Object getRemoteJSON(String url, int timeout){
+    private Object getRemoteJSON(String url, int timeout){
         //attempt to get the URL JSON data
         def stats=[:]
         if(url.startsWith("http:") || url.startsWith("https:")){
