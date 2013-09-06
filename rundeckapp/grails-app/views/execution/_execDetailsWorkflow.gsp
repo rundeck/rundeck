@@ -24,7 +24,7 @@
 <g:set var="rkey" value="${g.rkey()}"/>
 <g:unless test="${isAdhoc}">
 <div>
-    <span class="label"><g:message code="Workflow.property.keepgoing.prompt" /></span>
+    <span class=""><g:message code="Workflow.property.keepgoing.prompt" /></span>
     <g:if test="${edit}">
         <label>
             <input type="radio" name="workflow.keepgoing" value="false" ${workflow?.keepgoing?'':'checked'}/>
@@ -41,7 +41,7 @@
     </div>
 <div>
 
-    <span class="label" title="Strategy for iteration">Strategy:</span>
+    <span class="" title="Strategy for iteration">Strategy:</span>
     <g:if test="${edit}">
         <label title="Execute the full workflow on each node before the next node">
             <input id="wf_strat_node_first" type="radio" name="workflow.strategy" value="node-first" ${!workflow?.strategy||workflow?.strategy=='node-first'?'checked':''}/>

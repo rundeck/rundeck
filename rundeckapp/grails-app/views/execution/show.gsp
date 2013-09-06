@@ -246,7 +246,7 @@
                         <g:if test="${scheduledExecution}">
                             <tr>
                                 <td>
-                                    <span class="label">Job:</span>
+                                    <span >Job:</span>
                                 </td>
                                 <td>
                                     <g:render template="showJobHead"
@@ -263,7 +263,7 @@
                         <g:if test="${execution.argString}">
                             <tr>
                                 <td>
-                                    <span class="label">Options:</span>
+                                    <span >Options:</span>
                                 </td>
                                 <td>
                                     <span class="argString">${execution?.argString.encodeAsHTML()}</span>
@@ -273,7 +273,7 @@
                         <g:if test="${isAdhoc}">
                             <tr>
                                 <td >
-                                    <span class="label">Command:</span>
+                                    <span >Command:</span>
                                 </td>
                                 <td>
                                 <g:render template="/execution/execDetailsWorkflow"
