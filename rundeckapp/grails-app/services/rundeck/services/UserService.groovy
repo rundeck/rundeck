@@ -31,7 +31,7 @@ class UserService {
             def list=pref.split(",")
             list.each{String item->
                 def p=item.split("=",2)
-                if(p[1]){
+                if(p.size()>1 && p[1]){
                     inpref[p[0]]=p[1]
                 }
             }
