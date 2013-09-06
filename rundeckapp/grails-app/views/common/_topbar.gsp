@@ -1,37 +1,8 @@
 <%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
-<script type="text/javascript">
-//<!--
-function loadProjectSelect(){
-    jQuery('#projectSelect').load('${createLink(controller:'framework',action:'projectSelect')}',{
-        evalScripts:true
-    });
-}
-function selectProject(value){
-    if(value=='-new-'){
-        doCreateProject();
-        return;
-    }
-
-    new Ajax.Request('${createLink(controller:'framework',action:'selectProject')}',{
-        evalScripts:true,
-        parameters:{project:value},
-        onSuccess:function(transport){
-            $('projectSelect').loading(value?value:'All projects...');
-            if(typeof(_menuDidSelectProject)=='function'){
-                if(_menuDidSelectProject(value)){
-                    loadProjectSelect();
-                }
-            }else{
-                oopsEmbeddedLogin();
-            }
-        }
-    });
-}
-function doCreateProject(){
-    document.location = "${createLink(controller:'framework',action:'createProject')}";
-}
-//-->
-</script>
+<g:set var="selectParams" value="${[:]}"/>
+<g:if test="${pageScope._metaTabPage}">
+    <g:set var="selectParams" value="${[page: _metaTabPage]}"/>
+</g:if>
 <nav class="navbar navbar-default navbar-static-top" role="navigation">
 
     <a href="${grailsApplication.config.rundeck.gui.titleLink ? grailsApplication.config.rundeck.gui.titleLink : g.resource(dir: '/')}"
@@ -86,7 +57,7 @@ function doCreateProject(){
     <g:if test="${session?.project||session?.projects}">
         <g:if test="${session.frameworkProjects}">
             <li class="dropdown" id="projectSelect" >
-            <g:render template="/framework/projectSelect" model="${[projects:session.frameworkProjects,project:session.project]}"/>
+            <g:render template="/framework/projectSelect" model="${[projects:session.frameworkProjects,project:session.project, selectParams: selectParams]}"/>
             </li>
         </g:if>
         <g:else>
@@ -99,7 +70,9 @@ function doCreateProject(){
 
     <g:unless test="${session.frameworkProjects}">
         <g:javascript>
-            fireWhenReady('projectSelect', loadProjectSelect);
+            jQuery(window).load(function(){
+                jQuery('#projectSelect').load('${createLink(controller: 'framework', action: 'projectSelect', params: selectParams)}');
+            });
         </g:javascript>
     </g:unless>
 

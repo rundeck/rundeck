@@ -33,6 +33,9 @@
         %>
         }
     </script>
+    <g:ifPageProperty name="meta.tabpage">
+        <g:set var="_metaTabPage" value="${g.pageProperty(name: 'meta.tabpage')}" scope="page"/>
+    </g:ifPageProperty>
 
     <g:if test="${pageProperty(name:'meta.rssfeed')}">
         <g:ifServletContextAttribute attribute="RSS_ENABLED" value="true">

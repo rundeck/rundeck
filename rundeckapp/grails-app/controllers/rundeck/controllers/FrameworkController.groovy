@@ -1057,7 +1057,7 @@ class FrameworkController  {
                 log.warn("Error saving user project preference: "+result.error)
             }
         }
-        render params.project
+        return redirect(controller: 'menu',action: 'index',params: [page:params.page])
     }
 
     static autosetSessionProject(session, final ArrayList projects) {
