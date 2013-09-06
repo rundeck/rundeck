@@ -38,10 +38,10 @@
                 </span>
                 <g:if test="${authChecks[AuthConstants.ACTION_KILL]}">
                     <span id="cancelresult" style="margin-left:10px">
-                        <span class="action button textbtn act_cancel" onclick="docancel();">Kill <g:message
-                                code="domain.ScheduledExecution.title"/> <img
-                                src="${resource(dir: 'images', file: 'icon-tiny-removex.png')}" alt="Kill"
-                                width="12px" height="12px"/></span>
+                        <span class="btn btn-danger btn-xs act_cancel" onclick="docancel();">Kill <g:message
+                                code="domain.ScheduledExecution.title"/>
+                            <i class="glyphicon glyphicon-remove"></i>
+                        </span>
                     </span>
                 </g:if>
 
@@ -54,9 +54,9 @@
                                 action="execute"
                                 id="${scheduledExecution.extid}"
                                 params="${[retryExecId: execution.id]}"
-                                class="action button"
+                                class="btn btn-default btn-xs"
                                 title="${g.message(code: 'execution.job.action.runAgain')}">
-                            <g:img file="icon-small-run.png" alt="run" width="16px" height="16px"/>
+                            <i class="glyphicon glyphicon-play"></i>
                             <g:message code="execution.action.runAgain"/>&hellip;
                         </g:link>
                     </g:if>
@@ -67,9 +67,8 @@
                                 controller="scheduledExecution"
                                 action="createFromExecution"
                                 params="${[executionId: execution.id]}"
-                                class="action button"
+                                class="btn btn-default btn-xs"
                                 title="${g.message(code: 'execution.action.saveAsJob', default: 'Save as Job')}&hellip;">
-                            <g:img file="icon-small-run.png" alt="run" width="16px" height="16px"/>
                             <g:message code="execution.action.saveAsJob" default="Save as Job"/>&hellip;
                         </g:link>
                     </g:if>
@@ -78,9 +77,9 @@
                                     controller="framework"
                                     action="nodes"
                                     params="${[fromExecId: execution.id]}"
-                                    class="action button"
+                                    class="btn btn-default btn-xs"
                                     title="${g.message(code: 'execution.action.runAgain')}">
-                                <g:img file="icon-small-run.png" alt="run" width="16px" height="16px"/>
+                                <i class="glyphicon glyphicon-play"></i>
                                 <g:message code="execution.action.runAgain"/>&hellip;
                             </g:link>
                     </g:if>
@@ -101,10 +100,11 @@
 <form action="#" id="outputappendform">
 <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; border-spacing: 0;">
 
-<tr>
+<div class="row">
 
-    <td class="outputButtons" style="padding:0">
-        <span class="tabset">
+    <div class="col-sm-4">
+        <ul class="nav nav-tabs">
+            <li class="${followmode == 'tail' ? ' active' : ''}">
             <g:link class="tab ${followmode == 'tail' ? ' selected' : ''} out_setmode_tail"
                     title="${g.message(code: 'execution.show.mode.Tail.desc')}"
                     controller="execution" action="show" id="${execution.id}"
@@ -117,22 +117,24 @@
                     <g:message code="execution.show.mode.Log.title" default="Log Output"/>
                 </g:else>
             </g:link>
-
+            </li>
             %{--<g:link class="tab ${followmode == 'browse' ? ' selected' : ''} out_setmode_browse"--}%
                     %{--title="${g.message(code: 'execution.show.mode.Annotated.desc')}"--}%
                     %{--controller="execution" action="show" id="${execution.id}" params="[mode: 'browse']"--}%
                     %{--onclick="selectTab(this);">--}%
                 %{--<g:message code="execution.show.mode.Annotated.title" default="Grouped"/>--}%
             %{--</g:link>--}%
-
+            <li class="${followmode == 'node' ? ' active' : ''}">
             <g:link class="tab ${followmode == 'node' ? ' selected' : ''} out_setmode_node"
                     title="${g.message(code: 'execution.show.mode.Compact.desc')}"
                     controller="execution" action="show" id="${execution.id}" params="[mode: 'node']"
                     onclick="selectTab(this);">
                 <g:message code="execution.show.mode.Compact.title" default="Compact"/>
             </g:link>
-        </span>
-
+            </li>
+        </ul>
+        </div>
+    <div class="col-sm-4">
         <span id="viewoptions" style="${wdgt.styleVisible(unless: followmode == 'node')}" class="obs_node_false">
 
             %{--<span--}%
@@ -238,9 +240,9 @@
 
             %{--seconds--}%
         </span>
-    </td>
-    <td style="width:50%; text-align: right;">
-        <span style="${execution.dateCompleted ? '' : 'display:none'}" id="viewoptionscomplete">
+    </div>
+    <div class="col-sm-4">
+        <div class="pull-right" style="${execution.dateCompleted ? '' : 'display:none'}" id="viewoptionscomplete">
             <span>
                 <g:link class="textbtn" style="padding:5px;"
                         title="View raw text output"
@@ -262,10 +264,9 @@
                     <b class="glyphicon glyphicon-file"></b>
                     Download</g:link>
             </span>
-        </span>
-    </td>
-</tr>
-</table>
+        </div>
+    </div>
+</div>
 </form>
 </div>
 

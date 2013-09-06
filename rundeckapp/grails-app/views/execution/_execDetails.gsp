@@ -11,16 +11,16 @@
         </tr>
             <tr>
             <td></td>
-            <td>
+            <td class="scheduletime ${remoteClusterNodeUUID?'willnotrun':''}">
                 <g:if test="${nextExecution}">
                 <g:if test="${remoteClusterNodeUUID}">
-                    <g:img file="icon-small-clock-gray.png" width="16" height="16"/>
+                    <i class="glyphicon glyphicon-time"></i>
                       <span title="${remoteClusterNodeUUID}"><g:message code="expecting.another.cluster.server.to.run"/></span>
                       <g:relativeDate elapsed="${nextExecution}" untilClass="desc"/>
                       at <span class="desc">${nextExecution}</span>
                 </g:if>
                 <g:else>
-                    <g:img file="icon-small-clock.png" width="16" height="16"/>
+                    <i class="glyphicon glyphicon-time"></i>
                         Next execution
                         <g:relativeDate elapsed="${nextExecution}" untilClass="timeuntil"/>
                         at <span class="timeabs">${nextExecution}</span>
@@ -28,11 +28,9 @@
 
                 </g:if>
                 <g:elseif test="${scheduledExecution.scheduled && !nextExecution}">
-                    <span class="scheduletime">
-                        <img src="${resource(dir: 'images', file: 'icon-small-clock-gray.png')}" alt=""
-                             width="16"
-                             height="16"/>
-                        <span class="warn note" title="${g.message(code:'job.schedule.will.never.fire')}"><g:message code="job.schedule.will.never.fire" /></span>
+                    <span class="scheduletime willnotrun">
+                        <i class="glyphicon glyphicon-time"></i>
+                        <span class="detail" title="${g.message(code:'job.schedule.will.never.fire')}"><g:message code="job.schedule.will.never.fire" /></span>
                     </span>
                 </g:elseif>
             </td>

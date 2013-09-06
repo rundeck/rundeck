@@ -28,7 +28,6 @@ div.pageMessage.error {
 
 .welcomeMessage {
     font-size: 12pt;
-    /*font-family:Georgia, sans-serif;*/
 }
 
 .spinner {
@@ -286,9 +285,6 @@ div .errors {
     margin-bottom: 10px;
 }
 
-td .errors {
-
-}
 
 .message {
     padding: 5px;
@@ -327,19 +323,8 @@ td .errors {
 #footer {
     color: #888;
     font-size: 9px;
-    /*border:1px solid blue;*/
-    /*margin: 0 20px;*/
     clear: both;
     line-height: 200%;
-}
-
-.logininfo {
-    padding: 4px;
-
-}
-
-.logininfo span.userName {
-    font-weight: bold;
 }
 
 span.wblink {
@@ -362,9 +347,6 @@ span.wblink a:hover {
 
 }
 
-.depotinfo {
-}
-
 td.selected {
     background-color: #bbb;
     color: white;
@@ -381,50 +363,10 @@ span.desc {
 }
 
 
-.label, .content {
-    width: 300px;
-}
-
-.label {
-    font-style: italic;
-    color: #888;
-}
-
-.label.error {
-    color: #F88;
-}
-
-.action.label.error {
-    color: #F88;
-}
-
-.content {
-    background: #eeeeee;
-}
-
 .note {
 
     font-style: italic;
     color: #999;
-}
-
-.smlabel {
-
-}
-
-#P2P_selector {
-    border: 1px solid #fff;
-    color: #fc0;
-}
-
-div.viewPort {
-    padding: 10px;
-    overflow: auto;
-    overflow-x: hidden;
-    overflow-y: auto;
-}
-
-div.viewPort.output {
 }
 
 div.pageBody {
@@ -1883,7 +1825,6 @@ div.commandFlowError {
 }
 
 .commandcontent {
-    margin: 0 20px;
     overflow-x: auto;
 }
 

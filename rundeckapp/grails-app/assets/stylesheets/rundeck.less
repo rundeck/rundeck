@@ -31,6 +31,7 @@
     padding: 10px 20px;
   }
 
+  /* use glyphicon folder icons */
   .expandComponentHolder  > div > span.expandComponentControl.jobgroupexpand span.foldertoggle{
       .glyphicon();
       &:before {
@@ -44,8 +45,14 @@
       }
   }
 
-  .expandComponentControl.toggle .glyphicon{
+  /**
+  embed a pager in a column
+  */
+  .pager.pager-embed{
+    margin-top: 0;
+    margin-bottom: 0;
   }
+
 
   // Button variants
   // -------------------------
@@ -117,4 +124,14 @@
 
 .progress{
   height: auto;
+}
+
+// clock icon in scheduled job view is gray if job will not fire
+.scheduletime{
+  .glyphicon{
+    color:@brand-success;
+  }
+  &.willnotrun .glyphicon, &.willnotrun .detail{
+    color:@brand-warning;
+  }
 }
