@@ -1127,3 +1127,10 @@ function paginate(elem,offset,total,max,options){
     e.innerHTML='';
     e.insert(insert);
 }
+
+
+/** page init */
+
+jQuery(window).load(function () {
+    jQuery('.has_tooltip').tooltip({});
+});

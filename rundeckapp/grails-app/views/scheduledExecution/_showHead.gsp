@@ -37,9 +37,11 @@
             </span>
         </g:if>
         <g:elseif test="${scheduledExecution.scheduled && !nextExecution}">
-            <span class="scheduletime willnotrun">
+            <span class="scheduletime willnotrun has_tooltip" data-toggle="tooltip"
+                data-placement="auto left"
+                  title="${g.message(code: 'job.schedule.will.never.fire')}">
                 <i class="glyphicon glyphicon-time"></i>
-                <span class="detail" title="${g.message(code: 'job.schedule.will.never.fire')}"><g:message code="never" /></span>
+                <span class="detail"><g:message code="never" /></span>
             </span>
         </g:elseif>
     </div>

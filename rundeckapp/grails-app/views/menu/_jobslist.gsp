@@ -73,7 +73,7 @@
                                 <span class="jobdesc" title="${scheduledExecution.description?.encodeAsHTML()}">${scheduledExecution.description?.encodeAsHTML()}</span>
 
                             </td>
-                            <td class="scheduletime ${scheduledExecution.scheduled && !nextExecution?'willnotrun':''}">
+                            <td class="scheduletime">
                                 <g:if test="${scheduledExecution.scheduled && nextExecution}">
                                     <i class="glyphicon glyphicon-time"></i>
                                     <span title="${remoteClusterNodeUUID ? g.message(code: "expecting.another.cluster.server.to.run") : ''} at ${g.relativeDate(atDate: nextExecution)}">
@@ -81,9 +81,13 @@
                                     </span>
                                 </g:if>
                                 <g:elseif test="${scheduledExecution.scheduled && !nextExecution}">
-                                    <i class="glyphicon glyphicon-time"></i>
-                                    <span class="detail" title="${g.message(code: 'job.schedule.will.never.fire')}">
-                                        <g:message code="never" /></span>
+                                    <span class="scheduletime willnotrun has_tooltip"
+                                          title="${g.message(code: 'job.schedule.will.never.fire')}"
+                                          data-toggle="tooltip"
+                                          data-placement="auto left">
+                                        <i class="glyphicon glyphicon-time"></i>
+                                        <span class="detail"><g:message code="never"/></span>
+                                    </span>
                                 </g:elseif>
                             </td>
                         </tr>

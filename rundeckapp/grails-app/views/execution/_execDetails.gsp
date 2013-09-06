@@ -30,7 +30,7 @@
                 <g:elseif test="${scheduledExecution.scheduled && !nextExecution}">
                     <span class="scheduletime willnotrun">
                         <i class="glyphicon glyphicon-time"></i>
-                        <span class="detail" title="${g.message(code:'job.schedule.will.never.fire')}"><g:message code="job.schedule.will.never.fire" /></span>
+                        <span class="detail"><g:message code="job.schedule.will.never.fire" /></span>
                     </span>
                 </g:elseif>
             </td>
