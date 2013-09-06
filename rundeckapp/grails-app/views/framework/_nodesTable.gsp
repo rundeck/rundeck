@@ -8,16 +8,6 @@
     </div>
     </g:if>
     <table cellpadding="0" cellspacing="0" width="100%" id="nodesTable" class="table">
-        <g:if test="${!page || page=='0'}">
-            <tr>
-                <th>Name</th>
-                <th>Description</th>
-                <th>Tags</th>
-                <th style="text-align:right;">Username @</th>
-                <th>Hostname</th>
-                <th></th>
-            </tr>
-        </g:if>
         <g:render template="nodesTableContent" model="${[nodes:nodes,params:params,total:total,allcount:allcount,page:page,max:max,nodeauthrun:nodeauthrun]}"/>
     </table>
     <g:if test="${page==0 && (page+1*max<total)}">

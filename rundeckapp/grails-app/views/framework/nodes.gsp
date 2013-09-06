@@ -811,7 +811,7 @@
 
 
                 <div class=" clear matchednodes " id="nodelist" >
-                    <span class="button action receiver" onclick="expandResultNodes();">Show ${total} Node${1 != total ? 's' : ''}...</span>
+                    <span class="btn btn-default receiver" onclick="expandResultNodes();">Show ${total} Node${1 != total ? 's' : ''}...</span>
                     <g:javascript>
                         fireWhenReady('nodelist',expandResultNodes);
                     </g:javascript>
