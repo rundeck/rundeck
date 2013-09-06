@@ -49,7 +49,7 @@
                     <g:each in="${namegroups.keySet().sort()}" var="group">
                         <div>
                             <g:set var="expkey" value="${g.rkey()}"/>
-                            <g:expander key="${expkey}" classnames="action button">
+                            <g:expander key="${expkey}">
                                 <g:if test="${group!='other'}">
                                     <span class="prompt">
                                     ${namegroups[group][0].encodeAsHTML()}</span>

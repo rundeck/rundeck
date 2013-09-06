@@ -678,7 +678,7 @@
     <g:if test="${session.project}">
         <div class=" nodesummary ">
             <g:if test="${run_authorized}">
-                <g:expander classnames="button obs_shownodes" key="${ukey}nodeForm" open="true">
+                <g:expander classnames="obs_shownodes" key="${ukey}nodeForm" open="true">
                     <span class="match"><span class="obs_nodes_allcount">${total}</span> Node<span class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span>
                     </span>
                 </g:expander>
