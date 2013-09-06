@@ -60,7 +60,7 @@
             groupOutput:{value:${followmode == 'browse'}},
             updatepagetitle:${null == execution?.dateCompleted},
             <g:if test="${authChecks[AuthConstants.ACTION_KILL]}">
-            killjobhtml: '<span class="btn btn-danger btn-sm textbtn" onclick="followControl.docancel();">Kill <g:message code="domain.ScheduledExecution.title"/> <img src="${resource(dir: 'images', file: 'icon-tiny-removex.png')}" alt="Kill" width="12px" height="12px"/></span>',
+            killjobhtml: '<span class="btn btn-danger btn-sm textbtn" onclick="followControl.docancel();">Kill <g:message code="domain.ScheduledExecution.title"/> <i class="glyphicons glyphicons-remove"></i></span>',
             </g:if>
             <g:if test="${!authChecks[AuthConstants.ACTION_KILL]}">
             killjobhtml: "",
@@ -99,12 +99,14 @@
   </head>
 
   <body id="executionShowPage">
-    <div class="pageTop extra">
-        <div class="jobHead">
-                        <div class="jobInfo">
-                        <g:render template="/scheduledExecution/showExecutionHead"
+    <div class="">
+        <div class=" ">
+            <div class="row">
+                    <div class="col-sm-5">
+                    <g:render template="/scheduledExecution/showExecutionHead"
                                   model="[scheduledExecution: scheduledExecution, execution: execution, followparams: [mode: followmode, lastlines: params.lastlines]]"/>
-                        <span class="executioncontrol">
+                    </div>
+                    <div class="col-sm-4">
 
                         <g:if test="${null == execution.dateCompleted}">
                             <g:if test="${authChecks[AuthConstants.ACTION_KILL]}">
@@ -189,47 +191,58 @@
                             </g:else>
                         </span>
 
-                            <g:if test="${eprev || enext}">
-                                <span style="margin-left:10px; float:right; white-space: nowrap">
+                        </div>
+                        <g:if test="${eprev || enext}">
+                            <div class="col-sm-3">
+                                <ul class="pager pager-embed">
                                     <g:if test="${eprev}">
-                                        <g:link action="show" controller="execution" id="${eprev.id}"
-                                            title="Previous Execution #${eprev.id}">
-                                            <i class="glyphicon glyphicon-arrow-left"></i>
-                                            <g:message code="${scheduledExecution ? 'job' : 'adhoc'}.previous.execution"
-                                                args="${[eprev.id]}"/>
-                                        </g:link>
+                                       <li>
+                                           <g:link action="show" controller="execution" id="${eprev.id}"
+                                                title="Previous Execution #${eprev.id}">
+                                                <i class="glyphicon glyphicon-arrow-left"></i>
+                                                <g:message code="${scheduledExecution ? 'job' : 'adhoc'}.previous.execution"
+                                                    args="${[eprev.id]}"/>
+                                            </g:link>
+                                       </li>
                                     </g:if>
                                     <g:else>
-                                        <span class="info note">
-                                            <g:message code="no.previous.executions" />
-                                        </span>
+                                        <li class="disabled">
+                                            <span><g:message code="no.previous.executions" /></span>
+                                        </li>
                                     </g:else>
                                     <g:if test="${enext}">
-                                        <g:link action="show" controller="execution" class="sepL"
-                                                title="Next Execution #${enext.id}"
-                                            id="${enext.id}">
-                                            <g:message code="${scheduledExecution ? 'job' : 'adhoc'}.next.execution"
-                                                       args="${[enext.id]}"/>
-                                            <i class="glyphicon glyphicon-arrow-right"></i>
-                                        </g:link>
+                                        <li>
+                                            <g:link action="show" controller="execution" title="Next Execution #${enext.id}"
+                                                    id="${enext.id}">
+                                                <g:message code="${scheduledExecution ? 'job' : 'adhoc'}.next.execution"
+                                                           args="${[enext.id]}"/>
+                                                <i class="glyphicon glyphicon-arrow-right"></i>
+                                            </g:link>
+                                        </li>
                                     </g:if>
                                     <g:else>
-                                        <span class="sepL info note">
-                                            <g:message code="no.more.executions" />
-                                        </span>
+                                        <li class="disabled">
+                                            <span><g:message code="no.more.executions"/></span>
+                                        </li>
                                     </g:else>
-                                </span>
-                            </g:if>
-                        </span>
-                        <div style="display: inline-block; margin-left: 10px; width: 200px;">
-                            <g:render template="/common/progressBar"
-                                      model="[completePercent:execution.dateCompleted?100:0, height: '24',
-                                              progressType:'progress-bar-info',
-                                              containerId:'progressContainer', progressId:'progressBar']"/>
-                        </div>
+                                </ul>
+                            </div>
+                        </g:if>
 
-                        <g:set var="isAdhoc" value="${!scheduledExecution && execution.workflow.commands.size() == 1}"/>
-                        <table class="jobInfo">
+
+                </div>
+                <div class="row">
+
+                    <div style="display: inline-block; margin-left: 10px; width: 200px;">
+                        <g:render template="/common/progressBar"
+                                  model="[completePercent: execution.dateCompleted ? 100 : 0, height: '24',
+                                          progressType: 'progress-bar-info',
+                                          containerId: 'progressContainer', progressId: 'progressBar']"/>
+                    </div>
+                </div>
+                <g:set var="isAdhoc" value="${!scheduledExecution && execution.workflow.commands.size() == 1}"/>
+                 <div class="row">
+                <table class="table">
                         <g:if test="${scheduledExecution}">
                             <tr>
                                 <td>
@@ -268,22 +281,23 @@
                                 </td>
                             </tr>
                         </g:if>
-                        </table>
+                </table>
+                </div>
 
-                        <div class="jobInfo">
+                <div class="row">
+                <div class="col-sm-12">
                             <g:expander key="schedExDetails${scheduledExecution?.id ? scheduledExecution?.id : ''}"
                                         imgfirst="true">Definition</g:expander>
                             <div class="presentation" style="display:none" id="schedExDetails${scheduledExecution?.id}">
                                 <g:render template="execDetails"
                                           model="[execdata: execution, showArgString: false, hideAdhoc: isAdhoc]"/>
                             </div>
-                        </div>
+                </div>
+                </div>
                         <g:javascript>
                         var workflow=${execution.workflow.commands*.toMap().encodeAsJSON()};
                         </g:javascript>
 
-        </div>
-        <div class="clear"></div>
     </div>
 
   <g:render template="/execution/showFragment" model="[execution:execution,scheduledExecution: scheduledExecution,inlineView:false,followmode:followmode]"/>
