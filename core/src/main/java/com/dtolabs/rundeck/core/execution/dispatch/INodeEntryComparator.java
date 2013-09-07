@@ -65,13 +65,15 @@ public class INodeEntryComparator implements Comparator<INodeEntry> {
                     return i;
                 }
             }
-            return valA.compareTo(valB);
+            int i = valA.compareTo(valB);
+            if (i != 0) {
+                return i;
+            }
         } else if (null != valA) {
             return -1;
         } else if (null != valB) {
             return 1;
-        } else {
-            return iNodeEntry.getNodename().compareTo(iNodeEntryB.getNodename());
         }
+        return iNodeEntry.getNodename().compareTo(iNodeEntryB.getNodename());
     }
 }

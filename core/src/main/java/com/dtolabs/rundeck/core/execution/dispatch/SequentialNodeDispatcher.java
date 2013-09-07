@@ -37,12 +37,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResultImpl
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.TreeSet;
+import java.util.*;
 
 
 /**
@@ -93,18 +88,16 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
         final Thread thread = Thread.currentThread();
         boolean success = true;
         final HashMap<String, NodeStepResult> resultMap = new HashMap<String, NodeStepResult>();
-        final Collection<INodeEntry> nodes1 = nodes.getNodes();
+        final ArrayList<INodeEntry> nodes1 = new ArrayList<INodeEntry>(nodes.getNodes());
         //reorder based on configured rank property and order
         final String rankProperty = null != context.getNodeRankAttribute() ? context.getNodeRankAttribute()
                                                                            : "nodename";
         final boolean rankAscending = context.isNodeRankOrderAscending();
         final INodeEntryComparator comparator = new INodeEntryComparator(rankProperty);
-        final TreeSet<INodeEntry> orderedNodes = new TreeSet<INodeEntry>(
-            rankAscending ? comparator : Collections.reverseOrder(comparator));
-        orderedNodes.addAll(nodes1);
+        Collections.sort(nodes1, rankAscending ? comparator : Collections.reverseOrder(comparator));
         Throwable caught = null;
         INodeEntry failedNode = null;
-        for (final INodeEntry node : orderedNodes) {
+        for (final INodeEntry node : nodes1) {
             if (thread.isInterrupted()
                 || thread instanceof ServiceThreadBase && ((ServiceThreadBase) thread).isAborted()) {
                 interrupted = true;

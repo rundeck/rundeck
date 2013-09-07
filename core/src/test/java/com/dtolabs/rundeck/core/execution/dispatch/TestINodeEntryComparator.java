@@ -171,6 +171,69 @@ public class TestINodeEntryComparator extends TestCase {
         }
     }
 
+    public void testCompareEqualRankPropertyTreeSet() throws Exception {
+        final NodeEntryImpl node1 = new NodeEntryImpl("abc");
+        node1.setAttribute("rank", "1");
+
+        final NodeEntryImpl node2 = new NodeEntryImpl("def");
+
+        final NodeEntryImpl node3 = new NodeEntryImpl("ghi");
+        node3.setAttribute("rank", "1");
+
+        final NodeEntryImpl node4 = new NodeEntryImpl("jkl");
+
+        final NodeEntryImpl node5 = new NodeEntryImpl("mno");
+        node5.setAttribute("rank", "5");
+        {//ascending
+            final INodeEntryComparator comparator = new INodeEntryComparator("rank");
+            final TreeSet<INodeEntry> sorted = new TreeSet<INodeEntry>(comparator);
+            sorted.add(node1);
+            sorted.add(node2);
+            sorted.add(node3);
+            sorted.add(node4);
+            sorted.add(node5);
+            final ArrayList<INodeEntry> expected = new ArrayList<INodeEntry>();
+            expected.add(node1);
+            expected.add(node3);
+            expected.add(node5);
+            expected.add(node2);
+            expected.add(node4);
+            final ArrayList<INodeEntry> seen = new ArrayList<INodeEntry>(sorted);
+            assertEquals(expected, seen);
+        }
+    }
+    public void testCompareEqualRankPropertyCollectionsSort() throws Exception {
+        final NodeEntryImpl node1 = new NodeEntryImpl("abc");
+        node1.setAttribute("rank", "1");
+
+        final NodeEntryImpl node2 = new NodeEntryImpl("def");
+
+        final NodeEntryImpl node3 = new NodeEntryImpl("ghi");
+        node3.setAttribute("rank", "1");
+
+        final NodeEntryImpl node4 = new NodeEntryImpl("jkl");
+
+        final NodeEntryImpl node5 = new NodeEntryImpl("mno");
+        node5.setAttribute("rank", "5");
+        final INodeEntryComparator comparator = new INodeEntryComparator("rank");
+
+        final ArrayList<INodeEntry> sorted = new ArrayList<INodeEntry>();
+        sorted.add(node1);
+        sorted.add(node2);
+        sorted.add(node3);
+        sorted.add(node4);
+        sorted.add(node5);
+        Collections.sort(sorted, comparator);
+        final ArrayList<INodeEntry> expected = new ArrayList<INodeEntry>();
+        expected.add(node1);
+        expected.add(node3);
+        expected.add(node5);
+        expected.add(node2);
+        expected.add(node4);
+        final ArrayList<INodeEntry> seen = new ArrayList<INodeEntry>(sorted);
+        assertEquals(expected, seen);
+    }
+
     public void testCompareRankPropertyMixedNulls() throws Exception {
         final NodeEntryImpl node1 = new NodeEntryImpl("abc");
         node1.setAttribute("rank", "1");
