@@ -9,7 +9,7 @@
   </parent>
   <groupId>org.rundeck</groupId>
   <artifactId>rundeck-core</artifactId>
-  <version>1.6.1</version>
+  <version>1.6.2-SNAPSHOT</version>
   <name>Rundeck Core</name>
   <description>Core library for the Rundeck web console for command dispatching and job scheduling</description>
   <url>http://rundeck.org</url>
@@ -110,7 +110,7 @@
         <configuration>
           <archive>
             <manifestEntries>
-              <Rundeck-Version>1.6.1</Rundeck-Version>
+              <Rundeck-Version>1.6.2-SNAPSHOT</Rundeck-Version>
               <Rundeck-Tools-Dependencies>ant-1.7.1.jar log4j-1.2.16.jar commons-codec-1.5.jar commons-beanutils-1.8.0.jar commons-collections-3.2.1.jar commons-logging-1.1.1.jar commons-lang-2.4.jar dom4j-1.6.1.jar commons-cli-1.0.jar ant-jsch-1.7.1.jar jsch-0.1.50.jar snakeyaml-1.9.jar xercesImpl-2.6.2.jar jaxen-1.1.jar commons-httpclient-3.0.1.jar ant-launcher-1.7.1.jar jdom-1.0.jar icu4j-2.6.1.jar xom-1.0.jar</Rundeck-Tools-Dependencies>
             </manifestEntries>
           </archive>
@@ -243,8 +243,8 @@
     </dependency>
   </dependencies>
   <properties>
-    <version_ident>1.6.1-1</version_ident>
-    <version>1.6.1</version>
-    <version_build>1</version_build>
+    <version_ident>1.6.2-SNAPSHOT-0</version_ident>
+    <version>1.6.2-SNAPSHOT</version>
+    <version_build>0</version_build>
   </properties>
 </project>
