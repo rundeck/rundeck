@@ -362,14 +362,6 @@ span.desc {
     color: #999;
 }
 
-div.pageBody {
-    padding: 20px;
-}
-
-div.pageTop + div.pageBody {
-    padding-top: 0;
-}
-
 div.pageBody.form {
     margin: 10px 20px;
     border: 1px solid #aaa;
@@ -1005,13 +997,6 @@ span.timelabel {
 
 }
 
-span.fail {
-    color: red;
-}
-
-span.succeed {
-    color: green;
-}
 
 /* END execution listing */
 
@@ -2238,10 +2223,6 @@ td.username span.atsign {
 
 /** run/nodes page summary **/
 
-div.nodesummary {
-    padding: 10px;
-}
-
 div.nodesummary span.match {
     font-weight: bold;
 }
@@ -2559,10 +2540,6 @@ fieldset {
 }
 
 /** run box */
-
-.runbox {
-    padding: 10px;
-}
 
 .runbox.primary {
     background: none;
