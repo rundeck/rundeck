@@ -53,7 +53,10 @@
                                     <span class="inlinebuttons jobbuttons">
                                         <g:if test="${jobauthorizations && jobauthorizations[AuthConstants.ACTION_RUN]?.contains(scheduledExecution.id.toString())}">
                                             <g:link controller="scheduledExecution" action="execute"
-                                                    id="${scheduledExecution.extid}" class=" "
+                                                    id="${scheduledExecution.extid}" class=" btn btn-success btn-xs has_tooltip"
+                                                    data-toggle="tooltip"
+                                                    title="Run Job Now…"
+                                                    data-job-id="${scheduledExecution.extid}"
                                                     onclick="if(typeof(loadExec)=='function'){loadExec(${scheduledExecution.id});return false;}">
                                                 <b class="glyphicon glyphicon-play"></b>
                                             </g:link>
