@@ -199,3 +199,18 @@
     border: 1px solid @brand-primary;
     background: @label-primary-bg;
   }
+
+  //content with padding like nav-tabs links
+  ul.nav.nav-tabs > li{
+    .tabs-sibling {
+      float: left;
+      position: relative;
+      display: block;
+      border: 1px solid transparent;
+      margin-right: 2px;
+      padding: 10px 15px;
+      label{
+        margin-bottom: 0;
+      }
+    }
+  }

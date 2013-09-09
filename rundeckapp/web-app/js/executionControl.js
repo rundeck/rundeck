@@ -198,7 +198,12 @@ var FollowControl = Class.create({
     readyTail: function(){
         var obj=this;
         $(this.targetElement).select('.opt_mode_tail').each(Element.show);
-        $(this.targetElement).select('.out_setmode_tail').each(function(e){e.addClassName('selected');});
+        $(this.targetElement).select('.out_setmode_tail').each(function(e){
+            var li=$(e).up('li');
+            if(li){
+                li.addClassName('active');
+            }
+        });
 
         $(this.targetElement).select('.opt_last_lines_val').each(function(e){
             e.value=obj.lastlines;
@@ -214,57 +219,69 @@ var FollowControl = Class.create({
             $(this.targetElement).select('.obs_node_false').each(!this.nodemode?Element.show:Element.hide);
             $(this.targetElement).select('.obs_node_true').each(this.nodemode?Element.show:Element.hide);
             $(this.targetElement).select('.opt_mode').each(Element.hide);
-            $(this.targetElement).select('.out_setmode').each(function(e){e.removeClassName('selected')});
+            $(this.targetElement).select('.out_setmode').each(function(e){
+                e.removeClassName('active');
+
+                var li = $(e).up('li');
+                if (li) {
+                    li.removeClassName('active');
+                }
+            });
             if(this.tailmode){
                 this.readyTail();
             }else if(this.browsemode){
                 $(this.targetElement).select('.opt_mode_browse').each(Element.show);
-                $(this.targetElement).select('.out_setmode_browse').each(function(e){e.addClassName('selected');});
+                $(this.targetElement).select('.out_setmode_browse').each(function(e){e.addClassName('active');});
                 //set form inputs to reflect state
                 $(this.targetElement).select('.opt_append_top_true').each(function(e){
                     if(obj.appendtop.value){
-                        e.addClassName('selected');
+                        e.addClassName('active');
                     }else{
-                        e.removeClassName('selected');
+                        e.removeClassName('active');
                     }
                 });
                 $(this.targetElement).select('.opt_append_top_false').each(function(e){
                     if(!obj.appendtop.value){
-                        e.addClassName('selected');
+                        e.addClassName('active');
                     }else{
-                        e.removeClassName('selected');
+                        e.removeClassName('active');
                     }
                 });
                 $(this.targetElement).select('.opt_group_output').each(function(e){
                     e.checked=obj.groupOutput.value;
                     if(obj.groupOutput.value){
-                        e.up('label').addClassName('selected');
+                        e.up('label').addClassName('active');
                     }else{
-                        e.up('label').removeClassName('selected');
+                        e.up('label').removeClassName('active');
                     }
                 });
 
                 $(this.targetElement).select('.opt_collapse_ctx').each(function(e){
                     e.checked=obj.collapseCtx.value;
                     if(obj.collapseCtx.value){
-                        e.up('label').addClassName('selected');
+                        e.up('label').addClassName('active');
                     }else{
-                        e.up('label').removeClassName('selected');
+                        e.up('label').removeClassName('active');
                     }
                 });
 
                 $(this.targetElement).select('.opt_show_final').each(function(e){
                     e.checked=obj.showFinalLine.value;
                     if(obj.showFinalLine.value){
-                        e.up('label').addClassName('selected');
+                        e.up('label').addClassName('active');
                     }else{
-                        e.up('label').removeClassName('selected');
+                        e.up('label').removeClassName('active');
                     }
                 });
 
 
             }else if(this.nodemode){
-                $(this.targetElement).select('.out_setmode_node').each(function(e){e.addClassName('selected');});
+                $(this.targetElement).select('.out_setmode_node').each(function(e){
+                    var li = $(e).up('li');
+                    if (li) {
+                        li.addClassName('active');
+                    }
+                });
             }
         }
     },
@@ -359,9 +376,9 @@ var FollowControl = Class.create({
     setCtxCollapseDisplay:function(val) {
         if ($('ctxcollapseLabel')) {
             if (val) {
-                $('ctxcollapseLabel').addClassName('selected');
+                $('ctxcollapseLabel').addClassName('active');
             } else {
-                $('ctxcollapseLabel').removeClassName('selected');
+                $('ctxcollapseLabel').removeClassName('active');
             }
         }
         if ($('ctxshowlastlineoption')) {
@@ -414,9 +431,9 @@ var FollowControl = Class.create({
         $$('.obs_grouped_false').each(!val ? Element.show : Element.hide);
         if ($('ctxshowgroupoption')) {
             if (val) {
-                $('ctxshowgroupoption').addClassName('selected');
+                $('ctxshowgroupoption').addClassName('active');
             } else {
-                $('ctxshowgroupoption').removeClassName('selected');
+                $('ctxshowgroupoption').removeClassName('active');
             }
         }
     },
@@ -436,9 +453,9 @@ var FollowControl = Class.create({
 
         if ($('ctxshowlastlineoption')) {
             if (val) {
-                $('ctxshowlastlineoption').addClassName('selected');
+                $('ctxshowlastlineoption').addClassName('active');
             } else {
-                $('ctxshowlastlineoption').removeClassName('selected');
+                $('ctxshowlastlineoption').removeClassName('active');
             }
         }
     },
@@ -488,16 +505,16 @@ var FollowControl = Class.create({
         if ($('appendTopLabel')) {
 
             if (istop) {
-                $('appendTopLabel').addClassName('selected');
+                $('appendTopLabel').addClassName('active');
             } else {
-                $('appendTopLabel').removeClassName('selected');
+                $('appendTopLabel').removeClassName('active');
             }
         }
         if ($('appendBottomLabel')) {
             if (istop) {
-                $('appendBottomLabel').removeClassName('selected');
+                $('appendBottomLabel').removeClassName('active');
             } else {
-                $('appendBottomLabel').addClassName('selected');
+                $('appendBottomLabel').addClassName('active');
             }
         }
         this.appendtop.value = istop;

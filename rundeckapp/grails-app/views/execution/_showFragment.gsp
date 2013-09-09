@@ -98,14 +98,12 @@
 <div id="commandFlow" class="commandFlow">
 
 <form action="#" id="outputappendform">
-<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; border-spacing: 0;">
+<div class="row row-space">
 
-<div class="row">
-
-    <div class="col-sm-4">
+    <div class="col-sm-12">
         <ul class="nav nav-tabs">
             <li class="${followmode == 'tail' ? ' active' : ''}">
-            <g:link class="tab ${followmode == 'tail' ? ' selected' : ''} out_setmode_tail"
+            <g:link class="tab out_setmode_tail out_setmode"
                     title="${g.message(code: 'execution.show.mode.Tail.desc')}"
                     controller="execution" action="show" id="${execution.id}"
                     params="${[lastlines: params.lastlines, mode: 'tail'].findAll { it.value }}"
@@ -125,147 +123,132 @@
                 %{--<g:message code="execution.show.mode.Annotated.title" default="Grouped"/>--}%
             %{--</g:link>--}%
             <li class="${followmode == 'node' ? ' active' : ''}">
-            <g:link class="tab ${followmode == 'node' ? ' selected' : ''} out_setmode_node"
+            <g:link class="tab out_setmode_node out_setmode"
                     title="${g.message(code: 'execution.show.mode.Compact.desc')}"
                     controller="execution" action="show" id="${execution.id}" params="[mode: 'node']"
                     onclick="selectTab(this);">
                 <g:message code="execution.show.mode.Compact.title" default="Compact"/>
             </g:link>
             </li>
+            <li>
+                <div id="viewoptions" style="${wdgt.styleVisible(unless: followmode == 'node')}"
+                      class="obs_node_false tabs-sibling">
+
+                    <span id="fullviewopts" style="${followmode != 'browse' ? 'display:none' : ''}"
+                          class="obs_grouped_true form-inline">
+                        <span class="text-muted">View options:</span>
+                        <label
+                                class="action "
+                                title="Click to change"
+                                id="ctxcollapseLabel"
+                                onclick="followControl.setCollapseCtx($('ctxcollapse').checked);">
+                            <input
+                                    type="checkbox"
+                                    name="ctxcollapse"
+                                    id="ctxcollapse"
+                                    value="true"
+                                    class="opt_collapse_ctx"
+                                ${followmode == 'tail' ? '' : null == execution?.dateCompleted ? 'checked="CHECKED"' : ''}
+                                    style=""/>
+                            Collapse
+                        </label>
+
+                    </span>
+
+
+                    <span class="obs_grouped_false" style="${wdgt.styleVisible(if: followmode == 'tail')}">
+                        <span class="text-muted">Show columns:</span>
+
+                        <label
+                                class="action  join"
+                                title="Click to change"
+                                id="colTimeShowLabel">
+                            <g:checkBox
+                                    name="coltime"
+                                    id="colTimeShow"
+                                    value="true"
+                                    checked="true"
+                                    class="opt_display_col_time"/>
+                            Time
+                        </label>
+                        <label
+                                class="action  join"
+                                title="Click to change"
+                                id="colNodeShowLabel">
+                            <g:checkBox
+                                    name="coltime"
+                                    id="colNodeShow"
+                                    value="true"
+                                    checked="true"
+                                    class="opt_display_col_node"/>
+                            Node
+                        </label>
+                        <label
+                                class="action  "
+                                title="Click to change"
+                                id="colStepShowLabel">
+                            <g:checkBox
+                                    name="coltime"
+                                    id="colStepShow"
+                                    value="true"
+                                    checked="${!inlineView}"
+                                    class="opt_display_col_step"/>
+                            Step
+                        </label>
+                    </span>
+
+                    %{--<span id="taildelaycontrol" style="${execution.dateCompleted?'display:none':''}">,--}%
+                    %{--and update every--}%
+
+
+                    %{--<span class="action textbtn button"--}%
+                    %{--title="Click to reduce"--}%
+                    %{--onmousedown="followControl.modifyTaildelay(-1);return false;">-</span>--}%
+                    %{--<input--}%
+                    %{--type="text"--}%
+                    %{--name="taildelay"--}%
+                    %{--id="taildelayvalue"--}%
+                    %{--value="1"--}%
+                    %{--size="2"--}%
+                    %{--onchange="updateTaildelay(this.value)"--}%
+                    %{--onkeypress="var x= noenter();if(!x){this.blur();};return x;"--}%
+                    %{--style=""/>--}%
+                    %{--<span class="action textbtn button"--}%
+                    %{--title="Click to increase"--}%
+                    %{--onmousedown="followControl.modifyTaildelay(1);return false;">+</span>--}%
+
+                    %{--seconds--}%
+                </div>
+            </li>
+            <li class="pull-right">
+                <div class="tabs-sibling" style="${execution.dateCompleted ? '' : 'display:none'}"
+                     id="viewoptionscomplete">
+                    <span>
+                        <g:link class="textbtn" style="padding:5px;"
+                                title="View raw text output"
+                                controller="execution" action="downloadOutput" id="${execution.id}"
+                                params="[view: 'inline', formatted: false]">
+                            Raw</g:link>
+                    </span>
+                    <span class="sepL">
+                        <g:link class="textbtn" style="padding:5px;"
+                                title="View raw text output"
+                                controller="execution" action="follow" id="${execution.id}"
+                                params="[markdown: params.markdown == 'group' ? 'none' : 'group', mode: params.mode]">
+                            ${params.markdown == 'group' ? 'No Markdown' : 'Markdown'}</g:link>
+                    </span>
+                    <span class="sepL">
+                        <g:link class="textbtn" style="padding:5px;"
+                                title="Download ${filesize > 0 ? filesize + ' bytes' : ''}"
+                                controller="execution" action="downloadOutput" id="${execution.id}">
+                            <b class="glyphicon glyphicon-file"></b>
+                            Download</g:link>
+                    </span>
+                </div>
+            </li>
         </ul>
         </div>
-    <div class="col-sm-4">
-        <span id="viewoptions" style="${wdgt.styleVisible(unless: followmode == 'node')}" class="obs_node_false">
 
-            %{--<span--}%
-            %{--class="action  join"--}%
-            %{--title="Click to change"--}%
-            %{--id="showGroupedLabel"--}%
-            %{--style="${wdgt.styleVisible(if: followmode=='tail')}"--}%
-            %{--onclick="followControl.setGroupOutput($('showGrouped').checked);">--}%
-            %{--<input--}%
-            %{--type="checkbox"--}%
-            %{--name="showGrouped"--}%
-            %{--id="showGrouped"--}%
-            %{--value="true"--}%
-            %{--${followmode == 'tail' ? '' :  'checked="CHECKED"' }--}%
-            %{--style=""/>--}%
-            %{--<label for="showGrouped">Grouped</label>--}%
-            %{--</span>--}%
-            <span id="fullviewopts" style="${followmode != 'browse' ? 'display:none' : ''}"
-                  class="obs_grouped_true">
-                <span class="info note">View options:</span>
-                <label
-                        class="action "
-                        title="Click to change"
-                        id="ctxcollapseLabel"
-                        onclick="followControl.setCollapseCtx($('ctxcollapse').checked);">
-                    <input
-                            type="checkbox"
-                            name="ctxcollapse"
-                            id="ctxcollapse"
-                            value="true"
-                            class="opt_collapse_ctx"
-                        ${followmode == 'tail' ? '' : null == execution?.dateCompleted ? 'checked="CHECKED"' : ''}
-                            style=""/>
-                    Collapse
-                </label>
-
-            </span>
-
-
-            <span class="obs_grouped_false" style="${wdgt.styleVisible(if: followmode == 'tail')}">
-                <span class="info note">Show columns:</span>
-
-                <label
-                        class="action  join"
-                        title="Click to change"
-                        id="colTimeShowLabel">
-                    <g:checkBox
-                            name="coltime"
-                            id="colTimeShow"
-                            value="true"
-                            checked="true"
-                            class="opt_display_col_time"
-                            />
-                    Time
-                </label>
-                <label
-                        class="action  join"
-                        title="Click to change"
-                        id="colNodeShowLabel">
-                    <g:checkBox
-                            name="coltime"
-                            id="colNodeShow"
-                            value="true"
-                            checked="true"
-                            class="opt_display_col_node"
-                            />
-                    Node
-                </label>
-                <label
-                        class="action  "
-                        title="Click to change"
-                        id="colStepShowLabel">
-                    <g:checkBox
-                            name="coltime"
-                            id="colStepShow"
-                            value="true"
-                            checked="${!inlineView}"
-                            class="opt_display_col_step"
-                            />
-                    Step
-                </label>
-            </span>
-
-            %{--<span id="taildelaycontrol" style="${execution.dateCompleted?'display:none':''}">,--}%
-            %{--and update every--}%
-
-
-            %{--<span class="action textbtn button"--}%
-            %{--title="Click to reduce"--}%
-            %{--onmousedown="followControl.modifyTaildelay(-1);return false;">-</span>--}%
-            %{--<input--}%
-            %{--type="text"--}%
-            %{--name="taildelay"--}%
-            %{--id="taildelayvalue"--}%
-            %{--value="1"--}%
-            %{--size="2"--}%
-            %{--onchange="updateTaildelay(this.value)"--}%
-            %{--onkeypress="var x= noenter();if(!x){this.blur();};return x;"--}%
-            %{--style=""/>--}%
-            %{--<span class="action textbtn button"--}%
-            %{--title="Click to increase"--}%
-            %{--onmousedown="followControl.modifyTaildelay(1);return false;">+</span>--}%
-
-            %{--seconds--}%
-        </span>
-    </div>
-    <div class="col-sm-4">
-        <div class="pull-right" style="${execution.dateCompleted ? '' : 'display:none'}" id="viewoptionscomplete">
-            <span>
-                <g:link class="textbtn" style="padding:5px;"
-                        title="View raw text output"
-                        controller="execution" action="downloadOutput" id="${execution.id}"
-                        params="[view: 'inline', formatted: false]">
-                    Raw</g:link>
-            </span>
-            <span class="sepL">
-                <g:link class="textbtn" style="padding:5px;"
-                        title="View raw text output"
-                        controller="execution" action="follow" id="${execution.id}"
-                        params="[markdown: params.markdown=='group'?'none':'group',mode:params.mode]">
-                    ${params.markdown == 'group'?'No Markdown':'Markdown'}</g:link>
-            </span>
-            <span class="sepL">
-                <g:link class="textbtn" style="padding:5px;"
-                        title="Download ${filesize > 0 ? filesize + ' bytes' : ''}"
-                        controller="execution" action="downloadOutput" id="${execution.id}">
-                    <b class="glyphicon glyphicon-file"></b>
-                    Download</g:link>
-            </span>
-        </div>
-    </div>
 </div>
 </form>
 </div>

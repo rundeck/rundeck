@@ -231,7 +231,7 @@
 
 
                 </div>
-                <div class="row row-space" id="progressContainer">
+                <div class="row row-space" id="progressContainer" style="${wdgt.styleVisible(unless:execution.dateCompleted)}">
                     <div class="col-sm-12">
                         <g:render template="/common/progressBar"
                                   model="[completePercent: execution.dateCompleted ? 100 : 0,
@@ -243,7 +243,8 @@
                 <g:set var="isAdhoc" value="${!scheduledExecution && execution.workflow.commands.size() == 1}"/>
                  <div class="row row-space">
                     <div class="col-sm-12">
-                        <div class="well">
+                        <div class="panel panel-default">
+                        <div class="panel-body">
                             <g:if test="${scheduledExecution}">
                                 <div class="row">
                                     <div class="col-sm-1 control-label">
@@ -285,6 +286,7 @@
                                     </div>
                                 </div>
                             </g:if>
+                        </div>
                         </div>
                     </div>
                 </div>
