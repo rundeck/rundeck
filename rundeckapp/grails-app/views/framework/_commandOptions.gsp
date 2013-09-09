@@ -83,7 +83,7 @@ used by _editOptions.gsp template
                 </g:if>
             </div>
         </g:each>
-
+    </div>
         <%--
         Javascript for configuring remote option cascading/dependencies
         --%>
