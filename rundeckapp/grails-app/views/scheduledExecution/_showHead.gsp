@@ -4,8 +4,8 @@
 <g:set var="execPrimary" value="${''}"/>
 
 <div class="jobInfo" id="jobInfo_">
-    <div class="jobInfoSection">
-        <span class="jobInfoPart ${jobPrimary}">
+    <div class="jobInfoSection h3">
+        <span class="${jobPrimary}">
             <g:link controller="scheduledExecution" action="show"
                     id="${scheduledExecution.extid}"
                     absolute="${absolute ? 'true' : 'false'}">
@@ -13,16 +13,14 @@
 
         </span>
         <g:if test="${!runPage}">
-            <span>
+            <small>
             <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_UPDATE)}">
                 <g:link controller="scheduledExecution" title="Edit or Delete this Job" action="edit"
                         id="${scheduledExecution.extid}" class="textbtn textbtn-info">
                 <b class="glyphicon glyphicon-pencil"></b>
                     edit job</g:link>
             </g:if>
-            </span>
-            <span>
-
+            </small>
         </g:if>
 
         <g:if test="${scheduledExecution.scheduled && nextExecution}">
@@ -67,6 +65,6 @@
     </div>
 
     <div class="jobInfoSection">
-        <span class="jobdesc">${execInfo?.description?.encodeAsHTML()}</span>
+        <span class="text-muted">${execInfo?.description?.encodeAsHTML()}</span>
     </div>
 </div>
