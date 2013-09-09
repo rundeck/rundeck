@@ -1414,14 +1414,22 @@ var FollowControl = Class.create({
     jobFinishStatus: function(result) {
         if (null != result) {
             if($('runstatus')){
-                $('runstatus').innerHTML = result == 'succeeded' ? '<span class="succeed">Succeeded</span>'
-                    : (result == 'aborted' ? '<span class="fail">Killed</span>' : '<span class="fail">Failed</span>');
+                $('runstatus').innerHTML = result == 'succeeded' ? '<span class="exec-status succeed">Succeeded</span>'
+                    : (result == 'aborted' ? '<span class="exec-status warn">Killed</span>' : '<span class="exec-status fail">Failed</span>');
             }
             $$('.execstatus').each(function(e){
-                e.innerHTML = result == 'succeeded' ? '<span class="succeed">Succeeded</span>'
-                : (result == 'aborted' ? '<span class="fail">Killed</span>' : '<span class="fail">Failed</span>');
+                e.innerHTML = result == 'succeeded' ? '<span class="exec-status succeed">Succeeded</span>'
+                : (result == 'aborted' ? '<span class="exec-status warn">Killed</span>' : '<span class="exec-status fail">Failed</span>');
             });
             if ($('jobInfo_' + this.executionId)) {
+                var icon = $('jobInfo_' + this.executionId).down('.exec-status.icon');
+                if (icon) {
+                    var status = result == 'succeeded' ? 'succeed' : result == 'aborted' ? 'warn' : 'fail';
+                    ['succeed', 'fail', 'warn', 'running'].each(function (s) {
+                        $(icon).removeClassName(s);
+                    });
+                    $(icon).addClassName(status);
+                }
                 var img = $('jobInfo_' + this.executionId).down('img');
                 if (img) {
                     var status = result == 'succeeded' ? '-ok' : result == 'aborted' ? '-warn' : '-error';

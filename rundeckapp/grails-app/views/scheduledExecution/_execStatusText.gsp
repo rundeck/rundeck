@@ -9,7 +9,7 @@
         </span>
     </g:if>
     <g:else>
-        <span class="${execution.status == 'true' ? 'succeed' : 'fail'}">
+        <span class="exec-status ${execution.status == 'true' ? 'succeed' : execution.cancelled?'warn': 'fail'}">
             <g:if test="${execution.status == 'true'}">
                 Succeeded
             </g:if>

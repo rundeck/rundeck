@@ -1,7 +1,7 @@
 
 <div class="row">
 <div class="col-sm-12 ">
-<div class="panel panel-default">
+<div class="panel panel-default panel-tab-content">
 <g:if test="${!hideHead}">
     <div class="panel-heading">
         <div>

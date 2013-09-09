@@ -2,7 +2,7 @@
 
 <span class="jobInfo" id="jobInfo_${execution.id}">
     <g:if test="${execution}">
-        <span class="jobInfoSection">
+        <span class="h3">
             <g:link
                     controller="execution"
                     action="show"
@@ -16,23 +16,36 @@
                     </g:if>
                     <g:else>
                         <g:set var="fileName" value="job"/>
+                        <g:set var="gicon" value=""/>
                         <g:if test="${execution}">
                             <g:set var="fileName"
                                    value="${execution.status == 'true' ? 'job-ok' : null == execution.dateCompleted ? 'job-running' : execution.cancelled ? 'job-warn' : 'job-error'}"/>
                         </g:if>
-                        <g:if test="${!noimgs}"><img
+                        <g:if test="${!noimgs}">
+                            <img
                                 src="${resource(dir: 'images', file: "icon-small-" + fileName + ".png")}"
-                                alt="job" style="border:0;"/></g:if>
+                                alt="job" style="border:0;"/>
+                        </g:if>
+                        <g:if test="${execution}">
+                            <g:set var="gicon" value="${execution.status == 'true' ? 'ok-circle' : null == execution.dateCompleted ? 'play-circle' : execution.cancelled ? 'minus-sign' : 'warning-sign'}"/>
+                            <i class="exec-status icon ${!execution.dateCompleted? 'running' : execution.status == 'true' ? 'succeed' : execution.cancelled ? 'warn' : 'fail'}">
+                            </i>
+                        </g:if>
                     </g:else>
-                </span><span class="primary">Execution #${execution.id}</span>
+                </span>
+                <g:if test="${scheduledExecution}">
+                    <span class="primary"><g:message code="scheduledExecution.identity" args="[scheduledExecution.jobName,execution.id]" /></span>
+                </g:if>
+                <g:else>
+                    <span class="primary"><g:message code="execution.identity" args="[execution.id]" /></span>
+                </g:else>
+                <small>
                 <g:render template="/scheduledExecution/execStatusText" model="${[execution: execution]}"/>
                 <g:if test="${execution.dateCompleted != null}">
                     in <g:relativeDate start="${execution.dateStarted}" end="${execution.dateCompleted}"/>
                     <span class="timerel" title="${g.formatDate(date:execution.dateCompleted)} - ${execution.dateCompleted.time}">at <g:relativeDate atDate="${execution.dateCompleted}"/></span>
                 </g:if>
-            %{--started at <g:relativeDate--}%
-            %{--atDate="${execution.dateStarted}"/> by <span--}%
-            %{--class="username">${execution.user==session.user?'you': execution.user}</span>--}%
+                </small>
             </g:link>
 
         </span>
