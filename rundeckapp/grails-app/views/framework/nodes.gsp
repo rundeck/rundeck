@@ -632,9 +632,6 @@
         .commandcontent{
             margin:0;
         }
-        .inlinestatus{
-            padding: 10px;
-        }
 
         table.execoutput {
             font-size: 100%;
@@ -673,34 +670,28 @@
     <g:set var="run_authorized" value="${auth.adhocAllowedTest( action:AuthConstants.ACTION_RUN)}"/>
 
 
-<g:render template="/common/messages"/>
+    <g:render template="/common/messages"/>
     <div id="error" class="error message" style="display:none;"></div>
     <g:if test="${session.project}">
-        <div class=" nodesummary ">
+        <div>
+        <div class="row">
+        <div class="col-sm-2">
             <g:if test="${run_authorized}">
                 <g:expander classnames="obs_shownodes" key="${ukey}nodeForm" open="true">
-                    <span class="match"><span class="obs_nodes_allcount">${total}</span> Node<span class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span>
+                    <span class="h4 match"><span class="obs_nodes_allcount">${total}</span> Node<span class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span>
                     </span>
                 </g:expander>
             </g:if>
             <g:else>
-                <span class="match"><span class="obs_nodes_allcount">${total}</span> Node<span class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span>
-                </span>
+                <h4 class="match"><span class="obs_nodes_allcount">${total}</span> Node<span class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span>
+                </h4>
             </g:else>
-
-            <span class="type">
-                <g:if test="${filterName}">
-                    for filter '${filterName}'
-                </g:if>
-            </span>
-            <span id='nodedetaillist'>
-
-            </span>
+        </div>
             <g:if test="${session.project && run_authorized}">
                 <div class=" form-inline clearfix" id="runbox">
                     <g:hiddenField name="project" value="${session.project}"/>
                     <g:render template="nodeFiltersHidden" model="${[params: params, query: query]}"/>
-                    <div class=" col-sm-12">
+                    <div class=" col-sm-10">
                         <div class="input-group">
                             <g:textField name="exec" size="50" placeholder="Enter a shell command"
                                          value="${runCommand}"
@@ -722,7 +713,8 @@
             </g:if>
         </div>
     </g:if>
-<div id="${ukey}nodeForm" class="nodeview pageBody clearfix">
+<div class="row row-space">
+<div id="${ukey}nodeForm" class="col-sm-12 nodeview clearfix">
     <g:set var="wasfiltered" value="${paginateParams?.keySet().grep(~/(?!proj).*Filter|groupPath|project$/)||(query && !query.nodeFilterIsEmpty())}"/>
     <g:set var="filtersOpen" value="${params.createFilters||params.editFilters||params.saveFilter || filterErrors?true:false}"/>
 
@@ -824,14 +816,17 @@
             </table>
 
 </div>
+</div>
 
 
     <div id="runcontent" class="clearfix"></div>
 
     <g:if test="${run_authorized}">
-    <div class="runbox"><g:message code="page.section.Activity" /></div>
 
-    <div class="pageBody">
+    <h4 class="text-muted"><g:message code="page.section.Activity"/></h4>
+
+    <div class="row">
+    <div class="col-sm-12">
         <table cellpadding="0" cellspacing="0" class="jobsList list history" style="width:100%">
             <tbody id="nowrunning"></tbody>
             <tbody id="histcontent"></tbody>
@@ -839,6 +834,7 @@
         <g:javascript>
             fireWhenReady('histcontent',loadHistory);
         </g:javascript>
+    </div>
     </div>
     </g:if>
 

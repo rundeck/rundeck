@@ -104,7 +104,7 @@
             <div class="row">
                     <div class="col-sm-5">
                     <g:render template="/scheduledExecution/showExecutionHead"
-                                  model="[scheduledExecution: scheduledExecution, execution: execution, followparams: [mode: followmode, lastlines: params.lastlines]]"/>
+                                  model="[scheduledExecution: scheduledExecution, noimgs:true, execution: execution, followparams: [mode: followmode, lastlines: params.lastlines]]"/>
                     </div>
                     <div class="col-sm-4">
 
@@ -310,7 +310,7 @@
   <g:render template="/execution/showFragment" model="[execution:execution,scheduledExecution: scheduledExecution,inlineView:false,followmode:followmode]"/>
 
     <g:if test="${scheduledExecution}">
-        <div class="runbox"><g:message code="page.section.Activity"/></div>
+        <h4 class="text-muted"><g:message code="page.section.Activity"/></h4>
         <div class="pageBody">
             <table cellpadding="0" cellspacing="0" class="jobsList list history" style="width:100%">
                 <tbody id="histcontent"></tbody>
