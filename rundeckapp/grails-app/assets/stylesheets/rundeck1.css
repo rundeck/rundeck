@@ -1407,51 +1407,7 @@ span.dragHandle {
 
 }
 
-/** login page */
-#loginpage {
-}
 
-div.login {
-    margin: 50px auto;
-    width: 355px;
-    background: white;
-    padding: 5px;
-    border: 2px solid #000000;
-}
-
-div.login div.row {
-    clear: both;
-    padding: 10px 0px;
-    text-align: center;
-    vertical-align: middle;
-    margin-bottom: 5px;
-}
-
-div.login div.row.head {
-    padding-top: 3px;
-    padding-bottom: 3px;
-    margin: 0;
-}
-
-div.row label {
-    float: left;
-    text-align: right;
-    font-weight: bold;
-}
-
-div.row span.input {
-    float: left;
-    text-align: left;
-}
-
-div.login div.row label {
-    width: 100px;
-}
-
-div.login div.row span.input {
-    float: right;
-    width: 250px;
-}
 
 div.actiontitle {
     font-weight: normal;
@@ -1802,10 +1758,6 @@ span.jobfinal {
     padding: 10px;
     font-weight: bold;
     display: block;
-}
-
-#commandFlow {
-    margin: 20px 20px 0 20px;
 }
 
 div.commandFlowError {
