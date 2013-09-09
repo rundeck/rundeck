@@ -247,10 +247,10 @@
 
             </label>
         </div>
-        </div>
-        <div class="error note" id="formerror" style="display:none">
+    </div>
+    <div class="error note" id="formerror" style="display:none">
 
-        </div>
+    </div>
     </g:form>
 </div>
 </div>
