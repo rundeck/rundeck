@@ -2533,61 +2533,6 @@ table.projectselect td {
     padding: 5px;
 }
 
-/** html5 form components */
-fieldset {
-    border: 0;
-    padding: 0;
-}
-
-/** run box */
-
-.runbox.primary {
-    background: none;
-}
-
-.runbox.sub {
-    background: #eee;
-}
-
-.runbox.sepT {
-    border-top: 1px solid #bbb;
-    margin: 0;
-}
-
-.runbox.jobs {
-    padding: 0;
-}
-
-.runbox.jobs .jobscontent, .runbox.jobs .wffilter {
-    padding: 10px;
-}
-
-.runbox.jobs .wfcontent {
-    padding: 0;
-}
-
-div.jobscontent {
-    margin-bottom: 5px;
-}
-
-.runbox.jobs .jobscontent {
-    margin-bottom: 0;
-}
-
-.runbox div.jobGroups.topgroup {
-    background: #fff;
-    padding: 20px;
-}
-
-.runbox div.newjob {
-    background: #fff;
-    padding: 20px 20px 0px 20px;
-}
-
-.runbox table.list tr {
-    /*background: #ddd;*/
-}
-
 /** now running content */
 #nowrunning {
     max-height: 150px;
