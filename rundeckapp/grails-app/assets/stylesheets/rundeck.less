@@ -214,3 +214,47 @@
       }
     }
   }
+
+  //execution status text
+
+  .exec-status{
+    &.fail {
+      color: @brand-danger;
+
+      &.icon {
+        .glyphicon();
+        .glyphicon-warning-sign();
+      }
+    }
+
+    &.running {
+      color: @brand-info;
+
+      &.icon {
+        .glyphicon();
+        .glyphicon-play-circle();
+      }
+    }
+
+    &.succeed {
+      color: @brand-success;
+
+      &.icon {
+        .glyphicon();
+        .glyphicon-ok-circle();
+      }
+    }
+    &.warn {
+      color: @brand-warning;
+
+      &.icon {
+        .glyphicon();
+        .glyphicon-minus-sign();
+      }
+    }
+  }
+
+  .tab-content .panel.panel-tab-content{
+    border-top: 0;
+    .border-top-radius(0);
+  }
