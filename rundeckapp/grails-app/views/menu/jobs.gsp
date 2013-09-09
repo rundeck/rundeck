@@ -358,22 +358,24 @@
 
 
 <g:if test="${flash.bulkDeleteResult?.errors}">
-    <span class="error note">
+    <div class="alert alert-dismissable alert-warning">
+        <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
         <ul>
             <g:each in="${flash.bulkDeleteResult.errors*.message}" var="message">
                 <li>${message.encodeAsHTML()}</li>
             </g:each>
         </ul>
-    </span>
+    </div>
 </g:if>
 <g:if test="${flash.bulkDeleteResult?.success}">
-    <span class="message note">
+    <div class="alert alert-dismissable alert-info">
+        <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
         <ul>
         <g:each in="${flash.bulkDeleteResult.success*.message}" var="message">
             <li>${message.encodeAsHTML()}</li>
         </g:each>
         </ul>
-    </span>
+    </div>
 </g:if>
 <div class="runbox primary jobs" id="indexMain">
     <div id="error" class="error message" style="display:none;"></div>
@@ -385,7 +387,7 @@
     </div>
 </div>
 
-    <div class="runbox"><g:message code="page.section.Activity"/></div>
+    <h4 class="text-muted"><g:message code="page.section.Activity"/></h4>
     <div class="pageBody">
         <table cellpadding="0" cellspacing="0" class="jobsList list history" style="width:100%">
         <tbody id="nowrunning"></tbody>

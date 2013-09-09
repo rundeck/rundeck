@@ -114,7 +114,7 @@
                 <g:if test="${wasfiltered}">
                     <div>
                     <g:if test="${!params.compact}">
-                        <span class="prompt">${total} <g:message code="domain.ScheduledExecution.title"/>s</span>
+                        <span class="h4">${total} <g:message code="domain.ScheduledExecution.title"/>s</span>
                             matching filter:
                     </g:if>
 
@@ -150,7 +150,7 @@
                 </g:if>
                 <g:else>
                     <g:if test="${!params.compact}">
-                    <span class="prompt"><g:message code="domain.ScheduledExecution.title"/>s (${total})</span>
+                    <span class="h4"><g:message code="domain.ScheduledExecution.title"/>s (${total})</span>
                     </g:if>
 
                     <span class="textbtn textbtn-default obs_filtertoggle"  id="${rkey}filter-toggle">
@@ -164,6 +164,12 @@
                         </span>
                     </g:if>
                 </g:else>
+                    <span class="textbtn textbtn-default obs_expand_all">
+                        Expand All
+                    </span>
+                    <span class="textbtn textbtn-default obs_collapse_all">
+                        Collapse All
+                    </span>
                     <div class="clear"></div>
                 </div>
 
@@ -186,31 +192,53 @@
                     <g:timerStart key="groupTree"/>
                     <g:form controller="scheduledExecution" action="deleteBulk">
                     <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE  }">
-                    <div class="floatr" style="padding: 10px">
-                        <div>
-                            <span class="btn btn-danger btn-sm job_bulk_edit bulk_edit_invoke"><g:message code="bulk.delete" /></span>
-                        </div>
-                        <div class="bulk_edit_controls popout" style="display: none">
-                            <div style="border-bottom: 1px solid #aaa;padding-bottom: 4px;">
-                                <button type="button" class="close job_bulk_edit_hide " aria-hidden="true">&times;</button>
-                                <span class="btn btn-default btn-sm job_bulk_select_none" ><g:message code="select.none" /></span>
-                                <span class="btn btn-default btn-sm job_bulk_select_all" ><g:message code="select.all" /></span>
-
-                            </div>
-                            <div class="bulk_edit_controls " style="display: none; margin: 5px;">
-                                <div class="info note"><g:message code="select.jobs.to.delete" /></div>
-
-                                <span id="bulk_del_prompt" class="btn btn-warning btn-sm confirm_action pull-right" data-confirm="bulk_del_confirm"><g:message code="delete.selected.jobs" /></span>
-
-                                <div id="bulk_del_confirm" class="confirmMessage popout confirmbox" style="display:none; height: auto;">
-                                    <g:message code="really.delete.these.jobs" />
-                                    <div>
-                                        <button class="confirm_decline" data-confirm="bulk_del_prompt" data-confirm-view="bulk_del_confirm"><g:message code="no" /></button>
-                                        <g:submitButton name="${g.message(code:'yes')}" class="btn btn-warning"/>
+                        <div class="modal fade" id="bulk_del_confirm" tabindex="-1" role="dialog" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <button type="button" class="close" data-dismiss="modal"
+                                                aria-hidden="true">&times;</button>
+                                        <h4 class="modal-title">Confirm Bulk Job Delete</h4>
                                     </div>
-                                </div>
+
+                                    <div class="modal-body">
+                                        <p><g:message code="really.delete.these.jobs"/></p>
+                                    </div>
+
+                                    <div class="modal-footer">
+                                        <button type="button"
+                                                class="confirm_decline btn btn-default"
+                                                data-dismiss="modal" ><g:message code="no"/></button>
+                                        <g:submitButton name="${g.message(code: 'yes')}" class="btn btn-danger"/>
+                                    </div>
+                                </div><!-- /.modal-content -->
+                            </div><!-- /.modal-dialog -->
+                        </div><!-- /.modal -->
+                    <div class="floatr" style="margin-top: 10px;">
+                        <div>
+                            <span class="btn btn-warning btn-xs job_bulk_edit bulk_edit_invoke"><g:message code="bulk.delete" /></span>
+                        </div>
+                        <div class="bulk_edit_controls panel panel-warning" style="display: none">
+                            <div class="bulk_edit_controls panel-heading">
+                                <button type="button" class="close job_bulk_edit_hide "
+                                        aria-hidden="true">&times;</button>
+                                <h3 class="panel-title"><g:message code="select.jobs.to.delete"/>
+
+                                </h3>
                             </div>
-                            <div class="clear"></div>
+                            <div class="panel-body">
+                                <span class="btn btn-default btn-xs job_bulk_select_none" ><g:message code="select.none" /></span>
+                                <span class="btn btn-default btn-xs job_bulk_select_all" ><g:message code="select.all" /></span>
+
+                            </div>
+
+                            <div class="panel-footer">
+                                <button id="bulk_del_prompt"
+                                      data-toggle="modal"
+                                      data-target="#bulk_del_confirm"
+                                      class="btn btn-warning btn-sm" ><g:message code="delete.selected.jobs" /></button>
+                            </div>
+
                         </div>
                     </div>
                     </auth:resourceAllowed>
@@ -275,6 +303,16 @@
             $(el).show();
             $(view).hide();
             e.preventDefault();
+        });
+    });
+    $$('.obs_expand_all').each(function(elem){
+        Event.observe(elem,'click',function(e){
+            $$('.expandComponent').each(Element.show);
+        });
+    });
+    $$('.obs_collapse_all').each(function(elem){
+        Event.observe(elem,'click',function(e){
+            $$('.topgroup .expandComponent').each(Element.hide);
         });
     });
     $$('.job_bulk_edit').each(function(elem){
