@@ -1,19 +1,22 @@
-<g:if test="${!hideHead}">
-<div class="row">
-<div class="col-sm-12">
-    <tmpl:showHead scheduledExecution="${scheduledExecution}" iconName="icon-job" subtitle="Choose Execution Options" runPage="true"/>
-    <div class="clear"></div>
 
-</div>
-</div>
-</g:if>
 <div class="row">
 <div class="col-sm-12 ">
 <div class="panel panel-default">
+<g:if test="${!hideHead}">
+    <div class="panel-heading">
+        <div>
+            <h4>
+                Run Job
+            </h4>
+        </div>
+        <tmpl:showHead scheduledExecution="${scheduledExecution}" iconName="icon-job"
+                       subtitle="Choose Execution Options" runPage="true"/>
+    </div>
+</g:if>
 <div class="panel-body">
     <g:form controller="scheduledExecution" method="post" action="runJobNow" class="form-horizontal" role="form">
     <g:render template="editOptions" model="${[scheduledExecution:scheduledExecution, selectedoptsmap:selectedoptsmap, selectedargstring:selectedargstring,authorized:authorized,jobexecOptionErrors:jobexecOptionErrors, optiondependencies: optiondependencies, dependentoptions: dependentoptions, optionordering: optionordering]}"/>
-    <div class="row">
+    <div class="form-group">
     <div class="col-sm-2 control-label">
         Nodes
     </div>
@@ -27,6 +30,11 @@
             <div class="alert alert-warning">
                 <g:message code="scheduledExecution.nodeset.empty.warning"/>
             </div>
+        </g:elseif>
+        <g:elseif test="${!nodes}">
+            <p class="form-control-static text-info">
+                Will run on local node
+            </p>
         </g:elseif>
         <g:elseif test="${nodes}">
             <g:set var="COLS" value="${6}"/>

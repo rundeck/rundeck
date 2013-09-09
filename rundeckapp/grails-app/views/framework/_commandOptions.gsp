@@ -27,7 +27,7 @@ used by _editOptions.gsp template
             <g:set var="fieldhiddenid" value="${rkey+'_'+optName+'_h'}"/>
             <g:set var="hasRemote" value="${optionSelect.realValuesUrl != null}"/>
             <div class="form-group ${hasError ? 'has-warning' : ''} ${hasRemote?'remote':''}" >
-              <label class="remoteoptionfield col-sm-2 control-label" for="${fieldName}" id="${fieldNamekey}">
+              <label class="remoteoptionfield col-sm-2 control-label" for="${fieldhiddenid}" id="${fieldNamekey}">
                   <span style="display:none;" class="remotestatus"></span>
                   ${optName.encodeAsHTML()}
                   <g:if test="${Environment.current == Environment.DEVELOPMENT && grailsApplication.config.rundeck?.debug}">
@@ -63,18 +63,12 @@ used by _editOptions.gsp template
                 <div class="col-sm-1">
                     <span id="${optName.encodeAsHTML()+'_state'}">
                         <g:if test="${ optRequired }">
-                            <span class="reqwarning" style="${wdgt.styleVisible(unless:optionHasValue)}">
-                                <g:if test="${hasError && hasError.contains('required')}">
-                                    <i class="glyphicon glyphicon-warning-sign"></i>
-                                    ${hasError.encodeAsHTML()}
-                                </g:if>
-                                <g:else>
-                                    <g:message code="option.value.required"/>
-                                </g:else>
+                            <span class="reqwarning has_tooltip"
+                                    title="${hasError?.contains('required')?hasError:g.message(code:'option.value.required')}"
+                                    data-toggle="tooltip"
+                                  style="${wdgt.styleVisible(unless:optionHasValue)}">
+                                <i class="glyphicon glyphicon-warning-sign"></i>
                             </span>
-                        </g:if>
-                        <g:if test="${hasError && !hasError.contains('required')}">
-                            <span class="error ">${hasError.encodeAsHTML()}</span>
                         </g:if>
                     </span>
                 </div>
@@ -82,6 +76,11 @@ used by _editOptions.gsp template
                 <div class="col-sm-10 col-sm-offset-2">
                     <span class="help-block">${optDescription?.encodeAsHTML()}</span>
                 </div>
+                <g:if test="${hasError}">
+                    <div class="col-sm-10 col-sm-offset-2">
+                        <p class="text-warning">${hasError.encodeAsHTML()}</p>
+                    </div>
+                </g:if>
             </div>
         </g:each>
 
@@ -193,14 +192,17 @@ used by _editOptions.gsp template
     </g:if>
 
 </g:if>
-<g:elseif test="${notfound}">
-    <div class="info note">Choose a valid command (notfound).</div>
-    <g:if test="${selectedargstring}"><div>Old value: ${selectedargstring.encodeAsHTML()}</div></g:if>
-</g:elseif>
 <g:elseif test="${!authorized}">
-    <div class="info note">Not authorized to execute chosen command.</div>
+    <div class="info note">Not authorized to execute chosen job.</div>
     <g:if test="${selectedargstring}"><div>Old value: ${selectedargstring.encodeAsHTML()}</div></g:if>
 </g:elseif>
 <g:else>
-    <span class="info note">None for this job</span>
+    <div class="form-group">
+        <div class="col-sm-2 control-label">
+            <g:message code="input.options" />
+        </div>
+        <div class="col-sm-10">
+            <p class="form-control-static text-muted"><g:message code="no.input.options.for.this.job" /></p>
+        </div>
+    </div>
 </g:else>

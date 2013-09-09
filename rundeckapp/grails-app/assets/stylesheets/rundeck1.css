@@ -2305,7 +2305,7 @@ div.nodesummary span.type {
 }
 
 .matchednodes.embed {
-    width: 800px;
+    max-width: 800px;
     line-height: 20px;
 }
 

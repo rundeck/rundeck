@@ -15,17 +15,14 @@
 
 </div>
 
-<span class="prompt">Job Options:</span>
-<div class="presentation">
-    <g:hasErrors bean="${scheduledExecution}" field="argString">
-        <div class="fieldError">
-            <g:renderErrors bean="${scheduledExecution}" as="list" field="argString"/>
-        </div>
-    </g:hasErrors>
-    <div id="optionSelect">
-        <g:render template="/framework/commandOptions"
-                  model="[paramsPrefix:'extra.',selectedargstring:selectedargstring,selectedoptsmap:selectedoptsmap,notfound:commandnotfound,authorized:authorized,optionSelections:scheduledExecution?.options?scheduledExecution.options:null,scheduledExecutionId:scheduledExecution.id,jobexecOptionErrors:jobexecOptionErrors, optiondependencies: optiondependencies, dependentoptions: dependentoptions, optionordering: optionordering]"/>
+<g:hasErrors bean="${scheduledExecution}" field="argString">
+    <div class="fieldError">
+        <g:renderErrors bean="${scheduledExecution}" as="list" field="argString"/>
     </div>
+</g:hasErrors>
+<div id="optionSelect">
+    <g:render template="/framework/commandOptions"
+              model="[paramsPrefix:'extra.',selectedargstring:selectedargstring,selectedoptsmap:selectedoptsmap,notfound:commandnotfound,authorized:authorized,optionSelections:scheduledExecution?.options?scheduledExecution.options:null,scheduledExecutionId:scheduledExecution.id,jobexecOptionErrors:jobexecOptionErrors, optiondependencies: optiondependencies, dependentoptions: dependentoptions, optionordering: optionordering]"/>
 </div>
 
 
