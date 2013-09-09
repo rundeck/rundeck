@@ -194,7 +194,7 @@
                         </div>
                         <g:if test="${eprev || enext}">
                             <div class="col-sm-3">
-                                <ul class="pager pager-embed">
+                                <ul class="pager pager-embed pager-right">
                                     <g:if test="${eprev}">
                                        <li>
                                            <g:link action="show" controller="execution" id="${eprev.id}"
@@ -231,57 +231,62 @@
 
 
                 </div>
-                <div class="row">
-
-                    <div style="display: inline-block; margin-left: 10px; width: 200px;">
+                <div class="row row-space" id="progressContainer">
+                    <div class="col-sm-12">
                         <g:render template="/common/progressBar"
-                                  model="[completePercent: execution.dateCompleted ? 100 : 0, height: '24',
-                                          progressType: 'progress-bar-info',
-                                          containerId: 'progressContainer', progressId: 'progressBar']"/>
+                                  model="[completePercent: execution.dateCompleted ? 100 : 0,
+                                          progressClass: 'rd-progress-exec',
+                                          progressBarClass: 'progress-bar-info',
+                                          containerId: 'progressContainer2', progressId: 'progressBar']"/>
                     </div>
                 </div>
                 <g:set var="isAdhoc" value="${!scheduledExecution && execution.workflow.commands.size() == 1}"/>
-                 <div class="row">
-                <table class="table">
-                        <g:if test="${scheduledExecution}">
-                            <tr>
-                                <td>
-                                    <span >Job:</span>
-                                </td>
-                                <td>
-                                    <g:render template="showJobHead"
-                                              model="${[scheduledExecution: scheduledExecution,nameOnly:true]}"/>
+                 <div class="row row-space">
+                    <div class="col-sm-12">
+                        <div class="well">
+                            <g:if test="${scheduledExecution}">
+                                <div class="row">
+                                    <div class="col-sm-1 control-label">
+                                            Job:
+                                    </div>
+                                    <div class="col-sm-11">
+                                        <g:render template="showJobHead"
+                                                  model="${[scheduledExecution: scheduledExecution, nameOnly: true]}"/>
 
-                                    <g:render template="showJobHead"
-                                              model="${[scheduledExecution: scheduledExecution, groupOnly: true]}"/>
+                                        <g:render template="showJobHead"
+                                                  model="${[scheduledExecution: scheduledExecution, groupOnly: true]}"/>
 
-                                    <span class="jobdesc jobInfoSection">
-                                        ${scheduledExecution?.description?.encodeAsHTML()}
-                                    </span>
-                            </tr>
-                        </g:if>
-                        <g:if test="${execution.argString}">
-                            <tr>
-                                <td>
-                                    <span >Options:</span>
-                                </td>
-                                <td>
-                                    <span class="argString">${execution?.argString.encodeAsHTML()}</span>
-                                </td>
-                            </tr>
-                        </g:if>
-                        <g:if test="${isAdhoc}">
-                            <tr>
-                                <td >
-                                    <span >Command:</span>
-                                </td>
-                                <td>
+                                        <span class="jobdesc jobInfoSection">
+                                            ${scheduledExecution?.description?.encodeAsHTML()}
+                                        </span>
+                                    </div>
+                                </div>
+                            </g:if>
+                            <g:if test="${execution.argString}">
+                                <div class="row">
+                                    <div class="col-sm-1 control-label">
+                                        Options:
+                                    </div>
+                                    <div class="col-sm-11">
+                                        <span class="argString">${execution?.argString.encodeAsHTML()}</span>
+                                    </div>
+                                </div>
+                            </g:if>
+
+                            <g:if test="${isAdhoc}">
+                                <div class="row">
+                                    <div class="col-sm-2 control-label">
+                                        Command:
+                                    </div>
+                                    <div class="col-sm-10">
                                 <g:render template="/execution/execDetailsWorkflow"
-                                          model="${[workflow: execution.workflow, context: execution, project: execution.project, isAdhoc: isAdhoc]}"/>
-                                </td>
-                            </tr>
-                        </g:if>
-                </table>
+                                                  model="${[workflow: execution.workflow, context: execution, project: execution.project, isAdhoc: isAdhoc]}"/>
+
+                                    </div>
+                                </div>
+                            </g:if>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="row">

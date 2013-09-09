@@ -70,9 +70,17 @@
   /**
   embed a pager in a column
   */
-  .pager.pager-embed{
-    margin-top: 0;
-    margin-bottom: 0;
+  .pager{
+    &.pager-embed{
+      margin-top: 0;
+      margin-bottom: 0;
+    }
+    &.pager-right{
+      text-align: right;
+    }
+    &.pager-left{
+      text-align: right;
+    }
   }
 
 
@@ -152,9 +160,21 @@
   .textbtn-variant(@brand-info,clear,lighten(@brand-info, 50%));
 }
 
-.progress{
-  height: auto;
+.progress.rd-progress-exec {
+  height: @line-height-computed;
 }
+.row{
+  &.row-space {
+    margin-top: @padding-base-vertical;
+  }
+  &.row-space-sm {
+    margin-top: @padding-small-vertical;
+  }
+  &.row-space-lg {
+    margin-top: @padding-large-vertical;
+  }
+}
+
 
 // clock icon in scheduled job view is gray if job will not fire
 .scheduletime{
