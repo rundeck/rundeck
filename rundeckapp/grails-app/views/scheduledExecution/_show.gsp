@@ -68,7 +68,7 @@
     <h4 class="text-muted"><g:message code="page.section.Activity"/></h4>
     <g:render template="/scheduledExecution/renderJobStats" model="${[scheduledExecution: scheduledExecution]}"/>
 
-    <table cellpadding="0" cellspacing="0" class="jobsList list history" style="width:100%">
+    <table cellpadding="0" cellspacing="0" class="jobsList list history table table-hover table-condensed" style="width:100%">
         <tbody id="nowrunning"></tbody>
         <tbody id="histcontent"></tbody>
     </table>

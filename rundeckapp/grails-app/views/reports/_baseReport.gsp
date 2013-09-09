@@ -35,12 +35,18 @@
         </g:if>
         <tr class="link  ${it?.status != 'succeed' ? 'fail' : ''}  ${!it.dateCompleted ? 'nowrunning' : ''} ${sincetime && it.dateCompleted.time>sincetime?'newitem':''} hilite " onclick="$(this).down('a._defaultAction').click();">
             <td style="width:12px;" class="eventicon">
-                <g:if test="${execution}">
-                    <g:set var="fileName"
-                           value="${execution.status == 'true' ? 'job-ok' : null == execution.dateCompleted ? 'job-running' : execution.cancelled ? 'job-warn' : 'job-error'}"/>
-                </g:if>
-                <img src="${resource(dir: 'images', file: "icon-small-" + fileName + ".png",absolute: absoluteLinks)}" alt="job" style="border:0;"
-                     width="12px" height="12px"/>
+                %{--<g:if test="${execution}">--}%
+                    %{--<g:set var="fileName"--}%
+                           %{--value="${execution.status == 'true' ? 'job-ok' : null == execution.dateCompleted ? 'job-running' : execution.cancelled ? 'job-warn' : 'job-error'}"/>--}%
+                %{--</g:if>--}%
+                %{--<img src="${resource(dir: 'images', file: "icon-small-" + fileName + ".png",absolute: absoluteLinks)}" alt="job" style="border:0;"--}%
+                     %{--width="12px" height="12px"/>--}%
+
+                <g:set var="gicon"
+                       value="${execution.status == 'true' ? 'ok-circle' : null == execution.dateCompleted ? 'play-circle' : execution.cancelled ? 'minus-sign' : 'warning-sign'}"/>
+
+                <i class="glyphicon glyphicon-${gicon} exec-status ${execution.status == 'true' ? 'succeed' : execution.cancelled ? 'warn' : 'fail'}">
+                </i>
             </td>
             <g:set var="vals" value="${['?','?','?']}"/>
             <g:if test="${it instanceof ExecReport}">
@@ -72,8 +78,9 @@
                 </g:else>
             </g:if>
             <g:else>
+                <g:if test="${!it.status}">
                     <g:message code="status.label.${it.status}"/>
-
+                </g:if>
                 <g:if test="${(status == 'killed')}">
                     by ${it.abortedByUser}
                 </g:if>
@@ -88,7 +95,7 @@
         </td>
             </g:if>
 
-            <td style="white-space:nowrap" class="right sepL date">
+            <td style="white-space:nowrap" class="right  date">
                 <g:if test="${it.dateCompleted}">
                     %{--<g:relativeDate elapsed="${it?.dateCompleted}" agoClass="timeago"/>--}%
                     <g:unless test="${hideDate}">
@@ -106,7 +113,7 @@
                 <g:username user="${it?.author}"/>
             </td>
 
-            <td style="white-space:nowrap;text-align:right;" class="${vals[1] != '0' ? 'fail' : 'ok'}  nodecount sepL">
+            <td style="white-space:nowrap;text-align:right;" class="${vals[1] != '0' ? 'fail' : 'ok'}  nodecount ">
                 <g:if test="${vals[1] != '0'}">
                     ${vals[1]} ${options.summary ? '' : 'node'} failed
                 </g:if>
@@ -116,7 +123,7 @@
             </td>
 
             <g:unless test="${hideShowLink}">
-            <td class="sepL outputlink">
+            <td class=" outputlink">
             <g:if test="${rpt.execId}">
                 <g:link controller="execution" action="show" id="${rpt.execId}" class="_defaultAction"
                         title="View execution output" absolute="${absoluteLinks}">Show &raquo;</g:link>
