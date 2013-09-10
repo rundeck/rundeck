@@ -1251,17 +1251,20 @@ class ScheduledExecutionController  {
         
         def fileformat = params.fileformat ?: 'xml'
         def parseresult
-        if (params.xmlBatch) {
-            String fileContent = params.xmlBatch
-            parseresult = scheduledExecutionService.parseUploadedFile(fileContent, fileformat)
-        } else if(request instanceof MultipartHttpServletRequest){
+        if(request instanceof MultipartHttpServletRequest){
             def file = request.getFile("xmlBatch")
             if (!file || file.empty) {
                 flash.message = "No file was uploaded."
                 return
             }
             parseresult = scheduledExecutionService.parseUploadedFile(file.getInputStream(), fileformat)
-        }else{
+        }else if(params.xmlBatch instanceof String) {
+            String fileContent = params.xmlBatch
+            parseresult = scheduledExecutionService.parseUploadedFile(fileContent, fileformat)
+        } else {
+            if(request.method=='POST'){
+                flash.message = "No file was uploaded."
+            }
             return
         }
         def jobset
@@ -1273,7 +1276,7 @@ class ScheduledExecutionController  {
                 flash.error = parseresult.error
                 return xmlerror()
             }else{
-                render(view:'upload',model:[errors:parseresult.error])
+                render(view:'upload',model:[uploadError:parseresult.error])
                 return
             }
         }
