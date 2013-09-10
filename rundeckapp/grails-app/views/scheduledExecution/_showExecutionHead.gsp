@@ -6,6 +6,7 @@
             <g:link
                     controller="execution"
                     action="show"
+                    class="primary"
                     id="${execution.id}"
                     absolute="${absolute ? 'true' : 'false'}"
                     params="${followparams?.findAll { it.value }}">
@@ -39,16 +40,21 @@
                 <g:else>
                     <span class="primary"><g:message code="execution.identity" args="[execution.id]" /></span>
                 </g:else>
-                <small>
-                <g:render template="/scheduledExecution/execStatusText" model="${[execution: execution]}"/>
-                <g:if test="${execution.dateCompleted != null}">
-                    in <g:relativeDate start="${execution.dateStarted}" end="${execution.dateCompleted}"/>
-                    <span class="timerel" title="${g.formatDate(date:execution.dateCompleted)} - ${execution.dateCompleted.time}">at <g:relativeDate atDate="${execution.dateCompleted}"/></span>
-                </g:if>
-                </small>
+
             </g:link>
 
         </span>
+        <h4 >
+            <small>
+                <g:render template="/scheduledExecution/execStatusText" model="${[execution: execution]}"/>
+                <g:if test="${execution.dateCompleted != null}">
+                    in <g:relativeDate start="${execution.dateStarted}" end="${execution.dateCompleted}"/>
+                    <span class="timerel"
+                          title="${g.formatDate(date: execution.dateCompleted)} - ${execution.dateCompleted.time}">at <g:relativeDate
+                            atDate="${execution.dateCompleted}"/></span>
+                </g:if>
+            </small>
+        </h4>
     </g:if>
 
 </span>
