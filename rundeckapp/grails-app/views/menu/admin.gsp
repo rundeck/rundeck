@@ -32,6 +32,7 @@
 <body>
 
 <div class="row">
+<div class="col-sm-12">
     <g:render template="/common/messages"/>
     <g:if test="${flash.joberrors}">
         <ul class="error note">
@@ -40,136 +41,80 @@
             </g:each>
         </ul>
     </g:if>
+    </div>
+</div>
+<div class="row">
 <div class="col-sm-3">
     <g:render template="configNav" model="[selected:'project']"/>
 </div>
 <div class="col-sm-9">
-    Project: <span class="prompt">${session.project.encodeAsHTML()}</span>
-    <g:link controller="framework" action="editProject" params="[project: session.project]" class="textbtn textbtn-default">
-        <i class="glyphicon glyphicon-pencil"></i>
-        <g:message code="gui.menu.ProjectEdit" default="Edit Configuration"/>
-    </g:link>
-    <div class="presentation rounded" style="margin-right: 20px;">
-        <div class="presentation ">
-            <table class="simpleform">
 
-                <tr>
-                    <td><g:message code="domain.Project.field.resourcesUrl" default="Resources Provider URL"/>:</td>
-                    <td>
-                        <g:if test="${resourcesUrl}">
-                            <span class="configvalue">${resourcesUrl.encodeAsHTML()}</span>
-                        </g:if>
-                        <g:else>
-                            <span class="info note"><g:message code="message.none.set"/></span>
-                        </g:else>
-                    </td>
-                </tr>
-                <tr>
-                    <td><g:message code="domain.Project.field.sshKeyPath" default="Default SSH Key File"/>:</td>
-                    <td>
-                        <g:if test="${sshkeypath}">
-                            <span class="configvalue">${sshkeypath.encodeAsHTML()}</span>
-                        </g:if>
-                        <g:else>
-                            <span class="info note"><g:message code="message.none.set"/></span>
-                        </g:else>
-                    </td>
-                </tr>
-            </table>
-        </div>
+    <span class="h3">
+        Project: ${session.project.encodeAsHTML()}
 
-        <span class="prompt section">Export Archive</span>
+    </span>
 
-        <div class="presentation">
-            <g:link controller="project" action="export" params="[name: session.project]">
-                <i class="glyphicon glyphicon-file"></i>
-                ${session.project.encodeAsHTML()}.rdproject.jar
-            </g:link>
-            -
-            <span class="info note">
-                Download an archive of project <em>${session.project.encodeAsHTML()}</em>
-            </span>
-        </div>
+    <ul class="nav nav-tabs">
+        <li class="active">
+            <a href="#configure"
+                data-toggle="tab"
+                >Configuration</a>
+        </li>
+        <li>
+            <a href="#export"
+               data-toggle="tab"
+                >Export Archive</a>
+        </li>
+        <li>
+            <a href="#import"
+               data-toggle="tab"
+                >Import Archive</a>
+        </li>
+    </ul>
 
-        <g:expander key="projectImport" classnames="prompt section">Import Archive</g:expander>
-        <div style="display:none" id="projectImport" class="presentation ">
-            <g:form controller="project" action="importArchive" enctype="multipart/form-data">
-                <div>
-                    <label>
-                        Choose a Rundeck archive
-                        <input type="file" name="zipFile"/>
-                    </label>
-                </div>
+<div class="tab-content">
+<div class="tab-pane active" id="configure">
+<ul class="list-group list-group-tab-content">
+        <g:link controller="framework" action="editProject" params="[project: session.project]"
+                class="textbtn textbtn-default list-group-item">
+            <i class="glyphicon glyphicon-pencil"></i>
+            <g:message code="gui.menu.ProjectEdit" default="edit configuration"/>
+        </g:link>
+        <li class="list-group-item ">
+            <h4 class="list-group-item-heading ">
+                <g:message code="domain.Project.field.resourcesUrl" default="Resources Provider URL"/>
+            </h4>
 
-                <ul>
-                    <li>Existing Jobs in this project that match imported Jobs (group and name match, or UUID matches) will be updated.</li>
-                </ul>
-                <span class="prompt">Imported Jobs</span>
-                <div class="presentation">
-                    <div>
-                        <label title="Original UUIDs will be preserved, conflicting UUIDs will be replaced">
-                            <input type="radio" name="import.jobUUIDBehavior" value="preserve" checked/>
-                            <g:message code="project.archive.import.jobUUIDBehavior.preserve.label" />
-                        </label>
-                        <span class="info note"><g:message code="project.archive.import.jobUUIDBehavior.preserve.description" /></span>
-                    </div>
+            <p class="list-group-item-text">
+                <g:if test="${resourcesUrl}">
+                    <span class="text-info">${resourcesUrl.encodeAsHTML()}</span>
+                </g:if>
+                <g:else>
+                    <span class="text-muted"><g:message code="message.none.set"/></span>
+                </g:else>
+            </p>
+        </li>
+        <li class="list-group-item ">
+            <h4 class="list-group-item-heading ">
+                <g:message code="domain.Project.field.sshKeyPath" default="Default SSH Key File"/>
+            </h4>
 
-                    <div>
-                        <label title="New UUIDs will be generated for every imported Job">
-                            <input type="radio" name="import.jobUUIDBehavior" value="remove"/>
-                            <g:message code="project.archive.import.jobUUIDBehavior.remove.label" />
-                        </label>
-                        <span class="info note"><g:message code="project.archive.import.jobUUIDBehavior.remove.description" /></span>
-                    </div>
-                </div>
+            <p class="list-group-item-text">
+                <g:if test="${sshkeypath}">
+                    <span class="text-info">${sshkeypath.encodeAsHTML()}</span>
+                </g:if>
+                <g:else>
+                    <span class="text-warning"><g:message code="message.none.set"/></span>
+                </g:else>
+            </p>
+        </li>
 
-                <span class="prompt">Executions</span>
-
-                <div class="presentation">
-                    <div>
-                        <label title="All executions and reports will be imported">
-                            <input type="radio" name="import.executionImportBehavior" value="import" checked/>
-                            Import All
-                        </label>
-                        <span class="info note">Creates new Executions and History reports from the archive</span>
-                    </div>
-
-                    <div>
-                        <label title="No executions or reports will be imported">
-                            <input type="radio" name="import.executionImportBehavior" value="skip"/>
-                            Do Not Import
-                        </label>
-                        <span class="info note">Does not import any Executions or History</span>
-                    </div>
-                </div>
-
-                <g:hiddenField name="name" value="${session.project}"/>
-
-                <div class="buttons">
-                    <div id="uploadFormButtons">
-                        <g:actionSubmit id="createFormCancelButton" value="Cancel" class="btn btn-default"/>
-                        <g:actionSubmit action="importArchive" value="Import" id="uploadFormUpload"
-                                        onclick="['uploadFormButtons','importUploadSpinner'].each(Element.toggle)"
-                            class="btn btn-primary"
-                        />
-                    </div>
-
-                    <div id="importUploadSpinner" class="spinner block" style="display:none;">
-                        <img src="${resource(dir: 'images', file: 'icon-tiny-disclosure-waiting.gif')}"
-                             alt="Spinner"/>
-                        Uploading File...
-                    </div>
-                </div>
-            </g:form>
-        </div>
-
-        <span class="prompt section">
-            <g:message code="framework.service.ResourceModelSource.label"/>
-        </span>
-
-        <div class="presentation">
+        <li class="list-group-item">
+            <h4 class="list-group-item-heading">
+                <g:message code="framework.service.ResourceModelSource.label"/>
+            </h4>
             <g:if test="${!configs}">
-                <span class="info note"><g:message code="message.none.set"/></span>
+                <div class="text-muted"><g:message code="message.none.set"/></div>
             </g:if>
 
             <ol id="configs">
@@ -193,16 +138,15 @@
                     </g:each>
                 </g:if>
             </ol>
-        </div>
-        <span class="prompt section">
-            Default <g:message code="framework.service.NodeExecutor.label"/>
-        </span>
+        </li>
 
-        <div class="presentation">
-            <span
-                class="info note"><g:message code="domain.Project.edit.NodeExecutor.explanation"/></span>
+        <li class="list-group-item">
+            <h4 class="list-group-item-heading">
+                Default <g:message code="framework.service.NodeExecutor.label"/>
+            </h4>
+            <span class="text-muted"><g:message code="domain.Project.edit.NodeExecutor.explanation"/></span>
             <g:if test="${!nodeexecconfig}">
-                <span class="info note"><g:message code="message.none.set"/></span>
+                <div class="text-warning"><g:message code="message.none.set"/></div>
             </g:if>
 
             <g:if test="${nodeexecconfig}">
@@ -220,16 +164,16 @@
                     </g:else>
                 </div>
             </g:if>
-        </div>
-        <span class="prompt section">
-            Default <g:message code="framework.service.FileCopier.label"/>
-        </span>
+        </li>
 
-        <div class="presentation">
+        <li class="list-group-item">
+            <h4 class="list-group-item-heading">
+                Default <g:message code="framework.service.FileCopier.label"/>
+            </h4>
             <span
-                class="info note"><g:message code="domain.Project.edit.FileCopier.explanation"/></span>
+                class="text-muted"><g:message code="domain.Project.edit.FileCopier.explanation"/></span>
             <g:if test="${!fcopyconfig}">
-                <span class="info note"><g:message code="message.none.set" /></span>
+                <div class="text-warning"><g:message code="message.none.set"/></div>
             </g:if>
 
             <g:if test="${fcopyconfig}">
@@ -247,8 +191,107 @@
                     </g:else>
                 </div>
             </g:if>
+        </li>
+    </ul>
+</div>
+
+<div class="tab-pane" id="export">
+    <div class="panel panel-default panel-tab-content">
+        <div class="panel-heading">
+            Download an archive of project <strong>${session.project.encodeAsHTML()}</strong>
+        </div>
+        <div class="panel-body">
+                <g:link controller="project" action="export" params="[name: session.project]"
+                    class="btn btn-success"
+                >
+                    <i class="glyphicon glyphicon-download-alt"></i>
+                    ${session.project.encodeAsHTML()}.rdproject.jar
+                </g:link>
+
+        </div>
+
+    </div>
+</div>
+
+<div class="tab-pane" id="import">
+    <g:form controller="project" action="importArchive" enctype="multipart/form-data" class="form">
+    <div class="list-group list-group-tab-content">
+        <div class="list-group-item">
+            <div class="form-group">
+                <label>
+                    Choose a Rundeck archive
+                    <input type="file" name="zipFile" class="form-control"/>
+                </label>
+
+                <p class="help-block">
+                    Existing Jobs in this project that match imported Jobs (group and name match, or UUID matches) will be updated.
+                </p>
+            </div>
+        </div>
+
+        <div class="list-group-item">
+            <h4 class="list-group-item-heading">Imported Jobs</h4>
+
+            <div class="radio">
+                    <label title="Original UUIDs will be preserved, conflicting UUIDs will be replaced">
+                        <input type="radio" name="import.jobUUIDBehavior" value="preserve" checked />
+                        <g:message code="project.archive.import.jobUUIDBehavior.preserve.label"/>
+                    </label>
+
+                <p class="help-block"><g:message
+                        code="project.archive.import.jobUUIDBehavior.preserve.description"/></p>
+            </div>
+            <div class="radio">
+                <label title="New UUIDs will be generated for every imported Job">
+                    <input type="radio" name="import.jobUUIDBehavior" value="remove"/>
+                    <g:message code="project.archive.import.jobUUIDBehavior.remove.label"/>
+                </label>
+
+                <p class="help-block"><g:message
+                        code="project.archive.import.jobUUIDBehavior.remove.description"/></p>
+            </div>
+        </div>
+
+        <div class="list-group-item">
+            <h4 class="list-group-item-heading">Executions</h4>
+
+            <div class="radio">
+                <label title="All executions and reports will be imported">
+                    <input type="radio" name="import.executionImportBehavior" value="import" checked/>
+                    Import All
+                </label>
+                <span class="help-block">Creates new Executions and History reports from the archive</span>
+            </div>
+
+            <div class="radio">
+                <label title="No executions or reports will be imported">
+                    <input type="radio" name="import.executionImportBehavior" value="skip"/>
+                    Do Not Import
+                </label>
+                <span class="help-block">Does not import any Executions or History</span>
+            </div>
+        </div>
+            <g:hiddenField name="name" value="${session.project}"/>
+        <div class="list-group-item">
+            <div class="buttons">
+                <div id="uploadFormButtons">
+                    <g:actionSubmit id="createFormCancelButton" value="Cancel" class="btn btn-default"/>
+                    <g:actionSubmit action="importArchive" value="Import" id="uploadFormUpload"
+                                    onclick="['uploadFormButtons','importUploadSpinner'].each(Element.toggle)"
+                                    class="btn btn-primary"/>
+                </div>
+
+                <div id="importUploadSpinner" class="spinner block" style="display:none;">
+                    <img src="${resource(dir: 'images', file: 'icon-tiny-disclosure-waiting.gif')}"
+                         alt="Spinner"/>
+                    Uploading File...
+                </div>
+            </div>
+        </div>
         </div>
     </div>
+    </g:form>
+</div>
 </div>
 </div>
 </body>

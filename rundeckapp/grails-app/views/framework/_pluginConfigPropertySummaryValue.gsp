@@ -27,13 +27,13 @@
     <g:if test="${values[prop.name]=='true'}">
         <span class="configpair">
             <span title="${prop.description?.encodeAsHTML()}">${prop.title ? prop.title.encodeAsHTML() : prop.name.encodeAsHTML()}:</span>
-            <span class="configvalue">Yes</span>
+            <span class="text-success">Yes</span>
         </span>
     </g:if>
 </g:if>
 <g:elseif test="${values[prop.name]}">
     <span class="configpair">
         <span title="${prop.description?.encodeAsHTML()}">${prop.title ? prop.title.encodeAsHTML() : prop.name.encodeAsHTML()}:</span>
-        <span class="configvalue">${values[prop.name]?.encodeAsHTML()}</span>
+        <span class="text-success">${values[prop.name]?.encodeAsHTML()}</span>
     </span>
 </g:elseif>

@@ -24,10 +24,10 @@
 
 <g:if test="${description}">
     <g:if test="${!hideTitle}">
-        <span class="prompt">${description.title.encodeAsHTML()}</span>
+        <span class="text-info">${description.title.encodeAsHTML()}</span>
     </g:if>
     <g:if test="${!hideDescription}">
-        <span class="desc">${description.description?.encodeAsHTML()}</span>
+        <span class="text-muted">${description.description?.encodeAsHTML()}</span>
     </g:if>
 </g:if>
 <div class="" style="margin-top:5px;">
