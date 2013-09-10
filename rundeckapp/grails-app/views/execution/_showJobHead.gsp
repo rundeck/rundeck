@@ -5,10 +5,11 @@
             <g:if test="${!groupOnly}">
             <g:link controller="scheduledExecution" action="show"
                     id="${scheduledExecution.extid}"
-                    class=" ${execution?.status == 'true' ? 'jobok' : null == execution?.dateCompleted ? 'jobrunning' : execution?.cancelled ? 'jobwarn' : 'joberror'}" absolute="${absolute ? 'true' :'false'}"
+                    class="primary" absolute="${absolute ? 'true' :'false'}"
                 title="${scheduledExecution?.description.encodeAsHTML()}"
             >
-                <span class="jobName">${scheduledExecution?.jobName.encodeAsHTML()}</span></g:link>
+                ${scheduledExecution?.jobName.encodeAsHTML()}
+            </g:link>
 
             </g:if>
             <g:if test="${scheduledExecution.groupPath && !nameOnly}">
