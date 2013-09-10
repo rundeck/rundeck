@@ -232,12 +232,24 @@
 
                 </div>
                 <div class="row row-space" id="progressContainer" style="${wdgt.styleVisible(unless:execution.dateCompleted)}">
-                    <div class="col-sm-12">
+                    <div class="col-sm-12 runstatus">
+                        <g:set var="progressClass" value=""/>
+                        <g:set var="innerContent" value=""/>
+                        <g:set var="showpercent" value="${true}"/>
+                        <g:set var="progressBarClass" value="progress-bar-info"/>
+                        <g:if test="${!execution.scheduledExecution}">
+                            <g:set var="progressClass" value="indefinite progress-striped active indefinite"/>
+                            <g:set var="innerContent" value="Running"/>
+                            <g:set var="showpercent" value="${true}"/>
+                        </g:if>
                         <g:render template="/common/progressBar"
                                   model="[completePercent: execution.dateCompleted ? 100 : 0,
-                                          progressClass: 'rd-progress-exec',
-                                          progressBarClass: 'progress-bar-info',
-                                          containerId: 'progressContainer2', progressId: 'progressBar']"/>
+                                          progressClass: 'rd-progress-exec '+progressClass,
+                                          progressBarClass: progressBarClass,
+                                          containerId: 'progressContainer2',
+                                          innerContent: innerContent,
+                                          showpercent: showpercent,
+                                          progressId: 'progressBar']"/>
                     </div>
                 </div>
                 <g:set var="isAdhoc" value="${!scheduledExecution && execution.workflow.commands.size() == 1}"/>
@@ -257,7 +269,7 @@
                                         <g:render template="showJobHead"
                                                   model="${[scheduledExecution: scheduledExecution, groupOnly: true]}"/>
 
-                                        <span class="jobdesc jobInfoSection">
+                                        <span class="text-muted">
                                             ${scheduledExecution?.description?.encodeAsHTML()}
                                         </span>
                                     </div>
