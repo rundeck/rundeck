@@ -35,11 +35,6 @@
 </head>
 
 <body>
-<div class="pageTop">
-    <span class="welcomeMessage floatl">
-        <g:message code="domain.Project.create.message" default="Create a new Project"/>
-    </span>
-</div>
 <g:set var="adminauth"
        value="${auth.resourceAllowedTest(type: 'resource', kind: 'project', action: ['create'], context: 'application')}"/>
 <g:if test="${adminauth}">
@@ -58,15 +53,26 @@
         </g:if>
     </div>
 
-    <div class="pageBody form" style="width:500px;" id="createform">
-
+    <div class="row">
+    <div class="col-sm-10 col-sm-offset-1">
+    <div class="panel panel-primary"  id="createform">
+        <div class="panel-heading">
+            <span class="h3">
+                <g:message code="domain.Project.create.message" default="Create a new Project"/>
+            </span>
+        </div>
+        <div class="panel-body">
         <g:form action="createProject" method="post" onsubmit="return configControl.checkForm();">
             <tmpl:editProjectForm/>
             <div class="buttons">
                 <g:submitButton name="create" value="${g.message(code: 'button.action.Create', default: 'Create')}" class="btn btn-default"/>
             </div>
         </g:form>
+        </div>
     </div>
+    </div>
+    </div>
+
 </g:if>
 <g:else>
     <div class="pageBody">

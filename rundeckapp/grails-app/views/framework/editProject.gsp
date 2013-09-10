@@ -56,18 +56,14 @@
 </head>
 
 <body>
-<div class="pageTop">
-    <span class="welcomeMessage floatl">
-        %{--<g:message code="domain.Project.welcome.message" default="Welcome to RunDeck"/>--}%
-        <g:message code="domain.Project.edit.message" default="Configure Project"/>: ${session.project.encodeAsHTML()}
-    </span>
-</div>
 
 <g:set var="adminauth"
        value="${auth.resourceAllowedTest(type:'resource',kind:'project',action:['create'],context:'application')}"/>
 <g:if test="${adminauth}">
 
-    <div class="pageBody form note error" style="${wdgt.styleVisible(if: (flash.error || request.error || request.errors))}"
+    <div class="row">
+    <div class="col-sm-12">
+    <div class="alert alert-warning" style="${wdgt.styleVisible(if: (flash.error || request.error || request.errors))}"
          id="editerror">
         ${flash.error?.encodeAsHTML()}${request.error?.encodeAsHTML()}
         <g:if test="${request.errors}">
@@ -80,19 +76,38 @@
             </ul>
         </g:if>
     </div>
-    <div class="pageBody form" id="createform">
-        <g:form action="saveProject" method="post" onsubmit="return configControl.checkForm();">
-            <g:render template="editProjectForm" model="${[editOnly:true,project:session.project]}"/>
-            <div class="buttons primary">
-                <g:submitButton name="cancel" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default"/>
-                <g:submitButton name="save" value="${g.message(code:'button.action.Save',default:'Save')}" class="btn btn-primary"/>
-            </div>
-        </g:form>
     </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-10 col-sm-offset-1">
+        <div class="panel panel-primary"  id="createform">
+            <div class="panel-heading">
+                    <span class="h3">
+                        <g:message code="domain.Project.edit.message"
+                                   default="Configure Project"/>: ${session.project.encodeAsHTML()}
+                </span>
+            </div>
+            <div class="panel-body">
+                <g:form action="saveProject" method="post" onsubmit="return configControl.checkForm();" class="form">
+                    <g:render template="editProjectForm" model="${[editOnly:true,project:session.project]}"/>
+                    <div class="buttons ">
+                        <g:submitButton name="cancel" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default"/>
+                        <g:submitButton name="save" value="${g.message(code:'button.action.Save',default:'Save')}" class="btn btn-primary"/>
+                    </div>
+                </g:form>
+            </div>
+        </div>
+    </div>
+</div>
+
 </g:if>
 <g:else>
-    <div class="pageBody">
-        <div class="error note"><g:message code="unauthorized.project.create"/></div>
+    <div class="row">
+    <div class="col-sm-12">
+        <div class="alert alert-warning">
+            <g:message code="unauthorized.project.create"/>
+        </div>
+    </div>
     </div>
 </g:else>
 </body>
