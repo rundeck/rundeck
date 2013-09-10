@@ -1527,9 +1527,7 @@ var FollowControl = Class.create({
             if ($('avgDuration')) {
                 $('avgDuration').innerHTML = "???";
             }
-            if ($('progressContainer')) {
-                $('progressContainer').hide();
-            }
+            this.displayIndefiniteCompletion();
         }
     },
     displayCompletion: function(pct) {
@@ -1538,9 +1536,17 @@ var FollowControl = Class.create({
         }
 
         if ($('progressBar')){
-//            jQuery('#progressBar').width((Math.floor(pct)) + "%");
             $('progressBar').style.width = (Math.floor(pct) +'%');
             $('progressBar').innerHTML = (Math.floor(pct)) + "%";
+        }
+    },
+    displayIndefiniteCompletion: function() {
+        if ($('execDurationPct')) {
+            $('execDurationPct').innerHTML = "Running";
+        }
+
+        if ($('progressBar')){
+            $('progressBar').innerHTML = "Running";
         }
     }
 });

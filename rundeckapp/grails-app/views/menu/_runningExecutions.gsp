@@ -13,14 +13,20 @@
             <tr class=" ${j % 2 == 1 ? 'alternateRow' : ''}  ${!execution.dateCompleted ? 'nowrunning' : ''} execution ${execstatus} hilite link"
                 id="${upref}exec-${execution.id}-row" onclick="document.location='${execLink}';">
                 <g:set var="fileName" value="job"/>
-                <g:if test="${execution}">
-                <g:set var="fileName"
-                       value="${execution.status == 'true' ? 'job-ok' : null == execution.dateCompleted ? 'job-running' : execution.cancelled ? 'job-warn' : 'job-error'}"/>
-                </g:if>
+                %{--<g:if test="${execution}">--}%
+                %{--<g:set var="fileName"--}%
+                       %{--value="${execution.status == 'true' ? 'job-ok' : null == execution.dateCompleted ? 'job-running' : execution.cancelled ? 'job-warn' : 'job-error'}"/>--}%
+                %{--</g:if>--}%
                 <td style="width:12px;" class="eventicon">
-                <g:if test="${!noimgs}"><img
-                        src="${resource(dir: 'images', file: "icon-small-" + fileName + ".png")}"
-                        alt="job" style="border:0;" width="12px" height="12px"/></g:if>
+                %{--<g:if test="${!noimgs}"><img--}%
+                        %{--src="${resource(dir: 'images', file: "icon-small-" + fileName + ".png")}"--}%
+                        %{--alt="job" style="border:0;" width="12px" height="12px"/></g:if>--}%
+                <g:set var="gicon"
+                       value="${execution.status == 'true' ? 'ok-circle' : null == execution.dateCompleted ? 'play-circle' : execution.cancelled ? 'minus-sign' : 'warning-sign'}"/>
+
+                <i class="glyphicon glyphicon-${gicon} exec-status ${!execution.dateCompleted?'running':execution.status == 'true' ? 'succeed' : execution.cancelled ? 'warn' : 'fail'}">
+                </i>
+
                 </td>
                 <g:if test="${scheduledExecution}">
                     <td class=" eventtitle job">
@@ -90,16 +96,24 @@
                             <g:else>
                                 <g:set var="completeRemaining" value="${'+'+g.timeDuration(start:completeEstimate,end:new Date(timeNow))}"/>
                             </g:else>
-                            <g:render template="/common/progressBar" model="${[completePercent:(int)completePercent,title:completePercent < 100 ? 'Estimated completion time: ' + completeEstimateTime : '',
+                            <g:render template="/common/progressBar"
+                                      model="${[completePercent:(int)completePercent,
+                                              title:completePercent < 100 ? 'Estimated completion time: ' + completeEstimateTime : '',
+                                              progressClass: 'rd-progress-exec progress-striped',
+                                              progressBarClass: 'progress-bar-info',
                                 showpercent:true,showOverrun:true,remaining:' ('+completeRemaining+')',width:120]}"/>
                         </g:if>
                         <g:else>
-                            <g:render template="/common/progressBar" model="${[indefinite:true,title:'running',innerContent:'running',width:120]}"/>
+                            <g:render template="/common/progressBar" model="${[
+                                    indefinite:true,title:'Running',innerContent:'Running',width:120,
+                                    progressClass: 'rd-progress-exec progress-striped active indefinite',
+                                    progressBarClass: 'progress-bar-info',
+                            ]}"/>
                         </g:else>
                     </g:else>
                 </td>
 
-                <td class="sepL outputlink hilite action ${!execution.dateCompleted ? 'nowrunning' : ''}">
+                <td class="outputlink hilite action ${!execution.dateCompleted ? 'nowrunning' : ''}">
                     <g:link title="View execution output" controller="execution" action="show" id="${execution.id}">Show &raquo;</g:link>
                 </td>
 
