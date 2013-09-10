@@ -16,13 +16,13 @@
                 newparams['groupPath']=uplevel
             }%
             <g:link controller="menu" action="jobs" class="groupname" title="Previous level" params="${newparams}">
-                <g:img file="icon-small-folder-up.png" width="16px" height="15px"/>
+                <i class="glyphicon glyphicon-arrow-up"></i>
                 Up
             </g:link>
         </g:if>
         <g:else>
             <g:link controller="menu" action="jobs" class="groupname" title="Top level">
-                <g:img file="icon-small-folder-up.png" width="16px" height="15px"/>
+                <i class="glyphicon glyphicon-arrow-up"></i>
                 Top
             </g:link>
         </g:else>
@@ -83,14 +83,14 @@
         </g:if>
         <g:else>
             <g:set var="jsfunc" value="Expander.toggle(this,null,'.expandComponentHolder.sub_${currkey}_group');"/>
-            <g:expander open="${groupopen?'true':'false'}" jsfunc="${jsfunc}" imgfirst="true" style="padding-left:4px;" classnames="jobgroupexpand">
+            <g:expander open="${groupopen?'true':'false'}" jsfunc="${jsfunc}" imgfirst="true" style="padding-left:4px;" classnames="jobgroupexpand textbtn-secondary">
                 <span class="foldertoggle">&nbsp;</span>
                 <g:if test="${jobsjscallback}">
                     ${displaygroup}
                 </g:if>
             </g:expander>
             <g:if test="${!jobsjscallback}">
-            <a class=" groupname" href="${createLink(controller: 'menu', action: 'jobs', params: [groupPath: prefix ? prefix + '/' + group.key : group.key])}">${displaygroup}</a>
+            <a class=" groupname secondary" href="${createLink(controller: 'menu', action: 'jobs', params: [groupPath: prefix ? prefix + '/' + group.key : group.key])}">${displaygroup}</a>
             </g:if>
         </g:else>
         </div>

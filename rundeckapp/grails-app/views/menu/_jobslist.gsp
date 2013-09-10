@@ -53,7 +53,7 @@
                                     <span class="inlinebuttons jobbuttons">
                                         <g:if test="${jobauthorizations && jobauthorizations[AuthConstants.ACTION_RUN]?.contains(scheduledExecution.id.toString())}">
                                             <g:link controller="scheduledExecution" action="execute"
-                                                    id="${scheduledExecution.extid}" class=" btn btn-success btn-xs has_tooltip"
+                                                    id="${scheduledExecution.extid}" class=" btn btn-default btn-xs has_tooltip"
                                                     data-toggle="tooltip"
                                                     title="Run Job Now…"
                                                     data-job-id="${scheduledExecution.extid}"
@@ -63,17 +63,19 @@
                                         </g:if>
                                     </span>
 
-                                    <g:link action="show" controller="scheduledExecution" id="${scheduledExecution.extid}" class="primary" >
-                                    ${scheduledExecution.jobName.encodeAsHTML()}</g:link>
+                                    <g:link action="show" controller="scheduledExecution" id="${scheduledExecution.extid}" >
+                                        ${scheduledExecution.jobName.encodeAsHTML()}
+                                    </g:link>
 
                                 <g:if test="${jobauthorizations && jobauthorizations[AuthConstants.ACTION_UPDATE]?.contains(scheduledExecution.id.toString())}">
                                     <g:link action="edit" controller="scheduledExecution"
                                             id="${scheduledExecution.extid}"
-                                            class="jobIdLink textbtn">
+                                            class="jobIdLink textbtn textbtn-info">
+                                        <i class="glyphicon glyphicon-pencil"></i>
                                         edit</g:link>
                                 </g:if>
 
-                                <span class="jobdesc" title="${scheduledExecution.description?.encodeAsHTML()}">${scheduledExecution.description?.encodeAsHTML()}</span>
+                                <span class="text-muted" title="${scheduledExecution.description?.encodeAsHTML()}">${scheduledExecution.description?.encodeAsHTML()}</span>
 
                             </td>
                             <td class="scheduletime">
