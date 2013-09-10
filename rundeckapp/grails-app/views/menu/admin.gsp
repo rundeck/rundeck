@@ -76,7 +76,7 @@
 <div class="tab-pane active" id="configure">
 <ul class="list-group list-group-tab-content">
         <g:link controller="framework" action="editProject" params="[project: session.project]"
-                class="textbtn textbtn-default list-group-item">
+                class="textbtn textbtn-info list-group-item">
             <i class="glyphicon glyphicon-pencil"></i>
             <g:message code="gui.menu.ProjectEdit" default="edit configuration"/>
         </g:link>
