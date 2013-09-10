@@ -26,10 +26,19 @@ var ResourceModelConfigControl = Class.create({
 
     var parentNode = $(elem).parentNode;
     var top = new Element("div");
+    var top1 = new Element("div");
     var wrapper = new Element("div");
-    top.appendChild(wrapper);
+    top.appendChild(top1);
+    top1.appendChild(wrapper);
+    top1.addClassName('panel panel-default');
+    wrapper.addClassName('panel-body');
     $(parentNode).insert(top, {after:elem});
     var content = parentNode.removeChild(elem);
+    if(content.down('.rsrcConfigContent')){
+        content= content.down('.rsrcConfigContent');
+    }else{
+        content.addClassName('rsrcConfigContent');
+    }
     $(content).select('input').each(function(elem) {
         if (elem.type == 'text') {
             elem.observe('keypress', noenter);
@@ -42,11 +51,13 @@ var ResourceModelConfigControl = Class.create({
     hidden3.setAttribute("value", index);
     hidden3.addClassName("configindex");
 
+    var buttons1 = new Element("div");
+    buttons1.addClassName('form-group');
     var buttons = new Element("div");
-    buttons.setStyle({"text-align":"right"});
+    buttons.addClassName('col-sm-offset-2 col-sm-10');
+    buttons1.appendChild(buttons);
 
     if (edit) {
-        wrapper.addClassName("rounded");
         var self=this;
         var button;
         var isinvalid = $(elem).down(".invalidProvider");
@@ -72,7 +83,6 @@ var ResourceModelConfigControl = Class.create({
         }
     } else {
         var self = this;
-        wrapper.addClassName("popout");
         var button = new Element("button");
         Event.observe(button, 'click', function(e) {
             Event.stop(e);
@@ -95,9 +105,10 @@ var ResourceModelConfigControl = Class.create({
     content.insert(hidden3);
 
     wrapper.appendChild(content);
-
-    wrapper.appendChild(buttons);
-
+    $(buttons).descendants('button').each(function(b){
+        $(b).addClassName('btn btn-default btn-sm');
+    });
+    content.down('.form-horizontal').appendChild(buttons1);
 },
 error: function(req) {
     var data = req.responseJSON;

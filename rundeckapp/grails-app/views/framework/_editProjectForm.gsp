@@ -22,9 +22,11 @@
 
 <%@ page contentType="text/html;charset=UTF-8" %>
 
+<div class="list-group">
 <g:if test="${editOnly}">
     <g:hiddenField name="project" value="${project}"/>
 </g:if>
+    <div class="list-group-item">
     <g:if test="${!editOnly}">
         <div class="form-group ${projectNameError?'has-error':''}">
             <label for="project" class="required">
@@ -58,7 +60,9 @@
             <g:message code="domain.Project.field.sshKeyPath.description" />
         </div>
     </div>
+</div>
 <g:if test="${resourceModelConfigDescriptions}">
+    <div class="list-group-item">
     <span class="h4 ">
         <g:message code="framework.service.ResourceModelSource.label" />
     </span>
@@ -67,10 +71,10 @@
         <g:message code="domain.Project.edit.ResourceModelSource.explanation" />
     </div>
 
-    <div class="error note" id="errors" style="display:none;">
+    <div class="alert alert-warning" id="errors" style="display:none;">
 
     </div>
-    <ol id="configs">
+    <ol id="configs" >
         <g:if test="${configs}">
             <g:each var="config" in="${configs}" status="n">
                 <li>
@@ -88,40 +92,44 @@
         </g:if>
     </ol>
 
-    <div id="sourcebutton" class=" presentation">
-        <button class="btn btn-default btn-sm">
+    <div id="sourcebutton" >
+        <button class="btn btn-success btn-sm">
             Add Source
             <i class="glyphicon glyphicon-plus"></i>
         </button>
     </div>
 
-    <div id="sourcepicker" class="panel panel-default" style="display:none;">
+    <div id="sourcepicker" class="panel panel-success sourcechrome" style="display:none;">
         <div class="panel-heading">
-            Choose the type of Source to add:
+            <g:message code="framework.service.ResourceModelSource.add.title"/>
         </div>
-        <div class="panel-body">
         <div class="list-group">
             <g:each in="${resourceModelConfigDescriptions}" var="description">
                 <a onclick="configControl.addConfig('${description.name.encodeAsJavaScript()}');
                 return false;"
                     href="#"
                    class="list-group-item">
-                    <strong>${description.title.encodeAsHTML()}</strong>
+                    <strong>
+                        <i class="glyphicon glyphicon-plus"></i>
+                        ${description.title.encodeAsHTML()}
+                    </strong>
                     <span class="help-block">${description.description.encodeAsHTML()}</span>
                 </a>
             </g:each>
         </div>
 
-            <div id="sourcecancel">
-                <button class="btn btn-default btn-sm">Cancel</button>
-            </div>
+        <div id="sourcecancel" class="panel-footer">
+            <button class="btn btn-default btn-sm">Cancel</button>
         </div>
 
     </div>
     </li>
+    </div>
+
 </g:if>
 
 <g:if test="${nodeExecDescriptions}">
+    <div class="list-group-item">
     <span class="h4">Default <g:message code="framework.service.NodeExecutor.label" /></span>
 
 
@@ -151,22 +159,21 @@
                     </wdgt:eventHandler>
                     <div class="well well-sm nexecDetails" id="${nkey + '_det'}"
                          style="${wdgt.styleVisible(if: defaultNodeExec == description.name)}">
-                        <table class="simpleForm " >
+                        <div class="form-horizontal " >
                         <g:each in="${description.properties}" var="prop">
-                            <tr>
                                 <g:render
-                                    template="pluginConfigPropertyField"
+                                    template="pluginConfigPropertyFormField"
                                     model="${[prop:prop,prefix:nodeexecprefix,error:nodeexecreport?.errors?nodeexecreport?.errors[prop.name]:null,values:nodeexecconfig,
                                 fieldname:nodeexecprefix+prop.name,origfieldname:'orig.'+nodeexecprefix+prop.name]}"/>
-                            </tr>
                         </g:each>
-                    </table>
+                    </div>
                     </div>
                 </g:if>
         </g:each>
-
+    </div>
 </g:if>
 <g:if test="${fileCopyDescriptions}">
+    <div class="list-group-item">
     <span class="h4">Default Node <g:message code="framework.service.FileCopier.label"/></span>
 
 
@@ -196,18 +203,17 @@
                 </wdgt:eventHandler>
                 <div class="well well-sm fcopyDetails" id="${nkey + '_det'}"
                        style="${wdgt.styleVisible(if: defaultFileCopy == description.name)}">
-                <table class="simpleForm " >
+                <div class="form-horizontal " >
                     <g:each in="${description.properties}" var="prop">
-                        <tr>
                             <g:render
-                                template="pluginConfigPropertyField"
+                                template="pluginConfigPropertyFormField"
                                 model="${[prop:prop,prefix:fcopyprefix,error:fcopyreport?.errors?fcopyreport?.errors[prop.name]:null,values:fcopyconfig,
                             fieldname:fcopyprefix+prop.name,origfieldname:'orig.'+fcopyprefix+prop.name]}"/>
-                        </tr>
                     </g:each>
-                </table>
+                </div>
                 </div>
             </g:if>
         </g:each>
-
+    </div>
 </g:if>
+</div>

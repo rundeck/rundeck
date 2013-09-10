@@ -55,21 +55,19 @@
 
     <div class="row">
     <div class="col-sm-10 col-sm-offset-1">
-    <div class="panel panel-primary"  id="createform">
-        <div class="panel-heading">
-            <span class="h3">
-                <g:message code="domain.Project.create.message" default="Create a new Project"/>
-            </span>
-        </div>
-        <div class="panel-body">
         <g:form action="createProject" method="post" onsubmit="return configControl.checkForm();">
-            <tmpl:editProjectForm/>
-            <div class="buttons">
-                <g:submitButton name="create" value="${g.message(code: 'button.action.Create', default: 'Create')}" class="btn btn-default"/>
+            <div class="panel panel-primary"  id="createform">
+                <div class="panel-heading">
+                    <span class="h3">
+                        <g:message code="domain.Project.create.message" default="Create a new Project"/>
+                    </span>
+                </div>
+                <tmpl:editProjectForm/>
+                <div class="panel-footer">
+                    <g:submitButton name="create" value="${g.message(code: 'button.action.Create', default: 'Create')}" class="btn btn-default"/>
+                </div>
             </div>
         </g:form>
-        </div>
-    </div>
     </div>
     </div>
 

@@ -45,14 +45,6 @@
     }
     Event.observe(window, 'load', init);
     </g:javascript>
-<style type="text/css">
-    #configs li{
-        margin-top: 5px;
-    }
-    div.buttons{
-        text-align:right;
-    }
-</style>
 </head>
 
 <body>
@@ -79,26 +71,24 @@
     </div>
     </div>
     <div class="row">
+        <g:form action="saveProject" method="post" onsubmit="return configControl.checkForm();" class="form">
         <div class="col-sm-10 col-sm-offset-1">
-        <div class="panel panel-primary"  id="createform">
-            <div class="panel-heading">
-                    <span class="h3">
-                        <g:message code="domain.Project.edit.message"
-                                   default="Configure Project"/>: ${session.project.encodeAsHTML()}
-                </span>
-            </div>
-            <div class="panel-body">
-                <g:form action="saveProject" method="post" onsubmit="return configControl.checkForm();" class="form">
-                    <g:render template="editProjectForm" model="${[editOnly:true,project:session.project]}"/>
-                    <div class="buttons ">
-                        <g:submitButton name="cancel" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default"/>
-                        <g:submitButton name="save" value="${g.message(code:'button.action.Save',default:'Save')}" class="btn btn-primary"/>
-                    </div>
-                </g:form>
+            <div class="panel panel-primary"  id="createform">
+                <div class="panel-heading">
+                        <span class="h3">
+                            <g:message code="domain.Project.edit.message"
+                                       default="Configure Project"/>: ${session.project.encodeAsHTML()}
+                    </span>
+                </div>
+                <g:render template="editProjectForm" model="${[editOnly:true,project:session.project]}"/>
+                <div class="panel-footer">
+                    <g:submitButton name="cancel" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default"/>
+                    <g:submitButton name="save" value="${g.message(code:'button.action.Save',default:'Save')}" class="btn btn-primary"/>
+                </div>
             </div>
         </div>
+        </g:form>
     </div>
-</div>
 
 </g:if>
 <g:else>

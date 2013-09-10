@@ -21,14 +21,24 @@
  --%>
 
 <%@ page contentType="text/html;charset=UTF-8" %>
+<div class="container">
+
 
 <g:if test="${description}">
-    <span class="prompt">${description.title.encodeAsHTML()}</span>
-    <span class="info">${description.description.encodeAsHTML()}</span>
+    <div class="row">
+    <div class="col-sm-12">
+    <div class="h4 text-info">${description.title.encodeAsHTML()}
+        <small class="text-muted">${description.description.encodeAsHTML()}</small>
+    </div>
+
+    </div>
+    </div>
 </g:if>
-<div class="presentation">
+<div class="row ${description?'row-space':''}">
     <g:if test="${error}">
-        <span class="error note resourceConfigEdit">${error}</span>
+        <div class="col-sm-12">
+        <div class="alert alert-warning resourceConfigEdit">${error}</div>
+        </div>
     </g:if>
     <g:if test="${isCreate}">
         <g:hiddenField name="isCreate" value="true" class="isCreate"/>
@@ -39,15 +49,14 @@
     <g:hiddenField name="prefix" value="${prefix}"/>
     <g:hiddenField name="${prefix+'type'}" value="${type}"/>
     <g:if test="${description}">
-        <table class="simpleForm">
+        <div class="col-sm-12 form-horizontal">
         <g:each in="${description.properties}" var="prop">
-            <tr>
-            <g:render template="pluginConfigPropertyField" model="${[prop:prop,prefix:prefix,error:report?.errors?report?.errors[prop.name]:null,values:values,fieldname:prefix+'config.'+prop.name,origfieldname:'orig.'+prefix+'config.'+prop.name]}"/>
-            </tr>
+            <g:render template="pluginConfigPropertyFormField" model="${[prop:prop,prefix:prefix,error:report?.errors?report?.errors[prop.name]:null,values:values,fieldname:prefix+'config.'+prop.name,origfieldname:'orig.'+prefix+'config.'+prop.name]}"/>
         </g:each>
-        </table>
+        </div>
     </g:if>
     <g:else>
+        <div class="col-sm-12">
         <span>Properties:</span>
         <ul>
         <g:each var="prop" in="${values}">
@@ -56,5 +65,8 @@
                    value="${prop.value?.encodeAsHTML()}"/>
         </g:each>
         </ul>
+        </div>
     </g:else>
+</div>
+
 </div>

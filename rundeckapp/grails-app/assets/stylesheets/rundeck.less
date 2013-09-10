@@ -287,3 +287,15 @@
       .border-top-radius(0);
     }
   }
+
+  //padding between sequential buttons in a form group
+  .form-group{
+    .btn + .btn {
+      margin-left: 5px;
+    }
+  }
+
+  //resize control-label to match the input-sm vertical padding
+  .form-horizontal .control-label.input-sm{
+    padding: @padding-small-vertical @padding-small-horizontal;
+  }
