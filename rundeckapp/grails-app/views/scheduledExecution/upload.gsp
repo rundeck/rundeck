@@ -7,12 +7,6 @@
 </head>
 <body>
 
-    <div class="pageTop">
-        <span class="welcomeMessage">
-        Upload <g:message code="domain.ScheduledExecution.title"/> Definition
-            to project <b>${session.project.encodeAsHTML()}</b>
-        </span>
-    </div>
     <tmpl:uploadForm />
 </body>
 </html>

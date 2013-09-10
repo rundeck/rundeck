@@ -1,16 +1,28 @@
-<g:if test="${flash.message || errors || messages || errjobs || skipjobs || jobs || execerrors || execsuccess}">
-<div class="pageBody">
+<g:if test="${flash.message || uploadError || flash.error || messages || errjobs || skipjobs || jobs || execerrors || execsuccess}">
 
-    <g:if test="${flash.message || errors}">
-        <div class="error note">${flash.message?flash.message.encodeAsHTML():errors.encodeAsHTML()}</div>
+    <g:if test="${flash.error || uploadError}">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="alert alert-warning">${flash.error?flash.error.encodeAsHTML():uploadError.encodeAsHTML()}</div>
+            </div>
+        </div>
+    </g:if>
+    <g:if test="${flash.message}">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="alert alert-info">${flash.message.encodeAsHTML()}</div>
+            </div>
+        </div>
     </g:if>
 
     <g:if test="${messages}">
-        <div class="sepT presentation">
-            <div class="info note">
-            <g:each var="msg" in="${messages}">
-                <div>${msg}</div>
-            </g:each>
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="alert alert-info">
+                    <g:each var="msg" in="${messages}">
+                        <div>${msg}</div>
+                    </g:each>
+                </div>
             </div>
         </div>
     </g:if>
@@ -18,6 +30,9 @@
 
 
     <g:if test="${execerrors}">
+        <div class="row">
+        <div class="col-sm-12">
+
         <div class="batchresset">
             <span class="prompt errors">${execerrors.size()} Job${execerrors.size()==1?' was':'s were'} not executed due to errors</span>
 
@@ -43,12 +58,18 @@
                 </g:if>
             </div>
         </div>
+        </div>
+        </div>
     </g:if>
     <g:if test="${execsuccess}">
-        <div class="batchresset">
-            <span class="prompt info">${execsuccess.size()} Job Execution${execsuccess.size()==1?' was':'s were'} successfully queued</span>
+        <div class="row">
+        <div class="col-sm-12">
 
-            <div class="presentation">
+
+                <div class="batchresset">
+                    <span class="prompt info">${execsuccess.size()} Job Execution${execsuccess.size()==1?' was':'s were'} successfully queued</span>
+
+            <div class="">
                 <g:if test="${execsuccess.size()>0}">
                     <table cellpadding="0" cellspacing="0" style="width: 700px;" class="jobsList">
                         <% def j=0 %>
@@ -80,10 +101,14 @@
                 </g:if>
             </div>
         </div>
+        </div>
+        </div>
     </g:if>
     <g:if test="${errjobs}">
-        <div class="batchresset">
-            <span class="prompt errors">${errjobs.size()} Job${errjobs.size()==1?' was':'s were'} not processed due to errors</span>
+        <div class="row">
+        <div class="col-sm-12">
+      <div class="batchresset">
+               <span class="prompt errors">${errjobs.size()} Job${errjobs.size()==1?' was':'s were'} not processed due to errors</span>
 
             <div class="presentation">
                 <g:if test="${errjobs.size()>0}">
@@ -119,12 +144,16 @@
                 </g:if>
             </div>
         </div>
+        </div>
+        </div>
     </g:if>
 
 
     <g:if test="${skipjobs}">
+        <div class="row">
+        <div class="col-sm-12">
         <div class="batchresset">
-            <span class="prompt info">${skipjobs.size()} <g:message code="domain.ScheduledExecution.title"/>${skipjobs.size()==1?' was':'s were'} skipped due to existing jobs with the same name</span>
+                <span class="prompt info">${skipjobs.size()} <g:message code="domain.ScheduledExecution.title"/>${skipjobs.size()==1?' was':'s were'} skipped due to existing jobs with the same name</span>
 
             <div class="presentation">
                 <g:if test="${skipjobs.size()>0}">
@@ -159,101 +188,121 @@
                 </g:if>
             </div>
         </div>
+        </div>
+        </div>
     </g:if>
 
 
     <g:if test="${jobs}">
-        <div class="batchresset">
-            <span class="info prompt">${jobs.size()} <g:message code="domain.ScheduledExecution.title"/>${jobs.size()==1?' was':'s were'} successfully created/modified</span>
+        <div class="row">
+        <div class="col-sm-12">
+      <div class="batchresset">
+           <span class="text-info">${jobs.size()} <g:message code="domain.ScheduledExecution.title"/>${jobs.size()==1?' was':'s were'} successfully created/modified</span>
 
             <g:render template="/menu/jobslist" model="[jobslist:jobs,total:jobs.size()]"/>
         </div>
+        </div>
+        </div>
     </g:if>
-</div>
 </g:if>
-<div style="margin-top:10px;" class="pageBody form">
-    <g:form method="post" action="upload" enctype="multipart/form-data">
-        <g:hiddenField name="project" value="${session.project}"/>
-        <g:if test="${!didupload}">
-        <span class="prompt">Upload File</span>
-        </g:if>
-        <g:else>
-            <span class="textbtn textbtn-default" onclick="toggleDisclosure('uploadFormDiv','uploadFormDiv-toggle','${resource(dir:"images",file:"icon-tiny-disclosure.png")}','${resource(dir:"images",file:"icon-tiny-disclosure-open.png")}')">
-                Upload File
-                <img src="${resource(dir:'images',file:'icon-tiny-disclosure'+(errjobs?.size()>0?'-open':'')+'.png')}" id="uploadFormDiv-toggle"/>
+<div class="row">
+<div class="col-sm-10 col-sm-offset-1">
+<div class="panel panel-primary">
+    <g:form method="post" action="upload" enctype="multipart/form-data" class="form" role="form">
+        <div class="panel-heading">
+            <span class="h4">
+                Upload <g:message code="domain.ScheduledExecution.title"/> Definition
+                to project <b>${session.project.encodeAsHTML()}</b>
             </span>
-        </g:else>
-        <div id="uploadFormDiv" style="${(didupload && errjobs?.size()<1)?'display:none':''}">
-            <div class="presentation">
-                <p><span class="info note">Choose the XML/YAML formatted <g:message code="domain.ScheduledExecution.title"/>s definition file.</span></p>
-                <input type="file" name="xmlBatch"/>
-            </div>
-            <span class="prompt">File format:</span>
-            <div class="presentation">
-                <div>
-                    <label>
-                    <g:radio name="fileformat" value="xml"  checked="${params.fileformat?params.fileformat=='xml':true}"/>
-                    XML</label>
-                </div>
-                <div>
-                    <label>
-                    <g:radio name="fileformat" value="yaml"  checked="${params.fileformat?params.fileformat=='yaml':false}"/>
-                    YAML</label>
-                </div>
+        </div>
+        <div class="panel-body">
+        <g:hiddenField name="project" value="${session.project}"/>
+        <div class="form-group">
+        %{--<g:if test="${!didupload}">--}%
+            <label for="xmlBatch">Select a <g:message
+                code="domain.ScheduledExecution.title"/>s definition file.</label>
+        %{--</g:if>--}%
+        %{--<g:else>--}%
+            %{--<label for="xmlBatch">--}%
+                %{--<span class="textbtn textbtn-default"--}%
+                      %{--onclick="toggleDisclosure('uploadFormDiv', 'uploadFormDiv-toggle', '${resource(dir:"images",file:"icon-tiny-disclosure.png")}', '${resource(dir:"images",file:"icon-tiny-disclosure-open.png")}')">--}%
+                    %{--Upload File--}%
+                    %{--<img src="${resource(dir: 'images', file: 'icon-tiny-disclosure' + (errjobs?.size() > 0 ? '-open' : '') + '.png')}"--}%
+                         %{--id="uploadFormDiv-toggle"/>--}%
+                %{--</span>--}%
+            %{--</label>--}%
+        %{--</g:else>--}%
+            <input type="file" name="xmlBatch" id="xmlBatch" class="form-control"/>
+        </div>
+            <div class="form-group">
+                <label class="radio-inline">
+                <g:radio name="fileformat" value="xml"  checked="${params.fileformat?params.fileformat=='xml':true}"/>
+                XML format</label>
+                <label class="radio-inline">
+                <g:radio name="fileformat" value="yaml"  checked="${params.fileformat?params.fileformat=='yaml':false}"/>
+                YAML format</label>
 
             </div>
-            <span class="prompt">When a <g:message code="domain.ScheduledExecution.title"/> with the same name already exists:</span>
-            <div class="presentation">
 
-                <div>
+            <div class="form-group">
+                <div class="text-form-label">
+                    When a <g:message
+                            code="domain.ScheduledExecution.title"/> with the same name already exists:
+                </div>
+
+
+                <div class="radio">
                     <g:radio name="dupeOption" value="update" id="dupeOption1" checked="${params.dupeOption?params.dupeOption=='update':true}"/>
                     <label for="dupeOption1"><em>Update</em> the existing <g:message code="domain.ScheduledExecution.title"/></label>
                 </div>
 
-                <div>
+                <div class="radio">
                     <g:radio name="dupeOption" value="skip" id="dupeOption2" checked="${params.dupeOption=='skip'}"/>
                     <label for="dupeOption2"><em>Skip</em> the uploaded <g:message code="domain.ScheduledExecution.title"/></label>
                 </div>
 
-                <div>
+                <div class="radio">
                     <g:radio name="dupeOption" value="create" id="dupeOption3"  checked="${params.dupeOption=='create'}"/>
                     <label for="dupeOption3">Always <em>Create</em> a new <g:message code="domain.ScheduledExecution.title"/></label>
                 </div>
             </div>
 
-            <span class="prompt">Imported Jobs:</span>
-            <div class="presentation">
-                <div>
-                    <label title="Original UUIDs will be preserved, conflicting UUIDs will be replaced">
-                        <input type="radio" name="createUUIDOption" value="preserve" checked/>
-                        <g:message code="project.archive.import.jobUUIDBehavior.preserve.label"/>
-                    </label>
-                    <span class="info note"><g:message
-                            code="project.archive.import.jobUUIDBehavior.preserve.description"/></span>
-                </div>
-
-                <div>
-                    <label title="New UUIDs will be generated for every imported Job">
-                        <input type="radio" name="createUUIDOption" value="remove"/>
-                        <g:message code="project.archive.import.jobUUIDBehavior.remove.label"/>
-                    </label>
-                    <span class="info note"><g:message
-                            code="project.archive.import.jobUUIDBehavior.remove.description"/></span>
-                </div>
+        <div class="form-group">
+            <div class="text-form-label">Imported Jobs:</div>
+            <div class="radio">
+                 <label title="Original UUIDs will be preserved, conflicting UUIDs will be replaced">
+                    <input type="radio" name="createUUIDOption" value="preserve" checked/>
+                    <g:message code="project.archive.import.jobUUIDBehavior.preserve.label"/>
+                </label>
+                <div class="help-block"><g:message
+                        code="project.archive.import.jobUUIDBehavior.preserve.description"/></div>
             </div>
-            <div class="buttons">
-                <div id="uploadFormButtons">
-                    <g:actionSubmit id="createFormCancelButton" value="Cancel" class="btn btn-default"/>
-                    <g:actionSubmit action="upload" value="Upload" id="uploadFormUpload" onclick="['uploadFormButtons','schedUploadSpinner'].each(Element.toggle)"
-                        class="btn btn-primary"
-                    />
-                </div>
-                <div id="schedUploadSpinner" class="spinner block" style="display:none;">
-                    <img src="${resource(dir:'images',file:'icon-tiny-disclosure-waiting.gif')}" alt="Spinner"/>
-                    Uploading File...
-                </div>
+
+            <div class="radio">
+                <label title="New UUIDs will be generated for every imported Job">
+                    <input type="radio" name="createUUIDOption" value="remove"/>
+                    <g:message code="project.archive.import.jobUUIDBehavior.remove.label"/>
+                </label>
+                <div class="help-block"><g:message
+                        code="project.archive.import.jobUUIDBehavior.remove.description"/></div>
             </div>
         </div>
+</div>
+    <div class="panel-footer">
+
+            <div id="uploadFormButtons">
+                <g:actionSubmit id="createFormCancelButton" value="Cancel" class="btn btn-default"/>
+                <g:actionSubmit action="upload" value="Upload" id="uploadFormUpload"
+                                onclick="['uploadFormButtons','schedUploadSpinner'].each(Element.toggle)"
+                                class="btn btn-primary"/>
+            </div>
+
+            <div id="schedUploadSpinner" class="spinner block" style="display:none;">
+                <img src="${resource(dir: 'images', file: 'icon-tiny-disclosure-waiting.gif')}" alt="Spinner"/>
+                Uploading File...
+            </div>
+    </div>
     </g:form>
+</div>
 </div>
 </div>
