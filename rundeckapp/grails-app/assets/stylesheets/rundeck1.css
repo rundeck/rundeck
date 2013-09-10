@@ -456,50 +456,6 @@ tbody.scrollContent td, tbody.scrollContent tr td, tbody.listContent td, tbody.l
     vertical-align: top;
 }
 
-table.list tr {
-    background: #fff;
-}
-
-tbody tr.normalRow {
-    background: #ffffff;
-}
-
-tbody tr.alternateRow {
-    background: #f0f0f0;
-}
-
-tbody tr.normalRow.super tr {
-    background: #ffffff;
-}
-
-tbody tr.alternateRow.super tr {
-    background: #f0f0f0;
-}
-
-tbody tr.alternateRow2 {
-    background: #e0e0e0;
-}
-
-tbody.scrollContent tr.selected td, tbody.listContent tr.selected td {
-    background: yellow;
-    padding: 2px;
-}
-
-tbody.scrollContent tr:hover td, tbody.listContent tr:hover td {
-    background: #e3edfa;
-    padding: 2px;
-}
-
-tbody.scrollContent tr.selected:hover td, tbody.listContent tr.selected:hover td {
-    background: #ff3;
-    padding: 2px;
-}
-
-tbody.scrollContent tr.alternateRow:hover td, tbody.listContent tr.alternateRow:hover td {
-    background: #e3edfa;
-    padding: 2px;
-}
-
 /* form field */
 
 .fieldError {
@@ -1054,15 +1010,6 @@ table.jobsList td.jobname.transient {
     font-style: italic;
 }
 
-table.jobsList td.jobname a.primary {
-    color: black;
-    font-weight: normal;
-}
-
-table.jobsList td.jobname a.primary:hover {
-    color: blue;
-    text-decoration: underline;
-}
 
 table.jobsList td.jobbuttons div.buttons {
     margin: 0 0 4px 0;
@@ -1111,10 +1058,6 @@ table.jobsList td.date {
     max-width: 200px;
     white-space: nowrap;
     text-overflow: ellipsis;
-}
-
-table.jobsList tr.fail td.eventtitle {
-    color: red;
 }
 
 div.buttons span.group {
