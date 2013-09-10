@@ -13,7 +13,7 @@
          style="width: ${completePercent}%;">
         <g:if test="${showpercent}">${completePercent > 100 ? 100 : completePercent}%</g:if>${completePercent < 100 || showOverrun ? remaining : ''}<g:if
                 test="${overrun}"> <g:img
-                    file="icon-tiny-disclosure-waiting.gif"/></g:if>${innerContent}
+                    file="icon-tiny-disclosure-waiting.gif"/> </g:if>${innerContent}
         <span class="sr-only">${completePercent}% Complete</span>
     </div>
 </div>
