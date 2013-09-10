@@ -105,8 +105,27 @@
                 <div class="jobscontent head">
     <g:if test="${!params.compact}">
         <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_CREATE}">
-        <div class=" floatr" >
-            <g:link controller="scheduledExecution" action="create" class="btn btn-default btn-sm ">New <g:message code="domain.ScheduledExecution.title"/>&hellip;</g:link>
+        <div class=" pull-right" >
+            <div class="btn-group">
+            <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+                Create <g:message code="domain.ScheduledExecution.title"/>
+                <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu pull-right" role="menu">
+                <li><g:link controller="scheduledExecution" action="create"
+                            class="">New <g:message
+                            code="domain.ScheduledExecution.title"/>&hellip;</g:link></li>
+                <li class="divider">
+                </li>
+                <li>
+                    <g:link controller="scheduledExecution" action="upload"
+                            class="">
+                        <i class="glyphicon glyphicon-upload"></i>
+                        Upload Definition&hellip;
+                    </g:link>
+                </li>
+            </ul>
+            </div>
         </div>
         </auth:resourceAllowed>
     </g:if>
