@@ -1,6 +1,13 @@
 <%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
-<div class="pageBody ">
-    <g:render template="/common/errorFragment"/>
+
+<g:render template="/common/errorFragment"/>
+
+<div class="panel panel-primary ">
+    <div class="panel-heading">
+        <span class="h4">
+            Edit <g:message code="domain.ScheduledExecution.title"/>
+        </span>
+    </div>
     <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE}">
         <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_DELETE)}">
             <div class="panel panel-danger obs_delete_show" style="display:none; ">
@@ -22,18 +29,24 @@
             </div>
         </g:if>
     </auth:resourceAllowed>
+
     <div class="obs_delete_hide" id="editForm">
-    <g:form controller="scheduledExecution" method="post" onsubmit="if(typeof(validateJobEditForm)=='function'){return validateJobEditForm(this);}">
+
+    <g:form controller="scheduledExecution" method="post"
+        class="form-horizontal"
+            onsubmit="if(typeof(validateJobEditForm)=='function'){return validateJobEditForm(this);}">
         <g:render template="edit" model="[scheduledExecution:scheduledExecution, crontab:crontab, command:command,authorized:authorized]"/>
 
-        <div class="row">
-            <div class="buttons primary col-sm-10" >
+        <div class="panel-footer">
 
-                <g:actionSubmit id="editFormCancelButton" value="Cancel"  onclick="if(typeof(jobEditCancelled)=='function'){jobEditCancelled();}" class="btn btn-default"/>
+            <div class="buttons col-sm-10">
+
+                <g:actionSubmit id="editFormCancelButton" value="Cancel"
+                                onclick="if(typeof(jobEditCancelled)=='function'){jobEditCancelled();}"
+                                class="btn btn-default"/>
                 <g:actionSubmit value="Save" action="Update" class="btn btn-primary "/>
 
             </div>
-
             <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE}">
                 <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_DELETE)}">
                     <div class="  col-sm-2">
@@ -48,6 +61,7 @@
         </div>
 
     </g:form>
+
     </div>
 </div>
 <g:javascript>

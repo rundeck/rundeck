@@ -1,10 +1,32 @@
 <%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 
-<div class="pageBody">
     <g:render template="/common/errorFragment"/>
-    <g:form method="post" onsubmit="if(typeof(validateJobEditForm)=='function'){return validateJobEditForm(this);}">
+
+    <g:form method="post" onsubmit="if(typeof(validateJobEditForm)=='function'){return validateJobEditForm(this);}"
+            class="form-horizontal"
+    >
+        <div class="panel panel-primary">
+        <div class="panel-heading">
+            <div class="row">
+                <div class="col-sm-10">
+                    <span class="h4">
+                        Create New <g:message code="domain.ScheduledExecution.title"/>
+                    </span>
+                </div>
+
+                <div class="col-sm-2 ">
+                    <g:link controller="scheduledExecution" action="upload"
+                            class="btn btn-default btn-sm pull-right">
+                        <i class="glyphicon glyphicon-upload"></i>
+                        Upload Definition&hellip;
+                    </g:link>
+                </div>
+            </div>
+        </div>
+
         <g:render template="edit" model="['scheduledExecution':scheduledExecution, 'crontab':crontab,authorized:authorized]"/>
-        <div class="buttons">
+
+        <div class="panel-footer">
             <g:javascript>
                 <wdgt:eventHandlerJS for="scheduledTrue" state="unempty" >
                     <wdgt:action visible="true" targetSelector=".cformAllowSaveOnly"/>
@@ -12,13 +34,17 @@
                 </wdgt:eventHandlerJS>
             </g:javascript>
             <div id="schedCreateButtons">
-                <g:actionSubmit id="createFormCancelButton" value="Cancel" onclick="if(typeof(jobEditCancelled)=='function'){jobEditCancelled();}" class="btn btn-default"/>
+                <g:actionSubmit id="createFormCancelButton" value="Cancel"
+                                onclick="if(typeof(jobEditCancelled)=='function'){jobEditCancelled();}"
+                                class="btn btn-default"/>
                 <g:if test="${auth.resourceAllowedTest( kind:'job',action:[AuthConstants.ACTION_CREATE])}">
-                    <g:actionSubmit action="save" value="Create"  class="cformAllowSave cformAllowSaveOnly btn btn-default" />
+                    <g:actionSubmit action="save" value="Create"
+                                    class="cformAllowSave cformAllowSaveOnly btn btn-primary" />
                 </g:if>
 
                 <g:if test="${auth.resourceAllowedTest( kind:'job', action:[AuthConstants.ACTION_CREATE])}">
-                    <g:actionSubmit action="saveAndExec" value="Create And Run"  class="cformAllowSave cformAllowRun btn btn-default"/>
+                    <g:actionSubmit action="saveAndExec" value="Create And Run"
+                                    class="cformAllowSave cformAllowRun btn btn-primary"/>
                 </g:if>
 
                 <g:if test="${auth.resourceAllowedTest( has:false, kind:'job', action:[AuthConstants.ACTION_CREATE])}">
@@ -30,5 +56,6 @@
                 Creating Job...
             </div>
         </div>
+
+        </div>
     </g:form>
-</div>

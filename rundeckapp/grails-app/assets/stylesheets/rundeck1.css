@@ -1454,21 +1454,6 @@ div.presentation {
 }
 
 /* crontab page */
-div.crontab {
-    border: 1px solid #ddd;
-    -moz-border-radius: 5px;
-    -webkit-border-radius: 5px;
-    border-radius: 5px;
-    padding: 5px;
-}
-
-.crontab label {
-    cursor: pointer;
-}
-
-.crontab label:hover {
-    text-decoration: underline;
-}
 
 .cronselected {
     font-weight: bold;
@@ -1479,7 +1464,6 @@ div.crontab {
 .crondeselected {
     color: #999;
     text-decoration: line-through;
-
 }
 
 .hidedeselected .crondeselected {

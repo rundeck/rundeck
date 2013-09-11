@@ -41,22 +41,29 @@
 <g:set var="useCrontabString" value="${scheduledExecution?.crontabString?true:scheduledExecution?.shouldUseCrontabString()?true:false}"/>
 
 <input type="hidden" name="dayOfMonth" value="${scheduledExecution?.dayOfMonth}"/>
+<g:hiddenField name="useCrontabString" value="${useCrontabString}" id="useCrontabString"/>
+<ul class="nav nav-tabs crontab-edit">
+    <li class="${!useCrontabString ? 'active' : ''}">
+        <a data-toggle="tab" data-crontabstring="false" href="#cronsimple">Simple</a>
 
+    </li>
+    <li class="${useCrontabString ? 'active' : ''}">
+        <a data-toggle="tab" data-crontabstring="true" href="#cronstrtab">Crontab</a>
+    </li>
+</ul>
+<g:javascript>
+jQuery(window).load(function(){
+    jQuery('.crontab-edit a[data-toggle="tab"]').on('show.bs.tab', function (e) {
+        jQuery('#useCrontabString').val(jQuery(e.delegateTarget).data('crontabstring'));
+    })
+});
+</g:javascript>
 
-<label> <g:radio name="useCrontabString" value="false" id="useCrontabStringFalse" checked="${!useCrontabString}"/> Simple</label>
-<label title="Specify a crontab formatted string" class="${hasErrors(bean:scheduledExecution,field:'crontabString','fieldError')}"> <g:radio name="useCrontabString" value="true" id="useCrontabStringTrue" checked="${useCrontabString}"/> Crontab</label>
-<wdgt:eventHandler for="useCrontabStringFalse" state="unempty">
-    <wdgt:action visible="true" target="cronsimple"/>
-    <wdgt:action visible="false" target="cronstrtab"/>
-</wdgt:eventHandler>
-<wdgt:eventHandler for="useCrontabStringTrue" state="unempty">
-    <wdgt:action visible="false" target="cronsimple"/>
-    <wdgt:action visible="true" target="cronstrtab"/>
-</wdgt:eventHandler>
-
-<div class="crontab tabtarget" id="cronsimple" style="${wdgt.styleVisible(unless:useCrontabString)}">
-
-    <div class="floatl sepR" id="hourTab">
+<div class="tab-content">
+<div class="tab-pane ${!useCrontabString?'active':''}" id="cronsimple">
+<div class="panel panel-default panel-tab-content form-inline crontab tabtarget" >
+    <div class="panel-body">
+    <div class="col-sm-4" id="hourTab">
         <div>
             <g:select name="hour" from="${(0..23).collect{it<10?'0'+it.toString():it.toString()}}" value="${scheduledExecution?.hour}"/>
             :
@@ -64,7 +71,7 @@
         </div>
     </div>
 
-    <div class="floatl sepR">
+    <div class="col-sm-4">
         <g:set var="isDayOfWeekDefault" value="${(scheduledExecution?.dayOfWeek.equals('*'))? true: false }"/>
         <g:checkBox name="everyDayOfWeek"
                     id="everyDayOfWeek"
@@ -73,7 +80,6 @@
         />
 
         <label for="everyDayOfWeek">Every Day</label>
-
         <div  class="checklist sepT"
              style="${wdgt.styleVisible(unless:scheduledExecution?.dayOfWeek.equals('*'))}"
              id="DayOfWeekDialog"
@@ -92,7 +98,7 @@
         <wdgt:eventHandler for="everyDayOfWeek" state="unempty" visible="false" target="DayOfWeekDialog"/>
     </div>
 
-    <div class="floatl">
+    <div class="col-sm-4">
         <g:set var="isMonthDefault" value="${(scheduledExecution?.month.equals('*'))? true: false }"/>
         <g:checkBox
             name="everyMonth"
@@ -119,24 +125,46 @@
         </div>
         <wdgt:eventHandler for="everyMonth" state="unempty" visible="false" target="MonthDialog"/>
     </div>
-    <div class="clear">
     </div>
-
-
+</div>
 </div>
 
-<div class=" crontab tabtarget" style="${wdgt.styleVisible(if:useCrontabString)}" id="cronstrtab">
-    <div  style="font-size:12pt">
-        <g:textField name="crontabString" value="${scheduledExecution?.crontabString?scheduledExecution?.crontabString:scheduledExecution?.generateCrontabExression()}" onchange="changeCronExpression(this);" onblur="changeCronExpression(this);" onkeyup='tkeyup(this);' onclick='tkeyup(this);' style="font-size:12pt" size="50"/>
-        <span id="crontooltip" class="info note"></span>
+<div class="tab-pane ${useCrontabString ? 'active' : ''}" id="cronstrtab">
+<div class="panel panel-default panel-tab-content crontab tabtarget"  >
+
+    <div class="panel-body">
+    <div class="container">
+    <div class="row">
+    <div class="col-sm-4">
+        <div  class="form-group">
+            <g:textField name="crontabString"
+                         value="${scheduledExecution?.crontabString?scheduledExecution?.crontabString:scheduledExecution?.generateCrontabExression()}"
+                         onchange="changeCronExpression(this);"
+                         onblur="changeCronExpression(this);"
+                         onkeyup='tkeyup(this);'
+                         onclick='tkeyup(this);'
+                         class="form-control input-sm"
+                         size="50"/>
+
+        </div>
     </div>
-    <span id="cronstrinfo">
-        </span>
-    
-    <div class="info note"  style="padding:10px;">
+    <div class="col-sm-4">
+        <span id="crontooltip" class="label label-info form-control-static"></span>
+    </div>
+    <span id="cronstrinfo"></span>
+
+    </div>
+    <div class="row">
+    <div class="text-muted col-sm-12">
         <div>
-            Ranges: <code>1-3</code>.  Lists: <code>1,4,6</code>. Increments: <code>0/15</code> "every 15 units starting at 0".  
+            Ranges: <code>1-3</code>.  Lists: <code>1,4,6</code>. Increments: <code>0/15</code> "every 15 units starting at 0".
         </div>
         See: <a href="${g.message(code:'documentation.reference.cron.url')}" class="external">Cron reference</a> for formatting help
     </div>
+    </div>
+    </div>
+    </div>
+</div>
+</div>
+
 </div>

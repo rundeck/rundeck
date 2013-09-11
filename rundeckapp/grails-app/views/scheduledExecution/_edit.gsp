@@ -1,12 +1,21 @@
 <%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
+<div class="list-group">
 <g:if test="${flash.message}">
-    <div class="message">${flash.message}</div>
+    <div class="list-group-item">
+    <div class="alert alert-info">${flash.message}</div>
+    </div>
 </g:if>
 <g:hasErrors bean="${scheduledExecution}">
-    <div class="errors">
+    <div class="list-group-item">
+    <div class="alert alert-danger">
         <g:renderErrors bean="${scheduledExecution}" as="list"/>
     </div>
+    </div>
 </g:hasErrors>
+<g:set var="labelColSize" value="col-sm-2"/>
+<g:set var="labelColClass" value="${labelColSize}  control-label"/>
+<g:set var="fieldColSize" value="col-sm-10"/>
+<g:set var="offsetColSize" value="col-sm-10 col-sm-offset-2"/>
 <g:set var="NODE_FILTERS" value="${['Name','Tags']}"/>
 <g:set var="NODE_FILTERS_X" value="${['','OsName','OsFamily','OsArch','OsVersion']}"/>
 <g:set var="NODE_FILTERS_ALL" value="${['Name','Tags','','OsName','OsFamily','OsArch','OsVersion']}"/>
@@ -331,57 +340,66 @@ var applinks={
 </style>
 
 <input type="hidden" name="id" value="${scheduledExecution?.id}"/>
-<div class="note error" style="display: none" id="editerror">
+
+
+<div class="alert alert-danger" style="display: none" id="editerror">
     
 </div>
-<table class="simpleForm jobeditform" cellspacing="0" style="width:100%">
 
-    <tbody class="savedJobFields"  >
-    <tr>
-        <td>
-            <label for="schedJobName" class=" ${hasErrors(bean:scheduledExecution,field:'jobName','fieldError')} required" id="schedJobNameLabel">
-                <g:message code="domain.ScheduledExecution.title"/> Name
-            </label>
-        </td>
-        <td>
-            <span class="input">
-                <g:textField name="jobName" value="${scheduledExecution?.jobName.encodeAsHTML()}" id="schedJobName"
-                       size="80"/>
-                <g:hasErrors bean="${scheduledExecution}" field="jobName">
-                    <img src="${resource( dir:'images',file:'icon-small-warn.png' )}" alt="Error"  width="16px" height="16px" id="schedJobNameErr"/>
-                    <wdgt:eventHandler for="schedJobName" state="unempty"  frequency="1">
-                        <wdgt:action target="schedJobNameLabel" removeClassname="fieldError"/>
-                        <wdgt:action visible="false" target="schedJobNameErr"/>
-                    </wdgt:eventHandler>
-                </g:hasErrors>
-            </span>
-        </td>
-    </tr>
-    <tr>
-        <td>
-            <label for="schedJobGroup" class=" ${hasErrors(bean:scheduledExecution,field:'groupPath','fieldError')}">
-                Group
-            </label>
-        </td>
-        <td>
-            <span class="input">
+
+    <div class="savedJobFields list-group-item"  >
+    <div class="form-group ${g.hasErrors(bean:scheduledExecution,field:'jobName','has-error')}" id="schedJobNameLabel">
+        <label for="schedJobName"
+               class="required ${labelColClass}"
+               >
+            <g:message code="domain.ScheduledExecution.title"/> Name
+        </label>
+        <div class="${fieldColSize}">
+            <g:textField name="jobName"
+                         value="${scheduledExecution?.jobName.encodeAsHTML()}"
+                         id="schedJobName"
+                         class="form-control"
+            />
+            <g:hasErrors bean="${scheduledExecution}" field="jobName">
+                <i alt="Error" id="schedJobNameErr" class="glyphicon glyphicon-warning-sign"></i>
+                <wdgt:eventHandler for="schedJobName" state="unempty"  frequency="1">
+                    <wdgt:action target="schedJobNameLabel" removeClassname="has-error"/>
+                    <wdgt:action visible="false" target="schedJobNameErr"/>
+                </wdgt:eventHandler>
+            </g:hasErrors>
+        </div>
+    </div>
+    <div class="form-group ${hasErrors(bean: scheduledExecution, field: 'groupPath', 'has-error')}">
+        <label for="schedJobGroup" class=" ${labelColClass}">
+            Group
+        </label>
+        <div class="${fieldColSize}">
+            <div class="input-group">
                 <g:hasErrors bean="${scheduledExecution}" field="groupPath">
-                    <img src="${resource( dir:'images',file:'icon-small-warn.png' )}" alt="Error"  width="16px" height="16px"/>
+                    <span class="input-group-addon">
+                      <i class="glyphicon glyphicon-warning-sign"></i>
+                    </span>
                 </g:hasErrors>
-                <input type='text' name="groupPath" value="${scheduledExecution?.groupPath?.encodeAsHTML()}" id="schedJobGroup"
-                       size="80"/>
-            </span>
+                <input type='text' name="groupPath" value="${scheduledExecution?.groupPath?.encodeAsHTML()}"
+                       id="schedJobGroup"
+                    class="form-control"
+                />
 
-            <span class="btn btn-default btn-sm" onclick="loadGroupChooser(this);" id="groupChooseBtn" title="Select an existing group to use">
-                Choose &hellip; <i class="caret"></i>
-            </span>
-            <span id="groupChooseSpinner"></span>
-            <div class="popout" id="groupChooser" style="display:none; width:300px; padding: 5px; background:white; position:absolute;">
-                <div style="margin-bottom:5px;">
-                    <span class="info note">Click on the name of the group to use</span>
+                <span class="input-group-btn">
+                    <span class="btn btn-default" onclick="loadGroupChooser(this);" id="groupChooseBtn" title="Select an existing group to use">
+                        Choose &hellip; <i class="caret"></i>
+                        <span id="groupChooseSpinner"></span>
+                    </span>
+                </span>
+            </div>
+            <div class="panel panel-default" id="groupChooser"
+                 style="display:none; width:300px; padding: 5px; background:white; position:absolute;">
+                <div class="panel-heading">
                     <button type="button" class=" close" onclick="hideGroupChooser();">&times;</button>
+                    <span class="h4">Click on the name of the group to use
+                    </span>
                 </div>
-                <div id="groupChooserContent" style="overflow-y:auto;">
+                <div id="groupChooserContent" style="overflow-y:auto;" class="panel-body">
                 </div>
             </div>
 
@@ -435,89 +453,80 @@ var applinks={
                 }
 
             </script>
-            <div class="info note">
+
+            <div class="help-block">
                 Enter a / separated path.
             </div>
-        </td>
-    </tr>
+        </div>
+    </div>
 
-    <tr>
-        <td>
-            <label for="description" class="${hasErrors(bean:scheduledExecution,field:'description','fieldError')}">Description</label>
-        </td>
-        <td>
-            <span class="input ${hasErrors(bean:scheduledExecution,field:'description','fieldError')}">
-                <g:textArea name="description" value="${scheduledExecution?.description}" cols="80" rows="3" />
-
-                <g:hasErrors bean="${scheduledExecution}" field="description">
-                    <img src="${resource( dir:'images',file:'icon-small-warn.png' )}" alt="Error" width="16px" height="16px"/>
-                </g:hasErrors>
-            </span>
-        </td>
-    </tr>
-    <tr>
-        <td>
-            <label for="schedJobUuid"
-                   class=" ${hasErrors(bean: scheduledExecution, field: 'uuid', 'fieldError')}"
-                   id="schedJobUuidLabel">
-                UUID
-            </label>
-        </td>
-        <td>
+    <div class="form-group ${hasErrors(bean: scheduledExecution, field: 'description', 'has-error')}">
+        <label for="description" class="${labelColClass}">Description</label>
+        <div class="${fieldColSize}">
+            <g:textArea name="description" value="${scheduledExecution?.description}" cols="80" rows="3"
+                class="form-control"
+            />
+            <g:hasErrors bean="${scheduledExecution}" field="description">
+                <i class="glyphicon glyphicon-warning-sign"></i>
+            </g:hasErrors>
+        </div>
+    </div>
+    <div class="form-group ${hasErrors(bean: scheduledExecution, field: 'uuid', 'has-error')}" id="schedJobUuidLabel">
+        <label for="schedJobUuid" class=" ${labelColClass}" >
+            UUID
+        </label>
+        <div class="${fieldColSize}">
             <g:if test="${editSchedExecId && scheduledExecution?.uuid}">
-                <span class="desc" title="UUID for this Job">
+                <span class="form-control-static" title="UUID for this Job">
                     ${scheduledExecution?.uuid?.encodeAsHTML()}
                 </span>
             </g:if>
             <g:else>
-                <span class="input">
-                    <input type='text' name="uuid" value="${scheduledExecution?.uuid?.encodeAsHTML()}"
-                           id="schedJobUuid" size="36"/>
-                    <g:hasErrors bean="${scheduledExecution}" field="uuid">
-                        <img src="${resource(dir: 'images', file: 'icon-small-warn.png')}" alt="Error" width="16px"
-                             height="16px" id="schedJobUuidErr"/>
-                        <wdgt:eventHandler for="schedJobUuid" state="unempty" frequency="1">
-                            <wdgt:action target="schedJobUuidLabel" removeClassname="fieldError"/>
-                            <wdgt:action visible="false" target="schedJobUuidErr"/>
-                        </wdgt:eventHandler>
-                    </g:hasErrors>
-                </span>
+                <input type='text' name="uuid" value="${scheduledExecution?.uuid?.encodeAsHTML()}"
+                       id="schedJobUuid" size="36" class="form-control"/>
+                <g:hasErrors bean="${scheduledExecution}" field="uuid">
+                    <i class="glyphicon glyphicon-warning-sign" id="schedJobUuidErr"></i>
+                    <wdgt:eventHandler for="schedJobUuid" state="unempty" frequency="1">
+                        <wdgt:action target="schedJobUuidLabel" removeClassname="has-error"/>
+                        <wdgt:action visible="false" target="schedJobUuidErr"/>
+                    </wdgt:eventHandler>
+                </g:hasErrors>
             </g:else>
-        </td>
-    </tr>
-    <tr>
-        <td>
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="${labelColSize} text-form-label">
             <g:message code="scheduledExecution.property.multipleExecutions.label" />
-        </td>
-        <td>
-            <label>
+        </div>
+        <div class="${fieldColSize}">
+            <label class="radio-inline">
                 <g:radio value="false" name="multipleExecutions"
                          checked="${!scheduledExecution.multipleExecutions}"
                          id="multipleFalse"/>
                 <g:message code="no" />
             </label>
 
-            <label>
+            <label class="radio-inline">
                 <g:radio name="multipleExecutions" value="true"
                          checked="${scheduledExecution.multipleExecutions}"
                          id="multipleTrue"/>
                 <g:message code="yes" />
             </label>
 
-            <span class="info note">
+            <span class="help-block">
                 <g:message code="scheduledExecution.property.multipleExecutions.description" />
             </span>
-        </td>
-    </tr>
-    </tbody>
+        </div>
+    </div>
+</div><!--/.nput-group-item -->
 
     <g:set var="projectName" value="${scheduledExecution.project?scheduledExecution.project.toString():projects?.size()==1?projects[0].name:session.project?session.project:''}" />
     <g:hiddenField id="schedEditFrameworkProject" name="project" value="${projectName}" />
 
-    <tbody id="optionsContent" class="savedJobFields" >
-        <tr>
-            <td><span id="optsload"></span>Options:</td>
-            <td>
+    <div id="optionsContent" class="savedJobFields list-group-item" >
+        <div class="form-group">
+            <div class="${labelColSize} text-form-label"><span id="optsload"></span>Options:</div>
+            <div class="${fieldColSize}">
                 <span id="optssummarysect" class="autohilite autoedit">
                     <span id="optssummary" class="doeditopts " title="Click to edit options">
                         <g:render template="/scheduledExecution/optionsSummary" model="${[options:scheduledExecution?.options,edit:true]}"/>
@@ -548,14 +557,14 @@ var applinks={
                         </wdgt:eventHandler>
                     </div>
                 </div>
-            </td>
-        </tr>
-    </tbody>
+            </div>
+        </div>
+    </div>
 
-    <tbody id="workflowContent" >
-        <tr>
-            <td>Workflow:</td>
-            <td>
+    <div id="workflowContent" class="list-group-item" >
+        <div class="form-group">
+            <div class="${labelColSize}  text-form-label">Workflow:</div>
+            <div class="${fieldColSize}">
                 <g:set var="editwf" value="${session.editWF && session.editWF[scheduledExecution.id.toString()]?session.editWF[scheduledExecution.id.toString()]:scheduledExecution.workflow}"/>
                 <g:render template="/execution/execDetailsWorkflow" model="${[workflow:editwf,context:scheduledExecution,edit:true,error:scheduledExecution?.errors?.hasFieldErrors('workflow'),project:scheduledExecution?.project?:projects?.size()==1?projects[0].name:session.project?:'']}"/>
                 <g:hiddenField name="_sessionwf" value="true"/>
@@ -567,40 +576,42 @@ var applinks={
                         });
                     </g:javascript>
                 </g:if>
-            </td>
-        </tr>
-    </tbody>
-    <tbody class="savedJobFields"  >
-    <g:set var="adminauth"
-           value="${auth.resourceAllowedTest(type: 'project', name: session.project, action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_READ], context: 'application')}"/>
-        <g:render template="editNotifications" model="[scheduledExecution:scheduledExecution, notificationPlugins: notificationPlugins,adminauth:adminauth]"/>
+            </div>
+        </div>
+    </div>
+    <div class="savedJobFields list-group-item"  >
+            <g:set var="adminauth"
+                value="${auth.resourceAllowedTest(type: 'project', name: session.project, action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_READ], context: 'application')}"/>
 
-    <tr >
-        <td>
+        <g:render template="editNotificationsForm" model="[scheduledExecution:scheduledExecution, notificationPlugins: notificationPlugins,adminauth:adminauth]"/>
+
+    </div>
+
+<div class="savedJobFields list-group-item">
+
+    <div class="form-group">
+        <div class="${labelColSize}  text-form-label">
             Schedule to run repeatedly?
-        </td>
-        <td>
-            <div style="margin:0 0 10px 0">
+        </div>
+        <div class="${fieldColSize}">
 
-            <label>
+            <label class="radio-inline">
             <g:radio value="false" name="scheduled"
                 checked="${scheduledExecution?.scheduled?false:true}"
                 id="scheduledFalse"/>
                 No
             </label>
 
-            <label>
+            <label class="radio-inline">
                 <g:radio name="scheduled" value="true"
                     checked="${scheduledExecution?.scheduled}"
                     id="scheduledTrue"/>
                 Yes
             </label>
-            </div>
-            <div style="${wdgt.styleVisible(if:scheduledExecution?.scheduled)}" id="scheduledExecutionEditCrontab">
-                <g:render template="editCrontab" model="[scheduledExecution:scheduledExecution, crontab:crontab]"/>
-
-                <div class="clear"></div>
-            </div>
+        </div>
+        <div class="${offsetColSize}" style="${wdgt.styleVisible(if:scheduledExecution?.scheduled)}" id="scheduledExecutionEditCrontab">
+            <g:render template="editCrontab" model="[scheduledExecution:scheduledExecution, crontab:crontab]"/>
+        </div>
             <g:javascript>
                 <wdgt:eventHandlerJS for="scheduledTrue" state="unempty">
                     <wdgt:action visible="true" targetSelector="#scheduledExecutionEditCrontab"/>
@@ -609,49 +620,75 @@ var applinks={
                     <wdgt:action visible="false" target="scheduledExecutionEditCrontab"/>
                 </wdgt:eventHandlerJS>
             </g:javascript>
-        </td>
-    </tr>
-    </tbody>
-    <tr>
-        <td>
-            <label for="doNodedispatch" id="doNodedispatchLabel">
+    </div>
+</div>
+
+<div class="savedJobFields list-group-item" id="nodegroupitem">
+    <div class="form-group">
+        <label class="${labelColSize} control-label" >
+            Nodes
+        </label>
+        <div class="${fieldColSize} ">
+            <label  id="doNodedispatchLabelTrue" class="radio-inline">
+
+
+                <input type="radio"
+                    name="doNodedispatch"
+                    value="true"
+                    checked="${scheduledExecution?.doNodedispatch}"
+                    id="doNodedispatchTrue"
+                    onchange="_matchNodes()"
+                />
                 Dispatch to Nodes
             </label>
-        </td>
-        <td>
-            <g:checkBox
-                name="doNodedispatch"
-                value="true"
-                checked="${scheduledExecution?.doNodedispatch}"
-                id="doNodedispatch"
-                onchange="_matchNodes()"
-            />
-            <span class="info note">
-            If not selected, the Job will only run on the local node.
+            <label  id="doNodedispatchLabelFalse" class="radio-inline">
+
+
+                <input type="radio"
+                    name="doNodedispatch"
+                    value="false"
+                    checked="${!scheduledExecution?.doNodedispatch}"
+                    id="doNodedispatchFalse"
+                    onchange="_matchNodes()"
+                />
+                Execute locally
+            </label>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <div class="${offsetColSize}">
+            <span class="help-block">
+            Choose whether the Job will on filtered nodes or only run on the local node.
             </span>
+
             <g:javascript>
-                <wdgt:eventHandlerJS for="doNodedispatch" state="checked" oneway="true" >
-                    <wdgt:action visible="true" targetSelector="tbody.nodeFilterFields"/>
+                <wdgt:eventHandlerJS for="doNodedispatchTrue" state="unempty" oneway="true" >
+                    <wdgt:action visible="true" targetSelector=".nodeFilterFields"/>
                     <wdgt:action visible="true" target="nodeDispatchFields" />
                 </wdgt:eventHandlerJS>
-                <wdgt:eventHandlerJS for="doNodedispatch" state="unchecked" oneway="true" >
+                <wdgt:eventHandlerJS for="doNodedispatchFalse" state="unempty" oneway="true" >
                     <wdgt:action visible="false" target="nodeDispatchFields"/>
-                    <wdgt:action visible="false" targetSelector="tbody.nodeFilterFields"/>
+                    <wdgt:action visible="false" targetSelector=".nodeFilterFields"/>
                 </wdgt:eventHandlerJS>
             </g:javascript>
-        </td>
-    </tr>
-    <tbody style="${wdgt.styleVisible(if:scheduledExecution?.doNodedispatch)}" class="subfields nodeFilterFields">
-        <tr>
-            <td>
-                <span class=" ${hasErrors(bean:scheduledExecution,field:'nodeInclude','fieldError')}">
+        </div>
+    </div>
+
+<div class="form-group">
+    <div class="${offsetColSize}">
+    <div style="${wdgt.styleVisible(if:scheduledExecution?.doNodedispatch)}" class="subfields nodeFilterFields container">
+
+        <div class="form-group ${hasErrors(bean: scheduledExecution, field: 'nodeInclude', 'has-error')}">
+            <div>
+                <span class=" ">
                     Include
                 </span>
-            </td>
-            <td>
+            </div>
+            <div>
 
                 <g:hasErrors bean="${scheduledExecution}" field="nodeInclude">
-                    <div class="fieldError">
+                    <div class="has-error">
                         <g:renderErrors bean="${scheduledExecution}" as="list" field="nodeInclude"/>
                     </div>
                 </g:hasErrors>
@@ -713,32 +750,31 @@ var applinks={
                     </g:each>
                 </div>
                 <g:render template="/common/nodefilterRegexSyntaxNote"/>
-            </td>
-        </tr>
-        <tr>
-            <td>
-            </td>
-            <td >
+            </div>
+        </div>%{--//include filters--}%
+        <div class="form-group">
+            <div>
+            </div>
+            <div >
                 <g:expander key="extNodeFilters">Extended Filters&hellip;</g:expander>
-            </td>
-        </tr>
-    </tbody>
-    <tbody  style="display:none" class="subfields" id="extNodeFilters">
-        <tr>
-            <td>
-                <span class=" ${hasErrors(bean:scheduledExecution,field:'nodeExclude','fieldError')}">
+            </div>
+        </div>%{--//extended filters toggle--}%
+    <div  style="display:none" class="subfields" id="extNodeFilters">
+        <div class="form-group">
+            <div>
+                <span class=" ${hasErrors(bean:scheduledExecution,field:'nodeExclude','has-error')}">
                     Exclude
                 </span>
-            </td>
-            <td>
+            </div>
+            <div>
                 <div>
                     <g:hasErrors bean="${scheduledExecution}" field="nodeExclude">
-                    <div class="fieldError">
+                    <div class="has-error">
                         <g:renderErrors bean="${scheduledExecution}" as="list" field="nodeExclude"/>
                     </div>
                 </g:hasErrors>
                     <g:hasErrors bean="${scheduledExecution}" field="nodeExclude">
-                        <img src="${resource( dir:'images',file:'icon-small-warn.png' )}" alt="Error"  width="16px" height="16px"/>
+                        <i class="glyphicon glyphicon-warning-sign"></i>
                     </g:hasErrors>
                 </div>
                 <div id="nodeFilterDivExclude" >
@@ -782,11 +818,11 @@ var applinks={
                             >${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}</span>
                     </g:each>
                 </div>
-            </td>
-        </tr>
-        <tr>
-            <td>Precedence to:</td>
-            <td>
+            </div>
+        </div>
+        <div class="form-group">
+            <div>Precedence to:</div>
+            <div>
                 <label  title="Include more nodes">
                 <g:radio name="nodeExcludePrecedence" value="false"
                     checked="${!scheduledExecution?.nodeExcludePrecedence}"
@@ -798,121 +834,143 @@ var applinks={
                     checked="${scheduledExecution?.nodeExcludePrecedence}"
                     id="nodeExcludePrecedenceTrue" onchange="_matchNodes()" />
                     Excluded</label>
-            </td>
-        </tr>
-    </tbody>
-    <tbody style="${wdgt.styleVisible(if:scheduledExecution?.doNodedispatch)}" class="subfields nodeFilterFields">
-    <tr>
-        <td onclick="_formUpdateMatchedNodes()"><span id="mnodeswait"></span> <span class="action textbtn" title="click to refresh">Matched nodes</span></td>
-        <td id="matchednodes" class="embed matchednodes" >
+            </div>
+        </div>
+    </div>%{--//extended filters--}%
+
+    <div style="${wdgt.styleVisible(if:scheduledExecution?.doNodedispatch)}" class="subfields nodeFilterFields">
+    <div class="form-group">
+        <div onclick="_formUpdateMatchedNodes()"><span id="mnodeswait"></span> <span class="action textbtn" title="click to refresh">Matched nodes</span></div>
+        <div id="matchednodes" class="embed matchednodes" >
             <span class="action textbtn" onclick="_formUpdateMatchedNodes()">Update...</span>
-        </td>
-    </tr>
+        </div>
+    </div>
 
 
-    </tbody>
-    <tbody id="nodeDispatchFields" style="${wdgt.styleVisible(if:scheduledExecution?.doNodedispatch)} " class="subfields">
-        <tr>
-            <th colspan="2">Dispatch Options</th>
-        </tr>
-        <tr>
-            <td>
-                <label for="schedJobnodeThreadcount" class=" ${hasErrors(bean:scheduledExecution,field:'nodeThreadcount','fieldError')}">
-                    <g:message code="scheduledExecution.property.nodeThreadcount.label" />
-                </label>
-            </td>
-            <td>
+    <div id="nodeDispatchFields" style="${wdgt.styleVisible(if:scheduledExecution?.doNodedispatch)} " class="subfields">
+        <div class="row">
+        <div class="col-sm-12">
+            <span class="h4">Dispatch Options</span>
+        </div>
+        </div>
+        <div class="form-group ${hasErrors(bean: scheduledExecution, field: 'nodeThreadcount', 'has-error')}">
+            <label for="schedJobnodeThreadcount" class="${labelColClass}">
+                <g:message code="scheduledExecution.property.nodeThreadcount.label" />
+            </label>
+            <div class="${fieldColSize}">
+                <input type='text' name="nodeThreadcount"
+                       value="${scheduledExecution?.nodeThreadcount?.encodeAsHTML()}" id="schedJobnodeThreadcount" size="3"
+                    class="form-control"
+                />
+
                 <g:hasErrors bean="${scheduledExecution}" field="nodeThreadcount">
-                    <div class="fieldError">
+                    <div class="text-warning">
+                        <i class="glyphicon glyphicon-warning-sign"></i>
                         <g:renderErrors bean="${scheduledExecution}" as="list" field="nodeThreadcount"/>
                     </div>
                 </g:hasErrors>
-                <span class="input">
-                    <input type='text' name="nodeThreadcount" value="${scheduledExecution?.nodeThreadcount?.encodeAsHTML()}" id="schedJobnodeThreadcount" size="3"/>
-                    <g:hasErrors bean="${scheduledExecution}" field="nodeThreadcount">
-                        <img src="${resource( dir:'images',file:'icon-small-warn.png' )}" alt="Error"  width="16px" height="16px"/>
-                    </g:hasErrors>
-                </span>
-                <span class="info note">
+                <span class="help-block">
                     <g:message code="scheduledExecution.property.nodeThreadcount.description" />
                 </span>
 
-            </td>
-        </tr>
-        <tr>
-            <td>
-                <label for="schedJobnodeRankAttribute" class=" ${hasErrors(bean:scheduledExecution,field:'nodeRankAttribute','fieldError')}">
-                    <g:message code="scheduledExecution.property.nodeRankAttribute.label" />
-                </label>
-            </td>
-            <td>
+            </div>
+        </div>
+        <div class="form-group ${hasErrors(bean: scheduledExecution, field: 'nodeRankAttribute', 'has-error')}">
+            <label for="schedJobnodeRankAttribute" class="${labelColClass}">
+                <g:message code="scheduledExecution.property.nodeRankAttribute.label" />
+            </label>
+            <div class="${fieldColSize}">
+                <input type='text' name="nodeRankAttribute"
+                       value="${scheduledExecution?.nodeRankAttribute?.encodeAsHTML()}" id="schedJobnodeRankAttribute"
+                       class="form-control"/>
                 <g:hasErrors bean="${scheduledExecution}" field="nodeRankAttribute">
-                    <div class="fieldError">
+                    <div class="text-warning">
+                        <i class="glyphicon glyphicon-warning-sign"></i>
                         <g:renderErrors bean="${scheduledExecution}" as="list" field="nodeRankAttribute"/>
                     </div>
                 </g:hasErrors>
-                <span class="input">
-                    <input type='text' name="nodeRankAttribute" value="${scheduledExecution?.nodeRankAttribute?.encodeAsHTML()}" id="schedJobnodeRankAttribute" size="20"/>
-                    <g:hasErrors bean="${scheduledExecution}" field="nodeRankAttribute">
-                        <img src="${resource( dir:'images',file:'icon-small-warn.png' )}" alt="Error"  width="16px" height="16px"/>
-                    </g:hasErrors>
-                </span>
-                <span class="info note">
+                <span class="help-block">
                     <g:message code="scheduledExecution.property.nodeRankAttribute.description" />
                 </span>
-            </td>
-        </tr>
-        <tr>
-            <td><g:message code="scheduledExecution.property.nodeRankOrder.label" /></td>
-            <td>
-                <label>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="${labelColClass}">
+                <g:message code="scheduledExecution.property.nodeRankOrder.label" />
+            </label>
+            <div class="${fieldColSize}">
+                <label class="radio-inline">
                     <g:radio name="nodeRankOrderAscending" value="true"
                              checked="${scheduledExecution?.nodeRankOrderAscending || null==scheduledExecution?.nodeRankOrderAscending}"
                              id="nodeRankOrderAscending"/>
                     <g:message code="scheduledExecution.property.nodeRankOrder.ascending.label" /></label>
-                <label>
+                <label class="radio-inline">
                     <g:radio name="nodeRankOrderAscending" value="false"
                              checked="${!scheduledExecution?.nodeRankOrderAscending && null!=scheduledExecution?.nodeRankOrderAscending}"
                              id="nodeRankOrderDescending"/>
                     <g:message code="scheduledExecution.property.nodeRankOrder.descending.label" /></label>
 
-            </td>
-        </tr>
-        <tr>
-            <td><g:message code="scheduledExecution.property.nodeKeepgoing.prompt" /></td>
-            <td>
-                <div><label>
-                <g:radio name="nodeKeepgoing" value="false"
-                    checked="${!scheduledExecution?.nodeKeepgoing}"
-                    id="nodeKeepgoingFalse"/>
-                    <g:message code="scheduledExecution.property.nodeKeepgoing.false.description"/>
-                </label></div>
-
-                <div><label>
-                <g:radio name="nodeKeepgoing" value="true"
-                    checked="${scheduledExecution?.nodeKeepgoing}"
-                    id="nodeKeepgoingTrue"/>
-                    <g:message code="scheduledExecution.property.nodeKeepgoing.true.description"/>
-                </label></div>
-            </td>
-        </tr>
-    </tbody>
-    <tr>
-        <td>Log level</td>
-        <td>
-            <g:select name="loglevel"
-                      from="${['1. Debug','2. Verbose','3. Information','4. Warning','5. Error']}"
-                      keys="${['DEBUG','VERBOSE','INFO','WARN','ERROR']}"
-                      value="${scheduledExecution.loglevel?scheduledExecution.loglevel:'WARN'}"
-                />
-            <div class="info note">
-                Higher numbers produce less output.
             </div>
-        </td>
-    </tr>
+        </div>
+        <div class="form-group">
+            <label class="${labelColClass}"><g:message code="scheduledExecution.property.nodeKeepgoing.prompt" /></label>
+            <div class="${fieldColSize}">
+                <div class="radio">
+                <label >
+                <g:radio name="nodeKeepgoing"
+                         value="false"
 
+                         checked="${!scheduledExecution?.nodeKeepgoing}"
 
-</table>
+                         id="nodeKeepgoingFalse"/>
+                    <g:message code="scheduledExecution.property.nodeKeepgoing.false.description"/>
+                </label>
+                </div>
+                <div class="radio">
+                <label >
+                <g:radio
+                        name="nodeKeepgoing"
+                        value="true"
+
+                        checked="${scheduledExecution?.nodeKeepgoing}"
+
+                        id="nodeKeepgoingTrue"/>
+                    <g:message code="scheduledExecution.property.nodeKeepgoing.true.description"/>
+                </label>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+    </div>
+    </div>
+</div>
+</div>
+<div class="savedJobFields list-group-item">
+    <div class="form-group">
+        <label class="${labelColClass}" for="loglevel">Log level</label>
+        <div class="${fieldColSize}">
+            <label class="radio-inline">
+                <g:radio name="loglevel" value="INFO" checked="${scheduledExecution?.loglevel != 'DEBUG'}"/>
+                Normal
+            </label>
+            <label class="radio-inline">
+                <g:radio name="loglevel" value="DEBUG" checked="${scheduledExecution?.loglevel == 'DEBUG'}"/>
+                Debug
+            </label>
+            %{--<g:select name="loglevel"--}%
+                      %{--from="${['1. Debug','2. Verbose','3. Information','4. Warning','5. Error']}"--}%
+                      %{--keys="${['DEBUG','VERBOSE','INFO','WARN','ERROR']}"--}%
+                      %{--value="${scheduledExecution.loglevel?scheduledExecution.loglevel:'WARN'}"--}%
+                %{--class="form-control"--}%
+                %{--/>--}%
+            <div class="help-block">
+                Debug level produces more output
+            </div>
+        </div>
+    </div>
+</div>
+
 <g:javascript>
     if (typeof(initTooltipForElements) == 'function') {
         initTooltipForElements('.obs_tooltip');
