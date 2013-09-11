@@ -160,14 +160,14 @@ public class WidgetTagLib {
         
         if(this."pageScope"."$AND_COND_VAR"){
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
-                funcstr<<'console.log(\'test condition: \'+ "'+this."pageScope"."$AND_COND_VAR".join(" && ").encodeAsJavaScript()+'");'
-                funcstr<<'console.log(\'test result: \'+ ('+this."pageScope"."$AND_COND_VAR".join(" && ")+') );'
+                funcstr<<'\nconsole.log(\'test condition: \'+ "'+this."pageScope"."$AND_COND_VAR".join(" && ").encodeAsJavaScript()+'");\n'
+                funcstr<<'\nconsole.log(\'test result: \'+ ('+this."pageScope"."$AND_COND_VAR".join(" && ")+') );\n'
             }
             funcstr<<'if('
             funcstr<<this."pageScope"."$AND_COND_VAR".join(" && ")
             funcstr<<'){'
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
-                funcstr<<'console.log(\' trigger: \'+'+varname+');'
+                funcstr<<'\nconsole.log(\'trigger: \'+'+varname+'.identify());\n'
             }
             ifcase=true
         }
@@ -178,9 +178,11 @@ public class WidgetTagLib {
         def funcinvaction=''
         if(this."pageScope"."$ACTION_VAR"){
             funcaction=this."pageScope"."$ACTION_VAR".join("\n")
+            this."pageScope"."$ACTION_VAR" = []
         }
         if(this."pageScope"."$INV_ACTION_VAR"){
             funcinvaction=this."pageScope"."$INV_ACTION_VAR".join("\n")
+            this."pageScope"."$INV_ACTION_VAR" = []
         }
 
         funcstr<<funcaction
@@ -188,7 +190,7 @@ public class WidgetTagLib {
         if('true'!=attrs.oneway && ifcase && funcinvaction){
             funcstr<<"}else{"
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
-                funcstr<<'console.log(\'invert trigger: \'+'+varname+');'
+                funcstr<<'\nconsole.log(\'invert trigger: \'+'+varname+');\n'
             }
             funcstr<<funcinvaction
         }
@@ -366,23 +368,23 @@ public class WidgetTagLib {
         if(attrs.visible =='false'){
             funcaction+='$('+ftarget+').hide();'
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
-                funcaction+='console.log(\'visible false trigger\');'+funcaction
+                funcaction='\nconsole.log(\'visible false trigger\');\n'+funcaction+'\n'
             }
             funcinvaction+='$('+ftarget+').show();'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
-                funcinvaction+='console.log(\'visible !false trigger\');'+funcinvaction
+                funcinvaction='\nconsole.log(\'visible !false trigger\');\n'+funcinvaction+'\n'
             }
         }else if(attrs.visible=='true'){
             funcaction+='$('+ftarget+').show();'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
-                funcaction+='console.log(\'visible true trigger\');'+funcaction
+                funcaction='\nconsole.log(\'visible true trigger: \'+'+ ftarget+');\n'+funcaction+'\n'
             }
             funcinvaction+='$('+ftarget+').hide();'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
-                funcinvaction+='console.log(\'visible !true trigger\');'+funcinvaction
+                funcinvaction='\nconsole.log(\'visible !true trigger\');\n'+funcinvaction+'\n'
             }
         }
         if(attrs.clear=='true'){
@@ -390,7 +392,7 @@ public class WidgetTagLib {
             funcaction+='$('+ftarget+').setValue(\'\');'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
-                funcaction+='console.log(\'clear true trigger\');'+funcaction
+                funcaction='\nconsole.log(\'clear true trigger\');\n'+funcaction+'\n'
             }
         }
         if(attrs.copy=='value'){
@@ -398,7 +400,7 @@ public class WidgetTagLib {
             funcaction+='$('+ftarget+').setValue($F('+varname+'));'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
-                funcaction+='console.log(\'copy value trigger: "\'+$F('+varname+')+\'"\');'+funcaction
+                funcaction='\nconsole.log(\'copy value trigger: "\'+$F('+varname+')+\'"\');\n'+funcaction+'\n'
             }
         }
         if(attrs.check=='true'){
@@ -406,7 +408,7 @@ public class WidgetTagLib {
             funcaction+='$('+ftarget+').checked=true;'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
-                funcaction+='console.log(\'checked true trigger: \');'+funcaction
+                funcaction='\nconsole.log(\'checked true trigger: \');\n'+funcaction+'\n'
             }
         }
         if(attrs.check=='false'){
@@ -414,7 +416,7 @@ public class WidgetTagLib {
             funcaction+='$('+ftarget+').checked=false;'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
-                funcaction+='console.log(\'checked false trigger: \');'+funcaction
+                funcaction='\nconsole.log(\'checked false trigger: \');\n'+funcaction+'\n'
             }
         }
         if(attrs.copy=='html'){
@@ -422,7 +424,7 @@ public class WidgetTagLib {
             funcaction+='$('+ftarget+').setValue($('+varname+').innerHTML);'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
-                funcaction+='console.log(\'copy value trigger\');'+funcaction
+                funcaction='\nconsole.log(\'copy value trigger\');\n'+funcaction+'\n'
             }
         }
         if(attrs.copy=='tohtml'){
@@ -436,7 +438,7 @@ public class WidgetTagLib {
             funcaction+='$('+ftarget+').innerHTML='+trans+'$F('+varname+')'+transend+';'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
-                funcaction+='console.log(\'copy tohtml trigger\');'+funcaction
+                funcaction='\nconsole.log(\'copy tohtml trigger\');\n'+funcaction+'\n'
             }
         }
         if(attrs.disabled){
@@ -447,7 +449,7 @@ public class WidgetTagLib {
             }
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
-                funcaction+='console.log(\'disabled true trigger\');'+funcaction
+                funcaction='\nconsole.log(\'disabled true trigger\');\n'+funcaction+'\n'
             }
             if('false'==attrs.disabled){
                 funcinvaction+='$('+ftarget+').setAttribute("disabled","true");'
@@ -456,7 +458,7 @@ public class WidgetTagLib {
             }
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
-                funcinvaction+='console.log(\'disabled !true trigger\');'+funcinvaction
+                funcinvaction='\nconsole.log(\'disabled !true trigger\');\n'+funcinvaction+'\n'
             }
         }
         if(attrs.jshandler){
@@ -464,7 +466,7 @@ public class WidgetTagLib {
             funcaction+=attrs.jshandler.encodeAsJavaScript()+'();'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
-                funcaction+='console.log(\'jshandler trigger\');'+funcaction
+                funcaction='\nconsole.log(\'jshandler trigger\');\n'+funcaction+'\n'
             }
         }
         if(attrs.jstargethandler){
@@ -472,7 +474,7 @@ public class WidgetTagLib {
             funcaction+=attrs.jstargethandler.encodeAsJavaScript()+'($('+ftarget+'));'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
-                funcaction+='console.log(\'jstargethandler trigger\');'+funcaction
+                funcaction='\nconsole.log(\'jstargethandler trigger\');\n'+funcaction+'\n'
             }
         }
         if(attrs.focus=='true'){
@@ -480,12 +482,12 @@ public class WidgetTagLib {
             funcaction+='$('+ftarget+').focus();'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
-                funcaction+='console.log(\'focus true trigger\');'+funcaction
+                funcaction='\nconsole.log(\'focus true trigger\');\n'+funcaction+'\n'
             }
             funcinvaction+='$('+ftarget+').blur();'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
-                funcinvaction+='console.log(\'focus !true trigger\');'+funcinvaction
+                funcinvaction='\nconsole.log(\'focus !true trigger\');\n'+funcinvaction+'\n'
             }
         }
         if(attrs.setHtml){
@@ -497,7 +499,7 @@ public class WidgetTagLib {
             funcaction+='$('+ftarget+').innerHTML=\''+bodyval.encodeAsJavaScript()+'\';'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
-                funcaction+='console.log(\'setHtml body trigger\');'+funcaction
+                funcaction='\nconsole.log(\'setHtml body trigger\');\n'+funcaction+'\n'
             }
         }
         if(attrs.addClassname){
@@ -505,12 +507,12 @@ public class WidgetTagLib {
             funcaction+='$('+ftarget+').addClassName(\''+attrs.addClassname.encodeAsJavaScript()+'\');'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
-                funcaction+='console.log(\'addClassname trigger\');'+funcaction
+                funcaction='\nconsole.log(\'addClassname trigger\');\n'+funcaction+'\n'
             }
             funcinvaction+='$('+ftarget+').removeClassName(\''+attrs.addClassname.encodeAsJavaScript()+'\');'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
-                funcinvaction+='console.log(\'addClassname invert trigger\');'+funcinvaction
+                funcinvaction+='console.log(\'addClassname invert trigger\');\n'+funcinvaction+'\n'
             }
         }
         if(attrs.removeClassname){
@@ -518,11 +520,11 @@ public class WidgetTagLib {
             funcaction+='$('+ftarget+').removeClassName(\''+attrs.removeClassname.encodeAsJavaScript()+'\');'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
-                funcaction+='console.log(\'removeClassname trigger\');'+funcaction
+                funcaction='\nconsole.log(\'removeClassname trigger\');\n'+funcaction+'\n'
             }
             funcinvaction+='$('+ftarget+').addClassName(\''+attrs.removeClassname.encodeAsJavaScript()+'\');'
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
-                funcinvaction+='console.log(\'removeClassname invert trigger\');'+funcinvaction
+                funcinvaction+='console.log(\'removeClassname invert trigger\');\n'+funcinvaction+'\n'
             }
         }
         if(attrs.toggleClassname){
@@ -530,7 +532,7 @@ public class WidgetTagLib {
             funcaction+='$('+ftarget+').toggleClassName(\''+attrs.toggleClassname.encodeAsJavaScript()+'\');'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
-                funcaction+='console.log(\'toggleClassName trigger\');'+funcaction
+                funcaction='\nconsole.log(\'toggleClassName trigger\');\n'+funcaction+'\n'
             }
         }
 
