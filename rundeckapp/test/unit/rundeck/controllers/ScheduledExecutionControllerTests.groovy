@@ -1116,8 +1116,8 @@ class ScheduledExecutionControllerTests  {
     </job>
 </joblist>
 '''
-        sec.params.xmlBatch = xml
-
+        params.xmlBatch = xml.toString()
+        request.method='POST'
         final subject = new Subject()
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
@@ -1490,6 +1490,29 @@ class ScheduledExecutionControllerTests  {
     }
 
     /**
+     * test normal get request has no error
+     */
+    public void testUploadGetRequest() {
+        def sec = new ScheduledExecutionController()
+
+        //create mock of FrameworkService
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.existsFrameworkProject { project, framework -> return true }
+        sec.frameworkService = fwkControl.createMock()
+        //mock the scheduledExecutionService
+        def mock2 = mockFor(ScheduledExecutionService, true)
+        mock2.demand.nextExecutionTimes { joblist -> return [] }
+        sec.scheduledExecutionService = mock2.createMock()
+
+        request.method="GET"
+        def result = sec.upload()
+        assertNull(sec.flash.message)
+        assertNull result
+
+    }
+    /**
      * test missing content
      */
     public void testUploadMissingContent() {
@@ -1506,6 +1529,7 @@ class ScheduledExecutionControllerTests  {
         mock2.demand.nextExecutionTimes { joblist -> return [] }
         sec.scheduledExecutionService = mock2.createMock()
 
+        request.method="POST"
         def result = sec.upload()
         assertEquals('No file was uploaded.', sec.flash.message)
         assertNull result
