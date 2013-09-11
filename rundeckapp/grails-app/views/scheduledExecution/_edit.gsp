@@ -386,21 +386,11 @@ var applinks={
                 />
 
                 <span class="input-group-btn">
-                    <span class="btn btn-default" onclick="loadGroupChooser(this);" id="groupChooseBtn" title="Select an existing group to use">
+                    <span class="btn btn-default" data-loading-text="Loading..."
+                          id="groupChooseBtn" title="Click on the name of the group to use">
                         Choose &hellip; <i class="caret"></i>
-                        <span id="groupChooseSpinner"></span>
                     </span>
                 </span>
-            </div>
-            <div class="panel panel-default" id="groupChooser"
-                 style="display:none; width:300px; padding: 5px; background:white; position:absolute;">
-                <div class="panel-heading">
-                    <button type="button" class=" close" onclick="hideGroupChooser();">&times;</button>
-                    <span class="h4">Click on the name of the group to use
-                    </span>
-                </div>
-                <div id="groupChooserContent" style="overflow-y:auto;" class="panel-body">
-                </div>
             </div>
 
             <script type="text/javascript" src="${resource(dir:'js',file:'yellowfade.js')}"></script>
@@ -408,49 +398,21 @@ var applinks={
                 function groupChosen(path){
                     $('schedJobGroup').setValue(path);
                     $('schedJobGroup').highlight();
-                    hideGroupChooser();
+                    jQuery('#groupChooseBtn').popover('destroy');
                 }
-                function loadGroupChooser(elem){
-                    if($('groupChooser').visible()){
-                        hideGroupChooser();
-                        return;
-                    }
-                    $('groupChooserContent').innerHTML='<img src="'+ appLinks.iconSpinner+'" alt=""/> Loading...';
-                    $(elem).addClassName('selected');
-                    if($('groupChooseBtn').down('img')){
-                        $('groupChooseBtn').down('img').src=AppImages.disclosureOpen;
-                    }
-                    var project = $F('schedEditFrameworkProject');
-                    if (!project) {
-                        $('groupChooseSpinner').innerHTML = "Please choose a project";
-                        $('groupChooseSpinner').show();
-                        doyft('schedEditFrameworkProjectHolder');
-                        return;
-                    }
-                    $('groupChooseSpinner').loading();
-                    $('groupChooseSpinner').show();
-                    new Ajax.Updater(
-                        'groupChooserContent',
-                        '${createLink(controller:"scheduledExecution",action:"groupTreeFragment")}',
-                        {
-                        parameters: {jscallback:"groupChosen",project:project},
-                         onSuccess: function(transport) {
-                            new MenuController().showRelativeTo(elem,'groupChooser');
-                             $('groupChooseSpinner').hide();
-                         },
-                         onFailure: function() {
-                             showError("Error performing request: groupTreeFragment");
-                             $('jobChooseSpinner').hide();
-                         }
-                        });
+                function loadGroupChooser(){
+                    jQuery('#groupChooseBtn').button('loading');
+                    var project = jQuery('#schedEditFrameworkProject').val();
+                    jQuery.get('${createLink(controller:"scheduledExecution",action:"groupTreeFragment")}?jscallback=groupChosen&project='+project
+                            , function (d) {
+                        jQuery('#groupChooseBtn').popover({html:true, container:'body', placement: 'left',content: d,trigger:'manual'}).popover('show');
+                        jQuery('#groupChooseBtn').button('reset');
+                    });
+
                 }
-                function hideGroupChooser(){
-                    $('groupChooser').hide();
-                    $('groupChooseBtn').removeClassName('selected');
-                    if($('groupChooseBtn').down('img')){
-                        $('groupChooseBtn').down('img').src=AppImages.disclosure;
-                    }
-                }
+                jQuery(window).load(function(){
+                    jQuery('#groupChooseBtn').click(loadGroupChooser);
+                });
 
             </script>
 
