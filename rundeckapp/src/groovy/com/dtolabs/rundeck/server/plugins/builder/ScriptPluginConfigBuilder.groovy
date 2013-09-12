@@ -23,8 +23,10 @@ class ScriptPluginConfigBuilder {
         if (newValue instanceof Map) {
             buildProperty(property, newValue)
         } else if (newValue instanceof Integer || newValue instanceof String || newValue instanceof Long
-                || newValue instanceof Boolean || newValue instanceof List) {
+                || newValue instanceof Boolean ) {
             buildProperty(property, [defaultValue: newValue])
+        } else if (newValue instanceof List ) {
+            buildProperty(property, [values: newValue])
         }else {
             super.setProperty(property, newValue)
         }
@@ -44,7 +46,7 @@ class ScriptPluginConfigBuilder {
         }
         if (props['defaultValue'] != null) {
             //if no 'type' is defined for the property, guess it based on the default value
-            if (props['type'] == null) {
+            if (props['type'] == null && !pbuilder.getType()) {
                 if (props['defaultValue'] instanceof Integer) {
                     pbuilder.type(Property.Type.Integer)
                 } else if (props['defaultValue'] instanceof Long) {
