@@ -1,3 +1,12 @@
+<g:set var="appLogo"
+       value="${grailsApplication.config.rundeck.gui.logo ? grailsApplication.config.rundeck.gui.logo : g.message(code: 'main.app.logo')}"/>
+<g:set var="appLogoHires"
+       value="${grailsApplication.config.rundeck.gui.logoHires ? grailsApplication.config.rundeck.gui.logoHires : g.message(code: 'main.app.logo.hires')}"/>
+<g:set var="appLogoW"
+       value="${grailsApplication.config.rundeck.gui.'logo-width' ? grailsApplication.config.rundeck.gui.'logo-width' : g.message(code: 'main.app.logo.width')}"/>
+<g:set var="appLogoH"
+       value="${grailsApplication.config.rundeck.gui.'logo-height' ? grailsApplication.config.rundeck.gui.'logo-height' : g.message(code: 'main.app.logo.height')}"/>
+
 <style type="text/css">
 
     tr.selected.alternateRow{
@@ -19,19 +28,6 @@
     }
 
 
-    table.execoutput tr.contextRow td.expandicon.opened{
-        background: transparent url(<g:resource dir='images' file='icon-tiny-disclosure-open.png'/>) no-repeat 8px 8px;
-    }
-    table.execoutput tr.contextRow td.expandicon.closed{
-        background: transparent url(<g:resource dir='images' file='icon-tiny-disclosure.png'/>) no-repeat 8px 8px;
-    }
-
-    table.execoutput tr.contextRow.console td.expandicon.opened{
-        background: transparent url(<g:resource dir='images' file='icon-tiny-disclosure-open.png'/>) no-repeat 8px 8px;
-    }
-    table.execoutput tr.contextRow.console td.expandicon.closed{
-        background: transparent url(<g:resource dir='images' file='icon-tiny-disclosure.png'/>) no-repeat 8px 8px;
-    }
 
     th.sorted.asc a::after{
         content: " " url(<g:resource dir='images' file='icon-mini-up-arrow1.png'/>)
@@ -150,4 +146,69 @@
         %{--background: url("${resource(dir:'images',file:'icon-small-Node.png')}") no-repeat 2px top;--}%
         /*padding-left: 20px;*/
     }
+
+    .rdicon{
+          display: inline-block;
+          vertical-align: middle;
+    }
+    .rdicon.icon-small{
+          width: 16px;
+          height: 16px;
+    }
+    .rdicon.icon{
+          width: 32px;
+          height: 32px;
+    }
+    .rdicon.icon-med{
+          width: 24px;
+          height: 24px;
+    }
+    .rdicon.app-logo{
+          width: ${appLogoW};
+          height: ${appLogoH};
+        vertical-align: baseline;
+    }
+    .rdicon.icon-small.shell{
+          background-image: url("${resource(dir:'images',file:'icon-small-shell.png')}");
+    }
+    .rdicon.icon-med.shell{
+          background-image: url("${resource(dir:'images',file:'icon-med-shell.png')}");
+    }
+    .rdicon.icon.shell{
+          background-image: url("${resource(dir:'images',file:'icon-shell.png')}");
+    }
+    .rdicon.app-logo{
+          background-image: url("${resource(dir: 'images', file: appLogo)}");
+    }
+     @media
+          only screen and (-webkit-min-device-pixel-ratio: 2),
+          only screen and (   min--moz-device-pixel-ratio: 2),
+          only screen and (     -o-min-device-pixel-ratio: 2/1),
+          only screen and (        min-device-pixel-ratio: 2),
+          only screen and (                min-resolution: 192dpi),
+          only screen and (                min-resolution: 2dppx) {
+            .rdicon.icon-small {
+                background-size: 16px 16px;
+            }
+            .rdicon.icon {
+                background-size: 32px 32px;
+            }
+            .rdicon.icon-med {
+                background-size: 24px 24px;
+            }
+            .rdicon.icon-small.shell {
+                background-image: url("${resource(dir:'images',file:'icon-small-shell@2x.png')}");
+            }
+            .rdicon.icon.shell {
+                background-image: url("${resource(dir:'images',file:'icon-shell@2x.png')}");
+            }
+            .rdicon.icon-med.shell {
+                background-image: url("${resource(dir:'images',file:'icon-med-shell@2x.png')}");
+            }
+            .rdicon.app-logo{
+                background-image: url("${resource(dir: 'images', file: appLogoHires)}");
+                background-size: ${appLogoW} ${appLogoH};
+            }
+          }
+
 </style>

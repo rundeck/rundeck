@@ -9,14 +9,7 @@
        title="Home" class="navbar-brand">
         <g:set var="appTitle"
                value="${grailsApplication.config.rundeck.gui.title ? grailsApplication.config.rundeck.gui.title : g.message(code: 'main.app.name')}"/>
-        <g:set var="appLogo"
-               value="${grailsApplication.config.rundeck.gui.logo ? grailsApplication.config.rundeck.gui.logo : g.message(code: 'main.app.logo')}"/>
-        <g:set var="appLogoW"
-               value="${grailsApplication.config.rundeck.gui.'logo-width' ? grailsApplication.config.rundeck.gui.'logo-width' : g.message(code: 'main.app.logo.width')}"/>
-        <g:set var="appLogoH"
-               value="${grailsApplication.config.rundeck.gui.'logo-height' ? grailsApplication.config.rundeck.gui.'logo-height' : g.message(code: 'main.app.logo.height')}"/>
-        <img src="${resource(dir: 'images', file: appLogo)}" alt="${appTitle}" width="${appLogoW}"
-             height="${appLogoH}"/>
+        <i class="rdicon app-logo"></i>
         ${appTitle}
     </a>
 
