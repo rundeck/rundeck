@@ -1,23 +1,19 @@
 <%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 
 <g:render template="/common/errorFragment"/>
-
-<div class="panel panel-primary ">
-    <div class="panel-heading">
-        <span class="h4">
-            Edit <g:message code="domain.ScheduledExecution.title"/>
-        </span>
-    </div>
-    <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE}">
-        <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_DELETE)}">
-            <div class="panel panel-danger obs_delete_show" style="display:none; ">
+<auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE}">
+    <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_DELETE)}">
+        <div class="panel panel-danger obs_delete_show" style="display:none; ">
             <div class="panel-heading">Delete <g:message code="domain.ScheduledExecution.title"/></div>
-            <div id="${ukey}jobDisplayDeleteConf${scheduledExecution.id}" class="panel-body " >
+
+            <div id="${ukey}jobDisplayDeleteConf${scheduledExecution.id}" class="panel-body ">
                 <g:form controller="scheduledExecution" action="delete" method="post">
                     <g:hiddenField name="id" value="${scheduledExecution.id}"/>
-                    <g:render template="/scheduledExecution/showHead" model="${[scheduledExecution:scheduledExecution, runPage:true]}"/>
+                    <g:render template="/scheduledExecution/showHead"
+                              model="${[scheduledExecution: scheduledExecution, runPage: true]}"/>
                     <p class=" ">Really delete this <g:message
                             code="domain.ScheduledExecution.title"/>?</p>
+
                     <div class="buttons primary ">
                         <button type="submit" class="behavior_delete_hide btn btn-default btn-sm ">
                             Cancel
@@ -26,19 +22,26 @@
                     </div>
                 </g:form>
             </div>
-            </div>
-        </g:if>
-    </auth:resourceAllowed>
-
-    <div class="obs_delete_hide" id="editForm">
-
-    <g:form controller="scheduledExecution" method="post"
+        </div>
+    </g:if>
+</auth:resourceAllowed>
+<g:form controller="scheduledExecution" method="post"
         class="form-horizontal"
-            onsubmit="if(typeof(validateJobEditForm)=='function'){return validateJobEditForm(this);}">
+        onsubmit="if(typeof(validateJobEditForm)=='function'){return validateJobEditForm(this);}">
+
+<div class="panel panel-primary obs_delete_hide" id="editForm">
+    <div class="panel-heading">
+        <span class="h4">
+            Edit <g:message code="domain.ScheduledExecution.title"/>
+        </span>
+    </div>
+
+
+
         <g:render template="edit" model="[scheduledExecution:scheduledExecution, crontab:crontab, command:command,authorized:authorized]"/>
 
         <div class="panel-footer">
-
+            <div class="row">
             <div class="buttons col-sm-10">
 
                 <g:actionSubmit id="editFormCancelButton" value="Cancel"
@@ -58,12 +61,13 @@
                     </div>
                 </g:if>
             </auth:resourceAllowed>
+            </div>
         </div>
 
-    </g:form>
 
-    </div>
 </div>
+
+</g:form>
 <g:javascript>
 fireWhenReady('editForm',function(){
     $$('.behavior_delete_show').each(function(e){

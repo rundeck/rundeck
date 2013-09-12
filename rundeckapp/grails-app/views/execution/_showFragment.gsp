@@ -95,7 +95,7 @@
     <a href="#" class="textbtn textbtn-default btn-xs pull-left collapser"
        data-toggle="collapse" data-target="#viewoptions"
        title="Log Output View Options">
-        Output Options
+        View Options
         <i class="glyphicon glyphicon-chevron-right"></i>
     </a>
 

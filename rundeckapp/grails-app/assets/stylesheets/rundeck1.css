@@ -240,15 +240,6 @@ span.reqwarning {
     padding: 5px;
 }
 
-.buttons {
-    margin-top: 15px;
-    clear: both;
-}
-
-.buttons.primary button, .buttons.primary input[type='submit'] {
-    font-size: 150%;
-}
-
 .actionButtons {
     width: 100px;
 }

@@ -933,6 +933,7 @@ var applinks={
     </div>
 </div>
 
+
 <g:javascript>
     if (typeof(initTooltipForElements) == 'function') {
         initTooltipForElements('.obs_tooltip');
@@ -940,3 +941,4 @@ var applinks={
 </g:javascript>
 <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
 <div id="msg"></div>
+</div>
