@@ -1198,9 +1198,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def Map selectSecureOptionInput(ScheduledExecution scheduledExecution, Map params, Boolean exposed=false) throws ExecutionServiceException {
         def results=[:]
         def optparams
-        if (params.argString) {
+        if (params?.argString) {
             optparams = frameworkService.parseOptsFromString(params.argString)
-        }else if(params.optparams){
+        }else if(params?.optparams){
             optparams=params.optparams
         }else{
             optparams = ExecutionService.filterOptParams(params)
