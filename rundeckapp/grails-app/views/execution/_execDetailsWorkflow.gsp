@@ -103,9 +103,9 @@
     <g:else>
         <g:message code="Workflow.strategy.label.${workflow?.strategy}"/>
     </g:else>
-</g:unless>
 %{--<span class="label">threadcount:</span> ${workflow?.threadcount}--}%
 </div>
+</g:unless>
 <div class="pflowlist ${edit?'edit':''} rounded ${isAdhoc?'adhoc':''}" style="">
     <g:if test="${edit}">
         <div id="wfundoredo" >

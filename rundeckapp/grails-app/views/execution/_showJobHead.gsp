@@ -8,6 +8,7 @@
                     class="primary" absolute="${absolute ? 'true' :'false'}"
                 title="${scheduledExecution?.description.encodeAsHTML()}"
             >
+                <i class="glyphicon glyphicon-book"></i>
                 ${scheduledExecution?.jobName.encodeAsHTML()}
             </g:link>
 

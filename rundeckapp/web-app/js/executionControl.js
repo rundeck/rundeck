@@ -116,6 +116,13 @@ var FollowControl = Class.create({
         $(elem).select('a.out_setmode_node').each(function(e){
             Event.observe(e,'click',function(evt){Event.stop(evt);obj.setMode('node');obj.reload();});
         });
+        $(elem).select('.out_setmode_toggle').each(function(e){
+            Event.observe(e,'change',function(evt){
+                Event.stop(evt);
+                obj.setMode(e.down('input').checked?'node':'tail');
+                obj.reload();
+            });
+        });
         $(elem).select('.opt_append_top_true').each(function(e){
             e.onclick=null;
             Event.observe(e,'click',function(evt){obj.setOutputAppendTop(true);});
@@ -1400,11 +1407,11 @@ var FollowControl = Class.create({
         if ($('fileload2')) {
             $('fileload2').hide();
         }
-        if (this.runningcmd.failednodes && $('execRetry')) {
-            $('execRetry').show();
+        if (this.runningcmd.failednodes && $$('.execRetry')) {
+            $$('.execRetry').each(Element.show);
         }
-        if($('execRerun')){
-            $('execRerun').show();
+        if($$('.execRerun')){
+            $$('.execRerun').each(Element.show);
         }
         if(typeof(this.onComplete)=='function'){
             this.onComplete();

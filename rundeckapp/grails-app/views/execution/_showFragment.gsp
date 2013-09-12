@@ -2,18 +2,20 @@
 
 
 <g:if test="${inlineView}">
-    <div class="inlinestatus">
-            <div>
+    <div class="inlinestatus row" id="jobInfo_${execution.id}">
+            <div class="col-sm-6">
                 <span class="inline_only ">
-                    <g:link class="action txtbtn" style="padding:5px;"
+                    <g:link class="primary"
                             title="Show execution #${execution.id}"
                             controller="execution" action="show" id="${execution.id}"
                             params="">
-                        Execution #${execution.id} &raquo;</g:link>
+                        <i class="exec-status icon ${!execution.dateCompleted ? 'running' : execution.status == 'true' ? 'succeed' : execution.cancelled ? 'warn' : 'fail'}">
+                        </i>
+                        <g:message code="execution.identity" args="[execution.id]"/>
+                    </g:link>
                 </span>
             <g:if test="${null != execution.dateCompleted}">
 
-                Status:
                 <span class="${execution.status == 'true' ? 'succeed' : 'fail'}">
                     <g:if test="${execution.status == 'true'}">
                         Succeeded
@@ -27,8 +29,6 @@
                 </span>
             </g:if>
             <g:else>
-                Status:
-
                 <span id="runstatus">
                     <span class="nowrunning">
                         <img src="${resource(dir: 'images', file: 'icon-tiny-disclosure-waiting.gif')}"
@@ -46,8 +46,9 @@
                 </g:if>
 
             </g:else>
-
-            <span id="execRerun" class="retrybuttons" style="${wdgt.styleVisible(if: null != execution.dateCompleted)}">
+        </div>
+        <div class="col-sm-6">
+            <span  class="retrybuttons execRerun pull-right" style="${wdgt.styleVisible(if: null != execution.dateCompleted)}">
                 <g:if test="${scheduledExecution}">
                     <g:if test="${authChecks[AuthConstants.ACTION_RUN]}">
                         <g:link controller="scheduledExecution"
@@ -68,20 +69,9 @@
                                 action="createFromExecution"
                                 params="${[executionId: execution.id]}"
                                 class="btn btn-default btn-xs"
-                                title="${g.message(code: 'execution.action.saveAsJob', default: 'Save as Job')}&hellip;">
+                                title="${g.message(code: 'execution.action.saveAsJob', default: 'Save as Job')}">
                             <g:message code="execution.action.saveAsJob" default="Save as Job"/>&hellip;
                         </g:link>
-                    </g:if>
-                    <g:if test="${adhocRunAllowed && !inlineView}">
-                            <g:link
-                                    controller="framework"
-                                    action="nodes"
-                                    params="${[fromExecId: execution.id]}"
-                                    class="btn btn-default btn-xs"
-                                    title="${g.message(code: 'execution.action.runAgain')}">
-                                <i class="glyphicon glyphicon-play"></i>
-                                <g:message code="execution.action.runAgain"/>&hellip;
-                            </g:link>
                     </g:if>
                 </g:else>
             </span>
@@ -100,64 +90,20 @@
 <form action="#" id="outputappendform">
 <div class="row row-space">
 
-    <div class="col-sm-12">
-        <ul class="nav nav-tabs">
-            <li class="${followmode == 'tail' ? ' active' : ''}">
-            <g:link class="tab out_setmode_tail out_setmode"
-                    title="${g.message(code: 'execution.show.mode.Tail.desc')}"
-                    controller="execution" action="show" id="${execution.id}"
-                    params="${[lastlines: params.lastlines, mode: 'tail'].findAll { it.value }}"
-                    onclick="selectTab(this);">
-                <g:if test="${inlineView}">
-                    <g:message code="execution.show.mode.Tail.title" default="Tail Output"/>
-                </g:if>
-                <g:else>
-                    <g:message code="execution.show.mode.Log.title" default="Log Output"/>
-                </g:else>
-            </g:link>
-            </li>
-            %{--<g:link class="tab ${followmode == 'browse' ? ' selected' : ''} out_setmode_browse"--}%
-                    %{--title="${g.message(code: 'execution.show.mode.Annotated.desc')}"--}%
-                    %{--controller="execution" action="show" id="${execution.id}" params="[mode: 'browse']"--}%
-                    %{--onclick="selectTab(this);">--}%
-                %{--<g:message code="execution.show.mode.Annotated.title" default="Grouped"/>--}%
-            %{--</g:link>--}%
-            <li class="${followmode == 'node' ? ' active' : ''}">
-            <g:link class="tab out_setmode_node out_setmode"
-                    title="${g.message(code: 'execution.show.mode.Compact.desc')}"
-                    controller="execution" action="show" id="${execution.id}" params="[mode: 'node']"
-                    onclick="selectTab(this);">
-                <g:message code="execution.show.mode.Compact.title" default="Compact"/>
-            </g:link>
-            </li>
-            <li>
-                <div id="viewoptions" style="${wdgt.styleVisible(unless: followmode == 'node')}"
-                      class="obs_node_false tabs-sibling">
+    <div class="col-sm-8" style="margin-bottom: 10px">
 
-                    <span id="fullviewopts" style="${followmode != 'browse' ? 'display:none' : ''}"
-                          class="obs_grouped_true form-inline">
-                        <span class="text-muted">View options:</span>
-                        <label
-                                class="action "
-                                title="Click to change"
-                                id="ctxcollapseLabel"
-                                onclick="followControl.setCollapseCtx($('ctxcollapse').checked);">
-                            <input
-                                    type="checkbox"
-                                    name="ctxcollapse"
-                                    id="ctxcollapse"
-                                    value="true"
-                                    class="opt_collapse_ctx"
-                                ${followmode == 'tail' ? '' : null == execution?.dateCompleted ? 'checked="CHECKED"' : ''}
-                                    style=""/>
-                            Collapse
-                        </label>
+    <a href="#" class="textbtn textbtn-default btn-xs pull-left collapser"
+       data-toggle="collapse" data-target="#viewoptions"
+       title="Log Output View Options">
+        Output Options
+        <i class="glyphicon glyphicon-chevron-right"></i>
+    </a>
 
-                    </span>
-
-
+    <div class="collapse" id="viewoptions">
+                <span  style="${wdgt.styleVisible(unless: followmode == 'node')}"
+                      class="obs_node_false ">
                     <span class="obs_grouped_false" style="${wdgt.styleVisible(if: followmode == 'tail')}">
-                        <span class="text-muted">Show columns:</span>
+                        <span class="text-muted">Log view:</span>
 
                         <label
                                 class="action  join"
@@ -197,31 +143,17 @@
                         </label>
                     </span>
 
-                    %{--<span id="taildelaycontrol" style="${execution.dateCompleted?'display:none':''}">,--}%
-                    %{--and update every--}%
-
-
-                    %{--<span class="action textbtn button"--}%
-                    %{--title="Click to reduce"--}%
-                    %{--onmousedown="followControl.modifyTaildelay(-1);return false;">-</span>--}%
-                    %{--<input--}%
-                    %{--type="text"--}%
-                    %{--name="taildelay"--}%
-                    %{--id="taildelayvalue"--}%
-                    %{--value="1"--}%
-                    %{--size="2"--}%
-                    %{--onchange="updateTaildelay(this.value)"--}%
-                    %{--onkeypress="var x= noenter();if(!x){this.blur();};return x;"--}%
-                    %{--style=""/>--}%
-                    %{--<span class="action textbtn button"--}%
-                    %{--title="Click to increase"--}%
-                    %{--onmousedown="followControl.modifyTaildelay(1);return false;">+</span>--}%
-
-                    %{--seconds--}%
+                </span>
+        <span class="text-muted">Node view:</span>
+                <label class="out_setmode_toggle out_setmode">
+                    <input type="checkbox" ${followmode == 'node' ? 'checked' : ''}/>
+                    <g:message code="execution.show.mode.Compact.title" default="Compact"/>
+                </label>
                 </div>
-            </li>
-            <li class="pull-right">
-                <div class="tabs-sibling" style="${execution.dateCompleted ? '' : 'display:none'}"
+        </div>
+        <div class="col-sm-4">
+            <div class="pull-right">
+                <span class="tabs-sibling" style="${execution.dateCompleted ? '' : 'display:none'}"
                      id="viewoptionscomplete">
                     <span>
                         <g:link class="textbtn" style="padding:5px;"
@@ -244,12 +176,11 @@
                             <b class="glyphicon glyphicon-file"></b>
                             Download</g:link>
                     </span>
-                </div>
-            </li>
-        </ul>
+                </span>
+            </div>
         </div>
+    </div>
 
-</div>
 </form>
 </div>
 

@@ -59,7 +59,10 @@
                 <stepplugin:display step="${item}" prefix="" includeFormFields="false"/>
             </g:elseif>
             <g:else>
-                <g:if test="${!noimgs}"><g:img file="icon-small-shell.png" width="16px" height="16px"/></g:if>
+                <g:if test="${!noimgs}">
+                    <g:set var="iname" value="${icon?:'icon-small'}"/>
+                    <i class="rdicon shell ${iname}"></i>
+                </g:if>
                 <g:if test="${item.adhocRemoteString}">
                     <span class="argString"><g:truncate max="150" showtitle="true">${item.adhocRemoteString.encodeAsHTML()}</g:truncate></span>
                 </g:if>

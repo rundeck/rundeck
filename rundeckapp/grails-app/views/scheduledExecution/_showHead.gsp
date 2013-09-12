@@ -7,6 +7,7 @@
             class="primary"
                 id="${scheduledExecution.extid}"
                 absolute="${absolute ? 'true' : 'false'}">
+            <i class="glyphicon glyphicon-book"></i>
             ${scheduledExecution?.jobName.encodeAsHTML()}
         </g:link>
 
