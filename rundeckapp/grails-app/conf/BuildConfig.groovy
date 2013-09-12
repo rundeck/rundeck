@@ -87,8 +87,8 @@ grails.project.dependency.resolution = {
         runtime ":hibernate:$grailsVersion"
         compile ":code-coverage:1.2.6"
         build ':jetty:2.0.3'
-        compile ":asset-pipeline:0.6.0"
-        compile (":less-asset-pipeline:0.1.2"){
+        compile ":asset-pipeline:0.8.1"
+        compile (":less-asset-pipeline:0.8.0"){
             excludes 'asset-pipeline'
         }
     }
