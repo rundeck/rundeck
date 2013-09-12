@@ -1053,7 +1053,7 @@ var FollowControl = Class.create({
         $(tr).addClassName('action');
         iconcell.addClassName("icon");
         var cell = $(tr.insertCell(1));
-        cell.setAttribute('colSpan', '2');
+        cell.setAttribute('colSpan', '4');
 
 
         if (null != data['node'] && '' != data['node']) {
@@ -1331,7 +1331,6 @@ var FollowControl = Class.create({
             tdnode.innerHTML = data.node;
             shownode=true;
         }
-        colspan="1";
 
         //add context column
         var tdctx = $(tr.insertCell(cellndx));
