@@ -10,6 +10,4 @@
                 <g:render template="showExecutionDate"/>
             </small>
         </h4>
-    </g:if>
-
 </span>
