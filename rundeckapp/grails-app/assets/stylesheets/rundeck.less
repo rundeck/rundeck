@@ -35,7 +35,18 @@
     clear: both;
     padding: 10px 20px;
   }
-
+  .auto-caret-open{
+    .glyphicon();
+    .glyphicon-chevron-down();
+  }
+  .auto-caret{
+    .glyphicon();
+    .glyphicon-chevron-right();
+  }
+  .auto-caret-left{
+    .glyphicon();
+    .glyphicon-chevron-left();
+  }
   /* use glyphicon folder icons */
   .expandComponentHolder  > div > span.expandComponentControl.jobgroupexpand span.foldertoggle{
       .glyphicon();
@@ -44,6 +55,30 @@
   .expandComponentHolder.expanded  > div > span.expandComponentControl.jobgroupexpand span.foldertoggle{
       .glyphicon();
       .glyphicon-folder-open();
+  }
+  .glyphicon-td{
+    position: inherit;
+    top: auto;
+    display: table-cell;
+  }
+  table.execoutput tr.contextRow td.expandicon.opened {
+    .auto-caret-open();
+    .glyphicon-td();
+  }
+
+  table.execoutput tr.contextRow td.expandicon.closed {
+    .auto-caret();
+    .glyphicon-td();
+  }
+
+  table.execoutput tr.contextRow.console td.expandicon.opened {
+    .auto-caret-open();
+    .glyphicon-td();
+  }
+
+  table.execoutput tr.contextRow.console td.expandicon.closed {
+    .auto-caret();
+    .glyphicon-td();
   }
   /* use glyphicon for remote option url loading status indicator */
   .remote .remotestatus{
