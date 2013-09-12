@@ -625,10 +625,6 @@
             margin:5px 20px;
         }
 
-        #runcontent{
-            margin-bottom: 20px;;
-        }
-
         .commandcontent{
             margin:0;
         }
@@ -819,7 +815,7 @@
 </div>
 
 
-    <div id="runcontent" class="clearfix"></div>
+    <div id="runcontent" class="clearfix nodes_run_content" style="display: none"></div>
 
     <g:if test="${run_authorized}">
 
