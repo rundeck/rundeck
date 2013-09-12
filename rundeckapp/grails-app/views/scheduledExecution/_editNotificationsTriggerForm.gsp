@@ -104,11 +104,12 @@
                                 checked="${definedNotif ? true : false}"/>
                     <label for="${checkboxFieldName}">${pluginDescription['title'] ?: pluginDescription['name'] ?: pluginName}</label>
                     <g:if test="${pluginDescription['description']}">
-                        <span class="info note">${pluginDescription['description']?.encodeAsHTML()}</span>
+                        <span class="text-muted">${pluginDescription['description']?.encodeAsHTML()}</span>
                     </g:if>
                 </span>
-                <span id="notifholderPlugin${pkey}" style="${wdgt.styleVisible(if: definedNotif ? true : false)}"
-                      class="notificationplugin">
+                <div id="notifholderPlugin${pkey}" style="${wdgt.styleVisible(if: definedNotif ? true : false)}"
+                      class="notificationplugin panel panel-default">
+                    <div class="panel-body">
                     <g:set var="prefix" value="${('notifyPlugin.'+trigger+'.' + pluginName + '.config.').encodeAsHTML()}"/>
                     <g:if test="${pluginDescription instanceof Description}">
                         <div class="form-horizontal">
@@ -129,7 +130,8 @@
                             </g:each>
                         </div>
                     </g:if>
-                </span>
+                    </div>
+                </div>
                 <wdgt:eventHandler for="${checkboxFieldName}" state="checked"
                                    target="notifholderPlugin${pkey}" visible="true"/>
             </div>
