@@ -35,18 +35,7 @@
         </g:if>
         <tr class="link  ${it?.status != 'succeed' ? 'fail' : ''}  ${!it.dateCompleted ? 'nowrunning' : ''} ${sincetime && it.dateCompleted.time>sincetime?'newitem':''} hilite " onclick="$(this).down('a._defaultAction').click();">
             <td style="width:12px;" class="eventicon">
-                %{--<g:if test="${execution}">--}%
-                    %{--<g:set var="fileName"--}%
-                           %{--value="${execution.status == 'true' ? 'job-ok' : null == execution.dateCompleted ? 'job-running' : execution.cancelled ? 'job-warn' : 'job-error'}"/>--}%
-                %{--</g:if>--}%
-                %{--<img src="${resource(dir: 'images', file: "icon-small-" + fileName + ".png",absolute: absoluteLinks)}" alt="job" style="border:0;"--}%
-                     %{--width="12px" height="12px"/>--}%
-
-                <g:set var="gicon"
-                       value="${execution.status == 'true' ? 'ok-circle' : null == execution.dateCompleted ? 'play-circle' : execution.cancelled ? 'minus-sign' : 'warning-sign'}"/>
-
-                <i class="glyphicon glyphicon-${gicon} exec-status ${execution.status == 'true' ? 'succeed' : execution.cancelled ? 'warn' : 'fail'}">
-                </i>
+                <i class="exec-status icon ${!execution.dateCompleted ? 'running' : execution.status == 'true' ? 'succeed' : execution.cancelled ? 'warn' : 'fail'}"></i>
             </td>
             <g:set var="vals" value="${['?','?','?']}"/>
             <g:if test="${it instanceof ExecReport}">
