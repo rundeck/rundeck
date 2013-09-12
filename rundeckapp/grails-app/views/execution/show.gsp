@@ -206,93 +206,130 @@
                     </div>
                             <div class="col-sm-4">
 
+                                %{--adhoc--}%
+                                <g:if test="${!scheduledExecution}">
                                 <div class="btn-group pull-right">
-                                    <g:if test="${!scheduledExecution}">
-                                        <g:if test="${auth.resourceAllowedTest(kind: 'job', action: [AuthConstants.ACTION_CREATE])}">
-                                            <g:link
-                                                    controller="scheduledExecution"
-                                                    action="createFromExecution"
-                                                    params="${[executionId: execution.id]}"
-                                                    class=" btn btn-primary btn-sm header execRerun"
-                                                    title="${g.message(code: 'execution.action.saveAsJob')}"
-                                                    style="${wdgt.styleVisible(if: null != execution.dateCompleted)}">
-                                                <g:message code="execution.action.saveAsJob"
-                                                           default="Save as Job"/>&hellip;
-                                            </g:link>
-                                        </g:if>
+                                    %{--save as job link--}%
+                                    <g:if test="${auth.resourceAllowedTest(kind: 'job', action: [AuthConstants.ACTION_CREATE])}">
+                                        <g:link
+                                                controller="scheduledExecution"
+                                                action="createFromExecution"
+                                                params="${[executionId: execution.id]}"
+                                                class=" btn btn-primary btn-sm header execRerun execRetry"
+                                                title="${g.message(code: 'execution.action.saveAsJob')}"
+                                                style="${wdgt.styleVisible(if: null != execution.dateCompleted)}">
+                                            <g:message code="execution.action.saveAsJob"
+                                                       default="Save as Job"/>&hellip;
+                                        </g:link>
                                     </g:if>
-                                    <div class="btn-group execRerun"
-                                         style="${wdgt.styleVisible(if: null != execution.dateCompleted)}">
-                                        <button class="btn btn-default btn-sm dropdown-toggle" data-target="#"
+                                    %{--run again links--}%
+                                    <g:if test="${adhocRunAllowed}">
+                                        %{--run again only--}%
+                                    <g:link
+                                            controller="framework"
+                                            action="nodes"
+                                            params="${[fromExecId: execution.id]}"
+                                            title="${g.message(code: 'execution.action.runAgain')}"
+                                            class="btn btn-default btn-sm force-last-child execRerun"
+                                            style="${wdgt.styleVisible(if: null != execution.dateCompleted && null == execution.failedNodeList)}">
+
+                                        <b class="glyphicon glyphicon-play"></b>
+                                        <g:message code="execution.action.runAgain"/>&hellip;
+                                    </g:link>
+                                        %{--run again and retry failed --}%
+                                    <div class="btn-group execRetry"
+                                         style="${wdgt.styleVisible(if: null != execution.dateCompleted && null!=execution.failedNodeList )}">
+                                        <button class="btn btn-default btn-sm dropdown-toggle force-last-child" data-target="#"
                                                 data-toggle="dropdown">
                                             Run Again
                                             <i class="caret"></i>
                                         </button>
                                         <ul class="dropdown-menu pull-right" role="menu">
-                                            <li class="retrybuttons execRerun"
-                                                style="${wdgt.styleVisible(if: null != execution.dateCompleted)}">
-                                                <g:if test="${scheduledExecution}">
-                                                    <g:if test="${authChecks[AuthConstants.ACTION_RUN]}">
-                                                        <g:link controller="scheduledExecution"
-                                                                action="execute"
-                                                                id="${scheduledExecution.extid}"
-                                                                params="${[retryExecId: execution.id]}"
-                                                                title="${g.message(code: 'execution.job.action.runAgain')}">
-                                                            <b class="glyphicon glyphicon-play"></b>
-                                                            <g:message code="execution.action.runAgain"/>&hellip;
-                                                        </g:link>
-                                                    </g:if>
-                                                </g:if>
-                                                <g:else>
-                                                    <g:if test="${adhocRunAllowed}">
-                                                        <g:link
-                                                                controller="framework"
-                                                                action="nodes"
-                                                                params="${[fromExecId: execution.id]}"
-                                                                title="${g.message(code: 'execution.action.runAgain')}">
+                                            <li >
+                                                    <g:link
+                                                            controller="framework"
+                                                            action="nodes"
+                                                            params="${[fromExecId: execution.id]}"
+                                                            title="${g.message(code: 'execution.action.runAgain')}">
 
-                                                            <b class="glyphicon glyphicon-play"></b>
-                                                            <g:message code="execution.action.runAgain"/>&hellip;
-                                                        </g:link>
-                                                    </g:if>
-                                                </g:else>
+                                                        <b class="glyphicon glyphicon-play"></b>
+                                                        <g:message code="execution.action.runAgain"/>&hellip;
+                                                    </g:link>
                                             </li>
-                                            <li class="divider  execRetry"
-                                                style="${wdgt.styleVisible(if: null != execution.dateCompleted && null != execution.failedNodeList)};">
+                                            <li class="divider  ">
 
                                             </li>
-                                            <li class="retrybuttons execRetry"
-                                                style="${wdgt.styleVisible(if: null != execution.dateCompleted && null != execution.failedNodeList)};">
-                                                <g:if test="${scheduledExecution}">
-                                                    <g:if test="${authChecks[AuthConstants.ACTION_RUN]}">
-                                                        <g:link controller="scheduledExecution" action="execute"
-                                                                id="${scheduledExecution.extid}"
-                                                                params="${[retryFailedExecId: execution.id]}"
-                                                                title="${g.message(code: 'retry.job.failed.nodes')}">
-                                                            <b class="glyphicon glyphicon-play"></b>
-                                                            <g:message code="retry.failed.nodes"/>&hellip;
-                                                        </g:link>
-                                                    </g:if>
-                                                </g:if>
-                                                <g:else>
-                                                    <g:if test="${adhocRunAllowed}">
-                                                        <g:link
-                                                                controller="framework"
-                                                                action="nodes"
-                                                                params="${[retryFailedExecId: execution.id]}"
-                                                                title="${g.message(code: 'retry.failed.nodes.description')}">
+                                            <li>
+                                                    <g:link
+                                                            controller="framework"
+                                                            action="nodes"
+                                                            params="${[retryFailedExecId: execution.id]}"
+                                                            title="${g.message(code: 'retry.failed.nodes.description')}">
 
-                                                            <b class="glyphicon glyphicon-play"></b>
-                                                            <g:message code="retry.failed.nodes"/>&hellip;
-                                                        </g:link>
-                                                    </g:if>
-                                                </g:else>
+                                                        <b class="glyphicon glyphicon-play"></b>
+                                                        <g:message code="retry.failed.nodes"/>&hellip;
+                                                    </g:link>
                                             </li>
                                         </ul>
                                     </div>
+                                    </g:if>
 
                                 </div>
+                                </g:if>
+                                <g:else>
+                                %{--job--}%
+                                <div class="pull-right">
+                                    <g:if test="${authChecks[AuthConstants.ACTION_RUN]}">
+                                        %{--Run again link--}%
+                                        <g:link controller="scheduledExecution"
+                                                action="execute"
+                                                id="${scheduledExecution.extid}"
+                                                class="btn btn-default btn-sm execRerun"
+                                                params="${[retryExecId: execution.id]}"
+                                                title="${g.message(code: 'execution.job.action.runAgain')}"
+                                                style="${wdgt.styleVisible(if: null != execution.dateCompleted && null == execution.failedNodeList)};">
+                                            <b class="glyphicon glyphicon-play"></b>
+                                            <g:message code="execution.action.runAgain"/>&hellip;
+                                        </g:link>
+                                        %{--Run again and retry failed links in a dropdown --}%
+                                        <div class="btn-group execRetry"
+                                             style="${wdgt.styleVisible(if: null != execution.dateCompleted && null != execution.failedNodeList)};">
+                                            <button class="btn btn-default btn-sm dropdown-toggle"
+                                                    data-target="#"
+                                                    data-toggle="dropdown">
+                                                Run Again
+                                                <i class="caret"></i>
+                                            </button>
+                                            <ul class="dropdown-menu pull-right" role="menu">
+                                                <li class="retrybuttons execRerun">
+                                                    <g:link controller="scheduledExecution"
+                                                            action="execute"
+                                                            id="${scheduledExecution.extid}"
+                                                            params="${[retryExecId: execution.id]}"
+                                                            title="${g.message(code: 'execution.job.action.runAgain')}">
+                                                        <b class="glyphicon glyphicon-play"></b>
+                                                        <g:message code="execution.action.runAgain"/>&hellip;
+                                                    </g:link>
+                                                </li>
+                                                <li class="divider  execRetry">
 
+                                                </li>
+                                                <li class="retrybuttons execRetry">
+                                                    <g:link controller="scheduledExecution" action="execute"
+                                                            id="${scheduledExecution.extid}"
+                                                            params="${[retryFailedExecId: execution.id]}"
+                                                            title="${g.message(code: 'retry.job.failed.nodes')}">
+                                                        <b class="glyphicon glyphicon-play"></b>
+                                                        <g:message code="retry.failed.nodes"/>&hellip;
+                                                    </g:link>
+                                                </li>
+                                            </ul>
+                                        </div>
+
+                                    </g:if>
+
+                                </div>
+                                </g:else>
                             </div>
 
             </div>

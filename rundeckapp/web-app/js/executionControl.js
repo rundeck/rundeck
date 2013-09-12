@@ -1408,8 +1408,7 @@ var FollowControl = Class.create({
         }
         if (this.runningcmd.failednodes && $$('.execRetry')) {
             $$('.execRetry').each(Element.show);
-        }
-        if($$('.execRerun')){
+        }else if ($$('.execRerun')){
             $$('.execRerun').each(Element.show);
         }
         if(typeof(this.onComplete)=='function'){

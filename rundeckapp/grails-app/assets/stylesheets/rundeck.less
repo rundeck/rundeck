@@ -399,3 +399,13 @@
       background-color: @panel-default-heading-bg;
     }
   }
+  .btn-group .btn.force-last-child{
+    .border-right-radius(@border-radius-base) !important;
+  }
+  .btn-group .btn.btn-sm.force-last-child,
+  .btn-group .btn.btn-xs.force-last-child{
+    .border-right-radius(@border-radius-small) !important;
+  }
+  .btn-group .btn.btn-lg.force-last-child{
+    .border-right-radius(@border-radius-large) !important;
+  }
