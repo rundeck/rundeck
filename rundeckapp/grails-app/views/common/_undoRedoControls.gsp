@@ -22,7 +22,7 @@
     $Id$
  --%>
 <g:set var="rkey" value="${g.rkey()}"/>
-<div style="margin-bottom:10px; ">
+<div style="margin-bottom:10px; " id="undoredo${rkey}">
     <g:if test="${undo}">
         <span class="btn btn-sm btn-default " onclick="_doUndoAction('${key?.encodeAsJavaScript()}');">Undo</span>
     </g:if>
@@ -36,12 +36,22 @@
         <span class="btn btn-sm btn-default disabled ">Redo</span>
     </g:else>
     <g:if test="${undo || redo}">
-        <span class="btn btn-sm btn-default " onclick="menus.showRelativeTo(this,'revert_${rkey}');">Revert All Changes</span>
+        <span class="btn btn-sm btn-default "
+              data-toggle="popover"
+              data-popover-content-ref="#revert_${rkey}"
+              data-placement="bottom"
+              data-trigger="click"
+              id="revertall_${rkey}"
+        >Revert All Changes</span>
 
         <div id="revert_${rkey}" class="confirmMessage popout confirmbox" style="display:none">
-            Really revert ${revertConfirm?revertConfirm:'all changes'}?
-            <span class="btn btn-sm btn-default " onclick="['revert_${rkey}'].each(Element.hide);">No</span>
-            <span class="btn btn-sm btn-default " onclick="_doRevertAction('${key?.encodeAsJavaScript()}');">Yes</span>
+            <div class="text-warning">Really revert ${revertConfirm?revertConfirm:'all changes'}?</div>
+
+            <span class="btn btn-xs btn-default " onclick="jQuery('#revertall_${rkey}').popover('hide');">No</span>
+            <span class="btn btn-xs btn-warning " onclick="jQuery('#revertall_${rkey}').popover('destroy');_doRevertAction('${key?.encodeAsJavaScript()}');">Yes</span>
         </div>
     </g:if>
 </div>
+<g:javascript>
+    _initPopoverContentRef("#undoredo${rkey}");
+</g:javascript>

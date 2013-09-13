@@ -1128,9 +1128,20 @@ function paginate(elem,offset,total,max,options){
     e.insert(insert);
 }
 
+/**
+ * jQuery/bootstrap utility functions
+ */
+function _initPopoverContentRef(parent){
+    var sel= '[data-toggle=popover][data-popover-content-ref]';
+    jQuery(parent!=null?parent+' '+sel:sel).each(function (i, e) {
+        var ref = jQuery(e).data('popover-content-ref');
+        jQuery(e).popover({html: true, content: jQuery(ref).html()});
+    });
+}
 
 /** page init */
 
 jQuery(window).load(function () {
     jQuery('.has_tooltip').tooltip({});
+    _initPopoverContentRef();
 });

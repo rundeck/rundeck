@@ -561,7 +561,7 @@ function _updateWFUndoRedo() {
     if (getCurSEID()) {
         params['scheduledExecutionId'] = getCurSEID();
     }
-    new Ajax.Updater($('wfundoredo'), applinks.workflowRenderUndo, {parameters:params});
+    new Ajax.Updater($('wfundoredo'), applinks.workflowRenderUndo, {parameters:params,evalScripts:true});
 }
 
 
