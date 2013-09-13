@@ -12,7 +12,7 @@
 <g:set var="defStart" value="${scheduledExecution.findNotification('onstart', 'email')}"/>
 <g:set var="defStartUrl" value="${scheduledExecution.findNotification('onstart', 'url')}"/>
 <div class="form-group">
-    <div class="col-sm-2 text-form-label">
+    <div class="col-sm-2 control-label text-form-label">
         Send Notification?
     </div>
     <div class="col-sm-10">

@@ -245,7 +245,7 @@
             </div>
 
             <div class="form-group">
-                <div class="text-form-label">
+                <div class="control-label text-form-label">
                     When a <g:message
                             code="domain.ScheduledExecution.title"/> with the same name already exists:
                 </div>
@@ -268,7 +268,7 @@
             </div>
 
         <div class="form-group">
-            <div class="text-form-label">Imported Jobs:</div>
+            <div class="control-label text-form-label">Imported Jobs:</div>
             <div class="radio">
                  <label title="Original UUIDs will be preserved, conflicting UUIDs will be replaced">
                     <input type="radio" name="createUUIDOption" value="preserve" checked/>

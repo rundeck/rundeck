@@ -10,7 +10,7 @@
      style="${wdgt.styleVisible(if: isVisible)}">
 
     <!-- ${trigger} -->
-    <div class="text-form-label col-sm-2">
+    <div class="control-label text-form-label col-sm-2">
         <g:message code="notification.event.on${trigger}"/>
     </div>
     <div class="col-sm-10">

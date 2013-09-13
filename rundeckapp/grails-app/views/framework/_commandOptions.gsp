@@ -198,7 +198,7 @@ used by _editOptions.gsp template
 </g:elseif>
 <g:else>
     <div class="form-group">
-        <div class="col-sm-2 control-label">
+        <div class="col-sm-2 control-label text-form-label">
             <g:message code="input.options" />
         </div>
         <div class="col-sm-10">

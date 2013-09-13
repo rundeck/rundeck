@@ -457,7 +457,7 @@ var applinks={
         </div>
     </div>
     <div class="form-group">
-        <div class="${labelColSize} text-form-label">
+        <div class="${labelColSize} control-label text-form-label">
             <g:message code="scheduledExecution.property.multipleExecutions.label" />
         </div>
         <div class="${fieldColSize}">
@@ -487,7 +487,7 @@ var applinks={
 
     <div id="optionsContent" class="savedJobFields list-group-item" >
         <div class="form-group">
-            <div class="${labelColSize} text-form-label"><span id="optsload"></span>Options:</div>
+            <div class="${labelColSize} control-label text-form-label"><span id="optsload"></span>Options:</div>
             <div class="${fieldColSize}">
                 <span id="optssummarysect" class="autohilite autoedit">
                     <span id="optssummary" class="doeditopts " title="Click to edit options">
@@ -525,7 +525,7 @@ var applinks={
 
     <div id="workflowContent" class="list-group-item" >
         <div class="form-group">
-            <div class="${labelColSize}  text-form-label">Workflow:</div>
+            <div class="${labelColSize}  control-label text-form-label">Workflow:</div>
             <div class="${fieldColSize}">
                 <g:set var="editwf" value="${session.editWF && session.editWF[scheduledExecution.id.toString()]?session.editWF[scheduledExecution.id.toString()]:scheduledExecution.workflow}"/>
                 <g:render template="/execution/execDetailsWorkflow" model="${[workflow:editwf,context:scheduledExecution,edit:true,error:scheduledExecution?.errors?.hasFieldErrors('workflow'),project:scheduledExecution?.project?:projects?.size()==1?projects[0].name:session.project?:'']}"/>
@@ -552,7 +552,7 @@ var applinks={
 <div class="savedJobFields list-group-item">
 
     <div class="form-group">
-        <div class="${labelColSize}  text-form-label">
+        <div class="${labelColSize}  control-label text-form-label">
             Schedule to run repeatedly?
         </div>
         <div class="${fieldColSize}">
@@ -920,12 +920,6 @@ var applinks={
                 <g:radio name="loglevel" value="DEBUG" checked="${scheduledExecution?.loglevel == 'DEBUG'}"/>
                 Debug
             </label>
-            %{--<g:select name="loglevel"--}%
-                      %{--from="${['1. Debug','2. Verbose','3. Information','4. Warning','5. Error']}"--}%
-                      %{--keys="${['DEBUG','VERBOSE','INFO','WARN','ERROR']}"--}%
-                      %{--value="${scheduledExecution.loglevel?scheduledExecution.loglevel:'WARN'}"--}%
-                %{--class="form-control"--}%
-                %{--/>--}%
             <div class="help-block">
                 Debug level produces more output
             </div>
