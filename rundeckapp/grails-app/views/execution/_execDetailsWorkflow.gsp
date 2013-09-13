@@ -109,10 +109,7 @@
 <div class="pflowlist ${edit?'edit':''} rounded ${isAdhoc?'adhoc':''}" style="">
     <g:if test="${edit}">
         <div id="wfundoredo" >
-            <div style="margin-bottom:10px;">
-                <span class="btn btn-sm btn-default disabled ">Undo</span>
-                <span class="btn btn-sm btn-default disabled ">Redo</span>
-            </div>
+            <g:render template="/common/undoRedoControls"/>
         </div>
     </g:if>
     <ol id="wfilist_${rkey}" class="flowlist">

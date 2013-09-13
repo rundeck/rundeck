@@ -200,12 +200,17 @@
   &.disabled,
   &[disabled],
   fieldset[disabled] & {
+    color: @gray-light;
+    background-color: @background-color;
     &,
     &:hover,
     &:focus,
     &:active,
     &.active {
-      color: lighten(@color, 8%);
+      color: @gray-light;
+      background-color: @background-color;
+      cursor: default;
+      text-decoration: none;
     }
   }
 
@@ -220,30 +225,30 @@
 
 }
 .textbtn-default {
-  .textbtn-variant(lighten(@brand-primary, 30%),clear,lighten(@brand-primary, 70%));
+  .textbtn-variant(lighten(@brand-primary, 30%),transparent,lighten(@brand-primary, 70%));
 }
 .textbtn-secondary {
-  .textbtn-variant(desaturate(@link-color, 100%),clear,lighten(desaturate(@link-color, 100%), 50%));
+  .textbtn-variant(desaturate(@link-color, 100%),transparent,lighten(desaturate(@link-color, 100%), 50%));
 }
 
 .textbtn-primary {
-  .textbtn-variant(@brand-primary,clear,lighten(@brand-primary, 50%));
+  .textbtn-variant(@brand-primary,transparent,lighten(@brand-primary, 50%));
 }
 // Warning appears as orange
 .textbtn-warning {
-  .textbtn-variant(@brand-warning,clear,lighten(@brand-warning, 50%));
+  .textbtn-variant(@brand-warning,transparent,lighten(@brand-warning, 50%));
 }
 // Danger and error appear as red
 .textbtn-danger {
-  .textbtn-variant(@brand-danger,clear,lighten(@brand-danger, 50%));
+  .textbtn-variant(@brand-danger,transparent,lighten(@brand-danger, 50%));
 }
 // Success appears as green
 .textbtn-success {
-  .textbtn-variant(@brand-success,clear,lighten(@brand-success, 50%));
+  .textbtn-variant(@brand-success,transparent,lighten(@brand-success, 50%));
 }
 // Info appears as blue-green
 .textbtn-info {
-  .textbtn-variant(@brand-info,clear,lighten(@brand-info, 40%));
+  .textbtn-variant(@brand-info,transparent,lighten(@brand-info, 40%));
 }
 
 .progress {

@@ -1135,7 +1135,11 @@ function _initPopoverContentRef(parent){
     var sel= '[data-toggle=popover][data-popover-content-ref]';
     jQuery(parent!=null?parent+' '+sel:sel).each(function (i, e) {
         var ref = jQuery(e).data('popover-content-ref');
-        jQuery(e).popover({html: true, content: jQuery(ref).html()});
+        jQuery(e).popover({html: true, content: jQuery(ref).html()}).on('shown.bs.popover',function(){
+            jQuery(e).toggleClass('active');
+        }).on('hidden.bs.popover',function(){
+                jQuery(e).toggleClass('active');
+            });
     });
 }
 

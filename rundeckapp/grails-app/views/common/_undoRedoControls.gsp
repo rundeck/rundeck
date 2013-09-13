@@ -24,25 +24,33 @@
 <g:set var="rkey" value="${g.rkey()}"/>
 <div style="margin-bottom:10px; " id="undoredo${rkey}">
     <g:if test="${undo}">
-        <span class="btn btn-sm btn-default " onclick="_doUndoAction('${key?.encodeAsJavaScript()}');">Undo</span>
+        <span class="btn btn-xs btn-default " onclick="_doUndoAction('${key?.encodeAsJavaScript()}');">
+            <i class="glyphicon glyphicon-step-backward"></i>
+            Undo
+        </span>
     </g:if>
     <g:else>
-        <span class="btn btn-sm btn-default disabled ">Undo</span>
+        <span class="btn btn-xs btn-default disabled "><i class="glyphicon glyphicon-step-backward"></i> Undo</span>
     </g:else>
     <g:if test="${redo}">
-        <span class="btn btn-sm btn-default " onclick="_doRedoAction('${key?.encodeAsJavaScript()}');">Redo</span>
+        <span class="btn btn-xs btn-default " onclick="_doRedoAction('${key?.encodeAsJavaScript()}');">
+            Redo
+            <i class="glyphicon glyphicon-step-forward"></i>
+        </span>
     </g:if>
     <g:else>
-        <span class="btn btn-sm btn-default disabled ">Redo</span>
+        <span class="btn btn-xs btn-default disabled ">Redo <i class="glyphicon glyphicon-step-forward"></i></span>
     </g:else>
     <g:if test="${undo || redo}">
-        <span class="btn btn-sm btn-default "
+        <span class="btn btn-xs btn-default "
               data-toggle="popover"
               data-popover-content-ref="#revert_${rkey}"
               data-placement="bottom"
               data-trigger="click"
               id="revertall_${rkey}"
-        >Revert All Changes</span>
+        >
+            <i class="glyphicon glyphicon-fast-backward"></i>
+            Revert All Changes</span>
 
         <div id="revert_${rkey}" class="confirmMessage popout confirmbox" style="display:none">
             <div class="text-warning">Really revert ${revertConfirm?revertConfirm:'all changes'}?</div>
@@ -50,8 +58,8 @@
             <span class="btn btn-xs btn-default " onclick="jQuery('#revertall_${rkey}').popover('hide');">No</span>
             <span class="btn btn-xs btn-warning " onclick="jQuery('#revertall_${rkey}').popover('destroy');_doRevertAction('${key?.encodeAsJavaScript()}');">Yes</span>
         </div>
+        <g:javascript>
+    _initPopoverContentRef("#undoredo${rkey}");
+        </g:javascript>
     </g:if>
 </div>
-<g:javascript>
-    _initPopoverContentRef("#undoredo${rkey}");
-</g:javascript>
