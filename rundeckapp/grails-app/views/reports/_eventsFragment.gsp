@@ -76,7 +76,7 @@
 
                 <div class="jobsReport clear">
                     <g:if test="${reports}">
-                        <table cellpadding="0" cellspacing="0" class="jobsList list history table table-hover table-condensed" style="width:100%">
+                        <table class=" table table-hover table-condensed" style="width:100%">
                         <g:if test="${includeNowRunning}">
                             <tbody id="nowrunning"></tbody>
                         </g:if>

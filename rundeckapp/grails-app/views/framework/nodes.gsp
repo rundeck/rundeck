@@ -775,7 +775,7 @@
 
 
                         <g:if test="${!filterName}">
-                            <span class="textbtn textbtn-success obs_filtersave" title="Click to save this filter with a name" id="outsidefiltersave">
+                            <span class="textbtn textbtn-info textbtn-on-hover obs_filtersave" title="Click to save this filter with a name" id="outsidefiltersave">
                                 save this filter&hellip;
                             </span>
                         </g:if>
@@ -823,10 +823,7 @@
 
     <div class="row">
     <div class="col-sm-12">
-        <table cellpadding="0" cellspacing="0" class="jobsList list history" style="width:100%">
-            <tbody id="nowrunning"></tbody>
-            <tbody id="histcontent"></tbody>
-        </table>
+        <g:render template="/reports/historyTableContainer" model="[nowrunning: true]"/>
         <g:javascript>
             fireWhenReady('histcontent',loadHistory);
         </g:javascript>

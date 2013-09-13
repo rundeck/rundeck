@@ -389,10 +389,7 @@
 
     <h4 class="text-muted"><g:message code="page.section.Activity"/></h4>
     <div class="pageBody">
-        <table cellpadding="0" cellspacing="0" class="jobsList list history" style="width:100%">
-        <tbody id="nowrunning"></tbody>
-        <tbody id="histcontent"></tbody>
-    </table>
+        <g:render template="/reports/historyTableContainer" model="[nowrunning: true]"/>
         <g:javascript>
             fireWhenReady('histcontent',loadHistory);
         </g:javascript>

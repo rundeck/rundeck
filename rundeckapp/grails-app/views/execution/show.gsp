@@ -330,8 +330,8 @@
                                 </div>
                                 </g:else>
                                 <div class="affixed-shown pull-right">
-                                    <a class="textbtn textbtn-info textbtn-on-hover btn-xs" href="#top">
-                                        Scroll to Top
+                                    <a class="textbtn textbtn-default textbtn-on-hover btn-xs" href="#top">
+                                        <g:message code="scroll.to.top" />
                                         <i class="glyphicon glyphicon-arrow-up"></i>
                                     </a>
                                 </div>
@@ -421,10 +421,7 @@
             <g:message code="page.section.Activity"/>
         </h4>
         <div class="pageBody">
-            <table cellpadding="0" cellspacing="0" class="jobsList list history table table-hover table-condensed"
-                   style="width:100%">
-                <tbody id="histcontent"></tbody>
-            </table>
+            <g:render template="/reports/historyTableContainer" model="[nowrunning: false]"/>
             <g:if test="${execution.dateCompleted!=null}">
             <g:javascript>
                 fireWhenReady('histcontent', loadHistory);
