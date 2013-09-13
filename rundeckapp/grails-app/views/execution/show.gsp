@@ -101,7 +101,8 @@
 <g:set var="isAdhoc" value="${!scheduledExecution && execution.workflow.commands.size() == 1}"/>
   <body id="executionShowPage">
     <div class="">
-        <div class="executionshow" >
+        <div class="executionshow_wrap" data-affix="wrap">
+        <div class="executionshow" data-affix="top" data-affix-padding-top="21">
             <div class="row">
                     <div class="col-sm-2">
                         <span class="jobInfo" id="jobInfo_${execution.id}">
@@ -111,7 +112,7 @@
                             </span>
                         </span>
                         <g:if test="${eprev || enext}">
-                            <div class="">
+                            <div class="affixed-hidden">
 
                                 <ul class="pager pager-embed pager-left pager-sm">
                                     <g:if test="${eprev}">
@@ -183,7 +184,6 @@
                                         </div>
                                     </div>
                                 </g:if>
-
                                 <g:if test="${isAdhoc}">
                                     <div class="row">
                                         %{--<div class="col-sm-2 control-label">--}%
@@ -202,10 +202,9 @@
                                         </div>
                                     </div>
                                 </g:if>
-
                     </div>
-                            <div class="col-sm-4">
 
+                            <div class="col-sm-4">
                                 %{--adhoc--}%
                                 <g:if test="${!scheduledExecution}">
                                 <div class="btn-group pull-right">
@@ -330,6 +329,12 @@
 
                                 </div>
                                 </g:else>
+                                <div class="affixed-shown pull-right">
+                                    <a class="textbtn textbtn-info textbtn-on-hover btn-xs" href="#top">
+                                        Scroll to Top
+                                        <i class="glyphicon glyphicon-arrow-up"></i>
+                                    </a>
+                                </div>
                             </div>
 
             </div>
@@ -380,17 +385,18 @@
                         var workflow=${execution.workflow.commands*.toMap().encodeAsJSON()};
                         </g:javascript>
 
-    </div>
-
-    <div class="row row-space">
-        <div class="col-sm-12">
-
-            <ul class="nav nav-tabs">
-                <li class="active"><a href="#output" data-toggle="tab">Log Output</a></li>
-                <li><a href="#schedExDetails${scheduledExecution?.id}" data-toggle="tab">Definition</a></li>
-            </ul>
         </div>
-    </div>
+        </div>
+            <div class="row row-space">
+                <div class="col-sm-12">
+
+                    <ul class="nav nav-tabs">
+                        <li class="active"><a href="#output" data-toggle="tab">Log Output</a></li>
+                        <li><a href="#schedExDetails${scheduledExecution?.id}" data-toggle="tab">Definition</a></li>
+                    </ul>
+                </div>
+            </div>
+
 
     <div class="row">
         <div class="col-sm-12">
@@ -411,7 +417,9 @@
 
 
     <g:if test="${scheduledExecution}">
-        <h4 class="text-muted"><g:message code="page.section.Activity"/></h4>
+        <h4 class="text-muted" id="history_header" style="${wdgt.styleVisible(if: execution.dateCompleted != null)}">
+            <g:message code="page.section.Activity"/>
+        </h4>
         <div class="pageBody">
             <table cellpadding="0" cellspacing="0" class="jobsList list history table table-hover table-condensed"
                    style="width:100%">
@@ -419,7 +427,10 @@
             </table>
             <g:if test="${execution.dateCompleted!=null}">
             <g:javascript>
-                fireWhenReady('histcontent',loadHistory);
+                fireWhenReady('histcontent', loadHistory);
+                fireWhenReady('histcontent', function () {
+                    $('history_header').show();
+                });
             </g:javascript>
             </g:if>
         </div>

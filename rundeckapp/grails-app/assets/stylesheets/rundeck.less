@@ -429,6 +429,34 @@
     .border-right-radius(@border-radius-large) !important;
   }
 
+  //affix for execution show page
+  .executionshow {
+    &.affix {
+
+      top: 0;
+      right:0;
+      width: 100%;
+      background: white;
+      z-index: 1;
+      .container-fixed();
+      padding-top:@navbar-margin-bottom;
+      padding-bottom:10px;
+      border-bottom: 1px solid @list-group-border;
+    }
+  }
+  .affix .affixed-hidden{
+    display: none;
+  }
+  .affixed-shown{
+    display: none;
+    .affix &{
+      display: block;
+    }
+    .affix &.affixed-shown-inline{
+      display: inline;
+    }
+  }
+
 
 
 

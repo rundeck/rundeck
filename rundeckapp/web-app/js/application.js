@@ -1144,8 +1144,22 @@ function _initPopoverContentRef(parent){
 }
 
 /** page init */
+function _initAffix(){
+    //affixed elements
+    jQuery("a[href='#top']").click(function () {
+        jQuery("html, body").animate({ scrollTop: 0 }, "slow");
+        return false;
+    });
+    jQuery('[data-affix=top]').each(function (i, e) {
+        var padd = jQuery(e).data('affix-padding-top');
+        var top= jQuery(e).offset().top - (padd ? padd : 0);
+        jQuery(e).affix({ offset: { top:  top } });
+        jQuery(e).closest('[data-affix=wrap]').height(jQuery(e).height());
+    });
+}
 
 jQuery(window).load(function () {
     jQuery('.has_tooltip').tooltip({});
     _initPopoverContentRef();
+    _initAffix();
 });
