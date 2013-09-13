@@ -241,6 +241,12 @@
       <version>1.9</version>
       <scope>compile</scope>
     </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-all</artifactId>
+      <version>1.8.5</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
   <properties>
     <version_ident>2.0.0-SNAPSHOT-0</version_ident>
