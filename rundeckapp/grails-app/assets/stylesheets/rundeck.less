@@ -169,8 +169,12 @@
     color: @gray;
   }
 .textbtn-variant( @color ; @background-color ; @background-higlight) {
-    color: @color ;
+    color: @gray;
     background-color: @background-color ;
+
+  &.action{
+    text-decoration: underline;
+  }
 
   &:hover,
   &:focus,
@@ -647,4 +651,10 @@
     &.collapse_stepnum td.stepnum {
       display: none;
     }
+  }
+
+  //history rows with default action link
+  tr.link:hover a._defaultAction{
+    color: @link-hover-color;
+    text-decoration: underline;
   }
