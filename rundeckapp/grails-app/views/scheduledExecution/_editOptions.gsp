@@ -26,18 +26,24 @@
 </div>
 
 
-<g:if test="${scheduledExecution.loglevel != 'DEBUG'}">
-    <div class="form-group">
-        <div class="col-sm-offset-2 col-sm-10">
-            <div class="checkbox">
-                <label>
-                    <g:checkBox name="extra.debug" value="true" checked="false"/>
-                    <g:message code="enable.verbose.logging"/>
-                </label>
-            </div>
+<div class="form-group">
+    <label class="col-sm-2 control-label" for="extra.loglevel">Log level</label>
+
+    <div class="col-sm-10">
+        <label class="radio-inline">
+            <g:radio name="extra.loglevel" value="INFO" checked="${scheduledExecution?.loglevel != 'DEBUG'}"/>
+            Normal
+        </label>
+        <label class="radio-inline">
+            <g:radio name="extra.loglevel" value="DEBUG" checked="${scheduledExecution?.loglevel == 'DEBUG'}"/>
+            Debug
+        </label>
+
+        <div class="help-block">
+            Debug level produces more output
         </div>
     </div>
-</g:if>
+</div>
 
 <g:if test="${failedNodes}">
     <g:hiddenField name="_replaceNodeFilters" value="true"/>
