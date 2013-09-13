@@ -68,7 +68,7 @@
         <div class="presentation">
             <div>
                 <g:radio id="jobNodeStepFieldTrue" type="checkbox" name="nodeStep" value="true"
-                         checked="${isNodeStep}"/>
+                         checked="${!!isNodeStep}"/>
                 <label for="jobNodeStepFieldTrue">
                     <g:message code="JobExec.nodeStep.true.label" />
                 </label>
@@ -176,7 +176,7 @@
             <span class="info note">${newitemDescription.description?.encodeAsHTML()}</span>
         </div>
         <g:hiddenField name="pluginItem" value="true"/>
-        <g:hiddenField name="newitemnodestep" value="${item?item.nodeStep:newitemnodestep=='true'}"/>
+        <g:hiddenField name="newitemnodestep" value="${item?!!item.nodeStep:newitemnodestep=='true'}"/>
         <div>
             <table class="simpleForm nexecDetails">
                 <g:set var="pluginprefix" value="pluginConfig."/>
