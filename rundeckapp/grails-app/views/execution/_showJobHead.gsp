@@ -29,8 +29,8 @@
         </span>
         <g:if test="${!groupOnly && auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_UPDATE)}">
             <g:link controller="scheduledExecution" title="Edit Job" action="edit" id="${scheduledExecution.extid}"
-                class="textbtn textbtn-info">
-                <i class="glyphicon glyphicon-pencil"></i>
+                class="textbtn textbtn-info textbtn-on-hover">
+                <i class="glyphicon glyphicon-edit"></i>
                 edit
             </g:link>
         </g:if>

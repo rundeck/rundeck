@@ -16,7 +16,7 @@
             <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_UPDATE)}">
                 <g:link controller="scheduledExecution" title="Edit or Delete this Job" action="edit"
                         id="${scheduledExecution.extid}" class="textbtn textbtn-info textbtn-on-hover">
-                <b class="glyphicon glyphicon-pencil"></b>
+                <b class="glyphicon glyphicon-edit"></b>
                     edit job</g:link>
             </g:if>
             </small>

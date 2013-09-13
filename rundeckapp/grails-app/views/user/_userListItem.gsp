@@ -40,8 +40,8 @@
         <g:set var="adminauth" value="${auth.resourceAllowedTest(kind:'user',action:[AuthConstants.ACTION_ADMIN],context:'application')}"/>
         <g:if test="${adminauth}">
         <span class="useredit">
-            <g:link action="edit" params="[login:user.login]" class="textbtn textbtn-info">
-                <i class="glyphicon glyphicon-pencil"></i> edit
+            <g:link action="edit" params="[login:user.login]" class="textbtn textbtn-info textbtn-on-hover">
+                <i class="glyphicon glyphicon-edit"></i> edit
             </g:link>
         </span>
         </g:if>

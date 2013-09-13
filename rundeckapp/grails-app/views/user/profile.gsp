@@ -88,8 +88,8 @@
     <div class="col-sm-10">
         <h3>User Profile: ${user.login}
             <small>
-            <g:link action="edit" params="[login: params.login]" class=" textbtn textbtn-default btn-sm">
-                <i class="glyphicon-pencil glyphicon"></i>
+            <g:link action="edit" params="[login: params.login]" class=" textbtn textbtn-default btn-sm textbtn-on-hover">
+                <i class="glyphicon-edit glyphicon"></i>
                 Edit
             </g:link>
             </small>

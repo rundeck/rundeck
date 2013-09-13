@@ -53,7 +53,8 @@
         Project: ${session.project.encodeAsHTML()}
 
     </span>
-
+<div class="row row-space">
+<div class="col-sm-12">
     <ul class="nav nav-tabs">
         <li class="active">
             <a href="#configure"
@@ -76,8 +77,8 @@
 <div class="tab-pane active" id="configure">
 <ul class="list-group list-group-tab-content">
         <g:link controller="framework" action="editProject" params="[project: session.project]"
-                class="textbtn textbtn-info list-group-item">
-            <i class="glyphicon glyphicon-pencil"></i>
+                class="textbtn textbtn-info list-group-item  textbtn-on-hover">
+            <i class="glyphicon glyphicon-edit"></i>
             <g:message code="gui.menu.ProjectEdit" default="edit configuration"/>
         </g:link>
         <li class="list-group-item ">
@@ -291,6 +292,8 @@
         </div>
     </div>
     </g:form>
+</div>
+</div>
 </div>
 </div>
 </div>

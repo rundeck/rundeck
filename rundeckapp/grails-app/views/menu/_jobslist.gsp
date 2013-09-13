@@ -72,7 +72,7 @@
                                             id="${scheduledExecution.extid}"
                                             class="jobIdLink textbtn textbtn-info textbtn-on-hover"
                                             data-job-id="${scheduledExecution.extid}">
-                                        <i class="glyphicon glyphicon-pencil"></i>
+                                        <i class="glyphicon glyphicon-edit"></i>
                                         edit</g:link>
                                 </g:if>
 
