@@ -185,7 +185,7 @@
 
                 <g:if test="${auth.resourceAllowedTest(kind: 'job', action: AuthConstants.ACTION_CREATE)}">
                     <g:link controller="scheduledExecution" title="Duplicate Job" action="copy"
-                            id="${scheduledExecution.extid}" class="textbtn">
+                            id="${scheduledExecution.extid}" class="textbtn textbtn-success">
                         <b class="glyphicon glyphicon-plus"></b>
                         duplicate to a new job
                     </g:link>
