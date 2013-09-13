@@ -23,15 +23,47 @@ package com.dtolabs.rundeck.core.execution.workflow;
 * 
 */
 
-import com.dtolabs.rundeck.core.common.*;
-import com.dtolabs.rundeck.core.execution.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import junit.framework.Test;
+import junit.framework.TestSuite;
+
+import org.apache.tools.ant.BuildListener;
+import org.junit.Assert;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
+
+import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.FrameworkProject;
+import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.common.INodeSet;
+import com.dtolabs.rundeck.core.common.NodesSelector;
+import com.dtolabs.rundeck.core.common.SelectorUtils;
+import com.dtolabs.rundeck.core.execution.ExecutionContext;
+import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
+import com.dtolabs.rundeck.core.execution.ExecutionListener;
+import com.dtolabs.rundeck.core.execution.ExecutionListenerOverride;
+import com.dtolabs.rundeck.core.execution.FailedNodesListener;
+import com.dtolabs.rundeck.core.execution.StatusResult;
+import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.NodeDispatchStepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.*;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionService;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResultImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandBase;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCommandBase;
@@ -39,14 +71,6 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCom
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
 import com.dtolabs.rundeck.core.utils.NodeSet;
-import junit.framework.*;
-import org.apache.tools.ant.BuildListener;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
 
 public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
     Framework testFramework;
@@ -1802,6 +1826,128 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                 assertEquals(0, executionContext.getLoglevel());
                 assertEquals("user1", executionContext.getUser());
                 assertEquals(SelectorUtils.singleNode("testnode2"), executionContext.getNodeSelector());
+            }
+        }
+    }
+    
+    public void testCreatePrintableDataContext() {
+        Map<String, Map<String, String>> dataContext = new HashMap<String, Map<String, String>>();
+        
+        String otherKey = "other";
+        Map<String, String> otherData = new HashMap<String, String>();
+        dataContext.put(otherKey, otherData);
+        
+        Map<String, String> secureData = new HashMap<String, String>();
+        String secureKey = "secureKey";
+        secureData.put(secureKey, "secureValue");
+        dataContext.put(StepFirstWorkflowStrategy.SECURE_OPTION_KEY, secureData);
+        
+        Map<String, String> regularData = new HashMap<String, String>();
+        String insecureKey = "insecureKey";
+        regularData.put(insecureKey, "insecureValue");
+        regularData.put(secureKey, "secureValue");
+        dataContext.put(StepFirstWorkflowStrategy.OPTION_KEY, regularData);
+                
+        StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
+        Map<String, Map<String, String>> result = strategy.createPrintableDataContext(dataContext);
+        
+        Assert.assertSame("Expected other data to be present", otherData, result.get(otherKey));
+        
+        Map<String, String> resultSecureData = result.get(StepFirstWorkflowStrategy.SECURE_OPTION_KEY);
+        Assert.assertEquals("Expected secure value to be replaced", StepFirstWorkflowStrategy.SECURE_OPTION_VALUE, resultSecureData.get(secureKey));
+        
+        Map<String, String> resultRegularData = result.get(StepFirstWorkflowStrategy.OPTION_KEY);
+        Assert.assertEquals("Expected secure value to be replaced", StepFirstWorkflowStrategy.SECURE_OPTION_VALUE, resultRegularData.get(secureKey));
+        Assert.assertEquals("Expected insecure value to be untouched", regularData.get(insecureKey), resultRegularData.get(insecureKey));
+    }
+    
+    public void testCreatePrintableDataContextNoDataContext() {
+        StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
+        Map<String, Map<String, String>> result = strategy.createPrintableDataContext(null);
+        
+        Assert.assertTrue("Expected empty data context", result.isEmpty());
+    }
+    
+    public void testCreatePrintableDataContextEmptyDataContext() {
+        Map<String, Map<String, String>> dataContext = new HashMap<String, Map<String, String>>();
+        
+        StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
+        Map<String, Map<String, String>> result = strategy.createPrintableDataContext(dataContext);
+        
+        Assert.assertTrue("Expected empty data context", result.isEmpty());
+    }
+    
+    public void testCreatePrintableDataContextNoSecureData() {
+        Map<String, Map<String, String>> dataContext = new HashMap<String, Map<String, String>>();
+        
+        String otherKey = "other";
+        Map<String, String> otherData = new HashMap<String, String>();
+        dataContext.put(otherKey, otherData);
+        
+        Map<String, String> regularData = new HashMap<String, String>();
+        String insecureKey = "insecureKey";
+        regularData.put(insecureKey, "insecureValue");
+        dataContext.put(StepFirstWorkflowStrategy.OPTION_KEY, regularData);
+                
+        StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
+        Map<String, Map<String, String>> result = strategy.createPrintableDataContext(dataContext);
+        
+        Assert.assertSame("Expected other data to be present", otherData, result.get(otherKey));
+                
+        Map<String, String> resultRegularData = result.get(StepFirstWorkflowStrategy.OPTION_KEY);
+        Assert.assertEquals("Expected insecure value to be untouched", regularData.get(insecureKey), resultRegularData.get(insecureKey));
+    }
+    
+    public void testCreatePrintableDataContextNoRegularData() {
+        Map<String, Map<String, String>> dataContext = new HashMap<String, Map<String, String>>();
+        
+        String otherKey = "other";
+        Map<String, String> otherData = new HashMap<String, String>();
+        dataContext.put(otherKey, otherData);
+        
+        Map<String, String> secureData = new HashMap<String, String>();
+        String secureKey = "secureKey";
+        secureData.put(secureKey, "secureValue");
+        dataContext.put(StepFirstWorkflowStrategy.SECURE_OPTION_KEY, secureData);
+                
+        StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
+        Map<String, Map<String, String>> result = strategy.createPrintableDataContext(dataContext);
+        
+        Assert.assertSame("Expected other data to be present", otherData, result.get(otherKey));
+        
+        Map<String, String> resultSecureData = result.get(StepFirstWorkflowStrategy.SECURE_OPTION_KEY);
+        Assert.assertEquals("Expected secure value to be replaced", StepFirstWorkflowStrategy.SECURE_OPTION_VALUE, resultSecureData.get(secureKey));
+    }
+    
+    @SuppressWarnings("unchecked")
+    public void testExecuteWorkflowUsesPrintableDataContext() {
+        ExecutionListener listener = Mockito.mock(ExecutionListener.class);
+        StepExecutionContext context = Mockito.mock(StepExecutionContext.class);
+        Mockito.when(context.getExecutionListener()).thenReturn(listener);
+        
+        String printableContextToString = "this is hopefully some string that won't appear elsewhere";
+        Map<String, Map<String, String>> printableContext = Mockito.mock(Map.class);
+        Mockito.when(printableContext.toString()).thenReturn(printableContextToString);
+        
+        String dataContextToString = "this is another magic string that hopefully won't appear elsewhere";
+        Map<String, Map<String, String>> dataContext = Mockito.mock(Map.class);
+        Mockito.when(dataContext.toString()).thenReturn(dataContextToString);
+        Mockito.when(context.getDataContext()).thenReturn(dataContext);
+        
+        StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
+        strategy = Mockito.spy(strategy);
+        Mockito.doReturn(printableContext).when(strategy).createPrintableDataContext(Mockito.same(dataContext));
+        
+        WorkflowExecutionItem item = Mockito.mock(WorkflowExecutionItem.class);
+        strategy.executeWorkflowImpl(context, item);
+        
+        ArgumentCaptor<String> logLineCaptor = ArgumentCaptor.forClass(String.class);
+        Mockito.verify(listener, Mockito.atLeastOnce()).log(Mockito.anyInt(), logLineCaptor.capture());
+        
+        for (String line : logLineCaptor.getAllValues()) {
+            if (line.startsWith(StepFirstWorkflowStrategy.DATA_CONTEXT_PREFIX)) {
+                Assert.assertTrue("Expected printable data context string.", line.contains(printableContextToString));
+                Assert.assertFalse("Not expecting raw data context string.", line.contains(dataContextToString));
             }
         }
     }
