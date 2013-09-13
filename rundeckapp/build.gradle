@@ -133,22 +133,8 @@ task cleanGrails(type: Exec, dependsOn: [extractGrails]) {
 	commandLine grailsCommandLine
 	args "-DRUNDECK_VERSION=${version}", 'clean'
 }
-/**
- * Run grails asset-precompile
- */
-task cleanAssets(type: Exec, overwrite: true, dependsOn: [extractGrails]) {
-    workingDir project.projectDir
-    environment 'GRAILS_HOME', grailsHome
-    commandLine grailsCommandLine
-    args "-Dmaven.central.url=${mavenCentralUrl}",
-            "${mavenCreds}",
-            "-Dgrails.local.repo=${grailsLocalRepo}",
-            "-DRUNDECK_VERSION=${version}",
-            'prod',
-            'asset-clean'
-}
 
-task clean(overwrite: true, dependsOn: [cleanEclipse, cleanWar, cleanGrails, cleanAssets]) {
+task clean(overwrite: true, dependsOn: [cleanEclipse, cleanWar, cleanGrails]) {
 }
 
 /**
