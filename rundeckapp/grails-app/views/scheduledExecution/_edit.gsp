@@ -597,7 +597,7 @@ var applinks={
                 <input type="radio"
                     name="doNodedispatch"
                     value="true"
-                    checked="${scheduledExecution?.doNodedispatch}"
+                    ${scheduledExecution?.doNodedispatch?'checked':''}
                     id="doNodedispatchTrue"
                     onchange="_matchNodes()"
                 />
@@ -609,7 +609,7 @@ var applinks={
                 <input type="radio"
                     name="doNodedispatch"
                     value="false"
-                    checked="${!scheduledExecution?.doNodedispatch}"
+                    ${!scheduledExecution?.doNodedispatch ? 'checked' : ''}
                     id="doNodedispatchFalse"
                     onchange="_matchNodes()"
                 />
