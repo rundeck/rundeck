@@ -38,7 +38,7 @@
                                     title="Filter by tag: ${tag}">${tag.encodeAsHTML()} : ${tagsummary[tag]}</g:link>
                         </g:if>
                         <g:elseif test="${action}">
-                            <span class="${action.classnames}" onclick="${action.onclick}" tag="${tag.encodeAsHTML()}" title="Filter by tag: ${tag}">${tag.encodeAsHTML()}:${tagsummary[tag]}</span>
+                            <span class="${action.classnames}" onclick="${action.onclick}" data-tag="${tag.encodeAsHTML()}" title="Filter by tag: ${tag}">${tag.encodeAsHTML()}:${tagsummary[tag]}</span>
                         </g:elseif>
                         <g:else>
                             ${tag.encodeAsHTML()}:${tagsummary[tag]}
@@ -63,7 +63,7 @@
                             </g:if>
                             <g:elseif test="${action}">
                                 <span class=" ${action.classnames}" onclick="${action.onclick}"
-                                      tag="${tag.encodeAsHTML()}"
+                                      data-tag="${tag.encodeAsHTML()}"
                                       title="Filter by tag: ${tag}">${tag.encodeAsHTML()}:${tagsummary[tag]}</span>
                             </g:elseif>
                             <g:else>

@@ -7,12 +7,12 @@
     <div class="panel-heading">
         <div>
             <h4>
-                Run Job
+                <g:message code="run.job" />
             </h4>
         </div>
     </div>
 </g:if>
-    <div class="list-group list-group-tab-content">
+<div class="list-group list-group-tab-content">
 <g:if test="${!hideHead}">
             <div class="list-group-item">
 
@@ -21,6 +21,8 @@
             </div>
 </g:if>
 <div class="list-group-item">
+<div class="row">
+<div class="${hideHead?'col-sm-9':'col-sm-12'}">
     <g:render template="editOptions" model="${[scheduledExecution:scheduledExecution, selectedoptsmap:selectedoptsmap, selectedargstring:selectedargstring,authorized:authorized,jobexecOptionErrors:jobexecOptionErrors, optiondependencies: optiondependencies, dependentoptions: dependentoptions, optionordering: optionordering]}"/>
     <div class="form-group">
     <div class="col-sm-2 control-label text-form-label">
@@ -61,8 +63,8 @@
                 <g:if test="${namegroups}">
                     <div class=" group_select_control" style="display:none">
                         Select:
-                        <span class="textbtn textbtn-default selectall">All</span>
-                        <span class="textbtn textbtn-default selectnone">None</span>
+                        <span class="textbtn textbtn-default textbtn-on-hover selectall">All</span>
+                        <span class="textbtn textbtn-default textbtn-on-hover selectnone">None</span>
                         <g:if test="${tagsummary}">
                             <g:render template="/framework/tagsummary"
                                       model="${[tagsummary:tagsummary,action:[classnames:'tag tagselected textbtn obs_tag_group',onclick:'']]}"/>
@@ -91,49 +93,45 @@
                                 <g:if test="${namegroups.size()>1}">
                                 <div class="group_select_control" style="display:none">
                                     Select:
-                                    <span class="textbtn textbtn-default selectall" >All</span>
-                                    <span class="textbtn textbtn-default selectnone" >None</span>
+                                    <span class="textbtn textbtn-default textbtn-on-hover selectall" >All</span>
+                                    <span class="textbtn textbtn-default textbtn-on-hover selectnone" >None</span>
                                     <g:if test="${grouptags && grouptags[group]}">
                                         <g:render template="/framework/tagsummary" model="${[tagsummary:grouptags[group],action:[classnames:'tag tagselected textbtn  obs_tag_group',onclick:'']]}"/>
                                     </g:if>
                                 </div>
                                 </g:if>
-                                <table>
                                     <g:each var="node" in="${nodemap.subMap(namegroups[group]).values()}" status="index">
                                         <g:if test="${index % COLS == 0}">
-                                            <tr>
                                         </g:if>
-                                        <td>
                                             <label for="${node.nodename}"
-                                                   class=" ${localNodeName && localNodeName == node.nodename ? 'server' : ''} node_ident obs_tooltip"
+                                                   class=" ${localNodeName && localNodeName == node.nodename ? 'server' : ''} node_ident obs_tooltip checkbox-inline"
                                                    id="${node.nodename}_key">
-                                                <input id="${node.nodename}" type="checkbox" name="extra.nodeIncludeName"
-                                                       value="${node.nodename}"
-                                                    disabled="true"
-                                                    tag="${node.tags?.join(' ').encodeAsHTML()}"
-                                                       checked="true"/> ${node.nodename.encodeAsHTML()}</label>
+                                            <input id="${node.nodename}"
+                                                   type="checkbox"
+                                                   name="extra.nodeIncludeName"
+                                                   value="${node.nodename}"
+                                                   disabled="true"
+                                                   data-tag="${node.tags?.join(' ').encodeAsHTML()}"
+                                                   checked="true"/>${node.nodename.encodeAsHTML()}</label>
 
-                                            <g:render template="/framework/nodeTooltipView"
-                                                      model="[node:node,key:node.nodename+'_key',islocal:localNodeName && localNodeName==node.nodename]"/>
 
-                                        </td>
                                         <g:if test="${(index % COLS == (COLS-1)) || (index+1 == namegroups[group].size())}">
-                                            </tr>
                                         </g:if>
                                     </g:each>
-                                </table>
+                            <g:each var="node" in="${nodemap.subMap(namegroups[group]).values()}" status="index">
+                                <g:render template="/framework/nodeTooltipView"
+                                          model="[node: node, key: node.nodename + '_key', islocal: localNodeName && localNodeName == node.nodename]"/>
+
+                            </g:each>
                             </div>
                         </div>
                     </g:each>
                 </g:if>
                 <g:else>
-                <table>
                 <g:each var="node" in="${nodes}" status="index">
                     <g:if test="${index % COLS == 0}">
-                        <tr>
                     </g:if>
-                    <td>
-                        <label for="${node.nodename}" class=" ${localNodeName&& localNodeName==node.nodename? 'server' : ''} node_ident obs_tooltip"
+                        <label for="${node.nodename}" class=" ${localNodeName&& localNodeName==node.nodename? 'server' : ''} node_ident obs_tooltip checkbox-inline"
                                id="${node.nodename}_key">
                             <input id="${node.nodename}" type="checkbox" name="extra.nodeIncludeName"
                                    value="${node.nodename}" disabled="true" checked="true"/> ${node.nodename.encodeAsHTML()}</label>
@@ -141,12 +139,9 @@
                         <g:render template="/framework/nodeTooltipView"
                                   model="[node:node,key:node.nodename+'_key',islocal:localNodeName && localNodeName==node.nodename]"/>
 
-                    </td>
                     <g:if test="${(index % COLS == (COLS-1)) || (index+1 == nodes.size())}">
-                        </tr>
                     </g:if>
                 </g:each>
-                </table>
                 </g:else>
             </div>
             <g:javascript>
@@ -161,7 +156,7 @@
                             }
                         });
                         $(e).up('.group_section').select('span.textbtn.obs_tag_group').each(function(e) {
-                            $(e).setAttribute('tagselected', 'true');
+                            $(e).setAttribute('data-tagselected', 'true');
                             $(e).addClassName('tagselected');
                         });
                     });
@@ -174,29 +169,29 @@
                             }
                         });
                         $(e).up('.group_section').select('span.textbtn.obs_tag_group').each(function(e) {
-                            $(e).setAttribute('tagselected', 'false');
+                            $(e).setAttribute('data-tagselected', 'false');
                             $(e).removeClassName('tagselected');
                         });
                     });
                 });
                 $$('div.jobmatchednodes span.textbtn.obs_tag_group').each(function(e) {
                     Event.observe(e, 'click', function(evt) {
-                        var ischecked = e.getAttribute('tagselected') != 'false';
-                        e.setAttribute('tagselected', ischecked ? 'false' : 'true');
+                        var ischecked = e.getAttribute('data-tagselected') != 'false';
+                        e.setAttribute('data-tagselected', ischecked ? 'false' : 'true');
                         if (!ischecked) {
                             $(e).addClassName('tagselected');
                         } else {
                             $(e).removeClassName('tagselected');
                         }
-                        $(e).up('.group_section').select('input[tag~="' + e.getAttribute('tag') + '"]').each(function(
+                        $(e).up('.group_section').select('input[data-tag~="' + e.getAttribute('data-tag') + '"]').each(function(
                         el) {
                             if (el.type == 'checkbox') {
                                 el.checked = !ischecked;
                             }
                         });
-                        $(e).up('.group_section').select('span.textbtn.obs_tag_group[tag="' + e.getAttribute('tag') + '"]').each(function(
+                        $(e).up('.group_section').select('span.textbtn.obs_tag_group[data-tag="' + e.getAttribute('data-tag') + '"]').each(function(
                         el) {
-                            el.setAttribute('tagselected', ischecked ? 'false' : 'true');
+                            el.setAttribute('data-tagselected', ischecked ? 'false' : 'true');
                             if (!ischecked) {
                                 $(el).addClassName('tagselected');
                             } else {
@@ -238,7 +233,37 @@
 
     </div>
 </div>
+<g:if test="${hideHead}">
+<div class="col-sm-3">
+    <div id="formbuttons">
+        <g:if test="${!hideCancel}">
+            <g:actionSubmit id="execFormCancelButton" value="Cancel" class="btn btn-default"/>
+        </g:if>
+        <div class="pull-right">
+            <button type="submit"
+                    id="execFormRunButton"
+                    class=" btn btn-success ">
+                    <g:message code="run.job.now" />
+                <b class="glyphicon glyphicon-play"></b>
+            </button>
+        </div>
+        <div class="clearfix">
+        </div>
+        <div class="pull-right">
+        <label class="control-label">
+            <g:checkBox id="followoutputcheck" name="follow"
+                        checked="${defaultFollow || params.follow == 'true'}"
+                        value="true"/>
+            <g:message code="job.run.watch.output"/>
+        </label>
+        </div>
+    </div>
 </div>
+</g:if>
+</div>
+</div>
+</div>
+<g:if test="${!hideHead}">
 <div class="panel-footer">
     <div class="" id="formbuttons">
         <div class="col-sm-12">
@@ -246,18 +271,22 @@
                 <g:actionSubmit id="execFormCancelButton" value="Cancel" class="btn btn-default"/>
             </g:if>
             <button type="submit"
-                    title="${g.message(code: 'domain.ScheduledExecution.title')} Now" id="execFormRunButton"
+                    id="execFormRunButton"
                     class=" btn btn-success">
-                <b class="glyphicon glyphicon-play"></b> Run Job Now
+                <i class="glyphicon glyphicon-play"></i>
+                <g:message code="run.job.now" />
             </button>
             <label class="checkbox-inline">
-                <g:checkBox id="followoutputcheck" name="follow" checked="${defaultFollow || params.follow == 'true'}"
+                <g:checkBox id="followoutputcheck"
+                            name="follow"
+                            checked="${defaultFollow || params.follow == 'true'}"
                             value="true"/>
                 <g:message code="job.run.watch.output"/>
             </label>
         </div>
     </div>
 </div>
+</g:if>
 </div>%{--/.panel--}%
 </g:form>
 </div> %{--/.col--}%
