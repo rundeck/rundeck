@@ -1,6 +1,7 @@
 
 <div class="row">
 <div class="col-sm-12 ">
+<g:form controller="scheduledExecution" method="post" action="runJobNow" class="form-horizontal" role="form">
 <div class="panel panel-default panel-tab-content">
 <g:if test="${!hideHead}">
     <div class="panel-heading">
@@ -9,15 +10,20 @@
                 Run Job
             </h4>
         </div>
-        <tmpl:showHead scheduledExecution="${scheduledExecution}" iconName="icon-job"
-                       subtitle="Choose Execution Options" runPage="true"/>
     </div>
 </g:if>
-<div class="panel-body">
-    <g:form controller="scheduledExecution" method="post" action="runJobNow" class="form-horizontal" role="form">
+    <div class="list-group list-group-tab-content">
+<g:if test="${!hideHead}">
+            <div class="list-group-item">
+
+                <tmpl:showHead scheduledExecution="${scheduledExecution}" iconName="icon-job"
+                               subtitle="Choose Execution Options" runPage="true"/>
+            </div>
+</g:if>
+<div class="list-group-item">
     <g:render template="editOptions" model="${[scheduledExecution:scheduledExecution, selectedoptsmap:selectedoptsmap, selectedargstring:selectedargstring,authorized:authorized,jobexecOptionErrors:jobexecOptionErrors, optiondependencies: optiondependencies, dependentoptions: dependentoptions, optionordering: optionordering]}"/>
     <div class="form-group">
-    <div class="col-sm-2 control-label">
+    <div class="col-sm-2 control-label text-form-label">
         Nodes
     </div>
     <div class="col-sm-10">
@@ -227,32 +233,32 @@
         </g:elseif>
     </div>
     </div>
-    <div class="form-group " id="formbuttons">
-        <div class="col-sm-3 col-sm-offset-2">
-            <g:if test="${!hideCancel}">
-                <g:actionSubmit id="execFormCancelButton" value="Cancel" class="btn btn-default"/>
-            </g:if>
-                <button type="submit"
-                        title="${g.message(code:'domain.ScheduledExecution.title')} Now" id="execFormRunButton"
-                        class=" btn btn-success">
-                    <b class="glyphicon glyphicon-play"></b> Run Job Now
-                </button>
-        </div>
-        <div class="col-sm-7">
-            <label class="checkbox-inline">
-                <g:checkBox id="followoutputcheck" name="follow" checked="${defaultFollow|| params.follow == 'true'}" value="true"
-                    class=""
-                            />
-                <g:message code="job.run.watch.output"/>
 
-            </label>
-        </div>
-    </div>
     <div class="error note" id="formerror" style="display:none">
 
     </div>
-    </g:form>
 </div>
 </div>
+<div class="panel-footer">
+    <div class="" id="formbuttons">
+        <div class="col-sm-12">
+            <g:if test="${!hideCancel}">
+                <g:actionSubmit id="execFormCancelButton" value="Cancel" class="btn btn-default"/>
+            </g:if>
+            <button type="submit"
+                    title="${g.message(code: 'domain.ScheduledExecution.title')} Now" id="execFormRunButton"
+                    class=" btn btn-success">
+                <b class="glyphicon glyphicon-play"></b> Run Job Now
+            </button>
+            <label class="checkbox-inline">
+                <g:checkBox id="followoutputcheck" name="follow" checked="${defaultFollow || params.follow == 'true'}"
+                            value="true"/>
+                <g:message code="job.run.watch.output"/>
+            </label>
+        </div>
+    </div>
 </div>
-</div>
+</div>%{--/.panel--}%
+</g:form>
+</div> %{--/.col--}%
+</div> %{--/.row--}%
