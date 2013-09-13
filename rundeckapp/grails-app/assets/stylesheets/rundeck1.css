@@ -523,15 +523,6 @@ div.formRemoteList tr.module_entry td.objIdent {
     /*font-size:10pt;*/
 }
 
-.outputdisplayopts {
-    padding: 5px 10px;
-    margin: 0 20px;
-    background: #eee;
-    border-width: 1px 1px 0 1px;
-    border-style: solid;
-    border-color: #ddd;
-    color: #999;
-}
 
 .optDefault {
     font-family: courier, monospace;

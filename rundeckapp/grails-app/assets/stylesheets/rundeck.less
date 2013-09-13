@@ -18,14 +18,10 @@
       color: red;
       background-color: #000000;
     }
-    img{
-      vertical-align: baseline;
-    }
   }
     /* Reset the container */
   .container {
     max-width: none !important;
-    /*width: 970px;*/
   }
   .footer {
     margin-top: @navbar-margin-bottom;
@@ -254,8 +250,11 @@
 .progress {
   height: @line-height-computed;
 }
-.runstatus .progress{
+.runstatus .progress, .progress.progress-embed{
   margin-bottom: 0;
+}
+.well .progress{
+  background-color: darken(@progress-bg,10%);
 }
 .progress.indefinite{
   .progress-bar{

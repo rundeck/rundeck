@@ -561,26 +561,22 @@ var FollowControl = Class.create({
         $('commandPerform').show();
         return tbl;
     },
-    showLoading:function(message){
+    showLoading:function(message,percent){
         if ($('fileload')) {
             $('fileload').show();
-            if (message != null) {
-                $('fileloadpercent').innerHTML = message;
+            $('fileloadpercent').innerHTML = (message!=null ? message : '');
+            if(percent!=null && $('fileloadprogress')){
+                $('fileloadprogress').show();
+                $('fileloadprogress').down('.progress-bar').style.width=percent+'%';
             }
-        }
-        if ($('fileload2')) {
-            $('fileload2').show();
-            if (message != null) {
-                $('fileload2percent').innerHTML = message;
+            if(percent){
+                $('fileloadpercent').innerHTML = (message != null ? message : '')+percent+'%';
             }
         }
     },
     hideLoading:function(){
         if ($('fileload')) {
             $('fileload').hide();
-        }
-        if ($('fileload2')) {
-            $('fileload2').hide();
         }
     },
     appendCmdOutput: function(data) {
@@ -699,12 +695,14 @@ var FollowControl = Class.create({
                 $('progressContainer').hide();
             }
             var message=null
+            var percent=null;
             if(this.runningcmd.percent!=null){
-                message= "Loading Output... "+Math.ceil(this.runningcmd.percent) + "%";
+                percent= Math.ceil(this.runningcmd.percent);
+                message= "Loading Output... ";
             } else if (this.runningcmd.pending != null) {
                 message = this.runningcmd.pending;
             }
-            this.showLoading(message);
+            this.showLoading(message,percent);
         }else if (!this.runningcmd.jobcompleted && !this.runningcmd.completed) {
             //pending a remote load
             if (this.runningcmd.pending != null) {
@@ -1402,9 +1400,6 @@ var FollowControl = Class.create({
         }
         if ($('fileload')) {
             $('fileload').hide();
-        }
-        if ($('fileload2')) {
-            $('fileload2').hide();
         }
         if (this.runningcmd.failednodes && $$('.execRetry')) {
             $$('.execRetry').each(Element.show);

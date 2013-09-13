@@ -184,17 +184,17 @@
 </form>
 </div>
 
-<div id="fileload2" style="display:none;" class="outputdisplayopts"><img
-        src="${resource(dir: 'images', file: 'icon-tiny-disclosure-waiting.gif')}" alt="Spinner"/> <span
-        id="fileloadpercent"></span></div>
+<div id="fileload" style="display:none;" class=" row">
+    <div class="col-sm-12">
+        <div class=" progress " id="fileloadprogress" style="width:100%">
+            <div class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100" style="width: 10%;">
+                <img src="${resource(dir: 'images', file: 'icon-tiny-disclosure-waiting.gif')}" alt="Spinner"/>
+                <span id="fileloadpercent"></span>
+            </div>
+        </div>
+    </div>
+</div>
 
-<div
-        id="commandPerform"
-        class="commandcontent"
-        style="display:none;  "></div>
-
-<div id="fileload" style="display:none;" class="outputdisplayopts"><img
-        src="${resource(dir: 'images', file: 'icon-tiny-disclosure-waiting.gif')}" alt="Spinner"/> <span
-        id="fileload2percent"></span></div>
+<div id="commandPerform" class="commandcontent" style="display:none;  "></div>
 
 <div id="log"></div>
