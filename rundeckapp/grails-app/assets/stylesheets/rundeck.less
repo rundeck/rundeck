@@ -102,6 +102,13 @@
     }
   }
 
+  /*
+  * job header padding
+  */
+  .jobInfoSection{
+    margin-bottom: 5px;
+  }
+
   /**
   embed a pager in a column
   */
@@ -161,6 +168,10 @@
     text-decoration: underline;
   }
 }
+
+  .textbtn-on-hover {
+    color: @gray;
+  }
 .textbtn-variant( @color ; @background-color ; @background-higlight) {
     color: @color ;
     background-color: @background-color ;
@@ -169,6 +180,10 @@
   &:focus,
   &:active,
   &.active,
+  &.textbtn-on-hover:hover,
+  &.textbtn-on-hover:focus,
+  &.textbtn-on-hover:active,
+  &.textbtn-on-hover.active,
    {
     color: darken(@color, 8%);
     background-color: @background-higlight;
@@ -199,15 +214,17 @@
     display: inline-block;
     margin: 5px 5px 5px 0;
   }
+  &.textbtn-on-hover{
+    .textbtn-on-hover();
+  }
 
 }
 .textbtn-default {
   .textbtn-variant(lighten(@brand-primary, 30%),clear,lighten(@brand-primary, 70%));
 }
-
-  .textbtn-secondary {
-    .textbtn-variant(desaturate(@link-color, 100%),clear,lighten(desaturate(@link-color, 100%), 50%));
-  }
+.textbtn-secondary {
+  .textbtn-variant(desaturate(@link-color, 100%),clear,lighten(desaturate(@link-color, 100%), 50%));
+}
 
 .textbtn-primary {
   .textbtn-variant(@brand-primary,clear,lighten(@brand-primary, 50%));

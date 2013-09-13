@@ -70,7 +70,8 @@
                                 <g:if test="${jobauthorizations && jobauthorizations[AuthConstants.ACTION_UPDATE]?.contains(scheduledExecution.id.toString())}">
                                     <g:link action="edit" controller="scheduledExecution"
                                             id="${scheduledExecution.extid}"
-                                            class="jobIdLink textbtn textbtn-info">
+                                            class="jobIdLink textbtn textbtn-info textbtn-on-hover"
+                                            data-job-id="${scheduledExecution.extid}">
                                         <i class="glyphicon glyphicon-pencil"></i>
                                         edit</g:link>
                                 </g:if>
