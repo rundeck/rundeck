@@ -142,7 +142,7 @@
                         <!--<span class="info note">Filter:</span>-->
                     </g:if>
                     <g:if test="${!filterName}">
-                        <span class="textbtn textbtn-success obs_filtersave" id="outsidefiltersave" title="Click to save this filter with a name">
+                        <span class="textbtn textbtn-info textbtn-on-hover obs_filtersave" id="outsidefiltersave" title="Click to save this filter with a name">
                             save this filter&hellip;
                         </span>
                     </g:if></div>
