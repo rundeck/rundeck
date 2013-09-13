@@ -3,24 +3,32 @@
 <g:render template="/common/errorFragment"/>
 <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE}">
     <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_DELETE)}">
-        <div class="panel panel-danger obs_delete_show" style="display:none; ">
-            <div class="panel-heading">Delete <g:message code="domain.ScheduledExecution.title"/></div>
-
-            <div id="${ukey}jobDisplayDeleteConf${scheduledExecution.id}" class="panel-body ">
-                <g:form controller="scheduledExecution" action="delete" method="post">
-                    <g:hiddenField name="id" value="${scheduledExecution.id}"/>
-                    <g:render template="/scheduledExecution/showHead"
-                              model="${[scheduledExecution: scheduledExecution, runPage: true]}"/>
-                    <p class=" ">Really delete this <g:message
-                            code="domain.ScheduledExecution.title"/>?</p>
-
-                    <div class="buttons primary ">
-                        <button type="submit" class="behavior_delete_hide btn btn-default btn-sm ">
-                            Cancel
-                        </button>
-                        <input type="submit" value="Delete" class="btn btn-danger btn-sm"/>
+        <div class="modal" id="jobdelete" tabindex="-1" role="dialog" aria-labelledby="deletejobtitle" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="deletejobtitle">Delete <g:message code="domain.ScheduledExecution.title"/></h4>
                     </div>
-                </g:form>
+
+                    <div class="modal-body">
+                        <g:render template="/scheduledExecution/showHead"
+                                  model="${[scheduledExecution: scheduledExecution, runPage: true]}"/>
+                        <p class=" ">Really delete this <g:message
+                                code="domain.ScheduledExecution.title"/>?</p>
+                    </div>
+
+                    <div class="modal-footer">
+                        <g:form controller="scheduledExecution" action="delete" method="post">
+                            <g:hiddenField name="id" value="${scheduledExecution.id}"/>
+                            <button type="submit" class="btn btn-default btn-sm "
+                                    data-dismiss="modal">
+                                Cancel
+                            </button>
+                            <input type="submit" value="Delete" class="btn btn-danger btn-sm"/>
+                        </g:form>
+                    </div>
+                </div>
             </div>
         </div>
     </g:if>
@@ -53,11 +61,15 @@
             <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE}">
                 <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_DELETE)}">
                     <div class="  col-sm-2">
-                        <span class="textbtn textbtn-danger pull-right behavior_delete_show"
+
+                        <a data-toggle="modal"
+                           href="#jobdelete"
+                                class="textbtn textbtn-danger pull-right"
                               title="Delete ${g.message(code: 'domain.ScheduledExecution.title')}">
                             <b class="glyphicon glyphicon-remove-circle"></b>
                             Delete this Job
-                        </span>
+                        </a>
+
                     </div>
                 </g:if>
             </auth:resourceAllowed>
