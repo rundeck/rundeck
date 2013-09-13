@@ -185,6 +185,7 @@ task grailsWar(type: Exec, overwrite:true, dependsOn: [installJettyPlugin, insta
             "-DRUNDECK_VERSION=${version}",
             'prod',
             'war',
+            '--non-interactive',
             warFileLocation
 }
 
