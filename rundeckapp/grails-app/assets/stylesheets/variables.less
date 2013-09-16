@@ -18,11 +18,13 @@
 // Brand colors
 // -------------------------
 
-@brand-primary:         #2C3E50;
-@brand-success:         #18BC9C;
-@brand-warning:         #F39C12;
+@brand-primary:         #2C2C2C;
+@brand-success:         #188C6C;
+@brand-warning:         #E38C02;
 @brand-danger:          #E74C3C;
 @brand-info:            #3498DB;
+
+@brand-tint:            #FF0000;
 
 // Scaffolding
 // -------------------------
@@ -33,8 +35,8 @@
 // Links
 // -------------------------
 
-@link-color:            @brand-success;
-@link-hover-color:      @link-color;
+@link-color:            @brand-primary;
+@link-hover-color:      @brand-tint;
 
 // Typography
 // -------------------------
@@ -142,7 +144,7 @@
 @input-color:                    @text-color;
 @input-border:                   #dce4ec;
 @input-border-radius:            @border-radius-base;
-@input-border-focus:             #1abc9c;
+@input-border-focus:             #3498DB;
 
 @input-color-placeholder:        #acb6c0;
 
@@ -247,7 +249,7 @@
 
 // Navbar links
 @navbar-default-link-color:                #fff;
-@navbar-default-link-hover-color:          @brand-success;
+@navbar-default-link-hover-color:          @brand-tint;
 @navbar-default-link-hover-bg:             transparent;
 @navbar-default-link-active-color:         #fff;
 @navbar-default-link-active-bg:            darken(@navbar-default-bg, 10%);
@@ -331,7 +333,7 @@
 // Pagination
 // -------------------------
 
-@pagination-bg:                        @brand-success;
+@pagination-bg:                        @btn-default-bg;
 @pagination-border:                    transparent;
 
 @pagination-hover-bg:                  @gray-lighter;
