@@ -10,7 +10,7 @@
 
             <g:set var="execLink" value="${createLink(controller:'execution',action:'show', id:execution.id)}"/>
 
-            <tr class=" ${j % 2 == 1 ? 'alternateRow' : ''}  ${!execution.dateCompleted ? 'nowrunning' : ''} execution ${execstatus} hilite link"
+            <tr class=" ${j % 2 == 1 ? 'alternateRow' : ''}  ${!execution.dateCompleted ? 'nowrunning' : ''} execution ${execstatus} link"
                 id="${upref}exec-${execution.id}-row" onclick="document.location='${execLink}';">
                 <g:set var="fileName" value="job"/>
                 %{--<g:if test="${execution}">--}%
@@ -114,7 +114,7 @@
                 </td>
 
                 <td class="outputlink hilite action ${!execution.dateCompleted ? 'nowrunning' : ''}">
-                    <g:link title="View execution output" controller="execution" action="show" id="${execution.id}">Show &raquo;</g:link>
+                    <g:link title="View execution output" controller="execution" action="show" id="${execution.id}" class="_defaultAction">Show &raquo;</g:link>
                 </td>
 
             </tr>
