@@ -21,10 +21,11 @@
     Created: Apr 15, 2010 12:45:18 PM
     $Id$
  --%>
+<g:set var="varStr" value=""/> <% varStr = '${' %>
 <g:each in="${displayParams.properties.keySet().grep{it=~/^(node(Include|Exclude)(?!Precedence).*)$/}.sort()}" var="qparam">
     <g:if test="${displayParams[qparam]}">
     <span class="querykey ${qparam=~/Exclude/?'exclude':'include'}"><g:message code="BaseNodeFilters.title.${qparam}"/></span>:
-    <span class="queryvalue text ${qparam=~/Exclude/?'exclude':'include'}">
+    <span class="queryvalue text ${qparam=~/Exclude/?'exclude':'include'} ${displayParams[qparam].contains(varStr) ? 'variable' : ''}">
         <g:truncate max="50" title="${displayParams[qparam].toString().encodeAsHTML()}"><g:message code="${'BaseNodeFilters.title.'+qparam+'.'+displayParams[qparam]}" default="${displayParams[qparam].toString().encodeAsHTML()}"/></g:truncate></span>
     </g:if>
 </g:each>

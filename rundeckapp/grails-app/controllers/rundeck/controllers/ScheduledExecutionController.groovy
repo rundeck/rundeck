@@ -1326,6 +1326,7 @@ class ScheduledExecutionController  {
             NodeSet nset = ExecutionService.filtersAsNodeSet(scheduledExecution)
             def project=frameworkService.getFrameworkProject(scheduledExecution.project, framework)
 //            def nodes=project.getNodes().filterNodes(nset)
+            model.nodeset=nset
             def nodes= com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(nset, project.getNodeSet()).nodes
             if(!nodes || nodes.size()<1){
                 //error
