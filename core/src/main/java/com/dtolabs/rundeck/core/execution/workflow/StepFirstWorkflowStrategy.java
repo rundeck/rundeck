@@ -80,6 +80,9 @@ public class StepFirstWorkflowStrategy extends BaseWorkflowStrategy {
                                                              iWorkflowCmdItems, workflow.isKeepgoing());
         } catch (RuntimeException e) {
             exception = e;
+            e.printStackTrace();
+            executionContext.getExecutionListener().log(Constants.ERR_LEVEL, "Exception: " + e.getClass() + ": " + e
+                    .getMessage());
         }
         final boolean success = workflowsuccess;
         final Exception orig = exception;
