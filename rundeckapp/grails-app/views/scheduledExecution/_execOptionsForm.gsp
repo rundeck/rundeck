@@ -15,8 +15,19 @@
 
 
         <g:if test="${nodesetvariables }">
-            <div class="message note">
-                <g:message code="scheduledExecution.nodeset.variable.warning" default="Note: The Node filters specified for this Job contain variable references, and the runtime nodeset cannot be determined."/>
+            <div class="prompt">
+                Node Filters:
+            </div>
+            <div class="presentation">
+                %{--show node filters--}%
+                %{--${nodeset}--}%
+                <span class="query">
+                    <g:render template="/framework/displayNodeSetFilters" model="${[nodeset: nodeset]}"/>
+                </span>
+
+                <div class="message note">
+                    <g:message code="scheduledExecution.nodeset.variable.warning"/>
+                </div>
             </div>
         </g:if>
         <g:elseif test="${nodesetempty }">

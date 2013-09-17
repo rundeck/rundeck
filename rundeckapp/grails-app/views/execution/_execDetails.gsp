@@ -91,12 +91,22 @@
                 <td>Node Filters:</td>
                 <td id="matchednodes_${rkey}" class="matchednodes embed" >
                     <g:set var="jsdata" value="${execdata.properties.findAll{it.key==~/^node(In|Ex)clude.*$/ &&it.value}}"/>
+                    <g:set var="varStr" value=""/>
+                    <%varStr='${'%>
+                    <g:set var="hasVar" value="${jsdata.find{it.value.toString()?.contains(varStr)}}"/>
+                    <g:if test="${hasVar}">
+                        <span class="query">
+                        <g:render template="/framework/displayNodeFilters" model="${[displayParams: execdata]}"/>
+                        </span>
+                    </g:if>
+                    <g:else>
                     <g:javascript>
                         _g_nodeFilterData['${rkey}']=${jsdata.encodeAsJSON()};
                     </g:javascript>
                     <span class="action textbtn  textbtn query " title="Display matching nodes" onclick="_updateMatchedNodes(_g_nodeFilterData['${rkey}'],'matchednodes_${rkey}','${execdata?.project}',false,{requireRunAuth:true});">
                         <g:render template="/framework/displayNodeFilters" model="${[displayParams:execdata]}"/>
                     </span>
+                    </g:else>
 
                 </td>
 

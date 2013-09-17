@@ -1807,21 +1807,26 @@ span.query.textbtn,a.query.textbtn{
     display:inline-block;
     margin: 5px 5px 5px 0;
 }
-span.query.textbtn span.querykey,a.query.textbtn span.querykey{
-    color: #555;
+span.querykey{
+    /*color: #555;*/
 }
-span.query.textbtn span.queryvalue,a.query.textbtn span.queryvalue{
-    color:black;
+span.queryvalue{
+    /*color:black;*/
     font-weight:bold;
+}
+
+span.queryvalue.variable {
+    color: green;
+    font-weight: normal;
 }
 span.query.textbtn:hover span.queryvalue,a.query.textbtn:hover span.queryvalue{
     color:blue;
 }
-span.query.textbtn  span.querykey.exclude{
+span.querykey.exclude{
     color:#555;
     text-decoration:line-through;
 }
-span.query.textbtn span.querykey.include{
+span.querykey.include{
     color:blue;
 }
 
