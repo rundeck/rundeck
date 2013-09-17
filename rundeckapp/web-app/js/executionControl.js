@@ -1007,7 +1007,8 @@ var FollowControl = Class.create({
                 var step=workflow[parseInt(ctx[0])-1];
                 if(typeof(step)!='undefined'){
                     if(step['exec']){
-                        string+=' $ '+step['exec'];
+//                        string+=' $ '+step['exec'];
+                        string+='Command';
                     }else if(step['jobref']){
                         string+=" Job Reference: "+(step['jobref']['group']? step['jobref']['group']+'/':'')+step['jobref']['name'];
                     }else if(step['script']){
@@ -1015,7 +1016,13 @@ var FollowControl = Class.create({
                     }else if(step['scriptfile']){
                         string += " "+step['scriptfile'] ;
                     }else if(step['type']){//plugin
-                        string += " Plugin "+step['type'] ;
+                        var title= "Plugin " + step['type'];
+                        if(step['nodeStep'] && typeof(nodeSteppluginDescriptions)!='undefined'){
+                            title = nodeSteppluginDescriptions[step['type']].title;
+                        }else if(!step['nodeStep'] && typeof(wfSteppluginDescriptions) != 'undefined'){
+                            title = wfSteppluginDescriptions[step['type']].title;
+                        }
+                        string += title ;
                     }
                 }
             }
@@ -1206,7 +1213,7 @@ var FollowControl = Class.create({
             if ( data['command'] && "run" != data['command']) {
                 var contextstr = this.renderContextString(data);
                 var stepnum = this.renderContextStepNumber(data);
-                cell.innerHTML += "<span class='stepnum' title='" + this.escapeHtml(contextstr) + "'>" + this.escapeHtml(stepnum) + "</span>";
+                cell.innerHTML += "<span class='stepnum' title='" + this.escapeHtml(contextstr) + "'>" + this.escapeHtml(contextstr) + "</span>";
                 cell.innerHTML += "<span class='stepident'>" + this.escapeHtml(contextstr) + "</span>";
             } else if (data['command'] && "run" == data['command']) {
                 cell.innerHTML +=
@@ -1337,7 +1344,8 @@ var FollowControl = Class.create({
         if (!shownode && this.lastrow && this.lastrow['command'] == data['command'] ) {
 //                tdctx.addClassName('repeat');
         }else{
-            tdctx.innerHTML = this.renderContextStepNumber(data);
+
+            tdctx.innerHTML = this.renderContextStepNumber(data) +": " +this.renderContextString(data);
             tdctx.setAttribute('title',this.renderContextString(data));
         }
         var tddata = $(tr.insertCell(cellndx));

@@ -8,6 +8,7 @@ import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import rundeck.Execution
+import rundeck.PluginStep
 import rundeck.ScheduledExecution
 import rundeck.filters.ApiRequestFilters
 import rundeck.services.ExecutionService
@@ -95,11 +96,18 @@ class ExecutionController {
             order('dateStarted', 'desc')
         }
         eprev = result ? result[0] : null
-        if(e.scheduledExecution){
-            return [scheduledExecution: e.scheduledExecution, execution:e, filesize:filesize,enext:enext,eprev:eprev]
-        }else{
-            return [execution:e, filesize:filesize, enext: enext, eprev: eprev]
+        //load plugins for WF steps
+        def pluginDescs=[node:[:],workflow:[:]]
+        e.workflow.commands.findAll{it.instanceOf(PluginStep)}.each{PluginStep step->
+            if(!pluginDescs[step.nodeStep?'node':'workflow'][step.type]){
+                def description = frameworkService.getPluginDescriptionForItem(framework, step)
+                if (description) {
+                    pluginDescs[step.nodeStep ? 'node' : 'workflow'][step.type]=description
+                }
+            }
         }
+        return [scheduledExecution: e.scheduledExecution?:null,execution:e, filesize:filesize,
+                enext: enext, eprev: eprev,stepPluginDescriptions: pluginDescs]
     }
     def mail ={
         def Execution e = Execution.get(params.id)

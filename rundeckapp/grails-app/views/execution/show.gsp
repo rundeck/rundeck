@@ -381,9 +381,11 @@
                     %{--<div class="col-sm-12"></div>--}%
                 %{--</div>--}%
 
-                        <g:javascript>
-                        var workflow=${execution.workflow.commands*.toMap().encodeAsJSON()};
-                        </g:javascript>
+        <g:javascript>
+        var workflow=${execution.workflow.commands*.toMap().encodeAsJSON()};
+            var nodeSteppluginDescriptions=${stepPluginDescriptions.node.collectEntries{[(it.key):[title:it.value.title]]}.encodeAsJSON()};
+            var wfSteppluginDescriptions=${stepPluginDescriptions.workflow.collectEntries { [(it.key):[title: it.value.title]] }.encodeAsJSON()};
+        </g:javascript>
 
         </div>
         </div>
