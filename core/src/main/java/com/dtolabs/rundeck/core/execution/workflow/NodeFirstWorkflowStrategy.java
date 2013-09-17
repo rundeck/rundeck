@@ -132,12 +132,18 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
             }
         } catch (RuntimeException e) {
             exception = e;
+            executionContext.getExecutionListener().log(Constants.ERR_LEVEL, "Exception: " + e.getClass() + ": " + e
+                    .getMessage());
             wfsuccess = false;
         } catch (DispatcherException e) {
             exception = e;
+            executionContext.getExecutionListener().log(Constants.ERR_LEVEL, "Exception: " + e.getClass() + ": " + e
+                    .getMessage());
             wfsuccess = false;
         } catch (ExecutionServiceException e) {
             exception = e;
+            executionContext.getExecutionListener().log(Constants.ERR_LEVEL, "Exception: " + e.getClass() + ": " + e
+                    .getMessage());
             wfsuccess = false;
         }
         final boolean success = wfsuccess;
@@ -225,6 +231,16 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
                     mergedStepFailures.put(stepNum, new HashMap<String, NodeStepResult>());
                 }
                 mergedStepFailures.get(stepNum).put(nodeName, value);
+            }
+            if (result.getResultSet().size() < 1 && result.getNodeFailures().size() < 1 && result.getStepFailures()
+                    .size() < 1 && !result.isSuccess()) {
+
+                //failure could be prior to any node step
+
+                if (null == mergedStepFailures.get(0)) {
+                    mergedStepFailures.put(0, new HashMap<String, NodeStepResult>());
+                }
+                mergedStepFailures.get(0).put(nodeName, stepResult);
             }
             //The WorkflowExecutionResult has a list of StepExecutionResults produced by NodeDispatchStepExecutor
             List<NodeStepResult> results1 = DispatchedWorkflow.extractNodeStepResults(result, stepResult.getNode());
@@ -355,10 +371,11 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
             if (result.isSuccess()) {
                 result1 = new NodeStepResultImpl(node);
             } else {
-                result1 = new NodeStepResultImpl(null,
-                                                 Reason.WorkflowSequenceFailures,
-                                                 "Sequence failed",
-                                                 node);
+                result1 = new NodeStepResultImpl(result.getException(),
+                        Reason.WorkflowSequenceFailures,
+                        null == result.getException() ? "Sequence failed" : "Exception: " + result.getException()
+                                .getClass() + ": " + result.getException().getMessage(),
+                        node);
             }
             result1.setSourceResult(result);
             return result1;

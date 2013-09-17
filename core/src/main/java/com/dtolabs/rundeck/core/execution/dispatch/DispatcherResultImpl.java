@@ -86,7 +86,7 @@ public class DispatcherResultImpl implements DispatcherResult, HasDispatcherResu
                 NodeStepResult stepResult = results.get(s);
                 if(!stepResult.isSuccess()){
                     i++;
-                    names.add(s);
+                    names.add(s+": "+stepResult.toString());
                 }
             }
             return "Dispatch failed on " + i + " nodes: " + names;
