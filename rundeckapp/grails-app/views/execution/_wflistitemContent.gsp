@@ -58,18 +58,21 @@
         </g:unless>
 
     <g:if test="${edit}">
-        <span class="wfitemcontrols controls autohide" id="pfctrls_${i}" >
+        <span class="wfitemcontrols controls " id="pfctrls_${i}" >
             <g:if test="${!isErrorHandler && !item.errorHandler}">
-                <span class="action textbtn wfitem_add_errorhandler">add <g:message code="Workflow.stepErrorHandler.label"/></span>
+                <span class="textbtn textbtn-success wfitem_add_errorhandler">
+                    <i class="glyphicon glyphicon-plus"></i><g:message code="Workflow.stepErrorHandler.label"/></span>
             </g:if>
             <span class="textbtn textbtn-danger "
-                  id="itemdel_trigger-${i}"
                   data-toggle="collapse"
                   data-target="#itemdel_${i}"
                   title="${g.message(code:'Workflow.'+(isErrorHandler?'stepErrorHandler':'step')+'.action.delete.label')}">
                 <i class="glyphicon glyphicon-remove"></i></span>
 
-            <span class="action textbtn wfitem_edit" >edit</span>
+            <span class="textbtn textbtn-info wfitem_edit" >
+                <i class="glyphicon glyphicon-edit"></i>
+                edit
+            </span>
             <g:unless test="${isErrorHandler}">
                 <span class="action dragHandle"  title="Drag to reorder"><g:img file="icon-tiny-drag.png"/></span>
             </g:unless>

@@ -21,23 +21,45 @@
     Created: Aug 2, 2010 4:11:05 PM
     $Id$
  --%>
+<g:set var="ukey" value="${g.rkey()}"/>
 <div id="optvis_${option.name.encodeAsHTML()}" >
     <div class="optitem optctrlholder">
         <span class="opt item " id="opt_${option.name.encodeAsHTML()}" >
             <g:render template="/scheduledExecution/optView" model="${[option:option,edit:edit]}"/>
         </span>
 
+        <div id="optdel_${ukey}" class="panel panel-danger collapse">
+            <div class="panel-heading">
+                Delete this option
+            </div>
+
+            <div class="panel-body">
+                Really delete option ${option.name.encodeAsHTML()}?
+            </div>
+
+            <div class="panel-footer">
+                <span class="btn btn-default btn-xs"
+                      onclick="jQuery('#optdel_${ukey.encodeAsJavaScript()}').collapse('toggle');"><g:message code="cancel"/></span>
+                <span class="btn btn-danger btn-xs"
+                      onclick=" _doRemoveOption('${option.name.encodeAsJavaScript()}', $(this).up('li.optEntry'));"><g:message
+                        code="delete"/></span>
+            </div>
+        </div>
+
     <g:if test="${edit}">
-        <span class="optctrl opteditcontrols controls autohide" id="optctrls_${option.name.encodeAsHTML()}">
-            <span class="action" onclick="menus.showRelativeTo(this,'optdel_${option.name.encodeAsJavaScript()}',-2,-2);" title="Delete this option"><g:img file="icon-tiny-removex.png"/></span>
-            <span class="action textbtn" onclick="_optedit('${option.name.encodeAsJavaScript()}',$(this).up('li.optEntry'));" title="Edit this option">edit</span>
+        <span class="optctrl opteditcontrols controls " id="optctrls_${option.name.encodeAsHTML()}">
+            <span class="textbtn textbtn-danger "
+                  data-toggle="collapse"
+                  data-target="#optdel_${ukey.encodeAsHTML()}"
+                  title="Delete this option.">
+                <i class="glyphicon glyphicon-remove"></i></span>
+            <span class="textbtn textbtn-info" onclick="_optedit('${option.name.encodeAsJavaScript()}',$(this).up('li.optEntry'));"
+                  title="Edit this option">
+                <i class="glyphicon glyphicon-edit"></i>
+                edit
+            </span>
         </span>
 
-        <div id="optdel_${option.name.encodeAsHTML()}" class="confirmMessage popout confirmbox"  style="display:none">
-            Really delete option ${option.name.encodeAsHTML()}?
-            <span class="action button small textbtn" onclick="['optdel_${option.name.encodeAsJavaScript()}'].each(Element.hide);">No</span>
-            <span class="action button small textbtn" onclick="_doRemoveOption('${option.name.encodeAsJavaScript()}',$(this).up('li.optEntry'));">Yes</span>
-        </div>
         <g:javascript>
         fireWhenReady('opt_${option.name.encodeAsJavaScript()}',function(){
             $('opt_${option.name.encodeAsJavaScript()}').select('span.autoedit').each(function(e){

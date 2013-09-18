@@ -233,7 +233,6 @@ var applinks={
     }
     .optdetail{
         /*float:left;*/
-        display:inline-block;
         width:540px;
         overflow:hidden;
         white-space:nowrap;
