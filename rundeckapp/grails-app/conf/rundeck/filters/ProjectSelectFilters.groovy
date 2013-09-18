@@ -64,6 +64,9 @@ public class ProjectSelectFilters {
                 if(controllerName=='user' && ( actionName in ['logout','login'] )){
                     return
                 }
+                if(controllerName=='assets'){
+                    return
+                }
                 if (session && session.user) {
                     //get user authorizations
                     session.projectSelectFilterApplied = true
