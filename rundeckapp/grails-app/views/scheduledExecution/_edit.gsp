@@ -82,17 +82,9 @@ var applinks={
                 return;
             }
             var project=$F('schedEditFrameworkProject');
-            if(!project){
-                $('jobChooseSpinner').innerHTML="Please choose a project";
-                $('jobChooseSpinner').show();
-                doyft('schedEditFrameworkProjectHolder');
-                return;
-            }
-            $('jobChooseSpinner').loading();
-            $('jobChooseSpinner').show();
+            jQuery(elem).button('loading');
 
-            $(elem).addClassName('selected');
-            $('jobChooseBtn').down('img').src=AppImages.disclosureOpen;
+            $(elem).addClassName('active');
             new Ajax.Updater(
                 'jobChooserContent',
                 '${createLink(controller:"menu",action:"jobsPicker")}',
@@ -100,19 +92,18 @@ var applinks={
                 parameters: {jobsjscallback:'jobChosen',projFilter:project,runAuthRequired:true},
                  onSuccess: function(transport) {
                     new MenuController().showRelativeTo(elem,target);
-                     $('jobChooseSpinner').hide();
+                     jQuery('#jobChooseBtn').button('reset');
                  },
                  onFailure: function() {
                      showError("Error performing request: groupTreeFragment");
-                     $('jobChooseSpinner').hide();
+                     jQuery('#jobChooseBtn').button('reset');
                  }
                 });
         }
         function hideJobChooser(){
             $('jobChooser').hide();
-            $('jobChooseBtn').removeClassName('selected');
-            $('jobChooseBtn').down('img').src=AppImages.disclosure;
-            $('jobChooseSpinner').hide();
+            $('jobChooseBtn').removeClassName('active');
+            jQuery('#jobChooseBtn').button('reset');
         }
 
 
