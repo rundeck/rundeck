@@ -484,27 +484,26 @@
   // execution output table view
 
   table.execoutput {
-    font-family: Courier, monospace;
-    border: 1px solid #eee;
+    border: 1px solid @table-border-color;
     border-collapse: separate;
     .stepnum.short:before {
       content: "•";
     }
     td.node {
-      color: #888;
+      color: lighten(@brand-primary, 30%);
       text-align: right;
       width: 6em;
       max-width: 20em;
+      padding: 0 3px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
     td.info {
-      padding: 1px 3px;
       font-family: courier, mono;
     }
     tr.contextRow.expandable.closed {
-      background: #eee;
+      background: @table-border-color;
     }
     tr.contextRow.down {
       td {
@@ -520,8 +519,13 @@
     td.node.empty {
       color: #eee;
     }
+    tr.node-new td{
+      border-top: 2px solid white;
+    }
+    td.node{
+    }
     td.repeat {
-      visibility: hidden;
+//      visibility: hidden;
     }
     tr.contextRow.expandable.closed:hover {
       background: #e3edfa;
@@ -549,7 +553,7 @@
       }
     }
     td {
-      border: 1px solid #eee;
+      border: 1px solid @table-border-color;
       vertical-align: baseline;
       padding: 0;
       border: 0;
@@ -621,13 +625,21 @@
       padding: 1px 3px;
       color: black;
     }
+    td.time{
+      padding: 0 3px;
+      background-color: @gray-lighter;
+    }
+    td.node,td.stepnum{
+      padding: 0 3px;
+      background-color: @gray-lighter;
+    }
 
     td.data.log_verbose, td.data.log_debug {
       color: #888;
     }
 
     span.node:after, td.node:after {
-      content: " > ";
+
     }
 
     table.execoutput.collapse_node {
@@ -637,7 +649,7 @@
     }
 
     .stepident, .stepnum {
-      color: #008;
+      color: @gray;
     }
 
     td.data.log_warn, td.data.log_error {
