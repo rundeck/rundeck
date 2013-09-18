@@ -24,7 +24,7 @@
 <div class="row">
 <div class="${hideHead?'col-sm-9':'col-sm-12'}">
     <g:render template="editOptions" model="${[scheduledExecution:scheduledExecution, selectedoptsmap:selectedoptsmap, selectedargstring:selectedargstring,authorized:authorized,jobexecOptionErrors:jobexecOptionErrors, optiondependencies: optiondependencies, dependentoptions: dependentoptions, optionordering: optionordering]}"/>
-    <div class="form-group">
+    <div class="form-group" style="${wdgt.styleVisible(if:nodesetvariables || nodesetempty || nodes)}">
     <div class="col-sm-2 control-label text-form-label">
         Nodes
     </div>
@@ -45,11 +45,6 @@
             <div class="alert alert-warning">
                 <g:message code="scheduledExecution.nodeset.empty.warning"/>
             </div>
-        </g:elseif>
-        <g:elseif test="${!nodes}">
-            <p class="form-control-static text-info">
-                Will run on local node
-            </p>
         </g:elseif>
         <g:elseif test="${nodes}">
             <g:set var="COLS" value="${6}"/>
