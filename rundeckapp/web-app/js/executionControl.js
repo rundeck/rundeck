@@ -990,14 +990,44 @@ var FollowControl = Class.create({
         var ctx = this.parseOldContextString(data['command']);
         var string;
         if (ctx && ctx[0]) {
-             string= "Step " + ctx[0];
+             string= + ctx[0];
             if (ctx.length > 1) {
                 string += "/" + ctx.slice(1).join("/")
             }
+            string+=". "
         }else{
             string=data['command'];
         }
         return string;
+    },
+
+    contextType: function (data) {
+        var ctx = this.parseOldContextString(data['command']);
+        if (ctx) {
+            var string = "";
+            if (typeof(workflow) != 'undefined') {
+                var step = workflow[parseInt(ctx[0]) - 1];
+                if (typeof(step) != 'undefined') {
+                    if (step['exec']) {
+                        return 'command';
+                    } else if (step['jobref']) {
+                        return 'job';
+                    } else if (step['script']) {
+                        return 'script';
+                    } else if (step['scriptfile']) {
+                        return 'scriptfile';
+                    } else if (step['type']) {//plugin
+                        var title = "Plugin " + step['type'];
+                        if (step['nodeStep'] && typeof(nodeSteppluginDescriptions) != 'undefined') {
+                            return 'node-step-plugin plugin';
+                        } else if (!step['nodeStep'] && typeof(wfSteppluginDescriptions) != 'undefined') {
+                            return 'workflow-step-plugin plugin';
+                        }
+                    }
+                }
+            }
+        }
+        return 'console';
     },
     renderContextString: function(data){
         var ctx = this.parseOldContextString(data['command']);
@@ -1010,11 +1040,11 @@ var FollowControl = Class.create({
 //                        string+=' $ '+step['exec'];
                         string+='Command';
                     }else if(step['jobref']){
-                        string+=" Job Reference: "+(step['jobref']['group']? step['jobref']['group']+'/':'')+step['jobref']['name'];
+                        string+=(step['jobref']['group']? step['jobref']['group']+'/':'')+step['jobref']['name'];
                     }else if(step['script']){
-                        string += " Inline Script" ;
+                        string += "Script" ;
                     }else if(step['scriptfile']){
-                        string += " "+step['scriptfile'] ;
+                        string += step['scriptfile'] ;
                     }else if(step['type']){//plugin
                         var title= "Plugin " + step['type'];
                         if(step['nodeStep'] && typeof(nodeSteppluginDescriptions)!='undefined'){
@@ -1027,7 +1057,7 @@ var FollowControl = Class.create({
                 }
             }
             if(ctx.length>1){
-                string += " > Step "+ctx.slice(1).join(" > Step ")
+//                string += " > Step "+ctx.slice(1).join(" > Step ")
             }
             return string;
         }
@@ -1343,10 +1373,17 @@ var FollowControl = Class.create({
         tdctx.addClassName('stepnum');
         if (!shownode && this.lastrow && this.lastrow['command'] == data['command'] ) {
 //                tdctx.addClassName('repeat');
+        }else if(data['command']){
+
+            var cmdtext= this.renderContextStepNumber(data) + " " + this.renderContextString(data);
+            var icon= new Element('i');
+            icon.addClassName('rdicon icon-small '+ this.contextType(data))
+            tdctx.appendChild(icon);
+            tdctx.appendChild(document.createTextNode(" "+cmdtext));
+            tdctx.setAttribute('title',this.renderContextString(data));
+//            tdctx.addClassName(this.contextType(data));
         }else{
 
-            tdctx.innerHTML = this.renderContextStepNumber(data) +": " +this.renderContextString(data);
-            tdctx.setAttribute('title',this.renderContextString(data));
         }
         var tddata = $(tr.insertCell(cellndx));
         tddata.addClassName('data');

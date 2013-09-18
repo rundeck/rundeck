@@ -30,12 +30,16 @@
                 <g:set var="foundjob" value="${edit?null:ScheduledExecution.findScheduledExecution(item.jobGroup?item.jobGroup:null,item.jobName,project)}"/>
                 <g:if test="${foundjob}">
                 <g:link controller="scheduledExecution" action="show" id="${foundjob.extid}">
-                    <g:if test="${!noimgs}"><g:img file="icon-small-job.png" width="16px" height="16px"/></g:if>
+                    <g:if test="${!noimgs}">
+                        <i class="glyphicon glyphicon-book"></i>
+                    </g:if>
                     ${item.jobGroup?item.jobGroup.encodeAsHTML()+'/':''}${item.jobName.encodeAsHTML()}
                 </g:link>
                 </g:if>
                 <g:else>
-                    <g:if test="${!noimgs}"><g:img file="icon-small-job.png" width="16px" height="16px"/></g:if>
+                    <g:if test="${!noimgs}">
+                        <i class="glyphicon glyphicon-book"></i>
+                    </g:if>
                     ${item.jobGroup?item.jobGroup.encodeAsHTML()+'/':''}${item.jobName.encodeAsHTML()}
                 </g:else>
                 <g:if test="${item.argString}">
@@ -50,13 +54,13 @@
                 </g:if>
             </g:if>
             <g:elseif test="${pluginitem}">
+                <g:if test="${!noimgs}"><i class="rdicon icon-small plugin"></i></g:if>
                 <g:if test="${item && item.nodeStep}">
-                    <g:if test="${!noimgs}"><g:img file="icon-small-Node.png" width="16px" height="16px"/></g:if>
+                    <g:if test="${!noimgs && item.nodeStep}"><g:img file="icon-small-Node.png" width="16px"
+                                                                    height="16px"/></g:if>
                 </g:if>
-                <g:else>
-                    <g:if test="${!noimgs}"><g:img file="icon-small-file.png" width="16px" height="16px"/></g:if>
-                </g:else>
                 <stepplugin:display step="${item}" prefix="" includeFormFields="false"/>
+
             </g:elseif>
             <g:else>
                 <g:if test="${!noimgs}">
