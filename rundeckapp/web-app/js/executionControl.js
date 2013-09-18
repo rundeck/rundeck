@@ -1336,12 +1336,10 @@ var FollowControl = Class.create({
 
     configureDataRow: function(tr, data, ctxid) {
 
-        var tdicon = $(tr.insertCell(0));
-        tdicon.addClassName('info');
         if (data.level == 'ERROR' || data.level == 'SEVERE') {
             this.contextStatus[ctxid] = data.level.toLowerCase();
         }
-        var tdtime = $(tr.insertCell(1));
+        var tdtime = $(tr.insertCell(0));
         //tdtime.setAttribute('width', '20');
         tdtime.addClassName('info');
         tdtime.addClassName('time');
@@ -1349,7 +1347,7 @@ var FollowControl = Class.create({
         if(data.absolute_time){
             tdtime.setAttribute('title', data.absolute_time);
         }
-        var cellndx=2;
+        var cellndx=1;
         var colspan="2";
         var tdnode=$(tr.insertCell(cellndx));
         cellndx++;

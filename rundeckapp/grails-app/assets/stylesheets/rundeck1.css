@@ -1616,11 +1616,6 @@ span.resname, span.resname a {
     color: black;
 }
 
-span.node, span.node a {
-    color: black;
-    font-family: Courier, monospace;
-}
-
 ul.wfhandleritem, ul.wfhandleritem li {
     margin: 0;
 }
