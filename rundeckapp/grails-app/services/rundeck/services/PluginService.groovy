@@ -104,6 +104,17 @@ class PluginService {
         log.error("${service.name} not found: ${name}")
         return null
     }
+    /**
+     * Return the configured values for a plugin
+     * @param name provider name
+     * @param service service
+     * @param resolver property resolver for configuration properties
+     * @param defaultScope default plugin property scope
+     * @return Map of [instance: plugin instance, configuration: Map of resolved configuration properties], or null
+     */
+    def <T> Map getPluginConfiguration(String name, PluggableProviderService<T> service, PropertyResolver resolver, PropertyScope defaultScope) {
+        return rundeckPluginRegistry?.getPluginConfigurationByName(name, service, PropertyResolverFactory.createPrefixedResolver(resolver, name, service.name), defaultScope)
+    }
 
     private void logValidationErrors(String svcName, String pluginName,Validator.Report report) {
         def sb = new StringBuilder()
