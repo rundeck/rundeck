@@ -7,6 +7,7 @@
   body {
     //   padding-bottom: ((32px + @navbar-margin-bottom));
   }
+  @brand-light: lighten(@brand-primary, 30%);
 
   /* brand navbar */
   .navbar-default
@@ -490,7 +491,7 @@
       content: "•";
     }
     td.node {
-      color: lighten(@brand-primary, 30%);
+      color: @brand-light;
       text-align: right;
       width: 6em;
       max-width: 20em;
@@ -531,7 +532,7 @@
       background: #e3edfa;
     }
     tr.contextRow {
-      color: #888;
+      color: @brand-light;
       td.icon {
         padding: 1px 3px;
       }
@@ -601,7 +602,7 @@
       white-space: nowrap;
     }
     td.info.time {
-      color: #888;
+      color: @brand-light;
       white-space: nowrap;
       width: 6em;
     }
@@ -635,7 +636,7 @@
     }
 
     td.data.log_verbose, td.data.log_debug {
-      color: #888;
+      color: @brand-light;
     }
 
     span.node:after, td.node:after {
@@ -649,7 +650,7 @@
     }
 
     .stepident, .stepnum {
-      color: @gray;
+      color: @brand-light;
     }
 
     td.data.log_warn, td.data.log_error {
