@@ -85,7 +85,17 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
         }
         [instance:plugin, configuration:config]
     }
-    /**
+
+    public Map getPluginConfigurationByName(String name, PluggableProviderService service, PropertyResolver resolver, PropertyScope defaultScope) {
+        Map pluginDesc = loadPluginDescriptorByName(name, service)
+        def description = pluginDesc['description']
+        Map<String, Object> config=[:]
+        if (description && description instanceof Description) {
+            config = PluginAdapterUtility.mapDescribedProperties(resolver, description, defaultScope)
+        }
+        return config
+    }
+/**
      *
      * Validate a provider for a service using the framework, project name and instance configuration map
      * @param name name of bean or provider

@@ -83,12 +83,14 @@ class PluginServiceTests extends GrailsUnitTestCase {
         boolean validateWithFrameworkCalled
         boolean listPluginDescriptorsCalled
         boolean listPluginsCalled
+        boolean getPluginConfigurationByNameCalled
         Object plugin
         Map pluginDescriptor
         Map pluginDescriptorMap
         Map pluginListMap
         Map pluginValidation
         Map extraConfiguration
+        Map allConfiguration
 
         @Override
         Map configurePluginByName(String name, PluggableProviderService service, Map configuration) {
@@ -156,6 +158,12 @@ class PluginServiceTests extends GrailsUnitTestCase {
             listPluginDescriptorsCalled=true
             return pluginDescriptorMap
         }
+
+        @Override
+        Map getPluginConfigurationByName(String name, PluggableProviderService service, PropertyResolver resolver, PropertyScope defaultScope) {
+            getPluginConfigurationByNameCalled=true
+            return allConfiguration
+        }
     }
 
     void testGetPluginDNE() {
@@ -212,6 +220,22 @@ class PluginServiceTests extends GrailsUnitTestCase {
         assertFalse(testReg.lpdbncalled)
         assertEquals(test, service.getPluginDescriptor("blah", new testProvider()))
         assertTrue(testReg.lpdbncalled)
+    }
+    void testGetPluginConfigurationNoRegistry(){
+        mockLogging(PluginService)
+        def service = new PluginService()
+        def TestRegistry testReg = null
+        service.rundeckPluginRegistry = testReg
+        assertNull(service.getPluginConfiguration("blah", new testProvider(), null, null))
+    }
+    void testGetPluginConfiguration(){
+        mockLogging(PluginService)
+        def service = new PluginService()
+        def TestRegistry testReg = new TestRegistry()
+        service.rundeckPluginRegistry = testReg
+        testReg.allConfiguration=[test:'abc']
+        assertFalse(testReg.getPluginConfigurationByNameCalled)
+        assertNotNull(service.getPluginConfiguration("blah", new testProvider(), null, null))
     }
     void testConfigurePluginByNameNoRegistry(){
         mockLogging(PluginService)

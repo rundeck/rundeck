@@ -241,11 +241,15 @@ public class NotificationService implements ApplicationContextAware{
             return false
         }
         def plugin=result.instance
+        /*
+        * contains unmapped configuration values only
+         */
         def config=result.configuration
+        def allConfig = pluginService.getPluginConfiguration(type, notificationPluginProviderService, resolver, PropertyScope.Instance)
 
         //invoke plugin
         //TODO: use executor
-        if (!plugin.postNotification(trigger, data, config)) {
+        if (!plugin.postNotification(trigger, data, allConfig)) {
             log.error("Notification Failed: " + type);
             return false
         }
