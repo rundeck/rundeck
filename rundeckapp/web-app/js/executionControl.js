@@ -992,7 +992,7 @@ var FollowControl = Class.create({
         if (ctx && ctx[0]) {
              string= + ctx[0];
             if (ctx.length > 1) {
-                string += "/" + ctx.slice(1).join("/")
+//                string += "/" + ctx.slice(1).join("/")
             }
             string+=". "
         }else{
@@ -1337,7 +1337,6 @@ var FollowControl = Class.create({
     configureDataRow: function(tr, data, ctxid) {
 
         var tdicon = $(tr.insertCell(0));
-        tdicon.setAttribute('width', '16');
         tdicon.addClassName('info');
         if (data.level == 'ERROR' || data.level == 'SEVERE') {
             this.contextStatus[ctxid] = data.level.toLowerCase();
@@ -1358,13 +1357,16 @@ var FollowControl = Class.create({
         var shownode=false;
         if (this.lastrow && typeof(this.lastrow['node'])!=undefined && data.node==this.lastrow['node']){
             tdnode.addClassName('repeat');
+            tr.addClassName('node-repeat');
         }else if (!data.node) {
             tdnode.addClassName('empty');
             shownode = true;
+            tr.addClassName('node-empty');
         } else{
             tdnode.setAttribute('title', data.node);
             tdnode.innerHTML = data.node;
             shownode=true;
+            tr.addClassName('node-new');
         }
 
         //add context column
