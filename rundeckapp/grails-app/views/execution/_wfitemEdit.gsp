@@ -32,28 +32,33 @@
 <g:render template="/common/messages"/>
 <div id="wfiedit_${rkey}">
     <g:if test="${isErrorHandler}">
-        <span class="message note"><g:message code="Workflow.stepErrorHandler.description" /></span>
+        <span class="text-info"><g:message code="Workflow.stepErrorHandler.description" /></span>
     </g:if>
 <g:if test="${'job'==newitemtype || item instanceof JobExec || (item instanceof java.util.Map && item?.jobName)}">
     <div >
-       <div class="info note">Job Name</div>
+       <div class="text-muted">Job Name</div>
        <input id="jobNameField" type="text" name="jobName" value="${item?.jobName}" size="100" autofocus/>
     </div>
     <div >
-        <div class="info note">Job Group</div>
+        <div class="text-muted">Job Group</div>
         <input id="jobGroupField"  type="text" name="jobGroup" value="${item?.jobGroup}" size="100"/>
     </div>
     <div  >
-        <div class="info note">Enter the commandline arguments for the Job:</div>
+        <div class="text-muted">Enter the commandline arguments for the Job:</div>
         <input type='text' name="argString" value="${item?.argString?.encodeAsHTML()}" size="100" id="jobArgStringField"/>
     </div>
     <div style="margin-top:5px;">
-        <span class="action button" onclick="loadJobChooser(this,'jobChooser');" id="jobChooseBtn" title="Select an existing Job to use">Choose A Job&hellip; <g:img file="icon-tiny-disclosure.png" width="12px" height="12px"/></span>
+        <span class="btn btn-sm btn-default" onclick="loadJobChooser(this,'jobChooser');" id="jobChooseBtn"
+              title="Select an existing Job to use"
+              data-loading-text="Loading...">
+            Choose A Job&hellip;
+            <i class="caret"></i>
+        </span>
         <span id="jobChooseSpinner"></span>
     </div>
     <div class="popout" id="jobChooser" style="display:none; width:300px; padding: 5px; background:white; position:absolute;">
         <div style="margin-bottom:5px;">
-            <span class="info note">Click on the name of the Job to use</span>
+            <span class="text-muted">Click on the name of the Job to use</span>
             <button type="button" class=" close" style="text-align:right" onclick="hideJobChooser();">
                 &times;
             </button>
@@ -72,7 +77,7 @@
                 <label for="jobNodeStepFieldTrue">
                     <g:message code="JobExec.nodeStep.true.label" />
                 </label>
-                <span class="info note"><g:message code="JobExec.nodeStep.true.description"/></span>
+                <span class="text-muted"><g:message code="JobExec.nodeStep.true.description"/></span>
             </div>
             <div>
                 <g:radio id="jobNodeStepFieldFalse" type="checkbox" name="nodeStep" value="false"
@@ -80,7 +85,7 @@
                 <label for="jobNodeStepFieldFalse">
                     <g:message code="JobExec.nodeStep.false.label" />
                 </label>
-                <span class="info note"><g:message code="JobExec.nodeStep.false.description"/></span>
+                <span class="text-muted"><g:message code="JobExec.nodeStep.false.description"/></span>
             </div>
         </div>
     </div>
@@ -92,32 +97,32 @@
     <g:hiddenField name="adhocExecution" value="true"/>
     <g:if test="${isAdhocLocal}">
         <div id="localScriptDiv" class="${hasErrors(bean:item,field:'adhocExecution','fieldError')}">
-            <div class="info note"><g:message code="Workflow.Step.adhocLocalString.description" />:</div>
+            <div class="text-muted"><g:message code="Workflow.Step.adhocLocalString.description" />:</div>
             <textarea rows="10" cols="60" name="adhocLocalString" id="adhocLocalStringField" class="code apply_ace" autofocus>${item?.adhocLocalString?.encodeAsHTML()}</textarea>
         </div>
     </g:if>
     <g:elseif test="${isAdhocFileExecution}">
     <div id="filepathDiv" >
-        <div class="info note"><g:message code="Workflow.Step.adhocFilepath.description" />:</div>
+        <div class="text-muted"><g:message code="Workflow.Step.adhocFilepath.description" />:</div>
         <input type='text' name="adhocFilepath" value="${item?.adhocFilepath?.encodeAsHTML()}" size="100" id="adhocFilepathField" autofocus/>
     </div>
     </g:elseif>
     <g:elseif test="${isAdhocRemote}">
     <div id="remoteScriptDiv"  class="${hasErrors(bean:item,field:'adhocExecution','fieldError')}">
-        <div class="info note"><g:message code="Workflow.Step.adhocRemoteString.description" />:</div>
+        <div class="text-muted"><g:message code="Workflow.Step.adhocRemoteString.description" />:</div>
         <input type='text' name="adhocRemoteString" value="${item?.adhocRemoteString?.encodeAsHTML()}" size="100" id="adhocRemoteStringField" autofocus/>
     </div>
     </g:elseif>
     <g:if test="${!isAdhocRemote||isAdhocFileExecution}">
     <div id="adhocScriptArgs" >
-        <div class="info note"><g:message code="Workflow.Step.argString.description" />:</div>
+        <div class="text-muted"><g:message code="Workflow.Step.argString.description" />:</div>
         <input type='text' name="argString" value="${item?.argString?.encodeAsHTML()}" size="100" id="argStringField"/>
     </div>
     </g:if>
     <g:if test="${!isAdhocRemote}">
         <g:expander key="scriptInterpreter${rkey}" open="${item?.scriptInterpreter?'true':'false'}">Advanced </g:expander>
         <div id="scriptInterpreter${rkey}" style="${wdgt.styleVisible(if: item?.scriptInterpreter)}" class="presentation">
-            <div class="info note"><g:message code="Workflow.Step.scriptInterpreter.description"/>:</div>
+            <div class="text-muted"><g:message code="Workflow.Step.scriptInterpreter.description"/>:</div>
             <input type='text' name="scriptInterpreter"
                    placeholder="${g.message(code: 'Workflow.Step.scriptInterpreter.prompt')}"
                    value="${item?.scriptInterpreter?.encodeAsHTML()}" size="100"
@@ -173,7 +178,7 @@
     <div>
         <div>
             <span class="prompt">${newitemDescription.title?.encodeAsHTML()}</span>
-            <span class="info note">${newitemDescription.description?.encodeAsHTML()}</span>
+            <span class="text-muted">${newitemDescription.description?.encodeAsHTML()}</span>
         </div>
         <g:hiddenField name="pluginItem" value="true"/>
         <g:hiddenField name="newitemnodestep" value="${item?!!item.nodeStep:newitemnodestep=='true'}"/>
@@ -200,7 +205,7 @@
         <g:checkBox name="keepgoingOnSuccess" value="true" checked="${item?.keepgoingOnSuccess}"/>
         <g:message code="Workflow.stepErrorHandler.keepgoingOnSuccess.label" />
         </label>
-        <span class="info note"><g:message code="Workflow.stepErrorHandler.keepgoingOnSuccess.description" /></span>
+        <span class="text-muted"><g:message code="Workflow.stepErrorHandler.keepgoingOnSuccess.description" /></span>
     </div>
 </g:if>
 

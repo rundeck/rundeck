@@ -161,9 +161,10 @@
                                         %{--</div>--}%
 
                                         <div class="col-sm-12">
-                                            <g:render template="showJobHead"
+                                            <span class="h3">
+                                                <g:render template="showJobHead"
                                                       model="${[scheduledExecution: scheduledExecution, nameOnly: true]}"/>
-
+                                            </span>
                                             <g:render template="showJobHead"
                                                       model="${[scheduledExecution: scheduledExecution, groupOnly: true]}"/>
 

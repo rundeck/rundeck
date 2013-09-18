@@ -127,13 +127,13 @@
             Add a ${g.message(code:'Workflow.step.label')}
         </span>
     </div>
-    <div id="wfnewtypes" style="display:none; margin-top:10px" class="popout">
+    <div id="wfnewtypes" style="display:none; margin-top:10px;" class="panel panel-success">
         <g:render template="/execution/wfAddStep"
             model="[addMessage:'Workflow.step.label.add',chooseMessage:'Workflow.step.label.choose.the.type']"
         />
     </div>
 
-    <div id="wfnew_eh_types" style="display:none; margin-top:10px;background: white;" class="popout">
+    <div id="wfnew_eh_types" style="display:none;  margin-top:10px;" class="panel panel-success">
         %{--This element is moved around to show the add error-handle buttons for a step--}%
         <g:render template="/execution/wfAddStep"
                 model="[addMessage:'Workflow.stepErrorHandler.label.add',descriptionMessage:'Workflow.stepErrorHandler.description',chooseMessage:'Workflow.stepErrorHandler.label.choose.the.type']"

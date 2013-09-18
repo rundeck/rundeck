@@ -1,78 +1,101 @@
-<span><g:message code="${addMessage}"/></span>
-<g:if test="${descriptionMessage}">
-    <span><g:message code="${descriptionMessage}"/></span>
-</g:if>
-<div class="info note"><g:message code="${chooseMessage}"/></div>
-
-<div style="margin:10px;" class=" add_step_buttons">
-
-            <div class="node_step_section">
-                <span class="prompt">Node Steps:</span>
-                <span class="info note">Executes for each matched Node</span>
-                <ul>
-                    <li class="action textbtn add_node_step_type"
+<div class="panel-heading">
+    <span class="h3 "><g:message code="${addMessage}"/></span>
+</div>
+<div class=" add_step_buttons panel-body">
+<div class="row">
+    <div class="col-sm-12">
+        <g:if test="${descriptionMessage}">
+            <span><g:message code="${descriptionMessage}"/></span>
+        </g:if>
+        <div class="h4"><g:message code="${chooseMessage}"/></div>
+    </div>
+</div>
+<div class="row row-space">
+<div class="col-sm-12">
+    <ul class="nav nav-tabs" >
+            <li class="active node_step_section"><a href="#addnodestep" data-toggle="tab">Node Steps</a></li>
+            <li class="step_section"><a href="#addwfstep" data-toggle="tab">Workflow Steps</a></li>
+    </ul>
+    <div class="tab-content">
+            <div class="node_step_section tab-pane active " id="addnodestep">
+                <div class="list-group">
+                <div class="list-group-item">
+                    <span class=" list-group-item-heading h4 text-info">
+                        Node Steps execute for each matched Node
+                    </span>
+                </div>
+                    <a class="list-group-item  add_node_step_type"
                              data-node-step-type="command"
+                        href="#"
                              >
-                            <g:img file="icon-small-shell.png" width="16px" height="16px"/>
-                            Command <span class="info note">- Execute a remote command</span>
-                    </li>
-                    <li class="action textbtn  add_node_step_type"
+                            <i class="rdicon icon-small shell"></i>
+                            Command <span class="text-info">- Execute a remote command</span>
+                    </a>
+                    <a class="list-group-item textbtn  add_node_step_type" href="#"
                               data-node-step-type="script"
                               >
-                            <g:img file="icon-small-shell.png" width="16px" height="16px"/>
-                            Script <span class="info note">- Execute an inline script</span>
-                    </li>
-                    <li class="action textbtn  add_node_step_type"
+                        <i class="rdicon icon-small shell"></i>
+                            Script <span class="text-info">- Execute an inline script</span>
+                    </a>
+                    <a class="list-group-item textbtn  add_node_step_type" href="#"
                               data-node-step-type="scriptfile"
                               >
-                            <g:img file="icon-small-shell.png" width="16px" height="16px"/>
+                        <i class="rdicon icon-small shell"></i>
                             Script file or URL
-                            <span class="info note">- Execute a local script file or a script from a URL</span>
-                    </li>
-                    <li class="action textbtn add_node_step_type" data-node-step-type="job">
-                        <g:img file="icon-small-job.png" width="16px" height="16px"/>
-                        Job Reference <span class="info note">- Execute another Job for each Node</span>
-                    </li>
+                            <span class="text-info">- Execute a local script file or a script from a URL</span>
+                    </a>
+                    <a class="list-group-item textbtn add_node_step_type" data-node-step-type="job" href="#">
+                        <i class="glyphicon glyphicon-book"></i>
+                        Job Reference <span class="text-info">- Execute another Job for each Node</span>
+                    </a>
                 <g:if test="${nodeStepDescriptions}">
-                    <li class="note">
-                        <g:plural for="${nodeStepDescriptions}" code="node.step.plugin" verb="is" /> <g:message
-                                code="installed"/>:
-                    </li>
+                    <div class="list-group-item text-muted ">
+                        <g:plural for="${nodeStepDescriptions}" code="node.step.plugin" />
+                    </div>
                     <g:each in="${nodeStepDescriptions}" var="typedesc">
 
-                        <li  class="action textbtn  add_node_step_type" data-node-step-type="${typedesc.name.encodeAsHTML()}">
-                            <g:img file="icon-small-Node.png" width="16px" height="16px"/>
+                        <a  class="list-group-item textbtn  add_node_step_type" data-node-step-type="${typedesc.name.encodeAsHTML()}"
+                            href="#">
+                            <i class="rdicon icon-small plugin"></i>
                             ${typedesc.title?.encodeAsHTML()}
-                            <span class="info note">- ${typedesc.description.encodeAsHTML()}</span>
-                        </li>
+                            <span class="text-info">- ${typedesc.description.encodeAsHTML()}</span>
+                        </a>
                     </g:each>
                 </g:if>
-                </ul>
+                </div>
             </div>
-            <div class="step_section ">
-                <span class="prompt">Workflow Steps:</span> <span class="info note">Executes once in the workflow</span>
-                <ul>
-                    <li class="action textbtn  add_step_type" data-step-type="job">
-                        <g:img file="icon-small-job.png" width="16px" height="16px"/>
-                        Job Reference <span class="info note">- Execute another Job</span>
-                    </li>
+            <div class="step_section tab-pane " id="addwfstep">
+                <div class="list-group">
+                <div class="list-group-item">
+                    <span class=" list-group-item-heading h4 text-info">
+                        Workflow Steps execute once in the workflow
+                    </span>
+                </div>
+
+                <a class="list-group-item textbtn add_step_type" data-step-type="job" href="#">
+                    <i class="glyphicon glyphicon-book"></i>
+                    Job Reference <span class="text-info">- Execute another Job</span>
+                </a>
                 <g:if test="${stepDescriptions}">
-                    <li class="note">
-                        <g:plural for="${stepDescriptions}" code="workflow.step.plugin" verb="is" /> <g:message code="installed" />:
-                    </li>
+                    <div class="list-group-item text-muted ">
+                        <g:plural for="${stepDescriptions}" code="workflow.step.plugin" />
+                    </div>
                     <g:each in="${stepDescriptions}" var="typedesc">
-                        <li class="action textbtn  add_step_type" data-step-type="${typedesc.name.encodeAsHTML()}">
-                            &diams;
+                        <a class="list-group-item textbtn  add_step_type" data-step-type="${typedesc.name.encodeAsHTML()}" href="#">
+                            <i class="rdicon icon-small plugin"></i>
                             ${typedesc.title.encodeAsHTML()}
-                            <span class="info note">- ${typedesc.description.encodeAsHTML()}</span>
-                        </li>
+                            <span class="text-info">- ${typedesc.description.encodeAsHTML()}</span>
+                        </a>
                     </g:each>
 
                 </g:if>
-                </ul>
+                </div>
             </div>
+    </div>
+</div>
+</div>
 </div>
 
-<div style="margin:10px; ">
+<div class="panel-footer">
     <span class="btn btn-default btn-sm cancel_add_step_type" >Cancel</span>
 </div>
