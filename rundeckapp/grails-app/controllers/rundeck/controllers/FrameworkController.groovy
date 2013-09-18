@@ -76,7 +76,7 @@ class FrameworkController  {
         response.setHeader(Constants.X_RUNDECK_ACTION_UNAUTHORIZED_HEADER, request.error)
 
         log.error("'${request.remoteUser}' has no authorized access. Roles: "+ roles)
-        return render(template:  '/common/error', model: [:])
+        return render(view: '/common/error', model: [:])
     }
 
     def nodes ={ ExtNodeFilters query ->
