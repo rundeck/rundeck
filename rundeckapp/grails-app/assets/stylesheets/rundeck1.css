@@ -938,19 +938,7 @@ tr.link, td.link {
     cursor: pointer;
 }
 
-span.autohilite:hover {
-    background: #ffffaa;
-}
 
-span.autoedit {
-    padding: 3px;
-    cursor: pointer;
-}
-
-span.autoedit:hover {
-    padding: 2px;
-    border: 1px dotted #555;
-}
 
 span.dragHandle {
     cursor: move;
