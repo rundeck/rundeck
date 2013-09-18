@@ -150,6 +150,7 @@
     .rdicon{
           display: inline-block;
           vertical-align: middle;
+        background-repeat: no-repeat;
     }
     .rdicon.icon-small{
           width: 16px;
@@ -168,17 +169,22 @@
           height: ${appLogoH};
         vertical-align: baseline;
     }
-    .rdicon.icon-small.shell{
-          background-image: url("${resource(dir:'images',file:'icon-small-shell.png')}");
+
+    .rdicon.icon-small.shell,.rdicon.icon-small.command,.rdicon.icon-small.script,.rdicon.icon-small.scriptfile{
+        background-image: url("${resource(dir:'images',file:'icon-small-shell.png')}");
     }
-    .rdicon.icon-med.shell{
+    .rdicon.icon-med.shell,.rdicon.icon-med.command,.rdicon.icon-med.script,.rdicon.icon-med.scriptfile{
           background-image: url("${resource(dir:'images',file:'icon-med-shell.png')}");
     }
-    .rdicon.icon.shell{
+    .rdicon.icon.shell, .rdicon.icon.command, .rdicon.icon.script, .rdicon.icon.scriptfile{
           background-image: url("${resource(dir:'images',file:'icon-shell.png')}");
     }
     .rdicon.app-logo{
           background-image: url("${resource(dir: 'images', file: appLogo)}");
+    }
+
+    .rdicon.icon-small.plugin {
+        background-image: url("${resource(dir:'images',file:'icon-small-plugin.png')}");
     }
      @media
           only screen and (-webkit-min-device-pixel-ratio: 2),
@@ -187,7 +193,7 @@
           only screen and (        min-device-pixel-ratio: 2),
           only screen and (                min-resolution: 192dpi),
           only screen and (                min-resolution: 2dppx) {
-            .rdicon.icon-small {
+            .rdicon.icon-small{
                 background-size: 16px 16px;
             }
             .rdicon.icon {
@@ -196,19 +202,23 @@
             .rdicon.icon-med {
                 background-size: 24px 24px;
             }
-            .rdicon.icon-small.shell {
+            .rdicon.icon-small.shell, .rdicon.icon-small.command, .rdicon.icon-small.script, .rdicon.icon-small.scriptfile {
                 background-image: url("${resource(dir:'images',file:'icon-small-shell@2x.png')}");
             }
-            .rdicon.icon.shell {
+            .rdicon.icon.shell, .rdicon.icon.command, .rdicon.icon.script, .rdicon.icon.scriptfile {
                 background-image: url("${resource(dir:'images',file:'icon-shell@2x.png')}");
             }
-            .rdicon.icon-med.shell {
+            .rdicon.icon-med.shell, .rdicon.icon-med.command, .rdicon.icon-med.script, .rdicon.icon-med.scriptfile {
                 background-image: url("${resource(dir:'images',file:'icon-med-shell@2x.png')}");
             }
             .rdicon.app-logo{
                 background-image: url("${resource(dir: 'images', file: appLogoHires)}");
                 background-size: ${appLogoW} ${appLogoH};
             }
+
+             .rdicon.icon-small.plugin {
+                 background-image: url("${resource(dir:'images',file:'icon-small-plugin@2x.png')}");
+             }
           }
 
 </style>
