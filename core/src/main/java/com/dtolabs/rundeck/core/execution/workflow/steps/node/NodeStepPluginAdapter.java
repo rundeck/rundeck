@@ -24,26 +24,28 @@
 */
 package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
+import java.util.Map;
+
+import org.apache.log4j.Logger;
+
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ConfiguredStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
-import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility;
 import com.dtolabs.rundeck.core.execution.workflow.steps.PluginStepContextImpl;
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver;
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility;
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver;
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory;
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
 import com.dtolabs.rundeck.core.utils.Converter;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
-
-import java.util.Map;
 
 
 /**
@@ -53,7 +55,7 @@ import java.util.Map;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 class NodeStepPluginAdapter implements NodeStepExecutor, Describable {
-
+    protected static Logger log = Logger.getLogger(NodeStepPluginAdapter.class.getName());
 
     @Override
     public Description getDescription() {
@@ -100,11 +102,13 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable {
         try {
             plugin.executeNodeStep(pluginContext, config, node);
         } catch (RuntimeException e) {
+            log.error("Uncaught runtime exception executing node step.", e);
             return new NodeStepResultImpl(e,
                                           StepFailureReason.PluginFailed,
                                           e.getMessage(),
                                           node);
         } catch (NodeStepException e){
+            log.error("Error executing node step.", e);
             return new NodeStepResultImpl(e,
                                           e.getFailureReason(),
                                           e.getMessage(),
