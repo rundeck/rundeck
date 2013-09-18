@@ -8,15 +8,16 @@
 <body>
 
 <div id="nowRunningContent">
-    <div class="pageTop">
-    <div class="floatl">
-        <span class="welcomeMessage error">Error</span>
+    <div class="row">
+    <div class="col-sm-12">
+        <span class="h3 text-danger">Error</span>
     </div>
-    <div class="clear"></div>
     </div>
 </div>
-<div class="pageBody">
-    <g:render template="/common/messages"/>
+<div class="row row-space">
+<div class="col-sm-8 col-sm-offset-2">
+    <g:render template="/common/messages" model='[notDismissable:true]'/>
+</div>
 </div>
 </body>
 </html>
