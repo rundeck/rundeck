@@ -100,8 +100,11 @@ class LogEventLineIterator implements LogEventIterator{
     private void parseLine(String line) {
         def LineLogFormat.FormatItem item = lineLogFormat.parseLine(line)
         if(item.lineComplete){
-            if(!eventBuf){
+            if (!eventBuf && item.entry){
                 eventBuf=new DefaultLogEvent(item.entry)
+            }else if(!eventBuf){
+                //no entry, skip it
+                return
             }else if(item.partial){
                 //merge any partial
                 eventBuf.message+=item.partial
