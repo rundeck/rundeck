@@ -75,6 +75,7 @@ fi
 /var/lib/rundeck/bootstrap/libpam4j-1.5.jar
 /var/lib/rundeck/bootstrap/rundeck-jetty-server-%{_vname}.jar
 /var/lib/rundeck/bootstrap/servlet-api-2.5-20081211.jar
+/var/lib/rundeck/bootstrap/not-yet-commons-ssl-0.3.11.jar
 
 # CLI Lib Support
 %dir /var/lib/rundeck/cli
