@@ -47,6 +47,7 @@ import java.io.File;
  */
 public class ScriptFileNodeStepExecutor implements NodeStepExecutor {
     public static final String SERVICE_IMPLEMENTATION_NAME = "script";
+    public static final String SCRIPT_FILE_REMOVE_TMP = "script-step-remove-tmp-file";
     private Framework framework;
 
     public ScriptFileNodeStepExecutor(Framework framework) {
@@ -111,6 +112,32 @@ public class ScriptFileNodeStepExecutor implements NodeStepExecutor {
                                                      final String filepath,
                                                      final String scriptInterpreter,
                                                      final boolean interpreterargsquoted) throws NodeStepException {
+        boolean removeFile = true;
+        if (null != node.getAttributes() && null != node.getAttributes().get(SCRIPT_FILE_REMOVE_TMP)) {
+            removeFile = Boolean.parseBoolean(node.getAttributes().get(SCRIPT_FILE_REMOVE_TMP));
+        }
+        return executeRemoteScript(context, framework, node, args, filepath, scriptInterpreter,
+                interpreterargsquoted, removeFile);
+    }
+    /**
+     * Execute a scriptfile already copied to a remote node with the given args
+     *
+     * @param context               context
+     * @param framework             framework
+     * @param node                  the node
+     * @param args                  arguments to script
+     * @param filepath              the remote path for the script
+     * @param scriptInterpreter     interpreter used to invoke the script
+     * @param interpreterargsquoted if true, pass the file and script args as a single argument to the interpreter
+     */
+    public static NodeStepResult executeRemoteScript(final ExecutionContext context,
+                                                     final Framework framework,
+                                                     final INodeEntry node,
+                                                     final String[] args,
+                                                     final String filepath,
+                                                     final String scriptInterpreter,
+                                                     final boolean interpreterargsquoted,
+                                                     final boolean removeFile) throws NodeStepException {
         /**
          * TODO: Avoid this horrific hack. Discover how to get SCP task to preserve the execute bit.
          */
@@ -118,7 +145,7 @@ public class ScriptFileNodeStepExecutor implements NodeStepExecutor {
             //perform chmod+x for the file
 
             final NodeExecutorResult nodeExecutorResult = framework.getExecutionService().executeCommand(
-                context, new String[]{"chmod", "+x", filepath}, node);
+                    context, ExecArgList.fromStrings(false, "chmod", "+x", filepath), node);
             if (!nodeExecutorResult.isSuccess()) {
                 return nodeExecutorResult;
             }
@@ -133,7 +160,33 @@ public class ScriptFileNodeStepExecutor implements NodeStepExecutor {
                 interpreterargsquoted
         );
 
-        return framework.getExecutionService().executeCommand(context, scriptArgList, node);
-        //TODO: remove remote temp file after exec?
+        NodeExecutorResult nodeExecutorResult = framework.getExecutionService().executeCommand(context,
+                scriptArgList, node);
+
+        if (removeFile) {
+            //remove file
+            final NodeExecutorResult nodeExecutorResult2 = framework.getExecutionService().executeCommand(
+                    context, removeArgsForOsFamily(filepath, node.getOsFamily()), node);
+            if (!nodeExecutorResult2.isSuccess()) {
+                if (null != context.getExecutionListener()) {
+                    context.getExecutionListener().log(1, "Failed to remove remote file: " + filepath);
+                }
+            }
+        }
+        return nodeExecutorResult;
+    }
+
+    /**
+     * Return ExecArgList for removing a file for the given OS family
+     * @param filepath
+     * @param osFamily
+     * @return
+     */
+    public static ExecArgList removeArgsForOsFamily(String filepath, String osFamily) {
+        if("windows".equalsIgnoreCase(osFamily)){
+            return ExecArgList.fromStrings(false, "del", filepath);
+        }else{
+            return ExecArgList.fromStrings(false, "rm", "-f", filepath);
+        }
     }
 }
