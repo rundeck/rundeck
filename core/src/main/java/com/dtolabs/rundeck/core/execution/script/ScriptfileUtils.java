@@ -159,8 +159,12 @@ public class ScriptfileUtils {
      * Create a temp file in the framework 
      */
     public static File createTempFile(final Framework framework) throws IOException {
-        final File dispatch = File.createTempFile("dispatch", ".tmp", new File(framework.getProperty(
-            "framework.tmp.dir")));
+        String fileExt = ".tmp";
+        if ("windows".equalsIgnoreCase(framework.createFrameworkNode().getOsFamily())) {
+            fileExt = ".tmp.bat";
+        }
+        final File dispatch = File.createTempFile("dispatch", fileExt, new File(framework.getProperty(
+                "framework.tmp.dir")));
         dispatch.deleteOnExit();
         return dispatch;
     }
