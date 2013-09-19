@@ -16,14 +16,14 @@
 
 package com.dtolabs.rundeck.jetty.jaas;
 
-import java.security.Principal;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
-import javax.naming.InvalidNameException;
+import javax.net.ssl.SSLException;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
+import org.apache.commons.ssl.HostnameVerifier;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,11 +33,14 @@ public class HostnameVerifyingTrustManagerTest {
 
     protected HostnameVerifyingTrustManager trustManager;
     protected X509TrustManager realTrustManager;
+    protected HostnameVerifier verifier;
 
     @Before
     public void setup() {
         realTrustManager = Mockito.mock(X509TrustManager.class);
+        verifier = Mockito.mock(HostnameVerifier.class);
         trustManager = new HostnameVerifyingTrustManager(realTrustManager);
+        trustManager.verifier = verifier;
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -58,12 +61,10 @@ public class HostnameVerifyingTrustManagerTest {
     @Test
     public void testCheckServerTrusted() throws Exception {
         X509Certificate certificate = Mockito.mock(X509Certificate.class);
-        Principal principal = Mockito.mock(Principal.class);
-        Mockito.when(certificate.getSubjectDN()).thenReturn(principal);
         X509Certificate[] chain = { certificate };
         String authType = "type";
         String host = "host";
-        Mockito.when(principal.getName()).thenReturn(String.format("CN=%s", host));
+        Mockito.doNothing().when(verifier).check(Mockito.eq(host), Mockito.same(certificate));
 
         HostnameVerifyingSSLSocketFactory.setTargetHost(host);
 
@@ -83,39 +84,15 @@ public class HostnameVerifyingTrustManagerTest {
         Mockito.verify(realTrustManager, Mockito.times(1)).checkServerTrusted(Mockito.same(chain),
                                                                               Mockito.same(authType));
     }
-
-    @Test
-    public void testCheckServerTrustedFailsCNExtraction() throws Exception {
-        X509Certificate certificate = Mockito.mock(X509Certificate.class);
-        Principal principal = Mockito.mock(Principal.class);
-        Mockito.when(certificate.getSubjectDN()).thenReturn(principal);
-        X509Certificate[] chain = { certificate };
-        String authType = "type";
-        String host = "host";
-        Mockito.when(principal.getName()).thenReturn("invalid");
-
-        HostnameVerifyingSSLSocketFactory.setTargetHost(host);
-
-        try {
-            trustManager.checkServerTrusted(chain, authType);
-            Assert.fail("Expected hostname verification to fail.");
-        }
-        catch (CertificateException e) {
-            Assert.assertTrue("Expected cause to be instanceof InvalidNameException", e.getCause() instanceof InvalidNameException);
-        }
-
-        Mockito.verifyZeroInteractions(realTrustManager);
-    }
     
     @Test
-    public void testCheckServerTrustedFailsCNVerification() throws Exception {
+    public void testCheckServerTrustedFailsVerification() throws Exception {
         X509Certificate certificate = Mockito.mock(X509Certificate.class);
-        Principal principal = Mockito.mock(Principal.class);
-        Mockito.when(certificate.getSubjectDN()).thenReturn(principal);
         X509Certificate[] chain = { certificate };
         String authType = "type";
         String host = "host";
-        Mockito.when(principal.getName()).thenReturn("CN=otherhost");
+        SSLException root = new SSLException("Invalid");
+        Mockito.doThrow(root).when(verifier).check(Mockito.eq(host), Mockito.same(certificate));
 
         HostnameVerifyingSSLSocketFactory.setTargetHost(host);
 
@@ -124,7 +101,7 @@ public class HostnameVerifyingTrustManagerTest {
             Assert.fail("Expected hostname verification to fail.");
         }
         catch (CertificateException e) {
-            Assert.assertNull("Expected no underlying cause", e.getCause());
+            Assert.assertSame("Expected validation exception to be thrown as root cause.", root, e.getCause());
         }
 
         Mockito.verifyZeroInteractions(realTrustManager);
