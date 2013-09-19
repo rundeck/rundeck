@@ -25,7 +25,7 @@ import com.dtolabs.rundeck.core.logging.StreamingLogWriter
  * Logs to a file using the OutputLogFormat
  */
 class FSStreamingLogWriter implements StreamingLogWriter {
-    static final String lineSep = System.getProperty("line.separator")
+    static final String lineSep = "\n"
     private OutputStream output
     private Map<String, String> defaultMeta
     private OutputLogFormat formatter

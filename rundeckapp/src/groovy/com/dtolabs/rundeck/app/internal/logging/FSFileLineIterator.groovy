@@ -36,7 +36,6 @@ class FSFileLineIterator implements OffsetIterator<String>{
     private Queue<String> buffer = new ArrayDeque<String>()
     private String encoding
     private static final String lineSep=System.getProperty("line.separator")
-    private lineSeplen
     boolean closed=false
     public FSFileLineIterator(FileInputStream raf,String encoding){
         this.encoding=encoding
@@ -47,7 +46,6 @@ class FSFileLineIterator implements OffsetIterator<String>{
         }else{
             read = new InputStreamReader(raf)
         }
-        lineSeplen=lineSep.getBytes(encoding).length
         readNext()
     }
     @Override
@@ -58,7 +56,7 @@ class FSFileLineIterator implements OffsetIterator<String>{
     @Override
     String next() {
         String s = buffer.remove()
-        offset += (s.getBytes(encoding).length)+ lineSeplen
+        offset += (s.getBytes(encoding).length) + 1
         readNext()
         return s
     }
