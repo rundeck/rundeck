@@ -19,11 +19,11 @@ package com.dtolabs.rundeck.jetty.jaas;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
-import javax.naming.InvalidNameException;
-import javax.naming.ldap.LdapName;
-import javax.naming.ldap.Rdn;
+import javax.net.ssl.SSLException;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+
+import org.apache.commons.ssl.HostnameVerifier;
 
 /**
  * A wrapper around an existing X509TrustManager that verifies the server
@@ -34,6 +34,7 @@ import javax.net.ssl.X509TrustManager;
 public class HostnameVerifyingTrustManager implements X509TrustManager {
 
     protected X509TrustManager realTrustManager;
+    protected HostnameVerifier verifier; 
 
     public HostnameVerifyingTrustManager(TrustManager trustManager) {
         if (!(trustManager instanceof X509TrustManager)) {
@@ -41,6 +42,7 @@ public class HostnameVerifyingTrustManager implements X509TrustManager {
                                                String.format("Expected trustManager to be of type X509TrustManager but was [%s]",
                                                              trustManager.getClass()));
         }
+        this.verifier = HostnameVerifier.STRICT;
         this.realTrustManager = (X509TrustManager) trustManager;
     }
 
@@ -53,30 +55,15 @@ public class HostnameVerifyingTrustManager implements X509TrustManager {
     public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
         if (chain.length > 0) {
             X509Certificate serverCert = chain[0];
+            String host = HostnameVerifyingSSLSocketFactory.getTargetHost();
             try {
-                String host = HostnameVerifyingSSLSocketFactory.getTargetHost();
-                String dn = serverCert.getSubjectDN().getName();
-                String cn = extractCnFromDn(dn);
-                if (!cn.equalsIgnoreCase(host)) {
-                    throw new CertificateException(String.format("[%s] does not match certificate subject [%s]", host,
-                                                                 cn));
-                }
+                verifier.check(host, serverCert);
             }
-            catch (InvalidNameException e) {
-                throw new CertificateException("Error processing certificate for subject.", e);
+            catch (SSLException e) {
+                throw new CertificateException(e);
             }
         }
         realTrustManager.checkServerTrusted(chain, authType);
-    }
-
-    protected String extractCnFromDn(String dn) throws InvalidNameException {
-        LdapName name = new LdapName(dn);
-        for (Rdn rdn : name.getRdns()) {
-            if (rdn.getType().equalsIgnoreCase("CN")) {
-                return (String) rdn.getValue();
-            }
-        }
-        throw new InvalidNameException("Could not find CN");
     }
 
     @Override
