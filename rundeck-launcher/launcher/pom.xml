@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.rundeck</groupId>
   <artifactId>rundeck-launcher</artifactId>
-  <version>1.6.2-SNAPSHOT</version>
+  <version>1.6.2</version>
   <name>Rundeck Launcher</name>
   <url>http://rundeck.org</url>
   <inceptionYear>2011</inceptionYear>
@@ -47,7 +47,7 @@
               <Rundeck-Version>${project.version}</Rundeck-Version>
               <Rundeck-Start-Class>${launcherStartClass}</Rundeck-Start-Class>
               <Main-Class>${launcherMainClass}</Main-Class>
-              <Rundeck-Jetty-Libs>servlet-api-2.5-20081211.jar jetty-${jettyVersion}.jar jetty-util-${jettyVersion}.jar jetty-naming-${jettyVersion}.jar jetty-plus-${jettyVersion}.jar jna-3.2.2.jar libpam4j-1.5.jar</Rundeck-Jetty-Libs>
+              <Rundeck-Jetty-Libs>servlet-api-2.5-20081211.jar jetty-${jettyVersion}.jar jetty-util-${jettyVersion}.jar jetty-naming-${jettyVersion}.jar jetty-plus-${jettyVersion}.jar jna-3.2.2.jar libpam4j-1.5.jar not-yet-commons-ssl-0.3.11.jar</Rundeck-Jetty-Libs>
               <Rundeck-Jetty-Lib-Path>${launcherJettyLibPath}</Rundeck-Jetty-Lib-Path>
             </manifestEntries>
           </archive>
@@ -66,28 +66,28 @@
     <dependency>
       <groupId>org.rundeck</groupId>
       <artifactId>rundeck</artifactId>
-      <version>1.6.2-SNAPSHOT</version>
+      <version>1.6.2</version>
       <type>war</type>
     </dependency>
     <dependency>
       <groupId>org.rundeck</groupId>
       <artifactId>rundeck-script-plugin</artifactId>
-      <version>1.6.2-SNAPSHOT</version>
+      <version>1.6.2</version>
     </dependency>
     <dependency>
       <groupId>org.rundeck</groupId>
       <artifactId>rundeck-stub-plugin</artifactId>
-      <version>1.6.2-SNAPSHOT</version>
+      <version>1.6.2</version>
     </dependency>
     <dependency>
       <groupId>org.rundeck</groupId>
       <artifactId>rundeck-localexec-plugin</artifactId>
-      <version>1.6.2-SNAPSHOT</version>
+      <version>1.6.2</version>
     </dependency>
     <dependency>
       <groupId>org.rundeck</groupId>
       <artifactId>rundeck-jetty-server</artifactId>
-      <version>1.6.2-SNAPSHOT</version>
+      <version>1.6.2</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
