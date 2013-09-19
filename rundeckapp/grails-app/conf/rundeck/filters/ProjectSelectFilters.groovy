@@ -74,7 +74,7 @@ public class ProjectSelectFilters {
 
 
                     def selected = params.project
-                    if (selected && !frameworkService.existsFrameworkProject(selected, fw)) {
+                    if (selected && (!frameworkService.existsFrameworkProject(selected, fw) || !frameworkService.authorizeApplicationResourceAll(fw, [type: 'project', name: selected], ['read']))) {
                         selected = null
                     }
                     if (selected) {
@@ -84,7 +84,7 @@ public class ProjectSelectFilters {
 
                     selected = session.project
                     //check project exists
-                    if (selected && !frameworkService.existsFrameworkProject(selected, fw)) {
+                    if (selected && (!frameworkService.existsFrameworkProject(selected, fw) || !frameworkService.authorizeApplicationResourceAll(fw, [type: 'project', name: selected], ['read']))) {
                         selected = null
                     }
                     if (selected) {
@@ -93,7 +93,7 @@ public class ProjectSelectFilters {
                     }
                     //use last stored filter pref
                     def prefs = userService.getFilterPref(session.user)
-                    if (prefs.project && frameworkService.existsFrameworkProject(prefs.project, fw)) {
+                    if (prefs.project && (!frameworkService.existsFrameworkProject(prefs.project, fw) || !frameworkService.authorizeApplicationResourceAll(fw, [type: 'project', name: prefs.project], ['read']))) {
                         selected = prefs.project
                     }
                     if (selected) {
