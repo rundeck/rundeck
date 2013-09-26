@@ -5,7 +5,7 @@ import com.dtolabs.rundeck.plugins.notification.NotificationPlugin;
  */
 rundeckPlugin(NotificationPlugin){
     onstart { 
-        println("success: data ${execution}")
+        println("job start: data ${execution}")
         true
     }
 
@@ -15,7 +15,7 @@ rundeckPlugin(NotificationPlugin){
     }
 
     onsuccess {
-        println("job start: data ${execution}")
+        println("success: data ${execution}")
         true
     }
 }
