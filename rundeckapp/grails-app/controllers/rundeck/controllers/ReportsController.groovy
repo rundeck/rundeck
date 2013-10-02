@@ -81,6 +81,11 @@ class ReportsController {
         if(query && !query.projFilter && session.project){
             query.projFilter = session.project
         }
+        if(params.sessionOnly){
+            //auto date filter based on session login
+            query.dostartafterFilter=true
+            query.startafterFilter=new Date(session.creationTime)
+        }
 
         if(null!=query){
             query.configureFilter()

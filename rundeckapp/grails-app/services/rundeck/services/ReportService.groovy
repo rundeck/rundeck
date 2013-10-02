@@ -323,7 +323,11 @@ class ReportService  {
                 }
 
                 eqfilters.each { key, val ->
-                    if (query["${key}Filter"]) {
+                    if (query["${key}Filter"] == 'null') {
+                        isNull(val)
+                    } else if (query["${key}Filter"] == '!null') {
+                        isNotNull(val)
+                    } else if (query["${key}Filter"]) {
                         eq(val, query["${key}Filter"])
                     }
                 }

@@ -484,7 +484,14 @@
         /** START history
          *
          */
-        var histControl = new HistoryControl('histcontent',{xcompact:false,nofilters:true,projFilter:'${session.project}'});
+        var histControl = new HistoryControl('histcontent',{
+            sessionOnly:true,
+            xcompact:false,
+            nofilters:true,
+            jobIdFilter:'null',
+            userFilter:'${session.user}',
+            projFilter:'${session.project}'
+        });
         function loadHistory(){
             histControl.loadHistory();
         }
