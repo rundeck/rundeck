@@ -58,9 +58,6 @@ fi
 %dir /var/lib/rundeck/var
 %dir /var/lib/rundeck/var/tmp
 
-# Docs
-%doc /usr/share/man
-
 # The Rundeck WebApp.  The Exploded War Goes Here.
 %dir /var/lib/rundeck/exp
 /var/lib/rundeck/exp/webapp
