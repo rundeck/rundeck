@@ -336,8 +336,8 @@ var applinks={
     
 </div>
 
-
-    <div class="savedJobFields list-group-item"  >
+    <div class="list-group-item"  >
+        %{--name--}%
     <div class="form-group ${g.hasErrors(bean:scheduledExecution,field:'jobName','has-error')}" id="schedJobNameLabel">
         <label for="schedJobName"
                class="required ${labelColClass}"
@@ -359,6 +359,7 @@ var applinks={
             </g:hasErrors>
         </div>
     </div>
+        %{--group--}%
     <div class="form-group ${hasErrors(bean: scheduledExecution, field: 'groupPath', 'has-error')}">
         <label for="schedJobGroup" class=" ${labelColClass}">
             Group
@@ -412,6 +413,7 @@ var applinks={
         </div>
     </div>
 
+        %{--description--}%
     <div class="form-group ${hasErrors(bean: scheduledExecution, field: 'description', 'has-error')}">
         <label for="description" class="${labelColClass}">Description</label>
         <div class="${fieldColSize}">
@@ -423,6 +425,7 @@ var applinks={
             </g:hasErrors>
         </div>
     </div>
+        %{--uuid--}%
     <div class="form-group ${hasErrors(bean: scheduledExecution, field: 'uuid', 'has-error')}" id="schedJobUuidLabel">
         <label for="schedJobUuid" class=" ${labelColClass}" >
             UUID
@@ -446,6 +449,7 @@ var applinks={
             </g:else>
         </div>
     </div>
+        %{--multiple exec--}%
     <div class="form-group">
         <div class="${labelColSize} control-label text-form-label">
             <g:message code="scheduledExecution.property.multipleExecutions.label" />
@@ -475,11 +479,12 @@ var applinks={
     <g:set var="projectName" value="${scheduledExecution.project?scheduledExecution.project.toString():projects?.size()==1?projects[0].name:session.project?session.project:''}" />
     <g:hiddenField id="schedEditFrameworkProject" name="project" value="${projectName}" />
 
-    <div id="optionsContent" class="savedJobFields list-group-item" >
+    %{--Options--}%
+    <div id="optionsContent" class=" list-group-item" >
         <div class="form-group">
             <div class="${labelColSize} control-label text-form-label"><span id="optsload"></span>Options:</div>
             <div class="${fieldColSize}">
-                
+
                 <div  id="editoptssect" class="rounded">
                     <g:render template="/scheduledExecution/detailsOptions" model="${[options:scheduledExecution?.options,edit:true]}"/>
                     <g:if test="${scheduledExecution && scheduledExecution.argString}">
@@ -490,8 +495,9 @@ var applinks={
                 </div>
             </div>
         </div>
-    </div>
+    </div>%{--//Options--}%
 
+    %{--Workflow--}%
     <div id="workflowContent" class="list-group-item" >
         <div class="form-group">
             <div class="${labelColSize}  control-label text-form-label">Workflow:</div>
@@ -509,16 +515,19 @@ var applinks={
                 </g:if>
             </div>
         </div>
-    </div>
-    <div class="savedJobFields list-group-item"  >
+    </div>%{--//Workflow--}%
+
+    %{--Notifications--}%
+    <div class="list-group-item"  >
             <g:set var="adminauth"
                 value="${auth.resourceAllowedTest(type: 'project', name: session.project, action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_READ], context: 'application')}"/>
 
         <g:render template="editNotificationsForm" model="[scheduledExecution:scheduledExecution, notificationPlugins: notificationPlugins,adminauth:adminauth]"/>
 
-    </div>
+    </div>%{--//Notifications--}%
 
-<div class="savedJobFields list-group-item">
+%{--Schedule--}%
+<div class="list-group-item">
 
     <div class="form-group">
         <div class="${labelColSize}  control-label text-form-label">
@@ -552,9 +561,10 @@ var applinks={
                 </wdgt:eventHandlerJS>
             </g:javascript>
     </div>
-</div>
+</div>%{--//Schedule--}%
 
-<div class="savedJobFields list-group-item" id="nodegroupitem">
+%{--Node Dispatch--}%
+<div class="list-group-item" id="nodegroupitem">
     <div class="form-group">
         <label class="${labelColSize} control-label" >
             Nodes
@@ -876,8 +886,10 @@ var applinks={
     </div>
     </div>
 </div>
-</div>
-<div class="savedJobFields list-group-item">
+</div>%{--//Node Dispatch--}%
+
+%{--Log level--}%
+<div class="list-group-item">
     <div class="form-group">
         <label class="${labelColClass}" for="loglevel">Log level</label>
         <div class="${fieldColSize}">
@@ -894,7 +906,7 @@ var applinks={
             </div>
         </div>
     </div>
-</div>
+</div>%{--//Log level--}%
 
 
 <g:javascript>
