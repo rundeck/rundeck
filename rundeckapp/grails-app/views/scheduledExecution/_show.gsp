@@ -27,11 +27,7 @@
 </g:javascript>
 
 <div class="row">
-<div class="col-sm-12">
-    <div class="jobHead">
-        <g:render template="/scheduledExecution/showHead" model="[scheduledExecution:scheduledExecution,followparams:[mode:followmode,lastlines:params.lastlines]]"/>
-    </div>
-</div>
+    <g:render template="/scheduledExecution/showHead" model="[scheduledExecution:scheduledExecution,followparams:[mode:followmode,lastlines:params.lastlines]]"/>
 </div>
 <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_RUN)}">
     <div class="row">

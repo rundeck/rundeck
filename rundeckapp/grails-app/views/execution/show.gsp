@@ -160,18 +160,22 @@
                                             %{--Job:--}%
                                         %{--</div>--}%
 
-                                        <div class="col-sm-12">
-                                            <span class="h3">
-                                                <g:render template="showJobHead"
-                                                      model="${[scheduledExecution: scheduledExecution, nameOnly: true]}"/>
-                                            </span>
-                                            <g:render template="showJobHead"
-                                                      model="${[scheduledExecution: scheduledExecution, groupOnly: true]}"/>
+                                        %{--<div class="col-sm-8">--}%
+                                            %{--<span class="h3">--}%
+                                                <g:render template="/scheduledExecution/showHead"
+                                                      model="${[scheduledExecution: scheduledExecution, ]}"/>
+                                            %{--</span>--}%
+                                            %{--<span class="text-muted">--}%
+                                                %{--${scheduledExecution?.description?.encodeAsHTML()}--}%
+                                            %{--</span>--}%
+                                        %{--</div>--}%
+                                        %{--<div class="col-sm-4">--}%
 
-                                            <span class="text-muted">
-                                                ${scheduledExecution?.description?.encodeAsHTML()}
-                                            </span>
-                                        </div>
+                                            %{--<span>--}%
+                                                %{--<g:render template="showJobHead"--}%
+                                                          %{--model="${[scheduledExecution: scheduledExecution, groupOnly: true]}"/>--}%
+                                            %{--</span>--}%
+                                        %{--</div>--}%
                                     </div>
                                 </g:if>
                                 <g:if test="${execution.argString}">
@@ -279,6 +283,14 @@
                                 <g:else>
                                 %{--job--}%
                                 <div class="pull-right">
+                                    <g:if test="${!groupOnly && auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_UPDATE)}">
+                                        <g:link controller="scheduledExecution" title="Edit Job" action="edit"
+                                                       id="${scheduledExecution.extid}"
+                                                       class="btn btn-info btn-sm">
+                                            <i class="glyphicon glyphicon-edit"></i>
+                                            edit Job
+                                        </g:link>
+                                    </g:if>
                                     <g:if test="${authChecks[AuthConstants.ACTION_RUN]}">
                                         %{--Run again link--}%
                                         <g:link controller="scheduledExecution"

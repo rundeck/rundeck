@@ -1,6 +1,50 @@
 <%@ page import="com.dtolabs.rundeck.app.support.ExecutionContext; com.dtolabs.rundeck.server.authorization.AuthConstants; com.dtolabs.rundeck.core.plugins.configuration.Description; rundeck.ScheduledExecution" %>
 <g:set var="rkey" value="${g.rkey()}"/>
+<div class="row">
+<div class="col-sm-6 pull-right">
+<div class=" pull-right">
+<g:if test="${showEdit && execdata != null && execdata.id && execdata instanceof ScheduledExecution && auth.jobAllowedTest(job: execdata, action: AuthConstants.ACTION_UPDATE)}">
+    <g:link controller="scheduledExecution" title="Edit or Delete this Job" action="edit"
+            id="${execdata.extid}" class="btn btn-info btn-sm">
+        <b class="glyphicon glyphicon-edit"></b>
+        edit job</g:link>
 
+<g:if test="${scheduledExecution && auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_READ])}">
+    <g:if test="${auth.resourceAllowedTest(kind: 'job', action: AuthConstants.ACTION_CREATE)}">
+        <g:link controller="scheduledExecution" title="Duplicate Job" action="copy"
+                id="${scheduledExecution.extid}" class="btn btn-success btn-sm">
+            <b class="glyphicon glyphicon-plus"></b>
+            duplicate to a new job
+        </g:link>
+    </g:if>
+    <div class="btn-group">
+        <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+            Download Definition
+            <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu" role="menu">
+            <li><g:link controller="scheduledExecution" title="Download Job definition in  XML"
+                        action="show"
+                        id="${scheduledExecution.extid}.xml">
+                <b class="glyphicon glyphicon-file"></b>
+                xml format
+            </g:link>
+            </li>
+            <li>
+                <g:link controller="scheduledExecution" title="Download Job definition in YAML"
+                        action="show"
+                        id="${scheduledExecution.extid}.yaml">
+                    <b class="glyphicon glyphicon-file"></b>
+                    yaml format
+                </g:link>
+            </li>
+        </ul>
+    </div>
+    </g:if>
+</g:if>
+</div>
+</div>
+<div class="col-sm-6">
 <table class="simpleForm execdetails">
     <g:if test="${execdata!=null && execdata.id && execdata instanceof ScheduledExecution && execdata.scheduled}">
         <tr>
@@ -182,24 +226,8 @@
         <td>
             <span class="desc">
 
-                <g:link controller="scheduledExecution" title="Download Job definition in  XML" action="show"
-                        id="${scheduledExecution.extid}.xml">
-                    <b class="glyphicon glyphicon-file"></b>
-                    xml
-                </g:link>
-                <g:link controller="scheduledExecution" title="Download Job definition in YAML" action="show"
-                        id="${scheduledExecution.extid}.yaml">
-                    <b class="glyphicon glyphicon-file"></b>
-                    yaml
-                </g:link>
 
-                <g:if test="${auth.resourceAllowedTest(kind: 'job', action: AuthConstants.ACTION_CREATE)}">
-                    <g:link controller="scheduledExecution" title="Duplicate Job" action="copy"
-                            id="${scheduledExecution.extid}" class="textbtn textbtn-success">
-                        <b class="glyphicon glyphicon-plus"></b>
-                        duplicate to a new job
-                    </g:link>
-                </g:if>
+
             </span>
         </td>
     </tr>
@@ -207,3 +235,5 @@
 
     
 </table>
+</div>
+</div>

@@ -14,12 +14,14 @@
 
             </g:if>
             <g:if test="${scheduledExecution.groupPath && !nameOnly}">
-            <span class="jobGroup">
-                <span class="grouplabel">
+            <span class="jobGroup " >
+                <span class="grouplabel h4 ">
                     <g:link controller="menu" action="jobs"
+                            class="secondary"
                             params="${[groupPath: scheduledExecution.groupPath]}"
                             title="${'View ' + g.message(code: 'domain.ScheduledExecution.title') + 's in this group'}"
-                            absolute="${absolute ? 'true' : 'false'}">
+                            absolute="${absolute ? 'true' : 'false'}"
+                            >
                         <g:if test="${!noimgs}"><b class="glyphicon glyphicon-folder-close"></b></g:if>
                         ${scheduledExecution.groupPath.encodeAsHTML()}
                     </g:link>
@@ -27,13 +29,5 @@
             </span>
             </g:if>
         </span>
-        <g:if test="${!groupOnly && auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_UPDATE)}">
-            <small><g:link controller="scheduledExecution" title="Edit Job" action="edit" id="${scheduledExecution.extid}"
-                class="textbtn textbtn-info textbtn-on-hover">
-                <i class="glyphicon glyphicon-edit"></i>
-                edit
-            </g:link>
-            </small>
-        </g:if>
     </div>
 </g:if>

@@ -374,12 +374,18 @@
   //link color variants
   a {
     &.secondary {
-      color: desaturate(@link-color, 100%);
+      color: lighten(@link-color, 20%);
+      &:hover, &.active {
+        color: @link-hover-color;
+      }
     }
 
     //link color for secondary links
     &.primary {
       color: darken(@link-color, 15%);
+      &:hover,&.active{
+        color: @link-hover-color;
+      }
     }
   }
 
