@@ -159,7 +159,6 @@ class RundeckLogFormat implements OutputLogFormat, LineLogFormat {
             def meta = [:]
             if (rest.startsWith('{')) {
                 //parse meta
-
                 rest = rest.substring(1)
                 def done = false
                 while (!done) {
@@ -338,7 +337,7 @@ class RundeckLogFormat implements OutputLogFormat, LineLogFormat {
                 }
             }
         }
-        String rest = i < array.length - 1 ? new String(array, i, array.length - i) : null
+        String rest = i <= array.length - 1 ? new String(array, i, array.length - i) : null
 
         return [newline.toString(), doneDelimiter, rest]
     }
