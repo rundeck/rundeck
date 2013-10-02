@@ -479,35 +479,14 @@ var applinks={
         <div class="form-group">
             <div class="${labelColSize} control-label text-form-label"><span id="optsload"></span>Options:</div>
             <div class="${fieldColSize}">
-                <span id="optssummarysect" class="autohilite autoedit">
-                    <span id="optssummary" class="doeditopts " title="Click to edit options">
-                        <g:render template="/scheduledExecution/optionsSummary" model="${[options:scheduledExecution?.options,edit:true]}"/>
-                    </span>
-                </span>
-
-                <wdgt:eventHandler forSelector="span.doeditopts" action="click" >
-                    <wdgt:action visible="true" target="editoptssect"/>
-                    <wdgt:action visible="false" target="optssummarysect"/>
-                    <g:if test="${!(scheduledExecution?.options)}">
-                        <wdgt:action jshandler="_optaddnewIfNone" target="optssummarysect"/>
-                    </g:if>
-                </wdgt:eventHandler>
                 
-                <div style="display:none;" id="editoptssect" class="rounded">
+                <div  id="editoptssect" class="rounded">
                     <g:render template="/scheduledExecution/detailsOptions" model="${[options:scheduledExecution?.options,edit:true]}"/>
                     <g:if test="${scheduledExecution && scheduledExecution.argString}">
                         <span class="argString">${scheduledExecution?.argString.encodeAsHTML()}</span>
                     </g:if>
                     <g:hiddenField name="_sessionopts" value="true"/>
                 
-                    <div style="margin: 10px 0 5px 0;">
-                        <span class="action button opteditcontrols" id="doneEditopts">Close</span>
-                        <wdgt:eventHandler for="doneEditopts" action="click" >
-                            <wdgt:action visible="false" target="editoptssect"/>
-                            <wdgt:action visible="true" target="optssummarysect"/>
-                            <wdgt:action jshandler="_summarizeOpts" target="optssummarysect"/>
-                        </wdgt:eventHandler>
-                    </div>
                 </div>
             </div>
         </div>
