@@ -53,8 +53,6 @@ rpm:
 	@mkdir -p rpmdist/SOURCES/var/lib/rundeck/var/tmp
 	@mkdir -p rpmdist/SOURCES/tmp/rundeck
 	@mkdir -p rpmdist/SOURCES/var/rundeck/projects
-	@mkdir -p rpmdist/SOURCES/usr/share/man/man{1,5}
-	@mkdir -p rpmdist/SOURCES/usr/share/man/en/man{1,5}
 	@cp -R root/* rpmdist/SOURCES
 	@cp -R ../core/build/tools/lib/*.jar rpmdist/SOURCES/var/lib/rundeck/cli
 	@cp ../core/build/libs/rundeck-core-$(JVERS).jar rpmdist/SOURCES/var/lib/rundeck/cli
@@ -78,8 +76,6 @@ deb:
 	@mkdir -p debdist/var/lib/rundeck/var/tmp
 	@mkdir -p debdist/tmp/rundeck
 	@mkdir -p debdist/var/rundeck/projects
-	@mkdir -p debdist/usr/share/man/man{1,5}
-	@mkdir -p debdist/usr/share/man/en/man{1,5}
 	@cp -R debroot/* debdist
 	@# set version
 	@cat debroot/DEBIAN/control | sed -e "s/%VERSION%/$(VERSION)/" > debdist/DEBIAN/control
