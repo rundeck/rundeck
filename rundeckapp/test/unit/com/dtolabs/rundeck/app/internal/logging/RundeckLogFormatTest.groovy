@@ -193,4 +193,23 @@ class RundeckLogFormatTest extends GroovyTestCase {
         assertUnescape2("abc123def", null, null, '\\' as char, "1234", ["123", "234"], "abc\\123def")
         assertUnescape2("abc123def12", null, null, '\\' as char, "1234", ["123", "234"], "abc\\123def12")
     }
+
+    /**
+     * Test what happens when there are no actual characters in the log line (occurs on multi-line logs lines
+     * where the first line is a new line)
+     *
+     * E.g.
+     * <pre>
+     * ^2013-09-24T18:15:49Z|log|ERROR|{command=3-NodeDispatch-salt-api-exec|node=somehost|step=3|user=vagrant}|
+     * Traceback (most recent call last):
+     * with open (source_file, "r") as file:
+     * ^
+     * </pre>
+     */
+    void testUnescapeEmptyLogLine() {
+        def (text, done, rest) = RundeckLogFormat.unescape("foo}|", '\\' as char, '=|}\\', ['|', '}'] as String[]);
+        assertEquals("foo", text);
+        assertEquals("}", done);
+        assertEquals("|", rest);
+    }
 }
