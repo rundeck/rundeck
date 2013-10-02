@@ -8,7 +8,16 @@
     //   padding-bottom: ((32px + @navbar-margin-bottom));
   }
   @brand-light: lighten(@brand-primary, 30%);
-
+  a{
+    text-decoration: underline;
+    .nav li &,
+    .pager li &,
+    .dropdown-menu li &,
+    &.navbar-brand,
+    &.btn {
+      text-decoration: none;
+    }
+  }
   /* brand navbar */
   .navbar-default
   .navbar-brand{
