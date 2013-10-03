@@ -16,13 +16,21 @@
              </g:else>
         </code></div>
     </g:if>
-    <g:if test="${propScope?.isFrameworkLevel()}">
+    <g:if test="${propScope?.isFrameworkLevel() && (frameworkMapping&& frameworkMapping[prop.name] || !hideMissingFrameworkMapping )}">
+
         <div>configure framework:
+
         <code>
-            <g:pluginPropertyFrameworkScopeKey provider="${pluginName}"
-                                               service="${serviceName}"
-                                               property="${prop.name}"/>=${(prop.defaultValue ?: 'value').encodeAsHTML()}
-        </code></div>
+            <g:if test="${frameworkMapping && frameworkMapping[prop.name]}">
+                ${frameworkMapping[prop.name].encodeAsHTML()}=${(prop.defaultValue ?: 'value').encodeAsHTML()}
+            </g:if>
+            <g:else>
+                <g:pluginPropertyFrameworkScopeKey provider="${pluginName}"
+                                                   service="${serviceName}"
+                                                   property="${prop.name}"/>=${(prop.defaultValue ?: 'value').encodeAsHTML()}
+            </g:else>
+        </code>
+            </div>
     </g:if>
     <div class="text-info">
         <g:if test="${prop.defaultValue}">

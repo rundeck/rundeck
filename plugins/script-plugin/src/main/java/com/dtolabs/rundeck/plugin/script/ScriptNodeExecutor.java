@@ -91,6 +91,7 @@ public class ScriptNodeExecutor implements NodeExecutor, Describable {
 
     public static final String CONFIG_DIRECTORY = "directory";
     static final Map<String, String> CONFIG_MAPPING;
+    static final Map<String, String> CONFIG_MAPPING_FWK;
 
     static {
         properties.add(PropertyUtil.string(CONFIG_COMMAND, "Command",
@@ -109,6 +110,13 @@ public class ScriptNodeExecutor implements NodeExecutor, Describable {
         mapping.put(CONFIG_INTERPRETER, SCRIPT_EXEC_DEFAULT_REMOTE_SHELL);
         mapping.put(CONFIG_DIRECTORY, SCRIPT_EXEC_DEFAULT_DIR_PROPERTY);
         CONFIG_MAPPING = Collections.unmodifiableMap(mapping);
+
+        final Map<String, String> mapping2 = new HashMap<String, String>();
+        mapping2.put(CONFIG_COMMAND, SCRIPT_EXEC_DEFAULT_COMMAND_PROPERTY);
+        mapping2.put(CONFIG_INTERPRETER, SCRIPT_EXEC_DEFAULT_REMOTE_SHELL);
+        mapping2.put(CONFIG_DIRECTORY, SCRIPT_EXEC_DEFAULT_DIR_PROPERTY);
+
+        CONFIG_MAPPING_FWK = Collections.unmodifiableMap(mapping);
     }
 
     public static final Description DESC = new AbstractBaseDescription() {
@@ -131,6 +139,10 @@ public class ScriptNodeExecutor implements NodeExecutor, Describable {
         @Override
         public Map<String, String> getPropertiesMapping() {
             return CONFIG_MAPPING;
+        }
+        @Override
+        public Map<String, String> getFwkPropertiesMapping() {
+            return CONFIG_MAPPING_FWK;
         }
     };
 

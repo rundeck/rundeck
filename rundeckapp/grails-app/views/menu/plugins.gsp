@@ -37,7 +37,7 @@
 
             <g:set var="pluginUrl" value="http://rundeck.org/plugins/?${pluginParams}"/>
             <g:set var="pluginLinkUrl"
-                   value="${org.codehaus.groovy.grails.commons.ConfigurationHolder.config.rundeck?.gui?.pluginLink ?: pluginUrl}"/>
+                   value="${grailsApplication.config?.rundeck?.gui?.pluginLink ?: pluginUrl}"/>
             <a href="${pluginLinkUrl}" class="btn btn-success ">
                 <g:message code="gui.admin.GetPlugins" default="Get Plugins"/>
                 <i class="glyphicon glyphicon-arrow-right"></i>
@@ -117,7 +117,9 @@
                                             defaultScope: serviceDefaultScope,
                                             pluginName: pluginName,
                                             serviceName: serviceName,
-                                            mapping: pluginDescription.propertiesMapping
+                                            mapping: pluginDescription.propertiesMapping,
+                                            frameworkMapping: pluginDescription.fwkPropertiesMapping,
+                                            hideMissingFrameworkMapping:(serviceName in ['NodeExecutor','FileCopier'])
                                     ]}"/>
                         </g:if>
                     </g:each>

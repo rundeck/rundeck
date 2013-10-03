@@ -97,6 +97,7 @@ public class ScriptFileCopier implements FileCopier, Describable {
 
     static final List<Property> properties = new ArrayList<Property>();
     static final Map<String, String> CONFIG_MAPPING;
+    static final Map<String, String> CONFIG_MAPPING_FWK;
 
     static {
         properties.add(PropertyUtil.string(CONFIG_COMMAND, "Command",
@@ -118,6 +119,13 @@ public class ScriptFileCopier implements FileCopier, Describable {
         mapping.put(CONFIG_INTERPRETER, SCRIPT_COPY_DEFAULT_REMOTE_SHELL);
         mapping.put(CONFIG_DIRECTORY, SCRIPT_COPY_DEFAULT_DIR_PROPERTY);
         CONFIG_MAPPING = Collections.unmodifiableMap(mapping);
+        final Map<String, String> mapping2 = new HashMap<String, String>();
+        mapping2.put(CONFIG_COMMAND, SCRIPT_COPY_DEFAULT_COMMAND_PROPERTY);
+        mapping2.put(CONFIG_FILEPATH, SCRIPT_COPY_DEFAULT_REMOTE_FILEPATH_PROPERTY);
+        mapping2.put(CONFIG_INTERPRETER, SCRIPT_COPY_DEFAULT_REMOTE_SHELL);
+        mapping2.put(CONFIG_DIRECTORY, SCRIPT_COPY_DEFAULT_DIR_PROPERTY);
+
+        CONFIG_MAPPING_FWK = Collections.unmodifiableMap(mapping);
     }
 
     public static final Description DESC = new AbstractBaseDescription() {
@@ -140,6 +148,11 @@ public class ScriptFileCopier implements FileCopier, Describable {
         @Override
         public Map<String, String> getPropertiesMapping() {
             return CONFIG_MAPPING;
+        }
+
+        @Override
+        public Map<String, String> getFwkPropertiesMapping() {
+            return CONFIG_MAPPING_FWK;
         }
     };
 

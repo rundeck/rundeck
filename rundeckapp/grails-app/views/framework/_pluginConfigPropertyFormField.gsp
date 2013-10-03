@@ -110,7 +110,7 @@
         <div class="text-warning">${error.encodeAsHTML()}</div>
     </g:if>
     <g:if test="${outofscope}">
-        <g:render template="/framework/pluginConfigPropertyScopeInfo" model="[propScope:propScope,mapping:mapping]"/>
+        <g:render template="/framework/pluginConfigPropertyScopeInfo" model="[propScope:propScope,mapping:mapping, frameworkMapping: frameworkMapping, hideMissingFrameworkMapping: hideMissingFrameworkMapping]"/>
     </g:if>
 </div>
 </div>

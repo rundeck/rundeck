@@ -35,6 +35,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil;
 import com.dtolabs.rundeck.core.tasks.net.SSHTaskBuilder;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import org.apache.tools.ant.BuildException;
@@ -45,6 +46,7 @@ import org.apache.tools.ant.taskdefs.Sequential;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.Arrays;
 
 
 /**
@@ -60,8 +62,17 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier, Des
         .name(SERVICE_PROVIDER_TYPE)
         .title("SCP")
         .description("Copies a script file to a remote node via SCP.")
+        .property(PropertyUtil.string(JschNodeExecutor.CONFIG_KEYPATH, "SSH Keypath",
+                "Path to the SSH Key to use",
+                true, null))
+        .property(PropertyUtil.select(JschNodeExecutor.CONFIG_AUTHENTICATION, "SSH Authentication",
+                "Type of SSH Authentication to use",
+                true, SSHTaskBuilder.AuthenticationType.privateKey.toString(), Arrays.asList(SSHTaskBuilder
+                .AuthenticationType.values()), null, null))
         .mapping(JschNodeExecutor.CONFIG_KEYPATH, JschNodeExecutor.PROJ_PROP_SSH_KEYPATH)
         .mapping(JschNodeExecutor.CONFIG_AUTHENTICATION, JschNodeExecutor.PROJ_PROP_SSH_AUTHENTICATION)
+        .frameworkMapping(JschNodeExecutor.CONFIG_KEYPATH, JschNodeExecutor.FWK_PROP_SSH_KEYPATH)
+        .frameworkMapping(JschNodeExecutor.CONFIG_AUTHENTICATION, JschNodeExecutor.FWK_PROP_SSH_AUTHENTICATION)
         .build();
 
 

@@ -50,7 +50,11 @@ public interface Description {
     public List<Property> getProperties();
 
     /**
-     * Return a map of config prop keys to external property names, allowing input values to be in properties files
+     * Return a map of config prop keys to external project property names, allowing input values to be in properties files
      */
     public Map<String, String> getPropertiesMapping();
+    /**
+     * Return a map of config prop keys to external framework property names, allowing input values to be in properties files
+     */
+    public Map<String, String> getFwkPropertiesMapping();
 }

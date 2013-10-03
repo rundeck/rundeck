@@ -39,6 +39,7 @@ import java.util.*;
 public class DescriptionBuilder {
     private ArrayList<Property> properties;
     private HashMap<String, String> mapping;
+    private HashMap<String, String> fwkmapping;
     private String name;
     private String title;
     private String description;
@@ -46,11 +47,13 @@ public class DescriptionBuilder {
     private DescriptionBuilder() {
         properties = new ArrayList<Property>();
         mapping = new HashMap<String, String>();
+        fwkmapping = new HashMap<String, String>();
     }
 
     private DescriptionBuilder(final Description original) {
         properties = new ArrayList<Property>(original.getProperties());
         mapping = new HashMap<String, String>(original.getPropertiesMapping());
+        fwkmapping = new HashMap<String, String>(original.getFwkPropertiesMapping());
         this.name = original.getName();
         this.title = original.getTitle();
         this.description = original.getDescription();
@@ -102,10 +105,24 @@ public class DescriptionBuilder {
         return this;
     }
     /**
-     * Add a property mapping
+     * Add a property mapping for framework properties
+     */
+    public DescriptionBuilder frameworkMapping(final String key, final String name) {
+        fwkmapping.put(key, name);
+        return this;
+    }
+    /**
+     * Add all entries to the mapping
      */
     public DescriptionBuilder mapping(final Map<String,String> mapping) {
         this.mapping.putAll(mapping);
+        return this;
+    }
+    /**
+     * Add all entries to the frameworkMapping
+     */
+    public DescriptionBuilder frameworkMapping(final Map<String,String> mapping) {
+        this.fwkmapping.putAll(mapping);
         return this;
     }
 
@@ -237,6 +254,7 @@ public class DescriptionBuilder {
         final String title1 = null != title ? title : name;
         final List<Property> properties1 = Collections.unmodifiableList(properties);
         final Map<String, String> mapping1 = Collections.unmodifiableMap(mapping);
+        final Map<String, String> mapping2 = Collections.unmodifiableMap(fwkmapping);
         return new Description() {
             @Override
             public String getName() {
@@ -264,6 +282,11 @@ public class DescriptionBuilder {
             }
 
             @Override
+            public Map<String, String> getFwkPropertiesMapping() {
+                return mapping2;
+            }
+
+            @Override
             public String toString() {
                 return "PropertyDescription{" +
                         "name = " + getName() + ", " +
@@ -271,6 +294,7 @@ public class DescriptionBuilder {
                         "description = " + getDescription() + ", " +
                         "properties = " + getProperties() + ", " +
                         "mapping = " + getPropertiesMapping() +
+                        "frameworkMapping = " + getFwkPropertiesMapping() +
                         "}";
             }
         };

@@ -38,4 +38,9 @@ public abstract class AbstractBaseDescription implements Description {
     public Map<String, String> getPropertiesMapping() {
         return null;
     }
+
+    @Override
+    public Map<String, String> getFwkPropertiesMapping() {
+        return null;
+    }
 }
