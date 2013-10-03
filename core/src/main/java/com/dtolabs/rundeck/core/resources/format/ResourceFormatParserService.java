@@ -49,6 +49,9 @@ public class ResourceFormatParserService extends PluggableProviderRegistryServic
     public static final String SERVICE_NAME = ServiceNameConstants.ResourceFormatParser;
 
 
+    public List<String> getBundledProviderNames() {
+        return Collections.unmodifiableList(new ArrayList<String>(registry.keySet()));
+    }
     public ResourceFormatParserService(final Framework framework) {
         super(framework);
 

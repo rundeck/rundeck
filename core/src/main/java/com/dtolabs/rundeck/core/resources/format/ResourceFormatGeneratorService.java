@@ -37,6 +37,7 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -49,6 +50,9 @@ public class ResourceFormatGeneratorService extends PluggableProviderRegistrySer
 
     public static final String SERVICE_NAME = ServiceNameConstants.ResourceFormatGenerator;
 
+    public List<String> getBundledProviderNames() {
+        return Collections.unmodifiableList(new ArrayList<String>(registry.keySet()));
+    }
 
     public ResourceFormatGeneratorService(final Framework framework) {
         super(framework);

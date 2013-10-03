@@ -37,6 +37,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -56,6 +57,10 @@ public class FileCopierService extends NodeSpecifiedService<FileCopier> implemen
 
     public String getName() {
         return SERVICE_NAME;
+    }
+
+    public List<String> getBundledProviderNames() {
+        return Collections.unmodifiableList(new ArrayList<String>(registry.keySet()));
     }
 
     FileCopierService(Framework framework) {

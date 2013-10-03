@@ -643,8 +643,14 @@ class MenuController {
                 (framework.getNodeStepExecutorService().name) : PropertyScope.InstanceOnly,
                 (framework.getStepExecutionService().name) : PropertyScope.InstanceOnly,
         ]
+        def bundledPlugins=[
+                (framework.getNodeExecutorService().name): framework.getNodeExecutorService().getBundledProviderNames(),
+                (framework.getFileCopierService().name): framework.getFileCopierService().getBundledProviderNames(),
+                (framework.getResourceFormatParserService().name): framework.getResourceFormatParserService().getBundledProviderNames(),
+                (framework.getResourceFormatGeneratorService().name): framework.getResourceFormatGeneratorService().getBundledProviderNames(),
+        ]
 
-        [descriptions:pluginDescs,serviceDefaultScopes: defaultScopes]
+        [descriptions:pluginDescs,serviceDefaultScopes: defaultScopes, bundledPlugins: bundledPlugins]
     }
 
     /**

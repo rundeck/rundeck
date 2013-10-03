@@ -36,6 +36,7 @@ import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
@@ -58,12 +59,14 @@ public class NodeExecutorService extends NodeSpecifiedService<NodeExecutor> impl
         return SERVICE_NAME;
     }
 
+    public List<String> getBundledProviderNames() {
+        return Collections.unmodifiableList(new ArrayList<String>(registry.keySet()));
+    }
     NodeExecutorService(Framework framework) {
         super(framework);
 
         registry.put(JschNodeExecutor.SERVICE_PROVIDER_TYPE, JschNodeExecutor.class);
         registry.put(LocalNodeExecutor.SERVICE_PROVIDER_TYPE, LocalNodeExecutor.class);
-
     }
 
     @Override

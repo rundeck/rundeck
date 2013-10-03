@@ -59,10 +59,10 @@
                 <h4 class="panel-title">
                     <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#${ukey}">
                         <i class="glyphicon glyphicon-chevron-down"></i>
-    <g:message code="framework.service.${serviceName}.label.plural" default="${serviceName}"/>
-                    </a>
+    <g:message code="framework.service.${serviceName}.label.plural" default="${serviceName}"/></a>
+
                     <g:if test="${pluginDescList.size()>0}">
-                        (${pluginDescList.size()})
+                        <span class="label label-default">${pluginDescList.size()}</span>
                     </g:if>
                     <g:else>
                     <small>
@@ -90,11 +90,17 @@
                     <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion${ukey}" href="#${ukeyx}">
                         <i class="glyphicon glyphicon-chevron-down"></i>
                     <i class="rdicon icon-small plugin"></i>
-                    ${(pluginTitle?:pluginName).encodeAsHTML()}
-                    </a>
+                    ${(pluginTitle?:pluginName).encodeAsHTML()}</a>
+
                     <g:if test="${pluginDesc}">
                         <span class="text-muted">${pluginDesc.encodeAsHTML()}</span>
                     </g:if>
+                    <g:if test="${bundledPlugins&& bundledPlugins[serviceName] && bundledPlugins[serviceName].contains(pluginName)}">
+                        <span class="label label-default pull-right">bundled</span>
+                    </g:if>
+                    <g:else>
+                        <span class="label label-info pull-right">plugin</span>
+                    </g:else>
                 </h4>
             </div>
 
