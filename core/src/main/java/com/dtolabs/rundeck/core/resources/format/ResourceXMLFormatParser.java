@@ -83,7 +83,7 @@ public class ResourceXMLFormatParser implements ResourceFormatParser, Describabl
     private static final Description DESCRIPTION = DescriptionBuilder.builder()
         .name(SERVICE_PROVIDER_TYPE)
         .title("Resource XML")
-        .description("The RunDeck Resource XML format 1.3")
+        .description("The Rundeck Resource XML format 1.3 (bundled)")
         .build();
 
     public Description getDescription() {

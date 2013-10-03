@@ -72,7 +72,7 @@ public class ResourceYamlFormatGenerator implements ResourceFormatGenerator,Desc
     private static final Description DESCRIPTION = DescriptionBuilder.builder()
             .name(SERVICE_PROVIDER_TYPE)
             .title("Resource YAML")
-            .description("The RunDeck Resource YAML format 1.3 (generator)")
+            .description("The Rundeck Resource YAML format 1.3 (bundled)")
             .build();
 
     public Description getDescription() {
