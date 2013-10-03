@@ -30,6 +30,8 @@ import static com.dtolabs.rundeck.core.plugins.configuration.Property.Type.Long;
 import static com.dtolabs.rundeck.core.plugins.configuration.Property.Type.Select;
 import static com.dtolabs.rundeck.core.plugins.configuration.Property.Type.String;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -301,6 +303,20 @@ public class PropertyUtil {
                                   final PropertyScope scope, final Map<String, Object> renderingOptions) {
 
         return new SelectProperty(name, title, description, required, defaultValue, selectValues, scope, renderingOptions);
+    }
+    /**
+     * Create a Select property with a list of values
+     */
+    public static Property select(final String name, final String title, final String description,
+                                  final boolean required, final String defaultValue, final Collection<? extends Enum<?>> selectValues,
+                                  final PropertyScope scope, final Map<String, Object> renderingOptions) {
+        //create string representation of the enum values
+        ArrayList<String> strings = new ArrayList<String>();
+        for (Enum<?> selectValue : selectValues) {
+            strings.add(selectValue.name());
+        }
+        return new SelectProperty(name, title, description, required, defaultValue, strings, scope,
+                renderingOptions);
     }
 
     /**

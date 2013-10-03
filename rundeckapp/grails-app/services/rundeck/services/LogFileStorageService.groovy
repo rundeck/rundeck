@@ -86,6 +86,10 @@ class LogFileStorageService implements InitializingBean{
     Map getCurrentRetrievalResults(){
         return new HashMap<String,Map>(logFileRetrievalResults)
     }
+
+    def Map listLogFileStoragePlugins() {
+        return pluginService.listPlugins(LogFileStoragePlugin, logFileStoragePluginProviderService)
+    }
     /**
      * Run a storage request task, and if it fails submit a retry depending on the configured retry count and delay
      * @param task

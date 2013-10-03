@@ -115,7 +115,7 @@
                         <div class="form-horizontal">
                             <g:each in="${pluginDescription?.properties}" var="prop">
                                 <g:set var="outofscope" value="${prop.scope && !prop.scope.isInstanceLevel() && !prop.scope.isUnspecified()}"/>
-                                <g:if test="${!outofscope || adminauth}">
+                                <g:if test="${!outofscope}">
                                     <g:render
                                             template="/framework/pluginConfigPropertyFormField"
                                             model="${[prop: prop, prefix: prefix,

@@ -5,6 +5,8 @@ import com.dtolabs.rundeck.core.execution.Contextual
 import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.StreamingLogWriter
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.plugins.logging.StreamingLogReaderPlugin
+import com.dtolabs.rundeck.plugins.logging.StreamingLogWriterPlugin
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogReaderPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogWriterPluginProviderService
 import org.codehaus.groovy.grails.commons.ConfigurationHolder
@@ -85,6 +87,13 @@ class LoggingService {
             return ConfigurationHolder.config?.rundeck?.execution?.logs?.streamingWriterPlugins.toString().split(/,\s*/) as List
         }
         []
+    }
+
+    def Map listStreamingReaderPlugins() {
+        return pluginService.listPlugins(StreamingLogReaderPlugin, streamingLogReaderPluginProviderService)
+    }
+    def Map listStreamingWriterPlugins() {
+        return pluginService.listPlugins(StreamingLogWriterPlugin, streamingLogWriterPluginProviderService)
     }
 
     public ExecutionLogReader getLogReader(Execution execution) {

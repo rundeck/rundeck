@@ -1,3 +1,4 @@
+<%@ page import="com.dtolabs.rundeck.plugins.ServiceNameConstants" %>
 <g:set var="notifications" value="${scheduledExecution.notifications}"/>
 <g:set var="defSuccess" value="${scheduledExecution.findNotification('onsuccess', 'email')}"/>
 <g:set var="isSuccess" value="${params.notifySuccessRecipients && 'true' == params.notifyOnsuccess || defSuccess}"/>
@@ -47,7 +48,8 @@
             isEmail:isSuccess,
             isUrl:isSuccessUrl,
             definedNotifications: scheduledExecution.notifications?.findAll{it.eventTrigger=='onsuccess'},
-            adminauth: adminauth
+            adminauth: adminauth,
+            serviceName: ServiceNameConstants.Notification
     ]}"
     />
 <g:render template="/scheduledExecution/editNotificationsTriggerForm"
@@ -57,7 +59,8 @@
                   isEmail: isFailure,
                   isUrl: isFailureUrl,
                   definedNotifications: scheduledExecution.notifications?.findAll { it.eventTrigger == 'onfailure' },
-                  adminauth: adminauth
+                  adminauth: adminauth,
+                  serviceName: ServiceNameConstants.Notification
           ]}"/>
 
 <g:render template="/scheduledExecution/editNotificationsTriggerForm"
@@ -67,5 +70,6 @@
                   isEmail: defStart,
                   isUrl: defStartUrl,
                   definedNotifications: scheduledExecution.notifications?.findAll { it.eventTrigger == 'onstart' },
-                  adminauth: adminauth
+                  adminauth: adminauth,
+                  serviceName: ServiceNameConstants.Notification
           ]}"/>

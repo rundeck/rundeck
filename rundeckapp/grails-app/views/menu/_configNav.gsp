@@ -14,15 +14,9 @@
             <g:message code="gui.menu.UserProfiles" default="User Profiles"/>
         </g:link>
     </li>
-    <li class="${selected == 'plugins' ? 'active' : ''}">
-        <g:set var="pluginParams"
-               value="${[utm_source: 'rundeckapp', utm_medium: 'app', utm_campaign: 'getpluginlink'].collect { k, v -> k + '=' + v }.join('&')}"/>
-
-        <g:set var="pluginUrl" value="http://rundeck.org/plugins/?${pluginParams}"/>
-        <g:set var="pluginLinkUrl"
-               value="${org.codehaus.groovy.grails.commons.ConfigurationHolder.config.rundeck?.gui?.pluginLink ?: pluginUrl}"/>
-        <a href="${pluginLinkUrl}">
-            <g:message code="gui.admin.GetPlugins" default="Get Plugins"/>
-        </a>
+    <li class="${selected == 'pluginList' ? 'active' : ''}">
+        <g:link controller="menu" action="pluginList">
+            List Plugins
+        </g:link>
     </li>
 </ul>

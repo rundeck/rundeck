@@ -25,6 +25,9 @@ package com.dtolabs.rundeck.core.resources.format;
 
 import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.plugins.Plugin;
+import com.dtolabs.rundeck.core.plugins.configuration.Describable;
+import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import com.dtolabs.shared.resources.ResourceXMLGenerator;
 
 import java.io.IOException;
@@ -37,8 +40,7 @@ import java.util.*;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 @Plugin (name = "resourcexml", service = "ResourceFormatGenerator")
-
-public class ResourceXMLFormatGenerator implements ResourceFormatGenerator {
+public class ResourceXMLFormatGenerator implements ResourceFormatGenerator,Describable {
     public static final String SERVICE_PROVIDER_TYPE = "resourcexml";
 
 
@@ -60,5 +62,15 @@ public class ResourceXMLFormatGenerator implements ResourceFormatGenerator {
         final ResourceXMLGenerator resourceXMLGenerator = new ResourceXMLGenerator(stream);
         resourceXMLGenerator.addNodes(nodeset.getNodes());
         resourceXMLGenerator.generate();
+    }
+
+    private static final Description DESCRIPTION = DescriptionBuilder.builder()
+            .name(SERVICE_PROVIDER_TYPE)
+            .title("Resource XML")
+            .description("The RunDeck Resource XML format 1.3 (generator)")
+            .build();
+
+    public Description getDescription() {
+        return DESCRIPTION;
     }
 }

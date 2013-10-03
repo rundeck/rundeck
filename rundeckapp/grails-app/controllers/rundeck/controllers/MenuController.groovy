@@ -8,6 +8,7 @@ import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.core.execution.impl.jsch.JschNodeExecutor
 import com.dtolabs.rundeck.core.execution.service.FileCopierService
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
@@ -22,7 +23,10 @@ import rundeck.filters.ApiRequestFilters
 import rundeck.services.ExecutionService
 import rundeck.services.ExecutionServiceException
 import rundeck.services.FrameworkService
+import rundeck.services.LogFileStorageService
+import rundeck.services.LoggingService
 import rundeck.services.MenuService
+import rundeck.services.NotificationService
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.UserService
 
@@ -34,6 +38,9 @@ class MenuController {
     UserService userService
     ScheduledExecutionService scheduledExecutionService
     MenuService menuService
+    NotificationService notificationService
+    LoggingService LoggingService
+    LogFileStorageService logFileStorageService
     def quartzScheduler
     def list = {
         def results = index(params)
@@ -600,6 +607,46 @@ class MenuController {
 
     }
 
+    def pluginList(){
+        //list plugins and config settings for project/framework props
+
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        def project = session.project
+
+        //framework level plugin descriptions
+        def pluginDescs= [
+//            framework.getResourceModelSourceService(),
+            framework.getNodeExecutorService(),
+            framework.getFileCopierService(),
+            framework.getNodeStepExecutorService(),
+            framework.getStepExecutionService(),
+//            framework.getResourceFormatParserService(),
+//            framework.getResourceFormatGeneratorService(),
+        ].collectEntries{
+            [it.name, it.listDescriptions()]
+        }
+
+        //web-app level plugin descriptions
+        pluginDescs[notificationService.notificationPluginProviderService.name]=notificationService.listNotificationPlugins().collect {
+            it.value.description
+        }
+        pluginDescs[loggingService.streamingLogReaderPluginProviderService.name]=loggingService.listStreamingReaderPlugins().collect {
+            it.value.description
+        }
+        pluginDescs[loggingService.streamingLogWriterPluginProviderService.name]=loggingService.listStreamingWriterPlugins().collect {
+            it.value.description
+        }
+        pluginDescs[logFileStorageService.logFileStoragePluginProviderService.name]= logFileStorageService.listLogFileStoragePlugins().collect {
+            it.value.description
+        }
+
+        def defaultScopes=[
+                (framework.getNodeStepExecutorService().name) : PropertyScope.InstanceOnly,
+                (framework.getStepExecutionService().name) : PropertyScope.InstanceOnly,
+        ]
+
+        [descriptions:pluginDescs,serviceDefaultScopes: defaultScopes]
+    }
 
     /**
     * API Actions

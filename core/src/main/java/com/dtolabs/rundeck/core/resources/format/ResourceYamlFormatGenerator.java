@@ -27,6 +27,9 @@ import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.common.NodesGeneratorException;
 import com.dtolabs.rundeck.core.common.NodesYamlGenerator;
 import com.dtolabs.rundeck.core.plugins.Plugin;
+import com.dtolabs.rundeck.core.plugins.configuration.Describable;
+import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -38,7 +41,7 @@ import java.util.*;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 @Plugin (name = "resourceyaml", service = "ResourceFormatGenerator")
-public class ResourceYamlFormatGenerator implements ResourceFormatGenerator {
+public class ResourceYamlFormatGenerator implements ResourceFormatGenerator,Describable {
     public static final String SERVICE_PROVIDER_TYPE = "resourceyaml";
 
     public static final Set<String> EXTENSIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList("yaml",
@@ -64,5 +67,15 @@ public class ResourceYamlFormatGenerator implements ResourceFormatGenerator {
         } catch (NodesGeneratorException e) {
             throw new ResourceFormatGeneratorException(e);
         }
+    }
+
+    private static final Description DESCRIPTION = DescriptionBuilder.builder()
+            .name(SERVICE_PROVIDER_TYPE)
+            .title("Resource YAML")
+            .description("The RunDeck Resource YAML format 1.3 (generator)")
+            .build();
+
+    public Description getDescription() {
+        return DESCRIPTION;
     }
 }

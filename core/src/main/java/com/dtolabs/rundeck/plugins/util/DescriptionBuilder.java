@@ -101,6 +101,13 @@ public class DescriptionBuilder {
         mapping.put(key, name);
         return this;
     }
+    /**
+     * Add a property mapping
+     */
+    public DescriptionBuilder mapping(final Map<String,String> mapping) {
+        this.mapping.putAll(mapping);
+        return this;
+    }
 
     /**
      * Add a String property

@@ -20,7 +20,7 @@
     Created: 7/28/11 12:01 PM
  --%>
 
-<%@ page import="com.dtolabs.rundeck.plugins.ServiceNameConstants; com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants" contentType="text/html;charset=UTF-8" %>
+<%@ page import="com.dtolabs.rundeck.core.plugins.configuration.PropertyScope; com.dtolabs.rundeck.plugins.ServiceNameConstants; com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants" contentType="text/html;charset=UTF-8" %>
 %{--<g:set var="fieldname" value="${}"/>--}%
 %{--<g:set var="origfieldname" value="${}"/>--}%
 <g:set var="labelColType" value="col-sm-2 control-label input-sm"/>
@@ -31,12 +31,16 @@
 <g:set var="formControlType" value="form-control input-sm"/>
 <g:set var="hasError" value="${error ? 'has-error' : ''}"/>
 <g:set var="required" value="${prop.required ? 'required' : ''}"/>
+<g:set var="propScope"
+       value="${prop.scope != null && prop.scope != PropertyScope.Unspecified ? prop.scope : defaultScope}"/>
+<g:unless test="${outofscopeOnly && propScope?.isInstanceLevel()}">
 <div class="form-group ${hasError}">
+
 <g:if test="${outofscope}">
     <div class="${labelColType} form-control-static ${error?'has-error':''}  ${prop.required ? 'required' : ''}">
         ${prop.title ? prop.title.encodeAsHTML() : prop.name.encodeAsHTML()}:
     </div>
-    <div class="${valueColType}">
+    <div class="${valueColType}"  style="overflow-x:auto">
 
 </g:if>
 <g:elseif test="${prop.type.toString()=='Boolean'}">
@@ -106,32 +110,8 @@
         <div class="text-warning">${error.encodeAsHTML()}</div>
     </g:if>
     <g:if test="${outofscope}">
-        <g:set var="scopeinfo" value="${g.rkey()}"/>
-
-        <g:expander key="${scopeinfo}">Admin configuration info</g:expander>
-        <div class="text-info" id="${scopeinfo}" style="display: none;">
-            This configuration property must be set
-        <g:if test="${prop.scope.isProjectLevel()}">
-            in the project.properties file:
-            <div><code>
-                <g:pluginPropertyProjectScopeKey provider="${pluginName}"
-                                             service="${ServiceNameConstants.Notification}"
-                                             property="${prop.name}"/>=value
-            </code></div>
-        </g:if>
-        <g:if test="${prop.scope.isProjectLevel() && prop.scope.isFrameworkLevel()}">
-            or
-        </g:if>
-        <g:if test="${prop.scope.isFrameworkLevel()}">
-            in the framework.properties file:
-            <div><code>
-            <g:pluginPropertyFrameworkScopeKey provider="${pluginName}"
-                                               service="${ServiceNameConstants.Notification}"
-                                               property="${prop.name}"/>=value
-            </code></div>
-        </g:if>
-        </div>
-
+        <g:render template="/framework/pluginConfigPropertyScopeInfo" model="[propScope:propScope,mapping:mapping]"/>
     </g:if>
 </div>
 </div>
+</g:unless>

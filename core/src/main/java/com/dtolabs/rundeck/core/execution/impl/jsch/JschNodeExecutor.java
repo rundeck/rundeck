@@ -43,6 +43,8 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureReason;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.core.plugins.configuration.Property;
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil;
 import com.dtolabs.rundeck.core.tasks.net.ExtSSHExec;
 import com.dtolabs.rundeck.core.tasks.net.SSHTaskBuilder;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
@@ -60,7 +62,7 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.text.MessageFormat;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.regex.Pattern;
 
@@ -136,14 +138,29 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
 
     public static final String CONFIG_KEYPATH = "keypath";
     public static final String CONFIG_AUTHENTICATION = "authentication";
+    static final List<Property> properties = new ArrayList<Property>();
 
-    static final Description DESC = DescriptionBuilder.builder()
-        .name(SERVICE_PROVIDER_TYPE)
-        .title("SSH")
-        .description("Executes a command on a remote node via SSH.")
-        .mapping(CONFIG_KEYPATH, PROJ_PROP_SSH_KEYPATH)
-        .mapping(CONFIG_AUTHENTICATION, PROJ_PROP_SSH_AUTHENTICATION)
-        .build();
+    static final Description DESC ;
+    static {
+        DescriptionBuilder builder = DescriptionBuilder.builder();
+        builder.name(SERVICE_PROVIDER_TYPE)
+                .title("SSH")
+                .description("Executes a command on a remote node via SSH.")
+                ;
+
+        builder.property(PropertyUtil.string(CONFIG_KEYPATH, "SSH Keypath",
+                "Path to the SSH Key to use",
+                true, null));
+        builder.property(PropertyUtil.select(CONFIG_AUTHENTICATION, "SSH Authentication",
+                "Type of SSH Authentication to use",
+                true, SSHTaskBuilder.AuthenticationType.privateKey.toString(), Arrays.asList(SSHTaskBuilder
+                .AuthenticationType.values()), null, null));
+
+        builder.mapping(CONFIG_KEYPATH, PROJ_PROP_SSH_KEYPATH);
+        builder.mapping(CONFIG_AUTHENTICATION, PROJ_PROP_SSH_AUTHENTICATION);
+
+        DESC=builder.build();
+    }
 
 
     public Description getDescription() {
