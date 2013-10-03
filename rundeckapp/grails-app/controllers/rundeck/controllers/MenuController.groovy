@@ -607,38 +607,37 @@ class MenuController {
 
     }
 
-    def pluginList(){
+    def plugins(){
         //list plugins and config settings for project/framework props
 
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        def project = session.project
 
         //framework level plugin descriptions
         def pluginDescs= [
-//            framework.getResourceModelSourceService(),
             framework.getNodeExecutorService(),
             framework.getFileCopierService(),
             framework.getNodeStepExecutorService(),
             framework.getStepExecutionService(),
-//            framework.getResourceFormatParserService(),
-//            framework.getResourceFormatGeneratorService(),
+//                framework.getResourceModelSourceService(),
+            framework.getResourceFormatParserService(),
+            framework.getResourceFormatGeneratorService(),
         ].collectEntries{
-            [it.name, it.listDescriptions()]
+            [it.name, it.listDescriptions().sort {a,b->a.name<=>b.name}]
         }
 
         //web-app level plugin descriptions
         pluginDescs[notificationService.notificationPluginProviderService.name]=notificationService.listNotificationPlugins().collect {
             it.value.description
-        }
+        }.sort { a, b -> a.name <=> b.name }
         pluginDescs[loggingService.streamingLogReaderPluginProviderService.name]=loggingService.listStreamingReaderPlugins().collect {
             it.value.description
-        }
+        }.sort { a, b -> a.name <=> b.name }
         pluginDescs[loggingService.streamingLogWriterPluginProviderService.name]=loggingService.listStreamingWriterPlugins().collect {
             it.value.description
-        }
+        }.sort { a, b -> a.name <=> b.name }
         pluginDescs[logFileStorageService.logFileStoragePluginProviderService.name]= logFileStorageService.listLogFileStoragePlugins().collect {
             it.value.description
-        }
+        }.sort { a, b -> a.name <=> b.name }
 
         def defaultScopes=[
                 (framework.getNodeStepExecutorService().name) : PropertyScope.InstanceOnly,

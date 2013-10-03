@@ -14,8 +14,8 @@
             <g:message code="gui.menu.UserProfiles" default="User Profiles"/>
         </g:link>
     </li>
-    <li class="${selected == 'pluginList' ? 'active' : ''}">
-        <g:link controller="menu" action="pluginList">
+    <li class="${selected == 'plugins' ? 'active' : ''}">
+        <g:link controller="menu" action="plugins">
             List Plugins
         </g:link>
     </li>

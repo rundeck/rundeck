@@ -11,12 +11,13 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
+    <meta name="tabpage" content="configure"/>
     <title>Plugins</title>
 </head>
 <body>
 <div class="row">
 <div class="col-sm-3">
-<g:render template="configNav" model="[selected: 'pluginList']"/>
+<g:render template="configNav" model="[selected: 'plugins']"/>
 </div>
 <div class="col-sm-9">
     <div class="row">
