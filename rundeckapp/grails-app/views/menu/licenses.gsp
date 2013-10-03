@@ -10,7 +10,8 @@
 <html>
 <head>
     <meta name="layout" content="base"/>
-  <title>Licenses</title>
+    <meta name="tabpage" content="configure"/>
+  <title><g:message code="licenses" /></title>
 </head>
 <body>
 <div class="pageBody solo licenses">

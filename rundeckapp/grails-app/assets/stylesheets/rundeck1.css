@@ -367,11 +367,6 @@ div.pageBody.frame {
     padding: 0;
 }
 
-div.pageBody.licenses a {
-    color: blue;
-    text-decoration: underline;
-}
-
 table.moduledata th, table.moduledata td.sectionname {
     text-align: center;
     font-weight: normal;

@@ -24,4 +24,9 @@
             List Plugins
         </g:link>
     </li>
+    <li class="${selected == 'licenses' ? 'active' : ''}">
+        <g:link controller="menu" action="licenses">
+            <g:message code="licenses"/>
+        </g:link>
+    </li>
 </ul>
