@@ -603,7 +603,10 @@ class MenuController {
         ]]
     }
 
-    def licenses = {->
+    def metrics(){
+
+    }
+    def licenses(){
 
     }
 

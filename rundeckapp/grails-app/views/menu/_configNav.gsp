@@ -9,6 +9,11 @@
             <g:message code="gui.menu.SystemInfo" default="System Information"/>
         </g:link>
     </li>
+    <li class="${selected == 'metrics' ? 'active' : ''}">
+        <g:link controller="menu" action="metrics">
+            <g:message code="gui.menu.metrics" default="Metrics"/>
+        </g:link>
+    </li>
     <li class="${selected == 'profiles' ? 'active' : ''}">
         <g:link controller="user" action="list">
             <g:message code="gui.menu.UserProfiles" default="User Profiles"/>
