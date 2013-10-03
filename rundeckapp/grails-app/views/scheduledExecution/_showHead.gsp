@@ -9,8 +9,7 @@
                 id="${scheduledExecution.extid}"
                 absolute="${absolute ? 'true' : 'false'}">
             <i class="glyphicon glyphicon-book"></i>
-            ${scheduledExecution?.jobName.encodeAsHTML()}
-        </g:link>
+            ${scheduledExecution?.jobName.encodeAsHTML()}</g:link>
     </span>
         <g:if test="${scheduledExecution.scheduled && nextExecution}">
             <span class="scheduletime">
@@ -31,6 +30,7 @@
                 <span class="detail"><g:message code="never" /></span>
             </span>
         </g:elseif>
+
         <span class="h4 jobInfoSection">
             <span class="text-muted">${execInfo?.description?.encodeAsHTML()}</span>
         </span>
