@@ -408,9 +408,6 @@ var applinks={
 
             </script>
 
-            <div class="help-block">
-                <g:message code="scheduledExecution.groupPath.description" />
-            </div>
         </div>
     </div>
 
