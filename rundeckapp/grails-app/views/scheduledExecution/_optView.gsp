@@ -25,8 +25,8 @@
 
 <span id="opt_${rkey}" class="optview">
     <span class="optdetail ${edit?'autohilite autoedit':''}" ${edit?'title="Click to edit"':''} ${edit?'':''}>
-        <span class="optname ${option?.required ? 'required' : ''}" title="${option?.description?.encodeAsHTML()}${option?.required ? ' (Required)' : ''}">-${option.name.encodeAsHTML()}</span>
-        <span class="argstring">&lt;<g:truncate max="20" showtitle="true">${option.secureInput && option.defaultValue?'****':option.defaultValue?.encodeAsHTML()}</g:truncate>&gt;${option.multivalued?'+':''}</span>
+        <span class=" ${option?.required ? 'required' : ''}" title="${option?.description?.encodeAsHTML()}${option?.required ? ' (Required)' : ''}">${option.name.encodeAsHTML()}</span>
+        <span class=""><g:truncate max="20" showtitle="true">${option.secureInput && option.defaultValue?'****':option.defaultValue?.encodeAsHTML()}</g:truncate>${option.multivalued?'(+)':''}</span>
         <span class="desc">${option.description?.encodeAsHTML()}</span>
     </span>
     <g:if test="${option?.values || option.valuesList}">

@@ -162,8 +162,7 @@
         <tr>
             <td>Node:</td>
             <td id="matchednodes_${rkey}" class="matchednodes embed" >
-                <span class="action textbtn depress2 receiver"  title="Display matching nodes" onclick="_updateMatchedNodes({},'matchednodes_${rkey}','${execdata?.project}', true, {requireRunAuth:true})">Show Matches</span>
-                
+                <span class="btn btn-sm btn-default receiver"  title="Display matching nodes" onclick="_updateMatchedNodes({},'matchednodes_${rkey}','${execdata?.project}', true, {requireRunAuth:true})">Show Matches</span>
             </td>
         </tr>
         </tbody>

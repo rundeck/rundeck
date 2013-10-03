@@ -5,13 +5,12 @@ import org.codehaus.groovy.grails.commons.ConfigurationHolder
 
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
-import rundeck.ScheduledExecution
 
 class UtilityTagLib{
     def static  daysofweekkey = [Calendar.SUNDAY,Calendar.MONDAY,Calendar.TUESDAY,Calendar.WEDNESDAY,Calendar.THURSDAY,Calendar.FRIDAY,Calendar.SATURDAY];
     def public static daysofweekord = ScheduledExecution.daysofweeklist;
     def public static monthsofyearord = ScheduledExecution.monthsofyearlist;
-	static returnObjectForTags = ['rkey','w3cDateValue','sortGroupKeys','helpLinkUrl']
+	static returnObjectForTags = ['rkey','w3cDateValue','sortGroupKeys','helpLinkUrl','parseOptsFromString']
     def frameworkService
   
     private static Random rand=new java.util.Random()
@@ -30,6 +29,9 @@ class UtilityTagLib{
         return sprintf(attrs.format?:'%02x'*len,b)
     }
 
+    def parseOptsFromString={attrs,body->
+        return frameworkService.parseOptsFromString(attrs.args)
+    }
     /**
      * Return the group map sorted by group path
      */
