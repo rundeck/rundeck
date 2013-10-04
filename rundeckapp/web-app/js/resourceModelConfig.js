@@ -52,9 +52,9 @@ var ResourceModelConfigControl = Class.create({
     hidden3.addClassName("configindex");
 
     var buttons1 = new Element("div");
-    buttons1.addClassName('form-group');
+    buttons1.addClassName('panel-footer ');
     var buttons = new Element("div");
-    buttons.addClassName('col-sm-offset-2 col-sm-10');
+    buttons.addClassName('buttons');
     buttons1.appendChild(buttons);
 
     if (edit) {
@@ -68,6 +68,7 @@ var ResourceModelConfigControl = Class.create({
                 self.editConfig(top, type, prefix, index);
             });
             button.innerHTML = "Edit";
+            button.addClassName('btn-info');
         }
 
         var cancelbutton = new Element("button");
@@ -76,6 +77,7 @@ var ResourceModelConfigControl = Class.create({
             self.cancelConfig(top);
         });
         cancelbutton.innerHTML = "Delete";
+        cancelbutton.addClassName('btn-danger');
 
         buttons.appendChild(cancelbutton);
         if(button){
@@ -90,6 +92,7 @@ var ResourceModelConfigControl = Class.create({
         });
         button.innerHTML = "Save";
         button.addClassName("needsSave");
+        button.addClassName('btn-primary');
 
         var cancelbutton = new Element("button");
         Event.observe(cancelbutton, 'click', function(e) {
@@ -108,7 +111,7 @@ var ResourceModelConfigControl = Class.create({
     $(buttons).descendants('button').each(function(b){
         $(b).addClassName('btn btn-default btn-sm');
     });
-    content.down('.form-horizontal').appendChild(buttons1);
+    top1.appendChild(buttons1);
 },
 error: function(req) {
     var data = req.responseJSON;

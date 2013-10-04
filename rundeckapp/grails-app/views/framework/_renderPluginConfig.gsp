@@ -21,22 +21,28 @@
  --%>
 
 <%@ page contentType="text/html;charset=UTF-8" %>
-
+<div class="container">
 <g:if test="${description}">
-    <g:if test="${!hideTitle}">
-        <span class="text-info">${description.title.encodeAsHTML()}</span>
-    </g:if>
-    <g:if test="${!hideDescription}">
-        <span class="text-muted">${description.description?.encodeAsHTML()}</span>
-    </g:if>
+    <div class="row">
+    <div class="col-sm-12">
+        <div class="h4 text-info">
+            <g:if test="${!hideTitle}">${description.title.encodeAsHTML()}</g:if>
+            <g:if test="${!hideDescription}">
+                <small class="text-muted">${description.description?.encodeAsHTML()}</small>
+            </g:if>
+        </div>
+    </div>
+    </div>
 </g:if>
-<div class="" style="margin-top:5px;">
+<div class="row ${description ? 'row-space' : ''}">
     <g:set var="rkey" value="${g.rkey()}"/><g:if test="${includeFormFields && saved}">
     <g:hiddenField name="${prefix}saved" value="true" class="wasSaved"/>
 </g:if>
     <g:hiddenField name="prefix" value="${prefix}"/>
     <g:hiddenField name="${prefix+'type'}" value="${type}"/>
+    <div class="col-sm-12 form-horizontal">
     <g:if test="${values}">
+
         <span id="${rkey}_summary">
             <g:if test="${description}">
                 <g:each in="${description.properties}" var="prop">
@@ -46,14 +52,12 @@
             </g:if>
         </span>
         <g:if test="${description}">
-            <table class="simpleForm" id="${rkey}" style="display:none;">
+            <div  id="${rkey}" style="display:none;">
                 <g:each in="${description.properties}" var="prop">
-                    <tr>
                         <g:render template="/framework/pluginConfigPropertyValue"
                                   model="${[prop:prop,prefix:prefix,values:values,includeFormFields:includeFormFields]}"/>
-                    </tr>
                 </g:each>
-            </table>
+            </div>
         </g:if>
         <g:elseif test="${includeFormFields}">
             <g:expander key="${rkey}_inv">Properties</g:expander>
@@ -65,7 +69,8 @@
                 </g:each>
             </ul>
         </g:elseif>
-
     </g:if>
+</div>
 
+</div>
 </div>
