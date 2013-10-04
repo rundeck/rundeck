@@ -1094,13 +1094,15 @@ class FrameworkController  {
         def auth=[
                 jobCreate: frameworkService.authorizeProjectResource(framework,[type:'resource',kind:'job'], 'create',project)
         ]
+        def project1 = frameworkService.getFrameworkProject(project, framework)
         //summary data
         def data= [
-                jobCount: ScheduledExecution.countByProject(project),
-                execCount: Execution.countByProjectAndDateStartedGreaterThan(project, today),
-                userCount: users.size(),
-                users: users,
-                auth:auth
+            jobCount: ScheduledExecution.countByProject(project),
+            execCount: Execution.countByProjectAndDateStartedGreaterThan(project, today),
+            userCount: users.size(),
+            nodeCount:project1.nodeSet.nodeNames.size(),
+            users: users,
+            auth:auth
         ]
         withFormat {
             json{

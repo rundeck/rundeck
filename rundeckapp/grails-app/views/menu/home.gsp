@@ -122,6 +122,15 @@
             <div class="row">
                 <div class="col-sm-12">
                     <a class="h4" href="${g.createLink(controller: "framework", action: "selectProject", params: [page: 'nodes'])}&amp;project=<!= project !>">
+                        <! if(nodeCount !=null){ !>
+                        <! if(nodeCount > 0 ) { !>
+                        <span class="text-info">
+                            <!= nodeCount !>
+                        </span>
+                        <! }else{ !>
+                        <!= nodeCount !>
+                        <! } !>
+                        <! } !>
                         Nodes
                     </a>
                 </div>
