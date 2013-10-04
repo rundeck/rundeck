@@ -10,9 +10,12 @@ import com.dtolabs.rundeck.server.plugins.services.StreamingLogWriterPluginProvi
 import groovy.io.FileType
 import org.springframework.core.task.SimpleAsyncTaskExecutor
 
-import java.util.concurrent.Executors
-
 beans={
+    log4jConfigurer(org.springframework.beans.factory.config.MethodInvokingFactoryBean) {
+        targetClass = "org.springframework.util.Log4jConfigurer"
+        targetMethod = "initLogging"
+        arguments = ["classpath:log4j.properties"]
+    }
     defaultGrailsServiceInjectorJobListener(GrailsServiceInjectorJobListener){
         name= 'defaultGrailsServiceInjectorJobListener'
         services=[executionService: ref('executionService'),metricRegistry:ref('metricRegistry')]
