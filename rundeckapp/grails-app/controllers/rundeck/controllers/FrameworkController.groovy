@@ -10,6 +10,7 @@ import com.dtolabs.shared.resources.ResourceXMLGenerator
 
 import grails.converters.JSON
 import rundeck.Execution
+import rundeck.ScheduledExecution
 
 import java.util.regex.PatternSyntaxException
 import com.dtolabs.rundeck.core.common.INodeEntry
@@ -1029,7 +1030,84 @@ class FrameworkController  {
 
         return render(template: 'viewResourceModelConfig',model:[ prefix: prefix, values: props, includeFormFields: true, description: desc, report: report, error: error, saved:true, type: type])
     }
+    def projectDescFragment(){
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        def project = params.project
+        if (!project) {
+            flash.error = "Project parameter is required"
+            return render(template: "/common/errorFragment")
+        }
+        if (!frameworkService.existsFrameworkProject(project, framework)
+                || !frameworkService.authorizeApplicationResourceAll(framework, [type: 'project', name: project], ['read'])) {
+            flash.error = "Unauthorized"
+            return render(template: "/common/errorFragment")
+        }
+        //look for readme.md in project directory
+        def project1 = frameworkService.getFrameworkProject(project, framework)
+        def readme = new File(project1.baseDir, "readme.md")
+        def motd = new File(project1.baseDir, "motd.md")
+        def html=''//empty
+        if (motd.exists() && motd.isFile()) {
+            //load file and apply markdown
+            html = motd.text?.decodeMarkdown()
+            html+= '<hr>\n'
+        }
+        if(readme.exists() && readme.isFile()){
+            //load file and apply markdown
+            html += readme.text?.decodeMarkdown()
+        }
+        return render(contentType: 'text/html',text: html)
+    }
+    /**
+     * JSON output
+     * @return
+     */
+    def apiProjectSummary(){
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        def project=params.project
+        if (!project) {
+            flash.error = "Project parameter is required"
+            return render(template: "/common/errorFragment")
+        }
+        if(!frameworkService.existsFrameworkProject(project, framework)
+                || !frameworkService.authorizeApplicationResourceAll(framework, [type: 'project', name: project], ['read'])){
+            flash.error = "Unauthorized"
+            return render(template: "/common/errorFragment")
+        }
 
+        Calendar n = GregorianCalendar.getInstance()
+//        n.add(Calendar.DAY_OF_YEAR, -1)
+        n.set(Calendar.HOUR_OF_DAY, 0)
+        n.set(Calendar.MINUTE, 0)
+        n.set(Calendar.SECOND, 0)
+        Date today = n.getTime()
+        def c = Execution.createCriteria()
+
+        def users = c.list {
+            eq('project',project)
+            gt('dateStarted',today)
+            projections {
+                distinct('user')
+            }
+        }
+        //authorization
+        def auth=[
+                jobCreate: frameworkService.authorizeProjectResource(framework,[type:'resource',kind:'job'], 'create',project)
+        ]
+        //summary data
+        def data= [
+                jobCount: ScheduledExecution.countByProject(project),
+                execCount: Execution.countByProjectAndDateStartedGreaterThan(project, today),
+                userCount: users.size(),
+                users: users,
+                auth:auth
+        ]
+        withFormat {
+            json{
+                render data as JSON
+            }
+        }
+    }
 
     def projectSelect={
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)

@@ -119,6 +119,8 @@ class AuthTagLib {
         def env
         if ('application'==attrs.context){
             env=Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"application"), 'rundeck'))
+        }else if(attrs.project){
+            env=Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), attrs.project))
         }else{
             env=Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), session.project))
         }

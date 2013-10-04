@@ -118,7 +118,7 @@ class MenuController {
         /**
         * redirect to configured start page, or default to Run page
          */
-        def startpage='jobs'
+        def startpage='home'
         if(grailsApplication.config.rundeck.gui.startpage){
             startpage=grailsApplication.config.rundeck.gui.startpage
         }
@@ -126,12 +126,21 @@ class MenuController {
             startpage=params.page
         }
         switch (startpage){
+            case 'home':
+                return redirect(controller: 'menu', action: 'home')
             case 'run':
             case 'nodes':
                 return redirect(controller:'framework',action:'nodes')
             case 'jobs':
                 return redirect(controller:'menu',action:'jobs')
+            case 'createJob':
+                return redirect(controller:'scheduledExecution',action: 'create')
+            case 'uploadJob':
+                return redirect(controller: 'scheduledExecution', action: 'upload')
+            case 'configure':
+                return redirect(controller: 'menu', action: 'admin')
             case 'history':
+            case 'activity':
             case 'events':
                 return redirect(controller:'reports',action:'index')
         }
@@ -654,6 +663,11 @@ class MenuController {
         ]
 
         [descriptions:pluginDescs,serviceDefaultScopes: defaultScopes, bundledPlugins: bundledPlugins]
+    }
+
+    def home(){
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        session.frameworkProjects = frameworkService.projects(framework)
     }
 
     /**

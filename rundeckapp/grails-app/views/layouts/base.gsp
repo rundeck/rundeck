@@ -18,10 +18,16 @@
     <g:javascript library="prototype"/>
     <g:javascript library="application"/>
     <g:javascript library="menus"/>
+    <g:javascript library="underscore-min"/>
     <g:render template="/common/js"/>
     <g:render template="/common/css"/>
 
     <script language="javascript">
+        _.templateSettings = {
+            evaluate: /<!([\s\S]+?)!>/g,
+            interpolate: /<!=([\s\S]+?)!>/g,
+            escape: /<!-([\s\S]+?)!>/g
+        };
         function oopsEmbeddedLogin() {
         <%
             if (g.pageProperty(name: 'meta.tabpage')) { %>

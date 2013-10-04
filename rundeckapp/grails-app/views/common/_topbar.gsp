@@ -14,7 +14,30 @@
     </a>
 
     <ul class="nav navbar-nav">
-<g:if test="${session?.user && request.subject}">
+<g:if test="${session?.user && request.subject }">
+    <g:set var="homeselected" value="${false}"/>
+    <g:ifPageProperty name='meta.tabpage'>
+        <g:ifPageProperty name='meta.tabpage' equals='home'>
+            <g:set var="homeselected" value="${true}"/>
+        </g:ifPageProperty>
+    </g:ifPageProperty>
+    <g:if test="${! homeselected}">
+
+    <g:if test="${session?.project || session?.projects}">
+        <g:if test="${session.frameworkProjects}">
+            <li class="dropdown" id="projectSelect">
+                <g:render template="/framework/projectSelect"
+                          model="${[projects: session.frameworkProjects, project: session.project, selectParams: selectParams]}"/>
+            </li>
+        </g:if>
+        <g:else>
+            <li id="projectSelect" class="dropdown">
+                <span class="action textbtn button" onclick="loadProjectSelect();"
+                      title="Select project...">${session?.project ? session.project : 'Select project&hellip;'}
+                </span>
+            </li>
+        </g:else>
+    </g:if>
 
         <g:set var="selectedclass" value="active"/>
 
@@ -47,19 +70,6 @@
             <g:message code="gui.menu.Events"/>
         </g:link></li>
 
-    <g:if test="${session?.project||session?.projects}">
-        <g:if test="${session.frameworkProjects}">
-            <li class="dropdown" id="projectSelect" >
-            <g:render template="/framework/projectSelect" model="${[projects:session.frameworkProjects,project:session.project, selectParams: selectParams]}"/>
-            </li>
-        </g:if>
-        <g:else>
-            <li id="projectSelect" class="dropdown">
-               <span class="action textbtn button" onclick="loadProjectSelect();" title="Select project...">${session?.project?session.project:'Select project&hellip;'}
-               </span>
-            </li>
-        </g:else>
-    </g:if>
 
     <g:unless test="${session.frameworkProjects}">
         <g:javascript>
@@ -68,7 +78,7 @@
             });
         </g:javascript>
     </g:unless>
-
+    </g:if>
 </g:if>
 </ul>
   <ul class="nav navbar-nav navbar-right">
