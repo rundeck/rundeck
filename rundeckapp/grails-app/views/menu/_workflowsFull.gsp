@@ -113,7 +113,9 @@
             </button>
             <ul class="dropdown-menu pull-right" role="menu">
                 <li><g:link controller="scheduledExecution" action="create"
-                            class="">New <g:message
+                            class="">
+                    <i class="glyphicon glyphicon-plus"></i>
+                    New <g:message
                             code="domain.ScheduledExecution.title"/>&hellip;</g:link></li>
                 <li class="divider">
                 </li>
