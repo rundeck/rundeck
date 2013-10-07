@@ -112,6 +112,29 @@ class FrameworkService implements ApplicationContextAware {
     def getFrameworkProject(String project, Framework framework) {
         return framework.getFrameworkProjectMgr().getFrameworkProject(project)
     }
+    /**
+     * Return a map of the project's readme and motd content
+     * @param project
+     * @param framework
+     * @return [readme: "readme content", readmeHTML: "rendered content", motd: "motd content", motdHTML: "readnered content"]
+     */
+    def getFrameworkProjectReadmeContents(String project, Framework framework){
+        def project1 = getFrameworkProject(project,framework)
+        def readme = new File(project1.baseDir, "readme.md")
+        def motd = new File(project1.baseDir, "motd.md")
+        def result=[:]
+        if (motd.exists() && motd.isFile()) {
+            //load file and apply markdown
+            result.motd= motd.text
+            result.motdHTML= result.motd?.decodeMarkdown()
+        }
+        if (readme.exists() && readme.isFile()) {
+            //load file and apply markdown
+            result.readme= readme.text
+            result.readmeHTML= result.readme?.decodeMarkdown()
+        }
+        return result
+    }
 
     /**
      * Get a property resolver for optional project level
