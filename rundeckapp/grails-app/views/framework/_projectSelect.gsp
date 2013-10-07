@@ -1,7 +1,8 @@
 <g:set var="projectSet" value="${projects*.name.sort()}"/>
 <g:set var="selectParams" value="${selectParams?:[:]}"/>
     <a data-toggle="dropdown" href="#">
-        Project: ${session.project}
+        <i class="glyphicon glyphicon-tasks"></i>
+        ${session.project}
         <i class="caret"></i>
     </a>
     <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
@@ -21,6 +22,7 @@
         <g:each var="project" in="${projectSet}">
             <li>
                 <g:link controller="framework" action="selectProject" params="${[project: project] + selectParams}" >
+                    <i class="glyphicon glyphicon-tasks"></i>
                     ${project.encodeAsHTML()}
                 </g:link>
             </li>
