@@ -1076,10 +1076,7 @@ class FrameworkController  {
         }
 
         Calendar n = GregorianCalendar.getInstance()
-//        n.add(Calendar.DAY_OF_YEAR, -1)
-        n.set(Calendar.HOUR_OF_DAY, 0)
-        n.set(Calendar.MINUTE, 0)
-        n.set(Calendar.SECOND, 0)
+        n.add(Calendar.DAY_OF_YEAR, -1)
         Date today = n.getTime()
         def c = Execution.createCriteria()
 
@@ -1097,6 +1094,7 @@ class FrameworkController  {
         def project1 = frameworkService.getFrameworkProject(project, framework)
         //summary data
         def data= [
+            project:project,
             jobCount: ScheduledExecution.countByProject(project),
             execCount: Execution.countByProjectAndDateStartedGreaterThan(project, today),
             userCount: users.size(),
