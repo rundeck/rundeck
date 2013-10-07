@@ -106,12 +106,16 @@
                 ${session.user.encodeAsHTML()} <span class="caret"></span>
             </g:link>
             <ul class="dropdown-menu" role="menu" aria-labelledby="userLabel">
-                <li><g:link controller="user" action="profile">Profile</g:link></li>
+                <li><g:link controller="user" action="profile">
+                        <i class="glyphicon glyphicon-user"></i>
+                        Profile
+                    </g:link>
+                </li>
                 <li class="divider"></li>
                 <li><g:link action="logout" controller="user" title="Logout user: ${session.user}"
                             params="${[refLink: controllerName && actionName ? createLink(controller: controllerName, action: actionName, params: params, absolute: true) : '']}">
+                    <i class="glyphicon glyphicon-remove"></i>
                     Logout
-                    <b class="glyphicon glyphicon-remove"></b>
                 </g:link>
                 </li>
             </ul>
