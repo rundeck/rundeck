@@ -36,13 +36,13 @@ class BootStrap {
          if(!grailsApplication.config.rdeck.base){
              //look for system property
              rdeckBase=System.getProperty('rdeck.base')
-             log.error("using rdeck.base system property: ${rdeckBase}");
+             log.info("using rdeck.base system property: ${rdeckBase}");
              def newconf= new ConfigObject()
              newconf.rdeck.base = rdeckBase
              grailsApplication.config.merge(newconf)
          }else{
              rdeckBase=grailsApplication.config.rdeck.base
-             log.error("using rdeck.base config property: ${rdeckBase}");
+             log.info("using rdeck.base config property: ${rdeckBase}");
          }
          frameworkService.rundeckbase = rdeckBase
          def clusterMode = false
