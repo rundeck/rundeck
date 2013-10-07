@@ -6,7 +6,7 @@
   To change this template use File | Settings | File Templates.
 --%>
 
-<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" contentType="text/html;charset=UTF-8" %>
+<%@ page import="grails.converters.JSON; com.dtolabs.rundeck.server.authorization.AuthConstants" contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
@@ -18,135 +18,235 @@
 
 </head>
 <body>
+
+
 <div class="row">
-    <div class="col-sm-12">
-        <span class="h3">Projects</span>
-    </div>
-</div>
-<div class="row row-space">
-<div class="col-sm-3">
-<g:if test="${session.frameworkProjects}">
-    <g:set var="projectSet" value="${session.frameworkProjects*.name.sort()}"/>
-    <ul class="nav nav-pills nav-stacked">
-    <g:each in="${projectSet}" var="project">
-        <li class="${session.project==project?'active':''}">
-            <a href='#'
-                    class="obs_project" data-project="${project}">
-                ${project.encodeAsHTML()}
-            </a>
-        </li>
-    </g:each>
-    </ul>
-</g:if>
-</div>
-    <div class="col-sm-9">
-        <div class="alert alert-warning" id="alert" style="display: none;">
+<div class="col-sm-12">
+                <span class="h3">
+                    Rundeck
+                    server:
 
-        </div>
-        <g:each in="${projectSet}" var="project">
-        <div id="proj_${project.encodeAsHTML()}" style="${wdgt.styleVisible(if:session.project==project)};" class="view_project">
+                <span class="text-info ">${frameworkNodeName.encodeAsHTML()}</span>
 
-            <div id="projsummary_${project.encodeAsHTML()}" >
+                </span>
+</div>
+</div>
+        <div class="row row-space">
+            <div class="col-sm-2">
+                <span class="h4">
+                    <span class="summary-count ${ jobCount > 0 ? 'text-info' : 'text-muted' }">${projCount}</span>
+                    <g:message code="Project${projCount == 1 ? '' : '.plural'}"/>
+                </span>
             </div>
 
-            <div class="panel panel-info" id="projdesc_${project.encodeAsHTML()}" style="display: none;">
-                <div class="panel-body content">
+
+            <div class="col-sm-2">
+                <span class="h4">
+                    <span class="summary-count ${jobCount > 0 ? 'text-info' : 'text-muted'}">${jobCount}</span>
+                    <g:message code="Job${jobCount == 1 ? '' : '.plural'}"/>
+                    <i class="glyphicon glyphicon-book"></i>
+                </span>
+            </div>
+
+
+            <div class="col-sm-3">
+                <span class="h4">
+                    <span class="summary-count ${ execCount > 0 ? 'text-info' : 'text-muted' }">${execCount}</span>
+                    <strong>
+                        <g:message code="Execution${execCount == 1 ? '' : '.plural'}"/>
+                    </strong>
+                    In the last day
+                </span>
+                <g:if test="${projectSummaries.size()>0}">
+                <div>
+                in
+                <span class="text-info">
+                    ${projectSummary.size()}
+                </span>
+
+
+                <g:message code="Project${projectSummary.size() == 1 ? '' : '.plural'}"/>
+                <g:each var="project" in="${projectSummary}" status="i">
+                ${project}<g:if test="${i< projectSummary.size()-1}">,</g:if>
+                </g:each>
+                </div>
+                </g:if>
+                <div>
+                    <g:if test="${userCount>0}">
+                    by
+                    <span class="text-info">
+                        ${userCount}
+                    </span>
+                    <g:message code="user${userCount == 1 ? '' : '.plural'}"/>
+                    <g:each in="${userSummary}" var="user" status="i">
+                    ${user.encodeAsHTML()}<g:if test="${i<userSummary.size()-1}">,</g:if>
+                    </g:each>
+                    </g:if>
                 </div>
             </div>
-        </div>
-        </g:each>
     </div>
+
+
+<div class="row row-space">
+    <div class="col-sm-9">
+        <span class="h3 text-muted">
+            <g:message code="Project.plural" />
+        </span>
+    </div>
+    <auth:resourceAllowed action="create" kind="project" context="application">
+        <div class="col-sm-3">
+            <g:link controller="framework" action="createProject" class="btn  btn-success pull-right">
+                New Project
+                <b class="glyphicon glyphicon-plus"></b>
+            </g:link>
+        </div>
+    </auth:resourceAllowed>
 </div>
-<script id="projectSummary" type="text/template">
+
+<div class="row row-space">
+    <div class="col-sm-12">
+
+        <g:each in="${projectSummaries}" var="projectData">
+            <g:set var="project" value="${projectData.key}"/>
+            <g:set var="data" value="${projectData.value}"/>
 %{--Template for project details--}%
 <div class="panel panel-default">
-    <div class="list-group">
-        <div class="list-group-item">
+    <div class="panel-body">
             <div class="row">
-                <div class="col-sm-8">
-                    <a class="h4" href="${g.createLink(controller:"framework",action:"selectProject",params:[page: 'jobs'])}&amp;project=<!= project !>">
-                            <span class="<!= jobCount > 0 ? 'text-info' : 'text-muted' !>"><!= jobCount !></span> Jobs
+                <div class="col-sm-6 col-md-2">
+                    <a class="h3"
+                       href="${g.createLink(controller: "framework", action: "selectProject", params: [project: project])}">
+                        <i class="glyphicon glyphicon-tasks"></i>
+                    ${project}
                     </a>
                 </div>
-                <div class="col-sm-4">
-                    <! if(auth.jobCreate) { !>
-                    <div class="btn-group pull-right">
-                        <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
-                            Create <g:message code="domain.ScheduledExecution.title"/>
-                            <span class="caret"></span>
-                        </button>
-                        <ul class="dropdown-menu pull-right" role="menu">
-                            <li><a href="${g.createLink(controller: "framework", action: "selectProject", params: [page: 'createJob'])}&amp;project=<!= project !>">
-                                New <g:message
-                                        code="domain.ScheduledExecution.title"/>&hellip;</a></li>
-                            <li class="divider">
-                            </li>
-                            <li>
-                                <a href="${g.createLink(controller: "framework", action: "selectProject", params: [page: 'uploadJob'])}&amp;project=<!= project !>"
-                                        class="">
-                                    <i class="glyphicon glyphicon-upload"></i>
-                                    Upload Definition&hellip;
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                    <! } !>
+                <div class="col-sm-6 col-md-2">
+                    <a class="h4 ${data.jobCount > 0 ? '' : 'text-muted'}" href="${g.createLink(controller:"framework",action:"selectProject",params:[page: 'jobs',project:project])}">
+                        <span class="summary-count ${data.jobCount > 0 ? 'text-info' : '' }">${data.jobCount}</span>
+
+                        <g:plural code="Job" count="${data.jobCount}" textOnly="${true}"/>
+                        <i class="glyphicon glyphicon-book"></i>
+                    </a>
                 </div>
-            </div>
-        </div>
-        <div class="list-group-item">
-            <div class="row">
-                <div class="col-sm-12">
-                    <a class="h4"
-                       href="${g.createLink(controller: "framework", action: "selectProject", params: [page: 'activity'])}&amp;project=<!= project !>">
-                        <span class="<!= execCount > 0 ? 'text-info' : 'text-muted' !>"><!= execCount !></span> <strong>Executions</strong>
+                <div class="clearfix visible-sm"></div>
+                <div class="col-sm-6 col-md-3">
+                    <a class="h4 ${data.execCount > 0 ? '' : 'text-muted'}"
+                       href="${g.createLink(controller: "framework", action: "selectProject", params: [page: 'activity', project: project])}"
+
+                    >
+                        <span class="summary-count ${data.execCount > 0 ? 'text-info' : '' }">${data.execCount}</span>
+                        <strong>
+                            <g:plural code="Execution" count="${data.execCount}" textOnly="${true}"/>
+                        </strong>
                         In the last day
                     </a>
                     <div>
-                        <! if(userCount > 0 ) { !>
+                        <g:if test="${data.userCount>0}">
                         by
                         <span class="text-info">
-                        <!= userCount !>
+                        ${data.userCount}
                         </span>
-                        users:
-                            <! for(var i=0;i < users.size() ; i++){ !>
-                                <!- users[i] !><! if(i < users.size()-1 ){ !>,<! } !>
-                            <! } !>
-                        <! } !>
+
+                            <g:plural code="user" count="${data.userCount}" textOnly="${true}"/>
+
+                            <g:each in="${data.userSummary}" var="user" status="i">
+                                ${user.encodeAsHTML()}<g:if test="${i < data.userSummary.size() - 1}">,</g:if>
+                            </g:each>
+                        </g:if>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <div class="list-group-item">
-            <div class="row">
-                <div class="col-sm-12">
-                    <a class="h4" href="${g.createLink(controller: "framework", action: "selectProject", params: [page: 'nodes'])}&amp;project=<!= project !>">
-                        <! if(nodeCount !=null){ !>
-                        <! if(nodeCount > 0 ) { !>
-                        <span class="text-info">
-                            <!= nodeCount !>
+
+                <div class="col-sm-6 col-md-2">
+                    <a class="h4" href="${g.createLink(controller: "framework", action: "selectProject", params: [page: 'nodes',project:project])}">
+                        <span class="summary-count ${data.nodeCount>0?'text-info':''}">
+                            ${data.nodeCount}
                         </span>
-                        <! }else{ !>
-                        <!= nodeCount !>
-                        <! } !>
-                        <! } !>
-                        Nodes
+                        <g:plural code="Node" count="${data.nodeCount}" textOnly="${true}"/>
                     </a>
                 </div>
+
+                <div class="clearfix visible-xs visible-sm"></div>
+                <g:if test="${data.auth?.jobCreate || data.auth?.admin}">
+                    <div class="col-sm-12 col-md-3">
+                    <div class="pull-right">
+                        <g:if test="${data.auth?.admin}">
+                            <a href="${g.createLink(controller: "framework", action: "selectProject", params: [page: 'configure', project: project])}"
+                               class="btn btn-default btn-sm">
+                                <g:message code="gui.menu.Admin"/>
+                            </a>
+                        </g:if>
+                        <div class="btn-group ">
+
+                            <g:if test="${data.auth.jobCreate}">
+                            <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+                                Create <g:message code="domain.ScheduledExecution.title"/>
+                                <span class="caret"></span>
+                            </button>
+                            <ul class="dropdown-menu pull-right" role="menu">
+                                <li><a href="${g.createLink(controller: "framework", action: "selectProject", params: [page: 'createJob', project: project])}">
+                                    <i class="glyphicon glyphicon-plus"></i>
+                                    New <g:message
+                                        code="domain.ScheduledExecution.title"/>&hellip;
+
+                                </a>
+                                </li>
+                                <li class="divider">
+                                </li>
+                                <li>
+                                    <a href="${g.createLink(controller: "framework", action: "selectProject", params: [page: 'uploadJob', project: project])}"
+                                       class="">
+                                        <i class="glyphicon glyphicon-upload"></i>
+                                        Upload Definition&hellip;
+                                    </a>
+                                </li>
+                            </ul>
+                            </g:if>
+                        </div>
+                        </div>
+                    </div>
+                </g:if>
             </div>
-        </div>
+
+    </div>
+        <g:if test="${data.readme?.readme || data.readme?.motd}">
+            <div class="panel-body">
+                    <g:if test="${data.readme.readmeHTML}">
+                        ${data.readme.readmeHTML}
+                    </g:if>
+                    <g:elseif test="${data.readme.readme}">
+                        ${data.readme.readme.encodeAsHTML()}
+                    </g:elseif>
+
+                    <g:if test="${data.readme.motd && data.readme.readme}">
+                        <hr/>
+                    </g:if>
+                    <g:if test="${data.readme.motdHTML}">
+                        ${data.readme.motdHTML}
+                    </g:if>
+                    <g:elseif test="${data.readme.readme}">
+                        ${data.readme.readme.motdAsHTML()}
+                    </g:elseif>
+            </div>
+        </g:if>
+</div>
+
+</g:each>
     </div>
 </div>
-</script>
+
+
 <g:javascript>
+    /*Render project summary into element*/
+    function renderTempl(elem,data,name){
+        elem.html( _.template(jQuery('#'+name).html(),data) );
+    }
     /*Loads project summary details via json and popuplates div by expanding the template*/
     function loadProjectSummary(project){
         var summary = jQuery('#projsummary_' + project);
         jQuery.getJSON("${createLink(controller: 'framework', action: 'apiProjectSummary')}?project="+project,
             function(data){
-                data.project=project;
-                summary.html( _.template(jQuery('#projectSummary').html(),data) );
+                renderTempl(summary,data,'projectSummary');
             }
         ).fail(function(data, textStatus, error){
             var msg = "Sorry but there was an error: ";
@@ -171,23 +271,39 @@
             jQuery( "#alert" ).html( msg + err  ).show();
         });
     }
+    function navActivate(elem){
+        jQuery(elem).closest('ul.nav').children('li').removeClass('active');
+        jQuery(elem).closest('li').addClass('active');
+    }
+    function loadAppSummary(){
+    renderTempl(jQuery('.view_home'),${[jobCount: jobCount, projectSummary: projectSummary, execCount: execCount, projCount: projCount, userCount: userCount, users: userSummary, projects: projectSummary] as JSON},'appSummary');
+    }
     jQuery(function () {
         jQuery('.obs_project').each(function (i, elem) {
             var project = jQuery(elem).data('project');
             jQuery(elem).click(function () {
-                jQuery(elem).closest('ul.nav').children('li').removeClass('active');
-                jQuery(elem).closest('li').addClass('active');
+                navActivate(elem);
                 jQuery('.view_project').hide();
+                jQuery('.view_home').hide();
                 loadProjectDesc(project);
                 loadProjectSummary(project);
                 jQuery('#proj_' + project).show();
             });
         });
+        jQuery('.obs_home').each(function (i, elem) {
+            jQuery(elem).click(function () {
+                navActivate(elem);
+                jQuery('.view_project').hide();
+                loadAppSummary();
+                jQuery('.view_home').show();
+            });
+        });
         <g:if test="${session.project}">
-            loadProjectSummary('${session.project.encodeAsJavaScript()}');
-            loadProjectDesc('${session.project.encodeAsJavaScript()}');
+            %{--loadProjectSummary('${session.project.encodeAsJavaScript()}');--}%
+            %{--loadProjectDesc('${session.project.encodeAsJavaScript()}');--}%
         </g:if>
-    });
+//        loadAppSummary();
+});
 </g:javascript>
 </body>
 </html>

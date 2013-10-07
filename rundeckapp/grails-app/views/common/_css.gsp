@@ -169,6 +169,9 @@
           height: ${appLogoH};
         vertical-align: baseline;
     }
+    .rdicon.app-logo.middle{
+        vertical-align: middle;
+    }
 
     .rdicon.icon-small.shell,.rdicon.icon-small.command,.rdicon.icon-small.script,.rdicon.icon-small.scriptfile{
         background-image: url("${resource(dir:'images',file:'icon-small-shell.png')}");

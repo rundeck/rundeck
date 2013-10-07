@@ -15,7 +15,8 @@
     .dropdown-menu li &,
     &.navbar-brand,
     &.btn,
-    &.list-group-item
+    &.list-group-item,
+    .summary-count
     {
       text-decoration: none;
     }
@@ -31,6 +32,30 @@
       background-color: #000000;
     }
   }
+
+  /*
+  text placeholders/labels that fit into nav and nav-pills
+  */
+
+  .nav {
+    > li {
+      > span.nav-text {
+        position: relative;
+        display: block;
+        padding: @nav-link-padding;
+      }
+    }
+  }
+
+  .nav-pills {
+    > li {
+      // Links rendered as pills
+      > span.nav-text {
+        border-radius: 5px;
+      }
+    }
+  }
+
     /* Reset the container */
   .container {
     max-width: none !important;

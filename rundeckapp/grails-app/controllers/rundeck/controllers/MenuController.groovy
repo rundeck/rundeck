@@ -667,7 +667,56 @@ class MenuController {
 
     def home(){
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        session.frameworkProjects = frameworkService.projects(framework)
+        def fprojects = frameworkService.projects(framework)
+        session.frameworkProjects = fprojects
+
+        Calendar n = GregorianCalendar.getInstance()
+        n.add(Calendar.DAY_OF_YEAR, -1)
+        Date today = n.getTime()
+        println("today: ${today}")
+        def summary=[:]
+        fprojects.each { FrameworkProject project->
+            summary[project.name]=[
+                    jobCount: ScheduledExecution.countByProject(project.name),
+                    execCount: Execution.countByProjectAndDateStartedGreaterThan(project.name,today),
+            ]
+
+            summary[project.name].userSummary=Execution.createCriteria().list {
+                eq('project',project.name)
+                gt('dateStarted', today)
+                projections {
+                    distinct('user')
+                }
+            }
+            summary[project.name].userCount= summary[project.name].userSummary.size()
+            summary[project.name].nodeCount=project.nodeSet.nodeNames.size()
+            summary[project.name].readme=frameworkService.getFrameworkProjectReadmeContents(project.name,framework)
+            //authorization
+            summary[project.name].auth = [
+                    jobCreate: frameworkService.authorizeProjectResource(framework, [type: 'resource', kind: 'job'], 'create', project.name),
+                    admin: frameworkService.authorizeApplicationResource(framework, [type:'project',name: project.name], 'admin'),
+            ]
+        }
+        def projects = Execution.createCriteria().list {
+            gt('dateStarted', today)
+            projections {
+                distinct('project')
+            }
+        }
+        def users = Execution.createCriteria().list {
+            gt('dateStarted', today)
+            projections {
+                distinct('user')
+            }
+        }
+        //summarize cross-project details
+        def jobCount = ScheduledExecution.count()
+        def execCount= Execution.countByDateStartedGreaterThan( today)
+        def fwkNode = framework.getFrameworkNodeName()
+        [jobCount:jobCount,execCount:execCount,projectSummary:projects,projCount: fprojects.size(),userSummary:users,
+                userCount:users.size(),projectSummaries:summary,
+                frameworkNodeName: fwkNode,
+        ]
     }
 
     /**
