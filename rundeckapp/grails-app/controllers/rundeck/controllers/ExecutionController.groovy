@@ -868,8 +868,7 @@ class ExecutionController {
                 query.endafterFilter = ReportsController.parseDate(params.begin)
                 query.doendafterFilter = true
             } catch (ParseException e) {
-                flash.error = g.message(code: 'api.error.history.date-format', args: ['begin', params.begin])
-                return chain(controller: 'api', action: 'error')
+                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST, code: 'api.error.history.date-format', args: ['begin', params.begin]])
             }
         }
         if (params.end) {
@@ -877,8 +876,7 @@ class ExecutionController {
                 query.endbeforeFilter = ReportsController.parseDate(params.end)
                 query.doendbeforeFilter = true
             } catch (ParseException e) {
-                flash.error = g.message(code: 'api.error.history.date-format', args: ['end', params.end])
-                return chain(controller: 'api', action: 'error')
+                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST, code: 'api.error.history.date-format', args: ['end', params.end]])
             }
         }
         def resOffset = params.offset ? params.int('offset') : 0

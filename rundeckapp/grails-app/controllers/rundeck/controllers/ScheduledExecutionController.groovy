@@ -35,12 +35,14 @@ import rundeck.Workflow
 import rundeck.codecs.JobsXMLCodec
 import rundeck.codecs.JobsYAMLCodec
 import rundeck.filters.ApiRequestFilters
+import rundeck.services.ApiService
 import rundeck.services.ExecutionService
 import rundeck.services.ExecutionServiceException
 import rundeck.services.FrameworkService
 import rundeck.services.NotificationService
 import rundeck.services.ScheduledExecutionService
 
+import javax.servlet.http.HttpServletResponse
 import java.util.regex.Pattern
 import javax.security.auth.Subject
 
@@ -50,6 +52,7 @@ class ScheduledExecutionController  {
     def FrameworkService frameworkService
     def ScheduledExecutionService scheduledExecutionService
     def NotificationService notificationService
+    def ApiService apiService
 
  
     def index = { redirect(controller:'menu',action:'jobs',params:params) }
@@ -185,7 +188,8 @@ class ScheduledExecutionController  {
             log.error("No Job found for id: " + params.id)
             flash.error="No Job found for id: " + params.id
             response.setStatus (404)
-            return error()
+
+            return render(view: "/common/error")
         }
         if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_READ], scheduledExecution.project)) {
             return unauthorized("Read Job ${params.id}")
@@ -615,9 +619,8 @@ class ScheduledExecutionController  {
      */
     def deleteBulk = {ApiBulkJobDeleteRequest deleteRequest ->
         log.debug("ScheduledExecutionController: deleteBulk : params: " + params)
-        if (!deleteRequest.ids && !deleteRequest.idlist) {
-            flash.error = g.message(code: "api.error.parameter.required", args: ['ids or idlist'])
-            return redirect(action: index, params: params)
+        if (!apiService.requireAnyParameters(params,response,['ids','idlist'])) {
+            return
         }
         def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         def ids = new HashSet<String>()
@@ -632,7 +635,9 @@ class ScheduledExecutionController  {
         def deleteerrs = []
         ids.sort().each {jobid ->
             def result = scheduledExecutionService.deleteScheduledExecutionById(jobid, framework, session.user, 'deleteBulk')
-            if (result.error) {
+            if (result.errorCode) {
+                deleteerrs << [id: jobid, errorCode: result.errorCode, message: g.message(code: result.errorCode, args: ['Job ID', jobid])]
+            }else if (result.error) {
                 deleteerrs << result.error
             } else {
                 successful << result.success
@@ -643,37 +648,82 @@ class ScheduledExecutionController  {
     }
 
     /**
+     * Delete a job
+     * Only allowed via DELETE http method
+     * API: DELETE /api/5/jobs/{id}, version 10
+     */
+    def apiJobDeleteSingle (){
+        log.debug("ScheduledExecutionController: apiJobDeleteSingle : params: " + params)
+        if (!apiService.requireParameters(params, response, ['id'])) {
+            return
+        }
+        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+
+        def result = scheduledExecutionService.deleteScheduledExecutionById(params.id, framework, session.user, 'apiJobDeleteSingle')
+        if(!result.success){
+            if (result.error?.errorCode == 'notfound') {
+                apiService.renderErrorXml(response,[status:HttpServletResponse.SC_NOT_FOUND,code: 'api.error.item.doesnotexist',
+                args:['Job ID',params.id]])
+            }else if(result.error?.errorCode=='unauthorized'){
+                apiService.renderErrorXml(response, [status: HttpServletResponse.SC_UNAUTHORIZED,
+                        code: 'api.error.item.unauthorized',
+                        args: ['Delete','Job ID', params.id]]
+                )
+            }else{
+                apiService.renderErrorXml(response, [status: HttpServletResponse.SC_CONFLICT,
+                        code: 'api.error.job.delete.failed',
+                        args: [result.error.message]]
+                )
+            }
+        }else{
+            return apiService.renderSuccessXml(response){
+                delegate.'deleteJobs'(requestCount: 1, allsuccessful: true) {
+                    delegate.'succeeded'(count: 1) {
+                        delegate.'deleteJobResult'(id: params.id,) {
+                            delegate.'message'(g.message(code:'api.success.job.delete.message',args:[params.id]))
+                        }
+                    }
+                }
+            }
+        }
+    }
+    /**
      * Delete a set of jobs as specified in the idlist parameter.
      * Only allowed via DELETE http method
      * API: DELETE job definitions: /api/5/jobs/delete, version 5
     */
     def apiJobDeleteBulk = {ApiBulkJobDeleteRequest deleteRequest->
         log.debug("ScheduledExecutionController: apiJobDeleteBulk : params: " + params)
-        if(!deleteRequest.ids && !deleteRequest.idlist){
-            request.error = g.message(code: "api.error.parameter.required", args: ['ids or idlist'])
-            return new ApiController().error()
+        if (!apiService.requireAnyParameters(params, response, ['ids', 'idlist'])) {
+            return
         }
         def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
 
         def ids = new HashSet<String>()
-        if(deleteRequest.ids){
-            ids.addAll(deleteRequest.ids)
-        }
-        if(deleteRequest.idlist){
-            ids.addAll(deleteRequest.idlist.split(','))
+        if(params.id){
+            ids.add(params.id)
+        }else{
+            if (deleteRequest.ids){
+                ids.addAll(deleteRequest.ids)
+            }
+            if(deleteRequest.idlist){
+                ids.addAll(deleteRequest.idlist.split(','))
+            }
         }
 
         def successful = []
         def deleteerrs=[]
         ids.sort().each{jobid->
             def result = scheduledExecutionService.deleteScheduledExecutionById(jobid,framework,session.user, 'apiJobDeleteBulk')
-            if (result.error) {
+            if (result.errorCode) {
+                deleteerrs << [id:jobid,errorCode:result.errorCode,message: g.message(code: result.errorCode, args: ['Job ID', jobid])]
+            }else if (result.error) {
                 deleteerrs<< result.error
             } else {
                 successful<< result.success
             }
         }
-        return new ApiController().success { delegate ->
+        return apiService.renderSuccessXml(response) {
             delegate.'deleteJobs'(requestCount: ids.size(), allsuccessful:(successful.size()==ids.size())){
                 if(successful){
                     delegate.'succeeded'(count:successful.size()) {
@@ -1119,7 +1169,7 @@ class ScheduledExecutionController  {
         params.jobName='Temporary_Job'
         params.groupPath='adhoc'
 
-        if (params.asUser && new ApiController().requireVersion(ApiRequestFilters.V5)) {
+        if (params.asUser && apiService.requireVersion(request,response,ApiRequestFilters.V5)) {
             //authorize RunAs User
             if (!frameworkService.authorizeProjectResource(framework, [type: 'adhoc'], AuthConstants.ACTION_RUNAS, params.project)) {
 
@@ -1145,7 +1195,7 @@ class ScheduledExecutionController  {
         if(!failed){
             return _transientExecute(scheduledExecution,params,framework,request.subject)
         }else{
-            return [failed:true,message:'Job configuration was incorrect.',scheduledExecution:scheduledExecution,params:params]
+            return [success:false,failed:true,invalid:true,message:'Job configuration was incorrect.',scheduledExecution:scheduledExecution,params:params]
         }
     }
     /**
@@ -1189,7 +1239,7 @@ class ScheduledExecutionController  {
         def isauth = scheduledExecutionService.userAuthorizedForAdhoc(params.request,scheduledExecution,framework)
         if (!isauth){
             def msg=g.message(code:'unauthorized.job.run.user',args:[params.user])
-            return [error:'unauthorized',message:msg]
+            return [success:false,error:'unauthorized',message:msg]
         }
         params.workflow=new Workflow(scheduledExecution.workflow)
         params.argString=scheduledExecution.argString
@@ -1198,11 +1248,11 @@ class ScheduledExecutionController  {
         try {
             e = executionService.createExecutionAndPrep(params, framework, params.user)
         } catch (ExecutionServiceException exc) {
-            return [error:'failed',message:exc.getMessage()]
+            return [success:false,error:'failed',message:exc.getMessage()]
         }
 
         def eid = scheduledExecutionService.scheduleTempJob(params.user, subject,params,e);
-        return [execution:e,id:eid]
+        return [success:true,execution:e,id:eid]
     }
 
 
@@ -1710,31 +1760,31 @@ class ScheduledExecutionController  {
         log.debug("ScheduledExecutionController: upload " + params)
         def fileformat = params.format ?: 'xml'
         def parseresult
-        if (!params.xmlBatch) {
-            flash.error = g.message(code: 'api.error.parameter.required', args: ['xmlBatch'])
-            return chain(controller: 'api', action: 'error')
+        if (!apiService.requireParameters(params,response,['xmlBatch'])) {
+            return
         }
         if (request instanceof MultipartHttpServletRequest) {
             def file = request.getFile("xmlBatch")
             if (!file) {
-                flash.errorCode = "api.error.jobs.import.missing-file"
-                return chain(controller: 'api', action: 'renderError')
+                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                        code: 'api.error.jobs.import.missing-file', args: null])
             }
             parseresult = scheduledExecutionService.parseUploadedFile(file.getInputStream(), fileformat)
         }else if (params.xmlBatch) {
             String fileContent = params.xmlBatch
             parseresult = scheduledExecutionService.parseUploadedFile(fileContent, fileformat)
         }else{
-            flash.errorCode = "api.error.jobs.import.missing-file"
-            return chain(controller: 'api', action: 'renderError')
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.jobs.import.missing-file', args: null])
         }
         if (parseresult.errorCode) {
-            parseresult.error = message(code: parseresult.errorCode, args: parseresult.args)
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: parseresult.errorCode, args: parseresult.args])
         }
 
         if (parseresult.error) {
-            flash.error = parseresult.error
-            return chain(controller: 'api', action: 'error')
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.jobs.import.invalid', args: [fileformat,parseresult.error]])
         }
         def jobset = parseresult.jobset
         if(request.api_version >= ApiRequestFilters.V8){
@@ -1759,7 +1809,7 @@ class ScheduledExecutionController  {
         def skipjobs = loadresults.skipjobs
 
 
-        return new ApiController().success {delegate ->
+        return apiService.renderSuccessXml(response){
             renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
         }
     }
@@ -1770,16 +1820,13 @@ class ScheduledExecutionController  {
     def apiJobExport={
         log.debug("ScheduledExecutionController: /api/job GET : params: " + params)
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
-        if (!scheduledExecution) {
-            flash.errorCode = "api.error.item.doesnotexist"
-            flash.errorArgs = ['Job ID',params.id]
-            return chain(controller: 'api', action: 'renderError')
+        if (!apiService.requireExists(response, scheduledExecution,['Job ID',params.id])) {
+            return
         }
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_READ], scheduledExecution.project)) {
-            request.errorCode = "api.error.item.unauthorized"
-            request.errorArgs = ['Read','Job ID', params.id]
-            return new ApiController().renderError()
+            return apiService.renderErrorXml(response,[status:HttpServletResponse.SC_UNAUTHORIZED,
+                    code:'api.error.item.unauthorized',args:['Read','Job ID',params.id]])
         }
 
         withFormat{
@@ -1800,28 +1847,24 @@ class ScheduledExecutionController  {
      */
     def apiJobRun = {
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
-        if (!scheduledExecution) {
-            flash.errorCode = "api.error.item.doesnotexist"
-            flash.errorArgs = ['Job ID', params.id]
-            return chain(controller: 'api', action: 'renderError')
+        if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
+            return
         }
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
 
         if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_RUN],
             scheduledExecution.project)) {
-            request.errorCode = "api.error.item.unauthorized"
-            request.errorArgs = ['Run', 'Job ID', params.id]
-            return new ApiController().renderError()
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_UNAUTHORIZED,
+                    code: 'api.error.item.unauthorized', args: ['Run', 'Job ID', params.id]])
         }
         def inparams = [extra: [:]]
         inparams["user"] = (session?.user) ? session.user : "anonymous"
-        if(params.asUser && new ApiController().requireVersion(ApiRequestFilters.V5)){
+        if(params.asUser && apiService.requireVersion(request,response,ApiRequestFilters.V5)){
             //authorize RunAs User
             if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_RUNAS],
                     scheduledExecution.project)) {
-                request.errorCode = "api.error.item.unauthorized"
-                request.errorArgs = ['Run as User', 'Job ID', params.id]
-                return new ApiController().renderError()
+                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_UNAUTHORIZED,
+                        code: 'api.error.item.unauthorized', args: ['Run as User', 'Job ID', params.id]])
             }
             inparams['user']= params.asUser
         }
@@ -1846,10 +1889,20 @@ class ScheduledExecutionController  {
         }
 
         def result = executionService.executeScheduledExecution(scheduledExecution, framework, request.subject, inparams)
-        if (result.error) {
-            flash.error = result.message
-            return chain(controller: "api", action: "error")
+        if(!result.success){
+            if(result.error=='unauthorized'){
+                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_UNAUTHORIZED,
+                        code: 'api.error.item.unauthorized', args: ['Execute', 'Job ID', params.id]])
+            }else if(result.error=='invalid'){
+                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                        code: 'api.error.job.options-invalid', args: [result.message]])
+            }else{
+                //failed
+                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                        code: 'api.error.execution.failed', args: [result.message]])
+            }
         }
+        //TODO:
         return new ExecutionController().renderApiExecutionListResultXML([result.execution])
     }
 
@@ -1859,36 +1912,26 @@ class ScheduledExecutionController  {
     def apiJobDelete={
         log.debug("ScheduledExecutionController: /api/job DELETE : params: " + params)
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
-        if (!scheduledExecution) {
-            flash.error = g.message(code:"api.error.item.doesnotexist",args:['Job ID',params.id])
-            return chain(controller: 'api', action: 'error')
+        if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
+            return
         }
         def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         if(!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_DELETE],
             scheduledExecution.project)){
-            request.errorCode = "api.error.item.unauthorized"
-            request.errorArgs = ['Delete','Job ID', params.id]
-            return new ApiController().renderError()
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_UNAUTHORIZED,
+                    code: 'api.error.item.unauthorized', args: ['Delete', 'Job ID', params.id]])
         }
         def changeinfo = [user: session.user, method: 'apiJobDelete', change: 'delete']
         def jobdata = scheduledExecution.properties
         def jobtitle = "[" + params.id + "] " + scheduledExecution.generateFullName()
         def result=scheduledExecutionService.deleteScheduledExecution(scheduledExecution)
 
-
         if (!result.success) {
-            flash.error = result.error
-            return new ApiController().error()
-        }else{
-            scheduledExecutionService.logJobChange(changeinfo,jobdata)
-            def resmsg= g.message(code:'api.success.job.delete.message',args:[jobtitle])
-
-            return new ApiController().success{ delegate->
-                delegate.'success'{
-                    message(resmsg)
-                }
-            }
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_CONFLICT,
+                    code: 'api.error.job.delete.failed', args: [result.error]])
         }
+        scheduledExecutionService.logJobChange(changeinfo,jobdata)
+        return apiService.renderSuccessXml(Response, 'api.success.job.delete.message', [jobtitle])
     }
 
 
@@ -1897,22 +1940,15 @@ class ScheduledExecutionController  {
      * API: run simple exec: /api/run/command, version 1
      */
     def apiRunCommand={
-
-        if(!params.project){
-            flash.error=g.message(code:'api.error.parameter.required',args:['project'])
-            return chain(controller:'api',action:'error')
-        }
-        if(!params.exec){
-            flash.error=g.message(code:'api.error.parameter.required',args:['exec'])
-            return chain(controller:'api',action:'error')
+        if (!apiService.requireParameters(params, response, ['project','exec'])) {
+            return
         }
         //test valid project
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
 
         def exists=frameworkService.existsFrameworkProject(params.project,framework)
-        if(!exists){
-            flash.error=g.message(code:'api.error.item.doesnotexist',args:['project',params.project])
-            return chain(controller:'api',action:'error')
+        if (!apiService.requireExists(response, exists, ['project', params.project])) {
+            return
         }
 
         //remote any input parameters that should not be used when creating the execution
@@ -1933,26 +1969,7 @@ class ScheduledExecutionController  {
         }
 
         def results=runAdhoc()
-        if(results.failed){
-            results.error=results.message
-        }
-        if(results.error){
-            flash.error=results.error
-            if(results.scheduledExecution){
-                flash.errors=[]
-                results.scheduledExecution.errors.allErrors.each{
-                    flash.errors<<g.message(error:it)
-                }
-            }
-            return chain(controller:'api',action:'error')
-        }else{
-            return new ApiController().success{ delegate ->
-                delegate.'success'{
-                    message("Immediate execution scheduled (${results.id})")
-                }
-                delegate.'execution'(id:results.id)
-            }
-        }
+        return apiResponseAdhoc(results)
     }
 
 
@@ -1960,29 +1977,23 @@ class ScheduledExecutionController  {
      * API: run script: /api/run/script, version 1
      */
     def apiRunScript={
-
-        if(!params.project){
-            flash.error=g.message(code:'api.error.parameter.required',args:['project'])
-            return chain(controller:'api',action:'error')
-        }
-        if(!params.scriptFile){
-            flash.error=g.message(code:'api.error.parameter.required',args:['scriptFile'])
-            return chain(controller:'api',action:'error')
+        if(!apiService.requireParameters(params,response,['project','scriptFile'])){
+            return
         }
         //test valid project
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
 
         def exists=frameworkService.existsFrameworkProject(params.project,framework)
-        if(!exists){
-            flash.error=g.message(code:'api.error.item.doesnotexist',args:['project',params.project])
-            return chain(controller:'api',action:'error')
+        if (!apiService.requireExists(response, exists, ['project', params.project])) {
+            return
         }
 
         //read attached script content
         def file = request.getFile("scriptFile")
         if(file.empty) {
-            flash.error=g.message(code:'api.error.run-script.upload.is-empty')
-            return chain(controller:'api',action:'error')
+            return apiService.renderErrorXml(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.run-script.upload.is-empty'])
         }
 
         def script=new String(file.bytes)
@@ -2014,24 +2025,38 @@ class ScheduledExecutionController  {
         }
 
         def results=runAdhoc()
-        if(results.failed){
-            results.error=results.message
+        return apiResponseAdhoc(results)
+    }
+
+    private apiResponseAdhoc(results){
+        if (results.failed) {
+            results.error = results.message
         }
-        if(results.error){
-            flash.error=results.error
-            if(results.scheduledExecution){
-                flash.errors=[]
-                results.scheduledExecution.errors.allErrors.each{
-                    flash.errors<<g.message(error:it)
+        if (!results.success) {
+            def errors = [results.error]
+            if (results.scheduledExecution) {
+                errors = []
+                results.scheduledExecution.errors.allErrors.each {
+                    errors << g.message(error: it)
                 }
             }
-            return chain(controller:'api',action:'error')
-        }else{
-            return new ApiController().success{ delegate ->
-                delegate.'success'{
+            if (results.error == 'unauthorized') {
+                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_UNAUTHORIZED,
+                        code: 'api.error.item.unauthorized', args: ['Execute', 'Adhoc', 'Command']])
+            } else if (results.error == 'invalid') {
+                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                        code: 'api.error.execution.invalid', args: [errors.join(", ")]])
+            } else {
+                //failed
+                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                        code: 'api.error.execution.failed', args: [errors.join(", ")]])
+            }
+        } else {
+            return apiService.renderSuccessXml(response) {
+                delegate.'success' {
                     message("Immediate execution scheduled (${results.id})")
                 }
-                delegate.'execution'(id:results.id)
+                delegate.'execution'(id: results.id)
             }
         }
     }
@@ -2040,24 +2065,18 @@ class ScheduledExecutionController  {
      * API: run script: /api/run/url, version 4
      */
     def apiRunScriptUrl = {
-        if (!new ApiController().requireVersion(ApiRequestFilters.V4)) {
+        if (!apiService.requireVersion(request,response,ApiRequestFilters.V4)) {
             return
         }
-        if (!params.project) {
-            flash.error = g.message(code: 'api.error.parameter.required', args: ['project'])
-            return chain(controller: 'api', action: 'error')
-        }
-        if (!params.scriptURL) {
-            flash.error = g.message(code: 'api.error.parameter.required', args: ['scriptURL'])
-            return chain(controller: 'api', action: 'error')
+        if (!apiService.requireParameters(params, response, ['project','scriptURL'])) {
+            return
         }
         //test valid project
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
 
         def exists = frameworkService.existsFrameworkProject(params.project, framework)
-        if (!exists) {
-            flash.error = g.message(code: 'api.error.item.doesnotexist', args: ['project', params.project])
-            return chain(controller: 'api', action: 'error')
+        if (!apiService.requireExists(response, exists, ['project', params.project])) {
+            return
         }
 
         //remote any input parameters that should not be used when creating the execution
@@ -2087,40 +2106,18 @@ class ScheduledExecutionController  {
         }
 
         def results = runAdhoc()
-        if (results.failed) {
-            results.error = results.message
-        }
-        if (results.error) {
-            flash.error = results.error
-            if (results.scheduledExecution) {
-                flash.errors = []
-                results.scheduledExecution.errors.allErrors.each {
-                    flash.errors << g.message(error: it)
-                }
-            }
-            return chain(controller: 'api', action: 'error')
-        } else {
-            return new ApiController().success { delegate ->
-                delegate.'success' {
-                    message("Immediate execution scheduled (${results.id})")
-                }
-                delegate.'execution'(id: results.id)
-            }
-        }
+        return apiResponseAdhoc(results)
     }
     /**
      * API: /api/job/{id}/executions , version 1
      */
     def apiJobExecutions = {
-        if (!params.id) {
-            flash.error = g.message(code: 'api.error.parameter.required', args: ['id'])
-            return chain(controller: 'api', action: 'error')
+        if (!apiService.requireParameters(params, response, ['id'])) {
+            return
         }
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
-        if (!scheduledExecution) {
-            flash.errorCode = "api.error.item.doesnotexist"
-            flash.errorArgs = ['Job ID', params.id]
-            return chain(controller: 'api', action: 'renderError')
+        if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
+            return
         }
 
         def state=params['status']
@@ -2128,9 +2125,8 @@ class ScheduledExecutionController  {
         final domainStatus=[(ExecutionController.EXECUTION_FAILED):'false',
             (ExecutionController.EXECUTION_SUCCEEDED):'true']
         if(state && !(state in statusList)){
-            flash.errorCode = "api.error.parameter.not.inList"
-            flash.errorArgs = [params.status, 'status',statusList]
-            return chain(controller: 'api', action: 'renderError')
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.parameter.not.inList', args: [params.status, 'status', statusList]])
         }
         def c = Execution.createCriteria()
         def result=c.list{
@@ -2166,19 +2162,18 @@ class ScheduledExecutionController  {
      * API: /api/incubator/jobs/takeoverSchedule , version 7
      */
     def apiJobClusterTakeoverSchedule = {
-        if (!new ApiController().requireVersion(ApiRequestFilters.V7)) {
+        if (!apiService.requireVersion(request,response,ApiRequestFilters.V7)) {
             return
         }
         //test valid project
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
 
         if (!frameworkService.authorizeApplicationResource(framework, [type: 'resource', kind: 'job'], AuthConstants.ACTION_ADMIN)) {
-            request.errorCode = "api.error.item.unauthorized"
-            request.errorArgs = ['Reschedule Jobs', 'Server', params.serverNodeUUID]
-            return new ApiController().renderError()
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_UNAUTHORIZED,
+                    code: 'api.error.item.unauthorized', args: ['Reschedule Jobs', 'Server', params.serverNodeUUID]])
         }
         if(!frameworkService.isClusterModeEnabled()){
-            return new ApiController().success {
+            return apiService.renderSuccessXml(response) {
                 message("No action performed, cluster mode is not enabled.")
             }
         }
@@ -2193,14 +2188,13 @@ class ScheduledExecutionController  {
                 serverUUID = data.'@uuid'?.text()
             }
         }else{
-            request.errorCode = "api.error.invalid.request"
-            request.errorArgs = ['Expected content of type text/xml or text/json, content was of type: '+request.format]
-            return new ApiController().renderError()
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                    code: 'api.error.invalid.request',
+                    args: ['Expected content of type text/xml or text/json, content was of type: ' + request.format]])
         }
         if (!serverUUID) {
-            request.errorCode = "api.error.invalid.request"
-            request.errorArgs = ['Expected server.uuid in request.']
-            return new ApiController().renderError()
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.invalid.request', args: ['Expected server.uuid in request.']])
         }
 
         def reclaimMap=scheduledExecutionService.reclaimAndScheduleJobs(serverUUID)
@@ -2218,7 +2212,7 @@ class ScheduledExecutionController  {
         def successMessage= "Schedule Takeover successful for ${successCount}/${reclaimMap.size()} Jobs."
         withFormat {
             xml{
-                return new ApiController().success { delegate ->
+                return apiService.renderSuccessXml(response) {
                     delegate.'message'(successMessage)
                     delegate.'self'{
                         delegate.'server'(uuid:frameworkService.getServerUUID())

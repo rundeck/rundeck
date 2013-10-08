@@ -2,6 +2,9 @@ package rundeck.controllers
 
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.core.common.Framework
+import rundeck.services.ApiService
+
+import javax.servlet.http.HttpServletResponse
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.regex.Matcher
@@ -17,6 +20,7 @@ class ReportsController {
     def userService
     def FrameworkService frameworkService
     def scheduledExecutionService
+    def ApiService apiService
 
     private unauthorized(String action, boolean fragment = false) {
         if (!fragment) {
@@ -380,11 +384,11 @@ class ReportsController {
      */
     def apiHistory={ExecQuery query->
         if(!params.project){
-            flash.error=g.message(code:'api.error.parameter.required',args:['project'])
-            return chain(controller:'api',action:'error')
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.parameter.required', args: ['project']])
         }
         if(params.jobListFilter || params.excludeJobListFilter){
-            if (!new ApiController().requireVersion(ApiRequestFilters.V5)) {
+            if (!apiService.requireVersion(request,response,ApiRequestFilters.V5)) {
                 return
             }
         }
@@ -393,13 +397,14 @@ class ReportsController {
 
         def exists=frameworkService.existsFrameworkProject(params.project,framework)
         if(!exists){
-            flash.error=g.message(code:'api.error.item.doesnotexist',args:['project',params.project])
-            return chain(controller:'api',action:'error')
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.item.doesnotexist', args: ['project', params.project]])
+
         }
         if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'event'], ['read'],
             params.project)) {
-            flash.error = g.message(code: 'api.error.item.unauthorized', args: ['Read Events', 'Project',params.project])
-            return chain(controller: 'api', action: 'error')
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_UNAUTHORIZED,
+                    code: 'api.error.item.unauthorized', args: ['Read Events', 'Project', params.project]])
         }
         params.projFilter=params.project
         query.projFilter = params.project
@@ -411,8 +416,9 @@ class ReportsController {
                 query.endafterFilter=parseDate(params.begin)
                 query.doendafterFilter=true
             }catch(ParseException e){
-                flash.error=g.message(code:'api.error.history.date-format',args:['begin',params.begin])
-                return chain(controller:'api',action:'error')
+                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                        code: 'api.error.history.date-format', args: ['begin', params.begin]])
+
             }
         }
         if(params.end){
@@ -420,8 +426,8 @@ class ReportsController {
                 query.endbeforeFilter=parseDate(params.end)
                 query.doendbeforeFilter=true
             }catch(ParseException e){
-                flash.error=g.message(code:'api.error.history.date-format',args:['end',params.end])
-                return chain(controller:'api',action:'error')
+                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                        code: 'api.error.history.date-format', args: ['end', params.end]])
             }
         }
 
@@ -434,7 +440,7 @@ class ReportsController {
         def statusMap=[succeed:ExecutionController.EXECUTION_SUCCEEDED,
             cancel:ExecutionController.EXECUTION_ABORTED,
             fail:ExecutionController.EXECUTION_FAILED]
-        return new ApiController().success{ delegate->
+        return apiService.renderSuccessXml(response){
             delegate.'events'(count:model.reports.size(),total:model.total, max: model.max, offset: model.offset){
                 model.reports.each{  rpt->
                     def nodes=rpt.node

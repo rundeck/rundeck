@@ -1087,13 +1087,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def extraParamsExposed = selectSecureOptionInput(scheduledExecution, extra, true)
             def eid = scheduledExecutionService.scheduleTempJob(scheduledExecution, params.user, subject, e, extraMap, extraParamsExposed) ;
 
-            return [executionId: eid, name: scheduledExecution.jobName, execution: e]
+            return [success:true,executionId: eid, name: scheduledExecution.jobName, execution: e]
         } catch (ExecutionServiceValidationException exc) {
-            return [error: 'invalid', message: exc.getMessage(), options: exc.getOptions(), errors: exc.getErrors()]
+            return [success:false,error: 'invalid', message: exc.getMessage(), options: exc.getOptions(), errors: exc.getErrors()]
         } catch (ExecutionServiceException exc) {
             def msg = exc.getMessage()
             log.error("exception: " + exc)
-            return [error: 'failed', message: msg, options:extra.option]
+            return [success:false,error: 'failed', message: msg, options:extra.option]
         }
     }
     private Execution int_createExecution(ScheduledExecution se,framework,user,extra){

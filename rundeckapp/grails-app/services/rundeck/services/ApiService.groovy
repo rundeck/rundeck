@@ -4,11 +4,19 @@ import groovy.xml.MarkupBuilder
 import rundeck.Execution
 import rundeck.filters.ApiRequestFilters
 
+import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
 class ApiService {
     static transactional = false
     def messageSource
+    def renderSuccessXml(HttpServletResponse response, String code, List args) {
+        return renderSuccessXml(response){
+            success{
+                message(messageSource.getMessage(code,args as Object[],null))
+            }
+        }
+    }
     def renderSuccessXml(HttpServletResponse response, Closure recall) {
         response.setContentType('text/xml')
         response.setCharacterEncoding('UTF-8')
@@ -19,7 +27,7 @@ class ApiService {
         def xml = new MarkupBuilder(writer)
         xml.with {
             result(success: "true", apiversion: ApiRequestFilters.API_CURRENT_VERSION) {
-                recall.resolveStrategy=Closure.DELEGATE_FIRST
+//                recall.resolveStrategy=Closure.DELEGATE_FIRST
                 recall.delegate=delegate
                 recall()
             }
@@ -34,6 +42,61 @@ class ApiService {
         }
         response.outputStream << renderErrorXml(error,error.code)
     }
+    /**
+     * Require all specified parameters in the request
+     * @param request
+     * @param response
+     * @param params list of parameters of which all must be present
+     * @return false if requirement is not met, response will already have been made
+     */
+    def requireParameters(Map reqparams,HttpServletResponse response,List<String> params){
+        def notfound=params.find{!reqparams[it]}
+        if(notfound){
+            renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.parameter.required', args: [notfound]])
+            return false
+        }
+        return true
+    }
+    /**
+     * Require any of the specified parameters in the request
+     * @param request
+     * @param response
+     * @param params list of parameters of which one must be present
+     * @return false if requirement is not met, response will already have been made
+     */
+    def requireAnyParameters(Map reqparams,HttpServletResponse response,List<String> params){
+        def found=params.any{ reqparams[it]}
+        if(!found){
+            renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.parameter.required', args: ['Any of: '+params.join(', ')]])
+            return false
+        }
+        return true
+    }
+    /**
+     * Require a value exists, or respond with NOT FOUND
+     * @param request
+     * @param response
+     * @param item
+     * @return false if requirement is not met, response will already have been made
+     */
+    def requireExists(HttpServletResponse response, Object item, List args) {
+        if (!item) {
+            renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.item.doesnotexist', args: args])
+            return false
+        }
+        return true
+    }
+    /**
+     * Require a minimum API version, and optional maximum
+     * @param request
+     * @param response
+     * @param min
+     * @param max
+     * @return false if requirement is not met: response will already have been made
+     */
     def requireVersion(request, HttpServletResponse response, int min, int max = 0){
         if (request.api_version < min) {
             renderErrorXml(response,[

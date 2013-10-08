@@ -11,7 +11,9 @@ import com.dtolabs.shared.resources.ResourceXMLGenerator
 import grails.converters.JSON
 import rundeck.Execution
 import rundeck.ScheduledExecution
+import rundeck.services.ApiService
 
+import javax.servlet.http.HttpServletResponse
 import java.util.regex.PatternSyntaxException
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.common.INodeSet
@@ -48,6 +50,7 @@ class FrameworkController  {
     ExecutionService executionService
     UserService userService
     def metricService
+    def ApiService apiService
     // the delete, save and update actions only
     // accept POST requests
     def static allowedMethods = [
@@ -399,13 +402,17 @@ class FrameworkController  {
      * results (for ajax request). JSON format: {success:true/false, message:string}
      */
     def reloadNodes = {
-        def didsucceed=performNodeReload()
+        def result=performNodeReload()
+        def didsucceed=result.success
         withFormat {
             json{
                 def data=[success:didsucceed,message:didsucceed?"Remote resources loaded for project: ${params.project}":"Failed to load remote resources for project: ${params.project}"]
                 render data as JSON
             }
             html{
+                if(!didsucceed){
+                    flash.error=result.message?:'Failed reloading nodes: unknown reason'
+                }
                 redirect(action:'nodes')
             }
         }
@@ -417,34 +424,32 @@ class FrameworkController  {
      * Returns true if re-fetch succeeded, false otherwise.
      */
     def performNodeReload = {String url=null->
-        if(params.project){
-            Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-            if(!frameworkService.authorizeProjectResource(framework,[type:'resource',kind:'node'], AuthConstants.ACTION_REFRESH,params.project)){
-                def msg = "user: ${session.user} UNAUTHORIZED for performNodeReload"
-                log.error(msg)
-                flash.error = msg
-                return false
-            }
-            def project=framework.getFrameworkProjectMgr().getFrameworkProject(params.project)
-           //if reload parameter is specified, and user is admin, reload from source URL
-            try {
-                if(url){
-                    if(!(url==~ /(?i)^(https?|file):\/\/.*$/)){
-                        log.error("Error updating node resources file for project ${project.name}: invalid URL: " + url)
-                        flash.error = "Error updating node resources file for project ${project.name}: invalid URL: " + url
-                        return false
-                    }
-                    project.updateNodesResourceFileFromUrl(url, null, null)
-                    return true
-                }else{
-                    return project.updateNodesResourceFile()
-                }
-            } catch (Exception e) {
-                log.error("Error updating node resources file for project ${project.name}: "+e.message)
-                flash.error="Error updating node resources file for project ${project.name}: "+e.message
-            }
+        if(!params.project){
+            return [success: false, message: "project parameter is required", invalid: true]
         }
-        return false
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        if(!frameworkService.authorizeProjectResource(framework,[type:'resource',kind:'node'], AuthConstants.ACTION_REFRESH,params.project)){
+            def msg = "user: ${session.user} UNAUTHORIZED for performNodeReload"
+            log.error(msg)
+            return [success:false,message:msg,unauthorized:true]
+        }
+        def project=framework.getFrameworkProjectMgr().getFrameworkProject(params.project)
+       //if reload parameter is specified, and user is admin, reload from source URL
+        try {
+            if(url){
+                if(!(url==~ /(?i)^(https?|file):\/\/.*$/)){
+                    log.error("Error updating node resources file for project ${project.name}: invalid URL: " + url)
+                    return [success: false, message: "Error updating node resources file for project ${project.name}: invalid URL: " + url, invalid: true]
+                }
+                project.updateNodesResourceFileFromUrl(url, null, null)
+                return [success:true]
+            }else{
+                return [success:project.updateNodesResourceFile(),url:url,message:'No resources URL is configured']
+            }
+        } catch (Exception e) {
+            log.error("Error updating node resources file for project ${project.name}: "+e.message)
+            return [success: false, message: "Error updating node resources file for project ${project.name}: " + e.message, error: true]
+        }
     }
 
     def storeNodeFilter={ExtNodeFilters query->
@@ -1155,57 +1160,70 @@ class FrameworkController  {
      * calls performNodeReload, then returns API response
      * */
     def apiProjectResourcesRefresh = {
-        if (!new ApiController().requireVersion(ApiRequestFilters.V2)) {
+        if (!apiService.requireVersion(request,response,ApiRequestFilters.V2)) {
             return
         }
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         if (!params.project) {
-            flash.error = g.message(code: 'api.error.parameter.required', args: ['project'])
-            return new ApiController().error()
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.parameter.required',
+                    args: ['project']])
         }
         def exists = frameworkService.existsFrameworkProject(params.project, framework)
         if (!exists) {
-            flash.error = g.message(code: 'api.error.item.doesnotexist', args: ['project', params.project])
-            return new ApiController().error()
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.item.doesnotexist',
+                    args: ['project', params.project]])
         }
 
         //check content
-        def didsucceed = performNodeReload(params.providerURL)
+        def result = performNodeReload(params.providerURL)
+        def didsucceed=result.success
         if(didsucceed){
-            return new ApiController().success { delegate ->
-                delegate.'success' {
-                    message(g.message(code: 'api.project.updateResources.succeeded', args: [params.project]))
-                }
-            }
+            return apiService.renderSuccessXml(response, 'api.project.updateResources.succeeded', [params.project])
         }else{
-            if(!flash.error){
-                flash.error= g.message(code: 'api.project.updateResources.failed', args: [params.project])
+            def error=[:]
+            if(result.invalid){
+                error.code='api.error.invalid.request'
+                error.args=[result.message]
+            }else if(result.unauthorized){
+                error.code='api.error.item.unauthorized'
+                error.args=['Refresh Resources','Project: '+params.project,result.message]
             }
-            return new ApiController().error()
+            if(!error.code && !result.url){
+                error.code= 'api.project.updateResources.noproviderUrl.failed'
+                error.args=[params.project]
+            }else if(!error.code){
+                error.code = 'api.project.updateResources.failed'
+                error.args = [error.message?:'Unknown reason']
+            }
+
+            return apiService.renderErrorXml(response, error)
         }
     }
     /**
      * API: /api/2/project/NAME/resources
-     * GET: return resources data
      * POST: update resources data with either: text/xml content, text/yaml content, form-data param providerURL=<url>
+     *     GET: see {@link #apiResourcesv2}
      * */
-    def apiProjectResources = {
-        if (!new ApiController().requireVersion(ApiRequestFilters.V2)) {
+    def apiProjectResourcesPost = {
+        if (!apiService.requireVersion(request, response,ApiRequestFilters.V2)) {
             return
         }
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         if (!params.project) {
-            flash.error = g.message(code: 'api.error.parameter.required', args: ['project'])
-            return new ApiController().error()
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.parameter.required', args: ['project']])
+
         }
         def exists = frameworkService.existsFrameworkProject(params.project, framework)
         if (!exists) {
-            flash.error = g.message(code: 'api.error.item.doesnotexist', args: ['project', params.project])
-            return new ApiController().error()
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.item.doesnotexist', args: ['project', params.project]])
         }
         if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'node'], ['create','update'], params.project)) {
-            flash.error = g.message(code: 'api.error.item.unauthorized', args: ['Update Nodes', 'Project', params.project])
-            return chain(controller: 'api', action: 'error')
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_UNAUTHORIZED,
+                    code: 'api.error.item.unauthorized', args: ['Update Nodes', 'Project', params.project]])
         }
         final FrameworkProject project = frameworkService.getFrameworkProject(params.project, framework)
 
@@ -1213,70 +1231,62 @@ class FrameworkController  {
         def errormsg=null
         //determine data
         //assume post request
-        if(request.post){
-            final contentType = request.contentType
-            //try to parse loaded data
-            if(!(contentType?.endsWith("/xml")||contentType?.endsWith('/yaml')|| contentType?.endsWith('/x-yaml'))){
-                if (!new ApiController().requireVersion(ApiRequestFilters.V3)) {
-                    //require api V3 for any other content type
-                    return
-                }
-            }
-
-            final parser
-            try {
-                parser = framework.getResourceFormatParserService().getParserForMIMEType(contentType)
-            } catch (UnsupportedFormatException e) {
-                //invalid data
-                flash.error = "Unsupported format: ${e.getMessage()}"
-                return new ApiController().error()
-            }
-
-            //write content to temp file
-            File tempfile=File.createTempFile("post-input","data")
-            tempfile.deleteOnExit()
-            final stream = new FileOutputStream(tempfile)
-            try {
-                com.dtolabs.utils.Streams.copyStream(request.getInputStream(), stream)
-            } finally {
-                stream.close()
-            }
-
-            def INodeSet nodeset
-            try {
-                nodeset=parser.parseDocument(tempfile)
-            }catch (ResourceFormatParserException e){
-                flash.error = "Invalid data: ${e.getMessage()}"
-                return new ApiController().error()
-            }catch (Exception e){
-                flash.error = "Error parsing data: ${e.getMessage()}"
-                return new ApiController().error()
-            }
-            tempfile.delete()
-
-            //finally update resources file with the new nodes data
-            try {
-                project.updateNodesResourceFile nodeset
-                didsucceed=true
-            } catch (Exception e) {
-                log.error("Failed updating nodes file: "+e.getMessage())
-                e.printStackTrace(System.err)
-                flash.error=e.getMessage()
+        if(!request.post){
+            //bad method
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_METHOD_NOT_ALLOWED,
+                    code: 'api.error.invalid.request', args: ['Method not allowed']])
+        }
+        final contentType = request.contentType
+        //try to parse loaded data
+        if(!(contentType?.endsWith("/xml")||contentType?.endsWith('/yaml')|| contentType?.endsWith('/x-yaml'))){
+            if (!apiService.requireVersion(request, response,ApiRequestFilters.V3)) {
+                //require api V3 for any other content type
+                return
             }
         }
 
-        if(didsucceed){
-            return new ApiController().success { delegate ->
-                delegate.'success' {
-                    message(g.message(code: 'api.project.updateResources.succeeded', args: [params.project]))
-                }
-            }
-        }else{
-            if(!flash.error){
-                flash.error= g.message(code: 'api.project.updateResources.failed', args: [params.project])
-            }
-            return new ApiController().error()
+        final parser
+        try {
+            parser = framework.getResourceFormatParserService().getParserForMIMEType(contentType)
+        } catch (UnsupportedFormatException e) {
+            //invalid data
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                    code: 'api.error.item.unsupported-format', args: [contentType]])
         }
+
+        //write content to temp file
+        File tempfile=File.createTempFile("post-input","data")
+        tempfile.deleteOnExit()
+        final stream = new FileOutputStream(tempfile)
+        try {
+            com.dtolabs.utils.Streams.copyStream(request.getInputStream(), stream)
+        } finally {
+            stream.close()
+        }
+
+        def INodeSet nodeset
+        try {
+            nodeset=parser.parseDocument(tempfile)
+        }catch (ResourceFormatParserException e){
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.invalid.request', args: [e.message]])
+        }catch (Exception e){
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    code: 'api.project.updateResources.failed', args: [e.message]])
+        }
+        tempfile.delete()
+
+        //finally update resources file with the new nodes data
+        try {
+            project.updateNodesResourceFile nodeset
+            didsucceed=true
+        } catch (Exception e) {
+            log.error("Failed updating nodes file: "+e.getMessage())
+            e.printStackTrace(System.err)
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    code: 'api.project.updateResources.failed', args: [e.message]])
+        }
+        return apiService.renderSuccessXml(response, 'api.project.updateResources.succeeded', [params.project])
     }
     /**
      * API: /api/projects, version 1
@@ -1284,20 +1294,19 @@ class FrameworkController  {
     def apiProjects={
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         def projlist=frameworkService.projects(framework)
-        return new ApiController().success{ delegate->
+        return apiService.renderSuccessXml(response){
                 delegate.'projects'(count:projlist.size()){
                     projlist.each{ pject ->
                         renderApiProject(pject,delegate)
                     }
                 }
-
         }
     }
     /**
      * Render project info result using a builder
      */
     def renderApiProject={ pject, delegate ->
-        delegate.project{
+        delegate.'project'(href: g.createLink(absolute: true, controller: 'framework', action: 'apiProject', params: [project: pject.name, api_version: ApiRequestFilters.API_CURRENT_VERSION])){
             name(pject.name)
             description(pject.hasProperty('project.description')?pject.getProperty('project.description'):'')
             if(pject.hasProperty("project.resources.url")){
@@ -1336,20 +1345,20 @@ class FrameworkController  {
     def apiProject={
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         if(!params.project){
-            flash.error=g.message(code:'api.error.parameter.required',args:['project'])
-            return chain(controller:'api',action:'error')
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.parameter.required', args: ['project']])
         }
         if (!frameworkService.authorizeApplicationResourceAll(framework, [type:'project',name:params.project], ['read'])) {
-            flash.error = g.message(code: 'api.error.item.unauthorized', args: ['Read','Project',params.project])
-            return chain(controller: 'api', action: 'error')
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_UNAUTHORIZED,
+                    code: 'api.error.item.unauthorized', args: ['Read', 'Project', params.project]])
         }
         def exists=frameworkService.existsFrameworkProject(params.project,framework)
         if(!exists){
-            flash.error=g.message(code:'api.error.item.doesnotexist',args:['project',params.project])
-            return chain(controller:'api',action:'error')
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.item.doesnotexist', args: ['project', params.project]])
         }
         def pject=frameworkService.getFrameworkProject(params.project,framework)
-        return new ApiController().success{ delegate->
+        return apiService.renderSuccessXml(response){
             delegate.'projects'(count:1){
                 renderApiProject(pject,delegate)
             }
@@ -1362,21 +1371,21 @@ class FrameworkController  {
     def apiResource={
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         if(!params.project){
-            flash.error=g.message(code:'api.error.parameter.required',args:['project'])
-            return chain(controller:'api',action:'error')
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.parameter.required', args: ['project']])
         }
         if(!params.name){
-            flash.error=g.message(code:'api.error.parameter.required',args:['name'])
-            return chain(controller:'api',action:'error')
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.parameter.required', args: ['name']])
         }
         def exists=frameworkService.existsFrameworkProject(params.project,framework)
         if(!exists){
-            flash.error=g.message(code:'api.error.item.doesnotexist',args:['project',params.project])
-            return chain(controller:'api',action:'error')
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.item.doesnotexist', args: ['project',params.project]])
         }
         if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'node'], ['read'], params.project)) {
-            flash.error = g.message(code: 'api.error.item.unauthorized', args: ['Read Nodes', 'Project', params.project])
-            return chain(controller: 'api', action: 'error')
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_UNAUTHORIZED,
+                    code: 'api.error.item.unauthorized', args: ['Read Nodes', 'Project', params.project]])
         }
 
         NodeSet nset = new NodeSet()
@@ -1384,8 +1393,9 @@ class FrameworkController  {
         def pject=frameworkService.getFrameworkProject(params.project,framework)
         final INodeSet nodes = com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(nset,pject.getNodeSet())
         if(!nodes || nodes.nodes.size()<1 ){
-            flash.error=g.message(code:'api.error.item.doesnotexist',args:['Node Name',params.name])
-            return chain(controller:'api',action:'error')
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.item.doesnotexist', args: ['Node Name', params.name]])
+
         }
         return apiRenderNodeResult(nodes, framework, params.project)
     }
@@ -1393,7 +1403,7 @@ class FrameworkController  {
      * API: /api/2/project/NAME/resources, version 2
      */
     def apiResourcesv2={ExtNodeFilters query->
-        if (!new ApiController().requireVersion(ApiRequestFilters.V2)) {
+        if (!apiService.requireVersion(request, response,ApiRequestFilters.V2)) {
             return
         }
         return apiResources(query)
@@ -1404,22 +1414,26 @@ class FrameworkController  {
     def apiResources={ExtNodeFilters query->
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         if(!params.project){
-            flash.error=g.message(code:'api.error.parameter.required',args:['project'])
-            return chain(controller:'api',action:'error')
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.parameter.required', args: ['project']])
+
         }
         def exists=frameworkService.existsFrameworkProject(params.project,framework)
         if(!exists){
-            flash.error=g.message(code:'api.error.item.doesnotexist',args:['project',params.project])
-            return chain(controller:'api',action:'error')
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.item.doesnotexist', args: ['project',params.project]])
+
+
         }
         if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'node'], ['read'], params.project)) {
-            flash.error = g.message(code: 'api.error.item.unauthorized', args: ['Read Nodes', 'Project', params.project])
-            return chain(controller: 'api', action: 'error')
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_UNAUTHORIZED,
+                    code: 'api.error.item.unauthorized', args: ['Read Nodes', 'Project', params.project]])
+
         }
         if (params.format && !(params.format in ['xml','yaml']) || request.format && !(request.format in ['html','xml','yaml'])) {
             //expected another content type
             def reqformat = params.format ?: request.format
-            if (!new ApiController().requireVersion(ApiRequestFilters.V3)) {
+            if (!apiService.requireVersion(request, response,ApiRequestFilters.V3)) {
                 return
             }
         }
@@ -1444,7 +1458,7 @@ class FrameworkController  {
     protected String apiRenderNodeResult(INodeSet nodes, Framework framework, String project){
         if (params.format && !(params.format in ['xml', 'yaml']) || request.format && !(request.format in ['all','html', 'xml', 'yaml'])) {
             //expected another content type
-            if (!new ApiController().requireVersion(ApiRequestFilters.V3)) {
+            if (!apiService.requireVersion(request, response,ApiRequestFilters.V3)) {
                 return
             }
             def reqformat=params.format?:request.format
@@ -1457,14 +1471,14 @@ class FrameworkController  {
                 generator = service.getGeneratorForFormat(reqformat?:'resourcexml')
                 generator.generateDocument(nodes,baos)
             } catch (UnsupportedFormatException e) {
-                flash.error = g.message(code: 'api.error.resource.format.unsupported', args: [reqformat])
-                return new ApiController().error()
+                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                        code: 'api.error.resource.format.unsupported', args: [reqformat]])
             }catch (ResourceFormatGeneratorException e){
-                flash.error = g.message(code: 'api.error.resource.format.generator', args: [e.message])
-                return new ApiController().error()
+                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                        code: 'api.error.resource.format.generator', args: [e.message]])
             }catch (IOException e){
-                flash.error = g.message(code: 'api.error.resource.format.generator', args: [e.message])
-                return new ApiController().error()
+                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                        code: 'api.error.resource.format.generator', args: [e.message]])
             }
             final types = generator.getMIMETypes() as List
             return render(contentType: types[0],encoding:"UTF-8",text:baos.toString())
