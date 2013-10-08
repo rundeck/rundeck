@@ -29,31 +29,31 @@
                 <span class="text-info ">${frameworkNodeName.encodeAsHTML()}</span>
 
                 </span>
-</div>
+    </div>
 </div>
         <div class="row row-space">
-            <div class="col-sm-2">
-                <span class="h4">
-                    <span class="summary-count ${ jobCount > 0 ? 'text-info' : 'text-muted' }">${projCount}</span>
-                    <g:message code="Project${projCount == 1 ? '' : '.plural'}"/>
-                </span>
+            <div class="col-sm-4">
+                %{--<span class="h4">--}%
+                    %{--<span class="summary-count ${ jobCount > 0 ? 'text-info' : 'text-muted' }">${projCount}</span>--}%
+                    %{--<g:message code="Project${projCount == 1 ? '' : '.plural'}"/>--}%
+                %{--</span>--}%
             </div>
 
 
-            <div class="col-sm-2">
-                <span class="h4">
-                    <span class="summary-count ${jobCount > 0 ? 'text-info' : 'text-muted'}">${jobCount}</span>
-                    <g:message code="Job${jobCount == 1 ? '' : '.plural'}"/>
-                    <i class="glyphicon glyphicon-book"></i>
-                </span>
-            </div>
+            %{--<div class="col-sm-2">--}%
+                %{--<span class="h4">--}%
+                    %{--<span class="summary-count ${jobCount > 0 ? 'text-info' : 'text-muted'}">${jobCount}</span>--}%
+                    %{--<g:message code="Job${jobCount == 1 ? '' : '.plural'}"/>--}%
+                    %{--<i class="glyphicon glyphicon-book"></i>--}%
+                %{--</span>--}%
+            %{--</div>--}%
 
 
-            <div class="col-sm-3">
+            <div class="col-sm-4">
                 <span class="h4">
                     <span class="summary-count ${ execCount > 0 ? 'text-info' : 'text-muted' }">${execCount}</span>
                     <strong>
-                        <g:message code="Execution${execCount == 1 ? '' : '.plural'}"/>
+                        <g:plural code="Execution" count="${execCount}" textOnly="${true}"/>
                     </strong>
                     In the last day
                 </span>
@@ -65,7 +65,7 @@
                 </span>
 
 
-                <g:message code="Project${projectSummary.size() == 1 ? '' : '.plural'}"/>
+                <g:plural code="Project" count="${projectSummary.size()}" textOnly="${true}"/>:
                 <g:each var="project" in="${projectSummary}" status="i">
                 ${project}<g:if test="${i< projectSummary.size()-1}">,</g:if>
                 </g:each>
@@ -77,7 +77,7 @@
                     <span class="text-info">
                         ${userCount}
                     </span>
-                    <g:message code="user${userCount == 1 ? '' : '.plural'}"/>
+                    <g:plural code="user" count="${userCount}" textOnly="${true}"/>:
                     <g:each in="${userSummary}" var="user" status="i">
                     ${user.encodeAsHTML()}<g:if test="${i<userSummary.size()-1}">,</g:if>
                     </g:each>
@@ -90,7 +90,8 @@
 <div class="row row-space">
     <div class="col-sm-9">
         <span class="h3 text-muted">
-            <g:message code="Project.plural" />
+            ${projCount}
+            <g:plural code="Project" count="${projCount}" textOnly="${true}"/>
         </span>
     </div>
     <auth:resourceAllowed action="create" kind="project" context="application">
@@ -105,31 +106,30 @@
 
 <div class="row row-space">
     <div class="col-sm-12">
-
+    <div class="list-group">
         <g:each in="${projectSummaries}" var="projectData">
             <g:set var="project" value="${projectData.key}"/>
             <g:set var="data" value="${projectData.value}"/>
 %{--Template for project details--}%
-<div class="panel panel-default">
-    <div class="panel-body">
+<div class="list-group-item">
             <div class="row">
-                <div class="col-sm-6 col-md-2">
+                <div class="col-sm-6 col-md-4">
                     <a class="h3"
                        href="${g.createLink(controller: "framework", action: "selectProject", params: [project: project,page:'jobs'])}">
                         <i class="glyphicon glyphicon-tasks"></i>
                     ${project}
                     </a>
                 </div>
-                <div class="col-sm-6 col-md-2">
-                    <a class="h4 ${data.jobCount > 0 ? '' : 'text-muted'}" href="${g.createLink(controller:"framework",action:"selectProject",params:[page: 'jobs',project:project])}">
-                        <span class="summary-count ${data.jobCount > 0 ? 'text-info' : '' }">${data.jobCount}</span>
+                %{--<div class="col-sm-6 col-md-2">--}%
+                    %{--<a class="h4 ${data.jobCount > 0 ? '' : 'text-muted'}" href="${g.createLink(controller:"framework",action:"selectProject",params:[page: 'jobs',project:project])}">--}%
+                        %{--<span class="summary-count ${data.jobCount > 0 ? 'text-info' : '' }">${data.jobCount}</span>--}%
 
-                        <g:plural code="Job" count="${data.jobCount}" textOnly="${true}"/>
-                        <i class="glyphicon glyphicon-book"></i>
-                    </a>
-                </div>
+                        %{--<g:plural code="Job" count="${data.jobCount}" textOnly="${true}"/>--}%
+                        %{--<i class="glyphicon glyphicon-book"></i>--}%
+                    %{--</a>--}%
+                %{--</div>--}%
                 <div class="clearfix visible-sm"></div>
-                <div class="col-sm-6 col-md-3">
+                <div class="col-sm-6 col-md-4">
                     <a class="h4 ${data.execCount > 0 ? '' : 'text-muted'}"
                        href="${g.createLink(controller: "framework", action: "selectProject", params: [page: 'activity', project: project])}"
 
@@ -147,7 +147,7 @@
                         ${data.userCount}
                         </span>
 
-                            <g:plural code="user" count="${data.userCount}" textOnly="${true}"/>
+                            <g:plural code="user" count="${data.userCount}" textOnly="${true}"/>:
 
                             <g:each in="${data.userSummary}" var="user" status="i">
                                 ${user.encodeAsHTML()}<g:if test="${i < data.userSummary.size() - 1}">,</g:if>
@@ -157,18 +157,18 @@
                 </div>
 
 
-                <div class="col-sm-6 col-md-2">
-                    <a class="h4" href="${g.createLink(controller: "framework", action: "selectProject", params: [page: 'nodes',project:project])}">
-                        <span class="summary-count ${data.nodeCount>0?'text-info':''}">
-                            ${data.nodeCount}
-                        </span>
-                        <g:plural code="Node" count="${data.nodeCount}" textOnly="${true}"/>
-                    </a>
-                </div>
+                %{--<div class="col-sm-6 col-md-2">--}%
+                    %{--<a class="h4" href="${g.createLink(controller: "framework", action: "selectProject", params: [page: 'nodes',project:project])}">--}%
+                        %{--<span class="summary-count ${data.nodeCount>0?'text-info':''}">--}%
+                            %{--${data.nodeCount}--}%
+                        %{--</span>--}%
+                        %{--<g:plural code="Node" count="${data.nodeCount}" textOnly="${true}"/>--}%
+                    %{--</a>--}%
+                %{--</div>--}%
 
                 <div class="clearfix visible-xs visible-sm"></div>
                 <g:if test="${data.auth?.jobCreate || data.auth?.admin}">
-                    <div class="col-sm-12 col-md-3">
+                    <div class="col-sm-12 col-md-4">
                     <div class="pull-right">
                         <g:if test="${data.auth?.admin}">
                             <a href="${g.createLink(controller: "framework", action: "selectProject", params: [page: 'configure', project: project])}"
@@ -208,30 +208,39 @@
                 </g:if>
             </div>
 
-    </div>
         <g:if test="${data.readme?.readme || data.readme?.motd}">
-            <div class="panel-body">
-                    <g:if test="${data.readme.readmeHTML}">
-                        ${data.readme.readmeHTML}
+            <div class="row row-space">
+                <div class="col-sm-12">
+                    <g:if test="${data.readme?.motd}">
+                        %{--Test if user has dismissed the motd for this project--}%
+                        <div class="">
+                            <g:if test="${data.readme.motd && data.readme.readme}">
+                            </g:if>
+                            <g:if test="${data.readme.motdHTML}">
+                                ${data.readme.motdHTML}
+                            </g:if>
+                            <g:elseif test="${data.readme.motd}">
+                                ${data.readme.motd.encodeAsHTML()}
+                            </g:elseif>
+                        </div>
                     </g:if>
-                    <g:elseif test="${data.readme.readme}">
-                        ${data.readme.readme.encodeAsHTML()}
-                    </g:elseif>
+                    <g:if test="${data.readme?.readme}">
+                        <g:if test="${data.readme.readmeHTML}">
+                            ${data.readme.readmeHTML}
+                        </g:if>
+                        <g:elseif test="${data.readme.readme}">
+                            ${data.readme.readme.encodeAsHTML()}
+                        </g:elseif>
 
-                    <g:if test="${data.readme.motd && data.readme.readme}">
-                        <hr/>
                     </g:if>
-                    <g:if test="${data.readme.motdHTML}">
-                        ${data.readme.motdHTML}
-                    </g:if>
-                    <g:elseif test="${data.readme.readme}">
-                        ${data.readme.readme.motdAsHTML()}
-                    </g:elseif>
+
+                </div>
             </div>
         </g:if>
 </div>
 
 </g:each>
+    </div>
     </div>
 </div>
 
