@@ -1,0 +1,145 @@
+package rundeck.services
+
+import groovy.xml.MarkupBuilder
+import rundeck.Execution
+import rundeck.filters.ApiRequestFilters
+
+import javax.servlet.http.HttpServletResponse
+
+class ApiService {
+    static transactional = false
+    def messageSource
+    def renderSuccessXml(HttpServletResponse response, Closure recall) {
+        response.setContentType('text/xml')
+        response.setCharacterEncoding('UTF-8')
+        response.outputStream<< renderSuccessXml(recall)
+    }
+    def renderSuccessXml(Closure recall){
+        def writer = new StringWriter()
+        def xml = new MarkupBuilder(writer)
+        xml.with {
+            result(success: "true", apiversion: ApiRequestFilters.API_CURRENT_VERSION) {
+                recall.resolveStrategy=Closure.DELEGATE_FIRST
+                recall.delegate=delegate
+                recall()
+            }
+        }
+        return writer.toString()
+    }
+    def renderErrorXml(HttpServletResponse response, Map error){
+        response.setContentType('text/xml')
+        response.setCharacterEncoding('UTF-8')
+        if(error.status){
+            response.setStatus(error.status)
+        }
+        response.outputStream << renderErrorXml(error,error.code)
+    }
+    def requireVersion(request, HttpServletResponse response, int min, int max = 0){
+        if (request.api_version < min) {
+            renderErrorXml(response,[
+                    status:HttpServletResponse.SC_BAD_REQUEST,
+                    code:'api.error.api-version.unsupported',
+                    args: [request.api_version, request.forwardURI, "Minimum supported version: " + min]
+            ])
+            return false
+        }
+        if (max > 0 && request.api_version > max) {
+            renderErrorXml(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.api-version.unsupported',
+                    args: [request.api_version, request.forwardURI, "Maximum supported version: " + max]
+            ])
+            return false
+        }
+        return true
+    }
+    def renderErrorXml(messages, String code=null, builder=null){
+        def writer = new StringWriter()
+        def xml
+        if(!builder){
+            xml = new MarkupBuilder(writer)
+        }else{
+            xml=builder
+        }
+        xml.with {
+            result(error: "true", apiversion: ApiRequestFilters.API_CURRENT_VERSION) {
+                def errorprops = [:]
+                if (code) {
+                    errorprops = [code: code]
+                }
+                delegate.'error'(errorprops) {
+                    if (!messages) {
+                        delegate.'message'(messageSource.getMessage("api.error.unknown",null,null))
+                    }
+                    if (messages instanceof List) {
+                        messages.each {
+                            delegate.'message'(it)
+                        }
+                    }else if(messages instanceof Map && messages.code){
+                        delegate.'message'(messageSource.getMessage(messages.code, messages.args?messages.args as Object[]:null, null))
+                    }
+                }
+            }
+        }
+        if(!builder){
+            return writer.toString()
+        }
+    }
+
+    /**
+     * Render execution document for api response
+     */
+
+    /**
+     * Render execution list xml given a List of executions, and a builder delegate
+     * @param execlist list of Maps containing [execution:Execution, href: URL to execution, status: rendered status text, summary: rendered summary text]
+     */
+    public def renderExecutionsXml(execlist, paging = [:], delegate){
+        def execAttrs = [count: execlist.size()]
+        if (paging) {
+            execAttrs.putAll(paging)
+        }
+        delegate.'executions'(execAttrs) {
+            execlist.each { Map execdata ->
+
+                def href=execdata.href
+                def status=execdata.status
+                def summary=execdata.summary
+                def Execution e = Execution.get(execdata.execution.id)
+                execution(
+                        /** attributes   **/
+                        id: e.id,
+                        href: href,
+                        status: status,
+                        project: e.project
+                ) {
+                    /** elements   */
+                    user(e.user)
+                    delegate.'date-started'(unixtime: e.dateStarted.time, g.w3cDateValue(date: e.dateStarted))
+                    if (null != e.dateCompleted) {
+                        delegate.'date-ended'(unixtime: e.dateCompleted.time, g.w3cDateValue(date: e.dateCompleted))
+                    }
+                    if (e.cancelled) {
+                        abortedby(e.abortedby ? e.abortedby : e.user)
+                    }
+                    if (e.scheduledExecution) {
+                        def jobparams = [id: e.scheduledExecution.extid]
+                        if (e.scheduledExecution.totalTime >= 0 && e.scheduledExecution.execCount > 0) {
+                            def long avg = Math.floor(e.scheduledExecution.totalTime / e.scheduledExecution.execCount)
+                            jobparams.averageDuration = avg
+                        }
+                        job(jobparams) {
+                            name(e.scheduledExecution.jobName)
+                            group(e.scheduledExecution.groupPath ?: '')
+                            project(e.scheduledExecution.project)
+                            description(e.scheduledExecution.description)
+                        }
+                    }
+                    description(summary)
+                    argstring(e.argString)
+                }
+            }
+        }
+    }
+
+}

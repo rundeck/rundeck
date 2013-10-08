@@ -12,7 +12,8 @@ class ApiController {
     def defaultAction = "invalid"
     def quartzScheduler
     def frameworkService
-    
+    def apiService
+
     def invalid = {
         response.setStatus(404)
         request['error']=message(code:'api.error.invalid.request',args:[request.forwardURI])
@@ -63,35 +64,11 @@ class ApiController {
 
     def error={
         return render(contentType:"text/xml",encoding:"UTF-8"){
-            result(error:"true", apiversion:ApiRequestFilters.API_CURRENT_VERSION){
-                def errorprops=[:]
-                if(request.apiErrorCode){
-                    errorprops=[code:request.apiErrorCode]
-                }
-                delegate.'error'(errorprops){
-                    if (!flash.error && !flash.errors && !request.error && !request.errors) {
-                        delegate.'message'(message(code: "api.error.unknown"))
-                    }
-                    if(flash.error){
-                        delegate.'message'(flash.error)
-                        flash.error=null
-                    }
-                    if(request.error){
-                        delegate.'message'(request.error)
-                    }
-                    if(flash.errors){
-                        flash.errors.each{
-                            delegate.'message'(it)
-                        }
-                        flash.errors = null
-                    }
-                    if(request.errors){
-                        request.errors.each{
-                            delegate.'message'(it)
-                        }
-                    }
-                }
-            }
+            apiService.renderErrorXml(
+                    (flash.errors ?: []) + (request.errors ?: []) + [flash.error,request.error].findAll{it},
+                    request.apiErrorCode,
+                    delegate
+            )
         }
     }
 

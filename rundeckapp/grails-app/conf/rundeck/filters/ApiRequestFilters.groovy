@@ -37,6 +37,8 @@ public class ApiRequestFilters {
     private static final String METRIC_TIMER = 'ApiRequestFilters._METRIC_TIMER'
     private static final String REQUEST_TIME = 'ApiRequestFilters._TIMER'
     def MetricRegistry metricRegistry
+    def messageSource
+    def apiService
     public static final int V1 = 1
     public static final int V2 = 2
     public static final int V3 = 3
@@ -101,22 +103,21 @@ public class ApiRequestFilters {
 
                 if (!params.api_version) {
                     flash.errorCode = 'api.error.api-version.required'
-                    redirect(controller: 'api', action: 'renderError')
                     AA_TimerFilters.afterRequest(request, response, session)
                     logDetail(request, params.toString(), actionName, controllerName, 'api.error.api-version.required')
+                    apiService.renderErrorXml(response,[code: 'api.error.api-version.required'])
                     return false
                 }
                 def unsupported = !(VersionMap.containsKey(params.api_version))
                 if (unsupported) {
-                    render(contentType: "text/xml", encoding: "UTF-8") {
-                        result(error: "true", apiversion: API_CURRENT_VERSION) {
-                            delegate.'error' {
-                                message("Unsupported API Version \"${params.api_version}\". API Request: ${request.forwardURI}. Reason: Current version: ${API_CURRENT_VERSION}")
-                            }
-                        }
-                    }
                     AA_TimerFilters.afterRequest(request, response, session)
                     logDetail(request, params.toString(), actionName, controllerName, 'api.error.api-version.unsupported')
+                    apiService.renderErrorXml(response,
+                            [
+                                    code: 'api.error.api-version.unsupported',
+                                    args: [params.api_version, request.forwardURI, "Current version: "+API_CURRENT_VERSION]
+                            ]
+                        )
                     return false;
                 }
                 request.api_version = VersionMap[params.api_version]
