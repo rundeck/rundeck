@@ -115,7 +115,7 @@
             <div class="row">
                 <div class="col-sm-6 col-md-2">
                     <a class="h3"
-                       href="${g.createLink(controller: "framework", action: "selectProject", params: [project: project])}">
+                       href="${g.createLink(controller: "framework", action: "selectProject", params: [project: project,page:'jobs'])}">
                         <i class="glyphicon glyphicon-tasks"></i>
                     ${project}
                     </a>
