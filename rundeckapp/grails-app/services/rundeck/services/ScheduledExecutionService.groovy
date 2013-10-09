@@ -443,11 +443,11 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         def ScheduledExecution scheduledExecution = getByIDorUUID(jobid)
         if (!scheduledExecution) {
             def err = [
-                    message: g.message(code: "api.error.item.doesnotexist", args: ['Job ID', jobid]),
+                    message: lookupMessage( "api.error.item.doesnotexist",  ['Job ID', jobid] as Object[]),
                     errorCode: 'notfound',
                     id: jobid
             ]
-            return [error: err]
+            return [error: err,success: false]
         }
         if (!frameworkService.authorizeProjectResource (framework, [type: 'resource', kind: 'job'], AuthConstants.ACTION_DELETE, scheduledExecution.project)
             || !frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_DELETE], scheduledExecution.project)) {
@@ -457,14 +457,14 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                     id: scheduledExecution.extid,
                     job: scheduledExecution
             ]
-            return [error: err]
+            return [error: err,success: false]
         }
         def changeinfo = [user: user, method: callingAction, change: 'delete']
         def jobdata = scheduledExecution.properties
         def jobtitle = "[" + scheduledExecution.extid + "] " + scheduledExecution.generateFullName()
         def result = deleteScheduledExecution(scheduledExecution)
         if (!result.success) {
-            return [error:  [message: result.error, job: scheduledExecution, errorCode: 'failed', id: scheduledExecution.extid]]
+            return [success:false,error:  [message: result.error, job: scheduledExecution, errorCode: 'failed', id: scheduledExecution.extid]]
         } else {
             logJobChange(changeinfo, jobdata)
             return [success: [message: lookupMessage('api.success.job.delete.message', [jobtitle] as Object[]), job: scheduledExecution]]

@@ -21,6 +21,7 @@ import grails.test.mixin.TestFor
 import org.codehaus.groovy.grails.commons.ConfigurationHolder
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.mock.web.MockMultipartHttpServletRequest
+import rundeck.services.ApiService
 import rundeck.services.NotificationService
 
 import javax.security.auth.Subject
@@ -698,10 +699,22 @@ class ScheduledExecutionControllerTests  {
         assertNotNull exec.save()
         eServiceControl.demand.executeScheduledExecution { scheduledExecution, framework, subject, inparams ->
             assert 'anonymous' == inparams.user
-            return [executionId: exec.id, name: scheduledExecution.jobName, execution: exec]
+            return [executionId: exec.id, name: scheduledExecution.jobName, execution: exec,success:true]
+        }
+        eServiceControl.demand.respondExecutionsXml { response, List<Execution> execs ->
+            return true
         }
         sec.executionService = eServiceControl.createMock()
 
+        def svcMock = mockFor(ApiService, true)
+        svcMock.demand.requireExists { response, exists, args ->
+            true
+        }
+        svcMock.demand.renderErrorXml { response, Map error ->
+            println(error)
+            fail("Should not have error")
+        }
+        sec.apiService = svcMock.createMock()
 
         sec.metaClass.message = { params -> params?.code ?: 'messageCodeMissing' }
 
@@ -764,11 +777,31 @@ class ScheduledExecutionControllerTests  {
         assertNotNull exec.save()
         eServiceControl.demand.executeScheduledExecution { scheduledExecution, framework, subject, inparams ->
             assert userName == inparams.user
-            return [executionId: exec.id, name: scheduledExecution.jobName, execution: exec]
+            return [executionId: exec.id, name: scheduledExecution.jobName, execution: exec,success:true]
 
+        }
+        eServiceControl.demand.respondExecutionsXml { response, List<Execution> execs ->
+            return true
         }
         sec.executionService = eServiceControl.createMock()
 
+        def svcMock = mockFor(ApiService, true)
+        svcMock.demand.requireExists { response, exists, args ->
+            true
+        }
+        if(userName){
+            //asUser requires v5
+            svcMock.demand.requireVersion { request,response, min ->
+                assertEquals(5,min)
+                return true
+            }
+        }
+
+        svcMock.demand.renderErrorXml { response, Map error ->
+            println(error)
+            fail("Should not have error")
+        }
+        sec.apiService = svcMock.createMock()
 
         sec.metaClass.message = { params -> params?.code ?: 'messageCodeMissing' }
 
@@ -785,9 +818,6 @@ class ScheduledExecutionControllerTests  {
             assert execs.contains(exec)
         }
 
-        ApiController.metaClass.requireVersion={min,max=0->
-            true
-        }
         sec.apiJobRun()
     }
 
@@ -849,20 +879,25 @@ class ScheduledExecutionControllerTests  {
             assert execs.contains(exec)
         }
         sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
-        ApiController.metaClass.requireVersion = { min, max = 0 ->
-            true
-        }
         def succeeded = false
-        ApiController.metaClass.success = { clos ->
-            succeeded = true
-            true
+        def svcMock = mockFor(ApiService, true)
+        def requireFailed=false
+        svcMock.demand.requireParameters { reqparams, response, List needparams ->
+            assertTrue('project' in needparams)
+            assertTrue('exec' in needparams)
+            assertNotNull(reqparams.exec)
+            assertNull(reqparams.project)
+            requireFailed=true
+            return false
         }
+        sec.apiService = svcMock.createMock()
         def result = sec.apiRunCommand()
         assert !succeeded
         assert null == view
-        assertEquals("/api/error", response.redirectedUrl)
-        assert 'api.error.parameter.required'==sec.flash.error
+        assertNull(response.redirectedUrl)
+        assert null==sec.flash.error
         assert !sec.chainModel
+        assert requireFailed
     }
 
     public void testApiRunCommand() {
@@ -923,20 +958,32 @@ class ScheduledExecutionControllerTests  {
             assert execs.contains(exec)
         }
         sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
-        ApiController.metaClass.requireVersion = { min, max = 0 ->
-            assert min==5
-            true
-        }
         def succeeded=false
-        ApiController.metaClass.success = { clos ->
-            succeeded=true
-            true
+        def svcMock = mockFor(ApiService, true)
+        def requireFailed = true
+        svcMock.demand.requireParameters { reqparams, response, List needparams ->
+            assertTrue('project' in needparams)
+            assertTrue('exec' in needparams)
+            assertNotNull(reqparams.exec)
+            assertNotNull(reqparams.project)
+            requireFailed = false
+            return true
         }
+        svcMock.demand.requireExists { response, exists, args ->
+            assertEquals(['project','test'],args)
+            return true
+        }
+        svcMock.demand.renderSuccessXml { response, closure ->
+            succeeded=true
+            return true
+        }
+        sec.apiService = svcMock.createMock()
         def result=sec.apiRunCommand()
         assert succeeded
         assert null==view
         assertNull(response.redirectedUrl)
         assert !model
+        assert !requireFailed
     }
 
     public void testApiRunCommandAsUser() {
@@ -998,15 +1045,31 @@ class ScheduledExecutionControllerTests  {
             assert execs.contains(exec)
         }
         sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
-        ApiController.metaClass.requireVersion = { min, max = 0 ->
-            assert min == 5
-            true
-        }
         def succeeded = false
-        ApiController.metaClass.success = { clos ->
-            succeeded = true
-            true
+
+        def svcMock = mockFor(ApiService, true)
+        def requireFailed = true
+        svcMock.demand.requireParameters { reqparams, response, List needparams ->
+            assertTrue('project' in needparams)
+            assertTrue('exec' in needparams)
+            assertNotNull(reqparams.exec)
+            assertNotNull(reqparams.project)
+            requireFailed = false
+            return true
         }
+        svcMock.demand.requireExists { response, exists, args ->
+            assertEquals(['project', 'test'], args)
+            return true
+        }
+        svcMock.demand.requireVersion { request,response, int min->
+            assertEquals(5, min)
+            return true
+        }
+        svcMock.demand.renderSuccessXml { response, closure ->
+            succeeded = true
+            return true
+        }
+        sec.apiService = svcMock.createMock()
         def result = sec.apiRunCommand()
         assert succeeded
         assert null == view

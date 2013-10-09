@@ -295,7 +295,7 @@ echo "TEST: job/id/executions invalid id param"
 runurl="${APIURL}/job/fake/executions"
 params=""
 
-sh $SRC_DIR/api-expect-error.sh ${runurl} "${params}" "Job ID does not exist: fake" || exit 2
+sh $SRC_DIR/api-expect-error.sh ${runurl} "${params}" "Job ID does not exist: fake" 404 || exit 2
 echo "OK"
 
 ####

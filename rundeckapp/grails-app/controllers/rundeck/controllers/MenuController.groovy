@@ -20,6 +20,7 @@ import rundeck.User
 import rundeck.codecs.JobsXMLCodec
 import rundeck.codecs.JobsYAMLCodec
 import rundeck.filters.ApiRequestFilters
+import rundeck.services.ApiService
 import rundeck.services.ExecutionService
 import rundeck.services.ExecutionServiceException
 import rundeck.services.FrameworkService
@@ -30,6 +31,7 @@ import rundeck.services.NotificationService
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.UserService
 
+import javax.servlet.http.HttpServletResponse
 import java.lang.management.ManagementFactory
 
 class MenuController {
@@ -42,6 +44,7 @@ class MenuController {
     LoggingService LoggingService
     LogFileStorageService logFileStorageService
     def quartzScheduler
+    def ApiService apiService
     def list = {
         def results = index(params)
         render(view:"index",model:results)
@@ -727,29 +730,30 @@ class MenuController {
      * API: /api/jobs, version 1
      */
     def apiJobsList = {ScheduledExecutionQuery query ->
-        if(params.project){
-            query.projFilter=params.project
-        }else{
-            flash.error=g.message(code:'api.error.parameter.required',args:['project'])
-            return chain(controller:'api',action:'error')
+        if(!params.project){
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.parameter.required', args: ['project']])
+
         }
+        query.projFilter = params.project
         //test valid project
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
 
         def exists=frameworkService.existsFrameworkProject(params.project,framework)
         if(!exists){
-            flash.error=g.message(code:'api.error.item.doesnotexist',args:['project',params.project])
-            return chain(controller:'api',action:'error')
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.item.doesnotexist', args: ['project', params.project]])
+
         }
         if(query.groupPathExact || query.jobExactFilter){
             //these query inputs require API version 2
-            if (!new ApiController().requireVersion(ApiRequestFilters.V2)) {
+            if (!apiService.requireVersion(request,response,ApiRequestFilters.V2)) {
                 return
             }
         }
         def results = jobsFragment(query)
 
-        new ApiController().success{ delegate->
+        return apiService.renderSuccessXml(response){
             delegate.'jobs'(count:results.nextScheduled.size()){
                 results.nextScheduled.each{ ScheduledExecution se->
                     job(id:se.extid){
@@ -766,7 +770,7 @@ class MenuController {
      * API: /api/2/project/NAME/jobs, version 2
      */
     def apiJobsListv2 = {ScheduledExecutionQuery query ->
-        if(!new ApiController().requireVersion(ApiRequestFilters.V2)){
+        if(!apiService.requireVersion(request,response,ApiRequestFilters.V2)){
             return
         }
         return apiJobsList(query)
@@ -776,20 +780,18 @@ class MenuController {
      * API: /jobs/export, version 1
      */
     def apiJobsExport = {ScheduledExecutionQuery query ->
-
-        if(params.project){
-            query.projFilter=params.project
-        }else{
-            flash.error=g.message(code:'api.error.parameter.required',args:['project'])
-            return chain(controller:'api',action:'error')
+        if(!params.project){
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.parameter.required', args: ['project']])
         }
+        query.projFilter = params.project
         //test valid project
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
 
         def exists=frameworkService.existsFrameworkProject(params.project,framework)
         if(!exists){
-            flash.error=g.message(code:'api.error.item.doesnotexist',args:['project',params.project])
-            return chain(controller:'api',action:'error')
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.item.doesnotexist', args: ['project',params.project]])
         }
         def results = jobsFragment(query)
 
@@ -814,8 +816,8 @@ class MenuController {
     def apiExecutionsRunning = {
 
         if(!params.project){
-            flash.error=g.message(code:'api.error.parameter.required',args:['project'])
-            return chain(controller:'api',action:'error')
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.parameter.required', args: ['project']])
         }
         //test valid project
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
@@ -823,16 +825,15 @@ class MenuController {
         //allow project='*' to indicate all projects
         def allProjects = request.api_version >= ApiRequestFilters.V9 && params.project == '*'
         if(!allProjects){
-            def exists=frameworkService.existsFrameworkProject(params.project,framework)
-            if(!exists){
-                flash.error=g.message(code:'api.error.item.doesnotexist',args:['project',params.project])
-                return chain(controller:'api',action:'error')
+            if(!frameworkService.existsFrameworkProject(params.project,framework)){
+                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
+                        code: 'api.error.parameter.doesnotexist', args: ['project',params.project]])
             }
         }
 
         QueueQuery query = new QueueQuery(runningFilter:'running',projFilter:params.project)
         def results = nowrunning(query)
-        return new ExecutionController().renderApiExecutionListResultXML(results.nowrunning)
+        return executionService.respondExecutionsXml(response,results.nowrunning)
     }
 }
 

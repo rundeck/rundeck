@@ -39,12 +39,12 @@ if [ "0" != "$failedcount" ] ; then
 fi
 
 if [ "0" != "$succount" ] ; then
-    echo "$failedcount Succeeded:"
+    echo "$succount Succeeded:"
     $XMLSTARLET sel -T -t -m "/result/succeeded/job" -o "[" -v "id" -o "] " -v "name" -o ", " -v "group" -o ", " -v "project" -n $DIR/curl.out
 fi
 
 if [ "0" != "$skipcount" ] ; then
-    echo "$failedcount Skipped:"
+    echo "$skipcount Skipped:"
     $XMLSTARLET sel -T -t -m "/result/skipped/job" -o "[" -v "id" -o "] " -v "name" -o ", " -v "group" -o ", " -v "project" -n $DIR/curl.out
 fi
 rm $DIR/curl.out

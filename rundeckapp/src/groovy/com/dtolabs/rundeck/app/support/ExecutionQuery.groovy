@@ -1,6 +1,7 @@
 package com.dtolabs.rundeck.app.support
 
 import rundeck.controllers.ExecutionController
+import rundeck.services.ExecutionService
 
 /*
  * Copyright 2012 DTO Labs, Inc. (http://dtolabs.com)
@@ -52,7 +53,7 @@ class ExecutionQuery extends ScheduledExecutionQuery{
     String userFilter
 
     static constraints={
-        statusFilter(nullable:true,inList: [ExecutionController.EXECUTION_RUNNING, ExecutionController.EXECUTION_ABORTED, ExecutionController.EXECUTION_FAILED, ExecutionController.EXECUTION_SUCCEEDED])
+        statusFilter(nullable:true,inList: [ExecutionService.EXECUTION_RUNNING, ExecutionService.EXECUTION_ABORTED, ExecutionService.EXECUTION_FAILED, ExecutionService.EXECUTION_SUCCEEDED])
         sortOrder(nullable: true)
     }
 

@@ -88,12 +88,12 @@ public class NotificationService implements ApplicationContextAware{
                     //sending notification of a status trigger for the Job
                     def Execution exec = content.execution
                     def destarr=n.content.split(",") as List
-                    final state = ExecutionController.getExecutionState(exec)
+                    final state = ExecutionService.getExecutionState(exec)
                     def statMsg=[
-                            (ExecutionController.EXECUTION_ABORTED):'KILLED',
-                            (ExecutionController.EXECUTION_FAILED):'FAILURE',
-                            (ExecutionController.EXECUTION_RUNNING):'STARTING',
-                            (ExecutionController.EXECUTION_SUCCEEDED):'SUCCESS',
+                            (ExecutionService.EXECUTION_ABORTED):'KILLED',
+                            (ExecutionService.EXECUTION_FAILED):'FAILURE',
+                            (ExecutionService.EXECUTION_RUNNING):'STARTING',
+                            (ExecutionService.EXECUTION_SUCCEEDED):'SUCCESS',
                     ]
                     def status= statMsg[state]?:state
                     def subjectmsg="${status} [${exec.project}] ${source.groupPath?source.groupPath+'/':''}${source.jobName}${exec.argString?' '+exec.argString:''}"
@@ -140,7 +140,7 @@ public class NotificationService implements ApplicationContextAware{
                 }else if(n.type=='url'){    //sending notification of a status trigger for the Job
                     def Execution exec = content.execution
                     //iterate through the URLs, and submit a POST to the destination with the XML Execution result
-                    final state = ExecutionController.getExecutionState(exec)
+                    final state = ExecutionService.getExecutionState(exec)
                     String xmlStr = RequestHelper.doWithMockRequest {
                         def writer = new StringWriter()
                         def xml = new MarkupBuilder(writer)
@@ -257,7 +257,7 @@ public class NotificationService implements ApplicationContextAware{
     }
 
     String expandWebhookNotificationUrl(String url,Execution exec, ScheduledExecution job, String trigger){
-        def state=ExecutionController.getExecutionState(exec)
+        def state=ExecutionService.getExecutionState(exec)
         /**
          * Expand the URL string's embedded property references of the form
          * ${job.PROPERTY} and ${execution.PROPERTY}.  available properties are

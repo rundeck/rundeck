@@ -9,7 +9,6 @@ class UrlMappings {
         /*******
         * API url paths, v1
         */
-        "/api/$api_version/error"(controller: 'api', action: 'error')
         "/api/$api_version/execution/$id"(controller: 'execution', action: 'apiExecution')
         "/api/$api_version/execution/$id/abort"(controller: 'execution', action: 'apiExecutionAbort')
         /** v5 */
@@ -17,7 +16,9 @@ class UrlMappings {
         "/api/$api_version/executions/running"(controller: 'menu', action: 'apiExecutionsRunning')
         "/api/$api_version/executions"(controller: 'execution', action: 'apiExecutionsQuery')
         "/api/$api_version/history"(controller: 'reports', action: 'apiHistory')
-        "/api/$api_version/job/$id"(controller: 'scheduledExecution',action:'apiJobAction')
+        "/api/$api_version/job/$id"(controller: 'scheduledExecution') {
+            action = [GET: 'apiJobAction', DELETE: 'apiJobDeleteSingle']
+        }
         "/api/$api_version/job/$id/run"(controller: 'scheduledExecution', action: 'apiJobRun')
         "/api/$api_version/job/$id/executions"(controller: 'scheduledExecution', action: 'apiJobExecutions')
         "/api/$api_version/jobs"(controller: 'menu', action: 'apiJobsList')
@@ -29,13 +30,13 @@ class UrlMappings {
         "/api/$api_version/project/$project/resources/refresh"(controller: 'framework', action: 'apiProjectResourcesRefresh')
         /** v2  */
         "/api/$api_version/project/$project/resources"(controller: 'framework') {
-            action = [GET: "apiResourcesv2",/* PUT: "update", DELETE: "delete",*/ POST: "apiProjectResources"]
+            action = [GET: "apiResourcesv2",/* PUT: "update", DELETE: "delete",*/ POST: "apiProjectResourcesPost"]
         }
         /** v2 */
         "/api/$api_version/project/$project/jobs"(controller: 'menu', action: 'apiJobsListv2')
         "/api/$api_version/projects"(controller: 'framework', action: 'apiProjects')
-        "/api/renderError"(controller: 'api', action: 'renderError')
-        "/api/error"(controller: 'api', action: 'error')
+//        "/api/renderError"(controller: 'api', action: 'renderError')
+//        "/api/error"(controller: 'api', action: 'error')
         "/api/$api_version/report/create"(controller: 'reports', action: 'apiReportCreate')
         "/api/$api_version/resources"(controller: 'framework', action: 'apiResources')
         "/api/$api_version/resource/$name"(controller: 'framework', action: 'apiResource')

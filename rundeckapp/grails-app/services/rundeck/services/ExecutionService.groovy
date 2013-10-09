@@ -42,6 +42,7 @@ import rundeck.controllers.ExecutionController
 import rundeck.services.logging.ExecutionLogWriter
 
 import javax.security.auth.Subject
+import javax.servlet.http.HttpServletResponse
 import javax.servlet.http.HttpSession
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
@@ -67,6 +68,27 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     def ApplicationContext applicationContext
     def metricService
+    def apiService
+    def grailsLinkGenerator
+
+    /**
+     * Render execution document for api response
+     */
+
+    public def respondExecutionsXml(HttpServletResponse response, List<Execution> executions, paging = [:]) {
+        return apiService.respondExecutionsXml(response,executions.collect { Execution e ->
+                [
+                        execution: e,
+                        href: getFollowURLForExecution(e),
+                        status: getExecutionState(e),
+                        summary: summarizeJob(e.scheduledExecution, e)
+                ]
+            }, paging)
+    }
+
+    public String getFollowURLForExecution(Execution e) {
+        grailsLinkGenerator.link(controller: 'execution', action: 'follow', id: e.id, absolute: true)
+    }
 
     def listLastExecutionsPerProject(Framework framework, int max=5){
         def projects = frameworkService.projects(framework).collect{ it.name }
@@ -505,7 +527,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         jobcontext.username = execution.user
         jobcontext['user.name'] = execution.user
         jobcontext.project = execution.project
-        jobcontext.loglevel = ExecutionService.textLogLevels[execution.loglevel] ?: execution.loglevel
+        jobcontext.loglevel = textLogLevels[execution.loglevel] ?: execution.loglevel
         jobcontext
     }
 
@@ -625,6 +647,19 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         final WorkflowExecutionItemImpl item = new WorkflowExecutionItemImpl(
             new WorkflowImpl(execMap.workflow.commands.collect {itemForWFCmdItem(it,it.errorHandler?itemForWFCmdItem(it.errorHandler):null)}, execMap.workflow.threadcount, execMap.workflow.keepgoing,execMap.workflow.strategy?execMap.workflow.strategy: "node-first"))
         return item
+    }
+
+    public static String EXECUTION_RUNNING = "running"
+    public static String EXECUTION_SUCCEEDED = "succeeded"
+    public static String EXECUTION_FAILED = "failed"
+    public static String EXECUTION_ABORTED = "aborted"
+
+    public static String ABORT_PENDING = "pending"
+    public static String ABORT_ABORTED = "aborted"
+    public static String ABORT_FAILED = "failed"
+
+    public static String getExecutionState(Execution e) {
+        return null == e.dateCompleted ? EXECUTION_RUNNING : "true" == e.status ? EXECUTION_SUCCEEDED : e.cancelled ? EXECUTION_ABORTED : EXECUTION_FAILED
     }
 
     public StepExecutionItem itemForWFCmdItem(final WorkflowStep step,final StepExecutionItem handler=null) throws FileNotFoundException {
@@ -838,13 +873,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def failedreason
         def userIdent=killAsUser?:user
         if (!frameworkService.authorizeProjectExecutionAll(framework,e,[AuthConstants.ACTION_KILL])){
-            jobstate = ExecutionController.getExecutionState(e)
-            abortstate= ExecutionController.ABORT_FAILED
+            jobstate = getExecutionState(e)
+            abortstate= ABORT_FAILED
             failedreason="unauthorized"
             statusStr= jobstate
         }else if(killAsUser && !frameworkService.authorizeProjectExecutionAll(framework, e, [AuthConstants.ACTION_KILLAS])) {
-            jobstate = ExecutionController.getExecutionState(e)
-            abortstate = ExecutionController.ABORT_FAILED
+            jobstate = getExecutionState(e)
+            abortstate = ABORT_FAILED
             failedreason = "unauthorized"
             statusStr = jobstate
         }else if (scheduledExecutionService.existsJob(ident.jobname, ident.groupname)){
@@ -875,9 +910,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             if(success){
                 didcancel=scheduledExecutionService.interruptJob(ident.jobname, ident.groupname)
             }
-            abortstate=didcancel?ExecutionController.ABORT_PENDING:ExecutionController.ABORT_FAILED
+            abortstate=didcancel?ABORT_PENDING:ABORT_FAILED
             failedreason=didcancel?'':'Unable to interrupt the running job'
-            jobstate=ExecutionController.EXECUTION_RUNNING
+            jobstate=EXECUTION_RUNNING
         }else if(null==dateCompleted){
             saveExecutionState(
                 se?se.id:null,
@@ -889,12 +924,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     abortedby: userIdent
                     ]
                 )
-            abortstate=ExecutionController.ABORT_ABORTED
-            jobstate=ExecutionController.EXECUTION_ABORTED
+            abortstate=ABORT_ABORTED
+            jobstate=EXECUTION_ABORTED
         }else{
-            jobstate=ExecutionController.getExecutionState(e)
+            jobstate= getExecutionState(e)
             statusStr='previously '+jobstate
-            abortstate=ExecutionController.ABORT_FAILED
+            abortstate=ABORT_FAILED
             failedreason =  'Job is not running'
         }
         return [abortstate:abortstate,jobstate:jobstate,statusStr:statusStr, failedreason: failedreason]
@@ -1087,13 +1122,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def extraParamsExposed = selectSecureOptionInput(scheduledExecution, extra, true)
             def eid = scheduledExecutionService.scheduleTempJob(scheduledExecution, params.user, subject, e, extraMap, extraParamsExposed) ;
 
-            return [executionId: eid, name: scheduledExecution.jobName, execution: e]
+            return [success:true,executionId: eid, name: scheduledExecution.jobName, execution: e]
         } catch (ExecutionServiceValidationException exc) {
-            return [error: 'invalid', message: exc.getMessage(), options: exc.getOptions(), errors: exc.getErrors()]
+            return [success:false,error: 'invalid', message: exc.getMessage(), options: exc.getOptions(), errors: exc.getErrors()]
         } catch (ExecutionServiceException exc) {
             def msg = exc.getMessage()
             log.error("exception: " + exc)
-            return [error: 'failed', message: msg, options:extra.option]
+            return [success:false,error: 'failed', message: msg, options:extra.option]
         }
     }
     private Execution int_createExecution(ScheduledExecution se,framework,user,extra){
@@ -1203,7 +1238,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }else if(params?.optparams){
             optparams=params.optparams
         }else{
-            optparams = ExecutionService.filterOptParams(params)
+            optparams = filterOptParams(params)
         }
         final options = scheduledExecution.options
         if (options) {
@@ -1262,7 +1297,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * any options don't match.
      */
     def boolean validateInputOptionValues(ScheduledExecution scheduledExecution, Map props) throws ExecutionServiceException{
-        def optparams = ExecutionService.filterOptParams(props)
+        def optparams = filterOptParams(props)
         if(!optparams && props.argString){
             optparams = parseJobOptsFromString(scheduledExecution,props.argString)
         }
@@ -2018,15 +2053,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             if (query.userFilter) {
                 eq('user', query.userFilter)
             }
-            if (state == ExecutionController.EXECUTION_RUNNING) {
+            if (state == EXECUTION_RUNNING) {
                 isNull('dateCompleted')
-            } else if (state == ExecutionController.EXECUTION_ABORTED) {
+            } else if (state == EXECUTION_ABORTED) {
                 isNotNull('dateCompleted')
                 eq('cancelled', true)
             } else if (state) {
                 isNotNull('dateCompleted')
                 eq('cancelled', false)
-                eq('status', state == ExecutionController.EXECUTION_FAILED ? 'false' : 'true')
+                eq('status', state == EXECUTION_FAILED ? 'false' : 'true')
             }
             if (query.abortedbyFilter) {
                 eq('abortedby', query.abortedbyFilter)

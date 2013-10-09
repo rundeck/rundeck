@@ -11,6 +11,7 @@ import rundeck.Execution
 import rundeck.PluginStep
 import rundeck.ScheduledExecution
 import rundeck.filters.ApiRequestFilters
+import rundeck.services.ApiService
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.LoggingService
@@ -18,6 +19,7 @@ import rundeck.services.ScheduledExecutionService
 import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.logging.ExecutionLogState
 
+import javax.servlet.http.HttpServletResponse
 import java.text.ParseException
 import java.text.SimpleDateFormat
 
@@ -30,6 +32,7 @@ class ExecutionController {
     ExecutionService executionService
     LoggingService loggingService
     ScheduledExecutionService scheduledExecutionService
+    ApiService apiService
 
 
     def index ={
@@ -44,7 +47,7 @@ class ExecutionController {
 
     private unauthorized(String action, boolean fragment = false) {
         if (!fragment) {
-            response.setStatus(403)
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN)
         }
         flash.title = "Unauthorized"
         flash.error = "${request.remoteUser} is not authorized to: ${action}"
@@ -208,18 +211,18 @@ class ExecutionController {
         def jobcomplete = e.dateCompleted!=null
         def reader = loggingService.getLogReader(e)
         if (reader.state==ExecutionLogState.NOT_FOUND) {
-            response.setStatus(404)
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND)
             log.error("Output file not found")
             return
         }else if (reader.state == ExecutionLogState.ERROR) {
-            response.setStatus(500)
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR)
             def msg= g.message(code: reader.errorCode, args: reader.errorData)
             log.error("Output file reader error: ${msg}")
             response.outputStream << msg
             return
         }else if (reader.state != ExecutionLogState.AVAILABLE) {
             //TODO: handle other states
-            response.setStatus(404)
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND)
             log.error("Output file not available")
             return
         }
@@ -249,7 +252,7 @@ class ExecutionController {
      * API: /api/execution/{id}/output, version 5
      */
     def apiExecutionOutput = {
-        if (!new ApiController().requireVersion(ApiRequestFilters.V5)) {
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V5)) {
             return
         }
         return tailExecutionOutput()
@@ -320,48 +323,45 @@ class ExecutionController {
         log.debug("tailExecutionOutput: ${params}, format: ${request.format}")
         def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         Execution e = Execution.get(Long.parseLong(params.id))
-        def api= new ApiController()
         def reqError=false
-        if(!e){
-            reqError=true
-            response.setStatus(404)
-            request.error=g.message(code: 'api.error.item.doesnotexist', args: ['execution', params.id])
-        }
-        if(e && !frameworkService.authorizeProjectExecutionAll(framework,e,[AuthConstants.ACTION_READ])){
-            reqError=true
-            response.setStatus(403)
-            request.error = g.message(code: 'api.error.item.unauthorized', args: [AuthConstants.ACTION_READ, "Execution",params.id])
-        }
-        def apiError={
 
+        def apiError = { String code, List args, int status = 0 ->
+            def message=code?g.message(code:code,args:args):'Unknown error'
             withFormat {
                 xml {
-                    api.error()
+                    apiService.renderErrorXml(response,[code:code,args:args,status:status])
                 }
                 json {
+                    if (status > 0) {
+                        response.setStatus(status)
+                    }
                     render(contentType: "text/json") {
-                        renderOutputClosure('json',[
-                                error: request.error,
-                                id:params.id.toString(),
-                                offset:"0",
-                                completed:false
-                        ],[],request.api_version,delegate)
+                        renderOutputClosure('json', [
+                                error: message,
+                                id: params.id.toString(),
+                                offset: "0",
+                                completed: false
+                        ], [], request.api_version, delegate)
                     }
                 }
                 text {
-                    response.setStatus(500)
-                    render(contentType: "text/plain", text: request.error)
+                    if (status > 0) {
+                        response.setStatus(status)
+                    }
+                    render(contentType: "text/plain", text: message)
                 }
             }
         }
-        if (reqError){
-            apiError();
-            return
+        if(!e){
+            return apiError('api.error.item.doesnotexist', ['execution', params.id], HttpServletResponse.SC_NOT_FOUND);
+        }
+        if(e && !frameworkService.authorizeProjectExecutionAll(framework,e,[AuthConstants.ACTION_READ])){
+            return apiError('api.error.item.unauthorized', [AuthConstants.ACTION_READ, "Execution", params.id], HttpServletResponse.SC_FORBIDDEN);
         }
 
         def jobcomplete = e.dateCompleted != null
         def hasFailedNodes = e.failedNodeList ? true : false
-        def execState = getExecutionState(e)
+        def execState = executionService.getExecutionState(e)
         def execDuration = 0L
         execDuration = (e.dateCompleted ? e.dateCompleted.getTime() : System.currentTimeMillis()) - e.dateStarted.getTime()
 
@@ -370,9 +370,7 @@ class ExecutionController {
         def error = reader.state == ExecutionLogState.ERROR
         log.debug("Reader, state: ${reader.state}, reader: ${reader.reader}")
         if(error) {
-            request.error = g.message(code: reader.errorCode, args: reader.errorData)
-            apiError();
-            return
+            return apiError(reader.errorCode, reader.errorData, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
         if (null == reader  || reader.state == ExecutionLogState.NOT_FOUND ) {
             def errmsg = g.message(code: "execution.log.storage.state.NOT_FOUND")
@@ -394,11 +392,11 @@ class ExecutionController {
             }
             withFormat {
                 xml {
-                    api.success({ del ->
-                        del.'output' {
-                            renderOutputClosure('xml', dataMap, [], request.api_version, del)
+                    apiService.renderSuccessXml(response) {
+                        output{
+                            renderOutputClosure('xml', dataMap, [], request.api_version, delegate)
                         }
-                    })
+                    }
                 }
                 json {
                     render(contentType: "text/json") {
@@ -439,11 +437,11 @@ class ExecutionController {
             ]
             withFormat {
                 xml {
-                    api.success({ del ->
-                        del.'output' {
-                            renderOutputClosure('xml', dataMap, [], request.api_version, del)
+                    apiService.renderSuccessXml(response) {
+                        output {
+                            renderOutputClosure('xml', dataMap, [], request.api_version, delegate)
                         }
-                    })
+                    }
                 }
                 json {
                     render(contentType: "text/json") {
@@ -479,9 +477,8 @@ class ExecutionController {
                 reqError=true
             }
             if(reqError){
-                request.error = g.message(code: 'api.error.parameter.invalid', args: [params.offset, 'offset', 'Not an integer offset'])
-                apiError()
-                return
+                return apiError('api.error.parameter.invalid', [params.offset, 'offset', 'Not an integer offset'],
+                        HttpServletResponse.SC_BAD_REQUEST)
             }
         }
 
@@ -502,9 +499,9 @@ class ExecutionController {
                     reqError = true
                 }
                 if (reqError) {
-                    request.error = g.message(code: 'api.error.parameter.invalid', args: [params.lastmod, 'lastmod', 'Not a millisecond modification time'])
-                    apiError()
-                    return
+                    return apiError('api.error.parameter.invalid',
+                            [params.lastmod, 'lastmod', 'Not a millisecond modification time'],
+                            HttpServletResponse.SC_BAD_REQUEST)
                 }
             }
             reqlastmod=ll
@@ -526,11 +523,11 @@ class ExecutionController {
 
                 withFormat {
                     xml {
-                        api.success({del ->
-                            del.'output' {
-                                renderOutputClosure('xml', dataMap, [], request.api_version, del)
+                        apiService.renderSuccessXml(response) {
+                            output {
+                                renderOutputClosure('xml', dataMap, [], request.api_version, delegate)
                             }
-                        })
+                        }
                     }
                     json {
                         render(contentType: "text/json") {
@@ -645,11 +642,11 @@ class ExecutionController {
         ]
         withFormat {
             xml {
-                api.success({del ->
-                    del.'output' {
-                        renderOutputClosure('xml', resultData, entry, request.api_version, del)
+                apiService.renderSuccessXml(response) {
+                    output {
+                        renderOutputClosure('xml', resultData, entry, request.api_version, delegate)
                     }
-                })
+                }
             }
             json {
                 render(contentType: "text/json") {
@@ -681,13 +678,6 @@ class ExecutionController {
     * API actions
      */
 
-    public static String EXECUTION_RUNNING = "running"
-    public static String EXECUTION_SUCCEEDED = "succeeded"
-    public static String EXECUTION_FAILED = "failed"
-    public static String EXECUTION_ABORTED = "aborted"
-    public static String getExecutionState(Execution e){
-        return null==e.dateCompleted?EXECUTION_RUNNING:"true"==e.status?EXECUTION_SUCCEEDED:e.cancelled?EXECUTION_ABORTED:EXECUTION_FAILED
-    }
     public String createExecutionUrl(def id){
         return g.createLink(controller: 'execution', action: 'follow', id: id, absolute: true)
     }
@@ -697,48 +687,15 @@ class ExecutionController {
     /**
      * Render execution list xml given a List of executions, and a builder delegate
      */
-    public def renderApiExecutions= { execlist, paging=[:],delegate ->
-        def execAttrs=[count: execlist.size()]
-        if(paging){
-            execAttrs.putAll(paging)
-        }
-        delegate.'executions'(execAttrs) {
-            execlist.each {Execution e ->
-                e = Execution.get(e.id)
-                execution(
-                    /** attributes   **/
-                    id: e.id,
-                    href: g.createLink(controller: 'execution', action: 'follow', id: e.id, absolute: true),
-                    status: getExecutionState(e),
-                    project: e.project
-                ) {
-                    /** elements   */
-                    user(e.user)
-                    delegate.'date-started'(unixtime: e.dateStarted.time, g.w3cDateValue(date: e.dateStarted))
-                    if (null != e.dateCompleted) {
-                        delegate.'date-ended'(unixtime: e.dateCompleted.time, g.w3cDateValue(date: e.dateCompleted))
-                    }
-                    if (e.cancelled) {
-                        abortedby(e.abortedby ? e.abortedby : e.user)
-                    }
-                    if (e.scheduledExecution) {
-                        def jobparams= [id: e.scheduledExecution.extid]
-                        if(e.scheduledExecution.totalTime>=0 && e.scheduledExecution.execCount>0){
-                            def long avg= Math.floor(e.scheduledExecution.totalTime / e.scheduledExecution.execCount)
-                            jobparams.averageDuration=avg
-                        }
-                        job(jobparams) {
-                            name(e.scheduledExecution.jobName)
-                            group(e.scheduledExecution.groupPath ?: '')
-                            project(e.scheduledExecution.project)
-                            description(e.scheduledExecution.description)
-                        }
-                    }
-                    description(executionService.summarizeJob(e.scheduledExecution, e))
-                    argstring(e.argString)
-                }
-            }
-        }
+    public def renderApiExecutions= { List execlist, paging=[:],delegate ->
+        apiService.renderExecutionsXml(execlist.collect{ Execution e->
+            [
+                execution:e,
+                href: g.createLink(controller: 'execution', action: 'follow', id: e.id, absolute: true),
+                status: executionService.getExecutionState(e),
+                summary: executionService.summarizeJob(e.scheduledExecution, e)
+            ]
+        },paging,delegate)
     }
 
     /**
@@ -750,7 +707,7 @@ class ExecutionController {
             def emap =[
                 id: e.id,
                 href: g.createLink(controller: 'execution', action: 'follow', id: e.id, absolute: true),
-                status: getExecutionState(e),
+                status: executionService.getExecutionState(e),
                 user:e.user,
                 dateStarted: e.dateStarted,
                 'dateStartedUnixtime': e.dateStarted.time,
@@ -789,26 +746,21 @@ class ExecutionController {
         executions
     }
     /**
-     * Utility, render xml response for a list of executions
-     */
-    public def renderApiExecutionListResultXML={execlist,paging=[:] ->
-        return new ApiController().success(renderApiExecutions.curry(execlist,paging))
-    }
-    /**
      * API: /api/execution/{id} , version 1
      */
     def apiExecution={
         def Execution e = Execution.get(params.id)
         def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         if (!e) {
-            flash.errorCode = "api.error.item.doesnotexist"
-            flash.errorArgs = ['Execution ID',params.id]
-            return chain(controller: 'api', action: 'renderError')
+            return apiService.renderErrorXml(response,
+                    [status: HttpServletResponse.SC_NOT_FOUND,code: "api.error.item.doesnotexist", args: ['Execution ID', params.id]])
         } else if (!frameworkService.authorizeProjectExecutionAll(framework,e,[AuthConstants.ACTION_READ])){
-            flash.responseCode = 403
-            flash.errorCode = 'api.error.item.unauthorized'
-            flash.errorArgs = [AuthConstants.ACTION_READ, "Execution",params.id]
-            return chain(controller: 'api', action: 'renderError')
+            return apiService.renderErrorXml(response,
+                    [
+                            status: HttpServletResponse.SC_FORBIDDEN,
+                            code: "api.error.item.unauthorized",
+                            args: [AuthConstants.ACTION_READ, "Execution", params.id]
+                    ])
         }
         def filesize=-1
         if(null!=e.outputfilepath){
@@ -817,12 +769,9 @@ class ExecutionController {
                 filesize = file.length()
             }
         }
-        return renderApiExecutionListResultXML([e])
+        return executionService.respondExecutionsXml(response, [e])
     }
 
-    public static String ABORT_PENDING="pending"
-    public static String ABORT_ABORTED="aborted"
-    public static String ABORT_FAILED="failed"
     /**
      * API: /api/execution/{id}/abort, version 1
      */
@@ -830,19 +779,24 @@ class ExecutionController {
         def Execution e = Execution.get(params.id)
         def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         if (!e) {
-            flash.errorCode = "api.error.item.doesnotexist"
-            flash.errorArgs = ['Execution ID',params.id]
-            return chain(controller: 'api', action: 'renderError')
+            return apiService.renderErrorXml(response,
+                        [
+                                status: HttpServletResponse.SC_NOT_FOUND,
+                                code: "api.error.item.doesnotexist",
+                                args: ['Execution ID', params.id]
+                        ])
         } else if (!frameworkService.authorizeProjectExecutionAll(framework,e,[AuthConstants.ACTION_KILL])){
-            flash.responseCode = 403
-            flash.errorCode = 'api.error.item.unauthorized'
-            flash.errorArgs = [AuthConstants.ACTION_KILL, "Execution",params.id]
-            return chain(controller: 'api', action: 'renderError')
+            return apiService.renderErrorXml(response,
+                    [
+                            status: HttpServletResponse.SC_FORBIDDEN,
+                            code: "api.error.item.unauthorized",
+                            args: [AuthConstants.ACTION_KILL, "Execution", params.id]
+                    ])
         }
         def ScheduledExecution se = e.scheduledExecution
         def user=session.user
         def killas=null
-        if (params.asUser && new ApiController().requireVersion(ApiRequestFilters.V5)) {
+        if (params.asUser && apiService.requireVersion(request,response,ApiRequestFilters.V5)) {
             //authorized within service call
             killas= params.asUser
         }
@@ -852,14 +806,13 @@ class ExecutionController {
         if(abortresult.failedreason){
             reportstate.reason= abortresult.failedreason
         }
-        return new ApiController().success{ delegate->
-            delegate.'success'{
-                message("Execution status: ${abortresult.statusStr?abortresult.statusStr:abortresult.jobstate}")
+        apiService.renderSuccessXml(response) {
+            success {
+                message("Execution status: ${abortresult.statusStr ? abortresult.statusStr : abortresult.jobstate}")
             }
-            delegate.'abort'(reportstate){
-                execution(id:params.id, status: abortresult.jobstate)
+            abort(reportstate) {
+                execution(id: params.id, status: abortresult.jobstate)
             }
-
         }
     }
 
@@ -867,18 +820,25 @@ class ExecutionController {
      * API: /api/executions query interface, version 5
      */
     def apiExecutionsQuery = {ExecutionQuery query->
-        if (!new ApiController().requireVersion(ApiRequestFilters.V5)) {
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V5)) {
             return
         }
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         if(query?.hasErrors()){
-            request.errorCode = "api.error.parameter.error"
-            request.errorArgs = [query.errors.allErrors.collect{message(error: it)}.join("; ")]
-            return new ApiController().renderError()
+            return apiService.renderErrorXml(response,
+                    [
+                            status: HttpServletResponse.SC_BAD_REQUEST,
+                            code: "api.error.parameter.error",
+                            args: [query.errors.allErrors.collect { message(error: it) }.join("; ")]
+                    ])
         }
         if (!params.project) {
-            request.error = g.message(code: 'api.error.parameter.required', args: ['project'])
-            return new ApiController().error()
+            return apiService.renderErrorXml(response,
+                    [
+                            status: HttpServletResponse.SC_BAD_REQUEST,
+                            code: "api.error.parameter.required",
+                            args: ['project']
+                    ])
         }
         
         query.projFilter=params.project
@@ -892,8 +852,7 @@ class ExecutionController {
                 query.endafterFilter = ReportsController.parseDate(params.begin)
                 query.doendafterFilter = true
             } catch (ParseException e) {
-                flash.error = g.message(code: 'api.error.history.date-format', args: ['begin', params.begin])
-                return chain(controller: 'api', action: 'error')
+                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST, code: 'api.error.history.date-format', args: ['begin', params.begin]])
             }
         }
         if (params.end) {
@@ -901,8 +860,7 @@ class ExecutionController {
                 query.endbeforeFilter = ReportsController.parseDate(params.end)
                 query.doendbeforeFilter = true
             } catch (ParseException e) {
-                flash.error = g.message(code: 'api.error.history.date-format', args: ['end', params.end])
-                return chain(controller: 'api', action: 'error')
+                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST, code: 'api.error.history.date-format', args: ['end', params.end]])
             }
         }
         def resOffset = params.offset ? params.int('offset') : 0
@@ -914,7 +872,7 @@ class ExecutionController {
         def filtered = frameworkService.filterAuthorizedProjectExecutionsAll(framework,result,[AuthConstants.ACTION_READ])
 
 
-        return renderApiExecutionListResultXML(filtered,[total:total,offset:resOffset,max:resMax])
+        return executionService.respondExecutionsXml(response,filtered,[total:total,offset:resOffset,max:resMax])
     }
 }
 

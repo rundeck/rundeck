@@ -13,7 +13,7 @@ echo "TEST: export RunDeck Jobs in jobs.xml format [invalid project parameter]"
 params="project=DNEProject"
 
 # expect error message
-sh $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "project does not exist: DNEProject" || exit 2
+sh $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "project does not exist: DNEProject" 404 || exit 2
 echo "OK"
 
 rm $DIR/curl.out
