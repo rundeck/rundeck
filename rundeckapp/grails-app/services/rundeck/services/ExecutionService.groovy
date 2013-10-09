@@ -42,6 +42,7 @@ import rundeck.controllers.ExecutionController
 import rundeck.services.logging.ExecutionLogWriter
 
 import javax.security.auth.Subject
+import javax.servlet.http.HttpServletResponse
 import javax.servlet.http.HttpSession
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
@@ -67,6 +68,27 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     def ApplicationContext applicationContext
     def metricService
+    def apiService
+    def grailsLinkGenerator
+
+    /**
+     * Render execution document for api response
+     */
+
+    public def respondExecutionsXml(HttpServletResponse response, List<Execution> executions, paging = [:]) {
+        return apiService.respondExecutionsXml(response,executions.collect { Execution e ->
+                [
+                        execution: e,
+                        href: getFollowURLForExecution(e),
+                        status: getExecutionState(e),
+                        summary: summarizeJob(e.scheduledExecution, e)
+                ]
+            }, paging)
+    }
+
+    public String getFollowURLForExecution(Execution e) {
+        grailsLinkGenerator.link(controller: 'execution', action: 'follow', id: e.id, absolute: true)
+    }
 
     def listLastExecutionsPerProject(Framework framework, int max=5){
         def projects = frameworkService.projects(framework).collect{ it.name }

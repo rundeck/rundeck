@@ -833,8 +833,7 @@ class MenuController {
 
         QueueQuery query = new QueueQuery(runningFilter:'running',projFilter:params.project)
         def results = nowrunning(query)
-        //TODO: move to execution controller
-        return new ExecutionController().renderApiExecutionListResultXML(results.nowrunning)
+        return executionService.respondExecutionsXml(response,results.nowrunning)
     }
 }
 

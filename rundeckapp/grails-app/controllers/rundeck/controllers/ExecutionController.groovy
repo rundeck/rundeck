@@ -746,19 +746,6 @@ class ExecutionController {
         executions
     }
     /**
-     * Utility, render xml response for a list of executions
-     */
-    public def renderApiExecutionListResultXML={execlist,paging=[:] ->
-        return apiService.respondExecutionsXml(response, execlist.collect { Execution e ->
-            [
-                    execution: e,
-                    href: g.createLink(controller: 'execution', action: 'follow', id: e.id, absolute: true),
-                    status: executionService.getExecutionState(e),
-                    summary: executionService.summarizeJob(e.scheduledExecution, e)
-            ]
-        },paging)
-    }
-    /**
      * API: /api/execution/{id} , version 1
      */
     def apiExecution={
@@ -782,12 +769,7 @@ class ExecutionController {
                 filesize = file.length()
             }
         }
-        return apiService.respondExecutionsXml(response, [[
-                execution: e,
-                href: g.createLink(controller: 'execution', action: 'follow', id: e.id, absolute: true),
-                status: executionService.getExecutionState(e),
-                summary: executionService.summarizeJob(e.scheduledExecution, e)
-        ]])
+        return executionService.respondExecutionsXml(response, [e])
     }
 
     /**
@@ -890,7 +872,7 @@ class ExecutionController {
         def filtered = frameworkService.filterAuthorizedProjectExecutionsAll(framework,result,[AuthConstants.ACTION_READ])
 
 
-        return renderApiExecutionListResultXML(filtered,[total:total,offset:resOffset,max:resMax])
+        return executionService.respondExecutionsXml(response,filtered,[total:total,offset:resOffset,max:resMax])
     }
 }
 

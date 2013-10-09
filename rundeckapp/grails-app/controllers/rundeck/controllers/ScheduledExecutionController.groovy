@@ -1905,14 +1905,8 @@ class ScheduledExecutionController  {
                         code: 'api.error.execution.failed', args: [result.message]])
             }
         }
-        //TODO:
         def e = result.execution
-        return apiService.respondExecutionsXml(response,[[
-                execution: e,
-                    href: g.createLink(controller: 'execution', action: 'follow', id: e.id, absolute: true),
-                    status: executionService.getExecutionState(e),
-                    summary: executionService.summarizeJob(e.scheduledExecution, e)
-            ]])
+        return executionService.respondExecutionsXml(response,[e])
     }
 
     /**
@@ -2165,7 +2159,7 @@ class ScheduledExecutionController  {
             }
         }
 
-        return new ExecutionController().renderApiExecutionListResultXML(result)
+        return executionService.respondExecutionsXml(response,result)
     }
     /**
      * API: /api/incubator/jobs/takeoverSchedule , version 7
