@@ -3,6 +3,7 @@ package rundeck.controllers
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
 import com.dtolabs.rundeck.app.internal.logging.RundeckLogFormat
 import com.dtolabs.rundeck.app.support.ExecutionQuery
+import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.ControllerUnitTestCase
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
@@ -10,17 +11,17 @@ import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.Workflow
+import rundeck.services.ApiService
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.LoggingService
 import rundeck.services.logging.ExecutionLogState
 
 @TestFor(ExecutionController)
-@Mock([Workflow,ScheduledExecution])
+@Mock([Workflow,ScheduledExecution,Execution])
 class ExecutionControllerTests  {
 
     void testDownloadOutputNotFound() {
-        mockDomain(Execution)
 
         def ec = new ExecutionController()
         assert ec != null
@@ -195,18 +196,29 @@ class ExecutionControllerTests  {
     public void testApiExecutionsQueryRequireVersion() {
         def controller = new ExecutionController()
         ApiController.metaClass.message = { params -> params?.code ?: 'messageCodeMissing' }
+        def svcMock = mockFor(ApiService, false)
+        svcMock.demand.requireVersion { request, response, min ->
+            response.status=400
+            false
+        }
+        controller.apiService = svcMock.createMock()
         controller.apiExecutionsQuery(null)
         assert 400 == controller.response.status
-        assert "api-version-unsupported" == controller.request.apiErrorCode
     }
 
     public void testApiExecutionsQueryRequireV5_lessthan() {
         def controller = new ExecutionController()
-        ApiController.metaClass.message = { params -> params?.code ?: 'messageCodeMissing' }
         controller.request.api_version = 4
+
+        def svcMock = mockFor(ApiService, false)
+        svcMock.demand.requireVersion { request,response, int min ->
+            assertEquals(5,min)
+            response.status=400
+            return false
+        }
+        controller.apiService = svcMock.createMock()
         controller.apiExecutionsQuery(null)
         assert 400 == controller.response.status
-        assert "api-version-unsupported" == controller.request.apiErrorCode
     }
 
     public void testApiExecutionsQueryRequireV5_ok() {
@@ -225,11 +237,19 @@ class ExecutionControllerTests  {
         controller.executionService = execControl.createMock()
         controller.request.api_version = 5
         controller.params.project = "Test"
+        def svcMock = mockFor(ApiService, false)
+        svcMock.demand.requireVersion { request, response, int min ->
+            assertEquals(5, min)
+            return true
+        }
+        svcMock.demand.renderSuccessXml { response, Closure clos ->
+
+            return true
+        }
+        controller.apiService = svcMock.createMock()
         controller.apiExecutionsQuery(new ExecutionQuery())
 
         assert 200 == controller.response.status
-        assert null == controller.request.apiErrorCode
-
     }
 
     public List createTestExecs() {
@@ -327,10 +347,18 @@ class ExecutionControllerTests  {
         }
         controller.executionService = execControl.createMock()
 
+        def svcMock = mockFor(ApiService, false)
+        svcMock.demand.requireVersion { request, response, int min ->
+            assertEquals(5, min)
+            return true
+        }
+        svcMock.demand.renderSuccessXml { response, Closure clos ->
+            return true
+        }
+        controller.apiService = svcMock.createMock()
         controller.apiExecutionsQuery(new ExecutionQuery())
 
         assert 200 == controller.response.status
-        assert null == controller.request.apiErrorCode
     }
 
     /**
@@ -354,6 +382,11 @@ class ExecutionControllerTests  {
         controller.params.project = "Test"
         controller.params.id = execs[2].id.toString()
 
+        def svcMock = mockFor(ApiService, false)
+        svcMock.demand.renderSuccessXml { response, Closure clos ->
+            return true
+        }
+        controller.apiService = svcMock.createMock()
         controller.apiExecutionAbort(null)
 
         assert 200 == controller.response.status
@@ -381,10 +414,19 @@ class ExecutionControllerTests  {
         controller.params.project = "Test"
         controller.params.id = execs[2].id.toString()
 
+        def svcMock = mockFor(ApiService, false)
+        svcMock.demand.renderErrorXml { response, Map args ->
+            assertEquals('api.error.item.unauthorized',args.code)
+            assertEquals(403,args.status)
+            assertEquals([AuthConstants.ACTION_KILL, "Execution", execs[2].id.toString()],args.args)
+            response.status=403
+            return true
+        }
+        controller.apiService = svcMock.createMock()
         controller.apiExecutionAbort(null)
 
-        assert 403 == controller.flash.responseCode
-        assert 'api.error.item.unauthorized' == controller.flash.errorCode
+        assert 403 == controller.response.status
+        assert null == controller.flash.errorCode
     }
 
     /**
@@ -410,10 +452,19 @@ class ExecutionControllerTests  {
         controller.params.id = execs[2].id.toString()
         controller.params.asUser = "testuser"
 
+        def svcMock = mockFor(ApiService, false)
+        svcMock.demand.renderErrorXml { response, Map args ->
+            assertEquals('api.error.item.unauthorized', args.code)
+            assertEquals(403, args.status)
+            assertEquals([AuthConstants.ACTION_KILL, "Execution", execs[2].id.toString()], args.args)
+            response.status = 403
+            return true
+        }
+        controller.apiService = svcMock.createMock()
         controller.apiExecutionAbort(null)
 
-        assert 403 == controller.flash.responseCode
-        assert 'api.error.item.unauthorized' == controller.flash.errorCode
+        assert 403 == controller.response.status
+        assert null == controller.flash.errorCode
     }
 
     /**
@@ -439,6 +490,52 @@ class ExecutionControllerTests  {
         controller.params.id = execs[2].id.toString()
         controller.params.asUser = "testuser"
 
+        def svcMock = mockFor(ApiService, false)
+        svcMock.demand.requireVersion { request,response,int min ->
+            assertEquals(5,min)
+            return true
+        }
+        svcMock.demand.renderSuccessXml { response, Closure clos ->
+            return true
+        }
+        controller.apiService = svcMock.createMock()
+        controller.apiExecutionAbort(null)
+
+        assert 200 == controller.response.status
+        assert null == controller.request.apiErrorCode
+    }
+    /**
+     * Test abort as user, abortAs denied
+     */
+    public void testApiExecutionAbortAsUserNotAuthorized() {
+        def controller = new ExecutionController()
+        def execs = createTestExecs()
+        def fwkControl = mockFor(FrameworkService, false)
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        def execControl = mockFor(ExecutionService, false)
+        execControl.demand.abortExecution { se, e, user, framework, killas ->
+            assert killas == 'testuser'
+            [abortstate: 'aborted', jobstate: 'running', statusStr: 'blah', failedreason: null]
+        }
+
+        fwkControl.demand.authorizeProjectExecutionAll { framework, e, privs -> return !('killAs' in privs) }
+
+        controller.frameworkService = fwkControl.createMock()
+        controller.executionService = execControl.createMock()
+        controller.request.api_version = 5
+        controller.params.project = "Test"
+        controller.params.id = execs[2].id.toString()
+        controller.params.asUser = "testuser"
+
+        def svcMock = mockFor(ApiService, false)
+        svcMock.demand.requireVersion { request, response, int min ->
+            assertEquals(5, min)
+            return true
+        }
+        svcMock.demand.renderSuccessXml { response, Closure clos ->
+            return true
+        }
+        controller.apiService = svcMock.createMock()
         controller.apiExecutionAbort(null)
 
         assert 200 == controller.response.status
@@ -463,9 +560,18 @@ class ExecutionControllerTests  {
         controller.params.id = execs[2].id.toString()
         controller.params.asUser = "testuser"
 
+        def svcMock = mockFor(ApiService, false)
+        svcMock.demand.renderErrorXml { response, Map args ->
+            assertEquals('api.error.item.unauthorized', args.code)
+            assertEquals(403, args.status)
+            assertEquals([AuthConstants.ACTION_READ, "Execution", execs[2].id.toString()], args.args)
+            response.status = 403
+            return true
+        }
+        controller.apiService = svcMock.createMock()
         controller.apiExecution(null)
 
-        assert 403 == controller.flash.responseCode
-        assert 'api.error.item.unauthorized' == controller.flash.errorCode
+        assert 403 == controller.response.status
+        assert null == controller.flash.errorCode
     }
 }
