@@ -444,7 +444,8 @@ class FrameworkController  {
                 project.updateNodesResourceFileFromUrl(url, null, null)
                 return [success:true]
             }else{
-                return [success:project.updateNodesResourceFile(),url:url,message:'No resources URL is configured']
+                return [success:project.updateNodesResourceFile(),url:url,
+                        message:g.message(code:'api.project.updateResources.noproviderUrl.failed',args: [params.project])]
             }
         } catch (Exception e) {
             log.error("Error updating node resources file for project ${project.name}: "+e.message)
@@ -1191,8 +1192,9 @@ class FrameworkController  {
                 error.args=['Refresh Resources','Project: '+params.project,result.message]
             }
             if(!error.code && !result.url){
-                error.code= 'api.project.updateResources.noproviderUrl.failed'
+                error.code= 'api.project.updateResources.failed'
                 error.args=[params.project]
+                error.message=result.message
             }else if(!error.code){
                 error.code = 'api.project.updateResources.failed'
                 error.args = [error.message?:'Unknown reason']
@@ -1222,7 +1224,7 @@ class FrameworkController  {
                     code: 'api.error.item.doesnotexist', args: ['project', params.project]])
         }
         if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'node'], ['create','update'], params.project)) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_UNAUTHORIZED,
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Update Nodes', 'Project', params.project]])
         }
         final FrameworkProject project = frameworkService.getFrameworkProject(params.project, framework)
@@ -1251,7 +1253,7 @@ class FrameworkController  {
         } catch (UnsupportedFormatException e) {
             //invalid data
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
-                    code: 'api.error.item.unsupported-format', args: [contentType]])
+                    code: 'api.error.resources-import.unsupported-format', args: [contentType]])
         }
 
         //write content to temp file
@@ -1349,7 +1351,7 @@ class FrameworkController  {
                     code: 'api.error.parameter.required', args: ['project']])
         }
         if (!frameworkService.authorizeApplicationResourceAll(framework, [type:'project',name:params.project], ['read'])) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_UNAUTHORIZED,
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Read', 'Project', params.project]])
         }
         def exists=frameworkService.existsFrameworkProject(params.project,framework)
@@ -1384,7 +1386,7 @@ class FrameworkController  {
                     code: 'api.error.item.doesnotexist', args: ['project',params.project]])
         }
         if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'node'], ['read'], params.project)) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_UNAUTHORIZED,
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Read Nodes', 'Project', params.project]])
         }
 
@@ -1426,7 +1428,7 @@ class FrameworkController  {
 
         }
         if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'node'], ['read'], params.project)) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_UNAUTHORIZED,
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Read Nodes', 'Project', params.project]])
 
         }

@@ -6,6 +6,7 @@ import org.apache.log4j.MDC
 import org.codehaus.groovy.grails.web.util.WebUtils
 
 import javax.servlet.http.HttpServletRequest
+import javax.servlet.http.HttpServletResponse
 
 /*
  * Copyright 2011 DTO Labs, Inc. (http://dtolabs.com)
@@ -114,6 +115,7 @@ public class ApiRequestFilters {
                     logDetail(request, params.toString(), actionName, controllerName, 'api.error.api-version.unsupported')
                     apiService.renderErrorXml(response,
                             [
+                                    status: HttpServletResponse.SC_BAD_REQUEST,
                                     code: 'api.error.api-version.unsupported',
                                     args: [params.api_version, request.forwardURI, "Current version: "+API_CURRENT_VERSION]
                             ]

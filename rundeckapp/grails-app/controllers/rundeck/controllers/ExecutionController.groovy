@@ -47,7 +47,7 @@ class ExecutionController {
 
     private unauthorized(String action, boolean fragment = false) {
         if (!fragment) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED)
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN)
         }
         flash.title = "Unauthorized"
         flash.error = "${request.remoteUser} is not authorized to: ${action}"
@@ -361,7 +361,7 @@ class ExecutionController {
 
         def jobcomplete = e.dateCompleted != null
         def hasFailedNodes = e.failedNodeList ? true : false
-        def execState = getExecutionState(e)
+        def execState = executionService.getExecutionState(e)
         def execDuration = 0L
         execDuration = (e.dateCompleted ? e.dateCompleted.getTime() : System.currentTimeMillis()) - e.dateStarted.getTime()
 
@@ -678,13 +678,6 @@ class ExecutionController {
     * API actions
      */
 
-    public static String EXECUTION_RUNNING = "running"
-    public static String EXECUTION_SUCCEEDED = "succeeded"
-    public static String EXECUTION_FAILED = "failed"
-    public static String EXECUTION_ABORTED = "aborted"
-    public static String getExecutionState(Execution e){
-        return null==e.dateCompleted?EXECUTION_RUNNING:"true"==e.status?EXECUTION_SUCCEEDED:e.cancelled?EXECUTION_ABORTED:EXECUTION_FAILED
-    }
     public String createExecutionUrl(def id){
         return g.createLink(controller: 'execution', action: 'follow', id: id, absolute: true)
     }
@@ -699,7 +692,7 @@ class ExecutionController {
             [
                 execution:e,
                 href: g.createLink(controller: 'execution', action: 'follow', id: e.id, absolute: true),
-                status: getExecutionState(e),
+                status: executionService.getExecutionState(e),
                 summary: executionService.summarizeJob(e.scheduledExecution, e)
             ]
         },paging,delegate)
@@ -714,7 +707,7 @@ class ExecutionController {
             def emap =[
                 id: e.id,
                 href: g.createLink(controller: 'execution', action: 'follow', id: e.id, absolute: true),
-                status: getExecutionState(e),
+                status: executionService.getExecutionState(e),
                 user:e.user,
                 dateStarted: e.dateStarted,
                 'dateStartedUnixtime': e.dateStarted.time,
@@ -756,7 +749,14 @@ class ExecutionController {
      * Utility, render xml response for a list of executions
      */
     public def renderApiExecutionListResultXML={execlist,paging=[:] ->
-        return apiService.renderSuccessXml(renderApiExecutions.curry(execlist,paging))
+        return apiService.respondExecutionsXml(response, execlist.collect { Execution e ->
+            [
+                    execution: e,
+                    href: g.createLink(controller: 'execution', action: 'follow', id: e.id, absolute: true),
+                    status: executionService.getExecutionState(e),
+                    summary: executionService.summarizeJob(e.scheduledExecution, e)
+            ]
+        },paging)
     }
     /**
      * API: /api/execution/{id} , version 1
@@ -770,7 +770,7 @@ class ExecutionController {
         } else if (!frameworkService.authorizeProjectExecutionAll(framework,e,[AuthConstants.ACTION_READ])){
             return apiService.renderErrorXml(response,
                     [
-                            status: HttpServletResponse.SC_UNAUTHORIZED,
+                            status: HttpServletResponse.SC_FORBIDDEN,
                             code: "api.error.item.unauthorized",
                             args: [AuthConstants.ACTION_READ, "Execution", params.id]
                     ])
@@ -782,12 +782,14 @@ class ExecutionController {
                 filesize = file.length()
             }
         }
-        return renderApiExecutionListResultXML([e])
+        return apiService.respondExecutionsXml(response, [[
+                execution: e,
+                href: g.createLink(controller: 'execution', action: 'follow', id: e.id, absolute: true),
+                status: executionService.getExecutionState(e),
+                summary: executionService.summarizeJob(e.scheduledExecution, e)
+        ]])
     }
 
-    public static String ABORT_PENDING="pending"
-    public static String ABORT_ABORTED="aborted"
-    public static String ABORT_FAILED="failed"
     /**
      * API: /api/execution/{id}/abort, version 1
      */
@@ -804,7 +806,7 @@ class ExecutionController {
         } else if (!frameworkService.authorizeProjectExecutionAll(framework,e,[AuthConstants.ACTION_KILL])){
             return apiService.renderErrorXml(response,
                     [
-                            status: HttpServletResponse.SC_UNAUTHORIZED,
+                            status: HttpServletResponse.SC_FORBIDDEN,
                             code: "api.error.item.unauthorized",
                             args: [AuthConstants.ACTION_KILL, "Execution", params.id]
                     ])

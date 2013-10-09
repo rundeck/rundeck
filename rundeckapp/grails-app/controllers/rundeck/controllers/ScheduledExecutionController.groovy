@@ -27,7 +27,6 @@ import org.quartz.Scheduler
 import org.springframework.web.multipart.MultipartHttpServletRequest
 import rundeck.CommandExec
 import rundeck.Execution
-import rundeck.Notification
 import rundeck.Option
 import rundeck.ScheduledExecution
 import rundeck.User
@@ -665,7 +664,7 @@ class ScheduledExecutionController  {
                 apiService.renderErrorXml(response,[status:HttpServletResponse.SC_NOT_FOUND,code: 'api.error.item.doesnotexist',
                 args:['Job ID',params.id]])
             }else if(result.error?.errorCode=='unauthorized'){
-                apiService.renderErrorXml(response, [status: HttpServletResponse.SC_UNAUTHORIZED,
+                apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                         code: 'api.error.item.unauthorized',
                         args: ['Delete','Job ID', params.id]]
                 )
@@ -677,10 +676,13 @@ class ScheduledExecutionController  {
             }
         }else{
             return apiService.renderSuccessXml(response){
+                success{
+                    delegate.'message'(result.success.message)
+                }
                 delegate.'deleteJobs'(requestCount: 1, allsuccessful: true) {
                     delegate.'succeeded'(count: 1) {
                         delegate.'deleteJobResult'(id: params.id,) {
-                            delegate.'message'(g.message(code:'api.success.job.delete.message',args:[params.id]))
+                            delegate.'message'(result.success.message)
                         }
                     }
                 }
@@ -1809,9 +1811,10 @@ class ScheduledExecutionController  {
         def skipjobs = loadresults.skipjobs
 
 
-        return apiService.renderSuccessXml(response){
+        def out=apiService.renderSuccessXml{
             renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
         }
+        render(contentType: 'text/xml',text:out)
     }
 
     /**
@@ -1825,7 +1828,7 @@ class ScheduledExecutionController  {
         }
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_READ], scheduledExecution.project)) {
-            return apiService.renderErrorXml(response,[status:HttpServletResponse.SC_UNAUTHORIZED,
+            return apiService.renderErrorXml(response,[status:HttpServletResponse.SC_FORBIDDEN,
                     code:'api.error.item.unauthorized',args:['Read','Job ID',params.id]])
         }
 
@@ -1854,7 +1857,7 @@ class ScheduledExecutionController  {
 
         if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_RUN],
             scheduledExecution.project)) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_UNAUTHORIZED,
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Run', 'Job ID', params.id]])
         }
         def inparams = [extra: [:]]
@@ -1863,7 +1866,7 @@ class ScheduledExecutionController  {
             //authorize RunAs User
             if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_RUNAS],
                     scheduledExecution.project)) {
-                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_UNAUTHORIZED,
+                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                         code: 'api.error.item.unauthorized', args: ['Run as User', 'Job ID', params.id]])
             }
             inparams['user']= params.asUser
@@ -1891,7 +1894,7 @@ class ScheduledExecutionController  {
         def result = executionService.executeScheduledExecution(scheduledExecution, framework, request.subject, inparams)
         if(!result.success){
             if(result.error=='unauthorized'){
-                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_UNAUTHORIZED,
+                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                         code: 'api.error.item.unauthorized', args: ['Execute', 'Job ID', params.id]])
             }else if(result.error=='invalid'){
                 return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
@@ -1903,7 +1906,13 @@ class ScheduledExecutionController  {
             }
         }
         //TODO:
-        return new ExecutionController().renderApiExecutionListResultXML([result.execution])
+        def e = result.execution
+        return apiService.respondExecutionsXml(response,[[
+                execution: e,
+                    href: g.createLink(controller: 'execution', action: 'follow', id: e.id, absolute: true),
+                    status: executionService.getExecutionState(e),
+                    summary: executionService.summarizeJob(e.scheduledExecution, e)
+            ]])
     }
 
     /**
@@ -1918,7 +1927,7 @@ class ScheduledExecutionController  {
         def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         if(!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_DELETE],
             scheduledExecution.project)){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_UNAUTHORIZED,
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Delete', 'Job ID', params.id]])
         }
         def changeinfo = [user: session.user, method: 'apiJobDelete', change: 'delete']
@@ -2041,7 +2050,7 @@ class ScheduledExecutionController  {
                 }
             }
             if (results.error == 'unauthorized') {
-                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_UNAUTHORIZED,
+                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                         code: 'api.error.item.unauthorized', args: ['Execute', 'Adhoc', 'Command']])
             } else if (results.error == 'invalid') {
                 return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
@@ -2121,9 +2130,9 @@ class ScheduledExecutionController  {
         }
 
         def state=params['status']
-        final statusList = [ExecutionController.EXECUTION_RUNNING, ExecutionController.EXECUTION_ABORTED, ExecutionController.EXECUTION_FAILED, ExecutionController.EXECUTION_SUCCEEDED]
-        final domainStatus=[(ExecutionController.EXECUTION_FAILED):'false',
-            (ExecutionController.EXECUTION_SUCCEEDED):'true']
+        final statusList = [ExecutionService.EXECUTION_RUNNING, ExecutionService.EXECUTION_ABORTED, ExecutionService.EXECUTION_FAILED, ExecutionService.EXECUTION_SUCCEEDED]
+        final domainStatus=[(ExecutionService.EXECUTION_FAILED):'false',
+            (ExecutionService.EXECUTION_SUCCEEDED):'true']
         if(state && !(state in statusList)){
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.not.inList', args: [params.status, 'status', statusList]])
@@ -2133,9 +2142,9 @@ class ScheduledExecutionController  {
             delegate.'scheduledExecution'{
                 eq('id', scheduledExecution.id)
             }
-            if(state== ExecutionController.EXECUTION_RUNNING){
+            if(state== ExecutionService.EXECUTION_RUNNING){
                 isNull('dateCompleted')
-            }else if(state==ExecutionController.EXECUTION_ABORTED){
+            }else if(state== ExecutionService.EXECUTION_ABORTED){
                 isNotNull('dateCompleted')
                 eq('cancelled',true)
             }else if(state){
@@ -2169,7 +2178,7 @@ class ScheduledExecutionController  {
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
 
         if (!frameworkService.authorizeApplicationResource(framework, [type: 'resource', kind: 'job'], AuthConstants.ACTION_ADMIN)) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_UNAUTHORIZED,
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Reschedule Jobs', 'Server', params.serverNodeUUID]])
         }
         if(!frameworkService.isClusterModeEnabled()){

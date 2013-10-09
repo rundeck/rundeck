@@ -3,6 +3,7 @@ package rundeck.controllers
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.core.common.Framework
 import rundeck.services.ApiService
+import rundeck.services.ExecutionService
 
 import javax.servlet.http.HttpServletResponse
 import java.text.ParseException
@@ -403,7 +404,7 @@ class ReportsController {
         }
         if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'event'], ['read'],
             params.project)) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_UNAUTHORIZED,
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Read Events', 'Project', params.project]])
         }
         params.projFilter=params.project
@@ -437,9 +438,9 @@ class ReportsController {
         def model=reportService.getExecutionReports(query,true)
         model = reportService.finishquery(query,params,model)
 
-        def statusMap=[succeed:ExecutionController.EXECUTION_SUCCEEDED,
-            cancel:ExecutionController.EXECUTION_ABORTED,
-            fail:ExecutionController.EXECUTION_FAILED]
+        def statusMap=[succeed:ExecutionService.EXECUTION_SUCCEEDED,
+            cancel: ExecutionService.EXECUTION_ABORTED,
+            fail: ExecutionService.EXECUTION_FAILED]
         return apiService.renderSuccessXml(response){
             delegate.'events'(count:model.reports.size(),total:model.total, max: model.max, offset: model.offset){
                 model.reports.each{  rpt->

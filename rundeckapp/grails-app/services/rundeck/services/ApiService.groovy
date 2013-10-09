@@ -4,12 +4,35 @@ import groovy.xml.MarkupBuilder
 import rundeck.Execution
 import rundeck.filters.ApiRequestFilters
 
-import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
+import java.text.SimpleDateFormat
 
 class ApiService {
     static transactional = false
     def messageSource
+
+    def respondOutput(HttpServletResponse response, String contentType, String output) {
+        response.setContentType(contentType)
+        response.setCharacterEncoding('UTF-8')
+        def out = response.outputStream
+        out << output
+        out.flush()
+        null
+    }
+    def respondXml(HttpServletResponse response, Closure recall) {
+        return respondOutput(response, 'text/xml', renderXml(recall))
+    }
+
+    def renderXml(Closure recall) {
+        def writer = new StringWriter()
+        def xml = new MarkupBuilder(writer)
+        xml.with {
+            recall.delegate = delegate
+            recall()
+        }
+        return writer.toString()
+    }
+
     def renderSuccessXml(HttpServletResponse response, String code, List args) {
         return renderSuccessXml(response){
             success{
@@ -18,29 +41,23 @@ class ApiService {
         }
     }
     def renderSuccessXml(HttpServletResponse response, Closure recall) {
-        response.setContentType('text/xml')
-        response.setCharacterEncoding('UTF-8')
-        response.outputStream<< renderSuccessXml(recall)
+        return respondOutput(response, 'text/xml', renderSuccessXml(recall))
     }
     def renderSuccessXml(Closure recall){
-        def writer = new StringWriter()
-        def xml = new MarkupBuilder(writer)
-        xml.with {
+        return renderXml {
             result(success: "true", apiversion: ApiRequestFilters.API_CURRENT_VERSION) {
 //                recall.resolveStrategy=Closure.DELEGATE_FIRST
-                recall.delegate=delegate
+                recall.delegate = delegate
                 recall()
             }
         }
-        return writer.toString()
     }
+
     def renderErrorXml(HttpServletResponse response, Map error){
-        response.setContentType('text/xml')
-        response.setCharacterEncoding('UTF-8')
         if(error.status){
             response.setStatus(error.status)
         }
-        response.outputStream << renderErrorXml(error,error.code)
+        return respondOutput(response, 'text/xml', renderErrorXml(error, error.code))
     }
     /**
      * Require all specified parameters in the request
@@ -139,7 +156,7 @@ class ApiService {
                             delegate.'message'(it)
                         }
                     }else if(messages instanceof Map && messages.code){
-                        delegate.'message'(messageSource.getMessage(messages.code, messages.args?messages.args as Object[]:null, null))
+                        delegate.'message'(messages.message?:messageSource.getMessage(messages.code, messages.args?messages.args as Object[]:null, null))
                     }
                 }
             }
@@ -153,6 +170,11 @@ class ApiService {
      * Render execution document for api response
      */
 
+    public def respondExecutionsXml(HttpServletResponse response,execlist,paging=[:]) {
+        return respondOutput(response, 'text/xml', renderSuccessXml{
+            renderExecutionsXml(execlist, paging, delegate)
+        })
+    }
     /**
      * Render execution list xml given a List of executions, and a builder delegate
      * @param execlist list of Maps containing [execution:Execution, href: URL to execution, status: rendered status text, summary: rendered summary text]
@@ -178,9 +200,9 @@ class ApiService {
                 ) {
                     /** elements   */
                     user(e.user)
-                    delegate.'date-started'(unixtime: e.dateStarted.time, g.w3cDateValue(date: e.dateStarted))
+                    delegate.'date-started'(unixtime: e.dateStarted.time, w3cDateValue(e.dateStarted))
                     if (null != e.dateCompleted) {
-                        delegate.'date-ended'(unixtime: e.dateCompleted.time, g.w3cDateValue(date: e.dateCompleted))
+                        delegate.'date-ended'(unixtime: e.dateCompleted.time, w3cDateValue(e.dateCompleted))
                     }
                     if (e.cancelled) {
                         abortedby(e.abortedby ? e.abortedby : e.user)
@@ -205,4 +227,9 @@ class ApiService {
         }
     }
 
+    def w3cDateValue(Date date) {
+        SimpleDateFormat dateFormater = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
+        dateFormater.setTimeZone(TimeZone.getTimeZone("GMT"));
+        return dateFormater.format(date);
+    }
 }

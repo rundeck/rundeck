@@ -1,5 +1,6 @@
 package rundeck.controllers
 
+import javax.servlet.http.HttpServletResponse
 import java.lang.management.ManagementFactory
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.server.authorization.AuthConstants
@@ -15,61 +16,7 @@ class ApiController {
     def apiService
 
     def invalid = {
-        response.setStatus(404)
-        request['error']=message(code:'api.error.invalid.request',args:[request.forwardURI])
-        return error()
-    }
-    def renderError={
-        if (flash.responseCode) {
-            response.setStatus(flash.responseCode)
-        }
-        if(flash.errorCode||request.errorCode){
-            request.error=message(code:flash.errorCode?:request.errorCode,args:flash.errorArgs?:request.errorArgs)
-        }else{
-            request.error=message(code:"api.error.unknown")
-        }
-        return error()
-    }
-
-    public def success={ recall->
-        return render(contentType:"text/xml",encoding:"UTF-8"){
-            result(success:"true", apiversion:ApiRequestFilters.API_CURRENT_VERSION){
-                recall(delegate)
-            }
-        }
-    }
-
-    /**
-     * Utility to require specific min or max api version for an action.
-     */
-    public def requireVersion={min,max=0->
-        if(request.api_version < min){
-            response.setStatus(400)
-            request.error=message(code:'api.error.api-version.unsupported',
-                args:[request.api_version,request.forwardURI,"Minimum supported version: "+min])
-            request.apiErrorCode="api-version-unsupported"
-            error()
-            return false
-        }
-        if(max>0 && request.api_version > max){
-            response.setStatus(400)
-            request.error=message(code:'api.error.api-version.unsupported',
-                args:[request.api_version,request.forwardURI,"Maximum supported version: "+max])
-            request.apiErrorCode = "api-version-unsupported"
-            error()
-            return false
-        }
-        return true
-    }
-
-    def error={
-        return render(contentType:"text/xml",encoding:"UTF-8"){
-            apiService.renderErrorXml(
-                    (flash.errors ?: []) + (request.errors ?: []) + [flash.error,request.error].findAll{it},
-                    request.apiErrorCode,
-                    delegate
-            )
-        }
+        return apiService.renderErrorXml(response,[code:'api.error.invalid.request',args:[request.forwardURI],status:HttpServletResponse.SC_NOT_FOUND])
     }
 
     /**
@@ -82,9 +29,7 @@ class ApiController {
     def apiSystemInfo={
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         if (!frameworkService.authorizeApplicationResource(framework, [type: 'resource', kind: 'system'], AuthConstants.ACTION_READ)) {
-            response.setStatus(403)
-            request.error = message(code: 'api.error.item.unauthorized', args: ['Read System Info', 'Rundeck', ""])
-            return error()
+            return apiService.renderErrorXml(response,[status:HttpServletResponse.SC_FORBIDDEN, code: 'api.error.item.unauthorized', args: ['Read System Info', 'Rundeck', ""]])
         }
         Date nowDate=new Date();
         String nodeName= servletContext.getAttribute("FRAMEWORK_NODE")
@@ -100,9 +45,9 @@ class ApiController {
         long durationTime=ManagementFactory.getRuntimeMXBean().uptime
         Date startupDate = new Date(nowDate.getTime()-durationTime)
         int threadActiveCount=Thread.activeCount()
-        return success { delegate ->
+        return apiService.renderSuccessXml(response){
             delegate.'success' {
-                delegate.'message'("System Stats for RunDeck ${appVersion} on node ${nodeName}")
+                delegate.'message'("System Stats for Rundeck ${appVersion} on node ${nodeName}")
             }
             delegate.'system'{
                 timestamp(epoch:nowDate.getTime(),unit:'ms'){
