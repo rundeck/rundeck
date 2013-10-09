@@ -115,7 +115,7 @@ echo "TEST: Get deleted job should fail"
 # now submit req
 runurl="${APIURL}/job/${jobid}"
 params=""
-sh $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "Job ID does not exist: ${jobid}" || exit 2
+sh $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "Job ID does not exist: ${jobid}" 404 || exit 2
 
 echo "OK"
 

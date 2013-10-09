@@ -41,7 +41,7 @@ if [ -z "$RDAUTH" ] ; then
     
     grep 'j_security_check' -q $DIR/curl.out 
     if [ 0 == $? ] ; then
-        errorMsg "login was not successful"
+        errorMsg "login was not successful: ${loginurl}"
         exit 2
     fi
 fi

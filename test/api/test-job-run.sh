@@ -130,7 +130,7 @@ sleep 2
 # get listing
 $CURL -H "$AUTHHEADER" --data-urlencode "argString=${execargs}" ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-sh $SRC_DIR/api-test-error.sh $DIR/curl.out "Option 'opt2' is required." || exit 2
+sh $SRC_DIR/api-test-error.sh $DIR/curl.out "Job options were not valid: Option 'opt2' is required." || exit 2
 
 echo "OK"
 

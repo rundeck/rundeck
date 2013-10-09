@@ -17,6 +17,12 @@ shift
 params="$1"
 shift
 
+message="$1"
+shift
+
+code="${1:-400}"
+shift
+
 # get listing
 if [ -n "$RDAUTH" ] ; then
     curl -L -s -S -H "X-RunDeck-Auth-Token: $RDAUTH" -D $DIR/headers.out $CURL_REQ_OPTS ${requrl}?${params} > $DIR/curl.out
@@ -29,15 +35,13 @@ if [ 0 != $? ] ; then
 fi
 
 
-grep "HTTP/1.1 200" -q $DIR/headers.out
+grep "HTTP/1.1 $code" -q $DIR/headers.out
 okheader=$?
-grep "HTTP/1.1 302" -q $DIR/headers.out
-ok2header=$?
-if [ 0 != $okheader -a 0 != $ok2header ] ; then
-    errorMsg "FAIL: Response was not 200 OK or 302:"
+if [ 0 != $okheader ] ; then
+    errorMsg "FAIL: Response was not $code"
     grep 'HTTP/1.1' $DIR/headers.out
     exit 2
 fi
 rm $DIR/headers.out
 
-sh $SRC_DIR/api-test-error.sh $DIR/curl.out $*
+sh $SRC_DIR/api-test-error.sh $DIR/curl.out "$message"
