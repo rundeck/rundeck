@@ -234,16 +234,15 @@ class ExecutionControllerTests  {
         execControl.demand.queryExecutions { ExecutionQuery query, int offset, int max ->
             return [results:[],total:0]
         }
+        execControl.demand.respondExecutionsXml { response, List<Execution> execs ->
+            return true
+        }
         controller.executionService = execControl.createMock()
         controller.request.api_version = 5
         controller.params.project = "Test"
         def svcMock = mockFor(ApiService, false)
         svcMock.demand.requireVersion { request, response, int min ->
             assertEquals(5, min)
-            return true
-        }
-        svcMock.demand.renderSuccessXml { response, Closure clos ->
-
             return true
         }
         controller.apiService = svcMock.createMock()
@@ -344,6 +343,9 @@ class ExecutionControllerTests  {
             assert null!=query
             assert "WRONG"==query.projFilter
             return [result: [], total: 0]
+        }
+        execControl.demand.respondExecutionsXml { response, List<Execution> execsx ->
+            return true
         }
         controller.executionService = execControl.createMock()
 

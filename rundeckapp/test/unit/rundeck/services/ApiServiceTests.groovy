@@ -23,14 +23,14 @@ class ApiServiceTests {
     }
     void testRequireVersionInvalid() {
         def mock = mockFor(GrailsMockHttpServletResponse)
+        mock.demand.setStatus { int status ->
+            assertEquals(400, status)
+        }
         mock.demand.setContentType{String contentype->
             assertEquals("text/xml",contentype)
         }
         mock.demand.setCharacterEncoding{String encoding->
             assertEquals("UTF-8", encoding)
-        }
-        mock.demand.setStatus{int status->
-            assertEquals(400, status)
         }
         def mockOut = mockFor(OutputStream)
         def output = []

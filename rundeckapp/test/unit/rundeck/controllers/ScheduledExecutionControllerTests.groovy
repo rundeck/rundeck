@@ -701,6 +701,9 @@ class ScheduledExecutionControllerTests  {
             assert 'anonymous' == inparams.user
             return [executionId: exec.id, name: scheduledExecution.jobName, execution: exec,success:true]
         }
+        eServiceControl.demand.respondExecutionsXml { response, List<Execution> execs ->
+            return true
+        }
         sec.executionService = eServiceControl.createMock()
 
         def svcMock = mockFor(ApiService, true)
@@ -776,6 +779,9 @@ class ScheduledExecutionControllerTests  {
             assert userName == inparams.user
             return [executionId: exec.id, name: scheduledExecution.jobName, execution: exec,success:true]
 
+        }
+        eServiceControl.demand.respondExecutionsXml { response, List<Execution> execs ->
+            return true
         }
         sec.executionService = eServiceControl.createMock()
 
