@@ -2,6 +2,7 @@ package rundeck.services
 
 import groovy.xml.MarkupBuilder
 import rundeck.Execution
+import rundeck.ScheduledExecution
 import rundeck.filters.ApiRequestFilters
 
 import javax.servlet.http.HttpServletResponse
@@ -10,6 +11,7 @@ import java.text.SimpleDateFormat
 class ApiService {
     static transactional = false
     def messageSource
+    def grailsLinkGenerator
 
     def respondOutput(HttpServletResponse response, String contentType, String output) {
         response.setContentType(contentType)
@@ -40,7 +42,10 @@ class ApiService {
             }
         }
     }
-    def renderSuccessXml(HttpServletResponse response, Closure recall) {
+    def renderSuccessXml(int status=0,HttpServletResponse response, Closure recall) {
+        if(status){
+            response.status=status
+        }
         return respondOutput(response, 'text/xml', renderSuccessXml(recall))
     }
     def renderSuccessXml(Closure recall){
@@ -231,5 +236,17 @@ class ApiService {
         SimpleDateFormat dateFormater = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
         dateFormater.setTimeZone(TimeZone.getTimeZone("GMT"));
         return dateFormater.format(date);
+    }
+
+    String apiHrefForJob(ScheduledExecution scheduledExecution) {
+        return grailsLinkGenerator.link(controller: 'scheduledExecution',
+                id: scheduledExecution.extid,
+                params: [api_version:ApiRequestFilters.API_CURRENT_VERSION],
+                absolute: true)
+    }
+    String apiHrefForExecution(Execution execution) {
+        return grailsLinkGenerator.link(controller: 'execution', id: execution.id,
+                params: [api_version: ApiRequestFilters.API_CURRENT_VERSION],
+                absolute: true)
     }
 }
