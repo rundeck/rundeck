@@ -4,6 +4,7 @@ import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.app.api.ApiBulkJobDeleteRequest
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.common.Framework
+
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.server.authorization.AuthConstants
@@ -68,6 +69,7 @@ class ScheduledExecutionController  {
         apiRunScript:'POST',
         apiJobDeleteBulk:['DELETE','POST'],
         apiJobClusterTakeoverSchedule:'PUT',
+        apiJobUpdateSingle:'PUT'
     ]
 
     def cancel = {
@@ -647,45 +649,146 @@ class ScheduledExecutionController  {
     }
 
     /**
-     * Delete a job
-     * Only allowed via DELETE http method
-     * API: DELETE /api/5/jobs/{id}, version 10
+     * POST a single job definition to a
+     * @return
      */
-    def apiJobDeleteSingle (){
-        log.debug("ScheduledExecutionController: apiJobDeleteSingle : params: " + params)
+    def apiJobCreateSingle(){
+        log.debug("ScheduledExecutionController: apiJobUpdateSingle " + params)
+        def fileformat = params.format ?: 'xml'
+        def parseresult
+
         if (!apiService.requireParameters(params, response, ['id'])) {
             return
         }
+        if(ScheduledExecution.getByIdOrUUID(params.id)){
+            //job already exists, cannot create
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_CONFLICT,
+                    code: 'api.error.jobs.create.exists', args: [params.id]])
+        }
+        if (request.contentType.contains('text/xml')) {
+            //read input stream
+            parseresult = scheduledExecutionService.parseUploadedFile(request.getInputStream(), fileformat)
+        } else {
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.jobs.import.missing-file', args: null])
+        }
+        if (parseresult.errorCode) {
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: parseresult.errorCode, args: parseresult.args])
+        }
+
+        if (parseresult.error) {
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.jobs.import.invalid', args: [fileformat, parseresult.error]])
+        }
+        def jobset = parseresult.jobset
+        if (jobset.size() != 1) {
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.jobs.update.incorrect-document-content'])
+        }
+        if (params.project) {
+            jobset*.project = params.project
+        }
         def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
 
-        def result = scheduledExecutionService.deleteScheduledExecutionById(params.id, framework, session.user, 'apiJobDeleteSingle')
-        if(!result.success){
-            if (result.error?.errorCode == 'notfound') {
-                apiService.renderErrorXml(response,[status:HttpServletResponse.SC_NOT_FOUND,code: 'api.error.item.doesnotexist',
-                args:['Job ID',params.id]])
-            }else if(result.error?.errorCode=='unauthorized'){
-                apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
-                        code: 'api.error.item.unauthorized',
-                        args: ['Delete','Job ID', params.id]]
-                )
-            }else{
-                apiService.renderErrorXml(response, [status: HttpServletResponse.SC_CONFLICT,
-                        code: 'api.error.job.delete.failed',
-                        args: [result.error.message]]
-                )
+        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'job'],
+                [AuthConstants.ACTION_CREATE], jobset[0].project)) {
+
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
+                    code: 'api.error.item.unauthorized', args: ['Create Job', 'Project', jobset[0].project]])
+        }
+
+        jobset*.uuid = params.id
+        def changeinfo = [user: session.user, method: 'apiJobCreateSingle']
+        String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
+        def loadresults = scheduledExecutionService.loadJobs(jobset, 'create', 'preserve', session.user, roleList, changeinfo, framework)
+
+        def jobs = loadresults.jobs
+        def jobsi = loadresults.jobsi
+        def msgs = loadresults.msgs
+        def errjobs = loadresults.errjobs
+        def skipjobs = loadresults.skipjobs
+
+        if(jobs){
+            response.addHeader('Location',apiService.apiHrefForJob(jobs[0]))
+            return apiService.renderSuccessXml(HttpServletResponse.SC_CREATED,response){
+                renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
             }
         }else{
-            return apiService.renderSuccessXml(response){
-                success{
-                    delegate.'message'(result.success.message)
+            return apiService.renderErrorXml(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response) {
+                renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
+            }
+        }
+    }
+    /**
+     * Update a job via PUT
+     * @return
+     */
+    def apiJobUpdateSingle(){
+        log.debug("ScheduledExecutionController: apiJobUpdateSingle " + params)
+        def fileformat = params.format ?: 'xml'
+        def parseresult
+        if (!apiService.requireParameters(params, response, ['id'])) {
+            return
+        }
+        def scheduledExecution = ScheduledExecution.getByIdOrUUID(params.id)
+        if (!apiService.requireExists(response, scheduledExecution,['Job ID',params.id])) {
+            //job does not exist
+            return
+        }
+        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_UPDATE],
+                scheduledExecution.project)) {
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
+                    code: 'api.error.item.unauthorized', args: ['Update', 'Job ID', params.id]])
+        }
+        if(request.contentType.contains('text/xml')){
+            //read input stream
+            parseresult = scheduledExecutionService.parseUploadedFile(request.getInputStream(), fileformat)
+        } else {
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.jobs.import.missing-file', args: null])
+        }
+        if (parseresult.errorCode) {
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: parseresult.errorCode, args: parseresult.args])
+        }
+
+        if (parseresult.error) {
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.jobs.import.invalid', args: [fileformat, parseresult.error]])
+        }
+        def jobset = parseresult.jobset
+        if(jobset.size()!=1){
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.jobs.update.incorrect-document-content'])
+        }
+        if (params.project) {
+            jobset*.project = params.project
+        }
+        jobset*.uuid=params.id
+        def changeinfo = [user: session.user, method: 'apiJobUpdateSingle']
+        String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
+        def loadresults = scheduledExecutionService.loadJobs(jobset, 'update', 'preserve', session.user, roleList, changeinfo, framework)
+
+        def jobs = loadresults.jobs
+        def jobsi = loadresults.jobsi
+        def msgs = loadresults.msgs
+        def errjobs = loadresults.errjobs
+        def skipjobs = loadresults.skipjobs
+
+
+        if (jobs) {
+            return apiService.renderSuccessXml(response) {
+                delegate.'link'(href: apiService.apiHrefForJob(jobs[0]), rel: 'get')
+                success {
+                    delegate.'message'(g.message(code: 'api.success.job.create.message', args: [params.id]))
                 }
-                delegate.'deleteJobs'(requestCount: 1, allsuccessful: true) {
-                    delegate.'succeeded'(count: 1) {
-                        delegate.'deleteJobResult'(id: params.id,) {
-                            delegate.'message'(result.success.message)
-                        }
-                    }
-                }
+                renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
+            }
+        } else {
+            return apiService.renderErrorXml(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response) {
+                renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
             }
         }
     }
@@ -1678,39 +1781,32 @@ class ScheduledExecutionController  {
     * API Actions
      */
 
-    /**
-     * common action for delete or get, which will pass through to apiJobDelete or apiJobExport
-     */
-    def apiJobAction = {
-        //switch on method
-        if('DELETE'==request.method){
-            return apiJobDelete()
-        }else{
-            return apiJobExport()
-        }
-    }
 
     /**
      * Utility, render content for jobs/import response
      */
     def renderJobsImportApiXML={jobs,jobsi,errjobs,skipjobs, delegate->
         delegate.'succeeded'(count:jobs.size()){
-            jobsi.each{ Map job ->
-                delegate.'job'(index:job.entrynum){
+            jobsi.each { Map job ->
+                delegate.'job'(index: job.entrynum,href: apiService.apiHrefForJob(job.scheduledExecution)) {
                     id(job.scheduledExecution.extid)
                     name(job.scheduledExecution.jobName)
-                    group(job.scheduledExecution.groupPath?:'')
+                    group(job.scheduledExecution.groupPath ?: '')
                     project(job.scheduledExecution.project)
-                    url(g.createLink(action:'show',id: job.scheduledExecution.extid))
+                    url(g.createLink(action: 'show', id: job.scheduledExecution.extid, absolute: true))
                 }
             }
         }
         delegate.failed(count:errjobs.size()){
             errjobs.each{ Map job ->
-                delegate.'job'(index:job.entrynum){
+                def jmap=[index:job.entrynum]
+                if(job.scheduledExecution.id){
+                    jmap.href=apiService.apiHrefForJob(job.scheduledExecution)
+                }
+                delegate.'job'(jmap){
                     if(job.scheduledExecution.id){
                         id(job.scheduledExecution.extid)
-                        url(g.createLink(action:'show',id: job.scheduledExecution.extid))
+                        url(g.createLink(action:'show',id: job.scheduledExecution.extid, absolute:true))
                     }
                     name(job.scheduledExecution.jobName)
                     group(job.scheduledExecution.groupPath?:'')
@@ -1735,10 +1831,14 @@ class ScheduledExecutionController  {
         delegate.skipped(count:skipjobs.size()){
 
             skipjobs.each{ Map job ->
-                delegate.'job'(index:job.entrynum){
+                def jmap = [index: job.entrynum]
+                if (job.scheduledExecution.id) {
+                    jmap.href = apiService.apiHrefForJob(job.scheduledExecution)
+                }
+                delegate.'job'(jmap){
                     if(job.scheduledExecution.id){
                         id(job.scheduledExecution.extid)
-                        url(g.createLink(action:'show',id: job.scheduledExecution.extid))
+                        url(g.createLink(action:'show',id: job.scheduledExecution.extid,absolute:true))
                     }
                     name(job.scheduledExecution.jobName)
                     group(job.scheduledExecution.groupPath?:'')
@@ -1811,16 +1911,15 @@ class ScheduledExecutionController  {
         def skipjobs = loadresults.skipjobs
 
 
-        def out=apiService.renderSuccessXml{
+        apiService.renderSuccessXml(response){
             renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
         }
-        render(contentType: 'text/xml',text:out)
     }
 
     /**
      * API: export job definition: /job/{id}, version 1
      */
-    def apiJobExport={
+    def apiJobExport(){
         log.debug("ScheduledExecutionController: /api/job GET : params: " + params)
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
         if (!apiService.requireExists(response, scheduledExecution,['Job ID',params.id])) {
@@ -1912,32 +2011,42 @@ class ScheduledExecutionController  {
     /**
      * API: DELETE job definition: /job/{id}, version 1
      */
-    def apiJobDelete={
+    def apiJobDelete() {
         log.debug("ScheduledExecutionController: /api/job DELETE : params: " + params)
-        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
+        if (!apiService.requireParameters(params, response, ['id'])) {
+            return
+        }
+        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
         if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
             return
         }
         def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        if(!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_DELETE],
-            scheduledExecution.project)){
+        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_DELETE],
+                scheduledExecution.project)) {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Delete', 'Job ID', params.id]])
         }
-        def changeinfo = [user: session.user, method: 'apiJobDelete', change: 'delete']
-        def jobdata = scheduledExecution.properties
-        def jobtitle = "[" + params.id + "] " + scheduledExecution.generateFullName()
-        def result=scheduledExecutionService.deleteScheduledExecution(scheduledExecution)
-
+        def result = scheduledExecutionService.deleteScheduledExecutionById(params.id, framework, session.user, 'apiJobDelete')
         if (!result.success) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_CONFLICT,
-                    code: 'api.error.job.delete.failed', args: [result.error]])
+            if (result.error?.errorCode == 'notfound') {
+                apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND, code: 'api.error.item.doesnotexist',
+                        args: ['Job ID', params.id]])
+            } else if (result.error?.errorCode == 'unauthorized') {
+                apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
+                        code: 'api.error.item.unauthorized',
+                        args: ['Delete', 'Job ID', params.id]]
+                )
+            } else {
+                apiService.renderErrorXml(response, [status: HttpServletResponse.SC_CONFLICT,
+                        code: 'api.error.job.delete.failed',
+                        args: [result.error.message]]
+                )
+            }
+        } else {
+            //return 204 no content
+            return render(status: HttpServletResponse.SC_NO_CONTENT)
         }
-        scheduledExecutionService.logJobChange(changeinfo,jobdata)
-        return apiService.renderSuccessXml(Response, 'api.success.job.delete.message', [jobtitle])
     }
-
-
 
     /**
      * API: run simple exec: /api/run/command, version 1
