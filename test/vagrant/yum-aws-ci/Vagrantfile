@@ -1,6 +1,8 @@
 
 Vagrant.configure("2") do |config|
 
+  repo_url = "https://bintray.com/gschueler/ci-rundeck2-rpm/rpm"
+
   config.vm.box = "dummy"
   config.vm.box_url = "https://github.com/mitchellh/vagrant-aws/raw/master/dummy.box"
 
@@ -10,11 +12,10 @@ Vagrant.configure("2") do |config|
   config.vm.synced_folder "../../api", "/rundeck_api_test/api"
   config.vm.synced_folder "../src", "/test_scripts"
 
-  config.vm.provision :shell, :path => "bootstrap.sh"
+  config.vm.provision :shell, :path => "bootstrap.sh #{repo_url}"
   config.vm.provision :shell, :path => "prepare-tests.sh"
   config.vm.provision :shell,
     :inline => "su - rundeck -c 'sh /test_scripts/api-test.sh'"
-
 
 
   config.vm.provider :aws do |aws, override|
