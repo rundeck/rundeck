@@ -12,7 +12,7 @@ Vagrant.configure("2") do |config|
   config.vm.synced_folder "../../api", "/rundeck_api_test/api"
   config.vm.synced_folder "../src", "/test_scripts"
 
-  config.vm.provision :shell, :path => "bootstrap.sh #{repo_url}"
+  config.vm.provision :shell, :path => "bootstrap.sh", :args => repo_url
   config.vm.provision :shell, :path => "prepare-tests.sh"
   config.vm.provision :shell,
     :inline => "su - rundeck -c 'sh /test_scripts/api-test.sh'"
