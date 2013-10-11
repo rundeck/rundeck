@@ -24,8 +24,13 @@ die() {
 
 set -o nounset -o pipefail
 
+REPO_URL=$1
+shift
+
 #get the ci repo
-curl -# --fail -L -o /etc/yum.repos.d/bintray.repo https://bintray.com/rundeck/ci-snapshot-rpm/rpm || die "failed downloading bintray.repo"
+curl -# --fail -L -o /etc/yum.repos.d/bintray.repo "$REPO_URL" || die "failed downloading bintray.repo"
+
+test -f /etc/yum.repos.d/bintray.repo || die 1 "Repo file does not exist"
 
 curl -# --fail -L -O http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm || die "failed downloading epel-release-6-8"
 
@@ -44,7 +49,7 @@ ls /vagrant/rundeck-*.rpm >/dev/null
 if [ $? -eq 0 ] ; then
     rpm -i /vagrant/rundeck-*.rpm
 else
-    yum -y install rundeck
+    yum -y install rundeck || die 1 "Failed to install rundeck"
 fi
 
 
@@ -71,7 +76,7 @@ then
     let count=0
     while true
     do
-        if ! grep  "Started SocketConnector@" /var/log/vagrant/bootstrap.log
+        if ! grep  "Started SelectChannelConnector@" /var/log/rundeck/service.log
         then  printf >&2 ".";# progress output.
         else  break; # successful message.
         fi
@@ -86,7 +91,7 @@ else
     let count=0
     while true
     do
-        if ! grep  "Started SocketConnector@" /var/log/rundeck/service.log
+        if ! grep  "Started SelectChannelConnector@" /var/log/rundeck/service.log
         then  printf >&2 ".";# progress output.
         else  break; # successful message.
         fi
@@ -102,5 +107,5 @@ fi
 
 # test data file is in correct location
 
-ls /var/lib/rundeck/data/rundeckdb.data.db || die "Rundeck data file not found at /var/lib/rundeck/data/rundeckdb.data.db"
+ls /var/lib/rundeck/data/rundeckdb.h2.db || die "Rundeck data file not found at /var/lib/rundeck/data/rundeckdb.data.db"
 
