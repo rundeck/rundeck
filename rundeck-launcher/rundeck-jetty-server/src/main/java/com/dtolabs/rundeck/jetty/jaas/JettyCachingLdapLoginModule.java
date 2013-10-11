@@ -543,9 +543,10 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
         Log.info("Attempting authentication: " + userDn);
 
+        String pass = (String) password;
         Hashtable environment = getEnvironment();
         environment.put(Context.SECURITY_PRINCIPAL, userDn);
-        environment.put(Context.SECURITY_CREDENTIALS, password);
+        environment.put(Context.SECURITY_CREDENTIALS, (pass.trim().isEmpty() ? "password_that_would_be never_used" : pass));
 
         DirContext dirContext = new InitialDirContext(environment);
 
