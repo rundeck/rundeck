@@ -96,15 +96,19 @@ fi
 CURL="curl $CURLOPTS"
 
 # get listing
-$CURL -H "$AUTHHEADER" -X DELETE ${runurl}?${params} > $DIR/curl.out
+$CURL -D $DIR/headers.out -H "$AUTHHEADER" -X DELETE ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2
 fi
 
+# allow 204 no content response
+if ! grep 'HTTP/1.1 204' $DIR/headers.out ; then
 #test success result
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out "Job was successfully deleted: [${jobid}] api-test/job-delete/cli job" || exit 2
+  sh $SRC_DIR/api-test-success.sh $DIR/curl.out "Job was successfully deleted: [${jobid}] api-test/job-delete/cli job" || exit 2
+fi
 echo "OK"
+rm $DIR/headers.out
 
 ###
 # Get the chosen id, expect DNE message
