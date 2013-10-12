@@ -69,7 +69,7 @@ then
     let count=0
     while true
     do
-        if ! grep  "Started SocketConnector@" /var/log/vagrant/bootstrap.log
+        if ! grep  "Started SocketConnector@" /var/log/rundeck/service.log
         then  printf >&2 ".";# progress output.
         else  break; # successful message.
         fi
