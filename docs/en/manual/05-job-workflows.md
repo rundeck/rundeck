@@ -105,6 +105,8 @@ New steps are always added to the end of the sequence. See
 [Reordering steps](job-workflows.html#reordering-steps) 
 for directions on moving steps into a new order.
 
+Each step can have a "Description" to give it a more logical name or description to be displayed in the Rundeck GUI.
+
 The next several sections describe the specification of each kind of
 workflow step.
 
