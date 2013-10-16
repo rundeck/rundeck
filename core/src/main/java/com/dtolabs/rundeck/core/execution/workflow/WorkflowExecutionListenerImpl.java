@@ -38,13 +38,12 @@ import java.util.*;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class WorkflowExecutionListenerImpl extends ContextualExecutionListener implements WorkflowExecutionListener {
+public class WorkflowExecutionListenerImpl extends ContextualExecutionListener implements WorkflowExecutionListener,ExecutionListener {
     /**
-     * Thread local context stack, inherited by sub threads.
+     * Uses a thread local context stack, inherited by sub threads.
      */
-    private InheritableThreadLocal<WFStepContext> localStep = new InheritableThreadLocal<WFStepContext>();
-    private InheritableThreadLocal<INodeEntry> localNode = new InheritableThreadLocal<INodeEntry>();
-    private InheritableThreadLocal<ContextStack<WFStepContext>> contextStack = new InheritableThreadLocal<ContextStack<WFStepContext>>();
+    private StepContextWorkflowExecutionListener<INodeEntry, WFStepContext> stepContext = new
+            StepContextWorkflowExecutionListener<INodeEntry, WFStepContext>();
 
     private WorkflowExecutionListenerImpl delegate;
 
@@ -65,7 +64,7 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
             return;
         }
         super.beginExecuteNodeStep(context, item, node);
-        localNode.set(node);
+        stepContext.beginNodeContext(node);
         log(Constants.DEBUG_LEVEL,
             "[workflow] beginExecuteNodeStep(" + node.getNodename() + "): " + item.getType() + ": " + item
         );
@@ -79,7 +78,7 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
             return;
         }
         super.finishExecuteNodeStep(result, context, item, node);
-        localNode.set(null);
+        stepContext.finishNodeContext();
         log(Constants.DEBUG_LEVEL,
             "[workflow] finishExecuteNodeStep(" + node.getNodename() + "): " + item.getType() + ": " + result);
     }
@@ -90,25 +89,20 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
         if (null != delegate) {
             return delegate.getLoggingContext();
         }
-
-        if (null != localStep.get() || null != localNode.get()) {
+        INodeEntry currentNode = stepContext.getCurrentNode();
+        List<WFStepContext> currentContext = stepContext.getCurrentContext();
+        if (null != currentContext || null!=currentNode) {
             final HashMap<String, String> loggingContext = new HashMap<String, String>();
-            if (null != localNode.get()) {
-                final INodeEntry node = localNode.get();
-                loggingContext.put("node", node.getNodename());
-                loggingContext.put("user", node.extractUserName());
+            if (null != currentNode) {
+                loggingContext.put("node", currentNode.getNodename());
+                loggingContext.put("user", currentNode.extractUserName());
             }
-            if (null != localStep.get()) {
-                final WFStepContext wfStepInfo = localStep.get();
-                final int step = wfStepInfo.getStep();
-                if(null!= contextStack.get()) {
-                    loggingContext.put("command", generateContextString(contextStack.get().copyPush(wfStepInfo)));
-                }else {
-                    loggingContext.put("command", generateContextString(ContextStack.create(wfStepInfo)));
-                }
+            if (null != currentContext) {
+                loggingContext.put("command", generateContextString(currentContext));
 
-                if (step > -1) {
-                    loggingContext.put("step", Integer.toString(step));
+                WFStepContext last = currentContext.get(currentContext.size() - 1);
+                if (last.getStep() > -1) {
+                    loggingContext.put("step", Integer.toString(last.getStep()));
                 }
             }
             return loggingContext;
@@ -117,13 +111,13 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
         }
     }
 
-    private String generateContextString(final ContextStack<WFStepContext> stack) {
+    private String generateContextString(final List<WFStepContext> stack) {
         if (null != delegate) {
             return delegate.generateContextString(stack);
         }
         final String[] strings = new String[stack.size()];
         int i=0;
-        for (final WFStepContext context : stack.stack()) {
+        for (final WFStepContext context : stack) {
             strings[i++] = makePrefix(context);
         }
         return StringUtils.join(strings, ":");
@@ -148,19 +142,9 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
             delegate.beginWorkflowExecution(executionContext, item);
             return;
         }
-        if(null!=localStep.get()) {
-            //within another workflow already, so push context onto stack
-            WFStepContext info = localStep.get();
-            if(null!= contextStack.get()) {
-                contextStack.set(contextStack.get().copyPush(info));
-            }else {
-                contextStack.set(ContextStack.create(info));
-            }
-        }
-        localStep.set(null);
-        localNode.set(null);
+        stepContext.beginContext();
         log(Constants.DEBUG_LEVEL,
-            "[workflow] Begin execution: " + item.getType()+" context: "+contextStack.get()
+                "[workflow] Begin execution: " + item.getType() + " context: " + stepContext.getCurrentContext()
         );
     }
 
@@ -171,17 +155,7 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
             delegate.finishWorkflowExecution(result, executionContext, item);
             return;
         }
-        ContextStack<WFStepContext> stack = contextStack.get();
-        if (null != stack ) {
-            //pop any workflow context already on stack
-            if (stack.size() > 0) {
-                contextStack.set(stack.copyPop());
-            } else {
-                contextStack.set(null);
-            }
-        }
-        localStep.set(null);
-        localNode.set(null);
+        stepContext.finishContext();
         log(Constants.DEBUG_LEVEL,
             "[workflow] Finish execution:  " + item.getType() + ": " + result
         );
@@ -192,18 +166,18 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
             delegate.beginWorkflowItem(step, item);
             return;
         }
-        localStep.set(new WFStepContext(item, step));
+        stepContext.beginStepContext(new WFStepContext(item, step));
         log(Constants.DEBUG_LEVEL,
             "[workflow] Begin step: " + step + "," + item.getType()
         );
     }
 
-    public void finishWorkflowItem(final int step, final StepExecutionItem item) {
+    public void finishWorkflowItem(final int step, final StepExecutionItem item, boolean success) {
         if (null != delegate) {
-            delegate.finishWorkflowItem(step, item);
+            delegate.finishWorkflowItem(step, item,success);
             return;
         }
-        localStep.set(null);
+        stepContext.finishStepContext();
         log(Constants.DEBUG_LEVEL,
             "[workflow] Finish step: " + step + "," + item.getType()
         );

@@ -23,20 +23,46 @@
 */
 package com.dtolabs.rundeck.core.execution.workflow;
 
+import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
+import com.dtolabs.rundeck.core.execution.StatusResult;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 
 /**
  * WorkflowExecutionListener is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public interface WorkflowExecutionListener extends ExecutionListener {
+public interface WorkflowExecutionListener  {
 
     public void beginWorkflowExecution(StepExecutionContext executionContext, WorkflowExecutionItem item);
 
     public void finishWorkflowExecution(WorkflowExecutionResult result, StepExecutionContext executionContext,
                                         WorkflowExecutionItem item);
     public void beginWorkflowItem(int step, StepExecutionItem node);
-    public void finishWorkflowItem(int step, StepExecutionItem node);
+    public void finishWorkflowItem(int step, StepExecutionItem node, boolean success);
+
+    /**
+     * Called when execution begins for a step
+     */
+    public void beginStepExecution(StepExecutionContext context, StepExecutionItem item);
+
+    /**
+     * Called when execution finishes for a step
+     */
+    public void finishStepExecution(StatusResult result, StepExecutionContext context, StepExecutionItem item);
+
+    /**
+     * Begin execution of a node step
+     */
+    public void beginExecuteNodeStep(ExecutionContext context, NodeStepExecutionItem item, INodeEntry node);
+
+    /**
+     * Finish execution of a node step
+     */
+    public void finishExecuteNodeStep(NodeStepResult result, ExecutionContext context, StepExecutionItem item,
+            INodeEntry node);
 }

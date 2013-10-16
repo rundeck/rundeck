@@ -284,7 +284,7 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
                 }
             } finally {
                 if (null != wlistener) {
-                    wlistener.finishWorkflowItem(c, cmd);
+                    wlistener.finishWorkflowItem(c, cmd, stepSuccess);
                 }
             }
             resultList.add(stepResult);
