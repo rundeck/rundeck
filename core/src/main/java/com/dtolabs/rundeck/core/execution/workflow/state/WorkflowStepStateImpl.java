@@ -29,7 +29,7 @@ public class WorkflowStepStateImpl implements WorkflowStepState {
         return stepState;
     }
 
-    public Map<String, StepState> getNodeStateMap() {
+    public Map<String, ? extends StepState> getNodeStateMap() {
         return nodeStateMap;
     }
 

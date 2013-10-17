@@ -29,19 +29,6 @@ package com.dtolabs.rundeck.core.execution;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public interface ExecutionListenerOverride extends ExecutionListener{
-    /**
-     * Return true if output should be terse and not prefixed
-     *
-     * @return
-     */
-    public void setTerse(boolean terse);
-
-    /**
-     * Return log message format
-     *
-     * @return
-     */
-    public void setLogFormat(String format);
 
     /**
      * Return a listener for failed node list

@@ -1,19 +1,14 @@
 package com.dtolabs.rundeck.core.execution.workflow.state;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.execution.*;
-import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
-import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
-import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
+import com.dtolabs.rundeck.core.execution.ExecutionContext;
+import com.dtolabs.rundeck.core.execution.StatusResult;
+import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.*;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 
-import java.io.File;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * Adapts events from a {@link WorkflowExecutionListener} and sends changes to a list of {@link WorkflowStateListener}s.
@@ -35,11 +30,16 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
         listeners.add(listener);
     }
 
-    private void notifyAllWorkflowState(ExecutionState executionState, Date timestamp) {
+    private void notifyAllWorkflowState(ExecutionState executionState, Date timestamp, Collection<String> nodenames) {
+        HashSet<String> nodes=null;
+        if(null!=nodenames){
+            nodes= new HashSet<String>(nodenames);
+        }
         for (WorkflowStateListener listener : listeners) {
-            listener.workflowExecutionStateChanged(executionState, timestamp);
+            listener.workflowExecutionStateChanged(executionState, timestamp, nodes);
         }
     }
+
 
     private void notifyAllStepState(StepIdentifier identifier, StepStateChange stepStateChange, Date timestamp) {
         for (WorkflowStateListener listener : listeners) {
@@ -48,12 +48,12 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
     }
 
     public void beginWorkflowExecution(StepExecutionContext executionContext, WorkflowExecutionItem item) {
-        notifyAllWorkflowState(ExecutionState.RUNNING, new Date());
+        notifyAllWorkflowState(ExecutionState.RUNNING, new Date(), executionContext.getNodes().getNodeNames());
     }
 
     public void finishWorkflowExecution(WorkflowExecutionResult result, StepExecutionContext executionContext,
             WorkflowExecutionItem item) {
-        notifyAllWorkflowState(result.isSuccess() ? ExecutionState.SUCCEEDED : ExecutionState.FAILED, new Date());
+        notifyAllWorkflowState(result.isSuccess() ? ExecutionState.SUCCEEDED : ExecutionState.FAILED, new Date(), null);
     }
 
     private StepIdentifier createIdentifier() {
@@ -95,14 +95,14 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
     }
 
     public void finishStepExecution(StatusResult result, StepExecutionContext context, StepExecutionItem item) {
-        stepContext.finishStepContext();
         notifyAllStepState(createIdentifier(), createState(stateForResult(result)), new Date());
+        stepContext.finishStepContext();
     }
 
     public void finishExecuteNodeStep(NodeStepResult result, ExecutionContext context, StepExecutionItem item,
             INodeEntry node) {
-        stepContext.finishNodeContext();
         notifyAllStepState(createIdentifier(), createState(stateForResult(result)), new Date());
+        stepContext.finishNodeContext();
     }
 
     private ExecutionState stateForResult(StatusResult result) {

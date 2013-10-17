@@ -35,4 +35,13 @@ public class StepStateImpl implements StepState {
     public void setExecutionState(ExecutionState executionState) {
         this.executionState = executionState;
     }
+
+    @Override
+    public String toString() {
+        return "StepStateImpl{" +
+                "executionState=" + executionState +
+                ", metadata=" + metadata +
+                ", errorMessage='" + errorMessage + '\'' +
+                '}';
+    }
 }

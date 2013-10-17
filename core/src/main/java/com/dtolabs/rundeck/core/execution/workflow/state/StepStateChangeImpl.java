@@ -31,4 +31,13 @@ public class StepStateChangeImpl implements StepStateChange {
     public void setNodeState(boolean nodeState) {
         this.nodeState = nodeState;
     }
+
+    @Override
+    public String toString() {
+        return "StepStateChangeImpl{" +
+                "stepState=" + stepState +
+                ", nodeName='" + nodeName + '\'' +
+                ", nodeState=" + nodeState +
+                '}';
+    }
 }

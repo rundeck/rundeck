@@ -1,6 +1,7 @@
 package com.dtolabs.rundeck.core.execution.workflow.state;
 
 import java.util.Date;
+import java.util.Set;
 
 /**
  * Listens to state changes for a workflow
@@ -20,6 +21,7 @@ public interface WorkflowStateListener {
      *
      * @param executionState the new execution state
      * @param timestamp      the time of the change
+     * @param nodeSet        the set of nodes
      */
-    public void workflowExecutionStateChanged(ExecutionState executionState, Date timestamp);
+    public void workflowExecutionStateChanged(ExecutionState executionState, Date timestamp, Set<String> nodeSet);
 }

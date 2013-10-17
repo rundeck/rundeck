@@ -175,10 +175,6 @@ public abstract class ExecutionListenerOverrideBase implements ExecutionListener
         return terse;
     }
 
-    public void setTerse(final boolean terse) {
-        this.terse = terse;
-    }
-
     public String getLogFormat() {
         if (null != logFormat) {
             return logFormat;
@@ -187,10 +183,6 @@ public abstract class ExecutionListenerOverrideBase implements ExecutionListener
             return delegate.getLogFormat();
         }
         return logFormat;
-    }
-
-    public void setLogFormat(String logFormat) {
-        this.logFormat = logFormat;
     }
 
     public void setFailedNodesListener(FailedNodesListener failedNodesListener) {

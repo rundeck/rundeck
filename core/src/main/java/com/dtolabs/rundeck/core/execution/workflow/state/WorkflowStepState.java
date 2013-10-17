@@ -27,7 +27,7 @@ public interface WorkflowStepState {
      *
      * @return
      */
-    public Map<String, StepState> getNodeStateMap();
+    public Map<String, ? extends StepState> getNodeStateMap();
 
 
     /**
