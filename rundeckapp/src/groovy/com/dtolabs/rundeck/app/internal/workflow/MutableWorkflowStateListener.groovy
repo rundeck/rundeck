@@ -1,7 +1,9 @@
 package com.dtolabs.rundeck.app.internal.workflow
 
 import com.dtolabs.rundeck.core.execution.workflow.state.ExecutionState
+import com.dtolabs.rundeck.core.execution.workflow.state.StepIdentifier
 import com.dtolabs.rundeck.core.execution.workflow.state.StepState
+import com.dtolabs.rundeck.core.execution.workflow.state.StepStateChange
 import com.dtolabs.rundeck.core.execution.workflow.state.WorkflowStateListener
 
 /**
@@ -18,13 +20,13 @@ class MutableWorkflowStateListener implements WorkflowStateListener {
     }
 
     @Override
-    void stepStateChanged(StepState stepState, Date timestamp) {
-        mutableWorkflowState.updateStateForStep(stepState,timestamp)
+    void stepStateChanged(StepIdentifier identifier, StepStateChange stepStateChange, Date timestamp) {
+        mutableWorkflowState.updateStateForStep(identifier,stepStateChange, timestamp)
     }
 
     @Override
-    void workflowExecutionStateChanged(ExecutionState executionState, Date timestamp) {
-        mutableWorkflowState.updateWorkflowState(executionState, timestamp)
-
+    void workflowExecutionStateChanged(ExecutionState executionState, Date timestamp,Set<String> nodenames) {
+        mutableWorkflowState.updateWorkflowState(executionState, timestamp, nodenames)
     }
+
 }
