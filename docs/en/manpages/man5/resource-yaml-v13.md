@@ -58,7 +58,7 @@ Optional Entries:
 
 `tags`
 
-:    A literal with comma-separated tag strings, or a Sequence of literals
+:    A literal with comma-separated tag strings, or a Sequence of literals. Tags are used for filtering nodes and often represent server role, environment, class, or group.
 
 `osFamily`
 
@@ -92,6 +92,9 @@ Optional Entries:
 
 ## Examples
 
+Here's a node, Venkman.local, described with several of the required and optional
+attributes discussed above.
+
     Venkman.local:
       description: Rundeck server node
       hostname: Venkman.local
@@ -103,7 +106,22 @@ Optional Entries:
       tags: ''
       username: greg
 
-Specify some custom attributes:
+Tags are very useful for node filtering and can be used
+to describe the role, environment, group, or class to which a node belongs.
+The Homestar.local example below describes a node that plays the role of a redis server in the
+production environment. 
+
+    Homestar.local:
+      description: The production redis server.
+      hostname: Homestar.local
+      nodename: Homestar.local
+      osArch: x86_64
+      osFamily: unix
+      osName: Linux
+      tags: 'redis_server,production'
+      username: greg
+
+Here's a node, bartholemew, that specifies some custom attributes (app-port, https-port):
 
     bartholemew:
       description: Webapp node
@@ -111,8 +129,9 @@ Specify some custom attributes:
       nodename: bartholemew
       tags: 'web,app'
       username: greg
-      app-port: 550
-      https-port: 553
+      app-port: 8080
+      https-port: 8443
+
 
 The Rundeck source code and all documentation may be downloaded from
 <https://github.com/dtolabs/rundeck/>.
