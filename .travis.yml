@@ -2,6 +2,7 @@ language: java
 env: MAVEN_OPTS="-Xmx512m -XX:MaxPermSize=192m" GRADLE_OPTS="-Xmx512m -XX:MaxPermSize=192m"
 jdk:
   - openjdk6
+  - openjdk7
 
 # whitelist
 branches:
