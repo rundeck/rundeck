@@ -430,6 +430,9 @@
             </div>
         </div>
     </div>
+  <g:if test="${workflowState}">
+      <g:render template="wfstateModelDisplay" bean="${workflowState}" var="workflowState"/>
+  </g:if>
 
 
     <g:if test="${scheduledExecution}">
