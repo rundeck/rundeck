@@ -25,6 +25,9 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
         assertEquals(2, mutableWorkflowState.getStepStates().size());
         assertEquals(2, mutableWorkflowState.getStepCount());
         assertNull(mutableWorkflowState.getTimestamp());
+        (0..1).each{i->
+            assertEquals(ExecutionState.WAITING,mutableWorkflowState.stepStates[i].stepState.executionState)
+        }
     }
 
     public void testUpdateWorkflowStep() {
@@ -158,7 +161,9 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
     }
 
     public void testUpdateStateNormal() {
+        assertEquals(ExecutionState.WAITING, MutableWorkflowStateImpl.updateState(null, ExecutionState.WAITING))
         assertEquals(ExecutionState.RUNNING, MutableWorkflowStateImpl.updateState(null, ExecutionState.RUNNING))
+        assertEquals(ExecutionState.RUNNING, MutableWorkflowStateImpl.updateState(ExecutionState.WAITING, ExecutionState.RUNNING))
         assertEquals(ExecutionState.SUCCEEDED, MutableWorkflowStateImpl.updateState(ExecutionState.RUNNING, ExecutionState.SUCCEEDED))
         assertEquals(ExecutionState.FAILED, MutableWorkflowStateImpl.updateState(ExecutionState.RUNNING, ExecutionState.FAILED))
         assertEquals(ExecutionState.ABORTED, MutableWorkflowStateImpl.updateState(ExecutionState.RUNNING, ExecutionState.ABORTED))
@@ -166,6 +171,11 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
     public void testUpdateStateInvalid() {
         try {
             MutableWorkflowStateImpl.updateState(ExecutionState.RUNNING, ExecutionState.RUNNING)
+            fail("Should not succeed")
+        } catch (IllegalStateException e) {
+        }
+        try {
+            MutableWorkflowStateImpl.updateState(ExecutionState.RUNNING, ExecutionState.WAITING)
             fail("Should not succeed")
         } catch (IllegalStateException e) {
         }
@@ -181,6 +191,11 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
         }
         try {
             MutableWorkflowStateImpl.updateState(ExecutionState.ABORTED, ExecutionState.RUNNING)
+            fail("Should not succeed")
+        } catch (IllegalStateException e) {
+        }
+        try {
+            MutableWorkflowStateImpl.updateState(ExecutionState.ABORTED, ExecutionState.WAITING)
             fail("Should not succeed")
         } catch (IllegalStateException e) {
         }

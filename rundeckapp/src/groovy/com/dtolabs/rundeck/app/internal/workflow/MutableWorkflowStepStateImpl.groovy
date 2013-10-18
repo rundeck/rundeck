@@ -1,5 +1,6 @@
 package com.dtolabs.rundeck.app.internal.workflow
 
+import com.dtolabs.rundeck.core.execution.workflow.state.ExecutionState
 import com.dtolabs.rundeck.core.execution.workflow.state.StepIdentifier
 import com.dtolabs.rundeck.core.execution.workflow.state.StepState
 import com.dtolabs.rundeck.core.execution.workflow.state.WorkflowState
@@ -20,6 +21,7 @@ class MutableWorkflowStepStateImpl implements MutableWorkflowStepState {
     MutableWorkflowStepStateImpl(StepIdentifier stepIdentifier) {
         this.stepIdentifier = stepIdentifier
         this.mutableStepState=new MutableStepStateImpl()
+        this.mutableStepState.executionState= ExecutionState.WAITING
         this.mutableNodeStateMap = new HashMap<String, MutableStepState>()
         this.subworkflow=false
     }

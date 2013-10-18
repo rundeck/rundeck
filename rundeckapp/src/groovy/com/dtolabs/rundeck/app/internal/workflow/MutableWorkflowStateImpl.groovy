@@ -48,9 +48,7 @@ change status
 merge metadata
 update timestamp. update timestamp on WorkflowState(s)
          */
-        if(null==executionState){
-            executionState=ExecutionState.RUNNING
-        }
+        executionState = transitionWaiting(executionState)
         if(null==this.timestamp || this.timestamp< timestamp){
             this.timestamp=timestamp
         }
@@ -76,9 +74,7 @@ update timestamp. update timestamp on WorkflowState(s)
                 //TODO
                 subflow=found.createMutableSubWorkflowState(null, 0)
             }
-            if (null == found.stepState.executionState) {
-                found.mutableStepState.executionState = updateState(found.stepState.executionState, ExecutionState.RUNNING)
-            }
+            found.mutableStepState.executionState = transitionWaiting(found.stepState.executionState)
             def sublist = identifier.context.subList(1, identifier.context.size())
             subflow.updateStateForStep(StateUtils.stepIdentifier(sublist), stepStateChange, timestamp);
             return
@@ -95,9 +91,7 @@ update timestamp. update timestamp on WorkflowState(s)
                 toUpdate = new MutableStepStateImpl()
                 found.mutableNodeStateMap[stepStateChange.nodeName] = toUpdate
             }
-            if(null==found.mutableStepState.executionState){
-                found.mutableStepState.executionState=ExecutionState.RUNNING
-            }
+            found.mutableStepState.executionState=transitionWaiting(found.mutableStepState.executionState)
         } else {
             //overall step state
             toUpdate = found.mutableStepState
@@ -106,6 +100,18 @@ update timestamp. update timestamp on WorkflowState(s)
         toUpdate.errorMessage = stepStateChange.stepState.errorMessage
         toUpdate.executionState = updateState(toUpdate.executionState,stepStateChange.stepState.executionState)
         toUpdate.metadata = stepStateChange.stepState.metadata
+    }
+
+    private ExecutionState transitionWaiting(ExecutionState state) {
+        if (waitingState(state)) {
+            return updateState(state, ExecutionState.RUNNING)
+        }else{
+            return state
+        }
+    }
+
+    private static boolean waitingState(ExecutionState state) {
+        null == state || state == ExecutionState.WAITING
     }
 
     /**
@@ -117,9 +123,14 @@ update timestamp. update timestamp on WorkflowState(s)
     public static ExecutionState updateState(ExecutionState fromState, ExecutionState toState) {
         switch (toState){
             case null:
-                throw new IllegalStateException("Cannot change state to null")
-            case ExecutionState.RUNNING:
+                throw new IllegalStateException("Cannot change state to ${fromState}")
+            case ExecutionState.WAITING:
                 if (fromState != null) {
+                    throw new IllegalStateException("Cannot change from " + fromState + " to " + toState)
+                }
+                break;
+            case ExecutionState.RUNNING:
+                if (fromState != null && fromState!= ExecutionState.WAITING) {
                     throw new IllegalStateException("Cannot change from " + fromState + " to " + toState)
                 }
                 break;
