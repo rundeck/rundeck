@@ -16,6 +16,7 @@ import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.LoggingService
 import rundeck.services.ScheduledExecutionService
+import rundeck.services.WorkflowService
 import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.logging.ExecutionLogState
 
@@ -33,6 +34,7 @@ class ExecutionController {
     LoggingService loggingService
     ScheduledExecutionService scheduledExecutionService
     ApiService apiService
+    WorkflowService workflowService
 
 
     def index ={
@@ -108,9 +110,9 @@ class ExecutionController {
                     pluginDescs[step.nodeStep ? 'node' : 'workflow'][step.type]=description
                 }
             }
-        }
+        def state = workflowService.readWorkflowStateForExecution(e)
         return [scheduledExecution: e.scheduledExecution?:null,execution:e, filesize:filesize,
-                enext: enext, eprev: eprev,stepPluginDescriptions: pluginDescs]
+                enext: enext, eprev: eprev,stepPluginDescriptions: pluginDescs, workflowState: state]
     }
     def mail ={
         def Execution e = Execution.get(params.id)
