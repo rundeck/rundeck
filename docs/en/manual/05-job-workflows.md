@@ -39,8 +39,8 @@ and *Strategy*.
 
 *Keepgoing*: This manages what to do if a step incurs and error:
 
-*   No: Fail immediately (default).
-*   Yes: Continue to next step.
+*   Stop at the failed step: Fail immediately (default).
+*   Run remaining steps before failing: Continue to next steps and fail the job at the end.
 
 The default is to fail immediately but depending on the procedure at
 hand you can choose to have the execution continue.
@@ -84,11 +84,11 @@ correct, though the node-oriented flow is more commonplace.
 ## Workflow steps
 
 The following sections describe how to construct a workflow as a set
-of steps that call commands of different types.
+of steps of different types.
 
 When creating a new Job definition, the Workflow form will be set with
 defaults and have no workflow steps defined. The workflow editor will
-have a form open asking to enter a shell command as the first step. 
+have a form open asking to choose a stype type to add. 
 
 ![Add a step](../figures/fig0402.png)
 
@@ -99,11 +99,11 @@ form. When you are done filling out the form, press "Save" to add it
 to the sequence. Pressing "Cancel" will close the form and leave the
 sequence unchanged.
 
-![Workflow step types](../figures/fig0403.png)
+![Add a step form](../figures/fig0403.png)
 
 New steps are always added to the end of the sequence. See
 [Reordering steps](job-workflows.html#reordering-steps) 
-for directions on modifying the step order.
+for directions on moving steps into a new order.
 
 The next several sections describe the specification of each kind of
 workflow step.
@@ -314,6 +314,15 @@ return success.)
 It is a good practice, when you are defining Error Handlers, to **always** have them fail (e.g. scripts/commands return a non-zero exit-code), unless you specifically want them to be used for Recovery.
 
 Note that Error-handlers can be attached to either Node Steps or Workflow Steps, and the type of step and the Strategy of the Workflow determines what type of Error-handler steps can be attached to a step.  The only restriction is in the case that the Workflow is "Node-oriented", which means that the workflow is executed independently for each node.  In this case, Node Steps can only have other Node steps as Error Handlers.  In other cases, the Error Handler can be other Workflow steps.
+
+To add an error handler press the "+ error handler" button on the step you want to handle.
+The form presened includes the normal set of steps you can add to a workflow.
+
+![Adding an error handler](../figures/fig0410.png)
+
+The example below shows an error handler that calls a script by URL.
+
+![Example error handler](../figures/fig0411.png)
 
 ### Context information
 

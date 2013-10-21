@@ -164,13 +164,14 @@ The "hello" Job option signature would be: `-message <>`.
 
 The arguments passed to the script are defined as `${option.message}`.
 
-Here's the content of this simple script. 
+Here's the content of this simple script that shows the various
+forms to access the value of the "message" option.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
     #!/bin/sh    
-    echo envvar=$RD_OPTION_MESSAGE ;# read from environment
-    echo args=$1                   ;# comes from argument vector
-    echo message=@option.message@  ;# replacement token
+    echo envvar=$RD_OPTION_MESSAGE ;# access message as environment variable.
+    echo args=$1                   ;# read value passed into argument vector
+    echo message=@option.message@  ;# access message via replacement token syntax
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 
 When the user runs the "hello" job they will be prompted for the
@@ -178,7 +179,7 @@ When the user runs the "hello" job they will be prompted for the
 
 ![Option entered](../figures/fig0505.png)
 
-Let's assume they entered the word "howdy" in response. 
+Let's assume they chose the word "howdy" in response. 
 The output of the Job will be:
 
     envar=howdy
@@ -220,6 +221,8 @@ Replacement token
         if [ "$message" == "" ] ; then
            message=mydefault
         fi
+
+_Note_: The replacement token syntax is only supported in script files (ie, not command steps).
 
 ## Escaped values
 
