@@ -6,7 +6,7 @@ summary: It Slices, it Dices, it Takes Out Your Garbage
 group: System
 requires(post): chkconfig
 requires(postun): chkconfig
-requires: java
+requires: java7
 requires: openssh
 requires: rundeck-config
 
