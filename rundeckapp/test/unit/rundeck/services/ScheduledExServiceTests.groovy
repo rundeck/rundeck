@@ -33,7 +33,7 @@ import rundeck.*
  * 
  */
 @TestFor(ScheduledExecutionService)
-@Mock([Execution, FrameworkService, Workflow, CommandExec, JobExec, PluginStep, ScheduledExecution, Option, Notification])
+@Mock([Execution, FrameworkService, WorkflowStep, CommandExec, JobExec, PluginStep, Workflow, ScheduledExecution, Option, Notification])
 class ScheduledExServiceTests {
     static void assertLength(int length, Object[] array){
         Assert.assertEquals(length,array.length)
