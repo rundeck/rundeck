@@ -7,6 +7,7 @@ jdk:
 branches:
   only:
     - development
+    - rundeck2
 
 notifications:
   irc:
