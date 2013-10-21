@@ -192,22 +192,15 @@ browser will already have been directed to the Execution Follow page.
  
 ## Creating Jobs
 
-Rundeck allows you to define two kinds of Jobs.
+From the Jobs, page press the "Create Job" menu to begin creating a Job. Then
+menu contains items to create a job definition or upload a definition from a file.
 
-* Temporary: A *temporary Job* defines a set of commands to execute and
-   a node filter configuration. 
-* Saved: A *saved job* also defines a set of commands to execute and
-   dispatcher options but can be given a name and stored in a
-   group. Additionally, saved Jobs can be given an execution schedule.
-
-From the Jobs, page press the "New Job" button to begin creating a Job.
-
-![New Job button](../figures/fig0301.png)
+![Create Job menu](../figures/fig0301.png)
 
 
 For the first Job example, create a Job that calls the info script.
 
-1.   Like in the earlier example, begin by pressing the "New Job" button.
+1.   Like in the earlier example, begin by pressing the "New Job" menu item.
 1.   Within the new job form:
      -   For "Job Name", enter "info" and for the "Group", enter
      "adm/resources". 
@@ -216,31 +209,31 @@ For the first Job example, create a Job that calls the info script.
      -   Providing a description will be come helpful to other users to understand the intent and purpose for the Job.
      -   Check the box for "Dispatch to Nodes"
      -   Choose the "Node Exclude Filters" and enter the name of your Rundeck server. This will cause the job to run on just the remote Nodes (eg., centos54 and ubuntu).
-     -   Type in and info script 
+     -   Type in shell script that produces some information (eg, `uname -a`)
      -   Save the Workflow step
      -   Press the "Create" button at the bottom of the page.
      ![Simple saved job form](../figures/fig0303.png)
 1.   After the the job is created, the browser is directed to the Jobs page. The folder structure reflecting the group naming will show one Job.
      -    Navigate through the folders buttons to the new job 
-1.   Notice the green arrow button.
-     -    Press the button to run the Job.
+1.   Notice the play button before the job name.
+     -    Press the play button to run the Job.
      ![Simple saved job](../figures/fig0304.png)
 
 1.   Press the "Run Job Now" button to begin execution.
      -    The job will be queued and executed. 
 1.   Look in the "Now running" section.
-     -    Press the "output >>" link to go to the execution follow page.
+     -    Press the "Show >>" link to go to the execution follow page.
      ![Simple saved job output](../figures/fig0305.png)
 
 ### Multiple Executions
 
-By default, a saved job is "Single Execution": it can only have a single execution running at a time.  This is useful if the steps the Job performs might be interfered with if another separate process was also performing them on the same Node(s).
+By default, a job runs as a is "Single Execution" -- it can only have a single execution running at a time.  This is useful if the steps the Job performs might be interfered with if another separate process was also performing them on the same Node(s).
 
 However, in some cases it is useful to allow a Job to be executed more than once simultaneously.
 
 You can make a job allow "Multiple Executions" by toggling the value to Yes in the Job editor field shown below:
 
-![Multiple executions](../figures/fig-manual-jobs-multiexec.png)
+![Multiple executions](../figures/fig0324.png)
 
 ### Node dispatching and filtering
 
@@ -322,11 +315,11 @@ will be displayed when the Job is listed:
 
 You can configure notifications to occur when a Job Execution finishes with either success or failure.
 
-If you want to receive notifications, click Yes under "Send Notification?".
+If you want to receive notifications, click Yes under "Send Notification?". 
 
 ![Notification form](../figures/fig0322.png)
 
-You can enable notifications for either Success or Failure or Start, and either notification by email, by webhooks or a plugin.  Click the checkbox next to the type of notification to enable.
+You can enable notifications for either Success or Failure or Start, and either notification by email, by webhooks or a plugin (like HipChat).  Click the checkbox next to the type of notification to enable.
 
 ![Notifications enabled](../figures/fig0323.png)
 
@@ -448,28 +441,26 @@ Will have the tokens replaced with the appropriate values prior to making the we
 
 ## Job history
 
-In the Jobs page, you can see the outcome of previous executions of
-Jobs by clicking the "Executions" link for the Job.
+In the Job page, you can see the outcome of previous executions of
+Jobs by looking at the Activity section.
 
-![Job executions link](../figures/fig0309.png)
+You can click on any past execution in the list to see the full execution for that job run.
 
-This returns a filtered history pertaining to that Job.  You can click on
-any past execution in the list to see the full execution state.
+You can also navigate to the Acitity page from the top navigation bar and use the 
+search filter to find executions by typing in the job name.
 
 ![Job executions matches](../figures/fig0310.png)
 
-From the Job detail page, one can also see previous execution history.
+The Jobs page also contains all executions for the job group shown.
 
 ## Killing Jobs
 
 Jobs that are currently running can be Killed immediately.
 
 WARNING: This feature should be used with caution, as it forcibly
-kills the Java Thread that the Job is running on. It may result in the
-Rundeck server becoming flaky. It is a deprecated feature of Java that
-is not recommended to be used, so do so only when extremely necessary.
+kills the Java Thread that the Job is running on. 
 
-From the History view Now Running section, or in the Job execution
+From the Activity view Now Running section, or in the Job execution
 follow page, click on the "Kill Job Now" button for the running Job.
 
 When prompted "Really kill this job?" Click the "Yes" button.
@@ -489,13 +480,13 @@ Click "Yes" when it says "Really delete this Job?"
 ## Updating and copying Jobs
 
 All of the data you set when creating a job can be modified (except UUID). To edit a
-Job, you can click the Pencil icon:
+Job, you can click the "edit job" icon:
 
-![Job edit button](../figures/fig0312.png)
+![edit job button](../figures/fig0312.png)
 
-Similarly, to Copy a Job definition to a new Job, press the Copy button.
+Similarly, to Copy a Job definition to a new Job, press the "duplicate to a new job" button.
 
-![Job copy button](../figures/fig0313.png)
+![duplicate job button](../figures/fig0313.png)
 
 ## Exporting Job definitions
 
@@ -505,8 +496,8 @@ exported to XML or YAML file formats and be used for later import.
 Two methods exist to retrieve the Job definitions: via Rundeck's
 graphical interface, and via the <code>rd-jobs</code> shell tool.
 
-In the Job detail page, locate the icon with a document symbol in the toolbar. It is labeled
-"Download Job definition file"  in the mouse tool tip. Clicking on the icon will let you
+In the Job definition tab, locate the "Download Definition" menu button. 
+Clicking on the icon will let you
 choose either XML or YAML format to download the definition.
 
 ![Job export button](../figures/fig0314.png)
@@ -538,16 +529,16 @@ Consult the [rd-jobs(1)](../manpages/man1/rd-jobs.html) manual page for addition
 
 ## Importing Job definitions
 
-If you have a "job.xml" file (See above) and want to upload it via
+If you have a job definition file (See above) and want to upload it via
 the GUI web interface, you can do so.
 
-Click on the New Job" button in the Job list.
+Click on the "Create Job" menu button in the Job list.
 
-In the "Create New Job" form, click on the button that says "Upload Definition..." on the right side:
+Click the item that says "Upload Definition...":
 
 ![Job import button](../figures/fig0315.png)
 
-Click the Choose File button and choose your job.xml file to upload.
+Click the Choose File button and choose your job definition file to upload.
 
 ![Job import form](../figures/fig0316.png)
 
@@ -573,9 +564,9 @@ definitions in the XML file, they will show up on the page.
 
 After reading this chapter, you should be familiar with Rundeck Jobs
 and able to find and run them. You should understand how to create
-temporary and saved jobs and understand how to find their history.
+ jobs and understand how to find their previous executions.
 Finally, you should be aware of how to export and import Job
-definitions as XML documents.
+definitions as XML or YAML documents.
 
 Next, we'll cover how to create multi-step procedures using Job
 Workflows.

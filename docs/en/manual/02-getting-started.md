@@ -119,7 +119,7 @@ Simply download it, and place it into a directory that will be the `RDECK_BASE` 
 
 Start the Rundeck server by running the jar using java:
 
-    java -jar rundeck-launcher-1.6.0.jar
+    java -jar rundeck-launcher-2.0.0.jar
 
 This will extract the contents into the current working directory and start the service.
 You can Ctl-C the process and then start and stop it using the `rundeckd` script

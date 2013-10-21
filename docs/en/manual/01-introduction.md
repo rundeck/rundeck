@@ -5,7 +5,7 @@
 ## What is this manual about?
 
 Welcome to the Rundeck user manual. This manual was written to help
-you quickly become productive with the Rundeck service and tools. 
+you quickly become productive with the Rundeck server and tools. 
 
 ## What is Rundeck?
 
