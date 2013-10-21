@@ -62,7 +62,7 @@ osName
 
 tags
 
-:   Comma separated list of filtering tags.  (optional)
+:   Comma separated list of filtering tags.  (optional)  Tags are used for filtering nodes and often represent server role, environment, class, or group.
 
 username
 
@@ -147,6 +147,16 @@ An example with a custom attribute "appname" specified in the `<node>` element:
         hostname="192.168.1.106:4022"
         username="deploy"
         appname="CoolApp"
+        />
+
+An example with tags and custom attributes that describe the server role and environment for this node:
+
+    <node name="centos54"
+        hostname="192.168.1.106"
+        username="deploy"
+        role="redis_server"
+        environment="production"
+        tags="redis_server, production"
         />
 
 
