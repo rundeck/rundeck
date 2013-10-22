@@ -129,7 +129,7 @@ class FrameworkServiceTests  {
     void testAuthorizeProjectJobAll(){
         FrameworkService test= new FrameworkService();
         def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String argString, Closure clos ->
+        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
             clos.call()
         }
         test.metricService = mcontrol.createMock()
@@ -159,7 +159,7 @@ class FrameworkServiceTests  {
     void testAuthorizeProjectJobAllSingleAuthFalse() {
         FrameworkService test = new FrameworkService();
         def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String argString, Closure clos ->
+        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
             clos.call()
         }
         test.metricService = mcontrol.createMock()
@@ -189,7 +189,7 @@ class FrameworkServiceTests  {
     void testAuthorizeProjectJobAllMultipleAuthFalse() {
         FrameworkService test = new FrameworkService();
         def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String argString, Closure clos ->
+        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
             clos.call()
         }
         test.metricService = mcontrol.createMock()
@@ -219,7 +219,7 @@ class FrameworkServiceTests  {
     void testAuthorizeProjectJobAllAllMultipleAuthFalse() {
         FrameworkService test = new FrameworkService();
         def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String argString, Closure clos ->
+        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
             clos.call()
         }
         test.metricService = mcontrol.createMock()
@@ -249,7 +249,7 @@ class FrameworkServiceTests  {
     void testAuthorizeProjectJobAllAllMultipleAuthTrue() {
         FrameworkService test = new FrameworkService();
         def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String argString, Closure clos ->
+        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
             clos.call()
         }
         test.metricService = mcontrol.createMock()
@@ -278,7 +278,7 @@ class FrameworkServiceTests  {
     void testAuthorizeProjectResources(){
         FrameworkService test= new FrameworkService();
         def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String argString, Closure clos ->
+        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
             clos.call()
         }
         test.metricService = mcontrol.createMock()
@@ -306,7 +306,7 @@ class FrameworkServiceTests  {
     void testAuthorizeProjectResource(){
         FrameworkService test= new FrameworkService();
         def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String argString, Closure clos ->
+        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
             clos.call()
         }
         test.metricService = mcontrol.createMock()
@@ -331,7 +331,7 @@ class FrameworkServiceTests  {
     void testAuthorizeProjectResourceAllSuccess(){
         FrameworkService test= new FrameworkService();
         def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String argString, Closure clos ->
+        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
             clos.call()
         }
         test.metricService = mcontrol.createMock()
@@ -361,7 +361,7 @@ class FrameworkServiceTests  {
     void testAuthorizeProjectResourceAllFailure() {
         FrameworkService test = new FrameworkService();
         def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String argString, Closure clos ->
+        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
             clos.call()
         }
         test.metricService = mcontrol.createMock()
@@ -391,7 +391,7 @@ class FrameworkServiceTests  {
     void testAuthorizeProjectResourceAllMixedFailure() {
         FrameworkService test = new FrameworkService();
         def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String argString, Closure clos ->
+        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
             clos.call()
         }
         test.metricService = mcontrol.createMock()
@@ -421,7 +421,7 @@ class FrameworkServiceTests  {
     void testAuthorizeProjectResourceAllAllFailure() {
         FrameworkService test = new FrameworkService();
         def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String argString, Closure clos ->
+        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
             clos.call()
         }
         test.metricService = mcontrol.createMock()
@@ -451,7 +451,7 @@ class FrameworkServiceTests  {
     void testAuthorizeProjectResourceAllMultiSuccess() {
         FrameworkService test = new FrameworkService();
         def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String argString, Closure clos ->
+        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
             clos.call()
         }
         test.metricService = mcontrol.createMock()
@@ -524,7 +524,7 @@ class FrameworkServiceTests  {
     void testAuthorizeApplicationResourceSuccess(){
         FrameworkService test= new FrameworkService();
         def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String argString, Closure clos ->
+        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
             clos.call()
         }
         test.metricService = mcontrol.createMock()
@@ -550,7 +550,7 @@ class FrameworkServiceTests  {
     void testAuthorizeApplicationResourceFailure() {
         FrameworkService test = new FrameworkService();
         def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String argString, Closure clos ->
+        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
             clos.call()
         }
         test.metricService = mcontrol.createMock()
@@ -575,7 +575,7 @@ class FrameworkServiceTests  {
     void testAuthorizeApplicationResourceAllSuccess(){
         FrameworkService test= new FrameworkService();
         def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String argString, Closure clos ->
+        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
             clos.call()
         }
         test.metricService = mcontrol.createMock()
@@ -605,7 +605,7 @@ class FrameworkServiceTests  {
     void testAuthorizeApplicationResourceAllFailure() {
         FrameworkService test = new FrameworkService();
         def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String argString, Closure clos ->
+        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
             clos.call()
         }
         test.metricService = mcontrol.createMock()
@@ -635,7 +635,7 @@ class FrameworkServiceTests  {
     void testAuthorizeApplicationResourceAllMultiMixed() {
         FrameworkService test = new FrameworkService();
         def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String argString, Closure clos ->
+        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
             clos.call()
         }
         test.metricService = mcontrol.createMock()
@@ -665,7 +665,7 @@ class FrameworkServiceTests  {
     void testAuthorizeApplicationResourceAllMultiFail() {
         FrameworkService test = new FrameworkService();
         def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String argString, Closure clos ->
+        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
             clos.call()
         }
         test.metricService = mcontrol.createMock()
@@ -695,7 +695,7 @@ class FrameworkServiceTests  {
     void testAuthorizeApplicationResourceAllMultiSuccess() {
         FrameworkService test = new FrameworkService();
         def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String argString, Closure clos ->
+        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
             clos.call()
         }
         test.metricService = mcontrol.createMock()
@@ -725,7 +725,7 @@ class FrameworkServiceTests  {
     void testAuthorizeApplicationResourceType() {
         FrameworkService test = new FrameworkService();
         def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String argString, Closure clos ->
+        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
             clos.call()
         }
         test.metricService = mcontrol.createMock()
@@ -749,7 +749,7 @@ class FrameworkServiceTests  {
     void testAuthorizeApplicationResourceTypeAllSuccess() {
         FrameworkService test = new FrameworkService();
         def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String argString, Closure clos ->
+        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
             clos.call()
         }
         test.metricService = mcontrol.createMock()
@@ -778,7 +778,7 @@ class FrameworkServiceTests  {
     void testAuthorizeApplicationResourceTypeAllFailure() {
         FrameworkService test = new FrameworkService();
         def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String argString, Closure clos ->
+        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
             clos.call()
         }
         test.metricService = mcontrol.createMock()
@@ -807,7 +807,7 @@ class FrameworkServiceTests  {
     void testAuthorizeApplicationResourceTypeAllMultiFailure() {
         FrameworkService test = new FrameworkService();
         def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String argString, Closure clos ->
+        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
             clos.call()
         }
         test.metricService = mcontrol.createMock()
@@ -836,7 +836,7 @@ class FrameworkServiceTests  {
     void testAuthorizeApplicationResourceTypeAllMixedFailure() {
         FrameworkService test = new FrameworkService();
         def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String argString, Closure clos ->
+        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
             clos.call()
         }
         test.metricService = mcontrol.createMock()
@@ -865,7 +865,7 @@ class FrameworkServiceTests  {
     void testAuthorizeApplicationResourceTypeAllMultiSuccess() {
         FrameworkService test = new FrameworkService();
         def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String argString, Closure clos ->
+        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
             clos.call()
         }
         test.metricService = mcontrol.createMock()

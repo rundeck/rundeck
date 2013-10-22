@@ -172,7 +172,7 @@ class FrameworkService implements ApplicationContextAware {
      * @param project
      */
     def INodeSet filterNodeSet(Framework framework, NodesSelector selector, String project) {
-        metricService.withTimer('filterNodeSet') {
+        metricService.withTimer(this.class.name,'filterNodeSet') {
             framework.filterNodeSet(selector, project, null)
         }
     }
@@ -186,7 +186,7 @@ class FrameworkService implements ApplicationContextAware {
      * @param framework framework
      */
     def userAuthorizedForScript(user,project,script,Framework framework){
-        return metricService.withTimer('userAuthorizedForScript') {
+        metricService.withTimer(this.class.name,'userAuthorizedForScript') {
             framework.getAuthorizationMgr().authorizeScript(user,project,script)
         }
     }
@@ -221,7 +221,7 @@ class FrameworkService implements ApplicationContextAware {
         if (null == project) {
             throw new IllegalArgumentException("null project")
         }
-        def Set decisions = metricService.withTimer('authorizeProjectResources') {
+        def Set decisions = metricService.withTimer(this.class.name,'authorizeProjectResources') {
             framework.getAuthorizationMgr().evaluate(
                     resources,
                     framework.getAuthenticationMgr().subject,
@@ -242,7 +242,7 @@ class FrameworkService implements ApplicationContextAware {
         if (null == project) {
             throw new IllegalArgumentException("null project")
         }
-        def decision= metricService.withTimer('authorizeProjectResource') {
+        def decision= metricService.withTimer(this.class.name,'authorizeProjectResource') {
             framework.getAuthorizationMgr().evaluate(
                     resource,
                     framework.getAuthenticationMgr().subject,
@@ -263,7 +263,7 @@ class FrameworkService implements ApplicationContextAware {
         if(null==project){
             throw new IllegalArgumentException("null project")
         }
-        def decisions= metricService.withTimer('authorizeProjectResourceAll') {
+        def decisions= metricService.withTimer(this.class.name,'authorizeProjectResourceAll') {
             framework.getAuthorizationMgr().evaluate(
                     [resource] as Set,
                     framework.getAuthenticationMgr().subject,
@@ -299,7 +299,7 @@ class FrameworkService implements ApplicationContextAware {
         def semap=[:]
         def adhocauth=null
         def results=[]
-        metricService.withTimer('filterAuthorizedProjectExecutionsAll') {
+        metricService.withTimer(this.class.name,'filterAuthorizedProjectExecutionsAll') {
             execs.each{Execution exec->
                 def ScheduledExecution se = exec.scheduledExecution
                 if(se && null==semap[se.id]){
@@ -326,7 +326,7 @@ class FrameworkService implements ApplicationContextAware {
         if (null == project) {
             throw new IllegalArgumentException("null project")
         }
-        def decisions= metricService.withTimer('authorizeProjectJobAll') {
+        def decisions= metricService.withTimer(this.class.name,'authorizeProjectJobAll') {
             framework.getAuthorizationMgr().evaluate(
                     [authResourceForJob(job)] as Set,
                     framework.getAuthenticationMgr().subject,
@@ -345,7 +345,7 @@ class FrameworkService implements ApplicationContextAware {
      */
     def boolean authorizeApplicationResource(framework, Map resource, String action) {
 
-        def decision = metricService.withTimer('authorizeApplicationResource') {
+        def decision = metricService.withTimer(this.class.name,'authorizeApplicationResource') {
             framework.getAuthorizationMgr().evaluate(
                 resource,
                 framework.getAuthenticationMgr().subject,
@@ -362,7 +362,7 @@ class FrameworkService implements ApplicationContextAware {
      * @return set of authorized resources
      */
     def Set authorizeApplicationResourceSet(Framework framework, Set<Map> resources, String action) {
-        def decisions = metricService.withTimer('authorizeApplicationResourceSet') {
+        def decisions = metricService.withTimer(this.class.name,'authorizeApplicationResourceSet') {
             framework.getAuthorizationMgr().evaluate(
                     resources,
                     framework.getAuthenticationMgr().subject,
@@ -382,7 +382,7 @@ class FrameworkService implements ApplicationContextAware {
     def boolean authorizeApplicationResourceAll(framework, Map resource, Collection actions) {
 
 
-        def Set decisions = metricService.withTimer('authorizeApplicationResourceAll') {
+        def Set decisions = metricService.withTimer(this.class.name,'authorizeApplicationResourceAll') {
             framework.getAuthorizationMgr().evaluate(
             [resource] as Set,
             framework.getAuthenticationMgr().subject,
@@ -401,7 +401,7 @@ class FrameworkService implements ApplicationContextAware {
      */
     def boolean authorizeApplicationResourceType(framework, String resourceType, String action) {
 
-        def decision = metricService.withTimer('authorizeApplicationResourceType') {
+        def decision = metricService.withTimer(this.class.name,'authorizeApplicationResourceType') {
             framework.getAuthorizationMgr().evaluate(
                     [type: 'resource', kind: resourceType],
                     framework.getAuthenticationMgr().subject,
@@ -420,7 +420,7 @@ class FrameworkService implements ApplicationContextAware {
     def boolean authorizeApplicationResourceTypeAll(framework, String resourceType, Collection actions) {
 
 
-        def Set decisions = metricService.withTimer('authorizeApplicationResourceType') {
+        def Set decisions = metricService.withTimer(this.class.name,'authorizeApplicationResourceType') {
             framework.getAuthorizationMgr().evaluate(
                     [[type: 'resource', kind: resourceType]] as Set,
                     framework.getAuthenticationMgr().subject,

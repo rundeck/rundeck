@@ -1123,7 +1123,7 @@ class ExecutionServiceTests  {
     private ExecutionService setupCleanupService(){
         def testService = new ExecutionService()
         def mcontrol = mockFor(MetricService, true)
-        mcontrol.demand.markMeter(1..1) { argString ->
+        mcontrol.demand.markMeter(1..1) { classname,argString ->
         }
         testService.metricService = mcontrol.createMock()
 

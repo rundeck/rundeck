@@ -520,7 +520,7 @@ class FrameworkController  {
      */
 
     def createProjectPost() {
-        metricService.markMeter(actionName)
+        metricService.markMeter(this.class.name,actionName)
         //only attempt project create if form POST is used
         def prefixKey = 'plugin'
         def project = params.project
