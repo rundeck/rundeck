@@ -1,6 +1,7 @@
 package com.dtolabs.rundeck.core.execution.workflow.state;
 
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Describes the state of a step within a workflow, which has an identifier, a possible sub workflow, and possible
@@ -43,4 +44,10 @@ public interface WorkflowStepState {
      * @return
      */
     public WorkflowState getSubWorkflowState();
+
+    /**
+     * Return the set of node targets if this is a node step, or null
+     * @return
+     */
+    public Set<String> getNodeStepTargets();
 }

@@ -8,5 +8,9 @@ public enum ExecutionState {
     RUNNING,
     SUCCEEDED,
     FAILED,
-    ABORTED
+    ABORTED;
+
+    public boolean isCompletedState() {
+        return this == ExecutionState.ABORTED || this == ExecutionState.SUCCEEDED || this == ExecutionState.FAILED;
+    }
 }

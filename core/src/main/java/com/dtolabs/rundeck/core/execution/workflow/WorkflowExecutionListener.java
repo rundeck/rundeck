@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
 import com.dtolabs.rundeck.core.execution.StatusResult;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 
@@ -48,12 +49,12 @@ public interface WorkflowExecutionListener  {
     /**
      * Called when execution begins for a step
      */
-    public void beginStepExecution(StepExecutionContext context, StepExecutionItem item);
+    public void beginStepExecution(StepExecutor executor,StepExecutionContext context, StepExecutionItem item);
 
     /**
      * Called when execution finishes for a step
      */
-    public void finishStepExecution(StatusResult result, StepExecutionContext context, StepExecutionItem item);
+    public void finishStepExecution(StepExecutor executor, StatusResult result, StepExecutionContext context, StepExecutionItem item);
 
     /**
      * Begin execution of a node step

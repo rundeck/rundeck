@@ -8,6 +8,7 @@ import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 
@@ -21,7 +22,7 @@ public class EchoExecListener implements WorkflowExecutionListener {
 
     public void finishWorkflowExecution(WorkflowExecutionResult result, StepExecutionContext executionContext,
             WorkflowExecutionItem item) {
-        System.err.println(String.format("finishWorkflowExecution(%s,%s,%s)", result,executionContext, item));
+        System.err.println(String.format("finishWorkflowExecution(%s,%s,%s)", result, executionContext, item));
     }
 
     public void beginWorkflowItem(int step, StepExecutionItem node) {
@@ -29,22 +30,24 @@ public class EchoExecListener implements WorkflowExecutionListener {
     }
 
     public void finishWorkflowItem(int step, StepExecutionItem node, boolean success) {
-        System.err.println(String.format("finishWorkflowItem(%s,%s,%s)", step,node, success));
+        System.err.println(String.format("finishWorkflowItem(%s,%s,%s)", step, node, success));
     }
 
-    public void beginStepExecution(StepExecutionContext context, StepExecutionItem item) {
-        System.err.println(String.format("beginStepExecution(%s,%s)", context, item));
+    public void beginStepExecution(StepExecutor executor, StepExecutionContext context, StepExecutionItem item) {
+        System.err.println(String.format("beginStepExecution(%s,%s,%s)", executor, context, item));
     }
 
-    public void finishStepExecution(StatusResult result, StepExecutionContext context, StepExecutionItem item) {
-        System.err.println(String.format("finishStepExecution(%s,%s)", result,context, item));
+    public void finishStepExecution(StepExecutor executor, StatusResult result, StepExecutionContext context,
+            StepExecutionItem item) {
+        System.err.println(String.format("finishStepExecution(%s,%s,%s,%s)", executor, result, context, item));
     }
 
     public void beginExecuteNodeStep(ExecutionContext context, NodeStepExecutionItem item, INodeEntry node) {
-        System.err.println(String.format("beginExecuteNodeStep(%s,%s,%s)", context, item,node));
+        System.err.println(String.format("beginExecuteNodeStep(%s,%s,%s)", context, item, node));
     }
 
-    public void finishExecuteNodeStep(NodeStepResult result, ExecutionContext context, StepExecutionItem item, INodeEntry node) {
-        System.err.println(String.format("finishExecuteNodeStep(%s,%s,%s,%s)",result, context, item,node));
+    public void finishExecuteNodeStep(NodeStepResult result, ExecutionContext context, StepExecutionItem item,
+            INodeEntry node) {
+        System.err.println(String.format("finishExecuteNodeStep(%s,%s,%s,%s)", result, context, item, node));
     }
 }

@@ -77,7 +77,7 @@ class ExecutionServiceImpl implements ExecutionService {
     public ExecutionResult executeItem(StepExecutionContext context, StepExecutionItem executionItem)
         throws ExecutionException, ExecutionServiceException {
         if (null != getWorkflowListener(context)) {
-            getWorkflowListener(context).beginStepExecution(context, executionItem);
+            getWorkflowListener(context).beginStepExecution(null,context, executionItem);
         }
         if (!(executionItem instanceof NodeStepExecutionItem)) {
             throw new IllegalArgumentException("Cannot dispatch item which is not a NodeStepExecutionItem: " +
@@ -99,7 +99,7 @@ class ExecutionServiceImpl implements ExecutionService {
         } finally {
             loggingReformatter.resetOutputStreams();
             if (null != getWorkflowListener(context)) {
-                getWorkflowListener(context).finishStepExecution(baseExecutionResult, context, item);
+                getWorkflowListener(context).finishStepExecution(null,baseExecutionResult, context, item);
             }
         }
 
@@ -107,9 +107,6 @@ class ExecutionServiceImpl implements ExecutionService {
     }
 
     public StepExecutionResult executeStep(StepExecutionContext context, StepExecutionItem item) throws StepException {
-        if (null != getWorkflowListener(context)) {
-            getWorkflowListener(context).beginStepExecution(context, item);
-        }
 
         final StepExecutor executor;
         try {
@@ -120,10 +117,13 @@ class ExecutionServiceImpl implements ExecutionService {
 
         StepExecutionResult result = null;
         try {
+            if (null != getWorkflowListener(context)) {
+                getWorkflowListener(context).beginStepExecution(executor, context, item);
+            }
             result = executor.executeWorkflowStep(context, item);
         } finally {
             if (null != getWorkflowListener(context)) {
-                getWorkflowListener(context).finishStepExecution(result, context, item);
+                getWorkflowListener(context).finishStepExecution(executor,result, context, item);
             }
         }
         return result;

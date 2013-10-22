@@ -29,7 +29,7 @@ class WorkflowService {
         MutableWorkflowState state = createStateForWorkflow(execution.workflow)
         workflowStates.put(execution.id, state)
         def mutablestate= new MutableWorkflowStateListener(state)
-        new WorkflowExecutionStateListenerAdapter([mutablestate,new EchoWFStateListener()])
+        new WorkflowExecutionStateListenerAdapter([new EchoWFStateListener(),mutablestate])
     }
     /**
      * Read the workflow state for an execution

@@ -1,6 +1,7 @@
 package com.dtolabs.rundeck.core.execution.workflow.state;
 
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -24,4 +25,15 @@ public interface WorkflowStateListener {
      * @param nodeSet        the set of nodes
      */
     public void workflowExecutionStateChanged(ExecutionState executionState, Date timestamp, Set<String> nodeSet);
+
+    /**
+     * A sub workflow state changed with the given identifier
+     *
+     * @param identifier     the step identifier
+     * @param executionState state
+     * @param timestamp      timestamp
+     * @param nodeSet        node set
+     */
+    public void subWorkflowExecutionStateChanged(StepIdentifier identifier, ExecutionState executionState,
+            Date timestamp, Set<String> nodeSet);
 }

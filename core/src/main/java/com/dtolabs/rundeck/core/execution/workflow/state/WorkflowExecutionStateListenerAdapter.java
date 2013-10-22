@@ -5,6 +5,8 @@ import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.StatusResult;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.*;
+import com.dtolabs.rundeck.core.execution.workflow.steps.NodeDispatchStepExecutor;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 
@@ -40,6 +42,18 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
         }
     }
 
+    private void notifyAllSubWorkflowState(StepIdentifier identifier, ExecutionState executionState, Date timestamp,
+            Collection<String> nodenames) {
+
+        HashSet<String> nodes = null;
+        if (null != nodenames) {
+            nodes = new HashSet<String>(nodenames);
+        }
+        for (WorkflowStateListener listener : listeners) {
+            listener.subWorkflowExecutionStateChanged(identifier,executionState, timestamp, nodes);
+        }
+    }
+
 
     private void notifyAllStepState(StepIdentifier identifier, StepStateChange stepStateChange, Date timestamp) {
         for (WorkflowStateListener listener : listeners) {
@@ -48,12 +62,29 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
     }
 
     public void beginWorkflowExecution(StepExecutionContext executionContext, WorkflowExecutionItem item) {
-        notifyAllWorkflowState(ExecutionState.RUNNING, new Date(), executionContext.getNodes().getNodeNames());
+        stepContext.beginContext();
+        List<Integer> currentContext = stepContext.getCurrentContext();
+        if(null==currentContext ){
+            notifyAllWorkflowState(ExecutionState.RUNNING, new Date(), executionContext.getNodes().getNodeNames());
+        }else{
+            notifyAllSubWorkflowState(createIdentifier(), ExecutionState.RUNNING, new Date(),
+                    executionContext.getNodes().getNodeNames());
+        }
     }
 
     public void finishWorkflowExecution(WorkflowExecutionResult result, StepExecutionContext executionContext,
             WorkflowExecutionItem item) {
-        notifyAllWorkflowState(result.isSuccess() ? ExecutionState.SUCCEEDED : ExecutionState.FAILED, new Date(), null);
+        List<Integer> currentContext = stepContext.getCurrentContext();
+        if (null == currentContext || currentContext.size() < 1) {
+            notifyAllWorkflowState(
+                    null != result && result.isSuccess() ? ExecutionState.SUCCEEDED : ExecutionState.FAILED,
+                    new Date(), null);
+        }else{
+            notifyAllSubWorkflowState(createIdentifier(),
+                    null != result && result.isSuccess() ? ExecutionState.SUCCEEDED : ExecutionState.FAILED,
+                    new Date(), null);
+        }
+        stepContext.finishContext();
     }
 
     private StepIdentifier createIdentifier() {
@@ -78,9 +109,18 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
     }
 
     public void beginWorkflowItem(int step, StepExecutionItem node) {
+        stepContext.beginStepContext(step);
+        notifyAllStepState(createIdentifier(), createState(ExecutionState.RUNNING), new Date());
     }
 
     public void finishWorkflowItem(int step, StepExecutionItem node, boolean success) {
+        if (NodeDispatchStepExecutor.STEP_EXECUTION_TYPE.equals(node.getType())) {
+            //dont notify
+        } else {
+            notifyAllStepState(createIdentifier(), createState(success ? ExecutionState.SUCCEEDED : ExecutionState
+                    .FAILED), new Date());
+        }
+        stepContext.finishStepContext();
     }
 
     public void beginExecuteNodeStep(ExecutionContext context, NodeStepExecutionItem item, INodeEntry node) {
@@ -89,14 +129,10 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
 
     }
 
-    public void beginStepExecution(StepExecutionContext context, StepExecutionItem item) {
-        stepContext.beginStepContext(context.getStepNumber());
-        notifyAllStepState(createIdentifier(), createState(ExecutionState.RUNNING), new Date());
+    public void beginStepExecution(StepExecutor executor,StepExecutionContext context, StepExecutionItem item) {
     }
 
-    public void finishStepExecution(StatusResult result, StepExecutionContext context, StepExecutionItem item) {
-        notifyAllStepState(createIdentifier(), createState(stateForResult(result)), new Date());
-        stepContext.finishStepContext();
+    public void finishStepExecution(StepExecutor executor, StatusResult result, StepExecutionContext context, StepExecutionItem item) {
     }
 
     public void finishExecuteNodeStep(NodeStepResult result, ExecutionContext context, StepExecutionItem item,

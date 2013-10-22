@@ -41,6 +41,9 @@ public class StateUtils {
     public static StepIdentifier stepIdentifier(List<Integer> context) {
         return new StepIdentifierImpl(context);
     }
+    public static StepIdentifier stepIdentifierTail(StepIdentifier identifier) {
+        return new StepIdentifierImpl(identifier.getContext().subList(1, identifier.getContext().size()));
+    }
 
     public static StepIdentifier stepIdentifier(Integer... context) {
         return new StepIdentifierImpl(Arrays.asList(context));
@@ -53,13 +56,14 @@ public class StateUtils {
     }
 
     public static WorkflowStepState workflowStepState(StepState stepState, Map<String, StepState> nodeStateMap,
-            StepIdentifier stepIdentifier, WorkflowState subWorkflowState) {
+            StepIdentifier stepIdentifier, WorkflowState subWorkflowState, Set<String> nodeStepTargets) {
         WorkflowStepStateImpl workflowStepState = new WorkflowStepStateImpl();
         workflowStepState.setStepState(stepState);
         workflowStepState.setNodeStateMap(nodeStateMap);
         workflowStepState.setStepIdentifier(stepIdentifier);
         workflowStepState.setSubWorkflow(null != subWorkflowState);
         workflowStepState.setSubWorkflowState(subWorkflowState);
+        workflowStepState.setNodeStepTargets(nodeStepTargets);
         return workflowStepState;
     }
 }

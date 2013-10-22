@@ -48,61 +48,89 @@ change status
 merge metadata
 update timestamp. update timestamp on WorkflowState(s)
          */
-        executionState = transitionWaiting(executionState)
-        if(null==this.timestamp || this.timestamp< timestamp){
-            this.timestamp=timestamp
-        }
-        MutableWorkflowStepState found = null;
+        touchWFState(timestamp)
+
         Map<Integer, MutableWorkflowStepState> states = mutableStepStates;
-        def subid = identifier.context[0]-1
-        if (subid < 0) {
-            throw new IllegalStateException("Could not update state for step context: " + identifier
-                    + ": no step at index ${subid} found")
-        } else if (subid >= states.size() || null == states[subid]) {
-            states[subid]= new MutableWorkflowStepStateImpl(StateUtils.stepIdentifier(subid+1))
-            stepCount=states.size()
-        }
-        found = states[subid]
+        MutableWorkflowStepState currentStep = locateStepWithContext(identifier, states)
         if (identifier.context.size() > 1) {
+            transitionIfWaiting(currentStep.mutableStepState)
             //recurse to the workflow list to find the right index
 
-            MutableWorkflowState subflow
-            if (found.hasSubWorkflow()) {
-                subflow= found.mutableSubWorkflowState
-            } else {
-                //create it
-                //TODO
-                subflow=found.createMutableSubWorkflowState(null, 0)
-            }
-            found.mutableStepState.executionState = transitionWaiting(found.stepState.executionState)
-            def sublist = identifier.context.subList(1, identifier.context.size())
-            subflow.updateStateForStep(StateUtils.stepIdentifier(sublist), stepStateChange, timestamp);
+            MutableWorkflowState subflow = currentStep.hasSubWorkflow() ?
+                currentStep.mutableSubWorkflowState :
+                currentStep.createMutableSubWorkflowState(null, 0)
+            //recursively update subworkflow state for the step in the subcontext
+            subflow.updateStateForStep(StateUtils.stepIdentifierTail(identifier), stepStateChange, timestamp);
             return
         }
 
         //update the step found
-        MutableStepState toUpdate = null
+        MutableStepState toUpdate
         if (stepStateChange.isNodeState()) {
             //find node state in stepstate
-            if (found.nodeStateMap[stepStateChange.nodeName]) {
-                toUpdate = found.mutableNodeStateMap[stepStateChange.nodeName]
-            } else {
+            if (null == currentStep.nodeStateMap[stepStateChange.nodeName]) {
                 //create it
-                toUpdate = new MutableStepStateImpl()
-                found.mutableNodeStateMap[stepStateChange.nodeName] = toUpdate
+                currentStep.mutableNodeStateMap[stepStateChange.nodeName] = new MutableStepStateImpl()
             }
-            found.mutableStepState.executionState=transitionWaiting(found.mutableStepState.executionState)
+            toUpdate = currentStep.mutableNodeStateMap[stepStateChange.nodeName]
+            toUpdate.executionState = updateState(toUpdate.executionState, stepStateChange.stepState.executionState)
         } else {
             //overall step state
-            toUpdate = found.mutableStepState
+            toUpdate = currentStep.mutableStepState
+            //case: step is now RUNNING and has a target nodeset
+            if (stepStateChange.stepState.executionState == ExecutionState.RUNNING
+                    && currentStep.mutableStepState.executionState != ExecutionState.RUNNING
+                    && nodeSet) {
+                if(null==currentStep.nodeStepTargets){
+                    currentStep.setNodeStepTargets(nodeSet)
+                }
+            }
+            toUpdate.executionState = updateState(toUpdate.executionState, stepStateChange.stepState.executionState)
         }
+        transitionIfWaiting(currentStep.mutableStepState)
+
         //update state
         toUpdate.errorMessage = stepStateChange.stepState.errorMessage
-        toUpdate.executionState = updateState(toUpdate.executionState,stepStateChange.stepState.executionState)
         toUpdate.metadata = stepStateChange.stepState.metadata
+
+        if (stepStateChange.isNodeState() && currentStep.nodeStepTargets && stepStateChange.stepState.executionState.isCompletedState()) {
+            //if all target nodes have completed execution state, mark the overall step state
+            boolean finished = currentStep.nodeStepTargets.every{node-> currentStep.nodeStateMap[node]?.executionState?.isCompletedState() }
+            if(finished){
+                boolean aborted = currentStep.nodeStateMap.values()*.executionState.any{ it == ExecutionState.ABORTED }
+                boolean failed = currentStep.nodeStateMap.values()*.executionState.any { it == ExecutionState.FAILED }
+                currentStep.mutableStepState.executionState=updateState(currentStep.mutableStepState.executionState,
+                        aborted ? ExecutionState.ABORTED : failed ? ExecutionState.FAILED : ExecutionState.SUCCEEDED)
+            }
+        }
     }
 
-    private ExecutionState transitionWaiting(ExecutionState state) {
+    private MutableWorkflowStepState locateStepWithContext(StepIdentifier identifier, Map<Integer, MutableWorkflowStepState> states) {
+        MutableWorkflowStepState currentStep
+        def subid = identifier.context[0] - 1
+        if (subid < 0) {
+            throw new IllegalStateException("Could not update state for step context: " + identifier
+                    + ": no step at index ${subid} found")
+        } else if (subid >= states.size() || null == states[subid]) {
+            states[subid] = new MutableWorkflowStepStateImpl(StateUtils.stepIdentifier(subid + 1))
+            stepCount = states.size()
+        }
+        currentStep = states[subid]
+        currentStep
+    }
+
+    private void touchWFState(Date timestamp) {
+        executionState = transitionStateIfWaiting(executionState)
+        if (null == this.timestamp || this.timestamp < timestamp) {
+            this.timestamp = timestamp
+        }
+    }
+
+
+    private void transitionIfWaiting(MutableStepState step) {
+        step.executionState = transitionStateIfWaiting(step.executionState)
+    }
+    private ExecutionState transitionStateIfWaiting(ExecutionState state) {
         if (waitingState(state)) {
             return updateState(state, ExecutionState.RUNNING)
         }else{
@@ -121,6 +149,9 @@ update timestamp. update timestamp on WorkflowState(s)
      * @return
      */
     public static ExecutionState updateState(ExecutionState fromState, ExecutionState toState) {
+        if(fromState==toState){
+            return toState
+        }
         switch (toState){
             case null:
                 throw new IllegalStateException("Cannot change state to ${fromState}")
@@ -146,13 +177,39 @@ update timestamp. update timestamp on WorkflowState(s)
 
     @Override
     void updateWorkflowState(ExecutionState executionState, Date timestamp, Set<String> nodenames) {
+        touchWFState(timestamp)
         this.executionState = updateState(this.executionState, executionState)
-        this.timestamp = timestamp
         if (null != nodenames && (null == mutableNodeSet || mutableNodeSet.size() < 1)) {
             mutableNodeSet = new HashSet(nodenames)
         }
+        if(executionState.isCompletedState()){
+            //TODO: clean up all step states
+            //each step, set state if not complete
+            //each node step, set node states if not complete
+            //each subworkflow, cleanup
+            System.err.println("TODO: cleanup full workflow state")
+        }
     }
 
+    @Override
+    void updateSubWorkflowState(StepIdentifier identifier, ExecutionState executionState, Date timestamp, Set<String> nodeNames) {
+        touchWFState(timestamp)
+        Map<Integer, MutableWorkflowStepState> states = mutableStepStates;
+        //descend one step
+        MutableWorkflowStepState nextStep = locateStepWithContext(identifier, states)
+        MutableWorkflowState nextWorkflow = nextStep.hasSubWorkflow() ?
+            nextStep.mutableSubWorkflowState :
+            nextStep.createMutableSubWorkflowState(null, 0)
+
+        transitionIfWaiting(nextStep.mutableStepState)
+        if (identifier.context.size() > 1) {
+            //more steps to descend
+            nextWorkflow.updateSubWorkflowState(StateUtils.stepIdentifierTail(identifier), executionState, timestamp,nodeNames);
+        }else {
+            //update the workflow state for nextStep
+            nextWorkflow.updateWorkflowState(executionState, timestamp, nodeNames)
+        }
+    }
 
     @Override
     public java.lang.String toString() {

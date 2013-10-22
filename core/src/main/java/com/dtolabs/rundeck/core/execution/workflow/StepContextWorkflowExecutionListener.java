@@ -37,12 +37,14 @@ public class StepContextWorkflowExecutionListener<NODE, STEP> implements StepNod
         if (null != stack) {
             //pop any workflow context already on stack
             if (stack.size() > 0) {
-                contextStack.set(stack.copyPop());
+                localStep.set(stack.pop());
             } else {
+                localStep.set(null);
                 contextStack.set(null);
             }
+        }else{
+            localStep.set(null);
         }
-        localStep.set(null);
         localNode.set(null);
     }
 
@@ -74,6 +76,13 @@ public class StepContextWorkflowExecutionListener<NODE, STEP> implements StepNod
                 return contextStack.get().copyPush(step).stack();
             } else {
                 return ContextStack.create(step).stack();
+            }
+        } else if (null != contextStack.get()) {
+            List<STEP> stack = contextStack.get().stack();
+            if (stack.size() > 0) {
+                return stack;
+            } else {
+                return null;
             }
         } else {
             return null;

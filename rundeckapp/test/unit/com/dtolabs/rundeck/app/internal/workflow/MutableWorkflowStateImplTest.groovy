@@ -163,17 +163,13 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
     public void testUpdateStateNormal() {
         assertEquals(ExecutionState.WAITING, MutableWorkflowStateImpl.updateState(null, ExecutionState.WAITING))
         assertEquals(ExecutionState.RUNNING, MutableWorkflowStateImpl.updateState(null, ExecutionState.RUNNING))
+        assertEquals(ExecutionState.RUNNING, MutableWorkflowStateImpl.updateState(ExecutionState.RUNNING, ExecutionState.RUNNING))
         assertEquals(ExecutionState.RUNNING, MutableWorkflowStateImpl.updateState(ExecutionState.WAITING, ExecutionState.RUNNING))
         assertEquals(ExecutionState.SUCCEEDED, MutableWorkflowStateImpl.updateState(ExecutionState.RUNNING, ExecutionState.SUCCEEDED))
         assertEquals(ExecutionState.FAILED, MutableWorkflowStateImpl.updateState(ExecutionState.RUNNING, ExecutionState.FAILED))
         assertEquals(ExecutionState.ABORTED, MutableWorkflowStateImpl.updateState(ExecutionState.RUNNING, ExecutionState.ABORTED))
     }
     public void testUpdateStateInvalid() {
-        try {
-            MutableWorkflowStateImpl.updateState(ExecutionState.RUNNING, ExecutionState.RUNNING)
-            fail("Should not succeed")
-        } catch (IllegalStateException e) {
-        }
         try {
             MutableWorkflowStateImpl.updateState(ExecutionState.RUNNING, ExecutionState.WAITING)
             fail("Should not succeed")

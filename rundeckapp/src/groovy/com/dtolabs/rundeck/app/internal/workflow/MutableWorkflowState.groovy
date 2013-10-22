@@ -26,4 +26,14 @@ public interface MutableWorkflowState extends WorkflowState {
      * @param timestamp
      */
     void updateWorkflowState(ExecutionState executionState, Date timestamp, Set<String> nodeNames);
+
+    /**
+     * Update state for a sub workflow
+     * @param identifier
+     * @param executionState
+     * @param timestamp
+     * @param nodeNames
+     */
+    void updateSubWorkflowState(StepIdentifier identifier, ExecutionState executionState, Date timestamp, Set<String> nodeNames);
+
 }

@@ -14,4 +14,12 @@ public class EchoWFStateListener implements WorkflowStateListener{
     public void workflowExecutionStateChanged(ExecutionState executionState, Date timestamp, Set<String> nodeSet) {
         System.err.println(String.format("workflowExecutionStateChanged(%s,%s,%s)", executionState, timestamp, nodeSet));
     }
+
+    @Override
+    public void subWorkflowExecutionStateChanged(StepIdentifier identifier, ExecutionState executionState, Date
+            timestamp, Set<String> nodeSet) {
+        System.err.println(String.format("subWorkflowExecutionStateChanged(%s,%s,%s,%s)", identifier, executionState,
+                timestamp,
+                nodeSet));
+    }
 }

@@ -1,6 +1,7 @@
 package com.dtolabs.rundeck.core.execution.workflow.state;
 
 import java.util.Map;
+import java.util.Set;
 
 /**
  * $INTERFACE is ... User: greg Date: 10/15/13 Time: 3:00 PM
@@ -11,6 +12,7 @@ public class WorkflowStepStateImpl implements WorkflowStepState {
     private Map<String, StepState> nodeStateMap;
     private boolean subWorkflow;
     private WorkflowState subWorkflowState;
+    private Set<String> nodeStepTargets;
 
 
     public StepIdentifier getStepIdentifier() {
@@ -51,5 +53,13 @@ public class WorkflowStepStateImpl implements WorkflowStepState {
 
     public void setSubWorkflowState(WorkflowState subWorkflowState) {
         this.subWorkflowState = subWorkflowState;
+    }
+
+    public Set<String> getNodeStepTargets() {
+        return nodeStepTargets;
+    }
+
+    public void setNodeStepTargets(Set<String> nodeStepTargets) {
+        this.nodeStepTargets = nodeStepTargets;
     }
 }
