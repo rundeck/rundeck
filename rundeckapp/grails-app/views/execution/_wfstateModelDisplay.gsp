@@ -23,6 +23,9 @@
     <div >
         Step ${subCtx? subCtx+'/':''}${i+1}: (${substep},${nodestep})
         <span class="execstate ${wfstep.stepState.executionState}">${wfstep.stepState.executionState}</span>
+        <g:if test="${wfstep.stepState.errorMessage}">
+            ${wfstep.stepState.errorMessage}
+        </g:if>
     </div>
 
     <g:if test="${substep}">
