@@ -8,7 +8,11 @@ public enum ExecutionState {
     RUNNING,
     SUCCEEDED,
     FAILED,
-    ABORTED;
+    ABORTED,
+    //node step intermediate states
+    NODE_PARTIAL_SUCCEEDED,
+    NODE_MIXED,
+    ;
 
     public boolean isCompletedState() {
         return this == ExecutionState.ABORTED || this == ExecutionState.SUCCEEDED || this == ExecutionState.FAILED;
