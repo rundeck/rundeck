@@ -27,6 +27,10 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         }
     }
 
+    MutableWorkflowStepState getAt(Integer index){
+        return mutableStepStates[index]
+    }
+
     @Override
     List<WorkflowStepState> getStepStates() {
         return mutableStepStates.sort().values() as List
@@ -95,14 +99,55 @@ update timestamp. update timestamp on WorkflowState(s)
 
         if (stepStateChange.isNodeState() && currentStep.nodeStepTargets && stepStateChange.stepState.executionState.isCompletedState()) {
             //if all target nodes have completed execution state, mark the overall step state
-            boolean finished = currentStep.nodeStepTargets.every{node-> currentStep.nodeStateMap[node]?.executionState?.isCompletedState() }
-            if(finished){
-                boolean aborted = currentStep.nodeStateMap.values()*.executionState.any{ it == ExecutionState.ABORTED }
-                boolean failed = currentStep.nodeStateMap.values()*.executionState.any { it == ExecutionState.FAILED }
-                currentStep.mutableStepState.executionState=updateState(currentStep.mutableStepState.executionState,
-                        aborted ? ExecutionState.ABORTED : failed ? ExecutionState.FAILED : ExecutionState.SUCCEEDED)
-            }
+            finishNodeStepIfNodesFinished(currentStep)
+//        }else if(!stepStateChange.isNodeState() && currentStep.hasSubWorkflow() && stepStateChange.stepState.executionState.isCompletedState()){
+//            cleanupSteps(stepStateChange.stepState.executionState, timestamp)
         }
+    }
+
+    private finishNodeStepIfNodesFinished(MutableWorkflowStepState currentStep){
+        boolean finished = currentStep.nodeStepTargets.every { node -> currentStep.nodeStateMap[node]?.executionState?.isCompletedState() }
+        if (finished) {
+            boolean aborted = currentStep.nodeStateMap.values()*.executionState.any { it == ExecutionState.ABORTED }
+            boolean failed = currentStep.nodeStateMap.values()*.executionState.any { it == ExecutionState.FAILED }
+            currentStep.mutableStepState.executionState = updateState(currentStep.mutableStepState.executionState,
+                    aborted ? ExecutionState.ABORTED : failed ? ExecutionState.FAILED : ExecutionState.SUCCEEDED)
+        }
+    }
+    private finishNodeStepForced(ExecutionState overall,MutableWorkflowStepState currentStep){
+        boolean finished = currentStep.nodeStepTargets.every { node -> currentStep.nodeStateMap[node]?.executionState?.isCompletedState() }
+        boolean aborted = currentStep.nodeStateMap.values()*.executionState.any { it == ExecutionState.ABORTED }
+        boolean abortedAll = currentStep.nodeStateMap.values()*.executionState.every { it == ExecutionState.ABORTED }
+        boolean failed = currentStep.nodeStateMap.values()*.executionState.any { it == ExecutionState.FAILED }
+        boolean failedAll = currentStep.nodeStateMap.values()*.executionState.every { it == ExecutionState.FAILED }
+        boolean succeeded = currentStep.nodeStateMap.values()*.executionState.any { it == ExecutionState.SUCCEEDED }
+        boolean succeededAll = currentStep.nodeStateMap.values()*.executionState.every { it == ExecutionState.SUCCEEDED }
+        ExecutionState result=overall
+        if(finished){
+            //all nodes finished
+            if(abortedAll){
+                result=ExecutionState.ABORTED
+            }else if(failedAll){
+                result=ExecutionState.FAILED
+            }else if(succeededAll){
+                result=ExecutionState.SUCCEEDED
+            }else{
+                result=ExecutionState.NODE_MIXED
+            }
+        }else if (aborted && !failed && !succeeded) {
+            //partial aborted
+            result = ExecutionState.ABORTED
+        } else if (!aborted && failed && !succeeded) {
+            //partial failed
+            result = ExecutionState.FAILED
+        } else if (!failed && !aborted && succeeded) {
+            //partial success
+            result = ExecutionState.NODE_PARTIAL_SUCCEEDED
+        } else {
+            result = ExecutionState.NODE_MIXED
+        }
+
+        currentStep.mutableStepState.executionState = updateState(currentStep.mutableStepState.executionState, result)
     }
 
     private MutableWorkflowStepState locateStepWithContext(StepIdentifier identifier, Map<Integer, MutableWorkflowStepState> states) {
@@ -168,7 +213,9 @@ update timestamp. update timestamp on WorkflowState(s)
             case ExecutionState.SUCCEEDED:
             case ExecutionState.FAILED:
             case ExecutionState.ABORTED:
-                if(toState!=fromState && fromState!=ExecutionState.RUNNING) {
+            case ExecutionState.NODE_MIXED:
+            case ExecutionState.NODE_PARTIAL_SUCCEEDED:
+                if(toState!=fromState && !(fromState in [ExecutionState.RUNNING, ExecutionState.WAITING])) {
                     throw new IllegalStateException("Cannot change from " + fromState + " to " + toState)
                 }
         }
@@ -177,6 +224,9 @@ update timestamp. update timestamp on WorkflowState(s)
 
     @Override
     void updateWorkflowState(ExecutionState executionState, Date timestamp, Set<String> nodenames) {
+        updateWorkflowState(false,executionState,timestamp,nodenames)
+    }
+    void updateWorkflowState(boolean subflow,ExecutionState executionState, Date timestamp, Set<String> nodenames) {
         touchWFState(timestamp)
         this.executionState = updateState(this.executionState, executionState)
         if (null != nodenames && (null == mutableNodeSet || mutableNodeSet.size() < 1)) {
@@ -187,7 +237,35 @@ update timestamp. update timestamp on WorkflowState(s)
             //each step, set state if not complete
             //each node step, set node states if not complete
             //each subworkflow, cleanup
-            System.err.println("TODO: cleanup full workflow state")
+            cleanupSteps(executionState, timestamp)
+        }
+    }
+
+    private void cleanupSteps(ExecutionState executionState, Date timestamp) {
+        mutableStepStates.each { i, step ->
+            if (!step.stepState.executionState.isCompletedState()) {
+                resolveStepCompleted(executionState, timestamp, i+1, step)
+            }
+        }
+    }
+
+    /**
+     * Resolve the completed state of a step based on overal workflow completion state
+     * @param executionState
+     * @param date
+     * @param i
+     * @param mutableWorkflowStepState
+     */
+    def resolveStepCompleted(ExecutionState executionState, Date date, int i, MutableWorkflowStepState mutableWorkflowStepState) {
+        System.err.println("x resolveStepCompleted:${executionState}, ${i}, ${mutableWorkflowStepState}")
+        if(mutableWorkflowStepState.nodeStepTargets){
+            //a node step
+            finishNodeStepForced(executionState,mutableWorkflowStepState)
+            mutableWorkflowStepState.mutableStepState.errorMessage = "Resolved state: ${mutableWorkflowStepState.mutableStepState.executionState}, " +
+                    "due to: node step completion state"
+        }else {
+            mutableWorkflowStepState.mutableStepState.executionState = updateState(mutableWorkflowStepState.mutableStepState.executionState, executionState)
+            mutableWorkflowStepState.mutableStepState.errorMessage = "Resolved state: ${executionState}, due to: workflow completion state"
         }
     }
 
@@ -195,19 +273,20 @@ update timestamp. update timestamp on WorkflowState(s)
     void updateSubWorkflowState(StepIdentifier identifier, ExecutionState executionState, Date timestamp, Set<String> nodeNames) {
         touchWFState(timestamp)
         Map<Integer, MutableWorkflowStepState> states = mutableStepStates;
-        //descend one step
-        MutableWorkflowStepState nextStep = locateStepWithContext(identifier, states)
-        MutableWorkflowState nextWorkflow = nextStep.hasSubWorkflow() ?
-            nextStep.mutableSubWorkflowState :
-            nextStep.createMutableSubWorkflowState(null, 0)
 
-        transitionIfWaiting(nextStep.mutableStepState)
-        if (identifier.context.size() > 1) {
+        if (identifier.context.size() > 0) {
+            //descend one step
+            MutableWorkflowStepState nextStep = locateStepWithContext(identifier, states)
+            MutableWorkflowState nextWorkflow = nextStep.hasSubWorkflow() ?
+                nextStep.mutableSubWorkflowState :
+                nextStep.createMutableSubWorkflowState(null, 0)
+
+            transitionIfWaiting(nextStep.mutableStepState)
             //more steps to descend
             nextWorkflow.updateSubWorkflowState(StateUtils.stepIdentifierTail(identifier), executionState, timestamp,nodeNames);
         }else {
-            //update the workflow state for nextStep
-            nextWorkflow.updateWorkflowState(executionState, timestamp, nodeNames)
+            //update the workflow state for this workflow
+            updateWorkflowState(true, executionState, timestamp, nodeNames)
         }
     }
 
