@@ -180,12 +180,3 @@ framework.ssh.timeout = 0
 #
 framework.log.dispatch.console.format =[%user@%node %command][%level] %message
 
-#
-# The default project name
-#
-framework.project.default.name = @framework.project.default.name@
-
-#
-# Flag controlling if a default project will be created. true or leave unset
-#
-framework.project.default.create = @framework.project.default.create@

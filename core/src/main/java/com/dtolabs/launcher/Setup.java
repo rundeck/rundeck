@@ -207,26 +207,6 @@ public class Setup implements CLIToolLogger {
                 throw new SetupException("Unable to create dir: " + dir.getAbsolutePath());
             }
         }
-
-        ////////
-        //5. if default project name is set, create default project
-        /*
-            run rd-project -p ${project.default.name} -a create
-         */
-        if ("true".equals(prefs.getProperty("project.default.create"))
-            && null != prefs.getProperty("project.default.name")) {
-            //run ctlproject create task
-            final CreateAction createAction = new CreateAction(
-                this,
-                Framework.getInstance(basedir.getAbsolutePath()),
-                BaseAction.createArgs(prefs.getProperty("project.default.name"), true),
-                CreateAction.createArgs(false));
-            try {
-                createAction.exec();
-            } catch (Throwable throwable) {
-                throw new SetupException("Failed to run project create action: " + throwable.getMessage(), throwable);
-            }
-        }
     }
 
 
