@@ -275,7 +275,6 @@ update timestamp. update timestamp on WorkflowState(s)
      * @param mutableWorkflowStepState
      */
     def resolveStepCompleted(ExecutionState executionState, Date date, int i, MutableWorkflowStepState mutableWorkflowStepState) {
-        System.err.println("x resolveStepCompleted:${executionState}, ${i}, ${mutableWorkflowStepState}")
         if(mutableWorkflowStepState.nodeStepTargets){
             //a node step
             finalizeNodeStep(executionState,mutableWorkflowStepState)
