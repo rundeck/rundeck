@@ -1,6 +1,7 @@
 package rundeck.controllers
 
 import com.dtolabs.client.utils.Constants
+import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.ReverseSeekingStreamingLogReader
 import com.dtolabs.rundeck.core.logging.StreamingLogReader
@@ -113,6 +114,26 @@ class ExecutionController {
         def state = workflowService.readWorkflowStateForExecution(e)
         return [scheduledExecution: e.scheduledExecution?:null,execution:e, filesize:filesize,
                 enext: enext, eprev: eprev,stepPluginDescriptions: pluginDescs, workflowState: state]
+    }
+    def ajaxExecState(){
+        def Execution e = Execution.get(params.id)
+        if (!e) {
+            log.error("Execution not found for id: " + params.id)
+            flash.error = "Execution not found for id: " + params.id
+            return render(contentType: 'text/json'){
+                delegate.'error'('not found')
+            }
+        }
+
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+
+        if (e && !frameworkService.authorizeProjectExecutionAll(framework, e, [AuthConstants.ACTION_READ])) {
+            return render(contentType: 'text/json') {
+                delegate.'error'("Unauthorized: Read Execution ${params.id}")
+            }
+        }
+        def state = workflowService.serializeWorkflowStateForExecution(e)
+        return render(contentType: 'text/json', text: state.encodeAsJSON())
     }
     def mail ={
         def Execution e = Execution.get(params.id)
@@ -772,6 +793,79 @@ class ExecutionController {
             }
         }
         return executionService.respondExecutionsXml(response, [e])
+    }
+    /**
+     * API: /api/execution/{id}/state/$path**? , version 1
+     */
+    def apiExecutionState= {
+        def Execution e = Execution.get(params.id)
+        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        if (!e) {
+            flash.errorCode = "api.error.item.doesnotexist"
+            flash.errorArgs = ['Execution ID', params.id]
+            return chain(controller: 'api', action: 'renderError')
+        } else if (!frameworkService.authorizeProjectExecutionAll(framework, e, [AuthConstants.ACTION_READ])) {
+            flash.responseCode = 403
+            flash.errorCode = 'api.error.item.unauthorized'
+            flash.errorArgs = [AuthConstants.ACTION_READ, "Execution", params.id]
+            return chain(controller: 'api', action: 'renderError')
+        }
+
+        def state = workflowService.serializeWorkflowStateForExecution(e)
+        def convertNodeList={Collection tnodes->
+            def tnodemap = []
+            tnodes.each { String nname ->
+                tnodemap << [(BuilderUtil.ATTR_PREFIX + 'name'): nname]
+            }
+            tnodemap
+        }
+        def convertXml;
+        convertXml={Map map->
+            //for each step
+            map.steps.each{Map step->
+                if(step.workflow){
+                    //convert sub workflow
+                    convertXml(step.workflow)
+                }
+                //change 'id' to an attribute named num
+                step.num=step.remove('id')
+                BuilderUtil.makeAttribute(step,'num')
+                if(step.nodeStates){
+                    def nstates=step.remove('nodeStates')
+                    step.nodeStates=nstates.collect {String node,Map nodestate->
+                        def nmap= [name: node] + nodestate
+                        BuilderUtil.makeAttribute(nmap,'name')
+                        nmap
+                    }
+                    BuilderUtil.makePlural(step,'nodeStates')
+                }
+                if (step.stepTargetNodes) {
+                    step.stepTargetNodes = [(BuilderUtil.pluralize('nodes')):convertNodeList(step.remove('stepTargetNodes'))]
+                }
+            }
+            if(map.steps){
+                //make steps into a <steps><step/><step/>..</steps>
+                BuilderUtil.makePlural(map,'steps')
+            }
+            if (map.targetNodes) {
+                map.targetNodes = [(BuilderUtil.pluralize('nodes')):convertNodeList(map.remove('targetNodes'))]
+            }
+            map
+        }
+        withFormat {
+            json{
+                return render(contentType: "text/json", encoding: "UTF-8",text:state.encodeAsJSON())
+            }
+            xml{
+                return render(contentType: "text/xml", encoding: "UTF-8") {
+                    result(success: "true", apiversion: ApiRequestFilters.API_CURRENT_VERSION) {
+                        executionState(id:params.id){
+                            new BuilderUtil().mapToDom(convertXml(state), delegate)
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**

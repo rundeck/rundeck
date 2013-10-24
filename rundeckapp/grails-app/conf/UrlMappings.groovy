@@ -10,6 +10,7 @@ class UrlMappings {
         * API url paths, v1
         */
         "/api/$api_version/execution/$id"(controller: 'execution', action: 'apiExecution')
+        "/api/$api_version/execution/$id/state/$path**?"(controller: 'execution', action: 'apiExecutionState')
         "/api/$api_version/execution/$id/abort"(controller: 'execution', action: 'apiExecutionAbort')
         /** v5 */
         "/api/$api_version/execution/$id/output"(controller: 'execution', action: 'apiExecutionOutput')
