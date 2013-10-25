@@ -3,7 +3,9 @@ package com.dtolabs.rundeck.core.logging;
 import java.util.Date;
 import java.util.Map;
 
-/** Utility methods for logs */
+/**
+ * Utility methods for logs
+ */
 public class LogUtil {
 
     public static final String EVENT_TYPE_LOG = "log";
@@ -49,6 +51,10 @@ public class LogUtil {
     }
 
     private static LogEvent log(String message, Map<String, String> metadata, LogLevel level) {
-        return LogEventImpl.create(EVENT_TYPE_LOG, new Date(), level, message, metadata);
+        return event(EVENT_TYPE_LOG, level, message, metadata);
+    }
+
+    public static LogEvent event(String type, LogLevel level, String message, Map<String, String> metadata) {
+        return LogEventImpl.create(type, new Date(), level, message, metadata);
     }
 }

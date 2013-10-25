@@ -54,6 +54,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * TestNodeFirstWorkflowStrategy is ...
@@ -137,6 +138,11 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
 
         public void log(int i, String s) {
             System.err.println(i + ": " + s);
+        }
+
+        @Override
+        public void event(String eventType, String message, Map eventMeta) {
+            System.err.println(eventType + ": " + message);
         }
 
         public FailedNodesListener getFailedNodesListener() {

@@ -55,6 +55,11 @@ class ContextLogWriter implements ContextLogger {
         writer.addEvent(LogUtil.logDebug(message, context));
     }
 
+    @Override
+    public void emit(String eventType, LogLevel level, String message, Map<String, String> context) {
+        writer.addEvent(LogUtil.event(eventType, level, message, context));
+    }
+
     public void log(String message) {
         log(message, null);
     }

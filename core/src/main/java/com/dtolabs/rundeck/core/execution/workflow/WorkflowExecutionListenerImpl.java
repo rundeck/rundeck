@@ -104,6 +104,7 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
                 if (last.getStep() > -1) {
                     loggingContext.put("step", Integer.toString(last.getStep()));
                 }
+                loggingContext.put("stepctx", generateContextId(currentContext));
             }
             return loggingContext;
         } else {
@@ -121,6 +122,17 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
             strings[i++] = makePrefix(context);
         }
         return StringUtils.join(strings, ":");
+    }
+    private String generateContextId(final List<WFStepContext> stack) {
+        if (null != delegate) {
+            return delegate.generateContextString(stack);
+        }
+        final String[] strings = new String[stack.size()];
+        int i=0;
+        for (final WFStepContext context : stack) {
+            strings[i++] = Integer.toString(context.getStep());
+        }
+        return StringUtils.join(strings, "/");
     }
 
     private String makePrefix(WFStepContext wfStepInfo) {

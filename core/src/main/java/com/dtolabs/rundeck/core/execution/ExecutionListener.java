@@ -33,6 +33,7 @@ import com.dtolabs.rundeck.plugins.PluginLogger;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.Map;
 
 /**
  * ExecutionListener is ...
@@ -63,6 +64,8 @@ public interface ExecutionListener extends PluginLogger {
      *                are.
      */
     public void log(final int level, final String message);
+
+    public void event(String eventType, final String message, final Map eventMeta);
 
     /**
      * Return a listener for failed node list

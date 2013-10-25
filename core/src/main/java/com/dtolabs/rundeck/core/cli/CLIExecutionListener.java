@@ -26,6 +26,8 @@ package com.dtolabs.rundeck.core.cli;
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.execution.*;
 
+import java.util.Map;
+
 
 /**
  * CLIExecutionListener implements ExecutionListener, and is used to supply other listeners to the ExecutionService,
@@ -108,6 +110,10 @@ public class CLIExecutionListener extends ExecutionListenerOverrideBase  {
         }
     }
 
+    @Override
+    public void event(String eventType, String message, Map eventMeta) {
+        logger.debug("event[" + eventType + "] " + message);
+    }
 
     public ExecutionListenerOverride createOverride() {
         return new CLIExecutionListener(this);
