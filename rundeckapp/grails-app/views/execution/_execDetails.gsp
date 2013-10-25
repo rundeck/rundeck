@@ -1,7 +1,7 @@
 <%@ page import="com.dtolabs.rundeck.app.support.ExecutionContext; com.dtolabs.rundeck.server.authorization.AuthConstants; com.dtolabs.rundeck.core.plugins.configuration.Description; rundeck.ScheduledExecution" %>
 <g:set var="rkey" value="${g.rkey()}"/>
-<div class="row">
-<div class="col-sm-6 pull-right">
+<div class="row" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
+<div class="col-sm-4 pull-right">
 <div class=" pull-right">
 <g:if test="${showEdit && execdata != null && execdata.id && execdata instanceof ScheduledExecution && auth.jobAllowedTest(job: execdata, action: AuthConstants.ACTION_UPDATE)}">
     <g:link controller="scheduledExecution" title="Edit or Delete this Job" action="edit"
@@ -44,7 +44,7 @@
 </g:if>
 </div>
 </div>
-<div class="col-sm-6">
+<div class="col-sm-8">
 <table class="simpleForm execdetails">
     <g:if test="${execdata!=null && execdata.id && execdata instanceof ScheduledExecution && execdata.scheduled}">
         <tr>
@@ -92,7 +92,7 @@
     <g:if test="${execdata instanceof ExecutionContext && execdata?.workflow}">
         <g:unless test="${hideAdhoc}">
         <tr>
-            <td>Workflow:</td>
+            <td><g:message code="steps" />:</td>
             <td >
                 <g:render template="/execution/execDetailsWorkflow" model="${[workflow:execdata.workflow,context:execdata,noimgs:noimgs,project:execdata.project]}"/>
             </td>
@@ -117,12 +117,14 @@
             </tr>
         </g:if>
     </g:if>
+<g:if test="${execdata?.loglevel=='DEBUG'}">
     <tr>
-        <td>Log level:</td>
+        <td>Verbose Logging:</td>
         <td >
-            ${execdata?.loglevel}
+            Enabled
         </td>
     </tr>
+</g:if>
     <g:set var="NODE_FILTERS" value="${['','Name','Tags','OsName','OsFamily','OsArch','OsVersion']}"/>
     <g:set var="NODE_FILTER_MAP" value="${['':'Hostname','OsName':'OS Name','OsFamily':'OS Family','OsArch':'OS Architecture','OsVersion':'OS Version']}"/>
 
@@ -130,9 +132,11 @@
     <tbody>
     <g:if test="${!nomatchednodes}">
             <tr>
-                <td>Node Filters:</td>
-                <td id="matchednodes_${rkey}" class="matchednodes embed" >
-                    <g:set var="jsdata" value="${execdata.properties.findAll{it.key==~/^node(In|Ex)clude.*$/ &&it.value}}"/>
+                <td><g:message code="Node.plural" />:</td>
+                <td >
+                    <span id="matchednodes_${rkey}" class="matchednodes embed">
+                        <span class="text-muted"><g:message code="include.nodes.matching" /></span>
+                        <g:set var="jsdata" value="${execdata.properties.findAll{it.key==~/^node(In|Ex)clude.*$/ &&it.value}}"/>
                     <g:set var="varStr" value=""/>
                     <%varStr='${'%>
                     <g:set var="hasVar" value="${jsdata.find{it.value.toString()?.contains(varStr)}}"/>
@@ -149,6 +153,42 @@
                         <g:render template="/framework/displayNodeFilters" model="${[displayParams:execdata]}"/>
                     </span>
                     </g:else>
+                    </span>
+
+                    <div>
+                        <span class="text-muted text-em">
+                            <g:message code="execute.up.to"/>
+                            <strong>
+                                ${execdata?.nodeThreadcount}
+                                <g:message code="Node${execdata?.nodeThreadcount==1?'':'.plural'}"/>
+                            </strong>
+                            <g:message code="at.a.time"/>
+                        </span>
+                    </div>
+
+                    <div>
+                        <span class="text-muted text-em">
+                            <g:message code="if.a.node.fails" />:
+                            <strong>
+                            <g:message
+                                    code="scheduledExecution.property.nodeKeepgoing.${!!execdata?.nodeKeepgoing}.description"/>
+                            </strong>
+                        </span>
+                    </div>
+                    <div>
+                    <span class="text-muted text-em">
+                        <g:set value="${null == execdata?.nodeRankOrderAscending || execdata?.nodeRankOrderAscending}"
+                               var="isAscending"/>
+
+                        <g:message code="sort.nodes.by"  />
+                        <strong>${execdata?.nodeRankAttribute ? execdata?.nodeRankAttribute?.encodeAsHTML() : 'name'}</strong>
+                        in
+                        <strong>
+                            <g:message code="${isAscending ? 'ascending' : 'descending'}"/>
+                        </strong>
+                        order.
+                    </span>
+                    </div>
 
                 </td>
 
@@ -161,8 +201,9 @@
         <tbody>
         <tr>
             <td>Node:</td>
-            <td id="matchednodes_${rkey}" class="matchednodes embed" >
-                <span class="btn btn-sm btn-default receiver"  title="Display matching nodes" onclick="_updateMatchedNodes({},'matchednodes_${rkey}','${execdata?.project}', true, {requireRunAuth:true})">Show Matches</span>
+            <td class="matchednodes embed" id="matchednodes_${rkey}">
+                <span class="text-muted"><g:message code="execute.on.the.server.node" /></span>
+                <span class="btn btn-sm btn-default receiver"  title="Display matching nodes" onclick="_updateMatchedNodes({},'matchednodes_${rkey}','${execdata?.project}', true, {requireRunAuth:true})">Server Node</span>
             </td>
         </tr>
         </tbody>
@@ -170,18 +211,7 @@
     </g:else>
     <g:if test="${execdata?.doNodedispatch}">
 
-        <tr>
-            <td>Thread Count:</td>
-            <td>${execdata?.nodeThreadcount}</td>
-            <td class="displabel">Keep going:</td>
-            <td>${execdata?.nodeKeepgoing}</td>
-        </tr>
-        <tr>
-            <td><g:message code="scheduledExecution.property.nodeRankAttribute.label"/>:</td>
-            <td>${execdata?.nodeRankAttribute? execdata?.nodeRankAttribute.encodeAsHTML() : 'Node Name'}</td>
-            <td class="displabel"><g:message code="scheduledExecution.property.nodeRankOrder.label"/>:</td>
-            <td><g:message code="scheduledExecution.property.nodeRankOrder.${null==execdata?.nodeRankOrderAscending || execdata?.nodeRankOrderAscending?'ascending':'descending'}.label"/></td>
-        </tr>
+
     </g:if>
     <g:if test="${execdata instanceof ScheduledExecution && execdata.notifications}">
         <tr>

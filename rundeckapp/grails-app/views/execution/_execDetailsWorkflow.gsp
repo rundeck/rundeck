@@ -23,26 +23,21 @@
 --%>
 <g:set var="rkey" value="${g.rkey()}"/>
 <g:unless test="${isAdhoc}">
+<g:if test="${edit}">
 <div>
     <span class=""><g:message code="Workflow.property.keepgoing.prompt" /></span>
-    <g:if test="${edit}">
-        <label>
-            <input type="radio" name="workflow.keepgoing" value="false" ${workflow?.keepgoing?'':'checked'}/>
-            <g:message code="Workflow.property.keepgoing.false.description"/>
-        </label>
-        <label>
-            <input type="radio" name="workflow.keepgoing" value="true" ${workflow?.keepgoing?'checked':''}/>
-            <g:message code="Workflow.property.keepgoing.true.description"/>
-        </label>
-    </g:if>
-    <g:else>
-        <g:message code="Workflow.property.keepgoing.${workflow?.keepgoing ? true : false}.description"/>
-    </g:else>
-    </div>
+    <label>
+        <input type="radio" name="workflow.keepgoing" value="false" ${workflow?.keepgoing?'':'checked'}/>
+        <g:message code="Workflow.property.keepgoing.false.description"/>
+    </label>
+    <label>
+        <input type="radio" name="workflow.keepgoing" value="true" ${workflow?.keepgoing?'checked':''}/>
+        <g:message code="Workflow.property.keepgoing.true.description"/>
+    </label>
+</div>
 <div>
 
-    <span class="" title="Strategy for iteration">Strategy:</span>
-    <g:if test="${edit}">
+    <span class="" title="Strategy for iteration"><g:message code="strategy" />:</span>
         <label title="Execute the full workflow on each node before the next node">
             <input id="wf_strat_node_first" type="radio" name="workflow.strategy" value="node-first" ${!workflow?.strategy||workflow?.strategy=='node-first'?'checked':''}/>
             <g:message code="Workflow.strategy.label.node-first"/>
@@ -67,9 +62,9 @@
                 <tr>
                     <td width="200px;">
 
-                <span class="info note">Node-oriented executes the full workflow on each each node before the next node</span>
+                <span class="info note">Node-oriented: <g:message code="Workflow.strategy.description.node-first"/></span>
                     </td>
-                    <td width="200px;"><span class="info note">Step-oriented executes each step on all nodes before the next step</span></td>
+                    <td width="200px;"><span class="info note">Step-oriented: <g:message code="Workflow.strategy.description.step-first" /></span></td>
                 </tr>
                 <tr>
                 <td>
@@ -99,12 +94,9 @@
         <g:javascript>
             fireWhenReady('nodeStratHelp', initTooltipForElements.curry('.obs_tooltip'));
         </g:javascript>
-    </g:if>
-    <g:else>
-        <g:message code="Workflow.strategy.label.${workflow?.strategy}"/>
-    </g:else>
 %{--<span class="label">threadcount:</span> ${workflow?.threadcount}--}%
 </div>
+</g:if>
 </g:unless>
 <div class="pflowlist ${edit?'edit':''} rounded ${isAdhoc?'adhoc':''}" style="">
     <g:if test="${edit}">
@@ -165,7 +157,24 @@
             })
         </script>
 </g:if>
+
 </div>
+<g:if test="${!edit && !isAdhoc}">
+    <div>
+    <span class="text-muted text-em">
+        <g:message code="Workflow.property.keepgoing.prompt"/>
+        <strong><g:message
+            code="Workflow.property.keepgoing.${workflow?.keepgoing ? true : false}.description"/></strong>
+    </span>
+    </div>
+    <div>
+    <span class="text-muted text-em">
+        <g:message code="strategy"/>:
+        <strong><g:message code="Workflow.strategy.description.${workflow?.strategy}"/></strong>
+    </span>
+
+    </div>
+</g:if>
 <div class="clear"></div>
 
 
