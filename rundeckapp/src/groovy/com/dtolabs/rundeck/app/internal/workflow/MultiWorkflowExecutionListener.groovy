@@ -97,6 +97,11 @@ class MultiWorkflowExecutionListener implements WorkflowExecutionListener,Execut
         delegate.log(level,message)
     }
 
+    @Override
+    void event(String eventType, String message, Map eventMeta) {
+        delegate.event(eventType,message,eventMeta)
+    }
+
     FailedNodesListener overriddenFailedNodesListener
     @Override
     FailedNodesListener getFailedNodesListener() {
