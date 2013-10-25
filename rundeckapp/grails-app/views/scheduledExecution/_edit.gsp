@@ -437,7 +437,7 @@ var applinks={
                 <div  id="editoptssect" class="rounded">
                     <g:render template="/scheduledExecution/detailsOptions" model="${[options:scheduledExecution?.options,edit:true]}"/>
                     <g:if test="${scheduledExecution && scheduledExecution.argString}">
-                        <span class="argString">${scheduledExecution?.argString.encodeAsHTML()}</span>
+                        <g:render template="/execution/execArgString" model="[argString: scheduledExecution.argString]"/>
                     </g:if>
                     <g:hiddenField name="_sessionopts" value="true"/>
                 

@@ -77,7 +77,9 @@
         </td>
             <g:if test="${rpt?.jobId}">
         <td class="eventargs">
-            <g:if test="${execution && execution.argString}"><span class="">${execution.argString.encodeAsHTML()}</span></g:if>
+            <g:if test="${execution && execution.argString}">
+                <g:render template="/execution/execArgString" model="[argString: execution.argString]"/>
+            </g:if>
             <g:if test="${params.debug}">
                 ${rpt.toMap()}
             </g:if>

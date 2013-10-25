@@ -37,7 +37,7 @@
 
                     <td class="eventargs">
                         <g:if test="${execution && execution.argString}">
-                            ${execution.argString.encodeAsHTML()}
+                            <g:render template="/execution/execArgString" model="[argString: execution.argString]"/>
                         </g:if>
                     </td>
                 </g:if>

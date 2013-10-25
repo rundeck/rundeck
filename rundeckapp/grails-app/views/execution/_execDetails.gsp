@@ -112,7 +112,7 @@
                     Options:
                 </td>
                 <td >
-                    <span class="argString">${execdata?.argString.encodeAsHTML()}</span>
+                    <g:render template="/execution/execArgString" model="[argString: execdata.argString]"/>
                 </td>
             </tr>
         </g:if>

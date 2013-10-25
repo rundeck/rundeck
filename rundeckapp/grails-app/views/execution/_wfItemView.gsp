@@ -43,7 +43,9 @@
                     ${item.jobGroup?item.jobGroup.encodeAsHTML()+'/':''}${item.jobName.encodeAsHTML()}
                 </g:else>
                 <g:if test="${item.argString}">
-                   <span class="argString"><g:truncate max="150"  showtitle="true">${item.argString.encodeAsHTML()}</g:truncate></span>
+                   <span class="argString"><g:truncate max="150"  showtitle="true">
+                       <g:render template="/execution/execArgString" model="[argString: item.argString]"/>
+                   </g:truncate></span>
                 </g:if>
                 <g:if test="${item.nodeStep}">
                     <g:if test="${!noimgs && item.nodeStep}"><g:img file="icon-small-Node.png" width="16px"

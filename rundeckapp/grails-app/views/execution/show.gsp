@@ -185,16 +185,7 @@
                                         %{--</div>--}%
 
                                         <div class="col-sm-12">
-
-                                            <g:set var="parsed" value="${g.parseOptsFromString(args:execution.argString)}"/>
-                                            <g:if test="${parsed}">
-                                                <g:each in="${parsed}" var="entry">
-                                                    ${entry.key.encodeAsHTML()}: <code>${entry.value.encodeAsHTML()}</code>
-                                                </g:each>
-                                            </g:if>
-                                            <g:else>
-                                                <span class="argString">${execution?.argString.encodeAsHTML()}</span>
-                                            </g:else>
+                                            <g:render template="/execution/execArgString" model="[argString:execution.argString]"/>
                                         </div>
 
                                     </div>
