@@ -95,7 +95,9 @@
             </g:ifPageProperty>
             <g:if test="${adminauth}">
             <li class="${cfgselected ?: ''}">
-                <g:link controller="menu" action="admin" ><g:message code="gui.menu.Admin"/></g:link>
+                <g:link controller="menu" action="admin" title="${g.message(code:'gui.menu.Admin')}">
+                    <i class="glyphicon glyphicon-cog"></i>
+                </g:link>
             </li>
                 <!-- --></g:if><!--
         --></g:if><!--
