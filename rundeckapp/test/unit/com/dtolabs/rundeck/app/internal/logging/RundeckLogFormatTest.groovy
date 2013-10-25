@@ -26,7 +26,7 @@ class RundeckLogFormatTest extends GroovyTestCase {
         event.eventType = "log"
         event.datetime = dateFormat.parse('2013-05-24T01:31:02Z')
         event.metadata = [test: "1", something: "else"]
-        expectPrefix1 = "^2013-05-24T01:31:02Z|log|DEBUG|{something=else|test=1}|"
+        expectPrefix1 = "^2013-05-24T01:31:02Z||DEBUG|{something=else|test=1}|"
         expectLineEnd = "^"
     }
 
@@ -44,6 +44,20 @@ class RundeckLogFormatTest extends GroovyTestCase {
         assertEquals(expectPrefix1 + expect + expectLineEnd, format.outputEvent(event))
     }
 
+    void testOutputEventDefaultEventLevel() {
+        RundeckLogFormat format = new RundeckLogFormat()
+        def event = new DefaultLogEvent()
+        event.loglevel = LogLevel.NORMAL
+        event.eventType = "log"
+        event.datetime = dateFormat.parse('2013-05-24T01:31:02Z')
+        event.metadata = [test: "1", something: "else"]
+        event.message='message abc'
+
+        //loglevel and event type elided for defaults
+        def prefix = "^2013-05-24T01:31:02Z|||{something=else|test=1}|"
+
+        assertEquals(prefix+'message abc'+expectLineEnd,format.outputEvent(event))
+    }
     void testOutputEventSimple() {
         event.message = "test message"
         def expect = "test message"
@@ -66,7 +80,7 @@ class RundeckLogFormatTest extends GroovyTestCase {
         RundeckLogFormat format = new RundeckLogFormat()
         event.message = "test"
         event.metadata = ["aomething=": "=else", "best|as}df": "flif}|="]
-        assertEquals("^2013-05-24T01:31:02Z|log|DEBUG|{aomething\\==\\=else|best\\|as\\}df=flif\\}\\|\\=}|test^",
+        assertEquals("^2013-05-24T01:31:02Z||DEBUG|{aomething\\==\\=else|best\\|as\\}df=flif\\}\\|\\=}|test^",
                 format.outputEvent(event))
     }
 
