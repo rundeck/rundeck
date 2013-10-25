@@ -6,9 +6,6 @@ import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.app.internal.workflow.MultiWorkflowExecutionListener
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl
-import com.dtolabs.rundeck.core.execution.workflow.state.EchoExecListener
-import com.dtolabs.rundeck.core.execution.workflow.state.WorkflowExecutionStateListenerAdapter
-import com.dtolabs.rundeck.core.execution.workflow.state.WorkflowStateListener
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionService
@@ -576,9 +573,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             //create listener to handle log messages and Ant build events
             WorkflowExecutionListenerImpl executionListener = new WorkflowExecutionListenerImpl(recorder, new ContextLogWriter(loghandler),false,null);
             WorkflowExecutionListener execStateListener = workflowService.createWorkflowStateListenerForExecution(execution)
-            def multiListener = MultiWorkflowExecutionListener.create(executionListener, [executionListener,execStateListener,
-//                    new EchoExecListener()
-            ])
+            def wfEventListener = new WorkflowEventLoggerListener(executionListener)
+            def multiListener = MultiWorkflowExecutionListener.create(executionListener,
+                    [executionListener, wfEventListener,execStateListener, /*new EchoExecListener() */])
             StepExecutionContext executioncontext = createContext(execution, null,framework, execution.user, jobcontext, multiListener, null,extraParams, extraParamsExposed)
 
             //ExecutionService handles Job reference steps
