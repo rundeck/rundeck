@@ -112,6 +112,7 @@ class ExecutionController {
                     pluginDescs[step.nodeStep ? 'node' : 'workflow'][step.type]=description
                 }
             }
+        }
         def state = workflowService.readWorkflowStateForExecution(e)
         return [scheduledExecution: e.scheduledExecution?:null,execution:e, filesize:filesize,
                 enext: enext, eprev: eprev,stepPluginDescriptions: pluginDescs, workflowState: state]
@@ -267,7 +268,7 @@ class ExecutionController {
         iterator.openStream(0)
         def lineSep=System.getProperty("line.separator")
         iterator.findAll{it.eventType==LogUtil.EVENT_TYPE_LOG}.each{ LogEvent msgbuf ->
-                response.outputStream << (isFormatted?"${logFormater.format(msgbuf.datetime)} [${msgbuf.metadata?.user}@${msgbuf.metadata?.node} ${msgbuf.metadata?.command?:'_'}][${msgbuf.loglevel}] ${msgbuf.message}" : msgbuf.message)
+                response.outputStream << (isFormatted?"${logFormater.format(msgbuf.datetime)} [${msgbuf.metadata?.user}@${msgbuf.metadata?.node} ${msgbuf.metadata?.stepctx?:'_'}][${msgbuf.loglevel}] ${msgbuf.message}" : msgbuf.message)
                 response.outputStream<<lineSep
         }
         iterator.close()
@@ -315,6 +316,7 @@ class ExecutionController {
                         log: it.mesg?.replaceAll(/\r?\n$/, ''),
                         user: it.user,
                         command: it.command,
+                        stepctx: it.stepctx,
                         node: it.node,
                 ]
                 if (it.loghtml) {
@@ -339,6 +341,16 @@ class ExecutionController {
         }else{
             delegate.entries(dataClos)
         }
+    }
+    /**
+     * API: /api/execution/{id}/output/state, version ?
+     */
+    def apiExecutionStateOutput = {
+        if (!new ApiController().requireVersion(ApiRequestFilters.V9)) {
+            return
+        }
+        params.stateOutput = true
+        return tailExecutionOutput()
     }
     /**
      * tailExecutionOutput action, used by execution/show.gsp view to display output inline
@@ -640,7 +652,7 @@ class ExecutionController {
             def newe=[]
             def buf=[]
             entry.each {et->
-                if(et.command!=ctx.command || et.node!=ctx.node){
+                if(et.stepctx!=ctx.stepctx || et.node!=ctx.node){
                     if (newe){
                         //push buf
                         ctx.loghtml=buf.join("\n").decodeMarkdown()

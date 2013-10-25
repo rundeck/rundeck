@@ -98,7 +98,7 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
                 loggingContext.put("user", currentNode.extractUserName());
             }
             if (null != currentContext) {
-                loggingContext.put("command", generateContextString(currentContext));
+//                loggingContext.put("command", generateContextString(currentContext));
 
                 WFStepContext last = currentContext.get(currentContext.size() - 1);
                 if (last.getStep() > -1) {

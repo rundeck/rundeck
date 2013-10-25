@@ -961,20 +961,17 @@ var FollowControl = Class.create({
         this.lastrow = data;
         return tr;
     },
-    parseOldContextString: function(context){
-        if(context==null){
+    parseContextId: function (context) {
+        if (context == null) {
             return null;
         }
         //split context into project,type,object
-        var t = context.split(':');
-        var i=0;
-        var vals= new Array();
-        for(i=0;i< t.length;i++){
+        var t = context.split('/');
+        var i = 0;
+        var vals = new Array();
+        for (i = 0; i < t.length; i++) {
             var x = t[i];
-            var p= x.split('-',2)
-            if(p.length>0){
-                vals.push(p[0])
-            }
+            vals.push(x);
         }
         return vals;
     },
@@ -987,7 +984,7 @@ var FollowControl = Class.create({
             .replace(/'/g, "&#039;");
     },
     renderContextStepNumber: function(data){
-        var ctx = this.parseOldContextString(data['command']);
+        var ctx = this.parseContextId(data['stepctx']);
         var string;
         if (ctx && ctx[0]) {
              string= + ctx[0];
@@ -996,7 +993,7 @@ var FollowControl = Class.create({
             }
             string+=". "
         }else{
-            string=data['command'];
+            string=data['stepctx'];
         }
         return string;
     },
@@ -1030,7 +1027,7 @@ var FollowControl = Class.create({
         return 'console';
     },
     renderContextString: function(data){
-        var ctx = this.parseOldContextString(data['command']);
+        var ctx = this.parseContextId(data['stepctx']);
         if (ctx) {
             var string="";
             if(typeof(workflow)!='undefined'){
@@ -1061,7 +1058,7 @@ var FollowControl = Class.create({
             }
             return string;
         }
-        return data['command'];
+        return data['stepctx'];
     },
     createNewNodeTbody: function(data, tbl, ctxid) {
         //create new Table body
@@ -1095,13 +1092,10 @@ var FollowControl = Class.create({
             cell.innerHTML += "<span class='node'>" + data['node'] + "</span>";
         }
 
-        if (data['command']  || data['context']) {
-            if ( data['command'] && "run" != data['command']) {
+        if (data['stepctx']  || data['context']) {
+            if ( data['stepctx']) {
                 var contextstr= this.renderContextString(data)
 //                cell.innerHTML += "<span class='stepident' title='" + this.escapeHtml(contextstr) + "'>" + this.escapeHtml(contextstr) + "</span>";
-            } else if (data['command'] && "run" == data['command']) {
-                cell.innerHTML +=
-                "<span class='stepident' title='" + data['command'] + "'>" + data['command'] + "</span>";
             }
             if (data['context']) {
                 //split context into project,type,object
@@ -1239,15 +1233,12 @@ var FollowControl = Class.create({
             cell.innerHTML += "<span class='node'>" + data['node'] + "</span>";
         }
 
-        if (data['command']  || data['context']) {
-            if ( data['command'] && "run" != data['command']) {
+        if (data['stepctx']  || data['context']) {
+            if ( data['stepctx'] ) {
                 var contextstr = this.renderContextString(data);
                 var stepnum = this.renderContextStepNumber(data);
                 cell.innerHTML += "<span class='stepnum' title='" + this.escapeHtml(contextstr) + "'>" + this.escapeHtml(contextstr) + "</span>";
                 cell.innerHTML += "<span class='stepident'>" + this.escapeHtml(contextstr) + "</span>";
-            } else if (data['command'] && "run" == data['command']) {
-                cell.innerHTML +=
-                "<span class='stepident' title='" + data['command'] + "'>" + data['command'] + "</span>";
             }
             if (data['context']) {
                 //split context into project,type,object
@@ -1317,7 +1308,7 @@ var FollowControl = Class.create({
         if (null == this.lastTBody) {
             this.lastTBody = tbl.tBodies[0];
         }
-        if (null == this.lastrow  || this.lastrow['command'] != data['command']
+        if (null == this.lastrow  || this.lastrow['stepctx'] != data['stepctx']
             || this.lastrow['node'] != data['node'] || this.lastrow['context'] != data['context']) {
             if (null != this.lastrow) {
                 this.createFinalContextTbody(data, tbl, ctxid);
@@ -1371,7 +1362,7 @@ var FollowControl = Class.create({
         var tdctx = $(tr.insertCell(cellndx));
         cellndx++;
         tdctx.addClassName('stepnum');
-        if (!shownode && this.lastrow && this.lastrow['command'] == data['command'] ) {
+        if (!shownode && this.lastrow && this.lastrow['stepctx'] == data['stepctx'] ) {
 //                tdctx.addClassName('repeat');
         }else if(data['command']){
 
