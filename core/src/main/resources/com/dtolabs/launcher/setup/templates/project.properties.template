@@ -17,11 +17,3 @@ project.etc.dir = @rdeck.base@/projects/${project.name}/etc
 #
 project.resources.file = @rdeck.base@/projects/${project.name}/etc/resources.xml
 
-#
-# The project description
-#
-project.description = 
-#
-# The organization 
-#
-project.organization = 

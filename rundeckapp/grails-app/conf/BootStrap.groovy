@@ -84,7 +84,7 @@ class BootStrap {
                      port = "4440"
                  }
                  setup.getParameters().properties["rundeck.server.uuid"] = UUID.randomUUID().toString()
-                 setup.getParameters().setNodeArg(hostname)
+                 setup.getParameters().setServerName(hostname)
                  setup.getParameters().properties["framework.server.port"] = port
 
                  setup.performSetup()
@@ -107,9 +107,9 @@ class BootStrap {
              servletContext.setAttribute("FRAMEWORK_PROPERTIES", props2)
              log.info("loaded configuration: " + fprops.getAbsolutePath())
 
-             String nodeName = properties.getProperty("framework.node")
+             String nodeName = properties.getProperty("framework.server.name")
              if (!nodeName) {
-                 throw new RuntimeException("Expected 'framework.node' in framework.properties: Not found")
+                 throw new RuntimeException("Expected 'framework.server.name' in framework.properties: Not found")
              }
              servletContext.setAttribute("FRAMEWORK_NODE", nodeName)
              //check cluster mode

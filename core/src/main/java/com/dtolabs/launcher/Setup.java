@@ -34,7 +34,7 @@ import java.util.Properties;
 
 /**
  * Setup which replaces old command line parsing at the shell layer which leaves the old setup/setup.bat to only
- * blindly pass arguments along with the java.home, rdeck.base, and ant.home environment
+ * blindly pass arguments along with the java.home, rdeck.base.
  */
 public class Setup implements CLIToolLogger {
     public static final Logger logger = Logger.getLogger(Setup.class);
@@ -45,7 +45,7 @@ public class Setup implements CLIToolLogger {
     /**
      * setup usage statement
      */
-    public static final String SETUP_USAGE = "rd-setup [-v] -n nodename [-N hostname] -s serverhostname [ --key=value ]";
+    public static final String SETUP_USAGE = "rd-setup [-v] -n nodename [-N hostname] [ --key=value ]";
 
     /**
       * force a rewrite of the framework configuration files. always true
@@ -190,7 +190,7 @@ public class Setup implements CLIToolLogger {
                 fileInputStream.close();
             }
         } catch (IOException e) {
-            throw new SetupException("unable to load frameworkproperties", e);
+            throw new SetupException("unable to load framework.properties", e);
         }
         for (final String prop : new String[]{
             "framework.var.dir",
@@ -224,7 +224,7 @@ public class Setup implements CLIToolLogger {
                 Streams.copyStream(is, new FileOutputStream(templateFile));
                 return templateFile;
         }else {
-            throw new RuntimeException("Unable to load required resource: " + resource);
+            throw new RuntimeException("Unable to load required template: " + resource);
         }
     }
 
@@ -316,8 +316,6 @@ public class Setup implements CLIToolLogger {
 
         private boolean forceFlag = Setup.FORCE_FLAG;
         private boolean debugFlag;
-        private String nodeArg;
-        private String nodeHostnameArg;
         private String serverHostname;
         private String serverName;
         private String baseDir;
@@ -336,7 +334,7 @@ public class Setup implements CLIToolLogger {
         }
 
         protected String getNodeArg() {
-            return nodeArg;
+            return serverName;
         }
 
         /**
@@ -359,7 +357,7 @@ public class Setup implements CLIToolLogger {
 
         /**
          * process the required single hyphen parameters.
-         * support basic opt args:  forceFlag (-f), debugFlag (-v), and nodeArg (-n <node>)
+         * support basic opt args: debugFlag (-v), and name (-n <name>)
          *
          * @param args command line arg vector
          * @throws SetupException thrown if missing required arg
@@ -368,67 +366,41 @@ public class Setup implements CLIToolLogger {
             for (int i = 0; i < args.length; i++) {
                 if (args[i].equals("-v")) {
                     debugFlag = true;
-                } else if (args[i].equals("-f")) {
-                    // ignore it. this is for backwards compatability                
                 } else if (args[i].equals("-n")) {
-                    nodeArg = getOptParam(args, i);
-                    i++;
-                }else if (args[i].equals("-N")) {
-                    nodeHostnameArg = getOptParam(args, i);
-                    i++;
-                }else if (args[i].equals("-s")) {
-                    serverHostname = getOptParam(args, i);
-                    i++;
-                }else if (args[i].equals("-S")) {
                     serverName = getOptParam(args, i);
                     i++;
-                }else if (args[i].equals("-d")) {
+                } else if (args[i].equals("-N")) {
+                    serverHostname = getOptParam(args, i);
+                    i++;
+                } else if (args[i].equals("-d")) {
                     baseDir = getOptParam(args, i);
                     i++;
                 } else if (args[i].startsWith("--")) {
                     continue;
-                } else
+                } else {
                     usageError("unrecognized argument: \"" + args[i] + "\"");
+                }
             }
-
         }
         public void validate() throws SetupException {
-            if (null == nodeArg)
-                throw new SetupException("nodeName option not provided");
-            if (null == nodeHostnameArg) {
-                System.out.println("Using nodename as hostname: " + nodeArg);
-                nodeHostnameArg = nodeArg;
+            if (null == serverName) {
+                throw new SetupException("server name not specified.");
             }
             if (null == serverHostname) {
-                serverHostname = nodeHostnameArg;
-            }
-            if (null == serverName) {
-                serverName = nodeArg;
-            }
-            if (null != serverHostname) {
-                System.out.println("Using server hostname: " + serverHostname);
-            }
-            if (null != serverName) {
-                System.out.println("Using server hostname: " + serverName);
+                serverHostname = serverName;
             }
             if (null == baseDir) {
                 baseDir = Constants.getSystemBaseDir();
             }
 
-            System.out.println("Using basedir: " + Preferences.forwardSlashPath(baseDir));
+            System.out.println("Using rdeck.base: " + Preferences.forwardSlashPath(baseDir));
             properties.setProperty("rdeck.base", Preferences.forwardSlashPath(baseDir));
-            properties.setProperty("framework.node.name", nodeArg);
-            properties.setProperty("framework.node.hostname", nodeHostnameArg);
-            if (null != serverHostname) {
-                properties.setProperty("framework.server.hostname", serverHostname);
-            }
-            if (null != serverName) {
-                properties.setProperty("framework.server.name", serverName);
-            }
+            properties.setProperty("framework.server.hostname", serverHostname);
+            properties.setProperty("framework.server.name", serverName);
         }
 
         public String getNodeHostnameArg() {
-            return nodeHostnameArg;
+            return serverHostname;
         }
 
         public String getServerHostname() {
@@ -439,13 +411,6 @@ public class Setup implements CLIToolLogger {
             return properties;
         }
 
-        public void setNodeArg(String nodeArg) {
-            this.nodeArg = nodeArg;
-        }
-
-        public void setNodeHostnameArg(String nodeHostnameArg) {
-            this.nodeHostnameArg = nodeHostnameArg;
-        }
 
         public void setServerHostname(String serverHostname) {
             this.serverHostname = serverHostname;

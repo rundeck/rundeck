@@ -10,12 +10,12 @@ source $DIR/include.sh
 file=$DIR/curl.out
 
 ###
-# Setup: acquire local node name from RDECK_ETC/framework.properties#node.name
+# Setup: acquire local node name from RDECK_ETC/framework.properties#server.name
 ####
-localnode=$(grep 'framework.node.name' $RDECK_ETC/framework.properties | sed 's/framework.node.name = //')
+localnode=$(grep 'framework.server.name' $RDECK_ETC/framework.properties | sed 's/framework.server.name = //')
 
 if [ -z "${localnode}" ] ; then
-    errorMsg "FAIL: Unable to determine framework.node.name from $RDECK_ETC/framework.properties"
+    errorMsg "FAIL: Unable to determine framework.server.name from $RDECK_ETC/framework.properties"
     exit 2
 fi
 

@@ -506,7 +506,6 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
     }
 
     public static final String DEFAULT_LOG_FORMAT = "[%user@%node %command][%level] %message";
-    public static final String FRAMEWORK_LOG_RUNDECK_EXEC_CONSOLE_FORMAT = "framework.log.dispatch.console.format";
 
 
     public String getUser() {

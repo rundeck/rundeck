@@ -2,8 +2,8 @@
 #
 node.description=
 node.type=Node
-node.name=@framework.node.name@
-node.hostname=@framework.node.hostname@
+node.name=@framework.server.name@
+node.hostname=@framework.server.hostname@
 node.os-arch=@os.arch@
 node.os-family=@os.family@
 node.os-name=@os.name@

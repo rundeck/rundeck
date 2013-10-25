@@ -62,8 +62,8 @@ Configuration file used by shell tools and core Rundeck services. This file will
 
 Some important settings:
 
-* `framework.node.hostname`: Hostname of the Rundeck server node
-* `framework.node.name`: Name (identity) of the Rundeck server node
+* `framework.server.hostname`: Hostname of the Rundeck server node
+* `framework.server.name`: Name (identity) of the Rundeck server node
 * `framework.projects.dir`: Path to the directory containing Rundeck Project directories.  Default is `$RDECK_BASE/projects`.
 * `framework.var.dir`: Base directory for output and temp files used by the server and CLI tools. Default is `$RDECK_BASE/var`.
 * `framework.logs.dir`: Directory for log files written by core services and Rundeck Server's Job executions. Default is `$RDECK_BASE/var/logs`

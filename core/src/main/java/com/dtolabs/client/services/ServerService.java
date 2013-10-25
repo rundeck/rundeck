@@ -62,7 +62,7 @@ public class ServerService {
             }
 
             public String getServerUrl() {
-                return framework.getProperty("framework.rundeck.url");
+                return framework.getProperty("framework.server.url");
             }
         });
 

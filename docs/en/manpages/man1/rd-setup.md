@@ -8,13 +8,13 @@ rd-setup - Setup the Rundeck software after the distribution has been extracted 
 
 # SYNOPSIS
 
-rd-setup [-fv] -n nodename [-N hostname] [-s serverhostname] [ \--key=value ]...
+rd-setup [-v] -n nodename [-N hostname] [ \--key=value ]...
 
 # DESCRIPTION
 
 The rd-setup command is used to setup the Rundeck software after the distribution has been extracted into its installation directory.
 
-During the first time installation or if the -f flag is set rd-setup
+During the first time installation rd-setup
 will create a new instance of the framework and generate all the
 configuration files found in $RDECK_BASE/etc.
 
@@ -25,9 +25,6 @@ configuration files found in $RDECK_BASE/etc.
 
 -v
 : run verbose.
-
--f
-: Force re-generation of configuration files
 
 -n
 : The nodename

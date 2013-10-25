@@ -531,12 +531,12 @@ public class Framework extends FrameworkResourceParent {
     }
 
     /**
-     * Gets the value of "framework.node.hostname" property
+     * Gets the value of "framework.server.hostname" property
      *
-     * @return Returns value of framework.node.hostname property
+     * @return Returns value of framework.server.hostname property
      */
     public String getFrameworkNodeHostname() {
-        String hostname = getProperty("framework.node.hostname");
+        String hostname = getProperty("framework.server.hostname");
         if (null!=hostname) {
             return hostname.trim();
         } else {
@@ -545,12 +545,12 @@ public class Framework extends FrameworkResourceParent {
     }
 
    /**
-     * Gets the value of "framework.node.name" property
+     * Gets the value of "framework.server.name" property
      *
-     * @return Returns value of framework.node.name property
+     * @return Returns value of framework.server.name property
      */
     public String getFrameworkNodeName() {
-        String name = getProperty("framework.node.name");
+        String name = getProperty("framework.server.name");
        if (null!=name) {
            return name.trim();
        } else {

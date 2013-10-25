@@ -106,14 +106,14 @@ public class ExecToolCommandLogger extends DefaultLogger{
     }
 
     /**
-     * Look up the node name value from the project of the build event
+     * Look up the server name value from the project of the build event
      *
      * @param event the BuildEvent
      *
-     * @return the value of framework.node.name
+     * @return the value of framework.server.name
      */
     public static String retrieveNodeName(BuildEvent event) {
-        return event.getProject().getProperty("framework.node.name");
+        return event.getProject().getProperty("framework.server.name");
     }
 
 
