@@ -3,6 +3,7 @@ package rundeck.controllers
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.core.logging.LogEvent
+import com.dtolabs.rundeck.core.logging.LogUtil
 import com.dtolabs.rundeck.core.logging.ReverseSeekingStreamingLogReader
 import com.dtolabs.rundeck.core.logging.StreamingLogReader
 import com.dtolabs.rundeck.app.support.ExecutionQuery
@@ -265,9 +266,9 @@ class ExecutionController {
         def iterator = reader.reader
         iterator.openStream(0)
         def lineSep=System.getProperty("line.separator")
-        iterator.each{ LogEvent msgbuf ->
-            response.outputStream << (isFormatted?"${logFormater.format(msgbuf.datetime)} [${msgbuf.metadata?.user}@${msgbuf.metadata?.node} ${msgbuf.metadata?.command?:'_'}][${msgbuf.loglevel}] ${msgbuf.message}" : msgbuf.message)
-            response.outputStream<<lineSep
+        iterator.findAll{it.eventType==LogUtil.EVENT_TYPE_LOG}.each{ LogEvent msgbuf ->
+                response.outputStream << (isFormatted?"${logFormater.format(msgbuf.datetime)} [${msgbuf.metadata?.user}@${msgbuf.metadata?.node} ${msgbuf.metadata?.command?:'_'}][${msgbuf.loglevel}] ${msgbuf.message}" : msgbuf.message)
+                response.outputStream<<lineSep
         }
         iterator.close()
     }
@@ -278,6 +279,7 @@ class ExecutionController {
         if (!apiService.requireVersion(request, response, ApiRequestFilters.V5)) {
             return
         }
+        params.stateOutput=false
         return tailExecutionOutput()
     }
     static final String invalidXmlPattern = "[^" + "\\u0009\\u000A\\u000D" + "\\u0020-\\uD7FF" +
@@ -599,10 +601,17 @@ class ExecutionController {
         if(bufsize<(25*1024)){
             bufsize=25*1024
         }
-
+        def stateoutput = params.stateOutput in [true,'true']
+        def stateonly = params.stateOnly in [true,'true']
         for(LogEvent data : logread){
+            if(!stateoutput && data.eventType!= LogUtil.EVENT_TYPE_LOG){
+                continue
+            }
+            if (stateoutput && stateonly && data.eventType == LogUtil.EVENT_TYPE_LOG) {
+                continue
+            }
             log.debug("read stream event: ${data}")
-            def logdata= (data.metadata ?: [:]) + [mesg: data.message, time: data.datetime, level: data.loglevel.toString()]
+            def logdata= (data.metadata ?: [:]) + [mesg: data.message, time: data.datetime, level: data.loglevel.toString(),type:data.eventType]
             entry<<logdata
             if (!(0 == max || entry.size() < max)){
                 break
@@ -648,7 +657,6 @@ class ExecutionController {
         long marktime=System.currentTimeMillis()
         def percent=100.0 * (((float)storeoffset)/((float)totsize))
         log.debug("percent: ${percent}, store: ${storeoffset}, total: ${totsize} lastmod : ${lastmodl}")
-        //via http://benjchristensen.com/2008/02/07/how-to-strip-invalid-xml-characters/
 
         def resultData= [
                 id: e.id.toString(),
