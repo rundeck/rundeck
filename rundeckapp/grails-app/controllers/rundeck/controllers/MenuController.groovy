@@ -443,7 +443,7 @@ class MenuController {
             flash.error = "User ${session.user} unauthorized for: Project Admin"
             flash.title = "Unauthorized"
             response.setStatus(403)
-            render(template: '/common/error', model: [:])
+            render(view: '/common/error', model: [:])
         }else if (session.project){
 
             def project=session.project
@@ -505,7 +505,7 @@ class MenuController {
             flash.error = "User Admin role required"
             flash.title = "Unauthorized"
             response.setStatus(403)
-            render(template: '/common/error', model: [:])
+            render(view: '/common/error', model: [:])
         }
         Date nowDate = new Date();
         String nodeName = servletContext.getAttribute("FRAMEWORK_NODE")
