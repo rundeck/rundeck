@@ -10,7 +10,7 @@
 <div id="nowRunningContent">
     <div class="row">
     <div class="col-sm-12">
-        <span class="h3 text-danger">Error</span>
+        <span class="h3 text-danger">${flash.title?:'Error'}</span>
     </div>
     </div>
 </div>
