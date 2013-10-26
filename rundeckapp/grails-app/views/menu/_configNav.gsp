@@ -4,6 +4,11 @@
             <g:message code="gui.menu.SystemInfo" default="Project Configuration"/>
         </g:link>
     </li>
+    <li class="${selected == 'syscfg' ? 'active' : ''}">
+        <g:link controller="menu" action="systemConfig">
+            <g:message code="gui.menu.SystemConfig" default="System Configuration"/>
+        </g:link>
+    </li>
     <li class="${selected == 'sysinfo' ? 'active' : ''}">
         <g:link controller="menu" action="systemInfo">
             <g:message code="gui.menu.SystemInfo" default="System Information"/>
