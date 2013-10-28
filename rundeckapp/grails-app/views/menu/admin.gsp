@@ -81,34 +81,7 @@
             <i class="glyphicon glyphicon-edit"></i>
             <g:message code="gui.menu.ProjectEdit" default="edit configuration"/>
         </g:link>
-        <li class="list-group-item ">
-            <h4 class="list-group-item-heading ">
-                <g:message code="domain.Project.field.resourcesUrl" default="Resources Provider URL"/>
-            </h4>
 
-            <p class="list-group-item-text">
-                <g:if test="${resourcesUrl}">
-                    <span class="text-info">${resourcesUrl.encodeAsHTML()}</span>
-                </g:if>
-                <g:else>
-                    <span class="text-muted"><g:message code="message.none.set"/></span>
-                </g:else>
-            </p>
-        </li>
-        <li class="list-group-item ">
-            <h4 class="list-group-item-heading ">
-                <g:message code="domain.Project.field.sshKeyPath" default="Default SSH Key File"/>
-            </h4>
-
-            <p class="list-group-item-text">
-                <g:if test="${sshkeypath}">
-                    <span class="text-info">${sshkeypath.encodeAsHTML()}</span>
-                </g:if>
-                <g:else>
-                    <span class="text-warning"><g:message code="message.none.set"/></span>
-                </g:else>
-            </p>
-        </li>
 
         <li class="list-group-item">
             <h4 class="list-group-item-heading">

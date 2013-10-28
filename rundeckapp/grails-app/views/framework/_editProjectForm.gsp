@@ -40,26 +40,7 @@
         </div>
     </g:if>
 
-    <div class="form-group">
 
-        <label for="resourcesUrl">
-            <g:message code="domain.Project.field.resourcesUrl" default="Resource Model Source URL"/>
-        </label>
-        <g:textField name="resourcesUrl" size="50" value="${resourcesUrl?:params.resourcesUrl}" class="form-control"/>
-        <div class="help-block">
-            <g:message code="domain.Project.field.resourcesUrl.description" />
-        </div>
-    </div>
-    <div class="form-group">
-
-        <label for="sshkeypath">
-            <g:message code="domain.Project.field.sshKeyPath" default="Default SSH Key File"/>:
-        </label>
-        <g:textField name="sshkeypath" size="50" value="${sshkeypath?:params.sshkeypath}" class="form-control"/>
-        <div class="help-block">
-            <g:message code="domain.Project.field.sshKeyPath.description" />
-        </div>
-    </div>
 </div>
 <g:if test="${resourceModelConfigDescriptions}">
     <div class="list-group-item">

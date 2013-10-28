@@ -38,21 +38,6 @@
 <g:set var="adminauth"
        value="${auth.resourceAllowedTest(type: 'resource', kind: 'project', action: ['create'], context: 'application')}"/>
 <g:if test="${adminauth}">
-    <div class="pageBody form note error"
-         style="${wdgt.styleVisible(if: (flash.error || request.error || request.errors))}"
-         id="editerror">
-        ${flash.error?.encodeAsHTML()}${request.error?.encodeAsHTML()}
-        <g:if test="${request.errors}">
-            <ul>
-                <g:each in="${request.errors}" var="err">
-                    <g:if test="${err}">
-                        <li>${err.encodeAsHTML()}</li>
-                    </g:if>
-                </g:each>
-            </ul>
-        </g:if>
-    </div>
-
     <div class="row">
     <div class="col-sm-10 col-sm-offset-1">
         <g:form action="createProject" method="post" onsubmit="return configControl.checkForm();">

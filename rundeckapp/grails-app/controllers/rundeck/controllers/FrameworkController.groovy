@@ -5,6 +5,8 @@ import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import com.dtolabs.rundeck.core.resources.FileResourceModelSource
+import com.dtolabs.rundeck.core.resources.FileResourceModelSourceFactory
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.shared.resources.ResourceXMLGenerator
 
@@ -537,11 +539,7 @@ class FrameworkController  {
         def configs
         final defaultNodeExec = NodeExecutorService.DEFAULT_REMOTE_PROVIDER
         final defaultFileCopy = FileCopierService.DEFAULT_REMOTE_PROVIDER
-        final sshkeypath = new File(System.getProperty("user.home"), ".ssh/id_rsa").getAbsolutePath()
-        if (params.resourcesUrl) {
-            resourcesUrl = params.resourcesUrl
-            projProps[FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY] = params.resourcesUrl
-        }
+
         if (params.defaultNodeExec) {
             def ndx = params.defaultNodeExec
             (defaultNodeExec, nodeexec) = parseServiceConfigInput(params, "nodeexec", ndx)
@@ -573,11 +571,6 @@ class FrameworkController  {
                     errors << e.getMessage()
                 }
             }
-        }
-
-        if (params.sshkeypath) {
-            sshkeypath = params.sshkeypath
-            projProps[JschNodeExecutor.PROJ_PROP_SSH_KEYPATH] = sshkeypath
         }
 
         //parse plugin config properties, and convert to project.properties
@@ -638,19 +631,18 @@ class FrameworkController  {
         }
         if (errors) {
 //            request.error=errors.join("\n")
-            request.errors = errors
+//            request.errors = errors
         }
         //get list of node executor, and file copier services
         final nodeexecdescriptions = framework.getNodeExecutorService().listDescriptions()
         final descriptions = framework.getResourceModelSourceService().listDescriptions()
         final filecopydescs = framework.getFileCopierService().listDescriptions()
-        return chain(action: 'createProject',
+        return render(view:'createProject',
                 model:         [
                 project: params.project,
                 projectNameError: projectNameError,
                 resourcesUrl: resourcesUrl,
                 resourceModelConfigDescriptions: descriptions,
-                sshkeypath: sshkeypath,
                 defaultNodeExec: defaultNodeExec,
                 defaultFileCopy: defaultFileCopy,
                 nodeExecDescriptions: nodeexecdescriptions,
@@ -681,16 +673,30 @@ class FrameworkController  {
         final nodeexecdescriptions = framework.getNodeExecutorService().listDescriptions()
         final descriptions = framework.getResourceModelSourceService().listDescriptions()
         final filecopydescs = framework.getFileCopierService().listDescriptions()
-
+        def defaultResourceFile= new File(framework.getFrameworkProjectsBaseDir(),'${project.name}/etc/resources.xml').getAbsolutePath()
+        def configs=[
+            [
+                type: FileResourceModelSourceFactory.SERVICE_PROVIDER_TYPE,
+                props:[
+                        (FileResourceModelSource.Configuration.FILE): defaultResourceFile,
+                        (FileResourceModelSource.Configuration.FORMAT): 'resourcexml',
+                        (FileResourceModelSource.Configuration.GENERATE_FILE_AUTOMATICALLY): 'true',
+                        (FileResourceModelSource.Configuration.INCLUDE_SERVER_NODE): 'true',
+                ]
+            ]
+        ]
         return [
             project:params.project,
             resourceModelConfigDescriptions: descriptions,
-            sshkeypath:sshkeypath,
             defaultNodeExec:defaultNodeExec,
+            nodeexecconfig: ['keypath': sshkeypath],
+            fcopyconfig: ['keypath': sshkeypath],
             defaultFileCopy: defaultFileCopy,
             nodeExecDescriptions: nodeexecdescriptions,
             fileCopyDescriptions: filecopydescs,
-            prefixKey:prefixKey]
+            prefixKey:prefixKey,
+            configs: configs
+        ]
     }
 
     private def addProjectServiceProperties(GrailsParameterMap params, Properties projProps, final def ndx, final String param, final String default_provider_prop, final ProviderService service, Set removePrefixes=null) {
@@ -740,22 +746,15 @@ class FrameworkController  {
         }
         def fproject = frameworkService.getFrameworkProject(project, framework)
 
-        def resourcesUrl = fproject.hasProperty(FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY) ? fproject.getProperty(FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY) : null
         def defaultNodeExec
         def defaultFileCopy
-        def sshkeypath
         def nodeexec,fcopy
         def nodeexecreport,fcopyreport
         if(request.method=='POST'){
             //only attempt project create if form POST is used
             def Properties projProps = new Properties()
             def Set<String> removePrefixes=[]
-            if (params.resourcesUrl) {
-                resourcesUrl=params.resourcesUrl
-                projProps[FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY] = params.resourcesUrl
-            }else{
-                removePrefixes<< FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY
-            }
+            removePrefixes<< FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY
 
             if (params.defaultNodeExec) {
                 def ndx=params.defaultNodeExec
@@ -789,12 +788,7 @@ class FrameworkController  {
                     }
                 }
             }
-            if (params.sshkeypath) {
-                sshkeypath = params.sshkeypath
-                projProps[JschNodeExecutor.PROJ_PROP_SSH_KEYPATH] = sshkeypath
-            } else {
-                removePrefixes << JschNodeExecutor.PROJ_PROP_SSH_KEYPATH
-            }
+            //removePrefixes << JschNodeExecutor.PROJ_PROP_SSH_KEYPATH
 
             //parse plugin config properties, and convert to project.properties
             def sourceConfigPrefix = FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX
@@ -854,9 +848,8 @@ class FrameworkController  {
         final filecopydescs = framework.getFileCopierService().listDescriptions()
 
         return render(view:'editProject',model:
-        [resourcesUrl: resourcesUrl,
+        [
             project: params.project,
-            sshkeypath: sshkeypath,
             defaultNodeExec: defaultNodeExec,
             nodeexecconfig: nodeexec,
             fcopyconfig: fcopy,
@@ -885,12 +878,10 @@ class FrameworkController  {
         def configs = fproject.listResourceModelConfigurations()
         final service = framework.getResourceModelSourceService()
         final descriptions = service.listDescriptions()
-        def resourcesUrl=fproject.hasProperty(FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY)? fproject.getProperty(FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY):null
 
         //get list of node executor, and file copier services
         final nodeexecdescriptions = framework.getNodeExecutorService().listDescriptions()
         final filecopydescs = framework.getFileCopierService().listDescriptions()
-        final sshkeypath = fproject.hasProperty(JschNodeExecutor.PROJ_PROP_SSH_KEYPATH) ? fproject.getProperty(JschNodeExecutor.PROJ_PROP_SSH_KEYPATH) : null
 
         final defaultNodeExec = fproject.hasProperty(NodeExecutorService.SERVICE_DEFAULT_PROVIDER_PROPERTY) ? fproject.getProperty(NodeExecutorService.SERVICE_DEFAULT_PROVIDER_PROPERTY) : null
         final defaultFileCopy = fproject.hasProperty(FileCopierService.SERVICE_DEFAULT_PROVIDER_PROPERTY) ? fproject.getProperty(FileCopierService.SERVICE_DEFAULT_PROVIDER_PROPERTY) : null
@@ -918,8 +909,8 @@ class FrameworkController  {
             }
         }
 
-        [resourcesUrl: resourcesUrl, project: params.project, resourceModelConfigDescriptions: descriptions,
-            sshkeypath: sshkeypath,
+        [
+            project: params.project, resourceModelConfigDescriptions: descriptions,
             defaultNodeExec: defaultNodeExec,
             nodeexecconfig:nodeexec,
             fcopyconfig:fcopy,

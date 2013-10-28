@@ -458,8 +458,6 @@ class MenuController {
 
             final defaultNodeExec = fproject.hasProperty(NodeExecutorService.SERVICE_DEFAULT_PROVIDER_PROPERTY) ? fproject.getProperty(NodeExecutorService.SERVICE_DEFAULT_PROVIDER_PROPERTY) : null
             final defaultFileCopy = fproject.hasProperty(FileCopierService.SERVICE_DEFAULT_PROVIDER_PROPERTY) ? fproject.getProperty(FileCopierService.SERVICE_DEFAULT_PROVIDER_PROPERTY) : null
-            final sshkeypath = fproject.hasProperty(JschNodeExecutor.PROJ_PROP_SSH_KEYPATH) ? fproject.getProperty(JschNodeExecutor.PROJ_PROP_SSH_KEYPATH) : null
-            final resourcesUrl = fproject.hasProperty(FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY) ? fproject.getProperty(FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY) : null
             //load config for node exec
             def nodeexec = [:]
             if (defaultNodeExec) {
@@ -486,8 +484,6 @@ class MenuController {
             }
 
             return [configs:configs,
-                resourcesUrl:resourcesUrl,
-                sshkeypath:sshkeypath,
                 resourceModelConfigDescriptions:descriptions,
                 nodeexecconfig:nodeexec,
                 fcopyconfig:fcopy,
