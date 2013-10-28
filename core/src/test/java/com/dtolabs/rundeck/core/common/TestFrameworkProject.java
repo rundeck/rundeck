@@ -465,7 +465,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
 
         final Properties p = new Properties();
         loadProps(p,propFile);
-        assertTrue(p.containsKey("project.resources.file"));
+        assertEquals("file", p.get("resources.source.1.type"));
 
 
     }
@@ -487,7 +487,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
 
         final Properties p = new Properties();
         loadProps(p,propFile);
-        assertTrue(p.containsKey("project.resources.file"));
+        assertFalse(p.containsKey("project.resources.file"));
         assertTrue(p.containsKey("test1"));
         assertEquals("value1", p.getProperty("test1"));
         assertTrue(p.containsKey("test2"));
@@ -523,7 +523,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
 
         final Properties p = new Properties();
         loadProps(p,propFile);
-        assertTrue(p.containsKey("project.resources.file"));
+        assertFalse(p.containsKey("project.resources.file"));
         assertTrue(p.containsKey("test1"));
         assertEquals("xvalue1", p.getProperty("test1"));
         assertTrue(p.containsKey("test2"));
@@ -552,7 +552,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
                 (getBaseDir()), new File(getFrameworkProjectsBase()), PROJECT_NAME);
         assertNotNull(projectPropertyRetriever);
 
-        assertNotNull(projectPropertyRetriever.getProperty("project.resources.file"));
+        assertNull(projectPropertyRetriever.getProperty("project.resources.file"));
         assertEquals("value1", projectPropertyRetriever.getProperty("test1"));
         assertEquals("value2", projectPropertyRetriever.getProperty("test2"));
         assertEquals("value3", projectPropertyRetriever.getProperty("test3.something"));

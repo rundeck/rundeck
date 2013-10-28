@@ -724,7 +724,13 @@ public class FrameworkProject extends FrameworkResourceParent {
         }
         final Properties newProps = new Properties();
         newProps.setProperty("project.name", getName());
-        newProps.setProperty("project.resources.file", new File(getEtcDir(), "resources.xml").getAbsolutePath());
+        if (null == properties ) {
+            //add default file source
+            newProps.setProperty("resources.source.1.type", "file");
+            newProps.setProperty("resources.source.1.config.file", new File(getEtcDir(), "resources.xml").getAbsolutePath());
+            newProps.setProperty("resources.source.1.config.includeServerNode", "true");
+            newProps.setProperty("resources.source.1.config.generateFileAutomatically", "true");
+        }
         if(merge) {
             final Properties orig = new Properties();
 
