@@ -507,6 +507,15 @@ class MenuController {
             render(view: '/common/error', model: [:])
         }
     }
+    def securityConfig(){
+        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        if (!frameworkService.authorizeApplicationResource(framework, [type: 'resource', kind: 'system'], 'read')) {
+            flash.error = "User Admin role required"
+            flash.title = "Unauthorized"
+            response.setStatus(403)
+            render(view: '/common/error', model: [:])
+        }
+    }
 
     def systemInfo = {
         def Framework framework = frameworkService.getFrameworkFromUserSession(session,request)

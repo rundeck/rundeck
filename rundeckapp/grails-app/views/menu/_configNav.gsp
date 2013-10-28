@@ -9,6 +9,11 @@
             <g:message code="gui.menu.SystemConfig" default="System Configuration"/>
         </g:link>
     </li>
+    <li class="${selected == 'securityConfig' ? 'active' : ''}">
+        <g:link controller="menu" action="securityConfig">
+            <g:message code="gui.menu.Security" default="Security"/>
+        </g:link>
+    </li>
     <li class="${selected == 'sysinfo' ? 'active' : ''}">
         <g:link controller="menu" action="systemInfo">
             <g:message code="gui.menu.SystemInfo" default="System Information"/>
