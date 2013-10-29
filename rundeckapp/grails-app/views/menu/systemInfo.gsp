@@ -37,6 +37,18 @@
 <div class="col-sm-9">
 
     <h3>System Info</h3>
+
+    <div class="btn-group">
+        <g:link uri='/metrics/metrics?pretty=true' class="btn btn-sm btn-info" title="View JSON metrics data">
+            Metrics (json)
+            <i class="glyphicon glyphicon-file"></i>
+        </g:link>
+        <g:link uri='/metrics/threads' class="btn btn-sm btn-info" title="View Java thread dump">
+            Thread Dump
+            <i class="glyphicon glyphicon-file"></i>
+        </g:link>
+    </div>
+
     <g:set var="datapercol" value="${5.0}"/>
     <g:set var="colcount" value="${(int)Math.ceil((float)systemInfo.size()/datapercol)}"/>
     <table>
