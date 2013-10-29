@@ -114,8 +114,7 @@
                     </g:link>
                 </li>
                 <li class="divider"></li>
-                <li><g:link action="logout" controller="user" title="Logout user: ${session.user}"
-                            params="${[refLink: controllerName && actionName ? createLink(controller: controllerName, action: actionName, params: params, absolute: true) : '']}">
+                <li><g:link action="logout" controller="user" title="Logout user: ${session.user}">
                     <i class="glyphicon glyphicon-remove"></i>
                     Logout
                 </g:link>
