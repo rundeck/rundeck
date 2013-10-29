@@ -19,11 +19,6 @@
             <g:message code="gui.menu.SystemInfo" default="System Report"/>
         </g:link>
     </li>
-    <li class="${selected == 'profiles' ? 'active' : ''}">
-        <g:link controller="user" action="list">
-            <g:message code="gui.menu.UserProfiles" default="User Profiles"/>
-        </g:link>
-    </li>
     <li class="${selected == 'plugins' ? 'active' : ''}">
         <g:link controller="menu" action="plugins">
             <g:message code="gui.menu.ListPlugins" />
