@@ -1,7 +1,7 @@
 <ul class="nav nav-pills nav-stacked">
     <li class="${selected=='project'?'active':''}">
         <g:link controller="menu" action="admin">
-            <g:message code="gui.menu.SystemInfo" default="Project Configuration"/>
+            <g:message code="gui.menu.ProjectConfiguration" default="Project Configuration"/>
         </g:link>
     </li>
     <li class="${selected == 'syscfg' ? 'active' : ''}">
