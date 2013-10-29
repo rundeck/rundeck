@@ -529,6 +529,8 @@ class MenuController {
         String osName = ManagementFactory.getOperatingSystemMXBean().name
         String osVersion = ManagementFactory.getOperatingSystemMXBean().version
         String osArch = ManagementFactory.getOperatingSystemMXBean().arch
+        String javaVendor = System.properties['java.vendor']
+        String javaVersion = System.properties['java.version']
         String vmName = ManagementFactory.getRuntimeMXBean().vmName
         String vmVendor = ManagementFactory.getRuntimeMXBean().vmVendor
         String vmVersion = ManagementFactory.getRuntimeMXBean().vmVersion
@@ -551,6 +553,8 @@ class MenuController {
             osName: osName,
             osVersion: osVersion,
             osArch: osArch,
+            javaVendor: javaVendor,
+            javaVersion: javaVersion,
             vmName: vmName,
             vmVendor: vmVendor,
             vmVersion: vmVersion,
@@ -621,10 +625,11 @@ class MenuController {
             ],
             [jvm:
             [
+                vendor: info.javaVendor,
+                version: info.javaVersion,
                 name: info.vmName,
-                vendor: info.vmVendor,
-                version: info.vmVersion
-            ]
+                implementationVersion: info.vmVersion
+            ],
             ],
         ]]
     }

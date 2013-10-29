@@ -39,6 +39,8 @@ class ApiController {
         String osName= ManagementFactory.getOperatingSystemMXBean().name
         String osVersion= ManagementFactory.getOperatingSystemMXBean().version
         String osArch= ManagementFactory.getOperatingSystemMXBean().arch
+        String javaVendor=System.properties['java.vendor']
+        String javaVersion=System.properties['java.version']
         String vmName=ManagementFactory.getRuntimeMXBean().vmName
         String vmVendor=ManagementFactory.getRuntimeMXBean().vmVendor
         String vmVersion=ManagementFactory.getRuntimeMXBean().vmVersion
@@ -69,8 +71,9 @@ class ApiController {
                 }
                 jvm {
                     name(vmName)
-                    vendor(vmVendor)
-                    version(vmVersion)
+                    vendor(javaVendor)
+                    version(javaVersion)
+                    implementationVersion(vmVersion)
                 }
                 stats{
                     uptime(duration:durationTime,unit: 'ms'){
