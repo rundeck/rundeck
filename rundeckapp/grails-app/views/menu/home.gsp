@@ -20,82 +20,54 @@
 <body>
 
 
-<div class="row">
-<div class="col-sm-12">
-                <span class="h3">
-                    Rundeck
-                    server:
-
-                <span class="text-info ">${frameworkNodeName.encodeAsHTML()}</span>
-
-                </span>
-    </div>
-</div>
-        <div class="row row-space">
-            <div class="col-sm-4">
-                %{--<span class="h4">--}%
-                    %{--<span class="summary-count ${ jobCount > 0 ? 'text-info' : 'text-muted' }">${projCount}</span>--}%
-                    %{--<g:message code="Project${projCount == 1 ? '' : '.plural'}"/>--}%
-                %{--</span>--}%
-            </div>
-
-
-            %{--<div class="col-sm-2">--}%
-                %{--<span class="h4">--}%
-                    %{--<span class="summary-count ${jobCount > 0 ? 'text-info' : 'text-muted'}">${jobCount}</span>--}%
-                    %{--<g:message code="Job${jobCount == 1 ? '' : '.plural'}"/>--}%
-                    %{--<i class="glyphicon glyphicon-book"></i>--}%
-                %{--</span>--}%
-            %{--</div>--}%
-
-
-            <div class="col-sm-4">
-                <span class="h4">
-                    <span class="summary-count ${ execCount > 0 ? 'text-info' : 'text-muted' }">${execCount}</span>
-                    <strong>
-                        <g:plural code="Execution" count="${execCount}" textOnly="${true}"/>
-                    </strong>
-                    In the last day
-                </span>
-                <g:if test="${projectSummaries.size()>0}">
-                <div>
-                in
-                <span class="text-info">
-                    ${projectSummary.size()}
-                </span>
-
-
-                <g:plural code="Project" count="${projectSummary.size()}" textOnly="${true}"/>:
-                <g:each var="project" in="${projectSummary}" status="i">
-                ${project}<g:if test="${i< projectSummary.size()-1}">,</g:if>
-                </g:each>
-                </div>
-                </g:if>
-                <div>
-                    <g:if test="${userCount>0}">
-                    by
-                    <span class="text-info">
-                        ${userCount}
-                    </span>
-                    <g:plural code="user" count="${userCount}" textOnly="${true}"/>:
-                    <g:each in="${userSummary}" var="user" status="i">
-                    ${user.encodeAsHTML()}<g:if test="${i<userSummary.size()-1}">,</g:if>
-                    </g:each>
-                    </g:if>
-                </div>
-            </div>
-    </div>
-
-
 <div class="row row-space">
-    <div class="col-sm-9">
+    <div class="col-sm-4">
         <span class="h3 text-muted">
             ${projCount}
             <g:plural code="Project" count="${projCount}" textOnly="${true}"/>
         </span>
     </div>
+
+<div class="col-sm-4">
+    <g:if test="${projCount > 1}">
+    %{--app summary info--}%
+                <span class="h4">
+                    <span class="summary-count ${execCount > 0 ? 'text-info' : 'text-muted'}">${execCount}</span>
+                    <strong>
+                        <g:plural code="Execution" count="${execCount}" textOnly="${true}"/>
+                    </strong>
+                    In the last day
+                </span>
+                <g:if test="${projectSummaries.size() > 0}">
+                    <div>
+                        in
+                        <span class="text-info">
+                            ${projectSummary.size()}
+                        </span>
+
+
+                        <g:plural code="Project" count="${projectSummary.size()}" textOnly="${true}"/>:
+                        <g:each var="project" in="${projectSummary}" status="i">
+                            ${project}<g:if test="${i < projectSummary.size() - 1}">,</g:if>
+                        </g:each>
+                    </div>
+                </g:if>
+                <div>
+                    <g:if test="${userCount > 0}">
+                        by
+                        <span class="text-info">
+                            ${userCount}
+                        </span>
+                        <g:plural code="user" count="${userCount}" textOnly="${true}"/>:
+                        <g:each in="${userSummary}" var="user" status="i">
+                            ${user.encodeAsHTML()}<g:if test="${i < userSummary.size() - 1}">,</g:if>
+                        </g:each>
+                    </g:if>
+                </div>
+    </g:if>
+</div>
     <auth:resourceAllowed action="create" kind="project" context="application">
-        <div class="col-sm-3">
+        <div class="col-sm-4">
             <g:link controller="framework" action="createProject" class="btn  btn-success pull-right">
                 New Project
                 <b class="glyphicon glyphicon-plus"></b>
