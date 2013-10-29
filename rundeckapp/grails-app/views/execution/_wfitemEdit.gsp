@@ -165,9 +165,9 @@
         <div id='interpreterArgsQuotedHelp${rkey}_preview' class="presentation">
             <code>$
                 <span id='interpreterPreview'>${item?.scriptInterpreter?.encodeAsHTML()}</span>
-                <em>scriptfile</em>
-                <span class="interpreterquotepreview" style="${wdgt.styleVisible(if: item?.interpreterArgsQuoted)}">&quot;</span
-                    ><span id='interpreterArgsPreview'>${item?.argString?.encodeAsHTML()}</span
+                <span class="interpreterquotepreview"
+                      style="${wdgt.styleVisible(if: item?.interpreterArgsQuoted)}">&quot;</span
+                ><em>scriptfile</em> <span id='interpreterArgsPreview'>${item?.argString?.encodeAsHTML()}</span
                     ><span class="interpreterquotepreview" style="${wdgt.styleVisible(if: item?.interpreterArgsQuoted)}">&quot;</span>
             </code>
         </div>
