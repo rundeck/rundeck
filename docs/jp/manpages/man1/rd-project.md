@@ -12,7 +12,7 @@ rd-project [-vh] -a create -p projectname [ \--property=value ]...
 
 # DESCRIPTION
 
-The rd-project command is used to create projects in the Rundeck base directory.
+The rd-project command is used to create projects.
 
 The command will create the necessary directory structure and configuration files, and can be used to configure the project's properties.
 
@@ -47,7 +47,7 @@ of rd-setup:
 :Java installation directory
 
 * RDECK_BASE
-: Rundeck framework instance directory
+: Rundeck install directory
 
 # EXECUTION #
 
@@ -57,10 +57,10 @@ Create a new project named "production":
 
     rd-project -a create -p production
 
-Create a new project and specify the "project.ssh-keypath" value as well as a URL for the "project.resources.url"
+Create a new project and specify the "project.ssh-keypath" value as well as a path for the nodes data.
 
     rd-project -a create -p production --project.ssh-keypath=/path/to/keyfile \
-    --project.resources.url=http://example.com/nodes
+    --resources.source.1.config.file=/path/to/nodesfile
 
 
 # SEE ALSO
