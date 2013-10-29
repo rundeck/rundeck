@@ -724,12 +724,27 @@ public class FrameworkProject extends FrameworkResourceParent {
         }
         final Properties newProps = new Properties();
         newProps.setProperty("project.name", getName());
-        if (null == properties ) {
+
+        //TODO: improve default configuration generation
+        if (null == properties || !properties.containsKey("resources.source.1.type") ) {
             //add default file source
             newProps.setProperty("resources.source.1.type", "file");
             newProps.setProperty("resources.source.1.config.file", new File(getEtcDir(), "resources.xml").getAbsolutePath());
             newProps.setProperty("resources.source.1.config.includeServerNode", "true");
             newProps.setProperty("resources.source.1.config.generateFileAutomatically", "true");
+        }
+        if(null==properties || !properties.containsKey("service.NodeExecutor.default.provider")) {
+            newProps.setProperty("service.NodeExecutor.default.provider", "jsch-ssh");
+        }
+        if(null==properties || !properties.containsKey("service.FileCopier.default.provider")) {
+            newProps.setProperty("service.FileCopier.default.provider", "jsch-scp");
+        }
+        if (null == properties || !properties.containsKey("project.ssh-keypath")) {
+            newProps.setProperty("project.ssh-keypath", new File(System.getProperty("user.home"),
+                    ".ssh/id_rsa").getAbsolutePath());
+        }
+        if(null==properties || !properties.containsKey("project.ssh-authentication")) {
+            newProps.setProperty("project.ssh-authentication", "privateKey");
         }
         if(merge) {
             final Properties orig = new Properties();
