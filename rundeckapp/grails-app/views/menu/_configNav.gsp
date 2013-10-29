@@ -16,12 +16,7 @@
     </li>
     <li class="${selected == 'sysinfo' ? 'active' : ''}">
         <g:link controller="menu" action="systemInfo">
-            <g:message code="gui.menu.SystemInfo" default="System Information"/>
-        </g:link>
-    </li>
-    <li class="${selected == 'metrics' ? 'active' : ''}">
-        <g:link controller="menu" action="metrics">
-            <g:message code="gui.menu.metrics" default="Metrics"/>
+            <g:message code="gui.menu.SystemInfo" default="System Report"/>
         </g:link>
     </li>
     <li class="${selected == 'profiles' ? 'active' : ''}">
@@ -31,7 +26,7 @@
     </li>
     <li class="${selected == 'plugins' ? 'active' : ''}">
         <g:link controller="menu" action="plugins">
-            List Plugins
+            <g:message code="gui.menu.ListPlugins" />
         </g:link>
     </li>
     <li class="${selected == 'licenses' ? 'active' : ''}">
