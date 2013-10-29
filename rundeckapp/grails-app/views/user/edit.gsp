@@ -10,7 +10,7 @@
 
 <div class="row">
     <div class="col-sm-12">
-        <h3>Edit User Profile</h3>
+        <h3>Edit User Email</h3>
     </div>
 </div
 

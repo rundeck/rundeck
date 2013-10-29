@@ -46,20 +46,6 @@
 </div>
 
 <div class="form-group">
-    <label for="firstName" class="control-label">
-        First Name
-    </label>
-    <g:textField name="firstName" value="${user.firstName}" class="form-control"/>
-</div>
-
-<div class="form-group">
-    <label for="lastName" class="control-label">
-        Last Name
-    </label>
-    <g:textField name="lastName" value="${user.lastName}" class="form-control"/>
-</div>
-
-<div class="form-group">
     <label for="email" class="control-label">
         Email
     </label>

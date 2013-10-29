@@ -26,31 +26,21 @@
     <table class="simpleForm">
         <tr>
             <td>
-                First Name:
-            </td>
-            <td>
-                ${user.firstName}
-            </td>
-        </tr>
-        <tr>
-            <td>
-                Last Name:
-            </td>
-            <td>
-                ${user.lastName}
-            </td>
-        </tr>
-        <tr>
-            <td>
                 Email:
             </td>
             <td>
                 ${user.email}
+                <g:if test="${edit}">
+
+                    <small>
+                        <g:link action="edit" params="[login: user.login]"
+                                class=" textbtn textbtn-default btn-sm textbtn-on-hover">
+                            <i class="glyphicon-edit glyphicon"></i>
+                            Edit
+                        </g:link>
+                    </small>
+                </g:if>
             </td>
-        </tr>
-        <tr>
-            <td>Username:</td>
-            <td>${user.login}</td>
         </tr>
         <g:if test="${user.login == request.remoteUser}">
             <tr>

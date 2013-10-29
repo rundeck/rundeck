@@ -86,13 +86,7 @@
 
 <div class="row">
     <div class="col-sm-10">
-        <h3>User Profile: ${user.login}
-            <small>
-            <g:link action="edit" params="[login: params.login]" class=" textbtn textbtn-default btn-sm textbtn-on-hover">
-                <i class="glyphicon-edit glyphicon"></i>
-                Edit
-            </g:link>
-            </small>
+        <h3>User: ${user.login}
         </h3>
     </div>
     <div class="col-sm-2">
@@ -103,7 +97,7 @@
 <div class="pageBody" id="userProfilePage">
     <g:render template="/common/messages"/>
 
-    <tmpl:user user="${user}"/>
+    <tmpl:user user="${user}" edit="${true}"/>
 </div>
 </body>
 </html>

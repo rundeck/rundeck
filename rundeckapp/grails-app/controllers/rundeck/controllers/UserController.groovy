@@ -46,7 +46,7 @@ class UserController {
     }
     def denied={
         response.setStatus(403)
-        render(template:'/common/error',model:[:])
+        render(view: '/common/error',model:[:])
     }
     def deniedFragment={
         response.setStatus(403)
