@@ -37,11 +37,3 @@ framework.ssh.user = @framework.ssh.user@
 # "0" value means wait forever.
 framework.ssh.timeout = 0
 
-# ----------------------------------------------------------------
-# Dynamically loaded classes (do not change)
-# ----------------------------------------------------------------
-
-framework.centraldispatcher.classname = @framework.centraldispatcher.classname@
-framework.nodeauthentication.classname = @framework.nodeauthentication.classname@
-framework.authorization.class = @framework.authorization.class@
-framework.authentication.class = @framework.authentication.class@

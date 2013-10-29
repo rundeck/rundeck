@@ -25,7 +25,6 @@ import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext;
 import com.dtolabs.rundeck.core.dispatcher.CentralDispatcher;
 import com.dtolabs.rundeck.core.dispatcher.CentralDispatcherException;
 import com.dtolabs.rundeck.core.dispatcher.CentralDispatcherMgrFactory;
-import com.dtolabs.rundeck.core.dispatcher.NoCentralDispatcher;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionService;
 import com.dtolabs.rundeck.core.execution.ExecutionServiceFactory;
@@ -66,13 +65,14 @@ import java.util.*;
 public class Framework extends FrameworkResourceParent {
     public static final Logger logger = Logger.getLogger(Framework.class);
 
-    static final String NODEAUTH_CLS_PROP = "framework.nodeauthentication.classname";
     static final String AUTHENT_CLS_PROP = "framework.authentication.class";
+    static final String AUTHENT_CLS_DEFAULT = "com.dtolabs.rundeck.core.authentication.NoAuthentication";
     static final String AUTHORIZE_CLS_PROP = "framework.authorization.class";
+    static final String AUTHORIZE_CLS_DEFAULT = "com.dtolabs.rundeck.core.authorization.NoAuthorization";
     public static final String CENTRALDISPATCHER_CLS_PROP = "framework.centraldispatcher.classname";
     public static final String NODES_RESOURCES_FILE_PROP = "framework.nodes.file.name";
     public static final String NODES_FILE_AUTOGEN_PROP = "framework.nodes.file.autogenerate";
-    static final String CENTRALDISPATCHER_CLS_DEFAULT = NoCentralDispatcher.class.getName();
+    public static final String CENTRALDISPATCHER_CLS_DEFAULT = "com.dtolabs.client.services.RundeckAPICentralDispatcher";
 
     static final String PROJECTMGR_NAME = "projectResourceMgr";
     public static final String FRAMEWORK_LIBEXT_DIR = "framework.libext.dir";
@@ -120,11 +120,15 @@ public class Framework extends FrameworkResourceParent {
         projectResourceMgr = FrameworkProjectMgr.create(PROJECTMGR_NAME, projectsBase, this);
 
         if(null==authenticationMgr) {
-            authenticationMgr = AuthenticationMgrFactory.create(lookup.getProperty(AUTHENT_CLS_PROP), this)
+            String cls = lookup.hasProperty(AUTHENT_CLS_PROP)? lookup.getProperty(AUTHENT_CLS_PROP): AUTHENT_CLS_DEFAULT;
+            logger.debug("configured default authentication classname: " + cls);
+            authenticationMgr = AuthenticationMgrFactory.create(cls, this)
                 .getAuthenticationMgr();
         }
         if(null==authorizationMgr){
-            authorizationMgr = AuthorizationMgrFactory.create(lookup.getProperty(AUTHORIZE_CLS_PROP),
+            String cls = lookup.hasProperty(AUTHORIZE_CLS_PROP)? lookup.getProperty(AUTHENT_CLS_PROP): AUTHORIZE_CLS_DEFAULT;
+            logger.debug("configured default authorization classname: " + cls);
+            authorizationMgr = AuthorizationMgrFactory.create(cls,
                 this, getConfigDir()).getAuthorizationMgr();
         }
         if(null==centralDispatcherMgr){
@@ -249,16 +253,6 @@ public class Framework extends FrameworkResourceParent {
         lookup1.expand();
 
         lookup = lookup1;
-        if (!lookup.hasProperty(AUTHENT_CLS_PROP)) {
-            throw new IllegalArgumentException("\"" + AUTHENT_CLS_PROP + "\" property not set");
-        }
-        if (!lookup.hasProperty(AUTHORIZE_CLS_PROP)) {
-            throw new IllegalArgumentException("\"" + AUTHORIZE_CLS_PROP + "\" property not set");
-        }
-        if (!lookup.hasProperty(CENTRALDISPATCHER_CLS_PROP)) {
-            logger.warn("\"" + CENTRALDISPATCHER_CLS_PROP + "\" property not set, using default");
-        }
-
 
         this.authenticationMgr = authentication;
         this.authorizationMgr=authorization;

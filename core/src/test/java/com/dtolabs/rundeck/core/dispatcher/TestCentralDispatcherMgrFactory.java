@@ -73,8 +73,8 @@ public class TestCentralDispatcherMgrFactory extends AbstractBaseTest {
         } catch (CentralDispatcherException ex) {
             assertNotNull(ex);
         }
-        CentralDispatcherMgrFactory test1 = CentralDispatcherMgrFactory.create(getFrameworkInstance().getProperty(
-            "framework.centraldispatcher.classname"), getFrameworkInstance());
+
+        CentralDispatcherMgrFactory test1 = CentralDispatcherMgrFactory.create(Framework.CENTRALDISPATCHER_CLS_DEFAULT, getFrameworkInstance());
         assertNotNull("expected default instance of CentralDispatcher", test1);
 
     }
