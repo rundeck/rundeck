@@ -73,13 +73,7 @@
                     <span class="argString"><g:truncate max="150" showtitle="true">${item.adhocRemoteString.encodeAsHTML()}</g:truncate></span>
                 </g:if>
                 <g:elseif test="${item.adhocLocalString}">
-                    <g:if test="${item.scriptInterpreter}">
-                        <span class="argString">${item.scriptInterpreter.encodeAsHTML()}</span>
-                        <g:if test="${item.interpreterArgsQuoted}">
-                            &quot;
-                        </g:if>
-                    </g:if>
-                    <g:render template="/execution/scriptDetailDisplay" model="${[script:item.adhocLocalString,label:'Script: ',edit:edit]}"/>
+                    <g:render template="/execution/scriptDetailDisplay" model="${[script:item.adhocLocalString,label: 'Script: ',edit:edit]}"/>
                 </g:elseif>
                 <g:elseif test="${item.adhocFilepath}">
                     <g:if test="${item.scriptInterpreter}">
@@ -97,6 +91,16 @@
                         <span class="argString"><g:truncate max="150"  showtitle="true">${item.adhocFilepath.encodeAsHTML()}</g:truncate></span>
                     </g:else>
                 </g:elseif>
+                <g:if test="${item.adhocLocalString}">
+                    <g:if test="${item.scriptInterpreter}">
+                        <span class="text-muted"><g:message code="executed.as" />:</span>
+                        <span class="argString">${item.scriptInterpreter.encodeAsHTML()}</span>
+                        <g:if test="${item.interpreterArgsQuoted}">
+                            &quot;
+                        </g:if>
+                        <em title="${g.message(code:'placeholder.for.the.script.file')}"><g:message code="script" /></em>
+                    </g:if>
+                </g:if>
                 <g:if test="${item.argString}">
                    <span class="argString"><g:truncate max="150"  showtitle="true">${item.argString.encodeAsHTML()}</g:truncate></span>
                 </g:if>
