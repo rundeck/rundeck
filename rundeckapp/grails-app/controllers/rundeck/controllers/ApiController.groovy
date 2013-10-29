@@ -45,6 +45,8 @@ class ApiController {
         long durationTime=ManagementFactory.getRuntimeMXBean().uptime
         Date startupDate = new Date(nowDate.getTime()-durationTime)
         int threadActiveCount=Thread.activeCount()
+        def metricsJsonUrl = createLink(uri: '/metrics/metrics?pretty=true',absolute: true)
+        def metricsThreadDumpUrl = createLink(uri: '/metrics/threads',absolute: true)
         return apiService.renderSuccessXml(response){
             delegate.'success' {
                 delegate.'message'("System Stats for Rundeck ${appVersion} on node ${nodeName}")
@@ -94,6 +96,8 @@ class ApiController {
                         active(threadActiveCount)
                     }
                 }
+                metrics(href:metricsJsonUrl,contentType:'text/json')
+                threadDump(href:metricsThreadDumpUrl,contentType:'text/plain')
             }
         }
     }
