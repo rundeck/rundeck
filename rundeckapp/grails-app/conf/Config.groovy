@@ -112,5 +112,3 @@ rundeck.metrics.requestFilterEnabled=true
 rundeck.metrics.servletUrlPattern='/metrics/*'
 
 grails.plugins.twitterbootstrap.fixtaglib = true
-
-grails.assets.excludes = ["bootstrap-src-*.less"]
