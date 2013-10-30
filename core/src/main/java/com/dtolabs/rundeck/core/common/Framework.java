@@ -126,7 +126,7 @@ public class Framework extends FrameworkResourceParent {
                 .getAuthenticationMgr();
         }
         if(null==authorizationMgr){
-            String cls = lookup.hasProperty(AUTHORIZE_CLS_PROP)? lookup.getProperty(AUTHENT_CLS_PROP): AUTHORIZE_CLS_DEFAULT;
+            String cls = lookup.hasProperty(AUTHORIZE_CLS_PROP)? lookup.getProperty(AUTHORIZE_CLS_PROP): AUTHORIZE_CLS_DEFAULT;
             logger.debug("configured default authorization classname: " + cls);
             authorizationMgr = AuthorizationMgrFactory.create(cls,
                 this, getConfigDir()).getAuthorizationMgr();
