@@ -19,6 +19,7 @@ package com.dtolabs.rundeck.core.authentication;
 import com.dtolabs.rundeck.core.common.Framework;
 
 import javax.security.auth.Subject;
+import java.io.File;
 
 /**
  * Trivial implementation of the {@link Authenticator} interface.
@@ -26,6 +27,8 @@ import javax.security.auth.Subject;
 public class NoAuthentication implements Authenticator {
 
     public NoAuthentication(final Framework framework) {
+    }
+    public NoAuthentication(final Framework framework,File basedir) {
     }
     /**
      * Returns an instnace of NoAuthentication
