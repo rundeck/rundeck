@@ -32,7 +32,7 @@ public class AuthorizationException extends CoreException {
     }
 
     public AuthorizationException(final String msg, final Throwable e) {
-        super(msg + ". cause: " + e.getCause().getMessage());
+        super(msg + (null != e.getCause() ? ". cause: "+ e.getCause().getMessage() : ""));
     }
 
     public AuthorizationException(final String user, final String script, final String matchedRoles) {
