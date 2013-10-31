@@ -28,11 +28,11 @@
             Element.hide(this);">Show ${tagsummary.size()} tags&hellip;</span>
         </g:if>
         <span id="tagdemo" style="${wdgt.styleVisible(unless: hidetop)}">
-            <span class="desc">${tagsummary.size()} tags:</span>
+            <i class="glyphicon glyphicon-tags text-muted"></i>
             <g:set var="singletag" value="${[]}"/>
             <g:each var="tag" in="${tagsummary.sort{a,b->a.value>b.value?-1:a.value<b.value?1:a.key<=>b.key}.keySet()}">
                 <g:if test="${tagsummary[tag]>1 || tagsummary.size()<=30}">
-                    <span class="summary">
+                    <span class="summary nodetags">
                         <g:if test="${link}">
                             <g:link class=" tag textbtn" action="${link.action}" controller="${link.controller}" params="${[(link.param):tag]}"
                                     title="Filter by tag: ${tag}">${tag.encodeAsHTML()} : ${tagsummary[tag]}</g:link>

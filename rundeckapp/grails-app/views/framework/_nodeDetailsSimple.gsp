@@ -12,7 +12,7 @@
             </g:if>
         </g:each>
         <g:if test="${!exclude || !exclude.contains('tags')}">
-        <tr><td class="key"><g:message code="node.metadata.tags"/></td>
+        <tr><td class="key"><i class="glyphicon glyphicon-tags text-muted"></i></td>
             <td class="value">${(node['tags']?node['tags'].join(','):'').encodeAsHTML()}</td></tr>
         </g:if>
     </table>

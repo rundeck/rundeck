@@ -54,8 +54,13 @@
                 <td  title="Tags">
                     <g:if test="${node.tags}">
                         <span class="nodetags">
+                            <i class="glyphicon glyphicon-tags text-muted"></i>
                             <g:each var="tag" in="${node.tags.sort()}">
-                                <g:link class="tag textbtn" action="nodes" params="${[nodeIncludeTags:tag]}" title="Filter by tag: ${tag.encodeAsHTML()}">${tag.encodeAsHTML()}</g:link>
+                                <g:link class="tag textbtn" action="nodes" params="${[nodeIncludeTags:tag]}"
+                                        title="Filter by tag: ${tag.encodeAsHTML()}">
+
+                                    ${tag.encodeAsHTML()}
+                                </g:link>
                                 %{--<span class="action textbtn" onclick="setTagFilter('${tag.encodeAsJavaScript()}');" title="Add to existing filter">+</span>--}%
                             </g:each>
                         </span>
