@@ -1,0 +1,57 @@
+/**
+ * The Rundeck CopyFile plugin build file
+ */
+
+description 'This plugin provides the ability to mock the execution of a job'
+
+ext.pluginClassNames='com.dtolabs.rundeck.plugin.copyfile.CopyFileNodeStepPlugin'
+jar {
+    manifest {
+        attributes 'Rundeck-Plugin-Classnames': pluginClassNames
+    }
+}
+
+task createPom << {
+    pom {
+        project {
+            artifactId 'rundeck-copyfile-plugin'
+            groupId project.group
+            inceptionYear '2011'
+            packaging 'jar'
+            version version
+            name "RunDeck CopyFile Step Plugin"
+            url 'http://rundeck.org'
+            licenses {
+                license {
+                    name 'The Apache Software License, Version 2.0'
+                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    distribution 'repo'
+                }
+            }
+            parent{
+                groupId project.group
+                artifactId "rundeck-bundled-plugins"
+                version(version)
+            }
+            build{
+                plugins{
+                    plugin{
+                        groupId 'org.apache.maven.plugins'
+                        artifactId 'maven-jar-plugin'
+                        version '2.3.2'
+                        configuration{
+                            archive{
+                              manifestEntries{
+                                'Rundeck-Plugin-Classnames'(pluginClassNames)
+                                  'Rundeck-Plugin-Version'(rundeckPluginVersion)
+                                  'Rundeck-Plugin-Archive'('true')
+                                  'Rundeck-Plugin-File-Version'(version)
+                              }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }.writeTo("pom.xml")
+}

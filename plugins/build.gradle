@@ -49,6 +49,7 @@ task createPom << {
                 module 'stub-plugin'
                 module 'script-plugin'
                 module 'localexec-plugin'
+                module 'copyfile-plugin'
             }
             dependencies{
                 dependency{
