@@ -22,6 +22,24 @@
  *
  *--------------------------------------------------------------------------*/
 
+//patch: based on https://github.com/zikula/core/blob/079df47e7c1f536a0d9eea2993ae19768e1f0554/src/javascript/ajax/original_uncompressed/prototype.js
+//fix bootstrap compatibility
+var isBootstrapEvent = false;
+if (window.jQuery) {
+    jQuery('*').on('hide.bs.dropdown', function (event) {
+        isBootstrapEvent = true;
+    });
+    jQuery('*').on('hide.bs.collapse', function (event) {
+        isBootstrapEvent = true;
+    });
+    jQuery('*').on('hide.bs.modal', function (event) {
+        isBootstrapEvent = true;
+    });
+    jQuery('*').on('hide.bs.tooltip', function (event) {
+        isBootstrapEvent = true;
+    });
+}
+
 var Prototype = {
 
   Version: '1.7',
@@ -1944,6 +1962,11 @@ Element.Methods = {
   },
 
   hide: function(element) {
+      //patch: fix for bootstrap event model
+      if (isBootstrapEvent) {
+          isBootstrapEvent = false;
+          return element;
+      }
     element = $(element);
     element.style.display = 'none';
     return element;
