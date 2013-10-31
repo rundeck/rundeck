@@ -26,6 +26,7 @@ package com.dtolabs.rundeck.core.execution.workflow.steps;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeSet;
+import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionService;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.plugins.PluginLogger;
@@ -49,6 +50,7 @@ public class PluginStepContextImpl implements PluginStepContext {
     private int stepNumber;
     private List<Integer> stepContext;
     private Framework framework;
+    private ExecutionContext executionContext;
 
     public PluginStepContextImpl() {
         stepNumber = -1;
@@ -79,6 +81,7 @@ public class PluginStepContextImpl implements PluginStepContext {
         context1.stepNumber = context.getStepNumber();
         context1.stepContext = context.getStepContext();
         context1.framework = context.getFramework();
+        context1.executionContext = context;
         return context1;
     }
 
@@ -96,5 +99,9 @@ public class PluginStepContextImpl implements PluginStepContext {
 
     public Framework getFramework() {
         return framework;
+    }
+
+    public ExecutionContext getExecutionContext() {
+        return executionContext;
     }
 }

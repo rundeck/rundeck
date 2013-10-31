@@ -26,6 +26,7 @@ package com.dtolabs.rundeck.plugins.step;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeSet;
+import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionService;
 import com.dtolabs.rundeck.plugins.PluginLogger;
 
@@ -73,4 +74,9 @@ public interface PluginStepContext {
      * Return the Framework object
      */
     public Framework getFramework();
+
+    /**
+     * Return the the current execution context
+     */
+    public ExecutionContext getExecutionContext();
 }
