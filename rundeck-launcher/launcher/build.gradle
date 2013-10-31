@@ -36,7 +36,8 @@ dependencies {
 	
     pluginFiles project(':plugins:script-plugin'),
         project(':plugins:stub-plugin'),
-        project(':plugins:localexec-plugin')
+        project(':plugins:localexec-plugin'),
+        project(':plugins:copyfile-plugin')
 
     jettyServerLib(project(path:":rundeck-launcher:rundeck-jetty-server", configuration:'runtime')) {
         exclude module:'commons-cli'

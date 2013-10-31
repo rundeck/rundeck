@@ -58,7 +58,9 @@ def manifest=[
         "libext/rundeck-stub-plugin-${version}.jar##plugins/stub-plugin/${target}/rundeck-stub-plugin-${version}.jar",
         "libext/rundeck-localexec-plugin-${version}.jar",
         "libext/rundeck-localexec-plugin-${version}.jar##plugins/localexec-plugin/${target}/rundeck-localexec-plugin-${version}.jar",
-        "libext/#3",//require 3 files in dir
+        "libext/rundeck-copyfile-plugin-${version}.jar",
+        "libext/rundeck-copyfile-plugin-${version}.jar##plugins/copyfile-plugin/${target}/rundeck-copyfile-plugin-${version}.jar",
+        "libext/#4",//require 3 files in dir
         "templates/config/#4",
         "templates/config/jaas-loginmodule.conf.template",
         "templates/config/realm.properties.template",
@@ -78,6 +80,7 @@ def manifest=[
     "plugins/script-plugin/${target}/rundeck-script-plugin-${version}.jar":[:],
     "plugins/stub-plugin/${target}/rundeck-stub-plugin-${version}.jar":[:],
     "plugins/localexec-plugin/${target}/rundeck-localexec-plugin-${version}.jar":[:],
+    "plugins/copyfile-plugin/${target}/rundeck-copyfile-plugin-${version}.jar":[:],
 ]
 
 def isValid=true
