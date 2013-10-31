@@ -695,7 +695,6 @@ class MenuController {
         Calendar n = GregorianCalendar.getInstance()
         n.add(Calendar.DAY_OF_YEAR, -1)
         Date today = n.getTime()
-        println("today: ${today}")
         def summary=[:]
         fprojects.each { FrameworkProject project->
             summary[project.name]=[
