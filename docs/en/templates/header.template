@@ -1,7 +1,7 @@
 <div class="rundecksite">
 <nav class="site" >
       <ul  class="container_12">
-    <li class="item index grid_4 alpha">
+    <li class="item index grid_2 alpha">
     <a href="http://rundeck.org/index.html">
       <h1 class="brand">Rundeck</h1>
       <p class="rd_version">Open-Source Workflow Automation</p>
@@ -31,16 +31,13 @@
       <p class="rd_version">${VERSION}</p>
       </a>
     </li>
+    <li class="grid_2">
+        <form action="http://rundeck.org/search/">
+            <input type="search" name="q" placeholder="search docs"/>
+        </form>
+    </li>
 <div class="clear"></div>
 </ul>
     </nav>
-    <div class="container_12 searchbox">
-    <div class="grid_4 prefix_8">
-        <form action="http://rundeck.org/search/">
-            <input type="search" name="q"/>
-            <input type="submit" value="Search"/>
-        </form>
-    </div>
-<div class="clear"></div>
-</div>
+    
 </div>

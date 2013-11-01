@@ -12,7 +12,7 @@ body {
     background: white;
     width: 700px;
     clear: both;
-    margin: 0 auto;
+    margin: 0 auto 0 286px;
     padding: 10px 20px 20px;
 }
 
@@ -37,6 +37,14 @@ h1.brand{
     padding-bottom: .5em;
     border-top: 2px solid #aaa;
     border-bottom: 2px solid #aaa;
+    position: fixed;
+    left: 10px;
+    top: 90px;
+    bottom: 10px;
+    overflow-y: auto;
+    background: white;
+    padding:.5em .5em 20px .5em;
+    width: 250px;
 }
 
 #TOC a {
@@ -96,7 +104,7 @@ nav.page {
     background: white;
     width: 740px;
     clear: both;
-    margin: 0 auto;
+    margin: 0 auto 0 286px;
     padding: 0;
 }
 
@@ -156,7 +164,7 @@ footer,nav.breadcrumb {
     clear: both;
     font-size: 90%;
     color: #aaa;
-    margin: 0 auto;
+    margin: 0 auto 0 286px;
     padding: 10px 20px;
 }
 
