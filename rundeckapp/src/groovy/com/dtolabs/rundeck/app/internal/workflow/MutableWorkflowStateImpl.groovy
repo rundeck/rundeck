@@ -16,6 +16,9 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
     def Map<Integer,MutableWorkflowStepState> mutableStepStates;
 
     MutableWorkflowStateImpl(Set<String> nodeSet, long stepCount) {
+        this(nodeSet,stepCount,null)
+    }
+    MutableWorkflowStateImpl(Set<String> nodeSet, long stepCount,Map<Integer, MutableWorkflowStepStateImpl> steps) {
         this.mutableNodeSet = new HashSet<String>()
         if(null!=nodeSet){
             this.mutableNodeSet.addAll(nodeSet)
@@ -23,7 +26,7 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         this.stepCount = stepCount
         mutableStepStates = new HashMap<Integer,MutableWorkflowStepState>()
         for (int i = 1; i <= stepCount; i++) {
-            mutableStepStates[i - 1] = new MutableWorkflowStepStateImpl(StateUtils.stepIdentifier(i))
+            mutableStepStates[i - 1] = steps[i-1]?: new MutableWorkflowStepStateImpl(StateUtils.stepIdentifier(i))
         }
     }
 
@@ -148,7 +151,7 @@ update timestamp. update timestamp on WorkflowState(s)
         }else if (notStartedAll) {
             //not started
             result = ExecutionState.NOT_STARTED
-            currentStep.mutableStepState.errorMessage = "Resolved state: ${ExecutionState.NOT_STARTED}, due to: No nodes started"
+            currentStep.mutableStepState.errorMessage = "No nodes started"
         } else {
             result = ExecutionState.NODE_MIXED
         }
@@ -163,7 +166,6 @@ update timestamp. update timestamp on WorkflowState(s)
             MutableStepState state = currentStep.mutableNodeStateMap[node]
             if (state && state.executionState == ExecutionState.WAITING) {
                 state.executionState = updateState(state.executionState, ExecutionState.NOT_STARTED)
-                state.errorMessage="Resolved state: ${ExecutionState.NOT_STARTED}, due to: Node execution had not started when step was finished"
             }
         }
     }
@@ -278,11 +280,8 @@ update timestamp. update timestamp on WorkflowState(s)
         if(mutableWorkflowStepState.nodeStepTargets){
             //a node step
             finalizeNodeStep(executionState,mutableWorkflowStepState)
-            mutableWorkflowStepState.mutableStepState.errorMessage = "Resolved state: ${mutableWorkflowStepState.mutableStepState.executionState}, " +
-                    "due to: node step completion state"
         }else {
             mutableWorkflowStepState.mutableStepState.executionState = updateState(mutableWorkflowStepState.mutableStepState.executionState, executionState)
-            mutableWorkflowStepState.mutableStepState.errorMessage = "Resolved state: ${executionState}, due to: workflow completion state"
         }
     }
 

@@ -17,14 +17,16 @@ class MutableWorkflowStepStateImpl implements MutableWorkflowStepState {
     StepIdentifier stepIdentifier;
     Map<String, MutableStepState> mutableNodeStateMap;
     Set<String> nodeStepTargets;
-    boolean subworkflow
 
     MutableWorkflowStepStateImpl(StepIdentifier stepIdentifier) {
+        this(stepIdentifier,null)
+    }
+    MutableWorkflowStepStateImpl(StepIdentifier stepIdentifier,MutableWorkflowState subflow) {
         this.stepIdentifier = stepIdentifier
         this.mutableStepState=new MutableStepStateImpl()
         this.mutableStepState.executionState= ExecutionState.WAITING
         this.mutableNodeStateMap = new HashMap<String, MutableStepState>()
-        this.subworkflow=false
+        this.mutableSubWorkflowState=subflow
     }
 
     public StepState getStepState(){
@@ -46,7 +48,7 @@ class MutableWorkflowStepStateImpl implements MutableWorkflowStepState {
      * @return
      */
     public boolean hasSubWorkflow(){
-        subworkflow
+        mutableSubWorkflowState!=null
     }
 
     /**
@@ -60,7 +62,6 @@ class MutableWorkflowStepStateImpl implements MutableWorkflowStepState {
 
     @Override
     MutableWorkflowState createMutableSubWorkflowState(Set<String> nodeSet,int count) {
-        subworkflow=true
         mutableSubWorkflowState = new MutableWorkflowStateImpl(nodeSet, count)
     }
 
