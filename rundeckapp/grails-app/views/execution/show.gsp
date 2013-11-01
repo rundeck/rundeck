@@ -435,8 +435,27 @@
         </div>
     </div>
   <g:if test="${workflowState}">
-      <g:render template="wfstateModelDisplay" bean="${workflowState}" var="workflowState"/>
-      <div class="flowstate" id="flowstate"></div>
+      <table>
+          <tr>
+              <td style="width:50%; vertical-align: top;">
+
+                  <div class="flowstate" id="flowstate">
+                      <g:render template="wfstateModelDisplay" bean="${workflowState}" var="workflowState"/>
+
+                  </div>
+              </td>
+              <td style="width:50%; vertical-align: top;">
+
+                  <div id="flowstate_json"></div>
+              </td>
+          </tr>
+          <tr>
+              <td colspan="2" id="flowstate_log">
+
+              </td>
+          </tr>
+      </table>
+
   </g:if>
 
 
