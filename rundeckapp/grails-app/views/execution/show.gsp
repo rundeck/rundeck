@@ -25,7 +25,8 @@
 
       <g:set var="defaultLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.default}"/>
       <g:set var="maxLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.max}"/>
-      <g:javascript src="executionControl.js"/>
+      <g:javascript src="executionControl.js?v=${grailsApplication.metadata['app.version']}"/>
+      <g:javascript src="executionState.js?v=${grailsApplication.metadata['app.version']}"/>
       <g:javascript library="prototype/effects"/>
       <g:javascript>
         <g:if test="${scheduledExecution}">
@@ -71,10 +72,13 @@
             , onComplete:loadHistory
             </g:if>
         });
-
+        var flowState = new FlowState('${execution?.id}','flowstate',{
+            loadUrl: "${g.createLink(controller: 'execution', action: 'ajaxExecState', id: execution.id)}"
+         });
 
         function init() {
             followControl.beginFollowingOutput('${execution?.id}');
+            flowState.beginFollowing();
             <g:if test="${!(grailsApplication.config.rundeck?.gui?.enableJobHoverInfo in ['false', false])}">
             $$('.obs_bubblepopup').each(function(e) {
                 new BubbleController(e,null,{offx:-14,offy:null}).startObserving();
@@ -432,6 +436,7 @@
     </div>
   <g:if test="${workflowState}">
       <g:render template="wfstateModelDisplay" bean="${workflowState}" var="workflowState"/>
+      <div class="flowstate" id="flowstate"></div>
   </g:if>
 
 

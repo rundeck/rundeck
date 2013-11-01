@@ -117,12 +117,12 @@ class ExecutionController {
         return [scheduledExecution: e.scheduledExecution?:null,execution:e, filesize:filesize,
                 enext: enext, eprev: eprev,stepPluginDescriptions: pluginDescs, workflowState: state]
     }
-    def ajaxExecState(){
+    def ajaxExecState={
         def Execution e = Execution.get(params.id)
         if (!e) {
             log.error("Execution not found for id: " + params.id)
             flash.error = "Execution not found for id: " + params.id
-            return render(contentType: 'text/json'){
+            return render(contentType: 'application/json'){
                 delegate.'error'('not found')
             }
         }
@@ -130,12 +130,12 @@ class ExecutionController {
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
 
         if (e && !frameworkService.authorizeProjectExecutionAll(framework, e, [AuthConstants.ACTION_READ])) {
-            return render(contentType: 'text/json') {
+            return render(contentType: 'application/json') {
                 delegate.'error'("Unauthorized: Read Execution ${params.id}")
             }
         }
         def state = workflowService.serializeWorkflowStateForExecution(e)
-        return render(contentType: 'text/json', text: state.encodeAsJSON())
+        return render(contentType: 'application/json', text: state.encodeAsJSON())
     }
     def mail ={
         def Execution e = Execution.get(params.id)
