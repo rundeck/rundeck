@@ -29,53 +29,99 @@ var FlowState = Class.create({
         this.targetElement = elem;
         Object.extend(this, params);
     },
+    withOrWithoutMatch: function (root, selector, func, wofunc) {
+        var elem = $(root).down(selector);
+        if (elem && typeof(func)=='function') {
+            func(elem);
+        } else if(typeof(wofunc=='function')){
+            wofunc();
+        }
+    },
+    withoutMatch: function (root, selector, func) {
+        this.withOrWithoutMatch(root, selector, null,func);
+    },
+    withMatch: function (root, selector, func) {
+        this.withOrWithoutMatch(root,selector,func,
+            this.logWarn.bind(this).curry("No match " + selector)
+        );
+    },
+    updateStepState: function (root,stepctx, step) {
+        this.withMatch(root, '.execstate.step[data-stepctx=' + stepctx + ']', function (elem) {
+            $(elem).setAttribute('data-execstate', step.executionState);
+        });
+        if (step.errorMessage) {
+            this.withMatch(root, '.errmsg.step[data-stepctx=' + stepctx + ']', function (elem) {
+                $(elem).innerHTML = step.errorMessage;
+                $(elem).show();
+            });
+        }
+    },
+    newNodeState: function(stepctx, node, nstate){
+        var div = new Element('div');
+        var nspan = new Element('span');
+        nspan.addClassName('execstate isnode');
+        nspan.setAttribute('data-node',node);
+        nspan.setAttribute('data-stepctx',stepctx);
+        nspan.setAttribute('data-execstate', nstate.executionState);
+        var errspan = new Element('span');
+        errspan.addClassName('errmsg isnode');
+        errspan.setAttribute('data-node', node);
+        errspan.setAttribute('data-stepctx', stepctx);
+        errspan.style.display='none';
+        div.appendChild(nspan);
+        div.appendChild(errspan);
+        return div;
+    },
+    setNodeState:function(node,nstate, elem){
+        $(elem).innerHTML = node;
+        $(elem).setAttribute('data-execstate', nstate.executionState);
+    },
+    addNodeState: function(root,stepctx,node,nstate){
+        var nstates= $(root).down('.wfstepstate[data-stepctx=' + stepctx + '] .nodestates');
+        var newstate= this.newNodeState(stepctx, node, nstate);
+        nstates.appendChild(newstate);
+        var execstate=newstate.down('.execstate');
+        this.setNodeState(node, nstate, execstate);
+    },
+    updateNodeState: function (root, stepctx,node,nstate) {
+        this.withOrWithoutMatch(root, '.execstate.isnode[data-stepctx=' + stepctx + '][data-node=' + node + ']',
+            this.setNodeState.bind(this).curry(node,nstate),
+            this.addNodeState.bind(this).curry(root, stepctx, node, nstate)
+        );
 
+        if (nstate.errorMessage) {
+            this.withMatch(root, '.errmsg.isnode[data-stepctx=' + stepctx + '][data-node=' + node + ']', function (elem) {
+                $(elem).innerHTML = nstate.errorMessage;
+                $(elem).show();
+            });
+        }
+    },
+    logWarn: function (text) {
+        if ($(this.targetElement + '_log')) {
+            $(this.targetElement + '_log').innerHTML += "<br>" + text;
+        }
+    },
     updateWorkflow: function (currentwf,ctx) {
         var count = parseInt(currentwf.stepCount);
-        if (currentwf.steps) {
-            for (var i = 1; i <= count; i++) {
-                var step = currentwf.steps[i - 1];
-                var stepctx = ctx + (ctx ? '/' : '') + i;
-                var stepstate = $(this.targetElement).down('.execstate.step[data-stepctx=' + stepctx + ']');
-                if (stepstate) {
-                    stepstate.innerHTML =  step.executionState;
-                    stepstate.setAttribute('data-execstate', step.executionState);
-                }else if($(this.targetElement + '_log')){
-                    $(this.targetElement + '_log').innerHTML+="<br>No step state "+stepctx;
-                }
-                if(step.errorMessage){
-                    var msg = $(this.targetElement).down('.errmsg.step[data-stepctx=' + stepctx + ']');
-                    if(msg){
-                        msg.innerHTML=step.errorMessage;
-                        msg.show();
-                    }
-                }
-                if (step.hasSubworkflow) {
-                    this.updateWorkflow(step.workflow, stepctx);
-                }else if (step.stepTargetNodes && step.nodeStates){
-                    for(var n=0;n<step.stepTargetNodes.length;n++){
-                        var node = step.stepTargetNodes[n];
-                        var nstate=step.nodeStates[node];
-                        if(nstate){
-                            var nodestate = $(this.targetElement).down('.execstate.node[data-stepctx=' + stepctx + '][data-node='+node+']');
-                            if (nodestate) {
-                                nodestate.innerHTML = node+': '+nstate.executionState;
-                                nodestate.setAttribute('data-execstate', nstate.executionState);
-                            } else if ($(this.targetElement + '_log')) {
-                                $(this.targetElement + '_log').innerHTML += "<br>No Node state " + stepctx + ": " + node;
-                            }
+        if (!currentwf.steps) {
+            return;
+        }
+        for (var i = 1; i <= count; i++) {
+            var step = currentwf.steps[i - 1];
+            var stepctx = ctx + (ctx ? '/' : '') + i;
+            this.updateStepState(this.targetElement,stepctx,step);
 
-                            if (nstate.errorMessage) {
-                                var msg = $(this.targetElement).down('.errmsg.isnode[data-stepctx=' + stepctx + '][data-node=' + node + ']');
-                                if (msg) {
-                                    msg.innerHTML = nstate.errorMessage;
-                                    msg.show();
-                                }
-                            }
-                        }
+            if (step.hasSubworkflow) {
+                this.updateWorkflow(step.workflow, stepctx);
+            }else if (step.stepTargetNodes && step.nodeStates){
+                for(var n=0;n<step.stepTargetNodes.length;n++){
+                    var node = step.stepTargetNodes[n];
+                    var nstate=step.nodeStates[node];
+                    if(!nstate){
+                        nstate={ executionState: 'WAITING' };
                     }
+                    this.updateNodeState(this.targetElement, stepctx, node, nstate);
                 }
-
             }
         }
     },
