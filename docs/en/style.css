@@ -21,6 +21,16 @@ h1.title {
     letter-spacing: -.01em;
     margin: 0 0 .67em;
 }
+h1.brand{
+  font-size: 19px !IMPORTANT;
+  font-family: 'Futura';
+  text-transform: uppercase;
+  background-image: url("./figures/rundeck2-icon-32.png");
+  background-size: 16px 16px;
+  background-repeat: no-repeat;
+  background-position: 0 4px;
+  padding-left: 18px;
+}
 
 #TOC {
     padding-top: .5em;
@@ -45,16 +55,6 @@ a {
 
 a:hover {
     text-decoration: underline;
-}
-
-a[href*='://'] {
-    background:  url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKBAMAAAB/HNKOAAAAAXNSR0IArs4c6QAAABJQTFRFY39IZmZmgICAmZmZzMzM////A5BfGQAAAAF0Uk5TAEDm2GYAAAABYktHRACIBR1IAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAPUlEQVQI12NgYFBSUmJgYDINDWIAsoGkoKAKkBQNcnUCkiohSkYMos5OAgoMoiGqAgwMoqGhQFJQUFCAAQDq2geW9A6RGwAAAABJRU5ErkJggg==) 99% 40% no-repeat;
-    padding-right: 15px;
-}
-
-a[href*='://']:hover {
-    background: red url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKBAMAAAB/HNKOAAAAAXNSR0IArs4c6QAAABJQTFRFY39IZmZmgICAmZmZzMzM////A5BfGQAAAAF0Uk5TAEDm2GYAAAABYktHRACIBR1IAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAPUlEQVQI12NgYFBSUmJgYDINDWIAsoGkoKAKkBQNcnUCkiohSkYMos5OAgoMoiGqAgwMoqGhQFJQUFCAAQDq2geW9A6RGwAAAABJRU5ErkJggg==) 99% 40% no-repeat;
-    padding-right: 15px;
 }
 
 h1 a {
@@ -202,17 +202,13 @@ nav.page ul li.current,nav.breadcrumb.bottom {
 
 footer a,footer a:visited,footer a:link,nav.breadcrumb a {
     color: #aaa;
-    text-decoration: none;
 }
 
 /* from site nav.css */
 
 div.rundecksite nav {
-  border-bottom-color: #000;
-  border-bottom-style: solid;
-  border-bottom-width: 1px;
-  height: 50px;
-  background: #303030;
+  
+  background: #2c2c2c;
 }
 
 div.rundecksite nav img {
@@ -227,32 +223,31 @@ div.rundecksite nav ul {
 }
 
 div.rundecksite nav li {
-  border-top: 3px solid transparent;
   float: left;
   line-height: 1.2;
   list-style-type: none;
+  height: 60px;
   /*margin: 0px 0px 0px 0px;*/
   /*width: 220px;*/
   text-align: left;
+  padding-top: 10px;
 }
 
 div.rundecksite nav li:hover {
-  border-top: 3px solid white;
-  background: rgba(0,0,0,.50);
+  background: rgb(0,0,0);
 }
 
 div.rundecksite nav li a:visited {
-  color: #CCC;
 }
 
 div.rundecksite nav li a:hover {
-  color: white;
+  color: red;
   text-decoration:none;
 }
 
 div.rundecksite nav li a {
   text-decoration:none;
-  color: #CCC;
+  color: white;
   display:block;
   padding: 5px 10px;
 }
@@ -274,8 +269,7 @@ div.rundecksite nav li.selected a{
     color:white;
 }
 div.rundecksite nav li.selected{
-    border-top: 3px solid red;
-    background: rgba(0,0,0,.50);
+    background: rgb(0,0,0);
 }
 
 /* search box */
@@ -305,14 +299,15 @@ div.rundecksite nav ul{
     padding: 0;
 }
 div.rundecksite nav ul li{
-    margin:0 ;
-    margin: 0 10px;
+    margin-top: 0;
+    margin-bottom: 0;
+    /*margin: 0 ;*/
 }
 div.rundecksite nav ul li.alpha{
-    margin-left:0;
+    /*margin-left:0;*/
 }
 div.rundecksite nav ul li.omega{
-    margin-right:0;
+    /*margin-right:0;*/
 }
 
 div.rundecksite{

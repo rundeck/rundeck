@@ -3,7 +3,7 @@
       <ul  class="container_12">
     <li class="item index grid_4 alpha">
     <a href="http://rundeck.org/index.html">
-      <h1>Rundeck</h1>
+      <h1 class="brand">Rundeck</h1>
       <p class="rd_version">Open-Source Workflow Automation</p>
       </a>
     </li>
