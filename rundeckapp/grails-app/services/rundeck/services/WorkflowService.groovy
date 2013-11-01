@@ -97,6 +97,9 @@ class WorkflowService {
         ]
     }
     def String encodeDate(Date date){
+        if(!date){
+            return null;
+        }
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
         sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
         sdf.format(date)
