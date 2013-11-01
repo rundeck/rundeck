@@ -114,6 +114,9 @@ class ExecutionController {
             }
         }
         def state = workflowService.readWorkflowStateForExecution(e)
+        if(!state){
+            state= workflowService.previewWorkflowStateForExecution(e)
+        }
         return [scheduledExecution: e.scheduledExecution?:null,execution:e, filesize:filesize,
                 enext: enext, eprev: eprev,stepPluginDescriptions: pluginDescs, workflowState: state]
     }

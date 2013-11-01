@@ -3,12 +3,19 @@ package rundeck.services
 import com.dtolabs.rundeck.app.internal.workflow.MutableWorkflowState
 import com.dtolabs.rundeck.app.internal.workflow.MutableWorkflowStateImpl
 import com.dtolabs.rundeck.app.internal.workflow.MutableWorkflowStateListener
+import com.dtolabs.rundeck.app.internal.workflow.MutableWorkflowStepState
+import com.dtolabs.rundeck.app.internal.workflow.MutableWorkflowStepStateImpl
 import com.dtolabs.rundeck.app.internal.workflow.WorkflowStateListenerAction
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener
 import com.dtolabs.rundeck.core.execution.workflow.state.*
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepException
+import com.dtolabs.rundeck.execution.JobReferenceFailureReason
 import grails.converters.JSON
 import rundeck.Execution
+import rundeck.JobExec
+import rundeck.ScheduledExecution
 import rundeck.Workflow
+import rundeck.WorkflowStep
 
 import java.text.SimpleDateFormat
 
@@ -19,8 +26,26 @@ class WorkflowService {
      * in-memory states of executions,
      */
     static Map<Long,WorkflowState> workflowStates=new HashMap<Long, WorkflowState>()
-    def MutableWorkflowState createStateForWorkflow(Workflow wf){
-        new MutableWorkflowStateImpl(null, wf.commands.size())
+    def MutableWorkflowState createStateForWorkflow( Workflow wf, String project) {
+        Map<Integer, MutableWorkflowStepStateImpl> substeps = [:]
+        wf.commands.eachWithIndex { WorkflowStep step, int ndx ->
+            if (step instanceof JobExec) {
+                JobExec jexec = (JobExec) step
+                def schedlist = ScheduledExecution.findAllScheduledExecutions(jexec.jobGroup, jexec.jobName, project)
+                if (!schedlist || 1 != schedlist.size()) {
+                    //skip
+                    return
+                }
+                def id = schedlist[0].id
+
+                ScheduledExecution se = ScheduledExecution.get(id)
+                substeps[ndx] = new MutableWorkflowStepStateImpl(StateUtils.stepIdentifier(ndx),
+                        createStateForWorkflow(se.workflow,project))
+            }else{
+                substeps[ndx]=new MutableWorkflowStepStateImpl(StateUtils.stepIdentifier(ndx))
+            }
+        }
+        new MutableWorkflowStateImpl(null, wf.commands.size(), substeps)
     }
     /**
      * Create and return a listener for changes to the workflow state for an execution
@@ -28,7 +53,7 @@ class WorkflowService {
      */
     def WorkflowExecutionListener createWorkflowStateListenerForExecution(Execution execution) {
         final long id=execution.id
-        MutableWorkflowState state = createStateForWorkflow(execution.workflow)
+        MutableWorkflowState state = createStateForWorkflow(execution.workflow,execution.project)
         workflowStates.put(execution.id, state)
         def mutablestate= new MutableWorkflowStateListener(state)
         new WorkflowExecutionStateListenerAdapter([mutablestate, new WorkflowStateListenerAction(onWorkflowExecutionStateChanged: {
@@ -161,6 +186,9 @@ class WorkflowService {
         }else{
             return loadState(execution.id)
         }
+    }
+    def WorkflowState previewWorkflowStateForExecution(Execution execution){
+        createStateForWorkflow(execution.workflow, execution.project)
     }
 
 
