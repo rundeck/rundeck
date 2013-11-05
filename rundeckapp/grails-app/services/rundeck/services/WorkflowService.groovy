@@ -163,7 +163,8 @@ class WorkflowService {
         if(map.stepTargetNodes){
             nodeStepTargets=new HashSet<String>(map.stepTargetNodes)
         }
-        StateUtils.workflowStepState(state,nodeStateMap,StateUtils.stepIdentifier(map.id), subWorkflowState,nodeStepTargets)
+        boolean nodeStep = !!map.nodeStep
+        StateUtils.workflowStepState(state,nodeStateMap,StateUtils.stepIdentifier(map.id), subWorkflowState,nodeStepTargets,nodeStep)
     }
 
 
