@@ -1,5 +1,8 @@
 <%@ page import="com.dtolabs.rundeck.core.execution.workflow.state.ExecutionState" %>
 <style>
+    .selected{
+        background: #eeffee;
+    }
     .execstate[data-execstate=NODE_MIXED]{
         color: orange;
     }

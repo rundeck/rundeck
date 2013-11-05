@@ -73,7 +73,8 @@
             </g:if>
         });
         var flowState = new FlowState('${execution?.id}','flowstate',{
-            loadUrl: "${g.createLink(controller: 'execution', action: 'ajaxExecState', id: execution.id)}"
+            loadUrl: "${g.createLink(controller: 'execution', action: 'ajaxExecState', id: execution.id)}",
+            outputUrl:"${g.createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id)}.json"
          });
 
         function init() {
@@ -446,7 +447,7 @@
               </td>
               <td style="width:50%; vertical-align: top;">
 
-                  <div id="flowstate_json"></div>
+                  <pre id="flowstate_output"></pre>
               </td>
           </tr>
           <tr>

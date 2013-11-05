@@ -22,8 +22,10 @@ var FlowState = Class.create({
     executionId:null,
     targetElement:null,
     loadUrl:null,
+    outputUrl:null,
     shouldUpdate:false,
     timer:null,
+    selectedElem:null,
     initialize: function (eid, elem, params) {
         this.executionId = eid;
         this.targetElement = elem;
@@ -56,6 +58,34 @@ var FlowState = Class.create({
             });
         }
     },
+    updateOutput:function(elem,data){
+        $(elem).innerHTML='';
+        for(var i=0;i<data.entries.length;i++){
+            $(elem).innerHTML+= data.entries[i].log+'\n';
+        }
+    },
+    showOutput:function(stepctx, node,evt){
+        if($(this.targetElement + '_output')){
+            $(evt.target).addClassName('selected');
+            if(this.selectedElem){
+                $(this.selectedElem).removeClassName('selected');
+            }
+            this.selectedElem= evt.target;
+            var state=this;
+            new Ajax.Request(this.outputUrl,
+                {
+                    parameters:{nodename:node,stepctx:stepctx},
+                    onSuccess: function (transport) {
+                        var data = transport.responseJSON;
+                        state.updateOutput(state.targetElement+'_output',data);
+                    }
+                }
+            )
+        }
+    },
+    bindNodeOutput: function(elem,stepctx,node){
+        Event.observe(elem, 'click', this.showOutput.bind(this).curry(stepctx, node));
+    },
     newNodeState: function(stepctx, node, nstate){
         var div = new Element('div');
         var nspan = new Element('span');
@@ -70,11 +100,16 @@ var FlowState = Class.create({
         errspan.style.display='none';
         div.appendChild(nspan);
         div.appendChild(errspan);
+        this.bindNodeOutput(div,stepctx,node);
         return div;
     },
-    setNodeState:function(node,nstate, elem){
+    setNodeState:function(stepctx,node,nstate, elem){
         $(elem).innerHTML = node;
         $(elem).setAttribute('data-execstate', nstate.executionState);
+        if($(elem).getAttribute('data-bound')!='true'){
+            this.bindNodeOutput($(elem).parentNode, stepctx, node);
+            $(elem).setAttribute('data-bound', 'true');
+        }
     },
     addNodeState: function(root,stepctx,node,nstate){
         var nstates= $(root).down('.wfstepstate[data-stepctx=' + stepctx + '] .nodestates');
@@ -85,7 +120,7 @@ var FlowState = Class.create({
     },
     updateNodeState: function (root, stepctx,node,nstate) {
         this.withOrWithoutMatch(root, '.execstate.isnode[data-stepctx=' + stepctx + '][data-node=' + node + ']',
-            this.setNodeState.bind(this).curry(node,nstate),
+            this.setNodeState.bind(this).curry(stepctx,node,nstate),
             this.addNodeState.bind(this).curry(root, stepctx, node, nstate)
         );
 
