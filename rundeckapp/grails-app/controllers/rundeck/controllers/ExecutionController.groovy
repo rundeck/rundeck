@@ -389,7 +389,7 @@ class ExecutionController {
                     if (status > 0) {
                         response.setStatus(status)
                     }
-                    render(contentType: "text/json") {
+                    render(contentType: "application/json") {
                         renderOutputClosure('json', [
                                 error: message,
                                 id: params.id.toString(),
@@ -456,7 +456,7 @@ class ExecutionController {
                     }
                 }
                 json {
-                    render(contentType: "text/json") {
+                    render(contentType: "application/json") {
                         renderOutputClosure('json', dataMap, [], request.api_version, delegate)
                     }
                 }
@@ -501,7 +501,7 @@ class ExecutionController {
                     }
                 }
                 json {
-                    render(contentType: "text/json") {
+                    render(contentType: "application/json") {
                         renderOutputClosure('json', dataMap, [], request.api_version, delegate)
                     }
                 }
@@ -587,7 +587,7 @@ class ExecutionController {
                         }
                     }
                     json {
-                        render(contentType: "text/json") {
+                        render(contentType: "application/json") {
                             renderOutputClosure('json', dataMap, [], request.api_version, delegate)
                         }
                     }
@@ -736,7 +736,7 @@ class ExecutionController {
                 }
             }
             json {
-                render(contentType: "text/json") {
+                render(contentType: "application/json") {
                     renderOutputClosure('json', resultData, entry, request.api_version, delegate)
                 }
             }
@@ -918,7 +918,7 @@ class ExecutionController {
         }
         withFormat {
             json{
-                return render(contentType: "text/json", encoding: "UTF-8",text:state.encodeAsJSON())
+                return render(contentType: "application/json", encoding: "UTF-8",text:state.encodeAsJSON())
             }
             xml{
                 return render(contentType: "text/xml", encoding: "UTF-8") {
