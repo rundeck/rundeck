@@ -56,7 +56,7 @@ public class StateUtils {
     }
 
     public static WorkflowStepState workflowStepState(StepState stepState, Map<String, StepState> nodeStateMap,
-            StepIdentifier stepIdentifier, WorkflowState subWorkflowState, Set<String> nodeStepTargets) {
+            StepIdentifier stepIdentifier, WorkflowState subWorkflowState, Set<String> nodeStepTargets, boolean nodeStep) {
         WorkflowStepStateImpl workflowStepState = new WorkflowStepStateImpl();
         workflowStepState.setStepState(stepState);
         workflowStepState.setNodeStateMap(nodeStateMap);
@@ -64,6 +64,7 @@ public class StateUtils {
         workflowStepState.setSubWorkflow(null != subWorkflowState);
         workflowStepState.setSubWorkflowState(subWorkflowState);
         workflowStepState.setNodeStepTargets(nodeStepTargets);
+        workflowStepState.setNodeStep(nodeStep);
         return workflowStepState;
     }
 }
