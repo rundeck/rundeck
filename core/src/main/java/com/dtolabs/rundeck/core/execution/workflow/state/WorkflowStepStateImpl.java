@@ -13,6 +13,7 @@ public class WorkflowStepStateImpl implements WorkflowStepState {
     private boolean subWorkflow;
     private WorkflowState subWorkflowState;
     private Set<String> nodeStepTargets;
+    private boolean nodeStep;
 
 
     public StepIdentifier getStepIdentifier() {
@@ -61,5 +62,13 @@ public class WorkflowStepStateImpl implements WorkflowStepState {
 
     public void setNodeStepTargets(Set<String> nodeStepTargets) {
         this.nodeStepTargets = nodeStepTargets;
+    }
+
+    public boolean isNodeStep() {
+        return nodeStep;
+    }
+
+    public void setNodeStep(boolean nodeStep) {
+        this.nodeStep = nodeStep;
     }
 }

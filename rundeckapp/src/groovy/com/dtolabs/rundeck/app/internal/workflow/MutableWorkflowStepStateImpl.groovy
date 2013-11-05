@@ -17,6 +17,7 @@ class MutableWorkflowStepStateImpl implements MutableWorkflowStepState {
     StepIdentifier stepIdentifier;
     Map<String, MutableStepState> mutableNodeStateMap;
     Set<String> nodeStepTargets;
+    boolean nodeStep;
 
     MutableWorkflowStepStateImpl(StepIdentifier stepIdentifier) {
         this(stepIdentifier,null)
@@ -71,6 +72,7 @@ class MutableWorkflowStepStateImpl implements MutableWorkflowStepState {
             throw new IllegalStateException("Node step targets for this step are already set")
         }
         nodeStepTargets = new HashSet<String>(nodeset)
+        nodeStep=true
     }
 
     @Override

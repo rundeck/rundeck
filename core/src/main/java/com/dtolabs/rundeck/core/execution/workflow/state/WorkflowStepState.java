@@ -50,4 +50,10 @@ public interface WorkflowStepState {
      * @return
      */
     public Set<String> getNodeStepTargets();
+
+    /**
+     * Return true if this is a node step
+     * @return
+     */
+    public boolean isNodeStep();
 }

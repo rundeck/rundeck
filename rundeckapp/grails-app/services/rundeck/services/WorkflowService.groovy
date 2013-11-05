@@ -3,13 +3,10 @@ package rundeck.services
 import com.dtolabs.rundeck.app.internal.workflow.MutableWorkflowState
 import com.dtolabs.rundeck.app.internal.workflow.MutableWorkflowStateImpl
 import com.dtolabs.rundeck.app.internal.workflow.MutableWorkflowStateListener
-import com.dtolabs.rundeck.app.internal.workflow.MutableWorkflowStepState
 import com.dtolabs.rundeck.app.internal.workflow.MutableWorkflowStepStateImpl
 import com.dtolabs.rundeck.app.internal.workflow.WorkflowStateListenerAction
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener
 import com.dtolabs.rundeck.core.execution.workflow.state.*
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepException
-import com.dtolabs.rundeck.execution.JobReferenceFailureReason
 import grails.converters.JSON
 import rundeck.Execution
 import rundeck.JobExec
@@ -44,6 +41,7 @@ class WorkflowService {
             }else{
                 substeps[ndx]=new MutableWorkflowStepStateImpl(StateUtils.stepIdentifier(ndx))
             }
+            substeps[ndx].nodeStep = !!step.nodeStep
         }
         new MutableWorkflowStateImpl(null, wf.commands.size(), substeps)
     }
@@ -126,7 +124,7 @@ class WorkflowService {
         def map=[:]
         if(state.hasSubWorkflow()){
             map+=[
-                    hasSubworkflow: !!state.hasSubWorkflow(),
+                    hasSubworkflow: state.hasSubWorkflow(),
                     workflow:mapOf(state.subWorkflowState)
             ]
         }
@@ -144,6 +142,7 @@ class WorkflowService {
         }
         map + [
                 id:state.stepIdentifier.context.head(),
+                nodeStep:state.nodeStep
         ] + mapOf(state.stepState)
     }
 
