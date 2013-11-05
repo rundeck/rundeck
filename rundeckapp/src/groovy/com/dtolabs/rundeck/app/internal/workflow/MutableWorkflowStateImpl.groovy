@@ -26,7 +26,7 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         this.stepCount = stepCount
         mutableStepStates = new HashMap<Integer,MutableWorkflowStepState>()
         for (int i = 1; i <= stepCount; i++) {
-            mutableStepStates[i - 1] = steps[i-1]?: new MutableWorkflowStepStateImpl(StateUtils.stepIdentifier(i))
+            mutableStepStates[i - 1] = steps && steps[i-1]? steps[i-1] : new MutableWorkflowStepStateImpl(StateUtils.stepIdentifier(i))
         }
     }
 
@@ -118,15 +118,16 @@ update timestamp. update timestamp on WorkflowState(s)
         }
     }
     private finalizeNodeStep(ExecutionState overall, MutableWorkflowStepState currentStep){
-        boolean finished = currentStep.nodeStepTargets.every { node -> currentStep.nodeStateMap[node]?.executionState?.isCompletedState() }
-        boolean aborted = currentStep.nodeStateMap.values()*.executionState.any { it == ExecutionState.ABORTED }
-        boolean abortedAll = currentStep.nodeStateMap.values()*.executionState.every { it == ExecutionState.ABORTED }
-        boolean failed = currentStep.nodeStateMap.values()*.executionState.any { it == ExecutionState.FAILED }
-        boolean failedAll = currentStep.nodeStateMap.values()*.executionState.every { it == ExecutionState.FAILED }
-        boolean succeeded = currentStep.nodeStateMap.values()*.executionState.any { it == ExecutionState.SUCCEEDED }
-        boolean succeededAll = currentStep.nodeStateMap.values()*.executionState.every { it == ExecutionState.SUCCEEDED }
-        boolean notStartedAll = currentStep.nodeStateMap.size() == 0 ||
-                currentStep.nodeStateMap.values()*.executionState.every { it == ExecutionState.WAITING || it == null }
+        def nodeTargets = currentStep.nodeStepTargets?:this.nodeSet
+        boolean finished = currentStep.nodeStateMap && nodeTargets?.every { node -> currentStep.nodeStateMap[node]?.executionState?.isCompletedState() }
+        boolean aborted = currentStep.nodeStateMap && currentStep.nodeStateMap?.values()*.executionState.any { it == ExecutionState.ABORTED }
+        boolean abortedAll = currentStep.nodeStateMap && currentStep.nodeStateMap?.values()*.executionState.every { it == ExecutionState.ABORTED }
+        boolean failed = currentStep.nodeStateMap && currentStep.nodeStateMap?.values()*.executionState.any { it == ExecutionState.FAILED }
+        boolean failedAll = currentStep.nodeStateMap && currentStep.nodeStateMap?.values()*.executionState.every { it == ExecutionState.FAILED }
+        boolean succeeded = currentStep.nodeStateMap && currentStep.nodeStateMap?.values()*.executionState.any { it == ExecutionState.SUCCEEDED }
+        boolean succeededAll = currentStep.nodeStateMap && currentStep.nodeStateMap?.values()*.executionState.every { it == ExecutionState.SUCCEEDED }
+        boolean notStartedAll = currentStep.nodeStateMap?.size() == 0 ||
+                currentStep.nodeStateMap?.values()*.executionState.every { it == ExecutionState.WAITING || it == null }
         ExecutionState result=overall
         if(finished){
             //all nodes finished
@@ -151,7 +152,6 @@ update timestamp. update timestamp on WorkflowState(s)
         }else if (notStartedAll) {
             //not started
             result = ExecutionState.NOT_STARTED
-            currentStep.mutableStepState.errorMessage = "No nodes started"
         } else {
             result = ExecutionState.NODE_MIXED
         }
@@ -159,7 +159,7 @@ update timestamp. update timestamp on WorkflowState(s)
         currentStep.mutableStepState.executionState = updateState(currentStep.mutableStepState.executionState, result)
 
         //update any node states which are WAITING to NOT_STARTED
-        currentStep.nodeStepTargets.each{String node->
+        nodeTargets.each{String node->
             if(!currentStep.mutableNodeStateMap[node]){
                 currentStep.mutableNodeStateMap[node] = new MutableStepStateImpl(executionState:ExecutionState.WAITING)
             }
@@ -253,10 +253,6 @@ update timestamp. update timestamp on WorkflowState(s)
             mutableNodeSet = new HashSet(nodenames)
         }
         if(executionState.isCompletedState()){
-            //TODO: clean up all step states
-            //each step, set state if not complete
-            //each node step, set node states if not complete
-            //each subworkflow, cleanup
             cleanupSteps(executionState, timestamp)
         }
     }
@@ -277,11 +273,22 @@ update timestamp. update timestamp on WorkflowState(s)
      * @param mutableWorkflowStepState
      */
     def resolveStepCompleted(ExecutionState executionState, Date date, int i, MutableWorkflowStepState mutableWorkflowStepState) {
-        if(mutableWorkflowStepState.nodeStepTargets){
+        if(mutableWorkflowStepState.nodeStep){
             //a node step
             finalizeNodeStep(executionState,mutableWorkflowStepState)
         }else {
-            mutableWorkflowStepState.mutableStepState.executionState = updateState(mutableWorkflowStepState.mutableStepState.executionState, executionState)
+            def curstate= mutableWorkflowStepState.mutableStepState.executionState
+            def newstate=executionState
+            switch (curstate){
+                case null:
+                case ExecutionState.WAITING:
+                    newstate=ExecutionState.NOT_STARTED
+                    break
+                case ExecutionState.RUNNING:
+                    newstate = ExecutionState.ABORTED
+                    break
+            }
+            mutableWorkflowStepState.mutableStepState.executionState = updateState(curstate, newstate)
         }
     }
 
