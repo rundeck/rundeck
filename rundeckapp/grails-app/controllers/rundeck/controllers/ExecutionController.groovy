@@ -284,6 +284,11 @@ class ExecutionController {
             return
         }
         params.stateOutput=false
+
+        if (request.api_version < ApiRequestFilters.V9) {
+            params.nodename = null
+            params.stepctx = null
+        }
         return tailExecutionOutput()
     }
     static final String invalidXmlPattern = "[^" + "\\u0009\\u000A\\u000D" + "\\u0020-\\uD7FF" +
@@ -306,6 +311,15 @@ class ExecutionController {
             if(null!=data[it]){
                 setProp(it,data[it])
             }
+        }
+        def filterparms = [:]
+        ['nodename', 'stepctx'].each {
+            if (data[it]) {
+                filterparms[it] = data[it]
+            }
+        }
+        if (filterparms) {
+            delegate.filter(filterparms)
         }
 
 
@@ -397,6 +411,9 @@ class ExecutionController {
         }
         if(e && !frameworkService.authorizeProjectExecutionAll(framework,e,[AuthConstants.ACTION_READ])){
             return apiError('api.error.item.unauthorized', [AuthConstants.ACTION_READ, "Execution", params.id], HttpServletResponse.SC_FORBIDDEN);
+        }
+        if (params.stepctx && !(params.stepctx ==~ /^(\d+\/?)+$/)) {
+            return apiError("api.error.parameter.invalid",[params.stepctx,'stepctx',"Invalid stepctx filter"],HttpServletResponse.SC_BAD_REQUEST)
         }
 
         def jobcomplete = e.dateCompleted != null
@@ -618,11 +635,33 @@ class ExecutionController {
         }
         def stateoutput = params.stateOutput in [true,'true']
         def stateonly = params.stateOnly in [true,'true']
-        for(LogEvent data : logread){
-            if(!stateoutput && data.eventType!= LogUtil.EVENT_TYPE_LOG){
-                continue
+
+        def filter={ LogEvent data ->
+            if (!stateoutput && data.eventType != LogUtil.EVENT_TYPE_LOG) {
+                return false
             }
             if (stateoutput && stateonly && data.eventType == LogUtil.EVENT_TYPE_LOG) {
+                return false
+            }
+            if(params.nodename && data.metadata.node != params.nodename){
+                return false
+            }
+            if(params.stepctx && params.stepctx==~/^(\d+\/?)+$/){
+                if(params.stepctx.endsWith("/")){
+                    if(data.metadata.stepctx?.startsWith(params.stepctx)
+                            || data.metadata.stepctx[0..-2] == params.stepctx){
+                        return data
+                    }else{
+                        return false
+                    }
+                }else if(!params.stepctx.endsWith("/") && data.metadata.stepctx != params.stepctx){
+                    return false
+                }
+            }
+            data
+        }
+        for(LogEvent data : logread){
+            if(!filter(data)){
                 continue
             }
             log.debug("read stream event: ${data}")
@@ -684,7 +723,9 @@ class ExecutionController {
                 execDuration: execDuration,
                 percentLoaded: percent,
                 totalSize: totsize,
-                lastlinesSupported: lastlinesSupported
+                lastlinesSupported: lastlinesSupported,
+                nodename:params.nodename,
+                stepctx:params.stepctx
         ]
         withFormat {
             xml {
