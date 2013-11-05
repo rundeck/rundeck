@@ -162,9 +162,13 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
     }
 
     public void testUpdateSubWorkflowResolveState() {
-        MutableWorkflowStateImpl mutableWorkflowState = new MutableWorkflowStateImpl(null, 2);
+        def mutableStep8 = new MutableWorkflowStepStateImpl(stepIdentifier(8))
+        mutableStep8.nodeStep=true
+        MutableWorkflowStateImpl mutableWorkflowState = new MutableWorkflowStateImpl(null, 9,[7: mutableStep8]);
         def date = new Date(123)
         def newdate = new Date()
+
+        assertTrue(mutableWorkflowState.mutableStepStates[7].nodeStep)
 
         mutableWorkflowState.updateWorkflowState(ExecutionState.RUNNING, date, ['a', 'b'] as Set)
 
@@ -225,6 +229,9 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
             mutableWorkflowState.updateStateForStep(it, stepStateChange(stepState(ExecutionState.RUNNING), 'b'), newdate)
             mutableWorkflowState.updateStateForStep(it, stepStateChange(stepState(ExecutionState.SUCCEEDED), 'b'), newdate)
         }
+
+        //step 8: did not start, no nodes executed
+        //step 9: did not start, workflow step
 
         //finish
         mutableWorkflowState.updateWorkflowState(ExecutionState.SUCCEEDED, newdate, null)
@@ -291,6 +298,19 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
         assertEquals(ExecutionState.SUCCEEDED, step7.nodeStateMap['a'].executionState)
         assertNotNull(step7.nodeStateMap['b'])
         assertEquals(ExecutionState.SUCCEEDED, step7.nodeStateMap['b'].executionState)
+
+        def step8 = mutableWorkflowState[8]
+        assertEquals([8], step8.stepIdentifier.context)
+        assertEquals(true, step8.nodeStep)
+        assertEquals(ExecutionState.NOT_STARTED, step8.stepState.executionState)
+//        assertEquals(['a', 'b'] as Set, step8.nodeStepTargets)
+        assertEquals(ExecutionState.NOT_STARTED, step8.nodeStateMap['a'].executionState)
+        assertNotNull(step8.nodeStateMap['b'])
+        assertEquals(ExecutionState.NOT_STARTED, step8.nodeStateMap['b'].executionState)
+        def step9 = mutableWorkflowState[9]
+        assertEquals([9], step9.stepIdentifier.context)
+        assertEquals(false, step9.nodeStep)
+        assertEquals(ExecutionState.NOT_STARTED, step9.stepState.executionState)
 
     }
     public void testUpdateStateNormal() {
