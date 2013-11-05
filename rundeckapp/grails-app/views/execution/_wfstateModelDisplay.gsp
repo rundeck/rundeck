@@ -4,19 +4,19 @@
         color: orange;
     }
     .execstate[data-execstate=NODE_MIXED]:after {
-        content: ' :/';
+        content: ' ~';
     }
     .execstate[data-execstate=SUCCEEDED]{
         color: gray;
     }
     .execstate[data-execstate=SUCCEEDED]:after{
-        content: ' :)';
+        content: ' √';
     }
     .execstate[data-execstate=NODE_PARTIAL_SUCCEEDED]{
         color: gray;
     }
     .execstate[data-execstate=NODE_PARTIAL_SUCCEEDED]:after{
-        content: ' :|';
+        content: ' ';
     }
     .execstate[data-execstate=RUNNING]{
         color: blue;
@@ -29,7 +29,7 @@
         color: red;
     }
     .execstate[data-execstate=FAILED]:after{
-        content: ' :(';
+        content: ' -';
     }
     .execstate[data-execstate=WAITING], .execstate[data-execstate=NOT_STARTED]{
         color: lightgray;
@@ -38,7 +38,7 @@
         content: ' zzz';
     }
     .execstate[data-execstate=NOT_STARTED]:after{
-        content: ' ...';
+        content: ' …';
     }
     .wfstepstate .stepnodes{
         margin-left:10px;
@@ -48,7 +48,7 @@
     }
 </style>
 <g:each in="${workflowState.stepStates}" var="wfstep" status="i">
-    <g:set var="nodestep" value="${wfstep.nodeStepTargets}"/>
+    <g:set var="nodestep" value="${wfstep.nodeStep}"/>
     <g:set var="substep" value="${wfstep.hasSubWorkflow()}"/>
     <g:set var="myctx" value="${subCtx ? subCtx + '/' : ''}${i + 1}"/>
     <div id="wfstep_${i+1}" class="wfstepstate" data-stepctx="${myctx}">
@@ -76,7 +76,7 @@
     </g:if>
     <g:elseif test="${nodestep}">
         <div class="nodestates">
-            <g:each in="${workflowState.nodeSet}" var="nodename">
+            <g:each in="${wfstep.nodeStepTargets?: workflowState.nodeSet?.sort()?:[]}" var="nodename">
                 <g:set var="execState" value="${wfstep.nodeStateMap[nodename]?.executionState ?: ExecutionState.WAITING}"/>
                 <div>
                     <span class="execstate isnode"

@@ -113,10 +113,11 @@ var FlowState = Class.create({
 
             if (step.hasSubworkflow) {
                 this.updateWorkflow(step.workflow, stepctx);
-            }else if (step.stepTargetNodes && step.nodeStates){
-                for(var n=0;n<step.stepTargetNodes.length;n++){
-                    var node = step.stepTargetNodes[n];
-                    var nstate=step.nodeStates[node];
+            }else if (step.nodeStep){
+                var nodeset=step.stepTargetNodes? step.stepTargetNodes :currentwf.targetNodes;
+                for(var n=0;n<nodeset.length;n++){
+                    var node = nodeset[n];
+                    var nstate= step.nodeStates?step.nodeStates[node]:null;
                     if(!nstate){
                         nstate={ executionState: 'WAITING' };
                     }
