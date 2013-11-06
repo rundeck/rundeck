@@ -219,18 +219,6 @@ class ReportsController {
             }
         }
     }
-    def clearFragment={ ReportQuery query ->
-        params['Clear']='clear'
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-
-        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'event'], ['read'],
-            session.project)) {
-            return unauthorized("Read Events for project ${session.project}", true)
-        }
-        def results = index(query)
-        results.params=params
-        render(view:'eventsFragment',model:results)
-    }
     def eventsFragment={ ExecQuery query ->
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
 
@@ -253,16 +241,7 @@ class ReportsController {
         results.params=params
         render(view:'eventsFragment',model:results)
     }
-    def timelineFragment={ ReportQuery query ->
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
 
-        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'event'], ['read'],
-            session.project)) {
-            return unauthorized("Read Events for project ${session.project}", true)
-        }
-        def results = index(query)
-        render(view:'eventsFragment',model:results)
-    }
 
     def storeFilter={ReportQuery query->
         def User u = userService.findOrCreateUser(session.user)

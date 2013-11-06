@@ -26,7 +26,6 @@ import rundeck.services.ExecutionServiceException
 import rundeck.services.FrameworkService
 import rundeck.services.LogFileStorageService
 import rundeck.services.LoggingService
-import rundeck.services.MenuService
 import rundeck.services.NotificationService
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.UserService
@@ -39,7 +38,6 @@ class MenuController {
     ExecutionService executionService
     UserService userService
     ScheduledExecutionService scheduledExecutionService
-    MenuService menuService
     NotificationService notificationService
     LoggingService LoggingService
     LogFileStorageService logFileStorageService
