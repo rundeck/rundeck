@@ -21,7 +21,7 @@
                    <div class="right">
 
 
-                <g:if test="${it.jobId || it.execId}">
+                <g:if test="${it.jcJobId || it.jcExecId}">
                     <span class="title"><g:message code="domain.ScheduledExecution.title"/> <g:message code="status.label.${it.status}"/>
                     </span>
                     <g:if test="${(it.status == 'cancel') }">
@@ -33,25 +33,25 @@
                         </span>
                     </g:if>
                     <div class="rptitem">
-                        <g:if test="${it.jobId}">
-                            <g:set var="foundJob" value="${ ScheduledExecution.getByIdOrUUID(it.jobId)}"/>
+                        <g:if test="${it.jcJobId}">
+                            <g:set var="foundJob" value="${ ScheduledExecution.getByIdOrUUID(it.jcJobId)}"/>
                             <g:if test="${foundJob}">
                                 <g:link controller="scheduledExecution" action="show" id="${foundJob.extid}"><g:message code="domain.ScheduledExecution.title"/> Detail &raquo;</g:link>
                             </g:if>
                             <g:else>
-                                <span class="warning note">(<g:message code="domain.ScheduledExecution.title"/> ID ${it.jobId} has been deleted)</span>
+                                <span class="warning note">(<g:message code="domain.ScheduledExecution.title"/> ID ${it.jcJobId} has been deleted)</span>
                             </g:else>
                         </g:if>
                     </div>
-                    <g:if test="${it.execId }">
+                    <g:if test="${it.jcExecId }">
                         <div class="rptitem">
-                            <g:link controller="execution" action="show" id="${it.execId}" title="View execution output" >View Output &raquo;</g:link>
+                            <g:link controller="execution" action="show" id="${it.jcExecId}" title="View execution output" >View Output &raquo;</g:link>
                         </div>
                     </g:if>
                 </g:if>
                 <g:else>
                     <span class="title">
-                        ${(it.jobFullName?it.jobFullName:it.title).encodeAsHTML()}
+                        ${(it.reportId?it.reportId:it.title).encodeAsHTML()}
                     <g:message code="status.label.${it.status}"/></span>
 
                     <g:if test="${it.dateCompleted}">

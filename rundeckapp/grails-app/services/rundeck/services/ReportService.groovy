@@ -160,13 +160,13 @@ class ReportService  {
 
     private def getStartsWithFilters() {
         return [
-            job: 'jobFullName',
+            //job filter repurposed for reportId
+            job: 'reportId',
         ]
     }
     private def getTxtFilters() {
         def txtfilters = [
             obj: 'ctxName',
-            type: 'ctxType',
             user: 'author',
             abortedBy: 'abortedByUser',
             node: 'node',
@@ -180,8 +180,8 @@ class ReportService  {
     private def getEqFilters() {
         def eqfilters = [
             stat: 'status',
-            jobFullName: 'jobFullName',
-            jobId:'jobId',
+            reportId: 'reportId',
+            jobId:'jcJobId',
             proj: 'ctxProject',
         ]
         return eqfilters
@@ -240,7 +240,7 @@ class ReportService  {
                         if (query.jobListFilter) {
                             or {
                                 query.jobListFilter.each {
-                                    eq('jobFullName', it)
+                                    eq('reportId', it)
                                 }
                             }
                         }
@@ -248,7 +248,7 @@ class ReportService  {
                             not {
                                 or {
                                     query.excludeJobListFilter.each {
-                                        eq('jobFullName', it)
+                                        eq('reportId', it)
                                     }
 
                                 }
@@ -295,15 +295,15 @@ class ReportService  {
     def applyExecutionCriteria(ExecQuery query, delegate, boolean isJobs=true){
         def eqfilters = [
                 stat: 'status',
-                jobFullName: 'jobFullName',
-                jobId: 'jobId',
+                reportId: 'reportId',
+                jobId: 'jcJobId',
         ]
         def txtfilters = [
                 proj: 'ctxProject',
                 user: 'author',
                 node: 'node',
                 message: 'message',
-                job: 'jobFullName',
+                job: 'reportId',
                 title: 'title',
                 tags: 'tags',
         ]
@@ -342,7 +342,7 @@ class ReportService  {
                         if (query.jobListFilter) {
                             or {
                                 query.jobListFilter.each {
-                                    eq('jobFullName', it)
+                                    eq('reportId', it)
                                 }
                             }
                         }
@@ -350,7 +350,7 @@ class ReportService  {
                             not {
                                 or {
                                     query.excludeJobListFilter.each {
-                                        eq('jobFullName', it)
+                                        eq('reportId', it)
                                     }
 
                                 }
@@ -379,27 +379,27 @@ class ReportService  {
 
             if (isJobs) {
                 or {
-                    isNotNull("jobId")
-                    isNotNull("execId")
+                    isNotNull("jcJobId")
+                    isNotNull("jcExecId")
                 }
             } else {
-                isNull("jobId")
-                isNull("execId")
+                isNull("jcJobId")
+                isNull("jcExecId")
             }
         }
     }
     def getExecutionReports(ExecQuery query, boolean isJobs) {
         def eqfilters = [
                 stat: 'status',
-                jobFullName: 'jobFullName',
-                jobId: 'jobId',
+                reportId: 'reportId',
+                jobId: 'jcJobId',
         ]
         def txtfilters = [
                 proj: 'ctxProject',
                 user: 'author',
                 node: 'node',
                 message: 'message',
-                job: 'jobFullName',
+                job: 'reportId',
                 title: 'title',
                 tags: 'tags',
         ]

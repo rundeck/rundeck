@@ -26,11 +26,11 @@
         <g:set var="foundJob" value="${null}"/>
         <g:set var="execution" value="${null}"/>
         <g:set var="status" value="${it?.status=='succeed'?'succeeded':'failed'}"/>
-        <g:if test="${rpt?.jobId}">
-            <g:set var="foundJob" value="${ScheduledExecution.getByIdOrUUID(it.jobId)}"/>
+        <g:if test="${rpt?.jcJobId}">
+            <g:set var="foundJob" value="${ScheduledExecution.getByIdOrUUID(it.jcJobId)}"/>
         </g:if>
-        <g:if test="${rpt?.execId}">
-            <g:set var="execution" value="${Execution.get(it.execId)}"/>
+        <g:if test="${rpt?.jcExecId}">
+            <g:set var="execution" value="${Execution.get(it.jcExecId)}"/>
             <g:set var="status" value="${execution.status == 'true' ? 'succeeded' : null == execution.dateCompleted ? 'running' : execution.cancelled ? 'killed' : 'failed'}"/>
         </g:if>
         <tr class="link  ${it?.status != 'succeed' ? 'fail' : ''}  ${!it.dateCompleted ? 'nowrunning' : ''} ${sincetime && it.dateCompleted.time>sincetime?'newitem':''}  " onclick="$(this).down('a._defaultAction').click();">
@@ -48,17 +48,17 @@
             </g:if>
 
 
-        <td class="eventtitle ${rpt?.jobId ? 'job' : 'adhoc'}" colspan="${rpt?.jobId?1:2}">
-            #${rpt.execId}
+        <td class="eventtitle ${rpt?.jcJobId ? 'job' : 'adhoc'}" colspan="${rpt?.jcJobId?1:2}">
+            #${rpt.jcExecId}
             <g:if test="${options.summary}">
-                <g:if test="${rpt?.jobId}">
-                    <g:set var="foundJob" value="${ScheduledExecution.getByIdOrUUID(it.jobId)}"/>
+                <g:if test="${rpt?.jcJobId}">
+                    <g:set var="foundJob" value="${ScheduledExecution.getByIdOrUUID(it.jcJobId)}"/>
                     <g:if test="${foundJob}">
                         ${foundJob.groupPath?foundJob.groupPath+'/':''}${foundJob.jobName.encodeAsHTML()}
                     </g:if>
                     <g:else>
                         <span class="warning note">(<g:message
-                                code="domain.ScheduledExecution.title"/> ID ${it.jobId} has been deleted)</span>
+                                code="domain.ScheduledExecution.title"/> ID ${it.jcJobId} has been deleted)</span>
                     </g:else>
 
                 </g:if>
@@ -75,7 +75,7 @@
                 </g:if>
             </g:else>
         </td>
-            <g:if test="${rpt?.jobId}">
+            <g:if test="${rpt?.jcJobId}">
         <td class="eventargs">
             <g:if test="${execution && execution.argString}">
                 <g:render template="/execution/execArgString" model="[argString: execution.argString]"/>
@@ -115,8 +115,8 @@
 
             <g:unless test="${hideShowLink}">
             <td class=" outputlink">
-            <g:if test="${rpt.execId}">
-                <g:link controller="execution" action="show" id="${rpt.execId}" class="_defaultAction"
+            <g:if test="${rpt.jcExecId}">
+                <g:link controller="execution" action="show" id="${rpt.jcExecId}" class="_defaultAction"
                         title="View execution output" absolute="${absoluteLinks}">Show &raquo;</g:link>
             </g:if>
             </td>

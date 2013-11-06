@@ -1,10 +1,13 @@
 package rundeck
 
+import org.codehaus.groovy.grails.commons.ConfigurationHolder
+
 class ExecReport extends BaseReport{
 
-    String execId
-    String jobId
-    String jobFullName
+    String ctxCommand
+    String ctxController
+    String jcExecId
+    String jcJobId
     Boolean adhocExecution
     String adhocScript
     String abortedByUser
@@ -15,17 +18,17 @@ class ExecReport extends BaseReport{
 
     static constraints = {
         adhocExecution(nullable:true)
-        execId(nullable:true,blank:true)
-        jobId(nullable:true,blank:true)
-        jobFullName(nullable:true,blank:true)
+        ctxCommand(nullable:true,blank:true)
+        ctxController(nullable:true,blank:true)
+        jcExecId(nullable:true,blank:true)
+        jcJobId(nullable:true,blank:true)
         adhocScript(nullable:true,blank:true)
         abortedByUser(nullable:true,blank:true)
     }
 
     public static final ArrayList<String> exportProps = BaseReport.exportProps +[
-            'execId',
-            'jobId',
-            'jobFullName',
+            'jcExecId',
+            'jcJobId',
             'adhocExecution',
             'adhocScript',
             'abortedByUser'
@@ -51,8 +54,8 @@ class ExecReport extends BaseReport{
         def issuccess = exec.status == 'true'
         def iscancelled = exec.cancelled
         return fromMap([
-                execId:exec.id,
-                jobId: exec.scheduledExecution?.extid,
+                jcExecId:exec.id,
+                jcJobId: exec.scheduledExecution?.id,
                 adhocExecution: null==exec.scheduledExecution,
                 adhocScript: adhocScript,
                 abortedByUser: iscancelled? exec.abortedby ?: exec.user:null,
@@ -60,7 +63,7 @@ class ExecReport extends BaseReport{
                 title: adhocScript?adhocScript:summary,
                 status: issuccess ? "succeed" : iscancelled ? "cancel" : "fail",
                 ctxProject: exec.project,
-                jobFullName: exec.scheduledExecution?( exec.scheduledExecution.groupPath ? exec.scheduledExecution.generateFullName() : exec.scheduledExecution.jobName): 'adhoc',
+                reportId: exec.scheduledExecution?( exec.scheduledExecution.groupPath ? exec.scheduledExecution.generateFullName() : exec.scheduledExecution.jobName): 'adhoc',
                 author: exec.user,
                 message: (issuccess ? 'Job completed successfully' : iscancelled ? ('Job killed by: ' + (exec.abortedby ?: exec.user)) : 'Job failed'),
                 dateStarted: exec.dateStarted,

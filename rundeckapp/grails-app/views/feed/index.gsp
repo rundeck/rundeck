@@ -7,15 +7,15 @@
 --%><g:set var="item" value="[:]"/><%--
 --%><%
         def exec
-        if (report.execId) {
-            exec = Execution.get(Long.parseLong(report.execId))
+        if (report.jcExecId) {
+            exec = Execution.get(Long.parseLong(report.jcExecId))
         }
         item.title=(report.status=='succeed'?'SUCCEEDED': exec&&exec.cancelled?'KILLED':'FAILED')
-        if(report.execId){
-            item.link=createLink(controller:'execution', action:'show',params:[id:report.execId], absolute: true)
+        if(report.jcExecId){
+            item.link=createLink(controller:'execution', action:'show',params:[id:report.jcExecId], absolute: true)
         }
-        if(report.jobFullName){
-            item.title+=": "+ report.jobFullName
+        if(report.reportId){
+            item.title+=": "+ report.reportId
         }else {
             item.title+=": adhoc"
         }

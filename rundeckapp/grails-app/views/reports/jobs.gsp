@@ -7,7 +7,7 @@
         <title><g:message code="main.app.name"/> - <g:message code="domain.ScheduledExecution.title"/>s</title>
     </head>
 <body>
-    <g:set var="reportOptions" value="${session.job_reports_options?session.job_reports_options:[job:true,author:true,stat:true,out:true,duration:true,jobFullName:true,node:true]}"/>
+    <g:set var="reportOptions" value="${session.job_reports_options?session.job_reports_options:[job:true,author:true,stat:true,out:true,duration:true,reportId:true,node:true]}"/>
 
 <div class="pageTop">
     <g:render template="menusPageTop" model="[menu:'events',submenu:'jobs']"/>

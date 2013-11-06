@@ -453,7 +453,7 @@ class ReportsController {
                         nodesum[2]=matcher.group(3)
                     }
                     event(starttime:rpt.dateStarted.time,endtime:rpt.dateCompleted.time){
-                        title(rpt.jobFullName?:'adhoc')
+                        title(rpt.reportId?:'adhoc')
                         status(statusMap[rpt.status]?:rpt.status)
                         summary(rpt.adhocScript?:rpt.title)
                         delegate.'node-summary'(succeeded:nodesum[0],failed:nodesum[1],total:nodesum[2])
@@ -464,12 +464,12 @@ class ReportsController {
                         }
                         delegate.'date-started'(g.w3cDateValue(date:rpt.dateStarted))
                         delegate.'date-ended'(g.w3cDateValue(date:rpt.dateCompleted))
-                        if(rpt.jobId){
-                            def foundjob=scheduledExecutionService.getByIDorUUID(rpt.jobId)
-                            job(id:foundjob?foundjob.extid:rpt.jobId)
+                        if(rpt.jcJobId){
+                            def foundjob=scheduledExecutionService.getByIDorUUID(rpt.jcJobId)
+                            job(id:foundjob?foundjob.extid:rpt.jcJobId)
                         }
-                        if(rpt.execId){
-                            execution(id:rpt.execId)
+                        if(rpt.jcExecId){
+                            execution(id:rpt.jcExecId)
                         }
                     }
                 }
