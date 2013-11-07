@@ -17,7 +17,8 @@ import java.util.*;
  */
 public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionListener {
     List<WorkflowStateListener> listeners;
-    StepContextWorkflowExecutionListener<INodeEntry, Integer> stepContext;
+    StepContextWorkflowExecutionListener<INodeEntry, StepContextId> stepContext;
+
 
     public WorkflowExecutionStateListenerAdapter() {
         this(new ArrayList<WorkflowStateListener>());
@@ -25,7 +26,7 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
 
     public WorkflowExecutionStateListenerAdapter(List<WorkflowStateListener> listeners) {
         this.listeners = listeners;
-        stepContext = new StepContextWorkflowExecutionListener<INodeEntry, Integer>();
+        stepContext = new StepContextWorkflowExecutionListener<INodeEntry, StepContextId>();
     }
 
     public void addWorkflowStateListener(WorkflowStateListener listener) {
@@ -63,7 +64,7 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
 
     public void beginWorkflowExecution(StepExecutionContext executionContext, WorkflowExecutionItem item) {
         stepContext.beginContext();
-        List<Integer> currentContext = stepContext.getCurrentContext();
+        List<StepContextId> currentContext = stepContext.getCurrentContext();
         if(null==currentContext ){
             notifyAllWorkflowState(ExecutionState.RUNNING, new Date(), executionContext.getNodes().getNodeNames());
         }else{
@@ -74,7 +75,7 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
 
     public void finishWorkflowExecution(WorkflowExecutionResult result, StepExecutionContext executionContext,
             WorkflowExecutionItem item) {
-        List<Integer> currentContext = stepContext.getCurrentContext();
+        List<StepContextId> currentContext = stepContext.getCurrentContext();
         if (null == currentContext || currentContext.size() < 1) {
             notifyAllWorkflowState(
                     null != result && result.isSuccess() ? ExecutionState.SUCCEEDED : ExecutionState.FAILED,
@@ -86,35 +87,30 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
         }
         stepContext.finishContext();
     }
-
     private StepIdentifier createIdentifier() {
-        return new StepIdentifierImpl(stepContext.getCurrentContext());
+        return StateUtils.stepIdentifier(stepContext.getCurrentContext());
     }
 
     private StepStateChange createState(ExecutionState executionState) {
-        StepStateChangeImpl stepStateChange = new StepStateChangeImpl();
-
         INodeEntry currentNode = stepContext.getCurrentNode();
 
-        stepStateChange.setNodeState(null != currentNode);
-        if (null != currentNode) {
-            stepStateChange.setNodeName(currentNode.getNodename());
-        }
-
-        StepStateImpl stepState = new StepStateImpl();
-        stepState.setExecutionState(executionState);
-//        stepState.setMetadata();
-        stepStateChange.setStepState(stepState);
-        return stepStateChange;
+        return StateUtils.stepStateChange(StateUtils.stepState(executionState), null != currentNode ? currentNode
+                .getNodename() : null);
     }
 
-    public void beginWorkflowItem(int step, StepExecutionItem node) {
-        stepContext.beginStepContext(step);
+    public void beginWorkflowItem(int step, StepExecutionItem item) {
+        stepContext.beginStepContext(StateUtils.stepContextId(step, false));
         notifyAllStepState(createIdentifier(), createState(ExecutionState.RUNNING), new Date());
     }
 
-    public void finishWorkflowItem(int step, StepExecutionItem node, boolean success) {
-        if (NodeDispatchStepExecutor.STEP_EXECUTION_TYPE.equals(node.getType())) {
+    @Override
+    public void beginWorkflowItemErrorHandler(int step, StepExecutionItem item) {
+        stepContext.beginStepContext(StateUtils.stepContextId(step, true));
+        notifyAllStepState(createIdentifier(), createState(ExecutionState.RUNNING_HANDLER), new Date());
+    }
+
+    public void finishWorkflowItem(int step, StepExecutionItem item, boolean success) {
+        if (NodeDispatchStepExecutor.STEP_EXECUTION_TYPE.equals(item.getType())) {
             //dont notify
         } else {
             notifyAllStepState(createIdentifier(), createState(success ? ExecutionState.SUCCEEDED : ExecutionState
@@ -123,9 +119,16 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
         stepContext.finishStepContext();
     }
 
+    @Override
+    public void finishWorkflowItemErrorHandler(int step, StepExecutionItem item, boolean success) {
+        //dont notify
+    }
+
     public void beginExecuteNodeStep(ExecutionContext context, NodeStepExecutionItem item, INodeEntry node) {
         stepContext.beginNodeContext(node);
-        notifyAllStepState(createIdentifier(), createState(ExecutionState.RUNNING), new Date());
+        StepIdentifier identifier = createIdentifier();
+        notifyAllStepState(identifier, createState(identifier.getContext().get(0).getAspect() == StepAspect.Main ?
+                ExecutionState.RUNNING : ExecutionState.RUNNING_HANDLER), new Date());
 
     }
 

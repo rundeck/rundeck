@@ -146,6 +146,23 @@ public class WorkflowExecutionStateListenerAdapterTest extends TestCase {
         assertStepStateEvent((Object[]) testListener1.events.get(1), ExecutionState.RUNNING, null, 1);
         assertStepStateEvent((Object[]) testListener1.events.get(2), ExecutionState.SUCCEEDED, null,1);
     }
+    public void testEventsWorkflowItemErrorHandler() {
+        HashMap<String, INodeEntry> nodes = new HashMap<String, INodeEntry>();
+        nodes.put("test1", new NodeEntryImpl("test1"));
+        test.beginWorkflowExecution(ExecutionContextImpl.builder().nodes(new NodeSetImpl(nodes)).build(), null);
+
+        test.beginWorkflowItem(1, testitem);
+        test.beginWorkflowItemErrorHandler(1, testitem);
+        test.finishWorkflowItemErrorHandler(1, testitem, true);
+        test.finishWorkflowItem(1, testitem, true);
+
+        assertEquals(4, testListener1.events.size());
+        assertWorkflowStateEvent((Object[]) testListener1.events.get(0), ExecutionState.RUNNING, "test1");
+        assertStepStateEvent((Object[]) testListener1.events.get(1), ExecutionState.RUNNING, null, 1);
+        assertStepStateEvent((Object[]) testListener1.events.get(2), ExecutionState.RUNNING_HANDLER, null,
+                StateUtils.stepContextId(1, true));
+        assertStepStateEvent((Object[]) testListener1.events.get(3), ExecutionState.SUCCEEDED, null, StateUtils.stepContextId(1, true));
+    }
     public void testEventsBeginSubStepItem() {
         HashMap<String, INodeEntry> nodes = new HashMap<String, INodeEntry>();
         NodeEntryImpl node1 = new NodeEntryImpl("test1");
@@ -236,6 +253,19 @@ public class WorkflowExecutionStateListenerAdapterTest extends TestCase {
     }
 
     private void assertStepStateEvent(Object[] o, ExecutionState running, String nodename, int... ctxid) {
+        assertStepStateEvent(o, running, nodename, asContextIds(ctxid));
+    }
+
+    private StepContextId[] asContextIds(int[] ctxid) {
+        StepContextId[] stepContextIds = new StepContextId[ctxid.length];
+        for (int i = 0; i < ctxid.length; i++) {
+            int i1 = ctxid[i];
+            stepContextIds[i] = StateUtils.stepContextId(i1, false);
+        }
+        return stepContextIds;
+    }
+
+    private void assertStepStateEvent(Object[] o, ExecutionState running, String nodename, StepContextId... ctxid) {
         assertEquals("step", o[0]);
         StepIdentifier ident = (StepIdentifier)o[1];
         assertIdentifier(ident, ctxid);
@@ -256,10 +286,11 @@ public class WorkflowExecutionStateListenerAdapterTest extends TestCase {
 
     }
 
-    private void assertIdentifier(StepIdentifier ident, int[] ctxid) {
+    private void assertIdentifier(StepIdentifier ident, StepContextId[] ctxid) {
         assertEquals(ctxid.length, ident.getContext().size());
         for (int i =0;i<ctxid.length;i++) {
-            assertEquals(ctxid[i], (int)ident.getContext().get(i));
+            assertEquals(ctxid[i].getStep(), ident.getContext().get(i).getStep());
+            assertEquals(ctxid[i].getAspect(), ident.getContext().get(i).getAspect());
         }
     }
 
@@ -279,6 +310,9 @@ public class WorkflowExecutionStateListenerAdapterTest extends TestCase {
         }
     }
     private void assertSubWorkflowStateEvent(Object[] o, ExecutionState running, int[] ctxid,String... nodes) {
+        assertSubWorkflowStateEvent(o, running, asContextIds(ctxid), nodes);
+    }
+    private void assertSubWorkflowStateEvent(Object[] o, ExecutionState running, StepContextId[] ctxid,String... nodes) {
         int i=0;
         assertEquals("subworkflow", o[i++]);
         Object ident = o[i++];

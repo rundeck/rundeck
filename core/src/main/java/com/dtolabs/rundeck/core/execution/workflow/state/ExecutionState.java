@@ -13,6 +13,10 @@ public enum ExecutionState {
      */
     RUNNING,
     /**
+     * Running error handler
+     */
+    RUNNING_HANDLER,
+    /**
      * Finished running successfully
      */
     SUCCEEDED,

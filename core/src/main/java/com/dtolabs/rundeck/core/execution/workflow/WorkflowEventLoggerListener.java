@@ -14,6 +14,8 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
  */
 public class WorkflowEventLoggerListener implements WorkflowExecutionListener{
     private static final String STEP_START = "stepbegin";
+    private static final String STEP_HANDLER = "handlerbegin";
+    private static final String HANDLER_FINISH = "handlerend";
     private static final String STEP_FINISH = "stepend";
     private static final String NODE_START = "nodebegin";
     private static final String NODE_FINISH = "nodeend";
@@ -33,13 +35,23 @@ public class WorkflowEventLoggerListener implements WorkflowExecutionListener{
     }
 
     @Override
-    public void beginWorkflowItem(int step, StepExecutionItem node) {
+    public void beginWorkflowItem(int step, StepExecutionItem item) {
         logger.event(STEP_START, null, null);
     }
 
     @Override
-    public void finishWorkflowItem(int step, StepExecutionItem node, boolean success) {
+    public void beginWorkflowItemErrorHandler(int step, StepExecutionItem item) {
+        logger.event(STEP_HANDLER, null, null);
+    }
+
+    @Override
+    public void finishWorkflowItem(int step, StepExecutionItem item, boolean success) {
         logger.event(STEP_FINISH, null, null);
+    }
+
+    @Override
+    public void finishWorkflowItemErrorHandler(int step, StepExecutionItem item, boolean success) {
+        logger.event(HANDLER_FINISH, null, null);
     }
 
     @Override

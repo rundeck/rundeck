@@ -130,7 +130,7 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
         final String[] strings = new String[stack.size()];
         int i=0;
         for (final WFStepContext context : stack) {
-            strings[i++] = Integer.toString(context.getStep());
+            strings[i++] = Integer.toString(context.getStep()) + (context.isErrorHandler() ? "e" : "");
         }
         return StringUtils.join(strings, "/");
     }
@@ -184,6 +184,18 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
         );
     }
 
+    @Override
+    public void beginWorkflowItemErrorHandler(int step, StepExecutionItem item) {
+        if (null != delegate) {
+            delegate.beginWorkflowItemErrorHandler(step, item);
+            return;
+        }
+        stepContext.beginStepContext(new WFStepContext(item, step,true));
+        log(Constants.DEBUG_LEVEL,
+                "[workflow] Begin error handler: " + step + "," + item.getType()
+        );
+    }
+
     public void finishWorkflowItem(final int step, final StepExecutionItem item, boolean success) {
         if (null != delegate) {
             delegate.finishWorkflowItem(step, item,success);
@@ -192,6 +204,18 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
         stepContext.finishStepContext();
         log(Constants.DEBUG_LEVEL,
             "[workflow] Finish step: " + step + "," + item.getType()
+        );
+    }
+
+    @Override
+    public void finishWorkflowItemErrorHandler(int step, StepExecutionItem item, boolean success) {
+        if (null != delegate) {
+            delegate.finishWorkflowItemErrorHandler(step, item, success);
+            return;
+        }
+        stepContext.finishStepContext();
+        log(Constants.DEBUG_LEVEL,
+                "[workflow] Finish error handler: " + step + "," + item.getType()
         );
     }
 

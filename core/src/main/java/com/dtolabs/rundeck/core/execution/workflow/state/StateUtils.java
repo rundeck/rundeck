@@ -1,5 +1,7 @@
 package com.dtolabs.rundeck.core.execution.workflow.state;
 
+import com.dtolabs.rundeck.core.utils.PairImpl;
+
 import java.util.*;
 
 /**
@@ -33,21 +35,55 @@ public class StateUtils {
     public static StepStateChange stepStateChange(StepState state, String nodeName) {
         StepStateChangeImpl stepStateChange = new StepStateChangeImpl();
         stepStateChange.setStepState(state);
-        stepStateChange.setNodeState(true);
+        stepStateChange.setNodeState(null!=nodeName);
         stepStateChange.setNodeName(nodeName);
         return stepStateChange;
     }
 
-    public static StepIdentifier stepIdentifier(List<Integer> context) {
+    public static class CtxItem extends PairImpl<Integer, Boolean> implements StepContextId {
+        public CtxItem(Integer first, Boolean second) {
+            super(first, second);
+        }
+
+        public int getStep() {
+            return getFirst();
+        }
+
+        @Override
+        public StepAspect getAspect() {
+            return getSecond() ? StepAspect.ErrorHandler : StepAspect.Main;
+        }
+    }
+    public static StepContextId stepContextId(int step, boolean errorhandler) {
+        return new CtxItem(step, errorhandler);
+    }
+    public static StepIdentifier stepIdentifier(List<StepContextId> context) {
         return new StepIdentifierImpl(context);
     }
+    public static StepIdentifier stepIdentifier(StepContextId... context) {
+        return new StepIdentifierImpl(Arrays.asList(context));
+    }
+    public static StepIdentifier stepIdentifier(int id) {
+        return stepIdentifier(stepContextId(id,false));
+    }
+    public static StepIdentifier stepIdentifier(int... ids) {
+        return stepIdentifier(asStepContextIds(ids));
+    }
+
+    private static List<StepContextId> asStepContextIds(int[] ids) {
+        ArrayList<StepContextId> stepContextIds = new ArrayList<StepContextId>(ids.length);
+        for (int i = 0; i < ids.length; i++) {
+            int id = ids[i];
+            stepContextIds.add(stepContextId(id,false));
+        }
+        return stepContextIds;
+    }
+
+
     public static StepIdentifier stepIdentifierTail(StepIdentifier identifier) {
         return new StepIdentifierImpl(identifier.getContext().subList(1, identifier.getContext().size()));
     }
 
-    public static StepIdentifier stepIdentifier(Integer... context) {
-        return new StepIdentifierImpl(Arrays.asList(context));
-    }
 
     public static WorkflowState workflowState(HashSet<String> nodeSet, long stepCount, ExecutionState executionState,
             Date timestamp,

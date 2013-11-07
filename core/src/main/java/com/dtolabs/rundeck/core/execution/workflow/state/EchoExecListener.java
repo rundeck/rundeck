@@ -25,17 +25,28 @@ public class EchoExecListener implements WorkflowExecutionListener {
         System.err.println(String.format("finishWorkflowExecution(%s,%s,%s)", result, executionContext, item));
     }
 
-    public void beginWorkflowItem(int step, StepExecutionItem node) {
-        System.err.println(String.format("beginWorkflowItem(%s,%s)", step, node));
+    public void beginWorkflowItem(int step, StepExecutionItem item) {
+        System.err.println(String.format("beginWorkflowItem(%s,%s)", step, item));
     }
 
-    public void finishWorkflowItem(int step, StepExecutionItem node, boolean success) {
-        System.err.println(String.format("finishWorkflowItem(%s,%s,%s)", step, node, success));
+    @Override
+    public void beginWorkflowItemErrorHandler(int step, StepExecutionItem item) {
+        System.err.println(String.format("beginWorkflowItemErrorHandler(%s,%s)", step, item));
+    }
+
+    public void finishWorkflowItem(int step, StepExecutionItem item, boolean success) {
+        System.err.println(String.format("finishWorkflowItem(%s,%s,%s)", step, item, success));
+    }
+
+    @Override
+    public void finishWorkflowItemErrorHandler(int step, StepExecutionItem item, boolean success) {
+        System.err.println(String.format("finishWorkflowItemErrorHandler(%s,%s,%s)", step, item, success));
     }
 
     public void beginStepExecution(StepExecutor executor, StepExecutionContext context, StepExecutionItem item) {
         System.err.println(String.format("beginStepExecution(%s,%s,%s)", executor, context, item));
     }
+
 
     public void finishStepExecution(StepExecutor executor, StatusResult result, StepExecutionContext context,
             StepExecutionItem item) {

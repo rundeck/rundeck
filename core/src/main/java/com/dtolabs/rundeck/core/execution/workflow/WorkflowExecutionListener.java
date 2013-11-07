@@ -43,8 +43,10 @@ public interface WorkflowExecutionListener  {
 
     public void finishWorkflowExecution(WorkflowExecutionResult result, StepExecutionContext executionContext,
                                         WorkflowExecutionItem item);
-    public void beginWorkflowItem(int step, StepExecutionItem node);
-    public void finishWorkflowItem(int step, StepExecutionItem node, boolean success);
+    public void beginWorkflowItem(int step, StepExecutionItem item);
+    public void beginWorkflowItemErrorHandler(int step, StepExecutionItem item);
+    public void finishWorkflowItem(int step, StepExecutionItem item, boolean success);
+    public void finishWorkflowItemErrorHandler(int step, StepExecutionItem item, boolean success);
 
     /**
      * Called when execution begins for a step
