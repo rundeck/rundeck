@@ -985,9 +985,9 @@ var FollowControl = Class.create({
     },
     renderContextStepNumber: function(data){
         var ctx = this.parseContextId(data['stepctx']);
-        var string;
+        var string='';
         if (ctx && ctx[0]) {
-             string= + ctx[0];
+             string+= ctx[0];
             if (ctx.length > 1) {
 //                string += "/" + ctx.slice(1).join("/")
             }
@@ -998,12 +998,19 @@ var FollowControl = Class.create({
         return string;
     },
 
+    workflowIndexForContextId: function (ctxid) {
+        var id = ctxid;
+        if (ctxid ==~/e$/) {
+            id = ctix.substring(0, ctxid.length - 2);
+        }
+        return parseInt(id) - 1;
+    },
     contextType: function (data) {
-        var ctx = this.parseOldContextString(data['command']);
+        var ctx = this.parseContextId(data['stepctx']);
         if (ctx) {
             var string = "";
             if (typeof(workflow) != 'undefined') {
-                var step = workflow[parseInt(ctx[0]) - 1];
+                var step = workflow[this.workflowIndexForContextId(ctx[0])];
                 if (typeof(step) != 'undefined') {
                     if (step['exec']) {
                         return 'command';
@@ -1031,7 +1038,7 @@ var FollowControl = Class.create({
         if (ctx) {
             var string="";
             if(typeof(workflow)!='undefined'){
-                var step=workflow[parseInt(ctx[0])-1];
+                var step=workflow[this.workflowIndexForContextId(ctx[0])];
                 if(typeof(step)!='undefined'){
                     if(step['exec']){
 //                        string+=' $ '+step['exec'];
@@ -1364,7 +1371,7 @@ var FollowControl = Class.create({
         tdctx.addClassName('stepnum');
         if (!shownode && this.lastrow && this.lastrow['stepctx'] == data['stepctx'] ) {
 //                tdctx.addClassName('repeat');
-        }else if(data['command']){
+        }else if(data['stepctx']){
 
             var cmdtext= this.renderContextStepNumber(data) + " " + this.renderContextString(data);
             var icon= new Element('i');
