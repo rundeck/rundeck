@@ -25,8 +25,8 @@
 
       <g:set var="defaultLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.default}"/>
       <g:set var="maxLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.max}"/>
-      <g:javascript src="executionControl.js?v=${grailsApplication.metadata['app.version']}"/>
-      <g:javascript src="executionState.js?v=${grailsApplication.metadata['app.version']}"/>
+      <g:javascript src="executionControl.js"/>
+      <g:javascript src="executionState.js"/>
       <g:javascript library="prototype/effects"/>
       <g:javascript>
         <g:if test="${scheduledExecution}">
@@ -412,7 +412,10 @@
                 <div class="col-sm-12">
 
                     <ul class="nav nav-tabs">
-                        <li class="active"><a href="#output" data-toggle="tab">Log Output</a></li>
+                        <g:if test="${scheduledExecution}">
+                            <li class="active"><a href="#state" data-toggle="tab">Flow</a></li>
+                        </g:if>
+                        <li class="${scheduledExecution ? '' : 'active'}"><a href="#output" data-toggle="tab">Log Output</a></li>
                         <li><a href="#schedExDetails${scheduledExecution?.id}" data-toggle="tab">Definition</a></li>
                     </ul>
                 </div>
@@ -422,7 +425,35 @@
     <div class="row">
         <div class="col-sm-12">
             <div class="tab-content">
-                <div class="tab-pane active" id="output">
+                <g:if test="${scheduledExecution}">
+                    <div class="tab-pane active" id="state">
+                        <g:if test="${workflowState}">
+                            <table>
+                                <tr>
+                                    <td style="width:50%; vertical-align: top;">
+
+                                        <div class="flowstate" id="flowstate">
+                                            <g:render template="wfstateModelDisplay" bean="${workflowState}"
+                                                      var="workflowState"/>
+
+                                        </div>
+                                    </td>
+                                    <td style="width:50%; vertical-align: top;">
+
+                                        <pre id="flowstate_output"></pre>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2" id="flowstate_log">
+
+                                    </td>
+                                </tr>
+                            </table>
+
+                        </g:if>
+                    </div>
+                </g:if>
+                <div class="tab-pane ${scheduledExecution?'':'active'}" id="output">
                     <g:render template="/execution/showFragment"
                               model="[execution: execution, scheduledExecution: scheduledExecution, inlineView: false, followmode: followmode]"/>
                 </div>
@@ -435,29 +466,7 @@
             </div>
         </div>
     </div>
-  <g:if test="${workflowState}">
-      <table>
-          <tr>
-              <td style="width:50%; vertical-align: top;">
 
-                  <div class="flowstate" id="flowstate">
-                      <g:render template="wfstateModelDisplay" bean="${workflowState}" var="workflowState"/>
-
-                  </div>
-              </td>
-              <td style="width:50%; vertical-align: top;">
-
-                  <pre id="flowstate_output"></pre>
-              </td>
-          </tr>
-          <tr>
-              <td colspan="2" id="flowstate_log">
-
-              </td>
-          </tr>
-      </table>
-
-  </g:if>
 
 
     <g:if test="${scheduledExecution}">
