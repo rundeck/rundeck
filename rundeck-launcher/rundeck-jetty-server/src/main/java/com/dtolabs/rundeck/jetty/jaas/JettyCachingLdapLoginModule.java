@@ -358,7 +358,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
     }
 
     @SuppressWarnings("unchecked")
-    private List getUserRolesByDn(DirContext dirContext, String userDn, String username) throws LoginException,
+    protected List getUserRolesByDn(DirContext dirContext, String userDn, String username) throws LoginException,
             NamingException {
         ArrayList roleList = new ArrayList();
 
@@ -504,14 +504,17 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
     }
 
     /**
-     * binding authentication check This methode of authentication works only if
-     * the user branch of the DIT (ldap tree) has an ACI (acces control
-     * instruction) that allow the access to any user or at least for the user
-     * that logs in.
+    /**
+     * Sets the binding user / password to whatever is supplied as method argument
+     * overriding the default behavior which is to use bindUser and bindPassword from
+     * the ldap module configuration file. Role lookups are performed with the supplied
+     * user unless forceBindingLoginUseRootContextForRoles is set to true, in which case
+     * the bindUser will be used instead. This method makes no assumptions about the permissions
+     * of either the user or bindUser and will fail if access is not allowed. 
      * 
      * @param username
      * @param password
-     * @return
+     * @return true unless an exception is raise // TODO: consider refactoring
      * @throws LoginException
      */
     @SuppressWarnings("unchecked")
@@ -537,9 +540,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
             }
         }
         
-        SearchResult searchResult = findUser(username);
-
-        String userDn = searchResult.getNameInNamespace();
+        String userDn = String.format("%s=%s,%s", _userRdnAttribute, username, _userBaseDn);
 
         Log.info("Attempting authentication: " + userDn);
 
@@ -547,7 +548,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         environment.put(Context.SECURITY_PRINCIPAL, userDn);
         environment.put(Context.SECURITY_CREDENTIALS, password);
 
-        DirContext dirContext = new InitialDirContext(environment);
+        DirContext dirContext = newInitialDirContext(environment);
 
         // use _rootContext to find roles, if configured to doso
         if ( _forceBindingLoginUseRootContextForRoles ) {
@@ -567,7 +568,18 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         setAuthenticated(true);
         return true;
     }
-
+    
+    /**
+     * For unit testing purposes, allows us to setup a spy and prevent live calls to LDAP.
+     * 
+     * @param environment a hashtable with the environment
+     * @return a new InitialDirContext
+     * @throws NamingException
+     */
+    protected DirContext newInitialDirContext(Hashtable environment) throws NamingException {
+        return new InitialDirContext(environment);
+    }
+    
     @SuppressWarnings("unchecked")
     private SearchResult findUser(String username) throws NamingException, LoginException {
         SearchControls ctls = new SearchControls();
