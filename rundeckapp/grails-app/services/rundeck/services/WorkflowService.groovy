@@ -141,7 +141,7 @@ class WorkflowService {
             ]
         }
         map + [
-                id:state.stepIdentifier.context.head(),
+                id:state.stepIdentifier.context.head().step,
                 nodeStep:state.nodeStep
         ] + mapOf(state.stepState)
     }

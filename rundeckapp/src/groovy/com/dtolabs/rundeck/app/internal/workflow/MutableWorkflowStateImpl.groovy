@@ -172,15 +172,13 @@ update timestamp. update timestamp on WorkflowState(s)
 
     private MutableWorkflowStepState locateStepWithContext(StepIdentifier identifier, Map<Integer, MutableWorkflowStepState> states) {
         MutableWorkflowStepState currentStep
-        def subid = identifier.context[0] - 1
-        if (subid < 0) {
-            throw new IllegalStateException("Could not update state for step context: " + identifier
-                    + ": no step at index ${subid} found")
-        } else if (subid >= states.size() || null == states[subid]) {
-            states[subid] = new MutableWorkflowStepStateImpl(StateUtils.stepIdentifier(subid + 1))
+        StepContextId subid = identifier.context[0]
+        int ndx=subid.step-1
+        if (ndx >= states.size() || null == states[ndx]) {
+            states[ndx] = new MutableWorkflowStepStateImpl(StateUtils.stepIdentifier(subid))
             stepCount = states.size()
         }
-        currentStep = states[subid]
+        currentStep = states[ndx]
         currentStep
     }
 
@@ -230,12 +228,17 @@ update timestamp. update timestamp on WorkflowState(s)
                     throw new IllegalStateException("Cannot change from " + fromState + " to " + toState)
                 }
                 break;
+            case ExecutionState.RUNNING_HANDLER:
+                if (fromState != null && fromState!= ExecutionState.FAILED) {
+                    throw new IllegalStateException("Cannot change from " + fromState + " to " + toState)
+                }
+                break;
             case ExecutionState.SUCCEEDED:
             case ExecutionState.FAILED:
             case ExecutionState.ABORTED:
             case ExecutionState.NODE_MIXED:
             case ExecutionState.NODE_PARTIAL_SUCCEEDED:
-                if(toState!=fromState && !(fromState in [ExecutionState.RUNNING, ExecutionState.WAITING])) {
+                if(toState!=fromState && !(fromState in [ExecutionState.RUNNING, ExecutionState.RUNNING_HANDLER, ExecutionState.WAITING])) {
                     throw new IllegalStateException("Cannot change from " + fromState + " to " + toState)
                 }
         }

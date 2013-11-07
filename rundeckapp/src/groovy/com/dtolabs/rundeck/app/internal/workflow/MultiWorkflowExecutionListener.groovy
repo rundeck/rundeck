@@ -53,13 +53,23 @@ class MultiWorkflowExecutionListener implements WorkflowExecutionListener,Execut
     }
 
     @Override
-    void beginWorkflowItem(int step, StepExecutionItem node) {
-        listenerList*.beginWorkflowItem(step, node)
+    void beginWorkflowItem(int step, StepExecutionItem item) {
+        listenerList*.beginWorkflowItem(step, item)
     }
 
     @Override
-    void finishWorkflowItem(int step, StepExecutionItem node, boolean success) {
-        reversedListenerList*.finishWorkflowItem(step, node, success)
+    void beginWorkflowItemErrorHandler(int step, StepExecutionItem item) {
+        listenerList*.beginWorkflowItemErrorHandler(step, item)
+    }
+
+    @Override
+    void finishWorkflowItem(int step, StepExecutionItem item, boolean success) {
+        reversedListenerList*.finishWorkflowItem(step, item, success)
+    }
+
+    @Override
+    void finishWorkflowItemErrorHandler(int step, StepExecutionItem item, boolean success) {
+        reversedListenerList*.finishWorkflowItemErrorHandler(step, item, success)
     }
 
     @Override
