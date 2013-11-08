@@ -93,9 +93,12 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
     }
 
     private StepStateChange createStepStateChange(ExecutionState executionState) {
+        return createStepStateChange(executionState, null);
+    }
+    private StepStateChange createStepStateChange(ExecutionState executionState, Map metadata) {
         INodeEntry currentNode = stepContext.getCurrentNode();
 
-        return StateUtils.stepStateChange(StateUtils.stepState(executionState), null != currentNode ? currentNode
+        return StateUtils.stepStateChange(StateUtils.stepState(executionState,metadata), null != currentNode ? currentNode
                 .getNodename() : null);
     }
     private StepStateChange createStepStateChange(StepExecutionResult result){
@@ -142,7 +145,10 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
     @Override
     public void beginWorkflowItemErrorHandler(int step, StepExecutionItem item) {
         stepContext.beginStepContext(StateUtils.stepContextId(step, true));
-        notifyAllStepState(createIdentifier(), createStepStateChange(ExecutionState.RUNNING_HANDLER), new Date());
+        HashMap<String,String> ehMap=new HashMap<String, String>();
+        ehMap.put("handlerTriggered", "true");
+        notifyAllStepState(createIdentifier(), createStepStateChange(ExecutionState.RUNNING_HANDLER, ehMap),
+                new Date());
     }
 
     public void finishWorkflowItem(int step, StepExecutionItem item, StepExecutionResult result) {

@@ -198,7 +198,9 @@ public class WorkflowExecutionStateListenerAdapterTest extends TestCase {
         assertStepStateEvent((Object[]) testListener1.events.get(1), ExecutionState.RUNNING, null, 1);
         assertStepStateEvent((Object[]) testListener1.events.get(2), ExecutionState.RUNNING, "test1", 1);
         assertStepStateEvent((Object[]) testListener1.events.get(3), ExecutionState.FAILED,"test1","blah", reason1.map(), 1);
-        assertStepStateEvent((Object[]) testListener1.events.get(4), ExecutionState.RUNNING_HANDLER, null, null, null,
+        HashMap<String, String> handlermap = new HashMap<String, String>();
+        handlermap.put("handlerTriggered", "true");
+        assertStepStateEvent((Object[]) testListener1.events.get(4), ExecutionState.RUNNING_HANDLER, null, null, handlermap,
                 StateUtils.stepContextId(1, true));
         assertStepStateEvent((Object[]) testListener1.events.get(5), ExecutionState.RUNNING_HANDLER, "test1", null,
                 null, StateUtils.stepContextId(1, true));
