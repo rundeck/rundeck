@@ -8,6 +8,7 @@ import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
@@ -34,13 +35,13 @@ public class EchoExecListener implements WorkflowExecutionListener {
         System.err.println(String.format("beginWorkflowItemErrorHandler(%s,%s)", step, item));
     }
 
-    public void finishWorkflowItem(int step, StepExecutionItem item, boolean success) {
-        System.err.println(String.format("finishWorkflowItem(%s,%s,%s)", step, item, success));
+    public void finishWorkflowItem(int step, StepExecutionItem item, StepExecutionResult result) {
+        System.err.println(String.format("finishWorkflowItem(%s,%s,%s)", step, item, result));
     }
 
     @Override
-    public void finishWorkflowItemErrorHandler(int step, StepExecutionItem item, boolean success) {
-        System.err.println(String.format("finishWorkflowItemErrorHandler(%s,%s,%s)", step, item, success));
+    public void finishWorkflowItemErrorHandler(int step, StepExecutionItem item, StepExecutionResult result) {
+        System.err.println(String.format("finishWorkflowItemErrorHandler(%s,%s,%s)", step, item, result));
     }
 
     public void beginStepExecution(StepExecutor executor, StepExecutionContext context, StepExecutionItem item) {

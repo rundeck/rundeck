@@ -26,6 +26,7 @@ package com.dtolabs.rundeck.core.execution.workflow;
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.*;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import org.apache.commons.lang.StringUtils;
@@ -196,9 +197,9 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
         );
     }
 
-    public void finishWorkflowItem(final int step, final StepExecutionItem item, boolean success) {
+    public void finishWorkflowItem(final int step, final StepExecutionItem item, StepExecutionResult result) {
         if (null != delegate) {
-            delegate.finishWorkflowItem(step, item,success);
+            delegate.finishWorkflowItem(step, item,result);
             return;
         }
         stepContext.finishStepContext();
@@ -208,9 +209,9 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
     }
 
     @Override
-    public void finishWorkflowItemErrorHandler(int step, StepExecutionItem item, boolean success) {
+    public void finishWorkflowItemErrorHandler(int step, StepExecutionItem item, StepExecutionResult result) {
         if (null != delegate) {
-            delegate.finishWorkflowItemErrorHandler(step, item, success);
+            delegate.finishWorkflowItemErrorHandler(step, item, result);
             return;
         }
         stepContext.finishStepContext();

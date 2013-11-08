@@ -5,9 +5,14 @@ import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
 import com.dtolabs.rundeck.core.execution.StatusResult;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
+import com.dtolabs.rundeck.core.execution.workflow.state.ExecutionState;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Emits events to the logger for workflow step/node start and finish.
@@ -44,14 +49,27 @@ public class WorkflowEventLoggerListener implements WorkflowExecutionListener{
         logger.event(STEP_HANDLER, null, null);
     }
 
+    private static Map resultMap(StepExecutionResult result){
+        if(result.isSuccess()){
+            return null;
+        }
+        HashMap hashMap = new HashMap();
+        if (null != result.getFailureData()) {
+            hashMap.putAll(result.getFailureData());
+        }
+        hashMap.put("failureReason", result.getFailureReason().toString());
+        hashMap.put("executionState", result.isSuccess() ? ExecutionState.SUCCEEDED.toString() : ExecutionState
+                .FAILED.toString());
+        return hashMap;
+    }
     @Override
-    public void finishWorkflowItem(int step, StepExecutionItem item, boolean success) {
-        logger.event(STEP_FINISH, null, null);
+    public void finishWorkflowItem(int step, StepExecutionItem item, StepExecutionResult result) {
+        logger.event(STEP_FINISH, null!=result.getFailureMessage()?result.getFailureMessage():null, resultMap(result));
     }
 
     @Override
-    public void finishWorkflowItemErrorHandler(int step, StepExecutionItem item, boolean success) {
-        logger.event(HANDLER_FINISH, null, null);
+    public void finishWorkflowItemErrorHandler(int step, StepExecutionItem item, StepExecutionResult result) {
+        logger.event(HANDLER_FINISH, null != result.getFailureMessage() ? result.getFailureMessage() : null, resultMap(result));
     }
 
     @Override
@@ -70,6 +88,7 @@ public class WorkflowEventLoggerListener implements WorkflowExecutionListener{
 
     @Override
     public void finishExecuteNodeStep(NodeStepResult result, ExecutionContext context, StepExecutionItem item, INodeEntry node) {
-        logger.event(NODE_FINISH, null, null);
+        logger.event(NODE_FINISH, null != result.getFailureMessage() ? result.getFailureMessage() : null,
+                resultMap(result));
     }
 }

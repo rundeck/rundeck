@@ -6,6 +6,7 @@ import com.dtolabs.rundeck.core.execution.StatusResult;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.*;
 import com.dtolabs.rundeck.core.execution.workflow.steps.NodeDispatchStepExecutor;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
@@ -91,43 +92,78 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
         return StateUtils.stepIdentifier(stepContext.getCurrentContext());
     }
 
-    private StepStateChange createState(ExecutionState executionState) {
+    private StepStateChange createStepStateChange(ExecutionState executionState) {
         INodeEntry currentNode = stepContext.getCurrentNode();
 
         return StateUtils.stepStateChange(StateUtils.stepState(executionState), null != currentNode ? currentNode
                 .getNodename() : null);
     }
+    private StepStateChange createStepStateChange(StepExecutionResult result){
+        INodeEntry currentNode = stepContext.getCurrentNode();
+        return createStepStateChange(result, currentNode);
+    }
+
+    private StepStateChange createStepStateChange(StepExecutionResult result, INodeEntry currentNode) {
+        return StateUtils.stepStateChange(
+                StateUtils.stepState(
+                        resultState(result),
+                        resultMetadata(result),
+                        resultMessage(result)
+                ),
+                null != currentNode ? currentNode.getNodename() : null);
+    }
+
+    private String resultMessage(StepExecutionResult result) {
+        return result.getFailureMessage();
+    }
+
+    private ExecutionState resultState(StepExecutionResult result) {
+        return result.isSuccess() ? ExecutionState.SUCCEEDED :
+                ExecutionState.FAILED;
+    }
+
+    private Map<String, Object> resultMetadata(StepExecutionResult result) {
+        if(result.isSuccess()){
+            return null;
+        }
+        HashMap<String, Object> map = new HashMap<String, Object>();
+        if(null!=result.getFailureData()) {
+            map.putAll(result.getFailureData());
+        }
+        map.put("failureReason", result.getFailureReason().toString());
+        return map;
+    }
 
     public void beginWorkflowItem(int step, StepExecutionItem item) {
         stepContext.beginStepContext(StateUtils.stepContextId(step, false));
-        notifyAllStepState(createIdentifier(), createState(ExecutionState.RUNNING), new Date());
+        notifyAllStepState(createIdentifier(), createStepStateChange(ExecutionState.RUNNING), new Date());
     }
 
     @Override
     public void beginWorkflowItemErrorHandler(int step, StepExecutionItem item) {
         stepContext.beginStepContext(StateUtils.stepContextId(step, true));
-        notifyAllStepState(createIdentifier(), createState(ExecutionState.RUNNING_HANDLER), new Date());
+        notifyAllStepState(createIdentifier(), createStepStateChange(ExecutionState.RUNNING_HANDLER), new Date());
     }
 
-    public void finishWorkflowItem(int step, StepExecutionItem item, boolean success) {
+    public void finishWorkflowItem(int step, StepExecutionItem item, StepExecutionResult result) {
         if (NodeDispatchStepExecutor.STEP_EXECUTION_TYPE.equals(item.getType())) {
             //dont notify
         } else {
-            notifyAllStepState(createIdentifier(), createState(success ? ExecutionState.SUCCEEDED : ExecutionState
-                    .FAILED), new Date());
+            notifyAllStepState(createIdentifier(), createStepStateChange(result), new Date());
         }
         stepContext.finishStepContext();
     }
 
     @Override
-    public void finishWorkflowItemErrorHandler(int step, StepExecutionItem item, boolean success) {
+    public void finishWorkflowItemErrorHandler(int step, StepExecutionItem item, StepExecutionResult result) {
         //dont notify
     }
 
     public void beginExecuteNodeStep(ExecutionContext context, NodeStepExecutionItem item, INodeEntry node) {
         stepContext.beginNodeContext(node);
         StepIdentifier identifier = createIdentifier();
-        notifyAllStepState(identifier, createState(identifier.getContext().get(0).getAspect() == StepAspect.Main ?
+        notifyAllStepState(identifier, createStepStateChange(identifier.getContext().get(0).getAspect() == StepAspect
+                .Main ?
                 ExecutionState.RUNNING : ExecutionState.RUNNING_HANDLER), new Date());
 
     }
@@ -140,15 +176,8 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
 
     public void finishExecuteNodeStep(NodeStepResult result, ExecutionContext context, StepExecutionItem item,
             INodeEntry node) {
-        notifyAllStepState(createIdentifier(), createState(stateForResult(result)), new Date());
+        notifyAllStepState(createIdentifier(), createStepStateChange(result), new Date());
         stepContext.finishNodeContext();
     }
 
-    private ExecutionState stateForResult(StatusResult result) {
-        if (result.isSuccess()) {
-            return ExecutionState.SUCCEEDED;
-        } else {
-            return ExecutionState.FAILED;
-        }
-    }
 }

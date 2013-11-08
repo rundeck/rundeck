@@ -271,7 +271,7 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
                         boolean handlerSuccess = handlerResult.isSuccess();
 
                         if (null != wlistener) {
-                            wlistener.finishWorkflowItemErrorHandler(c, cmd, handlerSuccess);
+                            wlistener.finishWorkflowItemErrorHandler(c, cmd, handlerResult);
                         }
                         //handle success conditions:
                         //1. if keepgoing=true, then status from handler overrides original step
@@ -291,7 +291,7 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
                 }
             } finally {
                 if (null != wlistener) {
-                    wlistener.finishWorkflowItem(c, cmd, stepSuccess);
+                    wlistener.finishWorkflowItem(c, cmd, stepResult);
                 }
             }
             resultList.add(stepResult);

@@ -6,7 +6,11 @@ import com.dtolabs.rundeck.core.common.NodeSetImpl;
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResultImpl;
 import junit.framework.TestCase;
 
 import java.util.*;
@@ -139,30 +143,74 @@ public class WorkflowExecutionStateListenerAdapterTest extends TestCase {
         test.beginWorkflowExecution(ExecutionContextImpl.builder().nodes(new NodeSetImpl(nodes)).build(), null);
 
         test.beginWorkflowItem(1, testitem);
-        test.finishWorkflowItem(1, testitem, true);
+        test.finishWorkflowItem(1, testitem, successResult());
 
         assertEquals(3, testListener1.events.size());
         assertWorkflowStateEvent((Object[]) testListener1.events.get(0), ExecutionState.RUNNING, "test1");
         assertStepStateEvent((Object[]) testListener1.events.get(1), ExecutionState.RUNNING, null, 1);
         assertStepStateEvent((Object[]) testListener1.events.get(2), ExecutionState.SUCCEEDED, null,1);
     }
+
+    private StepExecutionResult successResult() {
+        return new StepExecutionResultImpl();
+    }
+
+
+    private NodeStepResult successNodeResult(INodeEntry node) {
+        return new NodeStepResultImpl(node);
+    }
+    class testReason implements FailureReason{
+        String reason;
+
+        testReason(String reason) {
+            this.reason = reason;
+        }
+
+        @Override
+        public String toString() {
+            return reason;
+        }
+        public Map map() {
+            HashMap<String, String> stringStringHashMap = new HashMap<String, String>();
+            stringStringHashMap.put("failureReason", reason);
+            return stringStringHashMap;
+        }
+    }
+
     public void testEventsWorkflowItemErrorHandler() {
         HashMap<String, INodeEntry> nodes = new HashMap<String, INodeEntry>();
-        nodes.put("test1", new NodeEntryImpl("test1"));
+        NodeEntryImpl node1 = new NodeEntryImpl("test1");
+        nodes.put("test1", node1);
         test.beginWorkflowExecution(ExecutionContextImpl.builder().nodes(new NodeSetImpl(nodes)).build(), null);
 
         test.beginWorkflowItem(1, testitem);
+        test.beginExecuteNodeStep(null, null, node1);
+        testReason reason1 = new testReason("reason1");
+        test.finishExecuteNodeStep(failureNodeResult(node1,"blah", reason1), null, null, node1);
         test.beginWorkflowItemErrorHandler(1, testitem);
-        test.finishWorkflowItemErrorHandler(1, testitem, true);
-        test.finishWorkflowItem(1, testitem, true);
+        test.beginExecuteNodeStep(null, null, node1);
+        test.finishExecuteNodeStep(successNodeResult(node1), null, null, node1);
+        test.finishWorkflowItemErrorHandler(1, testitem, successResult());
+        test.finishWorkflowItem(1, testitem, successResult());
 
-        assertEquals(4, testListener1.events.size());
+        assertEquals(8, testListener1.events.size());
         assertWorkflowStateEvent((Object[]) testListener1.events.get(0), ExecutionState.RUNNING, "test1");
         assertStepStateEvent((Object[]) testListener1.events.get(1), ExecutionState.RUNNING, null, 1);
-        assertStepStateEvent((Object[]) testListener1.events.get(2), ExecutionState.RUNNING_HANDLER, null,
+        assertStepStateEvent((Object[]) testListener1.events.get(2), ExecutionState.RUNNING, "test1", 1);
+        assertStepStateEvent((Object[]) testListener1.events.get(3), ExecutionState.FAILED,"test1","blah", reason1.map(), 1);
+        assertStepStateEvent((Object[]) testListener1.events.get(4), ExecutionState.RUNNING_HANDLER, null, null, null,
                 StateUtils.stepContextId(1, true));
-        assertStepStateEvent((Object[]) testListener1.events.get(3), ExecutionState.SUCCEEDED, null, StateUtils.stepContextId(1, true));
+        assertStepStateEvent((Object[]) testListener1.events.get(5), ExecutionState.RUNNING_HANDLER, "test1", null,
+                null, StateUtils.stepContextId(1, true));
+        assertStepStateEvent((Object[]) testListener1.events.get(6), ExecutionState.SUCCEEDED, "test1", null,
+                null, StateUtils.stepContextId(1, true));
+        assertStepStateEvent((Object[]) testListener1.events.get(7), ExecutionState.SUCCEEDED, null, null, null, StateUtils.stepContextId(1, true));
     }
+
+    private NodeStepResult failureNodeResult(INodeEntry node1, String message, FailureReason failureReason) {
+        return new NodeStepResultImpl(null, failureReason, message, node1);
+    }
+
     public void testEventsBeginSubStepItem() {
         HashMap<String, INodeEntry> nodes = new HashMap<String, INodeEntry>();
         NodeEntryImpl node1 = new NodeEntryImpl("test1");
@@ -197,7 +245,7 @@ public class WorkflowExecutionStateListenerAdapterTest extends TestCase {
         test.beginWorkflowExecution(ExecutionContextImpl.builder().nodes(new NodeSetImpl(nodes2)).build(), null);
 
         test.beginWorkflowItem(1, testitem);
-        test.finishWorkflowItem(1, testitem, true);
+        test.finishWorkflowItem(1, testitem, successResult());
 
         assertEquals(5, testListener1.events.size());
         assertWorkflowStateEvent((Object[]) testListener1.events.get(0), ExecutionState.RUNNING, "test1");
@@ -221,9 +269,9 @@ public class WorkflowExecutionStateListenerAdapterTest extends TestCase {
         test.beginWorkflowExecution(ExecutionContextImpl.builder().nodes(new NodeSetImpl(nodes2)).build(), null);
 
         test.beginWorkflowItem(1, testitem);
-        test.finishWorkflowItem(1, testitem, true);
+        test.finishWorkflowItem(1, testitem, successResult());
         test.finishWorkflowExecution(wfresult.forSuccess(true), null, null);
-        test.finishWorkflowItem(1, testitem, true);
+        test.finishWorkflowItem(1, testitem, successResult());
         test.finishWorkflowExecution(wfresult.forSuccess(true), null, null);
 
         assertEquals(8, testListener1.events.size());
@@ -252,8 +300,28 @@ public class WorkflowExecutionStateListenerAdapterTest extends TestCase {
         assertStepStateEvent((Object[]) testListener1.events.get(2), ExecutionState.RUNNING, "test1",1);
     }
 
+    public void testEventsFinishNodeStepItem() {
+        HashMap<String, INodeEntry> nodes = new HashMap<String, INodeEntry>();
+        NodeEntryImpl node1 = new NodeEntryImpl("test1");
+        nodes.put("test1", node1);
+        test.beginWorkflowExecution(ExecutionContextImpl.builder().nodes(new NodeSetImpl(nodes)).build(), null);
+
+        test.beginWorkflowItem(1, testitem);
+        test.beginExecuteNodeStep(null, null, node1);
+        test.finishExecuteNodeStep(successNodeResult(node1), null, null, node1);
+
+        assertEquals(4, testListener1.events.size());
+        assertWorkflowStateEvent((Object[]) testListener1.events.get(0), ExecutionState.RUNNING, "test1");
+        assertStepStateEvent((Object[]) testListener1.events.get(1), ExecutionState.RUNNING, null, 1);
+        assertStepStateEvent((Object[]) testListener1.events.get(2), ExecutionState.RUNNING, "test1",1);
+        assertStepStateEvent((Object[]) testListener1.events.get(3), ExecutionState.SUCCEEDED, "test1",1);
+    }
+
     private void assertStepStateEvent(Object[] o, ExecutionState running, String nodename, int... ctxid) {
-        assertStepStateEvent(o, running, nodename, asContextIds(ctxid));
+        assertStepStateEvent(o, running, nodename, null, null, ctxid);
+    }
+    private void assertStepStateEvent(Object[] o, ExecutionState running, String nodename, String errorMessage, Map metadata, int... ctxid) {
+        assertStepStateEvent(o, running, nodename, errorMessage, metadata, asContextIds(ctxid));
     }
 
     private StepContextId[] asContextIds(int[] ctxid) {
@@ -265,7 +333,9 @@ public class WorkflowExecutionStateListenerAdapterTest extends TestCase {
         return stepContextIds;
     }
 
-    private void assertStepStateEvent(Object[] o, ExecutionState running, String nodename, StepContextId... ctxid) {
+    private void assertStepStateEvent(Object[] o, ExecutionState running, String nodename, String errorMessage,
+            Map metadata,
+            StepContextId... ctxid) {
         assertEquals("step", o[0]);
         StepIdentifier ident = (StepIdentifier)o[1];
         assertIdentifier(ident, ctxid);
@@ -278,8 +348,8 @@ public class WorkflowExecutionStateListenerAdapterTest extends TestCase {
             assertFalse(change.isNodeState());
         }
         assertEquals(running, change.getStepState().getExecutionState());
-        assertEquals(null, change.getStepState().getErrorMessage());
-        assertEquals(null, change.getStepState().getMetadata());
+        assertEquals(errorMessage, change.getStepState().getErrorMessage());
+        assertEquals(metadata, change.getStepState().getMetadata());
 
 
         assertTrue(o[3] instanceof Date);
