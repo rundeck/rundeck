@@ -43,7 +43,9 @@ class WorkflowService {
             }
             substeps[ndx].nodeStep = !!step.nodeStep
         }
-        new MutableWorkflowStateImpl(null, wf.commands.size(), substeps)
+        def impl = new MutableWorkflowStateImpl(null, wf.commands.size(), substeps)
+        impl.executionState=ExecutionState.WAITING
+        return impl
     }
     /**
      * Create and return a listener for changes to the workflow state for an execution
