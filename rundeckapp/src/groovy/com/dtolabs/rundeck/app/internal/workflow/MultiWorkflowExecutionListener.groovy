@@ -14,6 +14,7 @@ import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
@@ -63,13 +64,13 @@ class MultiWorkflowExecutionListener implements WorkflowExecutionListener,Execut
     }
 
     @Override
-    void finishWorkflowItem(int step, StepExecutionItem item, boolean success) {
-        reversedListenerList*.finishWorkflowItem(step, item, success)
+    void finishWorkflowItem(int step, StepExecutionItem item, StepExecutionResult result) {
+        reversedListenerList*.finishWorkflowItem(step, item, result)
     }
 
     @Override
-    void finishWorkflowItemErrorHandler(int step, StepExecutionItem item, boolean success) {
-        reversedListenerList*.finishWorkflowItemErrorHandler(step, item, success)
+    void finishWorkflowItemErrorHandler(int step, StepExecutionItem item, StepExecutionResult result) {
+        reversedListenerList*.finishWorkflowItemErrorHandler(step, item, result)
     }
 
     @Override

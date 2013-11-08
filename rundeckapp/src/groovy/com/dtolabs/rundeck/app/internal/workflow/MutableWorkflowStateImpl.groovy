@@ -98,7 +98,12 @@ update timestamp. update timestamp on WorkflowState(s)
 
         //update state
         toUpdate.errorMessage = stepStateChange.stepState.errorMessage
-        toUpdate.metadata = stepStateChange.stepState.metadata
+        if(stepStateChange.stepState.metadata){
+            if(null==toUpdate.metadata){
+                toUpdate.metadata=[:]
+            }
+            toUpdate.metadata << stepStateChange.stepState.metadata
+        }
 
         if (stepStateChange.isNodeState() && currentStep.nodeStepTargets && stepStateChange.stepState.executionState.isCompletedState()) {
             //if all target nodes have completed execution state, mark the overall step state
