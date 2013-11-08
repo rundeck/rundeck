@@ -168,9 +168,14 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
     public void beginExecuteNodeStep(ExecutionContext context, NodeStepExecutionItem item, INodeEntry node) {
         stepContext.beginNodeContext(node);
         StepIdentifier identifier = createIdentifier();
-        notifyAllStepState(identifier, createStepStateChange(identifier.getContext().get(0).getAspect() == StepAspect
-                .Main ?
-                ExecutionState.RUNNING : ExecutionState.RUNNING_HANDLER), new Date());
+        notifyAllStepState(identifier,
+                createStepStateChange(
+                        StateUtils.last(identifier).getAspect().isMain()
+                                ? ExecutionState.RUNNING
+                                : ExecutionState.RUNNING_HANDLER
+                ),
+                new Date()
+        );
 
     }
 

@@ -5,5 +5,9 @@ package com.dtolabs.rundeck.core.execution.workflow.state;
  */
 public enum StepAspect {
     Main,
-    ErrorHandler
+    ErrorHandler;
+
+    public boolean isMain(){
+        return this==Main;
+    }
 }

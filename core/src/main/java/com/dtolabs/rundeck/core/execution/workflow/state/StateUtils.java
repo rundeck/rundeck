@@ -69,6 +69,12 @@ public class StateUtils {
     public static StepIdentifier stepIdentifier(int... ids) {
         return stepIdentifier(asStepContextIds(ids));
     }
+    public static StepContextId last(StepIdentifier stepIdentifier) {
+        return stepIdentifier.getContext().get(stepIdentifier.getContext().size() - 1);
+    }
+    public static StepContextId first(StepIdentifier stepIdentifier) {
+        return stepIdentifier.getContext().get(0);
+    }
 
     private static List<StepContextId> asStepContextIds(int[] ids) {
         ArrayList<StepContextId> stepContextIds = new ArrayList<StepContextId>(ids.length);

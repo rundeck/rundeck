@@ -209,6 +209,53 @@ public class WorkflowExecutionStateListenerAdapterTest extends TestCase {
         assertStepStateEvent((Object[]) testListener1.events.get(7), ExecutionState.SUCCEEDED, null, null, null, StateUtils.stepContextId(1, true));
     }
 
+    public void testEventsSubflowWithErrorHandler() {
+        HashMap<String, INodeEntry> nodes = new HashMap<String, INodeEntry>();
+        NodeEntryImpl node1 = new NodeEntryImpl("test1");
+        nodes.put("test1", node1);
+        test.beginWorkflowExecution(ExecutionContextImpl.builder().nodes(new NodeSetImpl(nodes)).build(), null);
+        test.beginWorkflowItem(1, testitem);
+        //sub workflow
+        test.beginWorkflowExecution(ExecutionContextImpl.builder().nodes(new NodeSetImpl(nodes)).build(), null);
+
+        test.beginWorkflowItem(1, testitem);
+        test.beginExecuteNodeStep(null, null, node1);
+        testReason reason1 = new testReason("reason1");
+        test.finishExecuteNodeStep(failureNodeResult(node1,"blah", reason1), null, null, node1);
+        test.beginWorkflowItemErrorHandler(1, testitem);
+        test.beginExecuteNodeStep(null, null, node1);
+        test.finishExecuteNodeStep(successNodeResult(node1), null, null, node1);
+        test.finishWorkflowItemErrorHandler(1, testitem, successResult());
+        test.finishWorkflowItem(1, testitem, successResult());
+
+        test.finishWorkflowExecution(wfresult.forSuccess(true), null, null);
+        test.finishWorkflowItem(1, testitem, successResult());
+        test.finishWorkflowExecution(wfresult.forSuccess(true), null, null);
+
+        assertEquals(13, testListener1.events.size());
+        int x=0;
+        assertWorkflowStateEvent((Object[]) testListener1.events.get(x++), ExecutionState.RUNNING, "test1");
+        assertStepStateEvent((Object[]) testListener1.events.get(x++), ExecutionState.RUNNING, null, 1);
+        assertSubWorkflowStateEvent((Object[]) testListener1.events.get(x++), ExecutionState.RUNNING,new int[]{1},"test1");
+
+        assertStepStateEvent((Object[]) testListener1.events.get(x++), ExecutionState.RUNNING, null, 1,1);
+        assertStepStateEvent((Object[]) testListener1.events.get(x++), ExecutionState.RUNNING, "test1", 1,1);
+        assertStepStateEvent((Object[]) testListener1.events.get(x++), ExecutionState.FAILED,"test1","blah", reason1.map(), 1,1);
+        HashMap<String, String> handlermap = new HashMap<String, String>();
+        handlermap.put("handlerTriggered", "true");
+        assertStepStateEvent((Object[]) testListener1.events.get(x++), ExecutionState.RUNNING_HANDLER, null, null, handlermap,
+                StateUtils.stepContextId(1,false),StateUtils.stepContextId(1, true));
+        assertStepStateEvent((Object[]) testListener1.events.get(x++), ExecutionState.RUNNING_HANDLER, "test1", null,
+                null, StateUtils.stepContextId(1, false), StateUtils.stepContextId(1, true));
+        assertStepStateEvent((Object[]) testListener1.events.get(x++), ExecutionState.SUCCEEDED, "test1", null,
+                null, StateUtils.stepContextId(1, false), StateUtils.stepContextId(1, true));
+        assertStepStateEvent((Object[]) testListener1.events.get(x++), ExecutionState.SUCCEEDED, null, null, null,
+                StateUtils.stepContextId(1, false), StateUtils.stepContextId(1, true));
+        assertSubWorkflowStateEvent((Object[]) testListener1.events.get(x++), ExecutionState.SUCCEEDED, new int[]{1});
+        assertStepStateEvent((Object[]) testListener1.events.get(x++), ExecutionState.SUCCEEDED, null, 1);
+        assertWorkflowStateEvent((Object[]) testListener1.events.get(x++), ExecutionState.SUCCEEDED);
+    }
+
     private NodeStepResult failureNodeResult(INodeEntry node1, String message, FailureReason failureReason) {
         return new NodeStepResultImpl(null, failureReason, message, node1);
     }
