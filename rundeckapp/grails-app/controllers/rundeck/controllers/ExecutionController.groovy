@@ -412,7 +412,7 @@ class ExecutionController {
         if(e && !frameworkService.authorizeProjectExecutionAll(framework,e,[AuthConstants.ACTION_READ])){
             return apiError('api.error.item.unauthorized', [AuthConstants.ACTION_READ, "Execution", params.id], HttpServletResponse.SC_FORBIDDEN);
         }
-        if (params.stepctx && !(params.stepctx ==~ /^(\d+\/?)+$/)) {
+        if (params.stepctx && !(params.stepctx ==~ /^(\d+e?\/?)+$/)) {
             return apiError("api.error.parameter.invalid",[params.stepctx,'stepctx',"Invalid stepctx filter"],HttpServletResponse.SC_BAD_REQUEST)
         }
 
@@ -646,15 +646,17 @@ class ExecutionController {
             if(params.nodename && data.metadata.node != params.nodename){
                 return false
             }
-            if(params.stepctx && params.stepctx==~/^(\d+\/?)+$/){
+            if(params.stepctx && params.stepctx==~/^(\d+e?\/?)+$/){
                 if(params.stepctx.endsWith("/")){
                     if(data.metadata.stepctx?.startsWith(params.stepctx)
-                            || data.metadata.stepctx[0..-2] == params.stepctx){
+                            || data.metadata.stepctx[0..-2] == params.stepctx
+                            || data.metadata.stepctx[0..-2] == params.stepctx + 'e'){
                         return data
                     }else{
                         return false
                     }
-                }else if(!params.stepctx.endsWith("/") && data.metadata.stepctx != params.stepctx){
+                }else if(!params.stepctx.endsWith("/") && !(data.metadata.stepctx == params.stepctx
+                        || (data.metadata.stepctx) == params.stepctx + 'e')){
                     return false
                 }
             }
