@@ -88,10 +88,11 @@ class WorkflowService {
     def Map mapOf(WorkflowState workflowState) {
         [
                 executionState:workflowState.executionState.toString(),
+                completed: workflowState.executionState.isCompletedState(),
                 targetNodes:workflowState.nodeSet,
                 stepCount:workflowState.stepCount,
                 timestamp:encodeDate(workflowState.timestamp),
-                steps:workflowState.stepStates.collect{mapOf(it)},
+                steps:workflowState.stepStates.collect{mapOf(it)}
         ]
     }
     def String encodeDate(Date date){
