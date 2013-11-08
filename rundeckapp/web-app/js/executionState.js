@@ -26,6 +26,7 @@ var FlowState = Class.create({
     shouldUpdate:false,
     timer:null,
     selectedElem:null,
+    reloadInterval:3000,
     initialize: function (eid, elem, params) {
         this.executionId = eid;
         this.targetElement = elem;
@@ -116,7 +117,7 @@ var FlowState = Class.create({
         var newstate= this.newNodeState(stepctx, node, nstate);
         nstates.appendChild(newstate);
         var execstate=newstate.down('.execstate');
-        this.setNodeState(node, nstate, execstate);
+        this.setNodeState(stepctx, node, nstate, execstate);
     },
     updateNodeState: function (root, stepctx,node,nstate) {
         this.withOrWithoutMatch(root, '.execstate.isnode[data-stepctx=' + stepctx + '][data-node=' + node + ']',
@@ -168,13 +169,13 @@ var FlowState = Class.create({
             $(this.targetElement + '_json').innerHTML = Object.toJSON(this.model);
         }
         this.updateWorkflow(this.model,'');
+        if (!this.model.completed && this.shouldUpdate) {
+            this.timer = setTimeout(this.callUpdate.bind(this), this.reloadInterval);
+        } else {
+            this.stopFollowing();
+        }
     },
     callUpdate: function(){
-        if(!this.shouldUpdate){
-            clearInterval(this.timer);
-            this.timer=null;
-            return;
-        }
         var state=this;
         new Ajax.Request(this.loadUrl,{
             evalScripts: true,
@@ -187,11 +188,11 @@ var FlowState = Class.create({
     },
     beginFollowing: function(){
         this.shouldUpdate=true;
-        this.timer=setInterval(this.callUpdate.bind(this),3000);
+        this.callUpdate();
     },
     stopFollowing: function(){
         this.shouldUpdate=false;
-        clearInterval(this.timer);
+        clearTimeout(this.timer);
         this.timer = null;
     }
 });
