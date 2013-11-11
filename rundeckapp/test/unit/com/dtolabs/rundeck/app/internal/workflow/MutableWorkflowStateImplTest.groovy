@@ -275,6 +275,42 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
         assertEquals(ExecutionState.SUCCEEDED, step1.nodeStateMap['a'].executionState)
 
     }
+    public void testErrorHandlerStepFirst() {
+        MutableWorkflowStateImpl mutableWorkflowState = new MutableWorkflowStateImpl(null, 1);
+        def date = new Date(123)
+        def newdate = new Date()
+
+        mutableWorkflowState.updateWorkflowState(ExecutionState.RUNNING, date, ['a','b'] as Set)
+
+        //step 1: error handler
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1), stepStateChange(stepState(ExecutionState.RUNNING)), newdate)
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1), stepStateChange(stepState(ExecutionState.RUNNING), 'a'), newdate)
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1), stepStateChange(stepState(ExecutionState.FAILED), 'a'), newdate)
+        mutableWorkflowState.updateStateForStep(stepIdentifier(stepContextId(1, true)), stepStateChange(stepState(ExecutionState.RUNNING_HANDLER)), newdate)
+        mutableWorkflowState.updateStateForStep(stepIdentifier(stepContextId(1, true)), stepStateChange(stepState(ExecutionState.RUNNING_HANDLER), 'a'), newdate)
+        mutableWorkflowState.updateStateForStep(stepIdentifier(stepContextId(1, true)), stepStateChange(stepState(ExecutionState.SUCCEEDED), 'a'), newdate)
+        mutableWorkflowState.updateStateForStep(stepIdentifier(stepContextId(1, true)), stepStateChange(stepState(ExecutionState.RUNNING_HANDLER), 'b'), newdate)
+        mutableWorkflowState.updateStateForStep(stepIdentifier(stepContextId(1, true)), stepStateChange(stepState(ExecutionState.SUCCEEDED), 'b'), newdate)
+
+
+        mutableWorkflowState.updateStateForStep(stepIdentifier(stepContextId(1, true)), stepStateChange(stepState(ExecutionState.SUCCEEDED)), newdate)
+
+
+        //finish
+        mutableWorkflowState.updateWorkflowState(ExecutionState.SUCCEEDED, newdate, null)
+
+
+        assertEquals(ExecutionState.SUCCEEDED, mutableWorkflowState.executionState)
+        assertEquals(newdate, mutableWorkflowState.timestamp)
+        assertEquals(['a','b'] as Set, mutableWorkflowState.nodeSet)
+
+        def step1 = mutableWorkflowState[1]
+        assertStepId(1, step1.stepIdentifier)
+        assertEquals(ExecutionState.SUCCEEDED, step1.stepState.executionState)
+        assertEquals(['a','b'] as Set, step1.nodeStepTargets)
+        assertEquals(ExecutionState.SUCCEEDED, step1.nodeStateMap['a'].executionState)
+
+    }
 
     public void testUpdateSubWorkflowResolveState() {
         def mutableStep8 = new MutableWorkflowStepStateImpl(stepIdentifier(8))
