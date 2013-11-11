@@ -202,7 +202,7 @@ class ExecutionController {
         def abortresult=executionService.abortExecution(se, e, session.user, framework)
 
 
-        def didcancel=abortresult.abortstate in [ABORT_ABORTED,ABORT_PENDING]
+        def didcancel=abortresult.abortstate in [ExecutionService.ABORT_ABORTED, ExecutionService.ABORT_PENDING]
 
         def reasonstr=abortresult.failedreason
         withFormat{
