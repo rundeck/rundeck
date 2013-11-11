@@ -115,7 +115,7 @@ class WorkflowService {
         ExecutionState state = ExecutionState.valueOf(map.executionState)
         Set<String> nodes = map.targetNodes
         int stepCount = map.stepCount
-        Date timestamp = decodeDate(map.timestamp)
+        Date timestamp = map.timestamp?decodeDate(map.timestamp):null
 
         return StateUtils.workflowState(nodes,stepCount,state,timestamp,map.steps.collect{
             workflowStepStateFromMap(it)
