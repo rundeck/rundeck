@@ -52,6 +52,10 @@ var FlowState = Class.create({
         this.withMatch(root, '.execstate.step[data-stepctx=' + stepctx + ']', function (elem) {
             $(elem).setAttribute('data-execstate', step.executionState);
         });
+        this.withMatch(root, '.stepident[data-stepctx=' + stepctx + ']', function (elem) {
+            var type= this.workflow.contextType(stepctx);
+            $(elem).innerHTML='<i class="rdicon icon-small '+type+'"></i> '+this.workflow.renderContextString(stepctx);
+        });
         if (step.errorMessage) {
             this.withMatch(root, '.errmsg.step[data-stepctx=' + stepctx + ']', function (elem) {
                 $(elem).innerHTML = step.errorMessage;
@@ -137,6 +141,9 @@ var FlowState = Class.create({
             $(this.targetElement + '_log').innerHTML += "<br>" + text;
         }
     },
+    showError: function(text){
+        this.logWarn(text);
+    },
     updateWorkflow: function (currentwf,ctx) {
         var count = parseInt(currentwf.stepCount);
         if (!currentwf.steps) {
@@ -164,6 +171,10 @@ var FlowState = Class.create({
     },
     update: function (data) {
         //compare
+        if(data.error){
+            this.showError(data.error);
+            return;
+        }
         this.model = data;
         if($(this.targetElement + '_json')){
             $(this.targetElement + '_json').innerHTML = Object.toJSON(this.model);

@@ -63,6 +63,7 @@ var FollowControl = Class.create({
     iconUrl:'/images/icon',
     smallIconUrl:'/images/icon-small',
     appLinks:{},
+    workflow:null,
     
     initialize: function(eid,elem,params){
         this.executionId=eid;
@@ -998,75 +999,6 @@ var FollowControl = Class.create({
         return string;
     },
 
-    workflowIndexForContextId: function (ctxid) {
-        var id = ctxid;
-        if (ctxid ==~/e$/) {
-            id = ctix.substring(0, ctxid.length - 2);
-        }
-        return parseInt(id) - 1;
-    },
-    contextType: function (data) {
-        var ctx = this.parseContextId(data['stepctx']);
-        if (ctx) {
-            var string = "";
-            if (typeof(workflow) != 'undefined') {
-                var step = workflow[this.workflowIndexForContextId(ctx[0])];
-                if (typeof(step) != 'undefined') {
-                    if (step['exec']) {
-                        return 'command';
-                    } else if (step['jobref']) {
-                        return 'job';
-                    } else if (step['script']) {
-                        return 'script';
-                    } else if (step['scriptfile']) {
-                        return 'scriptfile';
-                    } else if (step['type']) {//plugin
-                        var title = "Plugin " + step['type'];
-                        if (step['nodeStep'] && typeof(nodeSteppluginDescriptions) != 'undefined') {
-                            return 'node-step-plugin plugin';
-                        } else if (!step['nodeStep'] && typeof(wfSteppluginDescriptions) != 'undefined') {
-                            return 'workflow-step-plugin plugin';
-                        }
-                    }
-                }
-            }
-        }
-        return 'console';
-    },
-    renderContextString: function(data){
-        var ctx = this.parseContextId(data['stepctx']);
-        if (ctx) {
-            var string="";
-            if(typeof(workflow)!='undefined'){
-                var step=workflow[this.workflowIndexForContextId(ctx[0])];
-                if(typeof(step)!='undefined'){
-                    if(step['exec']){
-//                        string+=' $ '+step['exec'];
-                        string+='Command';
-                    }else if(step['jobref']){
-                        string+=(step['jobref']['group']? step['jobref']['group']+'/':'')+step['jobref']['name'];
-                    }else if(step['script']){
-                        string += "Script" ;
-                    }else if(step['scriptfile']){
-                        string += step['scriptfile'] ;
-                    }else if(step['type']){//plugin
-                        var title= "Plugin " + step['type'];
-                        if(step['nodeStep'] && typeof(nodeSteppluginDescriptions)!='undefined'){
-                            title = nodeSteppluginDescriptions[step['type']].title;
-                        }else if(!step['nodeStep'] && typeof(wfSteppluginDescriptions) != 'undefined'){
-                            title = wfSteppluginDescriptions[step['type']].title;
-                        }
-                        string += title ;
-                    }
-                }
-            }
-            if(ctx.length>1){
-//                string += " > Step "+ctx.slice(1).join(" > Step ")
-            }
-            return string;
-        }
-        return data['stepctx'];
-    },
     createNewNodeTbody: function(data, tbl, ctxid) {
         //create new Table body
         var newtbod = new Element("tbody");
@@ -1099,21 +1031,8 @@ var FollowControl = Class.create({
             cell.innerHTML += "<span class='node'>" + data['node'] + "</span>";
         }
 
-        if (data['stepctx']  || data['context']) {
-            if ( data['stepctx']) {
-                var contextstr= this.renderContextString(data)
-//                cell.innerHTML += "<span class='stepident' title='" + this.escapeHtml(contextstr) + "'>" + this.escapeHtml(contextstr) + "</span>";
-            }
-            if (data['context']) {
-                //split context into project,type,object
-                var t = data['context'].split('.');
-                if (t.size() > 2) {
-                    cell.innerHTML += " <span class='resname'>" + t[2] + "</span>";
-                }
-                if (t.size() > 1) {
-                    cell.innerHTML += " <span class='typename'>" + t[1] + "</span>";
-                }
-            }
+        if ( data['stepctx']) {
+            var contextstr= this.workflow.renderContextString(data['stepctx']);
         } else {
             tr.addClassName('console');
             cell.innerHTML += " <span class='console'>[console]</span>";
@@ -1240,24 +1159,11 @@ var FollowControl = Class.create({
             cell.innerHTML += "<span class='node'>" + data['node'] + "</span>";
         }
 
-        if (data['stepctx']  || data['context']) {
-            if ( data['stepctx'] ) {
-                var contextstr = this.renderContextString(data);
-                var stepnum = this.renderContextStepNumber(data);
-                cell.innerHTML += "<span class='stepnum' title='" + this.escapeHtml(contextstr) + "'>" + this.escapeHtml(contextstr) + "</span>";
-                cell.innerHTML += "<span class='stepident'>" + this.escapeHtml(contextstr) + "</span>";
-            }
-            if (data['context']) {
-                //split context into project,type,object
-                var t = data['context'].split('.');
-                if (t.size() > 2) {
-                    cell.innerHTML += " <span class='resname'>" + t[2] + "</span>";
-                }
-                if (t.size() > 1) {
-                    cell.innerHTML += " <span class='typename'>" + t[1] + "</span>";
-                }
-                //                cell.innerHTML+=" <span class='contextInfo'>("+data['context']+") </span>";
-            }
+        if (data['stepctx']) {
+            var contextstr = this.workflow.renderContextString(data['stepctx']);
+            var stepnum = this.renderContextStepNumber(data);
+            cell.innerHTML += "<span class='stepnum' title='" + this.escapeHtml(contextstr) + "'>" + this.escapeHtml(contextstr) + "</span>";
+            cell.innerHTML += "<span class='stepident'>" + this.escapeHtml(contextstr) + "</span>";
         } else {
             tr.addClassName('console');
             cell.innerHTML += " <span class='console'>[console]</span>";
@@ -1373,15 +1279,12 @@ var FollowControl = Class.create({
 //                tdctx.addClassName('repeat');
         }else if(data['stepctx']){
 
-            var cmdtext= this.renderContextStepNumber(data) + " " + this.renderContextString(data);
+            var cmdtext= this.renderContextStepNumber(data) + " " + this.workflow.renderContextString(data['stepctx']);
             var icon= new Element('i');
-            icon.addClassName('rdicon icon-small '+ this.contextType(data))
+            icon.addClassName('rdicon icon-small '+ this.workflow.contextType(data['stepctx']))
             tdctx.appendChild(icon);
             tdctx.appendChild(document.createTextNode(" "+cmdtext));
-            tdctx.setAttribute('title',this.renderContextString(data));
-//            tdctx.addClassName(this.contextType(data));
-        }else{
-
+            tdctx.setAttribute('title', this.workflow.renderContextString(data['stepctx']));
         }
         var tddata = $(tr.insertCell(cellndx));
         tddata.addClassName('data');

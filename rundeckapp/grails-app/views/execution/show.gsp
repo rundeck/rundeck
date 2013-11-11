@@ -26,6 +26,7 @@
       <g:set var="defaultLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.default}"/>
       <g:set var="maxLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.max}"/>
       <g:javascript src="executionControl.js"/>
+      <g:javascript src="workflow.js"/>
       <g:javascript src="executionState.js"/>
       <g:javascript library="prototype/effects"/>
       <g:javascript>
@@ -45,7 +46,14 @@
             });
         }
         </g:if>
+        var workflowData=${execution.workflow.commands*.toMap().encodeAsJSON()};
+        var workflow = new RDWorkflow(workflowData,{
+            nodeSteppluginDescriptions:${stepPluginDescriptions.node.collectEntries { [(it.key): [title: it.value.title]] }.encodeAsJSON()},
+            wfSteppluginDescriptions:${stepPluginDescriptions.workflow.collectEntries { [(it.key): [title: it.value.title]] }.encodeAsJSON()}
+        });
+
         var followControl = new FollowControl('${execution?.id}','outputappendform',{
+            workflow:workflow,
             appLinks:appLinks,
             iconUrl: "${resource(dir: 'images', file: 'icon-small')}",
             smallIconUrl: "${resource(dir: 'images', file: 'icon-small')}",
@@ -73,8 +81,10 @@
             </g:if>
         });
         var flowState = new FlowState('${execution?.id}','flowstate',{
+            workflow:workflow,
             loadUrl: "${g.createLink(controller: 'execution', action: 'ajaxExecState', id: execution.id)}",
-            outputUrl:"${g.createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id)}.json"
+            outputUrl:"${g.createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id)}.json",
+            reloadInterval:1500
          });
 
         function init() {
@@ -400,11 +410,7 @@
                     %{--<div class="col-sm-12"></div>--}%
                 %{--</div>--}%
 
-        <g:javascript>
-        var workflow=${execution.workflow.commands*.toMap().encodeAsJSON()};
-            var nodeSteppluginDescriptions=${stepPluginDescriptions.node.collectEntries{[(it.key):[title:it.value.title]]}.encodeAsJSON()};
-            var wfSteppluginDescriptions=${stepPluginDescriptions.workflow.collectEntries { [(it.key):[title: it.value.title]] }.encodeAsJSON()};
-        </g:javascript>
+
 
         </div>
         </div>
