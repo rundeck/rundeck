@@ -114,7 +114,7 @@
     .glyphicon-td();
   }
 
-  table.execoutput td.stepnum .rdicon.job{
+  .rdicon.job{
     .glyphicon();
     .glyphicon-book();
     vertical-align: baseline;
@@ -697,9 +697,6 @@
       }
     }
 
-    .stepident, .stepnum {
-      color: @brand-light;
-    }
 
     td.data.log_warn, td.data.log_error {
       color: #800;
@@ -729,6 +726,10 @@
     &.collapse_stepnum td.stepnum {
       display: none;
     }
+  }
+
+  .stepident, .stepnum {
+    color: @brand-light;
   }
 
   //history rows with default action link
