@@ -14,6 +14,10 @@ class MutableStepStateImpl implements MutableStepState {
     Map metadata;
     String errorMessage;
 
+    MutableStepStateImpl() {
+        executionState=ExecutionState.WAITING
+    }
+
     @Override
     public java.lang.String toString() {
         return "step{" +

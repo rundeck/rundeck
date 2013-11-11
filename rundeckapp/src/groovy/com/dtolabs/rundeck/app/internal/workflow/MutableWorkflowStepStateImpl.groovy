@@ -28,6 +28,7 @@ class MutableWorkflowStepStateImpl implements MutableWorkflowStepState {
         this.mutableStepState.executionState= ExecutionState.WAITING
         this.mutableNodeStateMap = new HashMap<String, MutableStepState>()
         this.mutableSubWorkflowState=subflow
+        this.nodeStep=false
     }
 
     public StepState getStepState(){

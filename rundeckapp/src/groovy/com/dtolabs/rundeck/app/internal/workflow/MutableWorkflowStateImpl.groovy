@@ -28,6 +28,7 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         for (int i = 1; i <= stepCount; i++) {
             mutableStepStates[i - 1] = steps && steps[i-1]? steps[i-1] : new MutableWorkflowStepStateImpl(StateUtils.stepIdentifier(i))
         }
+        this.executionState=ExecutionState.WAITING
     }
 
     MutableWorkflowStepState getAt(Integer index){
@@ -46,28 +47,12 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
 
     @Override
     void updateStateForStep(StepIdentifier identifier, StepStateChange stepStateChange, Date timestamp) {
-        /*
-To update state:
-locate step in the workflow context."1/2", look for stepstate[1].workflowstate.stepstate[2].
-if(node state) index via node name
-if(overall state)
-change status
-merge metadata
-update timestamp. update timestamp on WorkflowState(s)
-         */
         touchWFState(timestamp)
 
         Map<Integer, MutableWorkflowStepState> states = mutableStepStates;
         MutableWorkflowStepState currentStep = locateStepWithContext(identifier, states)
         if (identifier.context.size() > 1) {
-            transitionIfWaiting(currentStep.mutableStepState)
-            //recurse to the workflow list to find the right index
-
-            MutableWorkflowState subflow = currentStep.hasSubWorkflow() ?
-                currentStep.mutableSubWorkflowState :
-                currentStep.createMutableSubWorkflowState(null, 0)
-            //recursively update subworkflow state for the step in the subcontext
-            subflow.updateStateForStep(StateUtils.stepIdentifierTail(identifier), stepStateChange, timestamp);
+            descendUpdateStateForStep(currentStep, identifier, stepStateChange, timestamp)
             return
         }
 
@@ -81,18 +66,21 @@ update timestamp. update timestamp on WorkflowState(s)
             }
             toUpdate = currentStep.mutableNodeStateMap[stepStateChange.nodeName]
             toUpdate.executionState = updateState(toUpdate.executionState, stepStateChange.stepState.executionState)
-        } else {
-            //overall step state
-            toUpdate = currentStep.mutableStepState
-            //case: step is now RUNNING and has a target nodeset
-            if (stepStateChange.stepState.executionState == ExecutionState.RUNNING
-                    && currentStep.mutableStepState.executionState != ExecutionState.RUNNING
-                    && nodeSet) {
-                if(null==currentStep.nodeStepTargets){
+            if (!currentStep.nodeStep && nodeSet) {
+                if (null == currentStep.nodeStepTargets) {
                     currentStep.setNodeStepTargets(nodeSet)
                 }
             }
+        } else if(!currentStep.nodeStep){
+            //overall step state
+            toUpdate = currentStep.mutableStepState
+
             toUpdate.executionState = updateState(toUpdate.executionState, stepStateChange.stepState.executionState)
+        }else{
+            toUpdate=currentStep.mutableStepState
+            if (null == currentStep.nodeStepTargets && nodeSet) {
+                currentStep.setNodeStepTargets(nodeSet)
+            }
         }
         transitionIfWaiting(currentStep.mutableStepState)
 
@@ -105,12 +93,32 @@ update timestamp. update timestamp on WorkflowState(s)
             toUpdate.metadata << stepStateChange.stepState.metadata
         }
 
-        if (stepStateChange.isNodeState() && currentStep.nodeStepTargets && stepStateChange.stepState.executionState.isCompletedState()) {
+        if (stepStateChange.isNodeState() && currentStep.nodeStep && stepStateChange.stepState.executionState.isCompletedState()) {
             //if all target nodes have completed execution state, mark the overall step state
             finishNodeStepIfNodesFinished(currentStep)
-//        }else if(!stepStateChange.isNodeState() && currentStep.hasSubWorkflow() && stepStateChange.stepState.executionState.isCompletedState()){
-//            cleanupSteps(stepStateChange.stepState.executionState, timestamp)
+        }else if(stepStateChange.isNodeState() && currentStep.nodeStep && currentStep.stepState.executionState.isCompletedState()
+                && stepStateChange.stepState.executionState==ExecutionState.RUNNING_HANDLER){
+            currentStep.mutableStepState.executionState=ExecutionState.RUNNING_HANDLER
         }
+    }
+
+    
+/**
+     * Descend into a sub workflow to update state
+     * @param currentStep
+     * @param identifier
+     * @param stepStateChange
+     * @param timestamp
+     */
+    private void descendUpdateStateForStep(MutableWorkflowStepState currentStep, StepIdentifier identifier, StepStateChange stepStateChange, Date timestamp) {
+        transitionIfWaiting(currentStep.mutableStepState)
+        //recurse to the workflow list to find the right index
+
+        MutableWorkflowState subflow = currentStep.hasSubWorkflow() ?
+            currentStep.mutableSubWorkflowState :
+            currentStep.createMutableSubWorkflowState(null, 0)
+        //recursively update subworkflow state for the step in the subcontext
+        subflow.updateStateForStep(StateUtils.stepIdentifierTail(identifier), stepStateChange, timestamp);
     }
 
     private finishNodeStepIfNodesFinished(MutableWorkflowStepState currentStep){
@@ -161,7 +169,11 @@ update timestamp. update timestamp on WorkflowState(s)
             result = ExecutionState.NODE_MIXED
         }
 
-        currentStep.mutableStepState.executionState = updateState(currentStep.mutableStepState.executionState, result)
+        if(currentStep.nodeStep || currentStep.hasSubWorkflow()){
+            currentStep.mutableStepState.executionState = result
+        }else{
+            currentStep.mutableStepState.executionState = updateState(currentStep.mutableStepState.executionState, result)
+        }
 
         //update any node states which are WAITING to NOT_STARTED
         nodeTargets.each{String node->
@@ -220,33 +232,23 @@ update timestamp. update timestamp on WorkflowState(s)
         if(fromState==toState){
             return toState
         }
-        switch (toState){
-            case null:
-                throw new IllegalStateException("Cannot change state to ${fromState}")
-            case ExecutionState.WAITING:
-                if (fromState != null) {
-                    throw new IllegalStateException("Cannot change from " + fromState + " to " + toState)
-                }
-                break;
-            case ExecutionState.RUNNING:
-                if (fromState != null && fromState!= ExecutionState.WAITING) {
-                    throw new IllegalStateException("Cannot change from " + fromState + " to " + toState)
-                }
-                break;
-            case ExecutionState.RUNNING_HANDLER:
-                if (fromState != null && fromState!= ExecutionState.FAILED) {
-                    throw new IllegalStateException("Cannot change from " + fromState + " to " + toState)
-                }
-                break;
-            case ExecutionState.SUCCEEDED:
-            case ExecutionState.FAILED:
-            case ExecutionState.ABORTED:
-            case ExecutionState.NODE_MIXED:
-            case ExecutionState.NODE_PARTIAL_SUCCEEDED:
-                if(toState!=fromState && !(fromState in [ExecutionState.RUNNING, ExecutionState.RUNNING_HANDLER, ExecutionState.WAITING])) {
-                    throw new IllegalStateException("Cannot change from " + fromState + " to " + toState)
-                }
+        def allowed=[
+                (ExecutionState.WAITING):[null,ExecutionState.WAITING],
+                (ExecutionState.RUNNING): [null, ExecutionState.WAITING,ExecutionState.RUNNING],
+                (ExecutionState.RUNNING_HANDLER):[null,ExecutionState.WAITING,ExecutionState.FAILED, ExecutionState.RUNNING,ExecutionState.RUNNING_HANDLER],
+        ]
+        ExecutionState.values().findAll{it.isCompletedState()}.each{
+            allowed[it]= [it,ExecutionState.RUNNING, ExecutionState.RUNNING_HANDLER, ExecutionState.WAITING]
         }
+        if (toState == null) {
+//            System.err.println("Cannot change state to ${toState}")
+            throw new IllegalStateException("Cannot change state to ${toState}")
+        }
+        if(!(fromState in allowed[toState])){
+//            System.err.println("Cannot change from " + fromState + " to " + toState)
+            throw new IllegalStateException("Cannot change from " + fromState + " to " + toState)
+        }
+
         toState
     }
 
