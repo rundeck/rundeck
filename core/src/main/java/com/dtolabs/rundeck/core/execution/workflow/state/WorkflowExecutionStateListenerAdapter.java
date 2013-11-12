@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.StatusResult;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
+import com.dtolabs.rundeck.core.execution.dispatch.INodeEntryComparator;
 import com.dtolabs.rundeck.core.execution.workflow.*;
 import com.dtolabs.rundeck.core.execution.workflow.steps.NodeDispatchStepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
@@ -34,25 +35,17 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
         listeners.add(listener);
     }
 
-    private void notifyAllWorkflowState(ExecutionState executionState, Date timestamp, Collection<String> nodenames) {
-        HashSet<String> nodes=null;
-        if(null!=nodenames){
-            nodes= new HashSet<String>(nodenames);
-        }
+    private void notifyAllWorkflowState(ExecutionState executionState, Date timestamp, List<String> nodenames) {
         for (WorkflowStateListener listener : listeners) {
-            listener.workflowExecutionStateChanged(executionState, timestamp, nodes);
+            listener.workflowExecutionStateChanged(executionState, timestamp, nodenames);
         }
     }
 
     private void notifyAllSubWorkflowState(StepIdentifier identifier, ExecutionState executionState, Date timestamp,
-            Collection<String> nodenames) {
+            List<String> nodenames) {
 
-        HashSet<String> nodes = null;
-        if (null != nodenames) {
-            nodes = new HashSet<String>(nodenames);
-        }
         for (WorkflowStateListener listener : listeners) {
-            listener.subWorkflowExecutionStateChanged(identifier,executionState, timestamp, nodes);
+            listener.subWorkflowExecutionStateChanged(identifier,executionState, timestamp, nodenames);
         }
     }
 
@@ -66,12 +59,23 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
     public void beginWorkflowExecution(StepExecutionContext executionContext, WorkflowExecutionItem item) {
         stepContext.beginContext();
         List<StepContextId> currentContext = stepContext.getCurrentContext();
+        List<String> names = getNodeNames(executionContext);
         if(null==currentContext ){
-            notifyAllWorkflowState(ExecutionState.RUNNING, new Date(), executionContext.getNodes().getNodeNames());
+            notifyAllWorkflowState(ExecutionState.RUNNING, new Date(), names);
         }else{
-            notifyAllSubWorkflowState(createIdentifier(), ExecutionState.RUNNING, new Date(),
-                    executionContext.getNodes().getNodeNames());
+            notifyAllSubWorkflowState(createIdentifier(), ExecutionState.RUNNING, new Date(), names);
         }
+    }
+
+    private List<String> getNodeNames(StepExecutionContext executionContext) {
+        List<INodeEntry> orderedNodes = INodeEntryComparator.rankOrderedNodes(executionContext.getNodes(),
+                executionContext.getNodeRankAttribute(),
+                executionContext.isNodeRankOrderAscending());
+        List<String> names = new ArrayList<String>();
+        for (INodeEntry orderedNode : orderedNodes) {
+            names.add(orderedNode.getNodename());
+        }
+        return names;
     }
 
     public void finishWorkflowExecution(WorkflowExecutionResult result, StepExecutionContext executionContext,

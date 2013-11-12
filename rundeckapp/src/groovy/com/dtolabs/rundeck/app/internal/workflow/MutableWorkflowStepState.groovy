@@ -45,6 +45,6 @@ public interface MutableWorkflowStepState extends WorkflowStepState{
      * Indicates that the step is a node step with the given targets
      * @param nodeset
      */
-    void setNodeStepTargets(Set<String> nodeset);
+    void setNodeStepTargets(List<String> nodeset);
 
 }

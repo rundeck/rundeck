@@ -8,6 +8,7 @@ import com.dtolabs.rundeck.app.internal.workflow.WorkflowStateListenerAction
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener
 import com.dtolabs.rundeck.core.execution.workflow.state.*
 import grails.converters.JSON
+import grails.util.Environment
 import rundeck.Execution
 import rundeck.JobExec
 import rundeck.ScheduledExecution
@@ -56,13 +57,16 @@ class WorkflowService {
         MutableWorkflowState state = createStateForWorkflow(execution.workflow,execution.project)
         workflowStates.put(execution.id, state)
         def mutablestate= new MutableWorkflowStateListener(state)
-        new WorkflowExecutionStateListenerAdapter([mutablestate, new WorkflowStateListenerAction(onWorkflowExecutionStateChanged: {
-            ExecutionState executionState, Date timestamp, Set<String> nodeSet->
-            if(executionState.completedState){
-                //workflow finished:
-                serializeState(id, state)
-            }
-        })])
+        def chain = [mutablestate]
+        
+        chain << new WorkflowStateListenerAction(onWorkflowExecutionStateChanged: {
+                    ExecutionState executionState, Date timestamp, List<String> nodeSet ->
+                        if (executionState.completedState) {
+                            //workflow finished:
+                            serializeState(id, state)
+                        }
+                })
+        new WorkflowExecutionStateListenerAdapter(chain)
     }
     def File serializeState(Long id,WorkflowState state){
         File file= new File("/tmp/${id}.json")
@@ -113,7 +117,7 @@ class WorkflowService {
 
     def WorkflowState workflowStateFromMap(Map map) {
         ExecutionState state = ExecutionState.valueOf(map.executionState)
-        Set<String> nodes = map.targetNodes
+        List<String> nodes = map.targetNodes
         int stepCount = map.stepCount
         Date timestamp = map.timestamp?decodeDate(map.timestamp):null
 
@@ -162,9 +166,9 @@ class WorkflowService {
         if(map.hasSubworkflow){
             subWorkflowState=workflowStateFromMap(map.workflow)
         }
-        Set<String> nodeStepTargets=null
+        List<String> nodeStepTargets=null
         if(map.stepTargetNodes){
-            nodeStepTargets=new HashSet<String>(map.stepTargetNodes)
+            nodeStepTargets=new ArrayList<String>(map.stepTargetNodes)
         }
         boolean nodeStep = !!map.nodeStep
         StateUtils.workflowStepState(state,nodeStateMap,StateUtils.stepIdentifier(map.id), subWorkflowState,nodeStepTargets,nodeStep)

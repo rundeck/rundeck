@@ -25,12 +25,12 @@ class MutableWorkflowStateListener implements WorkflowStateListener {
     }
 
     @Override
-    void workflowExecutionStateChanged(ExecutionState executionState, Date timestamp,Set<String> nodenames) {
+    void workflowExecutionStateChanged(ExecutionState executionState, Date timestamp, List<String> nodenames) {
         mutableWorkflowState.updateWorkflowState(executionState, timestamp, nodenames)
     }
 
     @Override
-    void subWorkflowExecutionStateChanged(StepIdentifier identifier, ExecutionState executionState, Date timestamp, Set<String> nodeSet) {
+    void subWorkflowExecutionStateChanged(StepIdentifier identifier, ExecutionState executionState, Date timestamp, List<String> nodeSet) {
         mutableWorkflowState.updateSubWorkflowState(identifier, executionState, timestamp, nodeSet)
     }
 }

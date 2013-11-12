@@ -6,13 +6,13 @@ import java.util.*;
  * $INTERFACE is ... User: greg Date: 10/15/13 Time: 3:35 PM
  */
 public class WorkflowStateImpl implements WorkflowState {
-    private HashSet<String> nodeSet;
+    private ArrayList<String> nodeSet;
     private long stepCount;
     private ExecutionState executionState;
     private Date timestamp;
     private ArrayList<WorkflowStepState> stepStates;
 
-    public WorkflowStateImpl(HashSet<String> nodeSet, long stepCount, ExecutionState executionState, Date timestamp,
+    public WorkflowStateImpl(List<String> nodeSet, long stepCount, ExecutionState executionState, Date timestamp,
             ArrayList<WorkflowStepState> stepStates) {
         this.setNodeSet(nodeSet);
         this.setStepCount(stepCount);
@@ -21,7 +21,7 @@ public class WorkflowStateImpl implements WorkflowState {
         this.setStepStates(stepStates);
     }
 
-    public Set<String> getNodeSet() {
+    public List<String> getNodeSet() {
         return nodeSet;
     }
 
@@ -41,8 +41,8 @@ public class WorkflowStateImpl implements WorkflowState {
         return stepStates;
     }
 
-    public void setNodeSet(HashSet<String> nodeSet) {
-        this.nodeSet = nodeSet;
+    public void setNodeSet(List<String> nodeSet) {
+        this.nodeSet = new ArrayList<String>(nodeSet);
     }
 
     public void setStepCount(long stepCount) {

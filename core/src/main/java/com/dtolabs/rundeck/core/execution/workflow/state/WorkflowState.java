@@ -13,7 +13,7 @@ public interface WorkflowState {
      *
      * @return
      */
-    public Set<String> getNodeSet();
+    public List<String> getNodeSet();
 
     /**
      * The number of steps the workflow will run

@@ -1,5 +1,6 @@
 package com.dtolabs.rundeck.core.execution.workflow.state;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -49,7 +50,7 @@ public interface WorkflowStepState {
      * Return the set of node targets if this is a node step, or null
      * @return
      */
-    public Set<String> getNodeStepTargets();
+    public List<String> getNodeStepTargets();
 
     /**
      * Return true if this is a node step

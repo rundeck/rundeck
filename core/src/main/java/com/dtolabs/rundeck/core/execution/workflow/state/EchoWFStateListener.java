@@ -1,6 +1,7 @@
 package com.dtolabs.rundeck.core.execution.workflow.state;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -11,13 +12,13 @@ public class EchoWFStateListener implements WorkflowStateListener{
         System.err.println(String.format("stepStateChanged(%s,%s,%s)", identifier, stepStateChange, timestamp));
     }
 
-    public void workflowExecutionStateChanged(ExecutionState executionState, Date timestamp, Set<String> nodeSet) {
+    public void workflowExecutionStateChanged(ExecutionState executionState, Date timestamp, List<String> nodeSet) {
         System.err.println(String.format("workflowExecutionStateChanged(%s,%s,%s)", executionState, timestamp, nodeSet));
     }
 
     @Override
     public void subWorkflowExecutionStateChanged(StepIdentifier identifier, ExecutionState executionState, Date
-            timestamp, Set<String> nodeSet) {
+            timestamp, List<String> nodeSet) {
         System.err.println(String.format("subWorkflowExecutionStateChanged(%s,%s,%s,%s)", identifier, executionState,
                 timestamp,
                 nodeSet));

@@ -19,8 +19,8 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
     public void testCreate() {
         MutableWorkflowStateImpl mutableWorkflowState = new MutableWorkflowStateImpl(null, 2);
         assertEquals(ExecutionState.WAITING,mutableWorkflowState.getExecutionState());
-        assertEquals([] as Set, mutableWorkflowState.getNodeSet());
-        assertEquals([] as Set, mutableWorkflowState.getMutableNodeSet());
+        assertEquals([] , mutableWorkflowState.getNodeSet());
+        assertEquals([] , mutableWorkflowState.getMutableNodeSet());
         assertEquals(2, mutableWorkflowState.getStepStates().size());
         assertEquals(2, mutableWorkflowState.getStepCount());
         assertNull(mutableWorkflowState.getTimestamp());
@@ -36,8 +36,8 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
         mutableWorkflowState.updateStateForStep(stepIdentifier(1), stepStateChange(stepState(ExecutionState.RUNNING)),
                 date)
         assertEquals(ExecutionState.RUNNING, mutableWorkflowState.getExecutionState());
-        assertEquals([] as Set, mutableWorkflowState.getNodeSet());
-        assertEquals([] as Set, mutableWorkflowState.getMutableNodeSet());
+        assertEquals([] , mutableWorkflowState.getNodeSet());
+        assertEquals([] , mutableWorkflowState.getMutableNodeSet());
         assertEquals(2, mutableWorkflowState.getStepStates().size());
         assertEquals(2, mutableWorkflowState.getStepCount());
         assertEquals(date, mutableWorkflowState.getTimestamp());
@@ -64,8 +64,8 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
         mutableWorkflowState.updateStateForStep(stepIdentifier(1,1), stepStateChange(stepState(ExecutionState.RUNNING)),
                 date)
         assertEquals(ExecutionState.RUNNING, mutableWorkflowState.getExecutionState());
-        assertEquals([] as Set, mutableWorkflowState.getNodeSet());
-        assertEquals([] as Set, mutableWorkflowState.getMutableNodeSet());
+        assertEquals([] , mutableWorkflowState.getNodeSet());
+        assertEquals([] , mutableWorkflowState.getMutableNodeSet());
         assertEquals(2, mutableWorkflowState.getStepStates().size());
         assertEquals(2, mutableWorkflowState.getStepCount());
         assertEquals(date, mutableWorkflowState.getTimestamp());
@@ -80,7 +80,7 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
 
         def WorkflowState subWorkflowState = state.subWorkflowState
         assertEquals(ExecutionState.RUNNING, subWorkflowState.executionState)
-        assertEquals([] as Set, subWorkflowState.nodeSet)
+        assertEquals([] , subWorkflowState.nodeSet)
         assertEquals(1, subWorkflowState.getStepStates().size())
         assertEquals(1, subWorkflowState.getStepCount())
         assertEquals(date, subWorkflowState.getTimestamp())
@@ -100,8 +100,8 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
         mutableWorkflowState.updateStateForStep(stepIdentifier(1), stepStateChange(stepState(ExecutionState.RUNNING), 'testnode'),
                 date)
         assertEquals(ExecutionState.RUNNING, mutableWorkflowState.getExecutionState());
-        assertEquals([] as Set, mutableWorkflowState.getNodeSet());
-        assertEquals([] as Set, mutableWorkflowState.getMutableNodeSet());
+        assertEquals([] , mutableWorkflowState.getNodeSet());
+        assertEquals([] , mutableWorkflowState.getMutableNodeSet());
         assertEquals(2, mutableWorkflowState.getStepStates().size());
         assertEquals(2, mutableWorkflowState.getStepCount());
         assertEquals(date, mutableWorkflowState.getTimestamp());
@@ -124,11 +124,11 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
         MutableWorkflowStateImpl mutableWorkflowState = new MutableWorkflowStateImpl(null, 2);
         def date = new Date()
 
-        mutableWorkflowState.updateWorkflowState(ExecutionState.RUNNING, date, ['a', 'b'] as Set)
+        mutableWorkflowState.updateWorkflowState(ExecutionState.RUNNING, date, ['a', 'b'] )
 
         assertEquals(ExecutionState.RUNNING, mutableWorkflowState.executionState)
         assertEquals(date, mutableWorkflowState.timestamp)
-        assertEquals(['a', 'b'] as Set, mutableWorkflowState.nodeSet)
+        assertEquals(['a', 'b'] , mutableWorkflowState.nodeSet)
 
     }
 
@@ -137,12 +137,12 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
         def date = new Date(123)
         def newdate = new Date()
 
-        mutableWorkflowState.updateWorkflowState(ExecutionState.RUNNING, date, ['a', 'b'] as Set)
+        mutableWorkflowState.updateWorkflowState(ExecutionState.RUNNING, date, ['a', 'b'] )
         mutableWorkflowState.updateWorkflowState(ExecutionState.SUCCEEDED, newdate, null)
 
         assertEquals(ExecutionState.SUCCEEDED, mutableWorkflowState.executionState)
         assertEquals(newdate, mutableWorkflowState.timestamp)
-        assertEquals(['a', 'b'] as Set, mutableWorkflowState.nodeSet)
+        assertEquals(['a', 'b'] , mutableWorkflowState.nodeSet)
 
     }
 
@@ -151,7 +151,7 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
         def date = new Date(123)
         def newdate = new Date()
 
-        mutableWorkflowState.updateWorkflowState(ExecutionState.RUNNING, date, ['a', 'b'] as Set)
+        mutableWorkflowState.updateWorkflowState(ExecutionState.RUNNING, date, ['a', 'b'] )
         mutableWorkflowState.updateWorkflowState(ExecutionState.SUCCEEDED, newdate, null)
         try {
             mutableWorkflowState.updateWorkflowState(ExecutionState.RUNNING, newdate, null)
@@ -162,7 +162,7 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
 
         assertEquals(ExecutionState.SUCCEEDED, mutableWorkflowState.executionState)
         assertEquals(newdate, mutableWorkflowState.timestamp)
-        assertEquals(['a', 'b'] as Set, mutableWorkflowState.nodeSet)
+        assertEquals(['a', 'b'] , mutableWorkflowState.nodeSet)
     }
 
     public void testErrorHandlerBasic() {
@@ -170,7 +170,7 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
         def date = new Date(123)
         def newdate = new Date()
 
-        mutableWorkflowState.updateWorkflowState(ExecutionState.RUNNING, date, ['a'] as Set)
+        mutableWorkflowState.updateWorkflowState(ExecutionState.RUNNING, date, ['a'] )
 
         //step 1: error handler
         mutableWorkflowState.updateStateForStep(stepIdentifier(1), stepStateChange(stepState(ExecutionState.RUNNING)), newdate)
@@ -189,12 +189,12 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
 
         assertEquals(ExecutionState.SUCCEEDED, mutableWorkflowState.executionState)
         assertEquals(newdate, mutableWorkflowState.timestamp)
-        assertEquals(['a'] as Set, mutableWorkflowState.nodeSet)
+        assertEquals(['a'] , mutableWorkflowState.nodeSet)
 
         def step1 = mutableWorkflowState[1]
         assertStepId(1, step1.stepIdentifier)
         assertEquals(ExecutionState.SUCCEEDED, step1.stepState.executionState)
-        assertEquals(['a'] as Set, step1.nodeStepTargets)
+        assertEquals(['a'] , step1.nodeStepTargets)
         assertEquals(ExecutionState.SUCCEEDED, step1.nodeStateMap['a'].executionState)
 
     }
@@ -204,7 +204,7 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
         def date = new Date(123)
         def newdate = new Date()
 
-        mutableWorkflowState.updateWorkflowState(ExecutionState.RUNNING, date, ['a','b'] as Set)
+        mutableWorkflowState.updateWorkflowState(ExecutionState.RUNNING, date, ['a','b'] )
 
         //step 1: error handler
         mutableWorkflowState.updateStateForStep(stepIdentifier(1), stepStateChange(stepState(ExecutionState.RUNNING)), newdate)
@@ -223,12 +223,12 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
 
         assertEquals(ExecutionState.SUCCEEDED, mutableWorkflowState.executionState)
         assertEquals(newdate, mutableWorkflowState.timestamp)
-        assertEquals(['a','b'] as Set, mutableWorkflowState.nodeSet)
+        assertEquals(['a','b'] , mutableWorkflowState.nodeSet)
 
         def step1 = mutableWorkflowState[1]
         assertStepId(1, step1.stepIdentifier)
         assertEquals(ExecutionState.NODE_PARTIAL_SUCCEEDED, step1.stepState.executionState)
-        assertEquals(['a','b'] as Set, step1.nodeStepTargets)
+        assertEquals(['a','b'] , step1.nodeStepTargets)
         assertEquals(ExecutionState.SUCCEEDED, step1.nodeStateMap['a'].executionState)
 
     }
@@ -237,7 +237,7 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
         def date = new Date(123)
         def newdate = new Date()
 
-        mutableWorkflowState.updateWorkflowState(ExecutionState.RUNNING, date, ['a','b'] as Set)
+        mutableWorkflowState.updateWorkflowState(ExecutionState.RUNNING, date, ['a','b'] )
 
         //step 1: error handler
         mutableWorkflowState.updateStateForStep(stepIdentifier(1), stepStateChange(stepState(ExecutionState.RUNNING)), newdate)
@@ -266,12 +266,12 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
 
         assertEquals(ExecutionState.SUCCEEDED, mutableWorkflowState.executionState)
         assertEquals(newdate, mutableWorkflowState.timestamp)
-        assertEquals(['a','b'] as Set, mutableWorkflowState.nodeSet)
+        assertEquals(['a','b'] , mutableWorkflowState.nodeSet)
 
         def step1 = mutableWorkflowState[1]
         assertStepId(1, step1.stepIdentifier)
         assertEquals(ExecutionState.SUCCEEDED, step1.stepState.executionState)
-        assertEquals(['a','b'] as Set, step1.nodeStepTargets)
+        assertEquals(['a','b'] , step1.nodeStepTargets)
         assertEquals(ExecutionState.SUCCEEDED, step1.nodeStateMap['a'].executionState)
 
     }
@@ -280,7 +280,7 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
         def date = new Date(123)
         def newdate = new Date()
 
-        mutableWorkflowState.updateWorkflowState(ExecutionState.RUNNING, date, ['a','b'] as Set)
+        mutableWorkflowState.updateWorkflowState(ExecutionState.RUNNING, date, ['a','b'] )
 
         //step 1: error handler
         mutableWorkflowState.updateStateForStep(stepIdentifier(1), stepStateChange(stepState(ExecutionState.RUNNING)), newdate)
@@ -302,12 +302,12 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
 
         assertEquals(ExecutionState.SUCCEEDED, mutableWorkflowState.executionState)
         assertEquals(newdate, mutableWorkflowState.timestamp)
-        assertEquals(['a','b'] as Set, mutableWorkflowState.nodeSet)
+        assertEquals(['a','b'] , mutableWorkflowState.nodeSet)
 
         def step1 = mutableWorkflowState[1]
         assertStepId(1, step1.stepIdentifier)
         assertEquals(ExecutionState.SUCCEEDED, step1.stepState.executionState)
-        assertEquals(['a','b'] as Set, step1.nodeStepTargets)
+        assertEquals(['a','b'] , step1.nodeStepTargets)
         assertEquals(ExecutionState.SUCCEEDED, step1.nodeStateMap['a'].executionState)
 
     }
@@ -334,7 +334,7 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
         assertTrue(mutableWorkflowState[8].nodeStep)
         assertFalse(mutableWorkflowState[9].nodeStep)
 
-        mutableWorkflowState.updateWorkflowState(ExecutionState.RUNNING, date, ['a', 'b'] as Set)
+        mutableWorkflowState.updateWorkflowState(ExecutionState.RUNNING, date, ['a', 'b'] )
 
         //step 1: partial success
         mutableWorkflowState.updateStateForStep(stepIdentifier(1),stepStateChange(stepState(ExecutionState.RUNNING)),newdate)
@@ -346,7 +346,7 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
         assertFalse(mutableWorkflowState[2].nodeStep)
         //step 2: sub workflow
         //start subworkflow
-        mutableWorkflowState.updateSubWorkflowState(stepIdentifier(2), ExecutionState.RUNNING, newdate, ['c','d'] as Set)
+        mutableWorkflowState.updateSubWorkflowState(stepIdentifier(2), ExecutionState.RUNNING, newdate, ['c','d'] )
         //start sub steps
         //step 2/1: mixed failure
         mutableWorkflowState.updateStateForStep(stepIdentifier(2,1), stepStateChange(stepState(ExecutionState.RUNNING)), newdate)
@@ -408,12 +408,12 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
 
         assertEquals(ExecutionState.SUCCEEDED, mutableWorkflowState.executionState)
         assertEquals(newdate, mutableWorkflowState.timestamp)
-        assertEquals(['a', 'b'] as Set, mutableWorkflowState.nodeSet)
+        assertEquals(['a', 'b'] , mutableWorkflowState.nodeSet)
 
         def step1 = mutableWorkflowState[1]
         assertStepId(1, step1.stepIdentifier)
         assertEquals(ExecutionState.NODE_PARTIAL_SUCCEEDED, step1.stepState.executionState)
-        assertEquals(['a','b'] as Set, step1.nodeStepTargets)
+        assertEquals(['a','b'] , step1.nodeStepTargets)
         assertEquals(ExecutionState.SUCCEEDED, step1.nodeStateMap['a'].executionState)
         assertNotNull(step1.nodeStateMap['b'])
         assertEquals(ExecutionState.NOT_STARTED, step1.nodeStateMap['b'].executionState)
@@ -424,14 +424,14 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
         assertNotNull(step2.subWorkflowState)
         assertStepId(1, step2.subWorkflowState[1].stepIdentifier)
         assertEquals(ExecutionState.FAILED, step2.subWorkflowState[1].stepState.executionState)
-        assertEquals(['c', 'd'] as Set, step2.subWorkflowState[1].nodeStepTargets)
+        assertEquals(['c', 'd'] , step2.subWorkflowState[1].nodeStepTargets)
         assertEquals(ExecutionState.FAILED, step2.subWorkflowState[1].nodeStateMap['c'].executionState)
         assertEquals(ExecutionState.NOT_STARTED, step2.subWorkflowState[1].nodeStateMap['d'].executionState)
 
         def step3 = mutableWorkflowState[3]
         assertStepId(3, step3.stepIdentifier)
         assertEquals(ExecutionState.NODE_MIXED, step3.stepState.executionState)
-        assertEquals(['a', 'b'] as Set, step3.nodeStepTargets)
+        assertEquals(['a', 'b'] , step3.nodeStepTargets)
         assertEquals(ExecutionState.SUCCEEDED, step3.nodeStateMap['a'].executionState)
         assertNotNull(step3.nodeStateMap['b'])
         assertEquals(ExecutionState.FAILED, step3.nodeStateMap['b'].executionState)
@@ -439,7 +439,7 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
         def step4 = mutableWorkflowState[4]
         assertStepId(4, step4.stepIdentifier)
         assertEquals(ExecutionState.NOT_STARTED, step4.stepState.executionState)
-        assertEquals(['a', 'b'] as Set, step4.nodeStepTargets)
+        assertEquals(['a', 'b'] , step4.nodeStepTargets)
         assertEquals(ExecutionState.NOT_STARTED, step4.nodeStateMap['a'].executionState)
         assertNotNull(step4.nodeStateMap['b'])
         assertEquals(ExecutionState.NOT_STARTED, step4.nodeStateMap['b'].executionState)
@@ -447,7 +447,7 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
         def step5 = mutableWorkflowState[5]
         assertStepId(5, step5.stepIdentifier)
         assertEquals(ExecutionState.ABORTED, step5.stepState.executionState)
-        assertEquals(['a', 'b'] as Set, step5.nodeStepTargets)
+        assertEquals(['a', 'b'] , step5.nodeStepTargets)
         assertEquals(ExecutionState.ABORTED, step5.nodeStateMap['a'].executionState)
         assertNotNull(step5.nodeStateMap['b'])
         assertEquals(ExecutionState.ABORTED, step5.nodeStateMap['b'].executionState)
@@ -455,7 +455,7 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
         def step6 = mutableWorkflowState[6]
         assertStepId(6, step6.stepIdentifier)
         assertEquals(ExecutionState.FAILED, step6.stepState.executionState)
-        assertEquals(['a', 'b'] as Set, step6.nodeStepTargets)
+        assertEquals(['a', 'b'] , step6.nodeStepTargets)
         assertEquals(ExecutionState.FAILED, step6.nodeStateMap['a'].executionState)
         assertNotNull(step6.nodeStateMap['b'])
         assertEquals(ExecutionState.FAILED, step6.nodeStateMap['b'].executionState)
@@ -463,7 +463,7 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
         def step7 = mutableWorkflowState[7]
         assertStepId(7, step7.stepIdentifier)
         assertEquals(ExecutionState.SUCCEEDED, step7.stepState.executionState)
-        assertEquals(['a', 'b'] as Set, step7.nodeStepTargets)
+        assertEquals(['a', 'b'] , step7.nodeStepTargets)
         assertEquals(ExecutionState.SUCCEEDED, step7.nodeStateMap['a'].executionState)
         assertNotNull(step7.nodeStateMap['b'])
         assertEquals(ExecutionState.SUCCEEDED, step7.nodeStateMap['b'].executionState)
@@ -472,7 +472,7 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
         assertStepId(8, step8.stepIdentifier)
         assertEquals(true, step8.nodeStep)
         assertEquals(ExecutionState.NOT_STARTED, step8.stepState.executionState)
-//        assertEquals(['a', 'b'] as Set, step8.nodeStepTargets)
+//        assertEquals(['a', 'b'] , step8.nodeStepTargets)
         assertEquals(ExecutionState.NOT_STARTED, step8.nodeStateMap['a'].executionState)
         assertNotNull(step8.nodeStateMap['b'])
         assertEquals(ExecutionState.NOT_STARTED, step8.nodeStateMap['b'].executionState)

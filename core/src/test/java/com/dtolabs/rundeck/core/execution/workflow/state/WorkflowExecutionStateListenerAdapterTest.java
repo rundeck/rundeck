@@ -33,13 +33,13 @@ public class WorkflowExecutionStateListenerAdapterTest extends TestCase {
         }
 
         @Override
-        public void workflowExecutionStateChanged(ExecutionState executionState, Date timestamp, Set<String> nodeSet) {
+        public void workflowExecutionStateChanged(ExecutionState executionState, Date timestamp, List<String> nodeSet) {
             events.add(new Object[]{"workflow", executionState, timestamp, nodeSet});
         }
 
         @Override
         public void subWorkflowExecutionStateChanged(StepIdentifier identifier, ExecutionState executionState, Date
-                timestamp, Set<String> nodeSet) {
+                timestamp, List<String> nodeSet) {
             events.add(new Object[]{"subworkflow", identifier, executionState, timestamp, nodeSet});
         }
     }
@@ -420,8 +420,8 @@ public class WorkflowExecutionStateListenerAdapterTest extends TestCase {
         if (nodes.length <= 0) {
             assertEquals(null, o[3]);
         } else {
-            assertTrue(o[3] instanceof Set);
-            Set<String> names = (Set<String>) o[3];
+            assertTrue(o[3] instanceof List);
+            List<String> names = (List<String>) o[3];
             assertEquals(nodes.length, names.size());
             for (String node : nodes) {
                 assertTrue(names.contains(node));
@@ -443,8 +443,8 @@ public class WorkflowExecutionStateListenerAdapterTest extends TestCase {
             assertEquals(null, o[i++]);
         } else {
             Object o1 = o[i++];
-            assertTrue(o1 instanceof Set);
-            Set<String> names = (Set<String>) o1;
+            assertTrue(o1 instanceof List);
+            List<String> names = (List<String>) o1;
             assertEquals(nodes.length, names.size());
             for (String node : nodes) {
                 assertTrue("expected "+node+" in names: "+names,names.contains(node));

@@ -20,7 +20,7 @@ class WorkflowStateListenerAction implements WorkflowStateListener{
     }
 
     @Override
-    void workflowExecutionStateChanged(ExecutionState executionState, Date timestamp, Set<String> nodeSet) {
+    void workflowExecutionStateChanged(ExecutionState executionState, Date timestamp, List<String> nodeSet) {
 
         if (null != onWorkflowExecutionStateChanged) {
             onWorkflowExecutionStateChanged(executionState, timestamp, nodeSet)
@@ -28,7 +28,7 @@ class WorkflowStateListenerAction implements WorkflowStateListener{
     }
 
     @Override
-    void subWorkflowExecutionStateChanged(StepIdentifier identifier, ExecutionState executionState, Date timestamp, Set<String> nodeSet) {
+    void subWorkflowExecutionStateChanged(StepIdentifier identifier, ExecutionState executionState, Date timestamp, List<String> nodeSet) {
         if(null!=onSubWorkflowExecutionStateChanged){
             onSubWorkflowExecutionStateChanged(identifier,executionState,timestamp,nodeSet)
         }

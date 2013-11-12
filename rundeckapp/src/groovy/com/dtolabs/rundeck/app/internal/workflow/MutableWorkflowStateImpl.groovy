@@ -9,17 +9,18 @@ import com.dtolabs.rundeck.core.execution.workflow.state.*
  * Time: 3:41 PM
  */
 class MutableWorkflowStateImpl implements MutableWorkflowState {
-    def HashSet<String> mutableNodeSet;
+    def ArrayList<String> mutableNodeSet;
     def long stepCount;
     def ExecutionState executionState;
     def Date timestamp;
     def Map<Integer,MutableWorkflowStepState> mutableStepStates;
+    def List<Map<Date,Map>> stateChanges=[]
 
-    MutableWorkflowStateImpl(Set<String> nodeSet, long stepCount) {
+    MutableWorkflowStateImpl(List<String> nodeSet, long stepCount) {
         this(nodeSet,stepCount,null)
     }
-    MutableWorkflowStateImpl(Set<String> nodeSet, long stepCount,Map<Integer, MutableWorkflowStepStateImpl> steps) {
-        this.mutableNodeSet = new HashSet<String>()
+    MutableWorkflowStateImpl(List<String> nodeSet, long stepCount, Map<Integer, MutableWorkflowStepStateImpl> steps) {
+        this.mutableNodeSet = new ArrayList<>()
         if(null!=nodeSet){
             this.mutableNodeSet.addAll(nodeSet)
         }
@@ -41,7 +42,7 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
     }
 
     @Override
-    Set<String> getNodeSet() {
+    List<String> getNodeSet() {
         return mutableNodeSet
     }
 
@@ -55,6 +56,7 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
             descendUpdateStateForStep(currentStep, identifier, stepStateChange, timestamp)
             return
         }
+        addStateChange(timestamp, stepStateChange)
 
         //update the step found
         MutableStepState toUpdate
@@ -102,7 +104,24 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         }
     }
 
-    
+    private void addStateChange(Date timestamp, StepStateChange stepStateChange) {
+        this.stateChanges << [(timestamp): asChangeMap(stepStateChange)]
+    }
+
+    static Map asChangeMap(StepStateChange stepStateChange) {
+        [
+                node: stepStateChange.nodeName,
+                nodeState: stepStateChange.nodeState,
+        ] + asChangeMap(stepStateChange.stepState)
+    }
+
+    static Map asChangeMap(StepState stepState) {
+        [
+                errorMessage: stepState.errorMessage,
+                executionState: stepState.executionState.toString(),
+                meta: stepState.metadata,
+        ]
+    }
 /**
      * Descend into a sub workflow to update state
      * @param currentStep
@@ -253,14 +272,14 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
     }
 
     @Override
-    void updateWorkflowState(ExecutionState executionState, Date timestamp, Set<String> nodenames) {
+    void updateWorkflowState(ExecutionState executionState, Date timestamp, List<String> nodenames) {
         updateWorkflowState(false,executionState,timestamp,nodenames)
     }
-    void updateWorkflowState(boolean subflow,ExecutionState executionState, Date timestamp, Set<String> nodenames) {
+    void updateWorkflowState(boolean subflow,ExecutionState executionState, Date timestamp, List<String> nodenames) {
         touchWFState(timestamp)
         this.executionState = updateState(this.executionState, executionState)
         if (null != nodenames && (null == mutableNodeSet || mutableNodeSet.size() < 1)) {
-            mutableNodeSet = new HashSet(nodenames)
+            mutableNodeSet = new ArrayList<>(nodenames)
         }
         if(executionState.isCompletedState()){
             cleanupSteps(executionState, timestamp)
@@ -303,7 +322,7 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
     }
 
     @Override
-    void updateSubWorkflowState(StepIdentifier identifier, ExecutionState executionState, Date timestamp, Set<String> nodeNames) {
+    void updateSubWorkflowState(StepIdentifier identifier, ExecutionState executionState, Date timestamp, List<String> nodeNames) {
         touchWFState(timestamp)
         Map<Integer, MutableWorkflowStepState> states = mutableStepStates;
 

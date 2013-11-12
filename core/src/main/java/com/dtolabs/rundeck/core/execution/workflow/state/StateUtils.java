@@ -91,21 +91,23 @@ public class StateUtils {
     }
 
 
-    public static WorkflowState workflowState(HashSet<String> nodeSet, long stepCount, ExecutionState executionState,
+    public static WorkflowState workflowState(List<String> nodeSet, long stepCount, ExecutionState executionState,
             Date timestamp,
             ArrayList<WorkflowStepState> stepStates) {
         return new WorkflowStateImpl(nodeSet, stepCount, executionState, timestamp, stepStates);
     }
 
     public static WorkflowStepState workflowStepState(StepState stepState, Map<String, StepState> nodeStateMap,
-            StepIdentifier stepIdentifier, WorkflowState subWorkflowState, Set<String> nodeStepTargets, boolean nodeStep) {
+            StepIdentifier stepIdentifier, WorkflowState subWorkflowState, List<String> nodeStepTargets, boolean nodeStep) {
         WorkflowStepStateImpl workflowStepState = new WorkflowStepStateImpl();
         workflowStepState.setStepState(stepState);
         workflowStepState.setNodeStateMap(nodeStateMap);
         workflowStepState.setStepIdentifier(stepIdentifier);
         workflowStepState.setSubWorkflow(null != subWorkflowState);
         workflowStepState.setSubWorkflowState(subWorkflowState);
-        workflowStepState.setNodeStepTargets(nodeStepTargets);
+        if(null!=nodeStepTargets){
+            workflowStepState.setNodeStepTargets(nodeStepTargets);
+        }
         workflowStepState.setNodeStep(nodeStep);
         return workflowStepState;
     }

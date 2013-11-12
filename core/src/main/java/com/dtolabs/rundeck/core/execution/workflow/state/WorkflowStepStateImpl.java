@@ -1,5 +1,7 @@
 package com.dtolabs.rundeck.core.execution.workflow.state;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -12,7 +14,7 @@ public class WorkflowStepStateImpl implements WorkflowStepState {
     private Map<String, StepState> nodeStateMap;
     private boolean subWorkflow;
     private WorkflowState subWorkflowState;
-    private Set<String> nodeStepTargets;
+    private List<String> nodeStepTargets;
     private boolean nodeStep;
 
 
@@ -56,12 +58,12 @@ public class WorkflowStepStateImpl implements WorkflowStepState {
         this.subWorkflowState = subWorkflowState;
     }
 
-    public Set<String> getNodeStepTargets() {
+    public List<String> getNodeStepTargets() {
         return nodeStepTargets;
     }
 
-    public void setNodeStepTargets(Set<String> nodeStepTargets) {
-        this.nodeStepTargets = nodeStepTargets;
+    public void setNodeStepTargets(List<String> nodeStepTargets) {
+        this.nodeStepTargets = new ArrayList<String>(nodeStepTargets);
     }
 
     public boolean isNodeStep() {
