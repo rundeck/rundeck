@@ -56,10 +56,12 @@ var RDWorkflow = Class.create({
                 return 'scriptfile';
             } else if (step['type']) {//plugin
                 var title = "Plugin " + step['type'];
-                if (step['nodeStep'] && typeof(nodeSteppluginDescriptions) != 'undefined') {
+                if (step['nodeStep'] ) {
                     return 'node-step-plugin plugin';
-                } else if (!step['nodeStep'] && typeof(wfSteppluginDescriptions) != 'undefined') {
+                } else if (null != step['nodeStep'] && !step['nodeStep'] ) {
                     return 'workflow-step-plugin plugin';
+                }else{
+                    return 'plugin';
                 }
             }
         }
