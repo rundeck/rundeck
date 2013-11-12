@@ -142,12 +142,15 @@
             content: ' *';
         }
 
-        .execstate[data-execstate=RUNNING] {
+        .execstate[data-execstate=RUNNING],.execstate[data-execstate=RUNNING_HANDLER] {
             color: blue;
             background-image: url(${g.resource(dir: 'images',file: 'icon-tiny-disclosure-waiting.gif')});
             padding-right: 16px;
             background-repeat: no-repeat;
             background-position: right 2px;
+        }
+        .execstate[data-execstate=RUNNING_HANDLER] {
+            border-bottom: 2px dotted orange;
         }
 
         .execstate[data-execstate=FAILED] {
