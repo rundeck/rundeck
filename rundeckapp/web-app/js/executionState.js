@@ -15,7 +15,7 @@
  */
 
 /**
- * State of workflow
+ * State of workflow, step oriented
  */
 var FlowState = Class.create({
     model:{},
@@ -48,6 +48,15 @@ var FlowState = Class.create({
             this.logWarn.bind(this).curry("No match " + selector)
         );
     },
+    showStepOutput: function (elem, stepctx, evt) {
+        var wfstep = $(elem).up('.wfstepstate');
+        if (wfstep) {
+            $(wfstep).toggleClassName('collapsed');
+        }
+    },
+    bindStepOutput: function (elem, stepctx) {
+        Event.observe(elem, 'click', this.showStepOutput.bind(this).curry(elem, stepctx));
+    },
     updateStepState: function (root,stepctx, step) {
         this.withMatch(root, '.execstate.step[data-stepctx=' + stepctx + ']', function (elem) {
             $(elem).setAttribute('data-execstate', step.executionState);
@@ -56,12 +65,20 @@ var FlowState = Class.create({
             var type= this.workflow.contextType(stepctx);
             $(elem).innerHTML='<i class="rdicon icon-small '+type+'"></i> '+this.workflow.renderContextString(stepctx);
         });
+        var me=this;
+        this.withMatch(root, '.stepaction[data-stepctx=' + stepctx + ']', function (elem) {
+            if ($(elem).getAttribute('data-bound') != 'true') {
+                me.bindStepOutput($(elem), stepctx);
+                $(elem).setAttribute('data-bound', 'true');
+            }
+        });
         if (step.errorMessage) {
             this.withMatch(root, '.errmsg.step[data-stepctx=' + stepctx + ']', function (elem) {
                 $(elem).innerHTML = step.errorMessage;
                 $(elem).show();
             });
         }
+
     },
     updateOutput:function(elem,data){
         $(elem).innerHTML='';
@@ -69,13 +86,13 @@ var FlowState = Class.create({
             $(elem).innerHTML+= data.entries[i].log+'\n';
         }
     },
-    showOutput:function(stepctx, node,evt){
+    showOutput:function(elem,stepctx, node,evt){
         if($(this.targetElement + '_output')){
-            $(evt.target).addClassName('selected');
-            if(this.selectedElem){
-                $(this.selectedElem).removeClassName('selected');
+            if (this.selectedElem) {
+                $(this.selectedElem).removeClassName('active');
             }
-            this.selectedElem= evt.target;
+            $(elem).addClassName('active');
+            this.selectedElem= elem;
             var state=this;
             new Ajax.Request(this.outputUrl,
                 {
@@ -89,10 +106,11 @@ var FlowState = Class.create({
         }
     },
     bindNodeOutput: function(elem,stepctx,node){
-        Event.observe(elem, 'click', this.showOutput.bind(this).curry(stepctx, node));
+        Event.observe(elem, 'click', this.showOutput.bind(this).curry(elem,stepctx, node));
     },
     newNodeState: function(stepctx, node, nstate){
         var div = new Element('div');
+        div.addClassName('textbtn textbtn-default');
         var nspan = new Element('span');
         nspan.addClassName('execstate isnode');
         nspan.setAttribute('data-node',node);
