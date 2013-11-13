@@ -1,5 +1,6 @@
 package com.dtolabs.rundeck.core.execution.workflow.state;
 
+import java.util.Date;
 import java.util.Map;
 
 /**
@@ -23,4 +24,21 @@ public interface StepState {
      * @return
      */
     public String getErrorMessage();
+
+    /**
+     * Timestamp that the executionState left WAITING
+     * @return
+     */
+    public Date getStartTime();
+    /**
+     * Last timestamp that the executionState changed
+     * @return
+     */
+    public Date getUpdateTime();
+
+    /**
+     * Timestamp that the executionState was completed
+     * @return
+     */
+    public Date getEndTime();
 }

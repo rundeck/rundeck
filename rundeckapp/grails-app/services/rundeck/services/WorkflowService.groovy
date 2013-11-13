@@ -98,6 +98,8 @@ class WorkflowService {
                 targetNodes:workflowState.nodeSet,
                 stepCount:workflowState.stepCount,
                 timestamp:encodeDate(workflowState.timestamp),
+                startTime:encodeDate(workflowState.startTime),
+                endTime:encodeDate(workflowState.endTime),
                 steps:workflowState.stepStates.collect{mapOf(it)}
         ]
     }
@@ -120,8 +122,10 @@ class WorkflowService {
         List<String> nodes = map.targetNodes
         int stepCount = map.stepCount
         Date timestamp = map.timestamp?decodeDate(map.timestamp):null
+        Date startTime = map.startTime?decodeDate(map.startTime):null
+        Date endTime = map.endTime?decodeDate(map.endTime):null
 
-        return StateUtils.workflowState(nodes,stepCount,state,timestamp,map.steps.collect{
+        return StateUtils.workflowState(nodes,stepCount,state,timestamp,startTime,endTime,map.steps.collect{
             workflowStepStateFromMap(it)
         })
     }
@@ -176,13 +180,19 @@ class WorkflowService {
 
 
     def Map mapOf(StepState state){
-        [executionState: state.executionState.toString()] +
-                (state.errorMessage?[errorMessage:state.errorMessage]:[:]) +
-                (state.metadata?[meta:state.metadata]:[:])
+        [
+                executionState: state.executionState.toString(),
+                startTime: encodeDate(state.startTime),
+                updateTime: encodeDate(state.updateTime),
+                endTime: encodeDate(state.endTime),
+        ] + (state.errorMessage?[errorMessage:state.errorMessage]:[:]) + (state.metadata?[meta:state.metadata]:[:])
     }
 
     StepState stepStateFromMap(Map map) {
-        return StateUtils.stepState(ExecutionState.valueOf(map.executionState),map.meta,map.errorMessage)
+        Date updateTime = map.updateTime ? decodeDate(map.updateTime) : null
+        Date startTime = map.startTime ? decodeDate(map.startTime) : null
+        Date endTime = map.endTime ? decodeDate(map.endTime) : null
+        return StateUtils.stepState(ExecutionState.valueOf(map.executionState),map.meta,map.errorMessage,startTime,updateTime,endTime)
     }
 /**
      * Read the workflow state for an execution

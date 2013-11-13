@@ -13,6 +13,9 @@ class MutableStepStateImpl implements MutableStepState {
     ExecutionState executionState;
     Map metadata;
     String errorMessage;
+    Date startTime
+    Date updateTime
+    Date endTime
 
     MutableStepStateImpl() {
         executionState=ExecutionState.WAITING

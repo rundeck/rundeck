@@ -36,6 +36,10 @@ public interface WorkflowState {
      */
     public Date getTimestamp();
 
+    public Date getStartTime();
+
+    public Date getEndTime();
+
     /**
      * The list of states for the steps
      *

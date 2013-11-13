@@ -10,14 +10,21 @@ public class WorkflowStateImpl implements WorkflowState {
     private long stepCount;
     private ExecutionState executionState;
     private Date timestamp;
+    private Date startTime;
+    private Date endTime;
     private ArrayList<WorkflowStepState> stepStates;
 
-    public WorkflowStateImpl(List<String> nodeSet, long stepCount, ExecutionState executionState, Date timestamp,
+    public WorkflowStateImpl(List<String> nodeSet, long stepCount, ExecutionState executionState,
+            Date timestamp,
+            Date startTime,
+            Date endTime,
             ArrayList<WorkflowStepState> stepStates) {
         this.setNodeSet(nodeSet);
         this.setStepCount(stepCount);
         this.setExecutionState(executionState);
         this.setTimestamp(timestamp);
+        this.setStartTime(startTime);
+        this.setEndTime(endTime);
         this.setStepStates(stepStates);
     }
 
@@ -59,5 +66,21 @@ public class WorkflowStateImpl implements WorkflowState {
 
     public void setStepStates(ArrayList<WorkflowStepState> stepStates) {
         this.stepStates = stepStates;
+    }
+
+    public Date getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(Date startTime) {
+        this.startTime = startTime;
+    }
+
+    public Date getEndTime() {
+        return endTime;
+    }
+
+    public void setEndTime(Date endTime) {
+        this.endTime = endTime;
     }
 }

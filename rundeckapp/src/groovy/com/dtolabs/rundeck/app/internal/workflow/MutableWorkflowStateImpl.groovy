@@ -13,6 +13,8 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
     def long stepCount;
     def ExecutionState executionState;
     def Date timestamp;
+    def Date startTime;
+    def Date endTime;
     def Map<Integer,MutableWorkflowStepState> mutableStepStates;
     def List<Map<Date,Map>> stateChanges=[]
 
@@ -94,10 +96,17 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
             }
             toUpdate.metadata << stepStateChange.stepState.metadata
         }
+        if(!toUpdate.startTime){
+            toUpdate.startTime=timestamp
+        }
+        toUpdate.updateTime = timestamp
+        if(toUpdate.executionState.isCompletedState()){
+            toUpdate.endTime=timestamp
+        }
 
         if (stepStateChange.isNodeState() && currentStep.nodeStep && stepStateChange.stepState.executionState.isCompletedState()) {
             //if all target nodes have completed execution state, mark the overall step state
-            finishNodeStepIfNodesFinished(currentStep)
+            finishNodeStepIfNodesFinished(currentStep,timestamp)
         }else if(stepStateChange.isNodeState() && currentStep.nodeStep && currentStep.stepState.executionState.isCompletedState()
                 && stepStateChange.stepState.executionState==ExecutionState.RUNNING_HANDLER){
             currentStep.mutableStepState.executionState=ExecutionState.RUNNING_HANDLER
@@ -140,16 +149,16 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         subflow.updateStateForStep(StateUtils.stepIdentifierTail(identifier), stepStateChange, timestamp);
     }
 
-    private finishNodeStepIfNodesFinished(MutableWorkflowStepState currentStep){
+    private finishNodeStepIfNodesFinished(MutableWorkflowStepState currentStep,Date timestamp){
         boolean finished = currentStep.nodeStepTargets.every { node -> currentStep.nodeStateMap[node]?.executionState?.isCompletedState() }
         if (finished) {
             boolean aborted = currentStep.nodeStateMap.values()*.executionState.any { it == ExecutionState.ABORTED }
             boolean failed = currentStep.nodeStateMap.values()*.executionState.any { it == ExecutionState.FAILED }
             def overall = aborted ? ExecutionState.ABORTED : failed ? ExecutionState.FAILED : ExecutionState.SUCCEEDED
-            finalizeNodeStep(overall, currentStep)
+            finalizeNodeStep(overall, currentStep,timestamp)
         }
     }
-    private finalizeNodeStep(ExecutionState overall, MutableWorkflowStepState currentStep){
+    private finalizeNodeStep(ExecutionState overall, MutableWorkflowStepState currentStep,Date timestamp){
         def nodeTargets = currentStep.nodeStepTargets?:this.nodeSet
         boolean finished = currentStep.nodeStateMap && nodeTargets?.every { node -> currentStep.nodeStateMap[node]?.executionState?.isCompletedState() }
         boolean aborted = currentStep.nodeStateMap && currentStep.nodeStateMap?.values()*.executionState.any { it == ExecutionState.ABORTED }
@@ -193,6 +202,7 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         }else{
             currentStep.mutableStepState.executionState = updateState(currentStep.mutableStepState.executionState, result)
         }
+        currentStep.mutableStepState.endTime=timestamp
 
         //update any node states which are WAITING to NOT_STARTED
         nodeTargets.each{String node->
@@ -202,6 +212,7 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
             MutableStepState state = currentStep.mutableNodeStateMap[node]
             if (state && state.executionState == ExecutionState.WAITING) {
                 state.executionState = updateState(state.executionState, ExecutionState.NOT_STARTED)
+                state.endTime=timestamp
             }
         }
     }
@@ -222,6 +233,9 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         executionState = transitionStateIfWaiting(executionState)
         if (null == this.timestamp || this.timestamp < timestamp) {
             this.timestamp = timestamp
+        }
+        if (null == this.startTime) {
+            this.startTime = timestamp
         }
     }
 
@@ -283,6 +297,7 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         }
         if(executionState.isCompletedState()){
             cleanupSteps(executionState, timestamp)
+            this.endTime=timestamp
         }
     }
 
@@ -304,7 +319,7 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
     def resolveStepCompleted(ExecutionState executionState, Date date, int i, MutableWorkflowStepState mutableWorkflowStepState) {
         if(mutableWorkflowStepState.nodeStep){
             //a node step
-            finalizeNodeStep(executionState,mutableWorkflowStepState)
+            finalizeNodeStep(executionState,mutableWorkflowStepState,date)
         }else {
             def curstate= mutableWorkflowStepState.mutableStepState.executionState
             def newstate=executionState
@@ -318,6 +333,7 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
                     break
             }
             mutableWorkflowStepState.mutableStepState.executionState = updateState(curstate, newstate)
+            mutableWorkflowStepState.mutableStepState.endTime= date
         }
     }
 

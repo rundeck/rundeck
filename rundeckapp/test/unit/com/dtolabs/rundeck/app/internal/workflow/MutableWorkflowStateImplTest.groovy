@@ -28,6 +28,98 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
             assertEquals(ExecutionState.WAITING,mutableWorkflowState.stepStates[i].stepState.executionState)
         }
     }
+    public void testWorkflowTime() {
+        MutableWorkflowStateImpl mutableWorkflowState = new MutableWorkflowStateImpl(null, 2);
+        Date date = new Date(123)
+        mutableWorkflowState.updateWorkflowState(ExecutionState.RUNNING, date, ['a'])
+        assertEquals(date,mutableWorkflowState.startTime)
+        assertEquals(date,mutableWorkflowState.timestamp)
+        assertNull(mutableWorkflowState.endTime)
+        Date date2 = date+1
+        mutableWorkflowState.updateWorkflowState(ExecutionState.SUCCEEDED, date2, null)
+        assertEquals(date, mutableWorkflowState.startTime)
+        assertEquals(date2, mutableWorkflowState.timestamp)
+        assertEquals(date2,mutableWorkflowState.endTime)
+    }
+    public void testWorkflowStepTime() {
+        MutableWorkflowStateImpl mutableWorkflowState = new MutableWorkflowStateImpl(null, 2);
+        Date date = new Date(123)
+        mutableWorkflowState.updateWorkflowState(ExecutionState.RUNNING, date, ['a'])
+        assertEquals(date,mutableWorkflowState.startTime)
+        assertEquals(date,mutableWorkflowState.timestamp)
+        assertNull(mutableWorkflowState.endTime)
+        Date date2 = date + 1
+
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1), stepStateChange(stepState(ExecutionState.RUNNING)),
+                date2)
+
+        assertEquals(date2,mutableWorkflowState[1].stepState.startTime)
+        assertEquals(date2,mutableWorkflowState[1].stepState.updateTime)
+        assertEquals(null,mutableWorkflowState[1].stepState.endTime)
+
+        Date date3 = date2 + 1
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1), stepStateChange(stepState(ExecutionState.FAILED)),
+                date3)
+
+        assertEquals(date2, mutableWorkflowState[1].stepState.startTime)
+        assertEquals(date3, mutableWorkflowState[1].stepState.updateTime)
+        assertEquals(date3, mutableWorkflowState[1].stepState.endTime)
+
+        Date date4 = date3 + 1
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1), stepStateChange(stepState(ExecutionState.RUNNING_HANDLER)),
+                date4)
+
+        assertEquals(date2, mutableWorkflowState[1].stepState.startTime)
+        assertEquals(date4, mutableWorkflowState[1].stepState.updateTime)
+        assertEquals(date3, mutableWorkflowState[1].stepState.endTime)
+
+        Date date5 = date4 + 1
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1), stepStateChange(stepState(ExecutionState.SUCCEEDED)),
+                date5)
+
+        assertEquals(date2, mutableWorkflowState[1].stepState.startTime)
+        assertEquals(date5, mutableWorkflowState[1].stepState.updateTime)
+        assertEquals(date5, mutableWorkflowState[1].stepState.endTime)
+    }
+    public void testNodeStepTime() {
+        MutableWorkflowStateImpl mutableWorkflowState = new MutableWorkflowStateImpl(null, 2);
+        Date date = new Date(123)
+        mutableWorkflowState.updateWorkflowState(ExecutionState.RUNNING, date, ['a'])
+        Date date2 = date + 1
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1), stepStateChange(stepState(ExecutionState.RUNNING)), date2)
+
+        Date date3 = date2 + 1
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1), stepStateChange(stepState(ExecutionState.RUNNING),'a'),
+                date3)
+
+        assertEquals(date3, mutableWorkflowState[1].nodeStateMap['a'].startTime)
+        assertEquals(date3, mutableWorkflowState[1].nodeStateMap['a'].updateTime)
+        assertEquals(null, mutableWorkflowState[1].nodeStateMap['a'].endTime)
+
+        Date date4 = date3 + 1
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1), stepStateChange(stepState(ExecutionState.FAILED), 'a'),
+                date4)
+
+        assertEquals(date3, mutableWorkflowState[1].nodeStateMap['a'].startTime)
+        assertEquals(date4, mutableWorkflowState[1].nodeStateMap['a'].updateTime)
+        assertEquals(date4, mutableWorkflowState[1].nodeStateMap['a'].endTime)
+
+        Date date5 = date4 + 1
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1), stepStateChange(stepState(ExecutionState.RUNNING_HANDLER), 'a'),
+                date5)
+
+        assertEquals(date3, mutableWorkflowState[1].nodeStateMap['a'].startTime)
+        assertEquals(date5, mutableWorkflowState[1].nodeStateMap['a'].updateTime)
+        assertEquals(date4, mutableWorkflowState[1].nodeStateMap['a'].endTime)
+
+        Date date6 = date5 + 1
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1), stepStateChange(stepState(ExecutionState.SUCCEEDED), 'a'),
+                date6)
+
+        assertEquals(date3, mutableWorkflowState[1].nodeStateMap['a'].startTime)
+        assertEquals(date6, mutableWorkflowState[1].nodeStateMap['a'].updateTime)
+        assertEquals(date6, mutableWorkflowState[1].nodeStateMap['a'].endTime)
+    }
 
     public void testUpdateWorkflowStep() {
         MutableWorkflowStateImpl mutableWorkflowState = new MutableWorkflowStateImpl(null, 2);

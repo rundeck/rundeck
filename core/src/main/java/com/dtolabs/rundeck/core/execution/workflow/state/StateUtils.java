@@ -10,18 +10,27 @@ import java.util.*;
 public class StateUtils {
 
     public static StepState stepState(ExecutionState state) {
-        return stepState(state, null, null);
+        return stepState(state, null, null, null, null, null);
     }
 
     public static StepState stepState(ExecutionState state, Map metadata) {
-        return stepState(state, metadata, null);
+        return stepState(state, metadata, null,null,null,null);
     }
 
     public static StepState stepState(ExecutionState state, Map metadata, String errorMessage) {
+        return stepState(state, metadata, errorMessage, null, null, null);
+    }
+    public static StepState stepState(ExecutionState state, Map metadata, String errorMessage,
+            Date startTime,
+            Date updateTime, Date endTime) {
+
         StepStateImpl stepState = new StepStateImpl();
         stepState.setExecutionState(state);
         stepState.setMetadata(metadata);
         stepState.setErrorMessage(errorMessage);
+        stepState.setStartTime(startTime);
+        stepState.setUpdateTime(updateTime);
+        stepState.setEndTime(endTime);
         return stepState;
     }
 
@@ -93,8 +102,10 @@ public class StateUtils {
 
     public static WorkflowState workflowState(List<String> nodeSet, long stepCount, ExecutionState executionState,
             Date timestamp,
+            Date startTime,
+            Date endTime,
             ArrayList<WorkflowStepState> stepStates) {
-        return new WorkflowStateImpl(nodeSet, stepCount, executionState, timestamp, stepStates);
+        return new WorkflowStateImpl(nodeSet, stepCount, executionState, timestamp, startTime, endTime, stepStates);
     }
 
     public static WorkflowStepState workflowStepState(StepState stepState, Map<String, StepState> nodeStateMap,

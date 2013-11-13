@@ -28,4 +28,22 @@ public interface MutableStepState extends StepState {
      */
     void setErrorMessage(String message)
 
+    /**
+     * Set the start time
+     * @param startTime
+     */
+    void setStartTime(Date startTime)
+
+    /**
+     * Set the update time
+     * @param startTime
+     */
+    void setUpdateTime(Date startTime)
+
+    /**
+     * Set the end time
+     * @param startTime
+     */
+    void setEndTime(Date startTime)
+
 }

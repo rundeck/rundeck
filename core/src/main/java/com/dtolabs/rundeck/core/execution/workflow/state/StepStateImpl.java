@@ -1,5 +1,6 @@
 package com.dtolabs.rundeck.core.execution.workflow.state;
 
+import java.util.Date;
 import java.util.Map;
 
 /**
@@ -10,6 +11,9 @@ public class StepStateImpl implements StepState {
     private ExecutionState executionState;
     private Map metadata;
     private String errorMessage;
+    private Date startTime;
+    private Date updateTime;
+    private Date endTime;
 
 
     public Map getMetadata() {
@@ -43,5 +47,29 @@ public class StepStateImpl implements StepState {
                 ", metadata=" + metadata +
                 ", errorMessage='" + errorMessage + '\'' +
                 '}';
+    }
+
+    public Date getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(Date startTime) {
+        this.startTime = startTime;
+    }
+
+    public Date getEndTime() {
+        return endTime;
+    }
+
+    public void setEndTime(Date endTime) {
+        this.endTime = endTime;
+    }
+
+    public Date getUpdateTime() {
+        return updateTime;
+    }
+
+    public void setUpdateTime(Date updateTime) {
+        this.updateTime = updateTime;
     }
 }
