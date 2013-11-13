@@ -86,9 +86,11 @@
             outputUrl:"${g.createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id)}.json",
             reloadInterval:1500
          });
+         var stepState= new StepFlow(flowState,'flowstate');
 
         function init() {
             followControl.beginFollowingOutput('${execution?.id}');
+            flowState.addUpdater(stepState);
             flowState.beginFollowing();
             <g:if test="${!(grailsApplication.config.rundeck?.gui?.enableJobHoverInfo in ['false', false])}">
             $$('.obs_bubblepopup').each(function(e) {

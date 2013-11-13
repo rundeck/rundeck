@@ -14,6 +14,132 @@
  * limitations under the License.
  */
 
+var StepFlow=Class.create({
+    flow:null,
+    targetElement:null,
+    initialize: function(flow, targetElement,params){
+        this.flow = flow;
+        this.targetElement= targetElement;
+        Object.extend(this, params);
+    },
+
+    showStepOutput: function (elem, stepctx, evt) {
+        var wfstep = $(elem).up('.wfstepstate');
+        if (wfstep) {
+            $(wfstep).toggleClassName('collapsed');
+        }
+    },
+    bindStepOutput: function (elem, stepctx) {
+        Event.observe(elem, 'click', this.showStepOutput.bind(this).curry(elem, stepctx));
+    },
+    updateStepState: function (root, stepctx, step) {
+        this.flow.withMatch(root, '.execstate.step[data-stepctx=' + stepctx + ']', function (elem) {
+            $(elem).setAttribute('data-execstate', step.executionState);
+        });
+        this.flow.withMatch(root, '.stepident[data-stepctx=' + stepctx + ']', function (elem) {
+            var type = this.workflow.contextType(stepctx);
+            $(elem).innerHTML = '<i class="rdicon icon-small ' + type + '"></i> ' + this.workflow.renderContextString(stepctx);
+        });
+        var me = this;
+        this.flow.withMatch(root, '.stepaction[data-stepctx=' + stepctx + ']', function (elem) {
+            if ($(elem).getAttribute('data-bound') != 'true') {
+                me.bindStepOutput($(elem), stepctx);
+                $(elem).setAttribute('data-bound', 'true');
+            }
+        });
+        if (step.errorMessage) {
+            this.flow.withMatch(root, '.errmsg.step[data-stepctx=' + stepctx + ']', function (elem) {
+                $(elem).innerHTML = step.errorMessage;
+                $(elem).show();
+            });
+        }
+
+    },
+    bindNodeOutput: function (elem, stepctx, node) {
+        Event.observe(elem, 'click', this.flow.showOutput.bind(this.flow).curry(elem,this.targetElement+'_output', stepctx, node));
+    },
+    newNodeState: function (stepctx, node, nstate) {
+        var div = new Element('div');
+        div.addClassName('textbtn textbtn-default');
+        var nspan = new Element('span');
+        nspan.addClassName('execstate isnode');
+        nspan.setAttribute('data-node', node);
+        nspan.setAttribute('data-stepctx', stepctx);
+        nspan.setAttribute('data-execstate', nstate.executionState);
+        var errspan = new Element('span');
+        errspan.addClassName('errmsg isnode');
+        errspan.setAttribute('data-node', node);
+        errspan.setAttribute('data-stepctx', stepctx);
+        errspan.style.display = 'none';
+        div.appendChild(nspan);
+        div.appendChild(errspan);
+        this.bindNodeOutput(div, stepctx, node);
+        return div;
+    },
+    setNodeState: function (stepctx, node, nstate, elem) {
+        $(elem).innerHTML = node;
+        $(elem).setAttribute('data-execstate', nstate.executionState);
+        if ($(elem).getAttribute('data-bound') != 'true') {
+            this.bindNodeOutput($(elem).parentNode, stepctx, node);
+            $(elem).setAttribute('data-bound', 'true');
+        }
+    },
+    addNodeState: function (root, stepctx, node, nstate) {
+        var nstates = $(root).down('.wfstepstate[data-stepctx=' + stepctx + '] .nodestates');
+        var newstate = this.newNodeState(stepctx, node, nstate);
+        nstates.appendChild(newstate);
+        var execstate = newstate.down('.execstate');
+        this.setNodeState(stepctx, node, nstate, execstate);
+    },
+    updateNodeState: function (root, stepctx, node, nstate) {
+        this.flow.withOrWithoutMatch(root, '.execstate.isnode[data-stepctx=' + stepctx + '][data-node=' + node + ']',
+            this.setNodeState.bind(this).curry(stepctx, node, nstate),
+            this.addNodeState.bind(this).curry(root, stepctx, node, nstate)
+        );
+
+        if (nstate.errorMessage) {
+            this.flow.withMatch(root, '.errmsg.isnode[data-stepctx=' + stepctx + '][data-node=' + node + ']', function (elem) {
+                $(elem).innerHTML = nstate.errorMessage;
+                $(elem).show();
+            });
+        }
+    },
+    updateWorkflow: function (currentwf, ctx) {
+        var count = parseInt(currentwf.stepCount);
+        if (!currentwf.steps) {
+            return;
+        }
+        for (var i = 1; i <= count; i++) {
+            var step = currentwf.steps[i - 1];
+            var stepctx = ctx + (ctx ? '/' : '') + i;
+            this.updateStepState(this.targetElement, stepctx, step);
+
+            if (step.hasSubworkflow) {
+                this.updateWorkflow(step.workflow, stepctx);
+            } else if (step.nodeStep) {
+                var nodeset = step.stepTargetNodes ? step.stepTargetNodes : currentwf.targetNodes;
+                for (var n = 0; n < nodeset.length; n++) {
+                    var node = nodeset[n];
+                    var nstate = step.nodeStates ? step.nodeStates[node] : null;
+                    if (!nstate) {
+                        nstate = { executionState: 'WAITING' };
+                    }
+                    this.updateNodeState(this.targetElement, stepctx, node, nstate);
+                }
+            }
+        }
+    },
+    updateState: function(model){
+        this.updateWorkflow(model,'');
+    }
+});
+var NodeFlow=Class.create({
+    flow: null,
+    initialize: function (flow, params) {
+        this.flow = flow;
+        Object.extend(this, params);
+    }
+});
 /**
  * State of workflow, step oriented
  */
@@ -27,6 +153,7 @@ var FlowState = Class.create({
     timer:null,
     selectedElem:null,
     reloadInterval:3000,
+    updaters:null,
     initialize: function (eid, elem, params) {
         this.executionId = eid;
         this.targetElement = elem;
@@ -34,9 +161,9 @@ var FlowState = Class.create({
     },
     withOrWithoutMatch: function (root, selector, func, wofunc) {
         var elem = $(root).down(selector);
-        if (elem && typeof(func)=='function') {
+        if (elem && null!=func && typeof(func)=='function') {
             func(elem);
-        } else if(typeof(wofunc=='function')){
+        } else if(null!=wofunc && typeof(wofunc=='function')){
             wofunc();
         }
     },
@@ -45,113 +172,32 @@ var FlowState = Class.create({
     },
     withMatch: function (root, selector, func) {
         this.withOrWithoutMatch(root,selector,func,
-            this.logWarn.bind(this).curry("No match " + selector)
+            null//this.logWarn.bind(this).curry("No match " + selector)
         );
     },
-    showStepOutput: function (elem, stepctx, evt) {
-        var wfstep = $(elem).up('.wfstepstate');
-        if (wfstep) {
-            $(wfstep).toggleClassName('collapsed');
+    updateOutput: function (elem, data) {
+        $(elem).innerHTML = '';
+        for (var i = 0; i < data.entries.length; i++) {
+            $(elem).innerHTML += data.entries[i].log + '\n';
         }
     },
-    bindStepOutput: function (elem, stepctx) {
-        Event.observe(elem, 'click', this.showStepOutput.bind(this).curry(elem, stepctx));
-    },
-    updateStepState: function (root,stepctx, step) {
-        this.withMatch(root, '.execstate.step[data-stepctx=' + stepctx + ']', function (elem) {
-            $(elem).setAttribute('data-execstate', step.executionState);
-        });
-        this.withMatch(root, '.stepident[data-stepctx=' + stepctx + ']', function (elem) {
-            var type= this.workflow.contextType(stepctx);
-            $(elem).innerHTML='<i class="rdicon icon-small '+type+'"></i> '+this.workflow.renderContextString(stepctx);
-        });
-        var me=this;
-        this.withMatch(root, '.stepaction[data-stepctx=' + stepctx + ']', function (elem) {
-            if ($(elem).getAttribute('data-bound') != 'true') {
-                me.bindStepOutput($(elem), stepctx);
-                $(elem).setAttribute('data-bound', 'true');
-            }
-        });
-        if (step.errorMessage) {
-            this.withMatch(root, '.errmsg.step[data-stepctx=' + stepctx + ']', function (elem) {
-                $(elem).innerHTML = step.errorMessage;
-                $(elem).show();
-            });
-        }
-
-    },
-    updateOutput:function(elem,data){
-        $(elem).innerHTML='';
-        for(var i=0;i<data.entries.length;i++){
-            $(elem).innerHTML+= data.entries[i].log+'\n';
-        }
-    },
-    showOutput:function(elem,stepctx, node,evt){
-        if($(this.targetElement + '_output')){
+    showOutput: function (elem, targetElement,stepctx, node, evt) {
+        if ($(targetElement)) {
             if (this.selectedElem) {
                 $(this.selectedElem).removeClassName('active');
             }
             $(elem).addClassName('active');
-            this.selectedElem= elem;
-            var state=this;
+            this.selectedElem = elem;
+            var state = this;
             new Ajax.Request(this.outputUrl,
                 {
-                    parameters:{nodename:node,stepctx:stepctx},
+                    parameters: {nodename: node, stepctx: stepctx},
                     onSuccess: function (transport) {
                         var data = transport.responseJSON;
-                        state.updateOutput(state.targetElement+'_output',data);
+                        state.updateOutput(targetElement, data);
                     }
                 }
             )
-        }
-    },
-    bindNodeOutput: function(elem,stepctx,node){
-        Event.observe(elem, 'click', this.showOutput.bind(this).curry(elem,stepctx, node));
-    },
-    newNodeState: function(stepctx, node, nstate){
-        var div = new Element('div');
-        div.addClassName('textbtn textbtn-default');
-        var nspan = new Element('span');
-        nspan.addClassName('execstate isnode');
-        nspan.setAttribute('data-node',node);
-        nspan.setAttribute('data-stepctx',stepctx);
-        nspan.setAttribute('data-execstate', nstate.executionState);
-        var errspan = new Element('span');
-        errspan.addClassName('errmsg isnode');
-        errspan.setAttribute('data-node', node);
-        errspan.setAttribute('data-stepctx', stepctx);
-        errspan.style.display='none';
-        div.appendChild(nspan);
-        div.appendChild(errspan);
-        this.bindNodeOutput(div,stepctx,node);
-        return div;
-    },
-    setNodeState:function(stepctx,node,nstate, elem){
-        $(elem).innerHTML = node;
-        $(elem).setAttribute('data-execstate', nstate.executionState);
-        if($(elem).getAttribute('data-bound')!='true'){
-            this.bindNodeOutput($(elem).parentNode, stepctx, node);
-            $(elem).setAttribute('data-bound', 'true');
-        }
-    },
-    addNodeState: function(root,stepctx,node,nstate){
-        var nstates= $(root).down('.wfstepstate[data-stepctx=' + stepctx + '] .nodestates');
-        var newstate= this.newNodeState(stepctx, node, nstate);
-        nstates.appendChild(newstate);
-        var execstate=newstate.down('.execstate');
-        this.setNodeState(stepctx, node, nstate, execstate);
-    },
-    updateNodeState: function (root, stepctx,node,nstate) {
-        this.withOrWithoutMatch(root, '.execstate.isnode[data-stepctx=' + stepctx + '][data-node=' + node + ']',
-            this.setNodeState.bind(this).curry(stepctx,node,nstate),
-            this.addNodeState.bind(this).curry(root, stepctx, node, nstate)
-        );
-
-        if (nstate.errorMessage) {
-            this.withMatch(root, '.errmsg.isnode[data-stepctx=' + stepctx + '][data-node=' + node + ']', function (elem) {
-                $(elem).innerHTML = nstate.errorMessage;
-                $(elem).show();
-            });
         }
     },
     logWarn: function (text) {
@@ -162,28 +208,10 @@ var FlowState = Class.create({
     showError: function(text){
         this.logWarn(text);
     },
-    updateWorkflow: function (currentwf,ctx) {
-        var count = parseInt(currentwf.stepCount);
-        if (!currentwf.steps) {
-            return;
-        }
-        for (var i = 1; i <= count; i++) {
-            var step = currentwf.steps[i - 1];
-            var stepctx = ctx + (ctx ? '/' : '') + i;
-            this.updateStepState(this.targetElement,stepctx,step);
-
-            if (step.hasSubworkflow) {
-                this.updateWorkflow(step.workflow, stepctx);
-            }else if (step.nodeStep){
-                var nodeset=step.stepTargetNodes? step.stepTargetNodes :currentwf.targetNodes;
-                for(var n=0;n<nodeset.length;n++){
-                    var node = nodeset[n];
-                    var nstate= step.nodeStates?step.nodeStates[node]:null;
-                    if(!nstate){
-                        nstate={ executionState: 'WAITING' };
-                    }
-                    this.updateNodeState(this.targetElement, stepctx, node, nstate);
-                }
+    updateState: function(model){
+        if(this.updaters){
+            for(var i=0;i<this.updaters.length;i++){
+                this.updaters[i].updateState(model);
             }
         }
     },
@@ -197,7 +225,7 @@ var FlowState = Class.create({
         if($(this.targetElement + '_json')){
             $(this.targetElement + '_json').innerHTML = Object.toJSON(this.model);
         }
-        this.updateWorkflow(this.model,'');
+        this.updateState(this.model);
         if (!this.model.completed && this.shouldUpdate) {
             this.timer = setTimeout(this.callUpdate.bind(this), this.reloadInterval);
         } else {
@@ -223,5 +251,11 @@ var FlowState = Class.create({
         this.shouldUpdate=false;
         clearTimeout(this.timer);
         this.timer = null;
+    },
+    addUpdater: function(updater){
+        if(null==this.updaters){
+            this.updaters = [];
+        }
+        this.updaters.push( updater);
     }
 });
