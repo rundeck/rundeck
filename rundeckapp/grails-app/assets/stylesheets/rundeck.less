@@ -114,6 +114,104 @@
     .glyphicon-td();
   }
 
+  //state display
+
+  .execstate{
+
+    &[data-execstate=NODE_MIXED] {
+      color: orange;
+    }
+    &[data-execstate=SUCCEEDED] {
+      color: gray;
+    }
+
+    &[data-execstate=NODE_PARTIAL_SUCCEEDED] {
+      color: gray;
+    }
+
+    &[data-execstate=RUNNING], .execstate[data-execstate=RUNNING_HANDLER] {
+      color: blue;
+    }
+    &[data-execstate=RUNNING_HANDLER] {
+      border-bottom: 2px dotted orange;
+    }
+
+    &[data-execstate=FAILED] {
+      color: red;
+    }
+    &[data-execstate=WAITING], &[data-execstate=NOT_STARTED] {
+      color: lightgray;
+    }
+
+    &.isnode{
+      &[data-execstate=NODE_MIXED]:after {
+        content: ' ~';
+      }
+
+      &[data-execstate=SUCCEEDED]:after {
+        content: ' √';
+      }
+
+      &[data-execstate=NODE_PARTIAL_SUCCEEDED]:after {
+        content: ' *';
+      }
+
+
+      &[data-execstate=FAILED]:after {
+        content: ' -';
+      }
+
+
+      &[data-execstate=WAITING]:after {
+        content: ' …';
+      }
+
+      &[data-execstate=NOT_STARTED]:after {
+        content: ' •';
+      }
+    }
+    &.step{
+      &[data-execstate=SUCCEEDED] {
+        .glyphicon();
+        .glyphicon-check();
+      }
+
+      &[data-execstate=RUNNING], &[data-execstate=RUNNING_HANDLER], &[data-execstate=WAITING] {
+        .glyphicon();
+        .glyphicon-unchecked();
+      }
+
+      &[data-execstate=FAILED] {
+        .glyphicon();
+        .glyphicon-remove-circle();
+      }
+    }
+  }
+
+  .wfstepstate {
+
+    .stepctx {
+      width: 2em;
+      display: inline-block;
+    }
+    .stepnodes {
+      margin-left: 10px;
+    }
+
+    .nodestatesummary {
+      display: none;
+    }
+    &.collapsed {
+      .nodestates {
+        display: none;
+      }
+      .nodestatesummary{
+        display: block;
+      }
+    }
+  }
+
+
   .rdicon.job{
     .glyphicon();
     .glyphicon-book();

@@ -22,17 +22,18 @@
 </g:if>
 <g:else>
 <g:set var="nodestep" value="${wfstep.nodeStep}"/>
-<g:set var="substep" value="${wfstep.hasSubWorkflow()}"/>
 <g:set var="myctx" value="${subCtx ? subCtx + '/' : ''}${i + 1}"/>
 <div id="wfstep_${i + 1}" class="row wfstepstate" data-stepctx="${myctx}">
     <div class="col-sm-4">
+        <span class="stepaction" data-stepctx="${myctx}">
         <span class="execstate step"
               data-stepctx="${myctx}"
               data-execstate="${wfstep.stepState.executionState}">
 
         </span>
-        <span class="stepctx">Step ${subCtx ? subCtx + '/' : ''}${i + 1}</span>
+        <span class="stepctx">${subCtx ? subCtx + '/' : ''}${i + 1}. </span>
         <span class=" stepident" data-stepctx="${myctx}"></span>
+        </span>
     </div>
 
     <div class="col-sm-8 ">
@@ -49,14 +50,12 @@
         </div>
 
         <div class="row">
-            <g:if test="${substep}">
-            </g:if>
-            <g:elseif test="${false}">
+            <g:if test="${false}">
                 <div class="nodestates col-sm-12">
                     <g:each in="${wfstep.nodeStepTargets ?: workflowState.nodeSet?.sort() ?: []}" var="nodename">
                         <g:set var="execState"
                                value="${wfstep.nodeStateMap[nodename]?.executionState ?: ExecutionState.WAITING}"/>
-                        <div>
+                        <div class="nodeinfo">
                             <span class="execstate isnode"
                                   data-node="${nodename.encodeAsHTML()}"
                                   data-stepctx="${myctx}"
@@ -75,10 +74,15 @@
                         </div>
                     </g:each>
                 </div>
-            </g:elseif>
+            </g:if>
             <g:else>
-                <div class="nodestates col-sm-12">
+                <div class="col-sm-12">
+                <div class="nodestatesummary ">
+                    summary
+                </div>
+                <div class="nodestates">
 
+                </div>
                 </div>
             </g:else>
 

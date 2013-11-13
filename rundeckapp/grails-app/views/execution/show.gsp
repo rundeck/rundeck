@@ -110,72 +110,14 @@
             display: none;
         }
 
-        .stepctx{
-            width: 5em;
-            display: inline-block;
-        }
-        .selected {
-            background: #eeffee;
-        }
-
-        .execstate[data-execstate=NODE_MIXED] {
-            color: orange;
-        }
-
-        .execstate[data-execstate=NODE_MIXED]:after {
-            content: ' ~';
-        }
-
-        .execstate[data-execstate=SUCCEEDED] {
-            color: gray;
-        }
-
-        .execstate[data-execstate=SUCCEEDED]:after {
-            content: ' √';
-        }
-
-        .execstate[data-execstate=NODE_PARTIAL_SUCCEEDED] {
-            color: gray;
-        }
-
-        .execstate[data-execstate=NODE_PARTIAL_SUCCEEDED]:after {
-            content: ' *';
-        }
-
-        .execstate[data-execstate=RUNNING],.execstate[data-execstate=RUNNING_HANDLER] {
-            color: blue;
+        .execstate.isnode[data-execstate=RUNNING],.execstate[data-execstate=RUNNING_HANDLER] {
             background-image: url(${g.resource(dir: 'images',file: 'icon-tiny-disclosure-waiting.gif')});
             padding-right: 16px;
             background-repeat: no-repeat;
             background-position: right 2px;
         }
-        .execstate[data-execstate=RUNNING_HANDLER] {
-            border-bottom: 2px dotted orange;
-        }
 
-        .execstate[data-execstate=FAILED] {
-            color: red;
-        }
 
-        .execstate[data-execstate=FAILED]:after {
-            content: ' -';
-        }
-
-        .execstate[data-execstate=WAITING], .execstate[data-execstate=NOT_STARTED] {
-            color: lightgray;
-        }
-
-        .execstate[data-execstate=WAITING]:after {
-            content: ' …';
-        }
-
-        .execstate[data-execstate=NOT_STARTED]:after {
-            content: ' •';
-        }
-
-        .wfstepstate .stepnodes {
-            margin-left: 10px;
-        }
 
         .errmsg {
             color: gray;
