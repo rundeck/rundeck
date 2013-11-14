@@ -451,7 +451,7 @@
                             <a href="${g.createLink(controller: 'execution', action: 'ajaxExecState', id: execution.id)}">json</a>
 
                             <div class="flowstate" id="flowstate">
-                                <g:render template="wfstateModelDisplay" bean="${workflowState}" var="workflowState"/>
+                                <g:render template="wfstateStepModelDisplay" bean="${workflowState}" var="workflowState"/>
                             </div>
 
                             <div class="row">

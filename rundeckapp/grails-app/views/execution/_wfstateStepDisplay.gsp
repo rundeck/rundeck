@@ -17,7 +17,7 @@
 
 <g:if test="${wfstep.hasSubWorkflow()}">
     <g:set var="newsubctx" value="${(subCtx ? subCtx + '/' : '') + (i + 1)}"/>
-    <g:render template="wfstateModelDisplay"
+    <g:render template="wfstateStepModelDisplay"
                   model="[workflowState: wfstep.subWorkflowState, subCtx: newsubctx]"/>
 </g:if>
 <g:else>
