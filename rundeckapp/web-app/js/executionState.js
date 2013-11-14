@@ -164,18 +164,35 @@ var NodeFlow=Class.create({
         }
     },
     updateNodeRowForStep: function(node,stepctx,step,elem){
-//        $(elem).down('stepctx').innerHTML = stepctx;
+        $(elem).down('.stepctx').innerHTML = stepctx+".";
 //        $(elem).down('stepident').innerHTML = stepctx;
+        var type = this.flow.workflow.contextType(stepctx);
+        $(elem).down('.stepident').innerHTML = '<i class="rdicon icon-small ' + type + '"></i> ' + this.flow.workflow.renderContextString(stepctx);
         $(elem).down('.execstate').innerHTML = step.executionState;
         $(elem).down('.execstart').innerHTML = step.startTime;
         $(elem).down('.execend').innerHTML = step.endTime;
         $(elem).down('.execstate').setAttribute('data-execstate', step.executionState);
     },
+    /**
+     * Return true if state B should be used instead of a
+     * @param a
+     * @param b
+     */
+    stateCompare:function(a,b){
+        if(a==b){
+            return false;
+        }
+        var states=['SUCCEEDED', 'WAITING', 'FAILED','ABORTED','RUNNING','RUNNING_HANDLER'];
+        var ca = states.indexOf(a);
+        var cb = states.indexOf(b);
+        if(ca<0){
+            return true;
+        }
+        return cb>ca;
+    },
     updateNodeState: function(model,node,nodestate){
-        var last=nodestate[nodestate.length-1];
-        var foundstate=this.stepStateForCtx(model,last.stepctx).nodeStates[node];
-        this.withOverallNodeStateElem(node,this.updateNodeRowForStep.bind(this).curry(node,last.stepctx,foundstate),null);
-
+        var lastFound=null;
+        var lastFoundCtx=null;
         var count = nodestate.length;
         for (var i = 0; i < count; i++) {
             var stepstate = nodestate[i];
@@ -184,7 +201,12 @@ var NodeFlow=Class.create({
             this.withStepNodeStateElem(node, stepstate.stepctx,
                 this.updateNodeRowForStep.bind(this).curry(node, stepstate.stepctx, found),
                 null);
+            if(!lastFound || this.stateCompare(lastFound.executionState, found.executionState)){
+                lastFound=found;
+                lastFoundCtx= stepstate.stepctx;
+            }
         }
+        this.withOverallNodeStateElem(node, this.updateNodeRowForStep.bind(this).curry(node, lastFoundCtx, lastFound), null);
     },
     updateNodes: function(model){
         if(!model.nodes || !model.allNodes){
