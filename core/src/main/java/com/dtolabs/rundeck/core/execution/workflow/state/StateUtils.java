@@ -206,7 +206,12 @@ public class StateUtils {
             //include original states
             nodeStates.putAll(parent.getNodeStates());
         }
+        ArrayList<String> allNodes = new ArrayList<String>();
+        if(null!=parent.getNodeSet()) {
+            allNodes.addAll(parent.getNodeSet());
+        }
         parent.setNodeStates(nodeStates);
+        parent.setAllNodes(allNodes);
 
         for (WorkflowStepState workflowStepState : current.getStepStates()) {
             StepIdentifier thisident = stepIdentifierAppend(ident, workflowStepState.getStepIdentifier());
@@ -224,6 +229,9 @@ public class StateUtils {
                     WorkflowNodeState orig = nodeStates.get(nodeName);
                     if (null != orig && null != orig.getStepStateMap()) {
                         stepStatesForNode.putAll(orig.getStepStateMap());
+                    }
+                    if (!allNodes.contains(nodeName)) {
+                        allNodes.add(nodeName);
                     }
 
                     //create new workflowNodeState for this node
