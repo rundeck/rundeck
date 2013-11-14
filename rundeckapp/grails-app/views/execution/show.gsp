@@ -87,10 +87,12 @@
             reloadInterval:1500
          });
          var stepState= new StepFlow(flowState,'flowstate');
+         var nodeState= new NodeFlow(flowState,'nodeflowstate');
 
         function init() {
             followControl.beginFollowingOutput('${execution?.id}');
-            flowState.addUpdater(stepState);
+//            flowState.addUpdater(stepState);
+            flowState.addUpdater(nodeState);
             flowState.beginFollowing();
             <g:if test="${!(grailsApplication.config.rundeck?.gui?.enableJobHoverInfo in ['false', false])}">
             $$('.obs_bubblepopup').each(function(e) {
@@ -450,6 +452,9 @@
                         <g:if test="${workflowState}">
                             <a href="${g.createLink(controller: 'execution', action: 'ajaxExecState', id: execution.id)}">json</a>
 
+                            <div class="flowstate" id="nodeflowstate">
+                                <g:render template="wfstateNodeModelDisplay" bean="${workflowState}" var="workflowState"/>
+                            </div>
                             <div class="flowstate" id="flowstate">
                                 <g:render template="wfstateStepModelDisplay" bean="${workflowState}" var="workflowState"/>
                             </div>

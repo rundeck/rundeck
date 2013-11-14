@@ -135,9 +135,69 @@ var StepFlow=Class.create({
 });
 var NodeFlow=Class.create({
     flow: null,
-    initialize: function (flow, params) {
+    targetElement: null,
+    initialize: function (flow, targetElement, params) {
         this.flow = flow;
+        this.targetElement = targetElement;
         Object.extend(this, params);
+    },
+    withOverallNodeStateElem: function(node,func,wofunc){
+        this.flow.withOrWithoutMatch(this.targetElement, '.wfnodestate[data-node=' + node + '] [data-template=overall]',
+            func,
+            wofunc
+        );
+    },
+    withStepNodeStateElem: function(node,stepctx,func,wofunc){
+        this.flow.withOrWithoutMatch(this.targetElement, '.wfnodestate[data-node=' + node + '] [data-template=step][data-stepctx='+stepctx+']',
+            func,
+            wofunc
+        );
+    },
+    stepStateForCtx: function(model,stepctx){
+        var split = stepctx.split('/',2);
+        var ndx=parseInt(split[0])-1;
+        var step = model.steps[ndx];
+        if(split.length>1 && split[1] && step.workflow){
+            return this.stepStateForCtx(step.workflow,split[1]);
+        }else{
+            return step;
+        }
+    },
+    updateNodeRowForStep: function(node,stepctx,step,elem){
+//        $(elem).down('stepctx').innerHTML = stepctx;
+//        $(elem).down('stepident').innerHTML = stepctx;
+        $(elem).down('.execstate').innerHTML = step.executionState;
+        $(elem).down('.execstart').innerHTML = step.startTime;
+        $(elem).down('.execend').innerHTML = step.endTime;
+        $(elem).down('.execstate').setAttribute('data-execstate', step.executionState);
+    },
+    updateNodeState: function(model,node,nodestate){
+        var last=nodestate[nodestate.length-1];
+        var foundstate=this.stepStateForCtx(model,last.stepctx).nodeStates[node];
+        this.withOverallNodeStateElem(node,this.updateNodeRowForStep.bind(this).curry(node,last.stepctx,foundstate),null);
+
+        var count = nodestate.length;
+        for (var i = 0; i < count; i++) {
+            var stepstate = nodestate[i];
+            var stepStateForCtx = this.stepStateForCtx(model, stepstate.stepctx);
+            var found = stepStateForCtx.nodeStates[node];
+            this.withStepNodeStateElem(node, stepstate.stepctx,
+                this.updateNodeRowForStep.bind(this).curry(node, stepstate.stepctx, found),
+                null);
+        }
+    },
+    updateNodes: function(model){
+        if(!model.nodes || !model.allNodes){
+            return;
+        }
+        var count = model.allNodes.length;
+        for (var i = 0; i < count; i++) {
+            var node = model.allNodes[i];
+            this.updateNodeState(model,node, model.nodes[node]);
+        }
+    },
+    updateState: function (model) {
+        this.updateNodes(model);
     }
 });
 /**

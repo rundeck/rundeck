@@ -16,6 +16,6 @@
 
 <%@ page import="com.dtolabs.rundeck.core.execution.workflow.state.ExecutionState" %>
 
-<g:each in="${workflowState.nodeTargets}" var="node" status="i">
+<g:each in="${workflowState.allNodes}" var="node" status="i">
     <g:render template="wfstateNodeDisplay" model="[node:node, workflowState: workflowState, i: i]"/>
 </g:each>
