@@ -10,12 +10,14 @@ import com.dtolabs.rundeck.core.execution.workflow.state.*
  */
 class MutableWorkflowStateImpl implements MutableWorkflowState {
     def ArrayList<String> mutableNodeSet;
+    def ArrayList<String> mutableAllNodes;
     def long stepCount;
     def ExecutionState executionState;
     def Date timestamp;
     def Date startTime;
     def Date endTime;
     def Map<Integer,MutableWorkflowStepState> mutableStepStates;
+    def Map<String,MutableWorkflowNodeState> mutableNodeStates;
     def List<Map<Date,Map>> stateChanges=[]
 
     MutableWorkflowStateImpl(List<String> nodeSet, long stepCount) {
@@ -23,15 +25,22 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
     }
     MutableWorkflowStateImpl(List<String> nodeSet, long stepCount, Map<Integer, MutableWorkflowStepStateImpl> steps) {
         this.mutableNodeSet = new ArrayList<>()
+        this.mutableAllNodes = new ArrayList<>()
         if(null!=nodeSet){
             this.mutableNodeSet.addAll(nodeSet)
         }
+        this.mutableAllNodes.addAll(mutableNodeSet)
         this.stepCount = stepCount
         mutableStepStates = new HashMap<Integer,MutableWorkflowStepState>()
         for (int i = 1; i <= stepCount; i++) {
             mutableStepStates[i - 1] = steps && steps[i-1]? steps[i-1] : new MutableWorkflowStepStateImpl(StateUtils.stepIdentifier(i))
         }
         this.executionState=ExecutionState.WAITING
+        mutableNodeStates = new HashMap<String, MutableWorkflowNodeState>()
+        mutableAllNodes.each {node->
+            mutableNodeStates[node]=new MutableWorkflowNodeStateImpl(node)
+        }
+
     }
 
     MutableWorkflowStepState getAt(Integer index){
@@ -44,8 +53,18 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
     }
 
     @Override
+    Map<String,? extends WorkflowNodeState> getNodeStates() {
+        return mutableNodeStates
+    }
+
+    @Override
     List<String> getNodeSet() {
         return mutableNodeSet
+    }
+
+    @Override
+    List<String> getAllNodes() {
+        return mutableAllNodes
     }
 
     @Override
@@ -68,6 +87,13 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
                 //create it
                 currentStep.mutableNodeStateMap[stepStateChange.nodeName] = new MutableStepStateImpl()
             }
+            //connect step-oriented state to node-oriented state
+            if (null == mutableNodeStates[stepStateChange.nodeName]) {
+                mutableNodeStates[stepStateChange.nodeName] = new MutableWorkflowNodeStateImpl(stepStateChange.nodeName)
+            }
+            if (null == mutableNodeStates[stepStateChange.nodeName].mutableStepStateMap[currentStep.stepIdentifier]) {
+                mutableNodeStates[stepStateChange.nodeName].mutableStepStateMap[currentStep.stepIdentifier] = currentStep.mutableNodeStateMap[stepStateChange.nodeName]
+            }
             toUpdate = currentStep.mutableNodeStateMap[stepStateChange.nodeName]
             toUpdate.executionState = updateState(toUpdate.executionState, stepStateChange.stepState.executionState)
             if (!currentStep.nodeStep && nodeSet) {
@@ -75,6 +101,16 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
                     currentStep.setNodeStepTargets(nodeSet)
                 }
             }
+            mutableNodeStates[stepStateChange.nodeName].mutableNodeState.executionState=toUpdate.executionState
+
+            //TODO: need to merge this data
+            mutableNodeStates[stepStateChange.nodeName].mutableNodeState.metadata=toUpdate.metadata
+            mutableNodeStates[stepStateChange.nodeName].mutableNodeState.errorMessage=toUpdate.errorMessage
+            mutableNodeStates[stepStateChange.nodeName].mutableNodeState.updateTime=toUpdate.updateTime
+            mutableNodeStates[stepStateChange.nodeName].mutableNodeState.startTime=toUpdate.startTime
+            mutableNodeStates[stepStateChange.nodeName].mutableNodeState.endTime=toUpdate.endTime
+
+            mutableNodeStates[stepStateChange.nodeName].lastIdentifier=currentStep.stepIdentifier
         } else if(!currentStep.nodeStep){
             //overall step state
             toUpdate = currentStep.mutableStepState
@@ -294,6 +330,20 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         this.executionState = updateState(this.executionState, executionState)
         if (null != nodenames && (null == mutableNodeSet || mutableNodeSet.size() < 1)) {
             mutableNodeSet = new ArrayList<>(nodenames)
+
+            mutableNodeSet.each { node ->
+                if(!mutableNodeStates[node]){
+                    mutableNodeStates[node] = new MutableWorkflowNodeStateImpl(node)
+                }
+                mutableStepStates.keySet().each {int ident->
+                    if(mutableStepStates[ident].nodeStep){
+                        if(null==mutableStepStates[ident].mutableNodeStateMap[node]){
+                            mutableStepStates[ident].mutableNodeStateMap[node]=new MutableStepStateImpl()
+                        }
+                        mutableNodeStates[node].mutableStepStateMap[StateUtils.stepIdentifier(ident+1)]= mutableStepStates[ident].mutableNodeStateMap[node]
+                    }
+                }
+            }
         }
         if(executionState.isCompletedState()){
             cleanupSteps(executionState, timestamp)
