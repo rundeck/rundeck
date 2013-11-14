@@ -94,6 +94,9 @@ public class StateUtils {
             }
             return this.getAspect().compareTo(o.getAspect());
         }
+        public String toString() {
+            return getStep() + (getSecond() ? "e" : "");
+        }
     }
 
     public static StepContextId stepContextId(int step, boolean errorhandler) {
