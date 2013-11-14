@@ -68,13 +68,17 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
     }
 
     @Override
-    void updateStateForStep(StepIdentifier identifier, StepStateChange stepStateChange, Date timestamp) {
+    void updateStateForStep(StepIdentifier identifier,StepStateChange stepStateChange, Date timestamp) {
+        updateStateForStep(identifier,0,stepStateChange,timestamp)
+    }
+    @Override
+    void updateStateForStep(StepIdentifier identifier, int index,StepStateChange stepStateChange, Date timestamp) {
         touchWFState(timestamp)
 
         Map<Integer, MutableWorkflowStepState> states = mutableStepStates;
-        MutableWorkflowStepState currentStep = locateStepWithContext(identifier, states)
-        if (identifier.context.size() > 1) {
-            descendUpdateStateForStep(currentStep, identifier, stepStateChange, timestamp)
+        MutableWorkflowStepState currentStep = locateStepWithContext(identifier, index,states)
+        if (identifier.context.size() - index > 1) {
+            descendUpdateStateForStep(currentStep, identifier, index, stepStateChange, timestamp)
             return
         }
         addStateChange(timestamp, stepStateChange)
@@ -91,8 +95,8 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
             if (null == mutableNodeStates[stepStateChange.nodeName]) {
                 mutableNodeStates[stepStateChange.nodeName] = new MutableWorkflowNodeStateImpl(stepStateChange.nodeName)
             }
-            if (null == mutableNodeStates[stepStateChange.nodeName].mutableStepStateMap[currentStep.stepIdentifier]) {
-                mutableNodeStates[stepStateChange.nodeName].mutableStepStateMap[currentStep.stepIdentifier] = currentStep.mutableNodeStateMap[stepStateChange.nodeName]
+            if (null == mutableNodeStates[stepStateChange.nodeName].mutableStepStateMap[identifier]) {
+                mutableNodeStates[stepStateChange.nodeName].mutableStepStateMap[identifier] = currentStep.mutableNodeStateMap[stepStateChange.nodeName]
             }
             toUpdate = currentStep.mutableNodeStateMap[stepStateChange.nodeName]
             toUpdate.executionState = updateState(toUpdate.executionState, stepStateChange.stepState.executionState)
@@ -101,23 +105,23 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
                     currentStep.setNodeStepTargets(nodeSet)
                 }
             }
-            mutableNodeStates[stepStateChange.nodeName].mutableNodeState.executionState=toUpdate.executionState
+            mutableNodeStates[stepStateChange.nodeName].mutableNodeState.executionState = toUpdate.executionState
 
             //TODO: need to merge this data
-            mutableNodeStates[stepStateChange.nodeName].mutableNodeState.metadata=toUpdate.metadata
-            mutableNodeStates[stepStateChange.nodeName].mutableNodeState.errorMessage=toUpdate.errorMessage
-            mutableNodeStates[stepStateChange.nodeName].mutableNodeState.updateTime=toUpdate.updateTime
-            mutableNodeStates[stepStateChange.nodeName].mutableNodeState.startTime=toUpdate.startTime
-            mutableNodeStates[stepStateChange.nodeName].mutableNodeState.endTime=toUpdate.endTime
+            mutableNodeStates[stepStateChange.nodeName].mutableNodeState.metadata = toUpdate.metadata
+            mutableNodeStates[stepStateChange.nodeName].mutableNodeState.errorMessage = toUpdate.errorMessage
+            mutableNodeStates[stepStateChange.nodeName].mutableNodeState.updateTime = toUpdate.updateTime
+            mutableNodeStates[stepStateChange.nodeName].mutableNodeState.startTime = toUpdate.startTime
+            mutableNodeStates[stepStateChange.nodeName].mutableNodeState.endTime = toUpdate.endTime
 
-            mutableNodeStates[stepStateChange.nodeName].lastIdentifier=currentStep.stepIdentifier
-        } else if(!currentStep.nodeStep){
+            mutableNodeStates[stepStateChange.nodeName].lastIdentifier = identifier
+        } else if (!currentStep.nodeStep) {
             //overall step state
             toUpdate = currentStep.mutableStepState
 
             toUpdate.executionState = updateState(toUpdate.executionState, stepStateChange.stepState.executionState)
-        }else{
-            toUpdate=currentStep.mutableStepState
+        } else {
+            toUpdate = currentStep.mutableStepState
             if (null == currentStep.nodeStepTargets && nodeSet) {
                 currentStep.setNodeStepTargets(nodeSet)
             }
@@ -126,26 +130,26 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
 
         //update state
         toUpdate.errorMessage = stepStateChange.stepState.errorMessage
-        if(stepStateChange.stepState.metadata){
-            if(null==toUpdate.metadata){
-                toUpdate.metadata=[:]
+        if (stepStateChange.stepState.metadata) {
+            if (null == toUpdate.metadata) {
+                toUpdate.metadata = [:]
             }
             toUpdate.metadata << stepStateChange.stepState.metadata
         }
-        if(!toUpdate.startTime){
-            toUpdate.startTime=timestamp
+        if (!toUpdate.startTime) {
+            toUpdate.startTime = timestamp
         }
         toUpdate.updateTime = timestamp
-        if(toUpdate.executionState.isCompletedState()){
-            toUpdate.endTime=timestamp
+        if (toUpdate.executionState.isCompletedState()) {
+            toUpdate.endTime = timestamp
         }
 
         if (stepStateChange.isNodeState() && currentStep.nodeStep && stepStateChange.stepState.executionState.isCompletedState()) {
             //if all target nodes have completed execution state, mark the overall step state
-            finishNodeStepIfNodesFinished(currentStep,timestamp)
-        }else if(stepStateChange.isNodeState() && currentStep.nodeStep && currentStep.stepState.executionState.isCompletedState()
-                && stepStateChange.stepState.executionState==ExecutionState.RUNNING_HANDLER){
-            currentStep.mutableStepState.executionState=ExecutionState.RUNNING_HANDLER
+            finishNodeStepIfNodesFinished(currentStep, timestamp)
+        } else if (stepStateChange.isNodeState() && currentStep.nodeStep && currentStep.stepState.executionState.isCompletedState()
+                && stepStateChange.stepState.executionState == ExecutionState.RUNNING_HANDLER) {
+            currentStep.mutableStepState.executionState = ExecutionState.RUNNING_HANDLER
         }
     }
 
@@ -174,7 +178,7 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
      * @param stepStateChange
      * @param timestamp
      */
-    private void descendUpdateStateForStep(MutableWorkflowStepState currentStep, StepIdentifier identifier, StepStateChange stepStateChange, Date timestamp) {
+    private void descendUpdateStateForStep(MutableWorkflowStepState currentStep, StepIdentifier identifier, int index,StepStateChange stepStateChange, Date timestamp) {
         transitionIfWaiting(currentStep.mutableStepState)
         //recurse to the workflow list to find the right index
 
@@ -182,7 +186,7 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
             currentStep.mutableSubWorkflowState :
             currentStep.createMutableSubWorkflowState(null, 0)
         //recursively update subworkflow state for the step in the subcontext
-        subflow.updateStateForStep(StateUtils.stepIdentifierTail(identifier), stepStateChange, timestamp);
+        subflow.updateStateForStep(identifier, index + 1, stepStateChange, timestamp);
     }
 
     private finishNodeStepIfNodesFinished(MutableWorkflowStepState currentStep,Date timestamp){
@@ -253,9 +257,9 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         }
     }
 
-    private MutableWorkflowStepState locateStepWithContext(StepIdentifier identifier, Map<Integer, MutableWorkflowStepState> states) {
+    private MutableWorkflowStepState locateStepWithContext(StepIdentifier identifier, int index,Map<Integer, MutableWorkflowStepState> states) {
         MutableWorkflowStepState currentStep
-        StepContextId subid = identifier.context[0]
+        StepContextId subid = identifier.context[index]
         int ndx=subid.step-1
         if (ndx >= states.size() || null == states[ndx]) {
             states[ndx] = new MutableWorkflowStepStateImpl(StateUtils.stepIdentifier(subid))
@@ -323,24 +327,28 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
 
     @Override
     void updateWorkflowState(ExecutionState executionState, Date timestamp, List<String> nodenames) {
-        updateWorkflowState(false,executionState,timestamp,nodenames)
+        updateWorkflowState(null,executionState,timestamp,nodenames,this)
     }
-    void updateWorkflowState(boolean subflow,ExecutionState executionState, Date timestamp, List<String> nodenames) {
+    void updateWorkflowState(StepIdentifier identifier,ExecutionState executionState, Date timestamp, List<String> nodenames, MutableWorkflowState parent) {
         touchWFState(timestamp)
         this.executionState = updateState(this.executionState, executionState)
         if (null != nodenames && (null == mutableNodeSet || mutableNodeSet.size() < 1)) {
             mutableNodeSet = new ArrayList<>(nodenames)
-
+            def mutableNodeStates=parent.mutableNodeStates
+            def allNodes=parent.allNodes
             mutableNodeSet.each { node ->
                 if(!mutableNodeStates[node]){
                     mutableNodeStates[node] = new MutableWorkflowNodeStateImpl(node)
+                }
+                if(!allNodes.contains(node)){
+                    allNodes<<node
                 }
                 mutableStepStates.keySet().each {int ident->
                     if(mutableStepStates[ident].nodeStep){
                         if(null==mutableStepStates[ident].mutableNodeStateMap[node]){
                             mutableStepStates[ident].mutableNodeStateMap[node]=new MutableStepStateImpl()
                         }
-                        mutableNodeStates[node].mutableStepStateMap[StateUtils.stepIdentifier(ident+1)]= mutableStepStates[ident].mutableNodeStateMap[node]
+                        mutableNodeStates[node].mutableStepStateMap[StateUtils.stepIdentifierAppend(identifier,StateUtils.stepIdentifier(ident + 1))]= mutableStepStates[ident].mutableNodeStateMap[node]
                     }
                 }
             }
@@ -388,23 +396,23 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
     }
 
     @Override
-    void updateSubWorkflowState(StepIdentifier identifier, ExecutionState executionState, Date timestamp, List<String> nodeNames) {
+    void updateSubWorkflowState(StepIdentifier identifier, int index,ExecutionState executionState, Date timestamp, List<String> nodeNames, MutableWorkflowState parent) {
         touchWFState(timestamp)
         Map<Integer, MutableWorkflowStepState> states = mutableStepStates;
 
-        if (identifier.context.size() > 0) {
+        if (identifier.context.size() - index > 0) {
             //descend one step
-            MutableWorkflowStepState nextStep = locateStepWithContext(identifier, states)
+            MutableWorkflowStepState nextStep = locateStepWithContext(identifier, index, states)
             MutableWorkflowState nextWorkflow = nextStep.hasSubWorkflow() ?
                 nextStep.mutableSubWorkflowState :
                 nextStep.createMutableSubWorkflowState(null, 0)
 
             transitionIfWaiting(nextStep.mutableStepState)
             //more steps to descend
-            nextWorkflow.updateSubWorkflowState(StateUtils.stepIdentifierTail(identifier), executionState, timestamp,nodeNames);
-        }else {
+            nextWorkflow.updateSubWorkflowState(identifier, index + 1, executionState, timestamp, nodeNames, parent ?: this);
+        } else {
             //update the workflow state for this workflow
-            updateWorkflowState(true, executionState, timestamp, nodeNames)
+            updateWorkflowState(identifier, executionState, timestamp, nodeNames, parent ?: this)
         }
     }
 

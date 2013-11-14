@@ -16,10 +16,11 @@ public interface MutableWorkflowState extends WorkflowState {
     /**
      * Update the state for a step
      * @param identifier
+     * @param index current index into identifier context
      * @param stepStateChange
      * @param timestamp
      */
-    void updateStateForStep(StepIdentifier identifier, StepStateChange stepStateChange, Date timestamp);
+    void updateStateForStep(StepIdentifier identifier, int index,StepStateChange stepStateChange, Date timestamp);
     /**
      * Update the state for this workflow
      * @param executionState
@@ -34,6 +35,8 @@ public interface MutableWorkflowState extends WorkflowState {
      * @param timestamp
      * @param nodeNames
      */
-    void updateSubWorkflowState(StepIdentifier identifier, ExecutionState executionState, Date timestamp, List<String> nodeNames);
+    void updateSubWorkflowState(StepIdentifier identifier, int index, ExecutionState executionState, Date timestamp, List<String> nodeNames, MutableWorkflowState parent);
 
+
+    public Map<String,? extends MutableWorkflowNodeState> getMutableNodeStates();
 }

@@ -438,7 +438,7 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
         assertFalse(mutableWorkflowState[2].nodeStep)
         //step 2: sub workflow
         //start subworkflow
-        mutableWorkflowState.updateSubWorkflowState(stepIdentifier(2), ExecutionState.RUNNING, newdate, ['c','d'] )
+        mutableWorkflowState.updateSubWorkflowState(stepIdentifier(2),0, ExecutionState.RUNNING, newdate, ['c','d'], null)
         //start sub steps
         //step 2/1: mixed failure
         mutableWorkflowState.updateStateForStep(stepIdentifier(2,1), stepStateChange(stepState(ExecutionState.RUNNING)), newdate)
@@ -447,7 +447,7 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
         mutableWorkflowState.updateStateForStep(stepIdentifier(2, 1), stepStateChange(stepState(ExecutionState.FAILED)), newdate)
         //nb: node 'd' was not run
 
-        mutableWorkflowState.updateSubWorkflowState(stepIdentifier(2), ExecutionState.FAILED, newdate, null)
+        mutableWorkflowState.updateSubWorkflowState(stepIdentifier(2),0, ExecutionState.FAILED, newdate, null, null)
 
         //error handler executed to recover
         mutableWorkflowState.updateStateForStep(stepIdentifier(2), stepStateChange(stepState(ExecutionState.FAILED)), newdate)
