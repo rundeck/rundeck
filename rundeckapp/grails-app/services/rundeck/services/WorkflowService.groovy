@@ -92,15 +92,6 @@ class WorkflowService {
         return [executionId: id, nodes: nodestates] + map
     }
     def Map mapOf(WorkflowState workflowState, StepIdentifier parent=null, Map nodestates) {
-
-        workflowState.nodeStates.values().each { node ->
-            def list= listOf(node,parent)
-            if(!nodestates[node.nodeName]){
-                nodestates[node.nodeName]=list
-            }else{
-                nodestates[node.nodeName].addAll(list)
-            }
-        }
         [
                 executionState:workflowState.executionState.toString(),
                 completed: workflowState.executionState.isCompletedState(),
@@ -137,7 +128,6 @@ class WorkflowService {
         List stepStates = map.steps.collect {
             workflowStepStateFromMap(it)
         }
-//        Map nodeStates = nodeStatesFromMap(map.nodes)
         return StateUtils.workflowState(nodes,nodes,stepCount,state,timestamp,startTime,endTime, stepStates,true)
     }
 
@@ -152,31 +142,9 @@ class WorkflowService {
             StateUtils.stepContextId(Integer.parseInt(s.replaceAll(/e$/,'')), s.endsWith('e'))
         })
     }
-    def List listOf(WorkflowNodeState nodeState, StepIdentifier parent = null){
-        def stepctx={StepIdentifier id->
-            stepIdentifierToString(parent ? StateUtils.stepIdentifier(parent.context +id.context):id)
-        }
-        return nodeState.stepStateMap.keySet().sort().collect{ [stepctx: stepctx(it)]+ simpleMapOf(nodeState.stepStateMap[it]) }
-    }
 
-    def WorkflowNodeState nodeStateFromMap(String nodeName,List map){
-        Map stepStates=[:]
-        StepIdentifier lastIdentifier=null
-        //TODO parse list
-        map.steps.each{
-            def  stepIdent=stepIdentifierFromString(it.stepctx)
-            def state=stepStateFromMap(it)
-            stepStates[stepIdent]=state
-            lastIdentifier=stepIdent
-        }
-        return StateUtils.workflowNodeState(nodeName,stepStateFromMap(map.state),lastIdentifier,stepStates)
-    }
-    def Map nodeStatesFromMap(Map map){
-        def nstates=[:]
-        map.each{k,v->
-            nstates[k]=nodeStateFromMap(k,v)
-        }
-        return nstates
+    def stepctxToString(StepIdentifier parent = null, StepIdentifier id) {
+        stepIdentifierToString(parent ? StateUtils.stepIdentifier(parent.context + id.context) : id)
     }
 
     def Map mapOf(WorkflowStepState state, StepIdentifier parent = null, Map nodestates){
@@ -192,6 +160,12 @@ class WorkflowService {
             def nmap=[:]
             state.nodeStateMap.each {String node,StepState nstate->
                 nmap[node]=mapOf(nstate)
+                def list = [stepctx: stepctxToString(parent, state.stepIdentifier)] + simpleMapOf(nstate)
+                if (!nodestates[node]) {
+                    nodestates[node] = [list]
+                } else {
+                    nodestates[node].add(list)
+                }
             }
             map += [nodeStates: nmap]
         }
@@ -246,7 +220,7 @@ class WorkflowService {
         Date endTime = map.endTime ? decodeDate(map.endTime) : null
         return StateUtils.stepState(ExecutionState.valueOf(map.executionState),map.meta,map.errorMessage,startTime,updateTime,endTime)
     }
-/**
+    /**
      * Read the workflow state for an execution
      * @param execution
      */
