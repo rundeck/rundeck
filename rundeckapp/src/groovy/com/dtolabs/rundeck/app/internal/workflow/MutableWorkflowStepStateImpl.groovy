@@ -25,7 +25,6 @@ class MutableWorkflowStepStateImpl implements MutableWorkflowStepState {
     MutableWorkflowStepStateImpl(StepIdentifier stepIdentifier,MutableWorkflowState subflow) {
         this.stepIdentifier = stepIdentifier
         this.mutableStepState=new MutableStepStateImpl()
-        this.mutableStepState.executionState= ExecutionState.WAITING
         this.mutableNodeStateMap = new HashMap<String, MutableStepState>()
         this.mutableSubWorkflowState=subflow
         this.nodeStep=false
@@ -80,7 +79,7 @@ class MutableWorkflowStepStateImpl implements MutableWorkflowStepState {
     public java.lang.String toString() {
         return "WFStep{" +
                 "step=" + mutableStepState +
-                (subworkflow? ", sub=" + mutableSubWorkflowState :'') +
+                (hasSubWorkflow()? ", sub=" + mutableSubWorkflowState :'') +
                 ", id=" + stepIdentifier +
                 (nodeStepTargets!=null?", targetNodes=" + nodeStepTargets :'')+
                 ", nodes=" + mutableNodeStateMap +
