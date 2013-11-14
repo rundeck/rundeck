@@ -5,7 +5,7 @@ import java.util.List;
 /**
  * Identifies a step in a workflow
  */
-public interface StepIdentifier {
+public interface StepIdentifier extends Comparable<StepIdentifier>{
     /**
      * Return the stack of step contexts
      * @return

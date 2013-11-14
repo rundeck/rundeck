@@ -2,6 +2,7 @@ package com.dtolabs.rundeck.core.execution.workflow.state;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -14,6 +15,12 @@ public interface WorkflowState {
      * @return
      */
     public List<String> getNodeSet();
+
+    /**
+     * Return the set of all nodes this and and all sub workflows are operating on
+     * @return
+     */
+    public List<String> getAllNodes();
 
     /**
      * The number of steps the workflow will run
@@ -46,4 +53,11 @@ public interface WorkflowState {
      * @return
      */
     public List<WorkflowStepState> getStepStates();
+
+    /**
+     * The list of states for all nodes
+     *
+     * @return
+     */
+    public Map<String,? extends WorkflowNodeState> getNodeStates();
 }

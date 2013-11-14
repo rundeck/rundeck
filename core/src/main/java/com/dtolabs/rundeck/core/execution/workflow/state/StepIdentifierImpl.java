@@ -22,4 +22,34 @@ public class StepIdentifierImpl implements StepIdentifier {
                 "context=" + context +
                 '}';
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        StepIdentifierImpl that = (StepIdentifierImpl) o;
+
+        if (!context.equals(that.context)) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return context.hashCode();
+    }
+
+    @Override
+    public int compareTo(StepIdentifier o) {
+        int size = context.size();
+        int thatsize = o.getContext().size();
+        for(int i=0;i<Math.min(size, thatsize);i++) {
+            int c = context.get(i).compareTo(o.getContext().get(i));
+            if(c!=0){
+                return c;
+            }
+        }
+        return size < thatsize ? -1 : size > thatsize ? 1 : 0;
+    }
 }
