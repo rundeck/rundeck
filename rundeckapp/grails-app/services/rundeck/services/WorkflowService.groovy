@@ -37,16 +37,14 @@ class WorkflowService {
                 def id = schedlist[0].id
 
                 ScheduledExecution se = ScheduledExecution.get(id)
-                substeps[ndx] = new MutableWorkflowStepStateImpl(StateUtils.stepIdentifier(ndx),
+                substeps[ndx] = new MutableWorkflowStepStateImpl(StateUtils.stepIdentifier(ndx+1),
                         createStateForWorkflow(se.workflow,project))
             }else{
-                substeps[ndx]=new MutableWorkflowStepStateImpl(StateUtils.stepIdentifier(ndx))
+                substeps[ndx]=new MutableWorkflowStepStateImpl(StateUtils.stepIdentifier(ndx + 1))
             }
             substeps[ndx].nodeStep = !!step.nodeStep
         }
-        def impl = new MutableWorkflowStateImpl(null, wf.commands.size(), substeps)
-        impl.executionState=ExecutionState.WAITING
-        return impl
+        return new MutableWorkflowStateImpl(null, wf.commands.size(), substeps)
     }
     /**
      * Create and return a listener for changes to the workflow state for an execution
@@ -89,18 +87,30 @@ class WorkflowService {
     }
 
     def Map mapOf(Long id,WorkflowState workflowState) {
-        [executionId:id] + mapOf(workflowState)
+        def nodestates=[:]
+        def map=mapOf(workflowState,null,nodestates)
+        return [executionId: id, nodes: nodestates] + map
     }
-    def Map mapOf(WorkflowState workflowState) {
+    def Map mapOf(WorkflowState workflowState, StepIdentifier parent=null, Map nodestates) {
+
+        workflowState.nodeStates.values().each { node ->
+            def list= listOf(node,parent)
+            if(!nodestates[node.nodeName]){
+                nodestates[node.nodeName]=list
+            }else{
+                nodestates[node.nodeName].addAll(list)
+            }
+        }
         [
                 executionState:workflowState.executionState.toString(),
                 completed: workflowState.executionState.isCompletedState(),
                 targetNodes:workflowState.nodeSet,
+                allNodes:workflowState.allNodes,
                 stepCount:workflowState.stepCount,
                 timestamp:encodeDate(workflowState.timestamp),
                 startTime:encodeDate(workflowState.startTime),
                 endTime:encodeDate(workflowState.endTime),
-                steps:workflowState.stepStates.collect{mapOf(it)}
+                steps:workflowState.stepStates.collect{mapOf(it,parent, nodestates)},
         ]
     }
     def String encodeDate(Date date){
@@ -124,19 +134,58 @@ class WorkflowService {
         Date timestamp = map.timestamp?decodeDate(map.timestamp):null
         Date startTime = map.startTime?decodeDate(map.startTime):null
         Date endTime = map.endTime?decodeDate(map.endTime):null
-
-        return StateUtils.workflowState(nodes,stepCount,state,timestamp,startTime,endTime,map.steps.collect{
+        List stepStates = map.steps.collect {
             workflowStepStateFromMap(it)
-        })
+        }
+//        Map nodeStates = nodeStatesFromMap(map.nodes)
+        return StateUtils.workflowState(nodes,nodes,stepCount,state,timestamp,startTime,endTime, stepStates,true)
     }
 
+    def String stepIdentifierToString(StepIdentifier ident){
+        ident.context.collect{
+            it.step+(it.aspect==StepAspect.ErrorHandler?'e':'')
+        }.join("/")
+    }
+    def StepIdentifier stepIdentifierFromString(String string){
+        StateUtils.stepIdentifier(
+        string.split(/\//).collect{s->
+            StateUtils.stepContextId(Integer.parseInt(s.replaceAll(/e$/,'')), s.endsWith('e'))
+        })
+    }
+    def List listOf(WorkflowNodeState nodeState, StepIdentifier parent = null){
+        def stepctx={StepIdentifier id->
+            stepIdentifierToString(parent ? StateUtils.stepIdentifier(parent.context +id.context):id)
+        }
+        return nodeState.stepStateMap.keySet().sort().collect{ [stepctx: stepctx(it)]+ simpleMapOf(nodeState.stepStateMap[it]) }
+    }
 
-    def Map mapOf(WorkflowStepState state){
+    def WorkflowNodeState nodeStateFromMap(String nodeName,List map){
+        Map stepStates=[:]
+        StepIdentifier lastIdentifier=null
+        //TODO parse list
+        map.steps.each{
+            def  stepIdent=stepIdentifierFromString(it.stepctx)
+            def state=stepStateFromMap(it)
+            stepStates[stepIdent]=state
+            lastIdentifier=stepIdent
+        }
+        return StateUtils.workflowNodeState(nodeName,stepStateFromMap(map.state),lastIdentifier,stepStates)
+    }
+    def Map nodeStatesFromMap(Map map){
+        def nstates=[:]
+        map.each{k,v->
+            nstates[k]=nodeStateFromMap(k,v)
+        }
+        return nstates
+    }
+
+    def Map mapOf(WorkflowStepState state, StepIdentifier parent = null, Map nodestates){
         def map=[:]
         if(state.hasSubWorkflow()){
+            StepIdentifier ident = parent?StateUtils.stepIdentifier(parent.context+state.stepIdentifier.context):state.stepIdentifier
             map+=[
                     hasSubworkflow: state.hasSubWorkflow(),
-                    workflow:mapOf(state.subWorkflowState)
+                    workflow:mapOf(state.subWorkflowState,ident, nodestates)
             ]
         }
         if(state.nodeStateMap){
@@ -152,7 +201,7 @@ class WorkflowService {
             ]
         }
         map + [
-                id:state.stepIdentifier.context.head().step,
+                id: stepIdentifierToString(state.stepIdentifier),
                 nodeStep:state.nodeStep
         ] + mapOf(state.stepState)
     }
@@ -175,7 +224,7 @@ class WorkflowService {
             nodeStepTargets=new ArrayList<String>(map.stepTargetNodes)
         }
         boolean nodeStep = !!map.nodeStep
-        StateUtils.workflowStepState(state,nodeStateMap,StateUtils.stepIdentifier(map.id), subWorkflowState,nodeStepTargets,nodeStep)
+        StateUtils.workflowStepState(state,nodeStateMap,stepIdentifierFromString(map.id), subWorkflowState,nodeStepTargets,nodeStep)
     }
 
 
@@ -186,6 +235,9 @@ class WorkflowService {
                 updateTime: encodeDate(state.updateTime),
                 endTime: encodeDate(state.endTime),
         ] + (state.errorMessage?[errorMessage:state.errorMessage]:[:]) + (state.metadata?[meta:state.metadata]:[:])
+    }
+    def Map simpleMapOf(StepState state){
+        [executionState: state.executionState.toString(),]
     }
 
     StepState stepStateFromMap(Map map) {
