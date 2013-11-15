@@ -153,6 +153,19 @@ var NodeFlow=Class.create({
             wofunc
         );
     },
+    /**
+     * find first child of parent that has a greater stepctx that the given one
+     * @param parent
+     * @param stepctx
+     */
+    findNodeRowStepPeer: function (parent, stepctx) {
+        var me = this;
+        return parent.select('[data-stepctx]').detect(function (e) {
+            var ctx2 = $(e).getAttribute('data-stepctx');
+            var compareStepCtx = me.flow.compareStepCtx(stepctx, ctx2);
+            return compareStepCtx<0;
+        });
+    },
     stepStateForCtx: function(model,stepctx){
         var a,b;
         var s = stepctx.indexOf("/");
@@ -215,7 +228,6 @@ var NodeFlow=Class.create({
                     var clone = $(elem).clone(true);
                     clone.removeAttribute('data-template');
                     $(me.targetElement).appendChild(clone);
-                    clone.setAttribute('data-node',node);
                     me.flow.bindDom(clone,{nodename:node});
                     $(clone).show();
                 },
@@ -235,7 +247,12 @@ var NodeFlow=Class.create({
                             var clone=$(elem).clone(true);
                             clone.removeAttribute('data-template');
                             me.withOverallNodeStateElem(node, function(overall){
-                                $(overall).parentNode.appendChild(clone);
+                                var peer = me.findNodeRowStepPeer($(overall).parentNode,stepstate.stepctx);
+                                if(!peer){
+                                    $(overall).parentNode.appendChild(clone);
+                                }else{
+                                    $(peer).insert({before:clone});
+                                }
                                 me.updateNodeRowForStep(node,stepstate.stepctx,found,clone);
                                 $(clone).show();
                             }, null);
@@ -381,6 +398,24 @@ var FlowState = Class.create({
         $(elem).select('[data-bind]').each(this.bindElemData.bind(this).curry(data));
         $(elem).select('[data-bind-class]').each(this.bindElemClass.bind(this).curry(data));
         $(elem).select('[data-bind-attr]').each(this.bindElemAttr.bind(this).curry(data));
+    },
+    compareStepCtx: function(ctx1,ctx2){
+        var s1=ctx1.split('/');
+        var s2=ctx2.split('/');
+        var x;
+        for (x = 0; x < s1.length && x < s2.length; x++) {
+            var i1=s1.indexOf('e')>0?s1.substring(0,s1.length-2):s1;
+            var i2=s2.indexOf('e')>0?s2.substring(0,s2.length-2):s2;
+            var int1=parseInt(i1);
+            var int2=parseInt(i2);
+            if(int1!=int2){
+                return int1 < int2 ? -1 : 1;
+            }
+        }
+        if(s1.length!=s2.length){
+            return s1.length<s2.length?-1:1;
+        }
+        return 0;
     },
     updateOutput: function (elem, data) {
         $(elem).innerHTML = '';
