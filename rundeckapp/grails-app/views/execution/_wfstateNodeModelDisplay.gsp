@@ -46,6 +46,9 @@
             <g:render template="wfstateNodeStepTemplate" model="[node: '']"/>
         </div>
     </div>
+
+    <div class="wfnodeoutput " data-bind-attr="data-node:nodename"  style="display: none">
+    </div>
 </div>
 <g:each in="${workflowState.allNodes}" var="node" status="i">
     <g:render template="wfstateNodeDisplay" model="[node:node, workflowState: workflowState, i: i]"/>

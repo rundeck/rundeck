@@ -55,9 +55,6 @@ var StepFlow=Class.create({
         }
 
     },
-    bindNodeOutput: function (elem, stepctx, node) {
-        Event.observe(elem, 'click', this.flow.showOutput.bind(this.flow).curry(elem,this.targetElement+'_output', stepctx, node));
-    },
     newNodeState: function (stepctx, node, nstate) {
         var div = new Element('div');
         div.addClassName('textbtn textbtn-default');
@@ -73,14 +70,14 @@ var StepFlow=Class.create({
         errspan.style.display = 'none';
         div.appendChild(nspan);
         div.appendChild(errspan);
-        this.bindNodeOutput(div, stepctx, node);
+        this.flow.bindNodeOutput(div, this.targetElement + '_output',stepctx, node);
         return div;
     },
     setNodeState: function (stepctx, node, nstate, elem) {
         $(elem).innerHTML = node;
         $(elem).setAttribute('data-execstate', nstate.executionState);
         if ($(elem).getAttribute('data-bound') != 'true') {
-            this.bindNodeOutput($(elem).parentNode, stepctx, node);
+            this.flow.bindNodeOutput($(elem).parentNode, this.targetElement + '_output', stepctx, node);
             $(elem).setAttribute('data-bound', 'true');
         }
     },
@@ -223,6 +220,20 @@ var NodeFlow=Class.create({
         }
         return cb>ca;
     },
+    bindOutputForCtxNode:function(elem,stepctx,node){
+        var me=this;
+        //bind action on node name
+        if ($(elem).getAttribute('data-bound-click') != 'true') {
+            Event.observe(elem, 'click', function (evt) {
+                var output = $(me.targetElement).down('.wfnodeoutput[data-node=' + node + ']');
+                $(me.targetElement).select('.wfnodeoutput[data-node!=' + node + ']').each(Element.hide);
+                var ctrl=me.flow.showOutput(elem, output, stepctx, node);
+                //todo: stop following when changing target
+                $(output).show();
+            });
+            $(elem).setAttribute('data-bound-click', 'true');
+        }
+    },
     updateNodeState: function(model,node,nodestate){
         var lastFound=null;
         var lastFoundCtx=null;
@@ -247,7 +258,10 @@ var NodeFlow=Class.create({
             var stepStateForCtx = this.stepStateForCtx(model, stepstate.stepctx);
             var found = stepStateForCtx.nodeStates[node];
             this.withStepNodeStateElem(node, stepstate.stepctx,
-                this.updateNodeRowForStep.bind(this).curry(node, stepstate.stepctx, found),
+                function(elem){
+                    me.updateNodeRowForStep(node, stepstate.stepctx, found,elem);
+                    me.bindOutputForCtxNode(elem, stepstate.stepctx, node);
+                },
                 function(){
                     //clonetemplate
                     me.flow.withOrWithoutMatch(me.targetElement, '[data-template=step]',
@@ -263,6 +277,7 @@ var NodeFlow=Class.create({
                                     $(peer).insert({before:clone});
                                 }
                                 me.updateNodeRowForStep(node,stepstate.stepctx,found,clone);
+                                me.bindOutputForCtxNode(clone, stepstate.stepctx, node);
                                 $(clone).show();
                             },null);
                         },
@@ -275,6 +290,7 @@ var NodeFlow=Class.create({
             }
         }
         this.withOverallNodeStateElem(node, this.updateNodeRowForStep.bind(this).curry(node, lastFoundCtx, lastFound), null);
+        this.withOverallNodeStateElem(node, function(elem){me.bindOutputForCtxNode(elem,null,node);}, null);
     },
     updateNodes: function(model){
         if(!model.nodes || !model.allNodes){
@@ -408,6 +424,10 @@ var FlowState = Class.create({
         $(elem).select('[data-bind-class]').each(this.bindElemClass.bind(this).curry(data));
         $(elem).select('[data-bind-attr]').each(this.bindElemAttr.bind(this).curry(data));
     },
+
+    bindNodeOutput: function (elem, targetElement,stepctx, node) {
+        Event.observe(elem, 'click', this.showOutput.bind(this).curry(elem, targetElement, stepctx, node));
+    },
     compareStepCtx: function(ctx1,ctx2){
         var s1=ctx1.split('/');
         var s2=ctx2.split('/');
@@ -426,13 +446,56 @@ var FlowState = Class.create({
         }
         return 0;
     },
-    updateOutput: function (elem, data) {
+    updateOutputNew: function (elem, data) {
         $(elem).innerHTML = '';
+        var ctrl = new FollowControl();
+        ctrl.workflow = this.workflow;
+
+        var tbl=ctrl.createTable();
+        $(elem).appendChild(tbl);
         for (var i = 0; i < data.entries.length; i++) {
-            $(elem).innerHTML += data.entries[i].log + '\n';
+            var tr = tbl.insertRow(-1);
+            ctrl.configureDataRow(tr,data.entries[i],null);
         }
     },
     showOutput: function (elem, targetElement,stepctx, node, evt) {
+        if (!$(targetElement)) {
+            return null;
+        }
+        if (this.selectedElem) {
+            $(this.selectedElem).removeClassName('active');
+        }
+        $(elem).addClassName('active');
+        this.selectedElem = elem;
+        var state = this;
+        var params= {nodename: node};
+        if(stepctx){
+            Object.extend(params,{stepctx:stepctx});
+        }
+        var ctrl = new FollowControl(null,null,{
+            parentElement:targetElement,
+            extraParams:'&'+Object.toQueryString(params),
+            appLinks:{tailExecutionOutput:this.outputUrl}
+        });
+        ctrl.workflow = this.workflow;
+        ctrl.setColNode(false);
+        ctrl.setColStep(null==stepctx);
+        ctrl.beginFollowingOutput();
+        return ctrl;
+    },
+    updateOutput: function (elem, data) {
+        $(elem).innerHTML = '';
+        var ctrl = new FollowControl();
+        ctrl.workflow = this.workflow;
+
+        var tbl = ctrl.createTable();
+        $(elem).appendChild(tbl);
+        for (var i = 0; i < data.entries.length; i++) {
+            var tr = tbl.insertRow(-1);
+            ctrl.configureDataRow(tr, data.entries[i], null);
+        }
+    },
+    showOutputX: function (elem, targetElement,stepctx, node, evt) {
         if ($(targetElement)) {
             if (this.selectedElem) {
                 $(this.selectedElem).removeClassName('active');
@@ -440,15 +503,19 @@ var FlowState = Class.create({
             $(elem).addClassName('active');
             this.selectedElem = elem;
             var state = this;
+            var params= {nodename: node};
+            if(stepctx){
+                Object.extend(params,{stepctx:stepctx});
+            }
             new Ajax.Request(this.outputUrl,
                 {
-                    parameters: {nodename: node, stepctx: stepctx},
+                    parameters: params,
                     onSuccess: function (transport) {
                         var data = transport.responseJSON;
                         state.updateOutput(targetElement, data);
                     }
                 }
-            )
+            );
         }
     },
     logWarn: function (text) {

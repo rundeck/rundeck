@@ -17,6 +17,7 @@
  * Control execution follow page state for an execution
  */
 var FollowControl = Class.create({
+    parentElement:null,
     executionId:null,
     targetElement:null,
     cmdoutputtbl: null,
@@ -92,6 +93,9 @@ var FollowControl = Class.create({
     },
     bindActions: function(elem){
         var obj=this;
+        if(!elem){
+            return;
+        }
         $(elem).select('a.out_setmode_tail').each(function(e){
             Event.observe(e,'click',function(evt){Event.stop(evt);
                 if(!obj.nodemode){
@@ -468,12 +472,12 @@ var FollowControl = Class.create({
         }
     },
     setColTime: function (show) {
-        if ($(cmdoutputtbl)) {
+        if ($(this.cmdoutputtbl)) {
 
             if (show) {
-                $(cmdoutputtbl).removeClassName('collapse_time');
+                $(this.cmdoutputtbl).removeClassName('collapse_time');
             } else {
-                $(cmdoutputtbl).addClassName('collapse_time');
+                $(this.cmdoutputtbl).addClassName('collapse_time');
             }
         }
 
@@ -481,12 +485,12 @@ var FollowControl = Class.create({
     },
     setColNode: function (show) {
 
-        if ($(cmdoutputtbl)) {
+        if ($(this.cmdoutputtbl)) {
 
             if (show) {
-                $(cmdoutputtbl).removeClassName('collapse_node');
+                $(this.cmdoutputtbl).removeClassName('collapse_node');
             } else {
-                $(cmdoutputtbl).addClassName('collapse_node');
+                $(this.cmdoutputtbl).addClassName('collapse_node');
             }
         }
 
@@ -494,12 +498,12 @@ var FollowControl = Class.create({
     },
     setColStep: function (show) {
 
-        if ($(cmdoutputtbl)) {
+        if ($(this.cmdoutputtbl)) {
 
             if (show) {
-                $(cmdoutputtbl).removeClassName('collapse_stepnum');
+                $(this.cmdoutputtbl).removeClassName('collapse_stepnum');
             } else {
-                $(cmdoutputtbl).addClassName('collapse_stepnum');
+                $(this.cmdoutputtbl).addClassName('collapse_stepnum');
             }
         }
 
@@ -534,13 +538,13 @@ var FollowControl = Class.create({
     clearTable: function(tbl) {
 
         if (tbl) {
-            $('commandPerform').removeChild(tbl);
+            $(this.parentElement).removeChild(tbl);
             this.cmdoutputtbl = null;
         }
         this._init();
     },
 
-    createTable: function() {
+    createTable: function(id) {
         var tbl = new Element("table");
         tbl.setAttribute("border", "0");
         tbl.setAttribute("width", "100%");
@@ -548,7 +552,9 @@ var FollowControl = Class.create({
         tbl.setAttribute("cellSpacing", "0");
         tbl.setAttribute("cellPadding", "0");
         tbl.addClassName('execoutput');
-        tbl.setAttribute('id', 'cmdoutputtbl');
+        if(id){
+            tbl.setAttribute('id', id);
+        }
         if(!this.tailmode){
             $(tbl).addClassName('collapse_node');
             $(tbl).addClassName('collapse_stepnum');
@@ -557,9 +563,9 @@ var FollowControl = Class.create({
         var tbod = new Element("tbody");
         tbl.appendChild(tbod);
 
-        $('commandPerform').appendChild(tbl);
+        $(this.parentElement).appendChild(tbl);
 
-        $('commandPerform').show();
+        $(this.parentElement).show();
         return tbl;
     },
     showLoading:function(message,percent){
@@ -606,7 +612,7 @@ var FollowControl = Class.create({
                 }
             }
             if (!this.cmdoutputtbl) {
-                this.cmdoutputtbl = this.createTable();
+                this.cmdoutputtbl = this.createTable(this.tableId);
                 this.setColNode(this.colNode.value);
                 this.setColStep(this.colStep.value);
                 this.setColTime(this.colTime.value);
@@ -825,11 +831,12 @@ var FollowControl = Class.create({
 
     loadMoreOutputTail: function(id, offset) {
         var url = this.appLinks.tailExecutionOutput;
-        //    $('commandPerform').innerHTML+="id,offset: "+id+","+offset+"; runningcmd: "+this.runningcmd.id+","+this.runningcmd.offset;
+        //    $(this.parentElement).innerHTML+="id,offset: "+id+","+offset+"; runningcmd: "+this.runningcmd.id+","+this.runningcmd.offset;
         var obj=this;
         if(this.isrunning){
+            var idstr=id?( "id=" + id ): '';
             new Ajax.Request(url, {
-                parameters: "id=" + id + "&offset=" + offset
+                parameters: idstr + "&offset=" + offset
                     + ((this.tailmode && this.lastlines && this.truncateToTail && offset==0) ? "&lastlines=" + this.lastlines : "")
                     + "&maxlines="+this.lastlines
                     + this.extraParams ,
@@ -1142,6 +1149,7 @@ var FollowControl = Class.create({
 
 
         var tr = $(newtbod.insertRow(this.isAppendTop() ? 0 : -1));
+
         var iconcell = $(tr.insertCell(0));
         iconcell.setAttribute('id', 'ctxIcon' + ctxid);
         tr.addClassName('contextRow');
@@ -1305,7 +1313,7 @@ var FollowControl = Class.create({
         }
     },
     clearCmdOutput: function() {
-        $('commandPerform').innerHTML = '';
+        $(this.parentElement).innerHTML = '';
         this.cmdoutputtbl = null;
         this.cmdoutspinner = null;
         this.runningcmd = null;
@@ -1316,11 +1324,11 @@ var FollowControl = Class.create({
         $(d2).setAttribute("id", "cmdoutputerror");
         $(d2).hide();
 
-        $('commandPerform').appendChild(d2);
+        $(this.parentElement).appendChild(d2);
     },
     beginExecution: function() {
         this.clearCmdOutput();
-        $('commandPerform').show();
+        $(this.parentElement).show();
 
         this.displayCompletion(0);
         if ($('progressContainer')) {

@@ -15,4 +15,7 @@
             </div>
         </g:each>
     </div>
+
+    <div class="wfnodeoutput " data-bind-attr="data-node:nodename" data-node="${node}" style="display: none">
+    </div>
 </div>

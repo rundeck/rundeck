@@ -54,6 +54,7 @@
         });
 
         var followControl = new FollowControl('${execution?.id}','outputappendform',{
+            parentElement:'commandPerform',
             workflow:workflow,
             appLinks:appLinks,
             iconUrl: "${resource(dir: 'images', file: 'icon-small')}",
@@ -467,16 +468,16 @@
                                 %{--<g:render template="wfstateStepModelDisplay" bean="${workflowState}" var="workflowState"/>--}%
                             %{--</div>--}%
 
-                            <div class="row">
-                                <div class="col-sm-12">
-                                    <pre id="flowstate_output"></pre>
-                                </div>
-                            </div>
-                            <div class="row row-space">
-                                <div class="col-sm-12" id="flowstate_log">
+                            %{--<div class="row">--}%
+                                %{--<div class="col-sm-12">--}%
+                                    %{--<pre id="flowstate_output"></pre>--}%
+                                %{--</div>--}%
+                            %{--</div>--}%
+                            %{--<div class="row row-space">--}%
+                                %{--<div class="col-sm-12" id="flowstate_log">--}%
 
-                                </div>
-                            </div>
+                                %{--</div>--}%
+                            %{--</div>--}%
 
                         </g:if>
                     </div>
