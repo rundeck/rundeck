@@ -188,8 +188,7 @@
     }
   }
 
-  .wfstepstate {
-
+  .wfstepstate, .wfnodestate {
     .stepctx {
       width: 2em;
       display: inline-block;
@@ -207,6 +206,13 @@
       }
       .nodestatesummary{
         display: block;
+      }
+    }
+  }
+  .wfnodestate{
+    .wfnodestep{
+      .nodectx{
+        visibility: hidden;
       }
     }
   }

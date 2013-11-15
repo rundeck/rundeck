@@ -154,24 +154,30 @@ var NodeFlow=Class.create({
         );
     },
     stepStateForCtx: function(model,stepctx){
-        var split = stepctx.split('/',2);
-        var ndx=parseInt(split[0])-1;
+        var a,b;
+        var s = stepctx.indexOf("/");
+        if (s > 0) {
+            a = stepctx.substr(0, s);
+            b = stepctx.substr(s + 1);
+        }else{
+            a=stepctx;
+            b=null;
+        }
+        var ndx=parseInt(a)-1;
         var step = model.steps[ndx];
-        if(split.length>1 && split[1] && step.workflow){
-            return this.stepStateForCtx(step.workflow,split[1]);
+        if(b && step.workflow){
+            return this.stepStateForCtx(step.workflow,b);
         }else{
             return step;
         }
     },
     updateNodeRowForStep: function(node,stepctx,step,elem){
-        $(elem).down('.stepctx').innerHTML = stepctx+".";
-//        $(elem).down('stepident').innerHTML = stepctx;
+        var data={nodename:node,stepctx:stepctx};
         var type = this.flow.workflow.contextType(stepctx);
-        $(elem).down('.stepident').innerHTML = '<i class="rdicon icon-small ' + type + '"></i> ' + this.flow.workflow.renderContextString(stepctx);
-        $(elem).down('.execstate').innerHTML = step.executionState;
-        $(elem).down('.execstart').innerHTML = step.startTime;
-        $(elem).down('.execend').innerHTML = step.endTime;
-        $(elem).down('.execstate').setAttribute('data-execstate', step.executionState);
+        data['type']=type;
+        data['stepident'] =  this.flow.workflow.renderContextString(stepctx);
+        Object.extend(data,step);
+        this.flow.bindDom(elem,data);
     },
     /**
      * Return true if state B should be used instead of a
@@ -256,6 +262,53 @@ var FlowState = Class.create({
         this.withOrWithoutMatch(root,selector,func,
             null//this.logWarn.bind(this).curry("No match " + selector)
         );
+    },
+    /**
+     * Binds data values from an object to various parts of the dom.
+     * @param elem
+     * @param data
+     */
+    bindDom: function (elem, data) {
+        $(elem).select('[data-bind]').each(function (e) {
+            var attr = $(e).getAttribute('data-bind');
+            var val= data[attr];
+            var format = $(e).hasAttribute('data-bind-format')?$(e).getAttribute('data-bind-format'):null;
+            if(format){
+                var s = format.indexOf(":");
+                if(s>0){
+                    var a=format.substr(0,s);
+                    var b=format.substr(s+1);
+                    if(a=='moment'){
+                        var time = moment(val);
+                        val = time.format(b);
+                    }
+                }
+            }
+            $(e).innerHTML = val;
+        });
+        $(elem).select('[data-bind-class]').each(function (e) {
+            var classname = $(e).getAttribute('data-bind-class');
+            var val = data[classname];
+            if ($(e).hasAttribute('data-bound-class')) {
+                var boundClass = $(e).getAttribute('data-bound-class');
+                $(e).removeClassName(boundClass);
+            } else {
+                $(e).setAttribute('data-bound-class', val);
+            }
+            $(e).addClassName(val);
+        });
+        $(elem).select('[data-bind-attr]').each(function (e) {
+            var val = $(e).getAttribute('data-bind-attr');
+            var arr = val.split(",");
+            for (var x = 0; x < arr.length; x++) {
+                var s = arr[x].indexOf(":");
+                if (s > 0) {
+                    var a = arr[x].substr(0, s);
+                    var b = arr[x].substr(s + 1);
+                    $(e).setAttribute(a, data[b]);
+                }
+            }
+        });
     },
     updateOutput: function (elem, data) {
         $(elem).innerHTML = '';

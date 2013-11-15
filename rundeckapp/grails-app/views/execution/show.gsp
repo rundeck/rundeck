@@ -25,6 +25,7 @@
 
       <g:set var="defaultLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.default}"/>
       <g:set var="maxLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.max}"/>
+      <g:javascript src="moment.min.js"/>
       <g:javascript src="executionControl.js"/>
       <g:javascript src="workflow.js"/>
       <g:javascript src="executionState.js"/>
