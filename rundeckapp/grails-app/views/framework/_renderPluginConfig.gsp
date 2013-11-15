@@ -35,9 +35,10 @@
     </div>
 </g:if>
 <div class="row ${description ? 'row-space' : ''}">
-    <g:set var="rkey" value="${g.rkey()}"/><g:if test="${includeFormFields && saved}">
-    <g:hiddenField name="${prefix}saved" value="true" class="wasSaved"/>
-</g:if>
+    <g:set var="rkey" value="${g.rkey()}"/>
+    <g:if test="${includeFormFields && saved}">
+        <g:hiddenField name="${prefix}saved" value="true" class="wasSaved"/>
+    </g:if>
     <g:hiddenField name="prefix" value="${prefix}"/>
     <g:hiddenField name="${prefix+'type'}" value="${type}"/>
     <div class="col-sm-12 form-horizontal">
