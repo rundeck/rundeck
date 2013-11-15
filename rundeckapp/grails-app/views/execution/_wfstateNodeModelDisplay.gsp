@@ -37,7 +37,14 @@
     State
 </div>
 </div>
-
+<div class=" wfnodestate" data-template="node" style="display: none;" data-bind-attr="data-node:nodename">
+    <div class="row row-space wfnodeoverall" data-template="overall" data-bind-attr="data-node:nodename">
+        <g:render template="wfstateNodeStepTemplate" model="[node:'']"/>
+    </div>
+    <div class="row wfnodestep" data-template="step" data-bind-attr="data-stepctx:stepctx" style="display: none;">
+        <g:render template="wfstateNodeStepTemplate" model="[node: '']"/>
+    </div>
+</div>
 <g:each in="${workflowState.allNodes}" var="node" status="i">
     <g:render template="wfstateNodeDisplay" model="[node:node, workflowState: workflowState, i: i]"/>
 </g:each>

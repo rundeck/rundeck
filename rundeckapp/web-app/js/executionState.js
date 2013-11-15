@@ -142,13 +142,13 @@ var NodeFlow=Class.create({
         Object.extend(this, params);
     },
     withOverallNodeStateElem: function(node,func,wofunc){
-        this.flow.withOrWithoutMatch(this.targetElement, '.wfnodestate[data-node=' + node + '] [data-template=overall]',
+        this.flow.withOrWithoutMatch(this.targetElement, '.wfnodestate[data-node=' + node + '] .wfnodeoverall',
             func,
             wofunc
         );
     },
     withStepNodeStateElem: function(node,stepctx,func,wofunc){
-        this.flow.withOrWithoutMatch(this.targetElement, '.wfnodestate[data-node=' + node + '] [data-template=step][data-stepctx='+stepctx+']',
+        this.flow.withOrWithoutMatch(this.targetElement, '.wfnodestate[data-node=' + node + '] .wfnodestep[data-stepctx='+stepctx+']',
             func,
             wofunc
         );
@@ -206,13 +206,43 @@ var NodeFlow=Class.create({
         var lastFound=null;
         var lastFoundCtx=null;
         var count = nodestate.length;
+        var me=this;
+        this.withOverallNodeStateElem(node, null, function(){
+            //create node section
+            //clonetemplate
+            me.flow.withOrWithoutMatch(me.targetElement, '[data-template=node]',
+                function (elem) {
+                    var clone = $(elem).clone(true);
+                    clone.removeAttribute('data-template');
+                    $(me.targetElement).appendChild(clone);
+                    clone.setAttribute('data-node',node);
+                    me.flow.bindDom(clone,{nodename:node});
+                    $(clone).show();
+                },
+                null
+            );
+        });
         for (var i = 0; i < count; i++) {
             var stepstate = nodestate[i];
             var stepStateForCtx = this.stepStateForCtx(model, stepstate.stepctx);
             var found = stepStateForCtx.nodeStates[node];
             this.withStepNodeStateElem(node, stepstate.stepctx,
                 this.updateNodeRowForStep.bind(this).curry(node, stepstate.stepctx, found),
-                null);
+                function(){
+                    //clonetemplate
+                    me.flow.withOrWithoutMatch(me.targetElement, '[data-template=step]',
+                        function(elem){
+                            var clone=$(elem).clone(true);
+                            clone.removeAttribute('data-template');
+                            me.withOverallNodeStateElem(node, function(overall){
+                                $(overall).parentNode.appendChild(clone);
+                                me.updateNodeRowForStep(node,stepstate.stepctx,found,clone);
+                                $(clone).show();
+                            }, null);
+                        },
+                        null
+                    );
+                });
             if(!lastFound || this.stateCompare(lastFound.executionState, found.executionState)){
                 lastFound=found;
                 lastFoundCtx= stepstate.stepctx;
@@ -257,7 +287,7 @@ var FlowState = Class.create({
         var elem = $(root).down(selector);
         if (elem && null!=func && typeof(func)=='function') {
             func(elem);
-        } else if(null!=wofunc && typeof(wofunc=='function')){
+        } else if(!elem && null!=wofunc && typeof(wofunc=='function')){
             wofunc();
         }
     },
@@ -270,55 +300,87 @@ var FlowState = Class.create({
         );
     },
     /**
+     * Bind data to an element via the 'data-bind' attribute
+     * @param data
+     * @param e
+     */
+    bindElemData: function(data,e){
+        if(!$(e).hasAttribute('data-bind')){
+            return;
+        }
+        var attr = $(e).getAttribute('data-bind');
+        var val = data[attr];
+        var format = $(e).hasAttribute('data-bind-format') ? $(e).getAttribute('data-bind-format') : null;
+        if (format) {
+            var s = format.indexOf(":");
+            if (s > 0) {
+                var a = format.substr(0, s);
+                var b = format.substr(s + 1);
+                if (a == 'moment') {
+                    var time = moment(val);
+                    if (time.isValid()) {
+                        val = time.format(b);
+                    } else {
+                        val = '';
+                    }
+                }
+            }
+        }
+        $(e).innerHTML = typeof(val) != 'undefined' ? val : '';
+
+    },
+    /**
+     * Bind class attribute from the data based on the 'data-bind-class' attribute
+     * @param data
+     * @param e
+     */
+    bindElemClass: function (data,e) {
+        if(!$(e).hasAttribute('data-bind-class')){
+            return;
+        }
+        var classname = $(e).getAttribute('data-bind-class');
+        var val = data[classname];
+        if (typeof(val) == 'undefined') {
+            return;
+        }
+        if ($(e).hasAttribute('data-bound-class')) {
+            var boundClass = $(e).getAttribute('data-bound-class');
+            boundClass.split(' ').each(function(val){
+                $(e).removeClassName(val);
+            });
+        }
+        $(e).setAttribute('data-bound-class', val);
+        $(e).addClassName(val);
+    },
+    bindElemAttr: function (data,e) {
+        if(!$(e).hasAttribute('data-bind-attr')){
+            return;
+        }
+        var val = $(e).getAttribute('data-bind-attr');
+        var arr = val.split(",");
+        for (var x = 0; x < arr.length; x++) {
+            var s = arr[x].indexOf(":");
+            if (s > 0) {
+                var a = arr[x].substr(0, s);
+                var b = arr[x].substr(s + 1);
+                if (typeof(data[b]) != 'undefined') {
+                    $(e).setAttribute(a, data[b]);
+                }
+            }
+        }
+    },
+    /**
      * Binds data values from an object to various parts of the dom.
      * @param elem
      * @param data
      */
     bindDom: function (elem, data) {
-        $(elem).select('[data-bind]').each(function (e) {
-            var attr = $(e).getAttribute('data-bind');
-            var val= data[attr];
-            var format = $(e).hasAttribute('data-bind-format')?$(e).getAttribute('data-bind-format'):null;
-            if(format){
-                var s = format.indexOf(":");
-                if(s>0){
-                    var a=format.substr(0,s);
-                    var b=format.substr(s+1);
-                    if(a=='moment'){
-                        var time = moment(val);
-                        if(time.isValid()){
-                            val = time.format(b);
-                        }else{
-                            val='';
-                        }
-                    }
-                }
-            }
-            $(e).innerHTML = val;
-        });
-        $(elem).select('[data-bind-class]').each(function (e) {
-            var classname = $(e).getAttribute('data-bind-class');
-            var val = data[classname];
-            if ($(e).hasAttribute('data-bound-class')) {
-                var boundClass = $(e).getAttribute('data-bound-class');
-                $(e).removeClassName(boundClass);
-            } else {
-                $(e).setAttribute('data-bound-class', val);
-            }
-            $(e).addClassName(val);
-        });
-        $(elem).select('[data-bind-attr]').each(function (e) {
-            var val = $(e).getAttribute('data-bind-attr');
-            var arr = val.split(",");
-            for (var x = 0; x < arr.length; x++) {
-                var s = arr[x].indexOf(":");
-                if (s > 0) {
-                    var a = arr[x].substr(0, s);
-                    var b = arr[x].substr(s + 1);
-                    $(e).setAttribute(a, data[b]);
-                }
-            }
-        });
+        this.bindElemData(data,elem);
+        this.bindElemClass(data,elem);
+        this.bindElemAttr(data,elem);
+        $(elem).select('[data-bind]').each(this.bindElemData.bind(this).curry(data));
+        $(elem).select('[data-bind-class]').each(this.bindElemClass.bind(this).curry(data));
+        $(elem).select('[data-bind-attr]').each(this.bindElemAttr.bind(this).curry(data));
     },
     updateOutput: function (elem, data) {
         $(elem).innerHTML = '';

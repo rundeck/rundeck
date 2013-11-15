@@ -8,7 +8,7 @@
     <span class="stepctx"><span class="subctx" data-bind="substepctx"></span><span
             data-bind="mainstepctx">${ident?.context.collect { it.step }.join("/")}</span>.</span>
     <span class="stepident">
-        <i class="rdicon icon-small " data-bind-class="type"></i>
+        <i class="rdicon icon-small" data-bind-class="type"></i>
         <span data-bind="stepident"></span>
     </span>
 </div>
