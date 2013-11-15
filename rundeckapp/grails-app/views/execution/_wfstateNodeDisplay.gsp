@@ -7,10 +7,12 @@
         <g:render template="wfstateNodeStepTemplate" model="[node:node,state:laststate,ident:lastident]"/>
     </div>
     %{--step specific info for node--}%
-    <g:each in="${nodestate?.stepStateMap.keySet().sort()}" var="ident">
-        <g:set var="state" value="${nodestate.stepStateMap[ident]}"/>
-        <div class="row wfnodestep" data-stepctx="${ident.context.collect { it.step }.join("/")}">
-            <g:render template="wfstateNodeStepTemplate" model="[node: node, state: state, ident: ident]"/>
-        </div>
-    </g:each>
+    <div class="wfnodesteps collapse">
+        <g:each in="${nodestate?.stepStateMap.keySet().sort()}" var="ident">
+            <g:set var="state" value="${nodestate.stepStateMap[ident]}"/>
+            <div class="row wfnodestep " data-stepctx="${ident.context.collect { it.step }.join("/")}">
+                <g:render template="wfstateNodeStepTemplate" model="[node: node, state: state, ident: ident]"/>
+            </div>
+        </g:each>
+    </div>
 </div>

@@ -160,7 +160,7 @@ var NodeFlow=Class.create({
      */
     findNodeRowStepPeer: function (parent, stepctx) {
         var me = this;
-        return parent.select('[data-stepctx]').detect(function (e) {
+        return $(parent).select('.wfnodestep[data-stepctx]').detect(function (e) {
             var ctx2 = $(e).getAttribute('data-stepctx');
             var compareStepCtx = me.flow.compareStepCtx(stepctx, ctx2);
             return compareStepCtx<0;
@@ -184,6 +184,12 @@ var NodeFlow=Class.create({
             return step;
         }
     },
+    zeroNumber:function(num){
+        if(num<10){
+            return '0'+num;
+        }
+        return num;
+    },
     updateNodeRowForStep: function(node,stepctx,step,elem){
         var data={nodename:node,stepctx:stepctx};
         var type = this.flow.workflow.contextType(stepctx);
@@ -192,7 +198,9 @@ var NodeFlow=Class.create({
         data['substepctx']=stepctx.indexOf("/")>0?stepctx.substring(0,stepctx.lastIndexOf("/")+1):'';
         data['mainstepctx']= stepctx.indexOf("/") > 0 ? stepctx.substring(stepctx.lastIndexOf("/")+1) : stepctx;
         if(step.endTime && step.startTime){
-            data['duration']=moment.duration(moment(step.endTime).diff(moment(step.startTime))).humanize();
+            var duration = moment.duration(moment(step.endTime).diff(moment(step.startTime)));
+            data['duration']=duration.humanize();
+            data['duration']=duration.hours()+'.'+this.zeroNumber(duration.minutes())+':'+this.zeroNumber(duration.seconds());
 //            data['duration']=moment(step.endTime).from(moment(step.startTime));
         }
         Object.extend(data,step);
@@ -227,7 +235,7 @@ var NodeFlow=Class.create({
                 function (elem) {
                     var clone = $(elem).clone(true);
                     clone.removeAttribute('data-template');
-                    $(me.targetElement).appendChild(clone);
+                    $(elem).parentNode.appendChild(clone);
                     me.flow.bindDom(clone,{nodename:node});
                     $(clone).show();
                 },
@@ -246,16 +254,17 @@ var NodeFlow=Class.create({
                         function(elem){
                             var clone=$(elem).clone(true);
                             clone.removeAttribute('data-template');
-                            me.withOverallNodeStateElem(node, function(overall){
-                                var peer = me.findNodeRowStepPeer($(overall).parentNode,stepstate.stepctx);
+                            me.withOverallNodeStateElem(node,  function (overall) {
+                                var loc=$(overall).parentNode.down('.wfnodesteps');
+                                var peer = me.findNodeRowStepPeer(loc,stepstate.stepctx);
                                 if(!peer){
-                                    $(overall).parentNode.appendChild(clone);
+                                    $(loc).appendChild(clone);
                                 }else{
                                     $(peer).insert({before:clone});
                                 }
                                 me.updateNodeRowForStep(node,stepstate.stepctx,found,clone);
                                 $(clone).show();
-                            }, null);
+                            },null);
                         },
                         null
                     );
