@@ -16,6 +16,28 @@
 
 <%@ page import="com.dtolabs.rundeck.core.execution.workflow.state.ExecutionState" %>
 
+<div class="row">
+<div class="col-sm-3 ">
+    <span class="pull-right">Node</span>
+</div>
+
+<div class="col-sm-3">
+    Step
+</div>
+
+<div class="col-sm-2">
+    Start time
+</div>
+
+<div class="col-sm-2">
+    Duration
+</div>
+
+<div class="col-sm-2">
+    State
+</div>
+</div>
+
 <g:each in="${workflowState.allNodes}" var="node" status="i">
     <g:render template="wfstateNodeDisplay" model="[node:node, workflowState: workflowState, i: i]"/>
 </g:each>

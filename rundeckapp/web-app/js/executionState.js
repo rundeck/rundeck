@@ -176,6 +176,12 @@ var NodeFlow=Class.create({
         var type = this.flow.workflow.contextType(stepctx);
         data['type']=type;
         data['stepident'] =  this.flow.workflow.renderContextString(stepctx);
+        data['substepctx']=stepctx.indexOf("/")>0?stepctx.substring(0,stepctx.lastIndexOf("/")+1):'';
+        data['mainstepctx']= stepctx.indexOf("/") > 0 ? stepctx.substring(stepctx.lastIndexOf("/")+1) : stepctx;
+        if(step.endTime && step.startTime){
+            data['duration']=moment.duration(moment(step.endTime).diff(moment(step.startTime))).humanize();
+//            data['duration']=moment(step.endTime).from(moment(step.startTime));
+        }
         Object.extend(data,step);
         this.flow.bindDom(elem,data);
     },
@@ -280,7 +286,11 @@ var FlowState = Class.create({
                     var b=format.substr(s+1);
                     if(a=='moment'){
                         var time = moment(val);
-                        val = time.format(b);
+                        if(time.isValid()){
+                            val = time.format(b);
+                        }else{
+                            val='';
+                        }
                     }
                 }
             }
