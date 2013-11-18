@@ -33,6 +33,9 @@ class RundeckLogFormatTest extends GroovyTestCase {
     void testBackslashEscape(){
         assertEquals("monkey \\^\\^\\^ blah \\\\ elf \\\\\\\\", RundeckLogFormat.backslashEscape("monkey ^^^ blah \\ elf \\\\",'^'))
     }
+    void testBackslashEscapeNull(){
+        assertEquals('', RundeckLogFormat.backslashEscape(null,'^'))
+    }
     void testBasic() {
         RundeckLogFormat format = new RundeckLogFormat()
         assertEquals("^text/x-rundeck-log-v2.0^", format.outputBegin())
@@ -67,6 +70,20 @@ class RundeckLogFormatTest extends GroovyTestCase {
         event.message = "test"
         event.metadata = ["aomething=": "=else", "best|as}df": "flif}|="]
         assertEquals("^2013-05-24T01:31:02Z|log|DEBUG|{aomething\\==\\=else|best\\|as\\}df=flif\\}\\|\\=}|test^",
+                format.outputEvent(event))
+    }
+    void testOutputEventBlankMeta() {
+        RundeckLogFormat format = new RundeckLogFormat()
+        event.message = "test"
+        event.metadata = ["a":"b",c:'']
+        assertEquals("^2013-05-24T01:31:02Z|log|DEBUG|{a=b|c=}|test^",
+                format.outputEvent(event))
+    }
+    void testOutputEventNullMeta() {
+        RundeckLogFormat format = new RundeckLogFormat()
+        event.message = "test"
+        event.metadata = ["a":"b",c:null]
+        assertEquals("^2013-05-24T01:31:02Z|log|DEBUG|{a=b}|test^",
                 format.outputEvent(event))
     }
 

@@ -81,6 +81,9 @@ class RundeckLogFormat implements OutputLogFormat, LineLogFormat {
             def sort = metadata.keySet().sort()
             for (int i = 0; i < sort.size(); i++) {
                 def key = sort[i]
+                if(null==metadata[key]){
+                    continue
+                }
                 if (i > 0) {
                     sb.append('|')
                 }
@@ -102,7 +105,7 @@ class RundeckLogFormat implements OutputLogFormat, LineLogFormat {
     }
 
     static String backslashEscape(String dMesg, String chars) {
-        dMesg.replaceAll('([\\\\' + chars + '])', '\\\\$1')
+        dMesg ? dMesg.replaceAll('([\\\\' + chars + '])', '\\\\$1') : ''
     }
 
     static class RDFormatItem implements LineLogFormat.FormatItem {
