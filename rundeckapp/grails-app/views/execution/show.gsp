@@ -95,6 +95,7 @@
             workflow:workflow,
             loadUrl: "${g.createLink(controller: 'execution', action: 'ajaxExecState', id: execution.id)}",
             outputUrl:"${g.createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id)}.json",
+            selectedOutputStatusId:'selectedoutputview',
             reloadInterval:1500
          });
          var stepState= new StepFlow(flowState,'flowstate');
@@ -412,7 +413,23 @@
                         </g:if>
                     </g:if>
                     </div>
-                    <div class="col-sm-8 runstatus" id="progressContainer"
+                    <div class="col-sm-4 " >
+                        <div id="selectedoutputview" style="display: none;" class="runoutput">
+                            <span class="text-info">Output:</span>
+                            <span class="nodectx isnode"
+                                  data-bind="nodename"
+                                  ></span>
+
+                            <span class="stepctx"><span class="subctx" data-bind="substepctx"></span><span
+                                    data-bind="mainstepctx"></span>.
+                            </span>
+                            <span class="stepident">
+                                <i class="rdicon icon-small" data-bind-class="type"></i>
+                                <span data-bind="stepident"></span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-sm-4 runstatus" id="progressContainer"
                          style="${wdgt.styleVisible(unless: execution.dateCompleted)}">
                         <g:set var="progressClass" value=""/>
                         <g:set var="innerContent" value=""/>
@@ -466,7 +483,7 @@
                             <div class="flowstate" id="nodeflowstate">
                                 <div class="row">
                                     <div class="col-sm-12">
-                                        <a class="btn btn-sm btn-default" href="#" data-toggle="collapse" data-target=".wfnodesteps">
+                                        <a class="btn btn-sm btn-default" href="#" data-toggle="collapse" data-target=".wfnodecollapse">
                                             Collapse
                                         </a>
                                     </div>

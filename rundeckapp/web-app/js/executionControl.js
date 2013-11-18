@@ -32,6 +32,7 @@ var FollowControl = Class.create({
     cmdoutputtbl: null,
     cmdoutspinner: null,
     runningcmd: null,
+    finishedExecutionAction: true,
     appendtop: {value: false,changed: false},
     collapseCtx: {value:true,changed:false},
     showFinalLine: {value:true,changed:false},
@@ -1346,6 +1347,9 @@ var FollowControl = Class.create({
     },
 
     finishedExecution: function(result) {
+        if(!this.finishedExecutionAction){
+            return;
+        }
         if ($('cmdoutspinner')) {
             $('cmdoutspinner').remove();
         }

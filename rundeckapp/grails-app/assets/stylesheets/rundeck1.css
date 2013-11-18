@@ -55,36 +55,6 @@ tr.header {
     font-weight: bold;
 }
 
-.actionButton a:active, .actionButton a:link, .actionButton a:visited, .actionButton a:hover {
-    font-weight: bold;
-}
-
-
-.action:hover, span.action:hover {
-    background: #e3edfa;
-    cursor: pointer;
-}
-
-a.action, a.textbtn, .action.textbtn, td.action.textbtn {
-    font-weight: normal;
-}
-
-.action.textbtn.ready {
-    text-decoration: underline;
-}
-
-.action {
-}
-
-.action.minor {
-}
-
-a.action:hover, span.action.textbtn:hover, td.action.textbtn:hover {
-    color: blue;
-    text-decoration: underline;
-}
-
-
 button.runbutton:hover, input[type='submit'].runbutton:hover {
     text-decoration: underline;
     background: #ccc;

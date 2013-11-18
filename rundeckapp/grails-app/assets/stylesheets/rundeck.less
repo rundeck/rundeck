@@ -213,16 +213,29 @@
     }
   }
   .wfnodestate{
-    .wfnodestep{
-      .nodectx{
-        visibility: hidden;
+    .wfnodesteps{
+      >.wfnodestep{
+        .nodectx{
+          visibility: hidden;
+        }
+      }
+      &.in{
+        >.wfnodestep.first{
+          .nodectx{
+            visibility: visible;
+          }
+        }
       }
     }
   }
-  .flowstate{
-    &.closed{
-      .wfnodestep{
-        display: none;
+
+  .executionshow{
+    .runoutput{
+      display: none;
+    }
+    &.affix{
+      .runoutput{
+        display: block;
       }
     }
   }
@@ -418,6 +431,17 @@
 .textbtn-info {
   .textbtn-variant(@brand-info,transparent,lighten(@brand-info, 40%));
 }
+
+//div or other block that has a bound action
+
+.action:hover {
+  background: @table-bg-hover;
+  cursor: pointer;
+}
+.action.active{
+  background: @table-bg-active;
+}
+
 
 .progress {
   height: @line-height-computed;
