@@ -55,6 +55,15 @@
 
         var followControl = new FollowControl('${execution?.id}','outputappendform',{
             parentElement:'commandPerform',
+            fileloadId:'fileload',
+            fileloadPctId:'fileloadpercent',
+            fileloadProgressId:'fileloadprogress',
+            viewoptionsCompleteId:'viewoptionscomplete',
+            cmdOutputErrorId:'cmdoutputerror',
+            outfileSizeId:'outfilesize',
+            progressContainerId:'progressContainer',
+            progressBarId:'progressBar',
+            execDurationPctId:'execDurationPct',
             workflow:workflow,
             appLinks:appLinks,
             iconUrl: "${resource(dir: 'images', file: 'icon-small')}",

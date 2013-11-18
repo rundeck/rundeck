@@ -19,6 +19,15 @@
 var FollowControl = Class.create({
     parentElement:null,
     executionId:null,
+    fileloadId:null,
+    fileloadPctId:null,
+    fileloadProgressId:null,
+    viewoptionsCompleteId:null,
+    cmdOutputErrorId:null,
+    outfileSizeId:null,
+    progressContainerId:null,
+    progressBarId:null,
+    execDurationPctId:null,
     targetElement:null,
     cmdoutputtbl: null,
     cmdoutspinner: null,
@@ -298,9 +307,9 @@ var FollowControl = Class.create({
         }
     },
     appendCmdOutputError: function (message) {
-        if ($('cmdoutputerror')) {
-            $("cmdoutputerror").innerHTML += message;
-            $("cmdoutputerror").show();
+        if ($(this.cmdOutputErrorId)) {
+            $(this.cmdOutputErrorId).innerHTML += message;
+            $(this.cmdOutputErrorId).show();
         }
     },
     _log: function(message) {
@@ -569,21 +578,21 @@ var FollowControl = Class.create({
         return tbl;
     },
     showLoading:function(message,percent){
-        if ($('fileload')) {
-            $('fileload').show();
-            $('fileloadpercent').innerHTML = (message!=null ? message : '');
-            if(percent!=null && $('fileloadprogress')){
-                $('fileloadprogress').show();
-                $('fileloadprogress').down('.progress-bar').style.width=percent+'%';
+        if (this.fileloadId && $(this.fileloadId)) {
+            $(this.fileloadId).show();
+            $(this.fileloadPctId).innerHTML = (message!=null ? message : '');
+            if(percent!=null && $(this.fileloadProgressId)){
+                $(this.fileloadProgressId).show();
+                $(this.fileloadProgressId).down('.progress-bar').style.width=percent+'%';
             }
             if(percent){
-                $('fileloadpercent').innerHTML = (message != null ? message : '')+percent+'%';
+                $(this.fileloadPctId).innerHTML = (message != null ? message : '')+percent+'%';
             }
         }
     },
     hideLoading:function(){
-        if ($('fileload')) {
-            $('fileload').hide();
+        if (this.fileloadId && $(this.fileloadId)) {
+            $(this.fileloadId).hide();
         }
     },
     appendCmdOutput: function(data) {
@@ -633,7 +642,7 @@ var FollowControl = Class.create({
                 //hide table header
                 $(this.cmdoutputtbl).hide();
             }
-            $('viewoptionscomplete').hide();
+            $(this.viewoptionsCompleteId).hide();
             return;
         }
 
@@ -674,14 +683,11 @@ var FollowControl = Class.create({
         if (this.runningcmd.completed && this.runningcmd.jobcompleted) {
             //halt timer
 
-            if ($('viewoptionscomplete') && null != data.totalSize) {
-                if ($('outfilesize')) {
-                    $('outfilesize').innerHTML = data.totalSize + " bytes";
+            if ($(this.viewoptionsCompleteId) && null != data.totalSize) {
+                if ($(this.outfileSizeId)) {
+                    $(this.outfileSizeId).innerHTML = data.totalSize + " bytes";
                 }
-                $('viewoptionscomplete').show();
-            }
-            if ($('taildelaycontrol')) {
-                $('taildelaycontrol').hide();
+                $(this.viewoptionsCompleteId).show();
             }
             this.finishDataOutput();
             this.finishedExecution(this.runningcmd.jobstatus);
@@ -698,8 +704,8 @@ var FollowControl = Class.create({
         }
         if (this.runningcmd.jobcompleted && !this.runningcmd.completed) {
             this.jobFinishStatus(this.runningcmd.jobstatus);
-            if ($('progressContainer')) {
-                $('progressContainer').hide();
+            if ($(this.progressContainerId)) {
+                $(this.progressContainerId).hide();
             }
             var message=null
             var percent=null;
@@ -720,14 +726,11 @@ var FollowControl = Class.create({
         }
         if (this.runningcmd.jobcompleted) {
 
-            if ($('viewoptionscomplete') && null != data.totalSize) {
-                if ($('outfilesize')) {
-                    $('outfilesize').innerHTML = data.totalSize + " bytes";
+            if (this.viewoptionsCompleteId && $(this.viewoptionsCompleteId) && null != data.totalSize) {
+                if ($(this.outfileSizeId)) {
+                    $(this.outfileSizeId).innerHTML = data.totalSize + " bytes";
                 }
-                $('viewoptionscomplete').show();
-            }
-            if ($('taildelaycontrol')) {
-                $('taildelaycontrol').hide();
+                $(this.viewoptionsCompleteId).show();
             }
         }
 
@@ -1331,8 +1334,8 @@ var FollowControl = Class.create({
         $(this.parentElement).show();
 
         this.displayCompletion(0);
-        if ($('progressContainer')) {
-            $('progressContainer').show();
+        if ($(this.progressContainerId)) {
+            $(this.progressContainerId).show();
         }
 //        this.setOutputAppendTop($F('outputappendtop') == "top");
 //        this.setOutputAutoscroll($F('outputautoscrolltrue') == "true");
@@ -1348,12 +1351,12 @@ var FollowControl = Class.create({
         }
         this.cmdoutspinner = null;
         this.isrunning = false;
-        if ($('progressContainer')) {
+        if ($(this.progressContainerId)) {
             this.displayCompletion(100);
-            $('progressContainer').hide();
+            $(this.progressContainerId).hide();
         }
-        if ($('fileload')) {
-            $('fileload').hide();
+        if (this.fileloadId && $(this.fileloadId)) {
+            $(this.fileloadId).hide();
         }
         if (this.runningcmd.failednodes && $$('.execRetry')) {
             $$('.execRetry').each(Element.show);
@@ -1485,22 +1488,22 @@ var FollowControl = Class.create({
         }
     },
     displayCompletion: function(pct) {
-        if ($('execDurationPct')) {
-            $('execDurationPct').innerHTML = pct + "%";
+        if ($(this.execDurationPctId)) {
+            $(this.execDurationPctId).innerHTML = pct + "%";
         }
 
-        if ($('progressBar')){
-            $('progressBar').style.width = (Math.floor(pct) +'%');
-            $('progressBar').innerHTML = (Math.floor(pct)) + "%";
+        if ($(this.progressBarId)){
+            $(this.progressBarId).style.width = (Math.floor(pct) +'%');
+            $(this.progressBarId).innerHTML = (Math.floor(pct)) + "%";
         }
     },
     displayIndefiniteCompletion: function() {
-        if ($('execDurationPct')) {
-            $('execDurationPct').innerHTML = "Running";
+        if ($(this.execDurationPctId)) {
+            $(this.execDurationPctId).innerHTML = "Running";
         }
 
-        if ($('progressBar')){
-            $('progressBar').innerHTML = "Running";
+        if ($(this.progressBarId)){
+            $(this.progressBarId).innerHTML = "Running";
         }
     }
 });
