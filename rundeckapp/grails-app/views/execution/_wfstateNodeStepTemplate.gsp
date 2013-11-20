@@ -35,9 +35,9 @@
         <span class="stepident execstate"
               data-bind="title:stepctxdesc"
               data-bind-attr="data-execstate:executionState">
+            <i class="auto-caret"></i>
             <i class="rdicon icon-small" data-bind-class="type"></i>
             <span data-bind="html:stepident"></span>
-            <i class="auto-caret"></i>
         </span>
     </g:else>
 </div>
@@ -51,13 +51,17 @@
 
 
 <div class="col-sm-2">
+    %{--<g:unless test="${overall}">--}%
     <span class="${overall ? 'wfnodecollapse ' : ''}">
     <span class="execstart info time" data-bind="startTime" data-bind-format="moment:h:mm:ss a"><g:formatDate date="${state?.startTime}"/></span>
     </span>
+    %{--</g:unless>--}%
 </div>
 
 <div class="col-sm-3">
-    <span class="${overall ? 'wfnodecollapse ' : ''}">
+    %{--<g:unless test="${overall}">--}%
+    <span class="">
     <span class="execend  info time" data-bind="duration" xdata-bind-format="moment:h:mm:ss a"><g:formatDate date="${state?.endTime}"/></span>
     </span>
+    %{--</g:unless>--}%
 </div>
