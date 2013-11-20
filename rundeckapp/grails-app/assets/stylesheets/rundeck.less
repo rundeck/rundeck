@@ -230,9 +230,18 @@
     }
   }
   .wfnodestate{
+    border: 1px solid transparent;
+    .border-bottom-radius(@border-radius-base);
+    .border-top-radius(@border-radius-base);
+    .border-right-radius(@border-radius-base);
+    .border-left-radius(@border-radius-base);
     .wfnodeoutput{
       max-height: 500px;
       overflow: auto;
+      margin-top: 10px;
+      table.execouput{
+        width: auto IMPORTANT!;
+      }
     }
     .wfnodeoverall .nodectx{
     }
@@ -246,12 +255,18 @@
       .text-overflow();
     }
     .wfnodestep{
+      border: 1px solid transparent;
+      .border-bottom-radius(@border-radius-base);
+      .border-top-radius(@border-radius-base);
+      .border-right-radius(@border-radius-base);
+      .border-left-radius(@border-radius-base);
+      margin: 4px 0;
       .closed {
         display: none;
       }
     }
     .wfnodestep.open{
-      border: 1px solid @legend-border-color;
+      border: 1px solid darken(@legend-border-color,10%);
       .closed {
         display: block;
       }
