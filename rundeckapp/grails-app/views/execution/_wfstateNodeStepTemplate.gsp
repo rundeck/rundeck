@@ -43,19 +43,21 @@
 </div>
 
 <div class="col-sm-2">
+<g:unless test="${overall}">
     <span class="execstate isnode execstatedisplay"
           data-bind="title:executionState"
           data-bind-attr="data-execstate:executionState"
           data-execstate="${state?.executionState}"></span>
+    </g:unless>
 </div>
 
 
 <div class="col-sm-2">
-    %{--<g:unless test="${overall}">--}%
+    <g:unless test="${overall}">
     <span class="${overall ? 'wfnodecollapse ' : ''}">
     <span class="execstart info time" data-bind="startTime" data-bind-format="moment:h:mm:ss a"><g:formatDate date="${state?.startTime}"/></span>
     </span>
-    %{--</g:unless>--}%
+    </g:unless>
 </div>
 
 <div class="col-sm-3">
