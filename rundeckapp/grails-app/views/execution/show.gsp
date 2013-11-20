@@ -105,7 +105,7 @@
                     var node=elem.getAttribute('data-node');
                     var sel = '.wfnodestate[data-node='+node+'] .wfnodecollapse';
                     $(flow.targetElement).select(sel).each(Element.toggle);
-                    if(!$(flow.targetElement).down(sel).visible()){
+                    if($(flow.targetElement).down(sel).visible()){
                         $(elem).up('.wfnodestate').addClassName('open');
                         $(elem).addClassName('auto-caret-container');
                         $(elem).addClassName('active');
