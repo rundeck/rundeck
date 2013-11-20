@@ -36,7 +36,8 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-sm-offset-3 col-sm-9 wfnodeoutput" data-bind-attr="data-node:nodename,data-stepctx:stepctx">
+                    <div class="col-sm-offset-3 col-sm-9 wfnodeoutput" data-bind-attr="data-node:nodename,data-stepctx:stepctx"
+                         style="display: none">
                     </div>
                 </div>
             </div>
@@ -53,7 +54,7 @@
                         <g:render template="wfstateNodeStepTemplate" model="[node: node, state: state, ident: ident]"/>
                     </div>
                     <div class="row">
-                        <div class="col-sm-offset-3 col-sm-9 wfnodeoutput"  data-node="${node}" data-stepctx="${stepctx}">
+                        <div class="col-sm-offset-3 col-sm-9 wfnodeoutput"  data-node="${node}" data-stepctx="${stepctx}" style="display: none">
                         </div>
                     </div>
                 </div>
@@ -61,10 +62,11 @@
         </g:else>
     </div>
 
-    <div class="row">
+    %{--all output for the node--}%
+    %{--<div class="row">
         <div class="wfnodeoutput" data-bind-attr="data-node:nodename" data-node="${node}"
              style="display: none" data-stepctx="">
         </div>
-    </div>
+    </div>--}%
     </div>
 </div>
