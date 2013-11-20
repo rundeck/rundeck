@@ -21,20 +21,20 @@
     <span class="pull-right">Node</span>
 </div>
 
-<div class="col-sm-3">
+<div class="col-sm-2">
     Step
+</div>
+
+<div class="col-sm-2">
+    State
 </div>
 
 <div class="col-sm-2">
     Start time
 </div>
 
-<div class="col-sm-2">
+<div class="col-sm-3">
     Duration
-</div>
-
-<div class="col-sm-2">
-    State
 </div>
 </div>
 %{--<div class=" wfnodestate" data-template="node" style="display: none;" data-bind-attr="data-node:nodename">--}%

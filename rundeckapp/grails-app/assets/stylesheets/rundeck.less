@@ -76,6 +76,18 @@
     .glyphicon();
     .glyphicon-chevron-right();
   }
+  .auto-caret-container{
+    .auto-caret, .auto-caret-left {
+      .glyphicon();
+      .glyphicon-chevron-down();
+    }
+  }
+  .active{
+    > .auto-caret, .auto-caret-left {
+      .glyphicon();
+      .glyphicon-chevron-down();
+    }
+  }
   .auto-caret-left{
     .glyphicon();
     .glyphicon-chevron-left();
@@ -144,31 +156,7 @@
     }
 
     &.isnode{
-      &[data-execstate=NODE_MIXED]:after {
-        content: ' ~';
-      }
 
-      &[data-execstate=SUCCEEDED]:after {
-        content: ' √';
-      }
-
-      &[data-execstate=NODE_PARTIAL_SUCCEEDED]:after {
-        content: ' *';
-      }
-
-
-      &[data-execstate=FAILED]:after {
-        content: ' -';
-      }
-
-
-      &[data-execstate=WAITING]:after {
-        content: ' …';
-      }
-
-      &[data-execstate=NOT_STARTED]:after {
-        content: ' •';
-      }
     }
     &.step{
       &[data-execstate=SUCCEEDED] {
@@ -213,19 +201,21 @@
     }
   }
   .wfnodestate{
-    .wfnodesteps{
-      >.wfnodestep{
-        .nodectx{
-          visibility: hidden;
-        }
-      }
-      &.in{
-        >.wfnodestep.first{
-          .nodectx{
-            visibility: visible;
-          }
-        }
-      }
+    .wfnodeoutput{
+      max-height: 500px;
+      overflow: auto;
+    }
+    .wfnodeoverall .nodectx{
+      text-align: right;
+    }
+    &.open{
+      border: 1px solid @legend-border-color;
+    }
+    + .wfnodestate{
+      margin-top: @padding-base-vertical;
+    }
+    .wfnodestep.open{
+      border: 1px solid @legend-border-color;
     }
   }
 
