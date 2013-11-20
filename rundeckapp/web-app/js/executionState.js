@@ -188,7 +188,16 @@ var NodeFlow=Class.create({
         }
         return num;
     },
-    updateNodeRowForStep: function(node,stepctx,step,elem){
+    durationData: function(duration){
+        var data={};
+        data['duration_moment'] = duration;
+        data['duration_ms'] = duration.asMilliseconds();
+        data['duration_humanized'] = duration.humanize();
+        data['duration'] = duration.hours() + '.' + this.zeroNumber(duration.minutes()) + ':' + this.zeroNumber(duration.seconds());
+//            data['duration']=moment(step.endTime).from(moment(step.startTime));
+        return data;
+    },
+    dataForNodeRowForStep: function(node,stepctx,step){
         var data={nodename:node,stepctx:stepctx};
         var type =null;
         if(stepctx){
@@ -201,11 +210,13 @@ var NodeFlow=Class.create({
         }
         if(step.endTime && step.startTime){
             var duration = moment.duration(moment(step.endTime).diff(moment(step.startTime)));
-            data['duration_humanized']=duration.humanize();
-            data['duration']=duration.hours()+'.'+this.zeroNumber(duration.minutes())+':'+this.zeroNumber(duration.seconds());
-//            data['duration']=moment(step.endTime).from(moment(step.startTime));
+            Object.extend(data,this.durationData(duration));
         }
-        Object.extend(data,step);
+        Object.extend(data, step);
+        return data;
+    },
+
+    updateNodeRowForStep: function (node, stepctx, data, elem) {
         this.flow.bindDom(elem,data,this);
     },
     /**
@@ -296,6 +307,10 @@ var NodeFlow=Class.create({
             summarydata.summary="No steps";
             summarydata.summaryState="NONE";
         }
+        if (summarydata.duration_ms_total) {
+            var duration = moment.duration(summarydata.duration_ms_total);
+            Object.extend(summarydata, this.durationData(duration));
+        }
         return summarydata;
     },
     updateNodeState: function(model,node,nodestate){
@@ -318,12 +333,14 @@ var NodeFlow=Class.create({
             NOT_STARTED:0,
             RUNNING:0,
             RUNNING_HANDLER:0,
-            other:0
+            other:0,
+            duration_ms_total:0
         }
         for (var i = 0; i < count; i++) {
             var stepstate = nodestate[i];
             var stepStateForCtx = this.stepStateForCtx(model, stepstate.stepctx);
             var found = stepStateForCtx.nodeStates[node];
+            found= me.dataForNodeRowForStep(node, stepstate.stepctx, found);
             ['SUCCEEDED','FAILED','WAITING','NOT_STARTED','RUNNING','RUNNING_HANDLER'].each(function(z){
                 if (null!=summarydata[z] && z==found.executionState) {
                     summarydata[z]++;
@@ -331,6 +348,7 @@ var NodeFlow=Class.create({
                     summarydata['other']++;
                 }
             });
+            summarydata.duration_ms_total+=found.duration_ms? found.duration_ms:0;
 
             this.withStepNodeStateElem(node, stepstate.stepctx,
                 function(elem){
@@ -362,7 +380,7 @@ var NodeFlow=Class.create({
             }
         }
         //define summary data
-        var summary=Object.extend(this.summarizeNodeData(summarydata),lastFound);
+        var summary=Object.extend(lastFound,this.summarizeNodeData(summarydata));
         this.withOverallNodeStateElem(node, this.updateNodeRowForStep.bind(this).curry(node, lastFoundCtx, summary), null);
     },
     updateNodes: function(model){
