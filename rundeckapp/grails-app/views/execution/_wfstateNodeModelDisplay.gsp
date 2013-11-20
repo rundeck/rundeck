@@ -17,8 +17,8 @@
 <%@ page import="com.dtolabs.rundeck.core.execution.workflow.state.ExecutionState" %>
 
 <div class="row">
-<div class="col-sm-3 ">
-    <span class="pull-right">Node</span>
+<div class="col-sm-3">
+    Node
 </div>
 
 <div class="col-sm-2">
@@ -37,19 +37,7 @@
     Duration
 </div>
 </div>
-%{--<div class=" wfnodestate" data-template="node" style="display: none;" data-bind-attr="data-node:nodename">--}%
-    %{--<div class="row row-space wfnodeoverall  action " data-bind-attr="data-node:nodename">--}%
-        %{--<g:render template="wfstateNodeStepTemplate" model="[node:'',overall:true]"/>--}%
-    %{--</div>--}%
-    %{--<div class="wfnodesteps wfnodecollapse collapse">--}%
-        %{--<div class="row wfnodestep action" data-template="step" data-bind-attr="data-stepctx:stepctx" style="display: none;">--}%
-            %{--<g:render template="wfstateNodeStepTemplate" model="[node: '']"/>--}%
-        %{--</div>--}%
-    %{--</div>--}%
 
-    %{--<div class="wfnodeoutput " data-bind-attr="data-node:nodename"  style="display: none">--}%
-    %{--</div>--}%
-%{--</div>--}%
 <g:render template="wfstateNodeDisplay" model="[node:'',template:'node']"/>
 <g:each in="${workflowState.allNodes}" var="node" status="i">
     <g:render template="wfstateNodeDisplay" model="[node:node, workflowState: workflowState, i: i]"/>

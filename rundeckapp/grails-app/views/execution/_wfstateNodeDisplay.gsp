@@ -27,11 +27,10 @@
     <div class="wfnodecollapse" style="display: none">
     <div class="wfnodesteps" >
         <g:if test="${template}">
-            <div data-template="step" style="display: none;" class="wfnodestep container" data-bind-attr="data-stepctx:stepctx">
-                <div class="row action"
+            <div data-template="step" style="display: none;" class="wfnodestep" data-bind-attr="data-stepctx:stepctx">
+                <div class="row"
                      data-bind-attr="data-node:nodename,data-stepctx:stepctx"
                      data-node="${node}"
-                     data-bind-action="stepoutput"
                 >
                     <g:render template="wfstateNodeStepTemplate" model="[node: '']"/>
                 </div>
@@ -47,11 +46,10 @@
                 <g:set var="state" value="${nodestate.stepStateMap[ident]}"/>
                 <g:set var="stepctx" value="${ident.context.collect { it.step }.join("/")}"/>
 
-                <div class="wfnodestep container" data-node="${node}" data-stepctx="${stepctx}">
-                    <div class="row action "
+                <div class="wfnodestep" data-node="${node}" data-stepctx="${stepctx}">
+                    <div class="row"
                          data-stepctx="${stepctx}"
-                         data-node="${node}"
-                         data-bind-action="stepoutput">
+                         data-node="${node}">
                         <g:render template="wfstateNodeStepTemplate" model="[node: node, state: state, ident: ident]"/>
                     </div>
                     <div class="row">
@@ -63,7 +61,7 @@
         </g:else>
     </div>
 
-    <div class="row  ">
+    <div class="row">
         <div class="wfnodeoutput" data-bind-attr="data-node:nodename" data-node="${node}"
              style="display: none" data-stepctx="">
         </div>

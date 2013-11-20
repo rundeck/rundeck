@@ -16,48 +16,48 @@
 
 <g:if test="${overall}">
 <div class="col-sm-3 action nodectx" data-bind-action="nodeexpand" data-bind-attr="data-node:nodename">
-    <div class="nodectx">
-        <span class="textbtn isnode execstate" data-bind="nodename" data-bind-attr="data-execstate:executionState">${node?.encodeAsHTML()}</span >
+    <div class="textbtn isnode execstate nodename" data-bind="title:nodename"
+         data-bind-attr="data-execstate:executionState">
         <i class="auto-caret"></i>
+        <span data-bind="nodename">${node?.encodeAsHTML()}</span>
     </div>
 </div>
 </g:if>
 
-<div class="col-sm-2 ${!overall?'col-sm-offset-3':''}">
-    <span class="${overall?'wfnodecollapse':''}">
-    <span class="stepident" data-bind="title:stepctxdesc">
-        <i class="rdicon icon-small" data-bind-class="type"></i>
-        <span data-bind="stepident"></span>
-    </span>
-        %{--<span class="stepctx"><span class="subctx" data-bind="substepctx"></span><span--}%
-                %{--data-bind="mainstepctx">${ident?.context.collect { it.step }.join("/")}</span>.</span>--}%
-
-    </span>
+<div class="col-sm-2 ${!overall?'col-sm-offset-3 action':''}" data-bind-action="stepoutput"
+     data-bind-attr="data-node:nodename,data-stepctx:stepctx">
     <g:if test="${overall}">
-        <div class="wfnodecollapse" style="display: none">
-            <a class="btn btn-xs btn-default" href="#"
-               data-bind-action="nodeoutput"
-               data-bind-attr="data-node:nodename">Output <i class="auto-caret"></i></a>
-        </div>
+        <span class="execstate" data-bind-attr="data-execstate:summaryState">
+            <span data-bind="summary"></span>
+        </span>
     </g:if>
+    <g:else>
+        <span class="stepident execstate"
+              data-bind="title:stepctxdesc"
+              data-bind-attr="data-execstate:executionState">
+            <i class="rdicon icon-small" data-bind-class="type"></i>
+            <span data-bind="html:stepident"></span>
+            <i class="auto-caret"></i>
+        </span>
+    </g:else>
 </div>
 
 <div class="col-sm-2">
     <span class="execstate isnode execstatedisplay"
-          data-bind="executionState"
+          data-bind="title:executionState"
           data-bind-attr="data-execstate:executionState"
-          data-execstate="${state?.executionState}">${state?.executionState}</span>
+          data-execstate="${state?.executionState}"></span>
 </div>
 
 
 <div class="col-sm-2">
-    <span class="${overall ? 'wfnodecollapse collapse in' : ''}">
+    <span class="${overall ? 'wfnodecollapse ' : ''}">
     <span class="execstart info time" data-bind="startTime" data-bind-format="moment:h:mm:ss a"><g:formatDate date="${state?.startTime}"/></span>
     </span>
 </div>
 
 <div class="col-sm-3">
-    <span class="${overall ? 'wfnodecollapse collapse in' : ''}">
+    <span class="${overall ? 'wfnodecollapse ' : ''}">
     <span class="execend  info time" data-bind="duration" xdata-bind-format="moment:h:mm:ss a"><g:formatDate date="${state?.endTime}"/></span>
     </span>
 </div>

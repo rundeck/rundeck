@@ -514,14 +514,7 @@
                             <a href="${g.createLink(controller: 'execution', action: 'ajaxExecState', id: execution.id)}">json</a>
 
                             <div class="flowstate" id="nodeflowstate">
-                                <div class="row">
-                                    <div class="col-sm-12">
-                                        <a class="btn btn-sm btn-default" href="#" data-toggle="collapse" data-target=".wfnodecollapse">
-                                            Collapse
-                                        </a>
-                                    </div>
-                                </div>
-                                <g:render template="wfstateNodeModelDisplay" bean="${workflowState}" var="workflowState"/>
+                               <g:render template="wfstateNodeModelDisplay" bean="${workflowState}" var="workflowState"/>
                             </div>
                             %{--<div class="flowstate" id="flowstate">--}%
                                 %{--<g:render template="wfstateStepModelDisplay" bean="${workflowState}" var="workflowState"/>--}%

@@ -201,7 +201,7 @@ var NodeFlow=Class.create({
         }
         if(step.endTime && step.startTime){
             var duration = moment.duration(moment(step.endTime).diff(moment(step.startTime)));
-            data['duration']=duration.humanize();
+            data['duration_humanized']=duration.humanize();
             data['duration']=duration.hours()+'.'+this.zeroNumber(duration.minutes())+':'+this.zeroNumber(duration.seconds());
 //            data['duration']=moment(step.endTime).from(moment(step.startTime));
         }
@@ -259,6 +259,45 @@ var NodeFlow=Class.create({
             return true;
         }
     },
+    pluralize:function(count,singular,plural){
+        return count==1?singular:null!=plural?plural:(singular+'s');
+    },
+    summarizeNodeData: function(summarydata){
+        if(summarydata.total>0){
+            if(summarydata.RUNNING>0){
+                summarydata.summary= "Running";
+                summarydata.summaryState= "RUNNING";
+            }else if(summarydata.RUNNING_HANDLER>0){
+                summarydata.summary= "Running";
+                summarydata.summaryState= "RUNNING_HANDLER";
+            }else if(summarydata.total==summarydata.SUCCEEDED){
+                summarydata.summary= "All Steps OK";
+                summarydata.summaryState= "SUCCEEDED";
+            }else if(summarydata.FAILED>0){
+                summarydata.summary = summarydata.FAILED + " "+this.pluralize(summarydata.FAILED,"Step")+" FAILED";
+                summarydata.summaryState = "FAILED";
+            }else if(summarydata.WAITING>0){
+                summarydata.summary = "Waiting to run "+ summarydata.WAITING+" "+ this.pluralize(summarydata.WAITING, "Step");
+                summarydata.summaryState = "WAITING"
+            } else if (summarydata.NOT_STARTED == summarydata.total) {
+                summarydata.summary = "No steps were run";
+                summarydata.summaryState = "NOT_STARTED";
+            } else if(summarydata.NOT_STARTED>0){
+                summarydata.summary = summarydata.NOT_STARTED+" "+ this.pluralize(summarydata.NOT_STARTED, "Step")+" not run";
+                summarydata.summaryState = "NOT_STARTED";
+            }else if (summarydata.SUCCEEDED > 0) {
+                summarydata.summary = (summarydata.total- summarydata.SUCCEEDED) +" did not succeed" ;
+                summarydata.summaryState = "PARTIAL_SUCCEEDED";
+            }else{
+                summarydata.summary = "No steps succeeded";
+                summarydata.summaryState = "NONE_SUCCEEDED";
+            }
+        }else{
+            summarydata.summary="No steps";
+            summarydata.summaryState="NONE";
+        }
+        return summarydata;
+    },
     updateNodeState: function(model,node,nodestate){
         var lastFound=null;
         var lastFoundCtx=null;
@@ -268,13 +307,31 @@ var NodeFlow=Class.create({
             //create node section
             //clonetemplate
             var clone = me.flow.template(me.targetElement,'node');
-            me.flow.bindDom(clone,{nodename:node});
+            me.flow.bindDom(clone,{nodename:node},me);
             $(clone).show();
         });
+        var summarydata={
+            total:count,
+            SUCCEEDED:0,
+            FAILED:0,
+            WAITING:0,
+            NOT_STARTED:0,
+            RUNNING:0,
+            RUNNING_HANDLER:0,
+            other:0
+        }
         for (var i = 0; i < count; i++) {
             var stepstate = nodestate[i];
             var stepStateForCtx = this.stepStateForCtx(model, stepstate.stepctx);
             var found = stepStateForCtx.nodeStates[node];
+            ['SUCCEEDED','FAILED','WAITING','NOT_STARTED','RUNNING','RUNNING_HANDLER'].each(function(z){
+                if (null!=summarydata[z] && z==found.executionState) {
+                    summarydata[z]++;
+                } else{
+                    summarydata['other']++;
+                }
+            });
+
             this.withStepNodeStateElem(node, stepstate.stepctx,
                 function(elem){
                     me.updateNodeRowForStep(node, stepstate.stepctx, found,elem);
@@ -304,7 +361,9 @@ var NodeFlow=Class.create({
                 lastFoundCtx= stepstate.stepctx;
             }
         }
-        this.withOverallNodeStateElem(node, this.updateNodeRowForStep.bind(this).curry(node, lastFoundCtx, lastFound), null);
+        //define summary data
+        var summary=Object.extend(this.summarizeNodeData(summarydata),lastFound);
+        this.withOverallNodeStateElem(node, this.updateNodeRowForStep.bind(this).curry(node, lastFoundCtx, summary), null);
     },
     updateNodes: function(model){
         if(!model.nodes || !model.allNodes){
@@ -367,6 +426,19 @@ var FlowState = Class.create({
             return [str];
         }
     },
+    bindResolveData: function(data,key){
+        var valarr = this.splitFirst(key,'.');
+        if(valarr.length>1){
+            var result=data[valarr[0]];
+            if(typeof(result)=='object'){
+                return this.bindResolveData(result,valarr[1]);
+            }else{
+                return null;
+            }
+        }else{
+            return data[key]
+        }
+    },
     /**
      * Bind data to an element via the 'data-bind' attribute
      * @param data
@@ -381,13 +453,13 @@ var FlowState = Class.create({
         for(var x=0;x< s.length;x++){
             var t=s[x];
             var valarr=this.splitFirst(t,":");
-            var val = data[valarr.length>1?valarr[1]:valarr[0]];
+            var val = this.bindResolveData(data,valarr.length>1?valarr[1]:valarr[0]);
             var format = $(e).hasAttribute('data-bind-format') ? $(e).getAttribute('data-bind-format') : null;
             if (format) {
-                var s = format.indexOf(":");
-                if (s > 0) {
-                    var a = format.substr(0, s);
-                    var b = format.substr(s + 1);
+                var s2 = this.splitFirst(format, ":");
+                if (s2.length > 1) {
+                    var a = s2[0];
+                    var b = s2[1];
                     if (a == 'moment' && typeof(moment)=='function') {
                         var time = moment(val);
                         if (time.isValid()) {
@@ -399,11 +471,27 @@ var FlowState = Class.create({
                 }
             }
             var target=valarr.length>1?valarr[0]:'html';
-            var myval= typeof(val) != 'undefined' ? val : '';
+            var stringval= val;
+            if(typeof(val) == 'undefined'){
+                stringval='';
+            }else if(typeof(val)=='object'){
+                stringval=Object.toJSON(val);
+            }
             if(target=='title'){
-                $(e).setAttribute('title', myval);
+                $(e).setAttribute('title', stringval);
+            }else if(target=='template' && typeof(val)=='object'){
+                //apply each property as key/value to the template
+                var templ = $(e).hasAttribute('data-bind-template') ? $(e).getAttribute('data-bind-template') : null;
+                if(!templ){
+                    return;
+                }
+                for(var k in val){
+                    var clone=this.template($(e),templ);
+                    this.bindDom(clone,{key:k,value:val[k]},null);
+                    $(clone).show();
+                }
             }else{
-                $(e).innerHTML = myval;
+                $(e).innerHTML = stringval;
             }
         }
 
@@ -477,11 +565,15 @@ var FlowState = Class.create({
         this.bindElemData(data,elem);
         this.bindElemClass(data,elem);
         this.bindElemAttr(data,elem);
+        if(parent){
         this.bindElemAction(data,parent,elem);
+        }
         $(elem).select('[data-bind]').each(this.bindElemData.bind(this).curry(data));
         $(elem).select('[data-bind-class]').each(this.bindElemClass.bind(this).curry(data));
         $(elem).select('[data-bind-attr]').each(this.bindElemAttr.bind(this).curry(data));
+        if (parent) {
         $(elem).select('[data-bind-action]').each(this.bindElemAction.bind(this).curry(data,parent));
+        }
     },
     /**
      * Find a template node within the given node and return it
@@ -510,12 +602,12 @@ var FlowState = Class.create({
     /**
      * Create a clone of a template node, which has data-template=(template name), and attach it to the discovered parent node, which is
      * either the immediate parentNode, or an ancestor node with data-template-parent=(template name).
-     * @param elem target node containing the template node
+     * @param e target node containing the template node
      * @param templ name of the template
      * @returns cloned node, or null if the template was not found
      */
-    template: function(elem,templ){
-        var elem=this.templateNode(elem,templ);
+    template: function(e,templ){
+        var elem=this.templateNode(e,templ);
         if(!elem){
             return null;
         }

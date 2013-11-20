@@ -83,7 +83,11 @@
     }
   }
   .active{
-    > .auto-caret, .auto-caret-left {
+    > .auto-caret, > .auto-caret-left {
+      .glyphicon();
+      .glyphicon-chevron-down();
+    }
+    > * > .auto-caret, > * > .auto-caret-left {
       .glyphicon();
       .glyphicon-chevron-down();
     }
@@ -155,9 +159,7 @@
       color: lightgray;
     }
 
-    &.isnode{
 
-    }
     &.step{
       &[data-execstate=SUCCEEDED] {
         .glyphicon();
@@ -172,6 +174,33 @@
       &[data-execstate=FAILED] {
         .glyphicon();
         .glyphicon-remove-circle();
+      }
+    }
+  }
+  .wfnodestep .execstate.execstatedisplay{
+    &.isnode {
+      &[data-execstate=NODE_MIXED]:after {
+        content: 'Mixed';
+      }
+
+      &[data-execstate=SUCCEEDED]:after {
+        content: 'OK';
+      }
+
+      &[data-execstate=NODE_PARTIAL_SUCCEEDED]:after {
+        content: 'Partial';
+      }
+
+      &[data-execstate=FAILED]:after {
+        content: 'Failed';
+      }
+
+      &[data-execstate=WAITING]:after {
+        content: 'Waiting';
+      }
+
+      &[data-execstate=NOT_STARTED]:after {
+        content: 'Not Started';
       }
     }
   }
@@ -206,7 +235,6 @@
       overflow: auto;
     }
     .wfnodeoverall .nodectx{
-      text-align: right;
     }
     &.open{
       border: 1px solid @legend-border-color;
@@ -214,8 +242,19 @@
     + .wfnodestate{
       margin-top: @padding-base-vertical;
     }
+    .nodename{
+      .text-overflow();
+    }
+    .wfnodestep{
+      .closed {
+        display: none;
+      }
+    }
     .wfnodestep.open{
       border: 1px solid @legend-border-color;
+      .closed {
+        display: block;
+      }
     }
   }
 
