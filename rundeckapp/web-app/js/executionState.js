@@ -133,6 +133,7 @@ var StepFlow=Class.create({
 var NodeFlow=Class.create({
     flow: null,
     targetElement: null,
+    actions:null,
     initialize: function (flow, targetElement, params) {
         this.flow = flow;
         this.targetElement = targetElement;
@@ -196,6 +197,7 @@ var NodeFlow=Class.create({
             data['stepident'] =  this.flow.workflow.renderContextString(stepctx);
             data['substepctx']=stepctx.indexOf("/")>0?stepctx.substring(0,stepctx.lastIndexOf("/")+1):'';
             data['mainstepctx']= stepctx.indexOf("/") > 0 ? stepctx.substring(stepctx.lastIndexOf("/")+1) : stepctx;
+            data['stepctxdesc']="Workflow Step: "+stepctx;
         }
         if(step.endTime && step.startTime){
             var duration = moment.duration(moment(step.endTime).diff(moment(step.startTime)));
@@ -204,7 +206,7 @@ var NodeFlow=Class.create({
 //            data['duration']=moment(step.endTime).from(moment(step.startTime));
         }
         Object.extend(data,step);
-        this.flow.bindDom(elem,data);
+        this.flow.bindDom(elem,data,this);
     },
     /**
      * Return true if state B should be used instead of a
@@ -223,31 +225,38 @@ var NodeFlow=Class.create({
         }
         return cb>ca;
     },
-    bindOutputForCtxNode:function(elem,stepctx,node,data){
+    showOutputForNodeStep:function(elem,stepctx,node,data){
         var me=this;
-        //bind action on node name
-        if ($(elem).getAttribute('data-bound-click') != 'true') {
-            Event.observe(elem, 'click', function (evt) {
-                var sel= '.wfnodeoutput[data-node=' + node + ']';
-                if(stepctx){
-                    sel+='[data-stepctx='+stepctx+']';
-                }else{
-                    sel += '[data-stepctx=]';
-                }
-                var output = $(me.targetElement).down(sel);
-                $(me.targetElement).select('.wfnodeoutput').each(Element.hide);
-                if(me.flow.selectedElem==elem){
-                    //finish follow for elem.
-                     me.flow.stopShowingOutput();
-                }else{
-                    var ctrl=me.flow.showOutput(elem, output, stepctx, node);
-                    $(output).show();
-                    if (me.flow.selectedOutputStatusId) {
-                        me.updateNodeRowForStep(node, stepctx, data, me.flow.selectedOutputStatusId);
-                    }
-                }
-            });
-            $(elem).setAttribute('data-bound-click', 'true');
+        var sel = '.wfnodeoutput[data-node=' + node + ']';
+        if (stepctx) {
+            sel += '[data-stepctx=' + stepctx + ']';
+        } else {
+            sel += '[data-stepctx=]';
+        }
+        var output = $(me.targetElement).down(sel);
+        $(me.targetElement).select('.wfnodeoutput').each(Element.hide);
+        $(me.targetElement).select('.wfnodestep').each(function(elem){
+            $(elem).removeClassName('open');
+        });
+        if (me.flow.selectedElem == elem) {
+            if (!stepctx) {
+                //node view
+                $(output).up('.wfnodestate').select('.wfnodesteps').each(Element.show);
+            }
+            //finish follow for elem.
+            me.flow.stopShowingOutput();
+            return false;
+        } else {
+            var ctrl = me.flow.showOutput(elem, output, stepctx, node);
+            $(output).show();
+            if (me.flow.selectedOutputStatusId) {
+                me.updateNodeRowForStep(node, stepctx, data, me.flow.selectedOutputStatusId);
+            }
+            if (!stepctx) {
+                //node view
+                $(output).up('.wfnodestate').select('.wfnodesteps').each(Element.hide);
+            }
+            return true;
         }
     },
     updateNodeState: function(model,node,nodestate){
@@ -269,7 +278,6 @@ var NodeFlow=Class.create({
             this.withStepNodeStateElem(node, stepstate.stepctx,
                 function(elem){
                     me.updateNodeRowForStep(node, stepstate.stepctx, found,elem);
-                    me.bindOutputForCtxNode(elem, stepstate.stepctx, node,found);
                 },
                 function(){
                     //clonetemplate
@@ -282,16 +290,12 @@ var NodeFlow=Class.create({
                     me.withOverallNodeStateElem(node,  function (overall) {
                         var loc=$(overall).parentNode.down('.wfnodesteps');
                         var peer = me.findNodeRowStepPeer(loc,stepstate.stepctx);
-//                                if(!$(loc).down('.wfnodestep.first')){
-//                                    $(clone).addClassName('first');
-//                                }
                         if(!peer){
                             $(loc).appendChild(clone);
                         }else{
                             $(peer).insert({before:clone});
                         }
                         me.updateNodeRowForStep(node,stepstate.stepctx,found,clone);
-                        me.bindOutputForCtxNode(clone, stepstate.stepctx, node,found);
                         $(clone).show();
                     });
                 });
@@ -301,7 +305,6 @@ var NodeFlow=Class.create({
             }
         }
         this.withOverallNodeStateElem(node, this.updateNodeRowForStep.bind(this).curry(node, lastFoundCtx, lastFound), null);
-        this.withOverallNodeStateElem(node, function(elem){me.bindOutputForCtxNode(elem,null,node,lastFound);}, null);
     },
     updateNodes: function(model){
         if(!model.nodes || !model.allNodes){
@@ -354,6 +357,16 @@ var FlowState = Class.create({
             null//this.logWarn.bind(this).curry("No match " + selector)
         );
     },
+    splitFirst: function(str,char){
+        var s = str.indexOf(char);
+        if (s > 0) {
+            var a = str.substr(0, s);
+            var b = str.substr(s + 1);
+            return [a,b];
+        }else{
+            return [str];
+        }
+    },
     /**
      * Bind data to an element via the 'data-bind' attribute
      * @param data
@@ -364,24 +377,35 @@ var FlowState = Class.create({
             return;
         }
         var attr = $(e).getAttribute('data-bind');
-        var val = data[attr];
-        var format = $(e).hasAttribute('data-bind-format') ? $(e).getAttribute('data-bind-format') : null;
-        if (format) {
-            var s = format.indexOf(":");
-            if (s > 0) {
-                var a = format.substr(0, s);
-                var b = format.substr(s + 1);
-                if (a == 'moment' && typeof(moment)=='function') {
-                    var time = moment(val);
-                    if (time.isValid()) {
-                        val = time.format(b);
-                    } else {
-                        val = '';
+        var s = attr.split(',');
+        for(var x=0;x< s.length;x++){
+            var t=s[x];
+            var valarr=this.splitFirst(t,":");
+            var val = data[valarr.length>1?valarr[1]:valarr[0]];
+            var format = $(e).hasAttribute('data-bind-format') ? $(e).getAttribute('data-bind-format') : null;
+            if (format) {
+                var s = format.indexOf(":");
+                if (s > 0) {
+                    var a = format.substr(0, s);
+                    var b = format.substr(s + 1);
+                    if (a == 'moment' && typeof(moment)=='function') {
+                        var time = moment(val);
+                        if (time.isValid()) {
+                            val = time.format(b);
+                        } else {
+                            val = '';
+                        }
                     }
                 }
             }
+            var target=valarr.length>1?valarr[0]:'html';
+            var myval= typeof(val) != 'undefined' ? val : '';
+            if(target=='title'){
+                $(e).setAttribute('title', myval);
+            }else{
+                $(e).innerHTML = myval;
+            }
         }
-        $(e).innerHTML = typeof(val) != 'undefined' ? val : '';
 
     },
     /**
@@ -424,18 +448,40 @@ var FlowState = Class.create({
             }
         }
     },
+    bindElemAction: function (data,parent,e) {
+        if(!$(e).hasAttribute('data-bind-action')){
+            return;
+        }
+        var val = $(e).getAttribute('data-bind-action');
+        var action = parent.actions ? parent.actions[val] : null;
+        if (!action) {
+            return;
+        }
+        if (typeof(action) == 'function') {
+            //bind action on node name
+            if ($(e).getAttribute('data-bound-click') != 'true') {
+                Event.observe(e, 'click', function (evt) {
+                    action(parent,e,data);
+                });
+                $(e).setAttribute('data-bound-click','true')
+            }
+        }
+    },
     /**
      * Binds data values from an object to various parts of the dom.
      * @param elem
      * @param data
+     * @param parent parent object
      */
-    bindDom: function (elem, data) {
+    bindDom: function (elem, data,parent) {
         this.bindElemData(data,elem);
         this.bindElemClass(data,elem);
         this.bindElemAttr(data,elem);
+        this.bindElemAction(data,parent,elem);
         $(elem).select('[data-bind]').each(this.bindElemData.bind(this).curry(data));
         $(elem).select('[data-bind-class]').each(this.bindElemClass.bind(this).curry(data));
         $(elem).select('[data-bind-attr]').each(this.bindElemAttr.bind(this).curry(data));
+        $(elem).select('[data-bind-action]').each(this.bindElemAction.bind(this).curry(data,parent));
     },
     /**
      * Find a template node within the given node and return it
