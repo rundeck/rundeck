@@ -39,17 +39,13 @@
     </div>
 </div>
 
-%{--<g:render template="wfstateNodeDisplay2" model="[node: '', template: 'node']"/>--}%
-%{--<g:each in="${workflowState.allNodes}" var="node" status="i">--}%
-    %{--<g:render template="wfstateNodeDisplay2" model="[node: node, workflowState: workflowState, i: i]"/>--}%
-%{--</g:each>--}%
 
 
 <div data-bind="foreach: nodes">
 <div class=" wfnodestate " data-bind="css: { open: expanded() }">
-    <div class="row wfnodeoverall">
+    <div class="row wfnodeoverall action" data-bind="click: toggleExpand">
         <div class="col-sm-3  nodectx"
-             data-bind="attr: { title: name }, click: toggleExpand, css: { 'auto-caret-container': expanded() } ">
+             data-bind="attr: { title: name }, css: { 'auto-caret-container': expanded() } ">
             <div class="textbtn isnode execstate nodename action" data-bind="attr: { 'data-execstate': summaryState }, css: { active: expanded() }">
                 <i class="auto-caret"></i>
                 <span data-bind="text: name"></span>
@@ -62,7 +58,16 @@
                 </span>
         </div>
 
-        <div class="col-sm-3 col-sm-offset-4">
+        <div class="col-sm-4 ">
+            <div data-bind="with: currentStep(), visible: !expanded()">
+                <span class="stepident execstate"
+                      data-bind="attr: { 'data-execstate': executionState, title: stepctxdesc }">
+                    <i class="rdicon icon-small" data-bind="css: type"></i>
+                    <span data-bind="text: stepident"></span>
+                </span>
+            </div>
+        </div>
+        <div class="col-sm-3 ">
             <span class="execend  info time"
                   data-bind="text: durationSimple"
                   ></span>

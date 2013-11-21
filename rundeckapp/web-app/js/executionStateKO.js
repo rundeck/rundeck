@@ -65,6 +65,24 @@ function RDNodeStep(data, node, flow){
     });
     ko.mapping.fromJS(data, {}, this);
 }
+/**
+ * Return true if state B should be used instead of a
+ * @param a
+ * @param b
+ */
+RDNodeStep.stateCompare= function (a, b) {
+    if (a == b) {
+        return true;
+    }
+    var states = ['SUCCEEDED', 'NONE','NOT_STARTED', 'WAITING', 'FAILED', 'ABORTED', 'RUNNING', 'RUNNING_HANDLER'];
+    var ca = states.indexOf(a);
+    var cb = states.indexOf(b);
+    if (ca < 0) {
+        return true;
+    }
+    return cb > ca;
+};
+
 function RDNode(name, steps,flow){
     var self=this;
     self.flow= flow;
@@ -101,7 +119,9 @@ function RDNode(name, steps,flow){
     });
     self.summary=ko.observable();
     self.summaryState=ko.observable();
+    self.currentStep=ko.observable();
     self.summarize=function(){
+        var currentStep=null;
         var summarydata = {
             total: self.steps().length,
             SUCCEEDED: 0,
@@ -121,7 +141,12 @@ function RDNode(name, steps,flow){
                     summarydata['other']++;
                 }
             });
+            if (!currentStep && RDNodeStep.stateCompare('NONE', step.executionState())
+                || currentStep && RDNodeStep.stateCompare(currentStep.executionState(), step.executionState())) {
+                currentStep = step;
+            }
         });
+        self.currentStep(currentStep);
         if (summarydata.total > 0) {
             if (summarydata.RUNNING > 0) {
                 self.summary("Running");
