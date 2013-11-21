@@ -476,18 +476,12 @@
                     </g:if>
                     </div>
                     <div class="col-sm-4 " >
-                        <div id="selectedoutputview" style="display: none;" class="runoutput">
-                            <span class="text-info">Output:</span>
-                            <span class="nodectx isnode"
-                                  data-bind="nodename"
-                                  ></span>
-
-                            <span class="stepctx"><span class="subctx" data-bind="substepctx"></span><span
-                                    data-bind="mainstepctx"></span>.
-                            </span>
-                            <span class="stepident">
-                                <i class="rdicon icon-small" data-bind-class="type"></i>
-                                <span data-bind="stepident"></span>
+                        <div id="selectedoutputview"  class="runoutput" data-bind="with: followingStep()">
+                            <span class="nodectx isnode text-info" data-bind="text: node.name"></span>
+                            <span class="text-muted"><i class="glyphicon glyphicon-chevron-right"></i></span>
+                            <span class="stepident" data-bind="attr: { title: stepctxdesc }">
+                                <i class="rdicon icon-small" data-bind="css: type()"></i>
+                                <span data-bind="text: stepident()"></span>
                             </span>
                         </div>
                     </div>
