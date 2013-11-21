@@ -16,6 +16,7 @@
 
 <%@ page import="com.dtolabs.rundeck.core.execution.workflow.state.ExecutionState" %>
 
+<div class="container">
 <div class="row">
     <div class="col-sm-3">
         Node
@@ -45,11 +46,11 @@
 
 
 <div data-bind="foreach: nodes">
-<div class=" wfnodestate container" data-bind="css: { open: expanded() }">
+<div class=" wfnodestate " data-bind="css: { open: expanded() }">
     <div class="row wfnodeoverall">
-        <div class="col-sm-3 action nodectx"
-             data-bind="attr: { title: name }, click: toggleExpand, css: { 'auto-caret-container': expanded(), active: expanded() } ">
-            <div class="textbtn isnode execstate nodename" >
+        <div class="col-sm-3  nodectx"
+             data-bind="attr: { title: name }, click: toggleExpand, css: { 'auto-caret-container': expanded() } ">
+            <div class="textbtn isnode execstate nodename action" data-bind="attr: { 'data-execstate': summaryState }, css: { active: expanded() }">
                 <i class="auto-caret"></i>
                 <span data-bind="text: name"></span>
             </div>
@@ -61,16 +62,7 @@
                 </span>
         </div>
 
-        <div class="col-sm-2">
-
-        </div>
-
-
-        <div class="col-sm-2">
-
-        </div>
-
-        <div class="col-sm-3">
+        <div class="col-sm-3 col-sm-offset-4">
             <span class="execend  info time"
                   data-bind="text: durationSimple"
                   ></span>
@@ -126,5 +118,6 @@
         </div>
 
     </div>
+</div>
 </div>
 </div>
