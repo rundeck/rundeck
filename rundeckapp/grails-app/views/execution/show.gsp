@@ -1,4 +1,4 @@
-<%@ page import="rundeck.Execution; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
+<%@ page import="grails.util.Environment; rundeck.Execution; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 <html>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
@@ -29,6 +29,14 @@
       <g:javascript src="executionControl.js"/>
       <g:javascript src="workflow.js"/>
       <g:javascript src="executionState.js"/>
+      <g:if test="${grails.util.Environment.current==Environment.DEVELOPMENT}">
+            <g:javascript src="knockout-3.0.0.debug.js"/>
+      </g:if>
+      <g:else>
+          <g:javascript src="knockout-3.0.0-min.js"/>
+      </g:else>
+      <g:javascript src="knockout.mapping-latest.js"/>
+      <g:javascript src="executionStateKO.js"/>
       <g:javascript library="prototype/effects"/>
       <g:javascript>
         <g:if test="${scheduledExecution}">
@@ -133,12 +141,33 @@
                 }
             }
          });
+         var nodeflowvm=new NodeFlowViewModel(workflow);
 
         function init() {
             followControl.beginFollowingOutput('${execution?.id}');
 //            flowState.addUpdater(stepState);
-            flowState.addUpdater(nodeState);
+            flowState.addUpdater({updateState:function(model){
+                if(!model.nodes || !model.allNodes){
+                    return;
+                }
+
+                var count = model.allNodes.length;
+                for (var i = 0; i < count; i++) {
+                    var node = model.allNodes[i];
+                    var data=model.nodes[node];
+
+                    var nodesteps=nodeflowvm.extractNodeStepStates(node,data,model);
+                    var nodea=nodeflowvm.findNode(node);
+                    if(nodea){
+                        nodea.updateSteps(nodesteps);
+                    }else{
+                        nodeflowvm.addNode(node,nodesteps);
+                    }
+                }
+            }});
             flowState.beginFollowing();
+
+            ko.applyBindings(nodeflowvm);
             <g:if test="${!(grailsApplication.config.rundeck?.gui?.enableJobHoverInfo in ['false', false])}">
             $$('.obs_bubblepopup').each(function(e) {
                 new BubbleController(e,null,{offx:-14,offy:null}).startObserving();
@@ -513,8 +542,11 @@
                         <g:if test="${workflowState}">
                             <a href="${g.createLink(controller: 'execution', action: 'ajaxExecState', id: execution.id)}">json</a>
 
+                            %{--<div class="flowstate" id="nodeflowstate">--}%
+                               %{--<g:render template="wfstateNodeModelDisplay" bean="${workflowState}" var="workflowState"/>--}%
+                            %{--</div>--}%
                             <div class="flowstate" id="nodeflowstate">
-                               <g:render template="wfstateNodeModelDisplay" bean="${workflowState}" var="workflowState"/>
+                               <g:render template="wfstateNodeModelDisplay2" bean="${workflowState}" var="workflowState"/>
                             </div>
                             %{--<div class="flowstate" id="flowstate">--}%
                                 %{--<g:render template="wfstateStepModelDisplay" bean="${workflowState}" var="workflowState"/>--}%
