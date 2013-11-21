@@ -141,7 +141,7 @@
                 }
             }
          });
-         var nodeflowvm=new NodeFlowViewModel(workflow);
+         var nodeflowvm=new NodeFlowViewModel(workflow,"${g.createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id)}.json");
 
         function init() {
             followControl.beginFollowingOutput('${execution?.id}');

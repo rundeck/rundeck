@@ -14,12 +14,20 @@
  limitations under the License.
  */
 
-function RDNodeStep(data, flow){
+/**
+ * Represents a (node, stepctx) state.
+ * @param data state data object
+ * @param node RDNode object
+ * @param flow NodeFlowViewModel object
+ * @constructor
+ */
+function RDNodeStep(data, node, flow){
     var self = this;
+    self.node= node;
     self.flow= flow;
     self.stepctx=data.stepctx;
     self.type=ko.observable();
-    self.desc=ko.observable();
+    self.followingOutput=ko.observable(false);
     self.type=ko.computed(function(){
         return flow.workflow.contextType(self.stepctx);
     });
@@ -29,9 +37,15 @@ function RDNodeStep(data, flow){
     self.startTimeSimple=ko.computed(function(){
         return flow.formatTimeSimple(self.startTime());
     });
+    self.startTimeFormat=function(format){
+        return flow.formatTime(self.startTime(),format);
+    };
     self.endTimeSimple=ko.computed(function(){
         return flow.formatTimeSimple(self.endTime());
     });
+    self.endTimeFormat= function (format) {
+        return flow.formatTime(self.endTime(), format);
+    };
     self.duration=ko.computed(function(){
         if(self.endTime() && self.startTime()){
             return moment(self.endTime()).diff(moment(self.startTime()));
@@ -45,6 +59,9 @@ function RDNodeStep(data, flow){
             return '';
         }
         return flow.formatDurationSimple(ms);
+    });
+    self.stepctxdesc = ko.computed(function () {
+        return "Workflow Step: "+self.stepctx;
     });
     ko.mapping.fromJS(data, {}, this);
 }
@@ -61,7 +78,7 @@ function RDNode(name, steps,flow){
                 return ko.utils.unwrapObservable(data.stepctx);
             },
             create: function (options) {
-                return new RDNodeStep(options.data, flow);
+                return new RDNodeStep(options.data, self, flow);
             }
         }
     }
@@ -146,12 +163,70 @@ function RDNode(name, steps,flow){
     self.updateSteps(steps);
 }
 
-function NodeFlowViewModel(workflow){
+function NodeFlowViewModel(workflow,outputUrl){
     var self=this;
     self.workflow=workflow;
 
     self.nodes=ko.observableArray([
     ]);
+    self.followingStep=ko.observable();
+    self.followingControl=null;
+    self.followOutputUrl= outputUrl;
+    self.stopShowingOutput= function () {
+        if(self.followingControl){
+            self.followingControl.stopFollowingOutput();
+            self.followingControl=null;
+        }
+    };
+    self.showOutput= function (stepctx, node) {
+        var sel = '.wfnodeoutput[data-node=' + node + ']';
+        if (stepctx) {
+            sel += '[data-stepctx=' + stepctx + ']';
+        } else {
+            sel += '[data-stepctx=]';
+        }
+        var targetElement = $(document.body).down(sel);
+        if (!$(targetElement)) {
+            return null;
+        }
+        var params = {nodename: node};
+        if (stepctx) {
+            Object.extend(params, {stepctx: stepctx});
+        }
+        var ctrl = new FollowControl(null, null, {
+            parentElement: targetElement,
+            extraParams: '&' + Object.toQueryString(params),
+            appLinks: {tailExecutionOutput: self.followOutputUrl},
+            finishedExecutionAction: false
+        });
+        ctrl.workflow = self.workflow;
+        ctrl.setColNode(false);
+        ctrl.setColStep(null == stepctx);
+        ctrl.beginFollowingOutput();
+        return ctrl;
+    };
+
+    self.toggleOutputForNodeStep = function (nodestep) {
+        self.stopShowingOutput();
+        //toggle following output for selected nodestep
+        nodestep.followingOutput(!nodestep.followingOutput());
+        ko.utils.arrayForEach(self.nodes(), function (n) {
+            ko.utils.arrayForEach(n.steps(), function (step) {
+                //disable following for every other nodestep
+                if(step != nodestep){
+                    step.followingOutput(false);
+                }
+            });
+        });
+        if(nodestep.followingOutput()){
+            var ctrl = self.showOutput(nodestep.stepctx, nodestep.node.name);
+            self.followingStep(nodestep);
+            self.followingControl=ctrl;
+        }else{
+            self.followingStep(null);
+        }
+    };
+
     self.pluralize = function (count, singular, plural) {
         return count == 1 ? singular : null != plural ? plural : (singular + 's');
     };
@@ -185,14 +260,17 @@ function NodeFlowViewModel(workflow){
         }
         return newsteps;
     }
-    self.formatTimeSimple=function(text){
+    self.formatTime=function(text,format){
         var time = moment(text);
 
         if (time.isValid()) {
-            return time.format('h:mm:ss a');
+            return time.format(format);
         } else {
             return '';
         }
+    }
+    self.formatTimeSimple=function(text){
+        return self.formatTime(text,'h:mm:ss a');
     }
     self.formatDurationSimple=function(ms){
         var duration = moment.duration(ms);
