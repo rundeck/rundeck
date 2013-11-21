@@ -107,40 +107,7 @@
             reloadInterval:1500
          });
          var stepState= new StepFlow(flowState,'flowstate');
-         var nodeState= new NodeFlow(flowState,'nodeflowstate',{
-            actions:{
-                nodeexpand:function (flow,elem,data){
-                    var node=elem.getAttribute('data-node');
-                    var sel = '.wfnodestate[data-node='+node+'] .wfnodecollapse';
-                    $(flow.targetElement).select(sel).each(Element.toggle);
-                    if($(flow.targetElement).down(sel).visible()){
-                        $(elem).up('.wfnodestate').addClassName('open');
-                        $(elem).addClassName('auto-caret-container');
-                        $(elem).addClassName('active');
-                    }else{
-                        $(elem).up('.wfnodestate').removeClassName('open');
-                        $(elem).removeClassName('auto-caret-container');
-                        $(elem).removeClassName('active');
-                    }
-                },
-                nodeoutput:function(flow,elem,data){
-                    var node=elem.getAttribute('data-node');
-                    flow.showOutputForNodeStep(elem,null,node,data);
-                },
-                stepoutput:function(flow,elem,data){
-                    var node=elem.getAttribute('data-node');
-                    var stepctx=elem.getAttribute('data-stepctx');
-                    var result=flow.showOutputForNodeStep(elem,stepctx,node,data);
-                    if(result){
-                        //showing output
-                        $(elem).up('.wfnodestep').addClassName("open");
-                    }else{
-                        //hidden output
-                        $(elem).up('.wfnodestep').removeClassName("open");
-                    }
-                }
-            }
-         });
+         
          var nodeflowvm=new NodeFlowViewModel(workflow,"${g.createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id)}.json");
 
         function init() {
