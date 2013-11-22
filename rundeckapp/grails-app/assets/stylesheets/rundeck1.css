@@ -1123,7 +1123,7 @@ div.presentation {
     color: green;
 }
 
-.timenow, a.timenow, span.nowrunning {
+.timenow, a.timenow {
     color: green;
     font-weight: bold;
     font-style: italic;

@@ -131,22 +131,26 @@
   }
 
   //state display
-
+  .nowrunning{
+    color: darken(@brand-info, 10%);
+    font-weight: bold;
+    font-style: italic;
+  }
   .execstate{
 
     &[data-execstate=NODE_MIXED] {
       color: orange;
     }
     &[data-execstate=SUCCEEDED] {
-      color: gray;
+      color: @gray;
     }
 
     &[data-execstate=NODE_PARTIAL_SUCCEEDED] {
-      color: gray;
+      color: @gray;
     }
 
     &[data-execstate=RUNNING], .execstate[data-execstate=RUNNING_HANDLER] {
-      color: blue;
+      color: darken(@brand-info, 10%);
     }
     &[data-execstate=RUNNING_HANDLER] {
       border-bottom: 2px dotted orange;
@@ -156,7 +160,7 @@
       color: red;
     }
     &[data-execstate=WAITING], &[data-execstate=NOT_STARTED] {
-      color: lightgray;
+      color: @gray-darker;
     }
 
 
