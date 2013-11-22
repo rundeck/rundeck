@@ -17,7 +17,7 @@
 <%@ page import="com.dtolabs.rundeck.core.execution.workflow.state.ExecutionState" %>
 
 <div class="container">
-<div class="row">
+<div class="row text-muted row-space">
     <div class="col-sm-3">
         Node
     </div>
@@ -41,8 +41,9 @@
     <div class="row wfnodeoverall action" data-bind="click: toggleExpand">
         <div class="col-sm-3  nodectx"
              data-bind="attr: { title: name }, css: { 'auto-caret-container': expanded() } ">
-            <div class="textbtn  execstate nodename action" data-bind="attr: { 'data-execstate': summaryState }, css: { active: expanded() }">
+            <div class="execstate nodename action" data-bind="attr: { 'data-execstate': summaryState }, css: { active: expanded() }">
                 <i class="auto-caret"></i>
+                <i class="rdicon icon-small node"></i>
                 <span data-bind="text: name"></span>
             </div>
         </div>
