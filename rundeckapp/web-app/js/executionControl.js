@@ -28,6 +28,7 @@ var FollowControl = Class.create({
     progressContainerId:null,
     progressBarId:null,
     execDurationPctId:null,
+    autoscroll:true,
     targetElement:null,
     cmdoutputtbl: null,
     cmdoutspinner: null,
@@ -600,7 +601,7 @@ var FollowControl = Class.create({
         var orig = data;
         var needsScroll = false;
         try{
-        if (!this.isAppendTop() && this.isAtBottom()) {
+        if (!this.isAppendTop() && this.isAtBottom() && this.autoscroll) {
             needsScroll = true;
         }
         if (typeof(data) == "string" && data == "") {

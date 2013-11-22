@@ -222,7 +222,8 @@ function NodeFlowViewModel(workflow,outputUrl){
             parentElement: targetElement,
             extraParams: '&' + Object.toQueryString(params),
             appLinks: {tailExecutionOutput: self.followOutputUrl},
-            finishedExecutionAction: false
+            finishedExecutionAction: false,
+            autoscroll:false
         });
         ctrl.workflow = self.workflow;
         ctrl.setColNode(false);
