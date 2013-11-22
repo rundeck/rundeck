@@ -120,13 +120,8 @@
 
     }
 
-    .embed .node_entry{
-        background: white url("${resource(dir:'images',file:'icon-small-Node.png')}") no-repeat 2px top;
-        padding-left: 20px;
-    }
     .embed .node_entry.glow{
-        background: #cfc url("${resource(dir:'images',file:'icon-small-Node.png')}") no-repeat 2px top;
-        padding-left: 20px;
+        background: #cfc ;
     }
 
     .expandComponentHolder.expanded  > div > span.expandComponentControl.jobgroupexpand span.foldertoggle {
@@ -140,11 +135,6 @@
         width: 16px;
         height:14px;
         display: inline-block;
-    }
-
-    table.execoutput span.node {
-        %{--background: url("${resource(dir:'images',file:'icon-small-Node.png')}") no-repeat 2px top;--}%
-        /*padding-left: 20px;*/
     }
 
     .rdicon{

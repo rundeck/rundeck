@@ -9,7 +9,7 @@
             <tr class="${i%2==1?'alternateRow':''} node_entry ">
                 <td class="objIdent" colspan="3">
                 <span class="node_ident" id="${node.nodename}_key">
-                    <img src="${resource(dir:'images',file:'icon-small-Node.png')}" alt="Node" width="16px" height="16px"/>
+                    <i class="rdicon node icon-small"></i>
                     ${resName}
                 </span>
                     <g:if test="${totalexecs[node.nodename]}">

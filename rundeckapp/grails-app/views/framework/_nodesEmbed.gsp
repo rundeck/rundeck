@@ -11,6 +11,7 @@
             <g:set var="resName" value="${node.nodename}"/>
             <g:set var="resHost" value="${node.hostname}"/>
             <span class="${i%2==1?'alternateRow':''} node_entry ${nodedata.islocal?'server':''} node_ident obs_tooltip" id="${node.nodename}_key" >
+                <i class="rdicon node icon-small"></i>
                 ${node.nodename.encodeAsHTML()}
             </span>
             <g:render template="nodeTooltipView" model="[node:node,key:node.nodename+'_key',islocal:nodedata.islocal]"/>

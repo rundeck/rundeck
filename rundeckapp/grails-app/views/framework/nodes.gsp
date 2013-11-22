@@ -616,9 +616,6 @@
             white-space:nowrap;
         }
 
-        .node_entry .project{
-
-        }
         #remoteEditholder{
             margin: 0px 20px 0 20px;
 

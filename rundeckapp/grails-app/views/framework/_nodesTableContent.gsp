@@ -34,14 +34,14 @@
                     <g:if test="${expanddetail||params.expanddetail}">
                         <g:expander key="${ukey+'node_detail_'+i}" imgfirst="true">
                         <span class="node_ident" id="${ukey}_${node.nodename}_key">
-                            <img src="${resource(dir:'images',file:'icon-small-Node.png')}" alt="Node" width="16px" height="16px"/>
+                            <i class="rdicon node icon-small"></i>
                             ${resName.encodeAsHTML()}
                         </span>
                         </g:expander>
                     </g:if>
                     <g:else>
                         <span class="node_ident" id="${ukey}_${node.nodename}_key">
-                            <img src="${resource(dir:'images',file:'icon-small-Node.png')}" alt="Node" width="16px" height="16px"/>
+                            <i class="rdicon node icon-small"></i>
                             ${resName.encodeAsHTML()}
                         </span>
                     </g:else>

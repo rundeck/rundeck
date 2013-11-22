@@ -1850,9 +1850,7 @@ div.nodesummary span.type {
 
 .matchednodes.embed .node_entry {
     white-space: nowrap;
-    padding-right: 2px;
-    padding-top: 1px;
-    padding-bottom: 1px;
+    padding: 1px 2px;
     margin: 2px;
     border: 1px solid #aaa;
     border-radius: 3px;
