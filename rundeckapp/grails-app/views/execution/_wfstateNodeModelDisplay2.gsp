@@ -22,38 +22,33 @@
         Node
     </div>
 
-    <div class="col-sm-2">
-        Step
-    </div>
 
-    <div class="col-sm-2">
-        State
-    </div>
 
-    <div class="col-sm-2">
+    <div class="col-sm-2 col-sm-offset-5">
         Start time
     </div>
 
-    <div class="col-sm-3">
+    <div class="col-sm-2">
         Duration
     </div>
+</div>
 </div>
 
 
 
 <div data-bind="foreach: nodes">
-<div class=" wfnodestate " data-bind="css: { open: expanded() }">
+<div class="wfnodestate container" data-bind="css: { open: expanded() }">
     <div class="row wfnodeoverall action" data-bind="click: toggleExpand">
         <div class="col-sm-3  nodectx"
              data-bind="attr: { title: name }, css: { 'auto-caret-container': expanded() } ">
-            <div class="textbtn isnode execstate nodename action" data-bind="attr: { 'data-execstate': summaryState }, css: { active: expanded() }">
+            <div class="textbtn  execstate nodename action" data-bind="attr: { 'data-execstate': summaryState }, css: { active: expanded() }">
                 <i class="auto-caret"></i>
                 <span data-bind="text: name"></span>
             </div>
         </div>
 
-        <div class="col-sm-2 " data-bind-action="stepoutput" data-bind-attr="data-node:nodename,data-stepctx:stepctx">
-                <span class="execstate" data-bind="attr: {'data-execstate': summaryState } ">
+        <div class="col-sm-3 " data-bind-action="stepoutput" data-bind-attr="data-node:nodename,data-stepctx:stepctx">
+                <span class="execstate isnode" data-bind="attr: {'data-execstate': summaryState } ">
                     <span data-bind="text: summary"></span>
                 </span>
         </div>
@@ -67,7 +62,7 @@
                 </span>
             </div>
         </div>
-        <div class="col-sm-3 ">
+        <div class="col-sm-2 ">
             <span class="execend  info time"
                   data-bind="text: durationSimple"
                   ></span>
@@ -75,12 +70,12 @@
 
     </div>
     %{--step specific info for node--}%
-    <div class="wfnodecollapse" data-bind="visible: expanded" >
-        <div class="wfnodesteps" data-bind="foreach: steps">
+    <div class="row" data-bind="visible: expanded" >
+        <div class="col-sm-12 wfnodesteps" data-bind="foreach: steps">
 
-            <div class="wfnodestep" data-bind="css: { open: followingOutput() }">
-                <div class="row">
-                    <div class="col-sm-2 col-sm-offset-3 action" data-bind="click: $root.toggleOutputForNodeStep, css: { 'auto-caret-container': followingOutput(), active: followingOutput() } ">
+            <div class="container wfnodestep" data-bind="css: { open: followingOutput() }">
+                <div class="row action" data-bind="click: $root.toggleOutputForNodeStep">
+                    <div class="col-sm-3  action" data-bind="css: { 'auto-caret-container': followingOutput(), active: followingOutput() } ">
                         <span class="stepident execstate"
                               data-bind="attr: { 'data-execstate': executionState, title: stepctxdesc }">
                             <i class="auto-caret"></i>
@@ -90,29 +85,26 @@
                     </div>
 
                     <div class=" col-sm-2">
-                        <span class="execstate execstatedisplay isnode" data-bind="attr: { 'data-execstate': executionState }"></span>
+                        <span class="execstate execstatedisplay " data-bind="attr: { 'data-execstate': executionState }"></span>
                     </div>
 
 
-                    <div class="col-sm-2">
+                    <div class="col-sm-2 col-sm-offset-3">
                         <span class="execstart info time" data-bind="text: startTimeFormat('h:mm:ss a')"></span>
                     </div>
 
-                    <div class="col-sm-3">
+                    <div class="col-sm-2">
                         <span class="execend  info time" data-bind="text: durationSimple()"></span>
                     </div>
 
                 </div>
 
-                <div class="row">
-                    <div class="col-sm-offset-3 col-sm-9 wfnodeoutput" data-bind="visible: followingOutput, attr: { 'data-node': $parent.name , 'data-stepctx': stepctx } ">
-                        output here
-                    </div>
+                <div class="row wfnodeoutput" data-bind="visible: followingOutput, attr: { 'data-node': $parent.name , 'data-stepctx': stepctx } ">
+
                 </div>
             </div>
         </div>
 
     </div>
-</div>
 </div>
 </div>

@@ -178,7 +178,6 @@
     }
   }
   .wfnodestep .execstate.execstatedisplay{
-    &.isnode {
       &[data-execstate=NODE_MIXED]:after {
         content: 'Mixed';
       }
@@ -202,7 +201,6 @@
       &[data-execstate=NOT_STARTED]:after {
         content: 'Not Started';
       }
-    }
   }
 
   .wfstepstate, .wfnodestate {
@@ -238,9 +236,8 @@
     .wfnodeoutput{
       max-height: 500px;
       overflow: auto;
-      margin-top: 10px;
       table.execouput{
-        width: auto IMPORTANT!;
+//        width: auto IMPORTANT!;
       }
     }
     .wfnodeoverall .nodectx{
