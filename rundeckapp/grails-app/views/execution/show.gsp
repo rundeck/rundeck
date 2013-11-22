@@ -107,7 +107,7 @@
             reloadInterval:1500
          });
          var stepState= new StepFlow(flowState,'flowstate');
-         
+
          var nodeflowvm=new NodeFlowViewModel(workflow,"${g.createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id)}.json");
 
         function init() {
@@ -485,9 +485,7 @@
                 <div class="col-sm-12">
 
                     <ul class="nav nav-tabs">
-                        <g:if test="${scheduledExecution}">
-                            <li class="active"><a href="#state" data-toggle="tab">Flow</a></li>
-                        </g:if>
+                        <li class="${!scheduledExecution ? '' : 'active'}"><a href="#state" data-toggle="tab">Flow</a></li>
                         <li class="${scheduledExecution ? '' : 'active'}"><a href="#output" data-toggle="tab">Log Output</a></li>
                         <li><a href="#schedExDetails${scheduledExecution?.id}" data-toggle="tab">Definition</a></li>
                     </ul>
@@ -498,35 +496,29 @@
     <div class="row">
         <div class="col-sm-12">
             <div class="tab-content">
-                <g:if test="${scheduledExecution}">
-                    <div class="tab-pane active" id="state">
-                        <g:if test="${workflowState}">
-                            <a href="${g.createLink(controller: 'execution', action: 'ajaxExecState', id: execution.id)}">json</a>
-
-                            %{--<div class="flowstate" id="nodeflowstate">--}%
-                               %{--<g:render template="wfstateNodeModelDisplay" bean="${workflowState}" var="workflowState"/>--}%
-                            %{--</div>--}%
-                            <div class="flowstate" id="nodeflowstate">
-                               <g:render template="wfstateNodeModelDisplay2" bean="${workflowState}" var="workflowState"/>
-                            </div>
-                            %{--<div class="flowstate" id="flowstate">--}%
-                                %{--<g:render template="wfstateStepModelDisplay" bean="${workflowState}" var="workflowState"/>--}%
-                            %{--</div>--}%
-
-                            %{--<div class="row">--}%
-                                %{--<div class="col-sm-12">--}%
-                                    %{--<pre id="flowstate_output"></pre>--}%
-                                %{--</div>--}%
-                            %{--</div>--}%
-                            %{--<div class="row row-space">--}%
-                                %{--<div class="col-sm-12" id="flowstate_log">--}%
-
-                                %{--</div>--}%
-                            %{--</div>--}%
-
-                        </g:if>
+                <div class="tab-pane ${!scheduledExecution ? '' : 'active'}" id="state">
+                    %{--<div class="flowstate" id="nodeflowstate">--}%
+                       %{--<g:render template="wfstateNodeModelDisplay" bean="${workflowState}" var="workflowState"/>--}%
+                    %{--</div>--}%
+                    <div class="flowstate" id="nodeflowstate">
+                       <g:render template="wfstateNodeModelDisplay2" bean="${workflowState}" var="workflowState"/>
                     </div>
-                </g:if>
+                    %{--<div class="flowstate" id="flowstate">--}%
+                        %{--<g:render template="wfstateStepModelDisplay" bean="${workflowState}" var="workflowState"/>--}%
+                    %{--</div>--}%
+
+                    %{--<div class="row">--}%
+                        %{--<div class="col-sm-12">--}%
+                            %{--<pre id="flowstate_output"></pre>--}%
+                        %{--</div>--}%
+                    %{--</div>--}%
+                    %{--<div class="row row-space">--}%
+                        %{--<div class="col-sm-12" id="flowstate_log">--}%
+
+                        %{--</div>--}%
+                    %{--</div>--}%
+
+                </div>
                 <div class="tab-pane ${scheduledExecution?'':'active'}" id="output">
                     <g:render template="/execution/showFragment"
                               model="[execution: execution, scheduledExecution: scheduledExecution, inlineView: false, followmode: followmode]"/>
