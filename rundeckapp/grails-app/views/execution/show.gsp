@@ -109,9 +109,19 @@
          var stepState= new StepFlow(flowState,'flowstate');
 
          var nodeflowvm=new NodeFlowViewModel(workflow,"${g.createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id)}.json");
-
-        function init() {
+         function followOutput(){
             followControl.beginFollowingOutput('${execution?.id}');
+         }
+         function followState(){
+            try{
+                flowState.beginFollowing();
+            }catch(e){
+                nodeflowvm.errorMessage('Could not load flow state: '+e);
+                nodeflowvm.stateLoaded(false);
+            }
+         }
+        function init() {
+//            followControl.beginFollowingOutput('${execution?.id}');
 //            flowState.addUpdater(stepState);
             flowState.addUpdater({
             updateError:function(error,model){
@@ -141,12 +151,6 @@
                 }
             }});
 
-            try{
-                flowState.beginFollowing();
-            }catch(e){
-                nodeflowvm.errorMessage('Could not load flow state: '+e);
-                nodeflowvm.stateLoaded(false);
-            }
             ko.applyBindings(nodeflowvm);
 
             <g:if test="${!(grailsApplication.config.rundeck?.gui?.enableJobHoverInfo in ['false', false])}">
@@ -154,6 +158,16 @@
                 new BubbleController(e,null,{offx:-14,offy:null}).startObserving();
             });
             </g:if>
+
+          //link flow and output tabs to initialize following
+          //by default show state
+          followState();
+          jQuery('#tab_link_flow').on('show.bs.tab',function(e){
+            followState();
+          });
+          jQuery('#tab_link_output').on('show.bs.tab',function(e){
+            followOutput();
+          });
         }
 
         Event.observe(window, 'load', init);
@@ -499,8 +513,8 @@
                 <div class="col-sm-12">
 
                     <ul class="nav nav-tabs">
-                        <li class="${!scheduledExecution ? '' : 'active'}"><a href="#state" data-toggle="tab">Flow</a></li>
-                        <li class="${scheduledExecution ? '' : 'active'}"><a href="#output" data-toggle="tab">Log Output</a></li>
+                        <li id="tab_link_flow" class="${!scheduledExecution ? '' : 'active'}"><a href="#state" data-toggle="tab">Flow</a></li>
+                        <li id="tab_link_output" class="${scheduledExecution ? '' : 'active'}"><a href="#output" data-toggle="tab">Log Output</a></li>
                         <li><a href="#schedExDetails${scheduledExecution?.id}" data-toggle="tab">Definition</a></li>
                     </ul>
                 </div>

@@ -142,6 +142,7 @@ var FlowState = Class.create({
     loadUrl:null,
     outputUrl:null,
     shouldUpdate:false,
+    updateCompleted:false,
     timer:null,
     selectedElem:null,
     selectedFollowControl:null,
@@ -479,7 +480,7 @@ var FlowState = Class.create({
         if (data.error && this.retry || !this.model.completed && this.shouldUpdate) {
             this.timer = setTimeout(this.callUpdate.bind(this), this.reloadInterval);
         } else {
-            this.stopFollowing();
+            this.stopFollowing(this.model.completed);
         }
     },
     callUpdate: function(){
@@ -494,13 +495,16 @@ var FlowState = Class.create({
         });
     },
     beginFollowing: function(){
-        this.shouldUpdate=true;
-        this.callUpdate();
+        if(!this.updateCompleted){
+            this.shouldUpdate=true;
+            this.callUpdate();
+        }
     },
-    stopFollowing: function(){
+    stopFollowing: function(completed){
         this.shouldUpdate=false;
         clearTimeout(this.timer);
         this.timer = null;
+        this.updateCompleted=completed;
     },
     addUpdater: function(updater){
         if(null==this.updaters){
