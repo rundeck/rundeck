@@ -159,15 +159,15 @@
             });
             </g:if>
 
-          //link flow and output tabs to initialize following
-          //by default show state
-          followState();
-          jQuery('#tab_link_flow').on('show.bs.tab',function(e){
+            //link flow and output tabs to initialize following
+            //by default show state
             followState();
-          });
-          jQuery('#tab_link_output').on('show.bs.tab',function(e){
-            followOutput();
-          });
+            jQuery('#tab_link_flow').on('show.bs.tab',function(e){
+                followState();
+            });
+            jQuery('#tab_link_output').on('show.bs.tab',function(e){
+                followOutput();
+            });
         }
 
         Event.observe(window, 'load', init);
@@ -525,9 +525,15 @@
                 <div class="col-sm-12">
 
                     <ul class="nav nav-tabs">
-                        <li id="tab_link_flow" class="${!scheduledExecution ? '' : 'active'}"><a href="#state" data-toggle="tab">Flow</a></li>
-                        <li id="tab_link_output" class="${scheduledExecution ? '' : 'active'}"><a href="#output" data-toggle="tab">Log Output</a></li>
-                        <li><a href="#schedExDetails${scheduledExecution?.id}" data-toggle="tab">Definition</a></li>
+                        <li id="tab_link_flow" class="active">
+                            <a href="#state" data-toggle="tab">Workflow</a>
+                        </li>
+                        <li id="tab_link_output" class="">
+                            <a href="#output" data-toggle="tab">Log Output</a>
+                        </li>
+                        <li>
+                            <a href="#schedExDetails${scheduledExecution?.id}" data-toggle="tab">Definition</a>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -536,7 +542,7 @@
     <div class="row">
         <div class="col-sm-12">
             <div class="tab-content">
-                <div class="tab-pane ${!scheduledExecution ? '' : 'active'}" id="state">
+                <div class="tab-pane active" id="state">
                     %{--<div class="flowstate" id="nodeflowstate">--}%
                        %{--<g:render template="wfstateNodeModelDisplay" bean="${workflowState}" var="workflowState"/>--}%
                     %{--</div>--}%
@@ -559,7 +565,7 @@
                     %{--</div>--}%
 
                 </div>
-                <div class="tab-pane ${scheduledExecution?'':'active'}" id="output">
+                <div class="tab-pane " id="output">
                     <g:render template="/execution/showFragment"
                               model="[execution: execution, scheduledExecution: scheduledExecution, inlineView: false, followmode: followmode]"/>
                 </div>
