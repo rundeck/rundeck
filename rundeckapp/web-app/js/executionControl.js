@@ -1408,7 +1408,7 @@ var FollowControl = Class.create({
         }
     },
     beginFollowingOutput: function(id) {
-        if (this.isrunning) {
+        if (this.isrunning || this.runningcmd && this.runningcmd.completed) {
             return false;
         }
         this.beginExecution();
