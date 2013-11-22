@@ -308,6 +308,18 @@
                                         </div>
                                     </div>
                                 </g:if>
+
+                                <div class="row">
+                                    <div class="col-sm-12">
+                                        <g:if test="${scheduledExecution}">
+                                        <span class="text-muted">Number of Steps:</span> <span class="text-info" data-bind="text: totalSteps"></span>
+                                        </g:if>
+
+                                        <div data-bind="if: stateLoaded()">
+                                            <span class="text-muted">Number of Nodes:</span> <span class="text-info" data-bind="text: totalNodes"></span>
+                                        </div>
+                                    </div>
+                                </div>
                     </div>
 
                             <div class="col-sm-4">

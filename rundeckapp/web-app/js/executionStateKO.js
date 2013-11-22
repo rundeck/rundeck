@@ -198,6 +198,12 @@ function NodeFlowViewModel(workflow,outputUrl){
     self.followingStep=ko.observable();
     self.followingControl=null;
     self.followOutputUrl= outputUrl;
+    self.totalSteps=ko.computed(function(){
+       return self.workflow.workflow.length;
+    });
+    self.totalNodes=ko.computed(function(){
+       return self.nodes().length;
+    });
     self.stopShowingOutput= function () {
         if(self.followingControl){
             self.followingControl.stopFollowingOutput();
