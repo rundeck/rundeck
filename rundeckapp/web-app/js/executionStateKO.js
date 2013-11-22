@@ -50,15 +50,11 @@ function RDNodeStep(data, node, flow){
         if(self.endTime() && self.startTime()){
             return moment(self.endTime()).diff(moment(self.startTime()));
         }else{
-            return 0;
+            return -1;
         }
     });
     self.durationSimple=ko.computed(function(){
-        var ms = self.duration();
-        if(!self.startTime() || !self.endTime()){
-            return '';
-        }
-        return flow.formatDurationSimple(ms);
+        return flow.formatDurationSimple(self.duration());
     });
     self.stepctxdesc = ko.computed(function () {
         return "Workflow Step: "+self.stepctx;
@@ -103,19 +99,20 @@ function RDNode(name, steps,flow){
     self.toggleExpand=function(){ self.expanded(!self.expanded()); };
     self.duration=ko.computed(function(){
         //sum up duration of all completed steps
-       var ms=0;
+       var ms=-1;
        ko.utils.arrayForEach(self.steps(),function(x){
-            ms += x.duration();
+           var ms2 = x.duration();
+           if(ms2>=0 && ms<0){
+               ms=ms2;
+           }else if(ms2>=0){
+               ms += ms2;
+           }
        });
        return ms;
     });
     self.durationSimple=ko.computed(function(){
         //format duration
-        var ms=self.duration();
-        if(ms<1){
-            return '';
-        }
-       return flow.formatDurationSimple(ms);
+       return flow.formatDurationSimple(self.duration());
     });
     self.summary=ko.observable();
     self.summaryState=ko.observable();
@@ -306,6 +303,9 @@ function NodeFlowViewModel(workflow,outputUrl){
         return self.formatTime(text,'h:mm:ss a');
     }
     self.formatDurationSimple=function(ms){
+        if(ms<0){
+            return '';
+        }
         var duration = moment.duration(ms);
         var m = duration.minutes();
         var s = duration.seconds();
