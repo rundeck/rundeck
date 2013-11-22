@@ -113,10 +113,18 @@
         function init() {
             followControl.beginFollowingOutput('${execution?.id}');
 //            flowState.addUpdater(stepState);
-            flowState.addUpdater({updateState:function(model){
+            flowState.addUpdater({
+            updateError:function(error,model){
+                nodeflowvm.stateLoaded(false);
+                if(error!='pending'){
+                    nodeflowvm.errorMessage(model.errorMessage?model.errorMessage:error);
+                }
+            },
+            updateState:function(model){
                 if(!model.nodes || !model.allNodes){
                     return;
                 }
+                nodeflowvm.stateLoaded(true);
 
                 var count = model.allNodes.length;
                 for (var i = 0; i < count; i++) {
@@ -132,9 +140,15 @@
                     }
                 }
             }});
-            flowState.beginFollowing();
 
+            try{
+                flowState.beginFollowing();
+            }catch(e){
+                nodeflowvm.errorMessage('Could not load flow state: '+e);
+                nodeflowvm.stateLoaded(false);
+            }
             ko.applyBindings(nodeflowvm);
+
             <g:if test="${!(grailsApplication.config.rundeck?.gui?.enableJobHoverInfo in ['false', false])}">
             $$('.obs_bubblepopup').each(function(e) {
                 new BubbleController(e,null,{offx:-14,offy:null}).startObserving();

@@ -191,7 +191,8 @@ function RDNode(name, steps,flow){
 function NodeFlowViewModel(workflow,outputUrl){
     var self=this;
     self.workflow=workflow;
-
+    self.errorMessage=ko.observable();
+    self.stateLoaded=ko.observable(false);
     self.nodes=ko.observableArray([
     ]);
     self.followingStep=ko.observable();

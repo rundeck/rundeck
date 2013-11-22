@@ -138,6 +138,7 @@ var FlowState = Class.create({
     executionId:null,
     selectedOutputStatusId:null,
     targetElement:null,
+    retry:5,
     loadUrl:null,
     outputUrl:null,
     shouldUpdate:false,
@@ -446,18 +447,36 @@ var FlowState = Class.create({
             }
         }
     },
+    updateError: function(error,model){
+        if(this.updaters){
+            for(var i=0;i<this.updaters.length;i++){
+                if(typeof(this.updaters[i].updateError)=='function'){
+                    this.updaters[i].updateError(error,model);
+                }
+            }
+        }
+    },
     update: function (data) {
         //compare
-        if(data.error){
+        if (data.error=='pending' ) {
+            data.retry--;
+            console.log("retry... ("+data.error+")");
+        }
+        if(data.retry<0 && data.error){
+
             this.showError(data.error);
             return;
         }
-        this.model = data;
-        if($(this.targetElement + '_json')){
-            $(this.targetElement + '_json').innerHTML = Object.toJSON(this.model);
+        if(!data.error){
+            this.model = data;
+            if($(this.targetElement + '_json')){
+                $(this.targetElement + '_json').innerHTML = Object.toJSON(this.model);
+            }
+            this.updateState(this.model);
+        }else{
+            this.updateError(data.error,data);
         }
-        this.updateState(this.model);
-        if (!this.model.completed && this.shouldUpdate) {
+        if (data.error && this.retry || !this.model.completed && this.shouldUpdate) {
             this.timer = setTimeout(this.callUpdate.bind(this), this.reloadInterval);
         } else {
             this.stopFollowing();

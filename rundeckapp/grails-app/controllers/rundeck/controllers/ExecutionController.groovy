@@ -138,6 +138,11 @@ class ExecutionController {
             }
         }
         def state = workflowService.serializeWorkflowStateForExecution(e)
+        if(!state && e.dateCompleted){
+            state=[error:'not found',errorMessage:g.message(code: "api.error.item.doesnotexist", args: ['Execution State for ID', params.id])]
+        }else if(!state){
+            state=[error:'pending']
+        }
         return render(contentType: 'application/json', text: state.encodeAsJSON())
     }
     def mail ={
@@ -867,17 +872,45 @@ class ExecutionController {
         def Execution e = Execution.get(params.id)
         def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         if (!e) {
-            flash.errorCode = "api.error.item.doesnotexist"
-            flash.errorArgs = ['Execution ID', params.id]
-            return chain(controller: 'api', action: 'renderError')
+            def errormap= [status: HttpServletResponse.SC_NOT_FOUND, code: "api.error.item.doesnotexist", args: ['Execution ID', params.id]]
+            withFormat {
+                json{
+                    return apiService.renderErrorJson(response, errormap)
+                }
+                xml{
+                    return apiService.renderErrorXml(response, errormap)
+                }
+            }
+
         } else if (!frameworkService.authorizeProjectExecutionAll(framework, e, [AuthConstants.ACTION_READ])) {
-            flash.responseCode = 403
-            flash.errorCode = 'api.error.item.unauthorized'
-            flash.errorArgs = [AuthConstants.ACTION_READ, "Execution", params.id]
-            return chain(controller: 'api', action: 'renderError')
+            def errormap = [status: HttpServletResponse.SC_FORBIDDEN,
+                    code: "api.error.item.unauthorized", args: [AuthConstants.ACTION_READ, "Execution", params.id]]
+            withFormat {
+                json {
+                    return apiService.renderErrorJson(response, errormap)
+                }
+                xml {
+                    return apiService.renderErrorXml(response, errormap)
+                }
+            }
         }
 
         def state = workflowService.serializeWorkflowStateForExecution(e)
+        if(!state){
+            if(e.dateCompleted){
+                def errormap = [status: HttpServletResponse.SC_NOT_FOUND, code: "api.error.item.doesnotexist", args: ['Execution State ID', params.id]]
+                withFormat {
+                    json {
+                        return apiService.renderErrorJson(response, errormap)
+                    }
+                    xml {
+                        return apiService.renderErrorXml(response, errormap)
+                    }
+                }
+            }else{
+                state = [error: 'pending']
+            }
+        }
         def convertNodeList={Collection tnodes->
             def tnodemap = []
             tnodes.each { String nname ->

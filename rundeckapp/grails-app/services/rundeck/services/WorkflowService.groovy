@@ -242,8 +242,8 @@ class WorkflowService {
         def state = readWorkflowStateForExecution(execution)
         if(state){
             return mapOf(execution.id,state)
-        }else{
-            return [error:'unavailable']
+        }else {
+            return null
         }
     }
 }

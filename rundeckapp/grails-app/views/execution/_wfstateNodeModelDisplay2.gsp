@@ -15,7 +15,29 @@
   --}%
 
 <%@ page import="com.dtolabs.rundeck.core.execution.workflow.state.ExecutionState" %>
+<div data-bind="if: !stateLoaded()">
+    <div class="container">
+        <div class="row-space-lg row">
+            <div class="col-sm-12">
 
+                <div data-bind="if: errorMessage()">
+                    <div class="well well-lg" data-bind="visible: errorMessage()" style="display: none">
+                        <div class="text-warning" data-bind="text: errorMessage()">
+                        </div>
+                    </div>
+                </div>
+
+                <div data-bind="if: !errorMessage()">
+                    <div class="well well-lg text-muted">
+                        Waiting for state info…
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+<div data-bind="if: stateLoaded()">
 <div class="container">
 <div class="row text-muted row-space">
     <div class="col-sm-3">
@@ -107,5 +129,6 @@
         </div>
 
     </div>
+</div>
 </div>
 </div>
