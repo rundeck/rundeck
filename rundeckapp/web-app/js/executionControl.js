@@ -1042,7 +1042,7 @@ var FollowControl = Class.create({
             cell.innerHTML += "<span class='node'>" + data['node'] + "</span>";
         }
 
-        if ( data['stepctx']) {
+        if ( data['stepctx'] && this.workflow) {
             var contextstr= this.workflow.renderContextString(data['stepctx']);
         } else {
             tr.addClassName('console');
@@ -1171,7 +1171,7 @@ var FollowControl = Class.create({
             cell.innerHTML += "<span class='node'>" + data['node'] + "</span>";
         }
 
-        if (data['stepctx']) {
+        if (data['stepctx'] && this.workflow) {
             var contextstr = this.workflow.renderContextString(data['stepctx']);
             var stepnum = this.renderContextStepNumber(data);
             cell.innerHTML += "<span class='stepnum' title='" + this.escapeHtml(contextstr) + "'>" + this.escapeHtml(contextstr) + "</span>";
@@ -1289,7 +1289,7 @@ var FollowControl = Class.create({
         tdctx.addClassName('stepnum');
         if (!shownode && this.lastrow && this.lastrow['stepctx'] == data['stepctx'] ) {
 //                tdctx.addClassName('repeat');
-        }else if(data['stepctx']){
+        }else if(data['stepctx'] && this.workflow){
 
             var cmdtext= this.renderContextStepNumber(data) + " " + this.workflow.renderContextString(data['stepctx']);
             var icon= new Element('i');
