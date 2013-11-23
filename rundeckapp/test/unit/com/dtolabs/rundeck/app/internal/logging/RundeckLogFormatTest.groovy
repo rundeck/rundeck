@@ -90,14 +90,14 @@ class RundeckLogFormatTest extends GroovyTestCase {
         RundeckLogFormat format = new RundeckLogFormat()
         event.message = "test"
         event.metadata = ["a":"b",c:'']
-        assertEquals("^2013-05-24T01:31:02Z|log|DEBUG|{a=b|c=}|test^",
+        assertEquals("^2013-05-24T01:31:02Z||DEBUG|{a=b|c=}|test^",
                 format.outputEvent(event))
     }
     void testOutputEventNullMeta() {
         RundeckLogFormat format = new RundeckLogFormat()
         event.message = "test"
         event.metadata = ["a":"b",c:null]
-        assertEquals("^2013-05-24T01:31:02Z|log|DEBUG|{a=b}|test^",
+        assertEquals("^2013-05-24T01:31:02Z||DEBUG|{a=b}|test^",
                 format.outputEvent(event))
     }
 
