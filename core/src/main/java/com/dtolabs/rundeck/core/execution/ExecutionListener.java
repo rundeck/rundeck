@@ -33,6 +33,7 @@ import com.dtolabs.rundeck.plugins.PluginLogger;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.Map;
 
 /**
  * ExecutionListener is ...
@@ -64,6 +65,8 @@ public interface ExecutionListener extends PluginLogger {
      */
     public void log(final int level, final String message);
 
+    public void event(String eventType, final String message, final Map eventMeta);
+
     /**
      * Return a listener for failed node list
      *
@@ -72,15 +75,6 @@ public interface ExecutionListener extends PluginLogger {
     public FailedNodesListener getFailedNodesListener();
 
 
-    /**
-     * Called when execution begins for a step
-     */
-    public void beginStepExecution(ExecutionContext context, StepExecutionItem item);
-
-    /**
-     * Called when execution finishes for a step
-     */
-    public void finishStepExecution(StatusResult result, ExecutionContext context, StepExecutionItem item);
 
     /**
      * Called before execution of command on node
@@ -132,16 +126,6 @@ public interface ExecutionListener extends PluginLogger {
      */
     public void finishFileCopy(String result, ExecutionContext context, INodeEntry node);
 
-    /**
-     * Begin execution of a node step
-     */
-    public void beginExecuteNodeStep(ExecutionContext context, NodeStepExecutionItem item, INodeEntry node);
-
-    /**
-     * Finish execution of a node step
-     */
-    public void finishExecuteNodeStep(NodeStepResult result, ExecutionContext context, StepExecutionItem item,
-                                      INodeEntry node);
 
     /**
      * Return an ExecutionListenerOverride that will delegate to this ExecutionListener, but allows overriding

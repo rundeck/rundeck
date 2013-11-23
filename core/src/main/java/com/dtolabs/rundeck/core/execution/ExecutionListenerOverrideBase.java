@@ -24,6 +24,8 @@
 package com.dtolabs.rundeck.core.execution;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
@@ -71,15 +73,15 @@ public abstract class ExecutionListenerOverrideBase implements ExecutionListener
     }
 
 
-    public void beginStepExecution(ExecutionContext context, StepExecutionItem item) {
+    public void beginStepExecution(StepExecutor executor,StepExecutionContext context, StepExecutionItem item) {
         if (null != delegate) {
-            delegate.beginStepExecution(context, item);
+            delegate.beginStepExecution(executor,context, item);
         }
     }
 
-    public void finishStepExecution(StatusResult result, ExecutionContext context, StepExecutionItem item) {
+    public void finishStepExecution(StepExecutor executor, StatusResult result, StepExecutionContext context, StepExecutionItem item) {
         if (null != delegate) {
-            delegate.finishStepExecution(result, context, item);
+            delegate.finishStepExecution(executor,result, context, item);
         }
     }
 
@@ -174,10 +176,6 @@ public abstract class ExecutionListenerOverrideBase implements ExecutionListener
         return terse;
     }
 
-    public void setTerse(final boolean terse) {
-        this.terse = terse;
-    }
-
     public String getLogFormat() {
         if (null != logFormat) {
             return logFormat;
@@ -186,10 +184,6 @@ public abstract class ExecutionListenerOverrideBase implements ExecutionListener
             return delegate.getLogFormat();
         }
         return logFormat;
-    }
-
-    public void setLogFormat(String logFormat) {
-        this.logFormat = logFormat;
     }
 
     public void setFailedNodesListener(FailedNodesListener failedNodesListener) {

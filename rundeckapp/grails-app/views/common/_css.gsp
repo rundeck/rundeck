@@ -120,13 +120,8 @@
 
     }
 
-    .embed .node_entry{
-        background: white url("${resource(dir:'images',file:'icon-small-Node.png')}") no-repeat 2px top;
-        padding-left: 20px;
-    }
     .embed .node_entry.glow{
-        background: #cfc url("${resource(dir:'images',file:'icon-small-Node.png')}") no-repeat 2px top;
-        padding-left: 20px;
+        background: #cfc ;
     }
 
     .expandComponentHolder.expanded  > div > span.expandComponentControl.jobgroupexpand span.foldertoggle {
@@ -140,11 +135,6 @@
         width: 16px;
         height:14px;
         display: inline-block;
-    }
-
-    table.execoutput span.node {
-        %{--background: url("${resource(dir:'images',file:'icon-small-Node.png')}") no-repeat 2px top;--}%
-        /*padding-left: 20px;*/
     }
 
     .rdicon{
@@ -175,6 +165,10 @@
 
     .rdicon.icon-small.shell,.rdicon.icon-small.command,.rdicon.icon-small.script,.rdicon.icon-small.scriptfile{
         background-image: url("${resource(dir:'images',file:'icon-small-shell.png')}");
+    }
+    .rdicon.icon-small.node{
+        height: 10px;
+        background-image: url("${resource(dir:'images',file:'icon-small-Node.png')}");
     }
     .rdicon.icon-med.shell,.rdicon.icon-med.command,.rdicon.icon-med.script,.rdicon.icon-med.scriptfile{
           background-image: url("${resource(dir:'images',file:'icon-med-shell.png')}");
@@ -214,6 +208,11 @@
             .rdicon.icon-med.shell, .rdicon.icon-med.command, .rdicon.icon-med.script, .rdicon.icon-med.scriptfile {
                 background-image: url("${resource(dir:'images',file:'icon-med-shell@2x.png')}");
             }
+
+             .rdicon.icon-small.node {
+                 background-size: 16px 10px;
+                 background-image: url("${resource(dir:'images',file:'icon-small-Node@2x.png')}");
+             }
             .rdicon.app-logo{
                 background-image: url("${resource(dir: 'images', file: appLogoHires)}");
                 background-size: ${appLogoW} ${appLogoH};

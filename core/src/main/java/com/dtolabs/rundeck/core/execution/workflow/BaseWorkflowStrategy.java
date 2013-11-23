@@ -208,6 +208,7 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
             if (null != wlistener) {
                 wlistener.beginWorkflowItem(c, cmd);
             }
+            boolean hasHandler= cmd instanceof HasFailureHandler;
 
             //wrap node failed listener (if any) and capture status results
             NodeRecorder stepCaptureFailedNodesListener = new NodeRecorder();
@@ -229,7 +230,7 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
             }
 
             try {
-                if(!stepSuccess && cmd instanceof HasFailureHandler) {
+                if(!stepSuccess && hasHandler) {
                     final HasFailureHandler handles = (HasFailureHandler) cmd;
                     final StepExecutionItem handler = handles.getFailureHandler();
                     if (null != handler) {
@@ -258,6 +259,9 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
                             //extract node-specific failure and set as node-context data
                             handlerExecContext = addNodeStepFailureContextData(stepResult, handlerExecContext);
                         }
+                        if (null != wlistener) {
+                            wlistener.beginWorkflowItemErrorHandler(c, cmd);
+                        }
 
                         Map<Integer, StepExecutionResult> handlerFailedMap = new HashMap<Integer, StepExecutionResult>();
                         StepExecutionResult handlerResult = executeWFItem(handlerExecContext,
@@ -266,6 +270,9 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
                                                                           handler);
                         boolean handlerSuccess = handlerResult.isSuccess();
 
+                        if (null != wlistener) {
+                            wlistener.finishWorkflowItemErrorHandler(c, cmd, handlerResult);
+                        }
                         //handle success conditions:
                         //1. if keepgoing=true, then status from handler overrides original step
                         //2. keepgoing=false, then status is the same as the original step, unless
@@ -284,7 +291,7 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
                 }
             } finally {
                 if (null != wlistener) {
-                    wlistener.finishWorkflowItem(c, cmd);
+                    wlistener.finishWorkflowItem(c, cmd, stepResult);
                 }
             }
             resultList.add(stepResult);

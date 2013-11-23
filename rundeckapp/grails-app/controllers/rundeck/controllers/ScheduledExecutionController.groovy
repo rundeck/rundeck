@@ -21,7 +21,6 @@ import org.apache.commons.httpclient.util.DateParseException
 import org.apache.commons.httpclient.util.DateUtil
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
-import org.codehaus.groovy.grails.commons.ConfigurationHolder
 import org.codehaus.groovy.grails.web.json.JSONElement
 import org.quartz.CronExpression
 import org.quartz.Scheduler
@@ -1487,7 +1486,7 @@ class ScheduledExecutionController  {
                 //error
                 model.nodesetempty=true
             }
-            else if(ConfigurationHolder.config.gui.execution.summarizedNodes != 'false') {
+            else if(grailsApplication.config.gui.execution.summarizedNodes != 'false') {
                 model.nodes=nodes
                 model.nodemap=[:]
                 model.tagsummary=[:]

@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.execution.dispatch;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.common.INodeSet;
 
 import java.util.*;
 
@@ -37,6 +38,39 @@ public class INodeEntryComparator implements Comparator<INodeEntry> {
 
     public INodeEntryComparator(final String rankProperty) {
         this.rankProperty = rankProperty;
+    }
+
+    /**
+     * Utility method to return nodes ordered by rank property
+     *
+     * @param nodes
+     * @param rankProperty
+     * @param rankAscending
+     *
+     * @return
+     */
+    public static List<INodeEntry> rankOrderedNodes(INodeSet nodes, String rankProperty,
+            boolean rankAscending) {
+        return rankOrderedNodes(nodes.getNodes(), rankProperty, rankAscending);
+    }
+
+    /**
+     * Utility method to return nodes ordered by rank property
+     *
+     * @param nodes
+     * @param rankProperty
+     * @param rankAscending
+     *
+     * @return
+     */
+    public static List<INodeEntry> rankOrderedNodes(Collection<INodeEntry> nodes, String rankProperty,
+            boolean rankAscending) {
+        final ArrayList<INodeEntry> nodes1 = new ArrayList<INodeEntry>(nodes);
+        //reorder based on configured rank property and order
+        final INodeEntryComparator comparator = new INodeEntryComparator(rankProperty);
+
+        Collections.sort(nodes1, rankAscending ? comparator : Collections.reverseOrder(comparator));
+        return nodes1;
     }
 
     public int compare(final INodeEntry iNodeEntry, final INodeEntry iNodeEntryB) {

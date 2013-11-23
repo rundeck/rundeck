@@ -55,36 +55,6 @@ tr.header {
     font-weight: bold;
 }
 
-.actionButton a:active, .actionButton a:link, .actionButton a:visited, .actionButton a:hover {
-    font-weight: bold;
-}
-
-
-.action:hover, span.action:hover {
-    background: #e3edfa;
-    cursor: pointer;
-}
-
-a.action, a.textbtn, .action.textbtn, td.action.textbtn {
-    font-weight: normal;
-}
-
-.action.textbtn.ready {
-    text-decoration: underline;
-}
-
-.action {
-}
-
-.action.minor {
-}
-
-a.action:hover, span.action.textbtn:hover, td.action.textbtn:hover {
-    color: blue;
-    text-decoration: underline;
-}
-
-
 button.runbutton:hover, input[type='submit'].runbutton:hover {
     text-decoration: underline;
     background: #ccc;
@@ -1153,7 +1123,7 @@ div.presentation {
     color: green;
 }
 
-.timenow, a.timenow, span.nowrunning {
+.timenow, a.timenow {
     color: green;
     font-weight: bold;
     font-style: italic;
@@ -1880,9 +1850,7 @@ div.nodesummary span.type {
 
 .matchednodes.embed .node_entry {
     white-space: nowrap;
-    padding-right: 2px;
-    padding-top: 1px;
-    padding-bottom: 1px;
+    padding: 1px 2px;
     margin: 2px;
     border: 1px solid #aaa;
     border-radius: 3px;

@@ -1,7 +1,9 @@
 package rundeck.controllers
 
 import com.dtolabs.client.utils.Constants
+import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.core.logging.LogEvent
+import com.dtolabs.rundeck.core.logging.LogUtil
 import com.dtolabs.rundeck.core.logging.ReverseSeekingStreamingLogReader
 import com.dtolabs.rundeck.core.logging.StreamingLogReader
 import com.dtolabs.rundeck.app.support.ExecutionQuery
@@ -16,6 +18,7 @@ import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.LoggingService
 import rundeck.services.ScheduledExecutionService
+import rundeck.services.WorkflowService
 import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.logging.ExecutionLogState
 
@@ -33,6 +36,7 @@ class ExecutionController {
     LoggingService loggingService
     ScheduledExecutionService scheduledExecutionService
     ApiService apiService
+    WorkflowService workflowService
 
 
     def index ={
@@ -109,8 +113,37 @@ class ExecutionController {
                 }
             }
         }
+        def state = workflowService.readWorkflowStateForExecution(e)
+        if(!state){
+            state= workflowService.previewWorkflowStateForExecution(e)
+        }
         return [scheduledExecution: e.scheduledExecution?:null,execution:e, filesize:filesize,
-                enext: enext, eprev: eprev,stepPluginDescriptions: pluginDescs]
+                enext: enext, eprev: eprev,stepPluginDescriptions: pluginDescs, workflowState: state]
+    }
+    def ajaxExecState={
+        def Execution e = Execution.get(params.id)
+        if (!e) {
+            log.error("Execution not found for id: " + params.id)
+            flash.error = "Execution not found for id: " + params.id
+            return render(contentType: 'application/json'){
+                delegate.'error'('not found')
+            }
+        }
+
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+
+        if (e && !frameworkService.authorizeProjectExecutionAll(framework, e, [AuthConstants.ACTION_READ])) {
+            return render(contentType: 'application/json') {
+                delegate.'error'("Unauthorized: Read Execution ${params.id}")
+            }
+        }
+        def state = workflowService.serializeWorkflowStateForExecution(e)
+        if(!state && e.dateCompleted){
+            state=[error:'not found',errorMessage:g.message(code: "api.error.item.doesnotexist", args: ['Execution State for ID', params.id])]
+        }else if(!state){
+            state=[error:'pending']
+        }
+        return render(contentType: 'application/json', text: state.encodeAsJSON())
     }
     def mail ={
         def Execution e = Execution.get(params.id)
@@ -174,7 +207,7 @@ class ExecutionController {
         def abortresult=executionService.abortExecution(se, e, session.user, framework)
 
 
-        def didcancel=abortresult.abortstate in [ABORT_ABORTED,ABORT_PENDING]
+        def didcancel=abortresult.abortstate in [ExecutionService.ABORT_ABORTED, ExecutionService.ABORT_PENDING]
 
         def reasonstr=abortresult.failedreason
         withFormat{
@@ -242,9 +275,9 @@ class ExecutionController {
         def iterator = reader.reader
         iterator.openStream(0)
         def lineSep=System.getProperty("line.separator")
-        iterator.each{ LogEvent msgbuf ->
-            response.outputStream << (isFormatted?"${logFormater.format(msgbuf.datetime)} [${msgbuf.metadata?.user}@${msgbuf.metadata?.node} ${msgbuf.metadata?.command?:'_'}][${msgbuf.loglevel}] ${msgbuf.message}" : msgbuf.message)
-            response.outputStream<<lineSep
+        iterator.findAll{it.eventType==LogUtil.EVENT_TYPE_LOG}.each{ LogEvent msgbuf ->
+                response.outputStream << (isFormatted?"${logFormater.format(msgbuf.datetime)} [${msgbuf.metadata?.user}@${msgbuf.metadata?.node} ${msgbuf.metadata?.stepctx?:'_'}][${msgbuf.loglevel}] ${msgbuf.message}" : msgbuf.message)
+                response.outputStream<<lineSep
         }
         iterator.close()
     }
@@ -254,6 +287,12 @@ class ExecutionController {
     def apiExecutionOutput = {
         if (!apiService.requireVersion(request, response, ApiRequestFilters.V5)) {
             return
+        }
+        params.stateOutput=false
+
+        if (request.api_version < ApiRequestFilters.V9) {
+            params.nodename = null
+            params.stepctx = null
         }
         return tailExecutionOutput()
     }
@@ -278,6 +317,15 @@ class ExecutionController {
                 setProp(it,data[it])
             }
         }
+        def filterparms = [:]
+        ['nodename', 'stepctx'].each {
+            if (data[it]) {
+                filterparms[it] = data[it]
+            }
+        }
+        if (filterparms) {
+            delegate.filter(filterparms)
+        }
 
 
         def timeFmt = new SimpleDateFormat("HH:mm:ss")
@@ -290,6 +338,7 @@ class ExecutionController {
                         log: it.mesg?.replaceAll(/\r?\n$/, ''),
                         user: it.user,
                         command: it.command,
+                        stepctx: it.stepctx,
                         node: it.node,
                 ]
                 if (it.loghtml) {
@@ -316,6 +365,16 @@ class ExecutionController {
         }
     }
     /**
+     * API: /api/execution/{id}/output/state, version ?
+     */
+    def apiExecutionStateOutput = {
+        if (!new ApiController().requireVersion(ApiRequestFilters.V9)) {
+            return
+        }
+        params.stateOutput = true
+        return tailExecutionOutput()
+    }
+    /**
      * tailExecutionOutput action, used by execution/show.gsp view to display output inline
      * Also used by apiExecutionOutput for API response
      */
@@ -335,7 +394,7 @@ class ExecutionController {
                     if (status > 0) {
                         response.setStatus(status)
                     }
-                    render(contentType: "text/json") {
+                    render(contentType: "application/json") {
                         renderOutputClosure('json', [
                                 error: message,
                                 id: params.id.toString(),
@@ -357,6 +416,9 @@ class ExecutionController {
         }
         if(e && !frameworkService.authorizeProjectExecutionAll(framework,e,[AuthConstants.ACTION_READ])){
             return apiError('api.error.item.unauthorized', [AuthConstants.ACTION_READ, "Execution", params.id], HttpServletResponse.SC_FORBIDDEN);
+        }
+        if (params.stepctx && !(params.stepctx ==~ /^(\d+e?\/?)+$/)) {
+            return apiError("api.error.parameter.invalid",[params.stepctx,'stepctx',"Invalid stepctx filter"],HttpServletResponse.SC_BAD_REQUEST)
         }
 
         def jobcomplete = e.dateCompleted != null
@@ -399,7 +461,7 @@ class ExecutionController {
                     }
                 }
                 json {
-                    render(contentType: "text/json") {
+                    render(contentType: "application/json") {
                         renderOutputClosure('json', dataMap, [], request.api_version, delegate)
                     }
                 }
@@ -444,7 +506,7 @@ class ExecutionController {
                     }
                 }
                 json {
-                    render(contentType: "text/json") {
+                    render(contentType: "application/json") {
                         renderOutputClosure('json', dataMap, [], request.api_version, delegate)
                     }
                 }
@@ -530,7 +592,7 @@ class ExecutionController {
                         }
                     }
                     json {
-                        render(contentType: "text/json") {
+                        render(contentType: "application/json") {
                             renderOutputClosure('json', dataMap, [], request.api_version, delegate)
                         }
                     }
@@ -576,10 +638,41 @@ class ExecutionController {
         if(bufsize<(25*1024)){
             bufsize=25*1024
         }
+        def stateoutput = params.stateOutput in [true,'true']
+        def stateonly = params.stateOnly in [true,'true']
 
+        def filter={ LogEvent data ->
+            if (!stateoutput && data.eventType != LogUtil.EVENT_TYPE_LOG) {
+                return false
+            }
+            if (stateoutput && stateonly && data.eventType == LogUtil.EVENT_TYPE_LOG) {
+                return false
+            }
+            if(params.nodename && data.metadata.node != params.nodename){
+                return false
+            }
+            if(params.stepctx && params.stepctx==~/^(\d+e?\/?)+$/){
+                if(params.stepctx.endsWith("/")){
+                    if(data.metadata.stepctx?.startsWith(params.stepctx)
+                            || data.metadata.stepctx[0..-2] == params.stepctx
+                            || data.metadata.stepctx[0..-2] == params.stepctx + 'e'){
+                        return data
+                    }else{
+                        return false
+                    }
+                }else if(!params.stepctx.endsWith("/") && !(data.metadata.stepctx == params.stepctx
+                        || (data.metadata.stepctx) == params.stepctx + 'e')){
+                    return false
+                }
+            }
+            data
+        }
         for(LogEvent data : logread){
+            if(!filter(data)){
+                continue
+            }
             log.debug("read stream event: ${data}")
-            def logdata= (data.metadata ?: [:]) + [mesg: data.message, time: data.datetime, level: data.loglevel.toString()]
+            def logdata= (data.metadata ?: [:]) + [mesg: data.message, time: data.datetime, level: data.loglevel.toString(),type:data.eventType]
             entry<<logdata
             if (!(0 == max || entry.size() < max)){
                 break
@@ -608,7 +701,7 @@ class ExecutionController {
             def newe=[]
             def buf=[]
             entry.each {et->
-                if(et.command!=ctx.command || et.node!=ctx.node){
+                if(et.stepctx!=ctx.stepctx || et.node!=ctx.node){
                     if (newe){
                         //push buf
                         ctx.loghtml=buf.join("\n").decodeMarkdown()
@@ -625,7 +718,6 @@ class ExecutionController {
         long marktime=System.currentTimeMillis()
         def percent=100.0 * (((float)storeoffset)/((float)totsize))
         log.debug("percent: ${percent}, store: ${storeoffset}, total: ${totsize} lastmod : ${lastmodl}")
-        //via http://benjchristensen.com/2008/02/07/how-to-strip-invalid-xml-characters/
 
         def resultData= [
                 id: e.id.toString(),
@@ -638,7 +730,9 @@ class ExecutionController {
                 execDuration: execDuration,
                 percentLoaded: percent,
                 totalSize: totsize,
-                lastlinesSupported: lastlinesSupported
+                lastlinesSupported: lastlinesSupported,
+                nodename:params.nodename,
+                stepctx:params.stepctx
         ]
         withFormat {
             xml {
@@ -649,7 +743,7 @@ class ExecutionController {
                 }
             }
             json {
-                render(contentType: "text/json") {
+                render(contentType: "application/json") {
                     renderOutputClosure('json', resultData, entry, request.api_version, delegate)
                 }
             }
@@ -770,6 +864,107 @@ class ExecutionController {
             }
         }
         return executionService.respondExecutionsXml(response, [e])
+    }
+    /**
+     * API: /api/execution/{id}/state/$path**? , version 1
+     */
+    def apiExecutionState= {
+        def Execution e = Execution.get(params.id)
+        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        if (!e) {
+            def errormap= [status: HttpServletResponse.SC_NOT_FOUND, code: "api.error.item.doesnotexist", args: ['Execution ID', params.id]]
+            withFormat {
+                json{
+                    return apiService.renderErrorJson(response, errormap)
+                }
+                xml{
+                    return apiService.renderErrorXml(response, errormap)
+                }
+            }
+
+        } else if (!frameworkService.authorizeProjectExecutionAll(framework, e, [AuthConstants.ACTION_READ])) {
+            def errormap = [status: HttpServletResponse.SC_FORBIDDEN,
+                    code: "api.error.item.unauthorized", args: [AuthConstants.ACTION_READ, "Execution", params.id]]
+            withFormat {
+                json {
+                    return apiService.renderErrorJson(response, errormap)
+                }
+                xml {
+                    return apiService.renderErrorXml(response, errormap)
+                }
+            }
+        }
+
+        def state = workflowService.serializeWorkflowStateForExecution(e)
+        if(!state){
+            if(e.dateCompleted){
+                def errormap = [status: HttpServletResponse.SC_NOT_FOUND, code: "api.error.item.doesnotexist", args: ['Execution State ID', params.id]]
+                withFormat {
+                    json {
+                        return apiService.renderErrorJson(response, errormap)
+                    }
+                    xml {
+                        return apiService.renderErrorXml(response, errormap)
+                    }
+                }
+            }else{
+                state = [error: 'pending']
+            }
+        }
+        def convertNodeList={Collection tnodes->
+            def tnodemap = []
+            tnodes.each { String nname ->
+                tnodemap << [(BuilderUtil.ATTR_PREFIX + 'name'): nname]
+            }
+            tnodemap
+        }
+        def convertXml;
+        convertXml={Map map->
+            //for each step
+            map.steps.each{Map step->
+                if(step.workflow){
+                    //convert sub workflow
+                    convertXml(step.workflow)
+                }
+                //change 'id' to an attribute named num
+                step.num=step.remove('id')
+                BuilderUtil.makeAttribute(step,'num')
+                if(step.nodeStates){
+                    def nstates=step.remove('nodeStates')
+                    step.nodeStates=nstates.collect {String node,Map nodestate->
+                        def nmap= [name: node] + nodestate
+                        BuilderUtil.makeAttribute(nmap,'name')
+                        nmap
+                    }
+                    BuilderUtil.makePlural(step,'nodeStates')
+                }
+                if (step.stepTargetNodes) {
+                    step.stepTargetNodes = [(BuilderUtil.pluralize('nodes')):convertNodeList(step.remove('stepTargetNodes'))]
+                }
+            }
+            if(map.steps){
+                //make steps into a <steps><step/><step/>..</steps>
+                BuilderUtil.makePlural(map,'steps')
+            }
+            if (map.targetNodes) {
+                map.targetNodes = [(BuilderUtil.pluralize('nodes')):convertNodeList(map.remove('targetNodes'))]
+            }
+            map
+        }
+        withFormat {
+            json{
+                return render(contentType: "application/json", encoding: "UTF-8",text:state.encodeAsJSON())
+            }
+            xml{
+                return render(contentType: "text/xml", encoding: "UTF-8") {
+                    result(success: "true", apiversion: ApiRequestFilters.API_CURRENT_VERSION) {
+                        executionState(id:params.id){
+                            new BuilderUtil().mapToDom(convertXml(state), delegate)
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**

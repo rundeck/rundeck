@@ -88,13 +88,11 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
         final Thread thread = Thread.currentThread();
         boolean success = true;
         final HashMap<String, NodeStepResult> resultMap = new HashMap<String, NodeStepResult>();
-        final ArrayList<INodeEntry> nodes1 = new ArrayList<INodeEntry>(nodes.getNodes());
+        final List<INodeEntry> nodes1 = INodeEntryComparator.rankOrderedNodes(nodes, context
+                .getNodeRankAttribute(),
+                context.isNodeRankOrderAscending());
         //reorder based on configured rank property and order
-        final String rankProperty = null != context.getNodeRankAttribute() ? context.getNodeRankAttribute()
-                                                                           : "nodename";
-        final boolean rankAscending = context.isNodeRankOrderAscending();
-        final INodeEntryComparator comparator = new INodeEntryComparator(rankProperty);
-        Collections.sort(nodes1, rankAscending ? comparator : Collections.reverseOrder(comparator));
+
         Throwable caught = null;
         INodeEntry failedNode = null;
         for (final INodeEntry node : nodes1) {

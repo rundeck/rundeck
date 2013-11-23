@@ -17,11 +17,23 @@
  * Control execution follow page state for an execution
  */
 var FollowControl = Class.create({
+    parentElement:null,
     executionId:null,
+    fileloadId:null,
+    fileloadPctId:null,
+    fileloadProgressId:null,
+    viewoptionsCompleteId:null,
+    cmdOutputErrorId:null,
+    outfileSizeId:null,
+    progressContainerId:null,
+    progressBarId:null,
+    execDurationPctId:null,
+    autoscroll:true,
     targetElement:null,
     cmdoutputtbl: null,
     cmdoutspinner: null,
     runningcmd: null,
+    finishedExecutionAction: true,
     appendtop: {value: false,changed: false},
     collapseCtx: {value:true,changed:false},
     showFinalLine: {value:true,changed:false},
@@ -63,6 +75,7 @@ var FollowControl = Class.create({
     iconUrl:'/images/icon',
     smallIconUrl:'/images/icon-small',
     appLinks:{},
+    workflow:null,
     
     initialize: function(eid,elem,params){
         this.executionId=eid;
@@ -91,6 +104,9 @@ var FollowControl = Class.create({
     },
     bindActions: function(elem){
         var obj=this;
+        if(!elem){
+            return;
+        }
         $(elem).select('a.out_setmode_tail').each(function(e){
             Event.observe(e,'click',function(evt){Event.stop(evt);
                 if(!obj.nodemode){
@@ -293,9 +309,9 @@ var FollowControl = Class.create({
         }
     },
     appendCmdOutputError: function (message) {
-        if ($('cmdoutputerror')) {
-            $("cmdoutputerror").innerHTML += message;
-            $("cmdoutputerror").show();
+        if ($(this.cmdOutputErrorId)) {
+            $(this.cmdOutputErrorId).innerHTML += message;
+            $(this.cmdOutputErrorId).show();
         }
     },
     _log: function(message) {
@@ -467,12 +483,12 @@ var FollowControl = Class.create({
         }
     },
     setColTime: function (show) {
-        if ($(cmdoutputtbl)) {
+        if ($(this.cmdoutputtbl)) {
 
             if (show) {
-                $(cmdoutputtbl).removeClassName('collapse_time');
+                $(this.cmdoutputtbl).removeClassName('collapse_time');
             } else {
-                $(cmdoutputtbl).addClassName('collapse_time');
+                $(this.cmdoutputtbl).addClassName('collapse_time');
             }
         }
 
@@ -480,12 +496,12 @@ var FollowControl = Class.create({
     },
     setColNode: function (show) {
 
-        if ($(cmdoutputtbl)) {
+        if ($(this.cmdoutputtbl)) {
 
             if (show) {
-                $(cmdoutputtbl).removeClassName('collapse_node');
+                $(this.cmdoutputtbl).removeClassName('collapse_node');
             } else {
-                $(cmdoutputtbl).addClassName('collapse_node');
+                $(this.cmdoutputtbl).addClassName('collapse_node');
             }
         }
 
@@ -493,12 +509,12 @@ var FollowControl = Class.create({
     },
     setColStep: function (show) {
 
-        if ($(cmdoutputtbl)) {
+        if ($(this.cmdoutputtbl)) {
 
             if (show) {
-                $(cmdoutputtbl).removeClassName('collapse_stepnum');
+                $(this.cmdoutputtbl).removeClassName('collapse_stepnum');
             } else {
-                $(cmdoutputtbl).addClassName('collapse_stepnum');
+                $(this.cmdoutputtbl).addClassName('collapse_stepnum');
             }
         }
 
@@ -533,13 +549,13 @@ var FollowControl = Class.create({
     clearTable: function(tbl) {
 
         if (tbl) {
-            $('commandPerform').removeChild(tbl);
+            $(this.parentElement).removeChild(tbl);
             this.cmdoutputtbl = null;
         }
         this._init();
     },
 
-    createTable: function() {
+    createTable: function(id) {
         var tbl = new Element("table");
         tbl.setAttribute("border", "0");
         tbl.setAttribute("width", "100%");
@@ -547,7 +563,9 @@ var FollowControl = Class.create({
         tbl.setAttribute("cellSpacing", "0");
         tbl.setAttribute("cellPadding", "0");
         tbl.addClassName('execoutput');
-        tbl.setAttribute('id', 'cmdoutputtbl');
+        if(id){
+            tbl.setAttribute('id', id);
+        }
         if(!this.tailmode){
             $(tbl).addClassName('collapse_node');
             $(tbl).addClassName('collapse_stepnum');
@@ -556,34 +574,34 @@ var FollowControl = Class.create({
         var tbod = new Element("tbody");
         tbl.appendChild(tbod);
 
-        $('commandPerform').appendChild(tbl);
+        $(this.parentElement).appendChild(tbl);
 
-        $('commandPerform').show();
+        $(this.parentElement).show();
         return tbl;
     },
     showLoading:function(message,percent){
-        if ($('fileload')) {
-            $('fileload').show();
-            $('fileloadpercent').innerHTML = (message!=null ? message : '');
-            if(percent!=null && $('fileloadprogress')){
-                $('fileloadprogress').show();
-                $('fileloadprogress').down('.progress-bar').style.width=percent+'%';
+        if (this.fileloadId && $(this.fileloadId)) {
+            $(this.fileloadId).show();
+            $(this.fileloadPctId).innerHTML = (message!=null ? message : '');
+            if(percent!=null && $(this.fileloadProgressId)){
+                $(this.fileloadProgressId).show();
+                $(this.fileloadProgressId).down('.progress-bar').style.width=percent+'%';
             }
             if(percent){
-                $('fileloadpercent').innerHTML = (message != null ? message : '')+percent+'%';
+                $(this.fileloadPctId).innerHTML = (message != null ? message : '')+percent+'%';
             }
         }
     },
     hideLoading:function(){
-        if ($('fileload')) {
-            $('fileload').hide();
+        if (this.fileloadId && $(this.fileloadId)) {
+            $(this.fileloadId).hide();
         }
     },
     appendCmdOutput: function(data) {
         var orig = data;
         var needsScroll = false;
         try{
-        if (!this.isAppendTop() && this.isAtBottom()) {
+        if (!this.isAppendTop() && this.isAtBottom() && this.autoscroll) {
             needsScroll = true;
         }
         if (typeof(data) == "string" && data == "") {
@@ -605,7 +623,7 @@ var FollowControl = Class.create({
                 }
             }
             if (!this.cmdoutputtbl) {
-                this.cmdoutputtbl = this.createTable();
+                this.cmdoutputtbl = this.createTable(this.tableId);
                 this.setColNode(this.colNode.value);
                 this.setColStep(this.colStep.value);
                 this.setColTime(this.colTime.value);
@@ -626,7 +644,7 @@ var FollowControl = Class.create({
                 //hide table header
                 $(this.cmdoutputtbl).hide();
             }
-            $('viewoptionscomplete').hide();
+            $(this.viewoptionsCompleteId).hide();
             return;
         }
 
@@ -667,14 +685,11 @@ var FollowControl = Class.create({
         if (this.runningcmd.completed && this.runningcmd.jobcompleted) {
             //halt timer
 
-            if ($('viewoptionscomplete') && null != data.totalSize) {
-                if ($('outfilesize')) {
-                    $('outfilesize').innerHTML = data.totalSize + " bytes";
+            if ($(this.viewoptionsCompleteId) && null != data.totalSize) {
+                if ($(this.outfileSizeId)) {
+                    $(this.outfileSizeId).innerHTML = data.totalSize + " bytes";
                 }
-                $('viewoptionscomplete').show();
-            }
-            if ($('taildelaycontrol')) {
-                $('taildelaycontrol').hide();
+                $(this.viewoptionsCompleteId).show();
             }
             this.finishDataOutput();
             this.finishedExecution(this.runningcmd.jobstatus);
@@ -691,8 +706,8 @@ var FollowControl = Class.create({
         }
         if (this.runningcmd.jobcompleted && !this.runningcmd.completed) {
             this.jobFinishStatus(this.runningcmd.jobstatus);
-            if ($('progressContainer')) {
-                $('progressContainer').hide();
+            if ($(this.progressContainerId)) {
+                $(this.progressContainerId).hide();
             }
             var message=null
             var percent=null;
@@ -713,14 +728,11 @@ var FollowControl = Class.create({
         }
         if (this.runningcmd.jobcompleted) {
 
-            if ($('viewoptionscomplete') && null != data.totalSize) {
-                if ($('outfilesize')) {
-                    $('outfilesize').innerHTML = data.totalSize + " bytes";
+            if (this.viewoptionsCompleteId && $(this.viewoptionsCompleteId) && null != data.totalSize) {
+                if ($(this.outfileSizeId)) {
+                    $(this.outfileSizeId).innerHTML = data.totalSize + " bytes";
                 }
-                $('viewoptionscomplete').show();
-            }
-            if ($('taildelaycontrol')) {
-                $('taildelaycontrol').hide();
+                $(this.viewoptionsCompleteId).show();
             }
         }
 
@@ -824,11 +836,12 @@ var FollowControl = Class.create({
 
     loadMoreOutputTail: function(id, offset) {
         var url = this.appLinks.tailExecutionOutput;
-        //    $('commandPerform').innerHTML+="id,offset: "+id+","+offset+"; runningcmd: "+this.runningcmd.id+","+this.runningcmd.offset;
+        //    $(this.parentElement).innerHTML+="id,offset: "+id+","+offset+"; runningcmd: "+this.runningcmd.id+","+this.runningcmd.offset;
         var obj=this;
         if(this.isrunning){
+            var idstr=id?( "id=" + id ): '';
             new Ajax.Request(url, {
-                parameters: "id=" + id + "&offset=" + offset
+                parameters: idstr + "&offset=" + offset
                     + ((this.tailmode && this.lastlines && this.truncateToTail && offset==0) ? "&lastlines=" + this.lastlines : "")
                     + "&maxlines="+this.lastlines
                     + this.extraParams ,
@@ -961,20 +974,17 @@ var FollowControl = Class.create({
         this.lastrow = data;
         return tr;
     },
-    parseOldContextString: function(context){
-        if(context==null){
+    parseContextId: function (context) {
+        if (context == null) {
             return null;
         }
         //split context into project,type,object
-        var t = context.split(':');
-        var i=0;
-        var vals= new Array();
-        for(i=0;i< t.length;i++){
+        var t = context.split('/');
+        var i = 0;
+        var vals = new Array();
+        for (i = 0; i < t.length; i++) {
             var x = t[i];
-            var p= x.split('-',2)
-            if(p.length>0){
-                vals.push(p[0])
-            }
+            vals.push(x);
         }
         return vals;
     },
@@ -987,82 +997,20 @@ var FollowControl = Class.create({
             .replace(/'/g, "&#039;");
     },
     renderContextStepNumber: function(data){
-        var ctx = this.parseOldContextString(data['command']);
-        var string;
+        var ctx = this.parseContextId(data['stepctx']);
+        var string='';
         if (ctx && ctx[0]) {
-             string= + ctx[0];
+             string+= ctx[0];
             if (ctx.length > 1) {
 //                string += "/" + ctx.slice(1).join("/")
             }
             string+=". "
         }else{
-            string=data['command'];
+            string=data['stepctx'];
         }
         return string;
     },
 
-    contextType: function (data) {
-        var ctx = this.parseOldContextString(data['command']);
-        if (ctx) {
-            var string = "";
-            if (typeof(workflow) != 'undefined') {
-                var step = workflow[parseInt(ctx[0]) - 1];
-                if (typeof(step) != 'undefined') {
-                    if (step['exec']) {
-                        return 'command';
-                    } else if (step['jobref']) {
-                        return 'job';
-                    } else if (step['script']) {
-                        return 'script';
-                    } else if (step['scriptfile']) {
-                        return 'scriptfile';
-                    } else if (step['type']) {//plugin
-                        var title = "Plugin " + step['type'];
-                        if (step['nodeStep'] && typeof(nodeSteppluginDescriptions) != 'undefined') {
-                            return 'node-step-plugin plugin';
-                        } else if (!step['nodeStep'] && typeof(wfSteppluginDescriptions) != 'undefined') {
-                            return 'workflow-step-plugin plugin';
-                        }
-                    }
-                }
-            }
-        }
-        return 'console';
-    },
-    renderContextString: function(data){
-        var ctx = this.parseOldContextString(data['command']);
-        if (ctx) {
-            var string="";
-            if(typeof(workflow)!='undefined'){
-                var step=workflow[parseInt(ctx[0])-1];
-                if(typeof(step)!='undefined'){
-                    if(step['exec']){
-//                        string+=' $ '+step['exec'];
-                        string+='Command';
-                    }else if(step['jobref']){
-                        string+=(step['jobref']['group']? step['jobref']['group']+'/':'')+step['jobref']['name'];
-                    }else if(step['script']){
-                        string += "Script" ;
-                    }else if(step['scriptfile']){
-                        string += step['scriptfile'] ;
-                    }else if(step['type']){//plugin
-                        var title= "Plugin " + step['type'];
-                        if(step['nodeStep'] && typeof(nodeSteppluginDescriptions)!='undefined'){
-                            title = nodeSteppluginDescriptions[step['type']].title;
-                        }else if(!step['nodeStep'] && typeof(wfSteppluginDescriptions) != 'undefined'){
-                            title = wfSteppluginDescriptions[step['type']].title;
-                        }
-                        string += title ;
-                    }
-                }
-            }
-            if(ctx.length>1){
-//                string += " > Step "+ctx.slice(1).join(" > Step ")
-            }
-            return string;
-        }
-        return data['command'];
-    },
     createNewNodeTbody: function(data, tbl, ctxid) {
         //create new Table body
         var newtbod = new Element("tbody");
@@ -1095,24 +1043,8 @@ var FollowControl = Class.create({
             cell.innerHTML += "<span class='node'>" + data['node'] + "</span>";
         }
 
-        if (data['command']  || data['context']) {
-            if ( data['command'] && "run" != data['command']) {
-                var contextstr= this.renderContextString(data)
-//                cell.innerHTML += "<span class='stepident' title='" + this.escapeHtml(contextstr) + "'>" + this.escapeHtml(contextstr) + "</span>";
-            } else if (data['command'] && "run" == data['command']) {
-                cell.innerHTML +=
-                "<span class='stepident' title='" + data['command'] + "'>" + data['command'] + "</span>";
-            }
-            if (data['context']) {
-                //split context into project,type,object
-                var t = data['context'].split('.');
-                if (t.size() > 2) {
-                    cell.innerHTML += " <span class='resname'>" + t[2] + "</span>";
-                }
-                if (t.size() > 1) {
-                    cell.innerHTML += " <span class='typename'>" + t[1] + "</span>";
-                }
-            }
+        if ( data['stepctx'] && this.workflow) {
+            var contextstr= this.workflow.renderContextString(data['stepctx']);
         } else {
             tr.addClassName('console');
             cell.innerHTML += " <span class='console'>[console]</span>";
@@ -1222,6 +1154,7 @@ var FollowControl = Class.create({
 
 
         var tr = $(newtbod.insertRow(this.isAppendTop() ? 0 : -1));
+
         var iconcell = $(tr.insertCell(0));
         iconcell.setAttribute('id', 'ctxIcon' + ctxid);
         tr.addClassName('contextRow');
@@ -1239,27 +1172,11 @@ var FollowControl = Class.create({
             cell.innerHTML += "<span class='node'>" + data['node'] + "</span>";
         }
 
-        if (data['command']  || data['context']) {
-            if ( data['command'] && "run" != data['command']) {
-                var contextstr = this.renderContextString(data);
-                var stepnum = this.renderContextStepNumber(data);
-                cell.innerHTML += "<span class='stepnum' title='" + this.escapeHtml(contextstr) + "'>" + this.escapeHtml(contextstr) + "</span>";
-                cell.innerHTML += "<span class='stepident'>" + this.escapeHtml(contextstr) + "</span>";
-            } else if (data['command'] && "run" == data['command']) {
-                cell.innerHTML +=
-                "<span class='stepident' title='" + data['command'] + "'>" + data['command'] + "</span>";
-            }
-            if (data['context']) {
-                //split context into project,type,object
-                var t = data['context'].split('.');
-                if (t.size() > 2) {
-                    cell.innerHTML += " <span class='resname'>" + t[2] + "</span>";
-                }
-                if (t.size() > 1) {
-                    cell.innerHTML += " <span class='typename'>" + t[1] + "</span>";
-                }
-                //                cell.innerHTML+=" <span class='contextInfo'>("+data['context']+") </span>";
-            }
+        if (data['stepctx'] && this.workflow) {
+            var contextstr = this.workflow.renderContextString(data['stepctx']);
+            var stepnum = this.renderContextStepNumber(data);
+            cell.innerHTML += "<span class='stepnum' title='" + this.escapeHtml(contextstr) + "'>" + this.escapeHtml(contextstr) + "</span>";
+            cell.innerHTML += "<span class='stepident'>" + this.escapeHtml(contextstr) + "</span>";
         } else {
             tr.addClassName('console');
             cell.innerHTML += " <span class='console'>[console]</span>";
@@ -1317,7 +1234,7 @@ var FollowControl = Class.create({
         if (null == this.lastTBody) {
             this.lastTBody = tbl.tBodies[0];
         }
-        if (null == this.lastrow  || this.lastrow['command'] != data['command']
+        if (null == this.lastrow  || this.lastrow['stepctx'] != data['stepctx']
             || this.lastrow['node'] != data['node'] || this.lastrow['context'] != data['context']) {
             if (null != this.lastrow) {
                 this.createFinalContextTbody(data, tbl, ctxid);
@@ -1371,19 +1288,16 @@ var FollowControl = Class.create({
         var tdctx = $(tr.insertCell(cellndx));
         cellndx++;
         tdctx.addClassName('stepnum');
-        if (!shownode && this.lastrow && this.lastrow['command'] == data['command'] ) {
+        if (!shownode && this.lastrow && this.lastrow['stepctx'] == data['stepctx'] ) {
 //                tdctx.addClassName('repeat');
-        }else if(data['command']){
+        }else if(data['stepctx'] && this.workflow){
 
-            var cmdtext= this.renderContextStepNumber(data) + " " + this.renderContextString(data);
+            var cmdtext= this.renderContextStepNumber(data) + " " + this.workflow.renderContextString(data['stepctx']);
             var icon= new Element('i');
-            icon.addClassName('rdicon icon-small '+ this.contextType(data))
+            icon.addClassName('rdicon icon-small '+ this.workflow.contextType(data['stepctx']))
             tdctx.appendChild(icon);
             tdctx.appendChild(document.createTextNode(" "+cmdtext));
-            tdctx.setAttribute('title',this.renderContextString(data));
-//            tdctx.addClassName(this.contextType(data));
-        }else{
-
+            tdctx.setAttribute('title', this.workflow.renderContextString(data['stepctx']));
         }
         var tddata = $(tr.insertCell(cellndx));
         tddata.addClassName('data');
@@ -1404,7 +1318,7 @@ var FollowControl = Class.create({
         }
     },
     clearCmdOutput: function() {
-        $('commandPerform').innerHTML = '';
+        $(this.parentElement).innerHTML = '';
         this.cmdoutputtbl = null;
         this.cmdoutspinner = null;
         this.runningcmd = null;
@@ -1415,15 +1329,15 @@ var FollowControl = Class.create({
         $(d2).setAttribute("id", "cmdoutputerror");
         $(d2).hide();
 
-        $('commandPerform').appendChild(d2);
+        $(this.parentElement).appendChild(d2);
     },
     beginExecution: function() {
         this.clearCmdOutput();
-        $('commandPerform').show();
+        $(this.parentElement).show();
 
         this.displayCompletion(0);
-        if ($('progressContainer')) {
-            $('progressContainer').show();
+        if ($(this.progressContainerId)) {
+            $(this.progressContainerId).show();
         }
 //        this.setOutputAppendTop($F('outputappendtop') == "top");
 //        this.setOutputAutoscroll($F('outputautoscrolltrue') == "true");
@@ -1434,27 +1348,30 @@ var FollowControl = Class.create({
     },
 
     finishedExecution: function(result) {
+        if(!this.finishedExecutionAction){
+            return;
+        }
         if ($('cmdoutspinner')) {
             $('cmdoutspinner').remove();
         }
         this.cmdoutspinner = null;
         this.isrunning = false;
-        if ($('progressContainer')) {
+        if ($(this.progressContainerId)) {
             this.displayCompletion(100);
-            $('progressContainer').hide();
+            $(this.progressContainerId).hide();
         }
-        if ($('fileload')) {
-            $('fileload').hide();
+        if (this.fileloadId && $(this.fileloadId)) {
+            $(this.fileloadId).hide();
         }
         if (this.runningcmd.failednodes && $$('.execRetry')) {
             $$('.execRetry').each(Element.show);
         }else if ($$('.execRerun')){
             $$('.execRerun').each(Element.show);
         }
-        if(typeof(this.onComplete)=='function'){
+        this.jobFinishStatus(result);
+        if (typeof(this.onComplete) == 'function') {
             this.onComplete();
         }
-        this.jobFinishStatus(result);
     },
     jobFinishStatus: function(result) {
         if (null != result) {
@@ -1491,7 +1408,7 @@ var FollowControl = Class.create({
         }
     },
     beginFollowingOutput: function(id) {
-        if (this.isrunning) {
+        if (this.isrunning || this.runningcmd && this.runningcmd.completed) {
             return false;
         }
         this.beginExecution();
@@ -1576,22 +1493,22 @@ var FollowControl = Class.create({
         }
     },
     displayCompletion: function(pct) {
-        if ($('execDurationPct')) {
-            $('execDurationPct').innerHTML = pct + "%";
+        if ($(this.execDurationPctId)) {
+            $(this.execDurationPctId).innerHTML = pct + "%";
         }
 
-        if ($('progressBar')){
-            $('progressBar').style.width = (Math.floor(pct) +'%');
-            $('progressBar').innerHTML = (Math.floor(pct)) + "%";
+        if ($(this.progressBarId)){
+            $(this.progressBarId).style.width = (Math.floor(pct) +'%');
+            $(this.progressBarId).innerHTML = (Math.floor(pct)) + "%";
         }
     },
     displayIndefiniteCompletion: function() {
-        if ($('execDurationPct')) {
-            $('execDurationPct').innerHTML = "Running";
+        if ($(this.execDurationPctId)) {
+            $(this.execDurationPctId).innerHTML = "Running";
         }
 
-        if ($('progressBar')){
-            $('progressBar').innerHTML = "Running";
+        if ($(this.progressBarId)){
+            $(this.progressBarId).innerHTML = "Running";
         }
     }
 });

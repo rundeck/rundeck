@@ -22,7 +22,6 @@
         disclosureWait: "${resource(dir:'images',file:'icon-tiny-disclosure-waiting.gif')}",
         iconTinyRemoveX: '${resource(dir:"images",file:"icon-tiny-removex.png")}',
         iconTinyRemoveXGray: '${resource(dir:"images",file:"icon-tiny-removex-gray.png")}',
-        iconSmallNodeObject:'${resource(dir:"images",file:"icon-small-NodeObject.png")}',
         iconSmallPrefix:'${resource(dir:"images",file:"icon-small-")}'
     };
     var _g_nodeFilterData={};

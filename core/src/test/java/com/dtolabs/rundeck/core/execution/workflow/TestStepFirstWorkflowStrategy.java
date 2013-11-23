@@ -155,6 +155,11 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             System.err.println(i + ": " + s);
         }
 
+        @Override
+        public void event(String eventType, String message, Map eventMeta) {
+            System.err.println(eventType + ": " + message);
+        }
+
         public FailedNodesListener getFailedNodesListener() {
             return null;
         }

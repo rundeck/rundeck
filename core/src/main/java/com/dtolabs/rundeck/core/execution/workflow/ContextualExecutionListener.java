@@ -25,7 +25,9 @@ package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.execution.*;
+import com.dtolabs.rundeck.core.logging.LogLevel;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -57,6 +59,32 @@ class ContextualExecutionListener extends ExecutionListenerOverrideBase implemen
         }else{
             log(level, message, getLoggingContext());
         }
+    }
+    private Map<String,String> mergeMap(Map a,Map<String, String> b) {
+        HashMap<String, String> hashMap = new HashMap<String, String>();
+        if(null!=a){
+            for (Object k : a.keySet()) {
+                hashMap.put(k.toString(), a.get(k).toString());
+            }
+        }
+        if(null!=b){
+            hashMap.putAll(b);
+        }
+        return hashMap;
+    }
+
+    @Override
+    public void event(String eventType, String message, Map eventMeta) {
+        if (null != delegate) {
+            delegate.event(eventType, message, eventMeta);
+        } else {
+            emitEvent(eventType, LogLevel.NORMAL, message, mergeMap(eventMeta, getLoggingContext()));
+        }
+
+    }
+
+    private void emitEvent(String eventType, LogLevel normal, String message, Map<String, String> loggingContext) {
+        logger.emit(eventType, normal, message, loggingContext);
     }
 
     public void log(final int level, final String message, Map<String, String> data) {

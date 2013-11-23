@@ -1,4 +1,4 @@
-<%@ page import="rundeck.Execution; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
+<%@ page import="grails.util.Environment; rundeck.Execution; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 <html>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
@@ -25,26 +25,60 @@
 
       <g:set var="defaultLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.default}"/>
       <g:set var="maxLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.max}"/>
+      <g:javascript src="moment.min.js"/>
       <g:javascript src="executionControl.js"/>
+      <g:javascript src="workflow.js"/>
+      <g:javascript src="executionState.js"/>
+      <g:if test="${grails.util.Environment.current==Environment.DEVELOPMENT}">
+            <g:javascript src="knockout-3.0.0.debug.js"/>
+      </g:if>
+      <g:else>
+          <g:javascript src="knockout-3.0.0-min.js"/>
+      </g:else>
+      <g:javascript src="knockout.mapping-latest.js"/>
+      <g:javascript src="executionStateKO.js"/>
       <g:javascript library="prototype/effects"/>
       <g:javascript>
         <g:if test="${scheduledExecution}">
         /** START history
          *
          */
+         var histloaded=false;
         function loadHistory(){
+            if(histloaded){
+                return;
+            }
             new Ajax.Updater('histcontent',"${createLink(controller:'reports',action:'eventsFragment')}",{
                 parameters:{compact:true,nofilters:true,jobIdFilter:'${scheduledExecution.id}'},
                 evalScripts:true,
                 onComplete: function(transport) {
                     if (transport.request.success()) {
+                        histloaded=true;
                         Element.show('histcontent');
+                        Element.show('history_header');
                     }
                 }
             });
         }
         </g:if>
+        var workflowData=${execution.workflow.commands*.toMap().encodeAsJSON()};
+        var workflow = new RDWorkflow(workflowData,{
+            nodeSteppluginDescriptions:${stepPluginDescriptions.node.collectEntries { [(it.key): [title: it.value.title]] }.encodeAsJSON()},
+            wfSteppluginDescriptions:${stepPluginDescriptions.workflow.collectEntries { [(it.key): [title: it.value.title]] }.encodeAsJSON()}
+        });
+
         var followControl = new FollowControl('${execution?.id}','outputappendform',{
+            parentElement:'commandPerform',
+            fileloadId:'fileload',
+            fileloadPctId:'fileloadpercent',
+            fileloadProgressId:'fileloadprogress',
+            viewoptionsCompleteId:'viewoptionscomplete',
+            cmdOutputErrorId:'cmdoutputerror',
+            outfileSizeId:'outfilesize',
+            progressContainerId:'progressContainer',
+            progressBarId:'progressBar',
+            execDurationPctId:'execDurationPct',
+            workflow:workflow,
             appLinks:appLinks,
             iconUrl: "${resource(dir: 'images', file: 'icon-small')}",
             smallIconUrl: "${resource(dir: 'images', file: 'icon-small')}",
@@ -71,15 +105,82 @@
             , onComplete:loadHistory
             </g:if>
         });
+        var flowState = new FlowState('${execution?.id}','flowstate',{
+            workflow:workflow,
+            loadUrl: "${g.createLink(controller: 'execution', action: 'ajaxExecState', id: execution.id)}",
+            outputUrl:"${g.createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id)}.json",
+            selectedOutputStatusId:'selectedoutputview',
+            reloadInterval:1500
+         });
+         var stepState= new StepFlow(flowState,'flowstate');
 
-
-        function init() {
+         var nodeflowvm=new NodeFlowViewModel(workflow,"${g.createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id)}.json");
+         function followOutput(){
             followControl.beginFollowingOutput('${execution?.id}');
+         }
+         function followState(){
+            try{
+                flowState.beginFollowing();
+            }catch(e){
+                nodeflowvm.errorMessage('Could not load flow state: '+e);
+                nodeflowvm.stateLoaded(false);
+            }
+         }
+        function init() {
+//            followControl.beginFollowingOutput('${execution?.id}');
+//            flowState.addUpdater(stepState);
+            flowState.addUpdater({
+            updateError:function(error,model){
+                nodeflowvm.stateLoaded(false);
+                if(error!='pending'){
+                    nodeflowvm.errorMessage(model.errorMessage?model.errorMessage:error);
+                }
+            },
+            updateState:function(model){
+                if(!model.nodes || !model.allNodes){
+                    return;
+                }
+                nodeflowvm.stateLoaded(true);
+
+                var count = model.allNodes.length;
+                for (var i = 0; i < count; i++) {
+                    var node = model.allNodes[i];
+                    var data=model.nodes[node];
+
+                    var nodesteps=nodeflowvm.extractNodeStepStates(node,data,model);
+                    var nodea=nodeflowvm.findNode(node);
+                    if(nodea){
+                        nodea.updateSteps(nodesteps);
+                    }else{
+                        nodeflowvm.addNode(node,nodesteps);
+                    }
+                }
+                ko.mapping.fromJS({executionState:model.executionState,completed:model.completed},{},nodeflowvm);
+                if(nodeflowvm.completed()){
+                    loadHistory();
+                }
+            }});
+
+            ko.applyBindings(nodeflowvm);
+
             <g:if test="${!(grailsApplication.config.rundeck?.gui?.enableJobHoverInfo in ['false', false])}">
             $$('.obs_bubblepopup').each(function(e) {
                 new BubbleController(e,null,{offx:-14,offy:null}).startObserving();
             });
             </g:if>
+
+            //link flow and output tabs to initialize following
+            //by default show state
+            followState();
+            jQuery('#tab_link_flow').on('show.bs.tab',function(e){
+                followState();
+            });
+            jQuery('#tab_link_output').on('show.bs.tab',function(e){
+                followOutput();
+            });
+          <g:if test="${execution.dateCompleted != null}">
+            loadHistory();
+          </g:if>
         }
 
         Event.observe(window, 'load', init);
@@ -95,6 +196,18 @@
             display: none;
         }
 
+        .execstate.isnode[data-execstate=RUNNING],.execstate[data-execstate=RUNNING_HANDLER] {
+            background-image: url(${g.resource(dir: 'images',file: 'icon-tiny-disclosure-waiting.gif')});
+            padding-right: 16px;
+            background-repeat: no-repeat;
+            background-position: right 2px;
+        }
+
+
+
+        .errmsg {
+            color: gray;
+        }
       </style>
   </head>
 
@@ -208,6 +321,18 @@
                                         </div>
                                     </div>
                                 </g:if>
+
+                                <div class="row">
+                                    <div class="col-sm-12">
+                                        <g:if test="${scheduledExecution}">
+                                        <span class="text-muted">Number of Steps:</span> <span class="text-info" data-bind="text: totalSteps"></span>
+                                        </g:if>
+
+                                        <div data-bind="if: stateLoaded()">
+                                            <span class="text-muted">Number of Nodes:</span> <span class="text-info" data-bind="text: totalNodes"></span>
+                                        </div>
+                                    </div>
+                                </div>
                     </div>
 
                             <div class="col-sm-4">
@@ -370,7 +495,17 @@
                         </g:if>
                     </g:if>
                     </div>
-                    <div class="col-sm-8 runstatus" id="progressContainer"
+                    <div class="col-sm-4 " >
+                        <div id="selectedoutputview"  class="runoutput" data-bind="with: followingStep()">
+                            <span class="nodectx isnode text-info" data-bind="text: node.name"></span>
+                            <span class="text-muted"><i class="glyphicon glyphicon-chevron-right"></i></span>
+                            <span class="stepident" data-bind="attr: { title: stepctxdesc }">
+                                <i class="rdicon icon-small" data-bind="css: type()"></i>
+                                <span data-bind="text: stepident()"></span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-sm-4 runstatus" id="progressContainer"
                          style="${wdgt.styleVisible(unless: execution.dateCompleted)}">
                         <g:set var="progressClass" value=""/>
                         <g:set var="innerContent" value=""/>
@@ -395,11 +530,7 @@
                     %{--<div class="col-sm-12"></div>--}%
                 %{--</div>--}%
 
-        <g:javascript>
-        var workflow=${execution.workflow.commands*.toMap().encodeAsJSON()};
-            var nodeSteppluginDescriptions=${stepPluginDescriptions.node.collectEntries{[(it.key):[title:it.value.title]]}.encodeAsJSON()};
-            var wfSteppluginDescriptions=${stepPluginDescriptions.workflow.collectEntries { [(it.key):[title: it.value.title]] }.encodeAsJSON()};
-        </g:javascript>
+
 
         </div>
         </div>
@@ -407,8 +538,15 @@
                 <div class="col-sm-12">
 
                     <ul class="nav nav-tabs">
-                        <li class="active"><a href="#output" data-toggle="tab">Log Output</a></li>
-                        <li><a href="#schedExDetails${scheduledExecution?.id}" data-toggle="tab">Definition</a></li>
+                        <li id="tab_link_flow" class="active">
+                            <a href="#state" data-toggle="tab">Workflow</a>
+                        </li>
+                        <li id="tab_link_output" class="">
+                            <a href="#output" data-toggle="tab">Log Output</a>
+                        </li>
+                        <li>
+                            <a href="#schedExDetails${scheduledExecution?.id}" data-toggle="tab">Definition</a>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -417,7 +555,30 @@
     <div class="row">
         <div class="col-sm-12">
             <div class="tab-content">
-                <div class="tab-pane active" id="output">
+                <div class="tab-pane active" id="state">
+                    %{--<div class="flowstate" id="nodeflowstate">--}%
+                       %{--<g:render template="wfstateNodeModelDisplay" bean="${workflowState}" var="workflowState"/>--}%
+                    %{--</div>--}%
+                    <div class="flowstate" id="nodeflowstate">
+                       <g:render template="wfstateNodeModelDisplay2" bean="${workflowState}" var="workflowState"/>
+                    </div>
+                    %{--<div class="flowstate" id="flowstate">--}%
+                        %{--<g:render template="wfstateStepModelDisplay" bean="${workflowState}" var="workflowState"/>--}%
+                    %{--</div>--}%
+
+                    %{--<div class="row">--}%
+                        %{--<div class="col-sm-12">--}%
+                            %{--<pre id="flowstate_output"></pre>--}%
+                        %{--</div>--}%
+                    %{--</div>--}%
+                    %{--<div class="row row-space">--}%
+                        %{--<div class="col-sm-12" id="flowstate_log">--}%
+
+                        %{--</div>--}%
+                    %{--</div>--}%
+
+                </div>
+                <div class="tab-pane " id="output">
                     <g:render template="/execution/showFragment"
                               model="[execution: execution, scheduledExecution: scheduledExecution, inlineView: false, followmode: followmode]"/>
                 </div>
@@ -432,20 +593,13 @@
     </div>
 
 
+
     <g:if test="${scheduledExecution}">
         <h4 class="text-muted" id="history_header" style="${wdgt.styleVisible(if: execution.dateCompleted != null)}">
             <g:message code="page.section.Activity"/>
         </h4>
         <div class="pageBody">
             <g:render template="/reports/historyTableContainer" model="[nowrunning: false]"/>
-            <g:if test="${execution.dateCompleted!=null}">
-            <g:javascript>
-                fireWhenReady('histcontent', loadHistory);
-                fireWhenReady('histcontent', function () {
-                    $('history_header').show();
-                });
-            </g:javascript>
-            </g:if>
         </div>
     </g:if>
 

@@ -15,14 +15,14 @@
                     <g:if test="${expanddetail}">
                         <g:expander key="${ukey+'node_detail_'+i}" imgfirst="true">
                         <span class="node_ident" id="${ukey}_${node.nodename}_key">
-                            <img src="${resource(dir:'images',file:'icon-small-Node.png')}" alt="Node" width="16px" height="16px"/>
+                            <i class="rdicon node icon-small"></i>
                             ${resName}
                         </span>
                         </g:expander>
                     </g:if>
                     <g:else>
                         <span class="node_ident" id="${ukey}_${node.nodename}_key">
-                            <img src="${resource(dir:'images',file:'icon-small-Node.png')}" alt="Node" width="16px" height="16px"/>
+                            <i class="rdicon node icon-small"></i>
                             ${resName}
                         </span>
                     </g:else>
@@ -99,7 +99,7 @@
 
 <div id="remoteEditholder" style="display:none" class="popout">
     <span id="remoteEditHeader">
-            <span class="welcomeMessage">Edit node: <g:img file="icon-small-Node.png" width="16px" height="16px"/> <span id="editNodeIdent"></span></span>
+            <span class="welcomeMessage">Edit node: <i class="rdicon node icon-small"></i> <span id="editNodeIdent"></span></span>
     </span>
     <span class="toolbar" id="remoteEditToolbar">
         <span class="action " onclick="_remoteEditCompleted();" title="Close the remote edit box and discard any changes"><g:img file="icon-tiny-removex-gray.png" /> Close remote editing</span>

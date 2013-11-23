@@ -21,8 +21,8 @@
  --%>
 
 <%@ page contentType="text/html;charset=UTF-8" %>
-<td title="${prop.description?.encodeAsHTML()}">${prop.title ? prop.title.encodeAsHTML() : prop.name.encodeAsHTML()}:</td>
-<td>
+<div title="${prop.description?.encodeAsHTML()}">${prop.title ? prop.title.encodeAsHTML() : prop.name.encodeAsHTML()}:</div>
+<div>
 <g:if test="${prop.type.toString()=='Boolean'}">
     <g:if test="${values[prop.name]=='true'}">
         <span class="configvalue">Yes</span>
@@ -37,4 +37,4 @@
 <g:if test="${includeFormFields && values[prop.name]}">
     <input type="hidden" name="${(prefix+ 'config.'+prop.name).encodeAsHTML()}" value="${values[prop.name]?.encodeAsHTML()}"/>
 </g:if>
-</td>
+</div>

@@ -19,6 +19,9 @@ class RundeckLogFormat implements OutputLogFormat, LineLogFormat {
     public static final String DELIM = '^'
     public static final String FILE_START = DELIM + FORMAT_MIME + DELIM
     public static final String FILE_END = DELIM + "END" + DELIM
+    public static final String DEFAULT_EVENT_TYPE= LogUtil.EVENT_TYPE_LOG
+    public static final LogLevel DEFAULT_LOG_LEVEL= LogLevel.NORMAL
+
     static final char BACKSLASH = '\\' as char
     private static final ThreadLocal<DateFormat> w3cDateFormat = new ThreadLocal<DateFormat>() {
         protected DateFormat initialValue() {
@@ -70,9 +73,9 @@ class RundeckLogFormat implements OutputLogFormat, LineLogFormat {
         sb.append(DELIM)
         //date
         sb.append(date).append('|')
-        sb.append(entry.eventType?entry.eventType.replaceAll('\\|',''):'').append('|')
+        sb.append(entry.eventType&&entry.eventType!=DEFAULT_EVENT_TYPE?entry.eventType.replaceAll('\\|',''):'').append('|')
         //level
-        sb.append(entry.loglevel).append("|")
+        sb.append(entry.loglevel==DEFAULT_LOG_LEVEL?'':entry.loglevel).append("|")
 
         //metadata
         def metadata = entry.metadata
@@ -162,8 +165,8 @@ class RundeckLogFormat implements OutputLogFormat, LineLogFormat {
                 return RDFormatItem.error("Expected 4 sections: " + arr.length)
             }
             Date time = w3cDateFormat.get().parse(arr[0])
-            String eventType = arr[1] ?: LogUtil.EVENT_TYPE_LOG
-            LogLevel level = LogLevel.valueOf(arr[2])
+            String eventType = arr[1] ?: DEFAULT_EVENT_TYPE
+            LogLevel level = arr[2]?LogLevel.valueOf(arr[2]):DEFAULT_LOG_LEVEL
             def rest = arr[3]
             def meta = [:]
             if (rest.startsWith('{')) {

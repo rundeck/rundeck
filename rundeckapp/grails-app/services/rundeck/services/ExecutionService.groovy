@@ -3,6 +3,7 @@ package rundeck.services
 import com.dtolabs.rundeck.app.support.ExecutionContext
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
+import com.dtolabs.rundeck.app.internal.workflow.MultiWorkflowExecutionListener
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
@@ -61,6 +62,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def ScheduledExecutionService scheduledExecutionService
     def ReportService reportService
     def LoggingService loggingService
+    def WorkflowService workflowService
 
     def ThreadBoundOutputStream sysThreadBoundOut
     def ThreadBoundOutputStream sysThreadBoundErr
@@ -570,7 +572,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             //create listener to handle log messages and Ant build events
             WorkflowExecutionListenerImpl executionListener = new WorkflowExecutionListenerImpl(recorder, new ContextLogWriter(loghandler),false,null);
-            StepExecutionContext executioncontext = createContext(execution, null,framework, execution.user, jobcontext, executionListener, null,extraParams, extraParamsExposed)
+            WorkflowExecutionListener execStateListener = workflowService.createWorkflowStateListenerForExecution(execution)
+            def wfEventListener = new WorkflowEventLoggerListener(executionListener)
+            def multiListener = MultiWorkflowExecutionListener.create(executionListener,
+                    [executionListener, wfEventListener,execStateListener, /*new EchoExecListener() */])
+            StepExecutionContext executioncontext = createContext(execution, null,framework, execution.user, jobcontext, multiListener, null,extraParams, extraParamsExposed)
 
             //ExecutionService handles Job reference steps
             final cis = StepExecutionService.getInstanceForFramework(framework);

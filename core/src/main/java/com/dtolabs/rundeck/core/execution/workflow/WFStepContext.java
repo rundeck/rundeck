@@ -34,10 +34,15 @@ import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 class WFStepContext {
     private StepExecutionItem stepItem;
     private int step = -1;
+    private boolean errorHandler;
 
     WFStepContext(final StepExecutionItem stepItem, final int step) {
+        this(stepItem, step,false);
+    }
+    WFStepContext(final StepExecutionItem stepItem, final int step, final boolean errorHandler) {
         this.stepItem = stepItem;
         this.step = step;
+        this.errorHandler = errorHandler;
     }
 
     /**
@@ -54,4 +59,11 @@ class WFStepContext {
         return step;
     }
 
+    /**
+     * Return true if within error handler context
+     * @return
+     */
+    public boolean isErrorHandler() {
+        return errorHandler;
+    }
 }

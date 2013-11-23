@@ -64,6 +64,12 @@ class ApiService {
         }
         return respondOutput(response, 'text/xml', renderErrorXml(error, error.code))
     }
+    def renderErrorJson(HttpServletResponse response, Map error){
+        if(error.status){
+            response.setStatus(error.status)
+        }
+        return respondOutput(response, 'application/json', renderErrorJson(error, error.code))
+    }
     /**
      * Require all specified parameters in the request
      * @param request
@@ -137,6 +143,24 @@ class ApiService {
             return false
         }
         return true
+    }
+    def renderErrorJson(messages, String code=null){
+        def result=[
+                error: "true",
+                apiversion: ApiRequestFilters.API_CURRENT_VERSION,
+        ]
+        if (code) {
+            result.errorCode=code
+        }
+        if (!messages) {
+            result.'message'=messageSource.getMessage("api.error.unknown", null, null)
+        }
+        if (messages instanceof List) {
+            result.messages=messages
+        } else if (messages instanceof Map && messages.code) {
+            result.message=(messages.message ?: messageSource.getMessage(messages.code, messages.args ? messages.args as Object[] : null, null))
+        }
+        return result.encodeAsJSON()
     }
     def renderErrorXml(messages, String code=null, builder=null){
         def writer = new StringWriter()

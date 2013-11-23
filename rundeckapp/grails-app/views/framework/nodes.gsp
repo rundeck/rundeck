@@ -432,6 +432,13 @@
          */
         function continueRunFollow(data){
              var followControl = new FollowControl(data.id,'runcontent',{
+                 parentElement: 'commandPerform',
+                 viewoptionsCompleteId: 'viewoptionscomplete',
+                 cmdOutputErrorId: 'cmdoutputerror',
+                 outfileSizeId: 'outfilesize',
+                 progressContainerId: 'progressContainer',
+                 progressBarId: 'progressBar',
+                 execDurationPctId: 'execDurationPct',
                 extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>",
                 smallIconUrl: "${resource(dir: 'images', file: 'icon-small')}",
                 iconUrl: "${resource(dir: 'images', file: 'icon-small')}",
@@ -609,9 +616,6 @@
             white-space:nowrap;
         }
 
-        .node_entry .project{
-
-        }
         #remoteEditholder{
             margin: 0px 20px 0 20px;
 

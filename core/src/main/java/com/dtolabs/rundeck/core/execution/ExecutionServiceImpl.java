@@ -34,6 +34,7 @@ import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
 import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcher;
 import com.dtolabs.rundeck.core.execution.service.*;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
@@ -65,15 +66,24 @@ class ExecutionServiceImpl implements ExecutionService {
         this.framework = framework;
     }
 
+    protected WorkflowExecutionListener getWorkflowListener(final ExecutionContext executionContext) {
+        WorkflowExecutionListener wlistener = null;
+        final ExecutionListener elistener = executionContext.getExecutionListener();
+        if (null != elistener && elistener instanceof WorkflowExecutionListener) {
+            wlistener = (WorkflowExecutionListener) elistener;
+        }
+        return wlistener;
+    }
     public ExecutionResult executeItem(StepExecutionContext context, StepExecutionItem executionItem)
         throws ExecutionException, ExecutionServiceException {
-        if (null != context.getExecutionListener()) {
-            context.getExecutionListener().beginStepExecution(context, executionItem);
+        if (null != getWorkflowListener(context)) {
+            getWorkflowListener(context).beginStepExecution(null,context, executionItem);
         }
-        if(!(executionItem instanceof NodeStepExecutionItem)) {
-            throw new IllegalArgumentException("Cannot dispatch item which is not a NodeStepExecutionItem: " + executionItem);
+        if (!(executionItem instanceof NodeStepExecutionItem)) {
+            throw new IllegalArgumentException("Cannot dispatch item which is not a NodeStepExecutionItem: " +
+                    executionItem);
         }
-        NodeStepExecutionItem item=(NodeStepExecutionItem) executionItem;
+        NodeStepExecutionItem item = (NodeStepExecutionItem) executionItem;
 
         boolean success = false;
         DispatcherResult result = null;
@@ -88,8 +98,8 @@ class ExecutionServiceImpl implements ExecutionService {
             baseExecutionResult = new BaseExecutionResult(result, success, e);
         } finally {
             loggingReformatter.resetOutputStreams();
-            if (null != context.getExecutionListener()) {
-                context.getExecutionListener().finishStepExecution(baseExecutionResult, context, item);
+            if (null != getWorkflowListener(context)) {
+                getWorkflowListener(context).finishStepExecution(null,baseExecutionResult, context, item);
             }
         }
 
@@ -97,9 +107,6 @@ class ExecutionServiceImpl implements ExecutionService {
     }
 
     public StepExecutionResult executeStep(StepExecutionContext context, StepExecutionItem item) throws StepException {
-        if (null != context.getExecutionListener()) {
-            context.getExecutionListener().beginStepExecution(context, item);
-        }
 
         final StepExecutor executor;
         try {
@@ -110,10 +117,13 @@ class ExecutionServiceImpl implements ExecutionService {
 
         StepExecutionResult result = null;
         try {
+            if (null != getWorkflowListener(context)) {
+                getWorkflowListener(context).beginStepExecution(executor, context, item);
+            }
             result = executor.executeWorkflowStep(context, item);
         } finally {
-            if (null != context.getExecutionListener()) {
-                context.getExecutionListener().finishStepExecution(result, context, item);
+            if (null != getWorkflowListener(context)) {
+                getWorkflowListener(context).finishStepExecution(executor,result, context, item);
             }
         }
         return result;
@@ -133,8 +143,8 @@ class ExecutionServiceImpl implements ExecutionService {
             throw new NodeStepException(e, ServiceFailureReason.ServiceFailure, node.getNodename());
         }
 
-        if (null != context.getExecutionListener()) {
-            context.getExecutionListener().beginExecuteNodeStep(context, item, node);
+        if (null != getWorkflowListener(context)) {
+            getWorkflowListener(context).beginExecuteNodeStep(context, item, node);
         }
         //create node context for node and substitute data references in command
 
@@ -148,8 +158,8 @@ class ExecutionServiceImpl implements ExecutionService {
                 context.getExecutionListener().log(0, "Failed: " + result.toString());
             }
         } finally {
-            if (null != context.getExecutionListener()) {
-                context.getExecutionListener().finishExecuteNodeStep(result, context, item, node);
+            if (null != getWorkflowListener(context)) {
+                getWorkflowListener(context).finishExecuteNodeStep(result, context, item, node);
             }
         }
         return result;

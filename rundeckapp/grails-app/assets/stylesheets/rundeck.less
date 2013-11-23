@@ -76,6 +76,22 @@
     .glyphicon();
     .glyphicon-chevron-right();
   }
+  .auto-caret-container{
+    .auto-caret, .auto-caret-left {
+      .glyphicon();
+      .glyphicon-chevron-down();
+    }
+  }
+  .active{
+    > .auto-caret, > .auto-caret-left {
+      .glyphicon();
+      .glyphicon-chevron-down();
+    }
+    > * > .auto-caret, > * > .auto-caret-left {
+      .glyphicon();
+      .glyphicon-chevron-down();
+    }
+  }
   .auto-caret-left{
     .glyphicon();
     .glyphicon-chevron-left();
@@ -114,7 +130,167 @@
     .glyphicon-td();
   }
 
-  table.execoutput td.stepnum .rdicon.job{
+  //state display
+  .nowrunning{
+    color: darken(@brand-info, 10%);
+    font-weight: bold;
+    font-style: italic;
+  }
+  .execstate{
+
+    &[data-execstate=NODE_MIXED] {
+      color: orange;
+    }
+    &[data-execstate=SUCCEEDED] {
+      color: @gray;
+    }
+
+    &[data-execstate=NODE_PARTIAL_SUCCEEDED] {
+      color: @gray;
+    }
+
+    &[data-execstate=RUNNING], .execstate[data-execstate=RUNNING_HANDLER] {
+      color: darken(@brand-info, 10%);
+    }
+    &[data-execstate=RUNNING_HANDLER] {
+      border-bottom: 2px dotted orange;
+    }
+
+    &[data-execstate=FAILED] {
+      color: red;
+    }
+    &[data-execstate=WAITING], &[data-execstate=NOT_STARTED] {
+      color: @gray-darker;
+    }
+
+
+    &.step{
+      &[data-execstate=SUCCEEDED] {
+        .glyphicon();
+        .glyphicon-check();
+      }
+
+      &[data-execstate=RUNNING], &[data-execstate=RUNNING_HANDLER], &[data-execstate=WAITING] {
+        .glyphicon();
+        .glyphicon-unchecked();
+      }
+
+      &[data-execstate=FAILED] {
+        .glyphicon();
+        .glyphicon-remove-circle();
+      }
+    }
+  }
+  .execstate.execstatedisplay{
+      &[data-execstate=RUNNING]:after {
+        content: 'Running';
+      }
+
+      &[data-execstate=NODE_MIXED]:after {
+        content: 'Mixed';
+      }
+
+      &[data-execstate=SUCCEEDED]:after {
+        content: 'OK';
+      }
+
+      &[data-execstate=NODE_PARTIAL_SUCCEEDED]:after {
+        content: 'Partial';
+      }
+
+      &[data-execstate=FAILED]:after {
+        content: 'Failed';
+      }
+
+      &[data-execstate=WAITING]:after {
+        content: 'Waiting';
+      }
+
+      &[data-execstate=NOT_STARTED]:after {
+        content: 'Not Started';
+      }
+  }
+
+  .wfstepstate, .wfnodestate {
+    .subctx{
+      .text-muted();
+    }
+    .stepctx {
+      width: 2em;
+      display: inline-block;
+    }
+    .stepnodes {
+      margin-left: 10px;
+    }
+
+    .nodestatesummary {
+      display: none;
+    }
+    &.collapsed {
+      .nodestates {
+        display: none;
+      }
+      .nodestatesummary{
+        display: block;
+      }
+    }
+  }
+  .wfnodestate{
+    border: 1px solid transparent;
+    .border-bottom-radius(@border-radius-base);
+    .border-top-radius(@border-radius-base);
+    .border-right-radius(@border-radius-base);
+    .border-left-radius(@border-radius-base);
+    .wfnodeoutput{
+      max-height: 500px;
+      overflow: auto;
+      table.execouput{
+//        width: auto IMPORTANT!;
+      }
+    }
+    .wfnodeoverall .nodectx{
+    }
+    &.open{
+      border: 1px solid @legend-border-color;
+    }
+    + .wfnodestate{
+      margin-top: @padding-base-vertical;
+    }
+    .nodename{
+      .text-overflow();
+    }
+    .wfnodestep{
+      border: 1px solid transparent;
+      .border-bottom-radius(@border-radius-base);
+      .border-top-radius(@border-radius-base);
+      .border-right-radius(@border-radius-base);
+      .border-left-radius(@border-radius-base);
+      margin: 4px 0;
+      .closed {
+        display: none;
+      }
+    }
+    .wfnodestep.open{
+      border: 1px solid darken(@legend-border-color,10%);
+      .closed {
+        display: block;
+      }
+    }
+  }
+
+  .executionshow{
+    .runoutput{
+      display: none;
+    }
+    &.affix{
+      .runoutput{
+        display: block;
+      }
+    }
+  }
+
+
+  .rdicon.job{
     .glyphicon();
     .glyphicon-book();
     vertical-align: baseline;
@@ -304,6 +480,17 @@
 .textbtn-info {
   .textbtn-variant(@brand-info,transparent,lighten(@brand-info, 40%));
 }
+
+//div or other block that has a bound action
+
+.action:hover {
+  background: @table-bg-hover;
+  cursor: pointer;
+}
+.action.active{
+  background: @table-bg-active;
+}
+
 
 .progress {
   height: @line-height-computed;
@@ -697,9 +884,6 @@
       }
     }
 
-    .stepident, .stepnum {
-      color: @brand-light;
-    }
 
     td.data.log_warn, td.data.log_error {
       color: #800;
@@ -729,6 +913,10 @@
     &.collapse_stepnum td.stepnum {
       display: none;
     }
+  }
+
+  .stepident, .stepnum {
+    color: @brand-light;
   }
 
   //history rows with default action link
