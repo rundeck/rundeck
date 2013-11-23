@@ -181,7 +181,11 @@
       }
     }
   }
-  .wfnodestep .execstate.execstatedisplay{
+  .execstate.execstatedisplay{
+      &[data-execstate=RUNNING]:after {
+        content: 'Running';
+      }
+
       &[data-execstate=NODE_MIXED]:after {
         content: 'Mixed';
       }

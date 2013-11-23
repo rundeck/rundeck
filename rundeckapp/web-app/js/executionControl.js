@@ -1368,10 +1368,10 @@ var FollowControl = Class.create({
         }else if ($$('.execRerun')){
             $$('.execRerun').each(Element.show);
         }
-        if(typeof(this.onComplete)=='function'){
+        this.jobFinishStatus(result);
+        if (typeof(this.onComplete) == 'function') {
             this.onComplete();
         }
-        this.jobFinishStatus(result);
     },
     jobFinishStatus: function(result) {
         if (null != result) {

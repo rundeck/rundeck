@@ -195,11 +195,17 @@ function NodeFlowViewModel(workflow,outputUrl){
     self.followingStep=ko.observable();
     self.followingControl=null;
     self.followOutputUrl= outputUrl;
+    self.completed=ko.observable();
+    self.executionState=ko.observable();
+    self.startTime=ko.observable();
+    self.endTime=ko.observable();
+    self.executionId=ko.observable();
     self.totalSteps=ko.computed(function(){
        return self.workflow.workflow.length;
     });
     self.totalNodes=ko.computed(function(){
-       return self.nodes().length;
+        var nodes = self.nodes();
+        return nodes?nodes.length:0;
     });
     self.stopShowingOutput= function () {
         if(self.followingControl){

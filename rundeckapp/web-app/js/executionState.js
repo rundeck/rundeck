@@ -461,7 +461,6 @@ var FlowState = Class.create({
         //compare
         if (data.error=='pending' ) {
             data.retry--;
-            console.log("retry... ("+data.error+")");
         }
         if(data.retry<0 && data.error){
 

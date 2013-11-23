@@ -43,13 +43,19 @@
         /** START history
          *
          */
+         var histloaded=false;
         function loadHistory(){
+            if(histloaded){
+                return;
+            }
             new Ajax.Updater('histcontent',"${createLink(controller:'reports',action:'eventsFragment')}",{
                 parameters:{compact:true,nofilters:true,jobIdFilter:'${scheduledExecution.id}'},
                 evalScripts:true,
                 onComplete: function(transport) {
                     if (transport.request.success()) {
+                        histloaded=true;
                         Element.show('histcontent');
+                        Element.show('history_header');
                     }
                 }
             });
@@ -149,6 +155,10 @@
                         nodeflowvm.addNode(node,nodesteps);
                     }
                 }
+                ko.mapping.fromJS({executionState:model.executionState,completed:model.completed},{},nodeflowvm);
+                if(nodeflowvm.completed()){
+                    loadHistory();
+                }
             }});
 
             ko.applyBindings(nodeflowvm);
@@ -168,6 +178,9 @@
             jQuery('#tab_link_output').on('show.bs.tab',function(e){
                 followOutput();
             });
+          <g:if test="${execution.dateCompleted != null}">
+            loadHistory();
+          </g:if>
         }
 
         Event.observe(window, 'load', init);
@@ -587,14 +600,6 @@
         </h4>
         <div class="pageBody">
             <g:render template="/reports/historyTableContainer" model="[nowrunning: false]"/>
-            <g:if test="${execution.dateCompleted!=null}">
-            <g:javascript>
-                fireWhenReady('histcontent', loadHistory);
-                fireWhenReady('histcontent', function () {
-                    $('history_header').show();
-                });
-            </g:javascript>
-            </g:if>
         </div>
     </g:if>
 
