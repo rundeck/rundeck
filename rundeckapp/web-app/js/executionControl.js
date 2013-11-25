@@ -25,9 +25,6 @@ var FollowControl = Class.create({
     viewoptionsCompleteId:null,
     cmdOutputErrorId:null,
     outfileSizeId:null,
-    progressContainerId:null,
-    progressBarId:null,
-    execDurationPctId:null,
     autoscroll:true,
     targetElement:null,
     cmdoutputtbl: null,
@@ -658,9 +655,6 @@ var FollowControl = Class.create({
         this.runningcmd.pending = data.pending;
 
         var entries = $A(data.entries);
-        if (null != data.execDuration) {
-            this.updateDuration(data.execDuration);
-        }
         //if tail mode, count number of rows
         var rowcount= this.countTableRows(this.cmdoutputtbl);
         if (entries != null && entries.length > 0) {
@@ -706,9 +700,6 @@ var FollowControl = Class.create({
         }
         if (this.runningcmd.jobcompleted && !this.runningcmd.completed) {
             this.jobFinishStatus(this.runningcmd.jobstatus);
-            if ($(this.progressContainerId)) {
-                $(this.progressContainerId).hide();
-            }
             var message=null
             var percent=null;
             if(this.runningcmd.percent!=null){
@@ -1335,10 +1326,6 @@ var FollowControl = Class.create({
         this.clearCmdOutput();
         $(this.parentElement).show();
 
-        this.displayCompletion(0);
-        if ($(this.progressContainerId)) {
-            $(this.progressContainerId).show();
-        }
 //        this.setOutputAppendTop($F('outputappendtop') == "top");
 //        this.setOutputAutoscroll($F('outputautoscrolltrue') == "true");
 //        this.setGroupOutput($F('ctxshowgroup') == 'true');
@@ -1356,18 +1343,10 @@ var FollowControl = Class.create({
         }
         this.cmdoutspinner = null;
         this.isrunning = false;
-        if ($(this.progressContainerId)) {
-            this.displayCompletion(100);
-            $(this.progressContainerId).hide();
-        }
         if (this.fileloadId && $(this.fileloadId)) {
             $(this.fileloadId).hide();
         }
-        if (this.runningcmd.failednodes && $$('.execRetry')) {
-            $$('.execRetry').each(Element.show);
-        }else if ($$('.execRerun')){
-            $$('.execRerun').each(Element.show);
-        }
+
         this.jobFinishStatus(result);
         if (typeof(this.onComplete) == 'function') {
             this.onComplete();
@@ -1464,51 +1443,5 @@ var FollowControl = Class.create({
                 obj.updatecancel({error:"Failed to kill Job: " + response.statusText});
             }
         });
-    },
-
-
-    updateDuration: function(duration) {
-        if (this.totalCount > 0 && this.totalDuration >= 0 && duration >= 0) {
-            var avg = (this.totalDuration / this.totalCount);
-            if ($('execDuration')) {
-                $('execDuration').innerHTML = duration;
-            }
-            if ($('avgDuration')) {
-                $('avgDuration').innerHTML = avg;
-            }
-
-            if (duration < avg) {
-                this.displayCompletion(100 * (duration / avg));
-            } else {
-                this.displayCompletion(100);
-            }
-        } else {
-            if ($('execDuration')) {
-                $('execDuration').innerHTML = duration;
-            }
-            if ($('avgDuration')) {
-                $('avgDuration').innerHTML = "???";
-            }
-            this.displayIndefiniteCompletion();
-        }
-    },
-    displayCompletion: function(pct) {
-        if ($(this.execDurationPctId)) {
-            $(this.execDurationPctId).innerHTML = pct + "%";
-        }
-
-        if ($(this.progressBarId)){
-            $(this.progressBarId).style.width = (Math.floor(pct) +'%');
-            $(this.progressBarId).innerHTML = (Math.floor(pct)) + "%";
-        }
-    },
-    displayIndefiniteCompletion: function() {
-        if ($(this.execDurationPctId)) {
-            $(this.execDurationPctId).innerHTML = "Running";
-        }
-
-        if ($(this.progressBarId)){
-            $(this.progressBarId).innerHTML = "Running";
-        }
     }
 });

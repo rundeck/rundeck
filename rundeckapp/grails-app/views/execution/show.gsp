@@ -39,7 +39,6 @@
       <g:javascript src="executionStateKO.js"/>
       <g:javascript library="prototype/effects"/>
       <g:javascript>
-        <g:if test="${scheduledExecution}">
         /** START history
          *
          */
@@ -48,6 +47,7 @@
             if(histloaded){
                 return;
             }
+            <g:if test="${scheduledExecution}">
             new Ajax.Updater('histcontent',"${createLink(controller:'reports',action:'eventsFragment')}",{
                 parameters:{compact:true,nofilters:true,jobIdFilter:'${scheduledExecution.id}',projFilter:'${execution.project.encodeAsJavaScript()}'},
                 evalScripts:true,
@@ -59,8 +59,8 @@
                     }
                 }
             });
+            </g:if>
         }
-        </g:if>
         var workflowData=${execution.workflow.commands*.toMap().encodeAsJSON()};
         var workflow = new RDWorkflow(workflowData,{
             nodeSteppluginDescriptions:${stepPluginDescriptions.node.collectEntries { [(it.key): [title: it.value.title]] }.encodeAsJSON()},
@@ -75,9 +75,6 @@
             viewoptionsCompleteId:'viewoptionscomplete',
             cmdOutputErrorId:'cmdoutputerror',
             outfileSizeId:'outfilesize',
-            %{--progressContainerId:'progressContainer',--}%
-            %{--progressBarId:'progressBar',--}%
-            %{--execDurationPctId:'execDurationPct',--}%
             workflow:workflow,
             appLinks:appLinks,
             iconUrl: "${resource(dir: 'images', file: 'icon-small')}",
