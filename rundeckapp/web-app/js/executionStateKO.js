@@ -28,6 +28,7 @@ function RDNodeStep(data, node, flow){
     self.stepctx=data.stepctx;
     self.type=ko.observable();
     self.followingOutput=ko.observable(false);
+    self.outputLineCount=ko.observable(-1);
     self.type=ko.computed(function(){
         return flow.workflow.contextType(self.stepctx);
     });
@@ -243,7 +244,9 @@ function NodeFlowViewModel(workflow,outputUrl){
             self.followingControl=null;
         }
     };
-    self.showOutput= function (stepctx, node) {
+    self.showOutput= function (nodestep) {
+        var node=nodestep.node.name;
+        var stepctx=nodestep.stepctx;
         var sel = '.wfnodeoutput[data-node=' + node + ']';
         if (stepctx) {
             sel += '[data-stepctx=' + stepctx + ']';
@@ -263,7 +266,10 @@ function NodeFlowViewModel(workflow,outputUrl){
             extraParams: '&' + Object.toQueryString(params),
             appLinks: {tailExecutionOutput: self.followOutputUrl},
             finishedExecutionAction: false,
-            autoscroll:false
+            autoscroll:false,
+            onLoadComplete:function(){
+                nodestep.outputLineCount(ctrl.lineCount);
+            }
         });
         ctrl.workflow = self.workflow;
         ctrl.setColNode(false);
@@ -285,7 +291,7 @@ function NodeFlowViewModel(workflow,outputUrl){
             });
         });
         if(nodestep.followingOutput()){
-            var ctrl = self.showOutput(nodestep.stepctx, nodestep.node.name);
+            var ctrl = self.showOutput(nodestep);
             self.followingStep(nodestep);
             self.followingControl=ctrl;
         }else{

@@ -125,6 +125,23 @@
                 <div class="row wfnodeoutput" data-bind="visible: followingOutput, attr: { 'data-node': $parent.name , 'data-stepctx': stepctx } ">
 
                 </div>
+                <div data-bind="visible: followingOutput() && outputLineCount() < 0 " class="row row-space ">
+                    <div class="col-sm-12">
+                        <p class="text-muted">
+                            <img src="${resource(dir: 'images', file: 'icon-tiny-disclosure-waiting.gif')}"
+                                 alt="Spinner"/>
+                            <em><g:message code="loading" /></em>
+                        </p>
+                    </div>
+                </div>
+                <div data-bind="visible: followingOutput() && outputLineCount() == 0 " class="row row-space ">
+                    <div class="col-sm-12">
+                        <p class="text-muted">
+                            <i class="glyphicon glyphicon-info-sign"></i>
+                            <em><g:message code="no.output" /></em>
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
 

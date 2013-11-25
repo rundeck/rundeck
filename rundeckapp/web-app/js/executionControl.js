@@ -38,7 +38,7 @@ var FollowControl = Class.create({
     colTime:{value:true},
     colNode:{value:true},
     colStep:{value:true},
-
+    lineCount:0,
     lastrow:null,
     contextIdCounter: 0,
     contextStatus: {},
@@ -674,6 +674,7 @@ var FollowControl = Class.create({
                 this.scrollToBottom();
             }
         }
+        this.lineCount+=entries.length;
 
 
         if (this.runningcmd.completed && this.runningcmd.jobcompleted) {
@@ -729,6 +730,10 @@ var FollowControl = Class.create({
 
     },
     finishDataOutput: function() {
+
+        if (typeof(this.onLoadComplete) == 'function') {
+            this.onLoadComplete();
+        }
         if (null == this.lastTBody && null != this.cmdoutputtbl && this.cmdoutputtbl.tBodies.length > 0) {
             this.lastTBody = this.cmdoutputtbl.tBodies[0];
         }
@@ -1392,6 +1397,7 @@ var FollowControl = Class.create({
         }
         this.beginExecution();
         this.starttime = new Date().getTime();
+        this.lineCount=0;
         this.loadMoreOutput(id, 0);
     },
     stopFollowingOutput: function(callback){
