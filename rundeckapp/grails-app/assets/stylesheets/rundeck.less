@@ -524,6 +524,22 @@
   }
 }
 
+//alternate well without background
+.well{
+  &.well-nobg{
+    background: none;
+    border-width: 0;
+  }
+  &.inline{
+    margin:0;
+  }
+}
+
+//inset a box by the normal column gutter
+.col-inset{
+  padding-left: (@grid-gutter-width / 2);
+}
+
 
 // clock icon in scheduled job view is gray if job will not fire
 .scheduletime{

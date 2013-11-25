@@ -93,18 +93,18 @@
 
     </div>
     %{--step specific info for node--}%
-    <div class="row" data-bind="visible: expanded" >
-        <div class="col-sm-12 wfnodesteps" data-bind="foreach: steps">
+    <div  data-bind="visible: expanded" >
+        <div class=" wfnodesteps" data-bind="foreach: steps">
 
-            <div class="container wfnodestep" data-bind="css: { open: followingOutput() }">
+            <div class=" wfnodestep" data-bind="css: { open: followingOutput() }">
                 <div class="row action" data-bind="click: $root.toggleOutputForNodeStep">
-                    <div class="col-sm-3  action" data-bind="css: { 'auto-caret-container': followingOutput(), active: followingOutput() } ">
-                        <span class="stepident execstate"
-                              data-bind="attr: { 'data-execstate': executionState, title: stepctxdesc }">
+                    <div class="col-sm-3 " >
+                        <div class="stepident execstate action col-inset"
+                              data-bind="attr: { 'data-execstate': executionState, title: stepctxdesc }, css: { 'auto-caret-container': followingOutput(), active: followingOutput() } ">
                             <i class="auto-caret"></i>
                             <i class="rdicon icon-small" data-bind="css: type"></i>
                             <span data-bind="text: stepident"></span>
-                        </span>
+                        </div>
                     </div>
 
                     <div class=" col-sm-2">
@@ -122,24 +122,30 @@
 
                 </div>
 
-                <div class="row wfnodeoutput" data-bind="visible: followingOutput, attr: { 'data-node': $parent.name , 'data-stepctx': stepctx } ">
+                <div class="row " data-bind="visible: followingOutput">
+                    <div class="col-sm-12 wfnodeoutput" data-bind="attr: { 'data-node': $parent.name , 'data-stepctx': stepctx } ">
 
+                    </div>
                 </div>
                 <div data-bind="visible: followingOutput() && outputLineCount() < 0 " class="row row-space ">
                     <div class="col-sm-12">
+                        <div class="well well-sm well-nobg inline">
                         <p class="text-muted">
                             <img src="${resource(dir: 'images', file: 'icon-tiny-disclosure-waiting.gif')}"
                                  alt="Spinner"/>
                             <em><g:message code="loading" /></em>
                         </p>
+                        </div>
                     </div>
                 </div>
                 <div data-bind="visible: followingOutput() && outputLineCount() == 0 " class="row row-space ">
                     <div class="col-sm-12">
+                        <div class="well well-sm well-nobg inline">
                         <p class="text-muted">
                             <i class="glyphicon glyphicon-info-sign"></i>
                             <em><g:message code="no.output" /></em>
                         </p>
+                        </div>
                     </div>
                 </div>
             </div>
