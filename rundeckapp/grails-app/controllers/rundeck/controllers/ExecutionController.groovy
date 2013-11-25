@@ -144,7 +144,7 @@ class ExecutionController {
         def execDuration = 0L
         execDuration = (e.dateCompleted ? e.dateCompleted.getTime() : System.currentTimeMillis()) - e.dateStarted.getTime()
         def jobAverage=-1L
-        if (e.scheduledExecution.totalTime >= 0 && e.scheduledExecution.execCount > 0) {
+        if (e.scheduledExecution && e.scheduledExecution.totalTime >= 0 && e.scheduledExecution.execCount > 0) {
             def long avg = Math.floor(e.scheduledExecution.totalTime / e.scheduledExecution.execCount)
             jobAverage = avg
         }
