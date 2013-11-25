@@ -137,13 +137,34 @@ class ExecutionController {
                 delegate.'error'("Unauthorized: Read Execution ${params.id}")
             }
         }
-        def state = workflowService.serializeWorkflowStateForExecution(e)
-        if(!state && e.dateCompleted){
-            state=[error:'not found',errorMessage:g.message(code: "api.error.item.doesnotexist", args: ['Execution State for ID', params.id])]
-        }else if(!state){
-            state=[error:'pending']
+
+        def jobcomplete = e.dateCompleted != null
+        def hasFailedNodes = e.failedNodeList ? true : false
+        def execState = executionService.getExecutionState(e)
+        def execDuration = 0L
+        execDuration = (e.dateCompleted ? e.dateCompleted.getTime() : System.currentTimeMillis()) - e.dateStarted.getTime()
+        def jobAverage=-1L
+        if (e.scheduledExecution.totalTime >= 0 && e.scheduledExecution.execCount > 0) {
+            def long avg = Math.floor(e.scheduledExecution.totalTime / e.scheduledExecution.execCount)
+            jobAverage = avg
         }
-        return render(contentType: 'application/json', text: state.encodeAsJSON())
+        def state = workflowService.serializeWorkflowStateForExecution(e)
+        def data=[
+            completed:jobcomplete,
+            execDuration: execDuration,
+            executionState:execState.toUpperCase(),
+            jobAverageDuration: jobAverage,
+            startTime:workflowService.encodeDate(e.dateStarted),
+            endTime: workflowService.encodeDate(e.dateCompleted),
+        ]
+        if(!state && e.dateCompleted){
+            data.state=[error:'not found',errorMessage:g.message(code: "api.error.item.doesnotexist", args: ['Execution State for ID', params.id])]
+        }else if(!state){
+            data.state=[error:'pending']
+        }else{
+            data.state=state
+        }
+        return render(contentType: 'application/json', text: data.encodeAsJSON())
     }
     def mail ={
         def Execution e = Execution.get(params.id)

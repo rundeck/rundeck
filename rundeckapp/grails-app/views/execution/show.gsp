@@ -49,7 +49,7 @@
                 return;
             }
             new Ajax.Updater('histcontent',"${createLink(controller:'reports',action:'eventsFragment')}",{
-                parameters:{compact:true,nofilters:true,jobIdFilter:'${scheduledExecution.id}'},
+                parameters:{compact:true,nofilters:true,jobIdFilter:'${scheduledExecution.id}',projFilter:'${execution.project.encodeAsJavaScript()}'},
                 evalScripts:true,
                 onComplete: function(transport) {
                     if (transport.request.success()) {
@@ -75,9 +75,9 @@
             viewoptionsCompleteId:'viewoptionscomplete',
             cmdOutputErrorId:'cmdoutputerror',
             outfileSizeId:'outfilesize',
-            progressContainerId:'progressContainer',
-            progressBarId:'progressBar',
-            execDurationPctId:'execDurationPct',
+            %{--progressContainerId:'progressContainer',--}%
+            %{--progressBarId:'progressBar',--}%
+            %{--execDurationPctId:'execDurationPct',--}%
             workflow:workflow,
             appLinks:appLinks,
             iconUrl: "${resource(dir: 'images', file: 'icon-small')}",
@@ -101,9 +101,6 @@
             </g:if>
             totalDuration : 0 + ${scheduledExecution?.totalTime ? scheduledExecution.totalTime : -1},
             totalCount: 0 + ${scheduledExecution?.execCount ? scheduledExecution.execCount : -1}
-            <g:if test="${scheduledExecution}">
-            , onComplete:loadHistory
-            </g:if>
         });
         var flowState = new FlowState('${execution?.id}','flowstate',{
             workflow:workflow,
@@ -130,13 +127,30 @@
 //            followControl.beginFollowingOutput('${execution?.id}');
 //            flowState.addUpdater(stepState);
             flowState.addUpdater({
-            updateError:function(error,model){
+            updateError:function(error,data){
                 nodeflowvm.stateLoaded(false);
                 if(error!='pending'){
-                    nodeflowvm.errorMessage(model.errorMessage?model.errorMessage:error);
+                    nodeflowvm.errorMessage(data.state.errorMessage?data.state.errorMessage:error);
                 }
+                ko.mapping.fromJS({
+                    executionState:data.executionState,
+                    completed:data.completed,
+                    execDuration:data.execDuration,
+                    jobAverageDuration:data.jobAverageDuration,
+                    startTime:data.startTime? data.startTime : data.state ? data.state.startTime: null,
+                    endTime:data.endTime ? data.endTime : data.state ? data.state.endTime : null
+                },{},nodeflowvm);
             },
-            updateState:function(model){
+            updateState:function(data){
+                ko.mapping.fromJS({
+                    executionState:data.executionState,
+                    completed:data.completed,
+                    execDuration:data.execDuration,
+                    jobAverageDuration:data.jobAverageDuration,
+                    startTime:data.startTime? data.startTime : data.state ? data.state.startTime: null,
+                    endTime:data.endTime ? data.endTime : data.state ? data.state.endTime : null
+                },{},nodeflowvm);
+                var model=data.state
                 if(!model.nodes || !model.allNodes){
                     return;
                 }
@@ -155,7 +169,6 @@
                         nodeflowvm.addNode(node,nodesteps);
                     }
                 }
-                ko.mapping.fromJS({executionState:model.executionState,completed:model.completed},{},nodeflowvm);
                 if(nodeflowvm.completed()){
                     loadHistory();
                 }
@@ -328,7 +341,7 @@
                                         <span class="text-muted">Number of Steps:</span> <span class="text-info" data-bind="text: totalSteps"></span>
                                         </g:if>
 
-                                        <div data-bind="if: stateLoaded()">
+                                        <div data-bind="if: stateLoaded(), visible: stateLoaded()" >
                                             <span class="text-muted">Number of Nodes:</span> <span class="text-info" data-bind="text: totalNodes"></span>
                                         </div>
                                     </div>
@@ -347,7 +360,9 @@
                                                 params="${[executionId: execution.id]}"
                                                 class=" btn btn-primary btn-sm header execRerun execRetry"
                                                 title="${g.message(code: 'execution.action.saveAsJob')}"
-                                                style="${wdgt.styleVisible(if: null != execution.dateCompleted)}">
+                                                style="${wdgt.styleVisible(if: null != execution.dateCompleted)}"
+                                                data-bind="visible: completed()"
+                                        >
                                             <g:message code="execution.action.saveAsJob"
                                                        default="Save as Job"/>&hellip;
                                         </g:link>
@@ -361,14 +376,18 @@
                                             params="${[fromExecId: execution.id]}"
                                             title="${g.message(code: 'execution.action.runAgain')}"
                                             class="btn btn-default btn-sm force-last-child execRerun"
-                                            style="${wdgt.styleVisible(if: null != execution.dateCompleted && null == execution.failedNodeList)}">
+                                            style="${wdgt.styleVisible(if: null != execution.dateCompleted && null == execution.failedNodeList)}"
+                                            data-bind="visible: completed() && !failed()"
+                                    >
 
                                         <b class="glyphicon glyphicon-play"></b>
                                         <g:message code="execution.action.runAgain"/>&hellip;
                                     </g:link>
                                         %{--run again and retry failed --}%
                                     <div class="btn-group execRetry"
-                                         style="${wdgt.styleVisible(if: null != execution.dateCompleted && null!=execution.failedNodeList )}">
+                                         style="${wdgt.styleVisible(if: null != execution.dateCompleted && null!=execution.failedNodeList )}"
+                                         data-bind="visible: failed()"
+                                    >
                                         <button class="btn btn-default btn-sm dropdown-toggle force-last-child" data-target="#"
                                                 data-toggle="dropdown">
                                             Run Again
@@ -425,13 +444,17 @@
                                                 class="btn btn-default btn-sm execRerun"
                                                 params="${[retryExecId: execution.id]}"
                                                 title="${g.message(code: 'execution.job.action.runAgain')}"
-                                                style="${wdgt.styleVisible(if: null != execution.dateCompleted && null == execution.failedNodeList)};">
+                                                style="${wdgt.styleVisible(if: null != execution.dateCompleted && null == execution.failedNodeList)};"
+                                            data-bind="visible: completed() && !failed()"
+                                        >
                                             <b class="glyphicon glyphicon-play"></b>
                                             <g:message code="execution.action.runAgain"/>&hellip;
                                         </g:link>
                                         %{--Run again and retry failed links in a dropdown --}%
                                         <div class="btn-group execRetry"
-                                             style="${wdgt.styleVisible(if: null != execution.dateCompleted && null != execution.failedNodeList)};">
+                                             style="${wdgt.styleVisible(if: null != execution.dateCompleted && null != execution.failedNodeList)};"
+                                             data-bind="visible: failed()"
+                                        >
                                             <button class="btn btn-default btn-sm dropdown-toggle"
                                                     data-target="#"
                                                     data-toggle="dropdown">
@@ -439,20 +462,22 @@
                                                 <i class="caret"></i>
                                             </button>
                                             <ul class="dropdown-menu pull-right" role="menu">
-                                                <li class="retrybuttons execRerun">
+                                                <li class="retrybuttons">
                                                     <g:link controller="scheduledExecution"
                                                             action="execute"
                                                             id="${scheduledExecution.extid}"
                                                             params="${[retryExecId: execution.id]}"
-                                                            title="${g.message(code: 'execution.job.action.runAgain')}">
+                                                            title="${g.message(code: 'execution.job.action.runAgain')}"
+                                                            data-bind="visible: completed()"
+                                                    >
                                                         <b class="glyphicon glyphicon-play"></b>
                                                         <g:message code="execution.action.runAgain"/>&hellip;
                                                     </g:link>
                                                 </li>
-                                                <li class="divider  execRetry">
+                                                <li class="divider">
 
                                                 </li>
-                                                <li class="retrybuttons execRetry">
+                                                <li class="retrybuttons">
                                                     <g:link controller="scheduledExecution" action="execute"
                                                             id="${scheduledExecution.extid}"
                                                             params="${[retryFailedExecId: execution.id]}"
@@ -485,7 +510,7 @@
                         </span>
                         <g:if test="${null == execution.dateCompleted}">
                         <g:if test="${authChecks[AuthConstants.ACTION_KILL]}">
-                            <span id="cancelresult" style="margin-left:10px">
+                            <span id="cancelresult" style="margin-left:10px" data-bind="visible: !completed()">
                                 <span class="btn btn-danger btn-xs"
                                       onclick="followControl.docancel();">Kill <g:message
                                         code="domain.ScheduledExecution.title"/>
@@ -506,7 +531,7 @@
                         </div>
                     </div>
                     <div class="col-sm-4 runstatus" id="progressContainer"
-                         style="${wdgt.styleVisible(unless: execution.dateCompleted)}">
+                         style="${wdgt.styleVisible(unless: execution.dateCompleted)}" data-bind="visible: !completed() && jobAverageDuration()>0">
                         <g:set var="progressClass" value=""/>
                         <g:set var="innerContent" value=""/>
                         <g:set var="showpercent" value="${true}"/>
@@ -523,15 +548,11 @@
                                           containerId: 'progressContainer2',
                                           innerContent: innerContent,
                                           showpercent: showpercent,
-                                          progressId: 'progressBar']"/>
+                                          progressId: 'progressBar',
+                                          bind:'jobPercentageFixed()'
+                                  ]"/>
                     </div>
                 </div>
-             %{--<div class="row row-space">--}%
-                    %{--<div class="col-sm-12"></div>--}%
-                %{--</div>--}%
-
-
-
         </div>
         </div>
             <div class="row row-space">

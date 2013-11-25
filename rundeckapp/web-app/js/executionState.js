@@ -457,7 +457,8 @@ var FlowState = Class.create({
             }
         }
     },
-    update: function (data) {
+    update: function (json) {
+        var data=json.state
         //compare
         if (data.error=='pending' ) {
             data.retry--;
@@ -468,13 +469,13 @@ var FlowState = Class.create({
             return;
         }
         if(!data.error){
-            this.model = data;
+            this.model = json;
             if($(this.targetElement + '_json')){
                 $(this.targetElement + '_json').innerHTML = Object.toJSON(this.model);
             }
             this.updateState(this.model);
         }else{
-            this.updateError(data.error,data);
+            this.updateError(data.error,json);
         }
         if (data.error && this.retry || !this.model.completed && this.shouldUpdate) {
             this.timer = setTimeout(this.callUpdate.bind(this), this.reloadInterval);

@@ -1,6 +1,6 @@
     by <g:username user="${execution.user}"/>
     <g:if test="${execution.dateCompleted == null}">
-        <span class="isnode execstate execstatedisplay" data-bind="attr: { 'data-execstate': executionState() } ">
+        <span class="isnode execstate execstatedisplay overall" data-bind="attr: { 'data-execstate': executionState() } ">
         </span>
     </g:if>
     <g:else>

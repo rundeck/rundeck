@@ -197,9 +197,14 @@ function NodeFlowViewModel(workflow,outputUrl){
     self.followOutputUrl= outputUrl;
     self.completed=ko.observable();
     self.executionState=ko.observable();
+    self.execDuration=ko.observable();
+    self.jobAverageDuration=ko.observable();
     self.startTime=ko.observable();
     self.endTime=ko.observable();
     self.executionId=ko.observable();
+    self.failed=ko.computed(function(){
+       return self.executionState()=='FAILED';
+    });
     self.totalSteps=ko.computed(function(){
        return self.workflow.workflow.length;
     });
@@ -207,6 +212,31 @@ function NodeFlowViewModel(workflow,outputUrl){
         var nodes = self.nodes();
         return nodes?nodes.length:0;
     });
+    self.jobPercentage=ko.computed(function(){
+        if(self.jobAverageDuration()>0){
+            return 100*(self.execDuration()/self.jobAverageDuration());
+        }else{
+            return -1;
+        }
+    });
+    self.jobPercentageFixed=ko.computed(function(){
+        var pct = self.jobPercentage();
+        if(pct>=0){
+            return pct.toFixed(0)
+        }else{
+            return '0';
+        }
+    });
+    self.jobOverrunDuration=ko.computed(function(){
+        var jobAverageDuration = self.jobAverageDuration();
+        var execDuration = self.execDuration();
+        if(jobAverageDuration > 0 && execDuration > jobAverageDuration){
+            return self.formatDurationSimple(execDuration - jobAverageDuration);
+        }else{
+            return '';
+        }
+    });
+
     self.stopShowingOutput= function () {
         if(self.followingControl){
             self.followingControl.stopFollowingOutput();
@@ -299,7 +329,7 @@ function NodeFlowViewModel(workflow,outputUrl){
     self.formatTime=function(text,format){
         var time = moment(text);
 
-        if (time.isValid()) {
+        if (text && time.isValid()) {
             return time.format(format);
         } else {
             return '';
@@ -307,6 +337,28 @@ function NodeFlowViewModel(workflow,outputUrl){
     }
     self.formatTimeSimple=function(text){
         return self.formatTime(text,'h:mm:ss a');
+    }
+    self.formatTimeAtDate=function(text){
+        var time = moment(text);
+        if(!text || !time.isValid()){
+            return '';
+        }
+        var now=moment();
+        var ms = now.diff(time);
+        var since = moment.duration(ms);
+        if(since.asDays()<1 && now.month()==time.month()){
+            //same date
+            return time.format('h:mm a');
+        }if(since.asDays()<1 && now.month()!=time.month()){
+            //within a day
+            return time.format('h:mm a');
+        }else if(since.asWeeks()<1){
+            return time.format('ddd h:mm a');
+        }else if(time.year()!=now.year()){
+            return time.format('MMM do yyyy');
+        }else{
+            return time.format('M/d ha');
+        }
     }
     self.formatDurationSimple=function(ms){
         if(ms<0){
@@ -316,6 +368,37 @@ function NodeFlowViewModel(workflow,outputUrl){
         var m = duration.minutes();
         var s = duration.seconds();
         return duration.hours() + '.' + (m<10?'0'+m:m) + ':' + (s<10?'0'+s:s);
+    }
+    self.formatDurationHumanize=function(ms){
+        if(ms<0){
+            return '';
+        }
+        var duration = moment.duration(ms);
+        var valarr=[];
+        if(duration.days()>0){
+            valarr.push(duration.days()+'d');
+        }
+        if(duration.hours()>0){
+            valarr.push(duration.hours()+'h');
+        }
+        if(duration.minutes()>0){
+            valarr.push(duration.minutes()+'m');
+        }
+        if(duration.seconds()>0){
+            var s = duration.seconds();
+            if(duration.milliseconds()>0){
+                s++;
+            }
+            valarr.push(s+'s');
+        }
+        return valarr.join(' ');
+    }
+    self.formatDurationMomentHumanize=function(ms){
+        if(ms<0){
+            return '';
+        }
+        var duration = moment.duration(ms);
+        return duration.humanize();
     }
     self.addNode=function(node,steps){
         self.nodes.push(new RDNode(node, steps,self));
@@ -330,6 +413,16 @@ function NodeFlowViewModel(workflow,outputUrl){
         }
         return null;
     };
+
+
+    self.execDurationSimple = ko.computed(function () {
+        var execDuration = self.execDuration();
+        return self.formatDurationSimple(execDuration);
+    });
+    self.execDurationHumanized = ko.computed(function () {
+        var execDuration = self.execDuration();
+        return self.formatDurationHumanize(execDuration);
+    });
 }
 
 

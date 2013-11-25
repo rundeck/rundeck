@@ -209,6 +209,12 @@
       &[data-execstate=NOT_STARTED]:after {
         content: 'Not Started';
       }
+      &.overall{
+        &[data-execstate=SUCCEEDED]:after {
+          content: 'Succeeded';
+          color: @brand-success;
+        }
+      }
   }
 
   .wfstepstate, .wfnodestate {
@@ -561,7 +567,7 @@
   //execution status text
 
   .exec-status{
-    &.fail {
+    &.fail, &[data-execstate=FAILED] {
       color: @brand-danger;
 
       &.icon {
@@ -570,7 +576,7 @@
       }
     }
 
-    &.running {
+    &.running, &[data-execstate=RUNNING] {
       color: @brand-info;
 
       &.icon {
@@ -579,7 +585,7 @@
       }
     }
 
-    &.succeed {
+    &.succeed, &[data-execstate=SUCCEEDED] {
       color: @brand-success;
 
       &.icon {
@@ -587,7 +593,7 @@
         .glyphicon-ok-circle();
       }
     }
-    &.warn {
+    &.warn, &[data-execstate=ABORTED] {
       color: @brand-warning;
 
       &.icon {
