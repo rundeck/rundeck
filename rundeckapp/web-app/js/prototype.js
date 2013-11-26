@@ -38,6 +38,9 @@ if (window.jQuery) {
     jQuery('*').on('hide.bs.tooltip', function (event) {
         isBootstrapEvent = true;
     });
+    jQuery('*').on('hide.bs.popover', function (event) {
+        isBootstrapEvent = true;
+    });
 }
 
 var Prototype = {
