@@ -14,100 +14,197 @@ import rundeck.services.FrameworkService
 class WorkflowControllerTests {
 
 
-    public void testWFEditActions() {
+    public void testWFEditActionsInsertJob() {
         WorkflowController ctrl = new WorkflowController()
         //test insert
-        test: {
-            Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
-            wf.commands = new ArrayList()
+        Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
+        wf.commands = new ArrayList()
 
+        def result = ctrl._applyWFEditAction(wf, [action: 'insert', num: 0,
+                params: [jobName: 'blah', jobGroup: 'blee',description:'desc1',newitemtype: 'job']])
+        assertNull result.error
+        assertEquals 1, wf.commands.size()
+        final Object item = wf.commands.get(0)
+        assertTrue item instanceof JobExec
+        assertEquals 'blah', item.jobName
+        assertEquals 'blee', item.jobGroup
+        assertEquals 'desc1', item.description
+        //test undo
+        assertNotNull result.undo
+        assertEquals 'remove', result.undo.action
+        assertEquals 0, result.undo.num
+    }
+    public void testWFEditActionsInsertPlugin() {
+        WorkflowController ctrl = new WorkflowController()
+        //test insert
+        Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
+        wf.commands = new ArrayList()
 
-            def result = ctrl._applyWFEditAction(wf, [action: 'insert', num: 0, params: [jobName: 'blah', jobGroup: 'blee']])
-            assertNull result.error
-            assertEquals 1, wf.commands.size()
-            final Object item = wf.commands.get(0)
-            assertTrue item instanceof JobExec
-            assertEquals 'blah', item.jobName
-            assertEquals 'blee', item.jobGroup
-            //test undo
-            assertNotNull result.undo
-            assertEquals 'remove', result.undo.action
-            assertEquals 0, result.undo.num
+        def fwmock = mockFor(FrameworkService)
+        fwmock.demand.getFrameworkFromUserSession { s, r -> null }
+        fwmock.demand.getStepPluginDescription { fwk, type -> null }
+        fwmock.demand.validateDescription { desc, p, params ->
+            assertEquals([monkey:'tree'],params)
+            [valid: true, props: ['monkey': 'tree']]
         }
-        //test remove
-        test: {
-            Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
-            JobExec je = new JobExec(jobName: 'blah', jobGroup: 'blee')
-            wf.addToCommands(je)
+        ctrl.frameworkService = fwmock.createMock()
 
-            assertEquals 1, wf.commands.size()
+        def result = ctrl._applyWFEditAction(wf, [action: 'insert', num: 0,
+                params: [pluginItem: true, type: 'blah', pluginConfig: [monkey: 'tree'], description: 'elf',newitemtype: 'blah']])
+
+        assertNull result.error
+        assertEquals 1, wf.commands.size()
+        final Object item = wf.commands.get(0)
+        assertTrue item instanceof PluginStep
+        PluginStep pitem=(PluginStep)item
+        assertEquals 'blah', pitem.type
+        assertEquals( [monkey:'tree'], pitem.configuration)
+        assertEquals( 'elf', pitem.description)
+        //test undo
+        assertNotNull result.undo
+        assertEquals 'remove', result.undo.action
+        assertEquals 0, result.undo.num
+    }
+    public void testWFEditActionsInsertCommand() {
+        WorkflowController ctrl = new WorkflowController()
+        //test insert
+        Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
+        wf.commands = new ArrayList()
 
 
-            def result = ctrl._applyWFEditAction(wf, [action: 'remove', num: 0])
-            assertNull result.error
-            assertEquals 0, wf.commands.size()
-            assertNotNull result.undo
-            assertEquals 'insert', result.undo.action
-            assertEquals 0, result.undo.num
-            assertNotNull result.undo.params
-            assertEquals 'blah', result.undo.params.jobName
-            assertEquals 'blee', result.undo.params.jobGroup
-        }
+        def result = ctrl._applyWFEditAction(wf, [action: 'insert', num: 0,
+                params: [newitemtype: 'command',adhocRemoteString: 'some string',description: 'monkey']])
+
+        assertNull result.error
+        assertEquals 1, wf.commands.size()
+        final Object item = wf.commands.get(0)
+        assertTrue item instanceof CommandExec
+        CommandExec pitem=(CommandExec)item
+        assertEquals 'some string', pitem.adhocRemoteString
+        assertEquals( 'monkey', pitem.description)
+        //test undo
+        assertNotNull result.undo
+        assertEquals 'remove', result.undo.action
+        assertEquals 0, result.undo.num
+    }
+    public void testWFEditActionsRemove() {
+        WorkflowController ctrl = new WorkflowController()
+        Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
+        JobExec je = new JobExec(jobName: 'blah', jobGroup: 'blee')
+        wf.addToCommands(je)
+
+        assertEquals 1, wf.commands.size()
+
+
+        def result = ctrl._applyWFEditAction(wf, [action: 'remove', num: 0])
+        assertNull result.error
+        assertEquals 0, wf.commands.size()
+        assertNotNull result.undo
+        assertEquals 'insert', result.undo.action
+        assertEquals 0, result.undo.num
+        assertNotNull result.undo.params
+        assertEquals 'blah', result.undo.params.jobName
+        assertEquals 'blee', result.undo.params.jobGroup
+    }
 
         //test modify
-        test: {
-            Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
-            JobExec je = new JobExec(jobName: 'blah', jobGroup: 'blee')
-            wf.addToCommands(je)
 
-            assertEquals 1, wf.commands.size()
+    public void testWFEditActionsModifyJob() {
+        WorkflowController ctrl = new WorkflowController()
+        Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
+        JobExec je = new JobExec(jobName: 'blah', jobGroup: 'blee',description: 'abc')
+        wf.addToCommands(je)
+
+        assertEquals 1, wf.commands.size()
+
+        def result = ctrl._applyWFEditAction(wf, [action: 'modify', num: 0, params: [jobName: 'xxa', jobGroup: 'xxz',description: 'xyz']])
+        assertNull result.error
+        assertEquals 1, wf.commands.size()
+        final Object item = wf.commands.get(0)
+        assertTrue item instanceof JobExec
+        assertEquals 'xxa', item.jobName
+        assertEquals 'xxz', item.jobGroup
+        assertEquals 'xyz', item.description
+        //test undo
+        assertNotNull result.undo
+        assertEquals 'modify', result.undo.action
+        assertEquals 0, result.undo.num
+        assertNotNull result.undo.params
+        assertEquals 'blah', result.undo.params.jobName
+        assertEquals 'blee', result.undo.params.jobGroup
+        assertEquals 'abc', result.undo.params.description
+    }
+
+        //test modify plugin
+
+    public void testWFEditActionsModifyPlugin() {
+        WorkflowController ctrl = new WorkflowController()
+        Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
+        PluginStep je = new PluginStep(type:'blah',configuration: [monkey:'pizza'],description: 'abc')
+        wf.addToCommands(je)
+
+        assertEquals 1, wf.commands.size()
 
 
-            def result = ctrl._applyWFEditAction(wf, [action: 'modify', num: 0, params: [jobName: 'xxa', jobGroup: 'xxz']])
-            assertNull result.error
-            assertEquals 1, wf.commands.size()
-            final Object item = wf.commands.get(0)
-            assertTrue item instanceof JobExec
-            assertEquals 'xxa', item.jobName
-            assertEquals 'xxz', item.jobGroup
-            //test undo
-            assertNotNull result.undo
-            assertEquals 'modify', result.undo.action
-            assertEquals 0, result.undo.num
-            assertNotNull result.undo.params
-            assertEquals 'blah', result.undo.params.jobName
-            assertEquals 'blee', result.undo.params.jobGroup
+        def fwmock = mockFor(FrameworkService)
+        fwmock.demand.getFrameworkFromUserSession { s, r -> null }
+        fwmock.demand.getStepPluginDescription { fwk, type -> null }
+        fwmock.demand.validateDescription { desc, p, params ->
+            assertEquals([monkey: 'tree'], params)
+            [valid: true, props: ['monkey': 'tree']]
         }
+        ctrl.frameworkService = fwmock.createMock()
+
+        def result = ctrl._applyWFEditAction(wf, [action: 'modify', num: 0,
+                params: [pluginItem: true, type: 'blah', pluginConfig: [monkey: 'tree'], description: 'elf']])
+        assertNull result.error
+        assertEquals 1, wf.commands.size()
+        final Object item = wf.commands.get(0)
+        assertTrue item instanceof PluginStep
+        PluginStep pitem=(PluginStep)item
+        assertEquals 'blah', pitem.type
+        assertEquals( [monkey:'tree'], pitem.configuration)
+        assertEquals 'elf', pitem.description
+        //test undo
+        assertNotNull result.undo
+        assertEquals 'modify', result.undo.action
+        assertEquals 0, result.undo.num
+        assertNotNull result.undo.params
+        assertEquals 'blah', result.undo.params.type
+        assertEquals ([monkey:'pizza'], result.undo.params.configuration)
+        assertEquals ('abc', result.undo.params.description)
+    }
 
         //test move
-        test: {
-            Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
-            JobExec je = new JobExec(jobName: 'blah', jobGroup: 'blee')
-            CommandExec ce = new CommandExec(adhocExecution: true, adhocRemoteString: 'echo something')
-            CommandExec ce2 = new CommandExec(adhocExecution: true, adhocFilepath: '/xy/z', argString: 'test what')
-            wf.addToCommands(je)
-            wf.addToCommands(ce)
-            wf.addToCommands(ce2)
 
-            assertEquals 3, wf.commands.size()
+    public void testWFEditActionsMove() {
+        WorkflowController ctrl = new WorkflowController()
+        Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
+        JobExec je = new JobExec(jobName: 'blah', jobGroup: 'blee')
+        CommandExec ce = new CommandExec(adhocExecution: true, adhocRemoteString: 'echo something')
+        CommandExec ce2 = new CommandExec(adhocExecution: true, adhocFilepath: '/xy/z', argString: 'test what')
+        wf.addToCommands(je)
+        wf.addToCommands(ce)
+        wf.addToCommands(ce2)
+
+        assertEquals 3, wf.commands.size()
 
 
-            def result = ctrl._applyWFEditAction(wf, [action: 'move', from: 0, to: 2])
-            assertNull result.error
-            assertEquals 3, wf.commands.size()
-            final Object item = wf.commands.get(0)
-            assertEquals ce, item
-            final Object item1 = wf.commands.get(1)
-            assertEquals ce2, item1
-            final Object item2 = wf.commands.get(2)
-            assertEquals je, item2
+        def result = ctrl._applyWFEditAction(wf, [action: 'move', from: 0, to: 2])
+        assertNull result.error
+        assertEquals 3, wf.commands.size()
+        final Object item = wf.commands.get(0)
+        assertEquals ce, item
+        final Object item1 = wf.commands.get(1)
+        assertEquals ce2, item1
+        final Object item2 = wf.commands.get(2)
+        assertEquals je, item2
 
-            //test undo
-            assertNotNull result.undo
-            assertEquals 'move', result.undo.action
-            assertEquals 2, result.undo.from
-            assertEquals 0, result.undo.to
-        }
+        //test undo
+        assertNotNull result.undo
+        assertEquals 'move', result.undo.action
+        assertEquals 2, result.undo.from
+        assertEquals 0, result.undo.to
     }
 
     public void testWFEditActionsInsertPluginStep() {
