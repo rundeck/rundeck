@@ -41,11 +41,11 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
             description: 'test descrip',
             loglevel: 'INFO',
             project: 'test1',
-            workflow: new Workflow([keepgoing: false, threadcount: 1, commands: [new CommandExec([adhocRemoteString: 'test script']),
-                new CommandExec([adhocLocalString: "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'\n"]),
-                new CommandExec([adhocFilepath: 'some file path']),
-                new JobExec([jobName: 'another job', jobGroup: 'agroup', nodeStep:true]),
-                new CommandExec([adhocFilepath: 'http://example.com/blah']),
+            workflow: new Workflow([keepgoing: false, threadcount: 1, commands: [new CommandExec([adhocRemoteString: 'test script',description: 'test1']),
+                new CommandExec([adhocLocalString: "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'\n", description: 'test2']),
+                new CommandExec([adhocFilepath: 'some file path', description: 'test3']),
+                new JobExec([jobName: 'another job', jobGroup: 'agroup', nodeStep:true, description: 'test4']),
+                new CommandExec([adhocFilepath: 'http://example.com/blah', description: 'test5']),
             ]]),
             options: [new Option(name: 'opt1', description: "an opt", defaultValue: "xyz", enforced: true, required: true, values: new TreeSet(["a", "b"]))] as TreeSet,
             nodeThreadcount: 1,
@@ -82,6 +82,9 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
             assertEquals "wrong wf strategy", "node-first", doc[0].sequence.strategy
             assertNotNull "missing commands", doc[0].sequence.commands
             assertEquals "missing commands", 5, doc[0].sequence.commands.size()
+            doc[0].sequence.commands.eachWithIndex{cmd,i->
+                assertEquals "wrong desc at ${i}", "test${i+1}", cmd.description
+            }
             assertEquals "missing command exec", "test script", doc[0].sequence.commands[0].exec
             assertEquals "missing command script", "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'\n", doc[0].sequence.commands[1].script
             assertEquals "missing command scriptfile", "some file path", doc[0].sequence.commands[2].scriptfile
@@ -248,7 +251,15 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
     strategy: node-first
     commands:
     - exec: test script
+      description: test1
     - script: A Monkey returns
+      description: test2
+    - type: plugin1
+      nodeStep: false
+      description: test3
+    - type: plugin2
+      nodeStep: true
+      description: test4
   description: ''
   name: test job 1
   group: my group
@@ -313,7 +324,10 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
             assertNotNull "missing workflow", se.workflow.commands
             assertFalse "wrong workflow.keepgoing", se.workflow.keepgoing
             assertEquals "wrong workflow.strategy", "node-first", se.workflow.strategy
-            assertEquals "wrong workflow size", 2, se.workflow.commands.size()
+            assertEquals "wrong workflow size", 4, se.workflow.commands.size()
+            se.workflow.commands.eachWithIndex { def entry, int i ->
+                assertEquals "Wrong description i ${i}","test${i+1}",entry.description
+            }
             assertEquals "wrong workflow item", "test script", se.workflow.commands[0].adhocRemoteString
             assertTrue "wrong workflow item", se.workflow.commands[0].adhocExecution
             assertEquals "wrong workflow item", "A Monkey returns", se.workflow.commands[1].adhocLocalString

@@ -208,6 +208,12 @@
         <span class="text-muted"><g:message code="Workflow.stepErrorHandler.keepgoingOnSuccess.description" /></span>
     </div>
 </g:if>
+<g:else>
+    <div>
+        <div class="info note">Step Description</div>
+        <input id="description" type="text" name="description" value="${item?.description}" size="100"/>
+    </div>
+</g:else>
 
 <g:hiddenField name="key" value="${key}"/>
 <g:hiddenField name="isErrorHandler" value="${isErrorHandler ? true : false}"/>
