@@ -50,6 +50,7 @@ public class CommandExec extends WorkflowStep  {
         sb << (scriptInterpreter ? "interpreter: ${scriptInterpreter} " : '')
         sb << (interpreterArgsQuoted ? "quoted?: ${interpreterArgsQuoted} " : '')
         sb << (argString ? "scriptargs: ${argString}" : '')
+        sb << (description ? "description: ${description}" : '')
         sb << (errorHandler ? " [handler: ${errorHandler}]" : '')
         sb << (null!= keepgoingOnSuccess ? " keepgoingOnSuccess: ${keepgoingOnSuccess}" : '')
         sb<<")"
@@ -66,6 +67,7 @@ public class CommandExec extends WorkflowStep  {
         sb << (adhocFilepath ? "${adhocFilepath}" : '')
         sb << (argString ? " -- ${argString}" : '')
         sb << (interpreterArgsQuoted ? "'" : '')
+        sb << (description ?( " ('" + description + "')" ) : '')
         return sb.toString()
     }
 
@@ -117,6 +119,9 @@ public class CommandExec extends WorkflowStep  {
         }else if(keepgoingOnSuccess){
             map.keepgoingOnSuccess= keepgoingOnSuccess
         }
+        if(description){
+            map.description=description
+        }
         return map
     }
 
@@ -143,6 +148,7 @@ public class CommandExec extends WorkflowStep  {
             ce.argString=data.args.toString()
         }
         ce.keepgoingOnSuccess=!!data.keepgoingOnSuccess
+        ce.description=data.description?.toString()
         //nb: error handler is created inside Workflow.fromMap
         return ce
     }

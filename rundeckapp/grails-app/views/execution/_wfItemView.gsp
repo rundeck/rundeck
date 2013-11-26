@@ -25,7 +25,6 @@
             <g:set var="jobitem" value="${item.instanceOf(JobExec)|| (item instanceof java.util.Map && item.jobName)}"/>
             <g:set var="pluginitem" value="${item.instanceOf(PluginStep)}"/>
             <span class="${edit?'autohilite autoedit':''} wfitem ${jobitem?'jobtype':'exectype'}" title="${edit?'Click to edit':''}">
-
             <g:if test="${jobitem}">
                 <g:set var="foundjob" value="${edit?null:ScheduledExecution.findScheduledExecution(item.jobGroup?item.jobGroup:null,item.jobName,project)}"/>
                 <g:if test="${foundjob}">
@@ -42,6 +41,9 @@
                     </g:if>
                     ${item.jobGroup?item.jobGroup.encodeAsHTML()+'/':''}${item.jobName.encodeAsHTML()}
                 </g:else>
+                <g:if test="${item.description}">
+                    ${item.description.encodeAsHTML()}
+                </g:if>
                 <g:if test="${item.argString}">
                    <span class="argString"><g:truncate max="150"  showtitle="true">
                        <g:render template="/execution/execArgString" model="[argString: item.argString]"/>
@@ -58,8 +60,12 @@
             <g:elseif test="${pluginitem}">
                 <g:if test="${!noimgs}"><i class="rdicon icon-small plugin"></i></g:if>
                 <g:if test="${item && item.nodeStep}">
-                    <g:if test="${!noimgs && item.nodeStep}"><g:img file="icon-small-Node.png" width="16px"
-                                                                    height="16px"/></g:if>
+                    <g:if test="${!noimgs}">
+                    <i class="rdicon icon-small node"></i>
+                    </g:if>
+                </g:if>
+                <g:if test="${item.description}">
+                    ${item.description.encodeAsHTML()}
                 </g:if>
                 <stepplugin:display step="${item}" prefix="" includeFormFields="false"/>
 
@@ -68,6 +74,9 @@
                 <g:if test="${!noimgs}">
                     <g:set var="iname" value="${icon?:'icon-small'}"/>
                     <i class="rdicon shell ${iname}"></i>
+                </g:if>
+                <g:if test="${item.description}">
+                    ${item.description.encodeAsHTML()}
                 </g:if>
                 <g:if test="${item.adhocRemoteString}">
                     <span class="argString"><g:truncate max="150" showtitle="true">${item.adhocRemoteString.encodeAsHTML()}</g:truncate></span>

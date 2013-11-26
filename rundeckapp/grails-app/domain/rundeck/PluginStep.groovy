@@ -40,6 +40,9 @@ class PluginStep extends WorkflowStep{
 
     public Map toMap() {
         def map=[type: type, nodeStep:nodeStep,configuration: this.configuration]
+        if (description) {
+            map.description = description
+        }
         if (errorHandler) {
             map.errorhandler = errorHandler.toMap()
         } else if (keepgoingOnSuccess) {
@@ -55,11 +58,12 @@ class PluginStep extends WorkflowStep{
         ce.configuration=data.configuration
 
         ce.keepgoingOnSuccess = !!data.keepgoingOnSuccess
+        ce.description=data.description?.toString()
         return ce
     }
 
     public PluginStep createClone() {
-        return new PluginStep(type: type, nodeStep: nodeStep, jsonData: jsonData,keepgoingOnSuccess: keepgoingOnSuccess)
+        return new PluginStep(type: type, nodeStep: nodeStep, jsonData: jsonData,keepgoingOnSuccess: keepgoingOnSuccess,description: description)
     }
 
     @Override

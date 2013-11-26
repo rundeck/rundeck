@@ -85,6 +85,9 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         } else if (keepgoingOnSuccess) {
             map.keepgoingOnSuccess = keepgoingOnSuccess
         }
+        if (description) {
+            map.description = description
+        }
         return map
     }
 
@@ -99,6 +102,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
             exec.nodeStep=true
         }
         exec.keepgoingOnSuccess = !!map.keepgoingOnSuccess
+        exec.description=map.description?.toString()
         //nb: error handler is created inside Workflow.fromMap
         return exec
     }

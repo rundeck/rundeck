@@ -655,6 +655,8 @@ See:
 A command can embed a [errorhandler](#errorhandler) to define
 an action to run if the step fails.
 
+A command can have a [description](#description) element to set the step description.
+
 ### errorhandler
 
 Defines an action to handle an error in a [command](#command).
@@ -710,7 +712,17 @@ Example job reference:
         </jobref>
     </errorhandler>      
 
+### description
  
+Defines a description for a step. 
+
+Example:
+
+    <command>
+       <exec>echo this is a shell command</exec>
+       <description>Demonstrate echo command</description>
+    </command>
+
 ### Script sequence step 
 
 Script steps can be defined in three ways within a command element:

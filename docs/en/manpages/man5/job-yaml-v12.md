@@ -158,6 +158,8 @@ Each command in the [Sequence](#sequence) can be of these different types:
 
 Each command can also embed an [Error Handler](#error-handler).
 
+Each command can have a [description](#description).
+
 ### Error Handler
 
 An Error Handler defines a secondary action in case the first one
@@ -178,6 +180,14 @@ The errorhandler has this additional optional entry:
 `keepgoingOnSuccess`
 
 :    "true/false" - If true, and the error handler succeeds, the workflow sequence will continue even if the workflow `keepgoing` is false.
+
+### description
+ 
+Defines a description for a step. 
+
+`description`
+
+:    Text to describe this step (optional).
 
 ### Simple Command Entry
 

@@ -1004,6 +1004,17 @@ var FollowControl = Class.create({
         }else{
             string=data['stepctx'];
         }
+        if(typeof(workflow)!='undefined'){
+            try{
+                var i = parseInt(ctx[0]);
+                var desc=workflow[i-1].description;
+                if(typeof(desc)!='undefined' && desc){
+                    string=desc;
+                }
+            }catch(e){
+
+            }
+        }
         return string;
     },
 

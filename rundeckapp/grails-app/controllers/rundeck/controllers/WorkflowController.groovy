@@ -328,6 +328,7 @@ class WorkflowController {
                 item.type = params.newitemtype
                 item.nodeStep = params.newitemnodestep == 'true'
                 item.configuration = params.pluginConfig
+                item.description = params.description
             } else if (params.jobName || 'job' == params.newitemtype) {
                 item = new JobExec(params)
                 if (params.nodeStep instanceof String) {
@@ -346,7 +347,7 @@ class WorkflowController {
         }
         def modifyItemFromParams={moditem,params->
             if (params.pluginItem) {
-                moditem.properties=params.subMap(['keepgoingOnSuccess'])
+                moditem.properties=params.subMap(['keepgoingOnSuccess','description'])
                 moditem.configuration = params.pluginConfig
             } else {
                 if(params.nodeStep instanceof String) {

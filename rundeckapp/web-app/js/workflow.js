@@ -17,6 +17,7 @@ var RDWorkflow = Class.create({
     workflow:null,
     nodeSteppluginDescriptions:null,
     wfSteppluginDescriptions:null,
+    contextStringSeparator:'/',
     initialize: function(wf,params){
         this.workflow=wf;
         Object.extend(this, params);
@@ -26,7 +27,7 @@ var RDWorkflow = Class.create({
             return null;
         }
         //split context into project,type,object
-        var t = context.split('/');
+        var t = context.split(this.contextStringSeparator);
         var i = 0;
         var vals = new Array();
         for (i = 0; i < t.length; i++) {
@@ -38,7 +39,7 @@ var RDWorkflow = Class.create({
     workflowIndexForContextId: function (ctxid) {
         var id = ctxid;
         if (ctxid == ~/e$/) {
-            id = ctix.substring(0, ctxid.length - 2);
+            id = ctxid.substring(0, ctxid.length - 2);
         }
         return parseInt(id) - 1;
     },
@@ -55,7 +56,6 @@ var RDWorkflow = Class.create({
             } else if (step['scriptfile']) {
                 return 'scriptfile';
             } else if (step['type']) {//plugin
-                var title = "Plugin " + step['type'];
                 if (step['nodeStep'] ) {
                     return 'node-step-plugin plugin';
                 } else if (null != step['nodeStep'] && !step['nodeStep'] ) {
@@ -68,18 +68,23 @@ var RDWorkflow = Class.create({
         return 'console';
     },
     renderContextString: function (ctx) {
+        if(typeof(ctx)=='string'){
+            ctx=this.parseContextId(ctx);
+        }
         var string = "";
         var step = this.workflow[this.workflowIndexForContextId(ctx[0])];
         if (typeof(step) != 'undefined') {
-            if (step['exec']) {
+            if(step['description']){
+                string = step['description'];
+            }else if (step['exec']) {
 //                        string+=' $ '+step['exec'];
-                string += 'Command';
+                string = 'Command';
             } else if (step['jobref']) {
-                string += (step['jobref']['group'] ? step['jobref']['group'] + '/' : '') + step['jobref']['name'];
+                string = (step['jobref']['group'] ? step['jobref']['group'] + '/' : '') + step['jobref']['name'];
             } else if (step['script']) {
-                string += "Script";
+                string = "Script";
             } else if (step['scriptfile']) {
-                string += step['scriptfile'];
+                string = step['scriptfile'];
             } else if (step['type']) {//plugin
                 var title = "Plugin " + step['type'];
                 if (step['nodeStep'] && this.nodeSteppluginDescriptions) {
@@ -87,11 +92,10 @@ var RDWorkflow = Class.create({
                 } else if (!step['nodeStep'] && this.wfSteppluginDescriptions) {
                     title = this.wfSteppluginDescriptions[step['type']].title;
                 }
-                string += title;
+                string = title;
             }
-        }
-        if (ctx.length > 1) {
-//                string += " > Step "+ctx.slice(1).join(" > Step ")
+        }else{
+            return "[?]";
         }
         return string;
     }

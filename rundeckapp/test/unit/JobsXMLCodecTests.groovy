@@ -563,6 +563,65 @@ class JobsXMLCodecTests extends GroovyTestCase {
 
         assertFalse "incorrect scheduled", jobs[0].scheduled
     }
+    public void testDecodeStepDescription(){
+
+        def xml = """<joblist>
+  <job>
+    <id>5</id>
+    <name>wait1</name>
+    <description></description>
+    <loglevel>INFO</loglevel>
+    <context>
+      <options>
+        <option name='delay' value='60' />
+        <option name='monkey' value='bluefish' />
+      </options>
+    </context>
+    <sequence>
+        <command>
+            <description>a test1</description>
+            <exec>test</exec>
+        </command>
+        <command>
+            <jobref>
+                <name>false</name>
+                <group>false</group>
+                <arg line="123"/>
+            </jobref>
+            <description>a test2</description>
+        </command>
+        <command>
+            <step-plugin type="blah">
+                <configuration>
+                    <entry key="elf" value="cheese"/>
+                </configuration>
+            </step-plugin>
+            <description>a test3</description>
+        </command>
+        <command>
+            <node-step-plugin type="blah">
+                <configuration>
+                    <entry key="elf" value="cheese"/>
+                </configuration>
+            </node-step-plugin>
+            <description>a test4</description>
+        </command>
+    </sequence>
+    <dispatch>
+      <threadcount>1</threadcount>
+      <keepgoing>false</keepgoing>
+    </dispatch>
+  </job>
+</joblist>
+"""
+        def jobs = JobsXMLCodec.decode(xml)
+        assertNotNull jobs
+        assertEquals "incorrect size", 1, jobs.size()
+        assertEquals "incorrect steps",4, jobs[0].workflow.commands.size()
+        jobs[0].workflow.commands.eachWithIndex{v,i->
+            assertEquals ("a test${i+1}",v.description)
+        }
+    }
     public void testDecodeBasicScriptInterpreter(){
 
         def xml = """<joblist>
@@ -3672,6 +3731,56 @@ class JobsXMLCodecTests extends GroovyTestCase {
 
     }
 
+    void testEncodeStepDescription() {
+        def XmlParser parser = new XmlParser()
+        //encode basic workflow with one command call
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+                        argString: '',
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        doNodedispatch: true,
+                        workflow: new Workflow(keepgoing: true, commands: [
+                                new CommandExec(
+                                adhocExecution: true,
+                                adhocRemoteString: 'aname',
+                                description: 'test1'),
+                                new JobExec(
+                                jobName: 'jobname',
+                                jobGroup: 'agroup',
+                                description: 'test2'),
+                                new PluginStep(
+                                type: 'atype',
+                                configuration: [a:1,b:2],
+                                        nodeStep: true,
+                                description: 'test3'),
+                        ]
+                        ),
+                )
+        ]
+
+            def xmlstr
+            xmlstr = JobsXMLCodec.encode(jobs1)
+            assertNotNull xmlstr
+            assertTrue xmlstr instanceof String
+
+
+            def doc = parser.parse(new StringReader(xmlstr))
+            assertNotNull doc
+            assertEquals "missing job", 1, doc.job.size()
+            assertEquals "missing context", 1, doc.job[0].context.size()
+            assertEquals "missing context/project", 1, doc.job[0].context[0].project.size()
+            assertEquals "wrong project", 'test1', doc.job[0].context[0].project[0].text()
+            assertEquals "missing sequence", 1, doc.job.sequence.size()
+            assertEquals "wrong command count", 3, doc.job[0].sequence[0].command.size()
+            doc.job[0].sequence[0].command.eachWithIndex{cmd,i->
+                assertEquals "wrong description", "test${i+1}", cmd.description.text()
+            }
+    }
     void testEncodeWorkflow(){
         def XmlParser parser = new XmlParser()
         //encode basic workflow with one command call

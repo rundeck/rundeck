@@ -31,6 +31,11 @@ class JobExecTests extends GrailsUnitTestCase{
         assertEquals([jobref: [group:'group',name:'name']], t.toMap())
     }
 
+    void testBasicToMapDesc() {
+        JobExec t = new JobExec(jobGroup: 'group',jobName: 'name',description: 'a monkey')
+        assertEquals([jobref: [group:'group',name:'name'], description: 'a monkey'], t.toMap())
+    }
+
     void testBasicArgsToMap() {
         JobExec t = new JobExec(jobGroup: 'group', jobName: 'name',argString: 'job args')
         assertEquals([jobref: [group: 'group', name: 'name',args: 'job args']], t.toMap())
@@ -76,6 +81,16 @@ class JobExecTests extends GrailsUnitTestCase{
         assertEquals('job args1',h.argString)
         assertNull(h.errorHandler)
     }
+    //test jobExecFromMap
+    void testFromMapDesc(){
+
+        JobExec h = JobExec.jobExecFromMap([jobref: [group: 'group1', name: 'name1', args: 'job args1'], description: 'a blue'])
+        assertEquals('group1',h.jobGroup)
+        assertEquals('name1',h.jobName)
+        assertEquals('job args1',h.argString)
+        assertEquals('a blue',h.description)
+        assertNull(h.errorHandler)
+    }
 
     void testFromMapNoHandler(){
         JobExec h = JobExec.jobExecFromMap([jobref: [group: 'group1', name: 'name1', args: 'job args1'],
@@ -95,6 +110,18 @@ class JobExecTests extends GrailsUnitTestCase{
         assertEquals('group1', j1.jobGroup)
         assertEquals('name1', j1.jobName)
         assertEquals('job args1', j1.argString)
+        assertNull(j1.errorHandler)
+    }
+    //test create clone
+
+    void testCreateCloneDesc() {
+        mockDomain(JobExec)
+        JobExec t = new JobExec(jobGroup: 'group1', jobName: 'name1', argString: 'job args1',description: 'elf monkey')
+        JobExec j1 = t.createClone()
+        assertEquals('group1', j1.jobGroup)
+        assertEquals('name1', j1.jobName)
+        assertEquals('job args1', j1.argString)
+        assertEquals('elf monkey', j1.description)
         assertNull(j1.errorHandler)
     }
 
