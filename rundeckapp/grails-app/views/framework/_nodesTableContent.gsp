@@ -107,7 +107,9 @@
                     <!--&raquo; history-->
                 %{--</g:link>--}%
                 <tr id="${ukey}node_detail_${i}" class="detail_content nodedetail" style="display:none">
-                    <td colspan="6"><g:render template="nodeDetailsSimple" model="[node:node,key:ukey+'_'+node.nodename+'_key',projects:nodedata.projects,exclude:['username','hostname','tags']]"/></td>
+                    <td colspan="6">
+                        <g:render template="nodeDetailsSimple" model="[node:node,key:ukey+'_'+node.nodename+'_key',projects:nodedata.projects,exclude:['username','hostname','tags']]"/>
+                    </td>
                 </tr>
             </g:if>
             <g:else>

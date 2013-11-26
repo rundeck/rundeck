@@ -110,6 +110,9 @@
     top: auto;
     display: table-cell;
   }
+  .table.table-embed{
+    margin-bottom: 0;
+  }
   table.execoutput tr.contextRow td.expandicon.opened {
     .auto-caret-open();
     .glyphicon-td();
@@ -661,7 +664,10 @@
   .form-horizontal .control-label.input-sm{
     padding: @padding-small-vertical @padding-small-horizontal;
   }
-
+  .form-control-static{
+    display: inline-block;
+    vertical-align: middle;
+  }
 
   //style text like a form label
   .text-form-label {
@@ -976,3 +982,33 @@ code.optvalue{
       font-weight: normal;
     }
   }
+
+
+  //node detail
+
+  /** node detail */
+.nodedetail {
+   & tr td.key {
+    width: 200px;
+    text-align: right;
+    font-weight: bold;
+    color: #555;
+    vertical-align: top;
+  }
+  & tr .value {
+    vertical-align: top;
+    max-width: 800px;
+    .text-overflow();
+  }
+  &.detailpopup{
+    max-height: 500px;
+    max-width: 600px;
+    overflow-y: auto;
+  }
+  &.embed{
+    & tr .value {
+      max-width: 400px;
+    }
+  }
+}
+

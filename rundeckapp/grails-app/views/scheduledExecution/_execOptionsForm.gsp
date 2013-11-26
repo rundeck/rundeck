@@ -47,7 +47,6 @@
             </div>
         </g:elseif>
         <g:elseif test="${nodes}">
-            <g:set var="COLS" value="${6}"/>
             <div class="container">
             <div class="row">
                 <div class="col-sm-12 checkbox">
@@ -103,12 +102,12 @@
                                 </div>
                                 </g:if>
                                     <g:each var="node" in="${nodemap.subMap(namegroups[group]).values()}" status="index">
-                                        <g:if test="${index % COLS == 0}">
-                                        </g:if>
-                                            <label for="${node.nodename}"
-                                                   class=" ${localNodeName && localNodeName == node.nodename ? 'server' : ''} node_ident obs_tooltip checkbox-inline"
-                                                   id="${node.nodename}_key">
-                                            <input id="${node.nodename}"
+                                        <g:set var="nkey" value="${g.rkey()}"/>
+                                        <div>
+                                            <label for="${nkey}"
+                                                   class=" ${localNodeName && localNodeName == node.nodename ? 'server' : ''} node_ident  checkbox-inline"
+                                                   id="${nkey}_key">
+                                            <input id="${nkey}"
                                                    type="checkbox"
                                                    name="extra.nodeIncludeName"
                                                    value="${node.nodename}"
@@ -116,40 +115,32 @@
                                                    data-tag="${node.tags?.join(' ').encodeAsHTML()}"
                                                    checked="true"/>${node.nodename.encodeAsHTML()}</label>
 
-
-                                        <g:if test="${(index % COLS == (COLS-1)) || (index+1 == namegroups[group].size())}">
-                                        </g:if>
+                                        </div>
                                     </g:each>
-                            <g:each var="node" in="${nodemap.subMap(namegroups[group]).values()}" status="index">
-                                <g:render template="/framework/nodeTooltipView"
-                                          model="[node: node, key: node.nodename + '_key', islocal: localNodeName && localNodeName == node.nodename]"/>
-
-                            </g:each>
                             </div>
                         </div>
                     </g:each>
                 </g:if>
                 <g:else>
-                <g:each var="node" in="${nodes}" status="index">
-                    <g:if test="${index % COLS == 0}">
-                    </g:if>
-                        <label for="${node.nodename}" class=" ${localNodeName&& localNodeName==node.nodename? 'server' : ''} node_ident obs_tooltip checkbox-inline"
-                               id="${node.nodename}_key">
-                            <input id="${node.nodename}" type="checkbox" name="extra.nodeIncludeName"
-                                   value="${node.nodename}" disabled="true" checked="true"/> ${node.nodename.encodeAsHTML()}</label>
+                    <g:each var="node" in="${nodes}" status="index">
+                        <g:set var="nkey" value="${g.rkey()}"/>
+                        <div>
+                            <label for="${nkey}"
+                                   class=" ${localNodeName && localNodeName == node.nodename ? 'server' : ''} node_ident  checkbox-inline"
+                                   id="${nkey}_key">
+                                <input id="${nkey}"
+                                       type="checkbox"
+                                       name="extra.nodeIncludeName"
+                                       value="${node.nodename}"
+                                       disabled="true"
+                                       data-tag="${node.tags?.join(' ').encodeAsHTML()}"
+                                       checked="true"/>${node.nodename.encodeAsHTML()}</label>
 
-                        <g:render template="/framework/nodeTooltipView"
-                                  model="[node:node,key:node.nodename+'_key',islocal:localNodeName && localNodeName==node.nodename]"/>
-
-                    <g:if test="${(index % COLS == (COLS-1)) || (index+1 == nodes.size())}">
-                    </g:if>
-                </g:each>
+                        </div>
+                    </g:each>
                 </g:else>
             </div>
             <g:javascript>
-                if (typeof(initTooltipForElements) == 'function') {
-                    initTooltipForElements('.obs_tooltip');
-                }
                 $$('div.jobmatchednodes span.textbtn.selectall').each(function(e) {
                     Event.observe(e, 'click', function(evt) {
                         $(e).up('.group_section').select('input').each(function(el) {

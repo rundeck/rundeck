@@ -1,37 +1,45 @@
 <%@ page import="com.dtolabs.rundeck.core.common.NodeEntryImpl" %>
-    <table>
+    <table class="table table-condensed table-embed">
         <tr>
-            <td>
-
-    <table width="300px">
-        
-        <g:each in="${['hostname','osFamily','osArch','osVersion','osName','username']}" var="key">
-            <g:if test="${!exclude || !exclude.contains(key)}">
-            <tr><td class="key"><g:message code="${'node.metadata.'+key}"/></td>
-                <td class="value">${node[key]?.encodeAsHTML()}</td></tr>
-            </g:if>
-        </g:each>
-        <g:if test="${!exclude || !exclude.contains('tags')}">
-        <tr><td class="key"><i class="glyphicon glyphicon-tags text-muted"></i></td>
-            <td class="value">${(node['tags']?node['tags'].join(','):'').encodeAsHTML()}</td></tr>
-        </g:if>
-    </table>
-
+            <td class="key">
+                <g:message code="node.metadata.os"/>
             </td>
-            <td style="vertical-align:top">
-                <g:set var="nodeAttrs" value="${NodeEntryImpl.nodeExtendedAttributes(node)}"/>
-
-                <g:if test="${nodeAttrs}">
-                    <table width="300px">
-                        %{--<tr><th colspan="2" style="font-size:9pt;">Attributes</th></tr>--}%
-                        <g:each var="setting" in="${nodeAttrs.keySet().grep{nodeAttrs[it]}.sort()}">
-                            <tr>
-                                <td class="key setting">${setting.encodeAsHTML()}:</td>
-                                <td class="setting Value">${nodeAttrs[setting]?.encodeAsHTML()}</td>
-                            </tr>
-                        </g:each>
-                    </table>
+            <td class="value">
+                <g:if test="${node['osName']}">
+                    ${node['osName'].encodeAsHTML()}
+                </g:if>
+                <g:if test="${node['osVersion']}">
+                    ${node['osVersion'].encodeAsHTML()}
+                </g:if>
+                <g:if test="${node['osFamily']}">
+                    (${node['osFamily'].encodeAsHTML()})
+                </g:if>
+                <g:if test="${node['osArch']}">
+                    (${node['osArch'].encodeAsHTML()})
                 </g:if>
             </td>
         </tr>
+        <g:if test="${(!exclude || !exclude.contains('hostname') || !exclude.contains('username'))}">
+            <tr>
+                <td class="key">
+                    <g:message code="node.metadata.username-at-hostname"/>
+                </td>
+                <td class="value">
+                    ${node['username']?.encodeAsHTML()}@${node['hostname']?.encodeAsHTML()}
+                </td>
+            </tr>
+        </g:if>
+        <g:if test="${(!exclude || !exclude.contains('tags')) && node['tags']}">
+        <tr><td class="key"><i class="glyphicon glyphicon-tags text-muted"></i></td>
+            <td class="value">${(node['tags']?node['tags'].join(','):'').encodeAsHTML()}</td></tr>
+        </g:if>
+        <g:set var="nodeAttrs" value="${NodeEntryImpl.nodeExtendedAttributes(node)}"/>
+        <g:if test="${nodeAttrs}">
+            <g:each var="setting" in="${nodeAttrs.keySet().grep{nodeAttrs[it]}.sort()}">
+                <tr>
+                    <td class="key setting">${setting.encodeAsHTML()}:</td>
+                    <td class="setting"><div class="value">${nodeAttrs[setting]?.encodeAsHTML()}</div></td>
+                </tr>
+            </g:each>
+        </g:if>
     </table>

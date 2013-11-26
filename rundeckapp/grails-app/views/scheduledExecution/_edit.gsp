@@ -140,10 +140,7 @@ var applinks={
          }
         function pageinit(){
             _enableDragdrop();
-            Event.observe(document.body,'click',function(evt){
-                //click outside of popup bubble hides it
-                tooltipMouseOut();
-            },false);
+
             Event.observe(document,'keydown',function(evt){
                 //escape key hides popup bubble
                 if(evt.keyCode===27 ){

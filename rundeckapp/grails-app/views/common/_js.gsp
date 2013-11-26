@@ -61,7 +61,11 @@
         _tooltipelem=null;
         if(_tooltipElemSelector){
             $$('.tooltipcontent').each(Element.hide);
-            $$(_tooltipElemSelector).each(function(e){$(e).removeClassName('glow');});
+            $$(_tooltipElemSelector).each(function(e){
+                $(e).removeClassName('glow');
+                $(e).removeClassName('active');
+                $(e).removeAttribute('data-rdtooltip');
+            });
         }
     };
     /**
@@ -88,6 +92,7 @@
 
                     $(elem).addClassName('glow');
                     new MenuController().showRelativeTo(elem,ident+'_tooltip');
+                    $(elem).setAttribute('data-rdtooltip', 'true');
                 };
                 var out=function(evt){
                     if(!_tooltiptimer){
@@ -103,7 +108,64 @@
             _tooltipElemSelector = selector;
             Event.observe(document.body, 'click', function (evt) {
                 //click outside of popup bubble hides it
-                tooltipMouseOut();
+                if (!evt.element().hasAttribute('data-rdtooltip')) {
+                    tooltipMouseOut();
+                }
+            }, false);
+        }else{
+            _tooltipElemSelector = _tooltipElemSelector+', '+selector;
+        }
+
+    };
+    /**
+     * initialize a tooltip detail view for the matching elements.
+     * The tooltipe element is identified by the 'id' of the matching element
+     * with "_tooltip" appended.
+     *
+     * E.g. if the matched element has id "key" then the element with
+     * id "key_tooltip" will be shown when the element is hovered over.
+     * @param selector a selector expression to identify a set of elements
+     */
+    var initClicktipForElements=function(selector){
+        $$(selector).each(function(elem){
+            var ident=elem.identify();
+            if($(ident+'_tooltip')){
+                var out=function(evt){
+                    if(!_tooltiptimer){
+                        _tooltiptimer=setTimeout(tooltipMouseOut,50);
+                        _tooltipelem = null;
+                    }
+                };
+                var over = function (evt) {
+                    var oldelem= _tooltipelem;
+                    if(_tooltipelem && _tooltipelem != elem){
+                        clearTimeout(_tooltiptimer);
+                        tooltipMouseOut();
+                    }
+                    if(_tooltipelem == elem || oldelem==elem){
+                        out(evt);
+                        return;
+                    }
+                    if (_tooltiptimer) {
+                        clearTimeout(_tooltiptimer);
+                        tooltipMouseOut();
+                    }
+
+                    $(elem).addClassName('active');
+                    new MenuController().showRelativeTo(elem, ident + '_tooltip');
+                    _tooltipelem = elem;
+                    $(elem).setAttribute('data-rdtooltip', 'true');
+                };
+                Event.observe(elem,'click',over,true);
+            }
+        });
+        if(null==_tooltipElemSelector){
+            _tooltipElemSelector = selector;
+            Event.observe(document.body, 'click', function (evt) {
+                //click outside of popup bubble hides it
+                if(!evt.element().hasAttribute('data-rdtooltip')){
+                    tooltipMouseOut();
+                }
             }, false);
         }else{
             _tooltipElemSelector = _tooltipElemSelector+', '+selector;

@@ -1768,20 +1768,6 @@ div.filterdef div.inputline {
     -webkit-box-shadow: #aaa 2px 2px 7px;
 }
 
-/** node detail */
-.nodedetail {
-    border-radius: 5px;
-    -moz-border-radius: 5px;
-    -webkit-border-radius: 5px;
-
-}
-
-.nodedetail tr td.key {
-    width: 110px;
-    text-align: right;
-    font-weight: bold;
-    color: #555;
-}
 
 /** project set for node listing */
 div.project_group, tr.project_group {
@@ -1839,14 +1825,6 @@ div.nodesummary span.type {
 
 /** class matchednodes.embed used when showing an embedded list of matched nodes
 */
-.allnodes {
-
-}
-
-.matchednodes.embed {
-    max-width: 800px;
-    line-height: 20px;
-}
 
 .matchednodes.embed .node_entry {
     white-space: nowrap;
