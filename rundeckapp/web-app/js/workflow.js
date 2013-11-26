@@ -71,7 +71,9 @@ var RDWorkflow = Class.create({
         var string = "";
         var step = this.workflow[this.workflowIndexForContextId(ctx[0])];
         if (typeof(step) != 'undefined') {
-            if (step['exec']) {
+            if(step['description']){
+                string+=step['description'];
+            }else if (step['exec']) {
 //                        string+=' $ '+step['exec'];
                 string += 'Command';
             } else if (step['jobref']) {
