@@ -31,25 +31,25 @@ var FollowControl = Class.create({
     cmdoutspinner: null,
     runningcmd: null,
     finishedExecutionAction: true,
-    appendtop: {value: false,changed: false},
-    collapseCtx: {value:true,changed:false},
-    showFinalLine: {value:true,changed:false},
-    groupOutput: {value: true},
-    colTime:{value:true},
-    colNode:{value:true},
-    colStep:{value:true},
+    appendtop: null,
+    collapseCtx: null,
+    showFinalLine: null,
+    groupOutput: null,
+    colTime:null,
+    colNode:null,
+    colStep:null,
     lineCount:0,
     lastrow:null,
     contextIdCounter: 0,
-    contextStatus: {},
+    contextStatus: null,
 
     lastTBody:null,
-    ctxBodySet: new Array(),
-    ctxBodyFinalSet: new Array(),
-    ctxGroupSet: new Array(),
+    ctxBodySet: null,
+    ctxBodyFinalSet: null,
+    ctxGroupSet: null,
 
     //node mode
-    ctxGroupTbodies:{},
+    ctxGroupTbodies:null,
 
     taildelay: 1,
     isrunning: false,
@@ -57,11 +57,11 @@ var FollowControl = Class.create({
     updatepagetitle:false,
 
     //instance vars
-    extraParams:{},
+    extraParams:null,
     totalCount:0,
     totalDuration:0,
     killjobhtml:'',
-    execData:{},
+    execData:null,
     nodemode:false,
     browsemode:false,
     tailmode:false,
@@ -71,12 +71,29 @@ var FollowControl = Class.create({
     maxLastLines: 100,
     iconUrl:'/images/icon',
     smallIconUrl:'/images/icon-small',
-    appLinks:{},
+    appLinks: null,
     workflow:null,
     
     initialize: function(eid,elem,params){
         this.executionId=eid;
         this.targetElement=elem;
+        Object.extend(this,{
+            appendtop: {value: false, changed: false},
+            collapseCtx: {value: true, changed: false},
+            showFinalLine: {value: true, changed: false},
+            groupOutput: {value: true},
+            colTime: {value: true},
+            colNode: {value: true},
+            colStep: {value: true},
+            ctxBodySet: new Array(),
+            ctxBodyFinalSet: new Array(),
+            ctxGroupSet: new Array(),
+            ctxGroupTbodies: {},
+            contextStatus: {},
+            extraParams: {},
+            execData: {},
+            appLinks: {}
+        });
         Object.extend(this,params);
         this.refresh= this.tailmode;
         this._init();
