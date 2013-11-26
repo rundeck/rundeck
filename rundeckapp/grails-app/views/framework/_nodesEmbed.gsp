@@ -11,7 +11,7 @@
             <g:set var="resources" value="${nodedata.resources}"/>
             <g:set var="resName" value="${node.nodename}"/>
             <g:set var="resHost" value="${node.hostname}"/>
-            <span class="${i%2==1?'alternateRow':''} node_entry ${nodedata.islocal?'server':''} node_ident obs_clicktip action"
+            <span class="${i%2==1?'alternateRow':''} node_entry ${nodedata.islocal?'server':''} node_ident obs_clicktip action textbtn"
                   id="${nkey}_key" data-node="${node.nodename.encodeAsHTML()}" data-key="${nkey}">
                 <i class="rdicon node icon-small"></i>
                 ${node.nodename.encodeAsHTML()}
