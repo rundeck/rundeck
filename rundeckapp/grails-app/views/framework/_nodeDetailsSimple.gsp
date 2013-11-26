@@ -8,11 +8,11 @@
                 <g:if test="${node['osName']}">
                     ${node['osName'].encodeAsHTML()}
                 </g:if>
-                <g:if test="${node['osVersion']}">
-                    ${node['osVersion'].encodeAsHTML()}
-                </g:if>
                 <g:if test="${node['osFamily']}">
                     (${node['osFamily'].encodeAsHTML()})
+                </g:if>
+                <g:if test="${node['osVersion']}">
+                    ${node['osVersion'].encodeAsHTML()}
                 </g:if>
                 <g:if test="${node['osArch']}">
                     (${node['osArch'].encodeAsHTML()})
