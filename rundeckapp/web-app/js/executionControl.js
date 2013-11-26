@@ -387,6 +387,9 @@ var FollowControl = Class.create({
     isAppendTop: function() {
         return this.appendtop.value ? true : false;
     },
+    getLineCount: function() {
+        return this.lineCount;
+    },
     setCollapseCtx: function(val) {
         if (this.collapseCtx.value != val) {
             this.collapseCtx.changed = true;
@@ -693,6 +696,9 @@ var FollowControl = Class.create({
         }
         this.lineCount+=entries.length;
 
+        if (typeof(this.onAppend) == 'function') {
+            this.onAppend();
+        }
 
         if (this.runningcmd.completed && this.runningcmd.jobcompleted) {
             //halt timer

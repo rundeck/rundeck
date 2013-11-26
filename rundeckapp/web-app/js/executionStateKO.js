@@ -267,8 +267,8 @@ function NodeFlowViewModel(workflow,outputUrl){
             appLinks: {tailExecutionOutput: self.followOutputUrl},
             finishedExecutionAction: false,
             autoscroll:false,
-            onLoadComplete:function(){
-                nodestep.outputLineCount(ctrl.lineCount);
+            onAppend:function(){
+                nodestep.outputLineCount(ctrl.getLineCount());
             }
         });
         ctrl.workflow = self.workflow;
