@@ -15,7 +15,7 @@
   --}%
 <div class="container">
     <div class="row row-space">
-        <div class="col-sm-4">
+        <div class="col-sm-12">
 
             <span class=" execstate execstatedisplay overall h4"
                   data-bind="attr: { 'data-execstate': executionState() } ">
@@ -112,7 +112,7 @@
                 </section>
 
                 <section data-bind="if: !completed()" class="section-space">
-                    <span data-bind="if: waitingNodes()" class="text-muted h4">
+                    <span data-bind="if: waitingNodes().length > 0" class="text-muted h4">
                         <span class="" data-bind="text: waitingNodes().length"></span>
                         <span class=" " data-bind="text: pluralize(waitingNodes().length,'Node')"></span>
                         waiting to run
@@ -123,7 +123,7 @@
                     <span data-bind="if: notstartedNodes()" class="text-info h4">
                         <span class="" data-bind="text: notstartedNodes().length"></span>
                         <span class=" " data-bind="text: pluralize(notstartedNodes().length,'Node')"></span>
-                        were not started
+                        <span class=" " data-bind="text: pluralize(notstartedNodes().length,'was','were')"></span> not started
                     </span>
                 </section>
 

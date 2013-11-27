@@ -528,14 +528,14 @@
                                           bindText: '(jobPercentageFixed()  < 110 ? jobPercentageFixed() + \'%\' : \'+\' + jobOverrunDuration()) + \' of average \' + formatDurationHumanize(jobAverageDuration())',
                                   ]"/>
                     </section>
-                    <div data-bind="if: completed() ">
+                    <div data-bind="if: completed() || jobAverageDuration() <= 0 ">
                         <span data-bind="text: formatDurationSimple(execDuration())"></span>
                     </div>
                 </div>
             </div>
 
         </div>
-            
+
         </div>
         </div>
             <div class="row row-space clearfix">
