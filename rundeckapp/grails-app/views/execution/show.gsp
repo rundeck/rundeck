@@ -206,7 +206,7 @@
             display: none;
         }
 
-        .execstate.isnode[data-execstate=RUNNING],.execstate[data-execstate=RUNNING_HANDLER] {
+        .execstate.isnode[data-execstate=RUNNING],.execstate.isnode[data-execstate=RUNNING_HANDLER] {
             background-image: url(${g.resource(dir: 'images',file: 'icon-tiny-disclosure-waiting.gif')});
             padding-right: 16px;
             background-repeat: no-repeat;
@@ -227,6 +227,7 @@
         <div class="executionshow_wrap" data-affix="wrap">
         <div class="executionshow" data-affix="top" data-affix-padding-top="21">
             <div class="row">
+                    %{--permalink--}%
                     <div class="col-sm-2">
                         <span class="jobInfo" id="jobInfo_${execution.id}">
                             <span class="h3">
@@ -275,50 +276,26 @@
                             </div>
                         </g:if>
                     </div>
+
+                    %{--job or adhoc title--}%
                     <div class="col-sm-6">
 
                                 <g:if test="${scheduledExecution}">
                                     <div class="row">
-                                        %{--<div class="col-sm-1 control-label">--}%
-                                            %{--Job:--}%
-                                        %{--</div>--}%
-
-                                        %{--<div class="col-sm-8">--}%
-                                            %{--<span class="h3">--}%
-                                                <g:render template="/scheduledExecution/showHead"
-                                                      model="${[scheduledExecution: scheduledExecution, ]}"/>
-                                            %{--</span>--}%
-                                            %{--<span class="text-muted">--}%
-                                                %{--${scheduledExecution?.description?.encodeAsHTML()}--}%
-                                            %{--</span>--}%
-                                        %{--</div>--}%
-                                        %{--<div class="col-sm-4">--}%
-
-                                            %{--<span>--}%
-                                                %{--<g:render template="showJobHead"--}%
-                                                          %{--model="${[scheduledExecution: scheduledExecution, groupOnly: true]}"/>--}%
-                                            %{--</span>--}%
-                                        %{--</div>--}%
+                                        <g:render template="/scheduledExecution/showHead"
+                                              model="${[scheduledExecution: scheduledExecution, ]}"/>
                                     </div>
                                 </g:if>
                                 <g:if test="${execution.argString}">
                                     <div class="row">
-                                        %{--<div class="col-sm-1 control-label">--}%
-                                            %{--Options:--}%
-                                        %{--</div>--}%
-
                                         <div class="col-sm-12">
+                                            <span class="text-muted">Options:</span>
                                             <g:render template="/execution/execArgString" model="[argString:execution.argString]"/>
                                         </div>
-
                                     </div>
                                 </g:if>
                                 <g:if test="${isAdhoc}">
                                     <div class="row">
-                                        %{--<div class="col-sm-2 control-label">--}%
-                                            %{--Command:--}%
-                                        %{--</div>--}%
-
                                         <div class="col-sm-12">
                                             <g:render template="wfItemView" model="[
                                                     item:execution.workflow.commands[0],
@@ -326,26 +303,29 @@
                                                     iwidth:'24px',
                                                     iheight:'24px',
                                             ]"/>
-                                            %{--<g:render template="/execution/execDetailsWorkflow"--}%
-                                                      %{--model="${[workflow: execution.workflow, context: execution, project: execution.project, isAdhoc: isAdhoc]}"/>--}%
                                         </div>
                                     </div>
                                 </g:if>
 
-                                <div class="row">
-                                    <div class="col-sm-12">
-                                        <g:if test="${scheduledExecution}">
-                                        <span class="text-muted">Number of Steps:</span> <span class="text-info" data-bind="text: totalSteps"></span>
-                                        </g:if>
+                            </div>
 
-                                        <div data-bind="if: stateLoaded(), visible: stateLoaded()" >
-                                            <span class="text-muted">Number of Nodes:</span> <span class="text-info" data-bind="text: totalNodes"></span>
-                                        </div>
-                                    </div>
-                                </div>
-                    </div>
-
+                    %{--buttons--}%
                             <div class="col-sm-4">
+
+                                <g:if test="${null == execution.dateCompleted}">
+                                    <g:if test="${authChecks[AuthConstants.ACTION_KILL]}">
+                                        <div class="pull-right">
+                                        <span id="cancelresult" style="margin-left:10px"
+                                              data-bind="visible: !completed()">
+                                            <span class="btn btn-danger btn-sm"
+                                                  onclick="followControl.docancel();">Kill <g:message
+                                                    code="domain.ScheduledExecution.title"/>
+                                                <i class="glyphicon glyphicon-remove"></i>
+                                            </span>
+                                        </span>
+                                        </div>
+                                    </g:if>
+                                </g:if>
                                 %{--adhoc--}%
                                 <g:if test="${!scheduledExecution}">
                                 <div class="btn-group pull-right">
@@ -499,67 +479,73 @@
                             </div>
 
             </div>
-            <div class="row row-space" >
-                    <div class="col-sm-4">
-                        <span class="jobInfo" >
-                                <g:render template="/scheduledExecution/showExecutionDate"
-                                          model="[scheduledExecution: scheduledExecution, noimgs: true, execution: execution, followparams: [mode: followmode, lastlines: params.lastlines]]"/>
-                        </span>
-                        <g:if test="${null == execution.dateCompleted}">
-                        <g:if test="${authChecks[AuthConstants.ACTION_KILL]}">
-                            <span id="cancelresult" style="margin-left:10px" data-bind="visible: !completed()">
-                                <span class="btn btn-danger btn-xs"
-                                      onclick="followControl.docancel();">Kill <g:message
-                                        code="domain.ScheduledExecution.title"/>
-                                    <i class="glyphicon glyphicon-remove"></i>
-                                </span>
-                            </span>
-                        </g:if>
-                    </g:if>
-                    </div>
-                    <div class="col-sm-4 " >
-                        <div id="selectedoutputview"  class="runoutput" data-bind="with: followingStep()">
-                            <span class="nodectx isnode text-info">
-                                <i class="rdicon icon-small node"></i>
-                                <span data-bind="text: node.name"></span>
-                            </span>
-                            <span class="text-muted"><i class="glyphicon glyphicon-chevron-right"></i></span>
-                            <span class="stepident" data-bind="attr: { title: stepctxdesc }">
-                                <i class="rdicon icon-small" data-bind="css: type()"></i>
-                                <span data-bind="text: stepident()"></span>
-                            </span>
-                        </div>
-                    </div>
-                    <div class="col-sm-4 runstatus" id="progressContainer"
-                         style="${wdgt.styleVisible(unless: execution.dateCompleted)}" data-bind="visible: !completed() && jobAverageDuration()>0">
-                        <g:set var="progressClass" value=""/>
-                        <g:set var="innerContent" value=""/>
-                        <g:set var="showpercent" value="${true}"/>
-                        <g:set var="progressBarClass" value="progress-bar-info"/>
-                        <g:if test="${!execution.scheduledExecution || !execution.scheduledExecution.totalTime && !execution.scheduledExecution.execCount}">
-                            <g:set var="progressClass" value="indefinite progress-striped active indefinite"/>
-                            <g:set var="innerContent" value="Running"/>
-                            <g:set var="showpercent" value="${true}"/>
-                        </g:if>
+
+        <div >
+
+            <div class="row row-space">
+                <div class="col-sm-2 text-right">
+                    Nodes Completed:
+                </div>
+
+                <div class="col-sm-6">
+                    <section data-bind="if: !completed(), visible: !completed() ">
                         <g:render template="/common/progressBar"
-                                  model="[completePercent: execution.dateCompleted ? 100 : 0,
-                                          progressClass: 'rd-progress-exec '+progressClass,
-                                          progressBarClass: progressBarClass,
-                                          containerId: 'progressContainer2',
-                                          innerContent: innerContent,
-                                          showpercent: showpercent,
-                                          progressId: 'progressBar',
-                                          bind:'jobPercentageFixed()'
+                                  model="[completePercent: 0,
+                                          progressClass: 'progress-embed',
+                                          progressBarClass: 'progress-bar-success ',
+                                          containerId: 'nodeprogress1',
+                                          innerContent: 'Nodes',
+                                          showpercent: true,
+                                          progressId: 'nodeProgressBar',
+                                          bind: '(percentageFixed(succeededNodes().length,nodes().length))',
+                                          bindText: '( succeededNodes().length + \'/\' + nodes().length )',
                                   ]"/>
+                    </section>
+                    <div data-bind="if: completed() ">
+                        <span data-bind="text:succeededNodes().length"></span>
+                        of
+                        <span data-bind="text:nodes().length"></span>
                     </div>
                 </div>
-        </div>
-        </div>
+            </div>
+
             <div class="row row-space">
+                <div class="col-sm-2 text-right">
+                    Elapsed Time:
+                </div>
+
+                <div class="col-sm-6">
+                    <section class="runstatus " data-bind="if: !completed() && jobAverageDuration()>0">
+                        <g:render template="/common/progressBar"
+                                  model="[completePercent: execution.dateCompleted ? 100 : 0,
+                                          progressClass: 'rd-progress-exec progress-embed',
+                                          progressBarClass: 'progress-bar-info ',
+                                          containerId: 'progressContainer2',
+                                          innerContent: '',
+                                          showpercent: true,
+                                          progressId: 'progressBar',
+                                          bind: 'jobPercentageFixed()',
+                                          bindText: '(jobPercentageFixed()  < 110 ? jobPercentageFixed() + \'%\' : \'+\' + jobOverrunDuration()) + \' of average \' + formatDurationHumanize(jobAverageDuration())',
+                                  ]"/>
+                    </section>
+                    <div data-bind="if: completed() ">
+                        <span data-bind="text: formatDurationSimple(execDuration())"></span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+            
+        </div>
+        </div>
+            <div class="row row-space clearfix">
                 <div class="col-sm-12">
 
                     <ul class="nav nav-tabs">
-                        <li id="tab_link_flow" class="active">
+                        <li id="tab_link_summary" class="active">
+                            <a href="#summary" data-toggle="tab">Summary</a>
+                        </li>
+                        <li id="tab_link_flow">
                             <a href="#state" data-toggle="tab">Workflow</a>
                         </li>
                         <li id="tab_link_output" class="">
@@ -576,7 +562,10 @@
     <div class="row">
         <div class="col-sm-12">
             <div class="tab-content">
-                <div class="tab-pane active" id="state">
+                <div class="tab-pane active" id="summary">
+                    <g:render template="wfstateSummaryDisplay" bean="${workflowState}" var="workflowState"/>
+                </div>
+                <div class="tab-pane" id="state">
                     <div class="flowstate" id="nodeflowstate">
                        <g:render template="wfstateNodeModelDisplay" bean="${workflowState}" var="workflowState"/>
                     </div>
