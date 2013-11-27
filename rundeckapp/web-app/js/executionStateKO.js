@@ -79,6 +79,8 @@ RDNodeStep.stateCompare= function (a, b) {
     }
     return cb > ca;
 };
+RDNodeStep.completedStates= ['SUCCEEDED', 'FAILED', 'ABORTED', 'NONE_SUCCEEDED','PARTIAL_SUCCEEDED'];
+RDNodeStep.runningStates= ['RUNNING','RUNNING_HANDLER'];
 
 function RDNode(name, steps,flow){
     var self=this;
@@ -166,7 +168,7 @@ function RDNode(name, steps,flow){
                 self.summaryState("NOT_STARTED");
             } else if (summarydata.NOT_STARTED > 0) {
                 self.summary(summarydata.NOT_STARTED + " " + flow.pluralize(summarydata.NOT_STARTED, "Step") + " not run");
-                self.summaryState("NOT_STARTED");
+                self.summaryState("PARTIAL_NOT_STARTED");
             } else if (summarydata.SUCCEEDED > 0) {
                 self.summary((summarydata.total - summarydata.SUCCEEDED) + " did not succeed");
                 self.summaryState("PARTIAL_SUCCEEDED");
@@ -237,6 +239,73 @@ function NodeFlowViewModel(workflow,outputUrl){
             return '';
         }
     });
+    self.completedNodes=ko.computed(function(){
+        var completed=new Array();
+        ko.utils.arrayForEach(self.nodes(), function (n) {
+            if(RDNodeStep.completedStates.indexOf(n.summaryState())>=0){
+                completed.push(n);
+            }
+        });
+        return completed;
+    })
+    self.succeededNodes=ko.computed(function(){
+        var completed=new Array();
+        ko.utils.arrayForEach(self.nodes(), function (n) {
+            if(n.summaryState()=='SUCCEEDED'){
+                completed.push(n);
+            }
+        });
+        return completed;
+    })
+
+    self.runningNodes=ko.computed(function(){
+        var completed=new Array();
+        ko.utils.arrayForEach(self.nodes(), function (n) {
+            if(RDNodeStep.runningStates.indexOf(n.summaryState())>=0){
+                completed.push(n);
+            }
+        });
+        return completed;
+    });
+    self.waitingNodes=ko.computed(function(){
+        var completed=new Array();
+        ko.utils.arrayForEach(self.nodes(), function (n) {
+            if(n.summaryState()=='WAITING'){
+                completed.push(n);
+            }
+        });
+        return completed;
+    });
+    self.notstartedNodes=ko.computed(function(){
+        var completed=new Array();
+        ko.utils.arrayForEach(self.nodes(), function (n) {
+            if(n.summaryState()=='NOT_STARTED'){
+                completed.push(n);
+            }
+        });
+        return completed;
+    });
+    self.partialNodes=ko.computed(function(){
+        var completed=new Array();
+        ko.utils.arrayForEach(self.nodes(), function (n) {
+            if(n.summaryState() == 'PARTIAL_NOT_STARTED' || n.summaryState() == 'PARTIAL_SUCCEEDED'){
+                completed.push(n);
+            }
+        });
+        return completed;
+    });
+    self.failedNodes=ko.computed(function(){
+        var completed=new Array();
+        ko.utils.arrayForEach(self.nodes(), function (n) {
+            if(n.summaryState()=='FAILED'){
+                completed.push(n);
+            }
+        });
+        return completed;
+    });
+    self.percentageFixed = function(a,b){
+        return (b==0)?0:(100*(a/b)).toFixed(0);
+    };
 
     self.stopShowingOutput= function () {
         if(self.followingControl){
