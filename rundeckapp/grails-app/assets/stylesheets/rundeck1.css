@@ -2082,16 +2082,6 @@ div.jobstats  span.username {
 
 /** badges for update info */
 
-span.badge {
-    padding: 0px 4px;
-    font-variant: small-caps;
-    -moz-border-radius: 4px;
-    -webkit-border-radius: 4px;
-    border-radius: 4px;
-    color: white;
-    font-weight: bold;
-    background: #090;
-}
 
 span.badge.active {
     cursor: pointer;

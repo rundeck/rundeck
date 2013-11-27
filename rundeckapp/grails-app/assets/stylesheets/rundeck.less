@@ -141,7 +141,7 @@
   }
   .execstate{
 
-    &[data-execstate=NODE_MIXED] {
+    &[data-execstate=NODE_MIXED], &[data-execstate=ABORTED] {
       color: orange;
     }
     &[data-execstate=SUCCEEDED] {
@@ -203,6 +203,10 @@
 
       &[data-execstate=FAILED]:after {
         content: 'Failed';
+      }
+
+      &[data-execstate=ABORTED]:after {
+        content: 'Killed';
       }
 
       &[data-execstate=WAITING]:after {
@@ -507,6 +511,12 @@
 .runstatus .progress, .progress.progress-embed{
   margin-bottom: 0;
 }
+.progress-bar{
+  white-space: nowrap;
+  padding-left: @border-radius-base;
+  border-right: 1px solid darken(@progress-bar-color,20%);
+}
+
 .well .progress{
   background-color: darken(@progress-bg,10%);
 }
@@ -524,6 +534,20 @@
   }
   &.row-space-lg {
     margin-top: @padding-large-vertical;
+  }
+}
+section{
+  &.section-space{
+    margin-top: @padding-base-vertical;
+  }
+  &.section-space-sm {
+    margin-top: @padding-small-vertical;
+  }
+  &.section-space-lg {
+    margin-top: @padding-large-vertical;
+  }
+  & + &.section-separator {
+    border-top: 1px solid @gray-light;
   }
 }
 
