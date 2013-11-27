@@ -577,27 +577,9 @@
         <div class="col-sm-12">
             <div class="tab-content">
                 <div class="tab-pane active" id="state">
-                    %{--<div class="flowstate" id="nodeflowstate">--}%
-                       %{--<g:render template="wfstateNodeModelDisplay" bean="${workflowState}" var="workflowState"/>--}%
-                    %{--</div>--}%
                     <div class="flowstate" id="nodeflowstate">
-                       <g:render template="wfstateNodeModelDisplay2" bean="${workflowState}" var="workflowState"/>
+                       <g:render template="wfstateNodeModelDisplay" bean="${workflowState}" var="workflowState"/>
                     </div>
-                    %{--<div class="flowstate" id="flowstate">--}%
-                        %{--<g:render template="wfstateStepModelDisplay" bean="${workflowState}" var="workflowState"/>--}%
-                    %{--</div>--}%
-
-                    %{--<div class="row">--}%
-                        %{--<div class="col-sm-12">--}%
-                            %{--<pre id="flowstate_output"></pre>--}%
-                        %{--</div>--}%
-                    %{--</div>--}%
-                    %{--<div class="row row-space">--}%
-                        %{--<div class="col-sm-12" id="flowstate_log">--}%
-
-                        %{--</div>--}%
-                    %{--</div>--}%
-
                 </div>
                 <div class="tab-pane " id="output">
                     <g:render template="/execution/showFragment"
