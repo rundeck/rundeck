@@ -79,7 +79,7 @@
                 <section data-bind="if: !completed()" class="section-space">
                     <span class="text-info h4">
                         <span class=" " data-bind="text: runningNodes().length"></span>
-                        <span class=" " data-bind="text: pluralize(runningNodes().length,'Node')"></span>
+                        <span class=" " data-bind="text: pluralize(runningNodes().length,'Step')"></span>
                         running
                     </span>
                 </section>
