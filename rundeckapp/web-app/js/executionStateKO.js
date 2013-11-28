@@ -131,7 +131,8 @@ function RDNode(name, steps,flow){
             RUNNING: 0,
             RUNNING_HANDLER: 0,
             other: 0,
-            duration_ms_total: 0
+            duration_ms_total: 0,
+            pending: self.flow.pendingSteps()
         };
         ko.utils.arrayForEach(self.steps(),function(step){
             ['SUCCEEDED', 'FAILED', 'WAITING', 'NOT_STARTED', 'RUNNING', 'RUNNING_HANDLER'].each(function (z) {
@@ -154,7 +155,7 @@ function RDNode(name, steps,flow){
             } else if (summarydata.RUNNING_HANDLER > 0) {
                 self.summary("Running");
                 self.summaryState("RUNNING_HANDLER");
-            } else if (summarydata.total == summarydata.SUCCEEDED) {
+            } else if (summarydata.total == summarydata.SUCCEEDED && summarydata.pending < 1) {
                 self.summary("All Steps OK");
                 self.summaryState("SUCCEEDED");
             } else if (summarydata.FAILED > 0) {
@@ -163,12 +164,15 @@ function RDNode(name, steps,flow){
             } else if (summarydata.WAITING > 0) {
                 self.summary("Waiting to run " + summarydata.WAITING + " " + flow.pluralize(summarydata.WAITING, "Step"));
                 self.summaryState("WAITING");
-            } else if (summarydata.NOT_STARTED == summarydata.total) {
+            } else if (summarydata.NOT_STARTED == summarydata.total && summarydata.pending < 1) {
                 self.summary("No steps were run");
                 self.summaryState("NOT_STARTED");
             } else if (summarydata.NOT_STARTED > 0) {
                 self.summary(summarydata.NOT_STARTED + " " + flow.pluralize(summarydata.NOT_STARTED, "Step") + " not run");
                 self.summaryState("PARTIAL_NOT_STARTED");
+            }else if(summarydata.pending > 0 ){
+                self.summary("Waiting");
+                self.summaryState("WAITING");
             } else if (summarydata.SUCCEEDED > 0) {
                 self.summary((summarydata.total - summarydata.SUCCEEDED) + " did not succeed");
                 self.summaryState("PARTIAL_SUCCEEDED");
@@ -176,6 +180,9 @@ function RDNode(name, steps,flow){
                 self.summary("No steps succeeded");
                 self.summaryState("NONE_SUCCEEDED");
             }
+        } else if(summarydata.pending > 0){
+            self.summary("Waiting");
+            self.summaryState("WAITING");
         } else {
             self.summary("No steps");
             self.summaryState("NONE");
@@ -193,8 +200,8 @@ function NodeFlowViewModel(workflow,outputUrl){
     self.workflow=workflow;
     self.errorMessage=ko.observable();
     self.stateLoaded=ko.observable(false);
-    self.nodes=ko.observableArray([
-    ]);
+    self.pendingSteps=ko.observable(0);
+    self.nodes=ko.observableArray([ ]);
     self.followingStep=ko.observable();
     self.followingControl=null;
     self.followOutputUrl= outputUrl;
@@ -205,12 +212,8 @@ function NodeFlowViewModel(workflow,outputUrl){
     self.startTime=ko.observable();
     self.endTime=ko.observable();
     self.executionId=ko.observable();
-    self.failed=ko.computed(function(){
-       return self.executionState()=='FAILED';
-    });
-    self.totalSteps=ko.computed(function(){
-       return self.workflow.workflow.length;
-    });
+    self.failed=ko.computed(function(){ return self.executionState()=='FAILED'; });
+    self.totalSteps=ko.computed(function(){ return self.workflow.workflow.length; });
     self.totalNodes=ko.computed(function(){
         var nodes = self.nodes();
         return nodes?nodes.length:0;
@@ -251,7 +254,7 @@ function NodeFlowViewModel(workflow,outputUrl){
     self.succeededNodes=ko.computed(function(){
         var completed=new Array();
         ko.utils.arrayForEach(self.nodes(), function (n) {
-            if(n.summaryState()=='SUCCEEDED'){
+            if(n.summaryState()=='SUCCEEDED' || n.summaryState() == 'NONE'){
                 completed.push(n);
             }
         });
@@ -388,9 +391,22 @@ function NodeFlowViewModel(workflow,outputUrl){
             } else {
                 return step;
             }
-    }
+    };
+    self.countPendingSteps = function (workflowData) {
+        var pending = 0;
+        var noTargets = !workflowData.targetNodes || workflowData.targetNodes.length < 1;
+        for (var k = 0; k < workflowData.steps.length; k++) {
+            var step = workflowData.steps[k];
+            if (step.nodeStep && noTargets) {
+                pending++;
+            } else if (step.hasSubworkflow) {
+                pending += self.countPendingSteps(step.workflow);
+            }
+        }
+        return pending;
+    };
     self.extractNodeStepStates=function(node,steps,model){
-        var count=steps.length;
+        var count= steps?steps.length:0;
         var newsteps=[];
         for (var i = 0; i < count; i++) {
             var stepstate = steps[i];
@@ -400,6 +416,27 @@ function NodeFlowViewModel(workflow,outputUrl){
             newsteps.push(found);
         }
         return newsteps;
+    }
+    self.updateNodes=function(model){
+        if (!model.nodes || !model.allNodes) {
+            return;
+        }
+        self.stateLoaded(true);
+        //determine count of unevaluated steps
+        self.pendingSteps(model.completed ? 0 : self.countPendingSteps(model));
+        var count = model.allNodes.length;
+        for (var i = 0; i < count; i++) {
+            var node = model.allNodes[i];
+            var data = model.nodes[node];
+
+            var nodesteps = self.extractNodeStepStates(node, data, model);
+            var nodea = self.findNode(node);
+            if (nodea) {
+                nodea.updateSteps(nodesteps);
+            } else {
+                self.addNode(node, nodesteps);
+            }
+        }
     }
     self.formatTime=function(text,format){
         var time = moment(text);

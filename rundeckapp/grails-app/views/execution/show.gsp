@@ -121,7 +121,6 @@
             }
          }
         function init() {
-//            followControl.beginFollowingOutput('${execution?.id}');
 //            flowState.addUpdater(stepState);
             flowState.addUpdater({
             updateError:function(error,data){
@@ -147,30 +146,15 @@
                     startTime:data.startTime? data.startTime : data.state ? data.state.startTime: null,
                     endTime:data.endTime ? data.endTime : data.state ? data.state.endTime : null
                 },{},nodeflowvm);
-                var model=data.state
-                if(!model.nodes || !model.allNodes){
-                    return;
-                }
-                nodeflowvm.stateLoaded(true);
 
-                var count = model.allNodes.length;
-                for (var i = 0; i < count; i++) {
-                    var node = model.allNodes[i];
-                    var data=model.nodes[node];
-
-                    var nodesteps=nodeflowvm.extractNodeStepStates(node,data,model);
-                    var nodea=nodeflowvm.findNode(node);
-                    if(nodea){
-                        nodea.updateSteps(nodesteps);
-                    }else{
-                        nodeflowvm.addNode(node,nodesteps);
-                    }
-                }
-                if(nodeflowvm.completed()){
-                    loadHistory();
-                }
+                nodeflowvm.updateNodes(data.state);
             }});
-
+            var sub1=nodeflowvm.completed.subscribe(function(isCompleted) {
+                if(isCompleted){
+                    loadHistory();
+                    sub1.dispose();
+                }
+            });
             ko.applyBindings(nodeflowvm);
 
             <g:if test="${!(grailsApplication.config.rundeck?.gui?.enableJobHoverInfo in ['false', false])}">
@@ -182,6 +166,9 @@
             //link flow and output tabs to initialize following
             //by default show state
             followState();
+            jQuery('#tab_link_summary').on('show.bs.tab',function(e){
+                followState();
+            });
             jQuery('#tab_link_flow').on('show.bs.tab',function(e){
                 followState();
             });
@@ -533,7 +520,6 @@
                     </div>
                 </div>
             </div>
-
         </div>
 
         </div>
