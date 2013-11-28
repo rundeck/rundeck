@@ -155,6 +155,9 @@
                     sub1.dispose();
                 }
             });
+            ko.mapping.fromJS({
+                completed:${execution.dateCompleted!=null}
+            },{},nodeflowvm);
             ko.applyBindings(nodeflowvm);
 
             <g:if test="${!(grailsApplication.config.rundeck?.gui?.enableJobHoverInfo in ['false', false])}">
@@ -532,7 +535,14 @@
                             <a href="#summary" data-toggle="tab">Summary</a>
                         </li>
                         <li id="tab_link_flow">
-                            <a href="#state" data-toggle="tab">Workflow</a>
+                            <a href="#state" data-toggle="tab" data-bind="text: completed()?'Report':'Monitor' ">
+                                <g:if test="${execution.dateCompleted==null}">
+                                    Monitor
+                                </g:if>
+                                <g:else>
+                                    Report
+                                </g:else>
+                            </a>
                         </li>
                         <li id="tab_link_output" class="">
                             <a href="#output" data-toggle="tab">Log Output</a>
