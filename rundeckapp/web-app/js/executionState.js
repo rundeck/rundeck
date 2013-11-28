@@ -143,6 +143,7 @@ var FlowState = Class.create({
     outputUrl:null,
     shouldUpdate:false,
     updateCompleted:false,
+    updateRunning:false,
     timer:null,
     selectedElem:null,
     selectedFollowControl:null,
@@ -485,6 +486,7 @@ var FlowState = Class.create({
     },
     callUpdate: function(){
         var state=this;
+        this.updateRunning=true;
         new Ajax.Request(this.loadUrl,{
             evalScripts: true,
             evalJSON: true,
@@ -495,7 +497,7 @@ var FlowState = Class.create({
         });
     },
     beginFollowing: function(){
-        if(!this.updateCompleted){
+        if(!this.updateCompleted && !this.updateRunning){
             this.shouldUpdate=true;
             this.callUpdate();
         }
@@ -505,6 +507,7 @@ var FlowState = Class.create({
         clearTimeout(this.timer);
         this.timer = null;
         this.updateCompleted=completed;
+        this.updateRunning=false;
     },
     addUpdater: function(updater){
         if(null==this.updaters){
