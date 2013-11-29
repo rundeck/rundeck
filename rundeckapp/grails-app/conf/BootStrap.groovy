@@ -17,7 +17,7 @@ class BootStrap {
     def scheduledExecutionService
     def executionService
     def frameworkService
-    def loggingService
+    def workflowService
     def logFileStorageService
     def filterInterceptor
     Scheduler quartzScheduler
@@ -153,6 +153,9 @@ class BootStrap {
              }
 
          }
+
+         //initialize manually to avoid circular reference problem with spring
+         workflowService.initialize()
 
 
          if(grailsApplication.config.loglevel.default){

@@ -183,9 +183,12 @@ function RDNode(name, steps,flow){
         } else if(summarydata.pending > 0){
             self.summary("Waiting");
             self.summaryState("WAITING");
-        } else {
-            self.summary("No steps");
+        } else if(self.flow.completed()){
+            self.summary("No Steps");
             self.summaryState("NONE");
+        } else {
+            self.summary("Waiting");
+            self.summaryState("WAITING");
         }
     };
     self.updateSteps=function(steps){
@@ -424,9 +427,10 @@ function NodeFlowViewModel(workflow,outputUrl){
         self.stateLoaded(true);
         //determine count of unevaluated steps
         self.pendingSteps(model.completed ? 0 : self.countPendingSteps(model));
-        var count = model.allNodes.length;
+        var nodeList= model.allNodes;
+        var count = nodeList.length;
         for (var i = 0; i < count; i++) {
-            var node = model.allNodes[i];
+            var node = nodeList[i];
             var data = model.nodes[node];
 
             var nodesteps = self.extractNodeStepStates(node, data, model);

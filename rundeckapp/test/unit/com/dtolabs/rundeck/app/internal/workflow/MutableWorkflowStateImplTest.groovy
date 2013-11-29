@@ -26,6 +26,20 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
         assertNull(mutableWorkflowState.getTimestamp());
         (0..1).each{i->
             assertEquals(ExecutionState.WAITING,mutableWorkflowState.stepStates[i].stepState.executionState)
+            assertEquals([i+1],mutableWorkflowState.stepStates[i].stepIdentifier.context.collect{it.step})
+        }
+    }
+    public void testCreateWithParentStepId() {
+        MutableWorkflowStateImpl mutableWorkflowState = new MutableWorkflowStateImpl(null, 2,null,StateUtils.stepIdentifier(6));
+        assertEquals(ExecutionState.WAITING,mutableWorkflowState.getExecutionState());
+        assertEquals([] , mutableWorkflowState.getNodeSet());
+        assertEquals([] , mutableWorkflowState.getMutableNodeSet());
+        assertEquals(2, mutableWorkflowState.getStepStates().size());
+        assertEquals(2, mutableWorkflowState.getStepCount());
+        assertNull(mutableWorkflowState.getTimestamp());
+        (0..1).each{i->
+            assertEquals(ExecutionState.WAITING,mutableWorkflowState.stepStates[i].stepState.executionState)
+            assertEquals([6,i+1],mutableWorkflowState.stepStates[i].stepIdentifier.context.collect{it.step})
         }
     }
     public void testWorkflowTime() {
@@ -255,6 +269,57 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
         assertEquals(ExecutionState.SUCCEEDED, mutableWorkflowState.executionState)
         assertEquals(newdate, mutableWorkflowState.timestamp)
         assertEquals(['a', 'b'] , mutableWorkflowState.nodeSet)
+    }
+
+    public void testBasicSubworkflow() {
+        def mutableStep1 = new MutableWorkflowStepStateImpl(stepIdentifier(1))
+        mutableStep1.nodeStep = false
+        MutableWorkflowStateImpl mutableWorkflowState = new MutableWorkflowStateImpl(['a'], 1,[0:mutableStep1]);
+        def date = new Date(123)
+        def newdate = new Date()
+
+        mutableWorkflowState.updateWorkflowState(ExecutionState.RUNNING, date, ['a'])
+
+        assertEquals(['a'], mutableWorkflowState.allNodes)
+
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1), stepStateChange(stepState(ExecutionState.RUNNING)), newdate)
+        //step 1: sub workflow
+        mutableWorkflowState.updateSubWorkflowState(stepIdentifier(1), 0, ExecutionState.RUNNING, newdate, ['c', 'd'], null)
+        assertEquals(['a', 'c', 'd'], mutableWorkflowState.allNodes)
+        //start sub steps
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1, 1), stepStateChange(stepState(ExecutionState.RUNNING)), newdate)
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1, 1), stepStateChange(stepState(ExecutionState.RUNNING), 'c'), newdate)
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1, 1), stepStateChange(stepState(ExecutionState.SUCCEEDED), 'c'), newdate)
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1, 1), stepStateChange(stepState(ExecutionState.RUNNING), 'd'), newdate)
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1, 1), stepStateChange(stepState(ExecutionState.SUCCEEDED), 'd'), newdate)
+
+        mutableWorkflowState.updateSubWorkflowState(stepIdentifier(1), 0, ExecutionState.SUCCEEDED, newdate, null, null)
+
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1), stepStateChange(stepState(ExecutionState.SUCCEEDED)), newdate)
+
+        //finish
+        mutableWorkflowState.updateWorkflowState(ExecutionState.SUCCEEDED, newdate, null)
+
+
+        assertEquals(ExecutionState.SUCCEEDED, mutableWorkflowState.executionState)
+        assertEquals(newdate, mutableWorkflowState.timestamp)
+        assertEquals(['a'], mutableWorkflowState.nodeSet)
+        assertEquals(['a','c','d'], mutableWorkflowState.allNodes)
+
+        def step1 = mutableWorkflowState[1]
+        assertStepId(1, step1.stepIdentifier)
+        assertEquals(ExecutionState.SUCCEEDED, step1.stepState.executionState)
+        assertEquals(null, step1.nodeStepTargets)
+        assertNotNull( step1.mutableSubWorkflowState)
+        def sub1 = step1.subWorkflowState
+
+        def substep1 = sub1.stepStates[0]
+        assertEquals([1], substep1.stepIdentifier.context.collect{it.step})
+        assertEquals(ExecutionState.SUCCEEDED, substep1.stepState.executionState)
+        assertEquals(['c','d'], substep1.nodeStepTargets)
+        assertEquals(ExecutionState.SUCCEEDED, substep1.nodeStateMap['c'].executionState)
+        assertEquals(ExecutionState.SUCCEEDED, substep1.nodeStateMap['d'].executionState)
+
     }
 
     public void testErrorHandlerBasic() {

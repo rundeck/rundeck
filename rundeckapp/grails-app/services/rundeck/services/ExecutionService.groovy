@@ -33,6 +33,7 @@ import com.dtolabs.rundeck.execution.JobExecutionItem
 import com.dtolabs.rundeck.execution.JobReferenceFailureReason
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import org.hibernate.StaleObjectStateException
+import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.MessageSource
@@ -572,7 +573,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             //create listener to handle log messages and Ant build events
             WorkflowExecutionListenerImpl executionListener = new WorkflowExecutionListenerImpl(recorder, new ContextLogWriter(loghandler),false,null);
-            WorkflowExecutionListener execStateListener = workflowService.createWorkflowStateListenerForExecution(execution)
+            WorkflowExecutionListener execStateListener = workflowService.createWorkflowStateListenerForExecution(execution,framework,jobcontext,extraParamsExposed)
             def wfEventListener = new WorkflowEventLoggerListener(executionListener)
             def multiListener = MultiWorkflowExecutionListener.create(executionListener,
                     [executionListener, wfEventListener,execStateListener, /*new EchoExecListener() */])
@@ -1703,6 +1704,69 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
           return RequestContextHolder.currentRequestAttributes().getSession()
       }
 
+    def createJobReferenceContext(ScheduledExecution se, StepExecutionContext executionContext, String[] newargs)
+        throws ExecutionServiceValidationException{
+
+        //substitute any data context references in the arguments
+        if (null != newargs && executionContext.dataContext) {
+            newargs = DataContextUtils.replaceDataReferences(newargs, executionContext.dataContext)
+        }
+
+        final jobOptsMap = frameworkService.parseOptsFromArray(newargs)
+        jobOptsMap = addOptionDefaults(se, jobOptsMap)
+
+        //select secureAuth and secure options from the args to pass
+        def secAuthOpts = selectSecureOptionInput(se, [optparams: jobOptsMap], false)
+        def secOpts = selectSecureOptionInput(se, [optparams: jobOptsMap], true)
+
+        //for secAuthOpts, evaluate each in context of original private data context
+        def evalSecAuthOpts = [:]
+        secAuthOpts.each { k, v ->
+            def newv = DataContextUtils.replaceDataReferences(v, executionContext.privateDataContext)
+            if (newv != v || !v.startsWith('${option.')) {
+                evalSecAuthOpts[k] = newv
+            }
+        }
+
+        //for secOpts, evaluate each in context of original secure option data context
+        def evalSecOpts = [:]
+        secOpts.each { k, v ->
+            def newv = DataContextUtils.replaceDataReferences(v, [option: executionContext.dataContext['secureOption']])
+            if (newv != v || !v.startsWith('${option.')) {
+                evalSecOpts[k] = newv
+            }
+        }
+
+        //for plain opts, evaluate in context of non secure data context
+        final plainOpts = removeSecureOptionEntries(se, jobOptsMap)
+
+        //define nonsecure opts entries
+        def plainOptsContext = executionContext.dataContext['option']?.findAll { !executionContext.dataContext['secureOption'] || null == executionContext.dataContext['secureOption'][it.key] }
+        def evalPlainOpts = [:]
+        plainOpts.each { k, v ->
+            evalPlainOpts[k] = DataContextUtils.replaceDataReferences(v, [option: plainOptsContext])
+            //XXX: missing option references could be removed instead of passed on
+        }
+
+        //validate the option values
+        validateOptionValues(se, evalPlainOpts + evalSecOpts + evalSecAuthOpts)
+
+        //arg list for new context
+        def stringList = evalPlainOpts.collect { ["-" + it.key, it.value] }.flatten()
+        newargs = stringList.toArray(new String[stringList.size()]);
+
+        //construct job data context
+        def jobcontext = new HashMap<String, String>()
+        jobcontext.id = se.extid
+        jobcontext.execid = executionContext.dataContext.job?.execid ?: null;
+        jobcontext.loglevel = mappedLogLevels[executionContext.loglevel]
+        jobcontext.name = se.jobName
+        jobcontext.group = se.groupPath
+        jobcontext.project = se.project
+        jobcontext.username = executionContext.getUser()
+        jobcontext['user.name'] = jobcontext.username
+        return createContext(se, executionContext, jobcontext, newargs, evalSecAuthOpts, evalSecOpts)
+    }
     /**
      * Execute a job reference workflow with a particular context, optionally overriding the target node set,
      * and return the result based on the createFailure/createSuccess closures
@@ -1748,75 +1812,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     result = createFailure(JobReferenceFailureReason.Unauthorized, msg)
                     return
                 }
-                String[] newargs = jitem.args
-                //substitute any data context references in the arguments
-                if (null != newargs && executionContext.dataContext) {
-                    newargs = DataContextUtils.replaceDataReferences(newargs, executionContext.dataContext)
-                }
+                newExecItem = createExecutionItemForExecutionContext(se, executionContext.getFramework(), executionContext.getUser())
 
-                final jobOptsMap = frameworkService.parseOptsFromArray(newargs)
-                jobOptsMap = addOptionDefaults(se, jobOptsMap)
-
-                //select secureAuth and secure options from the args to pass
-                def secAuthOpts = selectSecureOptionInput(se, [optparams: jobOptsMap], false)
-                def secOpts = selectSecureOptionInput(se, [optparams: jobOptsMap], true)
-
-                //for secAuthOpts, evaluate each in context of original private data context
-                def evalSecAuthOpts = [:]
-                secAuthOpts.each { k, v ->
-                    def newv = DataContextUtils.replaceDataReferences(v, executionContext.privateDataContext)
-                    if (newv != v || !v.startsWith('${option.')) {
-                        evalSecAuthOpts[k] = newv
-                    }
-                }
-
-                //for secOpts, evaluate each in context of original secure option data context
-                def evalSecOpts = [:]
-                secOpts.each { k, v ->
-                    def newv = DataContextUtils.replaceDataReferences(v, [option: executionContext.dataContext['secureOption']])
-                    if (newv != v || !v.startsWith('${option.')) {
-                        evalSecOpts[k] = newv
-                    }
-                }
-
-                //for plain opts, evaluate in context of non secure data context
-                final plainOpts = removeSecureOptionEntries(se, jobOptsMap)
-
-                //define nonsecure opts entries
-                def plainOptsContext = executionContext.dataContext['option']?.findAll { !executionContext.dataContext['secureOption'] || null == executionContext.dataContext['secureOption'][it.key] }
-                def evalPlainOpts = [:]
-                plainOpts.each { k, v ->
-                    evalPlainOpts[k] = DataContextUtils.replaceDataReferences(v, [option: plainOptsContext])
-                    //XXX: missing option references could be removed instead of passed on
-                }
-
-                //validate the option values
                 try {
-                    validateOptionValues(se, evalPlainOpts + evalSecOpts + evalSecAuthOpts)
+                    newContext = createJobReferenceContext(se, executionContext,jitem.args)
                 } catch (ExecutionServiceValidationException e) {
                     executionContext.getExecutionListener().log(0, "Option input was not valid for [${jitem.jobIdentifier}]: ${e.message}");
                     def msg = "Invalid options: ${e.errors.keySet()}"
                     result = createFailure(JobReferenceFailureReason.InvalidOptions, msg.toString())
-                    return
                 }
-
-                //arg list for new context
-                def stringList = evalPlainOpts.collect { ["-" + it.key, it.value] }.flatten()
-                newargs = stringList.toArray(new String[stringList.size()]);
-
-                //construct job data context
-                def jobcontext = new HashMap<String, String>()
-                jobcontext.id = se.extid
-                jobcontext.execid = executionContext.dataContext.job?.execid ?: null;
-                jobcontext.loglevel = mappedLogLevels[executionContext.loglevel]
-                jobcontext.name = se.jobName
-                jobcontext.group = se.groupPath
-                jobcontext.project = se.project
-                jobcontext.username = executionContext.getUser()
-                jobcontext['user.name'] = jobcontext.username
-                newExecItem = createExecutionItemForExecutionContext(se, executionContext.getFramework(), executionContext.getUser())
-                newContext = createContext(se, executionContext, jobcontext, newargs, evalSecAuthOpts, evalSecOpts)
-                return
             }
             if (null != result) {
                 return result

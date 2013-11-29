@@ -68,9 +68,6 @@ class MutableWorkflowStepStateImpl implements MutableWorkflowStepState {
 
     @Override
     void setNodeStepTargets(List<String> nodeset) {
-        if(null!=nodeStepTargets){
-            throw new IllegalStateException("Node step targets for this step are already set")
-        }
         nodeStepTargets = new ArrayList<String>(nodeset)
         nodeStep=true
     }
