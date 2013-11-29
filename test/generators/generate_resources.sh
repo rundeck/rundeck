@@ -26,6 +26,8 @@ WC2=`cat $NAMELIST | wc -l`
 
 X=${1:-100}
 tcount=${2:-0}
+basename=${3:-node}
+suffix=${4:-}
 #set range to guarantee some tag overlap for nodes
 RANGE=$[ ($X * $tcount ) / 2 ]
 OFFSET=$[ $RANDOM * ( $WC / 32000 ) ]
@@ -50,7 +52,7 @@ for ((i=0; i<$X; i++)) ; do
     tags=`gentags ${2:0}`
     user=`genuser`
     cat <<END
-    <node name="node$i-$name" type="Node" description="node$i-$name node" hostname="localhost" osArch="x86_64" osFamily="unix" osName="Mac OS X" osVersion="10.6.5" username="$user" editUrl="" remoteUrl="" tags="$tags"/>
+    <node name="$basename$i$suffix" type="Node" description="node$i-$name node" hostname="localhost" osArch="x86_64" osFamily="unix" osName="Mac OS X" osVersion="10.6.5" username="$user" editUrl="" remoteUrl="" tags="$tags" node-executor="local" file-copier="local"/>
 END
 done
 
