@@ -77,7 +77,7 @@
         <div class="row row-space">
             <div class="col-sm-4 ">
                 <section data-bind="if: !completed()" class="section-space">
-                    <span class="text-info h4">
+                    <span class=" h4" data-bind="css: { 'text-info': runningNodes(), 'text-muted': !runningNodes() }">
                         <span class=" " data-bind="text: runningNodes().length"></span>
                         <span class=" " data-bind="text: pluralize(runningNodes().length,'Step')"></span>
                         running
@@ -85,7 +85,8 @@
                 </section>
 
                 <section data-bind="if: !completed()" class="section-space">
-                    <span class="text-success h4">
+                    <span class=" h4"
+                          data-bind="css: { 'text-success': succeededNodes(), 'text-muted': !succeededNodes() }">
                         <span data-bind="text: succeededNodes().length"></span>
                         <span class=" " data-bind="text: pluralize(succeededNodes().length,'Node')"></span>
                         completed
@@ -140,13 +141,13 @@
                             </div>
                         </div>
                     </section>
-                    <div data-bind="if: failedNodes().length > 0" class="section-separator">
+                    <section data-bind="if: failedNodes().length > 0" class="section-space">
                         <div data-bind="foreach: failedNodes()">
                             <div>
                                 <g:render template="nodeCurrentStateSimpleKO"/>
                             </div>
                         </div>
-                    </div>
+                    </section>
                     %{--display up to 5 partial nodes nodes--}%
                     <div data-bind="if:  partialNodes().length > 0" >
                         <div data-bind="foreach: partialNodes()">

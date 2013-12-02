@@ -94,10 +94,10 @@
     </div>
     %{--step specific info for node--}%
     <div  data-bind="visible: expanded" >
-        <div class=" wfnodesteps" data-bind="foreach: steps">
-
-            <div class=" wfnodestep" data-bind="css: { open: followingOutput() }">
-                <div class="row action" data-bind="click: $root.toggleOutputForNodeStep">
+        <div class=" " data-bind="foreach: steps">
+            <div class="wfnodesteps" data-bind="attr: { 'data-node': node.name }">
+            <div class=" wfnodestep" data-bind="css: { open: followingOutput() }, attr: { 'data-node': node.name, 'data-stepctx': stepctx }">
+                <div class="row action" data-bind="click: $root.toggleOutputForNodeStep ">
                     <div class="col-sm-3 " >
                         <div class="stepident execstate action col-inset"
                               data-bind="attr: { 'data-execstate': executionState, title: stepctxdesc }, css: { 'auto-caret-container': followingOutput(), active: followingOutput() } ">
@@ -148,6 +148,7 @@
                         </div>
                     </div>
                 </div>
+            </div>
             </div>
         </div>
 

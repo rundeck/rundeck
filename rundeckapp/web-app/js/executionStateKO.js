@@ -222,6 +222,7 @@ function NodeFlowViewModel(workflow,outputUrl){
     self.startTime=ko.observable();
     self.endTime=ko.observable();
     self.executionId=ko.observable();
+    self.outputScrollOffset=0;
     self.failed=ko.computed(function(){ return self.executionState()=='FAILED'; });
     self.totalSteps=ko.computed(function(){ return self.workflow.workflow.length; });
     self.activeNodes=ko.computed(function(){
@@ -381,10 +382,42 @@ function NodeFlowViewModel(workflow,outputUrl){
             var ctrl = self.showOutput(nodestep);
             self.followingStep(nodestep);
             self.followingControl=ctrl;
+            nodestep.node.expanded(true);
         }else{
             self.followingStep(null);
         }
     };
+    self.scrollTo= function (element,offx,offy) {
+        element = $(element);
+        var x = element.x ? element.x : element.offsetLeft,
+            y = element.y ? element.y : element.offsetTop;
+        window.scrollTo(x+(offx?offx:0), y+(offy?offy:0));
+    }
+
+    self.scrollToNodeStep=function(node,stepctx){
+        var elem = $$('.wfnodestep[data-node=' + node + '][data-stepctx=' + stepctx + ']');
+        if (elem) {
+            jQuery('#tab_link_flow a').tab('show');
+            //scroll to
+            self.scrollTo($(elem[0]));
+//            $(elem[0]).scrollTo();
+        }
+    };
+    self.scrollToNode=function(node){
+        var elem = $$('.wfnodesteps[data-node=' + node + ']');
+        if (elem) {
+            jQuery('#tab_link_flow a').tab('show');
+            //scroll to
+            self.scrollTo($(elem[0]));
+//            $(elem[0]).scrollTo();
+        }
+    };
+    self.scrollToOutput=function(nodestep){
+        if(!nodestep.followingOutput()){
+            self.toggleOutputForNodeStep(nodestep);
+        }
+        self.scrollToNode(nodestep.node.name);
+    }
 
     self.pluralize = function (count, singular, plural) {
         return count == 1 ? singular : null != plural ? plural : (singular + 's');
