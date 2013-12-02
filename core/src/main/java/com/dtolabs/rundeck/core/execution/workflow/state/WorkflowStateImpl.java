@@ -15,6 +15,7 @@ public class WorkflowStateImpl implements WorkflowState {
     private Date endTime;
     private ArrayList<WorkflowStepState> stepStates;
     private Map<String, WorkflowNodeState> nodeStates;
+    private String serverNode;
 
     public WorkflowStateImpl(
             List<String> nodeSet,
@@ -23,6 +24,7 @@ public class WorkflowStateImpl implements WorkflowState {
             Date timestamp,
             Date startTime,
             Date endTime,
+            String serverNode,
             List<WorkflowStepState> stepStates,
             Map<String, WorkflowNodeState> nodeStates
     ) {
@@ -33,6 +35,7 @@ public class WorkflowStateImpl implements WorkflowState {
         this.setTimestamp(timestamp);
         this.setStartTime(startTime);
         this.setEndTime(endTime);
+        this.setServerNode(serverNode);
         if(null!=stepStates){
             this.setStepStates(new ArrayList<WorkflowStepState>(stepStates));
         }
@@ -109,5 +112,13 @@ public class WorkflowStateImpl implements WorkflowState {
 
     public void setNodeStates(Map<String, WorkflowNodeState> nodeStates) {
         this.nodeStates = nodeStates;
+    }
+
+    public String getServerNode() {
+        return serverNode;
+    }
+
+    public void setServerNode(String serverNode) {
+        this.serverNode = serverNode;
     }
 }

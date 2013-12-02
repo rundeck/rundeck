@@ -158,11 +158,12 @@ public class StateUtils {
             Date timestamp,
             Date startTime,
             Date endTime,
+            String serverNode,
             List<WorkflowStepState> stepStates,
             boolean setupNodeStates
     ) {
         WorkflowStateImpl workflowState = new WorkflowStateImpl(nodeSet, allNodes, stepCount, executionState,
-                timestamp, startTime, endTime, stepStates, null);
+                timestamp, startTime, endTime, serverNode,stepStates, null);
         if (setupNodeStates) {
             setupNodeStates(workflowState);
         }
@@ -174,10 +175,11 @@ public class StateUtils {
             Date timestamp,
             Date startTime,
             Date endTime,
+            String serverNode,
             List<WorkflowStepState> stepStates,
             Map<String, WorkflowNodeState> nodeStates
     ) {
-        return new WorkflowStateImpl(nodeSet, allNodes, stepCount, executionState, timestamp, startTime, endTime,
+        return new WorkflowStateImpl(nodeSet, allNodes, stepCount, executionState, timestamp, startTime, endTime, serverNode,
                 stepStates, nodeStates);
     }
 

@@ -23,6 +23,12 @@ public interface WorkflowState {
     public List<String> getAllNodes();
 
     /**
+     * Return the name of the server node
+     * @return
+     */
+    public String getServerNode();
+
+    /**
      * The number of steps the workflow will run
      *
      * @return
