@@ -30,7 +30,7 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
         }
     }
     public void testCreateWithParentStepId() {
-        MutableWorkflowStateImpl mutableWorkflowState = new MutableWorkflowStateImpl(null, 2,null,StateUtils.stepIdentifier(6));
+        MutableWorkflowStateImpl mutableWorkflowState = new MutableWorkflowStateImpl(null, 2,null,StateUtils.stepIdentifier(6),null);
         assertEquals(ExecutionState.WAITING,mutableWorkflowState.getExecutionState());
         assertEquals([] , mutableWorkflowState.getNodeSet());
         assertEquals([] , mutableWorkflowState.getMutableNodeSet());
