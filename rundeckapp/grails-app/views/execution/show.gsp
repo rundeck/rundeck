@@ -487,14 +487,14 @@
                                           innerContent: 'Nodes',
                                           showpercent: true,
                                           progressId: 'nodeProgressBar',
-                                          bind: '(percentageFixed(succeededNodes().length,nodes().length))',
-                                          bindText: '( succeededNodes().length + \'/\' + nodes().length )',
+                                          bind: '(percentageFixed(succeededNodes().length,activeNodes().length))',
+                                          bindText: '( succeededNodes().length + \'/\' + activeNodes().length )',
                                   ]"/>
                     </section>
                     <div data-bind="if: completed() ">
                         <span data-bind="text:succeededNodes().length"></span>
                         of
-                        <span data-bind="text:nodes().length"></span>
+                        <span data-bind="text:activeNodes().length"></span>
                     </div>
                 </div>
             </div>

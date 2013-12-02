@@ -58,7 +58,7 @@
 
 
 
-<div data-bind="foreach: nodes">
+<div data-bind="foreach: activeNodes()">
 <div class="wfnodestate container" data-bind="css: { open: expanded() }">
     <div class="row wfnodeoverall action" data-bind="click: toggleExpand">
         <div class="col-sm-3  nodectx"
