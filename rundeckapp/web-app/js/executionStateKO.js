@@ -120,8 +120,14 @@ function RDNode(name, steps,flow){
     self.summary=ko.observable();
     self.summaryState=ko.observable();
     self.currentStep=ko.observable();
+
+    /**
+     * Determine summary data for the node, sets the summaryState and summary and currentStep
+     */
     self.summarize=function(){
         var currentStep=null;
+
+        //step summary info
         var summarydata = {
             total: self.steps().length,
             SUCCEEDED: 0,
@@ -134,6 +140,8 @@ function RDNode(name, steps,flow){
             duration_ms_total: 0,
             pending: self.flow.pendingSteps()
         };
+
+        //determine count for step states
         ko.utils.arrayForEach(self.steps(),function(step){
             ['SUCCEEDED', 'FAILED', 'WAITING', 'NOT_STARTED', 'RUNNING', 'RUNNING_HANDLER'].each(function (z) {
                 if (null != summarydata[z] && step.executionState()==z) {
@@ -148,6 +156,8 @@ function RDNode(name, steps,flow){
             }
         });
         self.currentStep(currentStep);
+
+        //based on step states set the summary for this node
         if (summarydata.total > 0) {
             if (summarydata.RUNNING > 0) {
                 self.summary("Running");
@@ -183,12 +193,9 @@ function RDNode(name, steps,flow){
         } else if(summarydata.pending > 0){
             self.summary("Waiting");
             self.summaryState("WAITING");
-        } else if(self.flow.completed()){
+        } else {
             self.summary("No Steps");
             self.summaryState("NONE");
-        } else {
-            self.summary("Waiting");
-            self.summaryState("WAITING");
         }
     };
     self.updateSteps=function(steps){
@@ -217,8 +224,13 @@ function NodeFlowViewModel(workflow,outputUrl){
     self.executionId=ko.observable();
     self.failed=ko.computed(function(){ return self.executionState()=='FAILED'; });
     self.totalSteps=ko.computed(function(){ return self.workflow.workflow.length; });
+    self.activeNodes=ko.computed(function(){
+        return ko.utils.arrayFilter(self.nodes(), function (n) {
+            return n.summaryState() != 'NONE';
+        });
+    });
     self.totalNodes=ko.computed(function(){
-        var nodes = self.nodes();
+        var nodes = ko.utils.arrayFilter(self.nodes(),function(n){return n.summaryState()!='NONE';});
         return nodes?nodes.length:0;
     });
     self.jobPercentage=ko.computed(function(){
@@ -257,7 +269,7 @@ function NodeFlowViewModel(workflow,outputUrl){
     self.succeededNodes=ko.computed(function(){
         var completed=new Array();
         ko.utils.arrayForEach(self.nodes(), function (n) {
-            if(n.summaryState()=='SUCCEEDED' || n.summaryState() == 'NONE'){
+            if(n.summaryState()=='SUCCEEDED'){
                 completed.push(n);
             }
         });
