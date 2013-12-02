@@ -69,7 +69,7 @@ function RDNodeStep(data, node, flow){
  */
 RDNodeStep.stateCompare= function (a, b) {
     if (a == b) {
-        return true;
+        return false;
     }
     var states = ['SUCCEEDED', 'NONE','NOT_STARTED', 'WAITING', 'FAILED', 'ABORTED', 'RUNNING', 'RUNNING_HANDLER'];
     var ca = states.indexOf(a);
