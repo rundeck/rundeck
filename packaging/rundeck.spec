@@ -15,6 +15,8 @@ RunDeck, is no ordinary wooden deck. You can build a bon fire on this deck.
 Rundeck provides a single console for dispatching commands across many resources.
 
 %changelog
+* Sun Dec 2 2013 Alex Honor <alexhonor@yahoo.com> 2.0-0
+	- Remove java dependency. #601
 * Sun Jan 6 2013 Jordi Llonch <llonchj@gmail.com> 1.4-0
 	- Soft-coded version numbers
 * Thu Jan 13 2011 Greg Schueler <greg@dtosolutions.com> 1.1-0

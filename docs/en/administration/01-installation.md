@@ -90,6 +90,8 @@ documentation as well.
 
 ### Installing with RPM
 
+Note, the java JRE must be installed. Install any JRE that is 1.6+.
+
 If you want to install Rundeck on Linux via a binary installer, you
 can generally do so through the RPM tool that comes with your distribution. 
 
