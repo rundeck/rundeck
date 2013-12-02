@@ -68,7 +68,7 @@ class WorkflowService implements ApplicationContextAware{
      * @param secureOptions
      * @return
      */
-    def MutableWorkflowState createStateForWorkflow( Workflow wf, String project, Framework framework,
+    def MutableWorkflowStateImpl createStateForWorkflow( Workflow wf, String project, Framework framework,
                                                     StepExecutionContext parent, Map secureOptions, StepIdentifier parentId=null) {
 
         Map<Integer, MutableWorkflowStepStateImpl> substeps = [:]
@@ -101,7 +101,8 @@ class WorkflowService implements ApplicationContextAware{
             }
             substeps[ndx].nodeStep = !!step.nodeStep
         }
-        return new MutableWorkflowStateImpl(parent ? (parent.nodes.nodeNames as List) : null, wf.commands.size(), substeps, parentId)
+        return new MutableWorkflowStateImpl(parent ? (parent.nodes.nodeNames as List) : null, wf.commands.size(),
+                substeps, parentId,framework.frameworkNodeName)
     }
     /**
      * Create and return a listener for changes to the workflow state for an execution
@@ -152,7 +153,7 @@ class WorkflowService implements ApplicationContextAware{
         def allNodes=[]
         def map=mapOf(workflowState,null,nodestates,allNodes)
         map.allNodes=allNodes
-        return [executionId: id, nodes: nodestates] + map
+        return [executionId: id, nodes: nodestates, serverNode: workflowState.serverNode ] + map
     }
     def Map mapOf(WorkflowState workflowState, StepIdentifier parent=null, Map nodestates, List<String> allNodes) {
         allNodes.addAll(workflowState.allNodes.findAll{!allNodes.contains(it)})
@@ -192,7 +193,8 @@ class WorkflowService implements ApplicationContextAware{
         List stepStates = map.steps.collect {
             workflowStepStateFromMap(it)
         }
-        return StateUtils.workflowState(nodes,nodes,stepCount,state,timestamp,startTime,endTime, stepStates,true)
+        String serverNode = map.serverNode?:null;
+        return StateUtils.workflowState(nodes,nodes,stepCount,state,timestamp,startTime,endTime, serverNode,stepStates,true)
     }
 
     def String stepIdentifierToString(StepIdentifier ident){
@@ -232,11 +234,6 @@ class WorkflowService implements ApplicationContextAware{
                 }
             }
             map += [nodeStates: nmap]
-        }
-        if(state.nodeStepTargets){
-            map+=[
-                    stepTargetNodes: state.nodeStepTargets,
-            ]
         }
         map + [
                 id: stepIdentifierToString(state.stepIdentifier),
