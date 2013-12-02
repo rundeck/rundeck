@@ -20,38 +20,49 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
     def Map<String,MutableWorkflowNodeState> mutableNodeStates;
     def List<Map<Date,Map>> stateChanges=[]
     private StepIdentifier parentStepId
+    def String serverNode
 
     MutableWorkflowStateImpl(List<String> nodeSet, long stepCount) {
         this(nodeSet,stepCount,null)
     }
     MutableWorkflowStateImpl(List<String> nodeSet, long stepCount, Map<Integer, MutableWorkflowStepStateImpl> steps) {
-        this(nodeSet,stepCount,steps,null)
+        this(nodeSet,stepCount,steps,null,null)
     }
-    MutableWorkflowStateImpl(List<String> nodeSet, long stepCount, Map<Integer, MutableWorkflowStepStateImpl> steps, StepIdentifier parentStepId) {
-        this.parentStepId=parentStepId
+
+    MutableWorkflowStateImpl(List<String> nodeSet, long stepCount, Map<Integer, MutableWorkflowStepStateImpl> steps, StepIdentifier parentStepId, String serverNode) {
+        this.serverNode=serverNode
+        this.parentStepId = parentStepId
         this.mutableNodeSet = new ArrayList<>()
         this.mutableAllNodes = new ArrayList<>()
-        if(null!=nodeSet){
+        if (null != nodeSet) {
             this.mutableNodeSet.addAll(nodeSet)
         }
         this.mutableAllNodes.addAll(mutableNodeSet)
         this.stepCount = stepCount
-        mutableStepStates = new HashMap<Integer,MutableWorkflowStepState>()
+        mutableStepStates = new HashMap<Integer, MutableWorkflowStepState>()
         for (int i = 1; i <= stepCount; i++) {
-            mutableStepStates[i - 1] = steps && steps[i-1]? steps[i-1] : new MutableWorkflowStepStateImpl(StateUtils.stepIdentifierAppend(parentStepId, StateUtils.stepIdentifier(i)))
+            mutableStepStates[i - 1] = steps && steps[i - 1] ? steps[i - 1] : new MutableWorkflowStepStateImpl(StateUtils.stepIdentifierAppend(parentStepId, StateUtils.stepIdentifier(i)))
         }
-        this.executionState=ExecutionState.WAITING
+        this.executionState = ExecutionState.WAITING
         mutableNodeStates = new HashMap<String, MutableWorkflowNodeState>()
-        mutableAllNodes.each {node->
-            mutableNodeStates[node]=new MutableWorkflowNodeStateImpl(node)
+        mutableAllNodes.each { node ->
+            mutableNodeStates[node] = new MutableWorkflowNodeStateImpl(node)
         }
-        if(mutableNodeStates && mutableStepStates){
+        if (mutableNodeStates && mutableStepStates) {
             //link nodes to node step states
-            mutableNodeStates.each { String node, MutableWorkflowNodeState nstate->
-                mutableStepStates.each { int index, MutableWorkflowStepState step->
-                    if(step.nodeStep){
+            mutableNodeStates.each { String node, MutableWorkflowNodeState nstate ->
+                mutableStepStates.each { int index, MutableWorkflowStepState step ->
+                    if (step.nodeStep) {
                         getOrCreateMutableNodeStepState(step, node, step.stepIdentifier)
                     }
+                }
+            }
+        }
+        if (mutableStepStates && serverNode) {
+            mutableStepStates.each { int index, MutableWorkflowStepState step ->
+                if (!step.nodeStep && !step.hasSubWorkflow()) {
+                    //a workflow step, e.g. plugin, without a sub workflow
+                    getOrCreateMutableNodeStepState(step, serverNode, step.stepIdentifier)
                 }
             }
         }
@@ -103,26 +114,22 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         if (stepStateChange.isNodeState()) {
             //find node state in stepstate
             def nodeName = stepStateChange.nodeName
-            toUpdate = getOrCreateMutableNodeStepState(currentStep, nodeName, identifier)
-            toUpdate.executionState = updateState(toUpdate.executionState, stepStateChange.stepState.executionState)
+            toUpdate = updateNodeStepState(currentStep, nodeName, identifier, stepStateChange)
+
             if (!currentStep.nodeStep && nodeSet) {
+                // change to a nodeStep since we have seen a node state for it
                 if (null == currentStep.nodeStepTargets || currentStep.nodeStepTargets.size() < 1) {
                     currentStep.setNodeStepTargets(nodeSet)
                 }
             }
-            mutableNodeStates[nodeName].mutableNodeState.executionState = toUpdate.executionState
-
-            //TODO: need to merge this data
-            mutableNodeStates[nodeName].mutableNodeState.metadata = toUpdate.metadata
-            mutableNodeStates[nodeName].mutableNodeState.errorMessage = toUpdate.errorMessage
-            mutableNodeStates[nodeName].mutableNodeState.updateTime = toUpdate.updateTime
-            mutableNodeStates[nodeName].mutableNodeState.startTime = toUpdate.startTime
-            mutableNodeStates[nodeName].mutableNodeState.endTime = toUpdate.endTime
-
-            mutableNodeStates[nodeName].lastIdentifier = identifier
         } else if (!currentStep.nodeStep) {
             //overall step state
             toUpdate = currentStep.mutableStepState
+
+            if(serverNode && !currentStep.hasSubWorkflow()){
+                //treat server node as node owner for this step
+                updateNodeStepState(currentStep, serverNode, identifier, stepStateChange)
+            }
 
             toUpdate.executionState = updateState(toUpdate.executionState, stepStateChange.stepState.executionState)
         } else {
@@ -156,6 +163,31 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
                 && stepStateChange.stepState.executionState == ExecutionState.RUNNING_HANDLER) {
             currentStep.mutableStepState.executionState = ExecutionState.RUNNING_HANDLER
         }
+    }
+
+    /**
+     * Update a node state due to a node step state change
+     * @param currentStep
+     * @param nodeName
+     * @param identifier
+     * @param stepStateChange
+     * @return
+     */
+    private MutableStepState updateNodeStepState(MutableWorkflowStepState currentStep, String nodeName, StepIdentifier identifier, StepStateChange stepStateChange) {
+        MutableStepState toUpdate = getOrCreateMutableNodeStepState(currentStep, nodeName, identifier)
+        toUpdate.executionState = updateState(toUpdate.executionState, stepStateChange.stepState.executionState)
+
+        mutableNodeStates[nodeName].mutableNodeState.executionState = toUpdate.executionState
+
+        //TODO: need to merge this data
+        mutableNodeStates[nodeName].mutableNodeState.metadata = toUpdate.metadata
+        mutableNodeStates[nodeName].mutableNodeState.errorMessage = toUpdate.errorMessage
+        mutableNodeStates[nodeName].mutableNodeState.updateTime = toUpdate.updateTime
+        mutableNodeStates[nodeName].mutableNodeState.startTime = toUpdate.startTime
+        mutableNodeStates[nodeName].mutableNodeState.endTime = toUpdate.endTime
+
+        mutableNodeStates[nodeName].lastIdentifier = identifier
+        toUpdate
     }
 
     /**

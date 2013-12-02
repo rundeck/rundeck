@@ -158,6 +158,74 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
         assertEquals([:], state.nodeStateMap)
     }
 
+    public void testUpdateWorkflowStepServerNode() {
+        MutableWorkflowStateImpl mutableWorkflowState = new MutableWorkflowStateImpl(['x'], 2);
+        mutableWorkflowState.serverNode='x'
+        def date = new Date()
+
+        mutableWorkflowState.updateWorkflowState(ExecutionState.RUNNING, date, ['x'])
+
+        assertEquals(ExecutionState.RUNNING, mutableWorkflowState.executionState)
+        assertEquals(date, mutableWorkflowState.timestamp)
+
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1), stepStateChange(stepState(ExecutionState.RUNNING)),
+                date)
+        assertEquals(ExecutionState.RUNNING, mutableWorkflowState.getExecutionState());
+        assertEquals(['x'] , mutableWorkflowState.getNodeSet());
+        assertEquals(['x'] , mutableWorkflowState.getMutableNodeSet());
+        assertEquals(2, mutableWorkflowState.getStepStates().size());
+        assertEquals(2, mutableWorkflowState.getStepCount());
+        assertEquals(date, mutableWorkflowState.getTimestamp());
+
+        def WorkflowStepState state = mutableWorkflowState.getStepStates()[0]
+        assertStepId(1, state.stepIdentifier)
+        assertEquals(false, state.hasSubWorkflow())
+        assertEquals(ExecutionState.RUNNING, state.stepState.executionState)
+        assertEquals(null, state.stepState.errorMessage)
+        assertEquals(null, state.stepState.metadata)
+        assertEquals(null, state.subWorkflowState)
+        assertEquals(1, state.nodeStateMap.size())
+        StepState nodestate = state.nodeStateMap['x']
+        assertEquals(ExecutionState.RUNNING, nodestate.executionState)
+        assertEquals(null, nodestate.metadata)
+        assertEquals(null, nodestate.errorMessage)
+    }
+
+    public void testUpdateWorkflowStepServerNodeComplete() {
+        MutableWorkflowStateImpl mutableWorkflowState = new MutableWorkflowStateImpl(['x'], 2);
+        mutableWorkflowState.serverNode='x'
+        def date = new Date()
+
+        mutableWorkflowState.updateWorkflowState(ExecutionState.RUNNING, date, ['x'])
+
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1), stepStateChange(stepState(ExecutionState.RUNNING)),
+                date)
+
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1), stepStateChange(stepState(ExecutionState.SUCCEEDED)),
+                date)
+
+        assertEquals(ExecutionState.RUNNING, mutableWorkflowState.getExecutionState());
+        assertEquals(['x'], mutableWorkflowState.getNodeSet());
+        assertEquals(['x'], mutableWorkflowState.getMutableNodeSet());
+        assertEquals(2, mutableWorkflowState.getStepStates().size());
+        assertEquals(2, mutableWorkflowState.getStepCount());
+        assertEquals(date, mutableWorkflowState.getTimestamp());
+
+        def WorkflowStepState state = mutableWorkflowState.getStepStates()[0]
+        assertStepId(1, state.stepIdentifier)
+        assertEquals(false, state.hasSubWorkflow())
+        assertEquals(ExecutionState.SUCCEEDED, state.stepState.executionState)
+        assertEquals(null, state.stepState.errorMessage)
+        assertEquals(null, state.stepState.metadata)
+        assertEquals(null, state.subWorkflowState)
+        assertEquals(1, state.nodeStateMap.size())
+        StepState nodestate = state.nodeStateMap['x']
+        assertEquals(ExecutionState.SUCCEEDED, nodestate.executionState)
+        assertEquals(null, nodestate.metadata)
+        assertEquals(null, nodestate.errorMessage)
+
+    }
+
     private void assertStepId(int ident, StepIdentifier identifier) {
         assertEquals(1, identifier.context.size())
         assertEquals(ident, identifier.context[0].step)
@@ -220,7 +288,33 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
         assertEquals(null, state.stepState.metadata)
         assertEquals(null, state.subWorkflowState)
         assertEquals(1, state.nodeStateMap.size())
-        StepState nodestate = state.nodeStateMap.testnode
+        StepState nodestate = state.nodeStateMap['testnode']
+        assertEquals(ExecutionState.RUNNING, nodestate.executionState)
+        assertEquals(null, nodestate.metadata)
+        assertEquals(null, nodestate.errorMessage)
+    }
+
+    public void testUpdateNodeStepPredictedNodes() {
+        MutableWorkflowStateImpl mutableWorkflowState = new MutableWorkflowStateImpl(['testnode'], 2);
+        def date = new Date()
+
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1), stepStateChange(stepState(ExecutionState.RUNNING), 'testnode'),
+                date)
+        assertEquals(ExecutionState.RUNNING, mutableWorkflowState.getExecutionState());
+        assertEquals(['testnode'] , mutableWorkflowState.getNodeSet());
+        assertEquals(2, mutableWorkflowState.getStepStates().size());
+        assertEquals(2, mutableWorkflowState.getStepCount());
+        assertEquals(date, mutableWorkflowState.getTimestamp());
+
+        def WorkflowStepState state = mutableWorkflowState.getStepStates()[0]
+        assertStepId(1, state.stepIdentifier)
+        assertEquals(false, state.hasSubWorkflow())
+        assertEquals(ExecutionState.RUNNING, state.stepState.executionState)
+        assertEquals(null, state.stepState.errorMessage)
+        assertEquals(null, state.stepState.metadata)
+        assertEquals(null, state.subWorkflowState)
+        assertEquals(1, state.nodeStateMap.size())
+        StepState nodestate = state.nodeStateMap['testnode']
         assertEquals(ExecutionState.RUNNING, nodestate.executionState)
         assertEquals(null, nodestate.metadata)
         assertEquals(null, nodestate.errorMessage)
