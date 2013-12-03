@@ -246,23 +246,18 @@
                 <span class="jobuuid desc" title="UUID for this job">${scheduledExecution.uuid.encodeAsHTML()}</span>
             </td>
         </tr>
+        <tr>
+            <td >
+                Created:
+            </td>
+            <td >
+                <span class="when">
+                    <g:relativeDate elapsed="${scheduledExecution.dateCreated}"/>
+                </span>
+            </td>
+        </tr>
     </g:if>
-<g:if test="${scheduledExecution && auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_READ])}">
-    <tr>
-        <td>
 
-        </td>
-        <td>
-            <span class="desc">
-
-
-
-            </span>
-        </td>
-    </tr>
-</g:if>
-
-    
 </table>
 </div>
 </div>

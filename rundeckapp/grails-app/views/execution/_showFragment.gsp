@@ -162,7 +162,7 @@
                                 params="[view: 'inline', formatted: false]">
                             Raw</g:link>
                     </span>
-                    
+
                     <span class="sepL">
                         <g:link class="textbtn" style="padding:5px;"
                                 title="Download ${filesize > 0 ? filesize + ' bytes' : ''}"
