@@ -16,41 +16,7 @@
 <div class="container">
     <div class="row row-space">
         <div class="col-sm-12">
-
-            <span class=" execstate execstatedisplay overall h4"
-                data-execstate="${execState}"
-                  data-bind="attr: { 'data-execstate': executionState() } ">
-            </span>
-
-            <span data-bind="visible: completed()" style="${wdgt.styleVisible(if:execution.dateCompleted)}">
-                after <span data-bind="text: execDurationHumanized(), attr: {title: execDurationSimple() } ">
-                <g:if test="${execution.dateCompleted}">
-                    <g:relativeDate start="${execution.dateStarted}" end="${execution.dateCompleted}"/>
-                </g:if>
-            </span>
-                <span class="timerel">at
-                    <span data-bind="text: formatTimeAtDate(endTime()), attr: {title: endTime() }">
-                        <g:if test="${execution.dateCompleted}">
-                            <g:relativeDate atDate="${execution.dateCompleted}"/>
-                        </g:if>
-                    </span>
-                </span>
-                
-            </span>
-
-                started
-            <span class="timerel">at
-                <span data-bind="text: formatTimeAtDate(startTime()), attr: {title: startTime() }">
-                    <g:if test="${execution.dateStarted}">
-                        <g:relativeDate atDate="${execution.dateStarted}"/>
-                    </g:if>
-                </span>
-            </span>
-            by <g:username user="${execution.user}"/>
-            %{--<g:render template="/scheduledExecution/execStatusText" model="${[execution: execution]}"/>--}%
-
-
-
+            <tmpl:wfstateSummaryLine />
         </div>
     </div>
 
@@ -77,69 +43,13 @@
 
 
 <div data-bind="if: stateLoaded()">
+
         <div class="row row-space" data-bind="if: completed()">
-            <div class="col-sm-12" >
-
-                <table class="table table-bordered table-condensed">
-
-                    <tr>
-                        <th colspan="4" class="text-muted table-footer text-small">
-                            Node Summary
-                        </th>
-                    </tr>
-                    <tr>
-                       <th style="width: 25%" class="text-muted text-center h5 text-header">Complete</th>
-                       <th style="width: 25%" class="text-muted text-center h5 text-header">Failed</th>
-                       <th style="width: 25%" class="text-muted text-center h5 text-header">Incomplete</th>
-                       <th style="width: 25%" class="text-muted text-center h5 text-header">Not Started</th>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div class="text-center">
-                                <span class="h1 text-muted"
-                                      data-bind="text: percentageFixed(completedNodes().length,activeNodes().length) + '%'"></span>
-                            </div>
-
-                            <div class="text-center">
-                                <span class="text-muted"
-                                      data-bind="text: completedNodes().length+'/'+activeNodes().length"></span>
-                            </div>
-                        </td>
-
-                        <td >
-
-
-                            <div class="text-center">
-                                <span class=" h1"
-                                      data-bind="css: {'text-danger': failedNodes().length > 0 , 'text-muted': failedNodes().length < 1 } ">
-                                    <span data-bind="text: failedNodes().length"></span>
-                                </span>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="text-center">
-
-                                <span class=" h1"
-                                      data-bind="css: {'text-warning': partialNodes().length > 0 , 'text-muted': partialNodes().length < 1 } ">
-                                    <span class="" data-bind="text: partialNodes().length"></span>
-                                </span>
-
-                            </div>
-                        </td>
-                        <td>
-
-                            <div class="text-center">
-                                <span class=" h1"
-                                      data-bind="css: {'text-warning': notstartedNodes().length > 0 , 'text-muted': notstartedNodes().length < 1 } ">
-                                    <span class="" data-bind="text: notstartedNodes().length"></span>
-                                </span>
-                            </div>
-
-                        </td>
-                    </tr>
-                </table>
+            <div class="col-sm-12">
+                <tmpl:wfstateSummaryScore />
             </div>
         </div>
+
         <div class="row row-space" data-bind="if: !completed()">
             <div class="col-sm-12" >
                 <table class="table table-bordered">
