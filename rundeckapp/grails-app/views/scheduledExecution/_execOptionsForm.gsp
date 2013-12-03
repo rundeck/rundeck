@@ -51,11 +51,14 @@
             <div class="row">
                 <div class="col-sm-12 checkbox">
                 <input name="extra._replaceNodeFilters" value="true" type="checkbox"
-                              id="doReplaceFilters"/> <label for="doReplaceFilters">Change the Target Nodes</label>
+                        data-toggle="collapse"
+                        data-target="#nodeSelect"
+                              id="doReplaceFilters"/> <label for="doReplaceFilters">Change the Target Nodes
+                (${nodes.size()})</label>
                 </div>
             </div>
             </div>
-            <div class=" matchednodes embed jobmatchednodes group_section">
+            <div class=" matchednodes embed jobmatchednodes group_section collapse" id="nodeSelect">
                 <%--
                  split node names into groups, in several patterns
                   .*\D(\d+)
