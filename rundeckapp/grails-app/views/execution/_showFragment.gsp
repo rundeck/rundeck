@@ -162,13 +162,7 @@
                                 params="[view: 'inline', formatted: false]">
                             Raw</g:link>
                     </span>
-                    <span class="sepL">
-                        <g:link class="textbtn" style="padding:5px;"
-                                title="View raw text output"
-                                controller="execution" action="follow" id="${execution.id}"
-                                params="[markdown: params.markdown == 'group' ? 'none' : 'group', mode: params.mode]">
-                            ${params.markdown == 'group' ? 'No Markdown' : 'Markdown'}</g:link>
-                    </span>
+                    
                     <span class="sepL">
                         <g:link class="textbtn" style="padding:5px;"
                                 title="Download ${filesize > 0 ? filesize + ' bytes' : ''}"
