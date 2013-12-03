@@ -54,7 +54,7 @@
     <h4 class="text-muted"><g:message code="page.section.Activity"/></h4>
     <g:render template="/scheduledExecution/renderJobStats" model="${[scheduledExecution: scheduledExecution]}"/>
 
-    <g:render template="/scheduledExecution/activityLinks" model="[scheduledExecution: scheduledExecution]"/>
+    <g:render template="/reports/activityLinks" model="[scheduledExecution: scheduledExecution]"/>
 </div>
 </div>
 

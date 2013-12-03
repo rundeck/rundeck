@@ -560,7 +560,7 @@
         <div class="row row-space">
             <div class="col-sm-12 ">
                 <h4 class="text-muted "><g:message code="page.section.Activity"/></h4>
-                <g:render template="/scheduledExecution/activityLinks" model="[execution:execution,scheduledExecution: scheduledExecution]"/>
+                <g:render template="/reports/activityLinks" model="[execution:execution,scheduledExecution: scheduledExecution]"/>
             </div>
         </div>
     </g:if>

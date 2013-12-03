@@ -133,20 +133,8 @@
         }
 
 
-        /** START history
-         *
-         */
-        var histControl = new HistoryControl('histcontent',{xcompact:true,nofilters:true});
-        function loadHistory(){
-            histControl.loadHistory( ${(reportQueryParams?:[projFilter:session.project]).encodeAsJSON()});
-        }
         /** now running section update */
-        var savedcount=0;
         function _pageUpdateNowRunning(count){
-            if(count!==savedcount){
-                savedcount=count;
-                loadHistory();
-            }
         }
         var lastRunExec=0;
         /**
@@ -158,7 +146,6 @@
             }
             if (name == 'nowrunning' && data.lastExecId && data.lastExecId != lastRunExec) {
                 lastRunExec = data.lastExecId;
-                loadHistory();
             }
         }
 
@@ -388,12 +375,6 @@
 </div>
 
     <h4 class="text-muted"><g:message code="page.section.Activity"/></h4>
-    <div class="pageBody">
-        <g:render template="/reports/historyTableContainer" model="[nowrunning: true]"/>
-        <g:javascript>
-            fireWhenReady('histcontent',loadHistory);
-        </g:javascript>
-
-    </div>
+    <g:render template="/reports/activityLinks" model="[project:session.project]"/>
 </body>
 </html>

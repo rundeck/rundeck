@@ -456,7 +456,6 @@
         function onRunComplete(){
             enableRunBar();
             afterRun();
-            loadHistory();
         }
 
         /**
@@ -485,32 +484,11 @@
             ['outsidefiltersave'].each($('${ukey}filter').visible()?Element.hide:Element.show);
         }
 
-        /** START history
-         *
-         */
-        var histControl = new HistoryControl('histcontent',{
-            sessionOnly:true,
-            xcompact:false,
-            nofilters:true,
-            jobIdFilter:'null',
-            userFilter:'${session.user}',
-            projFilter:'${session.project}'
-        });
-        function loadHistory(){
-            histControl.loadHistory();
-        }
-        var lastRunExec=0;
+
         /**
          * Handle embedded content updates
          */
         function _updateBoxInfo(name,data){
-            if(name=='events' && data.lastDate){
-                histControl.setHiliteSince(data.lastDate);
-            }
-            if (name == 'nowrunning' && data.lastExecId && data.lastExecId != lastRunExec) {
-                lastRunExec = data.lastExecId;
-                loadHistory();
-            }
             if(name=='nodetable'){
                 if(data.total && data.total!="0"){
                     enableRunBar();
@@ -532,36 +510,14 @@
                 }
             }
         }
-        /**
-         * now running
-         */
-        var savedcount=0;
-        function _pageUpdateNowRunning(count){
-            if(count!=savedcount){
-                savedcount=count;
-                loadHistory();
-            }
-        }
 
-        var runupdate;
-        function loadNowRunning(){
-            runupdate=new Ajax.PeriodicalUpdater({ success:'nowrunning'},'${createLink(controller:"menu",action:"nowrunningFragment")}',{
-                evalScripts:true,
-                parameters:{projFilter:'${session.project}'},
-                onFailure:function (response) {
-                    showError("AJAX error: Now Running [" + runupdate.url + "]: " + response.status + " "
-                                      + response.statusText);
-                    runupdate.stop();
-                }
-            });
-        }
+
 
         /**
          * START page init
          */
 
         function init() {
-            loadNowRunning();
             $$('#runbox input').each(function(elem){
                 if(elem.type=='text'){
                     elem.observe('keypress',function(evt){
@@ -831,10 +787,11 @@
 
     <div class="row">
     <div class="col-sm-12">
-        <g:render template="/reports/historyTableContainer" model="[nowrunning: true]"/>
-        <g:javascript>
-            fireWhenReady('histcontent',loadHistory);
-        </g:javascript>
+        <g:render template="/reports/activityLinks" model="[filter: [
+                jobIdFilter: 'null',
+                userFilter: session.user,
+                projFilter: session.project
+        ]]"/>
     </div>
     </div>
     </g:if>

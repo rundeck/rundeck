@@ -14,12 +14,16 @@
   limitations under the License.
   --}%
 
+<g:set var="linkParams" value="${filter?:[projFilter:project?:session.project]}"/>
+<g:if test="${scheduledExecution}">
+    <g:set var="linkParams" value="${[jobIdFilter: scheduledExecution.id, projFilter: scheduledExecution.project]}"/>
+</g:if>
 <ul class="nav nav-links">
 
     <li>
         <g:link controller="reports" action="index"
                 title="All activity for this job"
-                params="[jobIdFilter: scheduledExecution.id, projFilter: scheduledExecution.project]">
+                params="${linkParams}">
             <i class="glyphicon glyphicon-list"></i>
             all
         </g:link>
@@ -28,7 +32,7 @@
     <li>
         <g:link controller="reports" action="index"
                 title="Activity within the last day"
-                params="[jobIdFilter: scheduledExecution.id, projFilter: scheduledExecution.project, recentFilter: '1d']">
+                params="${linkParams+[recentFilter: '1d']}">
             <i class="glyphicon glyphicon-time"></i>
             last day
         </g:link>
@@ -37,7 +41,7 @@
     <li>
         <g:link controller="reports" action="index"
                 title="Activity within the last week"
-                params="[jobIdFilter: scheduledExecution.id, projFilter: scheduledExecution.project, recentFilter: '1w']">
+                params="${linkParams+[ recentFilter: '1w']}">
             <i class="glyphicon glyphicon-time"></i>
             last week
         </g:link>
@@ -46,7 +50,7 @@
     <li>
         <g:link controller="reports" action="index"
                 title="Failed executions"
-                params="[jobIdFilter: scheduledExecution.id, projFilter: scheduledExecution.project, statFilter: 'fail']">
+                params="${linkParams+[ statFilter: 'fail']}">
             <i class="glyphicon glyphicon-minus-sign"></i>
             failed
         </g:link>
@@ -56,7 +60,7 @@
         <li>
             <g:link controller="reports" action="index"
                     title="Executions by you"
-                    params="[jobIdFilter: scheduledExecution.id, projFilter: scheduledExecution.project, userFilter: session.user]">
+                    params="${linkParams+[ userFilter: session.user]}">
                 <i class="glyphicon glyphicon-user"></i>
                 by you
             </g:link>
@@ -67,7 +71,7 @@
         <li>
             <g:link controller="reports" action="index"
                     title="Executions by ${execution.user.encodeAsHTML()}"
-                    params="[jobIdFilter: scheduledExecution.id, projFilter: scheduledExecution.project, userFilter: execution.user]">
+                    params="${linkParams+[ userFilter: execution.user]}">
                 <i class="glyphicon glyphicon-user"></i>
                 by <g:username user="${execution.user}"/>
             </g:link>
