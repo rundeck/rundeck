@@ -40,28 +40,7 @@
       <g:javascript src="executionStateKO.js"/>
       <g:javascript library="prototype/effects"/>
       <g:javascript>
-        /** START history
-         *
-         */
-         var histloaded=false;
-        function loadHistory(){
-            if(histloaded){
-                return;
-            }
-            <g:if test="${scheduledExecution}">
-            new Ajax.Updater('histcontent',"${createLink(controller:'reports',action:'eventsFragment')}",{
-                parameters:{compact:true,nofilters:true,jobIdFilter:'${scheduledExecution.id}',projFilter:'${execution.project.encodeAsJavaScript()}'},
-                evalScripts:true,
-                onComplete: function(transport) {
-                    if (transport.request.success()) {
-                        histloaded=true;
-                        Element.show('histcontent');
-                        Element.show('history_header');
-                    }
-                }
-            });
-            </g:if>
-        }
+
         var workflowData=${execution.workflow.commands*.toMap().encodeAsJSON()};
         var workflow = new RDWorkflow(workflowData,{
             nodeSteppluginDescriptions:${stepPluginDescriptions.node.collectEntries { [(it.key): [title: it.value.title]] }.encodeAsJSON()},
@@ -150,12 +129,6 @@
 
                 nodeflowvm.updateNodes(data.state);
             }});
-            var sub1=nodeflowvm.completed.subscribe(function(isCompleted) {
-                if(isCompleted){
-                    loadHistory();
-                    sub1.dispose();
-                }
-            });
             ko.mapping.fromJS({
                 completed:${execution.dateCompleted!=null},
                 startTime:'${execution.dateStarted.encodeAsJavaScript()}',
@@ -182,9 +155,6 @@
             jQuery('#tab_link_output').on('show.bs.tab',function(e){
                 followOutput();
             });
-          <g:if test="${execution.dateCompleted != null}">
-            loadHistory();
-          </g:if>
         }
 
         Event.observe(window, 'load', init);
@@ -587,11 +557,11 @@
 
 
     <g:if test="${scheduledExecution}">
-        <h4 class="text-muted" id="history_header" style="${wdgt.styleVisible(if: execution.dateCompleted != null)}">
-            <g:message code="page.section.Activity"/>
-        </h4>
-        <div class="pageBody">
-            <g:render template="/reports/historyTableContainer" model="[nowrunning: false]"/>
+        <div class="row row-space">
+            <div class="col-sm-12 ">
+                <h4 class="text-muted "><g:message code="page.section.Activity"/></h4>
+                <g:render template="/scheduledExecution/activityLinks" model="[execution:execution,scheduledExecution: scheduledExecution]"/>
+            </div>
         </div>
     </g:if>
 

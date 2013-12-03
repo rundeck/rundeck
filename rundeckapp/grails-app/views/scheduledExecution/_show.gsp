@@ -3,17 +3,7 @@
 /** START history
          *
          */
-        function loadHistory(){
-            new Ajax.Updater('histcontent',"${createLink(controller: 'reports', action: 'eventsFragment')}",{
-                parameters:{compact:true,nofilters:true,jobIdFilter:'${scheduledExecution.id}'},
-                evalScripts:true,
-                onComplete: function(transport) {
-                    if (transport.request.success()) {
-                        Element.show('histcontent');
-                    }
-                }
-            });
-        }
+
 
     function init(){
         <g:if test="${!(grailsApplication.config.rundeck?.gui?.enableJobHoverInfo in ['false', false])}">
@@ -64,10 +54,7 @@
     <h4 class="text-muted"><g:message code="page.section.Activity"/></h4>
     <g:render template="/scheduledExecution/renderJobStats" model="${[scheduledExecution: scheduledExecution]}"/>
 
-    <g:render template="/reports/historyTableContainer" model="[nowrunning:true]"/>
-    <g:javascript>
-        fireWhenReady('histcontent', loadHistory);
-    </g:javascript>
+    <g:render template="/scheduledExecution/activityLinks" model="[scheduledExecution: scheduledExecution]"/>
 </div>
 </div>
 
