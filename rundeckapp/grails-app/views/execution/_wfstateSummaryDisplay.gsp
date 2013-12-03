@@ -18,10 +18,11 @@
         <div class="col-sm-12">
 
             <span class=" execstate execstatedisplay overall h4"
+                data-execstate="${execState}"
                   data-bind="attr: { 'data-execstate': executionState() } ">
             </span>
 
-            <span data-bind="visible: completed()">
+            <span data-bind="visible: completed()" style="${wdgt.styleVisible(if:execution.dateCompleted)}">
                 after <span data-bind="text: execDurationHumanized(), attr: {title: execDurationSimple() } ">
                 <g:if test="${execution.dateCompleted}">
                     <g:relativeDate start="${execution.dateStarted}" end="${execution.dateCompleted}"/>
@@ -34,9 +35,10 @@
                         </g:if>
                     </span>
                 </span>
+                
             </span>
 
-                started by <g:username user="${execution.user}"/>
+                started
             <span class="timerel">at
                 <span data-bind="text: formatTimeAtDate(startTime()), attr: {title: startTime() }">
                     <g:if test="${execution.dateStarted}">
@@ -44,6 +46,7 @@
                     </g:if>
                 </span>
             </span>
+            by <g:username user="${execution.user}"/>
             %{--<g:render template="/scheduledExecution/execStatusText" model="${[execution: execution]}"/>--}%
 
 
@@ -74,86 +77,158 @@
 
 
 <div data-bind="if: stateLoaded()">
-        <div class="row row-space">
-            <div class="col-sm-4 ">
-                <section data-bind="if: !completed()" class="section-space">
-                    <span class=" h4" data-bind="css: { 'text-info': runningNodes(), 'text-muted': !runningNodes() }">
-                        <span class=" " data-bind="text: runningNodes().length"></span>
-                        <span class=" " data-bind="text: pluralize(runningNodes().length,'Step')"></span>
-                        running
-                    </span>
-                </section>
+        <div class="row row-space" data-bind="if: completed()">
+            <div class="col-sm-12" >
 
-                <section data-bind="if: !completed()" class="section-space">
-                    <span class=" h4"
-                          data-bind="css: { 'text-success': succeededNodes(), 'text-muted': !succeededNodes() }">
-                        <span data-bind="text: succeededNodes().length"></span>
-                        <span class=" " data-bind="text: pluralize(succeededNodes().length,'Node')"></span>
-                        completed
-                    </span>
-                </section>
+                <table class="table table-bordered table-condensed">
 
-                <section data-bind="if: failedNodes().length > 0 " class="section-space">
-                    <span class="text-danger h4">
-                        <span data-bind="text: failedNodes().length"></span>
-                        <span class=" " data-bind="text: pluralize(failedNodes().length,'Node')"></span>
-                        failed
-                    </span>
+                    <tr>
+                        <th colspan="4" class="text-muted table-footer text-small">
+                            Node Summary
+                        </th>
+                    </tr>
+                    <tr>
+                       <th style="width: 25%" class="text-muted text-center h5 text-header">Complete</th>
+                       <th style="width: 25%" class="text-muted text-center h5 text-header">Failed</th>
+                       <th style="width: 25%" class="text-muted text-center h5 text-header">Incomplete</th>
+                       <th style="width: 25%" class="text-muted text-center h5 text-header">Not Started</th>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="text-center">
+                                <span class="h1 text-muted"
+                                      data-bind="text: percentageFixed(completedNodes().length,activeNodes().length) + '%'"></span>
+                            </div>
 
-                </section>
+                            <div class="text-center">
+                                <span class="text-muted"
+                                      data-bind="text: completedNodes().length+'/'+activeNodes().length"></span>
+                            </div>
+                        </td>
 
-                <section data-bind="if: partialNodes().length > 0 " class="section-space">
+                        <td >
 
-                    <span class="text-warning h4">
-                        <span data-bind="text: partialNodes().length"></span>
-                        <span class=" " data-bind="text: pluralize(partialNodes().length,'Node')"></span>
-                        partially completed
-                    </span>
 
-                </section>
+                            <div class="text-center">
+                                <span class=" h1"
+                                      data-bind="css: {'text-danger': failedNodes().length > 0 , 'text-muted': failedNodes().length < 1 } ">
+                                    <span data-bind="text: failedNodes().length"></span>
+                                </span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="text-center">
 
-                <section data-bind="if: !completed()" class="section-space">
-                    <span data-bind="if: waitingNodes().length > 0" class="text-muted h4">
-                        <span class="" data-bind="text: waitingNodes().length"></span>
-                        <span class=" " data-bind="text: pluralize(waitingNodes().length,'Node')"></span>
-                        waiting to run
-                    </span>
-                </section>
+                                <span class=" h1"
+                                      data-bind="css: {'text-warning': partialNodes().length > 0 , 'text-muted': partialNodes().length < 1 } ">
+                                    <span class="" data-bind="text: partialNodes().length"></span>
+                                </span>
 
-                <section data-bind="if: completed() && notstartedNodes().length > 0" class="section-space">
-                    <span data-bind="if: notstartedNodes()" class="text-info h4">
-                        <span class="" data-bind="text: notstartedNodes().length"></span>
-                        <span class=" " data-bind="text: pluralize(notstartedNodes().length,'Node')"></span>
-                        <span class=" " data-bind="text: pluralize(notstartedNodes().length,'was','were')"></span> not started
-                    </span>
-                </section>
+                            </div>
+                        </td>
+                        <td>
 
+                            <div class="text-center">
+                                <span class=" h1"
+                                      data-bind="css: {'text-warning': notstartedNodes().length > 0 , 'text-muted': notstartedNodes().length < 1 } ">
+                                    <span class="" data-bind="text: notstartedNodes().length"></span>
+                                </span>
+                            </div>
+
+                        </td>
+                    </tr>
+                </table>
             </div>
-            <div class="col-sm-8">
+        </div>
+        <div class="row row-space" data-bind="if: !completed()">
+            <div class="col-sm-12" >
+                <table class="table table-bordered">
 
-                %{--display up to 5 failed nodes--}%
-                <div class="">
+                    <tr>
+                        <th colspan="3" class="text-muted table-footer text-small">
+                            Node Summary
+                        </th>
+                    </tr>
+                    <tr>
+                       <th style="width: 33%" class="text-muted text-center h5 text-header">Waiting</th>
+                       <th style="width: 33%" class="text-muted text-center h5 text-header">Running</th>
+                       <th style="width: 33%" class="text-muted text-center h5 text-header">Done</th>
+                    </tr>
+                    <tr>
+                        <td>
+                                <div class="text-center">
+                                    <span class="h1 text-muted" data-bind="text: waitingNodes().length"></span>
+                                </div>
+                        </td>
+                        <td>
 
-                    <section data-bind="visible: runningNodes().length > 0, if: runningNodes().length > 0" >
-                        <div data-bind="foreach: runningNodes()">
-                            <div>
-                                <g:render template="nodeCurrentStateSimpleKO"/>
+                            <div class="text-center">
+                                <span class=" h1"
+                                      data-bind="css: {'text-info': runningNodes().length > 0 , 'text-muted': runningNodes().length < 1 } ">
+                                    <span class=" " data-bind="text: runningNodes().length"></span>
+                                </span>
                             </div>
+
+
+                        </td>
+                        <td >
+
+                            <div class="text-center">
+                                <span class=" h1"
+                                      data-bind="css: {'text-info': completedNodes().length > 0 , 'text-muted': completedNodes().length < 1 } ">
+                                    <span data-bind="text: completedNodes().length"></span>
+                                </span>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+
+        <div class="row " data-bind="if: !completed()">
+            <div class="col-sm-3 text-muted h4 text-right">
+                Now Running
+            </div>
+            <div class="col-sm-9">
+                <section data-bind="visible: runningNodes().length > 0, if: runningNodes().length > 0" >
+                    <div data-bind="foreach: runningNodes()">
+                        <div>
+                            <g:render template="nodeCurrentStateSimpleKO"/>
                         </div>
-                    </section>
-                    <section data-bind="if: failedNodes().length > 0" class="section-space">
-                        <div data-bind="foreach: failedNodes()">
-                            <div>
-                                <g:render template="nodeCurrentStateSimpleKO"/>
-                            </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <div class="row " data-bind="if: failedNodes().length > 0 ">
+            <div class="col-sm-3 text-muted h4 text-right">
+                <span data-bind="text: failedNodes().length"></span>
+                Failed Nodes
+            </div>
+            <div class="col-sm-9">
+                <div data-bind="if: failedNodes().length > 0" >
+                    <div data-bind="foreach: failedNodes()">
+                        <div>
+                            <g:render template="nodeCurrentStateSimpleKO"/>
                         </div>
-                    </section>
-                    %{--display up to 5 partial nodes nodes--}%
-                    <div data-bind="if:  partialNodes().length > 0" >
-                        <div data-bind="foreach: partialNodes()">
-                            <div>
-                                <g:render template="nodeCurrentStateSimpleKO"/>
-                            </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+
+    <div class="row " data-bind="if: partialNodes().length > 0">
+        <div class="col-sm-3 text-muted h4 text-right">
+            <span data-bind="text: partialNodes().length"></span>
+            Incomplete Nodes
+        </div>
+
+        <div class="col-sm-9">
+                %{--display up to 5 partial nodes nodes--}%
+                <div data-bind="if:  partialNodes().length > 0" >
+                    <div data-bind="foreach: partialNodes()">
+                        <div>
+                            <g:render template="nodeCurrentStateSimpleKO"/>
                         </div>
                     </div>
                 </div>

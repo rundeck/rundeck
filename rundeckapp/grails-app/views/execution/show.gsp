@@ -6,6 +6,7 @@
     <meta name="layout" content="base" />
     <title><g:message code="main.app.name"/> - <g:if test="${null==execution?.dateCompleted}">Now Running - </g:if><g:if test="${scheduledExecution}">${scheduledExecution?.jobName.encodeAsHTML()} :  </g:if><g:else>Adhoc</g:else> Execution at <g:relativeDate atDate="${execution.dateStarted}" /> by ${execution.user}</title>
     <g:set var="followmode" value="${params.mode in ['browse','tail','node']?params.mode:'tail'}"/>
+    <g:set var="execState" value="${execution.dateCompleted == null ? 'RUNNING' : execution.status == 'true' ? 'SUCCEEDED' : execution.cancelled ? 'ABORTED' : 'FAILED'}"/>
       <g:set var="authKeys" value="${[AuthConstants.ACTION_KILL, AuthConstants.ACTION_READ,AuthConstants.ACTION_CREATE,AuthConstants.ACTION_RUN]}"/>
       <g:set var="authChecks" value="${[:]}"/>
       <g:each in="${authKeys}" var="actionName">
@@ -156,7 +157,10 @@
                 }
             });
             ko.mapping.fromJS({
-                completed:${execution.dateCompleted!=null}
+                completed:${execution.dateCompleted!=null},
+                startTime:'${execution.dateStarted.encodeAsJavaScript()}',
+                endTime:'${execution.dateCompleted?.encodeAsJavaScript()}',
+                executionState:'${execState}'
             },{},nodeflowvm);
             ko.applyBindings(nodeflowvm);
 
@@ -472,34 +476,34 @@
 
         <div >
 
-            <div class="row row-space">
-                <div class="col-sm-2 text-right">
-                    Nodes Completed:
-                </div>
+            %{--<div class="row row-space">--}%
+                %{--<div class="col-sm-2 text-right">--}%
+                    %{--Nodes Completed:--}%
+                %{--</div>--}%
 
-                <div class="col-sm-6">
-                    <section data-bind="if: !completed(), visible: !completed() ">
-                        <g:render template="/common/progressBar"
-                                  model="[completePercent: 0,
-                                          progressClass: 'progress-embed',
-                                          progressBarClass: 'progress-bar-success ',
-                                          containerId: 'nodeprogress1',
-                                          innerContent: 'Nodes',
-                                          showpercent: true,
-                                          progressId: 'nodeProgressBar',
-                                          bind: '(percentageFixed(succeededNodes().length,activeNodes().length))',
-                                          bindText: '( succeededNodes().length + \'/\' + activeNodes().length )',
-                                  ]"/>
-                    </section>
-                    <div data-bind="if: completed() ">
-                        <span data-bind="text:succeededNodes().length"></span>
-                        of
-                        <span data-bind="text:activeNodes().length"></span>
-                    </div>
-                </div>
-            </div>
+                %{--<div class="col-sm-6">--}%
+                    %{--<section data-bind="if: !completed(), visible: !completed() ">--}%
+                        %{--<g:render template="/common/progressBar"--}%
+                                  %{--model="[completePercent: 0,--}%
+                                          %{--progressClass: 'progress-embed',--}%
+                                          %{--progressBarClass: 'progress-bar-success ',--}%
+                                          %{--containerId: 'nodeprogress1',--}%
+                                          %{--innerContent: 'Nodes',--}%
+                                          %{--showpercent: true,--}%
+                                          %{--progressId: 'nodeProgressBar',--}%
+                                          %{--bind: '(percentageFixed(succeededNodes().length,activeNodes().length))',--}%
+                                          %{--bindText: '( succeededNodes().length + \'/\' + activeNodes().length )',--}%
+                                  %{--]"/>--}%
+                    %{--</section>--}%
+                    %{--<div data-bind="if: completed() ">--}%
+                        %{--<span data-bind="text:succeededNodes().length"></span>--}%
+                        %{--of--}%
+                        %{--<span data-bind="text:activeNodes().length"></span>--}%
+                    %{--</div>--}%
+                %{--</div>--}%
+            %{--</div>--}%
 
-            <div class="row row-space">
+            <div class="row row-space" data-bind="if: !completed()">
                 <div class="col-sm-2 text-right">
                     Elapsed Time:
                 </div>

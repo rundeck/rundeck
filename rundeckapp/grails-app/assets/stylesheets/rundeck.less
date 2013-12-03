@@ -569,6 +569,10 @@ section{
 .col-inset{
   padding-left: (@grid-gutter-width / 2);
 }
+//border around a column
+.col-box {
+  border: 1px solid @table-border-color;
+}
 
 
 // clock icon in scheduled job view is gray if job will not fire
@@ -1008,6 +1012,15 @@ code.optvalue{
       color: @brand-primary;
       font-weight: normal;
     }
+  }
+  .text-header{
+    text-transform: uppercase;
+  }
+  .text-small{
+    font-size: @font-size-small;
+  }
+  .table-footer{
+    background: @panel-footer-bg;
   }
 
 
