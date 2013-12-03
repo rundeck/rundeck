@@ -23,10 +23,26 @@
                 </th>
             </tr>
             <tr>
-                <th style="width: 25%" class="text-muted text-center h5 text-header">Complete</th>
-                <th style="width: 25%" class="text-muted text-center h5 text-header">Failed</th>
-                <th style="width: 25%" class="text-muted text-center h5 text-header">Incomplete</th>
-                <th style="width: 25%" class="text-muted text-center h5 text-header">Not Started</th>
+                <th style="width: 25%" class="text-muted text-center h5 text-header">
+                    Complete
+                    <g:render template="/common/helpTooltipIconKO"
+                              model="[messageCode: 'workflowState.summary.nodes.complete.description']"/>
+                </th>
+                <th style="width: 25%" class="text-muted text-center h5 text-header">
+                    Failed
+                    <g:render template="/common/helpTooltipIconKO"
+                              model="[messageCode: 'workflowState.summary.nodes.failed.description']"/>
+                </th>
+                <th style="width: 25%" class="text-muted text-center h5 text-header">
+                    Incomplete
+                    <g:render template="/common/helpTooltipIconKO"
+                              model="[messageCode: 'workflowState.summary.nodes.incomplete.description']"/>
+                </th>
+                <th style="width: 25%" class="text-muted text-center h5 text-header">
+                    Not Started
+                    <g:render template="/common/helpTooltipIconKO"
+                              model="[messageCode: 'workflowState.summary.nodes.notstarted.description']"/>
+                </th>
             </tr>
             <tr>
                 <td>

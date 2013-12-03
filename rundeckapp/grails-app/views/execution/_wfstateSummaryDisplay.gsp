@@ -60,9 +60,21 @@
                         </th>
                     </tr>
                     <tr>
-                       <th style="width: 33%" class="text-muted text-center h5 text-header">Waiting</th>
-                       <th style="width: 33%" class="text-muted text-center h5 text-header">Running</th>
-                       <th style="width: 33%" class="text-muted text-center h5 text-header">Done</th>
+                       <th style="width: 33%" class="text-muted text-center h5 text-header">
+                           Waiting
+                           <g:render template="/common/helpTooltipIconKO"
+                                   model="[messageCode:'workflowState.summary.nodes.waiting.description']"/>
+                       </th>
+                       <th style="width: 33%" class="text-muted text-center h5 text-header">
+                           Running
+                           <g:render template="/common/helpTooltipIconKO"
+                                     model="[messageCode: 'workflowState.summary.nodes.running.description']"/>
+                       </th>
+                       <th style="width: 33%" class="text-muted text-center h5 text-header">
+                           Done
+                           <g:render template="/common/helpTooltipIconKO"
+                                     model="[messageCode: 'workflowState.summary.nodes.complete.description']"/>
+                       </th>
                     </tr>
                     <tr>
                         <td>
