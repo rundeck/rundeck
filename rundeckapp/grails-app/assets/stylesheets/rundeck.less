@@ -216,6 +216,9 @@
       &[data-execstate=WAITING]:after {
         content: 'Waiting';
       }
+      &[data-execstate=WAITING][data-next=true]:after {
+        content: 'Next Up';
+      }
 
       &[data-execstate=NOT_STARTED]:after {
         content: 'Not Started';

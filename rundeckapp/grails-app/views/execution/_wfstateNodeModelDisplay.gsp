@@ -29,7 +29,7 @@
 
                 <div data-bind="if: !errorMessage()">
                     <div class="well well-lg text-muted">
-                        Waiting for state info…
+                        Loading…
                     </div>
                 </div>
 
@@ -95,6 +95,9 @@
                     <i class="rdicon icon-small" data-bind="css: type"></i>
                     <span data-bind="text: stepident"></span>
                 </span>
+                <span data-bind="if: ( executionState() == 'WAITING' ) " class="text-muted">
+                    (Next up)
+                </span>
             </div>
         </div>
         <div class="col-sm-2 ">
@@ -106,7 +109,7 @@
     </div>
     %{--step specific info for node--}%
     <div  data-bind="visible: expanded" >
-        <div class=" " data-bind="foreach: steps">
+        <div data-bind="foreach: steps">
             <div class="wfnodesteps" data-bind="attr: { 'data-node': node.name }">
             <div class=" wfnodestep" data-bind="css: { open: followingOutput() }, attr: { 'data-node': node.name, 'data-stepctx': stepctx }">
                 <div class="row action" data-bind="click: $root.toggleOutputForNodeStep ">
@@ -120,7 +123,10 @@
                     </div>
 
                     <div class=" col-sm-2">
-                        <span class="execstate execstatedisplay " data-bind="attr: { 'data-execstate': executionState }"></span>
+                        <span class="execstate execstatedisplay " data-bind="attr: {
+                             'data-execstate': executionState,
+                             'data-next': ( node.currentStep()==$data && executionState() == 'WAITING' )
+                         }"></span>
                     </div>
 
 
