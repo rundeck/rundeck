@@ -192,6 +192,29 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
     private MutableStepState updateNodeStepState(MutableWorkflowStepState currentStep, String nodeName, StepIdentifier identifier, StepStateChange stepStateChange) {
         MutableStepState toUpdate = getOrCreateMutableNodeStepState(currentStep, nodeName, identifier)
         toUpdate.executionState = updateState(toUpdate.executionState, stepStateChange.stepState.executionState)
+        if(stepStateChange.stepState.metadata) {
+            if (toUpdate.metadata) {
+                toUpdate.metadata << stepStateChange.stepState.metadata
+            }else{
+                toUpdate.metadata = stepStateChange.stepState.metadata
+            }
+        }
+        if(stepStateChange.stepState.errorMessage){
+            if (toUpdate.errorMessage) {
+                toUpdate.errorMessage += stepStateChange.stepState.errorMessage
+            } else {
+                toUpdate.errorMessage = stepStateChange.stepState.errorMessage
+            }
+        }
+        if(!toUpdate.startTime && stepStateChange.stepState.startTime){
+            toUpdate.startTime = stepStateChange.stepState.startTime
+        }
+        if(!toUpdate.updateTime && stepStateChange.stepState.updateTime){
+            toUpdate.updateTime = stepStateChange.stepState.updateTime
+        }
+        if(toUpdate.executionState.isCompletedState() && stepStateChange.stepState.endTime){
+            toUpdate.endTime = stepStateChange.stepState.endTime
+        }
 
         mutableNodeStates[nodeName].mutableNodeState.executionState = toUpdate.executionState
 
@@ -279,8 +302,15 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
             finalizeNodeStep(overall, currentStep,timestamp)
         }
     }
+    /**
+     * Finalize the execution state of a Node step, based on the collective state of all target nodes
+     * @param overall
+     * @param currentStep
+     * @param timestamp
+     * @return
+     */
     private finalizeNodeStep(ExecutionState overall, MutableWorkflowStepState currentStep,Date timestamp){
-        def nodeTargets = currentStep.nodeStepTargets?:this.nodeSet
+        def nodeTargets = currentStep.nodeStep?(currentStep.nodeStepTargets?:this.nodeSet):[serverNode]
         boolean finished = currentStep.nodeStateMap && nodeTargets?.every { node -> currentStep.nodeStateMap[node]?.executionState?.isCompletedState() }
         boolean aborted = currentStep.nodeStateMap && currentStep.nodeStateMap?.values()*.executionState.any { it == ExecutionState.ABORTED }
         boolean abortedAll = currentStep.nodeStateMap && currentStep.nodeStateMap?.values()*.executionState.every { it == ExecutionState.ABORTED }
@@ -333,6 +363,9 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
             MutableStepState state = currentStep.mutableNodeStateMap[node]
             if (state && state.executionState == ExecutionState.WAITING) {
                 state.executionState = updateState(state.executionState, ExecutionState.NOT_STARTED)
+                state.endTime=timestamp
+            }else if (state && (state.executionState == ExecutionState.RUNNING || state.executionState == ExecutionState.RUNNING_HANDLER)) {
+                state.executionState = updateState(state.executionState, ExecutionState.ABORTED)
                 state.endTime=timestamp
             }
         }
@@ -447,16 +480,28 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         }
     }
 
+    /**
+     * Finalize all incomplete steps in the workflow with the given overall state
+     * @param executionState
+     * @param timestamp
+     */
     private void cleanupSteps(ExecutionState executionState, Date timestamp) {
         mutableStepStates.each { i, step ->
             if (!step.stepState.executionState.isCompletedState()) {
-                resolveStepCompleted(executionState, timestamp, i+1, step)
+                resolveStepCompleted(executionState, timestamp, i + 1, step)
             }
         }
     }
 
     /**
-     * Resolve the completed state of a step based on overal workflow completion state
+     *
+     * @param executionState
+     * @param timestamp
+     * @param states
+     */
+
+    /**
+     * Resolve the completed state of a step based on overall workflow completion state
      * @param executionState
      * @param date
      * @param i
@@ -464,22 +509,46 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
      */
     def resolveStepCompleted(ExecutionState executionState, Date date, int i, MutableWorkflowStepState mutableWorkflowStepState) {
         if(mutableWorkflowStepState.nodeStep){
-            //a node step
             finalizeNodeStep(executionState,mutableWorkflowStepState,date)
-        }else {
-            def curstate= mutableWorkflowStepState.mutableStepState.executionState
-            def newstate=executionState
-            switch (curstate){
-                case null:
-                case ExecutionState.WAITING:
-                    newstate=ExecutionState.NOT_STARTED
-                    break
-                case ExecutionState.RUNNING:
-                    newstate = ExecutionState.ABORTED
-                    break
-            }
-            mutableWorkflowStepState.mutableStepState.executionState = updateState(curstate, newstate)
-            mutableWorkflowStepState.mutableStepState.endTime= date
+        }else{
+            finalizeWorkflowStep(mutableWorkflowStepState, executionState, date)
+        }
+    }
+
+    /**
+     * Finalize the execution state of a non-node step. If it has a subworkflow, finalize the sub workflow.  Otherwise
+     * finalize the serverNode state.
+     * @param mutableWorkflowStepState
+     * @param executionState
+     * @param date
+     */
+    private void finalizeWorkflowStep(MutableWorkflowStepState mutableWorkflowStepState, ExecutionState executionState, Date date) {
+        def curstate = mutableWorkflowStepState.mutableStepState.executionState
+        def newstate = executionState
+        switch (curstate) {
+            case null:
+            case ExecutionState.WAITING:
+                newstate = ExecutionState.NOT_STARTED
+                break
+            case ExecutionState.RUNNING:
+            case ExecutionState.RUNNING_HANDLER:
+                newstate = ExecutionState.ABORTED
+                break
+        }
+        mutableWorkflowStepState.mutableStepState.executionState = updateState(curstate, newstate)
+        mutableWorkflowStepState.mutableStepState.endTime = date
+        if (mutableWorkflowStepState.hasSubWorkflow()) {
+            //resolve the sub workflow
+            mutableWorkflowStepState.mutableSubWorkflowState.updateSubWorkflowState(
+                    mutableWorkflowStepState.stepIdentifier,
+                    mutableWorkflowStepState.stepIdentifier.context.size(),
+                    executionState,
+                    timestamp,
+                    null,
+                    this
+            )
+        }else if (serverNode) {
+            finalizeNodeStep(executionState, mutableWorkflowStepState, date)
         }
     }
 
