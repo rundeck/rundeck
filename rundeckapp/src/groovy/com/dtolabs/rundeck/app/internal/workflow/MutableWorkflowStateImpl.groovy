@@ -110,11 +110,11 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         addStateChange(timestamp, stepStateChange)
 
         //update the step found
-        MutableStepState toUpdate
+        List<MutableStepState> toUpdate=[]
         if (stepStateChange.isNodeState()) {
             //find node state in stepstate
             def nodeName = stepStateChange.nodeName
-            toUpdate = updateNodeStepState(currentStep, nodeName, identifier, stepStateChange)
+            toUpdate << updateNodeStepState(currentStep, nodeName, identifier, stepStateChange)
 
             if (!currentStep.nodeStep && nodeSet) {
                 // change to a nodeStep since we have seen a node state for it
@@ -124,16 +124,18 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
             }
         } else if (!currentStep.nodeStep) {
             //overall step state
-            toUpdate = currentStep.mutableStepState
+            toUpdate << currentStep.mutableStepState
 
             if(serverNode && !currentStep.hasSubWorkflow()){
                 //treat server node as node owner for this step
-                updateNodeStepState(currentStep, serverNode, identifier, stepStateChange)
+                toUpdate << updateNodeStepState(currentStep, serverNode, identifier, stepStateChange)
             }
 
-            toUpdate.executionState = updateState(toUpdate.executionState, stepStateChange.stepState.executionState)
+            toUpdate.each{ toup->
+                toup.executionState = updateState(toup.executionState, stepStateChange.stepState.executionState)
+            }
         } else {
-            toUpdate = currentStep.mutableStepState
+            toUpdate << currentStep.mutableStepState
             if (nodeSet && (null == currentStep.nodeStepTargets || currentStep.nodeStepTargets.size() < 1)) {
                 currentStep.setNodeStepTargets(nodeSet)
             }
@@ -141,28 +143,42 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         transitionIfWaiting(currentStep.mutableStepState)
 
         //update state
-        toUpdate.errorMessage = stepStateChange.stepState.errorMessage
+        toUpdate*.errorMessage = stepStateChange.stepState.errorMessage
         if (stepStateChange.stepState.metadata) {
-            if (null == toUpdate.metadata) {
-                toUpdate.metadata = [:]
+            toUpdate.each {toup->
+                if (null == toup.metadata) {
+                    toup.metadata = [:]
+                }
             }
-            toUpdate.metadata << stepStateChange.stepState.metadata
+            toUpdate*.metadata << stepStateChange.stepState.metadata
         }
-        if (!toUpdate.startTime) {
-            toUpdate.startTime = timestamp
-        }
-        toUpdate.updateTime = timestamp
-        if (toUpdate.executionState.isCompletedState()) {
-            toUpdate.endTime = timestamp
+        toUpdate.each { toup ->
+
+            if (!toup.startTime) {
+                toup.startTime = timestamp
+            }
+            toup.updateTime = timestamp
+            if (toup.executionState.isCompletedState()) {
+                toup.endTime = timestamp
+            }
         }
 
-        if (stepStateChange.isNodeState() && currentStep.nodeStep && stepStateChange.stepState.executionState.isCompletedState()) {
-            //if all target nodes have completed execution state, mark the overall step state
-            finishNodeStepIfNodesFinished(currentStep, timestamp)
-        } else if (stepStateChange.isNodeState() && currentStep.nodeStep && currentStep.stepState.executionState.isCompletedState()
-                && stepStateChange.stepState.executionState == ExecutionState.RUNNING_HANDLER) {
-            currentStep.mutableStepState.executionState = ExecutionState.RUNNING_HANDLER
+
+        if(stepStateChange.nodeState && currentStep.nodeStep
+                || !stepStateChange.nodeState && !currentStep.nodeStep && !currentStep.hasSubWorkflow() && serverNode) {
+            //if it was a node state change
+            //or a non-node step without a workflow (e.g. plugin), and we are treating the serverNode as the target
+
+            if (stepStateChange.stepState.executionState.isCompletedState()) {
+                //if change state is completion:
+                finishNodeStepIfNodesFinished(currentStep, timestamp)
+            } else if (currentStep.stepState.executionState.isCompletedState()
+                    && stepStateChange.stepState.executionState == ExecutionState.RUNNING_HANDLER) {
+                //else if current step was completed, but step change is RUNNING_HANDLER
+                currentStep.mutableStepState.executionState = ExecutionState.RUNNING_HANDLER
+            }
         }
+
     }
 
     /**
@@ -248,6 +264,12 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         subflow.updateStateForStep(identifier, index + 1, stepStateChange, timestamp);
     }
 
+    /**
+     * If all node step targets are completed, finalize the step state
+     * @param currentStep
+     * @param timestamp
+     * @return
+     */
     private finishNodeStepIfNodesFinished(MutableWorkflowStepState currentStep,Date timestamp){
         boolean finished = currentStep.nodeStepTargets.every { node -> currentStep.nodeStateMap[node]?.executionState?.isCompletedState() }
         if (finished) {
