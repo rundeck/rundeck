@@ -124,20 +124,21 @@ class WorkflowService implements ApplicationContextAware{
         def mutablestate = new MutableWorkflowStateListener(state)
         def chain = [mutablestate]
         def File outfile = logFileStorageService.getFileForExecutionFilekey(execution, STATE_FILE_STORAGE_KEY)
+        def storagerequest = logFileStorageService.prepareForFileStorage(execution, STATE_FILE_STORAGE_KEY, outfile)
         chain << new WorkflowStateListenerAction(onWorkflowExecutionStateChanged: {
             ExecutionState executionState, Date timestamp, List<String> nodeSet ->
                 if (executionState.completedState) {
                     //workflow finished:
-                    persistExecutionState(execution, state, outfile)
+                    persistExecutionState(storagerequest, execution.id, state, outfile)
                 }
         })
         new WorkflowExecutionStateListenerAdapter(chain)
     }
 
-    def persistExecutionState(Execution e, WorkflowState state, File file) {
-        serializeStateJson(e.id, state, file)
-        def submitted = logFileStorageService.submitForFileStorage(e, STATE_FILE_STORAGE_KEY, file)
-        log.debug("${e.id}: execution state.json persisted to file. [submitted for remote storage? ${submitted}]")
+    def persistExecutionState(Closure storagerequest, Long id, WorkflowState state, File file) {
+        serializeStateJson(id, state, file)
+        storagerequest?.call()
+        log.debug("${id}: execution state.json persisted to file. [submitted for remote storage? ${storagerequest?true:false}]")
     }
 
     private WorkflowState loadState(Execution e) {
