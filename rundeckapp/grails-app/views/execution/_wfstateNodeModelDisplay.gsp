@@ -27,9 +27,15 @@
                     </div>
                 </div>
 
-                <div data-bind="if: !errorMessage()">
+                <div data-bind="if: !errorMessage() && !statusMessage()">
                     <div class="well well-lg text-muted">
                         Loading…
+                    </div>
+                </div>
+
+
+                <div data-bind="if: statusMessage()">
+                    <div class="well well-lg text-muted" data-bind="text: statusMessage()">
                     </div>
                 </div>
 

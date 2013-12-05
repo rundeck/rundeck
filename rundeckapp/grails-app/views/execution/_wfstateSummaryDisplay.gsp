@@ -31,9 +31,14 @@
                     </div>
                 </div>
 
-                <div data-bind="if: !errorMessage()">
+                <div data-bind="if: !errorMessage() && !statusMessage()">
                     <div class="well well-lg text-muted">
-                        Waiting for state info…
+                        <g:message code="waiting.for.state.info" />
+                    </div>
+                </div>
+                <div data-bind="if: statusMessage()">
+                    <div class="well well-lg text-muted" data-bind="text: statusMessage()">
+
                     </div>
                 </div>
 

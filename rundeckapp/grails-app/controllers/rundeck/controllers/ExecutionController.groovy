@@ -159,12 +159,16 @@ class ExecutionController {
         def loader = workflowService.requestState(e)
         if (loader.state == ExecutionLogState.AVAILABLE) {
             data.state = loader.workflowState
-        }else if(loader.state in [ExecutionLogState.NOT_FOUND]){
-            data.state=[error:'not found',errorMessage:g.message(code: "api.error.item.doesnotexist", args: ['Execution State for ID', params.id])]
-        }else if(loader.state in [ExecutionLogState.ERROR]){
-            data.state=[error:'error',errorMessage:g.message(code: loader.errorCode, args: loader.errorData)]
-        }else if (loader.state in [ExecutionLogState.AVAILABLE_REMOTE, ExecutionLogState.PENDING_LOCAL, ExecutionLogState.PENDING_REMOTE, ExecutionLogState.WAITING]) {
-            data.state = [error: 'pending']
+        }else if(loader.state in [ExecutionLogState.NOT_FOUND]) {
+            data.state = [error: 'not found',
+                    errorMessage: g.message(code: 'execution.state.storage.state.' + loader.state,
+                            default: "Not Found")]
+        }else if(loader.state in [ExecutionLogState.ERROR]) {
+            data.state = [error: 'error', errorMessage: g.message(code: loader.errorCode, args: loader.errorData)]
+        }else if (loader.state in [ ExecutionLogState.PENDING_LOCAL, ExecutionLogState.WAITING,
+                ExecutionLogState.AVAILABLE_REMOTE, ExecutionLogState.PENDING_REMOTE]) {
+            data.state = [error: 'pending',
+                    errorMessage: g.message(code: 'execution.state.storage.state.' + loader.state, default: "Pending")]
         }
         return render(contentType: 'application/json', text: data.encodeAsJSON())
     }

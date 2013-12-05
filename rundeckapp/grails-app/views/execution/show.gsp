@@ -107,6 +107,8 @@
                 nodeflowvm.stateLoaded(false);
                 if(error!='pending'){
                     nodeflowvm.errorMessage(data.state.errorMessage?data.state.errorMessage:error);
+                }else{
+                    nodeflowvm.statusMessage(data.state.errorMessage?data.state.errorMessage:error);
                 }
                 ko.mapping.fromJS({
                     executionState:data.executionState,
