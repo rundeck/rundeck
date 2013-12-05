@@ -147,7 +147,6 @@ class WorkflowService implements ApplicationContextAware{
     def persistExecutionState(Closure storagerequest, Long id, WorkflowState state, File file) {
         Map data=serializeStateJson(id, state, file)
         stateCache.put(id, data)
-        log.error("caching new state data for ${e.id}")
         activeStates.remove(id)
         storagerequest?.call()
         log.debug("${id}: execution state.json persisted to file. [submitted for remote storage? ${storagerequest?true:false}]")
@@ -324,7 +323,6 @@ class WorkflowService implements ApplicationContextAware{
         //look for cached local data
         def statemap=stateCache.getIfPresent(e.id)
         if (statemap) {
-            log.error("using cached state data for ${e.id}")
             return new WorkflowStateFileLoader(workflowState: statemap, state: ExecutionLogState.AVAILABLE)
         }
 
@@ -335,7 +333,6 @@ class WorkflowService implements ApplicationContextAware{
             //cache local data
             statemap = deserializeState(loader.file)
             stateCache.put(e.id,statemap)
-            log.error("add cached state data for ${e.id}")
         }
         return new WorkflowStateFileLoader(workflowState: statemap, state: loader.state, errorCode: loader.errorCode,
                 errorData: loader.errorData, file: loader.file)
