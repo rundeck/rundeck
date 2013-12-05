@@ -20,6 +20,7 @@ import rundeck.services.logging.MultiLogWriter
 
 class LoggingService {
 
+    static final String LOG_FILE_STORAGE_KEY="rdlog"
     FrameworkService frameworkService
     LogFileStorageService logFileStorageService
     def pluginService
@@ -60,7 +61,7 @@ class LoggingService {
         def outfilepath=null
         if (plugins.size() < 1 || isLocalFileStorageEnabled()) {
             plugins << logFileStorageService.getLogFileWriterForExecution(execution, defaultMeta)
-            outfilepath = logFileStorageService.generateFilepathForExecution(execution)
+            outfilepath = logFileStorageService.generateLogFilepathForExecution(execution)
         }else{
             log.debug("File log writer disabled for execution ${execution.id}")
         }
@@ -123,7 +124,7 @@ class LoggingService {
         if(pluginName){
             log.error("Falling back to local file storage log reader")
         }
-        return logFileStorageService.requestLogFileReader(execution)
+        return logFileStorageService.requestLogFileReader(execution, LOG_FILE_STORAGE_KEY)
     }
 
     public OutputStream createLogOutputStream(StreamingLogWriter logWriter, LogLevel level, Contextual listener) {

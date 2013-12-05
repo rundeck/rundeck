@@ -476,10 +476,11 @@ class ProjectService {
                     execidmap[oldids[e]] = e.id
                 }
                 //check outputfile exists in mapping
+                //TODO: handle json state file
                 if (e.outputfilepath && execout[e.outputfilepath]) {
                     File oldfile = execout[e.outputfilepath]
                     //move to appropriate location and update outputfilepath
-                    String filename = logFileStorageService.generateFilepathForExecution(e)
+                    String filename = logFileStorageService.generateLogFilepathForExecution(e)
                     File newfile = new File(filename)
                     try{
                         FileUtils.moveFile(oldfile, newfile)

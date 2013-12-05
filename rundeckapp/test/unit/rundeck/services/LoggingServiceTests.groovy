@@ -115,7 +115,7 @@ class LoggingServiceTests extends GrailsUnitTestCase {
             assertEquals([test: "blah"], defaultMeta)
             writer
         }
-        lfmock.demand.generateFilepathForExecution(1..1) { Execution e2 ->
+        lfmock.demand.generateLogFilepathForExecution(1..1) { Execution e2 ->
             assertEquals(1, e2.id)
             new File("/test/file/path")
         }
@@ -180,7 +180,7 @@ class LoggingServiceTests extends GrailsUnitTestCase {
             assertEquals([test: "blah"], defaultMeta)
             writer
         }
-        lfmock.demand.generateFilepathForExecution(1..1) { Execution e2 ->
+        lfmock.demand.generateLogFilepathForExecution(1..1) { Execution e2 ->
             assertEquals(1, e2.id)
             new File("/test/file/path")
         }
@@ -263,8 +263,9 @@ class LoggingServiceTests extends GrailsUnitTestCase {
 
         LoggingService svc = new LoggingService()
         def lfsvcmock = mockFor(LogFileStorageService)
-        lfsvcmock.demand.requestLogFileReader(1..1){Execution e2->
+        lfsvcmock.demand.requestLogFileReader(1..1){Execution e2, String key->
             assert e==e2
+            assert key=='rdlog'
             test
         }
         svc.logFileStorageService=lfsvcmock.createMock()
@@ -286,8 +287,9 @@ class LoggingServiceTests extends GrailsUnitTestCase {
         assertEquals("plugin1", svc.getConfiguredStreamingReaderPluginName())
 
         def lfsvcmock = mockFor(LogFileStorageService)
-        lfsvcmock.demand.requestLogFileReader(1..1){Execution e2->
-            assert e==e2
+        lfsvcmock.demand.requestLogFileReader(1..1) { Execution e2, String key ->
+            assert e == e2
+            assert key == 'rdlog'
             fail("should not be called")
         }
         def pmock = mockFor(PluginService)
@@ -328,8 +330,9 @@ class LoggingServiceTests extends GrailsUnitTestCase {
         assertEquals("plugin1", svc.getConfiguredStreamingReaderPluginName())
 
         def lfsvcmock = mockFor(LogFileStorageService)
-        lfsvcmock.demand.requestLogFileReader(1..1){Execution e2->
-            assert e==e2
+        lfsvcmock.demand.requestLogFileReader(1..1) { Execution e2, String key ->
+            assert e == e2
+            assert key == 'rdlog'
             fail("should not be called")
         }
         def pmock = mockFor(PluginService)

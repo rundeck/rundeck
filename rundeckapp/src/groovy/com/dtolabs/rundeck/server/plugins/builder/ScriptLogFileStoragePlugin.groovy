@@ -5,7 +5,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Configurable
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Description
-import com.dtolabs.rundeck.plugins.logging.LogFileStoragePlugin
+import com.dtolabs.rundeck.plugins.logging.KeyedLogFileStoragePlugin
 import org.apache.log4j.Logger
 
 /**
@@ -14,7 +14,7 @@ import org.apache.log4j.Logger
  * Date: 6/3/13
  * Time: 2:50 PM
  */
-class ScriptLogFileStoragePlugin implements LogFileStoragePlugin, Describable, Configurable {
+class ScriptLogFileStoragePlugin implements KeyedLogFileStoragePlugin, Describable, Configurable {
     static Logger logger = Logger.getLogger(ScriptLogFileStoragePlugin)
     Description description
     private Map<String, Closure> handlers
@@ -44,19 +44,22 @@ class ScriptLogFileStoragePlugin implements LogFileStoragePlugin, Describable, C
 
     @Override
     boolean isAvailable() throws LogFileStorageException {
+        return isAvailable(null)
+    }
+    boolean isAvailable(String filekey) throws LogFileStorageException {
         logger.debug("isAvailable ${pluginContext}")
         def closure = handlers.available
         def binding = [
                 configuration: configuration,
                 context: pluginContext
         ]
-        def result=null
+        def result = null
         if (closure.getMaximumNumberOfParameters() == 2) {
             def Closure newclos = closure.clone()
             newclos.resolveStrategy = Closure.DELEGATE_ONLY
             newclos.delegate = binding
             try {
-                result= newclos.call(pluginContext, configuration)
+                result = newclos.call(pluginContext + filekey?[key:filekey]:[:], configuration)
             } catch (Exception e) {
                 throw new LogFileStorageException(e.getMessage(), e)
             }
@@ -65,7 +68,7 @@ class ScriptLogFileStoragePlugin implements LogFileStoragePlugin, Describable, C
             newclos.delegate = binding
             newclos.resolveStrategy = Closure.DELEGATE_ONLY
             try {
-                result = newclos.call(pluginContext)
+                result = newclos.call(pluginContext + filekey ? [key: filekey] : [:])
             } catch (Exception e) {
                 throw new LogFileStorageException(e.getMessage(), e)
             }
@@ -77,21 +80,25 @@ class ScriptLogFileStoragePlugin implements LogFileStoragePlugin, Describable, C
 
     @Override
     boolean store(InputStream stream, long length, Date lastModified) throws IOException, LogFileStorageException {
+        store(null, stream, length, lastModified)
+    }
+
+    boolean store(String filekey, InputStream stream, long length, Date lastModified) throws IOException, LogFileStorageException {
         logger.debug("store ${pluginContext}")
         def closure = handlers.store
         def binding = [
                 configuration: configuration,
-                context: pluginContext,
+                context: pluginContext + filekey ? [key: filekey] : [:],
                 stream: stream,
-                length:length,
-                lastModified:lastModified
+                length: length,
+                lastModified: lastModified
         ]
         if (closure.getMaximumNumberOfParameters() == 3) {
             def Closure newclos = closure.clone()
             newclos.resolveStrategy = Closure.DELEGATE_ONLY
             newclos.delegate = binding
             try {
-                return newclos.call(pluginContext, configuration, stream)
+                return newclos.call(binding.context, binding.configuration, binding.stream)
             } catch (Exception e) {
                 throw new LogFileStorageException(e.getMessage(), e)
             }
@@ -100,7 +107,7 @@ class ScriptLogFileStoragePlugin implements LogFileStoragePlugin, Describable, C
             newclos.resolveStrategy = Closure.DELEGATE_ONLY
             newclos.delegate = binding
             try {
-                return newclos.call(pluginContext, stream)
+                return newclos.call(binding.context, binding.stream)
             } catch (Exception e) {
                 throw new LogFileStorageException(e.getMessage(), e)
             }
@@ -108,8 +115,8 @@ class ScriptLogFileStoragePlugin implements LogFileStoragePlugin, Describable, C
             def Closure newclos = closure.clone()
             newclos.delegate = binding
             newclos.resolveStrategy = Closure.DELEGATE_ONLY
-            try{
-                return newclos.call(stream)
+            try {
+                return newclos.call(binding.stream)
             } catch (Exception e) {
                 throw new LogFileStorageException(e.getMessage(), e)
             }
@@ -119,20 +126,25 @@ class ScriptLogFileStoragePlugin implements LogFileStoragePlugin, Describable, C
     }
 
     @Override
-    boolean retrieve(OutputStream stream) throws IOException,LogFileStorageException {
+    boolean retrieve(OutputStream stream) throws IOException, LogFileStorageException {
+        return retrieve(null, stream)
+    }
+
+    @Override
+    boolean retrieve(String filekey, OutputStream stream) throws IOException, LogFileStorageException {
         logger.debug("retrieve ${pluginContext}")
         def closure = handlers.retrieve
         def binding = [
                 configuration: configuration,
-                context: pluginContext,
+                context: pluginContext + filekey ? [key: filekey] : [:],
                 stream: stream,
         ]
         if (closure.getMaximumNumberOfParameters() == 3) {
             def Closure newclos = closure.clone()
             newclos.resolveStrategy = Closure.DELEGATE_ONLY
             newclos.delegate = binding
-            try{
-                return newclos.call(pluginContext, configuration, stream)
+            try {
+                return newclos.call(binding.context, binding.configuration, binding.stream)
             } catch (Exception e) {
                 throw new LogFileStorageException(e.getMessage(), e)
             }
@@ -140,8 +152,8 @@ class ScriptLogFileStoragePlugin implements LogFileStoragePlugin, Describable, C
             def Closure newclos = closure.clone()
             newclos.resolveStrategy = Closure.DELEGATE_ONLY
             newclos.delegate = binding
-            try{
-                return newclos.call(pluginContext, stream)
+            try {
+                return newclos.call(binding.context, binding.stream)
             } catch (Exception e) {
                 throw new LogFileStorageException(e.getMessage(), e)
             }
@@ -149,8 +161,8 @@ class ScriptLogFileStoragePlugin implements LogFileStoragePlugin, Describable, C
             def Closure newclos = closure.clone()
             newclos.delegate = binding
             newclos.resolveStrategy = Closure.DELEGATE_ONLY
-            try{
-                return newclos.call(stream)
+            try {
+                return newclos.call(binding.stream)
             } catch (Exception e) {
                 throw new LogFileStorageException(e.getMessage(), e)
             }

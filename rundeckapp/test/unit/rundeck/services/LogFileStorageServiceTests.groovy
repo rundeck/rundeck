@@ -2,6 +2,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogWriter
+import com.dtolabs.rundeck.core.logging.KeyedLogFileStorage
 import com.dtolabs.rundeck.core.logging.LogFileState
 import com.dtolabs.rundeck.core.logging.LogFileStorageException
 import com.dtolabs.rundeck.core.logging.StreamingLogWriter
@@ -9,6 +10,7 @@ import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.plugins.logging.KeyedLogFileStoragePlugin
 import com.dtolabs.rundeck.plugins.logging.LogFileStoragePlugin
 import grails.test.*
 import org.codehaus.groovy.grails.commons.ConfigurationHolder
@@ -127,7 +129,7 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
             PropertyResolverFactory.instanceRetriever('framework.logs.dir': '/tmp/logs')
         }
         svc.frameworkService = fmock.createMock()
-        def result = svc.getFileForKey("abc")
+        def result = svc.getFileForLocalPath("abc")
         assertNotNull(result)
         assertEquals(new File("/tmp/logs/rundeck/abc"),result)
     }
@@ -140,7 +142,7 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         LogFileStorageService svc = new LogFileStorageService()
         svc.frameworkService = fmock.createMock()
         try {
-            def result = svc.getFileForKey("abc")
+            def result = svc.getFileForLocalPath("abc")
             fail("Expected exception")
         } catch (IllegalStateException e) {
             assertEquals("framework.logs.dir is not set in framework.properties", e.message)
@@ -206,17 +208,20 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
 
         def writer = svc.getLogFileWriterForExecution(e, [:])
         assertNotNull(writer)
-        assert writer instanceof FSStreamingLogWriter
+        assert writer instanceof EventStreamingLogWriter
     }
-    class testStoragePlugin implements LogFileStoragePlugin{
+    class testStoragePlugin implements KeyedLogFileStoragePlugin{
         Map<String, ? extends Object> context
         boolean available
         boolean availableException
+        String availableFilekey
         boolean initializeCalled
         boolean storeLogFileCalled
         boolean storeLogFileSuccess
+        String storeFilekey
         boolean retrieveLogFileCalled
         boolean retrieveLogFileSuccess
+        String retrieveFilekey
         long storeLength
         Date storeLastModified
 
@@ -224,6 +229,12 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         void initialize(Map<String, ? extends Object> context) {
             initializeCalled=true
             this.context=context;
+        }
+
+        @Override
+        boolean isAvailable(String key) throws LogFileStorageException {
+            availableFilekey=key
+            return isAvailable()
         }
 
         @Override
@@ -235,11 +246,23 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         }
 
         @Override
+        boolean store(String key, InputStream stream, long length, Date lastModified) throws IOException, LogFileStorageException {
+            storeFilekey=key
+            return store(stream,length,lastModified)
+        }
+
+        @Override
         boolean store(InputStream stream, long length, Date lastModified) throws IOException {
             storeLogFileCalled = true
             storeLength=length
             storeLastModified=lastModified
             return storeLogFileSuccess
+        }
+
+        @Override
+        boolean retrieve(String key, OutputStream stream) throws IOException, LogFileStorageException {
+            retrieveFilekey=key
+            return retrieve(stream)
         }
 
         @Override
@@ -337,12 +360,14 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         def test = new testStoragePlugin()
         test.storeLogFileSuccess=true
         LogFileStorageService svc
-        Map task=performRunStorage(test, createExecution(), testLogFile1) { LogFileStorageService service ->
+        Map task=performRunStorage(test, "rdlog", createExecution(), testLogFile1) { LogFileStorageService service ->
             svc = service
             assertFalse(test.storeLogFileCalled)
+            assertNull(test.storeFilekey)
         }
 
         assertTrue(test.storeLogFileCalled)
+        assertEquals("rdlog", test.storeFilekey)
         assertEquals(testLogFile1.length(),test.storeLength)
         assertEquals(new Date(testLogFile1.lastModified()),test.storeLastModified)
 
@@ -357,12 +382,14 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         def test = new testStoragePlugin()
         test.storeLogFileSuccess=false
         LogFileStorageService svc
-        Map task=performRunStorage(test, createExecution(), testLogFile1) { LogFileStorageService service ->
+        Map task=performRunStorage(test, "rdlog", createExecution(), testLogFile1) { LogFileStorageService service ->
             svc = service
             assertFalse(test.storeLogFileCalled)
+            assertNull( test.storeFilekey)
         }
 
         assertTrue(test.storeLogFileCalled)
+        assertEquals("rdlog", test.storeFilekey)
         assertEquals(testLogFile1.length(),test.storeLength)
         assertEquals(new Date(testLogFile1.lastModified()),test.storeLastModified)
 
@@ -382,7 +409,7 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         registerMetaClass(LogFileStorageService)
         LogFileStorageService svc
         boolean queued=false
-        Map task=performRunStorage(test, createExecution(), testLogFile1) { LogFileStorageService service ->
+        Map task=performRunStorage(test, "rdlog", createExecution(), testLogFile1) { LogFileStorageService service ->
             svc = service
             svc.metaClass.queueLogStorageRequest={ Map task, int delay ->
                 queued=true
@@ -390,9 +417,11 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
                 assertEquals(testLogFile1,task.file)
             }
             assertFalse(test.storeLogFileCalled)
+            assertNull(test.storeFilekey)
         }
 
         assertTrue(test.storeLogFileCalled)
+        assertEquals("rdlog", test.storeFilekey)
         assertEquals(testLogFile1.length(),test.storeLength)
         assertEquals(new Date(testLogFile1.lastModified()),test.storeLastModified)
 
@@ -402,7 +431,7 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         assertTrue(queued)
     }
 
-    private Map performRunStorage(testStoragePlugin test, Execution e, File testfile, Closure clos = null) {
+    private Map performRunStorage(testStoragePlugin test, String filekey, Execution e, File testfile, Closure clos = null) {
         mockDomain(Execution)
         mockDomain(LogFileStorageRequest)
         mockLogging(LogFileStorageService)
@@ -432,7 +461,7 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         if (null != clos) {
             svc.with(clos)
         }
-        def task = [id: e.id.toString(), file: testfile, storage: test]
+        def task = [id: e.id.toString(), file: testfile, storage: test, key: filekey]
         svc.runStorageRequest(task)
         return task
     }
@@ -634,7 +663,7 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
             UUID.randomUUID()
         }
         svc.pluginService = pmock.createMock()
-        svc.metaClass.getFileForExecution = { Execution e2 ->
+        svc.metaClass.getLogFileForExecution = { Execution e2 ->
             assert e == e2
             logfile
         }
@@ -642,7 +671,7 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
             svc.with(svcClosure)
         }
 
-        return svc.requestLogFileReader(e, performLoad)
+        return svc.requestLogFileReader(e, LoggingService.LOG_FILE_STORAGE_KEY,performLoad)
     }
 
     private Execution createExecution(Closure clos=null) {

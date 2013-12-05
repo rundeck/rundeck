@@ -3,6 +3,7 @@ package rundeck
 class LogFileStorageRequest {
     Execution execution
     String pluginName
+    String filekey
     Boolean completed
 
     Date dateCreated
@@ -11,5 +12,6 @@ class LogFileStorageRequest {
     static constraints = {
         execution nullable: false
         pluginName maxSize: 255
+        filekey nullable: true
     }
 }

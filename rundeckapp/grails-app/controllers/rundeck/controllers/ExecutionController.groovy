@@ -113,12 +113,12 @@ class ExecutionController {
                 }
             }
         }
-        def state = workflowService.readWorkflowStateForExecution(e)
-        if(!state){
-//            state= workflowService.previewWorkflowStateForExecution(e)
-        }
+//        def state = workflowService.readWorkflowStateForExecution(e)
+//        if(!state){
+////            state= workflowService.previewWorkflowStateForExecution(e)
+//        }
         return [scheduledExecution: e.scheduledExecution?:null,execution:e, filesize:filesize,
-                enext: enext, eprev: eprev,stepPluginDescriptions: pluginDescs, workflowState: state]
+                enext: enext, eprev: eprev,stepPluginDescriptions: pluginDescs, ]
     }
     def ajaxExecState={
         def Execution e = Execution.get(params.id)
@@ -148,7 +148,6 @@ class ExecutionController {
             def long avg = Math.floor(e.scheduledExecution.totalTime / e.scheduledExecution.execCount)
             jobAverage = avg
         }
-        def state = workflowService.serializeWorkflowStateForExecution(e)
         def data=[
             completed:jobcomplete,
             execDuration: execDuration,
@@ -157,12 +156,15 @@ class ExecutionController {
             startTime:workflowService.encodeDate(e.dateStarted),
             endTime: workflowService.encodeDate(e.dateCompleted),
         ]
-        if(!state && e.dateCompleted){
+        def loader = workflowService.requestState(e)
+        if (loader.state == ExecutionLogState.AVAILABLE) {
+            data.state = loader.workflowState
+        }else if(loader.state in [ExecutionLogState.NOT_FOUND]){
             data.state=[error:'not found',errorMessage:g.message(code: "api.error.item.doesnotexist", args: ['Execution State for ID', params.id])]
-        }else if(!state){
-            data.state=[error:'pending']
-        }else{
-            data.state=state
+        }else if(loader.state in [ExecutionLogState.ERROR]){
+            data.state=[error:'error',errorMessage:g.message(code: loader.errorCode, args: loader.errorData)]
+        }else if (loader.state in [ExecutionLogState.AVAILABLE_REMOTE, ExecutionLogState.PENDING_LOCAL, ExecutionLogState.PENDING_REMOTE, ExecutionLogState.WAITING]) {
+            data.state = [error: 'pending']
         }
         return render(contentType: 'application/json', text: data.encodeAsJSON())
     }
@@ -916,20 +918,29 @@ class ExecutionController {
             }
         }
 
-        def state = workflowService.serializeWorkflowStateForExecution(e)
-        if(!state){
-            if(e.dateCompleted){
-                def errormap = [status: HttpServletResponse.SC_NOT_FOUND, code: "api.error.item.doesnotexist", args: ['Execution State ID', params.id]]
-                withFormat {
-                    json {
-                        return apiService.renderErrorJson(response, errormap)
-                    }
-                    xml {
-                        return apiService.renderErrorXml(response, errormap)
-                    }
-                }
-            }else{
+        def loader = workflowService.requestState(e)
+        def state= loader.workflowState
+        if(!loader.workflowState){
+            if(loader.state in [ExecutionLogState.WAITING, ExecutionLogState.AVAILABLE_REMOTE,
+                    ExecutionLogState.PENDING_LOCAL, ExecutionLogState.PENDING_REMOTE]) {
                 state = [error: 'pending']
+            }else{
+                def errormap=[:]
+                if (loader.state in [ExecutionLogState.NOT_FOUND]) {
+                    errormap = [status: HttpServletResponse.SC_NOT_FOUND, code: "api.error.item.doesnotexist",
+                            args: ['Execution State ID', params.id]]
+                }else {
+                    errormap = [status: HttpServletResponse.SC_NOT_FOUND, code: loader.errorCode, args: loader.errorData]
+                }
+                    withFormat {
+                        json {
+                            return apiService.renderErrorJson(response, errormap)
+                        }
+                        xml {
+                            return apiService.renderErrorXml(response, errormap)
+                        }
+                    }
+                return
             }
         }
         def convertNodeList={Collection tnodes->

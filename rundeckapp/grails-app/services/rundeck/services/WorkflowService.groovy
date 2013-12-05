@@ -19,12 +19,17 @@ import rundeck.JobExec
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.WorkflowStep
+import rundeck.services.logging.ExecutionLogState
+import rundeck.services.logging.WorkflowStateFileLoader
 
 import java.text.SimpleDateFormat
 
 class WorkflowService implements ApplicationContextAware{
+    public static final String STATE_FILE_STORAGE_KEY= "state.json"
+
     protected def ExecutionService executionService
     def ApplicationContext applicationContext
+    def LogFileStorageService logFileStorageService
     static transactional = false
 
     /**
@@ -118,35 +123,40 @@ class WorkflowService implements ApplicationContextAware{
         workflowStates.put(id, state)
         def mutablestate = new MutableWorkflowStateListener(state)
         def chain = [mutablestate]
-
+        def File outfile = logFileStorageService.getFileForExecutionFilekey(execution, STATE_FILE_STORAGE_KEY)
         chain << new WorkflowStateListenerAction(onWorkflowExecutionStateChanged: {
             ExecutionState executionState, Date timestamp, List<String> nodeSet ->
                 if (executionState.completedState) {
                     //workflow finished:
-                    serializeState(id, state)
+                    persistExecutionState(execution, state, outfile)
                 }
         })
         new WorkflowExecutionStateListenerAdapter(chain)
     }
-    def File serializeState(Long id,WorkflowState state){
-        File file= new File("/tmp/${id}.json")
+
+    def persistExecutionState(Execution e, WorkflowState state, File file) {
+        serializeStateJson(e.id, state, file)
+        def submitted = logFileStorageService.submitForFileStorage(e, STATE_FILE_STORAGE_KEY, file)
+        log.debug("${e.id}: execution state.json persisted to file. [submitted for remote storage? ${submitted}]")
+    }
+
+    private WorkflowState loadState(Execution e) {
+        def outfile = logFileStorageService.getFileForExecutionFilekey(e, STATE_FILE_STORAGE_KEY)
+        def Map map = deserializeState(outfile)
+        return map ? workflowStateFromMap(map) : null
+    }
+    def serializeStateJson(Long id,WorkflowState state, File file){
         file.withWriter { w->
             w << mapOf(id,state).encodeAsJSON()
         }
-        return file
     }
-    def Map deserializeState(Long id){
-        File file = new File("/tmp/${id}.json")
+    def Map deserializeState(File file){
         if(file.canRead()){
             return JSON.parse(file.text)
         }
         return null
     }
 
-    private WorkflowState loadState(long id) {
-        def Map map = deserializeState(id)
-        return map?workflowStateFromMap(map):null
-    }
 
     def Map mapOf(Long id,WorkflowState workflowState) {
         def nodestates=[:]
@@ -286,25 +296,45 @@ class WorkflowService implements ApplicationContextAware{
      * @param execution
      */
     def WorkflowState readWorkflowStateForExecution(Execution execution){
-        //TODO: read state from elsewhere (db,network)
         def state = workflowStates[execution.id]
         if(state){
             return state
         }else{
-            return loadState(execution.id)
+            return loadState(execution)
         }
     }
-    def WorkflowState previewWorkflowStateForExecution(Execution execution){
-        createStateForWorkflow(execution.workflow, execution.project)
-    }
-
 
     def Map serializeWorkflowStateForExecution(Execution execution){
-        def state = readWorkflowStateForExecution(execution)
+        def state = workflowStates[execution.id]
+        if(!state){
+            state= loadState(execution)
+        }
         if(state){
             return mapOf(execution.id,state)
         }else {
             return null
         }
+    }
+
+    /**
+     * Return an WorkflowStateFileLoader containing state of logfile availability, and content if available
+     * @param e execution
+     * @param performLoad if true, perform remote file transfer
+     */
+    WorkflowStateFileLoader requestState(Execution e, boolean performLoad = true) {
+
+        def state = null
+        if (workflowStates[e.id]) {
+            state= mapOf(e.id, workflowStates[e.id])
+            return new WorkflowStateFileLoader(workflowState: state, state: ExecutionLogState.AVAILABLE)
+        }
+
+        def loader = logFileStorageService.requestLogFileLoad(e, STATE_FILE_STORAGE_KEY, performLoad)
+
+        if (loader.file) {
+            state = deserializeState(loader.file)
+        }
+        return new WorkflowStateFileLoader(workflowState: state, state: loader.state, errorCode: loader.errorCode,
+                errorData: loader.errorData, file: loader.file)
     }
 }
