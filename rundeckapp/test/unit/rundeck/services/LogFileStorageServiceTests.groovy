@@ -597,7 +597,7 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         test.available = true
 
         def reader=performReaderRequest(test, false, testLogFileDNE, false, createExecution()){ LogFileStorageService svc->
-            svc.metaClass.logFileRetrievalRequestState={Execution execution->
+            svc.metaClass.logFileRetrievalRequestState={Execution execution, String filekey->
                 ExecutionLogState.PENDING_LOCAL
             }
         }
@@ -663,8 +663,9 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
             UUID.randomUUID()
         }
         svc.pluginService = pmock.createMock()
-        svc.metaClass.getLogFileForExecution = { Execution e2 ->
+        svc.metaClass.getFileForExecutionFilekey = { Execution e2, String filekey ->
             assert e == e2
+            assert "rdlog"==filekey
             logfile
         }
         if(null!= svcClosure){

@@ -317,20 +317,6 @@ class LogFileStorageService implements InitializingBean{
     }
 
     /**
-     * Return the local file path for the log file for the execution, which may be different than the stored
-     * outputfilepath on the current server node
-     * @param execution
-     * @return
-     */
-    private File getLogFileForExecution(Execution execution) {
-        if (frameworkService.isClusterModeEnabled() && (execution.serverNodeUUID != frameworkService.getServerUUID())) {
-            //execution on another rundeck server, generate a local filepath
-            return getFileForExecutionFilekey(execution,LoggingService.LOG_FILE_STORAGE_KEY)
-        }
-        return execution.outputfilepath?new File(execution.outputfilepath): getFileForExecutionFilekey(execution, LoggingService.LOG_FILE_STORAGE_KEY)
-    }
-
-    /**
      * Return the local file path for a stored file for the execution given the filekey
      * @param execution
      * @return
@@ -568,7 +554,7 @@ class LogFileStorageService implements InitializingBean{
         def loader= requestLogFileLoad(e, filekey, performLoad)
         def reader=null
         if(loader.file){
-            reader = getLogReaderForFile(getLogFileForExecution(e))
+            reader = getLogReaderForFile(getFileForExecutionFilekey(e, filekey))
         }
         return new ExecutionLogReader(state: loader.state, reader: reader,
                 errorCode: loader.errorCode, errorData: loader.errorData)
@@ -641,7 +627,7 @@ class LogFileStorageService implements InitializingBean{
      */
     private ExecutionLogState requestLogFileRetrieval(Execution execution, String filekey, LogFileStorage plugin){
         def key=logFileRetrievalKey(execution,filekey)
-        def file = getLogFileForExecution(execution)
+        def file = getFileForExecutionFilekey(execution,filekey)
         Map newstate = [state: ExecutionLogState.PENDING_LOCAL, file: file, key: filekey,
                 storage: plugin, id: key, name: getConfiguredPluginName(),count:0]
         def previous = logFileRetrievalResults.get(key)
