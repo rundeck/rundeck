@@ -11,6 +11,8 @@ import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener
 import com.dtolabs.rundeck.core.execution.workflow.state.*
 import com.dtolabs.rundeck.core.utils.OptsUtil
+import com.google.common.cache.Cache
+import com.google.common.cache.CacheBuilder
 import grails.converters.JSON
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
@@ -23,6 +25,7 @@ import rundeck.services.logging.ExecutionLogState
 import rundeck.services.logging.WorkflowStateFileLoader
 
 import java.text.SimpleDateFormat
+import java.util.concurrent.TimeUnit
 
 class WorkflowService implements ApplicationContextAware{
     public static final String STATE_FILE_STORAGE_KEY= "state.json"
@@ -30,8 +33,16 @@ class WorkflowService implements ApplicationContextAware{
     protected def ExecutionService executionService
     def ApplicationContext applicationContext
     def LogFileStorageService logFileStorageService
+    def grailsApplication
     static transactional = false
-
+    /**
+     * Cache of loaded execution state data after executions complete
+     */
+    def Cache<Long, Map> stateCache
+    /**
+     * in-memory states of executions while executions are running
+     */
+    Map<Long, WorkflowState> activeStates = new HashMap<Long, WorkflowState>()
     /**
      * initialized in bootstrap
      */
@@ -39,11 +50,9 @@ class WorkflowService implements ApplicationContextAware{
         if(!executionService){
             executionService=applicationContext.executionService
         }
+        def spec=grailsApplication.config.rundeck?.workflowService?.stateCache?.spec?: "maximumSize=5,expireAfterAccess=60s"
+        stateCache= CacheBuilder.from(spec).build()
     }
-/**
-     * in-memory states of executions,
-     */
-    static Map<Long,WorkflowState> workflowStates=new HashMap<Long, WorkflowState>()
 
     /**
      * Generate the mutable state container for the given job and workflow
@@ -120,7 +129,7 @@ class WorkflowService implements ApplicationContextAware{
         MutableWorkflowState state = createStateForWorkflow(execution, execution.workflow, execution.project, framework,
                 jobcontext, secureOpts)
 
-        workflowStates.put(id, state)
+        activeStates.put(id, state)
         def mutablestate = new MutableWorkflowStateListener(state)
         def chain = [mutablestate]
         def File outfile = logFileStorageService.getFileForExecutionFilekey(execution, STATE_FILE_STORAGE_KEY)
@@ -136,7 +145,10 @@ class WorkflowService implements ApplicationContextAware{
     }
 
     def persistExecutionState(Closure storagerequest, Long id, WorkflowState state, File file) {
-        serializeStateJson(id, state, file)
+        Map data=serializeStateJson(id, state, file)
+        stateCache.put(id, data)
+        log.error("caching new state data for ${e.id}")
+        activeStates.remove(id)
         storagerequest?.call()
         log.debug("${id}: execution state.json persisted to file. [submitted for remote storage? ${storagerequest?true:false}]")
     }
@@ -146,10 +158,12 @@ class WorkflowService implements ApplicationContextAware{
         def Map map = deserializeState(outfile)
         return map ? workflowStateFromMap(map) : null
     }
-    def serializeStateJson(Long id,WorkflowState state, File file){
+    def Map serializeStateJson(Long id,WorkflowState state, File file){
+        def data = mapOf(id, state)
         file.withWriter { w->
-            w << mapOf(id,state).encodeAsJSON()
+            w << data.encodeAsJSON()
         }
+        return data
     }
     def Map deserializeState(File file){
         if(file.canRead()){
@@ -292,30 +306,6 @@ class WorkflowService implements ApplicationContextAware{
         Date endTime = map.endTime ? decodeDate(map.endTime) : null
         return StateUtils.stepState(ExecutionState.valueOf(map.executionState),map.meta,map.errorMessage,startTime,updateTime,endTime)
     }
-    /**
-     * Read the workflow state for an execution
-     * @param execution
-     */
-    def WorkflowState readWorkflowStateForExecution(Execution execution){
-        def state = workflowStates[execution.id]
-        if(state){
-            return state
-        }else{
-            return loadState(execution)
-        }
-    }
-
-    def Map serializeWorkflowStateForExecution(Execution execution){
-        def state = workflowStates[execution.id]
-        if(!state){
-            state= loadState(execution)
-        }
-        if(state){
-            return mapOf(execution.id,state)
-        }else {
-            return null
-        }
-    }
 
     /**
      * Return an WorkflowStateFileLoader containing state of logfile availability, and content if available
@@ -324,18 +314,30 @@ class WorkflowService implements ApplicationContextAware{
      */
     WorkflowStateFileLoader requestState(Execution e, boolean performLoad = true) {
 
-        def state = null
-        if (workflowStates[e.id]) {
-            state= mapOf(e.id, workflowStates[e.id])
+        //look for active state
+        def state1 = activeStates[e.id]
+        if (state1) {
+            def state= mapOf(e.id, state1)
             return new WorkflowStateFileLoader(workflowState: state, state: ExecutionLogState.AVAILABLE)
         }
 
+        //look for cached local data
+        def statemap=stateCache.getIfPresent(e.id)
+        if (statemap) {
+            log.error("using cached state data for ${e.id}")
+            return new WorkflowStateFileLoader(workflowState: statemap, state: ExecutionLogState.AVAILABLE)
+        }
+
+        //request file via file storage
         def loader = logFileStorageService.requestLogFileLoad(e, STATE_FILE_STORAGE_KEY, performLoad)
 
         if (loader.file) {
-            state = deserializeState(loader.file)
+            //cache local data
+            statemap = deserializeState(loader.file)
+            stateCache.put(e.id,statemap)
+            log.error("add cached state data for ${e.id}")
         }
-        return new WorkflowStateFileLoader(workflowState: state, state: loader.state, errorCode: loader.errorCode,
+        return new WorkflowStateFileLoader(workflowState: statemap, state: loader.state, errorCode: loader.errorCode,
                 errorData: loader.errorData, file: loader.file)
     }
 }
