@@ -26,7 +26,8 @@ class ProjectService {
     def grailsApplication
     def scheduledExecutionService
     def executionService
-    def logFileStorageService
+    def loggingService
+    def workflowService
     static transactional = false
 
     private exportJob(ScheduledExecution job, Writer writer)
@@ -74,10 +75,10 @@ class ProjectService {
 
         def map = exec.toMap()
         BuilderUtil.makeAttribute(map, 'id')
-        def File outfile = exec.outputfilepath?new File(exec.outputfilepath):null
+        def File outfile = loggingService.getLogFileForExecution(exec)
         if (outfile && outfile.isFile()) {
             //change entry to point to local file
-            map.outputfilepath = "output-${exec.id}.txt"
+            map.outputfilepath = "output-${exec.id}.rdlog"
         }
         JobsXMLCodec.convertWorkflowMapForBuilder(map.workflow)
         //convert map to xml
@@ -86,7 +87,11 @@ class ProjectService {
             builder.objToDom("executions", [execution:map], xml)
         }
         if (outfile && outfile.isFile()) {
-            zip.file "output-${exec.id}.txt", outfile
+            zip.file "output-${exec.id}.rdlog", outfile
+        }
+        def File statefile = workflowService.getStateFileForExecution(exec)
+        if (statefile && statefile.isFile()) {
+            zip.file "state-${exec.id}.state.json", statefile
         }
     }
 
@@ -324,7 +329,7 @@ class ProjectService {
                         'execution-.*\\.xml' {path, name, inputs ->
                             execxml << copyToTemp()
                         }
-                        'output-.*\\.txt' {path, name, inputs ->
+                        'output-.*\\.(txt|rdlog)|state-.*\\.state.json' {path, name, inputs ->
                             execout[name]= copyToTemp()
                         }
                     }
@@ -476,11 +481,10 @@ class ProjectService {
                     execidmap[oldids[e]] = e.id
                 }
                 //check outputfile exists in mapping
-                //TODO: handle json state file
                 if (e.outputfilepath && execout[e.outputfilepath]) {
                     File oldfile = execout[e.outputfilepath]
                     //move to appropriate location and update outputfilepath
-                    String filename = logFileStorageService.generateLogFilepathForExecution(e)
+                    String filename = loggingService.getLogFileForExecution(e)
                     File newfile = new File(filename)
                     try{
                         FileUtils.moveFile(oldfile, newfile)
@@ -490,6 +494,18 @@ class ProjectService {
                     e.outputfilepath = newfile.absolutePath
                 } else {
                     log.error("New execution ${e.id}, NO matching outfile: ${e.outputfilepath}")
+                }
+
+                //copy state.json file
+                if(execout["state-${oldids[e]}.state.json"]){
+                    File statefile= execout["state-${oldids[e]}.state.json"]
+                    String filename = workflowService.getStateFileForExecution(e)
+                    File newfile = new File(filename)
+                    try {
+                        FileUtils.moveFile(statefile, newfile)
+                    } catch (IOException exc) {
+                        log.error("Failed to move temp state file to destination: ${newfile.absolutePath} (old id ${oldids[e]})", exc)
+                    }
                 }
             }
         }

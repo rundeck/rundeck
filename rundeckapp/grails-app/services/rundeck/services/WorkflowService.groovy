@@ -25,7 +25,6 @@ import rundeck.services.logging.ExecutionLogState
 import rundeck.services.logging.WorkflowStateFileLoader
 
 import java.text.SimpleDateFormat
-import java.util.concurrent.TimeUnit
 
 class WorkflowService implements ApplicationContextAware{
     public static final String STATE_FILE_STORAGE_KEY= "state.json"
@@ -132,7 +131,7 @@ class WorkflowService implements ApplicationContextAware{
         activeStates.put(id, state)
         def mutablestate = new MutableWorkflowStateListener(state)
         def chain = [mutablestate]
-        def File outfile = logFileStorageService.getFileForExecutionFilekey(execution, STATE_FILE_STORAGE_KEY)
+        def File outfile = getStateFileForExecution(execution)
         def storagerequest = logFileStorageService.prepareForFileStorage(execution, STATE_FILE_STORAGE_KEY, outfile)
         chain << new WorkflowStateListenerAction(onWorkflowExecutionStateChanged: {
             ExecutionState executionState, Date timestamp, List<String> nodeSet ->
@@ -142,6 +141,15 @@ class WorkflowService implements ApplicationContextAware{
                 }
         })
         new WorkflowExecutionStateListenerAdapter(chain)
+    }
+
+    /**
+     * Return the file for the state.json for the execution
+     * @param execution
+     * @return
+     */
+    public File getStateFileForExecution(Execution execution) {
+        logFileStorageService.getFileForExecutionFilekey(execution, STATE_FILE_STORAGE_KEY)
     }
 
     def persistExecutionState(Closure storagerequest, Long id, WorkflowState state, File file) {
