@@ -47,11 +47,11 @@ class ScriptLogFileStoragePlugin implements KeyedLogFileStoragePlugin, Describab
         return isAvailable(null)
     }
     boolean isAvailable(String filekey) throws LogFileStorageException {
-        logger.debug("isAvailable ${pluginContext}")
+        logger.debug("isAvailable(${filekey}) ${pluginContext}")
         def closure = handlers.available
         def binding = [
                 configuration: configuration,
-                context: pluginContext
+                context: pluginContext + (filekey ? [key: filekey] : [:])
         ]
         def result = null
         if (closure.getMaximumNumberOfParameters() == 2) {
@@ -59,7 +59,7 @@ class ScriptLogFileStoragePlugin implements KeyedLogFileStoragePlugin, Describab
             newclos.resolveStrategy = Closure.DELEGATE_ONLY
             newclos.delegate = binding
             try {
-                result = newclos.call(pluginContext + filekey?[key:filekey]:[:], configuration)
+                result = newclos.call(binding.context , binding.configuration)
             } catch (Exception e) {
                 throw new LogFileStorageException(e.getMessage(), e)
             }
@@ -68,7 +68,7 @@ class ScriptLogFileStoragePlugin implements KeyedLogFileStoragePlugin, Describab
             newclos.delegate = binding
             newclos.resolveStrategy = Closure.DELEGATE_ONLY
             try {
-                result = newclos.call(pluginContext + filekey ? [key: filekey] : [:])
+                result = newclos.call(binding.context)
             } catch (Exception e) {
                 throw new LogFileStorageException(e.getMessage(), e)
             }
@@ -84,11 +84,11 @@ class ScriptLogFileStoragePlugin implements KeyedLogFileStoragePlugin, Describab
     }
 
     boolean store(String filekey, InputStream stream, long length, Date lastModified) throws IOException, LogFileStorageException {
-        logger.debug("store ${pluginContext}")
+        logger.debug("store($filekey) ${pluginContext}")
         def closure = handlers.store
         def binding = [
                 configuration: configuration,
-                context: pluginContext + filekey ? [key: filekey] : [:],
+                context: pluginContext +( filekey ? [key: filekey] : [:]),
                 stream: stream,
                 length: length,
                 lastModified: lastModified
@@ -132,11 +132,11 @@ class ScriptLogFileStoragePlugin implements KeyedLogFileStoragePlugin, Describab
 
     @Override
     boolean retrieve(String filekey, OutputStream stream) throws IOException, LogFileStorageException {
-        logger.debug("retrieve ${pluginContext}")
+        logger.debug("retrieve($filekey) ${pluginContext}")
         def closure = handlers.retrieve
         def binding = [
                 configuration: configuration,
-                context: pluginContext + filekey ? [key: filekey] : [:],
+                context: pluginContext + (filekey ? [key: filekey] : [:]),
                 stream: stream,
         ]
         if (closure.getMaximumNumberOfParameters() == 3) {
