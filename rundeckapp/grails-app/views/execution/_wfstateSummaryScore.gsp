@@ -47,7 +47,7 @@
             <tr>
                 <td>
                     <div class="text-center">
-                        <span class="h1 text-muted"
+                        <span class="h3 text-muted"
                               data-bind="text: percentageFixed(completedNodes().length,activeNodes().length) + '%'"></span>
                     </div>
 
@@ -60,7 +60,7 @@
                 <td>
 
                     <div class="text-center">
-                        <span class=" h1"
+                        <span class=" h3"
                               data-bind="css: {'text-danger': failedNodes().length > 0 , 'text-muted': failedNodes().length < 1 } ">
                             <span data-bind="text: failedNodes().length"></span>
                         </span>
@@ -69,7 +69,7 @@
                 <td>
                     <div class="text-center">
 
-                        <span class=" h1"
+                        <span class=" h3"
                               data-bind="css: {'text-warning': partialNodes().length > 0 , 'text-muted': partialNodes().length < 1 } ">
                             <span class="" data-bind="text: partialNodes().length"></span>
                         </span>
@@ -79,7 +79,7 @@
                 <td>
 
                     <div class="text-center">
-                        <span class=" h1"
+                        <span class=" h3"
                               data-bind="css: {'text-warning': notstartedNodes().length > 0 , 'text-muted': notstartedNodes().length < 1 } ">
                             <span class="" data-bind="text: notstartedNodes().length"></span>
                         </span>

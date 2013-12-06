@@ -87,13 +87,13 @@
                     <tr>
                         <td>
                                 <div class="text-center">
-                                    <span class="h1 text-muted" data-bind="text: waitingNodes().length"></span>
+                                    <span class="h3 text-muted" data-bind="text: waitingNodes().length"></span>
                                 </div>
                         </td>
                         <td>
 
                             <div class="text-center">
-                                <span class=" h1"
+                                <span class=" h3"
                                       data-bind="css: {'text-info': runningNodes().length > 0 , 'text-muted': runningNodes().length < 1 } ">
                                     <span class=" " data-bind="text: runningNodes().length"></span>
                                 </span>
@@ -104,7 +104,7 @@
                         <td >
 
                             <div class="text-center">
-                                <span class=" h1"
+                                <span class=" h3"
                                       data-bind="css: {'text-info': completedNodes().length > 0 , 'text-muted': completedNodes().length < 1 } ">
                                     <span data-bind="text: completedNodes().length"></span>
                                 </span>
