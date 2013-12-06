@@ -100,6 +100,9 @@
                 nodeflowvm.stateLoaded(false);
             }
          }
+         function showTab(id){
+            jQuery('#'+id+' a').tab('show');
+         }
         function init() {
 //            flowState.addUpdater(stepState);
             flowState.addUpdater({
@@ -520,7 +523,7 @@
                                 </g:else>
                             </a>
                         </li>
-                        <li id="tab_link_output" class="">
+                        <li id="tab_link_output">
                             <a href="#output" data-toggle="tab">Log Output</a>
                         </li>
                         <li>

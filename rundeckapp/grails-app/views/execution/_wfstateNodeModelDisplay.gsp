@@ -24,6 +24,11 @@
                     <div class="well well-lg" data-bind="visible: errorMessage()" style="display: none">
                         <div class="text-warning" data-bind="text: errorMessage()">
                         </div>
+
+                        <div>
+                            <a class="btn btn-default btn-sm" href="#output"
+                               data-bind="click: showTab.curry('tab_link_output') ">View Log Output &raquo;</a>
+                        </div>
                     </div>
                 </div>
 
