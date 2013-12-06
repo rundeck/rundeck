@@ -8,8 +8,11 @@ import rundeck.CommandExec
 import rundeck.ScheduledExecution
 import rundeck.ExecReport
 import rundeck.BaseReport
+import rundeck.services.LoggingService
 import rundeck.services.ProjectService
 import rundeck.services.ScheduledExecutionService
+import rundeck.services.WorkflowService
+
 /*
  * Copyright 2012 DTO Labs, Inc. (http://dtolabs.com)
  * 
@@ -79,7 +82,7 @@ class ProjectServiceTests  {
      * Execution xml output with an output file path
      */
     static String EXEC_XML_TEST2 = EXEC_XML_TEST1_START+ '''
-    <outputfilepath>output-1.txt</outputfilepath>''' + EXEC_XML_TEST1_REST
+    <outputfilepath>output-1.rdlog</outputfilepath>''' + EXEC_XML_TEST1_REST
 
     /**
      * Execution xml with associated job ID
@@ -116,6 +119,18 @@ class ProjectServiceTests  {
                 workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'exec command')])
         )
         assertNotNull exec.save()
+        def logmock = mockFor(LoggingService)
+        logmock.demand.getLogFileForExecution(1..1){Execution e->
+            assert exec==e
+            new File(outfilename)
+        }
+        svc.loggingService=logmock.createMock()
+        def workflowmock = mockFor(WorkflowService)
+        workflowmock.demand.getStateFileForExecution(1..1){Execution e->
+            assert exec==e
+            null
+        }
+        svc.workflowService= workflowmock.createMock()
 
         svc.exportExecution(zip,exec,outfilename)
         def str=outwriter.toString()
@@ -154,13 +169,90 @@ class ProjectServiceTests  {
         assertNotNull exec.save()
 
         zipmock.demand.file(1..1) {name, File out ->
-            assertEquals('output-'+exec.id+'.txt', name)
+            assertEquals('output-'+exec.id+'.rdlog', name)
             assertEquals(tempoutfile,out)
         }
         def zip = zipmock.createMock()
+
+        def logmock = mockFor(LoggingService)
+        logmock.demand.getLogFileForExecution(1..1) { Execution e ->
+            assert exec == e
+            tempoutfile
+        }
+        svc.loggingService = logmock.createMock()
+        def workflowmock = mockFor(WorkflowService)
+        workflowmock.demand.getStateFileForExecution(1..1) { Execution e ->
+            assert exec == e
+            null
+        }
+
+        svc.workflowService = workflowmock.createMock()
         svc.exportExecution(zip,exec,outfilename)
         def str=outwriter.toString()
 //        println str
+        assertEquals EXEC_XML_TEST2, str
+    }
+    def testExportExecutionStateFile(){
+        ProjectService svc = new ProjectService()
+
+        def outfilename = "blahfile.xml"
+        File tempoutfile = File.createTempFile("tempout",".txt")
+        File tempoutfile2 = File.createTempFile("tempout",".state.json")
+
+        def zipmock=mockFor(ZipBuilder)
+        def outwriter = new StringWriter()
+        zipmock.demand.file(1..1){name,Closure withwriter->
+            assertEquals(outfilename,name)
+            withwriter.call(outwriter)
+            outwriter.flush()
+        }
+//        zipmock.demand.file(1..1){name,File outfile-> }
+
+        Execution exec = new Execution(
+                argString: "-test args",
+                user: "testuser",
+                project: "testproj",
+                loglevel: 'WARN',
+                doNodedispatch: true,
+                dateStarted: new Date(0),
+                dateCompleted: new Date(3600000),
+                nodeInclude: 'test1',
+                nodeExcludeTags: 'monkey',
+                status: 'true',
+                outputfilepath: tempoutfile.absolutePath,
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'exec command')])
+        )
+        assertNotNull exec.save()
+        int filecalled=0
+        zipmock.demand.file(2..2) {name, File out ->
+            filecalled++
+            if(filecalled==1){
+                assertEquals('output-'+exec.id+'.rdlog', name)
+                assertEquals(tempoutfile,out)
+            }else{
+                assertEquals('state-' + exec.id + '.state.json', name)
+                assertEquals(tempoutfile2, out)
+            }
+        }
+        def zip = zipmock.createMock()
+
+        def logmock = mockFor(LoggingService)
+        logmock.demand.getLogFileForExecution(1..1) { Execution e ->
+            assert exec == e
+            tempoutfile
+        }
+        svc.loggingService = logmock.createMock()
+        def workflowmock = mockFor(WorkflowService)
+        workflowmock.demand.getStateFileForExecution(1..1) { Execution e ->
+            assert exec == e
+            tempoutfile2
+        }
+        svc.workflowService = workflowmock.createMock()
+
+        svc.exportExecution(zip,exec,outfilename)
+        def str=outwriter.toString()
+//        println str
+        assertEquals(2, filecalled)
         assertEquals EXEC_XML_TEST2, str
     }
     def testImportExecution(){
