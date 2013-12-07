@@ -1,9 +1,8 @@
-import com.codahale.metrics.MetricRegistry
 import com.dtolabs.rundeck.core.plugins.PluginManagerService
 import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
 import com.dtolabs.rundeck.server.plugins.PluginCustomizer
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
-import com.dtolabs.rundeck.server.plugins.services.LogFileStoragePluginProviderService
+import com.dtolabs.rundeck.server.plugins.services.ExecutionFileStoragePluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.NotificationPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogReaderPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogWriterPluginProviderService
@@ -61,9 +60,9 @@ beans={
         rundeckServerServiceProviderLoader=ref('rundeckServerServiceProviderLoader')
     }
     /**
-     * the LogFileStorage plugin provider service
+     * the LogFileStorage plugin provider service (rundeck v2.0+)
      */
-    logFileStoragePluginProviderService(LogFileStoragePluginProviderService) {
+    executionFileStoragePluginProviderService(ExecutionFileStoragePluginProviderService) {
         rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
     }
     logFileTaskExecutor(SimpleAsyncTaskExecutor,"LogFileStorage"){

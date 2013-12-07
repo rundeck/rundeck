@@ -16,23 +16,32 @@
 
 package com.dtolabs.rundeck.plugins.logging;
 
-import com.dtolabs.rundeck.core.logging.KeyedLogFileStorage;
+import com.dtolabs.rundeck.core.logging.ExecutionFileStorage;
 import com.dtolabs.rundeck.core.logging.LogFileStorageException;
 
+import java.util.Map;
+
 /**
- * Plugin to implement {@link KeyedLogFileStorage}
+ * Plugin to implement {@link com.dtolabs.rundeck.core.logging.ExecutionFileStorage}
  */
-public interface KeyedLogFileStoragePlugin extends LogFileStoragePlugin, KeyedLogFileStorage {
+public interface ExecutionFileStoragePlugin extends ExecutionFileStorage {
+    /**
+     * Initializes the plugin with contextual data
+     *
+     * @param context
+     */
+    public void initialize(Map<String, ? extends Object> context);
 
     /**
-     * Returns true if the file is available, false otherwise
+     * Returns true if the file for the context and the given filetype is available, false otherwise
      *
-     * @param key          key to identify stored file
-     * @return
+     * @param filetype file type or extension of the file to check
+     *
+     * @return true if a file with the given filetype is available for the context
      *
      * @throws com.dtolabs.rundeck.core.logging.LogFileStorageException
      *          if there is an error determining the availability
      */
-    public boolean isAvailable(String key) throws LogFileStorageException;
+    public boolean isAvailable(String filetype) throws LogFileStorageException;
 
 }

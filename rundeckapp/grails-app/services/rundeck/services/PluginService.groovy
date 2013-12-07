@@ -91,6 +91,9 @@ class PluginService {
     def <T> Map configurePlugin(String name, PluggableProviderService<T> service, PropertyResolver resolver, PropertyScope defaultScope) {
         def validation = rundeckPluginRegistry?.validatePluginByName(name, service,
                 PropertyResolverFactory.createPrefixedResolver(resolver, name, service.name), defaultScope)
+        if(!validation){
+            return null
+        }
         if(!validation.valid) {
             logValidationErrors(service.name, name, validation.report)
             return null

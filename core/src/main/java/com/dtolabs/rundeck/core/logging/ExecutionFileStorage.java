@@ -22,13 +22,15 @@ import java.io.OutputStream;
 import java.util.Date;
 
 /**
- * Extends LogFileStorage to provide a key string when storing and retrieving
+ * Handles storage and retrieval of typed files for an execution, the filetype is specified in the {@link #store(String,
+ * java.io.InputStream, long, java.util.Date)} and {@link #retrieve(String, java.io.OutputStream)} methods, and more
+ * than one filetype may be stored or retrieved for the same execution.
  */
-public interface KeyedLogFileStorage extends LogFileStorage {
+public interface ExecutionFileStorage {
     /**
-     * Stores a log file read from the given stream
+     * Stores a file of the given file type, read from the given stream
      *
-     * @param key          key to identify stored file
+     * @param filetype     filetype or extension of the file to store
      * @param stream       the input stream
      * @param length       the file length
      * @param lastModified the file modification time
@@ -37,18 +39,18 @@ public interface KeyedLogFileStorage extends LogFileStorage {
      *
      * @throws java.io.IOException
      */
-    boolean store(String key, InputStream stream, long length, Date lastModified) throws IOException,
+    boolean store(String filetype, InputStream stream, long length, Date lastModified) throws IOException,
             LogFileStorageException;
 
     /**
-     * Writes a log file to the given stream
+     * Write a file of the given file type to the given stream
      *
-     * @param key    key to identify stored file
-     * @param stream the output stream
+     * @param filetype key to identify stored file
+     * @param stream   the output stream
      *
      * @return true if successful
      *
      * @throws IOException
      */
-    boolean retrieve(String key, OutputStream stream) throws IOException, LogFileStorageException;
+    boolean retrieve(String filetype, OutputStream stream) throws IOException, LogFileStorageException;
 }

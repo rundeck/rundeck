@@ -16,10 +16,13 @@ class PluginCustomizer implements GroovyObjectCustomizer {
         if (goo instanceof Script) {
             goo.metaClass.rundeckPlugin = { Class clazz, Closure clos ->
                 def builder = ScriptPluginBuilder.forPluginClass(clazz, goo.class.name)
-                clos.delegate = builder
-                clos.resolveStrategy = Closure.DELEGATE_FIRST
-                clos.call()
-                return builder;
+                if(builder){
+                    clos.delegate = builder
+                    clos.resolveStrategy = Closure.DELEGATE_FIRST
+                    clos.call()
+                    return builder
+                }
+                return goo;
             }
         }
     }

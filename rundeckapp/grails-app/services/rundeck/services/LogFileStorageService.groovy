@@ -3,18 +3,15 @@ package rundeck.services
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogWriter
 import com.dtolabs.rundeck.app.internal.logging.RundeckLogFormat
-import com.dtolabs.rundeck.core.logging.KeyedLogFileStorage
+import com.dtolabs.rundeck.core.logging.ExecutionFileStorage
 import com.dtolabs.rundeck.core.logging.LogFileState
-import com.dtolabs.rundeck.core.logging.LogFileStorage
 import com.dtolabs.rundeck.core.logging.LogFileStorageException
 import com.dtolabs.rundeck.core.logging.StreamingLogReader
 import com.dtolabs.rundeck.core.logging.StreamingLogWriter
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
-import com.dtolabs.rundeck.plugins.logging.KeyedLogFileStoragePlugin
-import com.dtolabs.rundeck.plugins.logging.LogFileStoragePlugin
-import com.dtolabs.rundeck.server.plugins.builder.WrapAsKeyedLogFileStoragePlugin
-import com.dtolabs.rundeck.server.plugins.services.LogFileStoragePluginProviderService
+import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
+import com.dtolabs.rundeck.server.plugins.services.ExecutionFileStoragePluginProviderService
 import org.codehaus.groovy.grails.commons.ConfigurationHolder
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.core.task.AsyncTaskExecutor
@@ -37,7 +34,7 @@ class LogFileStorageService implements InitializingBean{
 
     static transactional = false
     static final RundeckLogFormat rundeckLogFormat = new RundeckLogFormat()
-    LogFileStoragePluginProviderService logFileStoragePluginProviderService
+    ExecutionFileStoragePluginProviderService executionFileStoragePluginProviderService
     PluginService pluginService
     def frameworkService
     def AsyncTaskExecutor logFileTaskExecutor
@@ -92,7 +89,7 @@ class LogFileStorageService implements InitializingBean{
     }
 
     def Map listLogFileStoragePlugins() {
-        return pluginService.listPlugins(LogFileStoragePlugin, logFileStoragePluginProviderService)
+        return pluginService.listPlugins(ExecutionFileStoragePlugin, executionFileStoragePluginProviderService)
     }
     /**
      * Run a storage request task, and if it fails submit a retry depending on the configured retry count and delay
@@ -377,7 +374,7 @@ class LogFileStorageService implements InitializingBean{
      * @param plugin
      * @return state of the execution log
      */
-    private Map getLogFileState(Execution execution, String filekey, KeyedLogFileStoragePlugin plugin) {
+    private Map getLogFileState(Execution execution, String filekey, ExecutionFileStoragePlugin plugin) {
         File file = getFileForExecutionFilekey(execution, filekey)
         def key = logFileRetrievalKey(execution,filekey)
 
@@ -501,7 +498,7 @@ class LogFileStorageService implements InitializingBean{
      * @param execution
      * @param resolver @return
      */
-    private KeyedLogFileStoragePlugin getConfiguredPluginForExecution(Execution execution, PropertyResolver resolver) {
+    private ExecutionFileStoragePlugin getConfiguredPluginForExecution(Execution execution, PropertyResolver resolver) {
         def jobcontext = ExecutionService.exportContextForExecution(execution)
         def plugin = getConfiguredPlugin(jobcontext, resolver)
         plugin
@@ -512,7 +509,7 @@ class LogFileStorageService implements InitializingBean{
      * @param context
      * @param resolver @return
      */
-    private KeyedLogFileStoragePlugin getConfiguredPlugin(Map context, PropertyResolver resolver){
+    private ExecutionFileStoragePlugin getConfiguredPlugin(Map context, PropertyResolver resolver){
         def pluginName=getConfiguredPluginName()
         if (!pluginName) {
             return null
@@ -520,30 +517,24 @@ class LogFileStorageService implements InitializingBean{
         log.debug("Using log file storage plugin ${pluginName}")
         def result
         try {
-            result= pluginService.configurePlugin(pluginName, logFileStoragePluginProviderService, resolver, PropertyScope.Instance)
+            result= pluginService.configurePlugin(pluginName, executionFileStoragePluginProviderService, resolver, PropertyScope.Instance)
         } catch (Throwable e) {
-            log.error("Failed to create LogFileStoragePlugin '${pluginName}': ${e.class.name}:" + e.message)
+            log.error("Failed to create LogFileStoragePlugin '${pluginName}': ${e.class.name}:" + e.message,e)
             log.debug("Failed to create LogFileStoragePlugin '${pluginName}': ${e.class.name}:" + e.message, e)
         }
         if (result != null && result.instance!=null) {
             def plugin=result.instance
-            if(!(plugin instanceof KeyedLogFileStoragePlugin)){
-                plugin=wrapAsKeyedPlugin(plugin)
-            }
             try {
                 plugin.initialize(context)
                 return plugin
             } catch (Throwable e) {
-                log.error("Failed to initialize LogFileStoragePlugin '${pluginName}': ${e.class.name}: " + e.message)
+                log.error("Failed to initialize LogFileStoragePlugin '${pluginName}': ${e.class.name}: " + e.message,e)
                 log.debug("Failed to initialize LogFileStoragePlugin '${pluginName}': ${e.class.name}: " + e.message, e)
             }
         }
         return null
     }
 
-    def KeyedLogFileStoragePlugin wrapAsKeyedPlugin(LogFileStoragePlugin logFileStoragePlugin) {
-        return new WrapAsKeyedLogFileStoragePlugin(logFileStoragePlugin)
-    }
 /**
      * Return an ExecutionLogFileReader containing state of logfile availability, and reader if available
      * @param e execution
@@ -625,7 +616,7 @@ class LogFileStorageService implements InitializingBean{
      * @param plugin storage method
      * @return state of the log file
      */
-    private ExecutionLogState requestLogFileRetrieval(Execution execution, String filekey, LogFileStorage plugin){
+    private ExecutionLogState requestLogFileRetrieval(Execution execution, String filekey, ExecutionFileStorage plugin){
         def key=logFileRetrievalKey(execution,filekey)
         def file = getFileForExecutionFilekey(execution,filekey)
         Map newstate = [state: ExecutionLogState.PENDING_LOCAL, file: file, key: filekey,
@@ -676,7 +667,7 @@ class LogFileStorageService implements InitializingBean{
      * @param executionLogStorage the persisted object that records the result
      * @param delay seconds to delay the request
      */
-    private void storeLogFileAsync(String id, File file, LogFileStorage storage, LogFileStorageRequest executionLogStorage, int delay=0) {
+    private void storeLogFileAsync(String id, File file, ExecutionFileStorage storage, LogFileStorageRequest executionLogStorage, int delay=0) {
         queueLogStorageRequest([id: id, file: file, storage: storage, key:executionLogStorage.filekey, request: executionLogStorage], delay)
     }
 
@@ -699,7 +690,7 @@ class LogFileStorageService implements InitializingBean{
      * @param execution
      * @param storage plugin that is already initialized
      */
-    private Boolean storeLogFile(File file, String filekey, KeyedLogFileStorage storage, String ident) {
+    private Boolean storeLogFile(File file, String filekey, ExecutionFileStorage storage, String ident) {
         log.debug("Storage request [ID#${ident}], start")
         def success = false
         Date lastModified = new Date(file.lastModified())
@@ -726,7 +717,7 @@ class LogFileStorageService implements InitializingBean{
      * @param storage plugin that is already initialized
      * @return Map containing success: true/false, and error: String indicating the error if there was one
      */
-    private Map retrieveLogFile(File file, String filekey, KeyedLogFileStorage storage, String ident){
+    private Map retrieveLogFile(File file, String filekey, ExecutionFileStorage storage, String ident){
         def tempfile = File.createTempFile("temp-storage","logfile")
         tempfile.deleteOnExit()
         def success=false

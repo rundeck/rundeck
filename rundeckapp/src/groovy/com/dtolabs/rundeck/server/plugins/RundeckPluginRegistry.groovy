@@ -146,6 +146,9 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
      */
     public Map validatePluginByName(String name, PluggableProviderService service, PropertyResolver resolver, PropertyScope defaultScope, PropertyScope ignoredScope) {
         Map pluginDesc = loadPluginDescriptorByName(name, service)
+        if(!pluginDesc) {
+            return null
+        }
         Map result = [valid: true]
         def description = pluginDesc['description']
         if (description && description instanceof Description) {
@@ -212,9 +215,9 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
                 }
                 return beanDesc
             } catch (MissingProviderException exception) {
-                log.error("plugin Provider does not exist: ${name}")
+                log.error("Plugin ${name} for service: ${service.name} was not found")
             } catch (ProviderLoaderException exception) {
-                log.error("Failure loading Rundeck provider instance: ${name}", exception)
+                log.error("Failure loading Rundeck plugin: ${name} for service: : ${service.name}", exception)
             }
         }
         null

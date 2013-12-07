@@ -7,6 +7,7 @@ import java.util.Date;
 
 /**
  * Handles log file storage and retrieval
+ * @deprecated no longer used, replaced by {@link ExecutionFileStorage}
  */
 public interface LogFileStorage {
     /**

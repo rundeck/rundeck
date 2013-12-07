@@ -1,10 +1,10 @@
-import com.dtolabs.rundeck.plugins.logging.LogFileStoragePlugin;
+import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin;
 import java.util.zip.*
 
 /**
- * This example is an log file storage plugin for Rundeck
+ * This example is an execution file storage plugin for Rundeck
  */
-rundeckPlugin(LogFileStoragePlugin){
+rundeckPlugin(ExecutionFileStoragePlugin){
     configuration{
         filebase defaultValue:"log-", required:true
         outputDir='/tmp'
@@ -14,10 +14,10 @@ rundeckPlugin(LogFileStoragePlugin){
      * Called to determine the file availability, return true to indicate it is available, 
      * false to indicate it is not available. An exception indicates an error.
      */
-    available { Map execution, Map configuration->
+    available { String filetype, Map execution, Map configuration->
         def id = execution.execid
         //return state of storage given the id
-        def outfile=new File(configuration.outputDir,"${configuration.filebase}${id}.gz")
+        def outfile=new File(configuration.outputDir,"${configuration.filebase}${id}.${filetype}.gz")
         outfile.exists()
     }
 
@@ -27,10 +27,10 @@ rundeckPlugin(LogFileStoragePlugin){
      * and last modification Date.
      * Return true to indicate success.
      */
-    store { Map execution, Map configuration, InputStream source->
+    store { String filetype, Map execution, Map configuration, InputStream source->
         def id = execution.execid
         //use gzip
-        def outfile=new File(configuration.outputDir,"${configuration.filebase}${id}.gz.tmp")
+        def outfile=new File(configuration.outputDir,"${configuration.filebase}${id}${filetype}.gz.tmp")
         source.withReader { reader ->
             outfile.withOutputStream { out ->
                 def gzip=new OutputStreamWriter(new GZIPOutputStream(out))
@@ -43,7 +43,7 @@ rundeckPlugin(LogFileStoragePlugin){
                 gzip.flush()       
                 gzip.close()
             }
-            outfile.renameTo(new File(configuration.outputDir,"${configuration.filebase}${id}.gz"))
+            outfile.renameTo(new File(configuration.outputDir,"${configuration.filebase}${id}.${execution.filetype}.gz"))
         }
         source.close()
         true
@@ -53,10 +53,10 @@ rundeckPlugin(LogFileStoragePlugin){
      * Called to retrieve a log file, called with the execution data, configuration properties, and an OutputStream.
      * Return true to indicate success.
      */
-    retrieve {  Map execution, Map configuration, OutputStream out->
+    retrieve { String filetype, Map execution, Map configuration, OutputStream out->
         def id = execution.execid
-
-        def infile=new File(configuration.outputDir,"${configuration.filebase}${id}.gz")
+        Thread.sleep(10000) 
+        def infile=new File(configuration.outputDir,"${configuration.filebase}${id}.${filetype}.gz")
         infile.withInputStream { inpu ->
             def gzip=new BufferedReader(new InputStreamReader(new GZIPInputStream(inpu)))
             def writer=new BufferedWriter(new OutputStreamWriter(out))

@@ -5,7 +5,6 @@ import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkProject
-import com.dtolabs.rundeck.core.execution.impl.jsch.JschNodeExecutor
 import com.dtolabs.rundeck.core.execution.service.FileCopierService
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
@@ -667,7 +666,7 @@ class MenuController {
         pluginDescs[loggingService.streamingLogWriterPluginProviderService.name]=loggingService.listStreamingWriterPlugins().collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
-        pluginDescs[logFileStorageService.logFileStoragePluginProviderService.name]= logFileStorageService.listLogFileStoragePlugins().collect {
+        pluginDescs[logFileStorageService.executionFileStoragePluginProviderService.name]= logFileStorageService.listLogFileStoragePlugins().collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
 

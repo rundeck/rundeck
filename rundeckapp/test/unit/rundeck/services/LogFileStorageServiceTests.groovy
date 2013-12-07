@@ -2,7 +2,6 @@ package rundeck.services
 
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogWriter
-import com.dtolabs.rundeck.core.logging.KeyedLogFileStorage
 import com.dtolabs.rundeck.core.logging.LogFileState
 import com.dtolabs.rundeck.core.logging.LogFileStorageException
 import com.dtolabs.rundeck.core.logging.StreamingLogWriter
@@ -10,8 +9,7 @@ import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
-import com.dtolabs.rundeck.plugins.logging.KeyedLogFileStoragePlugin
-import com.dtolabs.rundeck.plugins.logging.LogFileStoragePlugin
+import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
 import grails.test.*
 import org.codehaus.groovy.grails.commons.ConfigurationHolder
 import rundeck.Execution
@@ -210,7 +208,7 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         assertNotNull(writer)
         assert writer instanceof EventStreamingLogWriter
     }
-    class testStoragePlugin implements KeyedLogFileStoragePlugin{
+    class testStoragePlugin implements ExecutionFileStoragePlugin{
         Map<String, ? extends Object> context
         boolean available
         boolean availableException
@@ -232,8 +230,8 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         }
 
         @Override
-        boolean isAvailable(String key) throws LogFileStorageException {
-            availableFilekey=key
+        boolean isAvailable(String filetype) throws LogFileStorageException {
+            availableFilekey=filetype
             return isAvailable()
         }
 
@@ -246,8 +244,8 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         }
 
         @Override
-        boolean store(String key, InputStream stream, long length, Date lastModified) throws IOException, LogFileStorageException {
-            storeFilekey=key
+        boolean store(String filetype, InputStream stream, long length, Date lastModified) throws IOException, LogFileStorageException {
+            storeFilekey=filetype
             return store(stream,length,lastModified)
         }
 
@@ -260,8 +258,8 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         }
 
         @Override
-        boolean retrieve(String key, OutputStream stream) throws IOException, LogFileStorageException {
-            retrieveFilekey=key
+        boolean retrieve(String filetype, OutputStream stream) throws IOException, LogFileStorageException {
+            retrieveFilekey=filetype
             return retrieve(stream)
         }
 

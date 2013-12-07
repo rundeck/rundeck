@@ -1,11 +1,13 @@
 package com.dtolabs.rundeck.server.plugins.builder
 
 import com.dtolabs.rundeck.plugins.logging.LogFileStoragePlugin
+import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
 import com.dtolabs.rundeck.plugins.logging.StreamingLogReaderPlugin
 import com.dtolabs.rundeck.plugins.logging.StreamingLogWriterPlugin
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.server.plugins.services.PluginBuilder
+import org.apache.log4j.Logger
 
 import java.lang.reflect.Constructor
 
@@ -16,6 +18,7 @@ import java.lang.reflect.Constructor
  * Time: 3:55 PM
  */
 abstract class ScriptPluginBuilder implements GroovyObject, PluginBuilder{
+    static Logger logger = Logger.getLogger(ScriptPluginBuilder)
     private Map pluginAttributes=[:]
     /**
      * internal builder for the plugin Description
@@ -28,7 +31,11 @@ abstract class ScriptPluginBuilder implements GroovyObject, PluginBuilder{
             (NotificationPlugin):ScriptNotificationPluginBuilder,
             (StreamingLogWriterPlugin):StreamingLogWriterPluginBuilder,
             (StreamingLogReaderPlugin):StreamingLogReaderPluginBuilder,
-            (LogFileStoragePlugin): LogFileStoragePluginBuilder,
+            (ExecutionFileStoragePlugin): ExecutionFileStoragePluginBuilder,
+    ]
+    private static Map<Class,String> disabledPluginClasses=[
+            (LogFileStoragePlugin):"The LogFileStoragePlugin interface is no longer supported, use a plugin that" +
+                    " implements ExecutionFileStoragePlugin"
     ]
     /**
      * Return a ScriptPluginBuilder for the given plugin class and plugin name
@@ -41,6 +48,9 @@ abstract class ScriptPluginBuilder implements GroovyObject, PluginBuilder{
         if(subClazz){
             def Constructor constructor = subClazz.getDeclaredConstructor(String)
             return constructor.newInstance(name)
+        }else if(disabledPluginClasses[clazz]){
+            logger.error("Plugin '${name}' not loaded: "+disabledPluginClasses[clazz])
+            return null
         }else{
             throw new IllegalArgumentException("Unsupported plugin type: ${clazz.name}")
         }
