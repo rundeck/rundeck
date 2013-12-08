@@ -1,4 +1,4 @@
-version = '1.5.4-SNAPSHOT'
+version = '2.0.0-SNAPSHOT'
 defaultTasks 'clean','build'
 apply plugin: 'java'
 apply plugin: 'idea'
@@ -18,7 +18,7 @@ dependencies {
     )
 }
 
-ext.pluginClassNames='com.dtolabs.rundeck.plugin.example.ExampleStreamingLogWriterPlugin,com.dtolabs.rundeck.plugin.example.ExampleLogFileStoragePlugin'
+ext.pluginClassNames='com.dtolabs.rundeck.plugin.example.ExampleStreamingLogWriterPlugin,com.dtolabs.rundeck.plugin.example.ExampleExecutionFileStoragePlugin'
 //ext.pluginClassNames='com.dtolabs.rundeck.plugin.example.ExampleStreamingLogWriterPlugin,com.dtolabs.rundeck.plugin.example.ExampleStreamingLogReaderPlugin'
 jar {
     manifest {
