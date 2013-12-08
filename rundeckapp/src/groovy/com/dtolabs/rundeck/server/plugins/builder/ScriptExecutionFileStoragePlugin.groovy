@@ -1,6 +1,6 @@
 package com.dtolabs.rundeck.server.plugins.builder
 
-import com.dtolabs.rundeck.core.logging.LogFileStorageException
+import com.dtolabs.rundeck.core.logging.ExecutionFileStorageException
 import com.dtolabs.rundeck.core.plugins.configuration.Configurable
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
@@ -42,7 +42,7 @@ class ScriptExecutionFileStoragePlugin implements ExecutionFileStoragePlugin, De
         }
     }
 
-    boolean isAvailable(String filetype) throws LogFileStorageException {
+    boolean isAvailable(String filetype) throws ExecutionFileStorageException {
         logger.debug("isAvailable(${filetype}) ${pluginContext}")
         def closure = handlers.available
         def binding = [
@@ -57,7 +57,7 @@ class ScriptExecutionFileStoragePlugin implements ExecutionFileStoragePlugin, De
             try {
                 result = newclos.call(filetype, binding.context , binding.configuration)
             } catch (Exception e) {
-                throw new LogFileStorageException(e.getMessage(), e)
+                throw new ExecutionFileStorageException(e.getMessage(), e)
             }
         } else if (closure.getMaximumNumberOfParameters() == 2) {
             def Closure newclos = closure.clone()
@@ -66,7 +66,7 @@ class ScriptExecutionFileStoragePlugin implements ExecutionFileStoragePlugin, De
             try {
                 result = newclos.call(filetype, binding.context)
             } catch (Exception e) {
-                throw new LogFileStorageException(e.getMessage(), e)
+                throw new ExecutionFileStorageException(e.getMessage(), e)
             }
         } else {
             throw new RuntimeException("ScriptExecutionFileStoragePlugin: 'available' closure signature invalid for plugin ${description.name}, cannot open")
@@ -74,7 +74,7 @@ class ScriptExecutionFileStoragePlugin implements ExecutionFileStoragePlugin, De
         return result ? true : false
     }
 
-    boolean store(String filetype, InputStream stream, long length, Date lastModified) throws IOException, LogFileStorageException {
+    boolean store(String filetype, InputStream stream, long length, Date lastModified) throws IOException, ExecutionFileStorageException {
         logger.debug("store($filetype) ${pluginContext}")
         def closure = handlers.store
         def binding = [
@@ -91,7 +91,7 @@ class ScriptExecutionFileStoragePlugin implements ExecutionFileStoragePlugin, De
             try {
                 return newclos.call(filetype, binding.context, binding.configuration, binding.stream)
             } catch (Exception e) {
-                throw new LogFileStorageException(e.getMessage(), e)
+                throw new ExecutionFileStorageException(e.getMessage(), e)
             }
         } else if (closure.getMaximumNumberOfParameters() == 3) {
             def Closure newclos = closure.clone()
@@ -100,7 +100,7 @@ class ScriptExecutionFileStoragePlugin implements ExecutionFileStoragePlugin, De
             try {
                 return newclos.call(filetype, binding.context, binding.stream)
             } catch (Exception e) {
-                throw new LogFileStorageException(e.getMessage(), e)
+                throw new ExecutionFileStorageException(e.getMessage(), e)
             }
         } else if (closure.getMaximumNumberOfParameters() == 2) {
             def Closure newclos = closure.clone()
@@ -109,7 +109,7 @@ class ScriptExecutionFileStoragePlugin implements ExecutionFileStoragePlugin, De
             try {
                 return newclos.call(filetype, binding.stream)
             } catch (Exception e) {
-                throw new LogFileStorageException(e.getMessage(), e)
+                throw new ExecutionFileStorageException(e.getMessage(), e)
             }
         } else {
             throw new RuntimeException("ScriptExecutionFileStoragePlugin: 'store' closure signature invalid for plugin ${description.name}, cannot open")
@@ -117,7 +117,7 @@ class ScriptExecutionFileStoragePlugin implements ExecutionFileStoragePlugin, De
     }
 
     @Override
-    boolean retrieve(String filetype, OutputStream stream) throws IOException, LogFileStorageException {
+    boolean retrieve(String filetype, OutputStream stream) throws IOException, ExecutionFileStorageException {
         logger.debug("retrieve($filetype) ${pluginContext}")
         def closure = handlers.retrieve
         def binding = [
@@ -132,7 +132,7 @@ class ScriptExecutionFileStoragePlugin implements ExecutionFileStoragePlugin, De
             try {
                 return newclos.call(filetype, binding.context, binding.configuration, binding.stream)
             } catch (Exception e) {
-                throw new LogFileStorageException(e.getMessage(), e)
+                throw new ExecutionFileStorageException(e.getMessage(), e)
             }
         } else if (closure.getMaximumNumberOfParameters() == 3) {
             def Closure newclos = closure.clone()
@@ -141,7 +141,7 @@ class ScriptExecutionFileStoragePlugin implements ExecutionFileStoragePlugin, De
             try {
                 return newclos.call(filetype, binding.context, binding.stream)
             } catch (Exception e) {
-                throw new LogFileStorageException(e.getMessage(), e)
+                throw new ExecutionFileStorageException(e.getMessage(), e)
             }
         } else if (closure.getMaximumNumberOfParameters() == 2) {
             def Closure newclos = closure.clone()
@@ -150,7 +150,7 @@ class ScriptExecutionFileStoragePlugin implements ExecutionFileStoragePlugin, De
             try {
                 return newclos.call(filetype, binding.stream)
             } catch (Exception e) {
-                throw new LogFileStorageException(e.getMessage(), e)
+                throw new ExecutionFileStorageException(e.getMessage(), e)
             }
         } else {
             throw new RuntimeException("ScriptExecutionFileStoragePlugin: 'retrieve' closure signature invalid for plugin ${description.name}, cannot open")

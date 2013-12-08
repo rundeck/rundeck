@@ -40,7 +40,7 @@ public interface ExecutionFileStorage {
      * @throws java.io.IOException
      */
     boolean store(String filetype, InputStream stream, long length, Date lastModified) throws IOException,
-            LogFileStorageException;
+            ExecutionFileStorageException;
 
     /**
      * Write a file of the given file type to the given stream
@@ -52,5 +52,5 @@ public interface ExecutionFileStorage {
      *
      * @throws IOException
      */
-    boolean retrieve(String filetype, OutputStream stream) throws IOException, LogFileStorageException;
+    boolean retrieve(String filetype, OutputStream stream) throws IOException, ExecutionFileStorageException;
 }

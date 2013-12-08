@@ -3,7 +3,7 @@ package rundeck.services
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogWriter
 import com.dtolabs.rundeck.core.logging.LogFileState
-import com.dtolabs.rundeck.core.logging.LogFileStorageException
+import com.dtolabs.rundeck.core.logging.ExecutionFileStorageException
 import com.dtolabs.rundeck.core.logging.StreamingLogWriter
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
@@ -230,21 +230,21 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         }
 
         @Override
-        boolean isAvailable(String filetype) throws LogFileStorageException {
+        boolean isAvailable(String filetype) throws ExecutionFileStorageException {
             availableFilekey=filetype
             return isAvailable()
         }
 
         @Override
-        boolean isAvailable() throws LogFileStorageException {
+        boolean isAvailable() throws ExecutionFileStorageException {
             if(availableException){
-                throw new LogFileStorageException("testStoragePlugin.available")
+                throw new ExecutionFileStorageException("testStoragePlugin.available")
             }
             return available
         }
 
         @Override
-        boolean store(String filetype, InputStream stream, long length, Date lastModified) throws IOException, LogFileStorageException {
+        boolean store(String filetype, InputStream stream, long length, Date lastModified) throws IOException, ExecutionFileStorageException {
             storeFilekey=filetype
             return store(stream,length,lastModified)
         }
@@ -258,7 +258,7 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         }
 
         @Override
-        boolean retrieve(String filetype, OutputStream stream) throws IOException, LogFileStorageException {
+        boolean retrieve(String filetype, OutputStream stream) throws IOException, ExecutionFileStorageException {
             retrieveFilekey=filetype
             return retrieve(stream)
         }

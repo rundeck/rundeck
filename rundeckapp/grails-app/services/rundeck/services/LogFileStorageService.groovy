@@ -5,7 +5,7 @@ import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogWriter
 import com.dtolabs.rundeck.app.internal.logging.RundeckLogFormat
 import com.dtolabs.rundeck.core.logging.ExecutionFileStorage
 import com.dtolabs.rundeck.core.logging.LogFileState
-import com.dtolabs.rundeck.core.logging.LogFileStorageException
+import com.dtolabs.rundeck.core.logging.ExecutionFileStorageException
 import com.dtolabs.rundeck.core.logging.StreamingLogReader
 import com.dtolabs.rundeck.core.logging.StreamingLogWriter
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
@@ -727,7 +727,7 @@ class LogFileStorageService implements InitializingBean{
             tempfile.withOutputStream { out ->
                 try {
                     psuccess = storage.retrieve(filekey,out)
-                } catch (LogFileStorageException e) {
+                } catch (ExecutionFileStorageException e) {
                     errorMessage=e.message
                 }
             }

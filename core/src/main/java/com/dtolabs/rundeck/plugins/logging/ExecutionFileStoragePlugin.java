@@ -17,7 +17,7 @@
 package com.dtolabs.rundeck.plugins.logging;
 
 import com.dtolabs.rundeck.core.logging.ExecutionFileStorage;
-import com.dtolabs.rundeck.core.logging.LogFileStorageException;
+import com.dtolabs.rundeck.core.logging.ExecutionFileStorageException;
 
 import java.util.Map;
 
@@ -39,9 +39,9 @@ public interface ExecutionFileStoragePlugin extends ExecutionFileStorage {
      *
      * @return true if a file with the given filetype is available for the context
      *
-     * @throws com.dtolabs.rundeck.core.logging.LogFileStorageException
+     * @throws com.dtolabs.rundeck.core.logging.ExecutionFileStorageException
      *          if there is an error determining the availability
      */
-    public boolean isAvailable(String filetype) throws LogFileStorageException;
+    public boolean isAvailable(String filetype) throws ExecutionFileStorageException;
 
 }
