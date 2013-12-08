@@ -27,7 +27,7 @@ import rundeck.services.logging.WorkflowStateFileLoader
 import java.text.SimpleDateFormat
 
 class WorkflowService implements ApplicationContextAware{
-    public static final String STATE_FILE_STORAGE_KEY= "state.json"
+    public static final String STATE_FILE_FILETYPE = "state.json"
 
     protected def ExecutionService executionService
     def ApplicationContext applicationContext
@@ -132,7 +132,7 @@ class WorkflowService implements ApplicationContextAware{
         def mutablestate = new MutableWorkflowStateListener(state)
         def chain = [mutablestate]
         def File outfile = getStateFileForExecution(execution)
-        def storagerequest = logFileStorageService.prepareForFileStorage(execution, STATE_FILE_STORAGE_KEY, outfile)
+        def storagerequest = logFileStorageService.prepareForFileStorage(execution, STATE_FILE_FILETYPE, outfile)
         chain << new WorkflowStateListenerAction(onWorkflowExecutionStateChanged: {
             ExecutionState executionState, Date timestamp, List<String> nodeSet ->
                 if (executionState.completedState) {
@@ -149,7 +149,7 @@ class WorkflowService implements ApplicationContextAware{
      * @return
      */
     public File getStateFileForExecution(Execution execution) {
-        logFileStorageService.getFileForExecutionFilekey(execution, STATE_FILE_STORAGE_KEY)
+        logFileStorageService.getFileForExecutionFiletype(execution, STATE_FILE_FILETYPE)
     }
 
     def persistExecutionState(Closure storagerequest, Long id, WorkflowState state, File file) {
@@ -161,7 +161,7 @@ class WorkflowService implements ApplicationContextAware{
     }
 
     private WorkflowState loadState(Execution e) {
-        def outfile = logFileStorageService.getFileForExecutionFilekey(e, STATE_FILE_STORAGE_KEY)
+        def outfile = logFileStorageService.getFileForExecutionFiletype(e, STATE_FILE_FILETYPE)
         def Map map = deserializeState(outfile)
         return map ? workflowStateFromMap(map) : null
     }
@@ -335,7 +335,7 @@ class WorkflowService implements ApplicationContextAware{
         }
 
         //request file via file storage
-        def loader = logFileStorageService.requestLogFileLoad(e, STATE_FILE_STORAGE_KEY, performLoad)
+        def loader = logFileStorageService.requestLogFileLoad(e, STATE_FILE_FILETYPE, performLoad)
 
         if (loader.file) {
             //cache local data

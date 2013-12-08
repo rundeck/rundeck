@@ -20,7 +20,7 @@ import rundeck.services.logging.MultiLogWriter
 
 class LoggingService {
 
-    static final String LOG_FILE_STORAGE_KEY="rdlog"
+    static final String LOG_FILE_FILETYPE ="rdlog"
     FrameworkService frameworkService
     LogFileStorageService logFileStorageService
     def pluginService
@@ -131,7 +131,7 @@ class LoggingService {
         if(pluginName){
             log.error("Falling back to local file storage log reader")
         }
-        return logFileStorageService.requestLogFileReader(execution, LOG_FILE_STORAGE_KEY)
+        return logFileStorageService.requestLogFileReader(execution, LOG_FILE_FILETYPE)
     }
 
     public OutputStream createLogOutputStream(StreamingLogWriter logWriter, LogLevel level, Contextual listener) {

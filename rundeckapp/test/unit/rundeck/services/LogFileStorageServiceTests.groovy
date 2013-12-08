@@ -119,7 +119,7 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         assertTrue(svc.isResultCacheItemAllowedRetry([time: new Date(), count: 3]))
         assertFalse(svc.isResultCacheItemAllowedRetry([time: new Date(), count: 10]))
     }
-    void testGetFileForKey(){
+    void testGetFileForLocalPath(){
         mockLogging(LogFileStorageService)
         LogFileStorageService svc = new LogFileStorageService()
         def fmock = mockFor(FrameworkService)
@@ -131,7 +131,7 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         assertNotNull(result)
         assertEquals(new File("/tmp/logs/rundeck/abc"),result)
     }
-    void testGetFileForKeyNotFound(){
+    void testGetFileForLocalPathNotFound(){
         mockLogging(LogFileStorageService)
         def fmock = mockFor(FrameworkService)
         fmock.demand.getFrameworkProperties() {->
@@ -212,14 +212,14 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         Map<String, ? extends Object> context
         boolean available
         boolean availableException
-        String availableFilekey
+        String availableFiletype
         boolean initializeCalled
         boolean storeLogFileCalled
         boolean storeLogFileSuccess
-        String storeFilekey
+        String storeFiletype
         boolean retrieveLogFileCalled
         boolean retrieveLogFileSuccess
-        String retrieveFilekey
+        String retrieveFiletype
         long storeLength
         Date storeLastModified
 
@@ -231,7 +231,7 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
 
         @Override
         boolean isAvailable(String filetype) throws ExecutionFileStorageException {
-            availableFilekey=filetype
+            availableFiletype=filetype
             return isAvailable()
         }
 
@@ -245,7 +245,7 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
 
         @Override
         boolean store(String filetype, InputStream stream, long length, Date lastModified) throws IOException, ExecutionFileStorageException {
-            storeFilekey=filetype
+            storeFiletype=filetype
             return store(stream,length,lastModified)
         }
 
@@ -259,7 +259,7 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
 
         @Override
         boolean retrieve(String filetype, OutputStream stream) throws IOException, ExecutionFileStorageException {
-            retrieveFilekey=filetype
+            retrieveFiletype=filetype
             return retrieve(stream)
         }
 
@@ -301,6 +301,7 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         assertEquals(false, req.completed)
         assertEquals(execution, req.execution)
         assertEquals("test1", req.pluginName)
+        assertEquals("rdlog", req.filetype)
     }
 
     void testPluginLogFileWriterOnCloseShouldStartStorageRequest(){
@@ -361,11 +362,11 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         Map task=performRunStorage(test, "rdlog", createExecution(), testLogFile1) { LogFileStorageService service ->
             svc = service
             assertFalse(test.storeLogFileCalled)
-            assertNull(test.storeFilekey)
+            assertNull(test.storeFiletype)
         }
 
         assertTrue(test.storeLogFileCalled)
-        assertEquals("rdlog", test.storeFilekey)
+        assertEquals("rdlog", test.storeFiletype)
         assertEquals(testLogFile1.length(),test.storeLength)
         assertEquals(new Date(testLogFile1.lastModified()),test.storeLastModified)
 
@@ -383,11 +384,11 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         Map task=performRunStorage(test, "rdlog", createExecution(), testLogFile1) { LogFileStorageService service ->
             svc = service
             assertFalse(test.storeLogFileCalled)
-            assertNull( test.storeFilekey)
+            assertNull( test.storeFiletype)
         }
 
         assertTrue(test.storeLogFileCalled)
-        assertEquals("rdlog", test.storeFilekey)
+        assertEquals("rdlog", test.storeFiletype)
         assertEquals(testLogFile1.length(),test.storeLength)
         assertEquals(new Date(testLogFile1.lastModified()),test.storeLastModified)
 
@@ -415,11 +416,11 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
                 assertEquals(testLogFile1,task.file)
             }
             assertFalse(test.storeLogFileCalled)
-            assertNull(test.storeFilekey)
+            assertNull(test.storeFiletype)
         }
 
         assertTrue(test.storeLogFileCalled)
-        assertEquals("rdlog", test.storeFilekey)
+        assertEquals("rdlog", test.storeFiletype)
         assertEquals(testLogFile1.length(),test.storeLength)
         assertEquals(new Date(testLogFile1.lastModified()),test.storeLastModified)
 
@@ -429,7 +430,7 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         assertTrue(queued)
     }
 
-    private Map performRunStorage(testStoragePlugin test, String filekey, Execution e, File testfile, Closure clos = null) {
+    private Map performRunStorage(testStoragePlugin test, String filetype, Execution e, File testfile, Closure clos = null) {
         mockDomain(Execution)
         mockDomain(LogFileStorageRequest)
         mockLogging(LogFileStorageService)
@@ -459,7 +460,7 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         if (null != clos) {
             svc.with(clos)
         }
-        def task = [id: e.id.toString(), file: testfile, storage: test, key: filekey]
+        def task = [id: e.id.toString(), file: testfile, storage: test, filetype: filetype]
         svc.runStorageRequest(task)
         return task
     }
@@ -595,7 +596,7 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         test.available = true
 
         def reader=performReaderRequest(test, false, testLogFileDNE, false, createExecution()){ LogFileStorageService svc->
-            svc.metaClass.logFileRetrievalRequestState={Execution execution, String filekey->
+            svc.metaClass.logFileRetrievalRequestState={Execution execution, String filetype->
                 ExecutionLogState.PENDING_LOCAL
             }
         }
@@ -661,16 +662,16 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
             UUID.randomUUID()
         }
         svc.pluginService = pmock.createMock()
-        svc.metaClass.getFileForExecutionFilekey = { Execution e2, String filekey ->
+        svc.metaClass.getFileForExecutionFiletype = { Execution e2, String filetype ->
             assert e == e2
-            assert "rdlog"==filekey
+            assert "rdlog"==filetype
             logfile
         }
         if(null!= svcClosure){
             svc.with(svcClosure)
         }
 
-        return svc.requestLogFileReader(e, LoggingService.LOG_FILE_STORAGE_KEY,performLoad)
+        return svc.requestLogFileReader(e, LoggingService.LOG_FILE_FILETYPE,performLoad)
     }
 
     private Execution createExecution(Closure clos=null) {
