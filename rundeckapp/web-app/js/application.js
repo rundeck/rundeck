@@ -1158,8 +1158,12 @@ function _initAffix(){
     });
 }
 
-jQuery(window).load(function () {
-    jQuery('.has_tooltip').tooltip({});
-    _initPopoverContentRef();
-    _initAffix();
-});
+(function(){
+    if(typeof(jQuery)=='function'){
+        jQuery(document).ready(function () {
+            jQuery('.has_tooltip').tooltip({});
+            _initPopoverContentRef();
+            _initAffix();
+        });
+    }
+})();
