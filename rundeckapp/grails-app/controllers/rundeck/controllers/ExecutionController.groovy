@@ -21,6 +21,7 @@ import rundeck.services.ScheduledExecutionService
 import rundeck.services.WorkflowService
 import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.logging.ExecutionLogState
+import rundeck.services.workflow.StateMapping
 
 import javax.servlet.http.HttpServletResponse
 import java.text.ParseException
@@ -153,8 +154,8 @@ class ExecutionController {
             execDuration: execDuration,
             executionState:execState.toUpperCase(),
             jobAverageDuration: jobAverage,
-            startTime:workflowService.encodeDate(e.dateStarted),
-            endTime: workflowService.encodeDate(e.dateCompleted),
+            startTime:StateMapping.encodeDate(e.dateStarted),
+            endTime: StateMapping.encodeDate(e.dateCompleted),
         ]
         def loader = workflowService.requestState(e)
         if (loader.state == ExecutionLogState.AVAILABLE) {
