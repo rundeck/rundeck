@@ -53,5 +53,5 @@ public class ServiceNameConstants {
     public static final String StreamingLogReader = "StreamingLogReader";
     public static final String StreamingLogWriter = "StreamingLogWriter";
     public static final String LogFileStorage = "LogFileStorage";
-    public static final String LogFileStorageV2 = "LogFileStorageV2";
+    public static final String ExecutionFileStorage = "ExecutionFileStorage";
 }

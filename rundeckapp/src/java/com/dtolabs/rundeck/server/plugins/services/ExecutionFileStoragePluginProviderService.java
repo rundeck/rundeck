@@ -25,7 +25,7 @@ import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin;
  * $INTERFACE is ... User: greg Date: 12/6/13 Time: 3:00 PM
  */
 public class ExecutionFileStoragePluginProviderService extends BasePluggableProviderService<ExecutionFileStoragePlugin> {
-    public static final String SERVICE_NAME = ServiceNameConstants.LogFileStorageV2;
+    public static final String SERVICE_NAME = ServiceNameConstants.ExecutionFileStorage;
     private ServiceProviderLoader rundeckServerServiceProviderLoader;
 
     public ExecutionFileStoragePluginProviderService() {
