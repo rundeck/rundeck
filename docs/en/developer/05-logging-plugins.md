@@ -16,15 +16,17 @@ When a user views the execution log in the Rundeck GUI, or accesses it via the A
 
 Rundeck provides a built-in Reader and Writer, by writing the log output to a formatted file on disk, stored in the `var/logs` directory.  This is the **Local File Log**.
 
-However local storage of log files is not always ideal, such as when deploying of Rundeck in a cloud environment where local disk storage could be ephemeral, or when clustering multiple Rundeck servers.  In those cases, it would be useful to have a way to store the log file somewhere else, and retrieve it when necessary.
+In addition, in Rundeck 2.0+, each execution generates a *state* file, which contains information about how each step and node executed.  This file is also stored on disk.
 
-Rundeck now has another component:
+However local storage of log files is not always ideal, such as when deploying of Rundeck in a cloud environment where local disk storage could be ephemeral, or when clustering multiple Rundeck servers.  In those cases, it would be useful to have a way to store the log file and state file somewhere else, and retrieve them when necessary.
 
-* *Log File Storage* - A way of storing and retrieving log file data in an external system
+Rundeck has another component:
 
-Rundeck has a plugin mechanism for all three of these logging components, allowing the logging system to be adapted to different needs.  
+* *Execution File Storage* - A way of storing and retrieving file data in an external system
 
-Events are written to all configured Writer plugins, as well as the **Local File Log** if not disabled:
+Rundeck has a plugin mechanism for all three of these components, allowing the logging system and file storage system to be adapted to different needs.  
+
+Log Events are written to all configured Writer plugins, as well as the **Local File Log** if not disabled:
 
 ![Writer plugins](../figures/log storage1.png)
 
@@ -42,13 +44,19 @@ Here are some examples of how it can be used:
 * duplicate all log output somewhere, in addition to using the **Local File Log**
 * Supplement the **Local File Log** with a secondary log file storage system, so that local files can be removed and restored as needed
 
+## Changes since Rundeck 1.6
+
+In Rundeck 1.6, there was an `LogFileStorage` service and plugin system.  In Rundeck 2.0+, this has been replaced by the `ExecutionFileStorage` service and plugin system.
+
+Any plugins written for Rundeck 1.6 will *not* work in Rundeck 2.0, and need to be updated to use the new mechanism.
+
 ## Types of Logging Plugins
 
 There are three types of plugins that can be created:
 
 * [StreamingLogWriter](#streaminglogwriter) - provides a stream-like mechanism for writing log events
 * [StreamingLogReader](#streaminglogreader) - provides a stream-like mechanism for reading log events
-* [LogFileStorage](#logfilestorage) - provides a way to both store and retrieve entire log files
+* [ExecutionFileStorage](#executionfilestorage) - provides a way to both store and retrieve entire log files and execution state files
 
 ## Configuration
 
@@ -71,7 +79,7 @@ Your plugin class should implement the appropriate Java interface as described i
 
 * [StreamingLogWriter](#streaminglogwriter)
 * [StreamingLogReader](#streaminglogreader)
-* [LogFileStorage](#logfilestorage)
+* [ExecutionFileStorage](#executionfilestorage)
 
 To define configuration properties for your plugin, you use the same mechanisms as for Workflow Steps, described under the chapter [Workflow Step Plugin Development - Plugin Descriptions](workflow-step-plugin-development.html#plugin-descriptions).
 
@@ -107,6 +115,8 @@ All three plugin types are given a Map of Execution "context data".  This is a d
 This data map is the same as the "Job context variables" available when you execute a job or adhoc script, as described in the chapter [Job Workflows - Context Variables](../manual/job-workflows.html#context-variables).
 
 Note that the Map keys will not start with `job.`, simply use the variable name, such as `execid`.
+
+In addition, for ExecutionFileStorage plugins, another map entry named `filetype` will be specified, which indicates which type of file is being stored.  You need to use this filetype as part of the identifier for storing or retrieving the file.
 
 ## StreamingLogWriter
 
@@ -422,124 +432,140 @@ The plugin is used in this manner:
 2. The `next` closure is called repeatedly, until the result `event` entry is null, or `complete` is true.  The `offset` value is reported to the client.
 3. The `close` closure is called with the context map.
 
-## LogFileStorage
+## ExecutionFileStorage
 
-The `LogFileStorage` system is asked to store and retrieve entire log files for a specific execution.
+The `ExecutionFileStorage` system is asked to store and retrieve entire log files and state files for a specific execution.
 
 The Java interface for these plugins is:
     
-    com.dtolabs.rundeck.plugins.logging.LogFileStoragePlugin
+    com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
 
-Log file storage allows Rundeck to store the log files elsewhere, in case local file storage is not suitable for long-term retention. 
+Exection file storage allows Rundeck to store the files elsewhere, in case local file storage is not suitable for long-term retention. 
 
-When a LogFileStorage plugin is enabled, and the **Local File Log** streaming writer/reader is enabled, Rundeck will add this additional behavior:
+The ExecutionFileStorage service is used by two aspects of the Rundeck server currently.
+
+1. Execution Log file - a data file containing all of the output for an execution
+2. Execution state files - a data file containing all of the workflow step and node state information for an execution
 
 ### Storage behavior
 
-After an execution completes, and the **Local File Log** finishes writing, Rundeck will place a *Storage Request* in an asynchronous queue for that Execution.
+If an ExecutionFileStoragePlugin is installed and configured to be enabled, Rundeck will use it in this way after an Execution completes:
 
-When triggered, the *Storage Request* will use the configured LogFileStorage plugin and invoke `store`:
+Rundeck will place two *Storage Requests* in an asynchronous queue for that Execution to store the Log file and the State file.
+
+When triggered, the *Storage Request* will use the configured ExecutionFileStorage plugin and invoke `store`:
 
 * If it is unsuccessful, Rundeck may re-queue the request to retry it after a delay (configurable)
 
 ### Retrieval behavior
 
-When a client requests a log stream to read via the **Local File Log**, Rundeck determines if the file is available locally.  If it is not available, it will start a *Retrieval Request* asynchronously, and tell the client that the file is in a "pending" state.
+When a client requests a log stream to read via the **Local File Log**, or requests to read the **Execution Workflow State**, Rundeck determines if the file(s) are available locally.  If they are not available, it will start a *Retrieval Request* asynchronously for each missing file, and tell the client that the file is in a "pending" state.
 
-The *Retrieval Request* will use the configured LogFileStorage plugin, and invoke `retrieve`.
+The *Retrieval Request* will use the configured ExecutionFileStorage plugin, and invoke `retrieve`.
 
-If successful, the client requests to read the **Local File Log** should find the file available locally.  If unsuccessful, the result may be cached for a period of time to report to the client. After that time, a new *Retrieval Request* may be started if requested by a client.  After a certain number of attempts fail, further attempts will be disabled and return the cached status.  The retry delay and number of attempts can be configured.
+If successful, the client requests to read the **Local File Log** or **Execution Workflow State** should find the file available locally.  If unsuccessful, the result may be cached for a period of time to report to the client. After that time, a new *Retrieval Request* may be started if requested by a client.  After a certain number of attempts fail, further attempts will be disabled and return the cached status.  The retry delay and number of attempts can be configured.
 
-### Log File Availability
+### Execution File Availability
 
-Your plugin will be asked if the log file is 'available', and should report back one of:
+Your plugin will be asked if a file of a specific type is 'available', and should report back one of:
 
-* `true` - the plugin can retrieve the file
-* `false` - the plugin cannot retrieve the file
+* `true` - the plugin can retrieve the file of the specified type
+* `false` - the plugin cannot retrieve the file of the specified type
 
 Only if `true` is reported will a *Retrieval Request* be created.
 
 If there is an error discovering availability, your plugin should throw an Exception with the error message to report.
 
-### Java LogFileStorage
+### Java ExecutionFileStorage
 
-Create a Java class that implements the [LogFileStoragePlugin](https://github.com/dtolabs/rundeck/tree/core/src/main/java/com/dtolabs/rundeck/plugins/logging/LogFileStoragePlugin.java) interface:
+Create a Java class that implements the [ExecutionFileStoragePlugin](https://github.com/dtolabs/rundeck/tree/core/src/main/java/com/dtolabs/rundeck/plugins/logging/ExecutionFileStoragePlugin.java) interface:
 
     /**
-     * Plugin interface for Log file storage
+     * Plugin to implement {@link com.dtolabs.rundeck.core.logging.ExecutionFileStorage}
      */
-    public interface LogFileStoragePlugin extends LogFileStorage {
+    public interface ExecutionFileStoragePlugin extends ExecutionFileStorage {
         /**
          * Initializes the plugin with contextual data
+         *
          * @param context
          */
         public void initialize(Map<String, ? extends Object> context);
 
         /**
-         * Returns true if the file is available, false otherwise
-         * @return
-         * @throws LogFileStorageException if there is an error determining the availability
+         * Returns true if the file for the context and the given filetype is available, false otherwise
+         *
+         * @param filetype file type or extension of the file to check
+         *
+         * @return true if a file with the given filetype is available for the context
+         *
+         * @throws com.dtolabs.rundeck.core.logging.ExecutionFileStorageException
+         *          if there is an error determining the availability
          */
-        public boolean isAvailable() throws LogFileStorageException;
+        public boolean isAvailable(String filetype) throws ExecutionFileStorageException;
     }
 
 
-This extends the the [LogFileStorage](https://github.com/dtolabs/rundeck/tree/core/src/main/java/com/dtolabs/rundeck/core/logging/LogFileStorage.java) interface:
+This extends the the [ExecutionFileStorage](https://github.com/dtolabs/rundeck/tree/core/src/main/java/com/dtolabs/rundeck/core/logging/ExecutionFileStorage.java) interface:
 
     /**
-     * Handles log file storage and retrieval
+     * Handles storage and retrieval of typed files for an execution, the filetype is specified in the {@link #store(String,
+     * java.io.InputStream, long, java.util.Date)} and {@link #retrieve(String, java.io.OutputStream)} methods, and more
+     * than one filetype may be stored or retrieved for the same execution.
      */
-    public interface LogFileStorage {
+    public interface ExecutionFileStorage {
         /**
-         * Stores a log file read from the given stream
+         * Stores a file of the given file type, read from the given stream
          *
-         * @param stream the input stream
-         * @param length the file length
+         * @param filetype     filetype or extension of the file to store
+         * @param stream       the input stream
+         * @param length       the file length
          * @param lastModified the file modification time
          *
          * @return true if successful
          *
-         * @throws IOException
+         * @throws java.io.IOException
          */
-        boolean store(InputStream stream, long length, Date lastModified) throws IOException, LogFileStorageException;
+        boolean store(String filetype, InputStream stream, long length, Date lastModified) throws IOException,
+                ExecutionFileStorageException;
 
         /**
-         * Writes a log file to the given stream
+         * Write a file of the given file type to the given stream
          *
-         * @param stream the output stream
+         * @param filetype key to identify stored file
+         * @param stream   the output stream
          *
          * @return true if successful
          *
          * @throws IOException
          */
-        boolean retrieve(OutputStream stream) throws IOException, LogFileStorageException;
+        boolean retrieve(String filetype, OutputStream stream) throws IOException, ExecutionFileStorageException;
     }
 
 
 The plugin is used in these two conditions:
 
-* A log file needs to be stored via the plugin
-* A log file needs to be retrieved via the plugin
+* A log or state file needs to be stored via the plugin
+* A log or state file needs to be retrieved via the plugin
 
 1. When the plugin is instantiated, any configuration properties defined that have values to be resolved are set on the plugin instance
-2. The `initialize` method is called with a map of [contextual data](#execution-context-data) about the execution
+2. The `initialize` method is called with a map of [contextual data](#execution-context-data) about the execution.
 
 When `retrieval` is needed:
 
-1. The `isAvailable` method is called to determine if the plugin can retrieve the file
-2. If the method returns true, then `retrieve` method is called.
+1. The `isAvailable` method is called to determine if the plugin can retrieve the file, and the filetype is specified
+2. If the method returns true, then `retrieve` method is called with the same filetype.
 
 When `storage` is needed:
 
-1. The `store` method is called.
+1. The `store` method is called with the filetype to store.
 
-### Groovy LogFileStorage
+### Groovy ExecutionFileStorage
 
-Create a groovy script that calls the `rundeckPlugin` method and passes the `LogFileStoragePlugin` as the type of plugin:
+Create a groovy script that calls the `rundeckPlugin` method and passes the `ExecutionFileStoragePlugin` as the type of plugin:
 
     
-    import com.dtolabs.rundeck.plugins.logging.LogFileStoragePlugin
-    rundeckPlugin(LogFileStoragePlugin){
+    import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
+    rundeckPlugin(ExecutionFileStoragePlugin){
         //plugin definition
     }
 
@@ -553,7 +579,7 @@ Define these closures inside your definition:
      * Called to determine the file availability, return true to indicate it is available, 
      * false to indicate it is not available. An exception indicates an error.
      */
-    available { Map execution, Map configuration->
+    available { String filetype, Map execution, Map configuration->
         //determine state
         return isAvailable()
     }
@@ -564,7 +590,7 @@ Define these closures inside your definition:
      * Called to store a log file, called with the execution data, configuration properties, and an InputStream.  Additionally `length` and `lastModified` properties are in the closure binding, providing the file length, and last modification Date.
      * Return true to indicate success.
      */
-    store { Map execution, Map configuration, InputStream source->
+    store { String filetype, Map execution, Map configuration, InputStream source->
         //store output
         source.withReader { reader ->
             //...write somewhere
@@ -580,7 +606,7 @@ Define these closures inside your definition:
      * Called to retrieve a log file, called with the execution data, configuration properties, and an OutputStream.
      * Return true to indicate success.
      */
-    retrieve {  Map execution, Map configuration, OutputStream out->
+    retrieve {  String filetype, Map execution, Map configuration, OutputStream out->
         //get log file contents and write to output stream
         out << retrieveIt()
         //return true to indicate success
@@ -589,6 +615,6 @@ Define these closures inside your definition:
 
 The plugin is used in this manner:
 
-1. The `available` closure is called before retrieving the file, to determine if it is available
-1. The `store` closure is called when a file needs to be stored, with the [contextual data](#execution-context-data), configuration Map, and InputStream which will produce the log data. Additionally `length` and `lastModified` properties are in the closure binding, providing the file length, and last modification Date.
+1. The `available` closure is called before retrieving the file, to determine if it is available, passing the filetype
+1. The `store` closure is called when a file needs to be stored, with the filetype, the [contextual data](#execution-context-data), configuration Map, and InputStream which will produce the log data. Additionally `length` and `lastModified` properties are in the closure binding, providing the file length, and last modification Date.
 2. The `retrieve` closure is called when a file needs to be retrieved, with the [contextual data](#execution-context-data), configuration Map, and OutputStream to write the log file content

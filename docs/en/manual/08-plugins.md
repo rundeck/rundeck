@@ -430,14 +430,14 @@ To disable the **Local File Log Writer**:
 * `rundeck.execution.logs.localFileStorageEnabled`
     * value: `false`
 
-To configure a LogFileStorage plugin:
+To configure a ExecutionFileStorage plugin:
 
 * `rundeck.execution.logs.fileStoragePlugin`
-    * example value: `MyLogFileStoragePlugin`
+    * example value: `MyFileStoragePlugin`
 
 Also, if `localFileStorageEnabled` is `false`, but no `streamingReaderPlugin` is enabled, then Rundeck will still default to using the **Local File Log Writer**.
 
-The LogFileStorage plugins also have some associated configuration values
+The ExecutionFileStorage plugins also have some associated configuration values
 that can be used to tune the behavior of the plugins:
 
 * `rundeck.execution.logs.fileStorage.storageRetryCount`
@@ -468,7 +468,7 @@ To add a configuration property, add a value to the appropriate file in the foll
 
 The `TYPE` is one of:
 
-* `StreamingLogReader`, `StreamingLogWriter`, or `LogFileStorage`
+* `StreamingLogReader`, `StreamingLogWriter`, or `ExecutionFileStorage`
 
 `PROVIDER` is the provider name of the plugin.
 
