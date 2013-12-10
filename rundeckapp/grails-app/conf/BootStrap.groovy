@@ -12,6 +12,7 @@ class BootStrap {
     def grailsApplication
     def scheduledExecutionService
     def executionService
+    def executionUtilService
     def frameworkService
     def loggingService
     def logFileStorageService
@@ -216,10 +217,11 @@ class BootStrap {
              System.setOut(new PrintStream(newOut));
              System.setErr(new PrintStream(newErr));
 
-             def WebApplicationContext appCtx = WebApplicationContextUtils.getRequiredWebApplicationContext(servletContext)
-             appCtx.executionService.sysThreadBoundOut=newOut
-             appCtx.executionService.sysThreadBoundErr=newErr
-             appCtx.executionService.defaultLogLevel=servletContext.getAttribute("LOGLEVEL_DEFAULT")
+             executionService.sysThreadBoundOut=newOut
+             executionService.sysThreadBoundErr=newErr
+             executionUtilService.sysThreadBoundOut=newOut
+             executionUtilService.sysThreadBoundErr=newErr
+             executionService.defaultLogLevel=servletContext.getAttribute("LOGLEVEL_DEFAULT")
 
              executionService.cleanupRunningJobs(clusterMode ? serverNodeUUID : null)
              if(clusterMode){

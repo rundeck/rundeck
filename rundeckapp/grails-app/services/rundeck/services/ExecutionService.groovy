@@ -524,6 +524,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * starts an execution in a separate thread, returning a map of [thread:Thread, loghandler:LogHandler]
      */
     def Map executeAsyncBegin(Framework framework, Execution execution, ScheduledExecution scheduledExecution=null, Map extraParams = null, Map extraParamsExposed = null){
+        //TODO: method can be transactional readonly
         execution.refresh()
         def ExecutionLogWriter loghandler= loggingService.openLogWriter(execution,
                                                                           logLevelForString(execution.loglevel),
@@ -788,50 +789,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             builder.pushContextStep(1)
         }
         return builder.build()
-    }
-
-    /**
-     * cleans up executed job
-     * @param framework the framework
-     * @execMap map contains 'thread' and 'loghandler' keys, for Thread and LogHandler objects
-     */
-    def boolean executeAsyncFinish(Map execMap){
-        def WorkflowExecutionServiceThread thread=execMap.thread
-        def ExecutionLogWriter loghandler=execMap.loghandler
-        if(!thread.isSuccessful() ){
-            Throwable exc = thread.getThrowable()
-            def errmsgs = []
-
-            if (exc && (exc instanceof com.dtolabs.rundeck.core.NodesetFailureException
-                || exc instanceof com.dtolabs.rundeck.core.NodesetEmptyException)) {
-                errmsgs << exc.getMessage()
-            }else if(exc){
-                errmsgs<< exc.getMessage()
-                if(exc.getCause()){
-                    errmsgs << "Caused by: "+exc.getCause().getMessage()
-                }
-            }else if(thread.resultObject){
-                loghandler.logVerbose(thread.resultObject.toString())
-            }
-            if(errmsgs) {
-                log.error("Execution failed: " + execMap.execution.id + ": " + errmsgs.join(","))
-
-                loghandler.logError(errmsgs.join(','))
-                if (exc) {
-                    loghandler.logVerbose(getStackTrace(exc))
-                }
-            }else {
-                log.error("Execution failed: " + execMap.execution.id + ": " + thread.resultObject?.toString())
-                loghandler.logError("Execution failed: " + execMap.execution.id + ": " + thread.resultObject?.toString())
-            }
-
-        }else{
-            log.info("Execution successful: " + execMap.execution.id )
-        }
-        sysThreadBoundOut.removeThreadStream()
-        sysThreadBoundErr.removeThreadStream()
-        loghandler.close()
-        return thread.isSuccessful()
     }
 
     def abortExecution(ScheduledExecution se, Execution e, String user, final def framework, String killAsUser=null

@@ -1,0 +1,544 @@
+/*
+ Copyright 2013 SimplifyOps Inc, <http://simplifyops.com>
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+ */
+
+package rundeck.quartzjobs
+
+import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.execution.ServiceThreadBase
+import grails.test.GrailsMock
+import org.junit.Assert
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
+import rundeck.CommandExec
+import rundeck.Execution
+import rundeck.ScheduledExecution
+import rundeck.Workflow
+import rundeck.services.ExecutionService
+import rundeck.services.ExecutionUtilService
+import rundeck.services.FrameworkService
+
+/**
+ * $INTERFACE is ...
+ * User: greg
+ * Date: 12/9/13
+ * Time: 1:10 PM
+ */
+
+@RunWith(JUnit4.class)
+class ExecutionJobTest  {
+
+    @Test(expected = RuntimeException)
+    void testInitializeEmpty(){
+        ExecutionJob job = new ExecutionJob()
+        def contextMock = setupJobDataMap([:])
+        try {
+            job.initialize(null,contextMock)
+            Assert.fail("expected exception")
+        } catch (RuntimeException e) {
+            Assert.assertTrue(e.message,e.message.contains("failed to lookup scheduledException object from job data map"))
+            throw e
+        }
+    }
+    @Test(expected = RuntimeException)
+    void testInitializeWithoutExecutionService(){
+        ScheduledExecution se = setupJob()
+        ExecutionJob job = new ExecutionJob()
+        def contextMock = setupJobDataMap([scheduledExecutionId:se.id])
+        try {
+            job.initialize(null, contextMock)
+            Assert.fail("expected exception")
+        } catch (RuntimeException e) {
+            Assert.assertTrue(e.message,e.message.contains("ExecutionService could not be retrieved"))
+            throw e
+        }
+    }
+    @Test(expected = RuntimeException)
+    void testInitializeWithoutExecutionUtilService(){
+        ScheduledExecution se = setupJob()
+        ExecutionJob job = new ExecutionJob()
+        def mockes=new GrailsMock(ExecutionService)
+
+        ExecutionService es=mockes.createMock()
+        def contextMock = setupJobDataMap([scheduledExecutionId:se.id,executionService:es])
+        try {
+            job.initialize(null, contextMock)
+            Assert.fail("expected exception")
+        } catch (RuntimeException e) {
+            Assert.assertTrue(e.message,e.message.contains("ExecutionUtilService could not be retrieved"))
+            throw e
+        }
+    }
+    /**
+     * Initialize for an execution specified via job ID
+     */
+    @Test()
+    void testInitializeJobExecution(){
+        ScheduledExecution se = setupJob()
+        ExecutionJob job = new ExecutionJob()
+        def mockes=new GrailsMock(ExecutionService)
+        def mockeus=new GrailsMock(ExecutionUtilService)
+        FrameworkService.metaClass.static.getFrameworkForUserAndRoles={ String user, List rolelist, String rundeckbase->
+            'fakeFramework'
+        }
+        mockes.demand.selectSecureOptionInput(1..1){ ScheduledExecution scheduledExecution, Map params, Boolean exposed = false->
+            [test:'input']
+        }
+        mockes.demand.createExecution(1..1){ ScheduledExecution se1, String framework, String user->
+            Assert.assertEquals(se,se1)
+            Assert.assertEquals(se.user,user)
+            Assert.assertEquals('fakeFramework',framework)
+            'fakeExecution'
+        }
+        ExecutionService es = mockes.createMock()
+        ExecutionUtilService eus = mockeus.createMock()
+
+        def contextMock = setupJobDataMap([scheduledExecutionId:se.id,executionService:es,executionUtilService:eus,'rdeck.base':'/test/rdeck/base'])
+        def result=job.initialize(null, contextMock)
+
+        Assert.assertEquals(se.id,result.scheduledExecutionId)
+        Assert.assertEquals(se,result.scheduledExecution)
+        Assert.assertEquals(es,result.executionService)
+        Assert.assertEquals(eus,result.executionUtilService)
+        Assert.assertEquals("/test/rdeck/base",result.adbase)
+        Assert.assertEquals([test:'input'],result.extraParamsExposed)
+        Assert.assertEquals("fakeFramework",result.framework)
+        Assert.assertEquals("fakeExecution",result.execution)
+
+    }
+
+    /**
+     * executeAsyncBegin fails to start, result is success=false
+     */
+    @Test
+    void testExecuteCommandStartFailed(){
+        ScheduledExecution se = setupJob()
+        ExecutionJob job = new ExecutionJob()
+        def mockes = new GrailsMock(ExecutionService)
+        def mockeus = new GrailsMock(ExecutionUtilService)
+        mockes.demand.executeAsyncBegin(1..1) { Framework framework, Execution execution, ScheduledExecution scheduledExecution = null, Map extraParams = null, Map extraParamsExposed = null ->
+            null //fail to start
+        }
+        ExecutionService es = mockes.createMock()
+        ExecutionUtilService eus = mockeus.createMock()
+
+        def result=job.executeCommand(es,eus,null,null)
+        Assert.assertEquals(false,result.success)
+    }
+
+    /**
+     * executeAsyncBegin succeeds,finish succeeds, thread succeeds
+     */
+    @Test
+    void testExecuteCommandStartOkFinishOkThreadSuccessful(){
+        ScheduledExecution se = setupJob()
+        Execution execution = setupExecution(se, new Date(), new Date())
+        ExecutionJob job = new ExecutionJob()
+        def mockes = new GrailsMock(ExecutionService)
+        def mockeus = new GrailsMock(ExecutionUtilService)
+        FrameworkService.metaClass.static.getFrameworkForUserAndRoles = { String user, List rolelist, String rundeckbase ->
+            'fakeFramework'
+        }
+        ServiceThreadBase stb=new ServiceThreadBase()
+        stb.success=true
+        def testExecmap = [thread: stb, testExecuteAsyncBegin: true]
+        mockes.demand.executeAsyncBegin(1..1) { Framework framework, Execution execution1, ScheduledExecution scheduledExecution = null, Map extraParams = null, Map extraParamsExposed = null ->
+            Assert.assertEquals(execution,execution1)
+            testExecmap
+        }
+        mockeus.demand.finishExecution(1..1){ Map datamap->
+            Assert.assertTrue(datamap.testExecuteAsyncBegin)
+        }
+        ExecutionService es = mockes.createMock()
+        ExecutionUtilService eus = mockeus.createMock()
+
+        def result=job.executeCommand(es,eus,execution,null)
+        Assert.assertEquals(true,result.success)
+        Assert.assertEquals(testExecmap,result.execmap)
+    }
+
+    Execution setupExecution(ScheduledExecution se, Date startDate, Date finishDate) {
+        Execution e = new Execution(project: "test", user: 'bob',
+                dateStarted: startDate,
+                dateCompleted: finishDate,
+                scheduledExecution: se, workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]))
+        e.save()
+    }
+    /**
+     * executeAsyncBegin succeeds,finish succeeds, thread fails
+     */
+    @Test
+    void testExecuteCommandStartOkFinishOkThreadFails(){
+        ScheduledExecution se = setupJob()
+        Execution execution = setupExecution(se, new Date(), new Date())
+        ExecutionJob job = new ExecutionJob()
+        def mockes = new GrailsMock(ExecutionService)
+        def mockeus = new GrailsMock(ExecutionUtilService)
+        FrameworkService.metaClass.static.getFrameworkForUserAndRoles = { String user, List rolelist, String rundeckbase ->
+            'fakeFramework'
+        }
+        ServiceThreadBase stb = new ServiceThreadBase()
+        stb.success = false
+        def testExecmap = [thread: stb, testExecuteAsyncBegin: true]
+        mockes.demand.executeAsyncBegin(1..1) { Framework framework, Execution execution1, ScheduledExecution scheduledExecution = null, Map extraParams = null, Map extraParamsExposed = null ->
+            Assert.assertEquals(execution, execution1)
+            testExecmap
+        }
+        mockeus.demand.finishExecution(1..1) { Map datamap ->
+            Assert.assertTrue(datamap.testExecuteAsyncBegin)
+        }
+        ExecutionService es = mockes.createMock()
+        ExecutionUtilService eus = mockeus.createMock()
+
+        def result = job.executeCommand(es, eus, execution, null)
+        Assert.assertEquals(false, result.success)
+        Assert.assertEquals(testExecmap, result.execmap)
+
+    }
+    /**
+     * executeAsyncBegin succeeds,finish fails,  retry does not succeed
+     */
+    @Test(expected = RuntimeException)
+    void testExecuteCommandStartOkFinishRetryNoSuccess(){
+        ScheduledExecution se = setupJob()
+        Execution execution = setupExecution(se, new Date(), new Date())
+        ExecutionJob job = new ExecutionJob()
+        def mockes = new GrailsMock(ExecutionService)
+        def mockeus = new GrailsMock(ExecutionUtilService)
+        FrameworkService.metaClass.static.getFrameworkForUserAndRoles = { String user, List rolelist, String rundeckbase ->
+            'fakeFramework'
+        }
+        ServiceThreadBase stb = new ServiceThreadBase()
+        stb.success = false
+        def testExecmap = [thread: stb, testExecuteAsyncBegin: true]
+        mockes.demand.executeAsyncBegin(1..1) { Framework framework, Execution execution1, ScheduledExecution scheduledExecution = null, Map extraParams = null, Map extraParamsExposed = null ->
+            Assert.assertEquals(execution, execution1)
+            testExecmap
+        }
+        mockeus.demand.finishExecution(3..3) { Map datamap ->
+            throw new Exception("expected failure")
+        }
+        ExecutionService es = mockes.createMock()
+        ExecutionUtilService eus = mockeus.createMock()
+        job.finalizeRetryDelay=10
+        job.finalizeRetryMax=3
+        try {
+            def result = job.executeCommand(es, eus, execution, null)
+            Assert.fail("should throw exception")
+        } catch (RuntimeException e) {
+            Assert.assertTrue(e.message,e.message.contains("failed"))
+            throw e
+        }
+    }
+
+    /**
+     * executeAsyncBegin succeeds,finish fails,  retry does  succeed
+     */
+    @Test()
+    void testExecuteCommandStartOkFinishRetryWithSuccess(){
+        ScheduledExecution se = setupJob()
+        Execution execution = setupExecution(se, new Date(), new Date())
+        ExecutionJob job = new ExecutionJob()
+        def mockes = new GrailsMock(ExecutionService)
+        def mockeus = new GrailsMock(ExecutionUtilService)
+        FrameworkService.metaClass.static.getFrameworkForUserAndRoles = { String user, List rolelist, String rundeckbase ->
+            'fakeFramework'
+        }
+        ServiceThreadBase stb = new ServiceThreadBase()
+        stb.success = false
+        def testExecmap = [thread: stb, testExecuteAsyncBegin: true]
+        mockes.demand.executeAsyncBegin(1..1) { Framework framework, Execution execution1, ScheduledExecution scheduledExecution = null, Map extraParams = null, Map extraParamsExposed = null ->
+            Assert.assertEquals(execution, execution1)
+            testExecmap
+        }
+        def count=3
+        mockeus.demand.finishExecution(4..4) { Map datamap ->
+            if(count>0){
+                count--
+                throw new Exception("expected failure")
+            }
+        }
+        ExecutionService es = mockes.createMock()
+        ExecutionUtilService eus = mockeus.createMock()
+        job.finalizeRetryDelay=10
+        job.finalizeRetryMax=4
+        def result = job.executeCommand(es, eus, execution, null)
+        Assert.assertEquals(false, result.success)
+        Assert.assertEquals(testExecmap, result.execmap)
+    }
+
+    /**
+     * Closure always succeeds
+     */
+    def successClos = {
+        true
+    }
+    /**
+     * Closure always throws exception
+     */
+    def alwaysThrowClos = {
+        throw new Exception("test failure")
+    }
+    /**
+     * Return a closure that throws an exception the first X times it is called
+     */
+    def throwXTimes( int max){
+        int count=0
+        return {
+            if (max > count) {
+                count++
+                throw new Exception("test failure number ${count}")
+            }
+        }
+    }
+
+    @Test
+    void testWithRetrySuccessful(){
+        def job=new ExecutionJob()
+        def retrySuccess,exc
+        (retrySuccess,exc)=job.withRetry(1,1,"test1",successClos)
+        Assert.assertEquals(true,retrySuccess)
+        Assert.assertNull(exc)
+    }
+    @Test
+    void testWithRetryFailure(){
+        def job=new ExecutionJob()
+        def retrySuccess,exc
+        (retrySuccess,exc)=job.withRetry(2,1,"test1",alwaysThrowClos)
+        Assert.assertEquals(false,retrySuccess)
+        Assert.assertNotNull(exc)
+        Assert.assertEquals("test failure",exc.message)
+    }
+    @Test
+    void testWithRetryXTimesWithoutSuccess(){
+        def job=new ExecutionJob()
+        def retrySuccess,exc
+        (retrySuccess,exc)=job.withRetry(3,1,"test1",throwXTimes(3))
+        Assert.assertEquals(false,retrySuccess)
+        Assert.assertNotNull(exc)
+        Assert.assertEquals("test failure number 3",exc.message)
+    }
+    @Test
+    void testWithRetryXTimesWithSuccess(){
+        def job=new ExecutionJob()
+        def retrySuccess,exc
+        (retrySuccess,exc)=job.withRetry(3,1,"test1",throwXTimes(2))
+        Assert.assertEquals(true,retrySuccess)
+        Assert.assertNull(exc)
+    }
+
+    @Test
+    void testSaveStateNoJob(){
+        def job = new ExecutionJob()
+        def execution = setupExecution(null, new Date(), new Date())
+        def mockes = new GrailsMock(ExecutionService)
+
+        def expectresult= [
+                status: 'true',
+                cancelled: false,
+                failedNodes: null,
+                failedNodesMap: null,
+        ]
+        def execMap=[
+                failedNodes: null,
+        ]
+
+        mockes.demand.saveExecutionState(1..1){ schedId, exId, Map props, Map execmap = null->
+            Assert.assertNull(schedId)
+            Assert.assertEquals(execution.id,exId)
+            expectresult.each {k,v->
+                Assert.assertEquals("result property ${k} expected: ${v} was ${props[k]}",v,props[k])
+            }
+        }
+
+        def es = mockes.createMock()
+        job.saveState(es,execution,true,false,true,-1,execMap)
+    }
+
+    @Test
+    void testSaveStateWithJob(){
+        def job = new ExecutionJob()
+        def scheduledExecution = setupJob()
+        def execution = setupExecution(scheduledExecution, new Date(), null)
+        def mockes = new GrailsMock(ExecutionService)
+
+        def expectresult= [
+                status: 'true',
+                cancelled: false,
+                failedNodes: null,
+                failedNodesMap: null,
+        ]
+        def execMap=[
+                failedNodes: null,
+        ]
+
+        mockes.demand.saveExecutionState(1..1){ schedId, exId, Map props, Map execmap = null->
+            Assert.assertEquals(scheduledExecution.id,schedId)
+            Assert.assertEquals(execution.id,exId)
+            expectresult.each {k,v->
+                Assert.assertEquals("result property ${k} expected: ${v} was ${props[k]}",v,props[k])
+            }
+        }
+        def x=false
+        mockes.demand.updateScheduledExecStatistics(1..1){ Long schedId, long eId, long time->
+            Assert.assertEquals(scheduledExecution.id,schedId)
+            Assert.assertEquals(execution.id,eId)
+            Assert.assertTrue(time>0)
+            x=true
+        }
+
+        def es = mockes.createMock()
+        def result=job.saveState(es,execution,true,false,false, scheduledExecution.id,execMap)
+        Assert.assertTrue(x)
+    }
+
+    @Test
+    void testSaveStateWithJobStatsFailureRetryFail(){
+        def job = new ExecutionJob()
+        def scheduledExecution = setupJob()
+        def execution = setupExecution(scheduledExecution, new Date(), null)
+        def mockes = new GrailsMock(ExecutionService)
+
+        def expectresult= [
+                status: 'true',
+                cancelled: false,
+                failedNodes: null,
+                failedNodesMap: null,
+        ]
+        def execMap=[
+                failedNodes: null,
+        ]
+
+        mockes.demand.saveExecutionState(1..1){ schedId, exId, Map props, Map execmap = null->
+            Assert.assertEquals(scheduledExecution.id,schedId)
+            Assert.assertEquals(execution.id,exId)
+            expectresult.each {k,v->
+                Assert.assertEquals("result property ${k} expected: ${v} was ${props[k]}",v,props[k])
+            }
+        }
+        def saveStatsComplete=false
+        def fail3times = throwXTimes(3)
+        mockes.demand.updateScheduledExecStatistics(2..2){ Long schedId, long eId, long time->
+            Assert.assertEquals(scheduledExecution.id,schedId)
+            Assert.assertEquals(execution.id,eId)
+            Assert.assertTrue(time>0)
+            fail3times()
+            saveStatsComplete=true
+        }
+
+        def es = mockes.createMock()
+        job.statsRetryMax=2
+        def result=job.saveState(es,execution,true,false,false, scheduledExecution.id,execMap)
+        Assert.assertFalse(saveStatsComplete)
+    }
+    @Test
+    void testSaveStateWithJobStatsFailureRetrySucceed(){
+        def job = new ExecutionJob()
+        def scheduledExecution = setupJob()
+        def execution = setupExecution(scheduledExecution, new Date(), null)
+        def mockes = new GrailsMock(ExecutionService)
+
+        def expectresult= [
+                status: 'true',
+                cancelled: false,
+                failedNodes: null,
+                failedNodesMap: null,
+        ]
+        def execMap=[
+                failedNodes: null,
+        ]
+
+        mockes.demand.saveExecutionState(1..1){ schedId, exId, Map props, Map execmap = null->
+            Assert.assertEquals(scheduledExecution.id,schedId)
+            Assert.assertEquals(execution.id,exId)
+            expectresult.each {k,v->
+                Assert.assertEquals("result property ${k} expected: ${v} was ${props[k]}",v,props[k])
+            }
+        }
+        def saveStatsComplete=false
+        def fail3times = throwXTimes(3)
+        mockes.demand.updateScheduledExecStatistics(4..4){ Long schedId, long eId, long time->
+            Assert.assertEquals(scheduledExecution.id,schedId)
+            Assert.assertEquals(execution.id,eId)
+            Assert.assertTrue(time>0)
+            fail3times()
+            saveStatsComplete=true
+        }
+
+        def es = mockes.createMock()
+        job.statsRetryMax=4
+        def result=job.saveState(es,execution,true,false,false, scheduledExecution.id,execMap)
+        Assert.assertTrue(saveStatsComplete)
+    }
+
+    @Test
+    void testSaveStateWithFailureNoJob(){
+        def job = new ExecutionJob()
+        def execution = setupExecution(null, new Date(), new Date())
+        def mockes = new GrailsMock(ExecutionService)
+
+        def expectresult= [
+                status: 'true',
+                cancelled: false,
+                failedNodes: null,
+                failedNodesMap: null,
+        ]
+        def execMap=[
+                failedNodes: null,
+        ]
+        def fail3times=throwXTimes(3)
+
+        mockes.demand.saveExecutionState(2..2){ schedId, exId, Map props, Map execmap = null->
+            Assert.assertNull(schedId)
+            Assert.assertEquals(execution.id,exId)
+            expectresult.each {k,v->
+                Assert.assertEquals("result property ${k} expected: ${v} was ${props[k]}",v,props[k])
+            }
+            fail3times.call()
+        }
+
+        def es = mockes.createMock()
+
+        job.finalizeRetryMax=2
+        def result=job.saveState(es,execution,true,false,true,-1,execMap)
+        Assert.assertEquals(false,result)
+    }
+
+    private ScheduledExecution setupJob() {
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+        )
+        se.workflow.save()
+        se.save()
+    }
+
+    private def setupJobDataMap(Map mockdata) {
+        def data = new Expando(mockdata)
+        data.get= { String key ->
+            return mockdata[key]
+        }
+        data.getString=data.get
+        data.getBoolean={String key->
+            return mockdata[key]?true:false
+        }
+        return data
+    }
+}
