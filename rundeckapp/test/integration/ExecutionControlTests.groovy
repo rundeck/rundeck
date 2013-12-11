@@ -172,7 +172,10 @@ class ExecutionControlTests extends GrailsUnitTestCase{
         controller.request.api_version = 5
         controller.params.project = "Test"
         controller.params.groupPath = "some"
+        registerMetaClass(ExecutionController)
+        controller.metaClass.renderApiExecutionListResultXML={ execlist, paging = [:] ->
 
+        }
         controller.apiExecutionsQuery(null)
 
         assert 200 == controller.response.status
@@ -197,6 +200,10 @@ class ExecutionControlTests extends GrailsUnitTestCase{
         controller.params.project = "Test"
         controller.params.groupPath = "some/where"
 
+        registerMetaClass(ExecutionController)
+        controller.metaClass.renderApiExecutionListResultXML={ execlist, paging = [:] ->
+
+        }
         controller.apiExecutionsQuery(null)
 
         assert 200 == controller.response.status
@@ -219,7 +226,10 @@ class ExecutionControlTests extends GrailsUnitTestCase{
         controller.request.api_version = 5
         controller.params.project = "Test"
         controller.params.groupPath = "some/where/else"
+        registerMetaClass(ExecutionController)
+        controller.metaClass.renderApiExecutionListResultXML = { execlist, paging = [:] ->
 
+        }
         controller.apiExecutionsQuery(null)
 
         assert 200 == controller.response.status
@@ -245,7 +255,10 @@ class ExecutionControlTests extends GrailsUnitTestCase{
         controller.request.api_version = 5
         controller.params.project = "Test"
         controller.params.excludeGroupPath = 'some/where/else'
+        registerMetaClass(ExecutionController)
+        controller.metaClass.renderApiExecutionListResultXML = { execlist, paging = [:] ->
 
+        }
         controller.apiExecutionsQuery(null)
 
         assert 200 == controller.response.status
@@ -269,7 +282,10 @@ class ExecutionControlTests extends GrailsUnitTestCase{
         controller.request.api_version = 5
         controller.params.project = "Test"
         controller.params.excludeGroupPath='some/where'
+        registerMetaClass(ExecutionController)
+        controller.metaClass.renderApiExecutionListResultXML = { execlist, paging = [:] ->
 
+        }
         controller.apiExecutionsQuery(null)
 
         assert 200 == controller.response.status
@@ -319,7 +335,10 @@ class ExecutionControlTests extends GrailsUnitTestCase{
         controller.request.api_version = 5
         controller.params.project = "Test"
         controller.params.groupPathExact = "some"
+        registerMetaClass(ExecutionController)
+        controller.metaClass.renderApiExecutionListResultXML = { execlist, paging = [:] ->
 
+        }
         controller.apiExecutionsQuery(null)
 
         assert 200 == controller.response.status
@@ -345,7 +364,10 @@ class ExecutionControlTests extends GrailsUnitTestCase{
         controller.request.api_version = 5
         controller.params.project = "Test"
         controller.params.groupPathExact = "some/where"
+        registerMetaClass(ExecutionController)
+        controller.metaClass.renderApiExecutionListResultXML = { execlist, paging = [:] ->
 
+        }
         controller.apiExecutionsQuery(null)
 
         assert 200 == controller.response.status
@@ -371,7 +393,10 @@ class ExecutionControlTests extends GrailsUnitTestCase{
         controller.request.api_version = 5
         controller.params.project = "Test"
         controller.params.groupPathExact = "some/where/else"
+        registerMetaClass(ExecutionController)
+        controller.metaClass.renderApiExecutionListResultXML = { execlist, paging = [:] ->
 
+        }
         controller.apiExecutionsQuery(null)
 
         assert 200 == controller.response.status
@@ -398,7 +423,10 @@ class ExecutionControlTests extends GrailsUnitTestCase{
         controller.request.api_version = 5
         controller.params.project = "Test"
         controller.params.excludeGroupPathExact = "some"
+        registerMetaClass(ExecutionController)
+        controller.metaClass.renderApiExecutionListResultXML = { execlist, paging = [:] ->
 
+        }
         controller.apiExecutionsQuery(null)
 
         assert 200 == controller.response.status
@@ -425,7 +453,10 @@ class ExecutionControlTests extends GrailsUnitTestCase{
         controller.request.api_version = 5
         controller.params.project = "Test"
         controller.params.excludeGroupPathExact = "some/where"
+        registerMetaClass(ExecutionController)
+        controller.metaClass.renderApiExecutionListResultXML = { execlist, paging = [:] ->
 
+        }
         controller.apiExecutionsQuery(null)
 
         assert 200 == controller.response.status
@@ -452,7 +483,10 @@ class ExecutionControlTests extends GrailsUnitTestCase{
         controller.request.api_version = 5
         controller.params.project = "Test"
         controller.params.excludeGroupPathExact = "some/where/else"
+        registerMetaClass(ExecutionController)
+        controller.metaClass.renderApiExecutionListResultXML = { execlist, paging = [:] ->
 
+        }
         controller.apiExecutionsQuery(null)
 
         assert 200 == controller.response.status
@@ -501,7 +535,10 @@ class ExecutionControlTests extends GrailsUnitTestCase{
         controller.request.api_version = 5
         controller.params.project = "Test"
         controller.params.excludeJobFilter = "%green and red color"
+        registerMetaClass(ExecutionController)
+        controller.metaClass.renderApiExecutionListResultXML = { execlist, paging = [:] ->
 
+        }
         controller.apiExecutionsQuery(null)
 
         assert 200 == controller.response.status
@@ -527,7 +564,10 @@ class ExecutionControlTests extends GrailsUnitTestCase{
         controller.request.api_version = 5
         controller.params.project = "Test"
         controller.params.excludeJobFilter = "%blue green and red color"
+        registerMetaClass(ExecutionController)
+        controller.metaClass.renderApiExecutionListResultXML = { execlist, paging = [:] ->
 
+        }
         controller.apiExecutionsQuery(null)
 
         assert 200 == controller.response.status
@@ -553,7 +593,10 @@ class ExecutionControlTests extends GrailsUnitTestCase{
         controller.request.api_version = 5
         controller.params.project = "Test"
         controller.params.excludeJobExactFilter = "red color"
+        registerMetaClass(ExecutionController)
+        controller.metaClass.renderApiExecutionListResultXML = { execlist, paging = [:] ->
 
+        }
         controller.apiExecutionsQuery(null)
 
         assert 200 == controller.response.status
@@ -579,7 +622,10 @@ class ExecutionControlTests extends GrailsUnitTestCase{
         controller.request.api_version = 5
         controller.params.project = "Test"
         controller.params.excludeJobExactFilter = "green and red color"
+        registerMetaClass(ExecutionController)
+        controller.metaClass.renderApiExecutionListResultXML = { execlist, paging = [:] ->
 
+        }
         controller.apiExecutionsQuery(null)
 
         assert 200 == controller.response.status
@@ -605,7 +651,10 @@ class ExecutionControlTests extends GrailsUnitTestCase{
         controller.request.api_version = 5
         controller.params.project = "Test"
         controller.params.excludeJobExactFilter = "blue green and red color"
+        registerMetaClass(ExecutionController)
+        controller.metaClass.renderApiExecutionListResultXML = { execlist, paging = [:] ->
 
+        }
         controller.apiExecutionsQuery(null)
 
         assert 200 == controller.response.status
