@@ -29,7 +29,7 @@ class ExecutionUtilServiceTests extends GrailsUnitTestCase {
      * Finish logging when no error cause
      */
     void testFinishExecutionLoggingNoMessage() {
-
+        mockLogging(ExecutionUtilService)
         def executionUtilService = new ExecutionUtilService()
         def thread = new ServiceThreadBase()
         thread.success = false
@@ -42,11 +42,9 @@ class ExecutionUtilServiceTests extends GrailsUnitTestCase {
         def loghandler = logcontrol.createMock()
 
         def stbocontrol = mockFor(ThreadBoundOutputStream)
-        def stbecontrol = mockFor(ThreadBoundOutputStream)
-        stbocontrol.demand.removeThreadStream(1..1) {-> }
-        stbecontrol.demand.removeThreadStream(1..1) {-> }
+        stbocontrol.demand.removeThreadStream(2..2) {-> }
         executionUtilService.sysThreadBoundOut = stbocontrol.createMock()
-        executionUtilService.sysThreadBoundErr = stbecontrol.createMock()
+        executionUtilService.sysThreadBoundErr = stbocontrol.createMock()
 
         executionUtilService.finishExecutionLogging([thread: thread, loghandler: loghandler, execution: [id: 1]])
     }
@@ -54,7 +52,7 @@ class ExecutionUtilServiceTests extends GrailsUnitTestCase {
      * Finish logging when no error cause, with result
      */
     void testFinishExecutionLoggingNoMessageWithResult() {
-
+        mockLogging(ExecutionUtilService)
         def executionUtilService = new ExecutionUtilService()
         def thread = new ServiceThreadBase()
         thread.success = false
@@ -71,11 +69,9 @@ class ExecutionUtilServiceTests extends GrailsUnitTestCase {
         def loghandler = logcontrol.createMock()
 
         def stbocontrol = mockFor(ThreadBoundOutputStream)
-        def stbecontrol = mockFor(ThreadBoundOutputStream)
-        stbocontrol.demand.removeThreadStream(1..1) {-> }
-        stbecontrol.demand.removeThreadStream(1..1) {-> }
+        stbocontrol.demand.removeThreadStream(2..2) {-> }
         executionUtilService.sysThreadBoundOut = stbocontrol.createMock()
-        executionUtilService.sysThreadBoundErr = stbecontrol.createMock()
+        executionUtilService.sysThreadBoundErr = stbocontrol.createMock()
 
         executionUtilService.finishExecutionLogging([thread: thread, loghandler: loghandler, execution: [id: 1]])
     }
@@ -83,7 +79,7 @@ class ExecutionUtilServiceTests extends GrailsUnitTestCase {
      * Finish logging when no error cause, with result
      */
     void testFinishExecutionLoggingCausedByException() {
-
+        mockLogging(ExecutionUtilService)
         def executionUtilService = new ExecutionUtilService()
         def thread = new ServiceThreadBase()
         thread.success = false
@@ -102,11 +98,9 @@ class ExecutionUtilServiceTests extends GrailsUnitTestCase {
         def loghandler = logcontrol.createMock()
 
         def stbocontrol = mockFor(ThreadBoundOutputStream)
-        def stbecontrol = mockFor(ThreadBoundOutputStream)
-        stbocontrol.demand.removeThreadStream(1..1) {-> }
-        stbecontrol.demand.removeThreadStream(1..1) {-> }
+        stbocontrol.demand.removeThreadStream(2..2) {-> }
         executionUtilService.sysThreadBoundOut = stbocontrol.createMock()
-        executionUtilService.sysThreadBoundErr = stbecontrol.createMock()
+        executionUtilService.sysThreadBoundErr = stbocontrol.createMock()
 
         executionUtilService.finishExecutionLogging([thread: thread, loghandler: loghandler, execution: [id: 1]])
     }
@@ -114,7 +108,7 @@ class ExecutionUtilServiceTests extends GrailsUnitTestCase {
      * Finish logging when no error cause, with result
      */
     void testFinishExecutionLoggingCausedByExceptionWithCause() {
-
+        mockLogging(ExecutionUtilService)
         def executionUtilService = new ExecutionUtilService()
         def thread = new ServiceThreadBase()
         thread.success = false
@@ -133,11 +127,9 @@ class ExecutionUtilServiceTests extends GrailsUnitTestCase {
         def loghandler = logcontrol.createMock()
 
         def stbocontrol = mockFor(ThreadBoundOutputStream)
-        def stbecontrol = mockFor(ThreadBoundOutputStream)
-        stbocontrol.demand.removeThreadStream(1..1) {-> }
-        stbecontrol.demand.removeThreadStream(1..1) {-> }
+        stbocontrol.demand.removeThreadStream(2..2) {-> }
         executionUtilService.sysThreadBoundOut = stbocontrol.createMock()
-        executionUtilService.sysThreadBoundErr = stbecontrol.createMock()
+        executionUtilService.sysThreadBoundErr = stbocontrol.createMock()
 
         executionUtilService.finishExecutionLogging([thread: thread, loghandler: loghandler, execution: [id: 1]])
     }
@@ -145,7 +137,7 @@ class ExecutionUtilServiceTests extends GrailsUnitTestCase {
      * Finish logging when no error cause, with result
      */
     void testFinishExecutionLoggingCausedByNodeSetFailureException() {
-
+        mockLogging(ExecutionUtilService)
         def executionUtilService = new ExecutionUtilService()
         def thread = new ServiceThreadBase()
         thread.success = false
@@ -164,11 +156,9 @@ class ExecutionUtilServiceTests extends GrailsUnitTestCase {
         def loghandler = logcontrol.createMock()
 
         def stbocontrol = mockFor(ThreadBoundOutputStream)
-        def stbecontrol = mockFor(ThreadBoundOutputStream)
-        stbocontrol.demand.removeThreadStream(1..1) {-> }
-        stbecontrol.demand.removeThreadStream(1..1) {-> }
+        stbocontrol.demand.removeThreadStream(2..2) {-> }
         executionUtilService.sysThreadBoundOut = stbocontrol.createMock()
-        executionUtilService.sysThreadBoundErr = stbecontrol.createMock()
+        executionUtilService.sysThreadBoundErr = stbocontrol.createMock()
 
         executionUtilService.finishExecutionLogging([thread: thread, loghandler: loghandler, execution: [id: 1]])
     }
