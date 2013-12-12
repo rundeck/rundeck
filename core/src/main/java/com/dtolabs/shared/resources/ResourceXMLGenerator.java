@@ -202,7 +202,7 @@ public class ResourceXMLGenerator implements NodesFileGenerator {
         for (final String key:entity.getProperties().stringPropertyNames()){
             if (!ResourceXMLConstants.allPropSet.contains(key)) {
                 //test attribute name is a valid XML attribute name
-                if(XMLChar.isValidName(key)){
+                if(XMLChar.isValidName(key) && !key.contains(":") ){
                     ent.addAttribute(key, entity.getProperties().getProperty(key));
                 }else {
                     //add sub element
