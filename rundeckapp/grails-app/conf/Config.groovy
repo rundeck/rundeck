@@ -106,3 +106,8 @@ log4j={
 }
 
 
+
+rundeck.execution.finalize.retryMax=10
+rundeck.execution.finalize.retryDelay=5000
+rundeck.execution.stats.retryMax=3
+rundeck.execution.stats.retryDelay=5000
