@@ -17,7 +17,7 @@ beans={
     }
     defaultGrailsServiceInjectorJobListener(GrailsServiceInjectorJobListener){
         name= 'defaultGrailsServiceInjectorJobListener'
-        services=[executionService: ref('executionService'),metricRegistry:ref('metricRegistry'), executionUtilService:ref('executionUtilService')]
+        services=[grailsApplication: ref('grailsApplication'),executionService: ref('executionService'),metricRegistry:ref('metricRegistry'), executionUtilService:ref('executionUtilService')]
         quartzScheduler=ref('quartzScheduler')
     }
     def rdeckBase
