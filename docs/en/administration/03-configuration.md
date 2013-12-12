@@ -169,6 +169,22 @@ Here's an example:
     grails.serverURL=https://node.fully.qualified.domain.name:4443
     grails.mail.default.from=deployer@domain.com
 
+#### Execution finalize retry settings
+
+If a sporadic DB connection failure happens when an execution finishes, Rundeck may fail to update the state of the execution in the database, causing the execution to appear is if it is still "running". 
+
+Rundeck now attempts to retry the update to correctly register the final state of the execution.  You can tune how many times and how often this retry occurs with these config values:
+
+    # attempt to retry the final state update
+    rundeck.execution.finalize.retryMax=10
+    rundeck.execution.finalize.retryDelay=5000
+
+    # attempt to retry updating job statistics after execution finishes
+    rundeck.execution.stats.retryMax=3
+    rundeck.execution.stats.retryDelay=5000
+
+Delay is in milliseconds. If a max is set to `-1`, then retries will happen indefinitely.
+
 ## GUI Admin Page
 
 The Rundeck GUI has an Admin Page which contains lets you view and manage some configuration options.  If you have `admin` role access, when you log in you will see an "Admin" link in the header of the page near your username:

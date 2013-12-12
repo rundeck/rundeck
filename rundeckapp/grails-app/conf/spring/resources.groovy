@@ -14,7 +14,7 @@ import java.util.concurrent.Executors
 beans={
     defaultGrailsServiceInjectorJobListener(GrailsServiceInjectorJobListener){
         name= 'defaultGrailsServiceInjectorJobListener'
-        services=[executionService: ref('executionService'),executionUtilService:ref('executionUtilService')]
+        services=[grailsApplication: ref('grailsApplication'),executionService: ref('executionService'),executionUtilService:ref('executionUtilService')]
         quartzScheduler=ref('quartzScheduler')
     }
     def rdeckBase

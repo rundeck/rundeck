@@ -13,21 +13,62 @@ import rundeck.services.ExecutionUtilService
 import rundeck.services.FrameworkService
 
 class ExecutionJob implements InterruptableJob {
-    public static final int STATS_RETRY_MAX = Integer.getInteger(ExecutionJob.class.name+".STATS_RETRY_MAX", 5)
-    public static final long STATS_RETRY_DELAY = Long.getLong(ExecutionJob.class.name+".STATS_RETRY_DELAY", 500)
-    public static final int FINALIZE_RETRY_MAX = Integer.getInteger(ExecutionJob.class.name + ".FINALIZE_RETRY_MAX", 10)
-    public static final long FINALIZE_RETRY_DELAY = Long.getLong(ExecutionJob.class.name+".FINALIZE_RETRY_DELAY", 5000)
-    int statsRetryMax = STATS_RETRY_MAX
-    long statsRetryDelay = STATS_RETRY_DELAY
-    int finalizeRetryMax = FINALIZE_RETRY_MAX
-    long finalizeRetryDelay = FINALIZE_RETRY_DELAY
-    def boolean _interrupted
 
+    public static final int DEFAULT_STATS_RETRY_MAX = 3
+    public static final long DEFAULT_STATS_RETRY_DELAY = 5000
+    public static final int DEFAULT_FINALIZE_RETRY_MAX = 10
+    public static final long DEFAULT_FINALIZE_RETRY_DELAY = 5000
+
+    /**
+     * max retry count for updating Job stats when execution completes
+     */
+    int statsRetryMax = DEFAULT_STATS_RETRY_MAX
+
+    /**
+     * milliscond delay between retries to update Job stats
+     */
+    long statsRetryDelay = DEFAULT_STATS_RETRY_DELAY
+
+    /**
+     * max retry count for finalizing Execution state when complete
+     */
+    int finalizeRetryMax = DEFAULT_FINALIZE_RETRY_MAX
+
+    /**
+     * millisecond delay between retries to finalize execution state
+     */
+    long finalizeRetryDelay = DEFAULT_FINALIZE_RETRY_DELAY
+    def boolean _interrupted
+    def grailsApplication
     static triggers = {
         /** define no triggers here */
     }
+
+    private int asInt(def value) {
+        if (value instanceof String) {
+            return value.toInteger()
+        } else if (value instanceof Integer) {
+            return value
+        } else {
+            throw new IllegalArgumentException("Not able to convert to integer, value: ${value}")
+        }
+    }
     // Implements the Job interface, execute
     void execute(JobExecutionContext context) {
+        grailsApplication= context.jobDetail.jobDataMap.get('grailsApplication')
+        if(grailsApplication?.config?.rundeck?.execution?.finalize?.retryMax){
+            finalizeRetryMax= asInt(grailsApplication.config.rundeck?.execution?.finalize?.retryMax)
+        }
+        if(grailsApplication?.config?.rundeck?.execution?.finalize?.retryDelay){
+            finalizeRetryDelay= asInt(grailsApplication.config.rundeck?.execution?.finalize?.retryDelay)
+        }
+        if(grailsApplication?.config?.rundeck?.execution?.stats?.retryMax){
+            statsRetryMax= asInt(grailsApplication.config.rundeck?.execution?.stats?.retryMax)
+        }
+        if(grailsApplication?.config?.rundeck?.execution?.stats?.retryDelay){
+            statsRetryDelay= asInt(grailsApplication.config.rundeck?.execution?.stats?.retryDelay)
+        }
+
         def boolean success=false
         def Map initMap
         try{
