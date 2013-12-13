@@ -25,7 +25,7 @@
 <g:if test="${description}">
     <div class="row">
     <div class="col-sm-12">
-        <div class="h4 text-info">
+        <div class=" text-info">
             <g:if test="${!hideTitle}">${description.title.encodeAsHTML()}</g:if>
             <g:if test="${!hideDescription}">
                 <small class="text-muted">${description.description?.encodeAsHTML()}</small>
@@ -34,7 +34,7 @@
     </div>
     </div>
 </g:if>
-<div class="row ${description ? 'row-space' : ''}">
+<div class="row">
     <g:set var="rkey" value="${g.rkey()}"/>
     <g:if test="${includeFormFields && saved}">
         <g:hiddenField name="${prefix}saved" value="true" class="wasSaved"/>
