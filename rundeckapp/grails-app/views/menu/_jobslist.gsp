@@ -55,7 +55,7 @@
                                             <g:link controller="scheduledExecution" action="execute"
                                                     id="${scheduledExecution.extid}" class=" btn btn-default btn-xs has_tooltip"
                                                     data-toggle="tooltip"
-                                                    title="Run Job Now…"
+                                                    title="Choose options and Run Job…"
                                                     data-job-id="${scheduledExecution.extid}"
                                                     onclick="if(typeof(loadExec)=='function'){loadExec(${scheduledExecution.id});return false;}">
                                                 <b class="glyphicon glyphicon-play"></b>
@@ -64,6 +64,9 @@
                                     </span>
 
                                     <g:link action="show" controller="scheduledExecution" id="${scheduledExecution.extid}" >
+                                        <g:if test="${showIcon}">
+                                            <i class="glyphicon glyphicon-book"></i>
+                                        </g:if>
                                         ${scheduledExecution.jobName.encodeAsHTML()}
                                     </g:link>
 

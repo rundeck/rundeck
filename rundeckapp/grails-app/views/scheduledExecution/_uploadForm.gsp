@@ -28,82 +28,6 @@
     </g:if>
 
 
-
-    <g:if test="${execerrors}">
-        <div class="row">
-        <div class="col-sm-12">
-
-        <div class="batchresset">
-            <span class="prompt errors">${execerrors.size()} Job${execerrors.size()==1?' was':'s were'} not executed due to errors</span>
-
-            <div class="presentation">
-                <g:if test="${execerrors.size()>0}">
-                    <table cellpadding="0" cellspacing="0" style="width: 700px;" class="jobsList">
-                        <% def j=0 %>
-                        <g:each in="${execerrors}" var="entry">
-                            <g:set var="entrynum" value="${entry.entrynum}"/>
-                            <tr class=" ${j%2==1?'alternateRow':'normalRow'}">
-                                <td>
-                                    #${entrynum}:
-                                </td>
-                                <td class="jobname" >
-                                   ${entry.error}
-                                </td>
-                                <td class="errors">
-                                    ${entry.message}
-                                </td>
-                            </tr>
-                        </g:each>
-                    </table>
-                </g:if>
-            </div>
-        </div>
-        </div>
-        </div>
-    </g:if>
-    <g:if test="${execsuccess}">
-        <div class="row">
-        <div class="col-sm-12">
-
-
-                <div class="batchresset">
-                    <span class="prompt info">${execsuccess.size()} Job Execution${execsuccess.size()==1?' was':'s were'} successfully queued</span>
-
-            <div class="">
-                <g:if test="${execsuccess.size()>0}">
-                    <table cellpadding="0" cellspacing="0" style="width: 700px;" class="jobsList">
-                        <% def j=0 %>
-                        <g:each in="${execsuccess}" var="entry">
-                            <g:set var="execution" value="${entry.execution}"/>
-                            <g:set var="entrynum" value="${entry.entrynum}"/>
-                            <g:set var="execid" value="${entry.id}"/>
-                            <tr class=" ${j%2==1?'alternateRow':'normalRow'}">
-                                <td>
-                                    #${entrynum}:
-                                </td>
-                                <td class="jobname" >
-                                    <g:if test="${execid}">
-                                        <g:link controller="execution" action="show" id="${execid}">${execution.toString().encodeAsHTML()}</g:link >
-                                    </g:if>
-                                    <g:else>
-                                        ${execution.toString().encodeAsHTML()}
-                                    </g:else>
-                                </td>
-                                %{--<td class="jobdesc" style="">${execution.description.size()>100?execution.description.substring(0,100).encodeAsHTML():execution.description.encodeAsHTML()}</td>--}%
-                                <g:hasErrors bean="${execution}">
-                                    <td class="errors">
-                                        <g:renderErrors bean="${execution}" as="list"/>
-                                    </td>
-                                </g:hasErrors>
-                            </tr>
-                        </g:each>
-                    </table>
-                </g:if>
-            </div>
-        </div>
-        </div>
-        </div>
-    </g:if>
     <g:if test="${errjobs}">
         <div class="row">
         <div class="col-sm-12">
@@ -199,7 +123,7 @@
       <div class="batchresset">
            <span class="text-info">${jobs.size()} <g:message code="domain.ScheduledExecution.title"/>${jobs.size()==1?' was':'s were'} successfully created/modified</span>
 
-            <g:render template="/menu/jobslist" model="[jobslist:jobs,total:jobs.size()]"/>
+            <g:render template="/menu/jobslist" model="[jobslist:jobs,total:jobs.size(), headers: false, showIcon:true]"/>
         </div>
         </div>
         </div>
@@ -208,7 +132,7 @@
 <div class="row">
 <div class="col-sm-10 col-sm-offset-1">
 <div class="panel panel-primary">
-    <g:form method="post" action="upload" enctype="multipart/form-data" class="form" role="form">
+    <g:uploadForm method="post" action="upload" class="form" role="form">
         <div class="panel-heading">
             <span class="h4">
                 Upload <g:message code="domain.ScheduledExecution.title"/> Definition
@@ -302,7 +226,7 @@
                 Uploading File...
             </div>
     </div>
-    </g:form>
+    </g:uploadForm>
 </div>
 </div>
 </div>

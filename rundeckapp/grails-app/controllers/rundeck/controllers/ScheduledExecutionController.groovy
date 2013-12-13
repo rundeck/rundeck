@@ -25,6 +25,7 @@ import org.codehaus.groovy.grails.web.json.JSONElement
 import org.quartz.CronExpression
 import org.quartz.Scheduler
 import org.springframework.web.multipart.MultipartHttpServletRequest
+import org.springframework.web.multipart.commons.CommonsMultipartFile
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.Option
@@ -1421,8 +1422,11 @@ class ScheduledExecutionController  {
         def fileformat = params.fileformat ?: 'xml'
         def parseresult
         if (request.method == 'POST') {
-            if(params.xmlBatch) {
+            if(params.xmlBatch && params.xmlBatch instanceof String) {
                 String fileContent = params.xmlBatch
+                parseresult = scheduledExecutionService.parseUploadedFile(fileContent, fileformat)
+            } else if(params.xmlBatch && params.xmlBatch instanceof CommonsMultipartFile) {
+                InputStream fileContent = params.xmlBatch.inputStream
                 parseresult = scheduledExecutionService.parseUploadedFile(fileContent, fileformat)
             } else if (request instanceof MultipartHttpServletRequest) {
                 def file = request.getFile("xmlBatch")
