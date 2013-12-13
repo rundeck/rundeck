@@ -20,7 +20,7 @@
 
                     <div class="modal-footer">
                         <g:form controller="scheduledExecution" action="delete" method="post">
-                            <g:hiddenField name="id" value="${scheduledExecution.id}"/>
+                            <g:hiddenField name="id" value="${scheduledExecution.extid}"/>
                             <button type="submit" class="btn btn-default btn-sm "
                                     data-dismiss="modal">
                                 Cancel

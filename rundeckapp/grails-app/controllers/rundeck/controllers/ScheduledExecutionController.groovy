@@ -100,7 +100,7 @@ class ScheduledExecutionController  {
     private void error(){
         withFormat{
             html{
-                return render(template:"/common/error")
+                return render(view:"/common/error")
             }
             xml {
                 return xmlerror()
@@ -611,7 +611,21 @@ class ScheduledExecutionController  {
     /**
     */
     def delete = {
-        return deleteBulk(new ApiBulkJobDeleteRequest(ids: [params.id]))
+        if (!params.id) {
+            request.error = g.message(code: 'api.error.parameter.required',args:['id'])
+            response.setStatus(400)
+            return error()
+        }
+        def jobid=params.id
+        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        def result = scheduledExecutionService.deleteScheduledExecutionById(jobid, framework, session.user, 'delete')
+        if (!result.success) {
+            request.error = result.error.message
+            return error()
+        } else {
+            flash.bulkDeleteResult = [success: [result.success]]
+            redirect(controller: 'menu', action: 'jobs')
+        }
     }
     /**
      * Delete a set of jobs as specified in the idlist parameter.
@@ -619,8 +633,9 @@ class ScheduledExecutionController  {
      */
     def deleteBulk = {ApiBulkJobDeleteRequest deleteRequest ->
         log.debug("ScheduledExecutionController: deleteBulk : params: " + params)
-        if (!apiService.requireAnyParameters(params,response,['ids','idlist'])) {
-            return
+        if (!params.ids && !params.idlist) {
+            flash.error = g.message(code: 'ScheduledExecutionController.bulkDelete.empty')
+            return redirect(controller: 'menu', action: 'jobs')
         }
         def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         def ids = new HashSet<String>()

@@ -35,10 +35,20 @@
 
 <div id="${rkey}wffilterform">
         <g:if test="${flash.message}">
-            ${flash.message}
+            <div class="alert alert-dismissable alert-info">
+                <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
+                <div>
+                    ${flash.message.encodeAsHTML()}
+                </div>
+            </div>
         </g:if>
         <g:if test="${flash.error}">
-            <span class="error note">${flash.error}</span>
+            <div class="alert alert-dismissable alert-warning">
+                <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
+                <div>
+                    ${flash.error.encodeAsHTML()}
+                </div>
+            </div>
         </g:if>
     <g:set var="wasfiltered" value="${paginateParams?.keySet().grep(~/(?!proj).*Filter|groupPath|idlist$/)}"/>
     <g:if test="${params.createFilters}">
