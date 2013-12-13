@@ -14,6 +14,7 @@
     <link rel="shortcut icon" href="${g.resource(dir: 'images', file: 'favicon.ico')}"/>
     <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
     <asset:stylesheet href="rundeck.css"/>
+    <g:javascript library="respond.min"/>
     <asset:javascript src="jquery.js"/>
     <asset:javascript src="bootstrap.js"/>
     <g:javascript library="prototype"/>
