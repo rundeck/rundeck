@@ -32,8 +32,7 @@
                     <g:if test="${!noimgs}">
                         <i class="glyphicon glyphicon-book"></i>
                     </g:if>
-                    ${item.jobGroup?item.jobGroup.encodeAsHTML()+'/':''}${item.jobName.encodeAsHTML()}
-                </g:link>
+                    ${item.jobGroup?item.jobGroup.encodeAsHTML()+'/':''}${item.jobName.encodeAsHTML()}</g:link>
                 </g:if>
                 <g:else>
                     <g:if test="${!noimgs}">
@@ -45,9 +44,9 @@
                     ${item.description.encodeAsHTML()}
                 </g:if>
                 <g:if test="${item.argString}">
-                   <span class="argString"><g:truncate max="150"  showtitle="true">
+                   <span class="argString" title="${item.argString.encodeAsHTML()}">
                        <g:render template="/execution/execArgString" model="[argString: item.argString]"/>
-                   </g:truncate></span>
+                   </span>
                 </g:if>
                 <g:if test="${item.nodeStep}">
                     <g:if test="${!noimgs && item.nodeStep}"><g:img file="icon-small-Node.png" width="16px"
