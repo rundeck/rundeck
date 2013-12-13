@@ -23,10 +23,8 @@
     <div class="row">
         <div class="col-sm-12">
             <ul class="nav nav-tabs">
-                <li class="active"><a href="#runjob" data-toggle="tab">Run
-                    <i class="glyphicon glyphicon-play"></i>
-                </a></li>
-                <li><a href="#schedExDetails${scheduledExecution?.id}" data-toggle="tab">Definition</a></li>
+                <li class="active"><a href="#runjob" data-toggle="tab"><g:message code="scheduledExecution.show.run.tab.name" /></a></li>
+                <li><a href="#schedExDetails${scheduledExecution?.id}" data-toggle="tab"><g:message code="definition" /></a></li>
             </ul>
             <div class="tab-content">
                 <div class="tab-pane active" id="runjob">
