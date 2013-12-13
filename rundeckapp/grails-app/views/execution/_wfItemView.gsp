@@ -26,23 +26,24 @@
             <g:set var="pluginitem" value="${item.instanceOf(PluginStep)}"/>
             <span class="${edit?'autohilite autoedit':''} wfitem ${jobitem?'jobtype':'exectype'}" title="${edit?'Click to edit':''}">
             <g:if test="${jobitem}">
+                <g:if test="${item.description}">
+                    <i class="glyphicon glyphicon-book"></i>
+                    ${item.description.encodeAsHTML()}
+                </g:if>
                 <g:set var="foundjob" value="${edit?null:ScheduledExecution.findScheduledExecution(item.jobGroup?item.jobGroup:null,item.jobName,project)}"/>
                 <g:if test="${foundjob}">
                 <g:link controller="scheduledExecution" action="show" id="${foundjob.extid}">
-                    <g:if test="${!noimgs}">
+                    <g:if test="${!noimgs && !item.description}">
                         <i class="glyphicon glyphicon-book"></i>
                     </g:if>
                     ${item.jobGroup?item.jobGroup.encodeAsHTML()+'/':''}${item.jobName.encodeAsHTML()}</g:link>
                 </g:if>
                 <g:else>
-                    <g:if test="${!noimgs}">
+                    <g:if test="${!noimgs && !item.description}">
                         <i class="glyphicon glyphicon-book"></i>
                     </g:if>
                     ${item.jobGroup?item.jobGroup.encodeAsHTML()+'/':''}${item.jobName.encodeAsHTML()}
                 </g:else>
-                <g:if test="${item.description}">
-                    ${item.description.encodeAsHTML()}
-                </g:if>
                 <g:if test="${item.argString}">
                    <span class="argString" title="${item.argString.encodeAsHTML()}">
                        <g:render template="/execution/execArgString" model="[argString: item.argString]"/>
