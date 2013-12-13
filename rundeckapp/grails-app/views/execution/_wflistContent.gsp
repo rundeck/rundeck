@@ -24,9 +24,9 @@
 <g:if test="${workflow && workflow?.commands}">
 <g:each in="${workflow.commands}" var="item" status="i">
     <li class="${i%2==1?'alternate':''}"  wfitemNum="${i}">
-        <span id="wfli_${i}">
+        <div id="wfli_${i}">
         <g:render template="/execution/wflistitemContent" model="${[i:i,stepNum: i,item:item,workflow:workflow,edit:edit,highlight:highlight,noimgs:noimgs, project: project]}"/>
-        </span>
+        </div>
         <g:if test="${item.errorHandler}">
             <ul class="wfhandleritem ${item.errors?.hasFieldErrors('errorHandler') ? 'fieldError' : ''}">
 
