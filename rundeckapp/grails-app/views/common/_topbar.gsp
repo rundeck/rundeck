@@ -5,6 +5,13 @@
 </g:if>
 <nav class="navbar navbar-default navbar-static-top" role="navigation">
 
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+        </button>
     <a href="${grailsApplication.config.rundeck.gui.titleLink ? grailsApplication.config.rundeck.gui.titleLink : g.resource(dir: '/')}"
        title="Home" class="navbar-brand">
         <g:set var="appTitle"
@@ -12,7 +19,10 @@
         <i class="rdicon app-logo"></i>
         ${appTitle}
     </a>
+    </div>
 
+    <div class="container">
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
     <ul class="nav navbar-nav">
 <g:if test="${session?.user && request.subject }">
     <g:set var="homeselected" value="${false}"/>
@@ -135,4 +145,6 @@
         </li>
     </g:else>
     </ul>
+    </div>
+    </div>
 </nav>
