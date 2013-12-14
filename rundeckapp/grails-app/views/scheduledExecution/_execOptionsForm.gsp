@@ -5,21 +5,13 @@
 <div class="panel panel-default panel-tab-content">
 <g:if test="${!hideHead}">
     <div class="panel-heading">
-        <div>
-            <h4>
-                <g:message code="run.job" />
-            </h4>
+        <div class="row">
+            <tmpl:showHead scheduledExecution="${scheduledExecution}" iconName="icon-job"
+                           subtitle="Choose Execution Options" runPage="true"/>
         </div>
     </div>
 </g:if>
 <div class="list-group list-group-tab-content">
-<g:if test="${!hideHead}">
-            <div class="list-group-item">
-
-                <tmpl:showHead scheduledExecution="${scheduledExecution}" iconName="icon-job"
-                               subtitle="Choose Execution Options" runPage="true"/>
-            </div>
-</g:if>
 <div class="list-group-item">
 <div class="row">
 <div class="${hideHead?'col-sm-9':'col-sm-12'}">
@@ -261,7 +253,7 @@
 </div>
 <g:if test="${!hideHead}">
 <div class="panel-footer">
-    <div class="" id="formbuttons">
+    <div class="row" id="formbuttons">
         <div class="col-sm-12">
             <g:if test="${!hideCancel}">
                 <g:actionSubmit id="execFormCancelButton" value="Cancel" class="btn btn-default"/>
