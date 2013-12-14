@@ -5,6 +5,11 @@
   @import "bootswatch";
   @import "nav-links";
 
+  @base-item-padding-vertical: 8px;
+  @base-item-padding-horizontal: 10px;
+  @list-group-item-padding-vertical: @base-item-padding-vertical;
+  @list-group-item-padding-horizontal: @base-item-padding-horizontal;
+
   body {
     //   padding-bottom: ((32px + @navbar-margin-bottom));
   }
@@ -1057,3 +1062,16 @@ section{
   }
 }
 
+//override padding for list-group-item
+
+.list-group-item {
+  padding: @list-group-item-padding-vertical @list-group-item-padding-horizontal;
+}
+
+.form-group {
+  margin-bottom: @base-item-padding-vertical;
+}
+
+.panel-heading , .panel-footer {
+  padding: @base-item-padding-vertical @base-item-padding-horizontal;
+}
