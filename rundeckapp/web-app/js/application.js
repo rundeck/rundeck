@@ -1157,6 +1157,33 @@ function _initAffix(){
         jQuery(e).closest('[data-affix=wrap]').height(jQuery(e).height());
     });
 }
+/** fix placeholder text for IE8 */
+function _initIEPlaceholder(){
+    if(!Prototype.Browser.IE){
+        return;
+    }
+    jQuery('[placeholder]').focus(function () {
+        var input = jQuery(this);
+        if (input.val() == input.attr('placeholder')) {
+            input.val('');
+            input.removeClass('placeholder');
+        }
+    }).blur(function () {
+            var input = jQuery(this);
+            if (input.val() == '' || input.val() == input.attr('placeholder')) {
+                input.addClass('placeholder');
+                input.val(input.attr('placeholder'));
+            }
+        }).blur();
+    jQuery('[placeholder]').parents('form').submit(function () {
+        jQuery(this).find('[placeholder]').each(function () {
+            var input = jQuery(this);
+            if (input.val() == input.attr('placeholder')) {
+                input.val('');
+            }
+        })
+    });
+}
 
 (function(){
     if(typeof(jQuery)=='function'){
@@ -1164,6 +1191,7 @@ function _initAffix(){
             jQuery('.has_tooltip').tooltip({});
             _initPopoverContentRef();
             _initAffix();
+            _initIEPlaceholder();
         });
     }
 })();
