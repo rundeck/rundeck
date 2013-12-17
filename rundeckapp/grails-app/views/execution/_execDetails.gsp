@@ -2,24 +2,25 @@
 <g:set var="rkey" value="${g.rkey()}"/>
 <div class="row" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
 <div class="col-sm-4 pull-right">
-<div class=" pull-right">
+<div class=" pull-right btn-group-vertical">
 <g:if test="${showEdit && execdata != null && execdata.id && execdata instanceof ScheduledExecution && auth.jobAllowedTest(job: execdata, action: AuthConstants.ACTION_UPDATE)}">
     <g:link controller="scheduledExecution" title="Edit or Delete this Job" action="edit"
-            id="${execdata.extid}" class="btn btn-info btn-sm">
-        <b class="glyphicon glyphicon-edit"></b>
-        edit job</g:link>
+            id="${execdata.extid}" class="btn btn-info ">
+        <g:message code="scheduledExecution.action.edit.button.label" />
+        <i class="glyphicon glyphicon-edit"></i>
+    </g:link>
 
 <g:if test="${scheduledExecution && auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_READ])}">
     <g:if test="${auth.resourceAllowedTest(kind: 'job', action: AuthConstants.ACTION_CREATE)}">
         <g:link controller="scheduledExecution" title="Duplicate Job" action="copy"
-                id="${scheduledExecution.extid}" class="btn btn-success btn-sm">
-            <b class="glyphicon glyphicon-plus"></b>
-            duplicate to a new job
+                id="${scheduledExecution.extid}" class="btn btn-success ">
+            <g:message code="scheduledExecution.action.duplicate.button.label" />
+            <i class="glyphicon glyphicon-plus"></i>
         </g:link>
     </g:if>
     <div class="btn-group">
-        <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
-            Download Definition
+        <button type="button" class="btn btn-default  dropdown-toggle" data-toggle="dropdown">
+            <g:message code="scheduledExecution.action.download.button.label" />
             <span class="caret"></span>
         </button>
         <ul class="dropdown-menu" role="menu">
@@ -217,6 +218,9 @@
         <tr>
             <td class="displabel">Notification:</td>
             <g:set var="bytrigger" value="${execdata.notifications.groupBy{ it.eventTrigger }}"/>
+            <td>
+            <table>
+            <tr>
             <g:each var="trigger" in="${bytrigger.keySet().sort()}" status="k">
                 <td>
                     <span class=""><g:message code="notification.event.${trigger}"/>:</span>
@@ -234,6 +238,8 @@
                 </g:else>
                 </td>
             </g:each>
+            </tr>
+            </table>
         </td>
     </tr>
     </g:if>
