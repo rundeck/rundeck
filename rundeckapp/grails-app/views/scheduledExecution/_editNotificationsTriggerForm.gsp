@@ -1,32 +1,26 @@
 <%@ page import="com.dtolabs.rundeck.core.plugins.configuration.Description" %>
 <g:set var="tkey" value="${g.rkey()}"/>
-<g:set var="Trigger" value="${trigger[0].toUpperCase()+trigger.substring(1)}"/>
-<g:set var="defEmail" value="${definedNotifications?.find {it.type=='email'}}"/>
-<g:set var="defUrl" value="${definedNotifications?.find {it.type=='url'}}"/>
-<g:set var="isEmail" value="${defEmail || params['notify'+Trigger+'Recipients'] && 'true' == params['notifyOn'+trigger]}"/>
-<g:set var="notifyRecipients" value="${'notify' + Trigger + 'Recipients'}"/>
-<g:set var="notifyUrl" value="${'notify' + Trigger + 'Url'}"/>
-<div class="notifyFields form-group ${hasErrors(bean: scheduledExecution, field: notifyRecipients, 'has-error')} ${hasErrors(bean: scheduledExecution, field: notifyUrl, 'has-error')}"
+<div class="notifyFields form-group"
      style="${wdgt.styleVisible(if: isVisible)}">
 
     <!-- ${trigger} -->
     <div class="control-label text-form-label col-sm-2">
-        <g:message code="notification.event.on${trigger}"/>
+        <g:message code="notification.event.${trigger}"/>
     </div>
     <div class="col-sm-10">
         <div class="form-inline">
-            <div class="form-group">
-                <g:checkBox name="notifyOn${trigger}Email" value="true" checked="${isEmail}"/>
-                <label for="notifyOn${trigger}Email">
-                    Send Email
+            <div class="form-group  ${hasErrors(bean: scheduledExecution, field: triggerEmailRecipientsName, 'has-error')} ">
+                <g:checkBox name="${triggerEmailCheckboxName}" value="true" checked="${isEmail}"/>
+                <label for="${triggerEmailCheckboxName}">
+                    <g:message code="notification.email.label" />
                 </label>
             </div>
             <span id="notifholder${tkey}" style="${wdgt.styleVisible(if: isEmail)}">
-                <div class="form-group">
+                <div class="form-group ${hasErrors(bean: scheduledExecution, field: triggerEmailRecipientsName, 'has-error')} ">
                     <label class="sr-only">to</label>
                     <g:textField
-                            name="notify${Trigger}Recipients"
-                            value="${defEmail?.content ?: params[notifyRecipients]}"
+                            name="${triggerEmailRecipientsName}"
+                            value="${params[triggerEmailRecipientsName] ?: defEmail?.content}"
                             class="form-control input-sm"
                             size="60"
                             placeholder="user@dns.tld"
@@ -39,29 +33,29 @@
                 </div>
             </span>
 
-            <g:hasErrors bean="${scheduledExecution}" field="${notifyRecipients}">
+            <g:hasErrors bean="${scheduledExecution}" field="${triggerEmailRecipientsName }">
                 <div class="text-warning">
-                    <g:renderErrors bean="${scheduledExecution}" as="list" field="${notifyRecipients}"/>
+                    <g:renderErrors bean="${scheduledExecution}" as="list" field="${triggerEmailRecipientsName}"/>
                 </div>
             </g:hasErrors>
-            <wdgt:eventHandler for="notifyOn${trigger}Email" state="checked" target="notifholder${tkey}" visible="true"
+            <wdgt:eventHandler for="${triggerEmailCheckboxName}" state="checked" target="notifholder${tkey}" visible="true"
             />
         </div>
 
         <div class="form-inline">
-            <div class="form-group">
-                <g:checkBox name="notifyOn${trigger}Url" value="true" checked="${isUrl}"/>
-                <label for="notifyOn${trigger}Url">
-                    Webhook
+            <div class="form-group ${hasErrors(bean: scheduledExecution, field: triggerUrlFieldName, 'has-error')}">
+                <g:checkBox name="${triggerUrlCheckboxName}" value="true" checked="${isUrl}"/>
+                <label for="${triggerUrlCheckboxName}">
+                    <g:message code="notification.webhook.label" />
                 </label>
             </div>
             <span id="notifholder_url_${tkey}" style="${wdgt.styleVisible(if: isUrl)}">
-                <div class="form-group">
-                    <label class="sr-only">POST to URLs:</label>
+                <div class="form-group  ${hasErrors(bean: scheduledExecution, field: triggerUrlFieldName, 'has-error')}">
+                    <label class="sr-only"><g:message code="notification.webhook.field.title" /></label>
                     <g:set var="notifurlcontent"
-                               value="${defUrl?.content ?: params[notifyUrl]}"/>
+                               value="${params[triggerUrlFieldName] ?: defUrl?.content}"/>
                     <g:if test="${notifurlcontent && notifurlcontent.size() > 30}">
-                        <textarea name="${notifyUrl}"
+                        <textarea name="${triggerUrlFieldName}"
                                   style="vertical-align:top;"
                                   placeholder="http://"
                                   rows="6"
@@ -69,7 +63,7 @@
                                   class="form-control input-sm">${notifurlcontent?.encodeAsHTML()}</textarea>
                     </g:if>
                     <g:else>
-                        <g:textField name="${notifyUrl}"
+                        <g:textField name="${triggerUrlFieldName}"
                                      value="${notifurlcontent?.encodeAsHTML()}"
                                      class="form-control input-sm"
                                      size="60"
@@ -78,24 +72,24 @@
                     </g:else>
                 </div>
 
-                <div class="help-block">comma-separated URLs</div>
-                <g:hasErrors bean="${scheduledExecution}" field="${notifyUrl}">
+                <div class="help-block"><g:message code="notification.webhook.field.description" /></div>
+                <g:hasErrors bean="${scheduledExecution}" field="${triggerUrlFieldName}">
                     <div class="text-warning">
-                        <g:renderErrors bean="${scheduledExecution}" as="list" field="${notifyUrl}"/>
+                        <g:renderErrors bean="${scheduledExecution}" as="list" field="${triggerUrlFieldName}"/>
                     </div>
                 </g:hasErrors>
             </span>
-            <wdgt:eventHandler for="notifyOn${trigger}Url" state="checked" target="notifholder_url_${tkey}" visible="true"/>
+            <wdgt:eventHandler for="${triggerUrlCheckboxName}" state="checked" target="notifholder_url_${tkey}" visible="true"/>
         </div>
         <g:each in="${notificationPlugins?.keySet()}" var="pluginName">
             <g:set var="plugin" value="${notificationPlugins[pluginName]}"/>
             <g:set var="pluginInstance" value="${notificationPlugins[pluginName]['instance']}"/>
             <g:set var="pkey" value="${g.rkey()}"/>
-            <g:set var="definedNotif" value="${scheduledExecution?.findNotification('on'+trigger, pluginName)}"/>
+            <g:set var="definedNotif" value="${scheduledExecution?.findNotification(trigger, pluginName)}"/>
             <g:set var="definedConfig"
                    value="${params.notifyPlugin?.get(trigger)?.get(pluginName)?.config ?: definedNotif?.configuration}"/>
             <g:set var="pluginDescription" value="${plugin.description}"/>
-            <g:set var="validation" value="${notificationValidation?.get('on'+trigger)?.get(pluginName)?.report}"/>
+            <g:set var="validation" value="${notificationValidation?.get(trigger)?.get(pluginName)?.report}"/>
             <g:set var="checkboxFieldName" value="notifyPlugin.${trigger}.enabled.${pluginName.encodeAsHTML()}"/>
             <div>
                 <g:hiddenField name="notifyPlugin.${trigger}.type" value="${pluginName}"/>

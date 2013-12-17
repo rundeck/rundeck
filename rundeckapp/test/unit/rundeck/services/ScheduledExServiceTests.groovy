@@ -1,6 +1,5 @@
 package rundeck.services
 
-import grails.test.GrailsUnitTestCase
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import org.junit.Assert
@@ -8,6 +7,7 @@ import org.quartz.*
 import org.quartz.spi.JobFactory
 import org.springframework.context.MessageSource
 import rundeck.*
+import rundeck.controllers.ScheduledExecutionController
 
 /*
  * Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
@@ -35,6 +35,7 @@ import rundeck.*
 @TestFor(ScheduledExecutionService)
 @Mock([Execution, FrameworkService, WorkflowStep, CommandExec, JobExec, PluginStep, Workflow, ScheduledExecution, Option, Notification])
 class ScheduledExServiceTests {
+
     static void assertLength(int length, Object[] array){
         Assert.assertEquals(length,array.length)
     }
@@ -517,7 +518,7 @@ class ScheduledExServiceTests {
         def params = [jobName: 'monkey1', project: 'testProject', description: 'blah',
                 scheduled: true, crontabString: crontabString, useCrontabString: 'true',
                 workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'asdf')]),
-                notifications: [[eventTrigger: 'onsuccess', type: 'email', content: 'c@example.com,d@example.com']]
+                notifications: [[eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'c@example.com,d@example.com']]
         ]
         def results = testService._dovalidate(params, 'test', 'test', null)
 
@@ -944,7 +945,7 @@ class ScheduledExServiceTests {
 
             def params = [jobName: 'monkey1', project: 'testProject', description: 'blah',
                     workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'test command']],
-                    notifications: [[eventTrigger: 'onsuccess', type: 'email', content: 'c@example.com,d@example.com']]
+                    notifications: [[eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'c@example.com,d@example.com']]
             ]
             def results = sec._dovalidate(params, 'test', 'test', null)
             if (results.scheduledExecution.errors.hasErrors()) {
@@ -976,7 +977,7 @@ class ScheduledExServiceTests {
             final def not1 = execution.notifications.iterator().next()
             assertTrue(not1 instanceof Notification)
             def Notification n = not1
-            assertEquals "onsuccess", n.eventTrigger
+            assertEquals ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, n.eventTrigger
             assertEquals "email", n.type
             assertEquals "c@example.com,d@example.com", n.content
         }
@@ -997,7 +998,7 @@ class ScheduledExServiceTests {
 
             def params = [jobName: 'monkey1', project: 'testProject', description: 'blah',
                     workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'test command']],
-                    notifications: [[eventTrigger: 'onsuccess', type: 'email', content: 'c@example.com,d@example.com'], [eventTrigger: 'onfailure', type: 'email', content: 'monkey@example.com']]
+                    notifications: [[eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'c@example.com,d@example.com'], [eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'monkey@example.com']]
             ]
             def results = sec._dovalidate(params, 'test', 'test', null)
             if (results.scheduledExecution.errors.hasErrors()) {
@@ -1030,16 +1031,16 @@ class ScheduledExServiceTests {
             execution.notifications.each { not1 ->
                 nmap[not1.eventTrigger] = not1
             }
-            assertNotNull(nmap.onsuccess)
-            assertNotNull(nmap.onfailure)
-            assertTrue(nmap.onsuccess instanceof Notification)
-            assertTrue(nmap.onfailure instanceof Notification)
-            def Notification n = nmap.onsuccess
-            assertEquals "onsuccess", n.eventTrigger
+            assertNotNull(nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME])
+            assertNotNull(nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME])
+            assertTrue(nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME] instanceof Notification)
+            assertTrue(nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME] instanceof Notification)
+            def Notification n = nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME]
+            assertEquals ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, n.eventTrigger
             assertEquals "email", n.type
             assertEquals "c@example.com,d@example.com", n.content
-            def Notification n2 = nmap.onfailure
-            assertEquals "onfailure", n2.eventTrigger
+            def Notification n2 = nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME]
+            assertEquals ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, n2.eventTrigger
             assertEquals "email", n2.type
             assertEquals "monkey@example.com", n2.content
         }
@@ -1062,8 +1063,8 @@ class ScheduledExServiceTests {
                     workflow: [threadcount: 1, keepgoing: true, "commands[0]": [
                             adhocExecution: true, adhocRemoteString: 'test command'
                     ]],
-                    notifyOnsuccess: 'true', notifySuccessRecipients: 'c@example.com,d@example.com',
-                    notifyOnfailure: 'true', notifyFailureRecipients: 'monkey@example.com',
+                    (ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL): 'true', (ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS): 'c@example.com,d@example.com',
+                    (ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL): 'true', (ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS): 'monkey@example.com',
 
 //                notifications:[onsuccess:[email:'c@example.com,d@example.com'],onfailure:[email:'monkey@example.com']]
             ]
@@ -1098,16 +1099,16 @@ class ScheduledExServiceTests {
             execution.notifications.each { not1 ->
                 nmap[not1.eventTrigger] = not1
             }
-            assertNotNull(nmap.onsuccess)
-            assertNotNull(nmap.onfailure)
-            assertTrue(nmap.onsuccess instanceof Notification)
-            assertTrue(nmap.onfailure instanceof Notification)
-            def Notification n = nmap.onsuccess
-            assertEquals "onsuccess", n.eventTrigger
+            assertNotNull(nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME])
+            assertNotNull(nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME])
+            assertTrue(nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME] instanceof Notification)
+            assertTrue(nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME] instanceof Notification)
+            def Notification n = nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME]
+            assertEquals ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, n.eventTrigger
             assertEquals "email", n.type
             assertEquals "c@example.com,d@example.com", n.content
-            def Notification n2 = nmap.onfailure
-            assertEquals "onfailure", n2.eventTrigger
+            def Notification n2 = nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME]
+            assertEquals ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, n2.eventTrigger
             assertEquals "email", n2.type
             assertEquals "monkey@example.com", n2.content
         }
@@ -1128,7 +1129,7 @@ class ScheduledExServiceTests {
             sec.frameworkService = fwkControl.createMock()
 
             def params = [jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand',
-                    notifyOnsuccess: 'true', notifySuccessRecipients: 'c@example.',
+                    (ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL): 'true', (ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS): 'c@example.',
             ]
             def results = sec._dovalidate(params, 'test', 'test', null)
             if (results.scheduledExecution.errors.hasErrors()) {
@@ -1143,8 +1144,8 @@ class ScheduledExServiceTests {
             assertNotNull(execution)
             assertNotNull(execution.errors)
             assertTrue(execution.errors.hasErrors())
-            assertTrue(execution.errors.hasFieldErrors('notifySuccessRecipients'))
-            assertFalse(execution.errors.hasFieldErrors('notifyFailureRecipients'))
+            assertTrue(execution.errors.hasFieldErrors(ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS))
+            assertFalse(execution.errors.hasFieldErrors(ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS))
         }
         if (true) {//test job with notifications, invalid email addresses
             def fwkControl = mockFor(FrameworkService, true)
@@ -1162,7 +1163,7 @@ class ScheduledExServiceTests {
             sec.frameworkService = fwkControl.createMock()
 
             def params = [jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand',
-                    notifyOnfailure: 'true', notifyFailureRecipients: '@example.com',
+                    (ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL): 'true', (ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS): '@example.com',
             ]
             def results = sec._dovalidate(params, 'test', 'test', null)
             if (results.scheduledExecution.errors.hasErrors()) {
@@ -1177,8 +1178,8 @@ class ScheduledExServiceTests {
             assertNotNull(execution)
             assertNotNull(execution.errors)
             assertTrue(execution.errors.hasErrors())
-            assertTrue(execution.errors.hasFieldErrors('notifyFailureRecipients'))
-            assertFalse(execution.errors.hasFieldErrors('notifySuccessRecipients'))
+            assertTrue(execution.errors.hasFieldErrors(ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS))
+            assertFalse(execution.errors.hasFieldErrors(ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS))
         }
         if (true) {//test job with notifications, invalid email addresses using map based notifications definition
             def fwkControl = mockFor(FrameworkService, true)
@@ -1196,7 +1197,7 @@ class ScheduledExServiceTests {
             sec.frameworkService = fwkControl.createMock()
 
             def params = [jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand',
-                    notifications: [[eventTrigger: 'onsuccess', type: 'email', content: 'c@example.comd@example.com'], [eventTrigger: 'onfailure', type: 'email', content: 'monkey@ example.com']]
+                    notifications: [[eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'c@example.comd@example.com'], [eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'monkey@ example.com']]
             ]
             def results = sec._dovalidate(params, 'test', 'test', null)
             if (results.scheduledExecution.errors.hasErrors()) {
@@ -1211,8 +1212,8 @@ class ScheduledExServiceTests {
             assertNotNull(execution)
             assertNotNull(execution.errors)
             assertTrue(execution.errors.hasErrors())
-            assertTrue(execution.errors.hasFieldErrors('notifyFailureRecipients'))
-            assertTrue(execution.errors.hasFieldErrors('notifySuccessRecipients'))
+            assertTrue(execution.errors.hasFieldErrors(ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS))
+            assertTrue(execution.errors.hasFieldErrors(ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS))
         }
         if (true) {//test job with notifications, invalid urls
             def fwkControl = mockFor(FrameworkService, true)
@@ -1230,7 +1231,7 @@ class ScheduledExServiceTests {
             sec.frameworkService = fwkControl.createMock()
 
             def params = [jobName: 'monkey1', project: 'testProject', description: 'blah2', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand',
-                    notifications: [[eventTrigger: 'onsuccess', type: 'url', content: 'c@example.comd@example.com'], [eventTrigger: 'onfailure', type: 'url', content: 'monkey@ example.com']]
+                    notifications: [[eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'url', content: 'c@example.comd@example.com'], [eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'url', content: 'monkey@ example.com']]
             ]
             def results = sec._dovalidate(params, 'test', 'test', null)
             if (results.scheduledExecution.errors.hasErrors()) {
@@ -1245,8 +1246,8 @@ class ScheduledExServiceTests {
             assertNotNull(execution)
             assertNotNull(execution.errors)
             assertTrue(execution.errors.hasErrors())
-            assertTrue(execution.errors.hasFieldErrors('notifyFailureUrl'))
-            assertTrue(execution.errors.hasFieldErrors('notifySuccessUrl'))
+            assertTrue(execution.errors.hasFieldErrors(ScheduledExecutionController.NOTIFY_FAILURE_URL))
+            assertTrue(execution.errors.hasFieldErrors(ScheduledExecutionController.NOTIFY_SUCCESS_URL))
         }
     }
 
@@ -1270,8 +1271,8 @@ class ScheduledExServiceTests {
 
         def params = [jobName: 'monkey1', project: 'testProject', description: 'blah',
                 workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'a remote string']],
-                notifications: [[eventTrigger: 'onsuccess', type: 'email', content: '${job.user.name}@something.org'],
-                        [eventTrigger: 'onfailure', type: 'email', content: '${job.user.email}']]
+                notifications: [[eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: '${job.user.name}@something.org'],
+                        [eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: '${job.user.email}']]
         ]
         def results = sec._dovalidate(params, 'test', 'test', null)
         if (results.scheduledExecution.errors.hasErrors()) {
@@ -1290,16 +1291,16 @@ class ScheduledExServiceTests {
         assertNotNull execution.notifications
         assertEquals 2, execution.notifications.size()
         def notifications = execution.notifications.groupBy { it.eventTrigger }
-        final def not0 = notifications['onsuccess'][0]
+        final def not0 = notifications[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME][0]
         assertTrue(not0 instanceof Notification)
         def Notification n0 = not0
-        assertEquals "onsuccess", n0.eventTrigger
+        assertEquals ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, n0.eventTrigger
         assertEquals "email", n0.type
         assertEquals '${job.user.name}@something.org', n0.content
-        final def not1 = notifications['onfailure'][0]
+        final def not1 = notifications[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME][0]
         assertTrue(not1 instanceof Notification)
         def Notification n1 = not1
-        assertEquals "onfailure", n1.eventTrigger
+        assertEquals ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, n1.eventTrigger
         assertEquals "email", n1.type
         assertEquals '${job.user.email}', n1.content
     }
@@ -2400,11 +2401,11 @@ class ScheduledExServiceTests {
 
         //test set scheduled with invalid crontabString  will not fire in future
         LinkedHashMap<String, Object> results = assertUpdateCrontabFailure('0 0 2 ? 12 1975') { ScheduledExecution se ->
-            def na1 = new Notification(eventTrigger: 'onsuccess', type: 'email', content: 'c@example.com,d@example.com')
-            def na2 = new Notification(eventTrigger: 'onfailure', type: 'email', content: 'monkey@example.com')
+            def na1 = new Notification(eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'c@example.com,d@example.com')
+            def na2 = new Notification(eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'monkey@example.com')
             se.addToNotifications(na1)
             se.addToNotifications(na2)
-            [notifications: [[eventTrigger: 'onsuccess', type: 'email', content: 'spaghetti@nowhere.com'], [eventTrigger: 'onfailure', type: 'email', content: 'milk@store.com']]]
+            [notifications: [[eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'spaghetti@nowhere.com'], [eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'milk@store.com']]]
         }
         ScheduledExecution se = results.scheduledExecution
         assertNotNull(se.notifications)
@@ -2416,8 +2417,8 @@ class ScheduledExServiceTests {
 
         //test set scheduled with invalid crontabString  will not fire in future
         LinkedHashMap<String, Object> results = assertUpdateCrontabFailure('0 0 2 ? 12 1975') { ScheduledExecution se ->
-            def na1 = new Notification(eventTrigger: 'onsuccess', type: 'email', content: 'c@example.com,d@example.com')
-            def na2 = new Notification(eventTrigger: 'onfailure', type: 'email', content: 'monkey@example.com')
+            def na1 = new Notification(eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'c@example.com,d@example.com')
+            def na2 = new Notification(eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'monkey@example.com')
             se.addToNotifications(na1)
             se.addToNotifications(na2)
             [notified: 'false']
@@ -3477,8 +3478,8 @@ class ScheduledExServiceTests {
         def sec = new ScheduledExecutionService()
         //test update job, add onsuccess
         def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2', adhocExecution: true, adhocRemoteString: 'test command',)
-        def na1 = new Notification(eventTrigger: 'onsuccess', type: 'email', content: 'c@example.com,d@example.com')
-        def na2 = new Notification(eventTrigger: 'onfailure', type: 'email', content: 'monkey@example.com')
+        def na1 = new Notification(eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'c@example.com,d@example.com')
+        def na2 = new Notification(eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'monkey@example.com')
         se.addToNotifications(na1)
         se.addToNotifications(na2)
         se.save()
@@ -3511,8 +3512,8 @@ class ScheduledExServiceTests {
                 workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'test command']],
                 _workflow_data: true,
                 notified: 'true',
-                notifyOnsuccess: 'true',
-                notifySuccessRecipients: 'spaghetti@nowhere.com',
+                (ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL): 'true',
+                (ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS): 'spaghetti@nowhere.com',
         ]
         def results = sec._doupdate(params, 'test', 'test', null)
         def succeeded = results.success
@@ -3547,20 +3548,20 @@ class ScheduledExServiceTests {
         execution.notifications.each { not1 ->
             nmap[not1.eventTrigger] = not1
         }
-        assertNotNull(nmap.onsuccess)
-        assertNull(nmap.onfailure)
-        assertTrue(nmap.onsuccess instanceof Notification)
-        def Notification n2 = nmap.onsuccess
-        assertEquals "onsuccess", n2.eventTrigger
+        assertNotNull(nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME])
+        assertNull(nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME])
+        assertTrue(nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME] instanceof Notification)
+        def Notification n2 = nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME]
+        assertEquals ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, n2.eventTrigger
         assertEquals "email", n2.type
         assertEquals "spaghetti@nowhere.com", n2.content
     }
 
     public void testDoUpdateNotificationsShouldUpdateOnSuccess() {
         assertUpdateNotifications([notified: 'true',
-                notifySuccessRecipients: 'spaghetti@nowhere.com',
-                notifyOnsuccess: 'true',
-                notifyFailureRecipients: 'milk@store.com'
+                (ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS): 'spaghetti@nowhere.com',
+                (ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL): 'true',
+                (ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS): 'milk@store.com'
         ]) { ScheduledExecution execution ->
 
             assertEquals 1, execution.notifications.size()
@@ -3568,12 +3569,12 @@ class ScheduledExServiceTests {
             execution.notifications.each { not1 ->
                 nmap[not1.eventTrigger] = not1
             }
-            assertNotNull(nmap.onsuccess)
-            assertNull(nmap.onfailure)
-            assertNull(nmap.onstart)
-            assertTrue(nmap.onsuccess instanceof Notification)
-            def Notification n2 = nmap.onsuccess
-            assertEquals "onsuccess", n2.eventTrigger
+            assertNotNull(nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME])
+            assertNull(nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME])
+            assertNull(nmap[ScheduledExecutionController.ONSTART_TRIGGER_NAME])
+            assertTrue(nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME] instanceof Notification)
+            def Notification n2 = nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME]
+            assertEquals ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, n2.eventTrigger
             assertEquals "email", n2.type
             assertEquals "spaghetti@nowhere.com", n2.content
         }
@@ -3581,8 +3582,8 @@ class ScheduledExServiceTests {
 
     public void testDoUpdateNotificationsShouldUpdateOnFailure() {
         assertUpdateNotifications([notified: 'true',
-                notifyOnfailure: 'true',
-                notifyFailureRecipients: 'milk@store.com'
+                (ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL): 'true',
+                (ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS): 'milk@store.com'
         ]) { ScheduledExecution execution ->
 
             assertEquals 1, execution.notifications.size()
@@ -3590,12 +3591,12 @@ class ScheduledExServiceTests {
             execution.notifications.each { not1 ->
                 nmap[not1.eventTrigger] = not1
             }
-            assertNotNull(nmap.onfailure)
-            assertNull(nmap.onsuccess)
-            assertNull(nmap.onstart)
-            assertTrue(nmap.onfailure instanceof Notification)
-            def Notification n2 = nmap.onfailure
-            assertEquals "onfailure", n2.eventTrigger
+            assertNotNull(nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME])
+            assertNull(nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME])
+            assertNull(nmap[ScheduledExecutionController.ONSTART_TRIGGER_NAME])
+            assertTrue(nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME] instanceof Notification)
+            def Notification n2 = nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME]
+            assertEquals ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, n2.eventTrigger
             assertEquals "email", n2.type
             assertEquals "milk@store.com", n2.content
         }
@@ -3603,8 +3604,8 @@ class ScheduledExServiceTests {
 
     public void testDoUpdateNotificationsShouldUpdateOnStart() {
         assertUpdateNotifications([notified: 'true',
-                notifyOnstart: 'true',
-                notifyStartRecipients: 'avbdf@zzdf.com'
+                (ScheduledExecutionController.NOTIFY_ONSTART_EMAIL): 'true',
+                (ScheduledExecutionController.NOTIFY_START_RECIPIENTS): 'avbdf@zzdf.com'
         ]) { ScheduledExecution execution ->
 
             assertEquals 1, execution.notifications.size()
@@ -3612,12 +3613,12 @@ class ScheduledExServiceTests {
             execution.notifications.each { not1 ->
                 nmap[not1.eventTrigger] = not1
             }
-            assertNotNull(nmap.onstart)
-            assertNull(nmap.onsuccess)
-            assertNull(nmap.onfailure)
-            assertTrue(nmap.onstart instanceof Notification)
-            def Notification n2 = nmap.onstart
-            assertEquals "onstart", n2.eventTrigger
+            assertNotNull(nmap[ScheduledExecutionController.ONSTART_TRIGGER_NAME])
+            assertNull(nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME])
+            assertNull(nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME])
+            assertTrue(nmap[ScheduledExecutionController.ONSTART_TRIGGER_NAME] instanceof Notification)
+            def Notification n2 = nmap[ScheduledExecutionController.ONSTART_TRIGGER_NAME]
+            assertEquals ScheduledExecutionController.ONSTART_TRIGGER_NAME, n2.eventTrigger
             assertEquals "email", n2.type
             assertEquals "avbdf@zzdf.com", n2.content
         }
@@ -3691,8 +3692,8 @@ class ScheduledExServiceTests {
         def sec = new ScheduledExecutionService()
         if (true) {//test update job  notifications, replacing onsuccess, and removing onfailure
             def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2', adhocExecution: true, adhocRemoteString: 'test command',)
-            def na1 = new Notification(eventTrigger: 'onsuccess', type: 'email', content: 'c@example.com,d@example.com')
-            def na2 = new Notification(eventTrigger: 'onfailure', type: 'email', content: 'monkey@example.com')
+            def na1 = new Notification(eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'c@example.com,d@example.com')
+            def na2 = new Notification(eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'monkey@example.com')
             se.addToNotifications(na1)
             se.addToNotifications(na2)
             se.save()
@@ -3725,8 +3726,8 @@ class ScheduledExServiceTests {
                     workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'test command']],
                     _workflow_data: true,
                     notified: 'true',
-                    notifyOnsuccessUrl: 'true', notifySuccessUrl: 'http://example.com',
-                    notifyFailureRecipients: 'milk@store.com',
+                    (ScheduledExecutionController.NOTIFY_ONSUCCESS_URL): 'true', (ScheduledExecutionController.NOTIFY_SUCCESS_URL): 'http://example.com',
+                    (ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS): 'milk@store.com',
             ]
             def results = sec._doupdate(params, 'test', 'test', null)
             def succeeded = results.success
@@ -3761,11 +3762,11 @@ class ScheduledExServiceTests {
             execution.notifications.each { not1 ->
                 nmap[not1.eventTrigger] = not1
             }
-            assertNotNull(nmap.onsuccess)
-            assertNull(nmap.onfailure)
-            assertTrue(nmap.onsuccess instanceof Notification)
-            def Notification n2 = nmap.onsuccess
-            assertEquals "onsuccess", n2.eventTrigger
+            assertNotNull(nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME])
+            assertNull(nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME])
+            assertTrue(nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME] instanceof Notification)
+            def Notification n2 = nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME]
+            assertEquals ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, n2.eventTrigger
             assertEquals "url", n2.type
             assertEquals "http://example.com", n2.content
         }
@@ -3780,8 +3781,8 @@ class ScheduledExServiceTests {
                             [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]
                     )
             )
-            def na1 = new Notification(eventTrigger: 'onsuccess', type: 'email', content: 'c@example.com,d@example.com')
-            def na2 = new Notification(eventTrigger: 'onfailure', type: 'email', content: 'monkey@example.com')
+            def na1 = new Notification(eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'c@example.com,d@example.com')
+            def na2 = new Notification(eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'monkey@example.com')
             se.addToNotifications(na1)
             se.addToNotifications(na2)
             se.save()
@@ -3814,8 +3815,8 @@ class ScheduledExServiceTests {
                     workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'test command']],
                     _workflow_data: true,
                     notified: 'false',
-                    notifyOnsuccessUrl: 'true', notifySuccessUrl: 'http://example.com',
-                    notifyFailureRecipients: 'milk@store.com',
+                    (ScheduledExecutionController.NOTIFY_ONSUCCESS_URL): 'true', (ScheduledExecutionController.NOTIFY_SUCCESS_URL): 'http://example.com',
+                    (ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS): 'milk@store.com',
             ]
             def results = sec._doupdate(params, 'test', 'test', null)
             def succeeded = results.success
@@ -3857,8 +3858,8 @@ class ScheduledExServiceTests {
                             [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]
                     )
             )
-            def na1 = new Notification(eventTrigger: 'onsuccess', type: 'email', content: 'c@example.com,d@example.com')
-            def na2 = new Notification(eventTrigger: 'onfailure', type: 'email', content: 'monkey@example.com')
+            def na1 = new Notification(eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'c@example.com,d@example.com')
+            def na2 = new Notification(eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'monkey@example.com')
             se.addToNotifications(na1)
             se.addToNotifications(na2)
             se.save()
@@ -3891,8 +3892,8 @@ class ScheduledExServiceTests {
                     workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'test command']],
                     _workflow_data: true,
                     notified: 'true',
-                    notifySuccessUrl: 'http://example.com',
-                    notifyFailureRecipients: 'milk@store.com',
+                    (ScheduledExecutionController.NOTIFY_SUCCESS_URL): 'http://example.com',
+                    (ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS): 'milk@store.com',
             ]
             def results = sec._doupdate(params, 'test', 'test', null)
             def succeeded = results.success
@@ -3933,8 +3934,8 @@ class ScheduledExServiceTests {
                             [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]
                     )
             )
-            def na1 = new Notification(eventTrigger: 'onsuccess', type: 'email', content: 'c@example.com,d@example.com')
-            def na2 = new Notification(eventTrigger: 'onfailure', type: 'email', content: 'monkey@example.com')
+            def na1 = new Notification(eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'c@example.com,d@example.com')
+            def na2 = new Notification(eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'monkey@example.com')
             se.addToNotifications(na1)
             se.addToNotifications(na2)
             se.save()
@@ -3966,7 +3967,7 @@ class ScheduledExServiceTests {
             def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah',
                     workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'test command']],
                     _workflow_data: true,
-                    notifications: [[eventTrigger: 'onsuccess', type: 'email', content: 'spaghetti@nowhere.com'], [eventTrigger: 'onfailure', type: 'email', content: 'milk@store.com']]
+                    notifications: [[eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'spaghetti@nowhere.com'], [eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'milk@store.com']]
             ]
             def results = sec._doupdate(params, 'test', 'test', null)
             def succeeded = results.success
@@ -4002,24 +4003,24 @@ class ScheduledExServiceTests {
             execution.notifications.each { not1 ->
                 nmap[not1.eventTrigger] = not1
             }
-            assertNotNull(nmap.onsuccess)
-            assertNotNull(nmap.onfailure)
-            assertTrue(nmap.onsuccess instanceof Notification)
-            assertTrue(nmap.onfailure instanceof Notification)
-            def Notification n = nmap.onsuccess
-            assertEquals "onsuccess", n.eventTrigger
+            assertNotNull(nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME])
+            assertNotNull(nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME])
+            assertTrue(nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME] instanceof Notification)
+            assertTrue(nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME] instanceof Notification)
+            def Notification n = nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME]
+            assertEquals ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, n.eventTrigger
             assertEquals "email", n.type
             assertEquals "spaghetti@nowhere.com", n.content
-            def Notification n2 = nmap.onfailure
-            assertEquals "onfailure", n2.eventTrigger
+            def Notification n2 = nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME]
+            assertEquals ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, n2.eventTrigger
             assertEquals "email", n2.type
             assertEquals "milk@store.com", n2.content
         }
 
         if (true) {//test update job  notifications, using form input parameters
             def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: true, adhocRemoteString: 'test command',)
-            def na1 = new Notification(eventTrigger: 'onsuccess', type: 'email', content: 'c@example.com,d@example.com')
-            def na2 = new Notification(eventTrigger: 'onfailure', type: 'email', content: 'monkey@example.com')
+            def na1 = new Notification(eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'c@example.com,d@example.com')
+            def na2 = new Notification(eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'monkey@example.com')
             se.addToNotifications(na1)
             se.addToNotifications(na2)
             se.save()
@@ -4052,8 +4053,8 @@ class ScheduledExServiceTests {
                     workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'test command']],
                     _workflow_data: true,
                     notified: 'true',
-                    notifyOnsuccess: 'true', notifySuccessRecipients: 'spaghetti@nowhere.com',
-                    notifyOnfailure: 'true', notifyFailureRecipients: 'milk@store.com',
+                    (ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL): 'true', (ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS): 'spaghetti@nowhere.com',
+                    (ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL): 'true', (ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS): 'milk@store.com',
             ]
             def results = sec._doupdate(params, 'test', 'test', null)
             def succeeded = results.success
@@ -4088,23 +4089,23 @@ class ScheduledExServiceTests {
             execution.notifications.each { not1 ->
                 nmap[not1.eventTrigger] = not1
             }
-            assertNotNull(nmap.onsuccess)
-            assertNotNull(nmap.onfailure)
-            assertTrue(nmap.onsuccess instanceof Notification)
-            assertTrue(nmap.onfailure instanceof Notification)
-            def Notification n = nmap.onsuccess
-            assertEquals "onsuccess", n.eventTrigger
+            assertNotNull(nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME])
+            assertNotNull(nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME])
+            assertTrue(nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME] instanceof Notification)
+            assertTrue(nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME] instanceof Notification)
+            def Notification n = nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME]
+            assertEquals ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, n.eventTrigger
             assertEquals "email", n.type
             assertEquals "spaghetti@nowhere.com", n.content
-            def Notification n2 = nmap.onfailure
-            assertEquals "onfailure", n2.eventTrigger
+            def Notification n2 = nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME]
+            assertEquals ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, n2.eventTrigger
             assertEquals "email", n2.type
             assertEquals "milk@store.com", n2.content
         }
         if (true) {//test update job  notifications, using form input parameters, invalid email addresses
             def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: true, adhocRemoteString: 'test command',)
-            def na1 = new Notification(eventTrigger: 'onsuccess', type: 'email', content: 'c@example.com,d@example.com')
-            def na2 = new Notification(eventTrigger: 'onfailure', type: 'email', content: 'monkey@example.com')
+            def na1 = new Notification(eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'c@example.com,d@example.com')
+            def na2 = new Notification(eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'monkey@example.com')
             se.addToNotifications(na1)
             se.addToNotifications(na2)
             se.save(flush: true)
@@ -4134,8 +4135,8 @@ class ScheduledExServiceTests {
 //            sec.scheduledExecutionService = sesControl.createMock()
 
             def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah',
-                    notifyOnsuccess: 'true', notifySuccessRecipients: 'spaghetti@ nowhere.com',
-                    notifyOnfailure: 'true', notifyFailureRecipients: 'milkstore.com',
+                    (ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL): 'true', (ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS): 'spaghetti@ nowhere.com',
+                    (ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL): 'true', (ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS): 'milkstore.com',
             ]
             def results = sec._doupdate(params, 'test', 'test', null)
             def succeeded = results.success
@@ -4152,8 +4153,8 @@ class ScheduledExServiceTests {
             assertNotNull executionErr
             assertNotNull(executionErr.errors)
             assertTrue(executionErr.errors.hasErrors())
-            assertTrue(executionErr.errors.hasFieldErrors('notifyFailureRecipients'))
-            assertTrue(executionErr.errors.hasFieldErrors('notifySuccessRecipients'))
+            assertTrue(executionErr.errors.hasFieldErrors(ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS))
+            assertTrue(executionErr.errors.hasFieldErrors(ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS))
 
             final ScheduledExecution execution = ScheduledExecution.get(scheduledExecution.id)
 
@@ -4166,16 +4167,16 @@ class ScheduledExServiceTests {
             execution.notifications.each { not1 ->
                 nmap[not1.eventTrigger] = not1
             }
-            assertNotNull(nmap.onsuccess)
-            assertNotNull(nmap.onfailure)
-            assertTrue(nmap.onsuccess instanceof Notification)
-            assertTrue(nmap.onfailure instanceof Notification)
-            def Notification n = nmap.onsuccess
-            assertEquals "onsuccess", n.eventTrigger
+            assertNotNull(nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME])
+            assertNotNull(nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME])
+            assertTrue(nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME] instanceof Notification)
+            assertTrue(nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME] instanceof Notification)
+            def Notification n = nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME]
+            assertEquals ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, n.eventTrigger
             assertEquals "email", n.type
             assertEquals "c@example.com,d@example.com", n.content
-            def Notification n2 = nmap.onfailure
-            assertEquals "onfailure", n2.eventTrigger
+            def Notification n2 = nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME]
+            assertEquals ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, n2.eventTrigger
             assertEquals "email", n2.type
             assertEquals "monkey@example.com", n2.content
         }
@@ -4187,8 +4188,8 @@ class ScheduledExServiceTests {
             def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah',
                     workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'test command',)])
             )
-            def na1 = new Notification(eventTrigger: 'onsuccess', type: 'email', content: 'c@example.com,d@example.com')
-            def na2 = new Notification(eventTrigger: 'onfailure', type: 'email', content: 'monkey@example.com')
+            def na1 = new Notification(eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'c@example.com,d@example.com')
+            def na2 = new Notification(eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'monkey@example.com')
             se.addToNotifications(na1)
             se.addToNotifications(na2)
             se.save()
@@ -4214,8 +4215,8 @@ class ScheduledExServiceTests {
             sec.frameworkService = fwkControl.createMock()
 
             def params = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: true, adhocRemoteString: 'test command',
-                    notifications: [new Notification(eventTrigger: 'onsuccess', type: 'email', content: 'spaghetti@nowhere.com'),
-                            new Notification(eventTrigger: 'onfailure', type: 'email', content: 'milk@store.com')
+                    notifications: [new Notification(eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'spaghetti@nowhere.com'),
+                            new Notification(eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'milk@store.com')
                     ])
             def results = sec._doupdateJob(se.id, params, 'test', 'test', null)
             def succeeded = results[0]
@@ -4251,16 +4252,16 @@ class ScheduledExServiceTests {
             execution.notifications.each { not1 ->
                 nmap[not1.eventTrigger] = not1
             }
-            assertNotNull(nmap.onsuccess)
-            assertNotNull(nmap.onfailure)
-            assertTrue(nmap.onsuccess instanceof Notification)
-            assertTrue(nmap.onfailure instanceof Notification)
-            def Notification n = nmap.onsuccess
-            assertEquals "onsuccess", n.eventTrigger
+            assertNotNull(nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME])
+            assertNotNull(nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME])
+            assertTrue(nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME] instanceof Notification)
+            assertTrue(nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME] instanceof Notification)
+            def Notification n = nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME]
+            assertEquals ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, n.eventTrigger
             assertEquals "email", n.type
             assertEquals "spaghetti@nowhere.com", n.content
-            def Notification n2 = nmap.onfailure
-            assertEquals "onfailure", n2.eventTrigger
+            def Notification n2 = nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME]
+            assertEquals ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, n2.eventTrigger
             assertEquals "email", n2.type
             assertEquals "milk@store.com", n2.content
         }
@@ -4270,8 +4271,8 @@ class ScheduledExServiceTests {
         def sec = new ScheduledExecutionService()
         if (true) {//test update job  notifications, invalid email addresses
             def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: true, adhocRemoteString: 'test command',)
-            def na1 = new Notification(eventTrigger: 'onsuccess', type: 'email', content: 'c@example.com,d@example.com')
-            def na2 = new Notification(eventTrigger: 'onfailure', type: 'email', content: 'monkey@example.com')
+            def na1 = new Notification(eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'c@example.com,d@example.com')
+            def na2 = new Notification(eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'monkey@example.com')
             se.addToNotifications(na1)
             se.addToNotifications(na2)
             se.save(flush: true)
@@ -4297,8 +4298,8 @@ class ScheduledExServiceTests {
             sec.frameworkService = fwkControl.createMock()
 
             def params = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: true, adhocRemoteString: 'test command',
-                    notifications: [new Notification(eventTrigger: 'onsuccess', type: 'email', content: 'spaghetti@ nowhere.com'),
-                            new Notification(eventTrigger: 'onfailure', type: 'email', content: 'milkstore.com')
+                    notifications: [new Notification(eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'spaghetti@ nowhere.com'),
+                            new Notification(eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'milkstore.com')
                     ])
             def results = sec._doupdateJob(se.id, params, 'test', 'test', null)
             def succeeded = results[0]
@@ -4315,8 +4316,8 @@ class ScheduledExServiceTests {
             assertNotNull executionErr
             assertNotNull(executionErr.errors)
             assertTrue(executionErr.errors.hasErrors())
-            assertTrue(executionErr.errors.hasFieldErrors('notifyFailureRecipients'))
-            assertTrue(executionErr.errors.hasFieldErrors('notifySuccessRecipients'))
+            assertTrue(executionErr.errors.hasFieldErrors(ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS))
+            assertTrue(executionErr.errors.hasFieldErrors(ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS))
 
             final ScheduledExecution execution = ScheduledExecution.get(scheduledExecution.id)
 
@@ -4329,16 +4330,16 @@ class ScheduledExServiceTests {
             execution.notifications.each { not1 ->
                 nmap[not1.eventTrigger] = not1
             }
-            assertNotNull(nmap.onsuccess)
-            assertNotNull(nmap.onfailure)
-            assertTrue(nmap.onsuccess instanceof Notification)
-            assertTrue(nmap.onfailure instanceof Notification)
-            def Notification n = nmap.onsuccess
-            assertEquals "onsuccess", n.eventTrigger
+            assertNotNull(nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME])
+            assertNotNull(nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME])
+            assertTrue(nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME] instanceof Notification)
+            assertTrue(nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME] instanceof Notification)
+            def Notification n = nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME]
+            assertEquals ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, n.eventTrigger
             assertEquals "email", n.type
             assertEquals "c@example.com,d@example.com", n.content
-            def Notification n2 = nmap.onfailure
-            assertEquals "onfailure", n2.eventTrigger
+            def Notification n2 = nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME]
+            assertEquals ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, n2.eventTrigger
             assertEquals "email", n2.type
             assertEquals "monkey@example.com", n2.content
         }

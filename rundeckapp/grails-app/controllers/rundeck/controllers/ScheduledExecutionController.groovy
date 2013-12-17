@@ -47,6 +47,31 @@ import java.util.regex.Pattern
 import javax.security.auth.Subject
 
 class ScheduledExecutionController  {
+    public static final String NOTIFY_ONSUCCESS_EMAIL = 'notifyOnsuccessEmail'
+    public static final String NOTIFY_ONFAILURE_EMAIL = 'notifyOnfailureEmail'
+    public static final String NOTIFY_ONSTART_EMAIL = 'notifyOnstartEmail'
+    public static final String NOTIFY_START_RECIPIENTS = 'notifyStartRecipients'
+    public static final String NOTIFY_ONSUCCESS_URL = 'notifyOnsuccessUrl'
+    public static final String NOTIFY_SUCCESS_URL = 'notifySuccessUrl'
+    public static final String NOTIFY_FAILURE_RECIPIENTS = 'notifyFailureRecipients'
+    public static final String NOTIFY_SUCCESS_RECIPIENTS = 'notifySuccessRecipients'
+    public static final String NOTIFY_FAILURE_URL = 'notifyFailureUrl'
+    public static final String NOTIFY_ONFAILURE_URL = 'notifyOnfailureUrl'
+    public static final String NOTIFY_ONSTART_URL = 'notifyOnstartUrl'
+    public static final String NOTIFY_START_URL = 'notifyStartUrl'
+    public static final String ONSUCCESS_TRIGGER_NAME = 'onsuccess'
+    public static final String ONFAILURE_TRIGGER_NAME = 'onfailure'
+    public static final String ONSTART_TRIGGER_NAME = 'onstart'
+    public static final String EMAIL_NOTIFICATION_TYPE = 'email'
+    public static final String WEBHOOK_NOTIFICATION_TYPE = 'url'
+    public static final ArrayList<String> NOTIFICATION_ENABLE_FIELD_NAMES = [
+            NOTIFY_ONFAILURE_URL,
+            NOTIFY_ONFAILURE_EMAIL,
+            NOTIFY_ONSUCCESS_EMAIL,
+            NOTIFY_ONSUCCESS_URL,
+            NOTIFY_ONSTART_EMAIL,
+            NOTIFY_ONSTART_URL
+    ]
     def Scheduler quartzScheduler
     def ExecutionService executionService
     def FrameworkService frameworkService
@@ -930,10 +955,16 @@ class ScheduledExecutionController  {
                 request.message+=": "+result.message
             }
 
-            if(!scheduledExecution.isAttached()) {
-                scheduledExecution.attach()
-            }else{
-                scheduledExecution.refresh()
+//            if(!scheduledExecution.isAttached()) {
+//                scheduledExecution.attach()
+//            }else{
+//                scheduledExecution.refresh()
+//            }
+            //update notification checkbox values
+            NOTIFICATION_ENABLE_FIELD_NAMES.each{
+                if(params[it]!='true'){
+                    params[it]='false'
+                }
             }
             def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions(framework)
             def stepTypes = frameworkService.getStepPluginDescriptions(framework)

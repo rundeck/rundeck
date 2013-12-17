@@ -14,6 +14,7 @@ import org.springframework.web.servlet.support.RequestContextUtils
 import rundeck.*
 import rundeck.controllers.EditOptsController
 import rundeck.controllers.JobXMLException
+import rundeck.controllers.ScheduledExecutionController
 import rundeck.controllers.WorkflowController
 import rundeck.quartzjobs.ExecutionJob
 
@@ -955,43 +956,55 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         }
     }
     static def parseNotificationsFromParams(params){
-        def notifyParamKeys = ['notifyPlugin', 'notifyOnstart', 'notifyOnstartUrl', 'notifyOnsuccess',
-                'notifyOnfailure', 'notifyOnsuccessUrl', 'notifyOnfailureUrl']
+        def notifyParamKeys = ['notifyPlugin']+ ScheduledExecutionController.NOTIFICATION_ENABLE_FIELD_NAMES
         if (!params.notifications && params.subMap(notifyParamKeys).any { it.value }) {
             params.notifications = parseParamNotifications(params)
         }
     }
     static List parseParamNotifications(params){
         List nots=[]
-        if ('true' == params.notifyOnsuccess) {
-            nots << [eventTrigger: 'onsuccess', type: 'email', content: params.notifySuccessRecipients]
+        if ('true' == params[ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL]) {
+            nots << [eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME,
+                    type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
+                    content: params[ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS]]
         }
-        if ('true' == params.notifyOnsuccessUrl) {
-            nots << [eventTrigger: 'onsuccess', type: 'url', content: params.notifySuccessUrl]
+        if ('true' == params[ScheduledExecutionController.NOTIFY_ONSUCCESS_URL]) {
+            nots << [eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME,
+                    type: ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE,
+                    content: params[ScheduledExecutionController.NOTIFY_SUCCESS_URL]]
         }
-        if ('true' == params.notifyOnfailure) {
-            nots << [eventTrigger: 'onfailure', type: 'email', content: params.notifyFailureRecipients]
+        if ('true' == params[ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL]) {
+            nots << [eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME,
+                    type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
+                    content: params[ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS]]
         }
-        if ('true' == params.notifyOnfailureUrl) {
-            nots << [eventTrigger: 'onfailure', type: 'url', content: params.notifyFailureUrl]
+        if ('true' == params[ScheduledExecutionController.NOTIFY_ONFAILURE_URL]) {
+            nots << [eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME,
+                    type: ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE,
+                    content: params[ScheduledExecutionController.NOTIFY_FAILURE_URL]]
         }
-        if ('true' == params.notifyOnstart) {
-            nots << [eventTrigger: 'onstart', type: 'email', content: params.notifyStartRecipients]
+        if ('true' == params[ScheduledExecutionController.NOTIFY_ONSTART_EMAIL]) {
+            nots << [eventTrigger: ScheduledExecutionController.ONSTART_TRIGGER_NAME,
+                    type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
+                    content: params[ScheduledExecutionController.NOTIFY_START_RECIPIENTS]]
         }
-        if ('true' == params.notifyOnstartUrl) {
-            nots << [eventTrigger: 'onstart', type: 'url', content: params.notifyStartUrl]
+        if ('true' == params[ScheduledExecutionController.NOTIFY_ONSTART_URL]) {
+            nots << [eventTrigger: ScheduledExecutionController.ONSTART_TRIGGER_NAME,
+                    type: ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE,
+                    content: params[ScheduledExecutionController.NOTIFY_START_URL]]
         }
         //notifyOnsuccessPlugin
         if (params.notifyPlugin) {
-            ['success', 'failure', 'start'].each { trig ->
+            [ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, ScheduledExecutionController
+                    .ONFAILURE_TRIGGER_NAME, ScheduledExecutionController.ONSTART_TRIGGER_NAME].each { trig ->
 //                params.notifyPlugin.each { trig, plug ->
                 def plugs = params.notifyPlugin[trig]
-                if(plugs){
-                    def types=[plugs['type']].flatten()
+                if (plugs) {
+                    def types = [plugs['type']].flatten()
                     types.each { pluginType ->
                         def config = plugs[pluginType]?.config
                         if (plugs['enabled'][pluginType] == 'true') {
-                            nots << [eventTrigger: 'on' + trig, type: pluginType, configuration: config]
+                            nots << [eventTrigger: trig, type: pluginType, configuration: config]
                         }
                     }
                 }
@@ -1373,7 +1386,14 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
     }
     private Map validateEmailNotification(ScheduledExecution scheduledExecution, String trigger, notif, params = null){
         def failed
-        def fieldNames = [onsuccess: 'notifySuccessRecipients', onfailure: 'notifyFailureRecipients', onstart: 'notifyStartRecipients']
+        def fieldNames = [
+                (ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME):
+                        ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS,
+                (ScheduledExecutionController.ONFAILURE_TRIGGER_NAME):
+                        ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS,
+                (ScheduledExecutionController.ONSTART_TRIGGER_NAME):
+                        ScheduledExecutionController.NOTIFY_START_RECIPIENTS
+        ]
         def arr = notif.content.split(",")
         arr.each { email ->
             if(email && email.indexOf('${')>=0){
@@ -1393,12 +1413,16 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         }
         def addrs = arr.findAll { it.trim() }.join(",")
 
-        def n = new Notification(eventTrigger: trigger, type: 'email', content: addrs)
+        def n = new Notification(eventTrigger: trigger, type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE, content: addrs)
         [failed: false, notification: n]
     }
     private Map validateUrlNotification(ScheduledExecution scheduledExecution, String trigger, notif, params = null){
         def failed
-        def fieldNamesUrl = [onsuccess: 'notifySuccessUrl', onfailure: 'notifyFailureUrl', onstart: 'notifyStartUrl']
+        def fieldNamesUrl = [
+                (ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_SUCCESS_URL,
+                (ScheduledExecutionController.ONFAILURE_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_FAILURE_URL,
+                (ScheduledExecutionController.ONSTART_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_START_URL
+        ]
         def arr = notif.content.split(",")
         arr.each { String url ->
             boolean valid = false
@@ -1422,7 +1446,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             return [failed: true]
         }
         def addrs = arr.findAll { it.trim() }.join(",")
-        def n = new Notification(eventTrigger: trigger, type: 'url', content: addrs)
+        def n = new Notification(eventTrigger: trigger, type: ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE, content: addrs)
         [failed:false,notification: n]
     }
 
@@ -1433,14 +1457,26 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
      */
     private Map _updateNotificationsData( params, ScheduledExecution scheduledExecution) {
         boolean failed = false
-        def fieldNames = [onsuccess: 'notifySuccessRecipients', onfailure: 'notifyFailureRecipients']
-        def fieldNamesUrl = [onsuccess: 'notifySuccessUrl', onfailure: 'notifyFailureUrl']
+        def fieldNames = [
+                (ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME):
+                        ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS,
+                (ScheduledExecutionController.ONFAILURE_TRIGGER_NAME):
+                        ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS,
+                (ScheduledExecutionController.ONSTART_TRIGGER_NAME):
+                        ScheduledExecutionController.NOTIFY_START_RECIPIENTS
+        ]
+        def fieldNamesUrl = [
+                (ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_SUCCESS_URL,
+                (ScheduledExecutionController.ONFAILURE_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_FAILURE_URL,
+                (ScheduledExecutionController.ONSTART_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_START_URL,
+        ]
+        
         def addedNotifications=[]
         params.notifications.each {notif ->
             def trigger = notif.eventTrigger
             def Notification n
             def String failureField
-            if (notif && notif.type == 'email' && notif.content) {
+            if (notif && notif.type == ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE && notif.content) {
                 def result=validateEmailNotification(scheduledExecution,trigger,notif,params)
                 if(result.failed){
                     failed=true
@@ -1448,7 +1484,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                     n=result.notification
                 }
                 failureField= fieldNames[trigger]
-            } else if (notif && notif.type == 'url' && notif.content) {
+            } else if (notif && notif.type == ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE && notif.content) {
 
                 def result = validateUrlNotification(scheduledExecution, trigger, notif, params)
                 if (result.failed) {

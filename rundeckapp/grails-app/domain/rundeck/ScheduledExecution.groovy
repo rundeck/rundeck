@@ -32,10 +32,12 @@ class ScheduledExecution extends ExecutionContext {
     Date lastUpdated
     String notifySuccessRecipients
     String notifyFailureRecipients
+    String notifyStartRecipients
     String notifySuccessUrl
     String notifyFailureUrl
+    String notifyStartUrl
     Boolean multipleExecutions = false
-    static transients = ['adhocExecutionType','notifySuccessRecipients','notifyFailureRecipients', 'notifySuccessUrl', 'notifyFailureUrl','crontabString']
+    static transients = ['adhocExecutionType','notifySuccessRecipients','notifyFailureRecipients','notifyStartRecipients', 'notifySuccessUrl', 'notifyFailureUrl', 'notifyStartUrl','crontabString']
 
     static constraints = {
         workflow(nullable:true)

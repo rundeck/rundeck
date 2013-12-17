@@ -1,17 +1,21 @@
-<%@ page import="com.dtolabs.rundeck.plugins.ServiceNameConstants" %>
+<%@ page import="rundeck.controllers.ScheduledExecutionController; com.dtolabs.rundeck.plugins.ServiceNameConstants" %>
 <g:set var="notifications" value="${scheduledExecution.notifications}"/>
-<g:set var="defSuccess" value="${scheduledExecution.findNotification('onsuccess', 'email')}"/>
-<g:set var="isSuccess" value="${params.notifySuccessRecipients && 'true' == params.notifyOnsuccess || defSuccess}"/>
-<g:set var="defSuccessUrl" value="${scheduledExecution.findNotification('onsuccess', 'url')}"/>
-<g:set var="isSuccessUrl" value="${params.notifySuccessUrl && 'true' == params.notifyOnsuccessUrl || defSuccessUrl}"/>
+<g:set var="defSuccess" value="${scheduledExecution.findNotification(ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE)}"/>
+<g:set var="isSuccess" value="${params[ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS] && 'true' == params[ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL] || null== params[ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL] && defSuccess}"/>
+<g:set var="defSuccessUrl" value="${scheduledExecution.findNotification(ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE)}"/>
+<g:set var="isSuccessUrl" value="${(params[ScheduledExecutionController.NOTIFY_SUCCESS_URL] && 'true' == params[ScheduledExecutionController.NOTIFY_ONSUCCESS_URL]) || (null==params[ScheduledExecutionController.NOTIFY_ONSUCCESS_URL] && defSuccessUrl)}"/>
 
-<g:set var="defFailure" value="${scheduledExecution.findNotification('onfailure', 'email')}"/>
-<g:set var="isFailure" value="${params.notifyFailureRecipients && 'true' == params.notifyOnfailure || defFailure}"/>
-<g:set var="defFailureUrl" value="${scheduledExecution.findNotification('onfailure', 'url')}"/>
-<g:set var="isFailureUrl" value="${params.notifyFailureUrl && 'true' == params.notifyOnfailureUrl || defFailureUrl}"/>
+<g:set var="defFailure" value="${scheduledExecution.findNotification(ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE)}"/>
+<g:set var="isFailure" value="${params[ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS] && 'true' == params[ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL] || null == params[ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL] &&defFailure}"/>
+<g:set var="defFailureUrl" value="${scheduledExecution.findNotification(ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE)}"/>
+<g:set var="isFailureUrl" value="${params[ScheduledExecutionController.NOTIFY_FAILURE_URL] && 'true' == params[ScheduledExecutionController.NOTIFY_ONFAILURE_URL] || null == params[ScheduledExecutionController.NOTIFY_ONFAILURE_URL] &&defFailureUrl}"/>
 
-<g:set var="defStart" value="${scheduledExecution.findNotification('onstart', 'email')}"/>
-<g:set var="defStartUrl" value="${scheduledExecution.findNotification('onstart', 'url')}"/>
+<g:set var="defStart" value="${scheduledExecution.findNotification(ScheduledExecutionController.ONSTART_TRIGGER_NAME, ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE)}"/>
+<g:set var="isStart"
+       value="${params[ScheduledExecutionController.NOTIFY_START_RECIPIENTS] && 'true' == params[ScheduledExecutionController.NOTIFY_ONSTART_EMAIL] || null == params[ScheduledExecutionController.NOTIFY_ONSTART_EMAIL] && defStart}"/>
+<g:set var="defStartUrl" value="${scheduledExecution.findNotification(ScheduledExecutionController.ONSTART_TRIGGER_NAME, ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE)}"/>
+<g:set var="isStartUrl"
+       value="${params[ScheduledExecutionController.NOTIFY_START_URL] && 'true' == params[ScheduledExecutionController.NOTIFY_ONSTART_URL] || null == params[ScheduledExecutionController.NOTIFY_ONSTART_URL] && defFailureUrl}"/>
 <div class="form-group">
     <div class="col-sm-2 control-label text-form-label">
         Send Notification?
@@ -44,10 +48,16 @@
 <g:render template="/scheduledExecution/editNotificationsTriggerForm"
     model="${[
             isVisible:( notifications ),
-            trigger:'success',
+            trigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME,
+            triggerEmailCheckboxName: ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL,
+            triggerEmailRecipientsName: ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS,
+            triggerUrlCheckboxName: ScheduledExecutionController.NOTIFY_ONSUCCESS_URL,
+            triggerUrlFieldName: ScheduledExecutionController.NOTIFY_SUCCESS_URL,
             isEmail:isSuccess,
             isUrl:isSuccessUrl,
-            definedNotifications: scheduledExecution.notifications?.findAll{it.eventTrigger=='onsuccess'},
+            defEmail:defSuccess,
+            defUrl:defSuccessUrl,
+            definedNotifications: scheduledExecution.notifications?.findAll{it.eventTrigger== ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME},
             adminauth: adminauth,
             serviceName: ServiceNameConstants.Notification
     ]}"
@@ -55,10 +65,16 @@
 <g:render template="/scheduledExecution/editNotificationsTriggerForm"
           model="${[
                   isVisible: (notifications),
-                  trigger: 'failure',
+                  trigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME,
+                  triggerEmailCheckboxName: ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL,
+                  triggerEmailRecipientsName: ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS,
+                  triggerUrlCheckboxName: ScheduledExecutionController.NOTIFY_ONFAILURE_URL,
+                  triggerUrlFieldName: ScheduledExecutionController.NOTIFY_FAILURE_URL,
                   isEmail: isFailure,
                   isUrl: isFailureUrl,
-                  definedNotifications: scheduledExecution.notifications?.findAll { it.eventTrigger == 'onfailure' },
+                  defEmail: defFailure,
+                  defUrl: defFailureUrl,
+                  definedNotifications: scheduledExecution.notifications?.findAll { it.eventTrigger == ScheduledExecutionController.ONFAILURE_TRIGGER_NAME },
                   adminauth: adminauth,
                   serviceName: ServiceNameConstants.Notification
           ]}"/>
@@ -66,10 +82,16 @@
 <g:render template="/scheduledExecution/editNotificationsTriggerForm"
           model="${[
                   isVisible: (notifications),
-                  trigger: 'start',
-                  isEmail: defStart,
-                  isUrl: defStartUrl,
-                  definedNotifications: scheduledExecution.notifications?.findAll { it.eventTrigger == 'onstart' },
+                  trigger: ScheduledExecutionController.ONSTART_TRIGGER_NAME,
+                  triggerEmailCheckboxName: ScheduledExecutionController.NOTIFY_ONSTART_EMAIL,
+                  triggerEmailRecipientsName: ScheduledExecutionController.NOTIFY_START_RECIPIENTS,
+                  triggerUrlCheckboxName: ScheduledExecutionController.NOTIFY_ONSTART_URL,
+                  triggerUrlFieldName: ScheduledExecutionController.NOTIFY_START_URL,
+                  isEmail: isStart,
+                  isUrl: isStartUrl,
+                  defEmail: defStart,
+                  defUrl: defStartUrl,
+                  definedNotifications: scheduledExecution.notifications?.findAll { it.eventTrigger == ScheduledExecutionController.ONSTART_TRIGGER_NAME },
                   adminauth: adminauth,
                   serviceName: ServiceNameConstants.Notification
           ]}"/>

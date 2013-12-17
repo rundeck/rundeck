@@ -1,12 +1,12 @@
 <%@ page import="com.dtolabs.rundeck.core.plugins.configuration.Description" %>
 <g:set var="ukey" value="${g.rkey()}"/>
 <g:if test="${notification.type == 'url'}">
-    <g:expander key="webhook${ukey}">Webhook </g:expander>
+    <g:expander key="webhook${ukey}"><g:message code="notification.webhook.label" /> </g:expander>
     <span class="webhooklink note" id="webhook${ukey}" style="display:none;"
           title="URLs: ${notification.content.encodeAsHTML()}">${notification.content.encodeAsHTML()}</span>
 </g:if>
 <g:elseif test="${notification.type == 'email'}">
-    mail to: ${notification.content.encodeAsHTML()}
+    <g:message code="notification.email.display" args="[notification.content.encodeAsHTML()]" />
 </g:elseif>
 <g:else>
 %{--plugin display--}%
@@ -20,6 +20,6 @@
         </span>
     </g:if>
     <g:elseif test="${!notificationPlugins?.get(notification.type)}">
-        <span class="warn note">Plugin not found: ${notification.type?.encodeAsHTML()}</span>
+        <span class="warn note"><g:message code="plugin.not.found.0" args="[notification.type?.encodeAsHTML()]" /></span>
     </g:elseif>
 </g:else>
