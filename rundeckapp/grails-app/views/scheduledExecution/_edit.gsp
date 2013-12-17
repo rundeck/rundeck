@@ -387,20 +387,30 @@ var applinks={
                 function groupChosen(path){
                     $('schedJobGroup').setValue(path);
                     $('schedJobGroup').highlight();
-                    jQuery('#groupChooseBtn').popover('destroy');
+                    jQuery('#groupChooseBtn').popover('hide');
                 }
                 function loadGroupChooser(){
                     jQuery('#groupChooseBtn').button('loading');
                     var project = jQuery('#schedEditFrameworkProject').val();
-                    jQuery.get('${createLink(controller:"scheduledExecution",action:"groupTreeFragment")}?jscallback=groupChosen&project='+project
-                            , function (d) {
-                        jQuery('#groupChooseBtn').popover({html:true, container:'body', placement: 'left',content: d,trigger:'manual'}).popover('show');
+                    if(jQuery('#groupChooseBtn').data('grouptreeshown')=='true'){
+                        jQuery('#groupChooseBtn').popover('hide');
                         jQuery('#groupChooseBtn').button('reset');
-                    });
-
+                    }else{
+                        jQuery.get('${createLink(controller:"scheduledExecution",action:"groupTreeFragment")}?jscallback=groupChosen&project='+project
+                                , function (d) {
+                            jQuery('#groupChooseBtn').popover({html:true, container:'body', placement: 'left',content: d,trigger:'manual'}).popover('show');
+                            jQuery('#groupChooseBtn').button('reset');
+                        });
+                    }
                 }
                 jQuery(window).load(function(){
                     jQuery('#groupChooseBtn').click(loadGroupChooser);
+                    jQuery('#groupChooseBtn').on('shown.bs.popover',function(e){
+                        jQuery('#groupChooseBtn').data('grouptreeshown', 'true');
+                    });
+                    jQuery('#groupChooseBtn').on('hide.bs.popover',function(e){
+                        jQuery('#groupChooseBtn').data('grouptreeshown', 'false');
+                    });
                 });
 
             </script>
