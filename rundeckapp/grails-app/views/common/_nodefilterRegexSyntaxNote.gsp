@@ -22,7 +22,7 @@
     $Id$
  --%>
 
-                <span class="info note">
+                <span class="help-block">
                     Regular expressions can be used.
                     E.g.: <code>dev(\d+).test.com</code>.
                     Use <code>/regex/</code> for syntax checking.
