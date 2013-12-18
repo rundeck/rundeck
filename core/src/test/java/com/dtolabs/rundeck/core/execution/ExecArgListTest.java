@@ -1,15 +1,13 @@
 package com.dtolabs.rundeck.core.execution;
 
 import com.dtolabs.rundeck.core.cli.CLIUtils;
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import junit.framework.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * $INTERFACE is ... User: greg Date: 6/19/13 Time: 2:23 PM
@@ -25,6 +23,14 @@ public class ExecArgListTest {
 
     private List<String> list(String... strs) {
         return Arrays.asList(strs);
+    }
+
+    private Map<String, String> map(String... strs) {
+        HashMap<String, String> stringStringHashMap = new HashMap<String, String>();
+        for(int i=0;i+1<strs.length;i+=2) {
+            stringStringHashMap.put(strs[i], strs[i + 1]);
+        }
+        return stringStringHashMap;
     }
 
     @Test
@@ -56,6 +62,39 @@ public class ExecArgListTest {
         testBuildCommandForNode(a, list("a test", "'b test'"), null,
                 "unix");
     }
+    @Test
+    public void buildExpandOptionRef() {
+        testBuildCommandForNode(
+                ExecArgList.fromStrings(true, "a", "command", "${option.test}"),
+                list("a", "command", "test1"),
+                DataContextUtils.addContext("option", map("test", "test1"), null),
+                null);
+    }
+    @Test
+    public void buildExpandOptionRefMissingIsBlank() {
+        testBuildCommandForNode(
+                ExecArgList.fromStrings(true, "a", "command", "${option.test2}"),
+                list("a", "command", ""),
+                DataContextUtils.addContext("option", map("test", "test1"), null),
+                null);
+    }
+    @Test
+    public void buildExpandNodeRef() {
+        testBuildCommandForNode(
+                ExecArgList.fromStrings(true, "a", "command", "${node.name}"),
+                list("a", "command", "node1"),
+                DataContextUtils.addContext("node", map("name", "node1"), null),
+                null);
+    }
+    @Test
+    public void buildExpandNodeRefMissing() {
+        testBuildCommandForNode(
+                ExecArgList.fromStrings(true, "a", "command", "${node.blah}"),
+                list("a", "command", "'${node.blah}'"),
+                DataContextUtils.addContext("node", map("name", "node1"), null),
+                null);
+    }
+
 
     @Test
     public void buildSubListUnquoted() {
