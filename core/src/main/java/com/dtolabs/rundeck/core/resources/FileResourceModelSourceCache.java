@@ -17,10 +17,7 @@
 package com.dtolabs.rundeck.core.resources;
 
 import com.dtolabs.rundeck.core.common.INodeSet;
-import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorException;
-import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserException;
-import com.dtolabs.rundeck.core.resources.format.ResourceXMLFormatGenerator;
-import com.dtolabs.rundeck.core.resources.format.ResourceXMLFormatParser;
+import com.dtolabs.rundeck.core.resources.format.*;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -29,20 +26,20 @@ import java.io.IOException;
 /**
  * A Resource Model source that caches results in a file, in case an error is thrown.
  */
-public class FileCachedResourceModelSource extends CachingResourceModelSource {
+public class FileResourceModelSourceCache implements ResourceModelSourceCache {
     private File cacheFile;
-    private ResourceXMLFormatGenerator generator;
-    private ResourceXMLFormatParser parser;
+    private ResourceFormatGenerator generator;
+    private ResourceModelSource fileResourceModelSource;
 
-    public FileCachedResourceModelSource(ResourceModelSource delegate, File cacheFile) {
-        super(delegate);
+    public FileResourceModelSourceCache(File cacheFile, ResourceFormatGenerator generator,
+            ResourceModelSource fileResourceModelSource) {
         this.cacheFile = cacheFile;
-        this.generator = new ResourceXMLFormatGenerator();
-        this.parser = new ResourceXMLFormatParser();
+        this.generator = generator;
+        this.fileResourceModelSource = fileResourceModelSource;
     }
 
     @Override
-    void storeNodesInCache(INodeSet nodes) throws ResourceModelSourceException {
+    public void storeNodesInCache(INodeSet nodes) throws ResourceModelSourceException {
         try {
             FileOutputStream fileOutputStream = new FileOutputStream(cacheFile);
             try {
@@ -58,14 +55,7 @@ public class FileCachedResourceModelSource extends CachingResourceModelSource {
     }
 
     @Override
-    INodeSet loadCachedNodes() throws ResourceModelSourceException{
-        if(!cacheFile.exists()){
-            return null;
-        }
-        try {
-            return parser.parseDocument(cacheFile);
-        } catch (ResourceFormatParserException e) {
-            throw new ResourceModelSourceException("Failed to load cached file: " + e.getLocalizedMessage(), e);
-        }
+    public INodeSet loadCachedNodes() throws ResourceModelSourceException {
+        return fileResourceModelSource.getNodes();
     }
 }

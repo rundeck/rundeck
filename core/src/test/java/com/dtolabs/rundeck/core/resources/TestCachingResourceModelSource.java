@@ -28,24 +28,21 @@ import org.junit.runners.JUnit4;
  */
 @RunWith(JUnit4.class)
 public class TestCachingResourceModelSource {
-    class test extends CachingResourceModelSource {
+    class test implements ResourceModelSourceCache {
         INodeSet stored;
         INodeSet cached;
         boolean storedCalled=false;
         boolean loadCalled=false;
 
-        test(ResourceModelSource delegate) {
-            super(delegate);
-        }
 
         @Override
-        void storeNodesInCache(INodeSet nodes) throws ResourceModelSourceException {
+        public void storeNodesInCache(INodeSet nodes) throws ResourceModelSourceException {
             storedCalled=true;
             stored = nodes;
         }
 
         @Override
-        INodeSet loadCachedNodes() throws ResourceModelSourceException {
+        public INodeSet loadCachedNodes() throws ResourceModelSourceException {
             loadCalled=true;
             return cached;
         }
@@ -55,14 +52,16 @@ public class TestCachingResourceModelSource {
     public void testStoreNodesInCache() throws Exception {
         final NodeSetImpl iNodeEntries = new NodeSetImpl();
         //delegate returns nodes, should be stored
-        test test = new TestCachingResourceModelSource.test(new ResourceModelSource() {
+        test test = new test();
+        CachingResourceModelSource source = new CachingResourceModelSource(new ResourceModelSource() {
             @Override
             public INodeSet getNodes() throws ResourceModelSourceException {
                 return iNodeEntries;
             }
-        });
+        }, test);
+
         Assert.assertNull(test.stored);
-        INodeSet nodes = test.getNodes();
+        INodeSet nodes = source.getNodes();
         Assert.assertTrue(test.storedCalled);
         Assert.assertFalse(test.loadCalled);
         Assert.assertEquals(iNodeEntries, nodes);
@@ -73,15 +72,17 @@ public class TestCachingResourceModelSource {
     public void testNullResult() throws Exception {
         final NodeSetImpl iNodeEntries = new NodeSetImpl();
         //delegate returns nodes, should be stored
-        test test = new TestCachingResourceModelSource.test(new ResourceModelSource() {
+
+        test test = new test();
+        CachingResourceModelSource source = new CachingResourceModelSource(new ResourceModelSource() {
             @Override
             public INodeSet getNodes() throws ResourceModelSourceException {
                 return null;
             }
-        });
+        }, test);
         test.cached = iNodeEntries;
         Assert.assertNull(test.stored);
-        INodeSet nodes = test.getNodes();
+        INodeSet nodes = source.getNodes();
         Assert.assertFalse(test.storedCalled);
         Assert.assertTrue(test.loadCalled);
         Assert.assertEquals(iNodeEntries, nodes);
@@ -92,15 +93,16 @@ public class TestCachingResourceModelSource {
     public void testExceptionResult() throws Exception {
         final NodeSetImpl iNodeEntries = new NodeSetImpl();
         //delegate returns nodes, should be stored
-        test test = new TestCachingResourceModelSource.test(new ResourceModelSource() {
+        test test = new test();
+        CachingResourceModelSource source = new CachingResourceModelSource(new ResourceModelSource() {
             @Override
             public INodeSet getNodes() throws ResourceModelSourceException {
                 throw new ResourceModelSourceException("test exception");
             }
-        });
+        }, test);
         test.cached = iNodeEntries;
         Assert.assertNull(test.stored);
-        INodeSet nodes = test.getNodes();
+        INodeSet nodes = source.getNodes();
         Assert.assertFalse(test.storedCalled);
         Assert.assertTrue(test.loadCalled);
         Assert.assertEquals(iNodeEntries, nodes);
@@ -111,15 +113,16 @@ public class TestCachingResourceModelSource {
     public void testRTExceptionResult() throws Exception {
         final NodeSetImpl iNodeEntries = new NodeSetImpl();
         //delegate returns nodes, should be stored
-        test test = new TestCachingResourceModelSource.test(new ResourceModelSource() {
+        test test = new test();
+        CachingResourceModelSource source = new CachingResourceModelSource(new ResourceModelSource() {
             @Override
             public INodeSet getNodes() throws ResourceModelSourceException {
                 throw new RuntimeException("test exception");
             }
-        });
+        }, test);
         test.cached = iNodeEntries;
         Assert.assertNull(test.stored);
-        INodeSet nodes = test.getNodes();
+        INodeSet nodes = source.getNodes();
         Assert.assertFalse(test.storedCalled);
         Assert.assertTrue(test.loadCalled);
         Assert.assertEquals(iNodeEntries, nodes);

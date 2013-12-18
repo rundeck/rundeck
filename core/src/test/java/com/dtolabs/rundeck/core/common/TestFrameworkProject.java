@@ -648,7 +648,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
         FrameworkProject project = FrameworkProject.create(PROJECT_NAME, new File(getFrameworkProjectsBase()), getFrameworkInstance().getFrameworkProjectMgr());
         final INodeSet nodeSet = project.getNodeSet();
         assertNotNull(nodeSet);
-        assertEquals(1, factory1.called);
+        assertEquals(2, factory1.called);
         assertEquals(1,provider1.called);
         assertEquals(1, factory2.called);
         assertEquals(1,provider2.called);
@@ -711,7 +711,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
         FrameworkProject project = FrameworkProject.create(PROJECT_NAME, new File(getFrameworkProjectsBase()), getFrameworkInstance().getFrameworkProjectMgr());
         final INodeSet nodeSet = project.getNodeSet();
         assertNotNull(nodeSet);
-        assertEquals(2, factory1.called);
+        assertEquals(4, factory1.called);
         assertEquals(2,provider1.called);
         assertEquals(2, factory2.called);
         assertEquals(2,provider2.called);

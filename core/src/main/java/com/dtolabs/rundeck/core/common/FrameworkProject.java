@@ -18,10 +18,10 @@ package com.dtolabs.rundeck.core.common;
 
 import com.dtolabs.rundeck.core.common.impl.URLFileUpdater;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
+import com.dtolabs.rundeck.core.plugins.configuration.Describable;
+import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.resources.*;
-import com.dtolabs.rundeck.core.resources.format.ResourceFormatGenerator;
-import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorException;
-import com.dtolabs.rundeck.core.resources.format.UnsupportedFormatException;
+import com.dtolabs.rundeck.core.resources.format.*;
 import com.dtolabs.rundeck.core.utils.PropertyLookup;
 
 import java.io.File;
@@ -322,17 +322,45 @@ public class FrameworkProject extends FrameworkResourceParent {
         ResourceModelSource sourceForConfiguration = nodesSourceService.getSourceForConfiguration(type, configuration);
 
         if (useCache) {
-            return createCachingSource(sourceForConfiguration, ident);
+            ResourceModelSourceFactory provider = nodesSourceService.providerOfType(type);
+            String name=ident;
+            if(provider instanceof Describable){
+                Describable desc=(Describable) provider;
+                Description description = desc.getDescription();
+                name = ident + " (" + description.getTitle() + ")";
+            }
+            return createCachingSource(sourceForConfiguration, ident,name);
         } else {
             return sourceForConfiguration;
         }
     }
 
-    private ResourceModelSource createCachingSource(ResourceModelSource sourceForConfiguration, String ident) {
-        File file = getResourceModelSourceFileCacheForType(ident);
-        return new MemCachedResourceModelSource(
-                new FileCachedResourceModelSource(sourceForConfiguration, file)
-        );
+    private ResourceModelSource createCachingSource(ResourceModelSource sourceForConfiguration, String ident, String descr) {
+        final File file = getResourceModelSourceFileCacheForType(ident);
+        final Framework framework = getFrameworkProjectMgr().getFramework();
+        final ResourceModelSourceService nodesSourceService = framework.getResourceModelSourceService();
+        final ResourceFormatGeneratorService resourceFormatGeneratorService = framework.getResourceFormatGeneratorService();
+        final Properties fileSourceConfig = generateFileSourceConfigurationProperties(file.getAbsolutePath(),
+                ResourceXMLFormatGenerator.SERVICE_PROVIDER_TYPE, true, false);
+        try {
+            ResourceModelSource fileSource = nodesSourceService.getSourceForConfiguration("file", fileSourceConfig);
+
+            ResourceFormatGenerator generatorForFormat = resourceFormatGeneratorService.getGeneratorForFormat
+                    (ResourceXMLFormatGenerator.SERVICE_PROVIDER_TYPE);
+
+            String ident1 = "[ResourceModelSource: " + descr + ", project: " + getName() + "]";
+            return new CachingResourceModelSource(
+                    sourceForConfiguration,
+                    ident1,
+                    new LoggingResourceModelSourceCache(
+                            new FileResourceModelSourceCache(file, generatorForFormat, fileSource),
+                            ident1));
+        } catch (UnsupportedFormatException e) {
+            e.printStackTrace();
+        } catch (ExecutionServiceException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     private File getResourceModelSourceFileCacheForType(String ident) {
@@ -345,18 +373,27 @@ public class FrameworkProject extends FrameworkResourceParent {
     }
 
     private Properties createFileSourceConfiguration() {
+        String format=null;
+        if(hasProperty(PROJECT_RESOURCES_FILEFORMAT_PROPERTY)) {
+            format = getProperty(PROJECT_RESOURCES_FILEFORMAT_PROPERTY);
+        }
+        return generateFileSourceConfigurationProperties(getProperty(PROJECT_RESOURCES_FILE_PROPERTY), format, true,
+                true);
+    }
+
+    private Properties generateFileSourceConfigurationProperties(String filepath, String format, boolean generate,
+            boolean includeServerNode) {
         final FileResourceModelSource.Configuration build = FileResourceModelSource.Configuration.build();
-        build.file(getProperty(PROJECT_RESOURCES_FILE_PROPERTY));
-        if(hasProperty(PROJECT_RESOURCES_FILEFORMAT_PROPERTY)){
-            build.format(getProperty(PROJECT_RESOURCES_FILEFORMAT_PROPERTY));
+        build.file(filepath);
+        if(null!=format){
+            build.format(format);
         }
         build.project(getName());
-        build.generateFileAutomatically(true);
-        build.includeServerNode(true);
+        build.generateFileAutomatically(generate);
+        build.includeServerNode(includeServerNode);
 
         return build.getProperties();
     }
-    
 
 
     /**

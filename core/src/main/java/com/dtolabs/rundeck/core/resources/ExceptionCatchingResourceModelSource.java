@@ -17,16 +17,25 @@
 package com.dtolabs.rundeck.core.resources;
 
 import com.dtolabs.rundeck.core.common.INodeSet;
+import org.apache.log4j.Logger;
 
 /**
  * Wraps a ResourceModelSource and provides resilience in case the underlying source throws checked or unchecked
- * exceptions. Any exceptions thrown will be caught, and
- * {@link #returnResultNodes(com.dtolabs.rundeck.core.common.INodeSet)}
+ * exceptions. Any exceptions thrown will be caught, and {@link #returnResultNodes(com.dtolabs.rundeck.core.common
+ * .INodeSet)}
  * called with either null (exception thrown), or the result of the underlying call to getNodes
  */
 public abstract class ExceptionCatchingResourceModelSource extends DelegateResourceModelSource {
-    public ExceptionCatchingResourceModelSource(ResourceModelSource delegate) {
+    public static final Logger logger = Logger.getLogger(ExceptionCatchingResourceModelSource.class);
+    String identity;
+
+    protected ExceptionCatchingResourceModelSource(ResourceModelSource delegate) {
         super(delegate);
+    }
+
+    protected ExceptionCatchingResourceModelSource(ResourceModelSource delegate, String identity) {
+        super(delegate);
+        this.identity = identity;
     }
 
     @Override
@@ -35,18 +44,22 @@ public abstract class ExceptionCatchingResourceModelSource extends DelegateResou
         try {
             nodes = getDelegate().getNodes();
         } catch (ResourceModelSourceException e) {
-            e.printStackTrace();
+            logException(e);
         } catch (RuntimeException e) {
-            e.printStackTrace();
+            logException(e);
         }
         try {
             return returnResultNodes(nodes);
         } catch (ResourceModelSourceException e) {
-            e.printStackTrace();
+            logException(e);
         } catch (RuntimeException e) {
-            e.printStackTrace();
+            logException(e);
         }
         return nodes;
+    }
+
+    private void logException(Throwable e) {
+        logger.error(null != identity ? identity + " " : "" + e.getMessage(), e);
     }
 
     /**

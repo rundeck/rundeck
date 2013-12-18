@@ -17,38 +17,33 @@
 package com.dtolabs.rundeck.core.resources;
 
 import com.dtolabs.rundeck.core.common.INodeSet;
+import org.apache.log4j.Logger;
 
 /**
  * Abstract caching model source. calls to getNodes will attempt to use the delegate to get nodes.  If successful the
  * nodes will be stored in the cache with a call to {@link #storeNodesInCache(com.dtolabs.rundeck.core.common.INodeSet)}.
  * If any exception is thrown it will be caught.  finally getNodes returns the result of {@link #loadCachedNodes()}
  */
-public abstract class CachingResourceModelSource extends ExceptionCatchingResourceModelSource {
-    public CachingResourceModelSource(ResourceModelSource delegate) {
+public class CachingResourceModelSource extends ExceptionCatchingResourceModelSource  {
+    private ResourceModelSourceCache cache;
+
+    public CachingResourceModelSource(ResourceModelSource delegate, ResourceModelSourceCache cache) {
         super(delegate);
+        this.cache = cache;
+    }
+
+    public CachingResourceModelSource(ResourceModelSource delegate, String identity, ResourceModelSourceCache cache) {
+        super(delegate, identity);
+        this.cache = cache;
     }
 
     @Override
     INodeSet returnResultNodes(INodeSet nodes) throws ResourceModelSourceException {
         if (null != nodes) {
-            storeNodesInCache(nodes);
+            cache.storeNodesInCache(nodes);
             return nodes;
         }
-        return loadCachedNodes();
+        return cache.loadCachedNodes();
     }
-
-    /**
-     * Store the nodes in a cache
-     *
-     * @param nodes
-     */
-    abstract void storeNodesInCache(INodeSet nodes) throws ResourceModelSourceException;
-
-    /**
-     * Load nodes from the cache
-     *
-     * @return
-     */
-    abstract INodeSet loadCachedNodes() throws ResourceModelSourceException;
 
 }

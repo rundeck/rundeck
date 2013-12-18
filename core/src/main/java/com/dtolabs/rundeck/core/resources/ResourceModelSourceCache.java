@@ -19,22 +19,20 @@ package com.dtolabs.rundeck.core.resources;
 import com.dtolabs.rundeck.core.common.INodeSet;
 
 /**
- * $INTERFACE is ... User: greg Date: 12/17/13 Time: 12:14 PM
+ * $INTERFACE is ... User: greg Date: 12/18/13 Time: 9:36 AM
  */
-public class MemCachedResourceModelSource extends CachingResourceModelSource {
-    INodeSet cache;
+public interface ResourceModelSourceCache {
+    /**
+     * Store the nodes in a cache
+     *
+     * @param nodes
+     */
+     public void storeNodesInCache(INodeSet nodes) throws ResourceModelSourceException;
 
-    public MemCachedResourceModelSource(ResourceModelSource delegate) {
-        super(delegate);
-    }
-
-    @Override
-    void storeNodesInCache(INodeSet nodes) {
-        cache = nodes;
-    }
-
-    @Override
-    INodeSet loadCachedNodes() {
-        return cache;
-    }
+    /**
+     * Load nodes from the cache
+     *
+     * @return
+     */
+     public INodeSet loadCachedNodes() throws ResourceModelSourceException;
 }
