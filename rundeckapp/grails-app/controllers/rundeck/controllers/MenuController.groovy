@@ -707,7 +707,6 @@ class MenuController {
                 }
             }
             summary[project.name].userCount= summary[project.name].userSummary.size()
-            summary[project.name].nodeCount=project.nodeSet.nodeNames.size()
             summary[project.name].readme=frameworkService.getFrameworkProjectReadmeContents(project.name,framework)
             //authorization
             summary[project.name].auth = [
