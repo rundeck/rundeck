@@ -215,7 +215,7 @@ public class FrameworkProject extends FrameworkResourceParent {
             try {
                 final Properties config = createFileSourceConfiguration();
                 logger.info("Source (project.resources.file): loading with properties: " + config);
-                nodesSourceList.add(loadResourceModelSource("file", config));
+                nodesSourceList.add(loadResourceModelSource("file", config, shouldCacheForType("file"),"file.file"));
             } catch (ExecutionServiceException e) {
                 logger.error("Failed to load file resource model source: " + e.getMessage(), e);
                 nodesSourceExceptions.add(e);
@@ -225,7 +225,7 @@ public class FrameworkProject extends FrameworkResourceParent {
             try{
                 final Properties config = createURLSourceConfiguration();
                 logger.info("Source (project.resources.url): loading with properties: " + config);
-                nodesSourceList.add(loadResourceModelSource("url", config));
+                nodesSourceList.add(loadResourceModelSource("url", config, shouldCacheForType("url"), "file.url"));
             } catch (ExecutionServiceException e) {
                 logger.error("Failed to load file resource model source: " + e.getMessage(), e);
                 nodesSourceExceptions.add(e);
@@ -240,7 +240,8 @@ public class FrameworkProject extends FrameworkResourceParent {
 
             logger.info("Source #" + i + " (" + providerType + "): loading with properties: " + props);
             try {
-                nodesSourceList.add(loadResourceModelSource(providerType, props));
+                nodesSourceList.add(loadResourceModelSource(providerType, props, shouldCacheForType(providerType),
+                        i + "." + providerType));
             } catch (ExecutionServiceException e) {
                 logger.error("Failed loading resource model source #" + i + ", skipping: " + e.getMessage(), e);
                 nodesSourceExceptions.add(e);
@@ -250,6 +251,16 @@ public class FrameworkProject extends FrameworkResourceParent {
 
         nodesSourcesLastReload = getPropertyFile().lastModified();
     }
+
+    static Set<String> uncachedResourceTypes = new HashSet<String>();
+    static {
+        uncachedResourceTypes.add("file");
+        uncachedResourceTypes.add("directory");
+    }
+    private boolean shouldCacheForType(String type) {
+        return !uncachedResourceTypes.contains(type);
+    }
+
     /**
      * list the configurations of resource model providers.  Returns a list of maps containing:
      * <li>type - provider type name</li>
@@ -303,11 +314,34 @@ public class FrameworkProject extends FrameworkResourceParent {
         return nodesSourceList;
     }
 
-    private ResourceModelSource loadResourceModelSource(String type, Properties configuration) throws ExecutionServiceException {
+    private ResourceModelSource loadResourceModelSource(String type, Properties configuration, boolean useCache,
+            String ident) throws ExecutionServiceException {
 
         final ResourceModelSourceService nodesSourceService =
-            getFrameworkProjectMgr().getFramework().getResourceModelSourceService();
-        return nodesSourceService.getSourceForConfiguration(type, configuration);
+                getFrameworkProjectMgr().getFramework().getResourceModelSourceService();
+        ResourceModelSource sourceForConfiguration = nodesSourceService.getSourceForConfiguration(type, configuration);
+
+        if (useCache) {
+            return createCachingSource(sourceForConfiguration, ident);
+        } else {
+            return sourceForConfiguration;
+        }
+    }
+
+    private ResourceModelSource createCachingSource(ResourceModelSource sourceForConfiguration, String ident) {
+        File file = getResourceModelSourceFileCacheForType(ident);
+        return new MemCachedResourceModelSource(
+                new FileCachedResourceModelSource(sourceForConfiguration, file)
+        );
+    }
+
+    private File getResourceModelSourceFileCacheForType(String ident) {
+        String varDir = getProperty("framework.var.dir");
+        File file = new File(varDir, "resourceModelSourceCache/" + getName() + "/" + ident + ".xml");
+        if(!file.getParentFile().exists() && !file.getParentFile().mkdirs()){
+            logger.warn("Failed to create cache dirs for source file cache");
+        }
+        return file;
     }
 
     private Properties createFileSourceConfiguration() {
@@ -437,8 +471,17 @@ public class FrameworkProject extends FrameworkResourceParent {
         nodesSourceExceptions = new ArrayList<Exception>();
         for (final ResourceModelSource nodesSource : getResourceModelSources()) {
             try {
-                list.addNodeSet(nodesSource.getNodes());
+                INodeSet nodes = nodesSource.getNodes();
+                if (null == nodes) {
+                    logger.warn("Empty nodes result from [" + nodesSource.toString() + "]");
+                } else {
+                    list.addNodeSet(nodes);
+                }
             } catch (ResourceModelSourceException e) {
+                logger.error("Cannot get nodes from ["+nodesSource.toString()+"]: "+e.getMessage(), e);
+                nodesSourceExceptions.add(new ResourceModelSourceException(
+                    "Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage(), e));
+            } catch (RuntimeException e) {
                 logger.error("Cannot get nodes from ["+nodesSource.toString()+"]: "+e.getMessage(), e);
                 nodesSourceExceptions.add(new ResourceModelSourceException(
                     "Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage(), e));
