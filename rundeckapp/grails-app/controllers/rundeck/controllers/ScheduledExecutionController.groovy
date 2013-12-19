@@ -2047,6 +2047,9 @@ class ScheduledExecutionController  {
             }else if(result.error=='invalid'){
                 return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                         code: 'api.error.job.options-invalid', args: [result.message]])
+            }else if(result.error=='conflict'){
+                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_CONFLICT,
+                        code: 'api.error.execution.conflict', args: [result.message]])
             }else{
                 //failed
                 return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,

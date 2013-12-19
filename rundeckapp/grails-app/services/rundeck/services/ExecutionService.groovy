@@ -1091,7 +1091,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         } catch (ExecutionServiceException exc) {
             def msg = exc.getMessage()
             log.error("exception: " + exc)
-            return [success:false,error: 'failed', message: msg, options:extra.option]
+            return [success:false,error: exc.code?:'failed', message: msg, options:extra.option]
         }
     }
     private Execution int_createExecution(ScheduledExecution se,framework,user,extra){
@@ -1162,7 +1162,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 //('from Execution where dateCompleted is null and scheduledExecution=:se and dateStarted is not null', [se: se])
 //                    System.err.println("multiexec check ${se.version}: ${found}")
                 if (found) {
-                    throw new ExecutionServiceException('Job "' + se.jobName + '" [' + se.extid + '] is currently being executed (execution [' + found.id + '])')
+                    throw new ExecutionServiceException('Job "' + se.jobName + '" [' + se.extid + '] is currently being executed (execution [' + found.id + '])','conflict')
                 }
                 return int_createExecution(se,framework,user,extra)
             }
