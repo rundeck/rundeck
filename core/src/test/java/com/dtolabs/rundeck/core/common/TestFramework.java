@@ -79,7 +79,6 @@ public class TestFramework extends AbstractBaseTest {
         assertEquals("basedir did not match: " + framework.getBaseDir().getAbsolutePath(), new File(
             getBaseDir()).getAbsolutePath(),
             framework.getBaseDir().getAbsolutePath());
-        assertNotNull("authentication manager was null", framework.getAuthenticationMgr());
         assertNotNull("FrameworkProjectMgr was null", framework.getFrameworkProjectMgr());
     }
 

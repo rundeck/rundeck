@@ -18,7 +18,6 @@ package com.dtolabs.rundeck.core.common;
 
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.CoreException;
-import com.dtolabs.rundeck.core.authentication.AuthenticationMgrFactory;
 import com.dtolabs.rundeck.core.authentication.Authenticator;
 import com.dtolabs.rundeck.core.authorization.*;
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext;
@@ -48,7 +47,6 @@ import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import com.dtolabs.rundeck.core.utils.PropertyLookup;
 import org.apache.log4j.Logger;
 
-import javax.security.auth.Subject;
 import java.io.File;
 import java.net.URI;
 import java.util.*;
@@ -66,10 +64,6 @@ import java.util.*;
 public class Framework extends FrameworkResourceParent {
     public static final Logger logger = Logger.getLogger(Framework.class);
 
-    static final String AUTHENT_CLS_PROP = "framework.authentication.class";
-    static final String AUTHENT_CLS_DEFAULT = "com.dtolabs.rundeck.core.authentication.NoAuthentication";
-    static final String AUTHORIZE_CLS_PROP = "framework.authorization.class";
-    static final String AUTHORIZE_CLS_DEFAULT = "com.dtolabs.rundeck.core.authorization.NoAuthorization";
     public static final String CENTRALDISPATCHER_CLS_PROP = "framework.centraldispatcher.classname";
     public static final String NODES_RESOURCES_FILE_PROP = "framework.nodes.file.name";
     public static final String NODES_FILE_AUTOGEN_PROP = "framework.nodes.file.autogenerate";
@@ -120,12 +114,6 @@ public class Framework extends FrameworkResourceParent {
         final boolean initialize = true; // managers should call their initialize methods
         projectResourceMgr = FrameworkProjectMgr.create(PROJECTMGR_NAME, projectsBase, this);
 
-        if(null==authenticationMgr) {
-            String cls = lookup.hasProperty(AUTHENT_CLS_PROP)? lookup.getProperty(AUTHENT_CLS_PROP): AUTHENT_CLS_DEFAULT;
-            logger.debug("configured default authentication classname: " + cls);
-            authenticationMgr = AuthenticationMgrFactory.create(cls, this)
-                .getAuthenticationMgr();
-        }
         if(null==centralDispatcherMgr){
             try {
 
@@ -170,20 +158,6 @@ public class Framework extends FrameworkResourceParent {
 
 
     /**
-     * Reference to class instance to authenicate
-     */
-    private Authenticator authenticationMgr;
-
-    /**
-     * Gets Authenticator for this framework instance
-     *
-     * @return returns instance of Authenticator
-     */
-    public Authenticator getAuthenticationMgr() {
-        return authenticationMgr;
-    }
-
-    /**
      * Gets DepotMgr for this framework instance
      * @return returns instance of IFrameworkProjectMgr
      */
@@ -199,18 +173,6 @@ public class Framework extends FrameworkResourceParent {
      */
     private Framework(final String rdeck_base_dir,
                       final String projects_base_dir) {
-        this(rdeck_base_dir, projects_base_dir, null);
-    }
-
-    /**
-     * Standard constructor
-     *
-     * @param rdeck_base_dir path name to the rdeck_base
-     * @param projects_base_dir  path name to the projects base
-     */
-    private Framework(final String rdeck_base_dir,
-            final String projects_base_dir,
-            final Authenticator authentication) {
         super("framework", new File(null == rdeck_base_dir ? Constants.getSystemBaseDir() : rdeck_base_dir), null);
         if(null==getBaseDir()) {
             throw new NullPointerException(
@@ -241,7 +203,6 @@ public class Framework extends FrameworkResourceParent {
 
         lookup = lookup1;
 
-        this.authenticationMgr = authentication;
         long start = System.currentTimeMillis();
         initialize();
         long end = System.currentTimeMillis();
@@ -422,7 +383,7 @@ public class Framework extends FrameworkResourceParent {
         }
         //determine projects dir from properties
         String frameworkProjectsDir = Constants.getFrameworkProjectsDir(rdeck_base_dir);
-        Framework instance = new Framework(rdeck_base_dir, frameworkProjectsDir, authenticator);
+        Framework instance = new Framework(rdeck_base_dir, frameworkProjectsDir);
         return instance;
     }
 
@@ -675,9 +636,6 @@ public class Framework extends FrameworkResourceParent {
         return projectsBase;
     }
 
-    public void setAuthenticationMgr(Authenticator authenticationMgr) {
-        this.authenticationMgr = authenticationMgr;
-    }
 
     /**
      * References the {@link INodeDesc} instance representing the framework node.
