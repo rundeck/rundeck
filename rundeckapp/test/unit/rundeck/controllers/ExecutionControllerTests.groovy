@@ -225,7 +225,7 @@ class ExecutionControllerTests  {
         def controller = new ExecutionController()
         ApiController.metaClass.message = { params -> params?.code ?: 'messageCodeMissing' }
         def fwkControl = mockFor(FrameworkService, false)
-        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.getAuthContextForSubject{subject -> return null }
         fwkControl.demand.filterAuthorizedProjectExecutionsAll {fwk,results,actions->
             return []
         }
@@ -330,7 +330,7 @@ class ExecutionControllerTests  {
         def execs = createTestExecs()
 
         def fwkControl = mockFor(FrameworkService, false)
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.getAuthContextForSubject { subject -> return null }
         fwkControl.demand.filterAuthorizedProjectExecutionsAll { framework, List<Execution> results, Collection actions ->
             assert results == []
             []
@@ -370,7 +370,7 @@ class ExecutionControllerTests  {
         def controller = new ExecutionController()
         def execs = createTestExecs()
         def fwkControl = mockFor(FrameworkService, false)
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.getAuthContextForSubject { subject -> return null }
         def execControl = mockFor(ExecutionService, false)
         execControl.demand.abortExecution { se, e, user, framework, killas ->
             assert null == killas
@@ -402,7 +402,7 @@ class ExecutionControllerTests  {
         def controller = new ExecutionController()
         def execs = createTestExecs()
         def fwkControl = mockFor(FrameworkService, false)
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.getAuthContextForSubject { subject -> return null }
         def execControl = mockFor(ExecutionService, false)
         execControl.demand.abortExecution { se, e, user, framework, killas ->
             assert null == killas
@@ -438,7 +438,7 @@ class ExecutionControllerTests  {
         def controller = new ExecutionController()
         def execs = createTestExecs()
         def fwkControl = mockFor(FrameworkService, false)
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.getAuthContextForSubject { subject -> return null }
         def execControl = mockFor(ExecutionService, false)
         execControl.demand.abortExecution { se, e, user, framework, killas ->
             assert killas == 'testuser'
@@ -476,7 +476,7 @@ class ExecutionControllerTests  {
         def controller = new ExecutionController()
         def execs = createTestExecs()
         def fwkControl = mockFor(FrameworkService, false)
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.getAuthContextForSubject { subject -> return null }
         def execControl = mockFor(ExecutionService, false)
         execControl.demand.abortExecution { se, e, user, framework, killas ->
             assert killas == 'testuser'
@@ -513,7 +513,7 @@ class ExecutionControllerTests  {
         def controller = new ExecutionController()
         def execs = createTestExecs()
         def fwkControl = mockFor(FrameworkService, false)
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.getAuthContextForSubject { subject -> return null }
         def execControl = mockFor(ExecutionService, false)
         execControl.demand.abortExecution { se, e, user, framework, killas ->
             assert killas == 'testuser'
@@ -552,7 +552,7 @@ class ExecutionControllerTests  {
         def execs = createTestExecs()
         def fwkControl = mockFor(FrameworkService, false)
         def execControl = mockFor(ExecutionService, false)
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.getAuthContextForSubject { subject -> return null }
         fwkControl.demand.authorizeProjectExecutionAll { framework, e, privs -> return false }
 
         controller.frameworkService = fwkControl.createMock()
