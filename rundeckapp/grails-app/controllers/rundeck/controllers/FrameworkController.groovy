@@ -219,8 +219,8 @@ class FrameworkController  {
 //            nodes = nodes.sort { INodeEntry a, INodeEntry b -> return a.nodename.compareTo(b.nodename) }
         //filter nodes by read authorization
 
-        def readnodes = framework.filterAuthorizedNodes(query.project, ['read'] as Set, nodeset, authContext)
-        def runnodes = framework.filterAuthorizedNodes(query.project, ['run'] as Set, readnodes, authContext)
+        def readnodes = frameworkService.filterAuthorizedNodes(query.project, ['read'] as Set, nodeset, authContext)
+        def runnodes = frameworkService.filterAuthorizedNodes(query.project, ['run'] as Set, readnodes, authContext)
         def noderunauthmap = [:]
 
 

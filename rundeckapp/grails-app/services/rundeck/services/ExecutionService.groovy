@@ -803,10 +803,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             nodeselector = null
         }
 
-        def INodeSet nodeSet = framework.filterAuthorizedNodes(
+        def INodeSet nodeSet = frameworkService.filterAuthorizedNodes(
                 execMap.project,
                 new HashSet<String>(Arrays.asList("read", "run")),
-                framework.filterNodeSet(nodeselector, execMap.project, null),
+                frameworkService.filterNodeSet(nodeselector, execMap.project),
                 authContext);
 
         def Map<String, Map<String, String>> privatecontext = new HashMap<String, Map<String, String>>()

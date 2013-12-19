@@ -189,6 +189,11 @@ class FrameworkService implements ApplicationContextAware, Authorization {
         }
     }
 
+    public INodeSet filterAuthorizedNodes(final String project, final Set<String> actions, final INodeSet unfiltered,
+                                          AuthContext authContext) {
+        return rundeckFramework.filterAuthorizedNodes(project,actions,unfiltered,authContext)
+    }
+
 
     /**
      * Return the resource definition for a job for use by authorization checks
