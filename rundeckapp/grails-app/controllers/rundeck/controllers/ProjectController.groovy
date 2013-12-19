@@ -1,6 +1,6 @@
 package rundeck.controllers
 
-
+import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import rundeck.services.ProjectServiceException
@@ -28,13 +28,14 @@ class ProjectController {
             request.error = "Project parameter is required"
             return render(template: "/common/error")
         }
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (!frameworkService.existsFrameworkProject(project, framework)) {
             request.error = g.message(code: 'scheduledExecution.project.invalid.message', args: [project])
             return render(template: "/common/error")
         }
 
-        if(!frameworkService.authorizeApplicationResourceAll(framework, [type: 'project', name: project], [AuthConstants.ACTION_ADMIN])){
+        if(!frameworkService.authorizeApplicationResourceAll(authContext, [type: 'project', name: project], [AuthConstants.ACTION_ADMIN])){
             response.setStatus(403)
             request.error = g.message(code: 'api.error.item.unauthorized', args: [AuthConstants.ACTION_ADMIN, "Project", params.name])
             return render(template: "/common/error")
@@ -67,13 +68,14 @@ class ProjectController {
             request.error = "Project parameter is required"
             return render(template: "/common/error")
         }
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (!frameworkService.existsFrameworkProject(project, framework)) {
             request.error = g.message(code: 'scheduledExecution.project.invalid.message', args: [project])
             return render(template: "/common/error")
         }
 
-        if (!frameworkService.authorizeApplicationResourceAll(framework, [type: 'project', name: project], [AuthConstants.ACTION_ADMIN])) {
+        if (!frameworkService.authorizeApplicationResourceAll(authContext, [type: 'project', name: project], [AuthConstants.ACTION_ADMIN])) {
             response.setStatus(403)
             request.error = g.message(code: 'api.error.item.unauthorized', args: [AuthConstants.ACTION_ADMIN, "Project", params.name])
             return render(template: "/common/error")
@@ -88,7 +90,7 @@ class ProjectController {
                 return
             }
             String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
-            def result=projectService.importToProject(project1,session.user,roleList,framework,new ZipInputStream(file.getInputStream()),params.import)
+            def result=projectService.importToProject(project1,session.user,roleList,framework,authContext,new ZipInputStream(file.getInputStream()),params.import)
 
             if(result.success){
                 flash.message="Archive successfully imported"

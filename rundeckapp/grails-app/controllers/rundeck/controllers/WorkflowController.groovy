@@ -57,9 +57,9 @@ class WorkflowController {
         }
         def newitemDescription
         if(item && item.instanceOf(PluginStep)){
-            newitemDescription = getPluginStepDescription(item.nodeStep, item.type, frameworkService.getFrameworkFromUserSession(session, request.subject))
+            newitemDescription = getPluginStepDescription(item.nodeStep, item.type, frameworkService.getRundeckFramework())
         } else{
-            newitemDescription = getPluginStepDescription(params.newitemnodestep == 'true', params['newitemtype'], frameworkService.getFrameworkFromUserSession(session, request.subject))
+            newitemDescription = getPluginStepDescription(params.newitemnodestep == 'true', params['newitemtype'], frameworkService.getRundeckFramework())
         }
         return render(template: "/execution/wfitemEdit", model: [item: item, key:params.key, num: numi, scheduledExecutionId: params.scheduledExecutionId, newitemtype: params['newitemtype'], newitemDescription: newitemDescription, edit: true, isErrorHandler: isErrorHandler,newitemnodestep: params.newitemnodestep])
     }
@@ -104,7 +104,7 @@ class WorkflowController {
                 return error.call()
             }
         }
-        def itemDescription = item.instanceOf(PluginStep)?getPluginStepDescription(item.nodeStep,item.type, frameworkService.getFrameworkFromUserSession(session, request.subject)):null
+        def itemDescription = item.instanceOf(PluginStep)?getPluginStepDescription(item.nodeStep,item.type, frameworkService.getRundeckFramework()):null
         return render(template: "/execution/wflistitemContent", model: [workflow: editwf, item: item, i: params.key, stepNum:numi, scheduledExecutionId: params.scheduledExecutionId, edit: params.edit, isErrorHandler: isErrorHandler, itemDescription: itemDescription])
     }
 
@@ -141,7 +141,7 @@ class WorkflowController {
         if (result.error) {
             log.error(result.error)
             item=result.item
-            def itemDescription = item.instanceOf(PluginStep) ? getPluginStepDescription(item.nodeStep, item.type, frameworkService.getFrameworkFromUserSession(session, request.subject)) : null
+            def itemDescription = item.instanceOf(PluginStep) ? getPluginStepDescription(item.nodeStep, item.type, frameworkService.getRundeckFramework()) : null
             return render(template: "/execution/wfitemEdit", model: [item: result.item, key: params.key, num: params.num,
                 scheduledExecutionId: params.scheduledExecutionId, newitemtype: params['newitemtype'], edit: true, isErrorHandler: isErrorHandler, newitemDescription: itemDescription,report:result.report])
         }
@@ -154,7 +154,7 @@ class WorkflowController {
         if(isErrorHandler){
             item=item.errorHandler
         }
-        def itemDescription = item.instanceOf(PluginStep) ? getPluginStepDescription(item.nodeStep, item.type, frameworkService.getFrameworkFromUserSession(session, request.subject)) : null
+        def itemDescription = item.instanceOf(PluginStep) ? getPluginStepDescription(item.nodeStep, item.type, frameworkService.getRundeckFramework()) : null
         return render(template: "/execution/wflistitemContent", model: [workflow: editwf, item: item, i: params.key, stepNum: numi, scheduledExecutionId: params.scheduledExecutionId, edit: true,isErrorHandler: isErrorHandler,itemDescription: itemDescription])
     }
 
@@ -659,7 +659,7 @@ class WorkflowController {
      protected Map _validatePluginStep(WorkflowStep exec, String type = null) {
         if(exec instanceof PluginStep){
             PluginStep item = exec as PluginStep
-            def framework = frameworkService.getFrameworkFromUserSession(session, request.subject)
+            def framework = frameworkService.getRundeckFramework()
             def description=getPluginStepDescription(item.nodeStep, item.type, framework)
             return frameworkService.validateDescription(description,'',item.configuration)
         }else{

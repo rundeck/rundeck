@@ -1,5 +1,7 @@
 package rundeck.controllers
 
+import com.dtolabs.rundeck.core.authorization.AuthContext
+
 import javax.servlet.http.HttpServletResponse
 import java.lang.management.ManagementFactory
 import com.dtolabs.rundeck.core.common.Framework
@@ -27,8 +29,8 @@ class ApiController {
      * /api/1/system/info: display stats and info about the server
      */
     def apiSystemInfo={
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        if (!frameworkService.authorizeApplicationResource(framework, [type: 'resource', kind: 'system'], AuthConstants.ACTION_READ)) {
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if (!frameworkService.authorizeApplicationResource(authContext, [type: 'resource', kind: 'system'], AuthConstants.ACTION_READ)) {
             return apiService.renderErrorXml(response,[status:HttpServletResponse.SC_FORBIDDEN, code: 'api.error.item.unauthorized', args: ['Read System Info', 'Rundeck', ""]])
         }
         Date nowDate=new Date();

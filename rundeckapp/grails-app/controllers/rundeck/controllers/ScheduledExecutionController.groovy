@@ -3,6 +3,7 @@ package rundeck.controllers
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.app.api.ApiBulkJobDeleteRequest
 import com.dtolabs.rundeck.core.authentication.Group
+import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.Framework
 
 import com.dtolabs.rundeck.core.common.INodeEntry
@@ -118,8 +119,8 @@ class ScheduledExecutionController  {
     def list = {redirect(action:index,params:params) }
 
     def groupTreeFragment = {
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        def tree = scheduledExecutionService.getGroupTree(params.project,framework)
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        def tree = scheduledExecutionService.getGroupTree(params.project,authContext)
         render(template:"/menu/groupTree",model:[jobgroups:tree,jscallback:params.jscallback])
     }
 
@@ -172,7 +173,8 @@ class ScheduledExecutionController  {
     def detailFragment = {
         log.debug("ScheduledExecutionController: show : params: " + params)
         def crontab = [:]
-        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
         if (!scheduledExecution) {
             log.error("No Job found for id: " + params.id)
@@ -180,7 +182,7 @@ class ScheduledExecutionController  {
             response.setStatus (404)
             return error()
         }
-        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_READ], scheduledExecution.project)) {
+        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_READ], scheduledExecution.project)) {
             return unauthorized("Read Job ${params.id}")
         }
         crontab = scheduledExecution.timeAndDateAsBooleanMap()
@@ -208,7 +210,8 @@ class ScheduledExecutionController  {
     def show = {
         log.debug("ScheduledExecutionController: show : params: " + params)
         def crontab = [:]
-        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
         if (!scheduledExecution) {
             log.error("No Job found for id: " + params.id)
@@ -217,7 +220,7 @@ class ScheduledExecutionController  {
 
             return render(view: "/common/error")
         }
-        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_READ], scheduledExecution.project)) {
+        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_READ], scheduledExecution.project)) {
             return unauthorized("Read Job ${params.id}")
         }
         crontab = scheduledExecution.timeAndDateAsBooleanMap()
@@ -643,8 +646,8 @@ class ScheduledExecutionController  {
             return error()
         }
         def jobid=params.id
-        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        def result = scheduledExecutionService.deleteScheduledExecutionById(jobid, framework, session.user, 'delete')
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        def result = scheduledExecutionService.deleteScheduledExecutionById(jobid, authContext, session.user, 'delete')
         if (!result.success) {
             request.error = result.error.message
             return error()
@@ -663,7 +666,7 @@ class ScheduledExecutionController  {
             flash.error = g.message(code: 'ScheduledExecutionController.bulkDelete.empty')
             return redirect(controller: 'menu', action: 'jobs')
         }
-        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def ids = new HashSet<String>()
         if (deleteRequest.ids) {
             ids.addAll(deleteRequest.ids)
@@ -675,7 +678,7 @@ class ScheduledExecutionController  {
         def successful = []
         def deleteerrs = []
         ids.sort().each {jobid ->
-            def result = scheduledExecutionService.deleteScheduledExecutionById(jobid, framework, session.user, 'deleteBulk')
+            def result = scheduledExecutionService.deleteScheduledExecutionById(jobid, authContext, session.user, 'deleteBulk')
             if (result.errorCode) {
                 deleteerrs << [id: jobid, errorCode: result.errorCode, message: g.message(code: result.errorCode, args: ['Job ID', jobid])]
             }else if (result.error) {
@@ -729,9 +732,10 @@ class ScheduledExecutionController  {
         if (params.project) {
             jobset*.project = params.project
         }
-        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        def Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
-        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'job'],
+        if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'job'],
                 [AuthConstants.ACTION_CREATE], jobset[0].project)) {
 
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
@@ -741,7 +745,8 @@ class ScheduledExecutionController  {
         jobset*.uuid = params.id
         def changeinfo = [user: session.user, method: 'apiJobCreateSingle']
         String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
-        def loadresults = scheduledExecutionService.loadJobs(jobset, 'create', 'preserve', session.user, roleList, changeinfo, framework)
+        def loadresults = scheduledExecutionService.loadJobs(jobset, 'create', 'preserve', session.user, roleList,
+                changeinfo, framework,authContext)
 
         def jobs = loadresults.jobs
         def jobsi = loadresults.jobsi
@@ -776,8 +781,9 @@ class ScheduledExecutionController  {
             //job does not exist
             return
         }
-        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_UPDATE],
+        def Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_UPDATE],
                 scheduledExecution.project)) {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Update', 'Job ID', params.id]])
@@ -809,7 +815,8 @@ class ScheduledExecutionController  {
         jobset*.uuid=params.id
         def changeinfo = [user: session.user, method: 'apiJobUpdateSingle']
         String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
-        def loadresults = scheduledExecutionService.loadJobs(jobset, 'update', 'preserve', session.user, roleList, changeinfo, framework)
+        def loadresults = scheduledExecutionService.loadJobs(jobset, 'update', 'preserve', session.user, roleList,
+                changeinfo, framework,authContext)
 
         def jobs = loadresults.jobs
         def jobsi = loadresults.jobsi
@@ -842,7 +849,7 @@ class ScheduledExecutionController  {
         if (!apiService.requireAnyParameters(params, response, ['ids', 'idlist'])) {
             return
         }
-        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
         def ids = new HashSet<String>()
         if(params.id){
@@ -859,7 +866,7 @@ class ScheduledExecutionController  {
         def successful = []
         def deleteerrs=[]
         ids.sort().each{jobid->
-            def result = scheduledExecutionService.deleteScheduledExecutionById(jobid,framework,session.user, 'apiJobDeleteBulk')
+            def result = scheduledExecutionService.deleteScheduledExecutionById(jobid,authContext,session.user, 'apiJobDeleteBulk')
             if (result.errorCode) {
                 deleteerrs << [id:jobid,errorCode:result.errorCode,message: g.message(code: result.errorCode, args: ['Job ID', jobid])]
             }else if (result.error) {
@@ -895,14 +902,15 @@ class ScheduledExecutionController  {
     def edit = {
         log.debug("ScheduledExecutionController: edit : params: " + params)
         def scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
-        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def crontab = [:]
         if(!scheduledExecution) {
             flash.message = "ScheduledExecution not found with id ${params.id}"
             return redirect(action:index, params:params)
         }
 
-        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_READ], scheduledExecution.project)) {
+        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_READ], scheduledExecution.project)) {
             return unauthorized("Update Job ${params.id}")
         }
         //clear session workflow
@@ -923,7 +931,7 @@ class ScheduledExecutionController  {
         return [ scheduledExecution:scheduledExecution, crontab:crontab,params:params,
                 notificationPlugins: notificationService.listNotificationPlugins(),
                 nextExecutionTime:scheduledExecutionService.nextExecutionTime(scheduledExecution),
-                authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,framework),
+                authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,authContext),
                 nodeStepDescriptions: nodeStepTypes,
                 stepDescriptions:stepTypes]
     }
@@ -931,13 +939,14 @@ class ScheduledExecutionController  {
 
 
     def update = {
-        Framework framework=frameworkService.getFrameworkFromUserSession(session, request)
+        Framework framework=frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def changeinfo=[method:'update',change:'modify',user:session.user]
 
         //pass session-stored edit state in params map
         transferSessionEditState(session, params,params.id)
         def roleList=request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
-        def result = scheduledExecutionService._doupdate(params,session.user, roleList, framework, changeinfo)
+        def result = scheduledExecutionService._doupdate(params,session.user, roleList, framework, authContext, changeinfo)
         def scheduledExecution=result.scheduledExecution
         def success = result.success
         if(!scheduledExecution){
@@ -988,9 +997,10 @@ class ScheduledExecutionController  {
     }
 
     def copy = {
-        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         //authorize
-        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'job'], [AuthConstants.ACTION_CREATE], session.project)) {
+        if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'job'], [AuthConstants.ACTION_CREATE], session.project)) {
             return unauthorized("Create a Job")
         }
         def user = (session?.user) ? session.user : "anonymous"
@@ -1004,7 +1014,7 @@ class ScheduledExecutionController  {
             redirect(action:index)
             return;
         }
-        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_READ], scheduledExecution.project)) {
+        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_READ], scheduledExecution.project)) {
             return unauthorized("Read Job ${params.id}")
         }
         def newScheduledExecution = new ScheduledExecution()
@@ -1030,7 +1040,7 @@ class ScheduledExecutionController  {
         def stepTypes = frameworkService.getStepPluginDescriptions(framework)
         render(view:'create',model: [ scheduledExecution:newScheduledExecution, crontab:crontab,params:params,
                 iscopy:true,
-                authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,framework),
+                authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,authContext),
                 nodeStepDescriptions: nodeStepTypes,
                 stepDescriptions: stepTypes,
                 notificationPlugins: notificationService.listNotificationPlugins()])
@@ -1041,8 +1051,10 @@ class ScheduledExecutionController  {
      */
     def createFromExecution={
 
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'job'], [AuthConstants.ACTION_CREATE],session.project) && !frameworkService.authorizeProjectResource(framework,[type:'adhoc'], AuthConstants.ACTION_RUN,session.project)) {
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'job'], [AuthConstants.ACTION_CREATE],session.project)
+                && !frameworkService.authorizeProjectResource(authContext,[type:'adhoc'], AuthConstants.ACTION_RUN,session.project)) {
             return unauthorized("Create a Job")
         }
         log.debug("ScheduledExecutionController: create : params: " + params)
@@ -1089,9 +1101,11 @@ class ScheduledExecutionController  {
     }
     def create = {
 
-        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         //authorize
-        if(!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'job'], [AuthConstants.ACTION_CREATE], session.project) && !frameworkService.authorizeProjectResource(framework, [type: 'adhoc'], AuthConstants.ACTION_RUN, session.project)){
+        if(!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'job'], [AuthConstants.ACTION_CREATE], session.project)
+                && !frameworkService.authorizeProjectResource(authContext, [type: 'adhoc'], AuthConstants.ACTION_RUN, session.project)){
             return unauthorized("Create a Job")
         }
 
@@ -1170,8 +1184,9 @@ class ScheduledExecutionController  {
     def saveAndExec = {
         log.debug("ScheduledExecutionController: saveAndExec : params: " + params)
         def changeinfo = [user: session.user, change: 'create', method: 'saveAndExec']
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'job'], [AuthConstants.ACTION_CREATE], session.project)) {
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'job'], [AuthConstants.ACTION_CREATE], session.project)) {
             unauthorized("Create a Job")
             return [success: false]
         }
@@ -1179,7 +1194,7 @@ class ScheduledExecutionController  {
         //pass session-stored edit state in params map
         transferSessionEditState(session,params,'_new')
         String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
-        def result = scheduledExecutionService._dosave(params,session.user,roleList,framework, changeinfo)
+        def result = scheduledExecutionService._dosave(params,session.user,roleList,framework, authContext, changeinfo)
         def scheduledExecution = result.scheduledExecution
         if(result.success && scheduledExecution && scheduledExecution.id){
 
@@ -1201,7 +1216,7 @@ class ScheduledExecutionController  {
             def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions(framework)
             def stepTypes = frameworkService.getStepPluginDescriptions(framework)
             return render(view:'create',model:[scheduledExecution:scheduledExecution,params:params,
-                    projects: frameworkService.projects(framework), nodeStepDescriptions: nodeStepTypes,
+                    projects: frameworkService.projects(authContext), nodeStepDescriptions: nodeStepTypes,
                     stepDescriptions: stepTypes,
                     notificationPlugins: notificationService.listNotificationPlugins(),
                     notificationValidation: params['notificationValidation']])
@@ -1242,9 +1257,10 @@ class ScheduledExecutionController  {
         }
         jobset = parseresult.jobset
         def changeinfo = [user: session.user, method: 'upload']
-        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        def Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
-        def loadresults = scheduledExecutionService.loadJobs(jobset, params.dupeOption, session.user, roleList, changeinfo, framework)
+        def loadresults = scheduledExecutionService.loadJobs(jobset, params.dupeOption, session.user, roleList, changeinfo, framework,authContext)
 
         def jobs = loadresults.jobs
         def jobsi = loadresults.jobsi
@@ -1264,7 +1280,7 @@ class ScheduledExecutionController  {
                 properties.putAll(scheduledExecution.properties)
                 properties.user=params.user
                 properties.request = request
-                def execresults = executionService.executeScheduledExecution(scheduledExecution,framework,request.subject,[user:request.remoteUser])
+                def execresults = executionService.executeScheduledExecution(scheduledExecution,framework,authContext,request.subject,[user:request.remoteUser])
     //            System.err.println("transient execute result: ${execresults}");
                 execresults.entrynum=entrynum
                 if(execresults.error || !execresults.success){
@@ -1314,7 +1330,8 @@ class ScheduledExecutionController  {
         }
     }
     private def runAdhoc(){
-        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         params["user"] = (session?.user) ? session.user : "anonymous"
         params.request = request
         params.jobName='Temporary_Job'
@@ -1322,7 +1339,7 @@ class ScheduledExecutionController  {
 
         if (params.asUser && apiService.requireVersion(request,response,ApiRequestFilters.V5)) {
             //authorize RunAs User
-            if (!frameworkService.authorizeProjectResource(framework, [type: 'adhoc'], AuthConstants.ACTION_RUNAS, params.project)) {
+            if (!frameworkService.authorizeProjectResource(authContext, [type: 'adhoc'], AuthConstants.ACTION_RUNAS, params.project)) {
 
                 def msg = g.message(code: "api.error.item.unauthorized", args: ['Run as User', 'Run', 'Adhoc'])
                 return [failed:true,error: 'unauthorized', message: msg]
@@ -1344,7 +1361,7 @@ class ScheduledExecutionController  {
         def ScheduledExecution scheduledExecution=result.scheduledExecution
         def failed=result.failed
         if(!failed){
-            return _transientExecute(scheduledExecution,params,framework,request.subject)
+            return _transientExecute(scheduledExecution,params,framework,authContext, request.subject)
         }else{
             return [success:false,failed:true,invalid:true,message:'Job configuration was incorrect.',scheduledExecution:scheduledExecution,params:params]
         }
@@ -1369,7 +1386,7 @@ class ScheduledExecutionController  {
             scheduledExecution.jobName = ''
             scheduledExecution.errors.allErrors.each { log.warn(it.defaultMessage) }
             flash.message=results.message
-            Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+            Framework framework = frameworkService.getRundeckFramework()
 
             def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions(framework)
             def stepTypes = frameworkService.getStepPluginDescriptions(framework)
@@ -1385,9 +1402,9 @@ class ScheduledExecutionController  {
     * Execute a transient ScheduledExecution and return execution data: [execution:Execution,id:Long]
      * if there is an error, return [error:'type',message:errormesg,...]
      */
-    private Map _transientExecute(ScheduledExecution scheduledExecution, Map params, Framework framework, Subject subject){
+    private Map _transientExecute(ScheduledExecution scheduledExecution, Map params, Framework framework, AuthContext authContext, Subject subject){
         def object
-        def isauth = scheduledExecutionService.userAuthorizedForAdhoc(params.request,scheduledExecution,framework)
+        def isauth = scheduledExecutionService.userAuthorizedForAdhoc(params.request,scheduledExecution,authContext)
         if (!isauth){
             def msg=g.message(code:'unauthorized.job.run.user',args:[params.user])
             return [success:false,error:'unauthorized',message:msg]
@@ -1409,13 +1426,14 @@ class ScheduledExecutionController  {
 
 
     def save = {
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def changeinfo=[user:session.user,change:'create',method:'save']
 
         //pass session-stored edit state in params map
         transferSessionEditState(session, params,'_new')
         String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
-        def result = scheduledExecutionService._dosave(params,session.user,roleList,framework, changeinfo)
+        def result = scheduledExecutionService._dosave(params,session.user,roleList,framework, authContext, changeinfo)
         def scheduledExecution = result.scheduledExecution
         if(result.success && scheduledExecution.id){
             clearEditSession()
@@ -1437,7 +1455,7 @@ class ScheduledExecutionController  {
         def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions(framework)
         def stepTypes = frameworkService.getStepPluginDescriptions(framework)
         render(view: 'create', model: [scheduledExecution: scheduledExecution, params: params,
-                projects: frameworkService.projects(framework), nodeStepDescriptions: nodeStepTypes,
+                projects: frameworkService.projects(authContext), nodeStepDescriptions: nodeStepTypes,
                 stepDescriptions: stepTypes,
                 notificationPlugins: notificationService.listNotificationPlugins(),
                 notificationValidation:params['notificationValidation']
@@ -1448,7 +1466,8 @@ class ScheduledExecutionController  {
     def upload ={
         log.debug("ScheduledExecutionController: upload " + params)
 
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         
         def fileformat = params.fileformat ?: 'xml'
         def parseresult
@@ -1491,7 +1510,7 @@ class ScheduledExecutionController  {
         def changeinfo = [user: session.user,method:'upload']
         String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
         def loadresults = scheduledExecutionService.loadJobs(jobset, params.dupeOption, params.uuidOption,
-                session.user, roleList, changeinfo, framework)
+                session.user, roleList, changeinfo, framework,authContext)
 
 
         def jobs = loadresults.jobs
@@ -1729,9 +1748,10 @@ class ScheduledExecutionController  {
         }
     }
     def executeFragment = {
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
-        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_RUN], scheduledExecution.project)) {
+        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN], scheduledExecution.project)) {
             return unauthorized("Execute Job ${scheduledExecution.extid}",true)
         }
         def model = _prepareExecute(scheduledExecution, framework)
@@ -1798,21 +1818,22 @@ class ScheduledExecutionController  {
         }
     }
     private Map runJob () {
-        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         params["user"] = (session?.user) ? session.user : "anonymous"
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
         if (!scheduledExecution) {
 //            response.setStatus (404)
             return [error:"No Job found for id: " + params.id,code:404]
         }
-        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_RUN],
+        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
             scheduledExecution.project)) {
             return [success:false,failed:true,error:'unauthorized',message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
         }
         if(params.extra?.debug=='true'){
             params.extra.loglevel='DEBUG'
         }
-        def result = executionService.executeScheduledExecution(scheduledExecution,framework, request.subject,params)
+        def result = executionService.executeScheduledExecution(scheduledExecution,framework, authContext, request.subject,params)
 
         if (result.error){
             result.failed=true
@@ -1945,13 +1966,15 @@ class ScheduledExecutionController  {
             }
         }
         def changeinfo = [user: session.user,method:'apiJobsImport']
-        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        def Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
         def option = params.uuidOption
         if (request.api_version < ApiRequestFilters.V9) {
             option = null
         }
-        def loadresults = scheduledExecutionService.loadJobs(jobset,params.dupeOption, option,session.user, roleList, changeinfo,framework)
+        def loadresults = scheduledExecutionService.loadJobs(jobset,params.dupeOption, option,session.user, roleList,
+                changeinfo,framework,authContext)
 
         def jobs = loadresults.jobs
         def jobsi = loadresults.jobsi
@@ -1974,8 +1997,9 @@ class ScheduledExecutionController  {
         if (!apiService.requireExists(response, scheduledExecution,['Job ID',params.id])) {
             return
         }
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_READ], scheduledExecution.project)) {
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_READ], scheduledExecution.project)) {
             return apiService.renderErrorXml(response,[status:HttpServletResponse.SC_FORBIDDEN,
                     code:'api.error.item.unauthorized',args:['Read','Job ID',params.id]])
         }
@@ -2001,9 +2025,10 @@ class ScheduledExecutionController  {
         if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
             return
         }
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
-        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_RUN],
+        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
             scheduledExecution.project)) {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Run', 'Job ID', params.id]])
@@ -2012,7 +2037,7 @@ class ScheduledExecutionController  {
         inparams["user"] = (session?.user) ? session.user : "anonymous"
         if(params.asUser && apiService.requireVersion(request,response,ApiRequestFilters.V5)){
             //authorize RunAs User
-            if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_RUNAS],
+            if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUNAS],
                     scheduledExecution.project)) {
                 return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                         code: 'api.error.item.unauthorized', args: ['Run as User', 'Job ID', params.id]])
@@ -2039,7 +2064,7 @@ class ScheduledExecutionController  {
             }
         }
 
-        def result = executionService.executeScheduledExecution(scheduledExecution, framework, request.subject, inparams)
+        def result = executionService.executeScheduledExecution(scheduledExecution, framework, authContext, request.subject, inparams)
         if(!result.success){
             if(result.error=='unauthorized'){
                 return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
@@ -2072,13 +2097,13 @@ class ScheduledExecutionController  {
         if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
             return
         }
-        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_DELETE],
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_DELETE],
                 scheduledExecution.project)) {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Delete', 'Job ID', params.id]])
         }
-        def result = scheduledExecutionService.deleteScheduledExecutionById(params.id, framework, session.user, 'apiJobDelete')
+        def result = scheduledExecutionService.deleteScheduledExecutionById(params.id, authContext, session.user, 'apiJobDelete')
         if (!result.success) {
             if (result.error?.errorCode == 'notfound') {
                 apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND, code: 'api.error.item.doesnotexist',
@@ -2108,7 +2133,7 @@ class ScheduledExecutionController  {
             return
         }
         //test valid project
-        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        Framework framework = frameworkService.getRundeckFramework()
 
         def exists=frameworkService.existsFrameworkProject(params.project,framework)
         if (!apiService.requireExists(response, exists, ['project', params.project])) {
@@ -2145,7 +2170,7 @@ class ScheduledExecutionController  {
             return
         }
         //test valid project
-        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        Framework framework = frameworkService.getRundeckFramework()
 
         def exists=frameworkService.existsFrameworkProject(params.project,framework)
         if (!apiService.requireExists(response, exists, ['project', params.project])) {
@@ -2236,7 +2261,7 @@ class ScheduledExecutionController  {
             return
         }
         //test valid project
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        Framework framework = frameworkService.getRundeckFramework()
 
         def exists = frameworkService.existsFrameworkProject(params.project, framework)
         if (!apiService.requireExists(response, exists, ['project', params.project])) {
@@ -2329,10 +2354,10 @@ class ScheduledExecutionController  {
         if (!apiService.requireVersion(request,response,ApiRequestFilters.V7)) {
             return
         }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         //test valid project
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
 
-        if (!frameworkService.authorizeApplicationResource(framework, [type: 'resource', kind: 'job'], AuthConstants.ACTION_ADMIN)) {
+        if (!frameworkService.authorizeApplicationResource(authContext, [type: 'resource', kind: 'job'], AuthConstants.ACTION_ADMIN)) {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Reschedule Jobs', 'Server', params.serverNodeUUID]])
         }

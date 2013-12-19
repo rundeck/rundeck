@@ -594,7 +594,7 @@ public class Framework extends FrameworkResourceParent {
      * Return the nodeset consisting only of the input nodes where the specified actions are all authorized
      */
     public INodeSet filterAuthorizedNodes(final String project, final Set<String> actions, final INodeSet unfiltered,
-            Authorization authorization, Subject subject) {
+            AuthContext authContext) {
         if (null != actions && actions.size() > 0) {
             //select only nodes with all allowed actions
             final HashSet<Map<String, String>> resources = new HashSet<Map<String, String>>();
@@ -604,8 +604,7 @@ public class Framework extends FrameworkResourceParent {
                 resdef.put("rundeck_server", Boolean.toString(isLocalNode(iNodeEntry)));
                 resources.add(resdef);
             }
-            final Set<Decision> decisions = authorization.evaluate(resources,
-                    subject,
+            final Set<Decision> decisions = authContext.evaluate(resources,
                     actions,
                     Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "project"), project)));
             final NodeSetImpl authorized = new NodeSetImpl();

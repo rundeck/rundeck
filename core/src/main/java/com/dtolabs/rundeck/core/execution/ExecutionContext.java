@@ -23,6 +23,7 @@
 */
 package com.dtolabs.rundeck.core.execution;
 
+import com.dtolabs.rundeck.core.authorization.AuthContext;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.common.NodesSelector;
@@ -48,6 +49,11 @@ public interface ExecutionContext {
      * Get the framework
      */
     public Framework getFramework();
+
+    /**
+     * Get the authorization context
+     */
+    public AuthContext getAuthContext();
 
     /**
      * username

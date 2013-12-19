@@ -2,6 +2,7 @@ package rundeck.controllers
 
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.app.support.BuilderUtil
+import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogUtil
 import com.dtolabs.rundeck.core.logging.ReverseSeekingStreamingLogReader
@@ -73,9 +74,10 @@ class ExecutionController {
                 filesize = file.length()
             }
         }
-        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
-        if (e && !frameworkService.authorizeProjectExecutionAll(framework, e, [AuthConstants.ACTION_READ])) {
+        if (e && !frameworkService.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_READ])) {
             return unauthorized("Read Execution ${params.id}")
         }
 
@@ -131,9 +133,9 @@ class ExecutionController {
             }
         }
 
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
-        if (e && !frameworkService.authorizeProjectExecutionAll(framework, e, [AuthConstants.ACTION_READ])) {
+        if (e && !frameworkService.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_READ])) {
             return render(contentType: 'application/json') {
                 delegate.'error'("Unauthorized: Read Execution ${params.id}")
             }
@@ -185,7 +187,6 @@ class ExecutionController {
         if (file.exists()) {
             filesize = file.length()
         }
-        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         if(e.scheduledExecution){
             def ScheduledExecution se = e.scheduledExecution //ScheduledExecution.get(e.scheduledExecutionId)
             return render(view:"mailNotification/status" ,model: [scheduledExecution: se, execution:e, filesize:filesize])
@@ -230,9 +231,9 @@ class ExecutionController {
                 }
             }
         }
-        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def ScheduledExecution se = e.scheduledExecution
-        def abortresult=executionService.abortExecution(se, e, session.user, framework)
+        def abortresult=executionService.abortExecution(se, e, session.user,authContext)
 
 
         def didcancel=abortresult.abortstate in [ExecutionService.ABORT_ABORTED, ExecutionService.ABORT_PENDING]
@@ -408,7 +409,7 @@ class ExecutionController {
      */
     def tailExecutionOutput = {
         log.debug("tailExecutionOutput: ${params}, format: ${request.format}")
-        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         Execution e = Execution.get(Long.parseLong(params.id))
         def reqError=false
 
@@ -442,7 +443,7 @@ class ExecutionController {
         if(!e){
             return apiError('api.error.item.doesnotexist', ['execution', params.id], HttpServletResponse.SC_NOT_FOUND);
         }
-        if(e && !frameworkService.authorizeProjectExecutionAll(framework,e,[AuthConstants.ACTION_READ])){
+        if(e && !frameworkService.authorizeProjectExecutionAll(authContext,e,[AuthConstants.ACTION_READ])){
             return apiError('api.error.item.unauthorized', [AuthConstants.ACTION_READ, "Execution", params.id], HttpServletResponse.SC_FORBIDDEN);
         }
         if (params.stepctx && !(params.stepctx ==~ /^(\d+e?\/?)+$/)) {
@@ -872,11 +873,11 @@ class ExecutionController {
      */
     def apiExecution={
         def Execution e = Execution.get(params.id)
-        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (!e) {
             return apiService.renderErrorXml(response,
                     [status: HttpServletResponse.SC_NOT_FOUND,code: "api.error.item.doesnotexist", args: ['Execution ID', params.id]])
-        } else if (!frameworkService.authorizeProjectExecutionAll(framework,e,[AuthConstants.ACTION_READ])){
+        } else if (!frameworkService.authorizeProjectExecutionAll(authContext,e,[AuthConstants.ACTION_READ])){
             return apiService.renderErrorXml(response,
                     [
                             status: HttpServletResponse.SC_FORBIDDEN,
@@ -898,7 +899,7 @@ class ExecutionController {
      */
     def apiExecutionState= {
         def Execution e = Execution.get(params.id)
-        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (!e) {
             def errormap= [status: HttpServletResponse.SC_NOT_FOUND, code: "api.error.item.doesnotexist", args: ['Execution ID', params.id]]
             withFormat {
@@ -910,7 +911,7 @@ class ExecutionController {
                 }
             }
 
-        } else if (!frameworkService.authorizeProjectExecutionAll(framework, e, [AuthConstants.ACTION_READ])) {
+        } else if (!frameworkService.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_READ])) {
             def errormap = [status: HttpServletResponse.SC_FORBIDDEN,
                     code: "api.error.item.unauthorized", args: [AuthConstants.ACTION_READ, "Execution", params.id]]
             withFormat {
@@ -1009,7 +1010,7 @@ class ExecutionController {
      */
     def apiExecutionAbort={
         def Execution e = Execution.get(params.id)
-        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (!e) {
             return apiService.renderErrorXml(response,
                         [
@@ -1017,7 +1018,7 @@ class ExecutionController {
                                 code: "api.error.item.doesnotexist",
                                 args: ['Execution ID', params.id]
                         ])
-        } else if (!frameworkService.authorizeProjectExecutionAll(framework,e,[AuthConstants.ACTION_KILL])){
+        } else if (!frameworkService.authorizeProjectExecutionAll(authContext,e,[AuthConstants.ACTION_KILL])){
             return apiService.renderErrorXml(response,
                     [
                             status: HttpServletResponse.SC_FORBIDDEN,
@@ -1032,7 +1033,7 @@ class ExecutionController {
             //authorized within service call
             killas= params.asUser
         }
-        def abortresult=executionService.abortExecution(se, e, user, framework, killas)
+        def abortresult = executionService.abortExecution(se, e, user, authContext, killas)
 
         def reportstate=[status: abortresult.abortstate]
         if(abortresult.failedreason){
@@ -1055,7 +1056,7 @@ class ExecutionController {
         if (!apiService.requireVersion(request, response, ApiRequestFilters.V5)) {
             return
         }
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if(query?.hasErrors()){
             return apiService.renderErrorXml(response,
                     [
@@ -1101,7 +1102,7 @@ class ExecutionController {
         def result=results.result
         def total=results.total
         //filter query results to READ authorized executions
-        def filtered = frameworkService.filterAuthorizedProjectExecutionsAll(framework,result,[AuthConstants.ACTION_READ])
+        def filtered = frameworkService.filterAuthorizedProjectExecutionsAll(authContext,result,[AuthConstants.ACTION_READ])
 
 
         return executionService.respondExecutionsXml(response,filtered,[total:total,offset:resOffset,max:resMax])

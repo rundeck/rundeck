@@ -1,6 +1,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
+import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import org.apache.commons.validator.EmailValidator
@@ -243,7 +244,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
     /**
      * return a map of defined group path to count of the number of jobs with that exact path
      */
-    def Map getGroups(project, framework){
+    def Map getGroups(project, AuthContext authContext){
         def groupMap=[:]
 
         //collect all jobs and authorize the user for the set of available Job actions
@@ -254,7 +255,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         }
         // Filter the groups by what the user is authorized to see.
 
-        def decisions = frameworkService.authorizeProjectResources(framework,res,
+        def decisions = frameworkService.authorizeProjectResources(authContext,res,
             new HashSet([AuthConstants.ACTION_READ]),project)
 
         decisions.each{
@@ -372,8 +373,8 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
           ]
      * </pre>
      */
-    def Map getGroupTree(project, Framework framework){
-        def groupMap = getGroups(project, framework)
+    def Map getGroupTree(project, AuthContext authContext){
+        def groupMap = getGroups(project, authContext)
         def tree=[:]
         groupMap.keySet().each{
             tree[it]=[]
@@ -439,7 +440,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
      *
      * @return
      */
-    def deleteScheduledExecutionById(jobid, Framework framework, String user, String callingAction){
+    def deleteScheduledExecutionById(jobid, AuthContext authContext, String user, String callingAction){
 
         def ScheduledExecution scheduledExecution = getByIDorUUID(jobid)
         if (!scheduledExecution) {
@@ -450,8 +451,8 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             ]
             return [error: err,success: false]
         }
-        if (!frameworkService.authorizeProjectResource (framework, [type: 'resource', kind: 'job'], AuthConstants.ACTION_DELETE, scheduledExecution.project)
-            || !frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_DELETE], scheduledExecution.project)) {
+        if (!frameworkService.authorizeProjectResource (authContext, [type: 'resource', kind: 'job'], AuthConstants.ACTION_DELETE, scheduledExecution.project)
+            || !frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_DELETE], scheduledExecution.project)) {
             def err = [
                     message: lookupMessage('api.error.item.unauthorized', ['Delete', 'Job ID', scheduledExecution.extid] as Object[]),
                     errorCode: 'unauthorized',
@@ -482,11 +483,11 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         quartzScheduler.deleteJob(jobname,groupname)
     }
 
-    def userAuthorizedForJob(request,ScheduledExecution se, Framework framework){
-        return frameworkService.authorizeProjectJobAll(framework,se,[AuthConstants.ACTION_READ],se.project)
+    def userAuthorizedForJob(request,ScheduledExecution se, AuthContext authContext){
+        return frameworkService.authorizeProjectJobAll(authContext,se,[AuthConstants.ACTION_READ],se.project)
     }
-    def userAuthorizedForAdhoc(request,ScheduledExecution se, Framework framework){
-        return frameworkService.authorizeProjectResource(framework,[type: 'adhoc'], AuthConstants.ACTION_RUN,se.project)
+    def userAuthorizedForAdhoc(request,ScheduledExecution se, AuthContext authContext){
+        return frameworkService.authorizeProjectResource(authContext,[type: 'adhoc'], AuthConstants.ACTION_RUN,se.project)
     }
 
     def scheduleJob(ScheduledExecution se, String oldJobName, String oldGroupName) {
@@ -796,15 +797,15 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
      * Given list of imported jobs, create, update or skip them as defined by the dupeOption parameter.
      * @return map of load results, [jobs: List of ScheduledExecutions, jobsi: list of maps [scheduledExecution: (job), entrynum: (index)], errjobs: List of maps [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg], skipjobs: list of maps [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg]]
      */
-    def loadJobs ( jobset, option, user, String roleList, changeinfo = [:], Framework framework ) {
-        return loadJobs(jobset, option, null, user, roleList, changeinfo, framework)
+    def loadJobs ( jobset, option, user, String roleList, changeinfo = [:], Framework framework, AuthContext authContext ) {
+        return loadJobs(jobset, option, null, user, roleList, changeinfo, framework,authContext)
     }
 
     /**
      * Given list of imported jobs, create, update or skip them as defined by the dupeOption parameter.
      * @return map of load results, [jobs: List of ScheduledExecutions, jobsi: list of maps [scheduledExecution: (job), entrynum: (index)], errjobs: List of maps [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg], skipjobs: list of maps [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg]]
      */
-    def loadJobs ( jobset, option, String uuidOption, user, String roleList, changeinfo = [:], Framework framework ){
+    def loadJobs ( jobset, option, String uuidOption, user, String roleList, changeinfo = [:], Framework framework, AuthContext authContext ){
         def jobs = []
         def jobsi = []
         def i = 1
@@ -844,19 +845,19 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                 def success = false
                 def errmsg
                 jobchange.change = 'modify'
-                if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_UPDATE], scheduledExecution.project)) {
+                if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_UPDATE], scheduledExecution.project)) {
                     errmsg = "Unauthorized: Update Job ${scheduledExecution.id}"
                 } else {
                     try {
                         def result
                         if (jobdata instanceof ScheduledExecution) {
                             //xxx:try/catch the update
-                            result = _doupdateJob(scheduledExecution.id, jobdata,user, roleList, framework, jobchange)
+                            result = _doupdateJob(scheduledExecution.id, jobdata,user, roleList, framework, authContext, jobchange)
                             success = result[0]
                             scheduledExecution = result[1]
                         } else {
                             jobdata.id = scheduledExecution.uuid ?: scheduledExecution.id
-                            result = _doupdate(jobdata, user, roleList, framework, jobchange)
+                            result = _doupdate(jobdata, user, roleList, framework, authContext, jobchange)
                             success = result.success
                             scheduledExecution = result.scheduledExecution
                         }
@@ -881,14 +882,14 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             } else if (option == "create" || !scheduledExecution) {
                 def errmsg
 
-                if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'job'],
+                if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'job'],
                                                                   [AuthConstants.ACTION_CREATE], jobdata.project)) {
                     errmsg = "Unauthorized: Create Job"
                     errjobs << [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg]
                 } else {
                     try {
                         jobchange.change = 'create'
-                        def result = _dosave(jobdata, user, roleList, framework, jobchange)
+                        def result = _dosave(jobdata, user, roleList, framework, authContext, jobchange)
                         scheduledExecution = result.scheduledExecution
                         if (!result.success && scheduledExecution && scheduledExecution.hasErrors()) {
                             errmsg = "Validation errors: " + scheduledExecution.errors.allErrors.collect { lookupMessageError(it) }.join("; ")
@@ -1013,7 +1014,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         nots
     }
 
-    def _doupdate ( params, user, String roleList, Framework framework, changeinfo = [:] ){
+    def _doupdate ( params, user, String roleList, Framework framework, AuthContext authContext, changeinfo = [:] ){
         log.debug("ScheduledExecutionController: update : attempting to update: " + params.id +
                   ". params: " + params)
         /**
@@ -1032,7 +1033,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         boolean failed = false
         def ScheduledExecution scheduledExecution = getByIDorUUID(params.id)
 
-        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_UPDATE], scheduledExecution.project)) {
+        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_UPDATE], scheduledExecution.project)) {
             return [success: false, scheduledExecution: scheduledExecution, message: "Update Job ${scheduledExecution.extid}", unauthorized: true]
         }
 
@@ -1073,7 +1074,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         }
         if(origGroupPath!=scheduledExecution.groupPath || origJobName!=scheduledExecution.jobName){
             //reauthorize if the name/group has changed
-            if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_CREATE], scheduledExecution.project)) {
+            if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_CREATE], scheduledExecution.project)) {
                 failed = true
                 scheduledExecution.errors.rejectValue('jobName', 'ScheduledExecution.jobName.unauthorized', [AuthConstants.ACTION_CREATE, scheduledExecution.jobName].toArray(), 'Unauthorized action: {0} for value: {1}')
                 scheduledExecution.errors.rejectValue('groupPath', 'ScheduledExecution.groupPath.unauthorized', [ AuthConstants.ACTION_CREATE, scheduledExecution.groupPath].toArray(), 'Unauthorized action: {0} for value: {1}')
@@ -1536,7 +1537,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         }
         return [failed:failed,modified:addedNotifications]
     }
-    public List _doupdateJob(id, ScheduledExecution params, user, String roleList, Framework framework, changeinfo = [:]) {
+    public List _doupdateJob(id, ScheduledExecution params, user, String roleList, Framework framework, AuthContext authContext, changeinfo = [:]) {
         log.debug("ScheduledExecutionController: update : attempting to update: " + id +
                   ". params: " + params)
         if (params.groupPath) {
@@ -1589,7 +1590,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
 
         if (origGroupPath != scheduledExecution.groupPath || origJobName != scheduledExecution.jobName) {
             //reauthorize if the name/group has changed
-            if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_CREATE], scheduledExecution.project)) {
+            if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_CREATE], scheduledExecution.project)) {
                 failed = true
                 scheduledExecution.errors.rejectValue('jobName', 'ScheduledExecution.jobName.unauthorized', [AuthConstants.ACTION_CREATE, scheduledExecution.jobName].toArray(), 'Unauthorized action: {0} for value: {1}')
                 scheduledExecution.errors.rejectValue('groupPath', 'ScheduledExecution.groupPath.unauthorized', [AuthConstants.ACTION_CREATE, scheduledExecution.groupPath].toArray(), 'Unauthorized action: {0} for value: {1}')
@@ -1780,7 +1781,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
 
     }
 
-    public Map _dosave(params, user, String roleList, Framework framework, changeinfo = [:]) {
+    public Map _dosave(params, user, String roleList, Framework framework, AuthContext authContext, changeinfo = [:]) {
         log.debug("ScheduledExecutionController: save : params: " + params)
         boolean failed = false;
         if (params.groupPath) {
@@ -1807,7 +1808,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         failed = result.failed
         //try to save workflow
 
-        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_CREATE], scheduledExecution.project)) {
+        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_CREATE], scheduledExecution.project)) {
             scheduledExecution.discard()
             return [success: false, error: "Unauthorized: Create Job ${scheduledExecution.generateFullName()}", unauthorized: true, scheduledExecution: scheduledExecution]
         }

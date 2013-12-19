@@ -105,15 +105,15 @@ class FrameworkService implements ApplicationContextAware, Authorization {
 /**
      * Return a list of FrameworkProject objects
      */
-    def projects (Framework framework) {
+    def projects (AuthContext authContext) {
         //authorize the list of projects
         def projMap=[:]
         def resources=[] as Set
-        for (proj in framework.frameworkProjectMgr.listFrameworkProjects()) {
+        for (proj in rundeckFramework.frameworkProjectMgr.listFrameworkProjects()) {
             projMap[proj.name] = proj;
             resources << [type: 'project', name: proj.name]
         }
-        def authed = authorizeApplicationResourceSet(framework, resources, 'read')
+        def authed = authorizeApplicationResourceSet(authContext, resources, 'read')
         return new ArrayList(authed.collect{projMap[it.name]})
     }
 
@@ -216,15 +216,14 @@ class FrameworkService implements ApplicationContextAware, Authorization {
      * @param project
      * @return
      */
-    def Set authorizeProjectResources( framework, Set resources, Set actions, String project) {
+    def Set authorizeProjectResources( AuthContext authContext, Set resources, Set actions, String project) {
         if (null == project) {
             throw new IllegalArgumentException("null project")
         }
         def Set decisions
         metricService.withTimer(this.class.name,'authorizeProjectResources') {
-            decisions=evaluate(
+            decisions= authContext.evaluate(
                     resources,
-                    framework.getAuthenticationMgr().subject,
                     actions,
                     Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "project"), project)))
         }
@@ -238,14 +237,13 @@ class FrameworkService implements ApplicationContextAware, Authorization {
      * @param project
      * @return
      */
-    def boolean authorizeProjectResource(framework, Map resource, String action, String project){
+    def boolean authorizeProjectResource(AuthContext authContext, Map resource, String action, String project){
         if (null == project) {
             throw new IllegalArgumentException("null project")
         }
         def decision= metricService.withTimer(this.class.name,'authorizeProjectResource') {
-            evaluate(
+            authContext.evaluate(
                     resource,
-                    framework.getAuthenticationMgr().subject,
                     action,
                     Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "project"), project)))
         }
@@ -259,14 +257,13 @@ class FrameworkService implements ApplicationContextAware, Authorization {
      * @param project
      * @return
      */
-    def boolean authorizeProjectResourceAll(framework, Map resource, Collection actions, String project){
+    def boolean authorizeProjectResourceAll(AuthContext authContext, Map resource, Collection actions, String project){
         if(null==project){
             throw new IllegalArgumentException("null project")
         }
         def decisions= metricService.withTimer(this.class.name,'authorizeProjectResourceAll') {
-            evaluate(
+            authContext.evaluate(
                     [resource] as Set,
-                    framework.getAuthenticationMgr().subject,
                     actions as Set,
                     Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "project"), project)))
         }
@@ -281,11 +278,11 @@ class FrameworkService implements ApplicationContextAware, Authorization {
      * @param project
      * @return true/false
      */
-    def authorizeProjectExecutionAll( framework, Execution exec, Collection actions){
+    def authorizeProjectExecutionAll( AuthContext authContext, Execution exec, Collection actions){
         def ScheduledExecution se = exec.scheduledExecution
         return se ?
-               authorizeProjectJobAll(framework, se, actions, se.project)  :
-               authorizeProjectResourceAll(framework, [type: 'adhoc'], actions, exec.project)
+               authorizeProjectJobAll(authContext, se, actions, se.project)  :
+               authorizeProjectResourceAll(authContext, [type: 'adhoc'], actions, exec.project)
 
     }
     /**
@@ -295,7 +292,7 @@ class FrameworkService implements ApplicationContextAware, Authorization {
      * @param actions
      * @return List of authorized executions
      */
-    def List filterAuthorizedProjectExecutionsAll( framework, List<Execution> execs, Collection actions){
+    def List filterAuthorizedProjectExecutionsAll( AuthContext authContext, List<Execution> execs, Collection actions){
         def semap=[:]
         def adhocauth=null
         def results=[]
@@ -303,9 +300,9 @@ class FrameworkService implements ApplicationContextAware, Authorization {
             execs.each{Execution exec->
                 def ScheduledExecution se = exec.scheduledExecution
                 if(se && null==semap[se.id]){
-                    semap[se.id]=authorizeProjectJobAll(framework, se, actions, se.project)
+                    semap[se.id]=authorizeProjectJobAll(authContext, se, actions, se.project)
                 }else if(!se && null==adhocauth){
-                    adhocauth=authorizeProjectResourceAll(framework, [type: 'adhoc'], actions, exec.project)
+                    adhocauth=authorizeProjectResourceAll(authContext, [type: 'adhoc'], actions, exec.project)
                 }
                 if(se ? semap[se.id] : adhocauth){
                     results << exec
@@ -322,14 +319,13 @@ class FrameworkService implements ApplicationContextAware, Authorization {
      * @param project
      * @return true/false
      */
-    def authorizeProjectJobAll( framework, ScheduledExecution job, Collection actions, String project){
+    def authorizeProjectJobAll( AuthContext authContext, ScheduledExecution job, Collection actions, String project){
         if (null == project) {
             throw new IllegalArgumentException("null project")
         }
         def decisions= metricService.withTimer(this.class.name,'authorizeProjectJobAll') {
-            evaluate(
+            authContext.evaluate(
                     [authResourceForJob(job)] as Set,
-                    framework.getAuthenticationMgr().subject,
                     actions as Set,
                     Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "project"), project)))
         }
@@ -343,12 +339,11 @@ class FrameworkService implements ApplicationContextAware, Authorization {
      * @param action
      * @return
      */
-    def boolean authorizeApplicationResource(framework, Map resource, String action) {
+    def boolean authorizeApplicationResource(AuthContext authContext, Map resource, String action) {
 
         def decision = metricService.withTimer(this.class.name,'authorizeApplicationResource') {
-            evaluate(
+            authContext.evaluate(
                 resource,
-                framework.getAuthenticationMgr().subject,
                 action,
                 Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "application"), 'rundeck')))
         }
@@ -361,11 +356,10 @@ class FrameworkService implements ApplicationContextAware, Authorization {
      * @param action
      * @return set of authorized resources
      */
-    def Set authorizeApplicationResourceSet(Framework framework, Set<Map> resources, String action) {
+    def Set authorizeApplicationResourceSet(AuthContext authContext, Set<Map> resources, String action) {
         def decisions = metricService.withTimer(this.class.name,'authorizeApplicationResourceSet') {
-            evaluate(
+            authContext.evaluate(
                     resources,
-                    framework.getAuthenticationMgr().subject,
                     [action] as Set,
                     Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "application"), 'rundeck')))
         }
@@ -379,12 +373,10 @@ class FrameworkService implements ApplicationContextAware, Authorization {
      * @param actions
      * @return
      */
-    def boolean authorizeApplicationResourceAll(framework, Map resource, Collection actions) {
-        def Set decisions
-        metricService.withTimer(this.class.name,'authorizeApplicationResourceAll') {
-            decisions=evaluate(
+    def boolean authorizeApplicationResourceAll(AuthContext authContext, Map resource, Collection actions) {
+        def Set decisions = metricService.withTimer(this.class.name,'authorizeApplicationResourceAll') {
+            authContext.evaluate(
                 [resource] as Set,
-                framework.getAuthenticationMgr().subject,
                 actions as Set,
                 Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "application"), 'rundeck')))
         }
@@ -398,12 +390,11 @@ class FrameworkService implements ApplicationContextAware, Authorization {
      * @param action
      * @return
      */
-    def boolean authorizeApplicationResourceType(framework, String resourceType, String action) {
+    def boolean authorizeApplicationResourceType(AuthContext authContext, String resourceType, String action) {
 
         def decision = metricService.withTimer(this.class.name,'authorizeApplicationResourceType') {
-            evaluate(
+            authContext.evaluate(
                     [type: 'resource', kind: resourceType],
-                    framework.getAuthenticationMgr().subject,
                     action,
                     Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "application"), 'rundeck')))
         }
@@ -416,14 +407,10 @@ class FrameworkService implements ApplicationContextAware, Authorization {
      * @param actions
      * @return
      */
-    def boolean authorizeApplicationResourceTypeAll(framework, String resourceType, Collection actions) {
-
-
-        def Set decisions
-        metricService.withTimer(this.class.name,'authorizeApplicationResourceType') {
-            decisions= evaluate(
+    def boolean authorizeApplicationResourceTypeAll(AuthContext authContext, String resourceType, Collection actions) {
+        def Set decisions= metricService.withTimer(this.class.name,'authorizeApplicationResourceType') {
+            authContext.evaluate(
                     [[type: 'resource', kind: resourceType]] as Set,
-                    framework.getAuthenticationMgr().subject,
                     actions as Set,
                     Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "application"), 'rundeck')))
         }
@@ -444,21 +431,11 @@ class FrameworkService implements ApplicationContextAware, Authorization {
         }
         return session['_Framework:AuthContext']
     }
-    def Framework getFrameworkFromUserSession( session, request){
+    def Framework getRundeckFramework(){
         if (!initialized) {
             initialize()
         }
-        if(!session.Framework){
-            String rundeckbase=getRundeckBase()
-            session.Framework= rundeckFramework
-            def user= session.user
-            def subject= session.subject ?: request.subject
-//            session['_Framework.authentication'] = new SingleUserAuthentication(user, subject)
-//            session['_Framework.authorization'] = new UserSubjectAuthorization(rundeckFramework,
-//                    new File(Constants.getFrameworkConfigDir(rundeckbase)), user, subject)
-//            session.Framework = getFrameworkForUserAndSubject(session.user, session.subject?:request.subject, rundeckbase)
-        }
-        return session.Framework;
+        return rundeckFramework;
     }
 
     public AuthContext getAuthContextForSubject(Subject subject) {
@@ -469,8 +446,7 @@ class FrameworkService implements ApplicationContextAware, Authorization {
     }
     public AuthContext getAuthContextForUserAndRoles(String user, List rolelist) {
         if (!(null != user && null != rolelist)) {
-            System.err.println("getFrameworkForUserAndRoles: No user/subject authorization")
-            throw new RuntimeException("Cannot get framework without user, roles: ${user}, ${rolelist}")
+            throw new RuntimeException("getAuthContextForUserAndRoles: Cannot get AuthContext without user, roles: ${user}, ${rolelist}")
         }
         //create fake subject
         Subject subject = new Subject()
@@ -481,25 +457,6 @@ class FrameworkService implements ApplicationContextAware, Authorization {
         return new SubjectAuthContext(subject, aclpolicies)
     }
 
-    /**
-     * Used by ExecutionJob when running for logged in user
-     * @param user
-     * @param subject
-     * @param rundeckbase
-     * @return
-     */
-    public static Framework getFrameworkForUserAndSubject(String user, Subject subject, String rundeckbase){
-        def Framework fw = Framework.getInstanceWithoutProjectsDir(rundeckbase)
-        if(null!=user && null!=subject){
-            def authen = new SingleUserAuthentication(user,subject)
-            def author = new UserSubjectAuthorization(fw,new File(Constants.getFrameworkConfigDir(rundeckbase)), user, subject)
-            fw.setAuthenticationMgr(authen)
-        } else {
-            System.err.println("getFrameworkForUserAndSubject: No user/subject authorization")
-            throw new RuntimeException("Cannot get framework without user, subject: ${user}, ${subject}")
-        }
-        return fw
-    }
 
     /**
      * Create a map of option name to value given an input argline.

@@ -23,6 +23,7 @@
 */
 package com.dtolabs.rundeck.core.execution;
 
+import com.dtolabs.rundeck.core.authorization.AuthContext;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.INodeSet;
@@ -58,6 +59,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     private Map<String, Map<String, Map<String, String>>> nodeDataContext;
     private ExecutionListener executionListener;
     private Framework framework;
+    private AuthContext authContext;
     private File nodesFile;
     private String nodeRankAttribute;
     private boolean nodeRankOrderAscending = true;
@@ -85,6 +87,14 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
         return nodeDataContext;
     }
 
+    public AuthContext getAuthContext() {
+        return authContext;
+    }
+
+    public void setAuthContext(AuthContext authContext) {
+        this.authContext = authContext;
+    }
+
     public static class Builder {
         private ExecutionContextImpl ctx;
 
@@ -105,6 +115,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
                 ctx.privateDataContext = original.getPrivateDataContext();
                 ctx.executionListener = original.getExecutionListener();
                 ctx.framework = original.getFramework();
+                ctx.authContext = original.getAuthContext();
                 ctx.nodesFile = original.getNodesFile();
                 ctx.threadCount = original.getThreadCount();
                 ctx.keepgoing = original.isKeepgoing();
@@ -205,6 +216,11 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
 
         public Builder framework(Framework framework) {
             ctx.framework = framework;
+            return this;
+        }
+
+        public Builder authContext(AuthContext authContext) {
+            ctx.authContext = authContext;
             return this;
         }
 

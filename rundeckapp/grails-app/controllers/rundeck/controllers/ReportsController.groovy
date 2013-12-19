@@ -1,6 +1,7 @@
 package rundeck.controllers
 
 import com.dtolabs.client.utils.Constants
+import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import rundeck.services.ApiService
 import rundeck.services.ExecutionService
@@ -35,9 +36,10 @@ class ReportsController {
     def index = { ExecQuery query->
        //find previous executions
         def usedFilter
-        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
-        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'event'], ['read'],
+        if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'event'], ['read'],
             session.project)) {
             return unauthorized("Read Events for project ${session.project}")
         }
@@ -120,9 +122,10 @@ class ReportsController {
     def since = { ExecQuery query->
        //find previous executions
         def usedFilter
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
-        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'event'], ['read'],
+        if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'event'], ['read'],
             session.project)) {
             return unauthorized("Read Events for project ${session.project}")
         }
@@ -220,9 +223,9 @@ class ReportsController {
         }
     }
     def eventsFragment={ ExecQuery query ->
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
-        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'event'], ['read'],
+        if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'event'], ['read'],
             session.project)) {
             return unauthorized("Read Events for project ${session.project}",true)
         }
@@ -231,9 +234,9 @@ class ReportsController {
         return results
     }
     def jobsFragment={ ExecQuery query ->
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
-        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'event'], ['read'],
+        if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'event'], ['read'],
             session.project)) {
             return unauthorized("Read Events for project ${session.project}", true)
         }
@@ -302,9 +305,9 @@ class ReportsController {
    
     def jobs = {ExecQuery query ->
         //find previous executions
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
-        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'event'], ['read'],
+        if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'event'], ['read'],
             session.project)) {
             return unauthorized("Read Events for project ${session.project}")
         }
@@ -373,15 +376,16 @@ class ReportsController {
             }
         }
         //test valid project
-        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        Framework framework = frameworkService.getRundeckFramework()
 
         def exists=frameworkService.existsFrameworkProject(params.project,framework)
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if(!exists){
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist', args: ['project', params.project]])
 
         }
-        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'event'], ['read'],
+        if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'event'], ['read'],
             params.project)) {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Read Events', 'Project', params.project]])

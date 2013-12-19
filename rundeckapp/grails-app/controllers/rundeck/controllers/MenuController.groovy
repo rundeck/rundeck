@@ -3,6 +3,7 @@ package rundeck.controllers
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
+import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.core.execution.service.FileCopierService
@@ -182,7 +183,8 @@ class MenuController {
     
     def jobsFragment = {ScheduledExecutionQuery query ->
         long start=System.currentTimeMillis()
-        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def usedFilter=null
         
         if(params.filterName){
@@ -207,7 +209,7 @@ class MenuController {
         if(query && !query.projFilter && session.project){
             query.projFilter=session.project
         }
-        def results=listWorkflows(query,framework,session.user)
+        def results=listWorkflows(query,authContext,session.user)
         if(usedFilter){
             results.filterName=usedFilter
             results.paginateParams['filterName']=usedFilter
@@ -222,7 +224,8 @@ class MenuController {
      */
     def jobsPicker = {ScheduledExecutionQuery query ->
 
-        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def usedFilter=null
         if(!query){
             query = new ScheduledExecutionQuery()
@@ -230,7 +233,7 @@ class MenuController {
         if(query && !query.projFilter && session.project){
             query.projFilter=session.project
         }
-        def results=listWorkflows(query,framework,session.user)
+        def results=listWorkflows(query,authContext,session.user)
         if(usedFilter){
             results.filterName=usedFilter
             results.paginateParams['filterName']=usedFilter
@@ -241,9 +244,9 @@ class MenuController {
         }
         return results + [runAuthRequired:params.runAuthRequired]
     }
-    private def listWorkflows(ScheduledExecutionQuery query,Framework framework,String user) {
+    private def listWorkflows(ScheduledExecutionQuery query,AuthContext authContext,String user) {
         long start=System.currentTimeMillis()
-        def projects = frameworkService.projects(framework)
+        def projects = frameworkService.projects(authContext)
         if(null!=query){
             query.configureFilter()
         }
@@ -283,12 +286,12 @@ class MenuController {
         }
         // Filter the groups by what the user is authorized to see.
 
-        def decisions = frameworkService.authorizeProjectResources(framework,res, new HashSet([AuthConstants.ACTION_READ, AuthConstants.ACTION_DELETE, AuthConstants.ACTION_RUN, AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_KILL]),query.projFilter)
+        def decisions = frameworkService.authorizeProjectResources(authContext,res, new HashSet([AuthConstants.ACTION_READ, AuthConstants.ACTION_DELETE, AuthConstants.ACTION_RUN, AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_KILL]),query.projFilter)
         log.debug("listWorkflows(evaluate): "+(System.currentTimeMillis()-preeval));
 
         long viewable=System.currentTimeMillis()
 
-        def authCreate = frameworkService.authorizeProjectResource(framework, [type: 'resource', kind: 'job'], AuthConstants.ACTION_CREATE, query.projFilter)
+        def authCreate = frameworkService.authorizeProjectResource(authContext, [type: 'resource', kind: 'job'], AuthConstants.ACTION_CREATE, query.projFilter)
         
 
         def Map jobauthorizations=[:]
@@ -435,8 +438,9 @@ class MenuController {
     }
 
     def admin={
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        if (!frameworkService.authorizeApplicationResourceAll(framework,[type:'project',name:session.project],[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_READ])) {
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if (!frameworkService.authorizeApplicationResourceAll(authContext,[type:'project',name:session.project],[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_READ])) {
             flash.error = "User ${session.user} unauthorized for: Project Admin"
             flash.title = "Unauthorized"
             response.setStatus(403)
@@ -492,8 +496,8 @@ class MenuController {
         }
     }
     def systemConfig(){
-        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        if (!frameworkService.authorizeApplicationResource(framework, [type: 'resource', kind: 'system'], 'read')) {
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if (!frameworkService.authorizeApplicationResource(authContext, [type: 'resource', kind: 'system'], 'read')) {
             flash.error = "User Admin role required"
             flash.title = "Unauthorized"
             response.setStatus(403)
@@ -501,8 +505,8 @@ class MenuController {
         }
     }
     def securityConfig(){
-        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        if (!frameworkService.authorizeApplicationResource(framework, [type: 'resource', kind: 'system'], 'read')) {
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if (!frameworkService.authorizeApplicationResource(authContext, [type: 'resource', kind: 'system'], 'read')) {
             flash.error = "User Admin role required"
             flash.title = "Unauthorized"
             response.setStatus(403)
@@ -511,8 +515,8 @@ class MenuController {
     }
 
     def systemInfo = {
-        def Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
-        if (!frameworkService.authorizeApplicationResource(framework,[type:'resource',kind:'system'],'read')) {
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if (!frameworkService.authorizeApplicationResource(authContext,[type:'resource',kind:'system'],'read')) {
             flash.error = "User Admin role required"
             flash.title = "Unauthorized"
             response.setStatus(403)
@@ -641,7 +645,7 @@ class MenuController {
     def plugins(){
         //list plugins and config settings for project/framework props
 
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        Framework framework = frameworkService.getRundeckFramework()
 
         //framework level plugin descriptions
         def pluginDescs= [
@@ -685,8 +689,9 @@ class MenuController {
     }
 
     def home(){
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        def fprojects = frameworkService.projects(framework)
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        Framework framework = frameworkService.rundeckFramework
+        def fprojects = frameworkService.projects(authContext)
         session.frameworkProjects = fprojects
 
         Calendar n = GregorianCalendar.getInstance()
@@ -710,8 +715,8 @@ class MenuController {
             summary[project.name].readme=frameworkService.getFrameworkProjectReadmeContents(project.name,framework)
             //authorization
             summary[project.name].auth = [
-                    jobCreate: frameworkService.authorizeProjectResource(framework, [type: 'resource', kind: 'job'], 'create', project.name),
-                    admin: frameworkService.authorizeApplicationResource(framework, [type:'project',name: project.name], 'admin'),
+                    jobCreate: frameworkService.authorizeProjectResource(authContext, [type: 'resource', kind: 'job'], 'create', project.name),
+                    admin: frameworkService.authorizeApplicationResource(authContext, [type:'project',name: project.name], 'admin'),
             ]
         }
         def projects = Execution.createCriteria().list {
@@ -751,7 +756,7 @@ class MenuController {
         }
         query.projFilter = params.project
         //test valid project
-        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        Framework framework = frameworkService.getRundeckFramework()
 
         def exists=frameworkService.existsFrameworkProject(params.project,framework)
         if(!exists){
@@ -800,7 +805,7 @@ class MenuController {
         }
         query.projFilter = params.project
         //test valid project
-        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        Framework framework = frameworkService.getRundeckFramework()
 
         def exists=frameworkService.existsFrameworkProject(params.project,framework)
         if(!exists){
@@ -834,7 +839,7 @@ class MenuController {
                     code: 'api.error.parameter.required', args: ['project']])
         }
         //test valid project
-        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        Framework framework = frameworkService.getRundeckFramework()
 
         //allow project='*' to indicate all projects
         def allProjects = request.api_version >= ApiRequestFilters.V9 && params.project == '*'

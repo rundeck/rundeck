@@ -67,7 +67,7 @@
             tailmode: ${followmode == 'tail'},
             browsemode: ${followmode == 'browse'},
             nodemode: ${followmode == 'node'},
-            execData: {node:"${session.Framework.getFrameworkNodeHostname()}"},
+            execData: {},
             groupOutput:{value:${followmode == 'browse'}},
             updatepagetitle:${null == execution?.dateCompleted},
             <g:if test="${authChecks[AuthConstants.ACTION_KILL]}">
