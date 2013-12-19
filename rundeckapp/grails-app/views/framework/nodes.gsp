@@ -552,8 +552,9 @@
                     });
                 }
             });
+            expandResultNodes();
         }
-        Event.observe(window,'load',init);
+        jQuery(document).ready(init);
 
     </script>
     <style type="text/css">
@@ -764,10 +765,6 @@
 
                 <div class=" clear matchednodes " id="nodelist" >
                     <span class="btn btn-default receiver" onclick="expandResultNodes();">Show ${total} Node${1 != total ? 's' : ''}...</span>
-                    <g:javascript>
-                        fireWhenReady('nodelist',expandResultNodes);
-                    </g:javascript>
-
                 </div>
 
                  </td>

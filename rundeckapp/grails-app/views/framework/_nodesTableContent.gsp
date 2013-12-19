@@ -75,9 +75,8 @@
                 <td class="hostname"  title="Hostname">
                         ${node.hostname?.encodeAsHTML()}
                     <g:if test="${null!=nodeauthrun && !nodeauthrun[node.nodename]}">
-                        <span title="Not authorized to 'run' on this node">
-                            <img src="${resource(dir: 'images', file: 'icon-tiny-warn.png')}" alt="Node" width="12px"
-                                 height="12px"/>
+                        <span title="Not authorized to 'run' on this node" class="text-warning has_tooltip" >
+                            <i class="glyphicon glyphicon-warning-sign"></i>
                         </span>
                     </g:if>
                 </td>
