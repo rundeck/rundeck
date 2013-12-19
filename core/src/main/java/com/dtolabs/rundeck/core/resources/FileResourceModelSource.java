@@ -267,7 +267,7 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
     public synchronized INodeSet getNodes(final File nodesFile, final String format) throws
         ResourceModelSourceException {
         final Long modtime = nodesFile.lastModified();
-        if (0 == nodeSet.getNodes().size() || !modtime.equals(lastModTime)) {
+        if (0 == nodeSet.getNodes().size() || (modtime > lastModTime)) {
             nodeSet = new NodeSetImpl();
             loadNodes(nodesFile, format);
             lastModTime = modtime;
