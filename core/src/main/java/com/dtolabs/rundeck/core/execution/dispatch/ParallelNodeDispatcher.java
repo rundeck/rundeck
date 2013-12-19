@@ -81,9 +81,7 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
     public DispatcherResult dispatch(final StepExecutionContext context,
                                      final NodeStepExecutionItem item, final Dispatchable toDispatch) throws
         DispatcherException {
-        INodeSet nodes = framework.filterAuthorizedNodes(context.getFrameworkProject(),
-                                                         new HashSet<String>(Arrays.asList("read", "run")),
-                                                         context.getNodes());
+        INodeSet nodes = context.getNodes();
         boolean keepgoing = context.isKeepgoing();
 
         final HashSet<String> nodeNames = new HashSet<String>();

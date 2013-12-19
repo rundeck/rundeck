@@ -68,9 +68,7 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
                                      final NodeStepExecutionItem item, final Dispatchable toDispatch) throws
                                                                                                       DispatcherException {
 
-        INodeSet nodes = framework.filterAuthorizedNodes(context.getFrameworkProject(),
-                                                         new HashSet<String>(Arrays.asList("read", "run")),
-                                                         context.getNodes());
+        INodeSet nodes = context.getNodes();
         if (nodes.getNodes().size() < 1) {
             throw new DispatcherException("No nodes matched");
         }

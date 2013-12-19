@@ -192,7 +192,7 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
      * Create QueueTool with default Framework instances located by the system rdeck.base property.
      */
     public QueueTool() {
-        this(Framework.getInstance(Constants.getSystemBaseDir()), new Log4JCLIToolLogger(log4j));
+        this(Framework.getInstanceWithoutProjectsDir(Constants.getSystemBaseDir()), new Log4JCLIToolLogger(log4j));
     }
 
     protected boolean isUseHelpOption() {
@@ -212,7 +212,7 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
      * @param logger the logger
      */
     public QueueTool(final CLIToolLogger logger) {
-        this(Framework.getInstance(Constants.getSystemBaseDir()), logger);
+        this(Framework.getInstanceWithoutProjectsDir(Constants.getSystemBaseDir()), logger);
     }
     
     /**

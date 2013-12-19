@@ -1,6 +1,5 @@
 package rundeck.controllers
 
-import com.codahale.metrics.MetricRegistry
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 
@@ -27,7 +26,6 @@ import com.dtolabs.rundeck.core.common.NodesYamlGenerator
 import com.dtolabs.rundeck.core.resources.format.UnsupportedFormatException
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserException
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorException
-import com.dtolabs.rundeck.core.execution.impl.jsch.JschNodeExecutor
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
 import com.dtolabs.rundeck.core.execution.service.FileCopierService
 
@@ -217,8 +215,8 @@ class FrameworkController  {
 //            nodes = nodes.sort { INodeEntry a, INodeEntry b -> return a.nodename.compareTo(b.nodename) }
         //filter nodes by read authorization
 
-        def readnodes = framework.filterAuthorizedNodes(query.project, ['read'] as Set, nodeset)
-        def runnodes = framework.filterAuthorizedNodes(query.project, ['run'] as Set, readnodes)
+        def readnodes = framework.filterAuthorizedNodes(query.project, ['read'] as Set, nodeset, frameworkService, framework.getAuthenticationMgr().getSubject())
+        def runnodes = framework.filterAuthorizedNodes(query.project, ['run'] as Set, readnodes, frameworkService, framework.getAuthenticationMgr().getSubject())
         def noderunauthmap = [:]
 
 

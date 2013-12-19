@@ -139,69 +139,7 @@ public abstract class BaseAclsAuthorization implements Authorization, LegacyAuth
      *
      * @throws AuthorizationException
      */
-    boolean authorize(final String user, final String project, final String resourceType, final String resourceName,
-                              final String module, final String commandName)
-        throws AuthorizationException {
 
-        logger.debug("authorize(), user: " + user + ", " +
-                     " project: " + project + ", " +
-                     " deploymentType: " + resourceType + ", " +
-                     " deploymentName: " + resourceName + ", " +
-                     " module: " + module + ", " + " command: " + commandName);
-
-        // Allow access to base modules.
-        // TODO: can this be refactored? 
-        if(null == project){
-            return true;
-        }
-        
-        // get current time in day/hour/minute int format and create a conforming timeandday string
-        final Calendar rightNow = Calendar.getInstance();
-        // Subtract 1 before we create the TimeanddayExp object which requires
-        // day to be between 0 and 6, not 1 and 7.
-        final int day = rightNow.get(Calendar.DAY_OF_WEEK) - 1;
-        final int hour = rightNow.get(Calendar.HOUR_OF_DAY);
-        final int minute = rightNow.get(Calendar.MINUTE);
-        final String timeandday = new TimeanddayExp(Integer.toString(day),
-            Integer.toString(hour),
-            Integer.toString(minute)).toString();
-
-
-        // Consult with an subclass to get a list of role memberships for user
-        final String[] roles = determineUserRoles(user);
-        setMatchedRoles(roles);
-
-        // shouldn't happen
-        if (null == roles) {
-            logger.error("Unable to obtain role memberships for user: " + user);
-            throw new AuthorizationException("Unable to obtain role memberships for user: " + user + " unknown error");
-        }
-
-        // if user has no roles, return false
-        if (roles.length == 0) {
-            logger.debug("no roles defined for user: " + user + " , returning false");
-            return false;
-        }
-        Map<String, String> moduleResource = new HashMap<String, String>();
-        moduleResource.put("module", module);
-        moduleResource.put("name", commandName);
-        
-        Subject subject = new Subject();
-        subject.getPrincipals().add(new Username(user));
-        for(String role : roles) {
-            subject.getPrincipals().add(new Group(role));
-        }
-        
-        Set<Attribute> environment = new HashSet<Attribute>();
-        environment.add(new Attribute(URI.create("http://dtolabs.com/rundeck/env/resource-type"), resourceType));
-        environment.add(new Attribute(URI.create("http://dtolabs.com/rundeck/env/resource-name"), resourceName));
-        environment.add(new Attribute(URI.create("http://dtolabs.com/rundeck/env/project"), project));
-        environment.add(new Attribute(URI.create("http://dtolabs.com/rundeck/env/now.cron"), timeandday));
-        Decision decision = this.authorization.evaluate(moduleResource, subject, "EXECUTE", environment);
-
-        return decision.isAuthorized();
-
-    }
 
 
     /**

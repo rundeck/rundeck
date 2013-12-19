@@ -1,5 +1,6 @@
 package rundeck.filters
 
+import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import rundeck.filters.AA_TimerFilters
 
@@ -70,7 +71,8 @@ public class ProjectSelectFilters {
                 if (session && session.user) {
                     //get user authorizations
                     session.projectSelectFilterApplied = true
-                    def Framework fw = frameworkService.getFrameworkFromUserSession(session, request)
+                    def Framework fw = frameworkService.rundeckFramework
+                    def AuthContext authContext = frameworkService.userAuthContext(session)
 
 
                     def selected = params.project

@@ -38,14 +38,11 @@ class AuthTagLib {
         
         boolean has=(!attrs.has || attrs.has == "true")
         
-        def framework = frameworkService.getFrameworkFromUserSession(request.session, request)
-        def Authorization authr = framework.getAuthorizationMgr()
-        
         def resource = frameworkService.authResourceForJob(attrs.job?.jobName, attrs.job?.groupPath)
 
         def env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE+"project"), session.project))
 
-        def decision = authr.evaluate(resource, request.subject, action, env)
+        def decision = frameworkService.evaluate(resource, request.subject, action, env)
         
         if(has && decision.authorized){
             out<<body()
@@ -73,14 +70,11 @@ class AuthTagLib {
 
         boolean has=(!attrs.has || attrs.has == "true")
 
-        def framework = frameworkService.getFrameworkFromUserSession(request.session, request)
-        def Authorization authr = framework.getAuthorizationMgr()
-
         def resource = [ type: 'adhoc']
 
         def env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), session.project))
 
-        def decision = authr.evaluate(resource, request.subject, action, env)
+        def decision = frameworkService.evaluate(resource, request.subject, action, env)
 
         if(has && decision.authorized){
             out<<body()
@@ -113,9 +107,6 @@ class AuthTagLib {
 
         boolean has = (!attrs.has || attrs.has == "true")
 
-        def framework = frameworkService.getFrameworkFromUserSession(request.session, request)
-        def Authorization authr = framework.getAuthorizationMgr()
-
         def env
         if ('application'==attrs.context){
             env=Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"application"), 'rundeck'))
@@ -138,10 +129,10 @@ class AuthTagLib {
 
         def authorized
         if(isset){
-            def decisions = authr.evaluate([resource] as Set, request.subject, action, env)
+            def decisions = frameworkService.evaluate([resource] as Set, request.subject, action, env)
             authorized = !(decisions.find{!it.authorized})
         } else{
-            def Decision decision = authr.evaluate(resource, request.subject, action, env)
+            def Decision decision = frameworkService.evaluate(resource, request.subject, action, env)
             authorized=decision.authorized
         }
 
@@ -177,8 +168,6 @@ class AuthTagLib {
             tests.addAll(action)
         }
 
-        def framework = frameworkService.getFrameworkFromUserSession(request.session, request)
-        def Authorization authr = framework.getAuthorizationMgr()
         def env
         if ('application' == attrs.context) {
             env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"application"), 'rundeck'))
@@ -198,7 +187,7 @@ class AuthTagLib {
         }
         def Set resources = [resource]
 
-        def decisions= authr.evaluate(resources, request.subject, tests, env)
+        def decisions= frameworkService.evaluate(resources, request.subject, tests, env)
         //return true if all decsisions are (has==true) or are not (has!=true) authorized
         return !(decisions.find{has^it.authorized})
 
@@ -228,15 +217,12 @@ class AuthTagLib {
             tests.addAll(action)
         }
 
-        def framework = frameworkService.getFrameworkFromUserSession(request.session, request)
-        def Authorization authr = framework.getAuthorizationMgr()
-
         def Set resources = [[type: 'adhoc']]
 
         def env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), session.project))
 
 
-        def decisions = authr.evaluate(resources, request.subject, tests, env)
+        def decisions = frameworkService.evaluate(resources, request.subject, tests, env)
         //return true if all decsisions are (has==true) or are not (has!=true) authorized
         return !(decisions.find {has ^ it.authorized})
     }
@@ -274,15 +260,11 @@ class AuthTagLib {
         
                 
 
-        def framework = frameworkService.getFrameworkFromUserSession(request.session, request)
-        def Authorization authr = framework.getAuthorizationMgr()
-        
         def Set resources = [frameworkService.authResourceForJob(attrs.job?.jobName, attrs.job?.groupPath) ]
 
         def env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), session.project))
 
-
-        def decisions = authr.evaluate(resources, request.subject, tests, env)
+        def decisions = frameworkService.evaluate(resources, request.subject, tests, env)
         //return true if all decsisions are (has==true) or are not (has!=true) authorized
         return !(decisions.find {has ^ it.authorized})
     }

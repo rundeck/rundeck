@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.app.support.ExecutionContext
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.app.internal.workflow.MultiWorkflowExecutionListener
+import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
@@ -33,11 +34,9 @@ import com.dtolabs.rundeck.execution.JobExecutionItem
 import com.dtolabs.rundeck.execution.JobReferenceFailureReason
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import org.hibernate.StaleObjectStateException
-import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.MessageSource
-import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
 import rundeck.*
@@ -50,8 +49,6 @@ import javax.servlet.http.HttpSession
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
 import java.util.regex.Pattern
-
-import static org.apache.tools.ant.util.StringUtils.*
 
 /**
  * Coordinates Command executions via Ant Project objects
@@ -550,7 +547,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     /**
      * starts an execution in a separate thread, returning a map of [thread:Thread, loghandler:LogHandler]
      */
-    def Map executeAsyncBegin(Framework framework, Execution execution, ScheduledExecution scheduledExecution=null, Map extraParams = null, Map extraParamsExposed = null){
+    def Map executeAsyncBegin(Framework framework, AuthContext authContext, Execution execution,
+                              ScheduledExecution scheduledExecution=null, Map extraParams = null, Map extraParamsExposed = null){
         //TODO: method can be transactional readonly
         metricService.markMeter(this.class.name,'executionStartMeter')
         execution.refresh()
@@ -794,7 +792,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             nodeselector = null
         }
 
-        def INodeSet nodeSet=frameworkService.filterNodeSet(framework,nodeselector,execMap.project)
+        def INodeSet nodeSet = framework.filterAuthorizedNodes(
+                execMap.project,
+                new HashSet<String>(Arrays.asList("read", "run")),
+                framework.filterNodeSet(nodeselector, execMap.project, null),
+                frameworkService, framework.getAuthenticationMgr().getSubject());
 
         def Map<String, Map<String, String>> privatecontext = new HashMap<String, Map<String, String>>()
         if (null != extraParams) {

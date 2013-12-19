@@ -2,6 +2,7 @@ package rundeck.quartzjobs
 
 import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.Timer
+import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.execution.ServiceThreadBase
 import org.quartz.JobExecutionContext
 import com.dtolabs.rundeck.core.common.Framework
@@ -97,7 +98,7 @@ class ExecutionJob implements InterruptableJob {
         def result
         try {
             if(!_interrupted){
-                result=executeCommand(initMap.executionService, initMap.executionUtilService,initMap.execution,initMap.framework,initMap.scheduledExecution, initMap.extraParams, initMap.extraParamsExposed)
+                result=executeCommand(initMap.executionService, initMap.executionUtilService,initMap.execution,initMap.framework,initMap.authContext,initMap.scheduledExecution, initMap.extraParams, initMap.extraParamsExposed)
                 success=result.success
             }
         }catch(Throwable t){
@@ -147,6 +148,7 @@ class ExecutionJob implements InterruptableJob {
         }
         initMap.executionService = fetchExecutionService(jobDataMap)
         initMap.executionUtilService = fetchExecutionUtilService(jobDataMap)
+        initMap.frameworkService = fetchFrameworkService(jobDataMap)
         initMap.adbase = jobDataMap.get("rdeck.base")
         if(initMap.isTemp){
             initMap.execution = Execution.get(initMap.executionId)
@@ -157,16 +159,18 @@ class ExecutionJob implements InterruptableJob {
                 throw new RuntimeException("JobDataMap contained invalid Execution type: " + initMap.execution.getClass().getName())
             }
             initMap.execution.refresh()
+            FrameworkService frameworkService = initMap.frameworkService
+            initMap.framework = frameworkService.rundeckFramework
             def subject = jobDataMap.get("userSubject")
             if(subject){
-                initMap.framework = FrameworkService.getFrameworkForUserAndSubject(initMap.execution.user, subject, initMap.adbase)
+                initMap.authContext = frameworkService.getAuthContextForSubject(subject)
             }else{
                 def roles = jobDataMap.get("userRoles")
                 if (null == roles) {
                     throw new RuntimeException("userRoleList not found in job data map")
                 }
                 def rolelist = Arrays.asList(roles.split(","))
-                initMap.framework = FrameworkService.getFrameworkForUserAndRoles(initMap.execution.user, rolelist, initMap.adbase)
+                initMap.authContext = frameworkService.getAuthContextForUserAndRoles(initMap.execution.user, rolelist)
             }
         }else if(jobDataMap.get("executionId")){
                 initMap.executionId=jobDataMap.get("executionId")
@@ -194,16 +198,18 @@ class ExecutionJob implements InterruptableJob {
                     throw new RuntimeException("JobDataMap contained invalid Execution type: " + initMap.execution.getClass().getName())
                 }
                 initMap.execution.refresh()
+                FrameworkService frameworkService = initMap.frameworkService
+                initMap.framework = frameworkService.rundeckFramework
                 def subject = jobDataMap.get("userSubject")
                 if (subject) {
-                    initMap.framework = FrameworkService.getFrameworkForUserAndSubject(initMap.execution.user, subject, initMap.adbase)
+                    initMap.authContext = frameworkService.getAuthContextForSubject(subject)
                 } else {
                     def roles = jobDataMap.get("userRoles")
                     if (null == roles) {
                         throw new RuntimeException("userRoleList not found in job data map")
                     }
                     def rolelist = Arrays.asList(roles.split(","))
-                    initMap.framework = FrameworkService.getFrameworkForUserAndRoles(initMap.execution.user, rolelist, initMap.adbase)
+                    initMap.authContext = frameworkService.getAuthContextForUserAndRoles(initMap.execution.user, rolelist)
                 }
         }else{
             def serverUUID = jobDataMap.get("serverUUID")
@@ -215,40 +221,50 @@ class ExecutionJob implements InterruptableJob {
                     return initMap
                 }
             }
-            initMap.framework = FrameworkService.getFrameworkForUserAndRoles(initMap.scheduledExecution.user,initMap.scheduledExecution.userRoles,initMap.adbase)
+//            initMap.framework = FrameworkService.getFrameworkForUserAndRoles(initMap.scheduledExecution.user,initMap.scheduledExecution.userRoles,initMap.adbase)
+            FrameworkService frameworkService = initMap.frameworkService
+            initMap.framework = frameworkService.rundeckFramework
+            def rolelist = initMap.scheduledExecution.userRoles
+            initMap.authContext = frameworkService.getAuthContextForUserAndRoles(initMap.scheduledExecution.user, rolelist)
             initMap.extraParamsExposed = initMap.executionService.selectSecureOptionInput(initMap.scheduledExecution,[:],true)
             initMap.execution = initMap.executionService.createExecution(initMap.scheduledExecution, initMap.framework,initMap.scheduledExecution.user)
         }
         return initMap
     }
 
-    def executeCommand(ExecutionService executionService,ExecutionUtilService executionUtilService,Execution execution, Framework framework, ScheduledExecution scheduledExecution=null, Map extraParams=null, Map extraParamsExposed=null) {
-        def success=false
+    def executeCommand(ExecutionService executionService, ExecutionUtilService executionUtilService,
+                       Execution execution, Framework framework, AuthContext authContext,
+                       ScheduledExecution scheduledExecution = null, Map extraParams = null,
+                       Map extraParamsExposed = null) {
+
+        def success = false
         def Map execmap
-        try{
-            execmap= executionService.executeAsyncBegin(framework,execution,scheduledExecution,extraParams, extraParamsExposed)
-        }catch(Exception e){
-            log.error("Execution ${execution.id} failed to start: "+e.getMessage(), e)
+        try {
+            execmap = executionService.executeAsyncBegin(framework, authContext, execution, scheduledExecution,
+                    extraParams, extraParamsExposed)
+
+        } catch (Exception e) {
+            log.error("Execution ${execution.id} failed to start: " + e.getMessage(), e)
             throw e
         }
-        if(!execmap){
+        if (!execmap) {
             //failed to start
-            return [success:false]
+            return [success: false]
         }
 
-        int killcount=0;
-        while(execmap.thread.isAlive()){
-            try{
+        int killcount = 0;
+        while (execmap.thread.isAlive()) {
+            try {
                 execmap.thread.join(1000)
-            }catch(InterruptedException e){
+            } catch (InterruptedException e) {
                 //do nada
             }
             if (_interrupted) {
-                if(killcount<100){
+                if (killcount < 100) {
                     execmap.thread.abort()
                     Thread.yield();
                     killcount++;
-                }else{
+                } else {
                     execmap.thread.stop()
                 }
 
@@ -258,16 +274,17 @@ class ExecutionJob implements InterruptableJob {
 
         def boolean retrysuccess
         def Throwable exc
-        (retrysuccess,exc) = withRetry(finalizeRetryMax,finalizeRetryDelay,"Execution ${execution.id} finishExecution:") {
+        (retrysuccess, exc) = withRetry(finalizeRetryMax, finalizeRetryDelay,
+                "Execution ${execution.id} finishExecution:") {
             executionUtilService.finishExecution(execmap)
         }
-        if(!retrysuccess && exc){
+        if (!retrysuccess && exc) {
             throw new RuntimeException("Execution ${execution.id} failed: " + exc.getMessage(), exc)
         }
 
-        log.debug("ExecutionJob: execution successful? " + success +", interrupted? "+_interrupted)
+        log.debug("ExecutionJob: execution successful? " + success + ", interrupted? " + _interrupted)
         def ServiceThreadBase thread = execmap.thread
-        return [success: thread.isSuccessful(),execmap:execmap]
+        return [success: thread.isSuccessful(), execmap: execmap]
 
     }
     /**
@@ -382,6 +399,16 @@ class ExecutionJob implements InterruptableJob {
         }
         if (! (es instanceof ExecutionUtilService)) {
             throw new RuntimeException("JobDataMap contained invalid ExecutionUtilService type: " + es.getClass().getName())
+        }
+        return es
+    }
+    def FrameworkService fetchFrameworkService(def jobDataMap) {
+        def es = jobDataMap.get("frameworkService")
+        if (es==null) {
+            throw new RuntimeException("FrameworkService could not be retrieved from JobDataMap!")
+        }
+        if (! (es instanceof FrameworkService)) {
+            throw new RuntimeException("JobDataMap contained invalid FrameworkService type: " + es.getClass().getName())
         }
         return es
     }

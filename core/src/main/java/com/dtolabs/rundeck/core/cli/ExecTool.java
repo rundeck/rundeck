@@ -151,7 +151,7 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
      * @param baseDir path to RDECK_BASE
      */
     ExecTool(String baseDir) {
-        this(Framework.getInstance(baseDir));
+        this(Framework.getInstanceWithoutProjectsDir(baseDir));
     }
 
     /**
@@ -506,11 +506,6 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
     }
 
     public static final String DEFAULT_LOG_FORMAT = "[%user@%node %command][%level] %message";
-
-
-    public String getUser() {
-        return getFramework().getAuthenticationMgr().getUserInfo().getUsername();
-    }
 
 
     /**
