@@ -42,7 +42,7 @@ class WorkflowControllerTests {
 
         def fwmock = mockFor(FrameworkService)
         fwmock.demand.getRundeckFramework {-> }
-        fwmock.demand.getStepPluginDescription { fwk, type -> null }
+        fwmock.demand.getStepPluginDescription { type -> null }
         fwmock.demand.validateDescription { desc, p, params ->
             assertEquals([monkey:'tree'],params)
             [valid: true, props: ['monkey': 'tree']]
@@ -148,7 +148,7 @@ class WorkflowControllerTests {
 
         def fwmock = mockFor(FrameworkService)
         fwmock.demand.getRundeckFramework {-> }
-        fwmock.demand.getStepPluginDescription { fwk, type -> null }
+        fwmock.demand.getStepPluginDescription { type -> null }
         fwmock.demand.validateDescription { desc, p, params ->
             assertEquals([monkey: 'tree'], params)
             [valid: true, props: ['monkey': 'tree']]
@@ -215,7 +215,7 @@ class WorkflowControllerTests {
 
         def fwmock = mockFor(FrameworkService)
         fwmock.demand.getRundeckFramework {-> }
-        fwmock.demand.getStepPluginDescription { fwk, type -> null }
+        fwmock.demand.getStepPluginDescription { type -> null }
         fwmock.demand.validateDescription { desc, p, params -> [valid: true, props: ['blah': 'value']] }
         ctrl.frameworkService = fwmock.createMock()
 
@@ -261,7 +261,7 @@ class WorkflowControllerTests {
 
         def fwmock = mockFor(FrameworkService)
         fwmock.demand.getRundeckFramework {-> }
-        fwmock.demand.getNodeStepPluginDescription { fwk, type -> null }
+        fwmock.demand.getNodeStepPluginDescription { type -> null }
         fwmock.demand.validateDescription { desc, p, params -> [valid: true, props: ['blah': 'value']] }
         ctrl.frameworkService = fwmock.createMock()
 
@@ -372,7 +372,7 @@ class WorkflowControllerTests {
 
         def fwmock = mockFor(FrameworkService)
         fwmock.demand.getRundeckFramework {-> }
-        fwmock.demand.getNodeStepPluginDescription { fwk, type -> null }
+        fwmock.demand.getNodeStepPluginDescription { type -> null }
         fwmock.demand.validateDescription { desc, p, params -> [valid: true, props: ['blah': 'value']] }
         ctrl.frameworkService = fwmock.createMock()
         //test insert
@@ -405,7 +405,7 @@ class WorkflowControllerTests {
 
         def fwmock = mockFor(FrameworkService)
         fwmock.demand.getRundeckFramework {-> }
-        fwmock.demand.getNodeStepPluginDescription { fwk, type -> null }
+        fwmock.demand.getNodeStepPluginDescription { type -> null }
         fwmock.demand.validateDescription { desc, p, params -> [valid: true, props: ['blah': 'value']] }
         ctrl.frameworkService = fwmock.createMock()
         //test insert
@@ -466,7 +466,7 @@ class WorkflowControllerTests {
 
         def fwmock = mockFor(FrameworkService)
         fwmock.demand.getRundeckFramework {-> }
-        fwmock.demand.getNodeStepPluginDescription { fwk, type -> null }
+        fwmock.demand.getNodeStepPluginDescription { type -> null }
         fwmock.demand.validateDescription { desc, p, params -> [valid: true, props: ['blah': 'value']] }
         ctrl.frameworkService = fwmock.createMock()
 
@@ -504,7 +504,7 @@ class WorkflowControllerTests {
 
         def fwmock = mockFor(FrameworkService)
         fwmock.demand.getRundeckFramework {-> }
-        fwmock.demand.getNodeStepPluginDescription { fwk, type -> null }
+        fwmock.demand.getNodeStepPluginDescription { type -> null }
         fwmock.demand.validateDescription { desc, p, params -> [valid: true, props: ['blah': 'value']] }
         ctrl.frameworkService = fwmock.createMock()
 
