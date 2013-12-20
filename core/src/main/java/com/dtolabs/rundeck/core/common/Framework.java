@@ -81,8 +81,6 @@ public class Framework extends FrameworkResourceParent {
     private final IPropertyLookup lookup;
     private final File projectsBase;
     private FrameworkProjectMgr projectResourceMgr;
-    private boolean allowUserInput = true;
-    private static final String FRAMEWORK_USERINPUT_DISABLED = "framework.userinput.disabled";
 
     final HashMap<String,FrameworkSupportService> services = new HashMap<String, FrameworkSupportService>();
     /**
