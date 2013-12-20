@@ -186,7 +186,7 @@ userBaseDn
 :    base DN to search for users, example: "ou=People,dc=test1,dc=example,dc=com"
 
 userRdnAttribute
-:    Attribute name for username, used when searching for user role membership by DN, default "uid". **Note**: This is the unique identifier part of the DN. For example, if the DN is `uid=userName,ou=People,dc=test1,dc=example,dc=com` then "uid" would be the RDN attribute name.
+:    Attribute name for username, used when searching for user role membership by DN, default "uid".
 
 userIdAttribute
 :    Attribute name to identify user by username, default "cn".
