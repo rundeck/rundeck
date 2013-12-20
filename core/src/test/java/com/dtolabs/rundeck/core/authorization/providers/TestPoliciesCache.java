@@ -67,6 +67,6 @@ public class TestPoliciesCache extends TestCase {
             assertNotNull(policiesDocument);
             docs.add(policiesDocument);
         }
-        assertEquals(5, docs.size());
+        assertEquals(4, docs.size());
     }
 }

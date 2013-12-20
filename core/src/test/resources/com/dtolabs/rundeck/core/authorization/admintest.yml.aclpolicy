@@ -19,20 +19,28 @@
 
 description: Yaml Policy 1
 id: a4c072fd-1d02-4341-96a7-51038dc5b557
-rules:
-  ^$:
-    actions: 'foobar'
-    
-  /yml:
-    actions: 'exact_match'
-    
-  /yml.*: 
-    actions: pattern_match
-  /listAction/.*:
-    actions: [action_list_1,action_list_2]
-  
-  /wldcrd/.*:
-    actions: '*'
+context:
+  project: 'aproject'
+for:
+  resource:
+    - allow: 'read' # allow read/create all kinds
+  adhoc:
+    - allow: 'run' # allow read/running/killing adhoc jobs
+  job:
+    - match:
+        group: '/listAction(/.*|$)'
+      allow: [action_list_1,action_list_2] # allow read/write/delete/run/kill of all jobs
+    - match:
+        group: '/wldcrd(/.*|$)'
+      allow: '*' # allow read/write/delete/run/kill of all jobs
+    - match:
+        group: '/yml.*'
+      allow: 'pattern_match' # allow read/write/delete/run/kill of all jobs
+    - equals:
+        group: '/yml'
+      allow: 'exact_match' # allow read/write/delete/run/kill of all jobs
+  node:
+    - allow: '*' # allow read/run for all nodes
 
 by:
     username: 'yml_usr_1'
@@ -42,10 +50,20 @@ by:
 
 description: Yaml Policy 2
 id: F76EACCC-1DFC-447B-9E72-CC06905A2924
+context:
+  project: 'aproject'
 
-rules:
-  /noactions/.*:
-    foobar: dingbat
+for:
+  resource:
+    - allow: 'read' # allow read/create all kinds
+  adhoc:
+    - allow: 'run' # allow read/running/killing adhoc jobs
+  job:
+    - match:
+        group: '/noactions(/.*|$)'
+      allow: [blah] # allow read/write/delete/run/kill of all jobs
+  node:
+    - allow: '*' # allow read/run for all nodes
     
 by:
     username: 'yml_usr_2'
@@ -56,6 +74,8 @@ by:
 description: Yaml Policy 3
 id: d5e598ae-403b-45c4-8f91-36c255101091
 
+context:
+  project: 'aproject'
 by:
     username: yml_usr_3
     group: missing_rules
@@ -65,6 +85,8 @@ by:
 description: Yaml Policy 4
 id: CD055D12-DAEF-4E4D-90B7-C100ADF8FD5F
 
+context:
+  project: 'aproject'
 rules:
     /AB3/.*:
         actions: '*'

@@ -1,4 +1,6 @@
 description: test multi file policy defs
+context:
+  project: 'aproject'
 for:
   job:
     - match:
