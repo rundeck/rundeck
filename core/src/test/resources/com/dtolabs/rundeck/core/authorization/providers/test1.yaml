@@ -46,3 +46,46 @@ rules:
     actions: 'foobar'
 by:
     group: 'prod_group'
+---
+description: wildcard group match
+for:
+  job:
+    - match: # map of attributes to perform regex match on
+        group: DEV.* #checks only group, so includes any job in matching group
+      allow: [read,update,create,delete] #allow/deny indicated explicitly
+  node:
+    - contains: # contains indicates attribute value is a member of a set
+        tag: dev # tag set membership
+      allow: [run,read]  #allow/deny explicitly
+    - contains: # contains indicates attribute value is a member of a set
+        tag: production # tag set membership
+      deny: ['*']  #allow/deny explicitly
+by:
+    group: 'dev_.*'
+---
+description: single user match
+for:
+  node:
+    - contains: # contains indicates attribute value is a member of a set
+        tag: production # tag set membership
+      deny: ['*']  #allow/deny explicitly
+by:
+    username: 'dev1'
+---
+description: multi user match
+for:
+  node:
+    - contains: # contains indicates attribute value is a member of a set
+        tag: production # tag set membership
+      deny: ['*']  #allow/deny explicitly
+by:
+    username: ['dev1','dev2']
+---
+description: regex user match
+for:
+  node:
+    - contains: # contains indicates attribute value is a member of a set
+        tag: production # tag set membership
+      deny: ['*']  #allow/deny explicitly
+by:
+    username: ['dev[ABC]']
