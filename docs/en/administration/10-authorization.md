@@ -85,6 +85,8 @@ File listing: admin.aclpolicy example
 The example policy document above demonstrates the access granted to
 the users in group "admin".
 
+Both `username` and `group` can use regular expressions to match multiple users or groups.
+
 Two separate policies define two levels of access control.  The first is the "project"
 context, which allows access to actions on resources within a specific project.
 The second is the "application" level context, which allows access to things 

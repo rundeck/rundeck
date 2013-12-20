@@ -219,19 +219,23 @@ Within `by` are `username` and `group` entries that declare who the policy appli
 Each entry can contain a single string, or a sequence of strings to define 
 multiple entries.
 
-A single match will result in further evaluation of the policy.  
+Regular expressions are supported in the username or group.
 
-`username` elements are evaluated first as they are typically more restrictive.  
-`group` elements are evaluated second.  Ordering is not important within 
-this element.
+A single match will result in further evaluation of the policy.  
 
 Examples:
 
     by:
       username: 'bob'
 
+    by: #using a regular expression
+      username: 'dev\d+'
+
     by:
       group: [test,qa,prod]
+
+    by: #using a regular expression
+      group: 'dev_team_(alpha|beta|gamma)'
 
     by:
       username: 
