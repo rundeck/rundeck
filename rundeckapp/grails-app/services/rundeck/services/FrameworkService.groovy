@@ -17,8 +17,6 @@ import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
-import com.dtolabs.rundeck.core.utils.SingleUserAuthentication
-import com.dtolabs.rundeck.core.utils.UserSubjectAuthorization
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import rundeck.Execution
@@ -31,12 +29,9 @@ import javax.security.auth.Subject
  */
 class FrameworkService implements ApplicationContextAware, Authorization {
 
-    boolean transactional = false
+    static transactional = false
 
     boolean initialized = false
-    def File varDir
-    String rundeckbase
-    String depsdir
     private String serverUUID
     private boolean clusterModeEnabled
     SAREAuthorization aclpolicies
@@ -48,10 +43,7 @@ class FrameworkService implements ApplicationContextAware, Authorization {
     def Framework rundeckFramework
 
     def getRundeckBase(){
-        if (!initialized) {
-            initialize()
-        }
-        return rundeckbase;
+        return rundeckFramework.baseDir.absolutePath;
     }
 
 
@@ -60,26 +52,12 @@ class FrameworkService implements ApplicationContextAware, Authorization {
         if(initialized){
             return
         }
-        if (!applicationContext){
-            throw new IllegalStateException("ApplicationContext instance not found!")
-        }
-        def props = applicationContext.getServletContext().getAttribute("FRAMEWORK_PROPERTIES")
-        if (!props){
-            throw new IllegalStateException("Could not obtain FRAMEWORK_PROPERTIES from servlet context")
-        }
-        def propkeys = ["rdeck.base", "framework.projects.dir", "framework.var.dir"]
-        propkeys.each {
-            if (!props.containsKey(it)) throw new RuntimeException("framework property not found: "+ it)
-        }
-        rundeckbase=applicationContext.getServletContext().getAttribute("RDECK_BASE")
-        
-        depsdir= props.getProperty("framework.projects.dir")
-        log.warn("rdeck.base is: "+rundeckbase)
 
-        aclpolicies= new SAREAuthorization(new File(Constants.getFrameworkConfigDir(rundeckbase)))
+        //todo: configure auth via spring
+        aclpolicies= new SAREAuthorization(new File(Constants.getFrameworkConfigDir(getRundeckBase())))
 
-        clusterModeEnabled = applicationContext.getServletContext().getAttribute("CLUSTER_MODE_ENABLED")=='true'
-        serverUUID = applicationContext.getServletContext().getAttribute("SERVER_UUID")
+        clusterModeEnabled = applicationContext?.getServletContext()?.getAttribute("CLUSTER_MODE_ENABLED")=='true'
+        serverUUID = applicationContext?.getServletContext()?.getAttribute("SERVER_UUID")
         initialized = true
     }
     def isClusterModeEnabled(){
@@ -89,9 +67,6 @@ class FrameworkService implements ApplicationContextAware, Authorization {
         return serverUUID
     }
    
-    def getVarDir() {
-        return varDir
-    }
 
     @Override
     Decision evaluate(Map<String, String> resource, Subject subject, String action, Set<Attribute> environment) {
@@ -154,9 +129,9 @@ class FrameworkService implements ApplicationContextAware, Authorization {
      * @return
      */
     def getFrameworkPropertyResolver(String projectName=null, Map instanceConfiguration=null) {
-        final File rdbaseDir = new File(rundeckbase)
+        final File rdbaseDir = new File(rundeckBase)
         def fwk = Framework.createPropertyRetriever(rdbaseDir)
-        def projBaseDir = getFrameworkProjectsBasedir(rundeckbase)
+        def projBaseDir = getFrameworkProjectsBasedir(rundeckBase)
         return PropertyResolverFactory.createResolver(
                 instanceConfiguration?PropertyResolverFactory.instanceRetriever(instanceConfiguration):null,
                 null != projectName
@@ -169,7 +144,7 @@ class FrameworkService implements ApplicationContextAware, Authorization {
      * @return
      */
     def getFrameworkProperties(){
-        final File rdbaseDir = new File(rundeckbase)
+        final File rdbaseDir = new File(rundeckBase)
         return Framework.createPropertyRetriever(rdbaseDir)
     }
     static def getFrameworkProjectsBasedir(String rundeckbase){
@@ -183,9 +158,9 @@ class FrameworkService implements ApplicationContextAware, Authorization {
      * @param selector
      * @param project
      */
-    def INodeSet filterNodeSet(Framework framework, NodesSelector selector, String project) {
+    def INodeSet filterNodeSet( NodesSelector selector, String project) {
         metricService.withTimer(this.class.name,'filterNodeSet') {
-            framework.filterNodeSet(selector, project, null)
+            rundeckFramework.filterNodeSet(selector, project, null)
         }
     }
 
@@ -427,6 +402,7 @@ class FrameworkService implements ApplicationContextAware, Authorization {
     }
 
     def getFrameworkRoles() {
+        initialize()
         return new HashSet(aclpolicies.hackMeSomeRoles())
     }
 
