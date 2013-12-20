@@ -547,37 +547,37 @@ public class Framework extends FrameworkResourceParent {
      */
     public INodeSet filterAuthorizedNodes(final String project, final Set<String> actions, final INodeSet unfiltered,
             AuthContext authContext) {
-        if (null != actions && actions.size() > 0) {
-            //select only nodes with all allowed actions
-            final HashSet<Map<String, String>> resources = new HashSet<Map<String, String>>();
-            for (final INodeEntry iNodeEntry : unfiltered.getNodes()) {
-                HashMap<String, String> resdef = new HashMap<String, String>(iNodeEntry.getAttributes());
-                resdef.put("type", "node");
-                resdef.put("rundeck_server", Boolean.toString(isLocalNode(iNodeEntry)));
-                resources.add(resdef);
-            }
-            final Set<Decision> decisions = authContext.evaluate(resources,
-                    actions,
-                    Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "project"), project)));
-            final NodeSetImpl authorized = new NodeSetImpl();
-            HashMap<String, Set<String>> authorizations = new HashMap<String, Set<String>>();
-            for (final Decision decision : decisions) {
-                if (decision.isAuthorized() && actions.contains(decision.getAction())) {
-                    final String nodename = decision.getResource().get("nodename");
-                    if(null==authorizations.get(nodename)) {
-                        authorizations.put(nodename, new HashSet<String>());
-                    }
-                    authorizations.get(nodename).add(decision.getAction());
-                }
-            }
-            for (final Map.Entry<String, Set<String>> entry : authorizations.entrySet()) {
-                if(entry.getValue().size()==actions.size()) {
-                    authorized.putNode(unfiltered.getNode(entry.getKey()));
-                }
-            }
-            return authorized;
+        if (null == actions || actions.size() <= 0) {
+            return unfiltered;
         }
-        return unfiltered;
+        final HashSet<Map<String, String>> resources = new HashSet<Map<String, String>>();
+        for (final INodeEntry iNodeEntry : unfiltered.getNodes()) {
+            HashMap<String, String> resdef = new HashMap<String, String>(iNodeEntry.getAttributes());
+            resdef.put("type", "node");
+            resdef.put("rundeck_server", Boolean.toString(isLocalNode(iNodeEntry)));
+            resources.add(resdef);
+        }
+        final Set<Decision> decisions = authContext.evaluate(resources,
+                actions,
+                Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "project"),
+                        project)));
+        final NodeSetImpl authorized = new NodeSetImpl();
+        HashMap<String, Set<String>> authorizations = new HashMap<String, Set<String>>();
+        for (final Decision decision : decisions) {
+            if (decision.isAuthorized() && actions.contains(decision.getAction())) {
+                final String nodename = decision.getResource().get("nodename");
+                if(null==authorizations.get(nodename)) {
+                    authorizations.put(nodename, new HashSet<String>());
+                }
+                authorizations.get(nodename).add(decision.getAction());
+            }
+        }
+        for (final Map.Entry<String, Set<String>> entry : authorizations.entrySet()) {
+            if(entry.getValue().size()==actions.size()) {
+                authorized.putNode(unfiltered.getNode(entry.getKey()));
+            }
+        }
+        return authorized;
     }
 
     /**
