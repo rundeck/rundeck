@@ -87,9 +87,10 @@ id: CD055D12-DAEF-4E4D-90B7-C100ADF8FD5F
 
 context:
   project: 'aproject'
-rules:
-    /AB3/.*:
-        actions: '*'
-
+for:
+  job:
+    - match:
+        group: '/AB3(/.*|$)'
+      allow: ['*'] # allow read/write/delete/run/kill of all jobs
 by:
     group: issue_not_match

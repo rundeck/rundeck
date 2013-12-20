@@ -52,7 +52,6 @@ final class YamlPolicy implements Policy {
     public static final String TYPE_PROPERTY = "type";
     public static final String FOR_SECTION = "for";
     public static final String JOB_TYPE = "job";
-    public static final String RULES_SECTION = "rules";
     public static final String ACTIONS_SECTION = "actions";
     public static final String CONTEXT_SECTION = "context";
     public Map policyInput;
@@ -257,16 +256,8 @@ final class YamlPolicy implements Policy {
             public AclContext createAclContext(List typeSection) {
                 return new TypeContext(createTypeRules(typeSection));
             }
-        }, new LegacyContextFactory() {
-            public AclContext createLegacyContext(Map rules) {
-                return new LegacyRulesContext(rules);
-            }
         }
         );
-    }
-
-    static interface LegacyContextFactory {
-        public AclContext createLegacyContext(final Map rules);
     }
 
     static interface TypeContextFactory {
@@ -290,10 +281,6 @@ final class YamlPolicy implements Policy {
      */
     ContextMatcher createTypeRuleContext(final Map section, final int i) {
         return new TypeRuleContextMatcher(section, i, this);
-    }
-
-    private static String createLegacyJobResourcePath(final Map<String, String> resource) {
-        return resource.get("group") + "/" + resource.get("job");
     }
 
 
@@ -772,84 +759,6 @@ final class YamlPolicy implements Policy {
     }
 
     /**
-     * Makes a decision for a job resource based on the "rules: " section
-     */
-    static class LegacyRulesContext implements AclContext {
-        private final Map rules;
-
-        private ConcurrentHashMap<String, Pattern> patternCache = new ConcurrentHashMap<String, Pattern>();
-
-        public LegacyRulesContext(final Map rules) {
-            this.rules = rules;
-        }
-
-        private boolean regexMatches(final String regex, final String value) {
-            if (!patternCache.containsKey(regex)) {
-                patternCache.putIfAbsent(regex, Pattern.compile(regex));
-            }
-            final Pattern pattern = patternCache.get(regex);
-            final Matcher matcher = pattern.matcher(value);
-            return matcher.matches();
-        }
-
-        public ContextDecision includes(final Map<String, String> resourceMap, final String action) {
-            final String resource = createLegacyJobResourcePath(resourceMap);
-            final List<ContextEvaluation> evaluations = new ArrayList<ContextEvaluation>();
-            final Set<Map.Entry> entries = rules.entrySet();
-            for (final Map.Entry entry : entries) {
-                final Object ruleKey = entry.getKey();
-                if (!(ruleKey instanceof String)) {
-                    evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED_CONTEXT_EVALUATION_ERROR,
-                            "Invalid key type: " + ruleKey.getClass().getName()));
-                    continue;
-                }
-
-                final String rule = (String) ruleKey;
-                if (rule == null || rule.length() == 0) {
-                    evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED_CONTEXT_EVALUATION_ERROR,
-                            "Resource is empty or null"));
-                }
-
-                if (regexMatches(rule, resource)) {
-                    final Map ruleMap = (Map) entry.getValue();
-                    final Object actionsKey = ruleMap.get(ACTIONS_SECTION);
-                    if (actionsKey == null) {
-                        evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED_ACTIONS_DECLARED_EMPTY,
-                                "No actions configured"));
-                        continue;
-                    }
-
-                    if (actionsKey instanceof String) {
-                        final String actions = (String) actionsKey;
-                        if ("*".equals(actions) || actions.contains(action)) {
-                            evaluations.add(new ContextEvaluation(Explanation.Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED,
-                                    "Legacy rule: " + rule + " action: " + actions));
-                            return new ContextDecision(Explanation.Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, true,
-                                    evaluations);
-                        }
-                    } else if (actionsKey instanceof List) {
-                        final List actions = (List) actionsKey;
-                        if (actions.contains(action)) {
-                            evaluations.add(new ContextEvaluation(Explanation.Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED,
-                                    "Legacy rule: " + rule + " action: " + actions));
-                            return new ContextDecision(Explanation.Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, true,
-                                    evaluations);
-                        }
-                    } else {
-                        evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED_CONTEXT_EVALUATION_ERROR,
-                                "Invalid action type."));
-
-                    }
-
-                    evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED_NO_ACTIONS_MATCHED,
-                            "No actions matched"));
-                }
-            }
-            return new ContextDecision(Explanation.Code.REJECTED, false, evaluations);
-        }
-    }
-
-    /**
      * Returns decision for a resource and action, based on the "type" of the resource, and the rules defined in the
      * for: type: section of the policy def.
      */
@@ -858,14 +767,11 @@ final class YamlPolicy implements Policy {
         Map policyDef;
         private final ConcurrentHashMap<String, AclContext> typeContexts = new ConcurrentHashMap<String, AclContext>();
         TypeContextFactory typeContextFactory;
-        LegacyContextFactory legacyContextFactory;
         private Map forsection;
 
-        YamlAclContext(final Map policyDef, final TypeContextFactory typeContextFactory,
-                final LegacyContextFactory legacyContextFactory) {
+        YamlAclContext(final Map policyDef, final TypeContextFactory typeContextFactory) {
             this.policyDef = policyDef;
             this.typeContextFactory = typeContextFactory;
-            this.legacyContextFactory = legacyContextFactory;
             initialize();
         }
 
@@ -895,11 +801,6 @@ final class YamlPolicy implements Policy {
             }
 
             forsection = (Map) forMap;
-            /**
-             * true indicates the old style "rules:" section is in effect for a resource of type "job"
-             */
-            boolean useLegacyRules = policyDef.containsKey(RULES_SECTION) && policyDef.get(RULES_SECTION) instanceof
-                    Map;
 
             if (null != forsection) {
                 for (Object key : forsection.keySet()) {
@@ -909,10 +810,6 @@ final class YamlPolicy implements Policy {
                         typeContexts.putIfAbsent(type, createTypeContext((List) typeSection));
                     }
                 }
-            } else if (useLegacyRules && null != legacyContextFactory) {
-                final Object rulesValue = policyDef.get(RULES_SECTION);
-                final Map rules = (Map) rulesValue;
-                typeContexts.putIfAbsent(JOB_TYPE, createLegacyContext(rules));
             }
         }
 
@@ -922,11 +819,6 @@ final class YamlPolicy implements Policy {
 
         private AclContext createTypeContext(final List typeSection) {
             return typeContextFactory.createAclContext(typeSection);
-        }
-
-        private AclContext createLegacyContext(final Map rules) {
-            return legacyContextFactory.createLegacyContext(rules);
-
         }
 
         static final ContextDecision NO_RESOURCE_TYPE_DECISION = new ContextDecision(

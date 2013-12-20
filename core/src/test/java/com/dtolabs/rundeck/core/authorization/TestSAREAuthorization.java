@@ -193,7 +193,7 @@ public class TestSAREAuthorization extends TestCase {
         
         Decision decision = authorization.evaluate(resource, subject, "foobar", environment);
         assertEquals("Decision for authoraztion for action: foobar is not GRANTED_ACTIONS_AND_COMMANDS_MATCHED. "+decision,
-                Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, decision.explain().getCode());
+                Code.GRANTED, decision.explain().getCode());
         assertTrue("Action granted authorization.", decision.isAuthorized());
     }
     

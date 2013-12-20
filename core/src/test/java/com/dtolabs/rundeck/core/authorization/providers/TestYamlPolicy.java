@@ -68,9 +68,8 @@ public class TestYamlPolicy extends TestCase {
         {
             final Map map = new HashMap();
             final YamlPolicy.TypeContextFactory typeContextFactory = null;
-            final YamlPolicy.LegacyContextFactory legacyContextFactory = null;
-            final YamlPolicy.YamlAclContext yamlAclContext = new YamlPolicy.YamlAclContext(map, typeContextFactory,
-                legacyContextFactory);
+            final YamlPolicy.YamlAclContext yamlAclContext = new YamlPolicy.YamlAclContext(map, typeContextFactory
+            );
             final ContextDecision includes = yamlAclContext.includes(null, null);
             assertFalse(includes.granted());
             assertEquals(Explanation.Code.REJECTED_NO_DESCRIPTION_PROVIDED, includes.getCode());
@@ -81,9 +80,8 @@ public class TestYamlPolicy extends TestCase {
             final Map map = new HashMap();
             map.put("description", "test1");
             final YamlPolicy.TypeContextFactory typeContextFactory = null;
-            final YamlPolicy.LegacyContextFactory legacyContextFactory = null;
-            final YamlPolicy.YamlAclContext yamlAclContext = new YamlPolicy.YamlAclContext(map, typeContextFactory,
-                legacyContextFactory);
+            final YamlPolicy.YamlAclContext yamlAclContext = new YamlPolicy.YamlAclContext(map, typeContextFactory
+            );
             final HashMap<String, String> resmap = new HashMap<String, String>();
 
             final ContextDecision includes = yamlAclContext.includes(resmap, null);
@@ -96,9 +94,8 @@ public class TestYamlPolicy extends TestCase {
             map.put("description", "test1");
             map.put("for", "test1");
             final YamlPolicy.TypeContextFactory typeContextFactory = null;
-            final YamlPolicy.LegacyContextFactory legacyContextFactory = null;
-            final YamlPolicy.YamlAclContext yamlAclContext = new YamlPolicy.YamlAclContext(map, typeContextFactory,
-                legacyContextFactory);
+            final YamlPolicy.YamlAclContext yamlAclContext = new YamlPolicy.YamlAclContext(map, typeContextFactory
+            );
             final HashMap<String, String> resmap = new HashMap<String, String>();
             resmap.put("type", "bob");
 
@@ -112,9 +109,8 @@ public class TestYamlPolicy extends TestCase {
             map.put("description", "test1");
             map.put("for", new ArrayList());
             final YamlPolicy.TypeContextFactory typeContextFactory = null;
-            final YamlPolicy.LegacyContextFactory legacyContextFactory = null;
-            final YamlPolicy.YamlAclContext yamlAclContext = new YamlPolicy.YamlAclContext(map, typeContextFactory,
-                legacyContextFactory);
+            final YamlPolicy.YamlAclContext yamlAclContext = new YamlPolicy.YamlAclContext(map, typeContextFactory
+            );
             final HashMap<String, String> resmap = new HashMap<String, String>();
             resmap.put("type", "bob");
 
@@ -128,9 +124,8 @@ public class TestYamlPolicy extends TestCase {
             map.put("description", "test1");
 //            map.put("for", new ArrayList());
             final YamlPolicy.TypeContextFactory typeContextFactory = null;
-            final YamlPolicy.LegacyContextFactory legacyContextFactory = null;
-            final YamlPolicy.YamlAclContext yamlAclContext = new YamlPolicy.YamlAclContext(map, typeContextFactory,
-                legacyContextFactory);
+            final YamlPolicy.YamlAclContext yamlAclContext = new YamlPolicy.YamlAclContext(map, typeContextFactory
+            );
             final HashMap<String, String> resmap = new HashMap<String, String>();
             resmap.put("type", "bob");
 
@@ -144,9 +139,8 @@ public class TestYamlPolicy extends TestCase {
             map.put("description", "test1");
             map.put("for", new HashMap());
             final YamlPolicy.TypeContextFactory typeContextFactory = null;
-            final YamlPolicy.LegacyContextFactory legacyContextFactory = null;
-            final YamlPolicy.YamlAclContext yamlAclContext = new YamlPolicy.YamlAclContext(map, typeContextFactory,
-                legacyContextFactory);
+            final YamlPolicy.YamlAclContext yamlAclContext = new YamlPolicy.YamlAclContext(map, typeContextFactory
+            );
             final HashMap<String, String> resmap = new HashMap<String, String>();
             resmap.put("type", "bob");
 
@@ -164,9 +158,8 @@ public class TestYamlPolicy extends TestCase {
             map.put("for", new HashMap());
             map.put("rules", new HashMap());
             final YamlPolicy.TypeContextFactory typeContextFactory = null;
-            final YamlPolicy.LegacyContextFactory legacyContextFactory = null;
-            final YamlPolicy.YamlAclContext yamlAclContext = new YamlPolicy.YamlAclContext(map, typeContextFactory,
-                legacyContextFactory);
+            final YamlPolicy.YamlAclContext yamlAclContext = new YamlPolicy.YamlAclContext(map, typeContextFactory
+            );
             final HashMap<String, String> resmap = new HashMap<String, String>();
             resmap.put("type", "bob");
 
@@ -175,30 +168,6 @@ public class TestYamlPolicy extends TestCase {
             assertEquals(Explanation.Code.REJECTED_NO_RULES_DECLARED, includes.getCode());
         }
 
-
-        {
-            //if type=='job' and rules: exists but no 'for', it uses legacy
-            final Map map = new HashMap();
-            map.put("description", "test1");
-            map.put("rules", new HashMap());
-            final YamlPolicy.TypeContextFactory typeContextFactory = null;
-            final TestLegacyContextFactory legacyContextFactory = new TestLegacyContextFactory();
-            final ContextDecision res1 = new ContextDecision(Explanation.Code.REJECTED, false);
-            legacyContextFactory.context=new AclContext() {
-                public ContextDecision includes(Map<String, String> resource, String action) {
-                    return res1;
-                }
-            };
-            final YamlPolicy.YamlAclContext yamlAclContext = new YamlPolicy.YamlAclContext(map, typeContextFactory,
-                legacyContextFactory);
-            final HashMap<String, String> resmap = new HashMap<String, String>();
-            resmap.put("type", "job");
-
-            final ContextDecision includes = yamlAclContext.includes(resmap, null);
-            assertTrue(legacyContextFactory.called);
-            assertNotNull(legacyContextFactory.rules);
-            assertEquals(res1, includes);
-        }
 
 
         {
@@ -218,21 +187,13 @@ public class TestYamlPolicy extends TestCase {
                     return res2;
                 }
             };
-            final TestLegacyContextFactory legacyContextFactory = new TestLegacyContextFactory();
             final ContextDecision res1 = new ContextDecision(Explanation.Code.REJECTED, false);
-            legacyContextFactory.context = new AclContext() {
-                public ContextDecision includes(Map<String, String> resource, String action) {
-                    return res1;
-                }
-            };
-            final YamlPolicy.YamlAclContext yamlAclContext = new YamlPolicy.YamlAclContext(map, typeContextFactory,
-                legacyContextFactory);
+            final YamlPolicy.YamlAclContext yamlAclContext = new YamlPolicy.YamlAclContext(map, typeContextFactory
+            );
 
             final ContextDecision includes = yamlAclContext.includes(resmap, null);
             assertTrue(typeContextFactory.called);
             assertNotNull(typeContextFactory.typeSection);
-            assertFalse(legacyContextFactory.called);
-            assertNull(legacyContextFactory.rules);
             assertEquals(res2, includes);
         }
     }
@@ -2144,17 +2105,7 @@ public class TestYamlPolicy extends TestCase {
         }
     }
 
-    private static class TestLegacyContextFactory implements YamlPolicy.LegacyContextFactory {
-        boolean called;
-        AclContext context;
-        Map rules;
 
-        public AclContext createLegacyContext(Map rules) {
-            called = true;
-            this.rules=rules;
-            return context;
-        }
-    }
 
     private static class TestTypeContextFactory implements YamlPolicy.TypeContextFactory {
         boolean called;

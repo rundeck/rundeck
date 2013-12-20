@@ -1,6 +1,6 @@
-% ACLPOLICY(5) Rundeck User Manuals | Version 1.4
+% ACLPOLICY(5) Rundeck User Manuals | Version 1.5
 % Noah Campbell;Greg Schueler
-% August 31, 2011
+% December 20, 2013
 
 # Overview
 
@@ -29,7 +29,7 @@ The aclpolicy describes actions that are allowed or denied on certain resources.
 The method for determining whether a user has access to perform such an action
 happens essentially in this way:
 
-1. Look for policies matching the username or rolename for the user
+1. Look for policies matching the username or group for the user
 2. Look for a context matching the environment of the given resource
     * either a specific project by name
     * or the application level
@@ -55,6 +55,12 @@ The YAML format has changed since version 1.2 to address several issues:
 4. Application level access control is also supported, replacing the Role mapping
 
 The Rundeck server no longer uses role-mapping and instead defers to the aclpolicy for all authorizations.
+
+### In version 1.5
+
+* `by` clause `username:` and `group:` now support regular expression matching
+* legacy XML support has been removed
+* legacy `rules:` section in yaml support has been removed
 
 ## Upgrading
 
@@ -87,15 +93,6 @@ An example policy document.
          - match:
              group: 'group1/.*'
            deny: '*'
-
-    # note, the 1.2 format "rules" section can still be used if no
-    # "for: job: " section is used
-    rules:
-      ^$:
-        actions: 'foobar'
-        
-      /listAction/.*:
-        actions: [action_list_1,action_list_2]
 
     by:
         username: 'yml_usr_1'
@@ -241,35 +238,6 @@ Examples:
       username: 
         - simon
         - frank
-
-## legacy job matching
-
-YAML aclpolicy files created before 1.4 would have the `rules` sections.  These
-were only designed to match Jobs, and so for backwards compatibilty these rules 
-sections can still be used for matching only jobs.
-
-The changes for the newer version affect the old `rules` section in these ways:
-
-* only actual existing Jobs are matched to the rules, meaning the 'adhoc' and 
-    'ui' pseudo-groups no longer exist. You must translate these actions to the
-    new format.
-* Action names have changed from "workflow_X" to simply "X", so you will have 
-  to modify the actions.
-
-See [Administration Guide - Authorization](../../administration/authorization.html#rundeck-resource-authorizations) for more information.
-
-### `rules` Element
-
-The `rules` element contains a map of resource paths to `actions`.  The key in
-each rule, for example:
-
-    /path:
-       actions: 'an_action'
-
-`/path` is evaluated against the resource being evaluated.  See below for a 
-complete list of paths that can have ACLs applied.  The path is evaluated
-as a java regex expression.  If a match is successful, then a final check
-against `actions` element is performed.
 
 ### `actions` element
 
