@@ -111,7 +111,6 @@ public class Framework extends FrameworkResourceParent {
      * Initialize children, the various resource management objects
      */
     public void initialize() {
-        final boolean initialize = true; // managers should call their initialize methods
         projectResourceMgr = FrameworkProjectMgr.create(PROJECTMGR_NAME, projectsBase, this);
 
         if(null==centralDispatcherMgr){
@@ -188,17 +187,18 @@ public class Framework extends FrameworkResourceParent {
                      + "  rdeck_base_dir=" + getBaseDir()
                      + ", projects_base_dir=" + projectsBaseDir
         );
-        if (!getBaseDir().exists())
+        if (!getBaseDir().exists()){
             throw new IllegalArgumentException("rdeck_base directory does not exist. "
                     + rdeck_base_dir);
+        }
 
         projectsBase = new File(projectsBaseDir);
-        if (!projectsBase.exists())
-            throw new IllegalArgumentException("project base directory does not exist. "
-                    + projectsBaseDir);
+        if (!projectsBase.exists() && !projectsBase.mkdirs()){
+            throw new IllegalArgumentException("project base directory could not be created. " + projectsBaseDir);
+        }
         File propertyFile = getPropertyFile(getConfigDir());
 
-        PropertyLookup lookup1 = createPropertyLookup(propertyFile);
+        PropertyLookup lookup1 = PropertyLookup.createDeferred(propertyFile);
         lookup1.expand();
 
         lookup = lookup1;
@@ -227,15 +227,6 @@ public class Framework extends FrameworkResourceParent {
      */
     public static File getPropertyFile(File configDir) {
         return new File(configDir, "framework.properties");
-    }
-
-    /**
-     * Create a property lookup from a property file
-     * @param propertyFile
-     * @return
-     */
-    private static PropertyLookup createPropertyLookup(File propertyFile) {
-        return PropertyLookup.create(propertyFile);
     }
 
     /**
@@ -342,11 +333,13 @@ public class Framework extends FrameworkResourceParent {
      */
     public static Framework getInstanceWithoutProjectsDir(final String rdeck_base_dir) {
         File baseDir = new File(rdeck_base_dir);
-        PropertyRetriever propertyRetriever = Framework.createPropertyRetriever(baseDir);
-        String property = propertyRetriever.getProperty("framework.projects.dir");
-        String projects_dir = property!=null ? property : Framework.getProjectsBaseDir(baseDir);
-
-        return new Framework(rdeck_base_dir, projects_dir);
+        File propertyFile = getPropertyFile(getConfigDir(baseDir));
+        String projectsDir=null;
+        if(propertyFile.exists()){
+            PropertyRetriever propertyRetriever = Framework.createPropertyRetriever(baseDir);
+            projectsDir = propertyRetriever.getProperty("framework.projects.dir");
+        }
+        return new Framework(rdeck_base_dir, projectsDir);
     }
     /**
      * Returns the singleton instance of Framework object.  If any of the

@@ -33,9 +33,18 @@ public class PropertyLookup implements IPropertyLookup {
      * Properties instance where data will be kept in memory
      */
     final Properties properties;
+    final File propsFile;
+    volatile boolean deferred;
 
+    private PropertyLookup(final File propsFile, final boolean deferred) {
+        properties = new Properties();
+        this.propsFile=propsFile;
+        this.deferred=deferred;
+    }
     private PropertyLookup(final Properties props) {
         properties = props;
+        this.propsFile=null;
+        this.deferred=false;
     }
 
     public static PropertyLookup create(final Properties props) {
@@ -91,6 +100,15 @@ public class PropertyLookup implements IPropertyLookup {
      */
     public static PropertyLookup create(final File propFile) {
         return new PropertyLookup(fetchProperties(propFile));
+    }
+    /**
+     * Factory method to create a property lookup object
+     *
+     * @param propFile File where proeprty data is contained
+     * @return
+     */
+    public static PropertyLookup createDeferred(final File propFile) {
+        return new PropertyLookup(propFile, true);
     }
 
     /**
@@ -157,7 +175,22 @@ public class PropertyLookup implements IPropertyLookup {
      * @return true if it exists; false otherwise
      */
     public boolean hasProperty(final String key) {
+        if(deferred){
+            loadProperties();
+        }
         return properties.containsKey(key);
+    }
+
+    private synchronized void loadProperties() {
+        if (deferred && propsFile.exists()) {
+            try {
+                properties.putAll(fetchProperties(propsFile));
+                expand();
+                deferred = false;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 
