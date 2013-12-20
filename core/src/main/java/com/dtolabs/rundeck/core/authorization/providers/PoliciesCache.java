@@ -100,21 +100,10 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
 
     private PolicyCollection createEntry(final File file) throws PoliciesParseException {
         try {
-            final Document document = builder.parse(file);
-            if(warned.add(file)) {
-                logger.warn("Deprecated ACLPOLICY format (XML): " + file.getAbsolutePath());
-            }
-            return new PoliciesDocument(document,file);
-            
-        } catch (SAXException e) {
-            try {
-                return new PoliciesYaml(file);
-            } catch (Exception e1) {
-                throw new PoliciesParseException(e1);
-            }
-        } catch (IOException e) {
-            throw new PoliciesParseException(e);
-        } 
+            return new PoliciesYaml(file);
+        } catch (Exception e1) {
+            throw new PoliciesParseException(e1);
+        }
     }
 
     public synchronized PolicyCollection getDocument(final File file) throws PoliciesParseException {
