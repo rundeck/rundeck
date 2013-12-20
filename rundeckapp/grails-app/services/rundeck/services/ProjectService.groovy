@@ -1,6 +1,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.app.support.BuilderUtil
+import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.util.XmlParserUtil
@@ -301,10 +302,7 @@ class ProjectService {
         }
 
     }
-    def importToProject(FrameworkProject project,String user, String roleList, Framework framework, ZipInputStream input) throws ProjectServiceException {
-        return importToProject(project, user, roleList, framework, input, [:])
-    }
-    def importToProject(FrameworkProject project,String user, String roleList, Framework framework, ZipInputStream input, Map options) throws ProjectServiceException{
+    def importToProject(FrameworkProject project,String user, String roleList, Framework framework, AuthContext authContext, ZipInputStream input, Map options) throws ProjectServiceException{
         ZipReader zip = new ZipReader(input)
 //        zip.debug=true
         def jobxml=[]
@@ -377,7 +375,7 @@ class ProjectService {
                         break;
                     break;
                 }
-                def results=scheduledExecutionService.loadJobs(jobset,'update',null,user,roleList,[:],framework)
+                def results=scheduledExecutionService.loadJobs(jobset,'update',null,user,roleList,[:],framework,authContext)
                 if(results.errjobs){
                     log.error("Failed loading (${results.errjobs.size()}) jobs from XML at archive path: ${path}${name}")
                     results.errjobs.each {

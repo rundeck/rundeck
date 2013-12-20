@@ -79,8 +79,6 @@ public class TestFramework extends AbstractBaseTest {
         assertEquals("basedir did not match: " + framework.getBaseDir().getAbsolutePath(), new File(
             getBaseDir()).getAbsolutePath(),
             framework.getBaseDir().getAbsolutePath());
-        assertNotNull("authorization manager was null", framework.getAuthorizationMgr());
-        assertNotNull("authentication manager was null", framework.getAuthenticationMgr());
         assertNotNull("FrameworkProjectMgr was null", framework.getFrameworkProjectMgr());
     }
 
@@ -114,7 +112,7 @@ public class TestFramework extends AbstractBaseTest {
 
 
     public void testIsLocal() {
-        final Framework framework = Framework.getInstance(getBaseDir());
+        final Framework framework = Framework.getInstanceWithoutProjectsDir(getBaseDir());
         assertTrue("framework node self-comparison should be true",
                 framework.isLocalNode(framework.getNodeDesc()));
 

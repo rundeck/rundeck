@@ -41,7 +41,7 @@ class WorkflowControllerTests {
         wf.commands = new ArrayList()
 
         def fwmock = mockFor(FrameworkService)
-        fwmock.demand.getFrameworkFromUserSession { s, r -> null }
+        fwmock.demand.getRundeckFramework {-> }
         fwmock.demand.getStepPluginDescription { fwk, type -> null }
         fwmock.demand.validateDescription { desc, p, params ->
             assertEquals([monkey:'tree'],params)
@@ -147,7 +147,7 @@ class WorkflowControllerTests {
 
 
         def fwmock = mockFor(FrameworkService)
-        fwmock.demand.getFrameworkFromUserSession { s, r -> null }
+        fwmock.demand.getRundeckFramework {-> }
         fwmock.demand.getStepPluginDescription { fwk, type -> null }
         fwmock.demand.validateDescription { desc, p, params ->
             assertEquals([monkey: 'tree'], params)
@@ -214,7 +214,7 @@ class WorkflowControllerTests {
         wf.commands = new ArrayList()
 
         def fwmock = mockFor(FrameworkService)
-        fwmock.demand.getFrameworkFromUserSession { s, r -> null }
+        fwmock.demand.getRundeckFramework {-> }
         fwmock.demand.getStepPluginDescription { fwk, type -> null }
         fwmock.demand.validateDescription { desc, p, params -> [valid: true, props: ['blah': 'value']] }
         ctrl.frameworkService = fwmock.createMock()
@@ -260,7 +260,7 @@ class WorkflowControllerTests {
         WorkflowController ctrl = new WorkflowController()
 
         def fwmock = mockFor(FrameworkService)
-        fwmock.demand.getFrameworkFromUserSession { s, r -> null }
+        fwmock.demand.getRundeckFramework {-> }
         fwmock.demand.getNodeStepPluginDescription { fwk, type -> null }
         fwmock.demand.validateDescription { desc, p, params -> [valid: true, props: ['blah': 'value']] }
         ctrl.frameworkService = fwmock.createMock()
@@ -371,7 +371,7 @@ class WorkflowControllerTests {
         WorkflowController ctrl = new WorkflowController()
 
         def fwmock = mockFor(FrameworkService)
-        fwmock.demand.getFrameworkFromUserSession { s, r -> null }
+        fwmock.demand.getRundeckFramework {-> }
         fwmock.demand.getNodeStepPluginDescription { fwk, type -> null }
         fwmock.demand.validateDescription { desc, p, params -> [valid: true, props: ['blah': 'value']] }
         ctrl.frameworkService = fwmock.createMock()
@@ -404,7 +404,7 @@ class WorkflowControllerTests {
         WorkflowController ctrl = new WorkflowController()
 
         def fwmock = mockFor(FrameworkService)
-        fwmock.demand.getFrameworkFromUserSession { s, r -> null }
+        fwmock.demand.getRundeckFramework {-> }
         fwmock.demand.getNodeStepPluginDescription { fwk, type -> null }
         fwmock.demand.validateDescription { desc, p, params -> [valid: true, props: ['blah': 'value']] }
         ctrl.frameworkService = fwmock.createMock()
@@ -465,7 +465,7 @@ class WorkflowControllerTests {
         WorkflowController ctrl = new WorkflowController()
 
         def fwmock = mockFor(FrameworkService)
-        fwmock.demand.getFrameworkFromUserSession { s, r -> null }
+        fwmock.demand.getRundeckFramework {-> }
         fwmock.demand.getNodeStepPluginDescription { fwk, type -> null }
         fwmock.demand.validateDescription { desc, p, params -> [valid: true, props: ['blah': 'value']] }
         ctrl.frameworkService = fwmock.createMock()
@@ -503,7 +503,7 @@ class WorkflowControllerTests {
         WorkflowController ctrl = new WorkflowController()
 
         def fwmock = mockFor(FrameworkService)
-        fwmock.demand.getFrameworkFromUserSession { s, r -> null }
+        fwmock.demand.getRundeckFramework {-> }
         fwmock.demand.getNodeStepPluginDescription { fwk, type -> null }
         fwmock.demand.validateDescription { desc, p, params -> [valid: true, props: ['blah': 'value']] }
         ctrl.frameworkService = fwmock.createMock()

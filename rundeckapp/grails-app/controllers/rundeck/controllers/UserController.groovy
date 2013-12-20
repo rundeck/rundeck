@@ -1,5 +1,6 @@
 package rundeck.controllers
 
+import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.Framework
 
 import grails.converters.JSON
@@ -53,8 +54,8 @@ class UserController {
         render(template:'/common/messages',model:[:])
     }
     def list={
-        def Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
-        if(!frameworkService.authorizeApplicationResourceType(framework,'user', AuthConstants.ACTION_ADMIN)){
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if(!frameworkService.authorizeApplicationResourceType(authContext,'user', AuthConstants.ACTION_ADMIN)){
             flash.error="User Admin role required"
             flash.title="Unauthorized"
             return denied()
@@ -68,8 +69,8 @@ class UserController {
         if(!params.login){
             params.login=session.user
         }
-        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        if(params.login!=session.user && !frameworkService.authorizeApplicationResourceType(framework, 'user', AuthConstants.ACTION_ADMIN)){
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if(params.login!=session.user && !frameworkService.authorizeApplicationResourceType(authContext, 'user', AuthConstants.ACTION_ADMIN)){
             flash.error="Unauthorized: admin role required"
             return render(template:"/common/error")
         }
@@ -105,8 +106,8 @@ class UserController {
     }
     def store={
 
-        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        if(params.login!=session.user && !frameworkService.authorizeApplicationResourceType(framework, 'user', AuthConstants.ACTION_ADMIN)) {
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if(params.login!=session.user && !frameworkService.authorizeApplicationResourceType(authContext, 'user', AuthConstants.ACTION_ADMIN)) {
             //require user_admin/admin if modifying a different user profile
             flash.error="Unauthorized: admin role required"
             return render(template:"/common/error")
@@ -130,8 +131,8 @@ class UserController {
     def update={
         //check auth to view profile
         //default to current user profile
-        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        if(params.login!=session.user && !frameworkService.authorizeApplicationResourceType(framework, 'user', AuthConstants.ACTION_ADMIN)) {
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if(params.login!=session.user && !frameworkService.authorizeApplicationResourceType(authContext, 'user', AuthConstants.ACTION_ADMIN)) {
             flash.error="Unauthorized: admin role required"
             return render(template:"/common/error")
         }
@@ -170,8 +171,8 @@ class UserController {
         //default to current user profile
         def login = params.login
         def result
-        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        if (!frameworkService.authorizeApplicationResourceType(framework, 'user', AuthConstants.ACTION_ADMIN)) {
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if (!frameworkService.authorizeApplicationResourceType(authContext, 'user', AuthConstants.ACTION_ADMIN)) {
             def error = "Unauthorized: admin role required"
             log.error error
             result=[result: false, error: error] 
@@ -227,8 +228,8 @@ class UserController {
         def result
         def user
         def token
-        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        if (!frameworkService.authorizeApplicationResourceType(framework, 'user', AuthConstants.ACTION_ADMIN)) {
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if (!frameworkService.authorizeApplicationResourceType(authContext, 'user', AuthConstants.ACTION_ADMIN)) {
             def error = "Unauthorized: admin role required"
             log.error error
             result = [result: false, error: error]
@@ -261,8 +262,8 @@ class UserController {
     def clearApiToken={
         def login = params.login
         def result
-        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        if (!frameworkService.authorizeApplicationResourceType(framework, 'user', AuthConstants.ACTION_ADMIN)) {
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if (!frameworkService.authorizeApplicationResourceType(authContext, 'user', AuthConstants.ACTION_ADMIN)) {
             def error = "Unauthorized: admin role required"
             log.error error
             result=[result: false, error: error]

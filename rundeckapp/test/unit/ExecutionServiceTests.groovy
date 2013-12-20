@@ -722,12 +722,14 @@ class ExecutionServiceTests  {
         fcontrol.demand.filterNodeSet(1..1){fwk,sel,proj->
             new NodeSetImpl()
         }
+        fcontrol.demand.filterAuthorizedNodes(1..1) {  project, actions, unfiltered, authContext ->
+            new NodeSetImpl()
+        }
         testService.frameworkService=fcontrol.createMock()
         //create mock user
         User u1 = new User(login: 'testuser')
         u1.save()
 
-        t:{//basic test
 
             Execution se = new Execution(argString:"-test args",user:"testuser",project:"testproj", loglevel:'WARN',doNodedispatch: false)
             def val=testService.createContext(se,null,null,null,null,null,null)
@@ -738,7 +740,6 @@ class ExecutionServiceTests  {
             assertEquals(1,val.loglevel)
             assertNull(val.framework)
             assertNull(val.executionListener)
-        }
     }
 
     /**
@@ -753,6 +754,9 @@ class ExecutionServiceTests  {
             [test: 'args']
         }
         fcontrol.demand.filterNodeSet(1..1) {fwk, sel, proj ->
+            new NodeSetImpl()
+        }
+        fcontrol.demand.filterAuthorizedNodes(1..1) { project, actions, unfiltered, authContext ->
             new NodeSetImpl()
         }
         testService.frameworkService = fcontrol.createMock()
@@ -786,6 +790,9 @@ class ExecutionServiceTests  {
         fcontrol.demand.filterNodeSet(1..1) {fwk, sel, proj ->
             new NodeSetImpl()
         }
+        fcontrol.demand.filterAuthorizedNodes(1..1) { project, actions, unfiltered, authContext ->
+            new NodeSetImpl()
+        }
         testService.frameworkService = fcontrol.createMock()
         //create mock user
         User u1 = new User(login: 'testuser')
@@ -793,7 +800,7 @@ class ExecutionServiceTests  {
         t: {//check datacontext, inputargs instead of argString
 
             Execution se = new Execution(user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
-            def val = testService.createContext(se, null,null, null, null, null, ['-test','args','-test2','monkey args'] as String[])
+            def val = testService.createContext(se, null,null, null, null, null,null, ['-test','args','-test2','monkey args'] as String[])
             assertNotNull(val)
             assertNotNull(val.dataContext)
             assertNotNull(val.dataContext.job)
@@ -818,6 +825,9 @@ class ExecutionServiceTests  {
         fcontrol.demand.filterNodeSet(1..1) {fwk, sel, proj ->
             new NodeSetImpl()
         }
+        fcontrol.demand.filterAuthorizedNodes(1..1) { project, actions, unfiltered, authContext ->
+            new NodeSetImpl()
+        }
         testService.frameworkService = fcontrol.createMock()
         //create mock user
         User u1 = new User(login: 'testuser')
@@ -825,7 +835,7 @@ class ExecutionServiceTests  {
         t: {//check datacontext, include job data
 
             Execution se = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
-            def val = testService.createContext(se, null,null, null, [id:"3",name:"testjob"], null, null)
+            def val = testService.createContext(se, null,null, null, null, [id:"3",name:"testjob"], null, null)
             assertNotNull(val)
             assertNotNull(val.dataContext)
             assertNotNull(val.dataContext.job)
@@ -849,6 +859,9 @@ class ExecutionServiceTests  {
         fcontrol.demand.filterNodeSet(1..1) {fwk, sel, proj ->
             new NodeSetImpl()
         }
+        fcontrol.demand.filterAuthorizedNodes(1..1) { project, actions, unfiltered, authContext ->
+            new NodeSetImpl()
+        }
         testService.frameworkService = fcontrol.createMock()
         //create mock user
         User u1 = new User(login: 'testuser')
@@ -856,7 +869,7 @@ class ExecutionServiceTests  {
         t: {//check nodeset, empty
 
             Execution se = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
-            def val = testService.createContext(se, null,null, null, [id:"3",name:"testjob"], null, null)
+            def val = testService.createContext(se, null,null, null, null, [id:"3",name:"testjob"], null, null)
             assertNotNull(val)
             assertNull(val.nodeSelector)
         }
@@ -876,6 +889,9 @@ class ExecutionServiceTests  {
         fcontrol.demand.filterNodeSet(1..1) {fwk, sel, proj ->
             new NodeSetImpl()
         }
+        fcontrol.demand.filterAuthorizedNodes(1..1) { project, actions, unfiltered, authContext ->
+            new NodeSetImpl()
+        }
         testService.frameworkService = fcontrol.createMock()
         //create mock user
         User u1 = new User(login: 'testuser')
@@ -883,7 +899,7 @@ class ExecutionServiceTests  {
         t: {//check nodeset, filtered from execution obj. include name
 
             Execution se = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: true, nodeIncludeName: "testnode")
-            def val = testService.createContext(se, null, null, null, [id: "3", name: "testjob"], null, null)
+            def val = testService.createContext(se, null, null, null, null, [id: "3", name: "testjob"], null, null)
             assertNotNull(val)
             assertNotNull(val.nodeSelector)
             assertNotNull(val.nodeSelector.exclude)
@@ -907,6 +923,9 @@ class ExecutionServiceTests  {
         fcontrol.demand.filterNodeSet(1..1) {fwk, sel, proj ->
             new NodeSetImpl()
         }
+        fcontrol.demand.filterAuthorizedNodes(1..1) { project, actions, unfiltered, authContext ->
+            new NodeSetImpl()
+        }
         testService.frameworkService = fcontrol.createMock()
         //create mock user
         User u1 = new User(login: 'testuser')
@@ -914,7 +933,7 @@ class ExecutionServiceTests  {
         t: {//check nodeset, filtered from execution obj. exclude name
 
             Execution se = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: true, nodeExcludeName: "testnode")
-            def val = testService.createContext(se, null, null, null, [id: "3", name: "testjob"], null, null)
+            def val = testService.createContext(se, null, null, null, null, [id: "3", name: "testjob"], null, null)
             assertNotNull(val)
             assertNotNull(val.nodeSelector)
             assertNotNull(val.nodeSelector.exclude)
@@ -936,6 +955,9 @@ class ExecutionServiceTests  {
         fcontrol.demand.filterNodeSet(1..1) {fwk, sel, proj ->
             new NodeSetImpl()
         }
+        fcontrol.demand.filterAuthorizedNodes(1..1) { project, actions, unfiltered, authContext ->
+            new NodeSetImpl()
+        }
         testService.frameworkService = fcontrol.createMock()
         //create mock user
         User u1 = new User(login: 'testuser')
@@ -944,7 +966,7 @@ class ExecutionServiceTests  {
         t: {//basic test
 
             Execution se = new Execution(argString: "-test args -test3 something", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: true,nodeIncludeName: "basic")
-            def val = testService.createContext(se, null, null, null, [id:'3',name:'blah',group:'something/else',username:'bill',project:'testproj'], null, null)
+            def val = testService.createContext(se, null, null, null, null, [id:'3',name:'blah',group:'something/else',username:'bill',project:'testproj'], null, null)
             assertNotNull(val)
             assertNotNull(val.nodeSelector)
             assertNotNull(val.nodeSelector.exclude)
@@ -966,6 +988,9 @@ class ExecutionServiceTests  {
             [test: 'args', test3: 'something']
         }
         fcontrol.demand.filterNodeSet(1..1) {fwk, sel, proj ->
+            new NodeSetImpl()
+        }
+        fcontrol.demand.filterAuthorizedNodes(1..1) { project, actions, unfiltered, authContext ->
             new NodeSetImpl()
         }
         testService.frameworkService = fcontrol.createMock()
@@ -993,7 +1018,7 @@ class ExecutionServiceTests  {
                 nodeExcludeOsName: "m,\${job.id} \${job.name} \${job.group} \${job.username} \${job.project}",
                 nodeExcludeOsVersion: "n,\${job.id} \${job.name} \${job.group} \${job.username} \${job.project}",
             )
-            def val = testService.createContext(se, null, null, null, [id:'3',name:'blah',group:'something/else',username:'bill',project:'testproj'], null, null)
+            def val = testService.createContext(se, null, null, null, null, [id:'3',name:'blah',group:'something/else',username:'bill',project:'testproj'], null, null)
             assertNotNull(val)
             assertNotNull(val.nodeSelector)
             assertNotNull(val.nodeSelector.exclude)

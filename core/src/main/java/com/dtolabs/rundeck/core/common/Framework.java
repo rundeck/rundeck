@@ -18,7 +18,6 @@ package com.dtolabs.rundeck.core.common;
 
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.CoreException;
-import com.dtolabs.rundeck.core.authentication.AuthenticationMgrFactory;
 import com.dtolabs.rundeck.core.authentication.Authenticator;
 import com.dtolabs.rundeck.core.authorization.*;
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext;
@@ -65,10 +64,6 @@ import java.util.*;
 public class Framework extends FrameworkResourceParent {
     public static final Logger logger = Logger.getLogger(Framework.class);
 
-    static final String AUTHENT_CLS_PROP = "framework.authentication.class";
-    static final String AUTHENT_CLS_DEFAULT = "com.dtolabs.rundeck.core.authentication.NoAuthentication";
-    static final String AUTHORIZE_CLS_PROP = "framework.authorization.class";
-    static final String AUTHORIZE_CLS_DEFAULT = "com.dtolabs.rundeck.core.authorization.NoAuthorization";
     public static final String CENTRALDISPATCHER_CLS_PROP = "framework.centraldispatcher.classname";
     public static final String NODES_RESOURCES_FILE_PROP = "framework.nodes.file.name";
     public static final String NODES_FILE_AUTOGEN_PROP = "framework.nodes.file.autogenerate";
@@ -86,8 +81,6 @@ public class Framework extends FrameworkResourceParent {
     private final IPropertyLookup lookup;
     private final File projectsBase;
     private FrameworkProjectMgr projectResourceMgr;
-    private boolean allowUserInput = true;
-    private static final String FRAMEWORK_USERINPUT_DISABLED = "framework.userinput.disabled";
 
     final HashMap<String,FrameworkSupportService> services = new HashMap<String, FrameworkSupportService>();
     /**
@@ -116,21 +109,8 @@ public class Framework extends FrameworkResourceParent {
      * Initialize children, the various resource management objects
      */
     public void initialize() {
-        final boolean initialize = true; // managers should call their initialize methods
         projectResourceMgr = FrameworkProjectMgr.create(PROJECTMGR_NAME, projectsBase, this);
 
-        if(null==authenticationMgr) {
-            String cls = lookup.hasProperty(AUTHENT_CLS_PROP)? lookup.getProperty(AUTHENT_CLS_PROP): AUTHENT_CLS_DEFAULT;
-            logger.debug("configured default authentication classname: " + cls);
-            authenticationMgr = AuthenticationMgrFactory.create(cls, this)
-                .getAuthenticationMgr();
-        }
-        if(null==authorizationMgr){
-            String cls = lookup.hasProperty(AUTHORIZE_CLS_PROP)? lookup.getProperty(AUTHORIZE_CLS_PROP): AUTHORIZE_CLS_DEFAULT;
-            logger.debug("configured default authorization classname: " + cls);
-            authorizationMgr = AuthorizationMgrFactory.create(cls,
-                this, getConfigDir()).getAuthorizationMgr();
-        }
         if(null==centralDispatcherMgr){
             try {
 
@@ -172,28 +152,7 @@ public class Framework extends FrameworkResourceParent {
     public CentralDispatcher getCentralDispatcherMgr() {
         return centralDispatcherMgr;
     }
-    /**
-     * Reference to class instance to authorizationMgr
-     */
-    private LegacyAuthorization authorizationMgr;
 
-    public LegacyAuthorization getAuthorizationMgr() {
-        return authorizationMgr;
-    }
-
-    /**
-     * Reference to class instance to authenicate
-     */
-    private Authenticator authenticationMgr;
-
-    /**
-     * Gets Authenticator for this framework instance
-     *
-     * @return returns instance of Authenticator
-     */
-    public Authenticator getAuthenticationMgr() {
-        return authenticationMgr;
-    }
 
     /**
      * Gets DepotMgr for this framework instance
@@ -211,19 +170,6 @@ public class Framework extends FrameworkResourceParent {
      */
     private Framework(final String rdeck_base_dir,
                       final String projects_base_dir) {
-        this(rdeck_base_dir, projects_base_dir, null, null);
-    }
-
-    /**
-     * Standard constructor
-     *
-     * @param rdeck_base_dir path name to the rdeck_base
-     * @param projects_base_dir  path name to the projects base
-     */
-    private Framework(final String rdeck_base_dir,
-                      final String projects_base_dir,
-                      final Authenticator authentication,
-                      final LegacyAuthorization authorization) {
         super("framework", new File(null == rdeck_base_dir ? Constants.getSystemBaseDir() : rdeck_base_dir), null);
         if(null==getBaseDir()) {
             throw new NullPointerException(
@@ -239,23 +185,22 @@ public class Framework extends FrameworkResourceParent {
                      + "  rdeck_base_dir=" + getBaseDir()
                      + ", projects_base_dir=" + projectsBaseDir
         );
-        if (!getBaseDir().exists())
+        if (!getBaseDir().exists()){
             throw new IllegalArgumentException("rdeck_base directory does not exist. "
                     + rdeck_base_dir);
+        }
 
         projectsBase = new File(projectsBaseDir);
-        if (!projectsBase.exists())
-            throw new IllegalArgumentException("project base directory does not exist. "
-                    + projectsBaseDir);
+        if (!projectsBase.exists() && !projectsBase.mkdirs()){
+            throw new IllegalArgumentException("project base directory could not be created. " + projectsBaseDir);
+        }
         File propertyFile = getPropertyFile(getConfigDir());
 
-        PropertyLookup lookup1 = createPropertyLookup(propertyFile);
+        PropertyLookup lookup1 = PropertyLookup.createDeferred(propertyFile);
         lookup1.expand();
 
         lookup = lookup1;
 
-        this.authenticationMgr = authentication;
-        this.authorizationMgr=authorization;
         long start = System.currentTimeMillis();
         initialize();
         long end = System.currentTimeMillis();
@@ -280,15 +225,6 @@ public class Framework extends FrameworkResourceParent {
      */
     public static File getPropertyFile(File configDir) {
         return new File(configDir, "framework.properties");
-    }
-
-    /**
-     * Create a property lookup from a property file
-     * @param propertyFile
-     * @return
-     */
-    private static PropertyLookup createPropertyLookup(File propertyFile) {
-        return PropertyLookup.create(propertyFile);
     }
 
     /**
@@ -388,6 +324,22 @@ public class Framework extends FrameworkResourceParent {
         return null;
     }
     /**
+     * Returns an instance of Framework object.  Loads the framework.projects.dir property value, or defaults to basedir/projects
+     *
+     * @param rdeck_base_dir     path name to the rdeck_base
+     * @return a Framework instance
+     */
+    public static Framework getInstanceWithoutProjectsDir(final String rdeck_base_dir) {
+        File baseDir = new File(rdeck_base_dir);
+        File propertyFile = getPropertyFile(getConfigDir(baseDir));
+        String projectsDir=null;
+        if(propertyFile.exists()){
+            PropertyRetriever propertyRetriever = Framework.createPropertyRetriever(baseDir);
+            projectsDir = propertyRetriever.getProperty("framework.projects.dir");
+        }
+        return new Framework(rdeck_base_dir, projectsDir);
+    }
+    /**
      * Returns the singleton instance of Framework object.  If any of the
      * supplied directory paths are null, then the value from {@link Constants} is used.
      *
@@ -401,17 +353,6 @@ public class Framework extends FrameworkResourceParent {
         return new Framework(rdeck_base_dir, projects_base_dir);
     }
 
-    /**
-     * Returns an instance of Framework object.
-     * Specify the rdeck_base path and let the projects and modules dir be constructed from it.
-     *
-     * @param rdeck_base_dir path name to the rdeck_base
-     *
-     * @return a Framework instance
-     */
-    public static Framework getInstance(final String rdeck_base_dir) {
-        return getInstance(rdeck_base_dir, null, null);
-    }
 
     /**
      * Returns an instance of Framework object. Specify the rdeck_base path and let the projects and modules dir be
@@ -422,8 +363,7 @@ public class Framework extends FrameworkResourceParent {
      * @return a Framework instance
      */
     public static Framework getInstance(final String rdeck_base_dir,
-                                        final Authenticator authenticator,
-                                        final LegacyAuthorization authorization) {
+            final Authenticator authenticator) {
 
         logger.debug("creating new Framework instance."
                      + "  rdeck_base_dir=" + rdeck_base_dir
@@ -434,24 +374,10 @@ public class Framework extends FrameworkResourceParent {
         }
         //determine projects dir from properties
         String frameworkProjectsDir = Constants.getFrameworkProjectsDir(rdeck_base_dir);
-        Framework instance = new Framework(rdeck_base_dir,
-                frameworkProjectsDir,
-                                           authenticator,
-                                           authorization);
+        Framework instance = new Framework(rdeck_base_dir, frameworkProjectsDir);
         return instance;
     }
 
-    /**
-     * Factory method to getting the singleton instance of the Framework object. Info about the
-     * rdeck.base, projects.base and modules.base are retrieved via {@link Constants}.
-     *
-     * @return returns Framework singleton instance. Creates it using info from
-     * {@link Constants} data. Assumes rdeck.base System props are set
-     */
-    public static Framework getInstance() {
-        logger.debug("creating new Framework using info from com.dtolabs.rundeck.core.Constants");
-        return Framework.getInstance(null, null);
-    }
 
     /**
      * Set the CentralDispatcherMgr instance
@@ -619,39 +545,39 @@ public class Framework extends FrameworkResourceParent {
     /**
      * Return the nodeset consisting only of the input nodes where the specified actions are all authorized
      */
-    public INodeSet filterAuthorizedNodes(final String project, final Set<String> actions, final INodeSet unfiltered) {
-        if (null != actions && actions.size() > 0) {
-            //select only nodes with all allowed actions
-            final HashSet<Map<String, String>> resources = new HashSet<Map<String, String>>();
-            for (final INodeEntry iNodeEntry : unfiltered.getNodes()) {
-                HashMap<String, String> resdef = new HashMap<String, String>(iNodeEntry.getAttributes());
-                resdef.put("type", "node");
-                resdef.put("rundeck_server", Boolean.toString(isLocalNode(iNodeEntry)));
-                resources.add(resdef);
-            }
-            final Set<Decision> decisions = getAuthorizationMgr().evaluate(resources,
-                getAuthenticationMgr().getSubject(),
-                actions,
-                Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "project"), project)));
-            final NodeSetImpl authorized = new NodeSetImpl();
-            HashMap<String, Set<String>> authorizations = new HashMap<String, Set<String>>();
-            for (final Decision decision : decisions) {
-                if (decision.isAuthorized() && actions.contains(decision.getAction())) {
-                    final String nodename = decision.getResource().get("nodename");
-                    if(null==authorizations.get(nodename)) {
-                        authorizations.put(nodename, new HashSet<String>());
-                    }
-                    authorizations.get(nodename).add(decision.getAction());
-                }
-            }
-            for (final Map.Entry<String, Set<String>> entry : authorizations.entrySet()) {
-                if(entry.getValue().size()==actions.size()) {
-                    authorized.putNode(unfiltered.getNode(entry.getKey()));
-                }
-            }
-            return authorized;
+    public INodeSet filterAuthorizedNodes(final String project, final Set<String> actions, final INodeSet unfiltered,
+            AuthContext authContext) {
+        if (null == actions || actions.size() <= 0) {
+            return unfiltered;
         }
-        return unfiltered;
+        final HashSet<Map<String, String>> resources = new HashSet<Map<String, String>>();
+        for (final INodeEntry iNodeEntry : unfiltered.getNodes()) {
+            HashMap<String, String> resdef = new HashMap<String, String>(iNodeEntry.getAttributes());
+            resdef.put("type", "node");
+            resdef.put("rundeck_server", Boolean.toString(isLocalNode(iNodeEntry)));
+            resources.add(resdef);
+        }
+        final Set<Decision> decisions = authContext.evaluate(resources,
+                actions,
+                Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "project"),
+                        project)));
+        final NodeSetImpl authorized = new NodeSetImpl();
+        HashMap<String, Set<String>> authorizations = new HashMap<String, Set<String>>();
+        for (final Decision decision : decisions) {
+            if (decision.isAuthorized() && actions.contains(decision.getAction())) {
+                final String nodename = decision.getResource().get("nodename");
+                if(null==authorizations.get(nodename)) {
+                    authorizations.put(nodename, new HashSet<String>());
+                }
+                authorizations.get(nodename).add(decision.getAction());
+            }
+        }
+        for (final Map.Entry<String, Set<String>> entry : authorizations.entrySet()) {
+            if(entry.getValue().size()==actions.size()) {
+                authorized.putNode(unfiltered.getNode(entry.getKey()));
+            }
+        }
+        return authorized;
     }
 
     /**
@@ -701,13 +627,6 @@ public class Framework extends FrameworkResourceParent {
         return projectsBase;
     }
 
-    public void setAuthorizationMgr(LegacyAuthorization authorizationMgr) {
-        this.authorizationMgr = authorizationMgr;
-    }
-
-    public void setAuthenticationMgr(Authenticator authenticationMgr) {
-        this.authenticationMgr = authenticationMgr;
-    }
 
     /**
      * References the {@link INodeDesc} instance representing the framework node.

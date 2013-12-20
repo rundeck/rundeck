@@ -140,7 +140,7 @@ public class RunTool extends BaseTool {
      * Create QueueTool with default Framework instances located by the system rdeck.base property.
      */
     public RunTool() {
-        this(Framework.getInstance(Constants.getSystemBaseDir()), new Log4JCLIToolLogger(log4j));
+        this(Framework.getInstanceWithoutProjectsDir(Constants.getSystemBaseDir()), new Log4JCLIToolLogger(log4j));
     }
 
     /**
@@ -149,7 +149,7 @@ public class RunTool extends BaseTool {
      * @param logger the logger
      */
     public RunTool(final CLIToolLogger logger) {
-        this(Framework.getInstance(Constants.getSystemBaseDir()), logger);
+        this(Framework.getInstanceWithoutProjectsDir(Constants.getSystemBaseDir()), logger);
     }
 
     /**

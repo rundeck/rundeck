@@ -45,7 +45,6 @@ class BootStrap {
              rdeckBase=grailsApplication.config.rdeck.base
              log.info("using rdeck.base config property: ${rdeckBase}");
          }
-         frameworkService.rundeckbase = rdeckBase
          def clusterMode = false
          def serverNodeUUID = null
          if (Environment.getCurrent()!=Environment.TEST) {

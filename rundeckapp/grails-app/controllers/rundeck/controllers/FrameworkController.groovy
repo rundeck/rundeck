@@ -1,6 +1,6 @@
 package rundeck.controllers
 
-import com.codahale.metrics.MetricRegistry
+import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 
@@ -27,7 +27,6 @@ import com.dtolabs.rundeck.core.common.NodesYamlGenerator
 import com.dtolabs.rundeck.core.resources.format.UnsupportedFormatException
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserException
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorException
-import com.dtolabs.rundeck.core.execution.impl.jsch.JschNodeExecutor
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
 import com.dtolabs.rundeck.core.execution.service.FileCopierService
 
@@ -86,11 +85,12 @@ class FrameworkController  {
     }
 
     def nodes ={ ExtNodeFilters query ->
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         String runCommand;
         if(params.fromExecId|| params.retryFailedExecId) {
             Execution e = Execution.get(params.fromExecId?: params.retryFailedExecId)
-            if (e && !frameworkService.authorizeProjectExecutionAll(framework, e, [AuthConstants.ACTION_READ])) {
+            if (e && !frameworkService.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_READ])) {
                 return unauthorized("Read Execution ${params.fromExecId ?: params.retryFailedExecId}")
             }
 
@@ -160,7 +160,9 @@ class FrameworkController  {
      */
     def nodesdata (ExtNodeFilters query){
 
-        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
         if(query.nodeFilterIsEmpty()){
             if(params.formInput=='true' && 'true'!=params.defaultLocalNode){
                 query.nodeIncludeName = '.*'
@@ -178,7 +180,7 @@ class FrameworkController  {
                 total:0,
                 query:query]
         }
-        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'node'], ['read'], query.project)) {
+        if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'node'], ['read'], query.project)) {
             return unauthorized("Read Nodes for project ${query.project}")
         }
         def allnodes = [:]
@@ -217,8 +219,8 @@ class FrameworkController  {
 //            nodes = nodes.sort { INodeEntry a, INodeEntry b -> return a.nodename.compareTo(b.nodename) }
         //filter nodes by read authorization
 
-        def readnodes = framework.filterAuthorizedNodes(query.project, ['read'] as Set, nodeset)
-        def runnodes = framework.filterAuthorizedNodes(query.project, ['run'] as Set, readnodes)
+        def readnodes = frameworkService.filterAuthorizedNodes(query.project, ['read'] as Set, nodeset, authContext)
+        def runnodes = frameworkService.filterAuthorizedNodes(query.project, ['run'] as Set, readnodes, authContext)
         def noderunauthmap = [:]
 
 
@@ -348,8 +350,9 @@ class FrameworkController  {
      */
     def nodesFragment = {ExtNodeFilters query->
 
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'node'], ['read'], query.project)) {
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'node'], ['read'], query.project)) {
             return unauthorized("Read Nodes for project ${query.project}",true)
         }
         def User u = userService.findOrCreateUser(session.user)
@@ -429,8 +432,9 @@ class FrameworkController  {
         if(!params.project){
             return [success: false, message: "project parameter is required", invalid: true]
         }
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        if(!frameworkService.authorizeProjectResource(framework,[type:'resource',kind:'node'], AuthConstants.ACTION_REFRESH,params.project)){
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if(!frameworkService.authorizeProjectResource(authContext,[type:'resource',kind:'node'], AuthConstants.ACTION_REFRESH,params.project)){
             def msg = "user: ${session.user} UNAUTHORIZED for performNodeReload"
             log.error(msg)
             return [success:false,message:msg,unauthorized:true]
@@ -526,8 +530,9 @@ class FrameworkController  {
         //only attempt project create if form POST is used
         def prefixKey = 'plugin'
         def project = params.project
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        if (!frameworkService.authorizeApplicationResourceTypeAll(framework, 'project', ['create'])) {
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if (!frameworkService.authorizeApplicationResourceTypeAll(authContext, 'project', ['create'])) {
             return unauthorized("Create a Project")
         }
         def nodeexec, nodeexecreport
@@ -543,7 +548,7 @@ class FrameworkController  {
         if (params.defaultNodeExec) {
             def ndx = params.defaultNodeExec
             (defaultNodeExec, nodeexec) = parseServiceConfigInput(params, "nodeexec", ndx)
-            final validation = frameworkService.validateServiceConfig(framework, defaultNodeExec, "nodeexec.${ndx}.config.", params, framework.getNodeExecutorService())
+            final validation = frameworkService.validateServiceConfig(defaultNodeExec, "nodeexec.${ndx}.config.", params, framework.getNodeExecutorService())
             if (!validation.valid) {
                 nodeexecreport = validation.report
                 errors << (validation.error ?: "Default Node Executor configuration was invalid")
@@ -559,7 +564,7 @@ class FrameworkController  {
         if (params.defaultFileCopy) {
             def ndx = params.defaultFileCopy
             (defaultFileCopy, fcopy) = parseServiceConfigInput(params, "fcopy", ndx)
-            final validation = frameworkService.validateServiceConfig(framework, defaultFileCopy, "fcopy.${ndx}.config.", params, framework.getFileCopierService())
+            final validation = frameworkService.validateServiceConfig(defaultFileCopy, "fcopy.${ndx}.config.", params, framework.getFileCopierService())
             if (!validation.valid) {
                 fcopyreport = validation.report
                 errors << (validation.error ?: "Default File copier configuration was invalid")
@@ -624,7 +629,7 @@ class FrameworkController  {
             }
             if (!errors && proj) {
                 session.project = proj.name
-                session.frameworkProjects = frameworkService.projects(framework)
+                session.frameworkProjects = frameworkService.projects(authContext)
                 def result = userService.storeFilterPref(session.user, [project: proj.name])
                 return redirect(controller: 'menu', action: 'index')
             }
@@ -662,8 +667,9 @@ class FrameworkController  {
      */
     def createProject(){
         def prefixKey= 'plugin'
-        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
-        if(!frameworkService.authorizeApplicationResourceTypeAll(framework,'project',['create'])){
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if(!frameworkService.authorizeApplicationResourceTypeAll(authContext,'project',['create'])){
             return unauthorized("Create a Project")
         }
         final defaultNodeExec = NodeExecutorService.DEFAULT_REMOTE_PROVIDER
@@ -730,7 +736,8 @@ class FrameworkController  {
     def saveProject={
         def prefixKey= 'plugin'
         def project=params.project
-        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def error=null
         def configs = []
         if (!project) {
@@ -741,10 +748,10 @@ class FrameworkController  {
             //cancel modification
             return redirect(controller: 'menu', action: 'admin')
         }
-        if (!frameworkService.authorizeApplicationResourceAll(framework, [type:'project',name:project], [AuthConstants.ACTION_ADMIN])) {
+        if (!frameworkService.authorizeApplicationResourceAll(authContext, [type:'project',name:project], [AuthConstants.ACTION_ADMIN])) {
             return unauthorized("Update Project ${project}")
         }
-        def fproject = frameworkService.getFrameworkProject(project, framework)
+        def fproject = frameworkService.getFrameworkProject(project)
 
         def defaultNodeExec
         def defaultFileCopy
@@ -759,7 +766,7 @@ class FrameworkController  {
             if (params.defaultNodeExec) {
                 def ndx=params.defaultNodeExec
                 (defaultNodeExec, nodeexec)=parseServiceConfigInput(params,"nodeexec",ndx)
-                final validation = frameworkService.validateServiceConfig(framework, defaultNodeExec, "nodeexec.${ndx}.config.", params, framework.getNodeExecutorService())
+                final validation = frameworkService.validateServiceConfig(defaultNodeExec, "nodeexec.${ndx}.config.", params, framework.getNodeExecutorService())
                 if(!validation.valid){
                     nodeexecreport=validation.report
                     error = validation.error ?: "Node Executor configuration was invalid"
@@ -775,7 +782,7 @@ class FrameworkController  {
             if (params.defaultFileCopy) {
                 def ndx=params.defaultFileCopy
                 (defaultFileCopy, fcopy) = parseServiceConfigInput(params, "fcopy", ndx)
-                final validation = frameworkService.validateServiceConfig(framework, defaultFileCopy, "fcopy.${ndx}.config.", params, framework.getFileCopierService())
+                final validation = frameworkService.validateServiceConfig(defaultFileCopy, "fcopy.${ndx}.config.", params, framework.getFileCopierService())
                 if(!validation.valid){
                     fcopyreport = validation.report
                     error=validation.error?:"File copier configuration was invalid"
@@ -866,15 +873,16 @@ class FrameworkController  {
     def editProject = {
         def prefixKey = 'plugin'
         def project = params.project
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if(!project){
             flash.error="Project parameter is required"
             return render(template: "/common/error")
         }
-        if (!frameworkService.authorizeApplicationResourceAll(framework, [type: 'project', name: project], [AuthConstants.ACTION_ADMIN])) {
+        if (!frameworkService.authorizeApplicationResourceAll(authContext, [type: 'project', name: project], [AuthConstants.ACTION_ADMIN])) {
             return unauthorized("Update Project ${project}")
         }
-        def fproject = frameworkService.getFrameworkProject(project,framework)
+        def fproject = frameworkService.getFrameworkProject(project)
         def configs = fproject.listResourceModelConfigurations()
         final service = framework.getResourceModelSourceService()
         final descriptions = service.listDescriptions()
@@ -920,7 +928,7 @@ class FrameworkController  {
             prefixKey: prefixKey, configs: configs]
     }
     def createResourceModelConfig={
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        Framework framework = frameworkService.getRundeckFramework()
         def error
         if(!params.type){
             error = "Plugin provider type must be specified"
@@ -938,7 +946,7 @@ class FrameworkController  {
     }
     def saveResourceModelConfig = {
         def project = params.project
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        Framework framework = frameworkService.getRundeckFramework()
         def error
         def prefix = params.prefix ?: ''
         def String type=params[prefix+'type']
@@ -948,7 +956,7 @@ class FrameworkController  {
         if (!type) {
             error = "Plugin provider type must be specified"
         }else{
-            def validate = frameworkService.validateServiceConfig(framework, type, prefix+'config.', params,framework.getResourceModelSourceService())
+            def validate = frameworkService.validateServiceConfig(type, prefix + 'config.', params, framework.getResourceModelSourceService())
             error = validate.error
             desc = validate.desc
             props = validate.props
@@ -961,7 +969,7 @@ class FrameworkController  {
     }
     def checkResourceModelConfig = {
         def project = params.project
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        Framework framework = frameworkService.getRundeckFramework()
         def error
         def prefix = params.prefix ?: ''
         def String type=params[prefix+'type']
@@ -975,7 +983,7 @@ class FrameworkController  {
         if (!type) {
             result.error = "Plugin provider type must be specified"
         }else{
-            def validate = frameworkService.validateServiceConfig(framework, type, prefix + 'config.', params,framework.getResourceModelSourceService())
+            def validate = frameworkService.validateServiceConfig(type, prefix + 'config.', params, framework.getResourceModelSourceService())
             result.valid=validate.valid
             result.error=validate.error
         }
@@ -984,7 +992,7 @@ class FrameworkController  {
 
 
     def editResourceModelConfig = {
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        Framework framework = frameworkService.getRundeckFramework()
         def error
         def prefix = params.prefix ?: ''
         def String type = params[prefix + 'type']
@@ -994,7 +1002,7 @@ class FrameworkController  {
         if (!type) {
             error = "Plugin provider type must be specified"
         } else {
-            def validate = frameworkService.validateServiceConfig(framework, type, prefix + 'config.', params,framework.getResourceModelSourceService())
+            def validate = frameworkService.validateServiceConfig(type, prefix + 'config.', params, framework.getResourceModelSourceService())
             error = validate.error
             desc=validate.desc
             props=validate.props
@@ -1004,7 +1012,7 @@ class FrameworkController  {
         render(view: 'createResourceModelConfig', model: [ prefix: prefix, values: props, description: desc, report: report, error: error, isEdit: "true"!=params.iscreate,type:type, isCreate:params.isCreate])
     }
     def viewResourceModelConfig = {
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        Framework framework = frameworkService.getRundeckFramework()
         def error
         def prefix = params.prefix ?: ''
         def String type = params[prefix + 'type']
@@ -1018,7 +1026,7 @@ class FrameworkController  {
         if (!type) {
             error = "Plugin provider type must be specified"
         } else {
-            def validate = frameworkService.validateServiceConfig(framework, type, prefix + 'config.', params,framework.getResourceModelSourceService())
+            def validate = frameworkService.validateServiceConfig(type, prefix + 'config.', params, framework.getResourceModelSourceService())
             error = validate.error
             desc = validate.desc
             props = validate.props
@@ -1028,19 +1036,20 @@ class FrameworkController  {
         return render(template: 'viewResourceModelConfig',model:[ prefix: prefix, values: props, includeFormFields: true, description: desc, report: report, error: error, saved:true, type: type])
     }
     def projectDescFragment(){
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def project = params.project
         if (!project) {
             flash.error = "Project parameter is required"
             return render(template: "/common/errorFragment")
         }
-        if (!frameworkService.existsFrameworkProject(project, framework)
-                || !frameworkService.authorizeApplicationResourceAll(framework, [type: 'project', name: project], ['read'])) {
+        if (!frameworkService.existsFrameworkProject(project)
+                || !frameworkService.authorizeApplicationResourceAll(authContext, [type: 'project', name: project], ['read'])) {
             flash.error = "Unauthorized"
             return render(template: "/common/errorFragment")
         }
         //look for readme.md in project directory
-        def project1 = frameworkService.getFrameworkProject(project, framework)
+        def project1 = frameworkService.getFrameworkProject(project)
         def readme = new File(project1.baseDir, "readme.md")
         def motd = new File(project1.baseDir, "motd.md")
         def html=''//empty
@@ -1060,14 +1069,15 @@ class FrameworkController  {
      * @return
      */
     def apiProjectSummary(){
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def project=params.project
         if (!project) {
             flash.error = "Project parameter is required"
             return render(template: "/common/errorFragment")
         }
-        if(!frameworkService.existsFrameworkProject(project, framework)
-                || !frameworkService.authorizeApplicationResourceAll(framework, [type: 'project', name: project], ['read'])){
+        if(!frameworkService.existsFrameworkProject(project)
+                || !frameworkService.authorizeApplicationResourceAll(authContext, [type: 'project', name: project], ['read'])){
             flash.error = "Unauthorized"
             return render(template: "/common/errorFragment")
         }
@@ -1086,9 +1096,9 @@ class FrameworkController  {
         }
         //authorization
         def auth=[
-                jobCreate: frameworkService.authorizeProjectResource(framework,[type:'resource',kind:'job'], 'create',project)
+                jobCreate: frameworkService.authorizeProjectResource(authContext,[type:'resource',kind:'job'], 'create',project)
         ]
-        def project1 = frameworkService.getFrameworkProject(project, framework)
+        def project1 = frameworkService.getFrameworkProject(project)
         //summary data
         def data= [
             project:project,
@@ -1107,12 +1117,12 @@ class FrameworkController  {
     }
 
     def projectSelect={
-        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def projects
         if(session.frameworkProjects){
             projects=session.frameworkProjects
         }else{
-            projects = frameworkService.projects(framework)
+            projects = frameworkService.projects(authContext)
             session.frameworkProjects=projects
         }
         [projects:projects,project:session.project]
@@ -1155,13 +1165,13 @@ class FrameworkController  {
         if (!apiService.requireVersion(request,response,ApiRequestFilters.V2)) {
             return
         }
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        Framework framework = frameworkService.getRundeckFramework()
         if (!params.project) {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required',
                     args: ['project']])
         }
-        def exists = frameworkService.existsFrameworkProject(params.project, framework)
+        def exists = frameworkService.existsFrameworkProject(params.project)
         if (!exists) {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist',
@@ -1203,22 +1213,23 @@ class FrameworkController  {
         if (!apiService.requireVersion(request, response,ApiRequestFilters.V2)) {
             return
         }
-        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (!params.project) {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])
 
         }
-        def exists = frameworkService.existsFrameworkProject(params.project, framework)
+        def exists = frameworkService.existsFrameworkProject(params.project)
         if (!exists) {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist', args: ['project', params.project]])
         }
-        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'node'], ['create','update'], params.project)) {
+        if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'node'], ['create','update'], params.project)) {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Update Nodes', 'Project', params.project]])
         }
-        final FrameworkProject project = frameworkService.getFrameworkProject(params.project, framework)
+        final FrameworkProject project = frameworkService.getFrameworkProject(params.project)
 
         def didsucceed=false
         def errormsg=null
@@ -1285,8 +1296,8 @@ class FrameworkController  {
      * API: /api/projects, version 1
      */
     def apiProjects={
-        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
-        def projlist=frameworkService.projects(framework)
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        def projlist=frameworkService.projects(authContext)
         return apiService.renderSuccessXml(response){
                 delegate.'projects'(count:projlist.size()){
                     projlist.each{ pject ->
@@ -1336,21 +1347,22 @@ class FrameworkController  {
      * API: /api/project/NAME, version 1
      */
     def apiProject={
-        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if(!params.project){
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])
         }
-        if (!frameworkService.authorizeApplicationResourceAll(framework, [type:'project',name:params.project], ['read'])) {
+        if (!frameworkService.authorizeApplicationResourceAll(authContext, [type:'project',name:params.project], ['read'])) {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Read', 'Project', params.project]])
         }
-        def exists=frameworkService.existsFrameworkProject(params.project,framework)
+        def exists=frameworkService.existsFrameworkProject(params.project)
         if(!exists){
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist', args: ['project', params.project]])
         }
-        def pject=frameworkService.getFrameworkProject(params.project,framework)
+        def pject=frameworkService.getFrameworkProject(params.project)
         return apiService.renderSuccessXml(response){
             delegate.'projects'(count:1){
                 renderApiProject(pject,delegate)
@@ -1362,7 +1374,8 @@ class FrameworkController  {
      * API: /api/resource/$name, version 1
      */
     def apiResource={
-        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if(!params.project){
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])
@@ -1371,19 +1384,19 @@ class FrameworkController  {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['name']])
         }
-        def exists=frameworkService.existsFrameworkProject(params.project,framework)
+        def exists=frameworkService.existsFrameworkProject(params.project)
         if(!exists){
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist', args: ['project',params.project]])
         }
-        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'node'], ['read'], params.project)) {
+        if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'node'], ['read'], params.project)) {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Read Nodes', 'Project', params.project]])
         }
 
         NodeSet nset = new NodeSet()
         nset.setSingleNodeName(params.name)
-        def pject=frameworkService.getFrameworkProject(params.project,framework)
+        def pject=frameworkService.getFrameworkProject(params.project)
         final INodeSet nodes = com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(nset,pject.getNodeSet())
         if(!nodes || nodes.nodes.size()<1 ){
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
@@ -1405,20 +1418,21 @@ class FrameworkController  {
      * API: /api/1/resources, version 1
      */
     def apiResources={ExtNodeFilters query->
-        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if(!params.project){
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])
 
         }
-        def exists=frameworkService.existsFrameworkProject(params.project,framework)
+        def exists=frameworkService.existsFrameworkProject(params.project)
         if(!exists){
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist', args: ['project',params.project]])
 
 
         }
-        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'node'], ['read'], params.project)) {
+        if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'node'], ['read'], params.project)) {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Read Nodes', 'Project', params.project]])
 
@@ -1443,7 +1457,7 @@ class FrameworkController  {
             //return all results
             query.nodeInclude=".*"
         }
-        def pject=frameworkService.getFrameworkProject(params.project,framework)
+        def pject=frameworkService.getFrameworkProject(params.project)
 //        final Collection nodes = pject.getNodes().filterNodes(ExecutionService.filtersAsNodeSet(query))
         final INodeSet nodes = com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(ExecutionService.filtersAsNodeSet(query), pject.getNodeSet())
         return apiRenderNodeResult(nodes,framework,params.project)

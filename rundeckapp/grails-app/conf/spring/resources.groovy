@@ -1,3 +1,6 @@
+import com.dtolabs.rundeck.core.Constants
+import com.dtolabs.rundeck.core.authorization.providers.SAREAuthorization
+import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.plugins.PluginManagerService
 import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
 import com.dtolabs.rundeck.server.plugins.PluginCustomizer
@@ -17,7 +20,11 @@ beans={
     }
     defaultGrailsServiceInjectorJobListener(GrailsServiceInjectorJobListener){
         name= 'defaultGrailsServiceInjectorJobListener'
-        services=[grailsApplication: ref('grailsApplication'),executionService: ref('executionService'),metricRegistry:ref('metricRegistry'), executionUtilService:ref('executionUtilService')]
+        services=[grailsApplication: ref('grailsApplication'),
+                executionService: ref('executionService'),
+                frameworkService: ref('frameworkService'),
+                metricRegistry:ref('metricRegistry'),
+                executionUtilService:ref('executionUtilService')]
         quartzScheduler=ref('quartzScheduler')
     }
     def rdeckBase
@@ -36,6 +43,16 @@ beans={
     def serverLibextCacheDir = application.config.rundeck?.server?.plugins?.cacheDir?:"${serverLibextDir}/cache"
     File cacheDir= new File(serverLibextCacheDir)
 
+    /*
+     * Define the single Framework instance to use
+     */
+    rundeckFramework(Framework, rdeckBase){bean->
+        bean.factoryMethod='getInstanceWithoutProjectsDir'
+    }
+    def configDir = new File(Constants.getFrameworkConfigDir(rdeckBase))
+    rundeckPolicyAuthorization(SAREAuthorization, configDir){
+
+    }
     /*
      * Define beans for Rundeck core-style plugin loader to load plugins from jar/zip files
      */

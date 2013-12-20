@@ -327,12 +327,7 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
     }
 
     private void validateNodeSet(ExecutionContext executionContext, NodesSelector nodeSelector) {
-        //retrieve the node set
-        final String project = executionContext.getFrameworkProject();
-        final INodeSet nodes = framework.filterAuthorizedNodes(project,
-                                                               new HashSet<String>(Arrays.asList("read", "run")),
-                                                               executionContext.getNodes());
-        if (0 == nodes.getNodes().size()) {
+        if (0 == executionContext.getNodes().getNodes().size()) {
             throw new NodesetEmptyException(nodeSelector);
         }
     }

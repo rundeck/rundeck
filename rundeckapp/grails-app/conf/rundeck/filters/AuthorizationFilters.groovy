@@ -88,7 +88,7 @@ public class AuthorizationFilters {
                     session.subject = subject
                 }else if(request.remoteUser && session.subject){
                     request.subject = session.subject
-                } else if (request.api_version) {
+                } else if (request.api_version && !session.user ) {
                     //allow authentication token to be used 
                     def authtoken = params.authtoken? params.authtoken : request.getHeader('X-RunDeck-Auth-Token')
                     String user = lookupToken(authtoken, servletContext)
@@ -105,8 +105,10 @@ public class AuthorizationFilters {
                         }
 
                         request.subject = subject
+                        session.subject = subject
                     }else{
                         request.subject=null
+                        session.subject=null
                         session.user=null
                         if(authtoken){
                             request.invalidAuthToken = "Token:" + (authtoken.size()>5?authtoken.substring(0, 5):'') + "****"
@@ -156,6 +158,7 @@ public class AuthorizationFilters {
                 if(request?.authenticatedToken && session && session?.user){
                     session.user=null
                     request.subject=null
+                    session.subject=null
                 }
             }
         }

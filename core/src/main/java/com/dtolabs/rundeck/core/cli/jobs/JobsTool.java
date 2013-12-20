@@ -398,7 +398,7 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
      * Create QueueTool with default Framework instances located by the system rdeck.base property.
      */
     public JobsTool() {
-        this(Framework.getInstance(Constants.getSystemBaseDir()), new Log4JCLIToolLogger(log4j));
+        this(Framework.getInstanceWithoutProjectsDir(Constants.getSystemBaseDir()), new Log4JCLIToolLogger(log4j));
     }
 
     protected boolean isUseHelpOption() {
@@ -411,7 +411,7 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
      * @param logger the logger
      */
     public JobsTool(final CLIToolLogger logger) {
-        this(Framework.getInstance(Constants.getSystemBaseDir()), logger);
+        this(Framework.getInstanceWithoutProjectsDir(Constants.getSystemBaseDir()), logger);
     }
 
     /**

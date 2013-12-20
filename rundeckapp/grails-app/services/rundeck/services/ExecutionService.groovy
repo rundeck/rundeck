@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.app.support.ExecutionContext
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.app.internal.workflow.MultiWorkflowExecutionListener
+import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
@@ -33,11 +34,9 @@ import com.dtolabs.rundeck.execution.JobExecutionItem
 import com.dtolabs.rundeck.execution.JobReferenceFailureReason
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import org.hibernate.StaleObjectStateException
-import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.MessageSource
-import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
 import rundeck.*
@@ -50,8 +49,6 @@ import javax.servlet.http.HttpSession
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
 import java.util.regex.Pattern
-
-import static org.apache.tools.ant.util.StringUtils.*
 
 /**
  * Coordinates Command executions via Ant Project objects
@@ -94,8 +91,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         grailsLinkGenerator.link(controller: 'execution', action: 'follow', id: e.id, absolute: true)
     }
 
-    def listLastExecutionsPerProject(Framework framework, int max=5){
-        def projects = frameworkService.projects(framework).collect{ it.name }
+    def listLastExecutionsPerProject(AuthContext authContext, int max=5){
+        def projects = frameworkService.projects(authContext).collect{ it.name }
 
         def c = Execution.createCriteria()
         def lastexecs=[:]
@@ -550,7 +547,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     /**
      * starts an execution in a separate thread, returning a map of [thread:Thread, loghandler:LogHandler]
      */
-    def Map executeAsyncBegin(Framework framework, Execution execution, ScheduledExecution scheduledExecution=null, Map extraParams = null, Map extraParamsExposed = null){
+    def Map executeAsyncBegin(Framework framework, AuthContext authContext, Execution execution,
+                              ScheduledExecution scheduledExecution=null, Map extraParams = null,
+                              Map extraParamsExposed = null){
         //TODO: method can be transactional readonly
         metricService.markMeter(this.class.name,'executionStartMeter')
         execution.refresh()
@@ -574,12 +573,19 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             NodeRecorder recorder = new NodeRecorder();//TODO: use workflow-aware listener for nodes
 
             //create listener to handle log messages and Ant build events
-            WorkflowExecutionListenerImpl executionListener = new WorkflowExecutionListenerImpl(recorder, new ContextLogWriter(loghandler),false,null);
-            WorkflowExecutionListener execStateListener = workflowService.createWorkflowStateListenerForExecution(execution,framework,jobcontext,extraParamsExposed)
+            WorkflowExecutionListenerImpl executionListener = new WorkflowExecutionListenerImpl(
+                    recorder, new ContextLogWriter(loghandler),false,null);
+
+            WorkflowExecutionListener execStateListener = workflowService.createWorkflowStateListenerForExecution(
+                    execution,framework,authContext,jobcontext,extraParamsExposed)
+
             def wfEventListener = new WorkflowEventLoggerListener(executionListener)
+
             def multiListener = MultiWorkflowExecutionListener.create(executionListener,
                     [executionListener, wfEventListener,execStateListener, /*new EchoExecListener() */])
-            StepExecutionContext executioncontext = createContext(execution, null,framework, execution.user, jobcontext, multiListener, null,extraParams, extraParamsExposed)
+
+            StepExecutionContext executioncontext = createContext(execution, null,framework, authContext,
+                    execution.user, jobcontext, multiListener, null,extraParams, extraParamsExposed)
 
             //ExecutionService handles Job reference steps
             final cis = StepExecutionService.getInstanceForFramework(framework);
@@ -740,13 +746,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     /**
      * Return an StepExecutionItem instance for the given workflow Execution, suitable for the ExecutionService layer
      */
-    public StepExecutionContext createContext(ExecutionContext execMap, StepExecutionContext origContext, Map<String, String> jobcontext, String[] inputargs = null, Map extraParams = null, Map extraParamsExposed = null) {
-        createContext(execMap,origContext,origContext.framework,origContext.user,jobcontext,origContext.executionListener,inputargs,extraParams,extraParamsExposed)
+    public StepExecutionContext createContext(ExecutionContext execMap, StepExecutionContext origContext,
+                                              Map<String, String> jobcontext, String[] inputargs = null,
+                                              Map extraParams = null, Map extraParamsExposed = null) {
+        createContext(execMap,origContext,origContext.framework,origContext.authContext,origContext.user,jobcontext,
+                origContext.executionListener,inputargs,extraParams,extraParamsExposed)
     }
     /**
      * Return an StepExecutionItem instance for the given workflow Execution, suitable for the ExecutionService layer
      */
-    public StepExecutionContext createContext(ExecutionContext execMap, StepExecutionContext origContext, Framework framework, String userName = null, Map<String, String> jobcontext, ExecutionListener listener, String[] inputargs=null, Map extraParams=null, Map extraParamsExposed=null) {
+    public StepExecutionContext createContext(ExecutionContext execMap, StepExecutionContext origContext, Framework framework, AuthContext authContext, String userName = null, Map<String, String> jobcontext, ExecutionListener listener, String[] inputargs=null, Map extraParams=null, Map extraParamsExposed=null) {
         if (!userName) {
             userName=execMap.user
         }
@@ -794,7 +803,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             nodeselector = null
         }
 
-        def INodeSet nodeSet=frameworkService.filterNodeSet(framework,nodeselector,execMap.project)
+        def INodeSet nodeSet = frameworkService.filterAuthorizedNodes(
+                execMap.project,
+                new HashSet<String>(Arrays.asList("read", "run")),
+                frameworkService.filterNodeSet(nodeselector, execMap.project),
+                authContext);
 
         def Map<String, Map<String, String>> privatecontext = new HashMap<String, Map<String, String>>()
         if (null != extraParams) {
@@ -812,6 +825,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             .privateDataContext(privatecontext)
             .executionListener(listener)
             .framework(framework)
+            .authContext(authContext)
             .threadCount(threadCount)
             .keepgoing(keepgoing)
             .nodeRankAttribute(execMap.nodeRankAttribute)
@@ -823,7 +837,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return builder.build()
     }
 
-    def abortExecution(ScheduledExecution se, Execution e, String user, final def framework, String killAsUser=null
+    def abortExecution(ScheduledExecution se, Execution e, String user, AuthContext authContext,String killAsUser=null
     ){
         metricService.markMeter(this.class.name,'executionAbortMeter')
         def eid=e.id
@@ -835,12 +849,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def jobstate
         def failedreason
         def userIdent=killAsUser?:user
-        if (!frameworkService.authorizeProjectExecutionAll(framework,e,[AuthConstants.ACTION_KILL])){
+        if (!frameworkService.authorizeProjectExecutionAll(authContext,e,[AuthConstants.ACTION_KILL])){
             jobstate = getExecutionState(e)
             abortstate= ABORT_FAILED
             failedreason="unauthorized"
             statusStr= jobstate
-        }else if(killAsUser && !frameworkService.authorizeProjectExecutionAll(framework, e, [AuthConstants.ACTION_KILLAS])) {
+        }else if(killAsUser && !frameworkService.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_KILLAS])) {
             jobstate = getExecutionState(e)
             abortstate = ABORT_FAILED
             failedreason = "unauthorized"
@@ -1070,8 +1084,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
 
-    public Map executeScheduledExecution(ScheduledExecution scheduledExecution, Framework framework, Subject subject, params) {
-        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_RUN],
+    public Map executeScheduledExecution(ScheduledExecution scheduledExecution, Framework framework, AuthContext authContext, Subject subject, params) {
+        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
             scheduledExecution.project)) {
 //            unauthorized("Execute Job ${scheduledExecution.extid}")
             return [success: false, error: 'unauthorized', message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
@@ -1761,7 +1775,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             ScheduledExecution.withTransaction { status ->
                 ScheduledExecution se = ScheduledExecution.get(id)
 
-                if (!frameworkService.authorizeProjectJobAll(executionContext.getFramework(), se, [AuthConstants.ACTION_RUN], se.project)) {
+                if (!frameworkService.authorizeProjectJobAll(executionContext.getAuthContext(), se, [AuthConstants.ACTION_RUN], se.project)) {
                     def msg = "Unauthorized to execute job [${jitem.jobIdentifier}}: ${se.extid}"
                     executionContext.getExecutionListener().log(0, msg);
                     result = createFailure(JobReferenceFailureReason.Unauthorized, msg)

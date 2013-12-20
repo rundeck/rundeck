@@ -24,4 +24,7 @@ packaging/dist
 docs/*/manpages/man*/*.gz
 docs/*/manpages/man*/*.1
 docs/*/manpages/man*/*.5
+docs/dist
+docs/*/dist
 tmp/**
+test/api/*.output

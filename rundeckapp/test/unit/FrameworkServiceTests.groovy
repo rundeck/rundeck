@@ -1,8 +1,13 @@
 import com.dtolabs.rundeck.core.authorization.Attribute
+import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.Decision
+import com.dtolabs.rundeck.core.authorization.Explanation
 import grails.test.mixin.TestFor
 import org.grails.plugins.metricsweb.MetricService
 import rundeck.ScheduledExecution
 import rundeck.services.FrameworkService
+
+import javax.security.auth.Subject
 
 @TestFor(FrameworkService)
 class FrameworkServiceTests  {
@@ -125,356 +130,200 @@ class FrameworkServiceTests  {
         assertNotNull(m1['test'])
         assertEquals("-blah", m1['test'])
     }
-
-    void testAuthorizeProjectJobAll(){
-        FrameworkService test= new FrameworkService();
+    def assertTestAuthorizeSet(FrameworkService test, Map expected, Set results, Collection<String> expectActions,
+                               String projectName, Closure call){
         def mcontrol = mockFor(MetricService, false)
         mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
             clos.call()
         }
         test.metricService = mcontrol.createMock()
-        test:{
-            //single authorization is true
-            ScheduledExecution job = new ScheduledExecution(jobName: 'name1',groupPath:'blah/blee')
-            def expected=[type:'job',name:'name1',group:'blah/blee']
-            def tfwk = new Expando()
-            tfwk.getAuthenticationMgr= { return [  subject: 'subject1'] }
-            def evalClos={ Set resources, subject, Set actions, Collection env-> 
-                assertEquals 1,resources.size()
-                def res1=resources.iterator().next()
-                assertEquals expected, res1
-                assertEquals 'subject1', subject
-                assertEquals 1,actions.size()
-                assertEquals 'test',actions.iterator().next()
-                Attribute attr=env.iterator().next()
-                assertEquals "http://dtolabs.com/rundeck/env/project",attr.property.toString()
-                assertEquals "testProject",attr.value
-                return [[authorized:true]]
+        def ctrl = mockFor(AuthContext)
+        ctrl.demand.evaluate { Set resources, Set actions, Collection env ->
+            assertEquals 1, resources.size()
+            def res1 = resources.iterator().next()
+            assertEquals expected, res1
+            assertEquals expectActions.size(), actions.size()
+            expectActions.each{
+                assertTrue(actions.contains(it))
             }
-            tfwk.getAuthorizationMgr= { return [ evaluate:evalClos] }
-            assertTrue(test.authorizeProjectJobAll(tfwk,job,['test'],'testProject'))
+            Attribute attr = env.iterator().next()
+            if (projectName) {
+                assertEquals "http://dtolabs.com/rundeck/env/project", attr.property.toString()
+                assertEquals projectName, attr.value
+            } else {
+                assertEquals "http://dtolabs.com/rundeck/env/application", attr.property.toString()
+                assertEquals "rundeck", attr.value
+            }
+            return results
+        }
+        def tfwk = ctrl.createMock()
+        call.call(tfwk)
+    }
+    def assertTestAuthorizeSingle(FrameworkService test, Map expected, Map result, String projectName, Closure call){
+        def mcontrol = mockFor(MetricService, false)
+        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
+            clos.call()
+        }
+        test.metricService = mcontrol.createMock()
+        def ctrl = mockFor(AuthContext)
+        ctrl.demand.evaluate { Map resource, String action, Collection env ->
+            assertEquals expected, resource
+            assertEquals 'test', action
+            Attribute attr = env.iterator().next()
+            if(projectName){
+                assertEquals "http://dtolabs.com/rundeck/env/project", attr.property.toString()
+                assertEquals projectName, attr.value
+            }else{
+                assertEquals "http://dtolabs.com/rundeck/env/application", attr.property.toString()
+                assertEquals "rundeck", attr.value
+            }
+            return makeDecision(result,resource,action,env)
+        }
+        def tfwk = ctrl.createMock()
+        call.call(tfwk)
+    }
+
+    def makeDecision(Map decision,Map resource, String action, Set<Attribute> environment) {
+        return new Decision(){
+            @Override
+            boolean isAuthorized() {
+                decision.authorized?true:false
+            }
+
+            @Override
+            Explanation explain() {
+                return null
+            }
+
+            @Override
+            long evaluationDuration() {
+                return 0
+            }
+
+            @Override
+            Map<String, String> getResource() {
+                return resource
+            }
+
+            @Override
+            String getAction() {
+                return action
+            }
+
+            @Override
+            Set<Attribute> getEnvironment() {
+                return environment
+            }
+
+            @Override
+            Subject getSubject() {
+                return null
+            }
+        }
+    }
+
+    void testAuthorizeProjectJobAll(){
+        FrameworkService test= new FrameworkService();
+        ScheduledExecution job = new ScheduledExecution(jobName: 'name1', groupPath: 'blah/blee')
+        def decisions = [[authorized: true]] as Set
+        assertTestAuthorizeSet(test, [type: 'job', name: 'name1', group: 'blah/blee'], decisions, ['test'], "testProject"){
+            assertTrue(test.authorizeProjectJobAll(it, job, ['test'] , 'testProject'))
         }
     }
 
     void testAuthorizeProjectJobAllSingleAuthFalse() {
         FrameworkService test = new FrameworkService();
-        def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
-            clos.call()
-        }
-        test.metricService = mcontrol.createMock()
-        test:{
-            //single authorization is false
-            ScheduledExecution job = new ScheduledExecution(jobName: 'name1',groupPath:'blah/blee')
-            def expected=[type:'job',name:'name1',group:'blah/blee']
-            def tfwk = new Expando()
-            tfwk.getAuthenticationMgr= { return [  subject: 'subject1'] }
-            def evalClos={ Set resources, subject, Set actions, Collection env->
-                assertEquals 1,resources.size()
-                def res1=resources.iterator().next()
-                assertEquals expected, res1
-                assertEquals 'subject1', subject
-                assertEquals 1,actions.size()
-                assertEquals 'test',actions.iterator().next()
-                Attribute attr = env.iterator().next()
-                assertEquals "http://dtolabs.com/rundeck/env/project", attr.property.toString()
-                assertEquals "testProject", attr.value
-                return [[authorized:false]]
-            }
-            tfwk.getAuthorizationMgr= { return [ evaluate:evalClos] }
-            assertFalse(test.authorizeProjectJobAll(tfwk,job,['test'],'testProject'))
+        ScheduledExecution job = new ScheduledExecution(jobName: 'name1', groupPath: 'blah/blee')
+        def decisions = [[authorized: false]] as Set
+        assertTestAuthorizeSet(test, [type: 'job', name: 'name1', group: 'blah/blee'], decisions, ['test'], "testProject") {
+            assertFalse(test.authorizeProjectJobAll(it, job, ['test'], 'testProject'))
         }
     }
 
     void testAuthorizeProjectJobAllMultipleAuthFalse() {
         FrameworkService test = new FrameworkService();
-        def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
-            clos.call()
-        }
-        test.metricService = mcontrol.createMock()
-        test:{
-            //one of multiple authorization is false
-            ScheduledExecution job = new ScheduledExecution(jobName: 'name1',groupPath:'blah/blee')
-            def expected=[type:'job',name:'name1',group:'blah/blee']
-            def tfwk = new Expando()
-            tfwk.getAuthenticationMgr= { return [  subject: 'subject1'] }
-            def evalClos={ Set resources, subject, Set actions, Collection env->
-                assertEquals 1,resources.size()
-                def res1=resources.iterator().next()
-                assertEquals expected, res1
-                assertEquals 'subject1', subject
-                assertEquals 1,actions.size()
-                assertEquals 'test',actions.iterator().next()
-                Attribute attr = env.iterator().next()
-                assertEquals "http://dtolabs.com/rundeck/env/project", attr.property.toString()
-                assertEquals "testProject", attr.value
-                return [[authorized:false],[authorized:true]]
-            }
-            tfwk.getAuthorizationMgr= { return [ evaluate:evalClos] }
-            assertFalse(test.authorizeProjectJobAll(tfwk,job,['test'],'testProject'))
+        ScheduledExecution job = new ScheduledExecution(jobName: 'name1', groupPath: 'blah/blee')
+        def decisions = [[authorized: false], [authorized: true]] as Set
+        assertTestAuthorizeSet(test, [type: 'job', name: 'name1', group: 'blah/blee'], decisions, ['test'], "testProject") {
+            assertFalse(test.authorizeProjectJobAll(it, job, ['test'], 'testProject'))
         }
     }
 
     void testAuthorizeProjectJobAllAllMultipleAuthFalse() {
         FrameworkService test = new FrameworkService();
-        def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
-            clos.call()
-        }
-        test.metricService = mcontrol.createMock()
-        test:{
-            //all of multiple authorization is false
-            ScheduledExecution job = new ScheduledExecution(jobName: 'name1',groupPath:'blah/blee')
-            def expected=[type:'job',name:'name1',group:'blah/blee']
-            def tfwk = new Expando()
-            tfwk.getAuthenticationMgr= { return [  subject: 'subject1'] }
-            def evalClos={ Set resources, subject, Set actions, Collection env->
-                assertEquals 1,resources.size()
-                def res1=resources.iterator().next()
-                assertEquals expected, res1
-                assertEquals 'subject1', subject
-                assertEquals 1,actions.size()
-                assertEquals 'test',actions.iterator().next()
-                Attribute attr = env.iterator().next()
-                assertEquals "http://dtolabs.com/rundeck/env/project", attr.property.toString()
-                assertEquals "testProject", attr.value
-                return [[authorized:false],[authorized:false]]
-            }
-            tfwk.getAuthorizationMgr= { return [ evaluate:evalClos] }
-            assertFalse(test.authorizeProjectJobAll(tfwk,job,['test'],'testProject'))
+        ScheduledExecution job = new ScheduledExecution(jobName: 'name1', groupPath: 'blah/blee')
+        def decisions = [[authorized: false], [authorized: false]] as Set
+        assertTestAuthorizeSet(test, [type: 'job', name: 'name1', group: 'blah/blee'], decisions, ['test'], "testProject") {
+            assertFalse(test.authorizeProjectJobAll(it, job, ['test'], 'testProject'))
         }
     }
 
     void testAuthorizeProjectJobAllAllMultipleAuthTrue() {
         FrameworkService test = new FrameworkService();
-        def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
-            clos.call()
-        }
-        test.metricService = mcontrol.createMock()
-        test:{
-            //all of multiple authorization is true
-            ScheduledExecution job = new ScheduledExecution(jobName: 'name1',groupPath:'blah/blee')
-            def expected=[type:'job',name:'name1',group:'blah/blee']
-            def tfwk = new Expando()
-            tfwk.getAuthenticationMgr= { return [  subject: 'subject1'] }
-            def evalClos={ Set resources, subject, Set actions, Collection env->
-                assertEquals 1,resources.size()
-                def res1=resources.iterator().next()
-                assertEquals expected, res1
-                assertEquals 'subject1', subject
-                assertEquals 1,actions.size()
-                assertEquals 'test',actions.iterator().next()
-                Attribute attr = env.iterator().next()
-                assertEquals "http://dtolabs.com/rundeck/env/project", attr.property.toString()
-                assertEquals "testProject", attr.value
-                return [[authorized:true],[authorized:true]]
-            }
-            tfwk.getAuthorizationMgr= { return [ evaluate:evalClos] }
-            assertTrue(test.authorizeProjectJobAll(tfwk,job,['test'],'testProject'))
+        ScheduledExecution job = new ScheduledExecution(jobName: 'name1', groupPath: 'blah/blee')
+        def decisions = [[authorized: true], [authorized: true]] as Set
+        assertTestAuthorizeSet(test, [type: 'job', name: 'name1', group: 'blah/blee'], decisions, ['test'], "testProject") {
+            assertTrue(test.authorizeProjectJobAll(it, job, ['test'], 'testProject'))
         }
     }
     void testAuthorizeProjectResources(){
-        FrameworkService test= new FrameworkService();
-        def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
-            clos.call()
-        }
-        test.metricService = mcontrol.createMock()
-        test:{
-            def expected=[type:'job',name:'name1',group:'blah/blee']
-            def tfwk = new Expando()
-            tfwk.getAuthenticationMgr= { return [  subject: 'subject1'] }
-            def evalClos={ Set resources, subject, Set actions, Collection env->
-                assertEquals 1,resources.size()
-                def res1=resources.iterator().next()
-                assertEquals expected, res1
-                assertEquals 'subject1', subject
-                assertEquals 1,actions.size()
-                assertEquals 'test',actions.iterator().next()
-                Attribute attr=env.iterator().next()
-                assertEquals "http://dtolabs.com/rundeck/env/project",attr.property.toString()
-                assertEquals "testProject",attr.value
-                return [[authorized:true]]
-            }
-            tfwk.getAuthorizationMgr= { return [ evaluate:evalClos] }
-            def resources = [[type: 'job', name: 'name1', group: 'blah/blee']] as Set
-            final result = test.authorizeProjectResources(tfwk, resources, ['test'] as Set, 'testProject')
+        FrameworkService test = new FrameworkService();
+        def decisions = [[authorized: true]] as Set
+        def resources = [[type: 'job', name: 'name1', group: 'blah/blee']] as Set
+        assertTestAuthorizeSet(test, [type: 'job', name: 'name1', group: 'blah/blee'], decisions, ['test'], "testProject") { AuthContext it->
+            assertEquals(decisions,test.authorizeProjectResources(it, resources, ['test'] as Set, 'testProject'))
         }
     }
     void testAuthorizeProjectResource(){
-        FrameworkService test= new FrameworkService();
-        def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
-            clos.call()
-        }
-        test.metricService = mcontrol.createMock()
-        test:{
-            def expected=[type:'job',name:'name1',group:'blah/blee']
-            def tfwk = new Expando()
-            tfwk.getAuthenticationMgr= { return [  subject: 'subject1'] }
-            def evalClos={ Map res1, subject, String action, Collection env->
-                assertEquals expected, res1
-                assertEquals 'subject1', subject
-                assertEquals 'test',action
-                Attribute attr=env.iterator().next()
-                assertEquals "http://dtolabs.com/rundeck/env/project",attr.property.toString()
-                assertEquals "testProject",attr.value
-                return [authorized:true]
-            }
-            tfwk.getAuthorizationMgr= { return [ evaluate:evalClos] }
-            def resource = [type: 'job', name: 'name1', group: 'blah/blee']
-            assertTrue test.authorizeProjectResource(tfwk, resource, 'test', 'testProject')
+        FrameworkService test = new FrameworkService();
+        def decision = [authorized: true]
+        def resource = [type: 'job', name: 'name1', group: 'blah/blee']
+        assertTestAuthorizeSingle(test, [type: 'job', name: 'name1', group: 'blah/blee'], decision, "testProject") { AuthContext it ->
+            assertTrue( test.authorizeProjectResource(it, resource, 'test', 'testProject'))
         }
     }
     void testAuthorizeProjectResourceAllSuccess(){
-        FrameworkService test= new FrameworkService();
-        def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
-            clos.call()
-        }
-        test.metricService = mcontrol.createMock()
-        test:{
-            def expected=[type:'job',name:'name1',group:'blah/blee']
-            def tfwk = new Expando()
-            tfwk.getAuthenticationMgr= { return [  subject: 'subject1'] }
-            def evalClos={ Set resources, subject, Set actions, Collection env->
-                assertEquals 1,resources.size()
-                def res1=resources.iterator().next()
-                assertEquals expected, res1
-                assertEquals 'subject1', subject
-                assertEquals 2, actions.size()
-                assertTrue actions.contains('test')
-                assertTrue actions.contains('test2')
-                Attribute attr=env.iterator().next()
-                assertEquals "http://dtolabs.com/rundeck/env/project",attr.property.toString()
-                assertEquals "testProject",attr.value
-                return [[authorized:true]]
-            }
-            tfwk.getAuthorizationMgr= { return [ evaluate:evalClos] }
-            def resource = [type: 'job', name: 'name1', group: 'blah/blee']
-            assertTrue test.authorizeProjectResourceAll(tfwk, resource, ['test','test2'], 'testProject')
+        FrameworkService test = new FrameworkService();
+        def decisions = [[authorized: true]] as Set
+        def resource = [type: 'job', name: 'name1', group: 'blah/blee']
+        assertTestAuthorizeSet(test, [type: 'job', name: 'name1', group: 'blah/blee'], decisions, ['test', 'test2'], "testProject") { AuthContext it ->
+            assertTrue( test.authorizeProjectResourceAll(it, resource, ['test','test2'], 'testProject'))
         }
     }
 
     void testAuthorizeProjectResourceAllFailure() {
         FrameworkService test = new FrameworkService();
-        def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
-            clos.call()
-        }
-        test.metricService = mcontrol.createMock()
-        test:{
-            def expected=[type:'job',name:'name1',group:'blah/blee']
-            def tfwk = new Expando()
-            tfwk.getAuthenticationMgr= { return [  subject: 'subject1'] }
-            def evalClos={ Set resources, subject, Set actions, Collection env->
-                assertEquals 1,resources.size()
-                def res1=resources.iterator().next()
-                assertEquals expected, res1
-                assertEquals 'subject1', subject
-                assertEquals 2, actions.size()
-                assertTrue actions.contains('test')
-                assertTrue actions.contains('test2')
-                Attribute attr=env.iterator().next()
-                assertEquals "http://dtolabs.com/rundeck/env/project",attr.property.toString()
-                assertEquals "testProject",attr.value
-                return [[authorized:false]]
-            }
-            tfwk.getAuthorizationMgr= { return [ evaluate:evalClos] }
-            def resource = [type: 'job', name: 'name1', group: 'blah/blee']
-            assertFalse test.authorizeProjectResourceAll(tfwk, resource, ['test','test2'], 'testProject')
+        def decisions = [[authorized: false]] as Set
+        def resource = [type: 'job', name: 'name1', group: 'blah/blee']
+        assertTestAuthorizeSet(test, [type: 'job', name: 'name1', group: 'blah/blee'], decisions, ['test', 'test2'], "testProject") { AuthContext it ->
+            assertFalse(test.authorizeProjectResourceAll(it, resource, ['test', 'test2'], 'testProject'))
         }
     }
 
     void testAuthorizeProjectResourceAllMixedFailure() {
         FrameworkService test = new FrameworkService();
-        def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
-            clos.call()
-        }
-        test.metricService = mcontrol.createMock()
-        test:{
-            def expected=[type:'job',name:'name1',group:'blah/blee']
-            def tfwk = new Expando()
-            tfwk.getAuthenticationMgr= { return [  subject: 'subject1'] }
-            def evalClos={ Set resources, subject, Set actions, Collection env->
-                assertEquals 1,resources.size()
-                def res1=resources.iterator().next()
-                assertEquals expected, res1
-                assertEquals 'subject1', subject
-                assertEquals 2, actions.size()
-                assertTrue actions.contains('test')
-                assertTrue actions.contains('test2')
-                Attribute attr=env.iterator().next()
-                assertEquals "http://dtolabs.com/rundeck/env/project",attr.property.toString()
-                assertEquals "testProject",attr.value
-                return [[authorized:false],[authorized:true]]
-            }
-            tfwk.getAuthorizationMgr= { return [ evaluate:evalClos] }
-            def resource = [type: 'job', name: 'name1', group: 'blah/blee']
-            assertFalse test.authorizeProjectResourceAll(tfwk, resource, ['test','test2'], 'testProject')
+        def decisions = [[authorized: false],[authorized: true]] as Set
+        def resource = [type: 'job', name: 'name1', group: 'blah/blee']
+        assertTestAuthorizeSet(test, [type: 'job', name: 'name1', group: 'blah/blee'], decisions, ['test', 'test2'], "testProject") { AuthContext it ->
+            assertFalse(test.authorizeProjectResourceAll(it, resource, ['test', 'test2'], 'testProject'))
         }
     }
 
     void testAuthorizeProjectResourceAllAllFailure() {
         FrameworkService test = new FrameworkService();
-        def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
-            clos.call()
-        }
-        test.metricService = mcontrol.createMock()
-        test:{
-            def expected=[type:'job',name:'name1',group:'blah/blee']
-            def tfwk = new Expando()
-            tfwk.getAuthenticationMgr= { return [  subject: 'subject1'] }
-            def evalClos={ Set resources, subject, Set actions, Collection env->
-                assertEquals 1,resources.size()
-                def res1=resources.iterator().next()
-                assertEquals expected, res1
-                assertEquals 'subject1', subject
-                assertEquals 2, actions.size()
-                assertTrue actions.contains('test')
-                assertTrue actions.contains('test2')
-                Attribute attr=env.iterator().next()
-                assertEquals "http://dtolabs.com/rundeck/env/project",attr.property.toString()
-                assertEquals "testProject",attr.value
-                return [[authorized:false],[authorized:false]]
-            }
-            tfwk.getAuthorizationMgr= { return [ evaluate:evalClos] }
-            def resource = [type: 'job', name: 'name1', group: 'blah/blee']
-            assertFalse test.authorizeProjectResourceAll(tfwk, resource, ['test','test2'], 'testProject')
+        def decisions = [[authorized: false],[authorized: false]] as Set
+        def resource = [type: 'job', name: 'name1', group: 'blah/blee']
+        assertTestAuthorizeSet(test, [type: 'job', name: 'name1', group: 'blah/blee'], decisions, ['test', 'test2'], "testProject") { AuthContext it ->
+            assertFalse(test.authorizeProjectResourceAll(it, resource, ['test', 'test2'], 'testProject'))
         }
     }
 
     void testAuthorizeProjectResourceAllMultiSuccess() {
         FrameworkService test = new FrameworkService();
-        def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
-            clos.call()
-        }
-        test.metricService = mcontrol.createMock()
-        test:{
-            def expected=[type:'job',name:'name1',group:'blah/blee']
-            def tfwk = new Expando()
-            tfwk.getAuthenticationMgr= { return [  subject: 'subject1'] }
-            def evalClos={ Set resources, subject, Set actions, Collection env->
-                assertEquals 1,resources.size()
-                def res1=resources.iterator().next()
-                assertEquals expected, res1
-                assertEquals 'subject1', subject
-                assertEquals 2, actions.size()
-                assertTrue actions.contains('test')
-                assertTrue actions.contains('test2')
-                Attribute attr=env.iterator().next()
-                assertEquals "http://dtolabs.com/rundeck/env/project",attr.property.toString()
-                assertEquals "testProject",attr.value
-                return [[authorized:true],[authorized:true]]
-            }
-            tfwk.getAuthorizationMgr= { return [ evaluate:evalClos] }
-            def resource = [type: 'job', name: 'name1', group: 'blah/blee']
-            assertTrue test.authorizeProjectResourceAll(tfwk, resource, ['test','test2'], 'testProject')
+        def decisions = [[authorized: true],[authorized: true]] as Set
+        def resource = [type: 'job', name: 'name1', group: 'blah/blee']
+        assertTestAuthorizeSet(test, [type: 'job', name: 'name1', group: 'blah/blee'], decisions, ['test', 'test2'], "testProject") { AuthContext it ->
+            assertTrue(test.authorizeProjectResourceAll(it, resource, ['test', 'test2'], 'testProject'))
         }
     }
     void testAuthResourceForJob(){
@@ -522,372 +371,102 @@ class FrameworkServiceTests  {
         }
     }
     void testAuthorizeApplicationResourceSuccess(){
-        FrameworkService test= new FrameworkService();
-        def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
-            clos.call()
-        }
-        test.metricService = mcontrol.createMock()
-        test:{
-            def expected=[type:'job',name:'name1',group:'blah/blee']
-            def tfwk = new Expando()
-            tfwk.getAuthenticationMgr= { return [  subject: 'subject1'] }
-            def evalClos={ Map res1, subject, String action, Collection env->
-                assertEquals expected, res1
-                assertEquals 'subject1', subject
-                assertEquals 'testAction', action
-                Attribute attr=env.iterator().next()
-                assertEquals "http://dtolabs.com/rundeck/env/application",attr.property.toString()
-                assertEquals "rundeck",attr.value
-                return [authorized:true]
-            }
-            tfwk.getAuthorizationMgr= { return [ evaluate:evalClos] }
-            def resource = [type: 'job', name: 'name1', group: 'blah/blee']
-            assertTrue test.authorizeApplicationResource(tfwk, resource, 'testAction')
+        FrameworkService test = new FrameworkService();
+        def decision = [authorized: true]
+        def resource = [type: 'job', name: 'name1', group: 'blah/blee']
+        assertTestAuthorizeSingle(test, [type: 'job', name: 'name1', group: 'blah/blee'], decision, null) { AuthContext it ->
+            assertTrue(test.authorizeApplicationResource(it, resource, 'test'))
         }
     }
 
     void testAuthorizeApplicationResourceFailure() {
         FrameworkService test = new FrameworkService();
-        def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
-            clos.call()
-        }
-        test.metricService = mcontrol.createMock()
-        test:{
-            def expected=[type:'job',name:'name1',group:'blah/blee']
-            def tfwk = new Expando()
-            tfwk.getAuthenticationMgr= { return [  subject: 'subject1'] }
-            def evalClos = { Map res1, subject, String action, Collection env ->
-                assertEquals expected, res1
-                assertEquals 'subject1', subject
-                assertEquals 'testAction', action
-                Attribute attr = env.iterator().next()
-                assertEquals "http://dtolabs.com/rundeck/env/application", attr.property.toString()
-                assertEquals "rundeck", attr.value
-                return [authorized:false]
-            }
-            tfwk.getAuthorizationMgr= { return [ evaluate:evalClos] }
-            def resource = [type: 'job', name: 'name1', group: 'blah/blee']
-            assertFalse test.authorizeApplicationResource(tfwk, resource, 'testAction')
+        def decision = [authorized: false]
+        def resource = [type: 'job', name: 'name1', group: 'blah/blee']
+        assertTestAuthorizeSingle(test, [type: 'job', name: 'name1', group: 'blah/blee'], decision,
+                null) { AuthContext it ->
+            assertFalse(test.authorizeApplicationResource(it, resource, 'test'))
         }
     }
     void testAuthorizeApplicationResourceAllSuccess(){
-        FrameworkService test= new FrameworkService();
-        def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
-            clos.call()
-        }
-        test.metricService = mcontrol.createMock()
-        test:{
-            def expected=[type:'job',name:'name1',group:'blah/blee']
-            def tfwk = new Expando()
-            tfwk.getAuthenticationMgr= { return [  subject: 'subject1'] }
-            def evalClos={ Set resources, subject, Set actions, Collection env->
-                assertEquals 1,resources.size()
-                def res1=resources.iterator().next()
-                assertEquals expected, res1
-                assertEquals 'subject1', subject
-                assertEquals 2, actions.size()
-                assertTrue actions.contains('testAction')
-                assertTrue actions.contains('testAction2')
-                Attribute attr=env.iterator().next()
-                assertEquals "http://dtolabs.com/rundeck/env/application",attr.property.toString()
-                assertEquals "rundeck",attr.value
-                return [[authorized:true]]
-            }
-            tfwk.getAuthorizationMgr= { return [ evaluate:evalClos] }
-            def resource = [type: 'job', name: 'name1', group: 'blah/blee']
-            assertTrue test.authorizeApplicationResourceAll(tfwk, resource, ['testAction','testAction2'])
+        FrameworkService test = new FrameworkService();
+        def decision = [[authorized: true]] as Set
+        def resource = [type: 'job', name: 'name1', group: 'blah/blee']
+        assertTestAuthorizeSet(test, [type: 'job', name: 'name1', group: 'blah/blee'], decision, ['test','test2'], null) { AuthContext it ->
+            assertTrue(test.authorizeApplicationResourceAll(it, resource, ['test', 'test2']))
         }
     }
 
     void testAuthorizeApplicationResourceAllFailure() {
         FrameworkService test = new FrameworkService();
-        def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
-            clos.call()
-        }
-        test.metricService = mcontrol.createMock()
-        test: {
-            def expected = [type: 'job', name: 'name1', group: 'blah/blee']
-            def tfwk = new Expando()
-            tfwk.getAuthenticationMgr = { return [subject: 'subject1'] }
-            def evalClos = { Set resources, subject, Set actions, Collection env ->
-                assertEquals 1, resources.size()
-                def res1 = resources.iterator().next()
-                assertEquals expected, res1
-                assertEquals 'subject1', subject
-                assertEquals 2, actions.size()
-                assertTrue actions.contains('testAction')
-                assertTrue actions.contains('testAction2')
-                Attribute attr = env.iterator().next()
-                assertEquals "http://dtolabs.com/rundeck/env/application", attr.property.toString()
-                assertEquals "rundeck", attr.value
-                return [[authorized: false]]
-            }
-            tfwk.getAuthorizationMgr = { return [evaluate: evalClos] }
-            def resource = [type: 'job', name: 'name1', group: 'blah/blee']
-            assertFalse test.authorizeApplicationResourceAll(tfwk, resource, ['testAction', 'testAction2'])
+        def decision = [[authorized: false]] as Set
+        def resource = [type: 'job', name: 'name1', group: 'blah/blee']
+        assertTestAuthorizeSet(test, [type: 'job', name: 'name1', group: 'blah/blee'], decision, ['test', 'test2'], null) { AuthContext it ->
+            assertFalse(test.authorizeApplicationResourceAll(it, resource, ['test', 'test2']))
         }
     }
 
     void testAuthorizeApplicationResourceAllMultiMixed() {
         FrameworkService test = new FrameworkService();
-        def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
-            clos.call()
-        }
-        test.metricService = mcontrol.createMock()
-        test: {
-            def expected = [type: 'job', name: 'name1', group: 'blah/blee']
-            def tfwk = new Expando()
-            tfwk.getAuthenticationMgr = { return [subject: 'subject1'] }
-            def evalClos = { Set resources, subject, Set actions, Collection env ->
-                assertEquals 1, resources.size()
-                def res1 = resources.iterator().next()
-                assertEquals expected, res1
-                assertEquals 'subject1', subject
-                assertEquals 2, actions.size()
-                assertTrue actions.contains('testAction')
-                assertTrue actions.contains('testAction2')
-                Attribute attr = env.iterator().next()
-                assertEquals "http://dtolabs.com/rundeck/env/application", attr.property.toString()
-                assertEquals "rundeck", attr.value
-                return [[authorized: false],[authorized:true]]
-            }
-            tfwk.getAuthorizationMgr = { return [evaluate: evalClos] }
-            def resource = [type: 'job', name: 'name1', group: 'blah/blee']
-            assertFalse test.authorizeApplicationResourceAll(tfwk, resource, ['testAction', 'testAction2'])
+        def decision = [[authorized: false],[authorized: true]] as Set
+        def resource = [type: 'job', name: 'name1', group: 'blah/blee']
+        assertTestAuthorizeSet(test, [type: 'job', name: 'name1', group: 'blah/blee'], decision, ['test', 'test2'], null) { AuthContext it ->
+            assertFalse(test.authorizeApplicationResourceAll(it, resource, ['test', 'test2']))
         }
     }
 
-    void testAuthorizeApplicationResourceAllMultiFail() {
-        FrameworkService test = new FrameworkService();
-        def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
-            clos.call()
-        }
-        test.metricService = mcontrol.createMock()
-        test: {
-            def expected = [type: 'job', name: 'name1', group: 'blah/blee']
-            def tfwk = new Expando()
-            tfwk.getAuthenticationMgr = { return [subject: 'subject1'] }
-            def evalClos = { Set resources, subject, Set actions, Collection env ->
-                assertEquals 1, resources.size()
-                def res1 = resources.iterator().next()
-                assertEquals expected, res1
-                assertEquals 'subject1', subject
-                assertEquals 2, actions.size()
-                assertTrue actions.contains('testAction')
-                assertTrue actions.contains('testAction2')
-                Attribute attr = env.iterator().next()
-                assertEquals "http://dtolabs.com/rundeck/env/application", attr.property.toString()
-                assertEquals "rundeck", attr.value
-                return [[authorized: false],[authorized:false]]
-            }
-            tfwk.getAuthorizationMgr = { return [evaluate: evalClos] }
-            def resource = [type: 'job', name: 'name1', group: 'blah/blee']
-            assertFalse test.authorizeApplicationResourceAll(tfwk, resource, ['testAction', 'testAction2'])
-        }
-    }
-
-    void testAuthorizeApplicationResourceAllMultiSuccess() {
-        FrameworkService test = new FrameworkService();
-        def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
-            clos.call()
-        }
-        test.metricService = mcontrol.createMock()
-        test: {
-            def expected = [type: 'job', name: 'name1', group: 'blah/blee']
-            def tfwk = new Expando()
-            tfwk.getAuthenticationMgr = { return [subject: 'subject1'] }
-            def evalClos = { Set resources, subject, Set actions, Collection env ->
-                assertEquals 1, resources.size()
-                def res1 = resources.iterator().next()
-                assertEquals expected, res1
-                assertEquals 'subject1', subject
-                assertEquals 2, actions.size()
-                assertTrue actions.contains('testAction')
-                assertTrue actions.contains('testAction2')
-                Attribute attr = env.iterator().next()
-                assertEquals "http://dtolabs.com/rundeck/env/application", attr.property.toString()
-                assertEquals "rundeck", attr.value
-                return [[authorized: true],[authorized:true]]
-            }
-            tfwk.getAuthorizationMgr = { return [evaluate: evalClos] }
-            def resource = [type: 'job', name: 'name1', group: 'blah/blee']
-            assertTrue test.authorizeApplicationResourceAll(tfwk, resource, ['testAction', 'testAction2'])
-        }
-    }
 
     void testAuthorizeApplicationResourceType() {
         FrameworkService test = new FrameworkService();
-        def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
-            clos.call()
-        }
-        test.metricService = mcontrol.createMock()
-        test: {
-            def expected = [type: 'resource', kind:'aType']
-            def tfwk = new Expando()
-            tfwk.getAuthenticationMgr = { return [subject: 'subject1'] }
-            def evalClos = { Map res1, subject, String action, Collection env ->
-                assertEquals expected, res1
-                assertEquals 'subject1', subject
-                assertEquals 'testAction', action
-                Attribute attr = env.iterator().next()
-                assertEquals "http://dtolabs.com/rundeck/env/application", attr.property.toString()
-                assertEquals "rundeck", attr.value
-                return [authorized: true]
-            }
-            tfwk.getAuthorizationMgr = { return [evaluate: evalClos] }
-            assertTrue test.authorizeApplicationResourceType(tfwk, 'aType', 'testAction')
+        def decision = [authorized: true]
+        def expected = [type: 'resource', kind: 'aType']
+        assertTestAuthorizeSingle(test, expected, decision,
+                null) { AuthContext it ->
+            assertTrue(test.authorizeApplicationResourceType(it, 'aType', 'test'))
         }
     }
     void testAuthorizeApplicationResourceTypeAllSuccess() {
         FrameworkService test = new FrameworkService();
-        def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
-            clos.call()
-        }
-        test.metricService = mcontrol.createMock()
-        test: {
-            def expected = [type: 'resource', kind:'aType']
-            def tfwk = new Expando()
-            tfwk.getAuthenticationMgr = { return [subject: 'subject1'] }
-            def evalClos = { Set resources, subject, Set actions, Collection env ->
-                assertEquals 1,resources.size()
-                def res1=resources.iterator().next()
-                assertEquals expected, res1
-                assertEquals 'subject1', subject
-                assertEquals 2, actions.size()
-                assertTrue  actions.contains('testAction')
-                assertTrue  actions.contains('testAction2')
-                Attribute attr = env.iterator().next()
-                assertEquals "http://dtolabs.com/rundeck/env/application", attr.property.toString()
-                assertEquals "rundeck", attr.value
-                return [[authorized: true]]
-            }
-            tfwk.getAuthorizationMgr = { return [evaluate: evalClos] }
-            assertTrue test.authorizeApplicationResourceTypeAll(tfwk, 'aType', ['testAction','testAction2'])
+        def decision = [[authorized: true]] as Set
+        def expected = [type: 'resource', kind: 'aType']
+        assertTestAuthorizeSet(test, expected, decision, ['test', 'test2'], null) { AuthContext it ->
+            assertTrue(test.authorizeApplicationResourceTypeAll(it, 'aType', ['test', 'test2']))
         }
     }
 
     void testAuthorizeApplicationResourceTypeAllFailure() {
         FrameworkService test = new FrameworkService();
-        def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
-            clos.call()
-        }
-        test.metricService = mcontrol.createMock()
-        test: {
-            def expected = [type: 'resource', kind:'aType']
-            def tfwk = new Expando()
-            tfwk.getAuthenticationMgr = { return [subject: 'subject1'] }
-            def evalClos = { Set resources, subject, Set actions, Collection env ->
-                assertEquals 1,resources.size()
-                def res1=resources.iterator().next()
-                assertEquals expected, res1
-                assertEquals 'subject1', subject
-                assertEquals 2, actions.size()
-                assertTrue  actions.contains('testAction')
-                assertTrue  actions.contains('testAction2')
-                Attribute attr = env.iterator().next()
-                assertEquals "http://dtolabs.com/rundeck/env/application", attr.property.toString()
-                assertEquals "rundeck", attr.value
-                return [[authorized: false]]
-            }
-            tfwk.getAuthorizationMgr = { return [evaluate: evalClos] }
-            assertFalse test.authorizeApplicationResourceTypeAll(tfwk, 'aType', ['testAction','testAction2'])
+        def decision = [[authorized: false]] as Set
+        def expected = [type: 'resource', kind: 'aType']
+        assertTestAuthorizeSet(test, expected, decision, ['test', 'test2'], null) { AuthContext it ->
+            assertFalse(test.authorizeApplicationResourceTypeAll(it, 'aType', ['test', 'test2']))
         }
     }
 
     void testAuthorizeApplicationResourceTypeAllMultiFailure() {
         FrameworkService test = new FrameworkService();
-        def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
-            clos.call()
-        }
-        test.metricService = mcontrol.createMock()
-        test: {
-            def expected = [type: 'resource', kind:'aType']
-            def tfwk = new Expando()
-            tfwk.getAuthenticationMgr = { return [subject: 'subject1'] }
-            def evalClos = { Set resources, subject, Set actions, Collection env ->
-                assertEquals 1,resources.size()
-                def res1=resources.iterator().next()
-                assertEquals expected, res1
-                assertEquals 'subject1', subject
-                assertEquals 2, actions.size()
-                assertTrue  actions.contains('testAction')
-                assertTrue  actions.contains('testAction2')
-                Attribute attr = env.iterator().next()
-                assertEquals "http://dtolabs.com/rundeck/env/application", attr.property.toString()
-                assertEquals "rundeck", attr.value
-                return [[authorized: false],[authorized:false]]
-            }
-            tfwk.getAuthorizationMgr = { return [evaluate: evalClos] }
-            assertFalse test.authorizeApplicationResourceTypeAll(tfwk, 'aType', ['testAction','testAction2'])
+        def decision = [[authorized: false], [authorized: false]] as Set
+        def expected = [type: 'resource', kind: 'aType']
+        assertTestAuthorizeSet(test, expected, decision, ['test', 'test2'], null) { AuthContext it ->
+            assertFalse(test.authorizeApplicationResourceTypeAll(it, 'aType', ['test', 'test2']))
         }
     }
 
     void testAuthorizeApplicationResourceTypeAllMixedFailure() {
         FrameworkService test = new FrameworkService();
-        def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
-            clos.call()
-        }
-        test.metricService = mcontrol.createMock()
-        test: {
-            def expected = [type: 'resource', kind:'aType']
-            def tfwk = new Expando()
-            tfwk.getAuthenticationMgr = { return [subject: 'subject1'] }
-            def evalClos = { Set resources, subject, Set actions, Collection env ->
-                assertEquals 1,resources.size()
-                def res1=resources.iterator().next()
-                assertEquals expected, res1
-                assertEquals 'subject1', subject
-                assertEquals 2, actions.size()
-                assertTrue  actions.contains('testAction')
-                assertTrue  actions.contains('testAction2')
-                Attribute attr = env.iterator().next()
-                assertEquals "http://dtolabs.com/rundeck/env/application", attr.property.toString()
-                assertEquals "rundeck", attr.value
-                return [[authorized: false],[authorized:true]]
-            }
-            tfwk.getAuthorizationMgr = { return [evaluate: evalClos] }
-            assertFalse test.authorizeApplicationResourceTypeAll(tfwk, 'aType', ['testAction','testAction2'])
+        def decision = [[authorized: false], [authorized: true]] as Set
+        def expected = [type: 'resource', kind: 'aType']
+        assertTestAuthorizeSet(test, expected, decision, ['test', 'test2'], null) { AuthContext it ->
+            assertFalse(test.authorizeApplicationResourceTypeAll(it, 'aType', ['test', 'test2']))
         }
     }
 
     void testAuthorizeApplicationResourceTypeAllMultiSuccess() {
         FrameworkService test = new FrameworkService();
-        def mcontrol = mockFor(MetricService, false)
-        mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
-            clos.call()
-        }
-        test.metricService = mcontrol.createMock()
-        test: {
-            def expected = [type: 'resource', kind:'aType']
-            def tfwk = new Expando()
-            tfwk.getAuthenticationMgr = { return [subject: 'subject1'] }
-            def evalClos = { Set resources, subject, Set actions, Collection env ->
-                assertEquals 1,resources.size()
-                def res1=resources.iterator().next()
-                assertEquals expected, res1
-                assertEquals 'subject1', subject
-                assertEquals 2, actions.size()
-                assertTrue  actions.contains('testAction')
-                assertTrue  actions.contains('testAction2')
-                Attribute attr = env.iterator().next()
-                assertEquals "http://dtolabs.com/rundeck/env/application", attr.property.toString()
-                assertEquals "rundeck", attr.value
-                return [[authorized: true],[authorized:true]]
-            }
-            tfwk.getAuthorizationMgr = { return [evaluate: evalClos] }
-            assertTrue test.authorizeApplicationResourceTypeAll(tfwk, 'aType', ['testAction','testAction2'])
+        def decision = [[authorized: true], [authorized: true]] as Set
+        def expected = [type: 'resource', kind: 'aType']
+        assertTestAuthorizeSet(test, expected, decision, ['test', 'test2'], null) { AuthContext it ->
+            assertTrue(test.authorizeApplicationResourceTypeAll(it, 'aType', ['test', 'test2']))
         }
     }
 }

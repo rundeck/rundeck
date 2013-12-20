@@ -1,7 +1,7 @@
 package rundeck.filters
 
+import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.Framework
-import rundeck.filters.AA_TimerFilters
 
 /*
 * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
@@ -70,11 +70,13 @@ public class ProjectSelectFilters {
                 if (session && session.user) {
                     //get user authorizations
                     session.projectSelectFilterApplied = true
-                    def Framework fw = frameworkService.getFrameworkFromUserSession(session, request)
+                    def Framework fw = frameworkService.rundeckFramework
+                    def AuthContext authContext = frameworkService.userAuthContext(session)
 
 
                     def selected = params.project
-                    if (selected && (!frameworkService.existsFrameworkProject(selected, fw) || !frameworkService.authorizeApplicationResourceAll(fw, [type: 'project', name: selected], ['read']))) {
+                    if (selected && (!frameworkService.existsFrameworkProject(selected)
+                            || !frameworkService.authorizeApplicationResourceAll(authContext, [type: 'project', name: selected], ['read']))) {
                         selected = null
                     }
                     if (selected) {
@@ -84,7 +86,8 @@ public class ProjectSelectFilters {
 
                     selected = session.project
                     //check project exists
-                    if (selected && (!frameworkService.existsFrameworkProject(selected, fw) || !frameworkService.authorizeApplicationResourceAll(fw, [type: 'project', name: selected], ['read']))) {
+                    if (selected && (!frameworkService.existsFrameworkProject(selected)
+                            || !frameworkService.authorizeApplicationResourceAll(authContext, [type: 'project', name: selected], ['read']))) {
                         selected = null
                     }
                     if (selected) {
@@ -93,7 +96,8 @@ public class ProjectSelectFilters {
                     }
                     //use last stored filter pref
                     def prefs = userService.getFilterPref(session.user)
-                    if (prefs.project && (!frameworkService.existsFrameworkProject(prefs.project, fw) || !frameworkService.authorizeApplicationResourceAll(fw, [type: 'project', name: prefs.project], ['read']))) {
+                    if (prefs.project && (!frameworkService.existsFrameworkProject(prefs.project)
+                            || !frameworkService.authorizeApplicationResourceAll(authContext, [type: 'project', name: prefs.project], ['read']))) {
                         selected = prefs.project
                     }
                     if (selected) {
@@ -102,13 +106,13 @@ public class ProjectSelectFilters {
                     }
 
                     //use alphabetically first project
-                    def projs = frameworkService.projects(fw).sort {a, b -> a.name <=> b.name}
+                    def projs = frameworkService.projects(authContext).sort {a, b -> a.name <=> b.name}
                     if (projs) {
                         selected = projs[0].name
                     }
                     session.project = selected
                     if (!selected) {
-                        if (!frameworkService.authorizeApplicationResourceTypeAll(fw, 'project', ['create'])) {
+                        if (!frameworkService.authorizeApplicationResourceTypeAll(authContext, 'project', ['create'])) {
                             redirect(action: 'noProjectAccess', controller: 'framework')
                         }else{
                             redirect(action: 'createProject', controller: 'framework')
