@@ -27,7 +27,7 @@ import javax.security.auth.Subject
 /**
  * Interfaces with the core Framework object
  */
-class FrameworkService implements ApplicationContextAware, Authorization {
+class FrameworkService implements ApplicationContextAware {
 
     static transactional = false
 
@@ -39,7 +39,6 @@ class FrameworkService implements ApplicationContextAware, Authorization {
     def ApplicationContext applicationContext
     def ExecutionService executionService
     def metricService
-    def projects
     def Framework rundeckFramework
 
     def getRundeckBase(){
@@ -65,15 +64,6 @@ class FrameworkService implements ApplicationContextAware, Authorization {
     }
    
 
-    @Override
-    Decision evaluate(Map<String, String> resource, Subject subject, String action, Set<Attribute> environment) {
-        return rundeckPolicyAuthorization.evaluate(resource,subject,action,environment)
-    }
-
-    @Override
-    Set<Decision> evaluate(Set<Map<String, String>> resources, Subject subject, Set<String> actions, Set<Attribute> environment) {
-        return rundeckPolicyAuthorization.evaluate(resources,subject,actions,environment)
-    }
 /**
      * Return a list of FrameworkProject objects
      */
