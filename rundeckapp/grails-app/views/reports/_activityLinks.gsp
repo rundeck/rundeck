@@ -20,14 +20,6 @@
 </g:if>
 <ul class="nav nav-links">
 
-    <li>
-        <g:link controller="reports" action="index"
-                title="All activity for this job"
-                params="${linkParams}">
-            <i class="glyphicon glyphicon-list"></i>
-            all
-        </g:link>
-    </li>
 
     <li>
         <g:link controller="reports" action="index"
@@ -77,4 +69,13 @@
             </g:link>
         </li>
     </g:if>
+    <li>
+        <g:link controller="reports" action="index"
+                title="All activity for this job"
+                params="${linkParams}">
+            <i class="glyphicon glyphicon-list"></i>
+            all
+        </g:link>
+    </li>
+
 </ul>
