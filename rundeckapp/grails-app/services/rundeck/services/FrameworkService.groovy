@@ -129,28 +129,18 @@ class FrameworkService implements ApplicationContextAware, Authorization {
      * @return
      */
     def getFrameworkPropertyResolver(String projectName=null, Map instanceConfiguration=null) {
-        final File rdbaseDir = new File(rundeckBase)
-        def fwk = Framework.createPropertyRetriever(rdbaseDir)
-        def projBaseDir = getFrameworkProjectsBasedir(rundeckBase)
         return PropertyResolverFactory.createResolver(
-                instanceConfiguration?PropertyResolverFactory.instanceRetriever(instanceConfiguration):null,
-                null != projectName
-                ? Framework.createProjectPropertyRetriever(rdbaseDir, new File(projBaseDir), projectName)
-                : null,
-                fwk)
+                instanceConfiguration ? PropertyResolverFactory.instanceRetriever(instanceConfiguration) : null,
+                null != projectName ? getFrameworkProject(projectName, rundeckFramework).getPropertyRetriever() : null,
+                rundeckFramework.getPropertyRetriever()
+        )
     }
     /**
      * Return the property retriever for framework properties from the base dir.
      * @return
      */
     def getFrameworkProperties(){
-        final File rdbaseDir = new File(rundeckBase)
-        return Framework.createPropertyRetriever(rdbaseDir)
-    }
-    static def getFrameworkProjectsBasedir(String rundeckbase){
-        def baseDir = new File(rundeckbase)
-        def fwk = Framework.createPropertyRetriever(baseDir)
-        return fwk.getProperty("framework.projects.dir") ?: Framework.getProjectsBaseDir(baseDir)
+        return rundeckFramework.getPropertyRetriever()
     }
     /**
      * Filter nodes for a project given the node selector
@@ -515,14 +505,6 @@ class FrameworkService implements ApplicationContextAware, Authorization {
     def List getNodeStepPluginDescriptions(Framework framework){
         framework.getNodeStepExecutorService().listDescriptions()
     }
-    /**
-     * Return the Map of NodeStepPlugin descriptions keyed by name
-     * @param framework
-     * @return
-     */
-    def getNodeStepPluginDescriptionsMap(Framework framework){
-        getNodeStepPluginDescriptions(framework).collectEntries{ [it.name, it] }
-    }
 
     /**
      * Return the list of StepPlugin descriptions
@@ -531,14 +513,6 @@ class FrameworkService implements ApplicationContextAware, Authorization {
      */
     def List getStepPluginDescriptions(Framework framework){
         framework.getStepExecutionService().listDescriptions()
-    }
-    /**
-     * Return the Map of StepPlugin descriptions keyed by name
-     * @param framework
-     * @return
-     */
-    def getStepPluginDescriptionsMap(Framework framework){
-        getStepPluginDescriptions(framework).collectEntries{ [it.name, it] }
     }
 
     /**
@@ -551,7 +525,7 @@ class FrameworkService implements ApplicationContextAware, Authorization {
      * @return validation results, keys: "valid" (true/false), "error" (error message), "desc" ({@link Description} object),
      *   "props" (parsed property values map), "report" (Validation report {@link Validator.Report))
      */
-    public Map validateServiceConfig(Framework framework, String type, String prefix, Map params, final ProviderService<?> service) {
+    public Map validateServiceConfig(String type, String prefix, Map params, ProviderService<?> service) {
         Map result = [:]
         result.valid=false
         final provider

@@ -548,7 +548,7 @@ class FrameworkController  {
         if (params.defaultNodeExec) {
             def ndx = params.defaultNodeExec
             (defaultNodeExec, nodeexec) = parseServiceConfigInput(params, "nodeexec", ndx)
-            final validation = frameworkService.validateServiceConfig(framework, defaultNodeExec, "nodeexec.${ndx}.config.", params, framework.getNodeExecutorService())
+            final validation = frameworkService.validateServiceConfig(defaultNodeExec, "nodeexec.${ndx}.config.", params, framework.getNodeExecutorService())
             if (!validation.valid) {
                 nodeexecreport = validation.report
                 errors << (validation.error ?: "Default Node Executor configuration was invalid")
@@ -564,7 +564,7 @@ class FrameworkController  {
         if (params.defaultFileCopy) {
             def ndx = params.defaultFileCopy
             (defaultFileCopy, fcopy) = parseServiceConfigInput(params, "fcopy", ndx)
-            final validation = frameworkService.validateServiceConfig(framework, defaultFileCopy, "fcopy.${ndx}.config.", params, framework.getFileCopierService())
+            final validation = frameworkService.validateServiceConfig(defaultFileCopy, "fcopy.${ndx}.config.", params, framework.getFileCopierService())
             if (!validation.valid) {
                 fcopyreport = validation.report
                 errors << (validation.error ?: "Default File copier configuration was invalid")
@@ -766,7 +766,7 @@ class FrameworkController  {
             if (params.defaultNodeExec) {
                 def ndx=params.defaultNodeExec
                 (defaultNodeExec, nodeexec)=parseServiceConfigInput(params,"nodeexec",ndx)
-                final validation = frameworkService.validateServiceConfig(framework, defaultNodeExec, "nodeexec.${ndx}.config.", params, framework.getNodeExecutorService())
+                final validation = frameworkService.validateServiceConfig(defaultNodeExec, "nodeexec.${ndx}.config.", params, framework.getNodeExecutorService())
                 if(!validation.valid){
                     nodeexecreport=validation.report
                     error = validation.error ?: "Node Executor configuration was invalid"
@@ -782,7 +782,7 @@ class FrameworkController  {
             if (params.defaultFileCopy) {
                 def ndx=params.defaultFileCopy
                 (defaultFileCopy, fcopy) = parseServiceConfigInput(params, "fcopy", ndx)
-                final validation = frameworkService.validateServiceConfig(framework, defaultFileCopy, "fcopy.${ndx}.config.", params, framework.getFileCopierService())
+                final validation = frameworkService.validateServiceConfig(defaultFileCopy, "fcopy.${ndx}.config.", params, framework.getFileCopierService())
                 if(!validation.valid){
                     fcopyreport = validation.report
                     error=validation.error?:"File copier configuration was invalid"
@@ -956,7 +956,7 @@ class FrameworkController  {
         if (!type) {
             error = "Plugin provider type must be specified"
         }else{
-            def validate = frameworkService.validateServiceConfig(framework, type, prefix+'config.', params,framework.getResourceModelSourceService())
+            def validate = frameworkService.validateServiceConfig(type, prefix + 'config.', params, framework.getResourceModelSourceService())
             error = validate.error
             desc = validate.desc
             props = validate.props
@@ -983,7 +983,7 @@ class FrameworkController  {
         if (!type) {
             result.error = "Plugin provider type must be specified"
         }else{
-            def validate = frameworkService.validateServiceConfig(framework, type, prefix + 'config.', params,framework.getResourceModelSourceService())
+            def validate = frameworkService.validateServiceConfig(type, prefix + 'config.', params, framework.getResourceModelSourceService())
             result.valid=validate.valid
             result.error=validate.error
         }
@@ -1002,7 +1002,7 @@ class FrameworkController  {
         if (!type) {
             error = "Plugin provider type must be specified"
         } else {
-            def validate = frameworkService.validateServiceConfig(framework, type, prefix + 'config.', params,framework.getResourceModelSourceService())
+            def validate = frameworkService.validateServiceConfig(type, prefix + 'config.', params, framework.getResourceModelSourceService())
             error = validate.error
             desc=validate.desc
             props=validate.props
@@ -1026,7 +1026,7 @@ class FrameworkController  {
         if (!type) {
             error = "Plugin provider type must be specified"
         } else {
-            def validate = frameworkService.validateServiceConfig(framework, type, prefix + 'config.', params,framework.getResourceModelSourceService())
+            def validate = frameworkService.validateServiceConfig(type, prefix + 'config.', params, framework.getResourceModelSourceService())
             error = validate.error
             desc = validate.desc
             props = validate.props
