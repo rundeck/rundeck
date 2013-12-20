@@ -1,6 +1,5 @@
 package rundeck.controllers
 
-import com.dtolabs.rundeck.core.common.Framework
 import rundeck.WorkflowStep
 import rundeck.Workflow
 import rundeck.JobExec
@@ -57,9 +56,9 @@ class WorkflowController {
         }
         def newitemDescription
         if(item && item.instanceOf(PluginStep)){
-            newitemDescription = getPluginStepDescription(item.nodeStep, item.type, frameworkService.getRundeckFramework())
+            newitemDescription = getPluginStepDescription(item.nodeStep, item.type)
         } else{
-            newitemDescription = getPluginStepDescription(params.newitemnodestep == 'true', params['newitemtype'], frameworkService.getRundeckFramework())
+            newitemDescription = getPluginStepDescription(params.newitemnodestep == 'true', params['newitemtype'])
         }
         return render(template: "/execution/wfitemEdit", model: [item: item, key:params.key, num: numi, scheduledExecutionId: params.scheduledExecutionId, newitemtype: params['newitemtype'], newitemDescription: newitemDescription, edit: true, isErrorHandler: isErrorHandler,newitemnodestep: params.newitemnodestep])
     }
@@ -70,7 +69,7 @@ class WorkflowController {
      * @param framework
      * @return
      */
-    private Description getPluginStepDescription(boolean isNodeStep, String type, Framework framework) {
+    private Description getPluginStepDescription(boolean isNodeStep, String type) {
         if (type && !(type in ['command', 'script', 'scriptfile', 'job'])) {
             return isNodeStep ? frameworkService.getNodeStepPluginDescription(type) : frameworkService.getStepPluginDescription(type)
         }
@@ -104,7 +103,7 @@ class WorkflowController {
                 return error.call()
             }
         }
-        def itemDescription = item.instanceOf(PluginStep)?getPluginStepDescription(item.nodeStep,item.type, frameworkService.getRundeckFramework()):null
+        def itemDescription = item.instanceOf(PluginStep)?getPluginStepDescription(item.nodeStep, item.type):null
         return render(template: "/execution/wflistitemContent", model: [workflow: editwf, item: item, i: params.key, stepNum:numi, scheduledExecutionId: params.scheduledExecutionId, edit: params.edit, isErrorHandler: isErrorHandler, itemDescription: itemDescription])
     }
 
@@ -141,7 +140,7 @@ class WorkflowController {
         if (result.error) {
             log.error(result.error)
             item=result.item
-            def itemDescription = item.instanceOf(PluginStep) ? getPluginStepDescription(item.nodeStep, item.type, frameworkService.getRundeckFramework()) : null
+            def itemDescription = item.instanceOf(PluginStep) ? getPluginStepDescription(item.nodeStep, item.type) : null
             return render(template: "/execution/wfitemEdit", model: [item: result.item, key: params.key, num: params.num,
                 scheduledExecutionId: params.scheduledExecutionId, newitemtype: params['newitemtype'], edit: true, isErrorHandler: isErrorHandler, newitemDescription: itemDescription,report:result.report])
         }
@@ -154,7 +153,7 @@ class WorkflowController {
         if(isErrorHandler){
             item=item.errorHandler
         }
-        def itemDescription = item.instanceOf(PluginStep) ? getPluginStepDescription(item.nodeStep, item.type, frameworkService.getRundeckFramework()) : null
+        def itemDescription = item.instanceOf(PluginStep) ? getPluginStepDescription(item.nodeStep, item.type) : null
         return render(template: "/execution/wflistitemContent", model: [workflow: editwf, item: item, i: params.key, stepNum: numi, scheduledExecutionId: params.scheduledExecutionId, edit: true,isErrorHandler: isErrorHandler,itemDescription: itemDescription])
     }
 
@@ -660,7 +659,7 @@ class WorkflowController {
         if(exec instanceof PluginStep){
             PluginStep item = exec as PluginStep
             def framework = frameworkService.getRundeckFramework()
-            def description=getPluginStepDescription(item.nodeStep, item.type, framework)
+            def description=getPluginStepDescription(item.nodeStep, item.type)
             return frameworkService.validateDescription(description,'',item.configuration)
         }else{
             return [valid:true]
