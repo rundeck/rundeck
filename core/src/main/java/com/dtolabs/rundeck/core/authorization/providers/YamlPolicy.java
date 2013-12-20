@@ -58,7 +58,9 @@ final class YamlPolicy implements Policy {
     public Map policyInput;
 
     private Set<String> usernames = new HashSet<String>();
-    private Set<Object> groups = new HashSet<Object>();
+    private Set<String> groups = new HashSet<String>();
+    private Set<Pattern> usernamePatterns = new HashSet<Pattern>();
+    private Set<Pattern> groupPatterns = new HashSet<Pattern>();
     AclContext aclContext;
 
     private File sourceFile;
@@ -76,10 +78,11 @@ final class YamlPolicy implements Policy {
     public YamlPolicy(final Map yamlDoc) {
         this(yamlDoc, null, -1);
     }
+
     String identify() {
         return null != policyInput.get("id") ? policyInput.get("id").toString()
-                                             : (null != sourceFile ? (sourceFile.getAbsolutePath()) : "(unknown file)")
-                                               + (sourceIndex >= 0 ? "[" + sourceIndex + "]" : "");
+                : (null != sourceFile ? (sourceFile.getAbsolutePath()) : "(unknown file)")
+                + (sourceIndex >= 0 ? "[" + sourceIndex + "]" : "");
     }
 
     public Set<String> getUsernames() {
@@ -101,10 +104,18 @@ final class YamlPolicy implements Policy {
         }
     }
 
-    static class YamlEnvironmentalContext implements EnvironmentalContext{
+    public Set<Pattern> getUsernamePatterns() {
+        return usernamePatterns;
+    }
+
+    public Set<Pattern> getGroupPatterns() {
+        return groupPatterns;
+    }
+
+    static class YamlEnvironmentalContext implements EnvironmentalContext {
         Map<URI, String> matcher = new HashMap<URI, String>();
         Map<URI, Pattern> matcherRegex = new HashMap<URI, Pattern>();
-        private boolean valid=false;
+        private boolean valid = false;
         private String validation;
         private String description;
         static private Comparator<Attribute> comparator = new Comparator<Attribute>() {
@@ -116,15 +127,16 @@ final class YamlPolicy implements Policy {
                     return u;
                 }
             }
-        };;
+        };
+        ;
 
         YamlEnvironmentalContext(final String uriPrefix, final Map ctx) {
-            boolean invalidentry=false;
+            boolean invalidentry = false;
             ArrayList<String> errors = new ArrayList<String>();
             for (final Object o : ctx.entrySet()) {
-                Map.Entry entry=(Map.Entry) o;
-                if(entry.getKey() instanceof String){
-                    String path=(String) entry.getKey();
+                Map.Entry entry = (Map.Entry) o;
+                if (entry.getKey() instanceof String) {
+                    String path = (String) entry.getKey();
                     final URI uri;
                     try {
                         uri = new URI(uriPrefix + path);
@@ -133,7 +145,7 @@ final class YamlPolicy implements Policy {
                         invalidentry = true;
                         continue;
                     }
-                    if(entry.getValue() instanceof String) {
+                    if (entry.getValue() instanceof String) {
                         String value = (String) entry.getValue();
                         matcher.put(uri, value);
                         try {
@@ -141,10 +153,10 @@ final class YamlPolicy implements Policy {
                             matcherRegex.put(uri, compile);
                         } catch (PatternSyntaxException e) {
                         }
-                    }else {
+                    } else {
                         errors.add(
-                            "Context section: " + entry.getKey() + ": expected 'String', saw: " + entry.getValue()
-                                .getClass().getName());
+                                "Context section: " + entry.getKey() + ": expected 'String', saw: " + entry.getValue()
+                                        .getClass().getName());
                         invalidentry = true;
                     }
                 } else {
@@ -152,10 +164,10 @@ final class YamlPolicy implements Policy {
                     invalidentry = true;
                 }
             }
-            if(errors.size()>0) {
+            if (errors.size() > 0) {
                 final StringBuffer sb = new StringBuffer();
                 for (final String error : errors) {
-                    if(sb.length()>0) {
+                    if (sb.length() > 0) {
                         sb.append("; ");
                     }
                     sb.append(error);
@@ -180,6 +192,7 @@ final class YamlPolicy implements Policy {
         }
 
         private HashMap<String, Boolean> memoize = new HashMap<String, Boolean>();
+
         private boolean memo(Set<Attribute> environment) {
             String ident = ident(environment);
             Boolean found = memoize.get(ident);
@@ -209,11 +222,11 @@ final class YamlPolicy implements Policy {
                 final String matchValue = matcher.get(attribute.property);
                 if (null != matchValue && matchValue.equals(attribute.value)) {
                     matchedSet.add(attribute.property);
-                }else if (null != pattern && pattern.matcher(attribute.value).matches()) {
+                } else if (null != pattern && pattern.matcher(attribute.value).matches()) {
                     matchedSet.add(attribute.property);
                 }
             }
-            return valid && matchedSet.size()==matcher.keySet().size();
+            return valid && matchedSet.size() == matcher.keySet().size();
         }
 
         public boolean isValid() {
@@ -230,7 +243,7 @@ final class YamlPolicy implements Policy {
         }
     }
 
-    public Set<Object> getGroups() {
+    public Set<String> getGroups() {
         return groups;
     }
 
@@ -276,7 +289,7 @@ final class YamlPolicy implements Policy {
      * Create acl context  for specific rule in a type context
      */
     ContextMatcher createTypeRuleContext(final Map section, final int i) {
-        return new TypeRuleContextMatcher(section, i,this);
+        return new TypeRuleContextMatcher(section, i, this);
     }
 
     private static String createLegacyJobResourcePath(final Map<String, String> resource) {
@@ -302,11 +315,11 @@ final class YamlPolicy implements Policy {
 
         if (null != u) {
             if (u instanceof String) {
-                usernames.add((String) u);
+                addUsername((String) u);
             } else if (u instanceof Collection) {
                 for (final Object o : (Collection) u) {
                     if (o instanceof String) {
-                        usernames.add((String) o);
+                        addUsername((String) o);
                     }
                 }
             }
@@ -314,11 +327,11 @@ final class YamlPolicy implements Policy {
 
         if (null != g) {
             if (g instanceof String) {
-                groups.add(g);
+                addGroup((String) g);
             } else if (g instanceof Collection) {
                 for (final Object o : (Collection) g) {
                     if (o instanceof String) {
-                        groups.add(o);
+                        addGroup((String) o);
                     }
                 }
             }
@@ -326,12 +339,30 @@ final class YamlPolicy implements Policy {
 
     }
 
+    private void addGroup(String g) {
+        try {
+            Pattern p = Pattern.compile(g);
+            getGroupPatterns().add(p);
+        } catch (PatternSyntaxException e) {
+        }
+        groups.add(g);
+    }
+
+    private void addUsername(String u) {
+        try {
+            Pattern p = Pattern.compile(u);
+            getUsernamePatterns().add(p);
+        } catch (PatternSyntaxException e) {
+        }
+        usernames.add(u);
+    }
+
     @Override
     public String toString() {
         final StringBuffer sb = new StringBuffer("YamlPolicy[id:");
         sb.append(identify()).append(", groups:");
-        for (final Object group : getGroups()) {
-            sb.append(group.toString()).append(" ");
+        for (final String group : getGroups()) {
+            sb.append(group).append(" ");
         }
         sb.append("]");
         return sb.toString();
@@ -379,8 +410,8 @@ final class YamlPolicy implements Policy {
                 }
             }
             return new ContextDecision(denied ? Explanation.Code.REJECTED_DENIED
-                                              : allowed ? Explanation.Code.GRANTED : Explanation.Code.REJECTED,
-                allowed && !denied, evaluations);
+                    : allowed ? Explanation.Code.GRANTED : Explanation.Code.REJECTED,
+                    allowed && !denied, evaluations);
 
         }
     }
@@ -446,6 +477,7 @@ final class YamlPolicy implements Policy {
         TypeRuleContextMatcher(final Map ruleSection, final int index) {
             this(ruleSection, index, null);
         }
+
         TypeRuleContextMatcher(final Map ruleSection, final int index, final YamlPolicy policy) {
             this.ruleSection = ruleSection;
             this.index = index;
@@ -458,20 +490,21 @@ final class YamlPolicy implements Policy {
         }
 
         private String identify() {
-            return (null!=policy?policy.identify():"(unknown policy)")+"[rule: " + index + ": " + ruleSection + "]";
+            return (null != policy ? policy.identify() : "(unknown policy)") + "[rule: " + index + ": " + ruleSection
+                    + "]";
         }
 
         private static ConcurrentHashMap<String, Pattern> patternCache = new ConcurrentHashMap<String, Pattern>();
 
         private Pattern patternForRegex(final String regex) {
             if (!patternCache.containsKey(regex)) {
-                Pattern compile=null;
+                Pattern compile = null;
                 try {
                     compile = Pattern.compile(regex);
                 } catch (Exception e) {
                     //invalid regex
                 }
-                if(null==compile) {
+                if (null == compile) {
                     //create equality match regex
                     compile = Pattern.compile("^" + Pattern.quote(regex) + "$");
                 }
@@ -503,13 +536,13 @@ final class YamlPolicy implements Policy {
                     actions.addAll((List<String>) actionsObj);
                 } else {
                     evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED_CONTEXT_EVALUATION_ERROR,
-                        "Invalid action type."));
+                            "Invalid action type."));
                 }
                 if (0 == actions.size()) {
                     logger.warn(identify() + ": No actions defined in Deny section");
                 } else if (actions.contains("*") || actions.contains(action)) {
                     evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED_DENIED,
-                        this + " for actions: " + actions));
+                            this + " for actions: " + actions));
                     denied = true;
                 }
             }
@@ -527,13 +560,13 @@ final class YamlPolicy implements Policy {
                     actions.addAll((List<String>) actionsObj);
                 } else {
                     evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED_CONTEXT_EVALUATION_ERROR,
-                        "Invalid action type."));
+                            "Invalid action type."));
                 }
                 if (0 == actions.size()) {
                     logger.warn(identify() + ": No actions defined in Allow section");
                 } else if (actions.contains("*") || actions.contains(action)) {
                     evaluations.add(new ContextEvaluation(Explanation.Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED,
-                        this + " for actions: " + actions));
+                            this + " for actions: " + actions));
                     allowed = true;
                 }
             }
@@ -559,7 +592,7 @@ final class YamlPolicy implements Policy {
                     matchesMet++;
                 } else {
                     evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED,
-                        MATCH_SECTION + " section did not match"));
+                            MATCH_SECTION + " section did not match"));
                 }
             }
             //evaluate equals:
@@ -569,7 +602,7 @@ final class YamlPolicy implements Policy {
                     matchesMet++;
                 } else {
                     evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED,
-                        EQUALS_SECTION + " section did not match"));
+                            EQUALS_SECTION + " section did not match"));
                 }
             }
 
@@ -580,18 +613,20 @@ final class YamlPolicy implements Policy {
                     matchesMet++;
                 } else {
                     evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED,
-                        CONTAINS_SECTION + " section did not match"));
+                            CONTAINS_SECTION + " section did not match"));
                 }
             }
             return matchesMet == matchesRequired;
         }
+
         private boolean validRuleSection(final Map section) {
             return null != section && section.size() > 0;
         }
 
         boolean ruleMatchesContainsSection(final Map<String, String> resource, final Map ruleSection) {
             final Map section = (Map) ruleSection.get(CONTAINS_SECTION);
-            return validRuleSection(section) && predicateMatchRules(section, resource, true, new Converter<String, Predicate>() {
+            return validRuleSection(section) && predicateMatchRules(section, resource, true, new Converter<String,
+                    Predicate>() {
                 public Predicate convert(final String o) {
                     return new SetContainsPredicate(o);
                 }
@@ -601,7 +636,8 @@ final class YamlPolicy implements Policy {
         boolean ruleMatchesEqualsSection(final Map<String, String> resource, final Map ruleSection) {
             final Map section = (Map) ruleSection.get(EQUALS_SECTION);
 
-            return validRuleSection(section) && predicateMatchRules(section, resource, false, new Converter<String, Predicate>() {
+            return validRuleSection(section) && predicateMatchRules(section, resource, false, new Converter<String,
+                    Predicate>() {
                 public Predicate convert(final String o) {
                     return PredicateUtils.equalPredicate(o);
                 }
@@ -610,7 +646,8 @@ final class YamlPolicy implements Policy {
 
         boolean ruleMatchesMatchSection(final Map<String, String> resource, final Map ruleSection) {
             final Map section = (Map) ruleSection.get(MATCH_SECTION);
-            return validRuleSection(section) && predicateMatchRules(section, resource, true, new Converter<String, Predicate>() {
+            return validRuleSection(section) && predicateMatchRules(section, resource, true, new Converter<String,
+                    Predicate>() {
                 public Predicate convert(final String o) {
                     return new RegexPredicate(patternForRegex(o));
                 }
@@ -627,9 +664,9 @@ final class YamlPolicy implements Policy {
          *                             test
          * @param predicateTransformer transformer to convert a String into a Predicate check
          */
-        @SuppressWarnings ("rawtypes")
+        @SuppressWarnings("rawtypes")
         boolean predicateMatchRules(final Map match, final Map<String, String> resource, final boolean allowListMatch,
-                                    final Converter<String, Predicate> predicateTransformer) {
+                final Converter<String, Predicate> predicateTransformer) {
             for (final Object o : match.entrySet()) {
                 final Map.Entry entry = (Map.Entry) o;
                 final String key = (String) entry.getKey();
@@ -653,8 +690,8 @@ final class YamlPolicy implements Policy {
          * @param test                 test to apply, can be a String, or List of Strings if allowListMatch is true
          */
         boolean applyTest(final Map<String, String> resource, final boolean allowListMatch,
-                          final Converter<String, Predicate> predicateTransformer, final String key,
-                          final Object test) {
+                final Converter<String, Predicate> predicateTransformer, final String key,
+                final Object test) {
 
             final ArrayList<Predicate> tests = new ArrayList<Predicate>();
             if (allowListMatch && test instanceof List) {
@@ -763,14 +800,14 @@ final class YamlPolicy implements Policy {
                 final Object ruleKey = entry.getKey();
                 if (!(ruleKey instanceof String)) {
                     evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED_CONTEXT_EVALUATION_ERROR,
-                        "Invalid key type: " + ruleKey.getClass().getName()));
+                            "Invalid key type: " + ruleKey.getClass().getName()));
                     continue;
                 }
 
                 final String rule = (String) ruleKey;
                 if (rule == null || rule.length() == 0) {
                     evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED_CONTEXT_EVALUATION_ERROR,
-                        "Resource is empty or null"));
+                            "Resource is empty or null"));
                 }
 
                 if (regexMatches(rule, resource)) {
@@ -778,7 +815,7 @@ final class YamlPolicy implements Policy {
                     final Object actionsKey = ruleMap.get(ACTIONS_SECTION);
                     if (actionsKey == null) {
                         evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED_ACTIONS_DECLARED_EMPTY,
-                            "No actions configured"));
+                                "No actions configured"));
                         continue;
                     }
 
@@ -786,26 +823,26 @@ final class YamlPolicy implements Policy {
                         final String actions = (String) actionsKey;
                         if ("*".equals(actions) || actions.contains(action)) {
                             evaluations.add(new ContextEvaluation(Explanation.Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED,
-                                "Legacy rule: " + rule + " action: " + actions));
+                                    "Legacy rule: " + rule + " action: " + actions));
                             return new ContextDecision(Explanation.Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, true,
-                                evaluations);
+                                    evaluations);
                         }
                     } else if (actionsKey instanceof List) {
                         final List actions = (List) actionsKey;
                         if (actions.contains(action)) {
                             evaluations.add(new ContextEvaluation(Explanation.Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED,
-                                 "Legacy rule: " + rule + " action: " + actions));
+                                    "Legacy rule: " + rule + " action: " + actions));
                             return new ContextDecision(Explanation.Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, true,
-                                evaluations);
+                                    evaluations);
                         }
                     } else {
                         evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED_CONTEXT_EVALUATION_ERROR,
-                            "Invalid action type."));
+                                "Invalid action type."));
 
                     }
 
                     evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED_NO_ACTIONS_MATCHED,
-                        "No actions matched"));
+                            "No actions matched"));
                 }
             }
             return new ContextDecision(Explanation.Code.REJECTED, false, evaluations);
@@ -817,7 +854,7 @@ final class YamlPolicy implements Policy {
      * for: type: section of the policy def.
      */
     static class YamlAclContext implements AclContext {
-        private String description = "Not Evaluated: " ;
+        private String description = "Not Evaluated: ";
         Map policyDef;
         private final ConcurrentHashMap<String, AclContext> typeContexts = new ConcurrentHashMap<String, AclContext>();
         TypeContextFactory typeContextFactory;
@@ -825,12 +862,13 @@ final class YamlPolicy implements Policy {
         private Map forsection;
 
         YamlAclContext(final Map policyDef, final TypeContextFactory typeContextFactory,
-                       final LegacyContextFactory legacyContextFactory) {
+                final LegacyContextFactory legacyContextFactory) {
             this.policyDef = policyDef;
             this.typeContextFactory = typeContextFactory;
             this.legacyContextFactory = legacyContextFactory;
             initialize();
         }
+
         private ContextDecision invalid;
 
         private void initialize() {
@@ -841,7 +879,7 @@ final class YamlPolicy implements Policy {
             if (descriptionValue == null || !(descriptionValue instanceof String)) {
                 evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED_NO_DESCRIPTION_PROVIDED,
                         "Policy is missing a description."));
-                invalid=new ContextDecision(Explanation.Code.REJECTED_NO_DESCRIPTION_PROVIDED, false, evaluations);
+                invalid = new ContextDecision(Explanation.Code.REJECTED_NO_DESCRIPTION_PROVIDED, false, evaluations);
                 return;
             }
             description = (String) descriptionValue;
@@ -852,7 +890,7 @@ final class YamlPolicy implements Policy {
             if (null != forMap && !(forMap instanceof Map)) {
                 evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED_INVALID_FOR_SECTION,
                         "'" + FOR_SECTION + "' was not declared"));
-                invalid= new ContextDecision(Explanation.Code.REJECTED_INVALID_FOR_SECTION, false, evaluations);
+                invalid = new ContextDecision(Explanation.Code.REJECTED_INVALID_FOR_SECTION, false, evaluations);
                 return;
             }
 
@@ -860,17 +898,18 @@ final class YamlPolicy implements Policy {
             /**
              * true indicates the old style "rules:" section is in effect for a resource of type "job"
              */
-            boolean useLegacyRules = policyDef.containsKey(RULES_SECTION) && policyDef.get(RULES_SECTION) instanceof Map;
+            boolean useLegacyRules = policyDef.containsKey(RULES_SECTION) && policyDef.get(RULES_SECTION) instanceof
+                    Map;
 
-            if(null!=forsection){
+            if (null != forsection) {
                 for (Object key : forsection.keySet()) {
-                    if(key instanceof String) {
-                        String type=(String) key;
+                    if (key instanceof String) {
+                        String type = (String) key;
                         Object typeSection = forsection.get(key);
                         typeContexts.putIfAbsent(type, createTypeContext((List) typeSection));
                     }
                 }
-            }else if (useLegacyRules && null != legacyContextFactory) {
+            } else if (useLegacyRules && null != legacyContextFactory) {
                 final Object rulesValue = policyDef.get(RULES_SECTION);
                 final Map rules = (Map) rulesValue;
                 typeContexts.putIfAbsent(JOB_TYPE, createLegacyContext(rules));
@@ -893,7 +932,7 @@ final class YamlPolicy implements Policy {
         static final ContextDecision NO_RESOURCE_TYPE_DECISION = new ContextDecision(
                 Explanation.Code.REJECTED_NO_RESOURCE_TYPE, false,
                 Collections.singletonList(new ContextEvaluation(Explanation.Code.REJECTED_NO_RESOURCE_TYPE,
-                "Resource has no '" + TYPE_PROPERTY + "'.")));
+                        "Resource has no '" + TYPE_PROPERTY + "'.")));
 
         private static ContextDecision createNoRulesDecision(String type) {
             return new ContextDecision(Explanation.Code.REJECTED_NO_RULES_DECLARED, false,
@@ -901,9 +940,9 @@ final class YamlPolicy implements Policy {
                             "Section for type '" + type + "' was not declared in " + FOR_SECTION + " section")));
         }
 
-        @SuppressWarnings ("rawtypes")
+        @SuppressWarnings("rawtypes")
         public ContextDecision includes(final Map<String, String> resourceMap, final String action) {
-            if(null!=invalid){
+            if (null != invalid) {
                 return invalid;
             }
             //require the resource to have a "type" value
@@ -913,7 +952,7 @@ final class YamlPolicy implements Policy {
             }
 
             final AclContext typeContext = typeContexts.get(type);
-            if(null==typeContext) {
+            if (null == typeContext) {
                 return createNoRulesDecision(type);
             }
             return typeContext.includes(resourceMap, action);

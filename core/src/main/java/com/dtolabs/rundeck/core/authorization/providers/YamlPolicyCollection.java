@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.*;
+import java.util.regex.Pattern;
 
 import javax.naming.InvalidNameException;
 import javax.naming.ldap.LdapName;
@@ -23,13 +24,13 @@ import com.dtolabs.rundeck.core.authorization.Attribute;
 /**
  * @author noahcampbell
  */
-public class PoliciesYaml implements PolicyCollection {
-    static Logger logger = Logger.getLogger(PoliciesYaml.class.getName());
+public class YamlPolicyCollection implements PolicyCollection {
+    static Logger logger = Logger.getLogger(YamlPolicyCollection.class.getName());
     private final Set<YamlPolicy> all = new HashSet<YamlPolicy>();
     File file;
 
 
-    public PoliciesYaml(final File file) throws IOException {
+    public YamlPolicyCollection(final File file) throws IOException {
         final Yaml yaml = new Yaml();
         this.file = file;
         final FileInputStream stream = new FileInputStream(this.file);
@@ -50,8 +51,8 @@ public class PoliciesYaml implements PolicyCollection {
     public Collection<String> groupNames() throws InvalidCollection {
         List<String> groups = new ArrayList<String>();
         for (YamlPolicy policy : all) {
-            for (Object policyGroup : policy.getGroups()) {
-                groups.add(policyGroup.toString());
+            for (String policyGroup : policy.getGroups()) {
+                groups.add(policyGroup);
             }
         }
         return groups;
@@ -121,16 +122,17 @@ public class PoliciesYaml implements PolicyCollection {
                 logger.debug(policy.toString() + ": empty environment not matched");
                 continue;
             }
-            
+
 
             if (usernamePrincipals.size() > 0) {
                 Set<String> policyUsers = policy.getUsernames();
-                if (!Collections.disjoint(policyUsers, usernamePrincipals)) {
+                if (!Collections.disjoint(policyUsers, usernamePrincipals)
+                        || matchesAnyPatterns(usernamePrincipals, policy.getUsernamePatterns())) {
                     matchedContexts.add(policy.getContext());
                     continue;
-                }else if(policyUsers.size()>0){
+                } else if (policyUsers.size() > 0) {
                     if (logger.isDebugEnabled()) {
-                        logger.debug(policy.toString() + ": username not matched: "+ policyUsers);
+                        logger.debug(policy.toString() + ": username not matched: " + policyUsers);
                     }
                 }
             }
@@ -138,8 +140,9 @@ public class PoliciesYaml implements PolicyCollection {
 
             if (groupNames.size() > 0) {
                 // no username matched, check groups.
-                Set<Object> policyGroups = policy.getGroups();
-                if (!Collections.disjoint(policyGroups, groupNames)) {
+                Set<String> policyGroups = policy.getGroups();
+                if (!Collections.disjoint(policyGroups, groupNames)
+                        || matchesAnyPatterns(groupNames, policy.getGroupPatterns())) {
                     matchedContexts.add(policy.getContext());
                     continue;
                 }else if(policyGroups.size()>0){
@@ -153,5 +156,16 @@ public class PoliciesYaml implements PolicyCollection {
         }
         logger.debug(file.getAbsolutePath() + ": matched contexts: " + matchedContexts.size());
         return matchedContexts;
+    }
+
+    static boolean matchesAnyPatterns(Set<?> groupNames, Set<Pattern> groupPatterns) {
+        for (Pattern groupPattern : groupPatterns) {
+            for (Object groupName : groupNames) {
+                if(groupPattern.matcher(groupName.toString()).matches()) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

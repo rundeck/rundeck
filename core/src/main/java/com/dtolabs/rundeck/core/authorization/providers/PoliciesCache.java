@@ -24,15 +24,12 @@
 package com.dtolabs.rundeck.core.authorization.providers;
 
 import org.apache.log4j.Logger;
-import org.w3c.dom.Document;
-import org.xml.sax.SAXException;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.FilenameFilter;
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -100,7 +97,7 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
 
     private PolicyCollection createEntry(final File file) throws PoliciesParseException {
         try {
-            return new PoliciesYaml(file);
+            return new YamlPolicyCollection(file);
         } catch (Exception e1) {
             throw new PoliciesParseException(e1);
         }
