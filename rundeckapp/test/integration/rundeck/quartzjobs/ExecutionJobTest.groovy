@@ -16,6 +16,7 @@
 
 package rundeck.quartzjobs
 
+import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.execution.ServiceThreadBase
 import grails.test.GrailsMock
@@ -91,9 +92,7 @@ class ExecutionJobTest  {
         ExecutionJob job = new ExecutionJob()
         def mockes=new GrailsMock(ExecutionService)
         def mockeus=new GrailsMock(ExecutionUtilService)
-        FrameworkService.metaClass.static.getFrameworkForUserAndRoles={ String user, List rolelist, String rundeckbase->
-            'fakeFramework'
-        }
+        def mockfs=new GrailsMock(FrameworkService)
         mockes.demand.selectSecureOptionInput(1..1){ ScheduledExecution scheduledExecution, Map params, Boolean exposed = false->
             [test:'input']
         }
@@ -103,10 +102,17 @@ class ExecutionJobTest  {
             Assert.assertEquals('fakeFramework',framework)
             'fakeExecution'
         }
+        mockfs.demand.getRundeckFramework(1..1){->
+            'fakeFramework'
+        }
+        mockfs.demand.getAuthContextForUserAndRoles(1..1) { user, rolelist ->
+
+        }
         ExecutionService es = mockes.createMock()
         ExecutionUtilService eus = mockeus.createMock()
+        FrameworkService fs = mockfs.createMock()
 
-        def contextMock = setupJobDataMap([scheduledExecutionId:se.id,executionService:es,executionUtilService:eus,'rdeck.base':'/test/rdeck/base'])
+        def contextMock = setupJobDataMap([scheduledExecutionId:se.id,frameworkService:fs,executionService:es,executionUtilService:eus,'rdeck.base':'/test/rdeck/base'])
         def result=job.initialize(null, contextMock)
 
         Assert.assertEquals(se.id,result.scheduledExecutionId)
@@ -126,16 +132,17 @@ class ExecutionJobTest  {
     @Test
     void testExecuteCommandStartFailed(){
         ScheduledExecution se = setupJob()
+        Execution execution = setupExecution(se, new Date(), new Date())
         ExecutionJob job = new ExecutionJob()
         def mockes = new GrailsMock(ExecutionService)
         def mockeus = new GrailsMock(ExecutionUtilService)
-        mockes.demand.executeAsyncBegin(1..1) { Framework framework, Execution execution, ScheduledExecution scheduledExecution = null, Map extraParams = null, Map extraParamsExposed = null ->
+        mockes.demand.executeAsyncBegin(1..1) { Framework framework, AuthContext authContext, Execution e, ScheduledExecution scheduledExecution = null, Map extraParams = null, Map extraParamsExposed = null ->
             null //fail to start
         }
         ExecutionService es = mockes.createMock()
         ExecutionUtilService eus = mockeus.createMock()
 
-        def result=job.executeCommand(es,eus,null,null)
+        def result = job.executeCommand(es, eus, execution, null, null)
         Assert.assertEquals(false,result.success)
     }
 
@@ -155,7 +162,7 @@ class ExecutionJobTest  {
         ServiceThreadBase stb=new ServiceThreadBase()
         stb.success=true
         def testExecmap = [thread: stb, testExecuteAsyncBegin: true]
-        mockes.demand.executeAsyncBegin(1..1) { Framework framework, Execution execution1, ScheduledExecution scheduledExecution = null, Map extraParams = null, Map extraParamsExposed = null ->
+        mockes.demand.executeAsyncBegin(1..1) { Framework framework, AuthContext authContext, Execution execution1, ScheduledExecution scheduledExecution = null, Map extraParams = null, Map extraParamsExposed = null ->
             Assert.assertEquals(execution,execution1)
             testExecmap
         }
@@ -165,7 +172,7 @@ class ExecutionJobTest  {
         ExecutionService es = mockes.createMock()
         ExecutionUtilService eus = mockeus.createMock()
 
-        def result=job.executeCommand(es,eus,execution,null)
+        def result=job.executeCommand(es,eus,execution,null, null)
         Assert.assertEquals(true,result.success)
         Assert.assertEquals(testExecmap,result.execmap)
     }
@@ -193,7 +200,7 @@ class ExecutionJobTest  {
         ServiceThreadBase stb = new ServiceThreadBase()
         stb.success = false
         def testExecmap = [thread: stb, testExecuteAsyncBegin: true]
-        mockes.demand.executeAsyncBegin(1..1) { Framework framework, Execution execution1, ScheduledExecution scheduledExecution = null, Map extraParams = null, Map extraParamsExposed = null ->
+        mockes.demand.executeAsyncBegin(1..1) { Framework framework, AuthContext authContext, Execution execution1, ScheduledExecution scheduledExecution = null, Map extraParams = null, Map extraParamsExposed = null ->
             Assert.assertEquals(execution, execution1)
             testExecmap
         }
@@ -203,7 +210,7 @@ class ExecutionJobTest  {
         ExecutionService es = mockes.createMock()
         ExecutionUtilService eus = mockeus.createMock()
 
-        def result = job.executeCommand(es, eus, execution, null)
+        def result = job.executeCommand(es, eus, execution, null, null)
         Assert.assertEquals(false, result.success)
         Assert.assertEquals(testExecmap, result.execmap)
 
@@ -224,7 +231,7 @@ class ExecutionJobTest  {
         ServiceThreadBase stb = new ServiceThreadBase()
         stb.success = false
         def testExecmap = [thread: stb, testExecuteAsyncBegin: true]
-        mockes.demand.executeAsyncBegin(1..1) { Framework framework, Execution execution1, ScheduledExecution scheduledExecution = null, Map extraParams = null, Map extraParamsExposed = null ->
+        mockes.demand.executeAsyncBegin(1..1) { Framework framework, AuthContext authContext, Execution execution1, ScheduledExecution scheduledExecution = null, Map extraParams = null, Map extraParamsExposed = null ->
             Assert.assertEquals(execution, execution1)
             testExecmap
         }
@@ -236,7 +243,7 @@ class ExecutionJobTest  {
         job.finalizeRetryDelay=10
         job.finalizeRetryMax=3
         try {
-            def result = job.executeCommand(es, eus, execution, null)
+            def result = job.executeCommand(es, eus, execution, null, null)
             Assert.fail("should throw exception")
         } catch (RuntimeException e) {
             Assert.assertTrue(e.message,e.message.contains("failed"))
@@ -260,7 +267,7 @@ class ExecutionJobTest  {
         ServiceThreadBase stb = new ServiceThreadBase()
         stb.success = false
         def testExecmap = [thread: stb, testExecuteAsyncBegin: true]
-        mockes.demand.executeAsyncBegin(1..1) { Framework framework, Execution execution1, ScheduledExecution scheduledExecution = null, Map extraParams = null, Map extraParamsExposed = null ->
+        mockes.demand.executeAsyncBegin(1..1) { Framework framework, AuthContext authContext, Execution execution1, ScheduledExecution scheduledExecution = null, Map extraParams = null, Map extraParamsExposed = null ->
             Assert.assertEquals(execution, execution1)
             testExecmap
         }
@@ -275,7 +282,7 @@ class ExecutionJobTest  {
         ExecutionUtilService eus = mockeus.createMock()
         job.finalizeRetryDelay=10
         job.finalizeRetryMax=4
-        def result = job.executeCommand(es, eus, execution, null)
+        def result = job.executeCommand(es, eus, execution, null, null)
         Assert.assertEquals(false, result.success)
         Assert.assertEquals(testExecmap, result.execmap)
     }
