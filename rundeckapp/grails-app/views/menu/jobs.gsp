@@ -202,9 +202,9 @@
             if(popvis && lastHref===elem.href){
                 return;
             }
-            var delay=50;
+            var delay=0;
             if(popvis){
-                delay=50;
+                delay=0;
             }
             motimer=setTimeout(showJobDetails.curry(elem),delay);
         }
@@ -228,11 +228,11 @@
                 motimer=null;
             }
             doshow=false;
-            mltimer=setTimeout(doMouseout,500);
+            mltimer=setTimeout(doMouseout,0);
         }
         function showJobDetails(elem){
             //get url
-            var href=elem.href;
+            var href=elem.href || elem.getAttribute('data-href');
             var match=href.match(/\/job\/.+?\/(.+)$/);
             if(!match){
                 return;
@@ -285,7 +285,7 @@
             });
         }
         function initJobIdLinks(){
-            $$('a.jobIdLink').each(function(e){
+            $$('.jobIdLink').each(function(e){
                 Event.observe(e,'mouseover',jobLinkMouseover.curry(e));
                 Event.observe(e,'mouseout',jobLinkMouseout.curry(e));
             });

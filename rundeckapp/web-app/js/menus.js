@@ -77,7 +77,7 @@ var MenuController = Class.create({
             cw+=pt[0];
         }
         Element.clonePosition(menu, menuLink, { setWidth:   false, setHeight:  false,offsetTop:h,offsetLeft:cw});
-        Try.these(function(){Effect.Appear(menu,{duration: 0.3});},Element.show.curry(menu));
+        Try.these(Element.show.curry(menu));
     },
     doMenuHide: function(menu, time) {
         if (time) {
