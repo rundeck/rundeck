@@ -110,7 +110,7 @@ class ExecutionController {
         def pluginDescs=[node:[:],workflow:[:]]
         e.workflow.commands.findAll{it.instanceOf(PluginStep)}.each{PluginStep step->
             if(!pluginDescs[step.nodeStep?'node':'workflow'][step.type]){
-                def description = frameworkService.getPluginDescriptionForItem(framework, step)
+                def description = frameworkService.getPluginDescriptionForItem(step)
                 if (description) {
                     pluginDescs[step.nodeStep ? 'node' : 'workflow'][step.type]=description
                 }

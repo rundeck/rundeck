@@ -11,7 +11,7 @@ class PluginTagLib {
         def step=attrs.step
         if(request.session?.user && request?.session?.subject){
             def Framework framework = frameworkService.rundeckFramework
-            def description = frameworkService.getPluginDescriptionForItem(framework, step)
+            def description = frameworkService.getPluginDescriptionForItem(step)
             if(description){
                 out << render(template: "/framework/renderPluginConfig", model: [type: step.type, values: step?.configuration, description: description] + attrs.subMap(['prefix', 'includeFormFields']))
                 return

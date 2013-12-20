@@ -925,8 +925,8 @@ class ScheduledExecutionController  {
             session.removeAttribute('undoOPTS');
             session.removeAttribute('redoOPTS');
         }
-        def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions(framework)
-        def stepTypes = frameworkService.getStepPluginDescriptions(framework)
+        def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
+        def stepTypes = frameworkService.getStepPluginDescriptions()
         crontab = scheduledExecution.timeAndDateAsBooleanMap()
         return [ scheduledExecution:scheduledExecution, crontab:crontab,params:params,
                 notificationPlugins: notificationService.listNotificationPlugins(),
@@ -975,8 +975,8 @@ class ScheduledExecutionController  {
                     params[it]='false'
                 }
             }
-            def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions(framework)
-            def stepTypes = frameworkService.getStepPluginDescriptions(framework)
+            def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
+            def stepTypes = frameworkService.getStepPluginDescriptions()
             return render(view:'edit', model: [scheduledExecution:scheduledExecution,
                        nextExecutionTime:scheduledExecutionService.nextExecutionTime(scheduledExecution),
                     notificationValidation: params['notificationValidation'],
@@ -1036,8 +1036,8 @@ class ScheduledExecutionController  {
         if(newScheduledExecution.scheduled){
             crontab=newScheduledExecution.timeAndDateAsBooleanMap()
         }
-        def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions(framework)
-        def stepTypes = frameworkService.getStepPluginDescriptions(framework)
+        def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
+        def stepTypes = frameworkService.getStepPluginDescriptions()
         render(view:'create',model: [ scheduledExecution:newScheduledExecution, crontab:crontab,params:params,
                 iscopy:true,
                 authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,authContext),
@@ -1123,7 +1123,7 @@ class ScheduledExecutionController  {
         scheduledExecution.userRoleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
         if(params.project ){
 
-            if(!frameworkService.existsFrameworkProject(params.project,framework) ) {
+            if(!frameworkService.existsFrameworkProject(params.project) ) {
                 scheduledExecution.errors.rejectValue('project','scheduledExecution.project.message',[params.project].toArray(),'FrameworkProject was not found: {0}')
             }
             scheduledExecution.argString=params.argString
@@ -1146,8 +1146,8 @@ class ScheduledExecutionController  {
             session.removeAttribute('redoOPTS');
         }
 
-        def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions(framework)
-        def stepTypes = frameworkService.getStepPluginDescriptions(framework)
+        def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
+        def stepTypes = frameworkService.getStepPluginDescriptions()
         log.debug("ScheduledExecutionController: create : now returning model data to view...")
         return ['scheduledExecution':scheduledExecution,params:params,crontab:[:],
                 nodeStepDescriptions: nodeStepTypes, stepDescriptions: stepTypes,
@@ -1213,8 +1213,8 @@ class ScheduledExecutionController  {
             }
             flash.message=g.message(code:'ScheduledExecutionController.save.failed')
 
-            def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions(framework)
-            def stepTypes = frameworkService.getStepPluginDescriptions(framework)
+            def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
+            def stepTypes = frameworkService.getStepPluginDescriptions()
             return render(view:'create',model:[scheduledExecution:scheduledExecution,params:params,
                     projects: frameworkService.projects(authContext), nodeStepDescriptions: nodeStepTypes,
                     stepDescriptions: stepTypes,
@@ -1388,8 +1388,8 @@ class ScheduledExecutionController  {
             flash.message=results.message
             Framework framework = frameworkService.getRundeckFramework()
 
-            def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions(framework)
-            def stepTypes = frameworkService.getStepPluginDescriptions(framework)
+            def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
+            def stepTypes = frameworkService.getStepPluginDescriptions()
             render(view:'create',model:[scheduledExecution:scheduledExecution,params:params,
                     nodeStepDescriptions: nodeStepTypes, stepDescriptions: stepTypes])
         } else {
@@ -1452,8 +1452,8 @@ class ScheduledExecutionController  {
             }
         }
 
-        def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions(framework)
-        def stepTypes = frameworkService.getStepPluginDescriptions(framework)
+        def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
+        def stepTypes = frameworkService.getStepPluginDescriptions()
         render(view: 'create', model: [scheduledExecution: scheduledExecution, params: params,
                 projects: frameworkService.projects(authContext), nodeStepDescriptions: nodeStepTypes,
                 stepDescriptions: stepTypes,
@@ -1547,7 +1547,7 @@ class ScheduledExecutionController  {
         //test nodeset to make sure there are matches
         if(scheduledExecution.doNodedispatch){
             NodeSet nset = ExecutionService.filtersAsNodeSet(scheduledExecution)
-            def project=frameworkService.getFrameworkProject(scheduledExecution.project, framework)
+            def project=frameworkService.getFrameworkProject(scheduledExecution.project)
 //            def nodes=project.getNodes().filterNodes(nset)
             model.nodeset=nset
             def nodes= com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(nset, project.getNodeSet()).nodes
@@ -2135,7 +2135,7 @@ class ScheduledExecutionController  {
         //test valid project
         Framework framework = frameworkService.getRundeckFramework()
 
-        def exists=frameworkService.existsFrameworkProject(params.project,framework)
+        def exists=frameworkService.existsFrameworkProject(params.project)
         if (!apiService.requireExists(response, exists, ['project', params.project])) {
             return
         }
@@ -2172,7 +2172,7 @@ class ScheduledExecutionController  {
         //test valid project
         Framework framework = frameworkService.getRundeckFramework()
 
-        def exists=frameworkService.existsFrameworkProject(params.project,framework)
+        def exists=frameworkService.existsFrameworkProject(params.project)
         if (!apiService.requireExists(response, exists, ['project', params.project])) {
             return
         }
@@ -2263,7 +2263,7 @@ class ScheduledExecutionController  {
         //test valid project
         Framework framework = frameworkService.getRundeckFramework()
 
-        def exists = frameworkService.existsFrameworkProject(params.project, framework)
+        def exists = frameworkService.existsFrameworkProject(params.project)
         if (!apiService.requireExists(response, exists, ['project', params.project])) {
             return
         }

@@ -1114,7 +1114,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         }
 
 
-        if (!frameworkService.existsFrameworkProject(scheduledExecution.project, framework)) {
+        if (!frameworkService.existsFrameworkProject(scheduledExecution.project)) {
             failed = true
             scheduledExecution.errors.rejectValue('project', 'scheduledExecution.project.invalid.message', [scheduledExecution.project].toArray(), 'Project was not found: {0}')
         }
@@ -1630,7 +1630,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         def boolean renamed = oldjobname != scheduledExecution.generateJobScheduledName() || oldjobgroup != scheduledExecution.generateJobGroupName()
 
 
-        if (scheduledExecution.project && !frameworkService.existsFrameworkProject(scheduledExecution.project, framework)) {
+        if (scheduledExecution.project && !frameworkService.existsFrameworkProject(scheduledExecution.project)) {
             failed = true
             scheduledExecution.errors.rejectValue('project', 'scheduledExecution.project.invalid.message', [scheduledExecution.project].toArray(), 'Project was not found: {0}')
         }
@@ -1949,7 +1949,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             scheduledExecution.nextExecution = new Date(ScheduledExecutionService.TWO_HUNDRED_YEARS)
         }
 
-        if (scheduledExecution.project && !frameworkService.existsFrameworkProject(scheduledExecution.project, framework)) {
+        if (scheduledExecution.project && !frameworkService.existsFrameworkProject(scheduledExecution.project)) {
             failed = true
             scheduledExecution.errors.rejectValue('project', 'scheduledExecution.project.invalid.message', [scheduledExecution.project].toArray(), 'Project does not exist: {0}')
         }

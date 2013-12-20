@@ -751,7 +751,7 @@ class FrameworkController  {
         if (!frameworkService.authorizeApplicationResourceAll(authContext, [type:'project',name:project], [AuthConstants.ACTION_ADMIN])) {
             return unauthorized("Update Project ${project}")
         }
-        def fproject = frameworkService.getFrameworkProject(project, framework)
+        def fproject = frameworkService.getFrameworkProject(project)
 
         def defaultNodeExec
         def defaultFileCopy
@@ -882,7 +882,7 @@ class FrameworkController  {
         if (!frameworkService.authorizeApplicationResourceAll(authContext, [type: 'project', name: project], [AuthConstants.ACTION_ADMIN])) {
             return unauthorized("Update Project ${project}")
         }
-        def fproject = frameworkService.getFrameworkProject(project,framework)
+        def fproject = frameworkService.getFrameworkProject(project)
         def configs = fproject.listResourceModelConfigurations()
         final service = framework.getResourceModelSourceService()
         final descriptions = service.listDescriptions()
@@ -1043,13 +1043,13 @@ class FrameworkController  {
             flash.error = "Project parameter is required"
             return render(template: "/common/errorFragment")
         }
-        if (!frameworkService.existsFrameworkProject(project, framework)
+        if (!frameworkService.existsFrameworkProject(project)
                 || !frameworkService.authorizeApplicationResourceAll(authContext, [type: 'project', name: project], ['read'])) {
             flash.error = "Unauthorized"
             return render(template: "/common/errorFragment")
         }
         //look for readme.md in project directory
-        def project1 = frameworkService.getFrameworkProject(project, framework)
+        def project1 = frameworkService.getFrameworkProject(project)
         def readme = new File(project1.baseDir, "readme.md")
         def motd = new File(project1.baseDir, "motd.md")
         def html=''//empty
@@ -1076,7 +1076,7 @@ class FrameworkController  {
             flash.error = "Project parameter is required"
             return render(template: "/common/errorFragment")
         }
-        if(!frameworkService.existsFrameworkProject(project, framework)
+        if(!frameworkService.existsFrameworkProject(project)
                 || !frameworkService.authorizeApplicationResourceAll(authContext, [type: 'project', name: project], ['read'])){
             flash.error = "Unauthorized"
             return render(template: "/common/errorFragment")
@@ -1098,7 +1098,7 @@ class FrameworkController  {
         def auth=[
                 jobCreate: frameworkService.authorizeProjectResource(authContext,[type:'resource',kind:'job'], 'create',project)
         ]
-        def project1 = frameworkService.getFrameworkProject(project, framework)
+        def project1 = frameworkService.getFrameworkProject(project)
         //summary data
         def data= [
             project:project,
@@ -1171,7 +1171,7 @@ class FrameworkController  {
                     code: 'api.error.parameter.required',
                     args: ['project']])
         }
-        def exists = frameworkService.existsFrameworkProject(params.project, framework)
+        def exists = frameworkService.existsFrameworkProject(params.project)
         if (!exists) {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist',
@@ -1220,7 +1220,7 @@ class FrameworkController  {
                     code: 'api.error.parameter.required', args: ['project']])
 
         }
-        def exists = frameworkService.existsFrameworkProject(params.project, framework)
+        def exists = frameworkService.existsFrameworkProject(params.project)
         if (!exists) {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist', args: ['project', params.project]])
@@ -1229,7 +1229,7 @@ class FrameworkController  {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Update Nodes', 'Project', params.project]])
         }
-        final FrameworkProject project = frameworkService.getFrameworkProject(params.project, framework)
+        final FrameworkProject project = frameworkService.getFrameworkProject(params.project)
 
         def didsucceed=false
         def errormsg=null
@@ -1357,12 +1357,12 @@ class FrameworkController  {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Read', 'Project', params.project]])
         }
-        def exists=frameworkService.existsFrameworkProject(params.project,framework)
+        def exists=frameworkService.existsFrameworkProject(params.project)
         if(!exists){
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist', args: ['project', params.project]])
         }
-        def pject=frameworkService.getFrameworkProject(params.project,framework)
+        def pject=frameworkService.getFrameworkProject(params.project)
         return apiService.renderSuccessXml(response){
             delegate.'projects'(count:1){
                 renderApiProject(pject,delegate)
@@ -1384,7 +1384,7 @@ class FrameworkController  {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['name']])
         }
-        def exists=frameworkService.existsFrameworkProject(params.project,framework)
+        def exists=frameworkService.existsFrameworkProject(params.project)
         if(!exists){
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist', args: ['project',params.project]])
@@ -1396,7 +1396,7 @@ class FrameworkController  {
 
         NodeSet nset = new NodeSet()
         nset.setSingleNodeName(params.name)
-        def pject=frameworkService.getFrameworkProject(params.project,framework)
+        def pject=frameworkService.getFrameworkProject(params.project)
         final INodeSet nodes = com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(nset,pject.getNodeSet())
         if(!nodes || nodes.nodes.size()<1 ){
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
@@ -1425,7 +1425,7 @@ class FrameworkController  {
                     code: 'api.error.parameter.required', args: ['project']])
 
         }
-        def exists=frameworkService.existsFrameworkProject(params.project,framework)
+        def exists=frameworkService.existsFrameworkProject(params.project)
         if(!exists){
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist', args: ['project',params.project]])
@@ -1457,7 +1457,7 @@ class FrameworkController  {
             //return all results
             query.nodeInclude=".*"
         }
-        def pject=frameworkService.getFrameworkProject(params.project,framework)
+        def pject=frameworkService.getFrameworkProject(params.project)
 //        final Collection nodes = pject.getNodes().filterNodes(ExecutionService.filtersAsNodeSet(query))
         final INodeSet nodes = com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(ExecutionService.filtersAsNodeSet(query), pject.getNodeSet())
         return apiRenderNodeResult(nodes,framework,params.project)

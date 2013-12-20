@@ -72,7 +72,7 @@ class WorkflowController {
      */
     private Description getPluginStepDescription(boolean isNodeStep, String type, Framework framework) {
         if (type && !(type in ['command', 'script', 'scriptfile', 'job'])) {
-            return isNodeStep ? frameworkService.getNodeStepPluginDescription(framework, type) : frameworkService.getStepPluginDescription(framework, type)
+            return isNodeStep ? frameworkService.getNodeStepPluginDescription(type) : frameworkService.getStepPluginDescription(type)
         }
         return null
     }

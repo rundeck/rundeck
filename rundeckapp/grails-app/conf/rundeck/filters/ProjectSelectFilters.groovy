@@ -2,7 +2,6 @@ package rundeck.filters
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.Framework
-import rundeck.filters.AA_TimerFilters
 
 /*
 * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
@@ -76,7 +75,7 @@ public class ProjectSelectFilters {
 
 
                     def selected = params.project
-                    if (selected && (!frameworkService.existsFrameworkProject(selected, fw)
+                    if (selected && (!frameworkService.existsFrameworkProject(selected)
                             || !frameworkService.authorizeApplicationResourceAll(authContext, [type: 'project', name: selected], ['read']))) {
                         selected = null
                     }
@@ -87,7 +86,7 @@ public class ProjectSelectFilters {
 
                     selected = session.project
                     //check project exists
-                    if (selected && (!frameworkService.existsFrameworkProject(selected, fw)
+                    if (selected && (!frameworkService.existsFrameworkProject(selected)
                             || !frameworkService.authorizeApplicationResourceAll(authContext, [type: 'project', name: selected], ['read']))) {
                         selected = null
                     }
@@ -97,7 +96,7 @@ public class ProjectSelectFilters {
                     }
                     //use last stored filter pref
                     def prefs = userService.getFilterPref(session.user)
-                    if (prefs.project && (!frameworkService.existsFrameworkProject(prefs.project, fw)
+                    if (prefs.project && (!frameworkService.existsFrameworkProject(prefs.project)
                             || !frameworkService.authorizeApplicationResourceAll(authContext, [type: 'project', name: prefs.project], ['read']))) {
                         selected = prefs.project
                     }

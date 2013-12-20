@@ -448,7 +448,7 @@ class MenuController {
         }else if (session.project){
 
             def project=session.project
-            def fproject = frameworkService.getFrameworkProject(project, framework)
+            def fproject = frameworkService.getFrameworkProject(project)
             def configs = fproject.listResourceModelConfigurations()
 
             final service = framework.getResourceModelSourceService()
@@ -712,7 +712,7 @@ class MenuController {
                 }
             }
             summary[project.name].userCount= summary[project.name].userSummary.size()
-            summary[project.name].readme=frameworkService.getFrameworkProjectReadmeContents(project.name,framework)
+            summary[project.name].readme=frameworkService.getFrameworkProjectReadmeContents(project.name)
             //authorization
             summary[project.name].auth = [
                     jobCreate: frameworkService.authorizeProjectResource(authContext, [type: 'resource', kind: 'job'], 'create', project.name),
@@ -758,7 +758,7 @@ class MenuController {
         //test valid project
         Framework framework = frameworkService.getRundeckFramework()
 
-        def exists=frameworkService.existsFrameworkProject(params.project,framework)
+        def exists=frameworkService.existsFrameworkProject(params.project)
         if(!exists){
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist', args: ['project', params.project]])
@@ -807,7 +807,7 @@ class MenuController {
         //test valid project
         Framework framework = frameworkService.getRundeckFramework()
 
-        def exists=frameworkService.existsFrameworkProject(params.project,framework)
+        def exists=frameworkService.existsFrameworkProject(params.project)
         if(!exists){
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist', args: ['project',params.project]])
@@ -844,7 +844,7 @@ class MenuController {
         //allow project='*' to indicate all projects
         def allProjects = request.api_version >= ApiRequestFilters.V9 && params.project == '*'
         if(!allProjects){
-            if(!frameworkService.existsFrameworkProject(params.project,framework)){
+            if(!frameworkService.existsFrameworkProject(params.project)){
                 return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
                         code: 'api.error.parameter.doesnotexist', args: ['project',params.project]])
             }

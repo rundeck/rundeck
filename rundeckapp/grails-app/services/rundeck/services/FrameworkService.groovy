@@ -1,5 +1,5 @@
 package rundeck.services
-import com.dtolabs.rundeck.core.Constants
+
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authorization.Attribute
@@ -89,12 +89,12 @@ class FrameworkService implements ApplicationContextAware, Authorization {
         return new ArrayList(authed.collect{projMap[it.name]})
     }
 
-    def existsFrameworkProject(String project, Framework framework) {
-        return framework.getFrameworkProjectMgr().existsFrameworkProject(project)
+    def existsFrameworkProject(String project) {
+        return rundeckFramework.getFrameworkProjectMgr().existsFrameworkProject(project)
     }
     
-    def getFrameworkProject(String project, Framework framework) {
-        return framework.getFrameworkProjectMgr().getFrameworkProject(project)
+    def getFrameworkProject(String project) {
+        return rundeckFramework.getFrameworkProjectMgr().getFrameworkProject(project)
     }
     /**
      * Return a map of the project's readme and motd content
@@ -102,8 +102,8 @@ class FrameworkService implements ApplicationContextAware, Authorization {
      * @param framework
      * @return [readme: "readme content", readmeHTML: "rendered content", motd: "motd content", motdHTML: "readnered content"]
      */
-    def getFrameworkProjectReadmeContents(String project, Framework framework){
-        def project1 = getFrameworkProject(project,framework)
+    def getFrameworkProjectReadmeContents(String project){
+        def project1 = getFrameworkProject(project)
         def readme = new File(project1.baseDir, "readme.md")
         def motd = new File(project1.baseDir, "motd.md")
         def result=[:]
@@ -128,7 +128,7 @@ class FrameworkService implements ApplicationContextAware, Authorization {
     def getFrameworkPropertyResolver(String projectName=null, Map instanceConfiguration=null) {
         return PropertyResolverFactory.createResolver(
                 instanceConfiguration ? PropertyResolverFactory.instanceRetriever(instanceConfiguration) : null,
-                null != projectName ? getFrameworkProject(projectName, rundeckFramework).getPropertyRetriever() : null,
+                null != projectName ? getFrameworkProject(projectName).getPropertyRetriever() : null,
                 rundeckFramework.getPropertyRetriever()
         )
     }
@@ -468,9 +468,9 @@ class FrameworkService implements ApplicationContextAware, Authorization {
      * @param step
      * @return
      */
-    def getPluginDescriptionForItem(Framework framework, PluginStep step) {
+    def getPluginDescriptionForItem(PluginStep step) {
         try {
-            return step.nodeStep ? getNodeStepPluginDescription(framework, step.type) : getStepPluginDescription(framework, step.type)
+            return step.nodeStep ? getNodeStepPluginDescription(step.type) : getStepPluginDescription(step.type)
         } catch (MissingProviderException e) {
             log.warn("Couldn't load description for step ${step}: ${e.message}",e)
             return null
@@ -482,8 +482,8 @@ class FrameworkService implements ApplicationContextAware, Authorization {
      * @param type
      * @return
      */
-    def Description getNodeStepPluginDescription(Framework framework, String type){
-        framework.getNodeStepExecutorService().providerOfType(type).description
+    def Description getNodeStepPluginDescription(String type){
+        rundeckFramework.getNodeStepExecutorService().providerOfType(type).description
     }
     /**
      * Return step plugin description of a certain type
@@ -491,16 +491,16 @@ class FrameworkService implements ApplicationContextAware, Authorization {
      * @param type
      * @return
      */
-    def Description getStepPluginDescription(Framework framework, String type){
-        framework.getStepExecutionService().providerOfType(type).description
+    def Description getStepPluginDescription(String type){
+        rundeckFramework.getStepExecutionService().providerOfType(type).description
     }
     /**
      * Return the list of NodeStepPlugin descriptions
      * @param framework
      * @return
      */
-    def List getNodeStepPluginDescriptions(Framework framework){
-        framework.getNodeStepExecutorService().listDescriptions()
+    def List getNodeStepPluginDescriptions(){
+        rundeckFramework.getNodeStepExecutorService().listDescriptions()
     }
 
     /**
@@ -508,8 +508,8 @@ class FrameworkService implements ApplicationContextAware, Authorization {
      * @param framework
      * @return
      */
-    def List getStepPluginDescriptions(Framework framework){
-        framework.getStepExecutionService().listDescriptions()
+    def List getStepPluginDescriptions(){
+        rundeckFramework.getStepExecutionService().listDescriptions()
     }
 
     /**

@@ -30,7 +30,7 @@ class ProjectController {
         }
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if (!frameworkService.existsFrameworkProject(project, framework)) {
+        if (!frameworkService.existsFrameworkProject(project)) {
             request.error = g.message(code: 'scheduledExecution.project.invalid.message', args: [project])
             return render(template: "/common/error")
         }
@@ -40,7 +40,7 @@ class ProjectController {
             request.error = g.message(code: 'api.error.item.unauthorized', args: [AuthConstants.ACTION_ADMIN, "Project", params.name])
             return render(template: "/common/error")
         }
-        def project1 = frameworkService.getFrameworkProject(project, framework)
+        def project1 = frameworkService.getFrameworkProject(project)
 
         //temp file
         def outfile
@@ -70,7 +70,7 @@ class ProjectController {
         }
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if (!frameworkService.existsFrameworkProject(project, framework)) {
+        if (!frameworkService.existsFrameworkProject(project)) {
             request.error = g.message(code: 'scheduledExecution.project.invalid.message', args: [project])
             return render(template: "/common/error")
         }
@@ -80,7 +80,7 @@ class ProjectController {
             request.error = g.message(code: 'api.error.item.unauthorized', args: [AuthConstants.ACTION_ADMIN, "Project", params.name])
             return render(template: "/common/error")
         }
-        def project1 = frameworkService.getFrameworkProject(project, framework)
+        def project1 = frameworkService.getFrameworkProject(project)
 
         //uploaded file
         if (request instanceof MultipartHttpServletRequest) {

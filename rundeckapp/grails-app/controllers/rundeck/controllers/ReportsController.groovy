@@ -378,7 +378,7 @@ class ReportsController {
         //test valid project
         Framework framework = frameworkService.getRundeckFramework()
 
-        def exists=frameworkService.existsFrameworkProject(params.project,framework)
+        def exists=frameworkService.existsFrameworkProject(params.project)
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if(!exists){
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
