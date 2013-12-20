@@ -55,24 +55,6 @@ tr.header {
     font-weight: bold;
 }
 
-button.runbutton:hover, input[type='submit'].runbutton:hover {
-    text-decoration: underline;
-    background: #ccc;
-}
-
-button.runbutton, input[type='submit'].runbutton {
-
-    font: 90%/1.5em verdana, arial, helvetica, sans-serif;
-    padding: 3px;
-    background: #eee;
-    -moz-border-radius: 3px;
-    -webkit-border-radius: 3px;
-    border-radius: 3px;
-    border: 0;
-    color: blue;
-    cursor: pointer;
-}
-
 
 .buttonbar {
     border-bottom: 1px solid #ccc;

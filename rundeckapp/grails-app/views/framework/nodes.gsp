@@ -314,21 +314,21 @@
         function disableRunBar(){
             if($('runbox')){
                 $('runbox').down('input[type="text"]').disable();
-                if ($('runbox').down('button')) {
-                    $('runbox').down('button').disabled = true;
-                    $('runbox').down('button').addClassName('disabled');
-                    _runBtnHtml= $('runbox').down('button').innerHTML;
-                    $('runbox').down('button').innerHTML="Running…";
+                if ($('runbox').down('button.runbutton')) {
+                    $('runbox').down('button.runbutton').disabled = true;
+                    $('runbox').down('button.runbutton').addClassName('disabled');
+                    _runBtnHtml= $('runbox').down('button.runbutton').innerHTML;
+                    $('runbox').down('button.runbutton').innerHTML="Running…";
                 }
             }
         }
         function enableRunBar(){
             if ($('runbox')) {
                 $('runbox').down('input[type="text"]').enable();
-                if($('runbox').down('button')){
-                    $('runbox').down('button').disabled=false;
-                    $('runbox').down('button').removeClassName('disabled');
-                    $('runbox').down('button').innerHTML = 'Run <span class="glyphicon glyphicon-play"></span>';
+                if($('runbox').down('button.runbutton')){
+                    $('runbox').down('button.runbutton').disabled=false;
+                    $('runbox').down('button.runbutton').removeClassName('disabled');
+                    $('runbox').down('button.runbutton').innerHTML = 'Run <span class="glyphicon glyphicon-play"></span>';
                 }
             }
         }
@@ -661,11 +661,57 @@
                                          autofocus="true"/>
 
                             <span class="input-group-btn">
+                                <button class="btn btn-default has_tooltip" type="button"
+                                        title="Node Dispatch Settings"
+                                        data-placement="left"
+                                        data-container="body"
+                                        data-toggle="collapse" data-target="#runconfig">
+                                    <i class="glyphicon glyphicon-cog"></i>
+                                </button>
 
-                                <button class="btn btn-success  " onclick="runFormSubmit('runbox');">
+                                <button class="btn btn-success runbutton " onclick="runFormSubmit('runbox');">
                                     Run <span class="glyphicon glyphicon-play"></span>
                                 </button>
                             </span>
+                        </div>
+                        <div class="collapse well well-sm " id="runconfig">
+                            <div class="row">
+                            <div class="col-sm-12">
+                                <div class="form-group text-muted ">Node Dispatch Settings: </div>
+                                <div class="form-group has_tooltip" title="Maximum number of parallel threads to use"
+                                     data-placement="bottom">
+                                    Thread count
+                                </div>
+                                <div class="form-group">
+                                    <input min="1" type="number" name="nodeThreadcount" id="runNodeThreadcount"
+                                           size="2"
+                                           placeholder="Maximum threadcount for nodes" value="1"
+                                           class="form-control  input-sm"/>
+                                </div>
+
+                                <div class="form-group">On node failure:</div>
+                                <div class="radio">
+                                    <label class="has_tooltip" title="Continue to execute on other nodes" data-placement="bottom">
+                                        <input type="radio" name="nodeKeepgoing"
+                                               value="true"
+                                            checked
+                                        /> <strong>Continue</strong>
+                                    </label>
+                                </div>
+
+                                <div class="radio">
+                                    <label class="has_tooltip" title="Do not execute on any other nodes"
+                                           data-placement="bottom">
+                                        <input type="radio" name="nodeKeepgoing"
+                                               value="false"
+                                               /> <strong>Stop</strong>
+                                    </label>
+                                </div>
+                                <div class="pull-right">
+                                    <button class="close " data-toggle="collapse" data-target="#runconfig">&times;</button>
+                                </div>
+                            </div>
+                            </div>
                         </div>
                     </div>
 
