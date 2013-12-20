@@ -34,7 +34,7 @@ class FrameworkService implements ApplicationContextAware, Authorization {
     boolean initialized = false
     private String serverUUID
     private boolean clusterModeEnabled
-    SAREAuthorization aclpolicies
+    SAREAuthorization rundeckPolicyAuthorization
 
     def ApplicationContext applicationContext
     def ExecutionService executionService
@@ -53,9 +53,6 @@ class FrameworkService implements ApplicationContextAware, Authorization {
             return
         }
 
-        //todo: configure auth via spring
-        aclpolicies= new SAREAuthorization(new File(Constants.getFrameworkConfigDir(getRundeckBase())))
-
         clusterModeEnabled = applicationContext?.getServletContext()?.getAttribute("CLUSTER_MODE_ENABLED")=='true'
         serverUUID = applicationContext?.getServletContext()?.getAttribute("SERVER_UUID")
         initialized = true
@@ -70,12 +67,12 @@ class FrameworkService implements ApplicationContextAware, Authorization {
 
     @Override
     Decision evaluate(Map<String, String> resource, Subject subject, String action, Set<Attribute> environment) {
-        return aclpolicies.evaluate(resource,subject,action,environment)
+        return rundeckPolicyAuthorization.evaluate(resource,subject,action,environment)
     }
 
     @Override
     Set<Decision> evaluate(Set<Map<String, String>> resources, Subject subject, Set<String> actions, Set<Attribute> environment) {
-        return aclpolicies.evaluate(resources,subject,actions,environment)
+        return rundeckPolicyAuthorization.evaluate(resources,subject,actions,environment)
     }
 /**
      * Return a list of FrameworkProject objects
@@ -393,7 +390,7 @@ class FrameworkService implements ApplicationContextAware, Authorization {
 
     def getFrameworkRoles() {
         initialize()
-        return new HashSet(aclpolicies.hackMeSomeRoles())
+        return new HashSet(rundeckPolicyAuthorization.hackMeSomeRoles())
     }
 
     def AuthContext userAuthContext(session) {
@@ -413,7 +410,7 @@ class FrameworkService implements ApplicationContextAware, Authorization {
         if (!subject) {
             throw new RuntimeException("getAuthContextForSubject: Cannot get AuthContext without subject")
         }
-        return new SubjectAuthContext(subject, aclpolicies)
+        return new SubjectAuthContext(subject, rundeckPolicyAuthorization)
     }
     public AuthContext getAuthContextForUserAndRoles(String user, List rolelist) {
         if (!(null != user && null != rolelist)) {
@@ -425,7 +422,7 @@ class FrameworkService implements ApplicationContextAware, Authorization {
         rolelist.each { String s ->
             subject.getPrincipals().add(new Group(s))
         }
-        return new SubjectAuthContext(subject, aclpolicies)
+        return new SubjectAuthContext(subject, rundeckPolicyAuthorization)
     }
 
 

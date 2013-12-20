@@ -1,3 +1,5 @@
+import com.dtolabs.rundeck.core.Constants
+import com.dtolabs.rundeck.core.authorization.providers.SAREAuthorization
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.plugins.PluginManagerService
 import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
@@ -46,6 +48,10 @@ beans={
      */
     rundeckFramework(Framework, rdeckBase){bean->
         bean.factoryMethod='getInstanceWithoutProjectsDir'
+    }
+    def configDir = new File(Constants.getFrameworkConfigDir(rdeckBase))
+    rundeckPolicyAuthorization(SAREAuthorization, configDir){
+
     }
     /*
      * Define beans for Rundeck core-style plugin loader to load plugins from jar/zip files
