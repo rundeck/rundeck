@@ -86,7 +86,7 @@
     <div class="row wfnodeoverall action" data-bind="click: toggleExpand">
         <div class="col-sm-3  nodectx"
              data-bind="attr: { title: name }, css: { 'auto-caret-container': expanded() } ">
-            <div class="execstate nodename action" data-bind="attr: { 'data-execstate': summaryState }, css: { active: expanded() }">
+            <div class="execstate nodename action isnode" data-bind="attr: { 'data-execstate': summaryState }, css: { active: expanded() }">
                 <i class="auto-caret"></i>
                 <i class="rdicon icon-small node"></i>
                 <span data-bind="text: name"></span>
@@ -94,14 +94,14 @@
         </div>
 
         <div class="col-sm-3 " data-bind-action="stepoutput" data-bind-attr="data-node:nodename,data-stepctx:stepctx">
-                <span class="execstate isnode" data-bind="attr: {'data-execstate': summaryState } ">
+                <span class="execstate " data-bind="attr: {'data-execstate': summaryState } ">
                     <span data-bind="text: summary"></span>
                 </span>
         </div>
 
         <div class="col-sm-4 ">
             <div data-bind="with: currentStep(), visible: !expanded()">
-                <span class="stepident execstate"
+                <span class="stepident "
                       data-bind="attr: { 'data-execstate': executionState, title: stepctxdesc }">
                     <i class="rdicon icon-small" data-bind="css: type"></i>
                     <span data-bind="text: stepident"></span>
@@ -125,7 +125,7 @@
             <div class=" wfnodestep" data-bind="css: { open: followingOutput() }, attr: { 'data-node': node.name, 'data-stepctx': stepctx }">
                 <div class="row action" data-bind="click: $root.toggleOutputForNodeStep ">
                     <div class="col-sm-3 " >
-                        <div class="stepident execstate action col-inset"
+                        <div class="stepident  action col-inset"
                               data-bind="attr: { 'data-execstate': executionState, title: stepctxdesc }, css: { 'auto-caret-container': followingOutput(), active: followingOutput() } ">
                             <i class="auto-caret"></i>
                             <i class="rdicon icon-small" data-bind="css: type"></i>

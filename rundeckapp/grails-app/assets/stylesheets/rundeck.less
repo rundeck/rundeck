@@ -175,6 +175,9 @@
     &[data-execstate=PASS] {
       color: @gray;
     }
+    &.isnode[data-execstate]{
+      color:inherit;
+    }
 
 
     &.step{
@@ -985,7 +988,7 @@ section{
   }
 
   .stepident, .stepnum {
-    color: @brand-light;
+//    color: @brand-light;
   }
 
   //history rows with default action link

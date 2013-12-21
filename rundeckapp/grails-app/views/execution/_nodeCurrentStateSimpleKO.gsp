@@ -20,7 +20,7 @@
 
 <i class="glyphicon glyphicon-chevron-right text-muted"></i>
 <span data-bind="with: currentStep()">
-    <a class="stepident execstate action textbtn"
+    <a class="stepident action textbtn"
           data-bind="attr: { 'data-execstate': executionState, title: stepctxdesc, href: '#'+stepctx+':'+node.name },  click: $root.scrollToOutput">
         <i class="rdicon icon-small" data-bind="css: type"></i>
         <span data-bind="text: stepident"></span>
