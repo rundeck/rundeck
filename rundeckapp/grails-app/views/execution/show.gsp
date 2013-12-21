@@ -451,32 +451,6 @@
 
         <div >
 
-            %{--<div class="row row-space">--}%
-                %{--<div class="col-sm-2 text-right">--}%
-                    %{--Nodes Completed:--}%
-                %{--</div>--}%
-
-                %{--<div class="col-sm-6">--}%
-                    %{--<section data-bind="if: !completed(), visible: !completed() ">--}%
-                        %{--<g:render template="/common/progressBar"--}%
-                                  %{--model="[completePercent: 0,--}%
-                                          %{--progressClass: 'progress-embed',--}%
-                                          %{--progressBarClass: 'progress-bar-success ',--}%
-                                          %{--containerId: 'nodeprogress1',--}%
-                                          %{--innerContent: 'Nodes',--}%
-                                          %{--showpercent: true,--}%
-                                          %{--progressId: 'nodeProgressBar',--}%
-                                          %{--bind: '(percentageFixed(succeededNodes().length,activeNodes().length))',--}%
-                                          %{--bindText: '( succeededNodes().length + \'/\' + activeNodes().length )',--}%
-                                  %{--]"/>--}%
-                    %{--</section>--}%
-                    %{--<div data-bind="if: completed() ">--}%
-                        %{--<span data-bind="text:succeededNodes().length"></span>--}%
-                        %{--of--}%
-                        %{--<span data-bind="text:activeNodes().length"></span>--}%
-                    %{--</div>--}%
-                %{--</div>--}%
-            %{--</div>--}%
 
             <div class="row row-space" data-bind="if: !completed()">
                 <div class="col-sm-2 text-right">
@@ -488,13 +462,14 @@
                         <g:render template="/common/progressBar"
                                   model="[completePercent: execution.dateCompleted ? 100 : 0,
                                           progressClass: 'rd-progress-exec progress-embed',
-                                          progressBarClass: 'progress-bar-info ',
+                                          progressBarClass: '',
                                           containerId: 'progressContainer2',
                                           innerContent: '',
                                           showpercent: true,
                                           progressId: 'progressBar',
                                           bind: 'jobPercentageFixed()',
-                                          bindText: '(jobPercentageFixed()  < 110 ? jobPercentageFixed() + \'%\' : \'+\' + jobOverrunDuration()) + \' of average \' + formatDurationHumanize(jobAverageDuration())',
+                                          bindText: '(jobPercentageFixed()  < 105 ? jobPercentageFixed() + \'%\' : \'+\' + jobOverrunDuration()) + \' of average \' + formatDurationHumanize(jobAverageDuration())',
+                                          progressBind: ', css: { \'progress-bar-info\': jobPercentageFixed() < 105 ,  \'progress-bar-warning\': jobPercentageFixed() &gt; 104  }',
                                   ]"/>
                     </section>
                     <div data-bind="if: completed() || jobAverageDuration() <= 0 ">

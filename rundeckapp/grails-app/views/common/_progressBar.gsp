@@ -15,7 +15,7 @@
     <div id="${progressId}" class="progress-bar  ${progressBarClass?:''}"
          role="progressbar" aria-valuenow="${completePercent}" aria-valuemin="0" aria-valuemax="100"
          style="width: ${completePercent}%;"
-         data-bind="${bind?'style: { width: '+bind+' < 101 ? '+bind+'+ \'%\' : \'100%\' }, text: '+textToBind :''}">
+         data-bind="${bind?'style: { width: '+bind+' < 101 ? '+bind+'+ \'%\' : \'100%\' }, text: '+textToBind +(progressBind?:''):''}">
         <g:if test="${showpercent}">${completePercent > 100 ? 100 : completePercent}%</g:if>${completePercent < 100 || showOverrun ? remaining : ''}<g:if
                 test="${overrun}"> <g:img
                     file="icon-tiny-disclosure-waiting.gif"/> </g:if>${innerContent}
