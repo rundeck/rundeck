@@ -72,7 +72,7 @@
         }%
     </g:else>
     <g:set var="prevkey" value="${group.key}"/>
-    <g:set var="groupopen" value="${(wasfiltered || jscallback)}"/>
+    <g:set var="groupopen" value="${(wasfiltered || jscallback || level.size()==1)}"/>
     ${"<"}div class="expandComponentHolder ${groupopen ? 'expanded' : ''} " ${">"}
         %{divcounts++;}%
         <div style="margin-bottom:4px;">
@@ -100,7 +100,7 @@
         %{ divcounts++;}%
         <g:if test="${jobgroups[group.key]}">
             <div class="jobGroups subjobs">
-            <g:render template="jobslist" model="[jobslist:jobgroups[group.key],total:jobgroups[group.key]?.size(),nowrunning:nowrunning, clusterMap: clusterMap,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true,headers:false,wasfiltered:wasfiltered,small:small?true:false,jobsjscallback:jobsjscallback,runAuthRequired:runAuthRequired]"/>
+            <g:render template="jobslist" model="[hideSummary:true,jobslist:jobgroups[group.key],total:jobgroups[group.key]?.size(),nowrunning:nowrunning, clusterMap: clusterMap,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true,headers:false,wasfiltered:wasfiltered,small:small?true:false,jobsjscallback:jobsjscallback,runAuthRequired:runAuthRequired]"/>
             </div>
         </g:if>
 
