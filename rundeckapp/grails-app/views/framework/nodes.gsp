@@ -726,41 +726,48 @@
     <g:set var="filtersOpen" value="${params.createFilters||params.editFilters||params.saveFilter || filterErrors?true:false}"/>
 
 <table cellspacing="0" cellpadding="0" width="100%">
-        <tr>
         <g:if test="${!params.nofilters}">
-        <td style=" ${wdgt.styleVisible(if:filtersOpen)}" id="${ukey}filter">
-            <g:form action="nodes" controller="framework" class="form">
+            <tr>
+            <td style=" ${wdgt.styleVisible(if:filtersOpen)}" id="${ukey}filter">
+            <g:form action="nodes" controller="framework" class="form form-horizontal">
                 <g:if test="${params.compact}">
                     <g:hiddenField name="compact" value="${params.compact}"/>
                 </g:if>
-                <span class="textbtn textbtn-default obs_filtertoggle" >
-                    Filter
-                    <b class="glyphicon glyphicon-chevron-down"></b>
-                </span>
+                <div class="panel panel-default ">
+                    <div class="panel-heading">
+                    <span class="textbtn textbtn-info obs_filtertoggle">
+                        Node Filter
+                        <b class="glyphicon glyphicon-chevron-down"></b>
+                    </span>
+                    </div>
 
-                <g:render template="/common/queryFilterManager" model="${[rkey:ukey,filterName:filterName,filterset:filterset,deleteActionSubmit:'deleteNodeFilter',storeActionSubmit:'storeNodeFilter']}"/>
-                <div class="presentation filter">
 
                     <g:hiddenField name="max" value="${max}"/>
                     <g:hiddenField name="offset" value="${offset}"/>
-                    <table class="simpleForm">
-                        <g:render template="nodeFilterInputs" model="${[params:params,query:query]}"/>
-                    </table>
                     <g:hiddenField name="exec" value="" class="execCommand"/>
-                    <div>
-                        <div class=" " style="text-align:right;">
-                            <g:submitButton  name="Filter" onclick="return _submitNodeFilters();"
-                                             id="nodefiltersubmit" value="Filter" class="btn btn-primary btn-sm"/>
 
-                            <g:submitButton name="Clear" onclick="return _clearNodeFilters();" value="Clear"
-                                class="btn btn-default btn-sm"
-                            />
-                        </div>
+                    <g:render template="/common/queryFilterManagerHorizontal"
+                              model="${[rkey: ukey, filterName: filterName, filterset: filterset, deleteActionSubmit: 'deleteNodeFilter', storeActionSubmit: 'storeNodeFilter']}"/>
+
+                    <div class="panel-body  obs_hide_filtermgr">
+                        <g:render template="nodeFilterInputs" model="${[params:params,query:query]}"/>
+                    </div>
+
+                    <div class="panel-footer obs_hide_filtermgr text-right" >
+                        <g:submitButton  name="Filter" onclick="return _submitNodeFilters();"
+                                         id="nodefiltersubmit" value="Filter" class="btn btn-primary btn-sm"/>
+
+                        <g:submitButton name="Clear" onclick="return _clearNodeFilters();" value="Clear"
+                            class="btn btn-default btn-sm"
+                        />
                     </div>
                 </div>
             </g:form>
         </td>
+            </tr>
             </g:if>
+
+    <tr>
             <td style="text-align:left;vertical-align:top;" id="${ukey}nodescontent">
 
 
@@ -792,7 +799,7 @@
                         </g:if>
 
                         <g:if test="${filterset}">
-                            <g:render template="/common/selectFilter" model="[filterset:filterset,filterName:filterName,prefName:'nodes',noSelection:filterName?'-Server Node-':null]"/>
+                            <g:render template="/common/selectFilter" model="[filterset:filterset,filterName:filterName,prefName:'nodes',noSelection:filterName?'-All Nodes-':null]"/>
                         </g:if>
                         <g:if test="${params.formInput}">
                             <g:form action="nodes" style="display: inline">

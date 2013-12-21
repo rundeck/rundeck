@@ -60,134 +60,126 @@
 <g:set var="NODE_FILTERS" value="${['Name','Tags']}"/>
 <g:set var="NODE_FILTERS_X" value="${['','OsName','OsFamily','OsArch','OsVersion']}"/>
 <g:set var="NODE_FILTER_MAP" value="${['':'Hostname','OsName':'OS Name','OsFamily':'OS Family','OsArch':'OS Architecture','OsVersion':'OS Version']}"/>
-        <tr>
-            <td>
-                <span class=" ${hasErrors(bean:query,field:'nodeInclude','fieldError')}">
-                    Include
-                </span>
-            </td>
-            <td>
-                <g:hiddenField name="formInput" value="true"/>
 
-                <g:hasErrors bean="${query}" field="nodeInclude">
-                    <div class="fieldError">
-                        <g:renderErrors bean="${query}" as="list" field="nodeInclude"/>
-                    </div>
-                </g:hasErrors>
-                <g:hasErrors bean="${query}" field="nodeInclude">
-                    <img src="${resource( dir:'images',file:'icon-small-warn.png' )}" alt="Error"  width="16px" height="16px"/>
-                </g:hasErrors>
-                <div id="nodeFilterDivInclude" style="">
-                    <g:each var="key" in="${NODE_FILTERS_ALL}">
-                        <g:render template="nodeFilterField" model="${[key:key,include:true,query:query,NODE_FILTER_MAP:NODE_FILTER_MAP]}"/>
-                    </g:each>
-                </div>
-                <div class="filterSetButtons">
-                    <g:each var="key" in="${NODE_FILTERS}">
-                        <span
-                            style="${query?.('nodeInclude'+key)?'display:none':''}"
-                            title="Add Filter for ${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}"
-                            class="filterAdd btn btn-default btn-sm"
-                            id="filterAddInclude${key}"
-                            onclick="_addNodeFilterInput('${key}',true,'${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}');"
-                            >${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}</span>
-                    </g:each>
-                </div>
-                <span class="filterAdd btn btn-default btn-sm" onclick="Element.show('${rkey}moreIncludeFilters');Element.hide(this);">more&hellip;</span>
-                <div class="filterSetButtons" id="${rkey}moreIncludeFilters" style="display:none">
-                    <g:each var="key" in="${NODE_FILTERS_X}">
-                        <span
-                            style="${query?.('nodeInclude'+key)?'display:none':''}"
-                            title="Add Filter for ${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}"
-                            class="filterAdd btn btn-default btn-sm"
-                            id="filterAddInclude${key}"
-                            onclick="_addNodeFilterInput('${key}',true,'${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}');"
-                            >${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}</span>
-                    </g:each>
-                </div>
-            </td>
-        </tr>
-        <tr>
-            <td ></td>
-            <td >
+        <div class="form-group  ${hasErrors(bean: query, field: 'nodeInclude', 'has-error')}">
+            <div class="col-sm-12">
+            <span class="h4 ">
+                Include Nodes Matching:
+            </span>
 
-                <g:render template="/common/nodefilterRegexSyntaxNote"/>
-            </td>
-        </tr>
-        <tr>
-            <td colspan="2" style="text-align:left">
-                <g:expander key="${rkey}nodeXtraFilters">
-                    Extended Filters...
-                </g:expander>
-            </td>
-        </tr>
-    <tbody id="${rkey}nodeXtraFilters" style="display:none">
-        <tr>
-            <td>
-                <span class=" ${hasErrors(bean:query,field:'nodeExclude','fieldError')}" >
-                    Exclude
-                </span>
-            </td>
-            <td>
+            <g:render template="/common/nodefilterRegexSyntaxNote"/>
+            </div>
 
-                <div>
-                    <g:hasErrors bean="${query}" field="nodeExclude">
-                    <div class="fieldError">
+
+            <g:hiddenField name="formInput" value="true"/>
+
+            <g:hasErrors bean="${query}" field="nodeInclude">
+                <div class="col-sm-12">
+                <div class="text-warning">
+                    <g:renderErrors bean="${query}" as="list" field="nodeInclude"/>
+                    <i class="glyphicon glyphicon-warning-sign"></i>
+                </div>
+                </div>
+            </g:hasErrors>
+            <div id="nodeFilterDivInclude" style="">
+                <g:each var="key" in="${NODE_FILTERS_ALL}">
+                    <g:render template="nodeFilterField" model="${[key:key,include:true,query:query,NODE_FILTER_MAP:NODE_FILTER_MAP]}"/>
+                </g:each>
+            </div>
+            <div class="row">
+                <div class="col-sm-10 col-sm-offset-2">
+                <g:each var="key" in="${NODE_FILTERS}">
+                    <span
+                        style="${query?.('nodeInclude'+key)?'display:none':''}"
+                        title="Add Filter for ${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}"
+                        class="filterAdd btn btn-default btn-sm"
+                        id="filterAddInclude${key}"
+                        onclick="_addNodeFilterInput('${key}',true,'${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}');"
+                        >${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}</span>
+                </g:each>
+                    <span class="filterAdd btn btn-default btn-sm" onclick="Element.show('${rkey}moreIncludeFilters');
+                    Element.hide(this);">more&hellip;</span>
+            </div>
+
+            <div class=" col-sm-10 col-sm-offset-2" id="${rkey}moreIncludeFilters" style="display:none">
+                <g:each var="key" in="${NODE_FILTERS_X}">
+                    <span
+                        style="${query?.('nodeInclude'+key)?'display:none':''}"
+                        title="Add Filter for ${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}"
+                        class="filterAdd btn btn-default btn-sm"
+                        id="filterAddInclude${key}"
+                        onclick="_addNodeFilterInput('${key}',true,'${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}');"
+                        >${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}</span>
+                </g:each>
+            </div>
+            </div>
+        </div>
+
+<div class="row">
+    <div class="col-sm-12">
+        <g:expander key="${rkey}nodeXtraFilters">Extended Filters&hellip;</g:expander>
+    </div>
+</div>%{--//extended filters toggle--}%
+    <div id="${rkey}nodeXtraFilters" style="display:none" class="subfields">
+        <div class="form-group">
+            <div class="col-sm-12">
+            <span class="h5 ${hasErrors(bean: query, field: 'nodeExclude', 'has-error')}">
+                Exclude Nodes Matching:
+            </span>
+            </div>
+
+
+                <g:hasErrors bean="${query}" field="nodeExclude">
+                    <div class="col-sm-12">
+                    <div class="has-error">
                         <g:renderErrors bean="${query}" as="list" field="nodeExclude"/>
+                        <i class="glyphicon glyphicon-warning-sign"></i>
+                    </div>
                     </div>
                 </g:hasErrors>
-                    <g:hasErrors bean="${query}" field="nodeExclude">
-                        <img src="${resource( dir:'images',file:'icon-small-warn.png' )}" alt="Error"  width="16px" height="16px"/>
-                    </g:hasErrors>
-                </div>
 
-                <div id="nodeFilterDivExclude" style="">
-                    <g:each var="key" in="${NODE_FILTERS_ALL}">
-                        <g:render template="nodeFilterField" model="${[key:key,include:false,query:query,NODE_FILTER_MAP:NODE_FILTER_MAP]}"/>
-                    </g:each>
 
-                </div>
-                <div class="filterSetButtons">
-                    <g:each var="key" in="${NODE_FILTERS_ALL}">
-                            <span
-                                style="${query?.('nodeExclude'+key)?'display:none':''}"
-                            title="Add Filter: ${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}"
-                            class="filterAdd btn btn-default btn-sm"
-                            id="filterAddExclude${key}"
-                            onclick="_addNodeFilterInput('${key}',false,'${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}');"
-                            >${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}</span>
-                    </g:each>
-                </div>
-            </td>
-        </tr>
+            <div id="nodeFilterDivExclude" style="">
+                <g:each var="key" in="${NODE_FILTERS_ALL}">
+                    <g:render template="nodeFilterField" model="${[key:key,include:false,query:query,NODE_FILTER_MAP:NODE_FILTER_MAP]}"/>
+                </g:each>
+            </div>
+            <div class="row">
+            <div class="  col-sm-10 col-sm-offset-2">
+                <g:each var="key" in="${NODE_FILTERS_ALL}">
+                        <span
+                            style="${query?.('nodeExclude'+key)?'display:none':''}"
+                        title="Add Filter: ${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}"
+                        class="filterAdd btn btn-default btn-sm"
+                        id="filterAddExclude${key}"
+                        onclick="_addNodeFilterInput('${key}',false,'${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}');"
+                        >${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}</span>
+                </g:each>
+            </div>
+            </div>
+        </div>
         <g:if test="${filterErrors?.filter}">
-            <tr>
-                <td></td>
-                <td>
+            <div class="row">
+                <div class="col-sm-12">
                     <span class="error filter">${filterErrors?.filter}</span>
-                </td>
-            </tr>
+                </div>
+            </div>
         </g:if>
-        <tr>
-            <td>Exclude Filters have precedence?</td>
-            <td>
-                <g:radio
-                    name="nodeExcludePrecedence"
-                    value="false"
-                    checked="${!query?.nodeExcludePrecedence}"
-                    id="nodeExcludePrecedenceFalse" onchange="_matchNodes()"
-                    />
-                <label for="nodeExcludePrecedenceFalse">
-                    <span class="action " id="nodeExcludePrecedenceFalseLabel" >No</span></label>
+        <div class="form-group">
+            <label class="col-sm-2  control-label">Precedence to:</label>
 
-                <g:radio
-                    name="nodeExcludePrecedence"
-                    value="true"
-                    checked="${query?.nodeExcludePrecedence}"
-                    id="nodeExcludePrecedenceTrue" onchange="_matchNodes()"
-                    />
-                <label for="nodeExcludePrecedenceTrue">
-                    <span class="action " id="nodeExcludePrecedenceTrueLabel" >Yes</span></label>
-            </td>
-        </tr>
-    </tbody>
+            <div class="col-sm-10">
+                <label title="Include more nodes" class="radio-inline">
+                    <g:radio name="nodeExcludePrecedence" value="false"
+                             checked="${!query?.nodeExcludePrecedence}"
+                             id="nodeExcludePrecedenceFalse" onchange="_matchNodes()"/>
+                    Included</label>
+
+                <label title="Exclude more nodes" class="radio-inline">
+                    <g:radio name="nodeExcludePrecedence" value="true"
+                             checked="${query?.nodeExcludePrecedence}"
+                             id="nodeExcludePrecedenceTrue" onchange="_matchNodes()"/>
+                    Excluded</label>
+            </div>
+        </div>
+    </div>

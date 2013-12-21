@@ -21,17 +21,35 @@
     Created: Oct 27, 2010 5:04:24 PM
  --%>
 <g:set var="type" value="${include?'Include':'Exclude'}"/>
-<div id="nodeFilter${type}${key}"  style="${query?.('node'+type+key)?'':'display:none;'}" class="nfilteritem">
+<g:set var="predefinedDefaults" value="${g.message(code: 'node.metadata.' + key + '.defaults', default: '')}"/>
+<div id="nodeFilter${type}${key}"  style="${query?.('node'+type+key)?'':'display:none;'}"
+     class="nodefilterfield form-group">
 <span class="input">
-    ${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}:
-    <input type='text' name="node${type}${key}"
-        value="${query?.('node'+type+key)?.encodeAsHTML()}" id="schedJobNode${type}${key}" onchange="_matchNodes();"/>
-    <span title="Remove filter for ${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}"
-        class="filterRemove action"
-        onclick="_removeNodeFilterInput('${key}',${include?true:false});"
-        ><img src="${resource( dir:'images',file:'icon-tiny-removex.png' )}" alt="remove" width="12px" height="12px"/></span>
-</span>
-    <g:if test="${g.message(code:'node.metadata.'+key+'.defaults',default:'')}">
-        <g:select name="_${key}defaults" from="${g.message(code:'node.metadata.'+key+'.defaults').split(',').sort()}" onchange="_setNodeFilterDefault('${key}',${include?true:false},this.value);"/>
+    <label class="control-label col-sm-2"
+           for="schedJobNodeInclude${key}">${NODE_FILTER_MAP[key] ? NODE_FILTER_MAP[key] : key}:</label>
+    <g:set var="filtvalue"
+           value="${query?.('node' + type + key)?.encodeAsHTML()}"/>
+
+    <div class="${predefinedDefaults ? 'col-sm-4' : 'col-sm-6'}">
+        <input type='text' name="node${type}${key}" class="filterIncludeText form-control input-sm"
+               value="${filtvalue}" id="schedJobNodeInclude${key}" onchange="_matchNodes();"/>
+    </div>
+    <g:if test="${predefinedDefaults}">
+        <div class="col-sm-2">
+            <g:select from="${predefinedDefaults.split(',').sort()}"
+                      onchange="setFilter('${key}',true,this.value);_matchNodesKeyPress();"
+                      class="form-control col-sm-2 input-sm"
+                      name="_${key}defaults"/>
+        </div>
     </g:if>
+
+    <div class="col-sm-4">
+        <span title="Remove filter for ${NODE_FILTER_MAP[key] ? NODE_FILTER_MAP[key] : key}"
+              class="filterRemove action textbtn textbtn-danger form-control-static"
+              onclick="_removeNodeFilterInput('${key}', ${include?true:false});">
+            <i class="glyphicon glyphicon-remove"></i>
+            remove
+        </span>
+    </div>
+</span>
 </div>
