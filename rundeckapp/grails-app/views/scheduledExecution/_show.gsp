@@ -66,6 +66,14 @@
 
 
 <div class="row">
+    <div class="col-sm-12 ">
+        <h4 class="text-muted">Statistics</h4>
+
+        <g:render template="/scheduledExecution/renderJobStats" model="${[scheduledExecution: scheduledExecution]}"/>
+    </div>
+</div>
+
+<div class="row">
     <div class="col-sm-12">
         <h4 class="text-muted"><g:message code="page.section.Activity"/></h4>
 
@@ -74,14 +82,6 @@
                 <g:render template="/reports/activityLinks" model="[scheduledExecution: scheduledExecution]"/>
             </div>
         </div>
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-sm-12 ">
-        <h4 class="text-muted">Statistics</h4>
-
-        <g:render template="/scheduledExecution/renderJobStats" model="${[scheduledExecution: scheduledExecution]}"/>
     </div>
 </div>
 
