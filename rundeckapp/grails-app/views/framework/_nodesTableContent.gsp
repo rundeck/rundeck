@@ -30,7 +30,7 @@
             <g:set var="resName" value="${node.nodename}"/>
 
             <tr class="${i%2==1?'alternateRow':''} node_entry ${nodedata.islocal?'server':''}">
-                <td class="objIdent" title="Name">
+                <td class="nodeident" title="Name">
                     <g:if test="${expanddetail||params.expanddetail}">
                         <g:expander key="${ukey+'node_detail_'+i}" imgfirst="true">
                         <span class="node_ident" id="${ukey}_${node.nodename}_key">
@@ -45,23 +45,23 @@
                             ${resName.encodeAsHTML()}
                         </span>
                     </g:else>
-
-
+                    <g:link class=" textbtn  " action="nodes" params="${[nodeIncludeName: resName]}"
+                            title="Select only this node">
+                        <i class="glyphicon glyphicon-circle-arrow-right"></i>
+                    </g:link>
                     </td>
-                <td class="desc"  title="Description">
-                        <span class="desc">${node.description?.encodeAsHTML()}</span>
+                <td class="desc nodedesc"  title="Description">
+                    ${node.description?.encodeAsHTML()}
                 </td>
-                <td  title="Tags">
+                <td  title="Tags" class="nodetags">
                     <g:if test="${node.tags}">
                         <span class="nodetags">
                             <i class="glyphicon glyphicon-tags text-muted"></i>
                             <g:each var="tag" in="${node.tags.sort()}">
                                 <g:link class="tag textbtn" action="nodes" params="${[nodeIncludeTags:tag]}"
                                         title="Filter by tag: ${tag.encodeAsHTML()}">
-
-                                    ${tag.encodeAsHTML()}
-                                </g:link>
-                                %{--<span class="action textbtn" onclick="setTagFilter('${tag.encodeAsJavaScript()}');" title="Add to existing filter">+</span>--}%
+                                    ${tag.encodeAsHTML()}</g:link>
+                            %{--<span class="action textbtn" onclick="setTagFilter('${tag.encodeAsJavaScript()}');" title="Add to existing filter">+</span>--}%
                             </g:each>
                         </span>
                     </g:if>
@@ -107,7 +107,7 @@
                 %{--</g:link>--}%
                 <tr id="${ukey}node_detail_${i}" class="detail_content nodedetail" style="display:none">
                     <td colspan="6">
-                        <g:render template="nodeDetailsSimple" model="[node:node,key:ukey+'_'+node.nodename+'_key',projects:nodedata.projects,exclude:['username','hostname','tags']]"/>
+                        <g:render template="nodeDetailsSimple" model="[node:node,key:ukey+'_'+node.nodename+'_key',projects:nodedata.projects,exclude:['username','hostname']]"/>
                     </td>
                 </tr>
             </g:if>

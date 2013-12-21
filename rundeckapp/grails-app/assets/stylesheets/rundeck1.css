@@ -1770,14 +1770,7 @@ tr.node_entry.server span.node_ident, .node_entry.server.node_ident, .node_entry
     border: 0;
 }
 
-tr.node_entry.server span.desc, .node_entry.server span.desc {
 
-}
-
-tr.node_entry.server span.desc:before, .node_entry.server span.desc:before, .nodedetail.server span.desc:before {
-    color: #f66;
-    content: " server " "\2022" " ";
-}
 
 td.username {
     text-align: right;

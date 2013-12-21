@@ -31,7 +31,16 @@
         </g:if>
         <g:if test="${(!exclude || !exclude.contains('tags')) && node['tags']}">
         <tr><td class="key"><i class="glyphicon glyphicon-tags text-muted"></i></td>
-            <td class="value">${(node['tags']?node['tags'].join(','):'').encodeAsHTML()}</td></tr>
+            <td class="">
+                <span class="nodetags">
+                    <g:each var="tag" in="${node.tags.sort()}">
+                        <g:link class="tag textbtn" action="nodes" params="${[nodeIncludeTags: tag]}"
+                                title="Filter by tag: ${tag.encodeAsHTML()}">
+                            ${tag.encodeAsHTML()}</g:link>
+                    %{--<span class="action textbtn" onclick="setTagFilter('${tag.encodeAsJavaScript()}');" title="Add to existing filter">+</span>--}%
+                    </g:each>
+                </span>
+            </td></tr>
         </g:if>
         <g:set var="nodeAttrs" value="${NodeEntryImpl.nodeExtendedAttributes(node)}"/>
         <g:if test="${nodeAttrs}">
