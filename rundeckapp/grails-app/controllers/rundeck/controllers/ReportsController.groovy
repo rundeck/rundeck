@@ -3,6 +3,8 @@ package rundeck.controllers
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.Framework
+import grails.converters.JSON
+import rundeck.Execution
 import rundeck.services.ApiService
 import rundeck.services.ExecutionService
 
@@ -232,6 +234,27 @@ class ReportsController {
         def results = index(query)
         results.params=params
         return results
+    }
+    def eventsAjax={ ExecQuery query ->
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'event'], ['read'],
+            session.project)) {
+            return unauthorized("Read Events for project ${session.project}",true)
+        }
+        def results = index(query)
+        results.reports=results.reports*.toMap()
+        results.reports?.each{
+            if(it.jcExecId){
+                try{
+                    it.execution= Execution.get(Long.parseLong(it.jcExecId))
+                }catch (Exception e){
+
+                }
+            }
+        }
+        results.params=params
+        render(contentType: 'application/json', text: results as JSON)
     }
     def jobsFragment={ ExecQuery query ->
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)

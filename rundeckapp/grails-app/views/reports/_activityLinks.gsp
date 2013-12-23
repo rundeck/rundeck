@@ -22,7 +22,7 @@
 
 
     <li>
-        <g:link controller="reports" action="index"
+        <g:link controller="reports" action="index" class="activity_link btn "
                 title="Activity within the last day"
                 params="${linkParams+[recentFilter: '1d']}">
             <i class="glyphicon glyphicon-time"></i>
@@ -31,7 +31,7 @@
     </li>
 
     <li>
-        <g:link controller="reports" action="index"
+        <g:link controller="reports" action="index" class="activity_link btn "
                 title="Activity within the last week"
                 params="${linkParams+[ recentFilter: '1w']}">
             <i class="glyphicon glyphicon-time"></i>
@@ -40,7 +40,7 @@
     </li>
 
     <li>
-        <g:link controller="reports" action="index"
+        <g:link controller="reports" action="index" class="activity_link btn "
                 title="Failed executions"
                 params="${linkParams+[ statFilter: 'fail']}">
             <i class="glyphicon glyphicon-minus-sign"></i>
@@ -50,7 +50,7 @@
 
     <g:if test="${!execution || execution.user != session.user}">
         <li>
-            <g:link controller="reports" action="index"
+            <g:link controller="reports" action="index" class="activity_link btn "
                     title="Executions by you"
                     params="${linkParams+[ userFilter: session.user]}">
                 <i class="glyphicon glyphicon-user"></i>
@@ -61,7 +61,7 @@
 
     <g:if test="${execution}">
         <li>
-            <g:link controller="reports" action="index"
+            <g:link controller="reports" action="index" class="activity_link btn "
                     title="Executions by ${execution.user.encodeAsHTML()}"
                     params="${linkParams+[ userFilter: execution.user]}">
                 <i class="glyphicon glyphicon-user"></i>
@@ -70,7 +70,7 @@
         </li>
     </g:if>
     <li>
-        <g:link controller="reports" action="index"
+        <g:link controller="reports" action="index" class="activity_link btn "
                 title="All activity for this job"
                 params="${linkParams}">
             <i class="glyphicon glyphicon-list"></i>
@@ -79,3 +79,70 @@
     </li>
 
 </ul>
+<g:if test="${knockoutBinding}">
+
+    <div data-bind="if: reports().length > 0" >
+    <table class=" table table-hover table-condensed" style="width:100%" data-bind="foreach: reports">
+        <tr class="link"
+            data-bind="css: { 'succeed': status()=='succeed', 'fail': status()=='fail' } "
+            onclick="$(this).down('a._defaultAction').click();"
+            >
+            <td style="width:12px;" class="eventicon">
+                <i class="exec-status icon"
+                   data-bind="css: { 'succeed': status()=='succeed', 'fail': status()=='fail', 'warn': status()=='cancel' } "
+                ></i>
+            </td>
+            %{--<td class="eventtitle ${rpt?.jcJobId ? 'job' : 'adhoc'}" colspan="${rpt?.jcJobId ? 1 : 2}">--}%
+                %{--#${rpt.jcExecId}--}%
+            %{--</td>--}%
+            <td class="eventtitle" data-bind="css: { job: jcJobId(), adhoc: !jcJobId() }, attr: { colspan: jcJobId()?'1':'2' }">
+                <a href="#" data-bind="text: '#'+jcExecId(), attr: { href: showExecutionLink() }" class="_defaultAction"></a>
+                <span data-bind="text: statusText()"></span>
+            </td>
+            <td class="eventargs" data-bind="if: jcJobId() && execution()">
+                <span data-bind="text: execution().argString"></span>
+            </td>
+            <td style="white-space:nowrap" class="right date">
+                <span data-bind="if: dateCompleted()">
+                    <span class="timeabs" data-bind="text: endTimeFormat('${g.message(code:'jobslist.date.format.ko')}')">
+
+                    </span>
+                    <span title="">
+                        in <span class="duration" data-bind="text: durationHumanize()"></span>
+                    </span>
+                </span>
+            </td>
+
+            <td class="  user" style="white-space: nowrap">
+                <em>by</em>
+                <span data-bind="text: author"></span>
+            </td>
+
+            <td style="white-space:nowrap;text-align:right;"
+                class="  nodecount "
+                data-bind="css: { fail: nodeFailCount() > 0 , ok: nodeFailCount() < 1 } "
+            >
+                <span data-bind="if: nodeFailCount() > 0">
+                    <span data-bind="text: nodeFailCount()"></span> failed
+                </span>
+                <span data-bind="if: nodeFailCount() < 1 ">
+                    <span data-bind="text: nodeSucceedCount()"></span> ok
+                </span>
+            </td>
+            <td class=" outputlink">
+                <span data-bind="if: jcExecId()">
+                    <a href="#" data-bind="attr: { href: showExecutionLink() }"
+                       class="_defaultAction">Show &raquo;</a>
+                </span>
+            </td>
+        </tr>
+    </table>
+    </div>
+    <div data-bind="if: selected() && reports().length < 1 ">
+        <div class="well well-sm">None</div>
+    </div>
+    <div data-bind="if: selected() ">
+        <a href="#" class="" data-bind="attr: { href: href() } ">More… <i class="glyphicon glyphicon-circle-arrow-right"></i></a>
+    </div>
+
+</g:if>

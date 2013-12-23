@@ -79,7 +79,7 @@
 
         <div class="panel panel-default">
             <div class="panel-body">
-                <g:render template="/reports/activityLinks" model="[scheduledExecution: scheduledExecution]"/>
+                <g:render template="/reports/activityLinks" model="[scheduledExecution: scheduledExecution, knockoutBinding:true]"/>
             </div>
         </div>
     </div>
