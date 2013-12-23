@@ -100,7 +100,7 @@
                                       model="${[completePercent:(int)completePercent,
                                               title:completePercent < 100 ? 'Estimated completion time: ' + completeEstimateTime : '',
                                               progressClass: 'rd-progress-exec progress-striped',
-                                              progressBarClass: 'progress-bar-info',
+                                              progressBarClass: completePercent <= 100  ? 'progress-bar-info': 'progress-bar-warning',
                                 showpercent:true,showOverrun:true,remaining:' ('+completeRemaining+')',width:120]}"/>
                         </g:if>
                         <g:else>
