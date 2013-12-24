@@ -18,11 +18,9 @@
 <g:if test="${scheduledExecution}">
     <g:set var="linkParams" value="${[jobIdFilter: scheduledExecution.id, projFilter: scheduledExecution.project]}"/>
 </g:if>
-<ul class="nav nav-links">
-
-
+<ul class="nav nav-tabs activity_links">
     <li>
-        <g:link controller="reports" action="index" class="activity_link btn "
+        <g:link controller="reports" action="index" class="activity_link"
                 title="Activity within the last day"
                 params="${linkParams+[recentFilter: '1d']}">
             <i class="glyphicon glyphicon-time"></i>
@@ -31,7 +29,7 @@
     </li>
 
     <li>
-        <g:link controller="reports" action="index" class="activity_link btn "
+        <g:link controller="reports" action="index" class="activity_link"
                 title="Activity within the last week"
                 params="${linkParams+[ recentFilter: '1w']}">
             <i class="glyphicon glyphicon-time"></i>
@@ -40,7 +38,7 @@
     </li>
 
     <li>
-        <g:link controller="reports" action="index" class="activity_link btn "
+        <g:link controller="reports" action="index" class="activity_link"
                 title="Failed executions"
                 params="${linkParams+[ statFilter: 'fail']}">
             <i class="glyphicon glyphicon-minus-sign"></i>
@@ -50,7 +48,7 @@
 
     <g:if test="${!execution || execution.user != session.user}">
         <li>
-            <g:link controller="reports" action="index" class="activity_link btn "
+            <g:link controller="reports" action="index" class="activity_link"
                     title="Executions by you"
                     params="${linkParams+[ userFilter: session.user]}">
                 <i class="glyphicon glyphicon-user"></i>
@@ -61,7 +59,7 @@
 
     <g:if test="${execution}">
         <li>
-            <g:link controller="reports" action="index" class="activity_link btn "
+            <g:link controller="reports" action="index" class="activity_link"
                     title="Executions by ${execution.user.encodeAsHTML()}"
                     params="${linkParams+[ userFilter: execution.user]}">
                 <i class="glyphicon glyphicon-user"></i>
@@ -70,7 +68,7 @@
         </li>
     </g:if>
     <li>
-        <g:link controller="reports" action="index" class="activity_link btn "
+        <g:link controller="reports" action="index" class="activity_link"
                 title="All activity for this job"
                 params="${linkParams}">
             <i class="glyphicon glyphicon-list"></i>
@@ -81,8 +79,10 @@
 </ul>
 <g:if test="${knockoutBinding}">
 
-    <div data-bind="if: reports().length > 0" >
-    <table class=" table table-hover table-condensed" style="width:100%" data-bind="foreach: reports">
+<div data-bind="visible: selected()"  class="panel panel-default panel-tab-content" style="display: none;">
+    <table class=" table table-hover table-condensed "
+           style="width:100%; display: none"
+           data-bind="visible: reports().length > 0, foreach: reports ">
         <tr class="link"
             data-bind="css: { 'succeed': status()=='succeed', 'fail': status()=='fail' } "
             onclick="$(this).down('a._defaultAction').click();"
@@ -92,9 +92,6 @@
                    data-bind="css: { 'succeed': status()=='succeed', 'fail': status()=='fail', 'warn': status()=='cancel' } "
                 ></i>
             </td>
-            %{--<td class="eventtitle ${rpt?.jcJobId ? 'job' : 'adhoc'}" colspan="${rpt?.jcJobId ? 1 : 2}">--}%
-                %{--#${rpt.jcExecId}--}%
-            %{--</td>--}%
             <td class="eventtitle" data-bind="css: { job: jcJobId(), adhoc: !jcJobId() }, attr: { colspan: jcJobId()?'1':'2' }">
                 <a href="#" data-bind="text: '#'+jcExecId(), attr: { href: showExecutionLink() }" class="_defaultAction"></a>
                 <span data-bind="text: statusText()"></span>
@@ -137,12 +134,25 @@
             </td>
         </tr>
     </table>
+
+
+    <div data-bind="visible: selected() && reports().length < 1 " class="panel-body" style="display: none;">
+        <div class="">
+        <span class="text-muted">No matching activity found</span>
+        </div>
     </div>
-    <div data-bind="if: selected() && reports().length < 1 ">
-        <div class="well well-sm">None</div>
+
+    <div data-bind="visible: selected()" class="panel-footer" style="display: none">
+        <span data-bind="if: max() > 0" class="text-info">
+            showing
+            <span data-bind="text: count() + ' of ' + total()"></span>
+        </span>
+        <a href="#" class="" data-bind="attr: { href: href() } ">
+                Show matching activity…
+            <i class="glyphicon glyphicon-circle-arrow-right"></i>
+        </a>
+
     </div>
-    <div data-bind="if: selected() ">
-        <a href="#" class="" data-bind="attr: { href: href() } ">More… <i class="glyphicon glyphicon-circle-arrow-right"></i></a>
-    </div>
+</div>
 
 </g:if>

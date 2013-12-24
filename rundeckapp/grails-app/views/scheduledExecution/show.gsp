@@ -73,13 +73,20 @@
             });
             ko.mapping.fromJS(data,{},self);
         }
-        var history={
-            reports:ko.observableArray([]),
-            href:ko.observableArray([]),
-            selected:ko.observable(false),
-
-            params:ko.observable()
-        };
+        function History(){
+            var self=this;
+            self.reports=ko.observableArray([]);
+            self.href=ko.observableArray([]);
+            self.selected=ko.observable(false);
+            self.max=ko.observable(20);
+            self.total=ko.observable(0);
+            self.offset=ko.observable(0);
+            self.params=ko.observable();
+            self.count=ko.computed(function(){
+                return self.reports().length + self.offset() * self.max();
+            });
+        }
+        var history = new History();
         var binding={
             'reports': {
                 key: function (data) {
@@ -99,9 +106,9 @@
                var url="${g.createLink(controller: 'reports',action: 'eventsAjax',absolute:true)}"+params;
                jQuery.getJSON(url,function(data){
                 history.selected(true);
-                jQuery('a.activity_link').removeClass('active');
-                jQuery(me).addClass('active');
-                ko.mapping.fromJS({ href: me.getAttribute('href'), reports:data.reports, params:params },binding,history);
+                jQuery('.activity_links > li').removeClass('active');
+                jQuery(me.parentNode).addClass('active');
+                ko.mapping.fromJS(Object.extend(data,{ href: me.getAttribute('href'), params:params }),binding,history);
                });
 
            });

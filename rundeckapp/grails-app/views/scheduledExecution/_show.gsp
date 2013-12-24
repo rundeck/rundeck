@@ -77,11 +77,7 @@
     <div class="col-sm-12">
         <h4 class="text-muted"><g:message code="page.section.Activity"/></h4>
 
-        <div class="panel panel-default">
-            <div class="panel-body">
-                <g:render template="/reports/activityLinks" model="[scheduledExecution: scheduledExecution, knockoutBinding:true]"/>
-            </div>
-        </div>
+        <g:render template="/reports/activityLinks" model="[scheduledExecution: scheduledExecution, knockoutBinding:true]"/>
     </div>
 </div>
 
