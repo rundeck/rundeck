@@ -1129,6 +1129,22 @@ function paginate(elem,offset,total,max,options){
 }
 
 /**
+ * Set click handlers for history links in activity section
+ * @param id
+ * @param ajaxHistoryLink
+ */
+function setupActivityLinks(id, history,ajaxHistoryLink){
+    jQuery('#'+id+' a.activity_link').click(function (e) {
+        e.preventDefault();
+        var me = jQuery(this)[0];
+        jQuery('#'+id+' .activity_links > li').removeClass('active');
+        jQuery(me.parentNode).addClass('active');
+
+        loadHistoryLink(history, ajaxHistoryLink, me.getAttribute('href'));
+    });
+}
+
+/**
  * jQuery/bootstrap utility functions
  */
 function _initPopoverContentRef(parent){

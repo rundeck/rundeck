@@ -1,3 +1,4 @@
+<%@ page import="grails.util.Environment" %>
 <html>
 <head>
     <g:set var="rkey" value="${g.rkey()}" />
@@ -9,6 +10,16 @@
     <g:javascript library="pagehistory"/>
     <g:javascript library="prototype/effects"/>
     <g:javascript library="executionOptions"/>
+    <g:if test="${grails.util.Environment.current == Environment.DEVELOPMENT}">
+        <g:javascript src="knockout-3.0.0.debug.js"/>
+    </g:if>
+    <g:else>
+        <g:javascript src="knockout-3.0.0-min.js"/>
+    </g:else>
+    <g:javascript src="knockout.mapping-latest.js"/>
+    <g:javascript src="moment.min.js"/>
+    <asset:javascript src="momentutil.js"/>
+    <g:javascript src="historyKO.js"/>
     <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
     <script type="text/javascript">
 
@@ -327,7 +338,15 @@
                 Event.observe(e, 'click', filterToggleSave);
             });
         }
-        Event.observe(window,'load',init);
+
+        jQuery(document).ready(function () {
+            init();
+            if (jQuery('#activity_section')) {
+                var history = new History();
+                ko.applyBindings(history, document.getElementById('activity_section'));
+                setupActivityLinks('activity_section', history, "${g.createLink(controller: 'reports', action: 'eventsAjax', absolute: true)}");
+            }
+        });
     </script>
     <g:javascript library="yellowfade"/>
     <g:render template="/framework/remoteOptionValuesJS"/>
@@ -374,7 +393,12 @@
     </div>
 </div>
 
-    <h4 class="text-muted"><g:message code="page.section.Activity"/></h4>
-    <g:render template="/reports/activityLinks" model="[project:session.project]"/>
+<div class="row row-space" id="activity_section">
+    <div class="col-sm-12 ">
+        <h4 class="text-muted "><g:message code="page.section.Activity"/></h4>
+        <g:render template="/reports/activityLinks"
+                  model="[project:session.project, knockoutBinding: true, showTitle:true]"/>
+    </div>
+</div>
 </body>
 </html>

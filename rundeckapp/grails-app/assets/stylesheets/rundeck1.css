@@ -1624,13 +1624,7 @@ tr.sectionhead td.eventsummary {
     width: 50px;
 }
 
-table.jobsList td.eventtitle.job {
-}
 
-table.jobsList td.eventtitle.adhoc {
-    font-style: italic;
-    color: #888;
-}
 
 tr.sectionhead td.eventmessage {
     overflow: hidden;

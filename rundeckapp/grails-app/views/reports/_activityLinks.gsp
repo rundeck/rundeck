@@ -80,9 +80,11 @@
 <g:if test="${knockoutBinding}">
 
 <div data-bind="visible: selected()"  class="panel panel-default panel-tab-content" style="display: none;">
-    <table class=" table table-hover table-condensed "
+    <table class=" table table-hover table-condensed events-table"
            style="width:100%; display: none"
-           data-bind="visible: reports().length > 0, foreach: reports ">
+           data-bind="visible: reports().length > 0">
+        <tbody ></tbody>
+        <tbody data-bind=" foreach: reports ">
         <tr class="link"
             data-bind="css: { 'succeed': status()=='succeed', 'fail': status()=='fail' } "
             onclick="$(this).down('a._defaultAction').click();"
@@ -92,11 +94,13 @@
                    data-bind="css: { 'succeed': status()=='succeed', 'fail': status()=='fail', 'warn': status()=='cancel' } "
                 ></i>
             </td>
-            <td class="eventtitle" data-bind="css: { job: jcJobId(), adhoc: !jcJobId() }, attr: { colspan: jcJobId()?'1':'2' }">
-                <a href="#" data-bind="text: '#'+jcExecId(), attr: { href: showExecutionLink() }" class="_defaultAction"></a>
-                <span data-bind="text: statusText()"></span>
+            <td class="eventtitle" data-bind="css: { job: jcJobId(), adhoc: !jcJobId() }">
+                <a href="#" data-bind="text: '#'+jcExecId(), attr: { href: executionHref() }" class="_defaultAction"></a>
+                <g:if test="${showTitle}">
+                    <span data-bind="text: jcJobId()?reportId():title(), css: {  } "></span>
+                </g:if>
             </td>
-            <td class="eventargs" data-bind="if: jcJobId() && execution()">
+            <td class="eventargs" >
                 <span data-bind="text: execution().argString"></span>
             </td>
             <td style="white-space:nowrap" class="right date">
@@ -128,11 +132,12 @@
             </td>
             <td class=" outputlink">
                 <span data-bind="if: jcExecId()">
-                    <a href="#" data-bind="attr: { href: showExecutionLink() }"
+                    <a href="#" data-bind="attr: { href: executionHref() }"
                        class="_defaultAction">Show &raquo;</a>
                 </span>
             </td>
         </tr>
+        </tbody>
     </table>
 
 

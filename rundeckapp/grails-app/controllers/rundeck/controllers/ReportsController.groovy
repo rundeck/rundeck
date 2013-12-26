@@ -248,6 +248,7 @@ class ReportsController {
             if(it.jcExecId){
                 try{
                     it.execution= Execution.get(Long.parseLong(it.jcExecId))
+                    it.executionHref=createLink(controller: 'execution',action: 'show',absolute: true,id: it.jcExecId)
                 }catch (Exception e){
 
                 }

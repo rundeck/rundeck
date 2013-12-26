@@ -27,6 +27,7 @@
       <g:set var="defaultLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.default}"/>
       <g:set var="maxLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.max}"/>
       <g:javascript src="moment.min.js"/>
+      <asset:javascript src="momentutil.js"/>
       <g:javascript src="executionControl.js"/>
       <g:javascript src="workflow.js"/>
       <g:javascript src="executionState.js"/>
@@ -38,6 +39,7 @@
       </g:else>
       <g:javascript src="knockout.mapping-latest.js"/>
       <g:javascript src="executionStateKO.js"/>
+      <g:javascript src="historyKO.js"/>
       <g:javascript library="prototype/effects"/>
       <g:javascript>
 
@@ -140,7 +142,7 @@
                 endTime:'${execution.dateCompleted?.encodeAsJavaScript()}',
                 executionState:'${execState}'
             },{},nodeflowvm);
-            ko.applyBindings(nodeflowvm);
+            ko.applyBindings(nodeflowvm,jQuery('#execution_main')[0]);
 
             <g:if test="${!(grailsApplication.config.rundeck?.gui?.enableJobHoverInfo in ['false', false])}">
             $$('.obs_bubblepopup').each(function(e) {
@@ -162,8 +164,14 @@
             });
         }
 
-        Event.observe(window, 'load', init);
-
+        jQuery(document).ready(function(){
+            init();
+            if(jQuery('#activity_section')){
+                var history = new History();
+                ko.applyBindings(history, document.getElementById('activity_section'));
+                setupActivityLinks('activity_section', history, "${g.createLink(controller: 'reports', action: 'eventsAjax', absolute: true)}");
+           }
+        });
       </g:javascript>
       <style type="text/css">
 
@@ -192,7 +200,7 @@
 
 <g:set var="isAdhoc" value="${!scheduledExecution && execution.workflow.commands.size() == 1}"/>
   <body id="executionShowPage">
-    <div class="">
+    <div id="execution_main">
         <div class="executionshow_wrap" data-affix="wrap">
         <div class="executionshow" data-affix="top" data-affix-padding-top="21">
             <div class="row">
@@ -533,14 +541,14 @@
             </div>
         </div>
     </div>
-
+    </div>
 
 
     <g:if test="${scheduledExecution}">
-        <div class="row row-space">
+        <div class="row row-space" id="activity_section">
             <div class="col-sm-12 ">
                 <h4 class="text-muted "><g:message code="page.section.Activity"/></h4>
-                <g:render template="/reports/activityLinks" model="[execution:execution,scheduledExecution: scheduledExecution]"/>
+                <g:render template="/reports/activityLinks" model="[execution:execution,scheduledExecution: scheduledExecution, knockoutBinding: true]"/>
             </div>
         </div>
     </g:if>

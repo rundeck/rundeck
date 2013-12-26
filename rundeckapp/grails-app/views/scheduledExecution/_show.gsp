@@ -73,7 +73,7 @@
     </div>
 </div>
 
-<div class="row">
+<div class="row" id="activity_section">
     <div class="col-sm-12">
         <h4 class="text-muted"><g:message code="page.section.Activity"/></h4>
 
