@@ -1,4 +1,4 @@
-<%@ page import="rundeck.User; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
+<%@ page import="grails.util.Environment; rundeck.User; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 <html>
 <head>
     <g:set var="ukey" value="${g.rkey()}" />
@@ -9,6 +9,16 @@
     <g:javascript library="executionControl"/>
     <g:javascript library="yellowfade"/>
     <g:javascript library="pagehistory"/>
+    <g:if test="${grails.util.Environment.current == Environment.DEVELOPMENT}">
+        <g:javascript src="knockout-3.0.0.debug.js"/>
+    </g:if>
+    <g:else>
+        <g:javascript src="knockout-3.0.0-min.js"/>
+    </g:else>
+    <g:javascript src="knockout.mapping-latest.js"/>
+    <g:javascript src="moment.min.js"/>
+    <asset:javascript src="momentutil.js"/>
+    <g:javascript src="historyKO.js"/>
     <g:set var="defaultLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.default}"/>
     <g:set var="maxLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.max}"/>
     <script type="text/javascript">
@@ -268,6 +278,9 @@
                     });
                 }
             });
+            var history = new History("${g.createLink(controller: 'reports', action: 'eventsAjax', absolute: true)}");
+            ko.applyBindings(history, document.getElementById('activity_section'));
+            setupActivityLinks('activity_section', history, "${g.createLink(controller: 'reports', action: 'eventsAjax', absolute: true)}");
         }
         jQuery(document).ready(init);
 
@@ -419,16 +432,15 @@
     <div id="runcontent" class="clearfix nodes_run_content" style="display: none"></div>
 
     <g:if test="${run_authorized}">
-
-    <h4 class="text-muted"><g:message code="page.section.Activity"/></h4>
-
-    <div class="row">
+    <div class="row" id="activity_section">
     <div class="col-sm-12">
+        <h4 class="text-muted"><g:message code="page.section.Activity"/></h4>
         <g:render template="/reports/activityLinks" model="[filter: [
                 jobIdFilter: 'null',
                 userFilter: session.user,
                 projFilter: session.project
-        ]]"/>
+        ],
+        knockoutBinding:true, showTitle:true]"/>
     </div>
     </div>
     </g:if>
