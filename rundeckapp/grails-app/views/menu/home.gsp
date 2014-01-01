@@ -48,7 +48,10 @@
 
                         <g:plural code="Project" count="${projectSummary.size()}" textOnly="${true}"/>:
                         <g:each var="project" in="${projectSummary}" status="i">
-                            ${project}<g:if test="${i < projectSummary.size() - 1}">,</g:if>
+                            <g:link action="selectProject" controller="framework"
+                                    params="[project: project, page: 'jobs']" class="">
+                                ${project}
+                            </g:link><g:if test="${i < projectSummary.size() - 1}">,</g:if>
                         </g:each>
                     </div>
                 </g:if>
@@ -86,11 +89,11 @@
 <div class="list-group-item">
             <div class="row">
                 <div class="col-sm-6 col-md-4">
-                    <a class="h3"
-                       href="${g.createLink(controller: "framework", action: "selectProject", params: [project: project,page:'jobs'])}">
+                    <g:link action="selectProject" controller="framework"
+                        params="[project:project,page:'jobs']" class="h3">
                         <i class="glyphicon glyphicon-tasks"></i>
-                    ${project}
-                    </a>
+                        ${project}
+                    </g:link>
                 </div>
                 %{--<div class="col-sm-6 col-md-2">--}%
                     %{--<a class="h4 ${data.jobCount > 0 ? '' : 'text-muted'}" href="${g.createLink(controller:"framework",action:"selectProject",params:[page: 'jobs',project:project])}">--}%
