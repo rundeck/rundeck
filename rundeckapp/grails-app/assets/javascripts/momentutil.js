@@ -53,7 +53,7 @@
         } else if (since.asWeeks() < 1) {
             return time.format('ddd h:mm a');
         } else if (time.year() != now.year()) {
-            return time.format('MMM do yyyy');
+            return time.format('MMM do YYYY h a');
         } else {
             return time.format('M/d ha');
         }
@@ -88,6 +88,8 @@
                 s++;
             }
             valarr.push(s + 's');
+        } else if (ms < 1000) {
+            valarr.push('0s');
         }
         return valarr.join(' ');
     },

@@ -38,7 +38,7 @@
           <g:javascript src="knockout-3.0.0-min.js"/>
       </g:else>
       <g:javascript src="knockout.mapping-latest.js"/>
-      <g:javascript src="executionStateKO.js"/>
+      <asset:javascript src="executionStateKO.js"/>
       <g:javascript src="historyKO.js"/>
       <g:javascript library="prototype/effects"/>
       <g:javascript>
@@ -166,7 +166,7 @@
 
         jQuery(document).ready(function(){
             init();
-            if(jQuery('#activity_section')){
+            if(document.getElementById('activity_section')){
                 var history = new History("${g.createLink(controller: 'reports', action: 'eventsAjax', absolute: true)}");
                 ko.applyBindings(history, document.getElementById('activity_section'));
                 setupActivityLinks('activity_section', history, "${g.createLink(controller: 'reports', action: 'eventsAjax', absolute: true)}");
@@ -481,7 +481,7 @@
                                   ]"/>
                     </section>
                     <div data-bind="if: completed() || jobAverageDuration() <= 0 ">
-                        <span data-bind="text: formatDurationSimple(execDuration())"></span>
+                        <span data-bind="text: execDurationSimple()"></span>
                     </div>
                 </div>
             </div>
