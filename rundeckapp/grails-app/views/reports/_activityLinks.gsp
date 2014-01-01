@@ -103,18 +103,7 @@
                 <span data-bind="text: author"></span>
             </td>
 
-            %{--<td style="white-space:nowrap;text-align:right;"--}%
-                %{--class="  nodecount "--}%
-                %{--data-bind="css: { fail: nodeFailCount() > 0 , ok: nodeFailCount() < 1 } "--}%
-            %{-->--}%
-                %{--<span data-bind="if: nodeFailCount() > 0">--}%
-                    %{--<span data-bind="text: nodeFailCount()"></span> failed--}%
-                %{--</span>--}%
-                %{--<span data-bind="if: nodeFailCount() < 1 ">--}%
-                    %{--<span data-bind="text: nodeSucceedCount()"></span> ok--}%
-                %{--</span>--}%
-            %{--</td>--}%
-            %{----}%
+
         </tr>
         </tbody>
     </table>
