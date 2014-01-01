@@ -21,19 +21,10 @@
 <ul class="nav nav-tabs activity_links">
     <li>
         <g:link controller="reports" action="index" class="activity_link"
-                title="Activity within the last day"
-                params="${linkParams+[recentFilter: '1d']}">
-            <i class="glyphicon glyphicon-time"></i>
-            last day
-        </g:link>
-    </li>
-
-    <li>
-        <g:link controller="reports" action="index" class="activity_link"
-                title="Activity within the last week"
-                params="${linkParams+[ recentFilter: '1w']}">
-            <i class="glyphicon glyphicon-time"></i>
-            last week
+                title="All activity for this job"
+                params="${linkParams}">
+            <i class="glyphicon glyphicon-list"></i>
+            all
         </g:link>
     </li>
 
@@ -67,14 +58,6 @@
             </g:link>
         </li>
     </g:if>
-    <li>
-        <g:link controller="reports" action="index" class="activity_link"
-                title="All activity for this job"
-                params="${linkParams}">
-            <i class="glyphicon glyphicon-list"></i>
-            all
-        </g:link>
-    </li>
 
 </ul>
 <g:if test="${knockoutBinding}">
@@ -109,33 +92,29 @@
 
                     </span>
                     <span title="">
-                        in <span class="duration" data-bind="text: durationHumanize()"></span>
+                        <span class="text-muted">in</span>
+                        <span class="duration" data-bind="text: durationHumanize()"></span>
                     </span>
                 </span>
             </td>
 
-            <td class="  user" style="white-space: nowrap">
+            <td class="  user text-right" style="white-space: nowrap;">
                 <em>by</em>
                 <span data-bind="text: author"></span>
             </td>
 
-            <td style="white-space:nowrap;text-align:right;"
-                class="  nodecount "
-                data-bind="css: { fail: nodeFailCount() > 0 , ok: nodeFailCount() < 1 } "
-            >
-                <span data-bind="if: nodeFailCount() > 0">
-                    <span data-bind="text: nodeFailCount()"></span> failed
-                </span>
-                <span data-bind="if: nodeFailCount() < 1 ">
-                    <span data-bind="text: nodeSucceedCount()"></span> ok
-                </span>
-            </td>
-            <td class=" outputlink">
-                <span data-bind="if: jcExecId()">
-                    <a href="#" data-bind="attr: { href: executionHref() }"
-                       class="_defaultAction">Show &raquo;</a>
-                </span>
-            </td>
+            %{--<td style="white-space:nowrap;text-align:right;"--}%
+                %{--class="  nodecount "--}%
+                %{--data-bind="css: { fail: nodeFailCount() > 0 , ok: nodeFailCount() < 1 } "--}%
+            %{-->--}%
+                %{--<span data-bind="if: nodeFailCount() > 0">--}%
+                    %{--<span data-bind="text: nodeFailCount()"></span> failed--}%
+                %{--</span>--}%
+                %{--<span data-bind="if: nodeFailCount() < 1 ">--}%
+                    %{--<span data-bind="text: nodeSucceedCount()"></span> ok--}%
+                %{--</span>--}%
+            %{--</td>--}%
+            %{----}%
         </tr>
         </tbody>
     </table>
@@ -148,13 +127,34 @@
     </div>
 
     <div data-bind="visible: selected()" class="panel-footer" style="display: none">
+            <ul class="pagination pagination-sm pagination-embed" data-bind="foreach: pages()">
+                <li data-bind="css: { active: $data.currentPage, disabled: $data.disabled } ">
+                    <a data-bind="attr: { href: ($data.skipped||$data.disabled||$data.currentPage)?'#':$data.url },
+                    click: function(){$data.skipped||$data.disabled||$data.currentPage?null:$root.visitPage($data);}">
+                        <span data-bind="if: $data.nextPage">
+                            <i class="glyphicon glyphicon-arrow-right"></i>
+                        </span>
+                        <span data-bind="if: $data.prevPage">
+                            <i class="glyphicon glyphicon-arrow-left"></i>
+                        </span>
+                        <span data-bind="if: $data.skipped">
+                            …
+                        </span>
+                        <span data-bind="if: $data.normal">
+                            <span data-bind="text: $data.page">
+
+                            </span>
+                        </span>
+                    </a>
+                </li>
+            </ul>
         <span data-bind="if: max() > 0" class="text-info">
             showing
-            <span data-bind="text: count() + ' of ' + total()"></span>
+            <span data-bind="text: reports().length + ' of ' + total()"></span>
         </span>
-        <a href="#" class="" data-bind="attr: { href: href() } ">
-                Show matching activity…
-            <i class="glyphicon glyphicon-circle-arrow-right"></i>
+        <a href="#" class="textbtn textbtn-default" data-bind="attr: { href: href() } ">
+            Filter results…
+            <i class="glyphicon glyphicon-search"></i>
         </a>
 
     </div>

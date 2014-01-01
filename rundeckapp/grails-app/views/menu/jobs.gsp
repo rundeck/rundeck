@@ -342,7 +342,7 @@
         jQuery(document).ready(function () {
             init();
             if (jQuery('#activity_section')) {
-                var history = new History();
+                var history = new History("${g.createLink(controller: 'reports', action: 'eventsAjax', absolute: true)}");
                 ko.applyBindings(history, document.getElementById('activity_section'));
                 setupActivityLinks('activity_section', history, "${g.createLink(controller: 'reports', action: 'eventsAjax', absolute: true)}");
             }
@@ -397,7 +397,7 @@
     <div class="col-sm-12 ">
         <h4 class="text-muted "><g:message code="page.section.Activity"/></h4>
         <g:render template="/reports/activityLinks"
-                  model="[project:session.project, knockoutBinding: true, showTitle:true]"/>
+                  model="[filter: [projFilter:session.project, jobIdFilter: '!null',], knockoutBinding: true, showTitle:true]"/>
     </div>
 </div>
 </body>

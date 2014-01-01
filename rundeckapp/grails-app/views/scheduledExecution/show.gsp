@@ -20,7 +20,7 @@
     <g:javascript src="historyKO.js"/>
     <g:javascript>
         jQuery(document).ready(function(){
-            var history = new History();
+            var history = new History("${g.createLink(controller: 'reports', action: 'eventsAjax', absolute: true)}");
             ko.applyBindings(history, document.getElementById('activity_section'));
             setupActivityLinks('activity_section', history, "${g.createLink(controller: 'reports', action: 'eventsAjax', absolute: true)}");
         });

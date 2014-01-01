@@ -58,10 +58,11 @@ function Report(data) {
     });
     ko.mapping.fromJS(data, {}, self);
 }
-function History() {
+function History(ajaxHistoryLink) {
     var self = this;
+    self.ajaxHistoryLink = ajaxHistoryLink;
     self.reports = ko.observableArray([]);
-    self.href = ko.observableArray([]);
+    self.href = ko.observable();
     self.selected = ko.observable(false);
     self.max = ko.observable(20);
     self.total = ko.observable(0);
@@ -70,6 +71,30 @@ function History() {
     self.count = ko.computed(function () {
         return self.reports().length + self.offset() * self.max();
     });
+    self.pages=ko.computed(function(){
+        var total = self.total();
+        var offset = self.offset();
+        var max = self.max();
+        var href = self.href();
+        if (total < 1 || !href) {
+            return '';
+        }
+        var pages = [];
+        //remove offset/max params from href
+        href=href.replace(/[&\?](offset|max)=\d+/ig,'');
+
+        foreachPage(offset, max, total, {maxSteps:10}, function (pg) {
+            var a;
+            var url = _genUrl(href, {offset: pg.offset, max: pg.max});
+            var label = pg.prevPage ? 'Previous' : pg.nextPage ? 'Next' : pg.skipped? '…' : (pg.page);
+            pages.push(ko.utils.extend({url:url,label:label},pg));
+        });
+
+        return pages;
+    });
+    self.visitPage=function(page){
+        loadHistoryLink(self,self.ajaxHistoryLink,page.url);
+    };
 }
 
 var binding = {

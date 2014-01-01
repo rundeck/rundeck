@@ -167,7 +167,7 @@
         jQuery(document).ready(function(){
             init();
             if(jQuery('#activity_section')){
-                var history = new History();
+                var history = new History("${g.createLink(controller: 'reports', action: 'eventsAjax', absolute: true)}");
                 ko.applyBindings(history, document.getElementById('activity_section'));
                 setupActivityLinks('activity_section', history, "${g.createLink(controller: 'reports', action: 'eventsAjax', absolute: true)}");
            }
