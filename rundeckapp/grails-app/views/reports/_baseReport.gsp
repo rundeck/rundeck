@@ -49,7 +49,8 @@
 
 
         <td class="eventtitle ${rpt?.jcJobId ? 'job' : 'adhoc'}" colspan="${rpt?.jcJobId?1:2}">
-            #${rpt.jcExecId}
+            <g:link controller="execution" action="show" id="${rpt.jcExecId}" class="_defaultAction"
+                    title="View execution output" absolute="${absoluteLinks}">#${rpt.jcExecId}</g:link>
             <g:if test="${options.summary}">
                 <g:if test="${rpt?.jcJobId}">
                     <g:set var="foundJob" value="${ScheduledExecution.getByIdOrUUID(it.jcJobId)}"/>
@@ -104,6 +105,7 @@
                 <g:username user="${it?.author}"/>
             </td>
 
+            <g:unless test="${hideNodes}">
             <td style="white-space:nowrap;text-align:right;" class="${vals[1] != '0' ? 'fail' : 'ok'}  nodecount ">
                 <g:if test="${vals[1] != '0'}">
                     ${vals[1]} ${options.summary ? '' : 'node'} failed
@@ -112,15 +114,8 @@
                     ${vals[0]} ${options.summary ? '' : 'node'} ok
                 </g:else>
             </td>
-
-            <g:unless test="${hideShowLink}">
-            <td class=" outputlink">
-            <g:if test="${rpt.jcExecId}">
-                <g:link controller="execution" action="show" id="${rpt.jcExecId}" class="_defaultAction"
-                        title="View execution output" absolute="${absoluteLinks}">Show &raquo;</g:link>
-            </g:if>
-            </td>
             </g:unless>
+
         </tr>
         <% j++; %>
     </g:each>
