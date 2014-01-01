@@ -87,9 +87,69 @@ class FrameworkController  {
     def nodes ={ ExtNodeFilters query ->
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        String runCommand;
         if(params.fromExecId|| params.retryFailedExecId) {
-            Execution e = Execution.get(params.fromExecId?: params.retryFailedExecId)
+            return redirect(action: 'adhoc',params: params)
+        }else if(params.exec){
+            return redirect(action: 'adhoc', params: params)
+        }
+        def User u = userService.findOrCreateUser(session.user)
+        def usedFilter = null
+//        if (!params.filterName && u && query.nodeFilterIsEmpty() && params.formInput != 'true') {
+//            Map filterpref = userService.parseKeyValuePref(u.filterPref)
+//            if (filterpref['nodes']) {
+//                params.filterName = filterpref['nodes']
+//            }
+//        }
+        if (params.filterName) {
+            //load a named filter and create a query from it
+            if (u) {
+                NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, u)
+                if (filter) {
+                    def query2 = filter.createExtNodeFilters()
+                    //XXX: node query doesn't use pagination, as it is not an actual DB query
+                    query = query2
+                    def props = query.properties
+                    params.putAll(props)
+                    usedFilter = params.filterName
+                }
+            }
+        }
+
+        if (params['Clear']) {
+            query = new ExtNodeFilters()
+            usedFilter = null
+        }
+
+        if (query.nodeFilterIsEmpty()) {
+//            if ('true' == params.defaultLocalNode) {
+//                query.nodeIncludeName = framework.getFrameworkNodeName()
+//            } else {
+//                query.nodeIncludeName = '.*'
+//            }
+        }
+        if (query && !query.project && session.project) {
+            query.project = session.project
+        }
+        def model
+        if ('true' == params.formInput || usedFilter || !query.nodeFilterIsEmpty()) {
+            model = nodesdata(query)
+        } else {
+            model = [query: query, params: params, showFilter:true]
+        }
+
+        if (usedFilter) {
+            model['filterName'] = usedFilter
+        }
+
+        return model
+    }
+
+    def adhoc = { ExtNodeFilters query ->
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        String runCommand;
+        if (params.fromExecId || params.retryFailedExecId) {
+            Execution e = Execution.get(params.fromExecId ?: params.retryFailedExecId)
             if (e && !frameworkService.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_READ])) {
                 return unauthorized("Read Execution ${params.fromExecId ?: params.retryFailedExecId}")
             }
@@ -101,13 +161,13 @@ class FrameworkController  {
                     //configure node filters
                     if (params.retryFailedExecId) {
                         query = new ExtNodeFilters(nodeIncludeName: e.failedNodeList, project: e.project)
-                    }else{
+                    } else {
                         query = ExtNodeFilters.from(e, e.project)
                     }
                 }
             }
-        }else if(params.exec){
-            runCommand=params.exec
+        } else if (params.exec) {
+            runCommand = params.exec
         }
         def User u = userService.findOrCreateUser(session.user)
         def usedFilter = null
@@ -147,13 +207,15 @@ class FrameworkController  {
         if (query && !query.project && session.project) {
             query.project = session.project
         }
-        def model=[query:query,params:params]
+        def result = nodesdata(query)
+        def model = result//[query: query, params: params]
 
         if (usedFilter) {
             model['filterName'] = usedFilter
         }
         return model + [runCommand: runCommand]
     }
+
     /**
      * Nodes action lists nodes in resources view, also called by nodesFragment to
      * render a set of nodes via ajax
@@ -252,9 +314,7 @@ class FrameworkController  {
                     return
                 }
                 count++;
-                if(params.fullresults){
-                    allnodes[nd.nodename]=[node:nd,projects:[project],project:project,executions:[],resources:[],islocal:nd.nodename==framework.getFrameworkNodeName()]
-                }
+                allnodes[nd.nodename]=[node:nd,projects:[project],project:project,executions:[],resources:[],islocal:nd.nodename==framework.getFrameworkNodeName()]
                 if(params.requireRunAuth == 'true'  || runnodes.getNode(nd.nodename)){
                     noderunauthmap[nd.nodename]=true
                 }

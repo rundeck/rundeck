@@ -21,7 +21,22 @@
     Created: Apr 16, 2010 11:17:06 AM
     $Id$
  --%>
-<g:if test="${filterset}">
+
+<g:if test="${filterLinks && filterset}">
+    <ul class="nav nav-links nav-links-inline">
+    <g:each in="${filterset.sort({ a, b -> a.name.compareTo(b.name) })}" var="filter">
+        <g:if test="${filter.name != filterName}">
+        <li>
+            <g:link action="nodes" controller="framework" params="[filterName: filter.name]" class="textbtn textbtn-primary">
+                <i class="glyphicon glyphicon-filter"></i>
+                ${filter.name.encodeAsHTML()}
+            </g:link>
+        </li>
+        </g:if>
+    </g:each>
+    </ul>
+</g:if>
+<g:elseif test="${filterset}">
     <g:select name="filterName" optionKey="name" optionValue="name" from="${filterset?filterset.sort({a,b->a.name.compareTo(b.name)}):filterset}" value="${filterName}"
         noSelection="${['':noSelection?noSelection:'-select a filter-']}" onchange="setFilter('${prefName}',this.value);"/>
-</g:if>
+</g:elseif>

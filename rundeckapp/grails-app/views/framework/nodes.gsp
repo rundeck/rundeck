@@ -266,9 +266,6 @@
          */
 
 
-        /**
-         * START run execution code
-         */
         <g:set var="jsdata" value="${query?.properties.findAll{it.key==~/^(node(In|Ex)clude.*|project)$/ &&it.value}}"/>
 
         var nodeFilterData_${ukey}=${jsdata.encodeAsJSON()};
@@ -310,153 +307,7 @@
                 }
             }
         }
-        var _runBtnHtml;
-        function disableRunBar(){
-            if($('runbox')){
-                $('runbox').down('input[type="text"]').disable();
-                if ($('runbox').down('button.runbutton')) {
-                    $('runbox').down('button.runbutton').disabled = true;
-                    $('runbox').down('button.runbutton').addClassName('disabled');
-                    _runBtnHtml= $('runbox').down('button.runbutton').innerHTML;
-                    $('runbox').down('button.runbutton').innerHTML="Running…";
-                }
-            }
-        }
-        function enableRunBar(){
-            if ($('runbox')) {
-                $('runbox').down('input[type="text"]').enable();
-                if($('runbox').down('button.runbutton')){
-                    $('runbox').down('button.runbutton').disabled=false;
-                    $('runbox').down('button.runbutton').removeClassName('disabled');
-                    $('runbox').down('button.runbutton').innerHTML = 'Run <span class="glyphicon glyphicon-play"></span>';
-                }
-            }
-        }
-        function collapseNodeView(){
-//            $$('.obs_shownodes').each(Element.show);
-            $$('.obs_shownodes').each(function(e){Expander.close(e,null);});
 
-            $$('.nodeview').each(Element.hide);
-            $$('.nodeviewsummary').each(Element.show);
-        }
-        function showNodeView(){
-//            $$('.obs_shownodes').each(Element.hide);
-            $$('.obs_shownodes').each(function(e){Expander.open(e,null);});
-            $$('.nodeview').each(Element.show);
-            $$('.nodeviewsummary').each(Element.hide);
-        }
-        function runStarted(){
-            running=true;
-            $$('.hiderun').each(Element.hide);
-            $$('.showrun').each(Element.show);
-            collapseNodeView();
-        }
-        function afterRun(){
-            running=false;
-            $$('.showafterrun').each(Element.show);
-            $$('.hideafterrun').each(Element.hide);
-            $('runFormExec').focus();
-        }
-        function runError(msg){
-            $('runerror').innerHTML=msg;
-            $('runerror').show();
-            $('runcontent').hide();
-            onRunComplete();
-        }
-        function requestFailure(trans){
-            runError("Request failed: "+trans.statusText);
-        }
-        var running=false;
-        /**
-         * Run the command
-         * @param elem
-         */
-        function runFormSubmit(elem){
-            if(running || !$F('runFormExec')){
-                return false;
-            }
-            var data = Form.serialize(elem);
-            disableRunBar();
-            runStarted();
-            $('runcontent').loading('Starting Execution&hellip;');
-            new Ajax.Request("${createLink(controller:'scheduledExecution',action:'runAdhocInline')}",{
-                parameters:data,
-                evalScripts:true,
-                evalJSON:true,
-                onSuccess: function(transport) {
-                    var data =transport.responseJSON;
-//                    alert("data: "+data);
-                    try{
-                    startRunFollow(data);
-                    }catch(e){
-                        console.log(e);
-                        runError(e);
-                    }
-                },
-                onFailure:requestFailure
-            });
-            return false;
-        }
-        /**
-         * Load content view to contain output
-         * @param data
-         */
-        function startRunFollow(data){
-            if(data.error){
-                runError(data.error);
-            }else if(!data.id){
-                runError("Server response was invalid: "+data.toString());
-            }else {
-                $('runcontent').loading('Loading Output&hellip;');
-                new Ajax.Updater('runcontent',"${createLink(controller:'execution',action:'followFragment')}",{
-                parameters:{id:data.id,mode:'tail'},
-                evalScripts:true,
-                onComplete: function(transport) {
-                    if (transport.request.success()) {
-                        Element.show('runcontent');
-//                        try{
-                        continueRunFollow(data);
-//                        }catch(e){
-//                            console.log(e,e);
-//                            runError(e);
-//                        }
-                    }
-                },
-                onFailure:requestFailure
-            });
-            }
-        }
-        /**
-         * Start following the output
-         * @param data
-         */
-        function continueRunFollow(data){
-             var followControl = new FollowControl(data.id,'runcontent',{
-                 parentElement: 'commandPerform',
-                 viewoptionsCompleteId: 'viewoptionscomplete',
-                 cmdOutputErrorId: 'cmdoutputerror',
-                 outfileSizeId: 'outfilesize',
-                extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>",
-                smallIconUrl: "${resource(dir: 'images', file: 'icon-small')}",
-                iconUrl: "${resource(dir: 'images', file: 'icon-small')}",
-                lastlines: ${params.lastlines ? params.lastlines : defaultLastLines},
-                maxLastLines: ${maxLastLines},
-                 showFinalLine: {value: false, changed: false},
-                 colStep:{value:false},
-                tailmode: true,
-                 taildelay:1,
-                 truncateToTail:true,
-                execData: {node:"test"},
-                appLinks:appLinks,
-                onComplete:onRunComplete,
-                dobind:true
-            });
-            followControl.beginFollowingOutput(data.id);
-        }
-        function onRunComplete(){
-            enableRunBar();
-            afterRun();
-        }
 
         /**
          * START tag filter link code
@@ -476,12 +327,12 @@
          */
         function filterToggle(evt) {
             ['${ukey}filter','${ukey}filterdispbtn'].each(Element.toggle);
-            ['outsidefiltersave'].each($('${ukey}filter').visible()?Element.hide:Element.show);
+            var isvis= $('${ukey}filter').visible();
+            $$('.obs_filtertoggle').each(isvis?Element.hide:Element.show);
         }
         function filterToggleSave(evt) {
             ['${ukey}filter','${ukey}fsave'].each(Element.show);
             ['${ukey}filterdispbtn','${ukey}fsavebtn'].each(Element.hide);
-            ['outsidefiltersave'].each($('${ukey}filter').visible()?Element.hide:Element.show);
         }
 
 
@@ -490,11 +341,6 @@
          */
         function _updateBoxInfo(name,data){
             if(name=='nodetable'){
-                if(data.total && data.total!="0"){
-                    enableRunBar();
-                }else{
-                    disableRunBar();
-                }
                 if(null !=data.total){
                     $$('.obs_nodes_page_total').each(function(e){
                         e.innerHTML=data.total;
@@ -518,27 +364,9 @@
          */
 
         function init() {
-            $$('#runbox input').each(function(elem){
-                if(elem.type=='text'){
-                    elem.observe('keypress',function(evt){
-                        if(!noenter(evt)){
-                            runFormSubmit('runbox');
-                            return false;
-                        }else{
-                            return true;
-                        }
-                    });
-                }
-            });
-            $$('.obs_filtertoggle').each(function(e) {
+            $$('.act_filtertoggle').each(function(e) {
                 Event.observe(e, 'click', filterToggle);
             });
-            $$('.obs_filtersave').each(function(e) {
-                Event.observe(e, 'click', filterToggleSave);
-            });
-//            $$('.obs_shownodes').each(function(e){
-//                Event.observe(e, 'click', showNodeView);
-//            });
 
             $$('#${ukey}filter div.filter input').each(function(elem) {
                 if (elem.type == 'text') {
@@ -552,7 +380,6 @@
                     });
                 }
             });
-            expandResultNodes();
         }
         jQuery(document).ready(init);
 
@@ -579,15 +406,6 @@
         }
         #remoteEditholder .toolbar{
             margin:4px;
-        }
-        .runbox input[type='text']{
-            font-size: 150%;
-            font-family: Monaco, 'Courier New', 'DejaVu Sans Mono', 'Bitstream Vera Sans Mono', monospace;
-            font-family: Courier, monospace;
-        }
-        #runerror{
-            color:red;
-            margin:5px 20px;
         }
 
         .commandcontent{
@@ -637,106 +455,49 @@
         <div>
         <div class="row">
         <div class="col-sm-2">
-            <g:if test="${run_authorized}">
-                <g:expander classnames="obs_shownodes" key="${ukey}nodeForm" open="true">
-                    <span class="h4 match"><span class="obs_nodes_allcount">${total}</span> Node<span class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span>
-                    </span>
-                </g:expander>
-            </g:if>
-            <g:else>
-                <h4 class="match"><span class="obs_nodes_allcount">${total}</span> Node<span class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span>
-                </h4>
-            </g:else>
+            <h4 class="match">
+            <span class="obs_nodes_allcount">${total}</span> Node<span class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span>
+            </h4>
         </div>
             <g:if test="${session.project && run_authorized}">
+                <g:form class="form form-inline"  action="adhoc" controller="framework" method="get">
                 <div class=" form-inline clearfix" id="runbox">
                     <g:hiddenField name="project" value="${session.project}"/>
                     <g:render template="nodeFiltersHidden" model="${[params: params, query: query]}"/>
                     <div class=" col-sm-10">
-                        <div class="input-group">
-                            <g:textField name="exec" size="50" placeholder="Enter a shell command"
-                                         value="${runCommand}"
-                                         id="runFormExec"
-                                        class="form-control"
-                                         autofocus="true"/>
-
-                            <span class="input-group-btn">
-                                <button class="btn btn-default has_tooltip" type="button"
-                                        title="Node Dispatch Settings"
-                                        data-placement="left"
-                                        data-container="body"
-                                        data-toggle="collapse" data-target="#runconfig">
-                                    <i class="glyphicon glyphicon-cog"></i>
-                                </button>
-
-                                <button class="btn btn-success runbutton " onclick="runFormSubmit('runbox');">
-                                    Run <span class="glyphicon glyphicon-play"></span>
-                                </button>
-                            </span>
+                    <g:if test="${total!=null}">
+                        <div class="input-group pull-right ">
+                            <button class="btn btn-success ${total>0?'runbutton':'disabled '} ">
+                                Run command on <span class="obs_nodes_allcount">${total}</span> Node<span
+                                    class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span> …
+                                <span class="glyphicon glyphicon-play"></span>
+                            </button>
                         </div>
-                        <div class="collapse well well-sm " id="runconfig">
-                            <div class="row">
-                            <div class="col-sm-12">
-                                <div class="form-group text-muted ">Node Dispatch Settings: </div>
-                                <div class="form-group has_tooltip" title="Maximum number of parallel threads to use"
-                                     data-placement="bottom">
-                                    Thread count
-                                </div>
-                                <div class="form-group">
-                                    <input min="1" type="number" name="nodeThreadcount" id="runNodeThreadcount"
-                                           size="2"
-                                           placeholder="Maximum threadcount for nodes" value="1"
-                                           class="form-control  input-sm"/>
-                                </div>
+                    </g:if>
 
-                                <div class="form-group">On node failure:</div>
-                                <div class="radio">
-                                    <label class="has_tooltip" title="Continue to execute on other nodes" data-placement="bottom">
-                                        <input type="radio" name="nodeKeepgoing"
-                                               value="true"
-                                            checked
-                                        /> <strong>Continue</strong>
-                                    </label>
-                                </div>
-
-                                <div class="radio">
-                                    <label class="has_tooltip" title="Do not execute on any other nodes"
-                                           data-placement="bottom">
-                                        <input type="radio" name="nodeKeepgoing"
-                                               value="false"
-                                               /> <strong>Stop</strong>
-                                    </label>
-                                </div>
-                                <div class="pull-right">
-                                    <button class="close " data-toggle="collapse" data-target="#runconfig">&times;</button>
-                                </div>
-                            </div>
-                            </div>
-                        </div>
                     </div>
 
                     <div class="hiderun" id="runerror" style="display:none"></div>
                 </div>
+                </g:form>
             </g:if>
         </div>
     </g:if>
 <div class="row row-space">
-<div id="${ukey}nodeForm" class="col-sm-12 nodeview clearfix">
+<div  class="col-sm-12 nodeview clearfix">
     <g:set var="wasfiltered" value="${paginateParams?.keySet().grep(~/(?!proj).*Filter|groupPath|project$/)||(query && !query.nodeFilterIsEmpty())}"/>
-    <g:set var="filtersOpen" value="${params.createFilters||params.editFilters||params.saveFilter || filterErrors?true:false}"/>
+    <g:set var="filtersOpen" value="${showFilter||params.createFilters||params.editFilters||params.saveFilter || filterErrors?true:false}"/>
 
-<table cellspacing="0" cellpadding="0" width="100%">
         <g:if test="${!params.nofilters}">
-            <tr>
-            <td style=" ${wdgt.styleVisible(if:filtersOpen)}" id="${ukey}filter">
+            <div style=" ${wdgt.styleVisible(if:filtersOpen)}" id="${ukey}filter">
             <g:form action="nodes" controller="framework" class="form form-horizontal">
                 <g:if test="${params.compact}">
                     <g:hiddenField name="compact" value="${params.compact}"/>
                 </g:if>
                 <div class="panel panel-default ">
                     <div class="panel-heading">
-                    <span class="textbtn textbtn-info obs_filtertoggle">
-                        Node Filter
+                    <span class="textbtn textbtn-info act_filtertoggle">
+                        Filter Nodes
                         <b class="glyphicon glyphicon-chevron-down"></b>
                     </span>
                     </div>
@@ -747,7 +508,9 @@
                     <g:hiddenField name="exec" value="" class="execCommand"/>
 
                     <g:render template="/common/queryFilterManagerHorizontal"
-                              model="${[rkey: ukey, filterName: filterName, filterset: filterset, deleteActionSubmit: 'deleteNodeFilter', storeActionSubmit: 'storeNodeFilter']}"/>
+                              model="${[rkey: ukey, filterName: filterName, filterset: filterset,
+                                      filterLinks:true,
+                                      deleteActionSubmit: 'deleteNodeFilter', storeActionSubmit: 'storeNodeFilter']}"/>
 
                     <div class="panel-body  obs_hide_filtermgr">
                         <g:render template="nodeFilterInputs" model="${[params:params,query:query]}"/>
@@ -763,12 +526,9 @@
                     </div>
                 </div>
             </g:form>
-        </td>
-            </tr>
-            </g:if>
+            </div>
+        </g:if>
 
-    <tr>
-            <td style="text-align:left;vertical-align:top;" id="${ukey}nodescontent">
 
 
                 <g:set var="adminauth"
@@ -780,36 +540,32 @@
                 </g:if>
                 <g:if test="${!params.nofilters}">
                 <div id="${ukey}nodesfilterholder" >
-                    %{--<g:if test="${wasfiltered}">--}%
 
-
-                        <div >
-                            <span style="${!filtersOpen?'':'display:none;'} " id='${ukey}filterdispbtn' >
-                            <span title="Click to modify filter" class="textbtn textbtn-default query  obs_filtertoggle" >
+                    <div >
+                        <span style="${!filtersOpen?'':'display:none;'} " id='${ukey}filterdispbtn' >
+                            <span title="Click to modify filter" class="textbtn textbtn-default query  act_filtertoggle" >
+                                <g:if test="${filterName}">
+                                    <i class="glyphicon glyphicon-filter"></i>
+                                    ${filterName.encodeAsHTML()}:
+                                </g:if>
                                 <g:render template="displayNodeFilters" model="${[displayParams:query]}"/>
                                 <b class="glyphicon glyphicon-chevron-right"></b>
                             </span>
-                            </span>
+                        </span>
 
-
-                        <g:if test="${!filterName}">
-                            <span class="textbtn textbtn-info textbtn-on-hover obs_filtersave" title="Click to save this filter with a name" id="outsidefiltersave">
-                                save this filter&hellip;
-                            </span>
-                        </g:if>
 
                         <g:if test="${filterset}">
-                            <g:render template="/common/selectFilter" model="[filterset:filterset,filterName:filterName,prefName:'nodes',noSelection:filterName?'-All Nodes-':null]"/>
+                            <g:render template="/common/selectFilter" model="[filterLinks: true, filterset:filterset,filterName:filterName,prefName:'nodes',noSelection:filterName?'-All Nodes-':null]"/>
+
                         </g:if>
-                        <g:if test="${params.formInput}">
+
+                        <g:if test="${params.formInput!='true' || filterName}">
                             <g:form action="nodes" style="display: inline">
                                 <g:hiddenField name="formInput" value="true"/>
-                                <g:hiddenField name="exec" value="" class="execCommand"/>
                                 <button name="Clear" value="Clear" class="btn btn-default btn-sm" onclick="return _submitNodeFilters();">Show all nodes</button>
                             </g:form>
                         </g:if>
-                        </div>
-
+                    </div>
 
                 </div>
                 </g:if>
@@ -817,34 +573,14 @@
 
 
                 <div class=" clear matchednodes " id="nodelist" >
-                    <span class="btn btn-default receiver" onclick="expandResultNodes();">Show ${total} Node${1 != total ? 's' : ''}...</span>
+                    <g:render template="allnodes" model="${[nodeview:'table', expanddetail: true,allnodes: allnodes, totalexecs: totalexecs, jobs: jobs, params: params, total: total, allcount: allcount, page: page, max: max, nodeauthrun: nodeauthrun, tagsummary: tagsummary]}" />
                 </div>
 
-                 </td>
 
-                </tr>
-            </table>
 
 </div>
 </div>
 
-
-    <div id="runcontent" class="clearfix nodes_run_content" style="display: none"></div>
-
-    <g:if test="${run_authorized}">
-
-    <h4 class="text-muted"><g:message code="page.section.Activity"/></h4>
-
-    <div class="row">
-    <div class="col-sm-12">
-        <g:render template="/reports/activityLinks" model="[filter: [
-                jobIdFilter: 'null',
-                userFilter: session.user,
-                projFilter: session.project
-        ]]"/>
-    </div>
-    </div>
-    </g:if>
 
 </div>
 <div id="loaderror"></div>
