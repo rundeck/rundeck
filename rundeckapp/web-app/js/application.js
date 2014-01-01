@@ -346,6 +346,116 @@ function _pageLink(url,params,text,css,behavior){
     return a;
 }
 /**
+ * Call a function for each page in a set of results.  The function will be passed
+ * an object as described below.
+ * @param offset
+ * @param max
+ * @param total
+ * @param options optional behavior configuration, {maxsteps: 10} the maximum number of page links to show, others will be skipped and a "skipped:true" page will be passed instead
+ * @param func function called with paging parameters: {offset:number,
+ *      prevPage: true/false,
+ *      nextPage: true/false,
+  *      currentPage: true/false,
+ *      page: number,
+ *      disabled: true/false,
+ *      skipped: true/false
+ *      }
+ */
+function foreachPage(offset,max,total, options, func){
+    if (!total) {
+        return;
+    } else {
+        total = parseInt(total);
+    }
+    if (!offset) {
+        offset = 0;
+    } else {
+        offset = parseInt(offset);
+    }
+    if (!max) {
+        max = 20;
+    } else {
+        max = parseInt(max);
+    }
+    var opts = {
+        //max number of page links to show
+        maxsteps: 10
+    };
+    if(typeof(options)=='function'){
+        func=options;
+    }else if (options) {
+        Object.extend(opts, options);
+    }
+    var pages = Math.floor(total / max);
+    if (pages != (total / max)) {
+        pages += 1;
+    }
+    var curpage = Math.floor(offset / max) + 1;
+
+    //calculate starting page given a window for maximum number of links to show
+    var leftwindow = Math.floor( opts.maxsteps / 2 );
+
+    var startpage = curpage - leftwindow;
+
+    if(startpage + opts.maxsteps > pages){
+        startpage = pages - opts.maxsteps;
+    }
+
+    if(startpage < 0){
+        startpage = 0;
+    }
+
+    //determine indicators for skipped steps
+    var skipbefore=startpage>0;
+    var skipafter= startpage + opts.maxsteps < pages;
+
+    //previous
+    func({
+        offset:(offset-max),
+        page: curpage - 1,
+        prevPage:true,
+        disabled: curpage <= 1,
+        max:max
+    });
+    //if skipping before curpage
+    if(skipbefore){
+        func({
+            skipped: true,
+            disabled: true,
+            max: max
+        });
+    }
+
+
+    //generate intermediate pages
+    for (var i = startpage; (i-startpage) < opts.maxsteps && (max * i) < total; i++) {
+        //page
+        func({
+            offset: (max * i),
+            currentPage: (i+1==curpage),
+            page:i+1,
+            normal:true,
+            max: max
+        });
+    }
+    //if skipping after curpage
+    if (skipafter) {
+        func({
+            skipped: true,
+            disabled: true,
+            max: max
+        });
+    }
+    //next
+    func({
+        offset: (offset + max),
+        nextPage: true,
+        page: curpage+1,
+        disabled: curpage >= pages,
+        max: max
+    });
+}
+/**
  * generate pagination links
  * @param elem
  * @param offset
