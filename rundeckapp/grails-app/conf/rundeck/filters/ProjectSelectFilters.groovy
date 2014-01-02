@@ -45,7 +45,6 @@ import com.dtolabs.rundeck.core.common.Framework
  * allow the create project form to be used. 
  */
 public class ProjectSelectFilters {
-    def userService
     def frameworkService
     
     def dependsOn = [ApiRequestFilters]
@@ -72,7 +71,6 @@ public class ProjectSelectFilters {
                 }
                 if (session && session.user) {
                     //get user authorizations
-                    session.projectSelectFilterApplied = true
                     def AuthContext authContext = frameworkService.userAuthContext(session)
 
 
