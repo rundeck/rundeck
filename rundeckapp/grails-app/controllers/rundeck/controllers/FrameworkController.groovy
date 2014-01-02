@@ -578,7 +578,7 @@ class FrameworkController  {
         metricService.markMeter(this.class.name,actionName)
         //only attempt project create if form POST is used
         def prefixKey = 'plugin'
-        def project = params.project
+        def project = params.newproject
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (!frameworkService.authorizeApplicationResourceTypeAll(authContext, 'project', ['create'])) {
@@ -680,7 +680,7 @@ class FrameworkController  {
                 session.project = proj.name
                 session.frameworkProjects = frameworkService.projects(authContext)
                 def result = userService.storeFilterPref(session.user, [project: proj.name])
-                return redirect(controller: 'menu', action: 'index')
+                return redirect(controller: 'menu', action: 'index',params: [project:proj.name])
             }
         }
         if (errors) {
@@ -693,7 +693,7 @@ class FrameworkController  {
         final filecopydescs = framework.getFileCopierService().listDescriptions()
         return render(view:'createProject',
                 model:         [
-                project: params.project,
+                newproject: params.newproject,
                 projectNameError: projectNameError,
                 resourcesUrl: resourcesUrl,
                 resourceModelConfigDescriptions: descriptions,
@@ -741,7 +741,7 @@ class FrameworkController  {
             ]
         ]
         return [
-            project:params.project,
+                newproject:params.newproject,
             resourceModelConfigDescriptions: descriptions,
             defaultNodeExec:defaultNodeExec,
             nodeexecconfig: ['keypath': sshkeypath],
@@ -784,7 +784,7 @@ class FrameworkController  {
 
     def saveProject={
         def prefixKey= 'plugin'
-        def project=params.project
+        def project=params.project?:params.newproject
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def error=null
@@ -906,6 +906,7 @@ class FrameworkController  {
         return render(view:'editProject',model:
         [
             project: params.project,
+            newproject: params.newproject,
             defaultNodeExec: defaultNodeExec,
             nodeexecconfig: nodeexec,
             fcopyconfig: fcopy,
@@ -1191,7 +1192,7 @@ class FrameworkController  {
                 log.warn("Error saving user project preference: "+result.error)
             }
         }
-        return redirect(controller: 'menu',action: 'index',params: [page:params.page])
+        return redirect(controller: 'menu',action: 'index',params: [page:params.page,project:params.project])
     }
 
     static autosetSessionProject(session, final ArrayList projects) {

@@ -14,11 +14,12 @@
   limitations under the License.
   --}%
 
-<g:set var="linkParams" value="${filter?:[projFilter:project?:session.project]}"/>
-<g:set var="runningParams" value="${filter?:[projFilter:project?:session.project]}"/>
+<g:set var="projParams" value="${[project: project ?: params.project ?: request.project]}"/>
+<g:set var="linkParams" value="${filter?filter+projParams:projParams}"/>
+<g:set var="runningParams" value="${filter ? filter + projParams : projParams}"/>
 <g:if test="${scheduledExecution}">
-    <g:set var="linkParams" value="${[jobIdFilter: scheduledExecution.id, projFilter: scheduledExecution.project]}"/>
-    <g:set var="runningParams" value="${[jobIdFilter: scheduledExecution.extid, projFilter: scheduledExecution.project]}"/>
+    <g:set var="linkParams" value="${[jobIdFilter: scheduledExecution.id]+projParams}"/>
+    <g:set var="runningParams" value="${[jobIdFilter: scheduledExecution.extid]+projParams}"/>
 </g:if>
 <ul class="nav nav-tabs activity_links">
     %{--<g:unless test="${hideNowRunning}">--}%

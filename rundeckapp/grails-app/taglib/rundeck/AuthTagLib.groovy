@@ -41,7 +41,7 @@ class AuthTagLib {
         def authContext = frameworkService.getAuthContextForSubject(request.subject)
         def resource = frameworkService.authResourceForJob(attrs.job?.jobName, attrs.job?.groupPath)
 
-        def env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE+"project"), session.project))
+        def env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE+"project"), attrs.project))
 
         def decision = authContext.evaluate(resource, action, env)
 
@@ -73,7 +73,7 @@ class AuthTagLib {
 
         def resource = [ type: 'adhoc']
 
-        def env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), session.project))
+        def env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), attrs.project))
 
 
         def authContext = frameworkService.getAuthContextForSubject(request.subject)
@@ -115,8 +115,6 @@ class AuthTagLib {
             env=Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"application"), 'rundeck'))
         }else if(attrs.project){
             env=Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), attrs.project))
-        }else{
-            env=Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), session.project))
         }
         def resource = [type: attrs.type?:'resource']
         def tagattrs=[:]
@@ -176,7 +174,7 @@ class AuthTagLib {
         if ('application' == attrs.context) {
             env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"application"), 'rundeck'))
         } else {
-            env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), session.project))
+            env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), attrs.project))
         }
         def resource = [type: attrs.type ?: 'resource']
         def tagattrs = [:]
@@ -224,7 +222,7 @@ class AuthTagLib {
 
         def Set resources = [[type: 'adhoc']]
 
-        def env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), session.project))
+        def env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), attrs.project))
 
 
         def authContext = frameworkService.getAuthContextForSubject(request.subject)
@@ -268,7 +266,7 @@ class AuthTagLib {
 
         def Set resources = [frameworkService.authResourceForJob(attrs.job?.jobName, attrs.job?.groupPath) ]
 
-        def env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), session.project))
+        def env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), attrs.job?.project))
 
         def authContext = frameworkService.getAuthContextForSubject(request.subject)
         def decisions = authContext.evaluate(resources, tests, env)

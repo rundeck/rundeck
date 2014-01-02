@@ -226,6 +226,8 @@ class ScheduledExecutionController  {
         if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_READ], scheduledExecution.project)) {
             return unauthorized("Read Job ${params.id}")
         }
+        params.project=scheduledExecution.project
+        request.project=scheduledExecution.project
         crontab = scheduledExecution.timeAndDateAsBooleanMap()
         def User user = User.findByLogin(session.user)
         //list executions using query params and pagination params

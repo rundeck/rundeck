@@ -6,7 +6,7 @@
     <g:ifServletContextAttribute attribute="RSS_ENABLED" value="true">
     <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="${createLink(controller:"feed",action:"index",params:paginateParams?paginateParams:[:])}"/>
     </g:ifServletContextAttribute>
-    <title><g:message code="gui.menu.Events"/> - ${session.project.encodeAsHTML()}</title>
+    <title><g:message code="gui.menu.Events"/> - ${(params.project ?: request.project).encodeAsHTML()}</title>
     <g:javascript library="yellowfade"/>
     <g:javascript library="pagehistory"/>
     <g:javascript>

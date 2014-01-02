@@ -432,7 +432,7 @@ var applinks={
     </div>
 </div><!--/.nput-group-item -->
 
-    <g:set var="projectName" value="${scheduledExecution.project?scheduledExecution.project.toString():projects?.size()==1?projects[0].name:session.project?session.project:''}" />
+    <g:set var="projectName" value="${scheduledExecution.project?scheduledExecution.project.toString():params.project ?: request.project?: projects?.size() == 1 ? projects[0].name : ''}" />
     <g:hiddenField id="schedEditFrameworkProject" name="project" value="${projectName}" />
 
     %{--Options--}%
@@ -459,7 +459,7 @@ var applinks={
             <div class="${labelColSize}  control-label text-form-label">Workflow:</div>
             <div class="${fieldColSize}">
                 <g:set var="editwf" value="${session.editWF && session.editWF[scheduledExecution.id.toString()]?session.editWF[scheduledExecution.id.toString()]:scheduledExecution.workflow}"/>
-                <g:render template="/execution/execDetailsWorkflow" model="${[workflow:editwf,context:scheduledExecution,edit:true,error:scheduledExecution?.errors?.hasFieldErrors('workflow'),project:scheduledExecution?.project?:projects?.size()==1?projects[0].name:session.project?:'']}"/>
+                <g:render template="/execution/execDetailsWorkflow" model="${[workflow:editwf,context:scheduledExecution,edit:true,error:scheduledExecution?.errors?.hasFieldErrors('workflow'),project:scheduledExecution?.project?:(params.project ?: request.project)?: projects?.size() == 1 ? projects[0].name :'']}"/>
                 <g:hiddenField name="_sessionwf" value="true"/>
                 <g:if test="${null==editwf || null==editwf.commands || 0==editwf.commands.size()}">
                     <g:javascript>
@@ -718,7 +718,7 @@ var applinks={
     %{--Notifications--}%
     <div class="list-group-item"  >
             <g:set var="adminauth"
-                value="${auth.resourceAllowedTest(type: 'project', name: session.project, action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_READ], context: 'application')}"/>
+                value="${auth.resourceAllowedTest(type: 'project', name: scheduledExecution.project, action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_READ], context: 'application')}"/>
 
         <g:render template="editNotificationsForm" model="[scheduledExecution:scheduledExecution, notificationPlugins: notificationPlugins,adminauth:adminauth]"/>
 

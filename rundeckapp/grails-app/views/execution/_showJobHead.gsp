@@ -5,6 +5,7 @@
             <g:if test="${!groupOnly}">
             <g:link controller="scheduledExecution" action="show"
                     id="${scheduledExecution.extid}"
+                    params="[project:scheduledExecution.project]"
                     class="primary" absolute="${absolute ? 'true' :'false'}"
                 title="${scheduledExecution?.description.encodeAsHTML()}"
             >
@@ -18,7 +19,7 @@
                 <span class="grouplabel h4 ">
                     <g:link controller="menu" action="jobs"
                             class="secondary"
-                            params="${[groupPath: scheduledExecution.groupPath]}"
+                            params="${[groupPath: scheduledExecution.groupPath, project:scheduledExecution.project]}"
                             title="${'View ' + g.message(code: 'domain.ScheduledExecution.title') + 's in this group'}"
                             absolute="${absolute ? 'true' : 'false'}"
                             >

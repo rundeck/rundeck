@@ -5,7 +5,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="nodes"/>
-    <title><g:message code="gui.menu.Nodes"/> - ${session.project.encodeAsHTML()}</title>
+    <title><g:message code="gui.menu.Nodes"/> - ${(params.project ?: request.project).encodeAsHTML()}</title>
     <g:javascript library="yellowfade"/>
     <g:if test="${grails.util.Environment.current == Environment.DEVELOPMENT}">
         <g:javascript src="knockout-3.0.0.debug.js"/>
@@ -91,7 +91,7 @@
             nodeFilter.filterAll(filterAll);
             nodeFilter.filterName(filterName);
             nodeFilter.filter(filterString);
-            _updateMatchedNodes(data,elem,'${session.project}',false,{view:view,expanddetail:true,inlinepaging:true,
+            _updateMatchedNodes(data,elem,'${params.project?:request.project}',false,{view:view,expanddetail:true,inlinepaging:true,
                 page:page,max:pagingMax},function(xht){
             });
         }
@@ -177,7 +177,7 @@
     <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters}"/>
 </g:if>
 <div id="nodesContent">
-    <g:set var="run_authorized" value="${auth.adhocAllowedTest( action:AuthConstants.ACTION_RUN)}"/>
+    <g:set var="run_authorized" value="${auth.adhocAllowedTest( action:AuthConstants.ACTION_RUN,project: params.project ?: request.project)}"/>
 
     <g:render template="/common/messages"/>
 
@@ -256,7 +256,7 @@
 
 
                 <g:set var="adminauth"
-                       value="${auth.resourceAllowedTest(kind:'node',action:[AuthConstants.ACTION_REFRESH])}"/>
+                       value="${auth.resourceAllowedTest(kind:'node',action:[AuthConstants.ACTION_REFRESH],project: params.project ?: request.project)}"/>
                 <g:if test="${adminauth}">
                     <g:if test="${selectedProject && selectedProject.shouldUpdateNodesResourceFile()}">
                         <span class="floatr"><g:link action="reloadNodes" params="${[project:selectedProject.name]}" class="btn btn-sm btn-default" title="Click to update the resources.xml file from the source URL, for project ${selectedProject.name}" onclick="\$(this.parentNode).loading();">Update Nodes for project ${selectedProject.name}</g:link></span>

@@ -18,11 +18,11 @@
       </g:if>
       <g:else>
           %{
-              authChecks[actionName] = auth.adhocAllowedTest(action: actionName)
+              authChecks[actionName] = auth.adhocAllowedTest(action: actionName,project:execution.project)
           }%
       </g:else>
       </g:each>
-      <g:set var="adhocRunAllowed" value="${auth.adhocAllowedTest(action: AuthConstants.ACTION_RUN)}"/>
+      <g:set var="adhocRunAllowed" value="${auth.adhocAllowedTest(action: AuthConstants.ACTION_RUN,project:execution.project)}"/>
 
       <g:set var="defaultLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.default}"/>
       <g:set var="maxLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.max}"/>
@@ -310,7 +310,7 @@
                                 <g:if test="${!scheduledExecution}">
                                 <div class="btn-group pull-right">
                                     %{--save as job link--}%
-                                    <g:if test="${auth.resourceAllowedTest(kind: 'job', action: [AuthConstants.ACTION_CREATE])}">
+                                    <g:if test="${auth.resourceAllowedTest(kind: 'job', action: [AuthConstants.ACTION_CREATE],project:execution.project)}">
                                         <g:link
                                                 controller="scheduledExecution"
                                                 action="createFromExecution"

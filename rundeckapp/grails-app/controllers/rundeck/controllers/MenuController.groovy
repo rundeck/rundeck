@@ -144,26 +144,29 @@ class MenuController {
         if(params.page){
             startpage=params.page
         }
+        if(params.project){
+            startpage='jobs'
+        }
         switch (startpage){
             case 'home':
                 return redirect(controller: 'menu', action: 'home')
             case 'run':
             case 'nodes':
-                return redirect(controller:'framework',action:'nodes')
+                return redirect(controller:'framework',action:'nodes',params:[project:params.project])
             case 'jobs':
-                return redirect(controller:'menu',action:'jobs')
+                return redirect(controller:'menu',action:'jobs', params: [project: params.project])
             case 'createJob':
-                return redirect(controller:'scheduledExecution',action: 'create')
+                return redirect(controller:'scheduledExecution',action: 'create', params: [project: params.project])
             case 'uploadJob':
-                return redirect(controller: 'scheduledExecution', action: 'upload')
+                return redirect(controller: 'scheduledExecution', action: 'upload', params: [project: params.project])
             case 'configure':
-                return redirect(controller: 'menu', action: 'admin')
+                return redirect(controller: 'menu', action: 'admin', params: [project: params.project])
             case 'history':
             case 'activity':
             case 'events':
-                return redirect(controller:'reports',action:'index')
+                return redirect(controller:'reports',action:'index', params: [project: params.project])
         }
-        return redirect(controller:'framework',action:'nodes')
+        return redirect(controller:'framework',action:'nodes', params: [project: params.project])
     }
     
     def jobs = {ScheduledExecutionQuery query ->

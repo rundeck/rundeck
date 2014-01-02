@@ -136,11 +136,11 @@
         <div class="panel-heading">
             <span class="h4">
                 Upload <g:message code="domain.ScheduledExecution.title"/> Definition
-                to project <b>${session.project.encodeAsHTML()}</b>
+                to project <b>${(params.project ?: request.project).encodeAsHTML()}</b>
             </span>
         </div>
         <div class="panel-body">
-        <g:hiddenField name="project" value="${session.project}"/>
+        <g:hiddenField name="project" value="${params.project ?: request.project}"/>
         <div class="form-group">
         %{--<g:if test="${!didupload}">--}%
             <label for="xmlBatch">Select a <g:message

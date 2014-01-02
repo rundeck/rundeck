@@ -12,12 +12,12 @@
     </g:if>
     <g:else>
         %{
-            authChecks[actionName] = auth.adhocAllowedTest(action: actionName)
+            authChecks[actionName] = auth.adhocAllowedTest(action: actionName,project:execution.project)
         }%
     </g:else>
 </g:each>
-<g:set var="adhocRunAllowed" value="${auth.adhocAllowedTest(action: AuthConstants.ACTION_RUN)}"/>
-<g:set var="jobCreateAllowed" value="${auth.resourceAllowedTest(kind: 'job', action: [AuthConstants.ACTION_CREATE])}"/>
+<g:set var="adhocRunAllowed" value="${auth.adhocAllowedTest(action: AuthConstants.ACTION_RUN,project:execution.project)}"/>
+<g:set var="jobCreateAllowed" value="${auth.resourceAllowedTest(kind: 'job', action: [AuthConstants.ACTION_CREATE],project:execution.project)}"/>
 
 
 

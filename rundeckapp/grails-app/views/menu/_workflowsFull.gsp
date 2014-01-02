@@ -114,7 +114,7 @@
 
                 <div class="jobscontent head">
     <g:if test="${!params.compact}">
-        <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_CREATE}">
+        <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_CREATE}" project="${params.project ?: request.project}">
         <div class=" pull-right" >
             <div class="btn-group">
             <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
@@ -222,7 +222,7 @@
                 <g:if test="${ jobgroups}">
                     <g:timerStart key="groupTree"/>
                     <g:form controller="scheduledExecution" action="deleteBulk">
-                    <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE  }">
+                    <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE  }" project="${params.project ?: request.project}">
                         <div class="modal fade" id="bulk_del_confirm" tabindex="-1" role="dialog" aria-hidden="true">
                             <div class="modal-dialog">
                                 <div class="modal-content">
@@ -281,7 +281,7 @@
                     <div class="presentation">
                         No Jobs have been defined.
 
-                        <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_CREATE}">
+                        <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_CREATE}" project="${params.project ?: request.project}">
                             <ul>
                             <li style="padding:5px"><g:link controller="scheduledExecution" action="create"
                                                             class="btn btn-default btn-sm">Create a new Job&hellip;</g:link></li>

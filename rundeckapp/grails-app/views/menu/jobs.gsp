@@ -5,7 +5,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="jobs"/>
-    <title><g:message code="gui.menu.Workflows"/> - ${session.project.encodeAsHTML()}</title>
+    <title><g:message code="gui.menu.Workflows"/> - ${(params.project ?: request.project).encodeAsHTML()}</title>
     <g:javascript library="yellowfade"/>
     <g:javascript library="pagehistory"/>
     <g:javascript library="prototype/effects"/>
@@ -163,7 +163,7 @@
         //now running
         var runupdate;
         function loadNowRunning(){
-            runupdate=new Ajax.PeriodicalUpdater({success:'nowrunning'},'${createLink(controller:"menu",action:"nowrunningFragment",params: execQueryParams?:[projFilter: session.project])}',{
+            runupdate=new Ajax.PeriodicalUpdater({success:'nowrunning'},'${createLink(controller:"menu",action:"nowrunningFragment",params: execQueryParams?:[projFilter: params.project ?: request.project])}',{
                 evalScripts:true,
                 onFailure:function (response) {
                     showError("AJAX error: Now Running ["+ runupdate.url+"]: "+response.status+" "+response.statusText);
@@ -397,7 +397,7 @@
     <div class="col-sm-12 ">
         <h4 class="text-muted "><g:message code="page.section.Activity.for.jobs" /></h4>
         <g:render template="/reports/activityLinks"
-                  model="[filter: [projFilter:session.project, jobIdFilter: '!null',], knockoutBinding: true, showTitle:true]"/>
+                  model="[filter: [projFilter: params.project ?: request.project, jobIdFilter: '!null',], knockoutBinding: true, showTitle:true]"/>
     </div>
 </div>
 </body>

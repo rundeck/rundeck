@@ -50,7 +50,7 @@
 <div class="col-sm-9">
 
     <span class="h3">
-        Project: ${session.project.encodeAsHTML()}
+        Project: ${(params.project ?: request.project).encodeAsHTML()}
 
     </span>
 <div class="row row-space">
@@ -76,7 +76,7 @@
 <div class="tab-content">
 <div class="tab-pane active" id="configure">
 <ul class="list-group list-group-tab-content">
-        <g:link controller="framework" action="editProject" params="[project: session.project]"
+        <g:link controller="framework" action="editProject" params="[project: params.project ?: request.project]"
                 class="textbtn textbtn-info list-group-item  textbtn-on-hover">
             <i class="glyphicon glyphicon-edit"></i>
             <g:message code="gui.menu.ProjectEdit" default="edit configuration"/>
@@ -172,14 +172,14 @@
 <div class="tab-pane" id="export">
     <div class="panel panel-default panel-tab-content">
         <div class="panel-heading">
-            Download an archive of project <strong>${session.project.encodeAsHTML()}</strong>
+            Download an archive of project <strong>${(params.project ?: request.project).encodeAsHTML()}</strong>
         </div>
         <div class="panel-body">
-                <g:link controller="project" action="export" params="[name: session.project]"
+                <g:link controller="project" action="export" params="[name: params.project ?: request.project]"
                     class="btn btn-success"
                 >
                     <i class="glyphicon glyphicon-download-alt"></i>
-                    ${session.project.encodeAsHTML()}.rdproject.jar
+                    ${(params.project ?: request.project).encodeAsHTML()}.rdproject.jar
                 </g:link>
 
         </div>
@@ -245,7 +245,7 @@
                 <span class="help-block">Does not import any Executions or History</span>
             </div>
         </div>
-            <g:hiddenField name="name" value="${session.project}"/>
+            <g:hiddenField name="name" value="${params.project ?: request.project}"/>
         <div class="list-group-item">
             <div class="buttons">
                 <div id="uploadFormButtons">

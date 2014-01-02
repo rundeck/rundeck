@@ -32,7 +32,7 @@
             <label for="project" class="required">
                 <g:message code="domain.Project.field.name" default="Project Name"/>
             </label>
-            <g:textField name="project" size="50" autofocus="true" value="${project}" class="form-control"/>
+            <g:textField name="newproject" size="50" autofocus="true" value="${newproject}" class="form-control"/>
 
             <g:if test="${projectNameError}">
                 <div class="text-warning">${projectNameError.encodeAsHTML()}</div>

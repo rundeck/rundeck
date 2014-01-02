@@ -77,10 +77,10 @@
                 <div class="panel-heading">
                         <span class="h3">
                             <g:message code="domain.Project.edit.message"
-                                       default="Configure Project"/>: ${session.project.encodeAsHTML()}
+                                       default="Configure Project"/>: ${(params.project ?: request.project).encodeAsHTML()}
                     </span>
                 </div>
-                <g:render template="editProjectForm" model="${[editOnly:true,project:session.project]}"/>
+                <g:render template="editProjectForm" model="${[editOnly:true,project: params.project ?: request.project]}"/>
                 <div class="panel-footer">
                     <g:submitButton name="cancel" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default"/>
                     <g:submitButton name="save" value="${g.message(code:'button.action.Save',default:'Save')}" class="btn btn-primary"/>

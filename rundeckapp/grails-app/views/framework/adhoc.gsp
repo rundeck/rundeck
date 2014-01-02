@@ -4,8 +4,8 @@
     <g:set var="ukey" value="${g.rkey()}" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
-    <meta name="tabpage" content="adhoc"/>
-    <title><g:message code="gui.menu.Nodes"/> - ${session.project.encodeAsHTML()}</title>
+    <meta name="tabpage" content="nodes"/>
+    <title><g:message code="gui.menu.Nodes"/> - ${(params.project ?: request.project).encodeAsHTML()}</title>
     <g:javascript library="executionControl"/>
     <g:javascript library="yellowfade"/>
     <g:javascript library="pagehistory"/>
@@ -328,7 +328,7 @@
 </g:if>
 
 <div id="nodesContent">
-    <g:set var="run_authorized" value="${auth.adhocAllowedTest( action:AuthConstants.ACTION_RUN)}"/>
+    <g:set var="run_authorized" value="${auth.adhocAllowedTest( action:AuthConstants.ACTION_RUN,project: params.project ?: request.project)}"/>
 
 
     <g:render template="/common/messages"/>
@@ -361,6 +361,7 @@
                                             <i class="glyphicon glyphicon-cog"></i>
                                         </button>
 
+<<<<<<< HEAD
                                     </span>
                                     </span>
 
@@ -410,6 +411,50 @@
                                             </div>
                                         </div>
                                     </div>
+=======
+                </div>
+        </div>
+        <div class="row ">
+            <div id="${ukey}nodeForm" class="collapse collapse-expandable col-sm-12">
+                <g:render template="allnodes"
+                          model="${[nodeview: 'embed', expanddetail: true, allnodes: allnodes, totalexecs: totalexecs, jobs: jobs, params: params, total: total, allcount: allcount, page: page, max: max, nodeauthrun: nodeauthrun, tagsummary: tagsummary]}"/>
+            </div>
+        </div>
+        <div class="row row-space">
+            <g:if test="${run_authorized}">
+                <div class=" form-inline clearfix" id="runbox">
+                    <g:hiddenField name="project" value="${params.project ?: request.project}"/>
+                    <g:render template="nodeFiltersHidden" model="${[params: params, query: query]}"/>
+                    <div class=" col-sm-12">
+                        <div class="input-group">
+                            <g:textField name="exec" size="50" placeholder="Enter a shell command"
+                                         value="${runCommand}"
+                                         id="runFormExec"
+                                        class="form-control"
+                                         autofocus="true"/>
+
+                            <span class="input-group-btn">
+                                <button class="btn btn-default has_tooltip" type="button"
+                                        title="Node Dispatch Settings"
+                                        data-placement="left"
+                                        data-container="body"
+                                        data-toggle="collapse" data-target="#runconfig">
+                                    <i class="glyphicon glyphicon-cog"></i>
+                                </button>
+
+                                <button class="btn btn-success runbutton " onclick="runFormSubmit('runbox');">
+                                    Run <span class="glyphicon glyphicon-play"></span>
+                                </button>
+                            </span>
+                        </div>
+                        <div class="collapse well well-sm " id="runconfig">
+                            <div class="row">
+                            <div class="col-sm-12">
+                                <div class="form-group text-muted ">Node Dispatch Settings: </div>
+                                <div class="form-group has_tooltip" title="Maximum number of parallel threads to use"
+                                     data-placement="bottom">
+                                    Thread count
+>>>>>>> Initial sweep: move project to url
                                 </div>
                                 </div>
                             </div>
@@ -551,7 +596,7 @@
         <g:render template="/reports/activityLinks" model="[filter: [
                 jobIdFilter: 'null',
                 userFilter: session.user,
-                projFilter: session.project
+                projFilter: params.project ?: request.project
         ],
         knockoutBinding:true, showTitle:true]"/>
     </div>
