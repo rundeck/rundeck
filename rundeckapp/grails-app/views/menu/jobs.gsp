@@ -315,7 +315,6 @@
             }
         }
         function init(){
-            loadNowRunning();
             <g:if test="${!(grailsApplication.config.rundeck?.gui?.enableJobHoverInfo in ['false',false])}">
             initJobIdLinks();
             </g:if>
