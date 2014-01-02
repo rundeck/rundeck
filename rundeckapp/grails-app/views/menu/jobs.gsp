@@ -56,7 +56,7 @@
             }
             new Ajax.Updater(
                 'execDivContent',
-                '${createLink(controller:"scheduledExecution",action:"executeFragment")}', {
+                '${createLink(controller:"scheduledExecution",action:"executeFragment",params:[project:params.project ?: request.project])}', {
                 parameters: params,
                 evalScripts:true,
                 onComplete: function(transport) {
@@ -71,7 +71,7 @@
         function execSubmit(elem){
             var params=Form.serialize(elem);
             new Ajax.Request(
-                '${createLink(controller:"scheduledExecution",action:"runJobInline")}', {
+                '${createLink(controller:"scheduledExecution",action:"runJobInline",params:[project:params.project ?: request.project])}', {
                 parameters: params,
                 evalScripts:true,
                 onComplete: function(trans) {
@@ -130,7 +130,7 @@
             if(data){
                 var bfilters=data.filterpref;
                 //reload page
-                document.location="${createLink(controller:'menu',action:'jobs')}"+(bfilters[name]?"?filterName="+encodeURIComponent(bfilters[name]):'');
+                document.location="${createLink(controller:'menu',action:'jobs',params: [project:params.project ?: request.project])}"+(bfilters[name]?"&filterName="+encodeURIComponent(bfilters[name]):'');
             }
         }
         function setFilter(name,value){
@@ -138,7 +138,7 @@
                 value="!";
             }
             var str=name+"="+value;
-            new Ajax.Request("${createLink(controller:'user',action:'addFilterPref')}",{parameters:{filterpref:str}, evalJSON:true,onSuccess:function(response){
+            new Ajax.Request("${createLink(controller:'user',action:'addFilterPref',params:[project:params.project ?: request.project])}",{parameters:{filterpref:str}, evalJSON:true,onSuccess:function(response){
                 _setFilterSuccess(response,name);
             }});
         }
@@ -163,7 +163,7 @@
         //now running
         var runupdate;
         function loadNowRunning(){
-            runupdate=new Ajax.PeriodicalUpdater({success:'nowrunning'},'${createLink(controller:"menu",action:"nowrunningFragment",params: execQueryParams?:[projFilter: params.project ?: request.project])}',{
+            runupdate=new Ajax.PeriodicalUpdater({success:'nowrunning'},'${createLink(controller:"menu",action:"nowrunningFragment",params: execQueryParams?:[project: params.project ?: request.project])}',{
                 evalScripts:true,
                 onFailure:function (response) {
                     showError("AJAX error: Now Running ["+ runupdate.url+"]: "+response.status+" "+response.statusText);
@@ -278,7 +278,7 @@
             bcontent.loading();
 
 
-            new Ajax.Updater('jobIdDetailContent','${createLink(controller:'scheduledExecution',action:'detailFragment')}',{
+            new Ajax.Updater('jobIdDetailContent','${createLink(controller:'scheduledExecution',action:'detailFragment',params: [project:params.project ?: request.project])}',{
                 parameters:{id:matchId},
                 evalScripts:true,
                 onComplete: function(trans){

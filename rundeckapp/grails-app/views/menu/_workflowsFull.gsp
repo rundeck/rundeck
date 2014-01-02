@@ -123,6 +123,7 @@
             </button>
             <ul class="dropdown-menu pull-right" role="menu">
                 <li><g:link controller="scheduledExecution" action="create"
+                    params="[project: params.project ?: request.project]"
                             class="">
                     <i class="glyphicon glyphicon-plus"></i>
                     New <g:message
@@ -131,6 +132,7 @@
                 </li>
                 <li>
                     <g:link controller="scheduledExecution" action="upload"
+                            params="[project: params.project ?: request.project]"
                             class="">
                         <i class="glyphicon glyphicon-upload"></i>
                         Upload Definition&hellip;
@@ -208,7 +210,8 @@
                     <div class="newjob">
                     <span class="popout message note" style="background:white">
                         ${flash.savedJobMessage?flash.savedJobMessage:'Saved changes to Job'}:
-                        <g:link controller="scheduledExecution" action="show" id="${flash.savedJob.id}">${flash.savedJob.generateFullName().encodeAsHTML()}</g:link>
+                        <g:link controller="scheduledExecution" action="show" id="${flash.savedJob.id}"
+                                params="[project: params.project ?: request.project]">${flash.savedJob.generateFullName().encodeAsHTML()}</g:link>
                     </span>
                     </div>
                     <g:javascript>
@@ -284,8 +287,10 @@
                         <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_CREATE}" project="${params.project ?: request.project}">
                             <ul>
                             <li style="padding:5px"><g:link controller="scheduledExecution" action="create"
+                                                            params="[project: params.project ?: request.project]"
                                                             class="btn btn-default btn-sm">Create a new Job&hellip;</g:link></li>
                             <li style="padding:5px"><g:link controller="scheduledExecution" action="upload"
+                                                            params="[project: params.project ?: request.project]"
                                                             class="btn btn-default btn-sm">Upload a Job definition&hellip;</g:link></li>
                             </ul>
                         </auth:resourceAllowed>
