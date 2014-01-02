@@ -75,7 +75,7 @@
 
 <div class="row" id="activity_section">
     <div class="col-sm-12">
-        <h4 class="text-muted"><g:message code="page.section.Activity"/></h4>
+        <h4 class="text-muted"><g:message code="page.section.Activity.for.this.job" /></h4>
 
         <g:render template="/reports/activityLinks" model="[scheduledExecution: scheduledExecution, knockoutBinding:true]"/>
     </div>

@@ -395,7 +395,7 @@
 
 <div class="row row-space" id="activity_section">
     <div class="col-sm-12 ">
-        <h4 class="text-muted "><g:message code="page.section.Activity"/></h4>
+        <h4 class="text-muted "><g:message code="page.section.Activity.for.jobs" /></h4>
         <g:render template="/reports/activityLinks"
                   model="[filter: [projFilter:session.project, jobIdFilter: '!null',], knockoutBinding: true, showTitle:true]"/>
     </div>

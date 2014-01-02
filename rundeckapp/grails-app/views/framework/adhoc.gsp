@@ -434,7 +434,7 @@
     <g:if test="${run_authorized}">
     <div class="row" id="activity_section">
     <div class="col-sm-12">
-        <h4 class="text-muted"><g:message code="page.section.Activity"/></h4>
+        <h4 class="text-muted"><g:message code="page.section.Activity.for.adhoc.commands" /></h4>
         <g:render template="/reports/activityLinks" model="[filter: [
                 jobIdFilter: 'null',
                 userFilter: session.user,
