@@ -71,6 +71,9 @@ function History(ajaxHistoryLink) {
     self.count = ko.computed(function () {
         return self.reports().length + self.offset() * self.max();
     });
+    self.pageCount=ko.computed(function(){
+        return totalPageCount(self.max(),self.total());
+    });
     self.pages=ko.computed(function(){
         var total = self.total();
         var offset = self.offset();

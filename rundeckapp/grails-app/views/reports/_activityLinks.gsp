@@ -116,7 +116,7 @@
     </div>
 
     <div data-bind="visible: selected()" class="panel-footer" style="display: none">
-            <ul class="pagination pagination-sm pagination-embed" data-bind="foreach: pages()">
+            <ul class="pagination pagination-sm pagination-embed" data-bind="foreach: pageCount() > 1 ? pages() : []">
                 <li data-bind="css: { active: $data.currentPage, disabled: $data.disabled } ">
                     <a data-bind="attr: { href: ($data.skipped||$data.disabled||$data.currentPage)?'#':$data.url },
                     click: function(){$data.skipped||$data.disabled||$data.currentPage?null:$root.visitPage($data);}">
@@ -142,7 +142,7 @@
             <span data-bind="text: reports().length + ' of ' + total()"></span>
         </span>
         <a href="#" class="textbtn textbtn-default" data-bind="attr: { href: href() } ">
-            Filter results…
+            Filter activity…
             <i class="glyphicon glyphicon-search"></i>
         </a>
 

@@ -345,6 +345,13 @@ function _pageLink(url,params,text,css,behavior){
         });
     return a;
 }
+function totalPageCount(max,total){
+    var pages = Math.floor(total / max);
+    if (pages != (total / max)) {
+        pages += 1;
+    }
+    return pages;
+}
 /**
  * Call a function for each page in a set of results.  The function will be passed
  * an object as described below.
@@ -386,10 +393,7 @@ function foreachPage(offset,max,total, options, func){
     }else if (options) {
         Object.extend(opts, options);
     }
-    var pages = Math.floor(total / max);
-    if (pages != (total / max)) {
-        pages += 1;
-    }
+    var pages = totalPageCount(max,total);
     var curpage = Math.floor(offset / max) + 1;
 
     //calculate starting page given a window for maximum number of links to show
