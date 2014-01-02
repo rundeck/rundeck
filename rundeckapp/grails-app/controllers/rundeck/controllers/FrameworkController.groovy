@@ -125,8 +125,8 @@ class FrameworkController  {
 //            summaryOnly=true
             //filter all and summarize
         }
-        if (query && !query.project && session.project) {
-            query.project = session.project
+        if (query && !query.project && params.project) {
+            query.project = params.project
         }
         def model
 //        if (!summaryOnly && ('true' == params.formInput || usedFilter || !query.nodeFilterIsEmpty())){
@@ -189,8 +189,8 @@ class FrameworkController  {
             usedFilter = null
         }
 
-        if (query && !query.project && session.project) {
-            query.project = session.project
+        if (query && !query.project && params.project) {
+            query.project = params.project
         }
         def result
         if(!query.nodeFilterIsEmpty()){
@@ -223,8 +223,8 @@ class FrameworkController  {
                 query.nodeIncludeName = framework.getFrameworkNodeName()
             }
         }
-        if(query && !query.project && session.project){
-            query.project=session.project
+        if(query && !query.project && params.project){
+            query.project= params.project
         }
         if(!query.project){
             request.error="No project selected"
@@ -443,8 +443,8 @@ class FrameworkController  {
                 query.nodeIncludeName = framework.getFrameworkNodeName()
             }
         }
-        if (query && !query.project && session.project) {
-            query.project = session.project
+        if (query && !query.project && params.project) {
+            query.project = params.project
         }
         def result = nodesdata(query)
         if (usedFilter) {
@@ -677,7 +677,6 @@ class FrameworkController  {
                 errors << e.getMessage()
             }
             if (!errors && proj) {
-                session.project = proj.name
                 session.frameworkProjects = frameworkService.projects(authContext)
                 def result = userService.storeFilterPref(session.user, [project: proj.name])
                 return redirect(controller: 'menu', action: 'index',params: [project:proj.name])
@@ -890,10 +889,9 @@ class FrameworkController  {
                 }
             }
             if(!error){
-                session.project=fproject.name
                 def result=userService.storeFilterPref(session.user, [project: fproject.name])
                 flash.message="Project ${project} saved"
-                return redirect(controller:'menu',action:'admin')
+                return redirect(controller:'menu',action:'admin',params:[project:fproject.name])
             }
         }
         if(error){
@@ -1166,6 +1164,9 @@ class FrameworkController  {
         }
     }
 
+    /**
+     * Render selection list for projects
+     */
     def projectSelect={
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def projects
@@ -1175,32 +1176,14 @@ class FrameworkController  {
             projects = frameworkService.projects(authContext)
             session.frameworkProjects=projects
         }
-        [projects:projects,project:session.project]
+        [projects:projects,project:params.project]
     }
+    /**
+     * Select project via parameter, and redirect to default page for the project
+     */
     def selectProject= {
-        if (null != params.project) {
-            session.project = params.project
-            //also set User project filter pref
-            def result=userService.storeFilterPref(session.user, [project:params.project])
-            if(result.error){
-                log.warn("Error saving user project preference: "+result.error)
-            }
-        } else {
-            session.removeAttribute('project')
-            def result=userService.storeFilterPref(session.user, [project:'!'])
-            if(result.error){
-                log.warn("Error saving user project preference: "+result.error)
-            }
-        }
+        //also set User project filter pref
         return redirect(controller: 'menu',action: 'index',params: [page:params.page,project:params.project])
-    }
-
-    static autosetSessionProject(session, final ArrayList projects) {
-        if(null==session.project && 1==projects.size()){
-            session.project=projects[0].name
-        }else if(0==projects.size()){
-            session.removeAttribute('project')
-        }
     }
 
     /*******

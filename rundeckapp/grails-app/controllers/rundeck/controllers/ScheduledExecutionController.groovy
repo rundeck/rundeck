@@ -226,7 +226,10 @@ class ScheduledExecutionController  {
         if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_READ], scheduledExecution.project)) {
             return unauthorized("Read Job ${params.id}")
         }
-        params.project=scheduledExecution.project
+        if (!params.project || params.project != scheduledExecution.project) {
+            return redirect(controller: 'scheduledExecution', action: 'show',
+                    params: [id: params.id, project: scheduledExecution.project])
+        }
         request.project=scheduledExecution.project
         crontab = scheduledExecution.timeAndDateAsBooleanMap()
         def User user = User.findByLogin(session.user)
@@ -918,6 +921,10 @@ class ScheduledExecutionController  {
         if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_READ], scheduledExecution.project)) {
             return unauthorized("Update Job ${params.id}")
         }
+        if (!params.project || params.project != scheduledExecution.project) {
+            return redirect(controller: 'scheduledExecution', action: 'edit',
+                    params: [id: params.id, project: scheduledExecution.project])
+        }
         //clear session workflow
         if(session.editWF ){
             session.removeAttribute('editWF');
@@ -1002,10 +1009,9 @@ class ScheduledExecutionController  {
     }
 
     def copy = {
-        Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         //authorize
-        if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'job'], [AuthConstants.ACTION_CREATE], session.project)) {
+        if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'job'], [AuthConstants.ACTION_CREATE], params.project)) {
             return unauthorized("Create a Job")
         }
         def user = (session?.user) ? session.user : "anonymous"
@@ -1056,10 +1062,10 @@ class ScheduledExecutionController  {
      */
     def createFromExecution={
 
-        Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'job'], [AuthConstants.ACTION_CREATE],session.project)
-                && !frameworkService.authorizeProjectResource(authContext,[type:'adhoc'], AuthConstants.ACTION_RUN,session.project)) {
+        if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'job'], [AuthConstants.ACTION_CREATE],
+                params.project)
+                && !frameworkService.authorizeProjectResource(authContext,[type:'adhoc'], AuthConstants.ACTION_RUN, params.project)) {
             return unauthorized("Create a Job")
         }
         log.debug("ScheduledExecutionController: create : params: " + params)
@@ -1106,11 +1112,11 @@ class ScheduledExecutionController  {
     }
     def create = {
 
-        Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         //authorize
-        if(!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'job'], [AuthConstants.ACTION_CREATE], session.project)
-                && !frameworkService.authorizeProjectResource(authContext, [type: 'adhoc'], AuthConstants.ACTION_RUN, session.project)){
+        if(!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'job'], [AuthConstants.ACTION_CREATE],
+                params.project)
+                && !frameworkService.authorizeProjectResource(authContext, [type: 'adhoc'], AuthConstants.ACTION_RUN, params.project)){
             return unauthorized("Create a Job")
         }
 
@@ -1208,7 +1214,8 @@ class ScheduledExecutionController  {
         def changeinfo = [user: session.user, change: 'create', method: 'saveAndExec']
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'job'], [AuthConstants.ACTION_CREATE], session.project)) {
+        if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'job'], [AuthConstants.ACTION_CREATE],
+                params.project)) {
             unauthorized("Create a Job")
             return [success: false]
         }

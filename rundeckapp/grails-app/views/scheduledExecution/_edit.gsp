@@ -27,10 +27,10 @@
 <g:javascript library="prototype/scriptaculous"/>
 <g:javascript library="prototype/effects"/>
 <g:javascript library="prototype/dragdrop"/>
-
+<g:set var="project" value="${scheduledExecution?.project ?: params.project?:request.project?: projects?.size() == 1 ? projects[0].name.encodeAsJavaScript() : ''}"/>
 <script type="text/javascript">
 //<!CDATA[
-        var selFrameworkProject='${scheduledExecution?.project?scheduledExecution?.project.encodeAsJavaScript():projects?.size()==1?projects[0].name.encodeAsJavaScript():''}';
+        var selFrameworkProject='${project.encodeAsJavaScript()}';
         var selArgs='${scheduledExecution?.argString?.encodeAsJavaScript()}';
         var isWorkflow=${isWorkflow};
 var node_filter_map =${NODE_FILTER_MAP.encodeAsJSON()};
@@ -40,27 +40,27 @@ function getCurSEID(){
     return curSEID;
 }
 var applinks={
-    frameworkNodesFragment:"${createLink(controller:'framework',action:'nodesFragment')}",
-    workflowEdit:'${createLink(controller:"workflow",action:"edit")}',
-    workflowRender:'${createLink(controller:"workflow",action:"render")}',
-    workflowSave:'${createLink(controller:"workflow",action:"save")}',
-    workflowReorder:'${createLink(controller:"workflow",action:"reorder")}',
-    workflowRemove:'${createLink(controller:"workflow",action:"remove")}',
-    workflowUndo:'${createLink(controller:"workflow",action:"undo")}',
-    workflowRedo:'${createLink(controller:"workflow",action:"redo")}',
-    workflowRevert:'${createLink(controller:"workflow",action:"revert")}',
-    workflowRenderUndo:'${createLink(controller:"workflow",action:"renderUndo")}',
+    frameworkNodesFragment:"${createLink(controller:'framework',action:'nodesFragment',params:[project:project])}",
+    workflowEdit:'${createLink(controller:"workflow",action:"edit",params:[project:project])}',
+    workflowRender:'${createLink(controller:"workflow",action:"render",params:[project:project])}',
+    workflowSave:'${createLink(controller:"workflow",action:"save",params:[project:project])}',
+    workflowReorder:'${createLink(controller:"workflow",action:"reorder",params:[project:project])}',
+    workflowRemove:'${createLink(controller:"workflow",action:"remove",params:[project:project])}',
+    workflowUndo:'${createLink(controller:"workflow",action:"undo",params:[project:project])}',
+    workflowRedo:'${createLink(controller:"workflow",action:"redo",params:[project:project])}',
+    workflowRevert:'${createLink(controller:"workflow",action:"revert",params:[project:project])}',
+    workflowRenderUndo:'${createLink(controller:"workflow",action:"renderUndo",params:[project:project])}',
 
-    editOptsRenderUndo:'${createLink(controller:"editOpts",action:"renderUndo")}',
-    editOptsEdit:'${createLink(controller:"editOpts",action:"edit")}',
-    editOptsRender:'${createLink(controller:"editOpts",action:"render")}',
-    editOptsSave:'${createLink(controller:"editOpts",action:"save")}',
-    editOptsRenderAll:'${createLink(controller:"editOpts",action:"renderAll")}',
-    editOptsRenderSummary:'${createLink(controller:"editOpts",action:"renderSummary")}',
-    editOptsRemove:'${createLink(controller:"editOpts",action:"remove")}',
-    editOptsUndo:'${createLink(controller:"editOpts",action:"undo")}',
-    editOptsRedo:'${createLink(controller:"editOpts",action:"redo")}',
-    editOptsRevert:'${createLink(controller:"editOpts",action:"revert")}'
+    editOptsRenderUndo:'${createLink(controller:"editOpts",action:"renderUndo",params:[project:project])}',
+    editOptsEdit:'${createLink(controller:"editOpts",action:"edit",params:[project:project])}',
+    editOptsRender:'${createLink(controller:"editOpts",action:"render",params:[project:project])}',
+    editOptsSave:'${createLink(controller:"editOpts",action:"save",params:[project:project])}',
+    editOptsRenderAll:'${createLink(controller:"editOpts",action:"renderAll",params:[project:project])}',
+    editOptsRenderSummary:'${createLink(controller:"editOpts",action:"renderSummary",params:[project:project])}',
+    editOptsRemove:'${createLink(controller:"editOpts",action:"remove",params:[project:project])}',
+    editOptsUndo:'${createLink(controller:"editOpts",action:"undo",params:[project:project])}',
+    editOptsRedo:'${createLink(controller:"editOpts",action:"redo",params:[project:project])}',
+    editOptsRevert:'${createLink(controller:"editOpts",action:"revert",params:[project:project])}'
 };
 
 //]>

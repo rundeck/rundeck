@@ -124,12 +124,11 @@ class ReportsController {
     def since = { ExecQuery query->
        //find previous executions
         def usedFilter
-        Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
         if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'event'], ['read'],
-            session.project)) {
-            return unauthorized("Read Events for project ${session.project}")
+                params.project)) {
+            return unauthorized("Read Events for project ${params.project}")
         }
         def User u = userService.findOrCreateUser(session.user)
         
@@ -152,8 +151,8 @@ class ReportsController {
         if(null!=query && !params.find{ it.key.endsWith('Filter')}){
             //no default filter
         }
-        if(query && !query.projFilter && session.project){
-            query.projFilter = session.project
+        if(query && !query.projFilter && params.project){
+            query.projFilter = params.project
         }
 
 //        if(null!=query){
@@ -228,8 +227,8 @@ class ReportsController {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
         if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'event'], ['read'],
-            session.project)) {
-            return unauthorized("Read Events for project ${session.project}",true)
+                params.project)) {
+            return unauthorized("Read Events for project ${params.project}",true)
         }
         def results = index(query)
         results.params=params
@@ -275,8 +274,8 @@ class ReportsController {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
         if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'event'], ['read'],
-            session.project)) {
-            return unauthorized("Read Events for project ${session.project}", true)
+                params.project)) {
+            return unauthorized("Read Events for project ${params.project}", true)
         }
         def results = jobs(query)
         results.params=params

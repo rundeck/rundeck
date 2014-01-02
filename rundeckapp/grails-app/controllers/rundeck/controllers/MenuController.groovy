@@ -59,7 +59,9 @@ class MenuController {
             query.recentFilter="1h"
             params.recentFilter="1h"
         }
-        
+        if(!query.projFilter && params.project){
+            query.projFilter=params.project
+        }
         if(null!=query){
             query.configureFilter()
         }
@@ -178,6 +180,9 @@ class MenuController {
                 params.filterName=filterpref['workflows']
             }
         }
+        if(!params.project){
+            return redirect(controller: 'menu',action: 'home')
+        }
         
         def results = jobsFragment(query)
         results.execQueryParams=query.asExecQueryParams()
@@ -204,7 +209,6 @@ class MenuController {
     
     def jobsFragment = {ScheduledExecutionQuery query ->
         long start=System.currentTimeMillis()
-        Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def usedFilter=null
         
@@ -227,8 +231,8 @@ class MenuController {
             query=new ScheduledExecutionQuery()
             usedFilter=null
         }
-        if(query && !query.projFilter && session.project){
-            query.projFilter=session.project
+        if(query && !query.projFilter && params.project){
+            query.projFilter= params.project
         }
         def results=listWorkflows(query,authContext,session.user)
         if(usedFilter){
@@ -251,8 +255,8 @@ class MenuController {
         if(!query){
             query = new ScheduledExecutionQuery()
         }
-        if(query && !query.projFilter && session.project){
-            query.projFilter=session.project
+        if(query && !query.projFilter && params.project){
+            query.projFilter= params.project
         }
         def results=listWorkflows(query,authContext,session.user)
         if(usedFilter){
@@ -461,14 +465,14 @@ class MenuController {
     def admin={
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if (!frameworkService.authorizeApplicationResourceAll(authContext,[type:'project',name:session.project],[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_READ])) {
+        if (!frameworkService.authorizeApplicationResourceAll(authContext,[type:'project',name: params.project],[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_READ])) {
             flash.error = "User ${session.user} unauthorized for: Project Admin"
             flash.title = "Unauthorized"
             response.setStatus(403)
             render(view: '/common/error', model: [:])
-        }else if (session.project){
+        }else if (params.project){
 
-            def project=session.project
+            def project= params.project
             def fproject = frameworkService.getFrameworkProject(project)
             def configs = fproject.listResourceModelConfigurations()
 
