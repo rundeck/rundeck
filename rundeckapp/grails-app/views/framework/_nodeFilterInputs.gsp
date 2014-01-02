@@ -63,7 +63,7 @@
 
         <div class="form-group  ${hasErrors(bean: query, field: 'nodeInclude', 'has-error')}">
             <div class="col-sm-12">
-            <span class="h4 ">
+            <span class="h5 ">
                 Include Nodes Matching:
             </span>
 
@@ -82,37 +82,11 @@
                 </div>
             </g:hasErrors>
             <div id="nodeFilterDivInclude" style="">
-                <g:each var="key" in="${NODE_FILTERS_ALL}">
+                <g:each var="key" in="${NODE_FILTERS}">
                     <g:render template="nodeFilterField" model="${[key:key,include:true,query:query,NODE_FILTER_MAP:NODE_FILTER_MAP]}"/>
                 </g:each>
             </div>
-            <div class="row">
-                <div class="col-sm-10 col-sm-offset-2">
-                <g:each var="key" in="${NODE_FILTERS}">
-                    <span
-                        style="${query?.('nodeInclude'+key)?'display:none':''}"
-                        title="Add Filter for ${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}"
-                        class="filterAdd btn btn-default btn-sm"
-                        id="filterAddInclude${key}"
-                        onclick="_addNodeFilterInput('${key}',true,'${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}');"
-                        >${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}</span>
-                </g:each>
-                    <span class="filterAdd btn btn-default btn-sm" onclick="Element.show('${rkey}moreIncludeFilters');
-                    Element.hide(this);">more&hellip;</span>
-            </div>
 
-            <div class=" col-sm-10 col-sm-offset-2" id="${rkey}moreIncludeFilters" style="display:none">
-                <g:each var="key" in="${NODE_FILTERS_X}">
-                    <span
-                        style="${query?.('nodeInclude'+key)?'display:none':''}"
-                        title="Add Filter for ${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}"
-                        class="filterAdd btn btn-default btn-sm"
-                        id="filterAddInclude${key}"
-                        onclick="_addNodeFilterInput('${key}',true,'${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}');"
-                        >${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}</span>
-                </g:each>
-            </div>
-            </div>
         </div>
 
 <div class="row">
@@ -121,6 +95,20 @@
     </div>
 </div>%{--//extended filters toggle--}%
     <div id="${rkey}nodeXtraFilters" style="display:none" class="subfields">
+        <div class="form-group">
+            <div class="col-sm-12">
+            <span class="h5 ${hasErrors(bean: query, field: 'nodeExclude', 'has-error')}">
+                Include Nodes Matching:
+            </span>
+            </div>
+
+            <div id="nodeFilterDivInclude2" style="">
+                <g:each var="key" in="${NODE_FILTERS_X}">
+                    <g:render template="nodeFilterField"
+                              model="${[key: key, include: true, query: query, NODE_FILTER_MAP: NODE_FILTER_MAP]}"/>
+                </g:each>
+            </div>
+        </div>
         <div class="form-group">
             <div class="col-sm-12">
             <span class="h5 ${hasErrors(bean: query, field: 'nodeExclude', 'has-error')}">
@@ -144,19 +132,7 @@
                     <g:render template="nodeFilterField" model="${[key:key,include:false,query:query,NODE_FILTER_MAP:NODE_FILTER_MAP]}"/>
                 </g:each>
             </div>
-            <div class="row">
-            <div class="  col-sm-10 col-sm-offset-2">
-                <g:each var="key" in="${NODE_FILTERS_ALL}">
-                        <span
-                            style="${query?.('nodeExclude'+key)?'display:none':''}"
-                        title="Add Filter: ${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}"
-                        class="filterAdd btn btn-default btn-sm"
-                        id="filterAddExclude${key}"
-                        onclick="_addNodeFilterInput('${key}',false,'${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}');"
-                        >${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}</span>
-                </g:each>
-            </div>
-            </div>
+
         </div>
         <g:if test="${filterErrors?.filter}">
             <div class="row">

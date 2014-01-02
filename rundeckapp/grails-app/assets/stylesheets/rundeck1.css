@@ -1182,51 +1182,6 @@ th.sortable a:hover {
     text-decoration: underline;
 }
 
-/* query output showing */
-span.query, a.query {
-
-    padding: 3px;
-    -moz-border-radius: 3px;
-    -webkit-border-radius: 3px;
-    border-radius: 3px;
-    border: 1px solid #ddd;
-    margin-right: 5px;
-}
-
-span.query span.querykey, a.query span.querykey {
-    color: #555;
-}
-
-span.query span.queryvalue.text, a.query span.queryvalue.text {
-
-}
-
-span.query span.queryvalue.date, a.query span.queryvalue.date {
-    font-weight: bold;
-}
-
-
-span.query.textbtn span.querykey, a.query.textbtn span.querykey {
-    color: #555;
-}
-
-span.query.textbtn span.queryvalue, a.query.textbtn span.queryvalue {
-    color: black;
-    font-weight: bold;
-}
-
-span.query.textbtn:hover span.queryvalue, a.query.textbtn:hover span.queryvalue {
-    color: blue;
-}
-
-span.query.textbtn  span.querykey.exclude {
-    color: #555;
-    text-decoration: line-through;
-}
-
-span.query.textbtn span.querykey.include {
-    color: blue;
-}
 
 div.eventspage div.jobsReport {
     margin: 10px 0;

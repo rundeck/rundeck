@@ -115,17 +115,22 @@ class FrameworkController  {
             }
         }
 
+        def summaryOnly = false
         if (params['Clear']) {
             query = new ExtNodeFilters()
             usedFilter = null
         }
+        if(params.showall){
+            query.nodeIncludeName = '.*'
 
-        if (query.nodeFilterIsEmpty()) {
+        }else if (query.nodeFilterIsEmpty() && 'true'!=params.formInput) {
 //            if ('true' == params.defaultLocalNode) {
 //                query.nodeIncludeName = framework.getFrameworkNodeName()
 //            } else {
-//                query.nodeIncludeName = '.*'
+            query.nodeIncludeName = '.*'
+            summaryOnly=true
 //            }
+            //filter all and summarize
         }
         if (query && !query.project && session.project) {
             query.project = session.project
@@ -141,7 +146,7 @@ class FrameworkController  {
             model['filterName'] = usedFilter
         }
 
-        return model
+        return model + [summaryOnly: summaryOnly]
     }
 
     def adhoc = { ExtNodeFilters query ->
@@ -171,12 +176,12 @@ class FrameworkController  {
         }
         def User u = userService.findOrCreateUser(session.user)
         def usedFilter = null
-        if (!params.filterName && u && query.nodeFilterIsEmpty() && params.formInput != 'true') {
-            Map filterpref = userService.parseKeyValuePref(u.filterPref)
-            if (filterpref['nodes']) {
-                params.filterName = filterpref['nodes']
-            }
-        }
+//        if (!params.filterName && u && query.nodeFilterIsEmpty() && params.formInput != 'true') {
+//            Map filterpref = userService.parseKeyValuePref(u.filterPref)
+//            if (filterpref['nodes']) {
+//                params.filterName = filterpref['nodes']
+//            }
+//        }
         if (params.filterName) {
             //load a named filter and create a query from it
             if (u) {
@@ -198,22 +203,28 @@ class FrameworkController  {
         }
 
         if (query.nodeFilterIsEmpty()) {
-            if ('true' == params.defaultLocalNode) {
-                query.nodeIncludeName = framework.getFrameworkNodeName()
-            } else {
-                query.nodeIncludeName = '.*'
-            }
+//            if ('true' == params.defaultLocalNode) {
+//                query.nodeIncludeName = framework.getFrameworkNodeName()
+//            } else {
+//                query.nodeIncludeName = '.*'
+//            }
         }
         if (query && !query.project && session.project) {
             query.project = session.project
         }
-        def result = nodesdata(query)
+        def result
+        if(!query.nodeFilterIsEmpty()){
+
+            result = nodesdata(query)
+        }else{
+            result= [query: query, params: params, allnodes:[:]]
+        }
         def model = result//[query: query, params: params]
 
         if (usedFilter) {
             model['filterName'] = usedFilter
         }
-        return model + [runCommand: runCommand]
+        return model + [runCommand: runCommand, emptyQuery: query.nodeFilterIsEmpty()]
     }
 
     /**

@@ -22,7 +22,8 @@
     &.navbar-brand,
     &.btn,
     &.list-group-item,
-    .summary-count
+    .summary-count,
+    &.close
     {
       text-decoration: none;
     }
@@ -483,7 +484,7 @@
   &.query.textbtn {
     border: 1px solid darken(@color, 12%);
     display: inline-block;
-    margin: 5px 5px 5px 0;
+    text-decoration: none;
   }
   &.textbtn-on-hover{
     .textbtn-on-hover();
@@ -519,6 +520,46 @@
 .textbtn-info {
   .textbtn-variant(@brand-info,transparent,lighten(@brand-info, 40%));
 }
+
+//represent textual query
+
+    /* query output showing */
+  span.query, a.query {
+
+    &.textbtn{
+      padding: 3px;
+      -moz-border-radius: 3px;
+      -webkit-border-radius: 3px;
+      border-radius: 3px;
+      margin-right: 5px;
+      border: 1px solid #ddd;
+    }
+
+    & span.querykey{
+      color: #555;
+    }
+    &  span.queryvalue.date {
+      font-weight: bold;
+    }
+    & span.querykey {
+      color: #555;
+    }
+    & span.queryvalue {
+      color: blue;
+      font-weight: bold;
+    }
+    &.textbtn:hover span.queryvalue {
+      color: blue;
+    }
+    & span.querykey.exclude {
+      color: #555;
+      text-decoration: line-through;
+    }
+    & span.querykey.include {
+//      color: blue;
+    }
+  }
+
 
 //div or other block that has a bound action
 

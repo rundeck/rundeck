@@ -3,9 +3,7 @@
 </g:if>
 <g:if test="${nodes && nodes.size()>0}">
     <g:if test="${tagsummary}">
-    <div class="presentation clear">
     <g:render template="tagsummary" model="${[tagsummary:tagsummary,link:[action:'nodes',controller:'framework',param:'nodeIncludeTags']]}"/>
-    </div>
     </g:if>
     <table cellpadding="0" cellspacing="0" width="100%" id="nodesTable" class="">
         <g:render template="nodesTableContent" model="${[nodes:nodes,params:params,total:total,allcount:allcount,page:page,max:max,nodeauthrun:nodeauthrun]}"/>

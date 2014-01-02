@@ -63,6 +63,12 @@
                 <g:set var="resselected" value="${selectedclass}"/>
             </g:ifPageProperty>
         </g:ifPageProperty>
+        <g:set var="adhocselected" value=""/>
+        <g:ifPageProperty name='meta.tabpage'>
+            <g:ifPageProperty name='meta.tabpage' equals='adhoc'>
+                <g:set var="adhocselected" value="${selectedclass}"/>
+            </g:ifPageProperty>
+        </g:ifPageProperty>
         <g:set var="eventsselected" value=""/>
         <g:ifPageProperty name='meta.tabpage'>
             <g:ifPageProperty name='meta.tabpage' equals='events'>
@@ -75,6 +81,9 @@
         </g:link></li><!--
         --><li class="${resselected}"><g:link controller="framework" action="nodes" class=" toptab ${resselected}" >
            <g:message code="gui.menu.Nodes"/>
+       </g:link></li><!--
+        --><li class="${adhocselected}"><g:link controller="framework" action="adhoc" class=" toptab ${adhocselected}" >
+           <g:message code="gui.menu.Adhoc"/>
        </g:link></li><!--
         --><li class="${eventsselected}"><g:link controller="reports"  action="index" class=" toptab ${eventsselected}"  >
             <g:message code="gui.menu.Events"/>

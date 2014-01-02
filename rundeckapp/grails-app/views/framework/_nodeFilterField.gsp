@@ -22,15 +22,15 @@
  --%>
 <g:set var="type" value="${include?'Include':'Exclude'}"/>
 <g:set var="predefinedDefaults" value="${g.message(code: 'node.metadata.' + key + '.defaults', default: '')}"/>
-<div id="nodeFilter${type}${key}"  style="${query?.('node'+type+key)?'':'display:none;'}"
-     class="nodefilterfield form-group">
+<div id="nodeFilter${type}${key}"
+     class="nodefilterfield form-group ${query?.('node' + type + key)?'has-success':''}">
 <span class="input">
     <label class="control-label col-sm-2"
            for="schedJobNodeInclude${key}">${NODE_FILTER_MAP[key] ? NODE_FILTER_MAP[key] : key}:</label>
     <g:set var="filtvalue"
            value="${query?.('node' + type + key)?.encodeAsHTML()}"/>
 
-    <div class="${predefinedDefaults ? 'col-sm-4' : 'col-sm-6'}">
+    <div class="${predefinedDefaults ? 'col-sm-4' : 'col-sm-6'} nfilteritem">
         <input type='text' name="node${type}${key}" class="filterIncludeText form-control input-sm"
                value="${filtvalue}" id="schedJobNodeInclude${key}" onchange="_matchNodes();"/>
     </div>
@@ -44,12 +44,7 @@
     </g:if>
 
     <div class="col-sm-4">
-        <span title="Remove filter for ${NODE_FILTER_MAP[key] ? NODE_FILTER_MAP[key] : key}"
-              class="filterRemove action textbtn textbtn-danger form-control-static"
-              onclick="_removeNodeFilterInput('${key}', ${include?true:false});">
-            <i class="glyphicon glyphicon-remove"></i>
-            remove
-        </span>
+
     </div>
 </span>
 </div>

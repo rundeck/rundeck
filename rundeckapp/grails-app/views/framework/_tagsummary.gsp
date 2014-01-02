@@ -25,7 +25,11 @@
         <g:set var="hidetop" value="${tagsummary.findAll {it.value>1}.size()>30}"/>
         <g:if test="${hidetop}">
             <span class="action button receiver" title="Show tag demographics" onclick="Element.show('tagdemo');
-            Element.hide(this);">Show ${tagsummary.size()} tags&hellip;</span>
+            Element.hide(this);">
+                <i class="glyphicon glyphicon-tags text-muted"></i>
+
+                Show ${tagsummary.size()} tags&hellip;
+            </span>
         </g:if>
         <span id="tagdemo" style="${wdgt.styleVisible(unless: hidetop)}">
             <i class="glyphicon glyphicon-tags text-muted"></i>

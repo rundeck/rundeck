@@ -4,7 +4,7 @@
     <g:set var="ukey" value="${g.rkey()}" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
-    <meta name="tabpage" content="nodes"/>
+    <meta name="tabpage" content="adhoc"/>
     <title><g:message code="gui.menu.Nodes"/> - ${session.project.encodeAsHTML()}</title>
     <g:javascript library="executionControl"/>
     <g:javascript library="yellowfade"/>
@@ -278,9 +278,18 @@
                     });
                 }
             });
-            var history = new History("${g.createLink(controller: 'reports', action: 'eventsAjax', absolute: true)}");
+            var ajaxHistoryLink="${g.createLink(controller: 'reports', action: 'eventsAjax', absolute: true)}";
+            var history = new History(ajaxHistoryLink);
             ko.applyBindings(history, document.getElementById('activity_section'));
-            setupActivityLinks('activity_section', history, "${g.createLink(controller: 'reports', action: 'eventsAjax', absolute: true)}");
+            setupActivityLinks('activity_section', history, ajaxHistoryLink);
+
+            //if empty query, automatically load first activity_link
+            if("${emptyQuery}"=='true'){
+                jQuery('ul.activity_links > li:first-child').addClass('active');
+                jQuery('ul.activity_links > li:first-child > a').each(function(e){
+                    loadHistoryLink(history, ajaxHistoryLink, this.getAttribute('href'));
+                });
+            }
         }
         jQuery(document).ready(init);
 
@@ -313,41 +322,32 @@
     <div id="error" class="error message" style="display:none;"></div>
         <div>
         <div class="row">
-        <div class="col-sm-2">
-            <g:if test="${run_authorized}">
-                <a class="h4 match" data-toggle="collapse" href="#${ukey}nodeForm">
+            <div class="col-sm-12">
+
+            <g:link class="textbtn textbtn-default query"
+                    title="Click to modify the filter"
+                    action="nodes" controller="framework"
+                    params="${filterName?[filterName:filterName]:filterParams}">
+                Node Filter:
+                <g:if test="${filterName}">
+                    <i class="glyphicon glyphicon-filter"></i>
+                    ${filterName.encodeAsHTML()}:
+                </g:if>
+                <g:render template="displayNodeFilters" model="${[displayParams: query]}"/>
+
+                <i class="glyphicon glyphicon-edit"></i>
+                edit …
+            </g:link>
+
+            <g:if test="${!emptyQuery}">
+                <a class="h4 " data-toggle="collapse" href="#${ukey}nodeForm">
                     <span class="obs_nodes_allcount">${total}</span> Node<span class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span>
                     <b class="glyphicon glyphicon-chevron-right"></b>
                 </a>
             </g:if>
-            <g:else>
-                <h4 class="match"><span class="obs_nodes_allcount">${total}</span> Node<span class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span>
-                </h4>
-            </g:else>
         </div>
 
-                <div  class="col-sm-10" >
 
-                        <div id="${ukey}nodesfilterholder">
-                            <div>
-                                <g:link class="textbtn textbtn-default query"
-                                    title="Click to modify the filter"
-                                        action="nodes" controller="framework"
-                                        params="${filterParams}">
-                                    <g:if test="${filterName}">
-                                        <i class="glyphicon glyphicon-filter"></i>
-                                        ${filterName.encodeAsHTML()}:
-                                    </g:if>
-                                    <g:render template="displayNodeFilters" model="${[displayParams: query]}"/>
-
-                                    <i class="glyphicon glyphicon-edit"></i>
-                                    edit …
-                                </g:link>
-                            </div>
-                        </div>
-
-
-                </div>
         </div>
         <div class="row ">
             <div id="${ukey}nodeForm" class="collapse collapse-expandable col-sm-12">
@@ -356,7 +356,7 @@
             </div>
         </div>
         <div class="row row-space">
-            <g:if test="${run_authorized}">
+            <g:if test="${run_authorized && !emptyQuery}">
                 <div class=" form-inline clearfix" id="runbox">
                     <g:hiddenField name="project" value="${session.project}"/>
                     <g:render template="nodeFiltersHidden" model="${[params: params, query: query]}"/>
