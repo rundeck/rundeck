@@ -913,63 +913,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     /**
-     * Return a map of include filters as used by the NodeSet type
-     */
-    public static Map includeFiltersAsNodeSetMap( econtext) {
-        def nodeIncludeMap = [:]
-        if (econtext.nodeInclude || econtext.nodeExclude
-                               || econtext.nodeIncludeName || econtext.nodeExcludeName
-                               || econtext.nodeIncludeTags || econtext.nodeExcludeTags
-                               || econtext.nodeIncludeOsName || econtext.nodeExcludeOsName
-                               || econtext.nodeIncludeOsFamily || econtext.nodeExcludeOsFamily
-                               || econtext.nodeIncludeOsArch || econtext.nodeExcludeOsArch
-                               || econtext.nodeIncludeOsVersion || econtext.nodeExcludeOsVersion
-            ) {
-
-            nodeIncludeMap[NodeSet.HOSTNAME] = econtext.nodeInclude
-            nodeIncludeMap[NodeSet.NAME] = econtext.nodeIncludeName
-            nodeIncludeMap[NodeSet.TAGS] = econtext.nodeIncludeTags
-            nodeIncludeMap[NodeSet.OS_NAME] = econtext.nodeIncludeOsName
-            nodeIncludeMap[NodeSet.OS_FAMILY] = econtext.nodeIncludeOsFamily
-            nodeIncludeMap[NodeSet.OS_ARCH] = econtext.nodeIncludeOsArch
-            nodeIncludeMap[NodeSet.OS_VERSION] = econtext.nodeIncludeOsVersion
-        }
-        return nodeIncludeMap
-    }
-
-    /**
-     * Return a map of exclude filters as used by the NodeSet type
-     */
-    public static Map excludeFiltersAsNodeSetMap( econtext) {
-
-        def nodeExcludeMap = [:]
-        if (econtext.nodeInclude || econtext.nodeExclude
-                               || econtext.nodeIncludeName || econtext.nodeExcludeName
-                               || econtext.nodeIncludeTags || econtext.nodeExcludeTags
-                               || econtext.nodeIncludeOsName || econtext.nodeExcludeOsName
-                               || econtext.nodeIncludeOsFamily || econtext.nodeExcludeOsFamily
-                               || econtext.nodeIncludeOsArch || econtext.nodeExcludeOsArch
-                               || econtext.nodeIncludeOsVersion || econtext.nodeExcludeOsVersion
-            ) {
-            nodeExcludeMap[NodeSet.HOSTNAME] = econtext.nodeExclude
-            nodeExcludeMap[NodeSet.NAME] = econtext.nodeExcludeName
-            nodeExcludeMap[NodeSet.TAGS] = econtext.nodeExcludeTags
-            nodeExcludeMap[NodeSet.OS_NAME] = econtext.nodeExcludeOsName
-            nodeExcludeMap[NodeSet.OS_FAMILY] = econtext.nodeExcludeOsFamily
-            nodeExcludeMap[NodeSet.OS_ARCH] = econtext.nodeExcludeOsArch
-            nodeExcludeMap[NodeSet.OS_VERSION] = econtext.nodeExcludeOsVersion
-
-        }
-        return nodeExcludeMap
-    }
-
-    /**
      * Return a NodeSet using the filters in the execution context
      */
     public static NodeSet filtersAsNodeSet(BaseNodeFilters econtext) {
         final NodeSet nodeset = new NodeSet();
-        nodeset.createExclude(excludeFiltersAsNodeSetMap(econtext)).setDominant(econtext.nodeExcludePrecedence ? true : false);
-        nodeset.createInclude(includeFiltersAsNodeSetMap(econtext)).setDominant(!econtext.nodeExcludePrecedence ? true : false);
+        nodeset.createExclude(BaseNodeFilters.asExcludeMap(econtext)).setDominant(econtext.nodeExcludePrecedence ? true : false);
+        nodeset.createInclude(BaseNodeFilters.asIncludeMap(econtext)).setDominant(!econtext.nodeExcludePrecedence ? true : false);
         return nodeset
     }
     /**
@@ -977,8 +926,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     public static NodeSet filtersAsNodeSet(ExecutionContext econtext) {
         final NodeSet nodeset = new NodeSet();
-        nodeset.createExclude(excludeFiltersAsNodeSetMap(econtext)).setDominant(econtext.nodeExcludePrecedence ? true : false);
-        nodeset.createInclude(includeFiltersAsNodeSetMap(econtext)).setDominant(!econtext.nodeExcludePrecedence ? true : false);
+        nodeset.createExclude(BaseNodeFilters.asExcludeMap(econtext)).setDominant(econtext.nodeExcludePrecedence ? true : false);
+        nodeset.createInclude(BaseNodeFilters.asIncludeMap(econtext)).setDominant(!econtext.nodeExcludePrecedence ? true : false);
         nodeset.setKeepgoing(econtext.nodeKeepgoing?true:false)
         nodeset.setThreadCount(econtext.nodeThreadcount?econtext.nodeThreadcount:1)
         return nodeset
@@ -989,8 +938,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     public static NodeSet filtersAsNodeSet(Map econtext) {
         final NodeSet nodeset = new NodeSet();
-        nodeset.createExclude(excludeFiltersAsNodeSetMap(econtext)).setDominant(econtext.nodeExcludePrecedence?true:false);
-        nodeset.createInclude(includeFiltersAsNodeSetMap(econtext)).setDominant(!econtext.nodeExcludePrecedence?true:false);
+        nodeset.createExclude(BaseNodeFilters.asExcludeMap(econtext)).setDominant(econtext.nodeExcludePrecedence?true:false);
+        nodeset.createInclude(BaseNodeFilters.asIncludeMap(econtext)).setDominant(!econtext.nodeExcludePrecedence?true:false);
         nodeset.setKeepgoing(econtext.nodeKeepgoing?true:false)
         nodeset.setThreadCount(econtext.nodeThreadcount?econtext.nodeThreadcount:1)
         return nodeset
@@ -1003,20 +952,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             execution = new Execution(project:params.project,
                                       user:params.user,loglevel:params.loglevel,
                                     doNodedispatch:params.doNodedispatch?"true" == params.doNodedispatch.toString():false,
-                                    nodeInclude:params.nodeInclude,
-                                    nodeExclude:params.nodeExclude,
-                                    nodeIncludeName:params.nodeIncludeName,
-                                    nodeExcludeName:params.nodeExcludeName,
-                                    nodeIncludeTags:params.nodeIncludeTags,
-                                    nodeExcludeTags:params.nodeExcludeTags,
-                                    nodeIncludeOsName:params.nodeIncludeOsName,
-                                    nodeExcludeOsName:params.nodeExcludeOsName,
-                                    nodeIncludeOsFamily:params.nodeIncludeOsFamily,
-                                    nodeExcludeOsFamily:params.nodeExcludeOsFamily,
-                                    nodeIncludeOsArch:params.nodeIncludeOsArch,
-                                    nodeExcludeOsArch:params.nodeExcludeOsArch,
-                                    nodeIncludeOsVersion:params.nodeIncludeOsVersion,
-                                    nodeExcludeOsVersion:params.nodeExcludeOsVersion,
+                                    filter: params.filter,
                                     nodeExcludePrecedence:params.nodeExcludePrecedence,
                                     nodeThreadcount:params.nodeThreadcount,
                                     nodeKeepgoing:params.nodeKeepgoing,

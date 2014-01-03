@@ -121,13 +121,13 @@ class FrameworkController  {
             usedFilter = null
         }
         if(params.showall){
-            query.nodeIncludeName = '.*'
+            query.filter = 'name: .*'
 
         }else if (query.nodeFilterIsEmpty() && 'true'!=params.formInput) {
 //            if ('true' == params.defaultLocalNode) {
 //                query.nodeIncludeName = framework.getFrameworkNodeName()
 //            } else {
-            query.nodeIncludeName = '.*'
+            query.filter = 'name: .*'
             summaryOnly=true
 //            }
             //filter all and summarize
@@ -204,7 +204,7 @@ class FrameworkController  {
 
         if (query.nodeFilterIsEmpty()) {
 //            if ('true' == params.defaultLocalNode) {
-//                query.nodeIncludeName = framework.getFrameworkNodeName()
+                query.nodeIncludeName = framework.getFrameworkNodeName()
 //            } else {
 //                query.nodeIncludeName = '.*'
 //            }
@@ -238,7 +238,7 @@ class FrameworkController  {
 
         if(query.nodeFilterIsEmpty()){
             if(params.formInput=='true' && 'true'!=params.defaultLocalNode){
-                query.nodeIncludeName = '.*'
+                query.filter = 'name: .*'
             }else{
                 query.nodeIncludeName = framework.getFrameworkNodeName()
             }
@@ -391,6 +391,10 @@ class FrameworkController  {
         def resources=[:]
 
         def parseExceptions= project.getResourceModelSourceExceptions()
+
+        if(!query.filter){
+            query.filter=NodeSet.generateFilter(nset)
+        }
         def model=[
             allnodes: allnodes,
             nodesvalid: !parseExceptions,
@@ -455,7 +459,7 @@ class FrameworkController  {
         }
         if (query.nodeFilterIsEmpty()) {
             if (params.formInput == 'true' && 'true' != params.defaultLocalNode) {
-                query.nodeIncludeName = '.*'
+                query.filter = 'name: .*'
             } else {
                 query.nodeIncludeName = framework.getFrameworkNodeName()
             }
@@ -1526,7 +1530,7 @@ class FrameworkController  {
 
         if(query.nodeFilterIsEmpty()){
             //return all results
-            query.nodeInclude=".*"
+            query.filter = 'name: .*'
         }
         def pject=frameworkService.getFrameworkProject(params.project)
 //        final Collection nodes = pject.getNodes().filterNodes(ExecutionService.filtersAsNodeSet(query))

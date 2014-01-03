@@ -2163,25 +2163,11 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             }
         }
         if (scheduledExecution.doNodedispatch) {
-            if (       !scheduledExecution.nodeInclude
-                    && !scheduledExecution.nodeExclude
-                    && !scheduledExecution.nodeIncludeName
-                    && !scheduledExecution.nodeExcludeName
-                    && !scheduledExecution.nodeIncludeTags
-                    && !scheduledExecution.nodeExcludeTags
-                    && !scheduledExecution.nodeIncludeOsName
-                    && !scheduledExecution.nodeExcludeOsName
-                    && !scheduledExecution.nodeIncludeOsFamily
-                    && !scheduledExecution.nodeExcludeOsFamily
-                    && !scheduledExecution.nodeIncludeOsArch
-                    && !scheduledExecution.nodeExcludeOsArch
-                    && !scheduledExecution.nodeIncludeOsVersion
-                    && !scheduledExecution.nodeExcludeOsVersion) {
-                scheduledExecution.errors.rejectValue('nodeInclude', 'scheduledExecution.nodeIncludeExclude.blank.message')
-                scheduledExecution.errors.rejectValue('nodeExclude', 'scheduledExecution.nodeIncludeExclude.blank.message')
+            if (!scheduledExecution.asFilter()) {
+                scheduledExecution.errors.rejectValue('filter', 'scheduledExecution.filter.blank.message')
                 failed = true
-            }else if (!scheduledExecution.nodeThreadcount){
-                scheduledExecution.nodeThreadcount=1
+            } else if (!scheduledExecution.nodeThreadcount) {
+                scheduledExecution.nodeThreadcount = 1
             }
         }
         failed = failed || !valid
