@@ -95,21 +95,9 @@
 
             <div class="modal-body">
                 <div class="form-group">
-                    <label class="col-sm-2" for="existsFilterName">Filter:</label>
+                    <label for="newFilterName" class="col-sm-2">Name:</label>
 
-                    <div class="col-sm-4">
-                        <g:select class="form-control input-sm"
-                                  name="existsFilterName" optionKey="name" optionValue="name"
-                                  from="${filterset ? filterset.sort({ a, b -> a.name.compareTo(b.name) }) : filterset}"
-                                  value="${filterName}" noSelection="['': '-New-']"
-                                  onchange="if(this.value){\$('newFilterInput').hide();}else{\$('newFilterInput').show();}"/>
-                    </div>
-
-                    <div id="newFilterInput">
-                        <label for="newFilterName" class="col-sm-2">Name:</label>
-
-                        <div class="col-sm-4"><g:textField name="newFilterName" class="form-control input-sm"/></div>
-                    </div>
+                    <div class="col-sm-10"><g:textField name="newFilterName" class="form-control input-sm"/></div>
                 </div>
             </div>
 

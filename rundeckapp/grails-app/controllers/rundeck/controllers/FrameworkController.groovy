@@ -542,23 +542,18 @@ class FrameworkController  {
         }
         def NodeFilter filter
         def boolean saveuser=false
-        if(params.newFilterName && !params.existsFilterName){
+        if(params.newFilterName){
             def ofilter = NodeFilter.findByNameAndUser(params.newFilterName,u)
             if(ofilter){
-                flash.error="Filter named ${params.newFilterName} already exists."
-                params.saveFilter=true
-                return chain(controller:'framework',action:'nodes',params:params)
+                ofilter.properties = query.properties
+                filter=ofilter
+            }else{
+                filter= new NodeFilter(query.properties)
+                filter.name=params.newFilterName
+                u.addToNodefilters(filter)
+                saveuser=true
             }
-            filter= new NodeFilter(query.properties)
-            filter.name=params.newFilterName
-            u.addToNodefilters(filter)
-            saveuser=true
-        }else if(params.existsFilterName){
-            filter = NodeFilter.findByNameAndUser(params.existsFilterName,u)
-            if(filter){
-                filter.properties=query.properties
-            }
-        }else if(!params.newFilterName && !params.existsFilterName){
+        }else if(!params.newFilterName){
             flash.error="Filter name not specified"
             params.saveFilter=true
             return chain(controller:'framework',action:'nodes',params:params)
