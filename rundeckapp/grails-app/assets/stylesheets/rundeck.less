@@ -754,8 +754,11 @@ section{
 
 
   //padding between sequential buttons in a form group
-  .form-group .panel-footer, .panel-footer .buttons{
+  .form-group .panel-footer, .panel-footer .buttons, .panel-footer.buttons{
     .btn + .btn,  {
+      margin-left: 5px;
+    }
+    .btn.pull-right{
       margin-left: 5px;
     }
   }
@@ -1156,7 +1159,7 @@ section{
   padding: @base-item-padding-vertical @base-item-padding-horizontal;
 }
 
-.placeholder{
+input.placeholder{
   color: gray;
 }
 
