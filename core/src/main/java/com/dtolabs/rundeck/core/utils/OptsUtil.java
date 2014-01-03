@@ -28,6 +28,7 @@ import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -64,7 +65,7 @@ public class OptsUtil {
         return join(strings);
     }
 
-    public static String join(List<String> args) {
+    public static String join(Collection<String> args) {
         StringBuilder sb = new StringBuilder();
         for (String str : args) {
             if (sb.length() > 0) {
