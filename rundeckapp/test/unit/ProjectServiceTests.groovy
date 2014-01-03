@@ -59,12 +59,7 @@ class ProjectServiceTests  {
         <excludePrecedence>true</excludePrecedence>
         <rankOrder>ascending</rankOrder>
       </dispatch>
-      <include>
-        <hostname>test1</hostname>
-      </include>
-      <exclude>
-        <tags>monkey</tags>
-      </exclude>
+      <filter>hostname: test1 !tags: monkey</filter>
     </nodefilters>
     <project>testproj</project>
     <user>testuser</user>
@@ -271,8 +266,7 @@ class ProjectServiceTests  {
                 doNodedispatch: true,
                 dateStarted: new Date(0),
                 dateCompleted: new Date(3600000),
-                nodeInclude: 'test1',
-                nodeExcludeTags: 'monkey',
+                filter: 'hostname: test1 !tags: monkey',
                 status: 'true',
         ]
         assertPropertiesEquals expected,e
@@ -333,8 +327,7 @@ class ProjectServiceTests  {
                 doNodedispatch: true,
                 dateStarted: new Date(0),
                 dateCompleted: new Date(3600000),
-                nodeInclude: 'test1',
-                nodeExcludeTags: 'monkey',
+                filter: 'hostname: test1 !tags: monkey',
                 status: 'true',
         ]
         assertPropertiesEquals expected,e

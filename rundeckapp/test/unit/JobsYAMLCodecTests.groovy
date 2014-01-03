@@ -108,9 +108,10 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect dispatch threadcount", 1, doc[0].nodefilters.dispatch.threadcount
             assertTrue "incorrect dispatch keepgoing", doc[0].nodefilters.dispatch.keepgoing
             assertTrue "incorrect dispatch excludePrecedence", doc[0].nodefilters.dispatch.excludePrecedence
-            assertNotNull "missing nodefilters include", doc[0].nodefilters.include
-            assertEquals "wrong nodefilters include hostname", "testhost1", doc[0].nodefilters.include.hostname
-            assertEquals "missing nodefilters exclude name", "x1", doc[0].nodefilters.exclude.name
+            assertNotNull "missing nodefilters include", doc[0].nodefilters.filter
+            assertEquals "wrong nodefilters include hostname", "hostname: testhost1 !name: x1", doc[0].nodefilters.filter
+            assertEquals "missing nodefilters exclude name", null, doc[0].nodefilters.include
+            assertEquals "missing nodefilters exclude name", null, doc[0].nodefilters.exclude
 
             assertNotNull "not scheduled", doc[0].schedule
             assertNotNull "not scheduled.time", doc[0].schedule.time
@@ -306,8 +307,9 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
             assertEquals "wrong nodeThreadcount", 1, se.nodeThreadcount
             assertTrue "wrong nodeKeepgoing", se.nodeKeepgoing
             assertTrue "wrong nodeExcludePrecedence", se.nodeExcludePrecedence
-            assertEquals "wrong nodeInclude", "testhost1", se.nodeInclude
-            assertEquals "wrong nodeExcludeName", "x1", se.nodeExcludeName
+            assertEquals "wrong nodeInclude", null, se.nodeInclude
+            assertEquals "wrong nodeExcludeName", null, se.nodeExcludeName
+            assertEquals "wrong nodeInclude", "hostname: testhost1 !name: x1", se.filter
 
             //schedule
             assertTrue "wrong scheduled", se.scheduled
@@ -429,13 +431,15 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
         assertEquals "wrong nodeThreadcount", 3, se.nodeThreadcount
         assertFalse "wrong nodeKeepgoing", se.nodeKeepgoing
         assertFalse "wrong nodeExcludePrecedence", se.nodeExcludePrecedence
-        assertEquals "wrong nodeInclude", ".*", se.nodeIncludeName
-        assertEquals "wrong nodeExcludeName", "shampoo.*", se.nodeExclude
-        assertEquals "wrong nodeExcludeName", "monkey", se.nodeExcludeTags
-        assertEquals "wrong nodeExcludeName", "unix", se.nodeExcludeOsFamily
-        assertEquals "wrong nodeExcludeName", "x86", se.nodeExcludeOsArch
-        assertEquals "wrong nodeExcludeName", "Linux", se.nodeExcludeOsName
-        assertEquals "wrong nodeExcludeName", "10.5.*", se.nodeExcludeOsVersion
+        assertEquals "wrong nodeInclude", null, se.nodeIncludeName
+        assertEquals "wrong nodeExcludeName", null, se.nodeExclude
+        assertEquals "wrong nodeExcludeName", null, se.nodeExcludeTags
+        assertEquals "wrong nodeExcludeName", null, se.nodeExcludeOsFamily
+        assertEquals "wrong nodeExcludeName", null, se.nodeExcludeOsArch
+        assertEquals "wrong nodeExcludeName", null, se.nodeExcludeOsName
+        assertEquals "wrong nodeExcludeName", null, se.nodeExcludeOsVersion
+
+        assertEquals "wrong nodeInclude", "name: .* !tags: monkey !os-family: unix !os-name: Linux !os-version: 10.5.* !os-arch: x86 !hostname: shampoo.*", se.filter
 
         //schedule
         assertTrue "wrong scheduled", se.scheduled
@@ -557,8 +561,9 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
             assertEquals "wrong nodeThreadcount", 1, se.nodeThreadcount
             assertTrue "wrong nodeKeepgoing", se.nodeKeepgoing
             assertTrue "wrong nodeExcludePrecedence", se.nodeExcludePrecedence
-            assertEquals "wrong nodeInclude", "testhost1", se.nodeInclude
-            assertEquals "wrong nodeExcludeName", "x1", se.nodeExcludeName
+            assertEquals "wrong nodeInclude", "hostname: testhost1 !name: x1", se.filter
+            assertEquals "wrong nodeInclude", null, se.nodeInclude
+            assertEquals "wrong nodeExcludeName", null, se.nodeExcludeName
 
             //schedule
             assertTrue "wrong scheduled", se.scheduled

@@ -1,4 +1,8 @@
 package com.dtolabs.rundeck.app.support
+
+import com.dtolabs.rundeck.core.utils.NodeSet
+import com.dtolabs.rundeck.core.utils.OptsUtil
+
 /*
  * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
  *
@@ -42,6 +46,7 @@ public class BaseNodeFilters {
     String nodeIncludeOsVersion
     String nodeExcludeOsVersion
     Boolean nodeExcludePrecedence=true
+    String filter
 
     static constraints = {
         nodeInclude(nullable: true)
@@ -59,6 +64,7 @@ public class BaseNodeFilters {
         nodeIncludeOsVersion(nullable: true)
         nodeExcludeOsVersion(nullable: true)
         nodeExcludePrecedence(nullable: true)
+        filter(nullable: true)
     }
     static mapping = {
         nodeInclude(type: 'text')
@@ -75,14 +81,73 @@ public class BaseNodeFilters {
         nodeExcludeOsArch(type: 'text')
         nodeIncludeOsVersion(type: 'text')
         nodeExcludeOsVersion(type: 'text')
+        filter(type: 'text')
     }
 
     public boolean nodeFilterIsEmpty(){
         return !(nodeInclude||nodeExclude||nodeIncludeName||nodeExcludeName||
                nodeIncludeTags || nodeExcludeTags|| nodeIncludeOsName || nodeExcludeOsName || nodeIncludeOsFamily ||
-            nodeExcludeOsFamily || nodeIncludeOsArch||nodeExcludeOsArch || nodeIncludeOsVersion||nodeExcludeOsVersion)
+            nodeExcludeOsFamily || nodeIncludeOsArch||nodeExcludeOsArch || nodeIncludeOsVersion||nodeExcludeOsVersion||filter)
     }
 
+    /**
+     * Generate a filter string given the node filters
+     * @return
+     */
+    public String asFilter(){
+        if(filter){
+            return filter
+        }
+        return asFilter([include:asIncludeMap(),exclude:asExcludeMap()])
+    }
+    public static String asFilter(Map<String,Map<String, String>> filtermap){
+        Map<String,String> include= filtermap.include
+        Map<String, String> exclude= filtermap.exclude
+        return OptsUtil.join(
+                (include?.keySet()?.findAll{include[it]}.collect{
+                    [it+':',include[it]]
+                }?.flatten()?:[])
+                + (exclude?.keySet()?.findAll { exclude[it] }.collect{
+                    ['!'+it+':',exclude[it]]
+                }?.flatten()?:[])
+        )
+    }
+
+    public Map<String, String> asExcludeMap(){
+        return asExcludeMap(this)
+    }
+
+    public static Map<String, String> asExcludeMap(filters) {
+        def nodeMap = [:]
+        nodeMap[NodeSet.HOSTNAME] = filters.nodeExclude
+        nodeMap[NodeSet.NAME] = filters.nodeExcludeName
+        nodeMap[NodeSet.TAGS] = filters.nodeExcludeTags
+        nodeMap[NodeSet.OS_NAME] = filters.nodeExcludeOsName
+        nodeMap[NodeSet.OS_FAMILY] = filters.nodeExcludeOsFamily
+        nodeMap[NodeSet.OS_ARCH] = filters.nodeExcludeOsArch
+        nodeMap[NodeSet.OS_VERSION] = filters.nodeExcludeOsVersion
+        if (filters.filter) {
+            nodeMap.putAll(NodeSet.parseFilter(filters.filter).exclude)
+        }
+        return nodeMap
+    }
+    public Map<String, String> asIncludeMap(){
+        return asIncludeMap(this)
+    }
+    public static Map<String, String> asIncludeMap(filters){
+        def nodeMap=[:]
+        nodeMap[NodeSet.HOSTNAME] = filters.nodeInclude
+        nodeMap[NodeSet.NAME] = filters.nodeIncludeName
+        nodeMap[NodeSet.TAGS] = filters.nodeIncludeTags
+        nodeMap[NodeSet.OS_NAME] = filters.nodeIncludeOsName
+        nodeMap[NodeSet.OS_FAMILY] = filters.nodeIncludeOsFamily
+        nodeMap[NodeSet.OS_ARCH] = filters.nodeIncludeOsArch
+        nodeMap[NodeSet.OS_VERSION] = filters.nodeIncludeOsVersion
+        if (filters.filter) {
+            nodeMap.putAll(NodeSet.parseFilter(filters.filter).include)
+        }
+        return nodeMap
+    }
 
     static filterKeys = [hostname: '',  tags: 'Tags', 'os-name': 'OsName', 'os-family': 'OsFamily',
     'os-arch': 'OsArch', 'os-version': 'OsVersion','name':'Name']
@@ -104,5 +169,6 @@ public class BaseNodeFilters {
     (nodeIncludeOsVersion?", nodeIncludeOsVersion='" + nodeIncludeOsVersion + '\'' : '') +
     (nodeExcludeOsVersion?", nodeExcludeOsVersion='" + nodeExcludeOsVersion + '\'' : '') +
     (nodeExcludePrecedence?", nodeExcludePrecedence=" + nodeExcludePrecedence : '') +
+    (filter?", filter=" + filter : '') +
     '}' ;
     }}

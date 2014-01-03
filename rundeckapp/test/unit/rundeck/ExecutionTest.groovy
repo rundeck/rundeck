@@ -314,4 +314,66 @@ class ExecutionTest extends GrailsUnitTestCase {
         assertEquals(false, exec.nodeExcludePrecedence)
         assertEquals(true, exec.nodeKeepgoing)
     }
+    void testFromMapFilter(){
+        //blank threadcount
+        def exec = Execution.fromMap([
+                status: 'true',
+                dateStarted: new Date(),
+                dateCompleted: new Date(),
+                doNodedispatch: true,
+                nodefilters:[
+                    dispatch:[
+                            threadcount:1,
+                            keepgoing: "true",
+                            excludePrecedence:'false'
+                    ],
+                    filter: 'name: test1'
+                ],
+                project:'test1',
+                user:'user1',
+                workflow:[
+                        keepgoing:true,
+                        commands:[
+                                [
+                                        exec:"blah"
+                                ]
+                        ]
+                ]
+        ], null)
+        assertNotNull(exec)
+        assertNull(exec.nodeIncludeName)
+        assertEquals('name: test1', exec.filter)
+    }
+    void testFromMapOldNodeFilter(){
+        //blank threadcount
+        def exec = Execution.fromMap([
+                status: 'true',
+                dateStarted: new Date(),
+                dateCompleted: new Date(),
+                doNodedispatch: true,
+                nodefilters:[
+                    dispatch:[
+                            threadcount:1,
+                            keepgoing: "true",
+                            excludePrecedence:'false'
+                    ],
+                    include: [
+                            name: "test1"
+                    ]
+                ],
+                project:'test1',
+                user:'user1',
+                workflow:[
+                        keepgoing:true,
+                        commands:[
+                                [
+                                        exec:"blah"
+                                ]
+                        ]
+                ]
+        ], null)
+        assertNotNull(exec)
+        assertNull(exec.nodeIncludeName)
+        assertEquals('name: test1', exec.filter)
+    }
 }

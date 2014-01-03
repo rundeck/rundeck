@@ -932,7 +932,8 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertNotNull jobs
             assertNull "incorrect groupPath",jobs[0].groupPath
             assertEquals "incorrect nodeExcludePrecedence","true",jobs[0].nodeExcludePrecedence.toString()
-            assertEquals "incorrect nodeInclude","cypress.hill.com",jobs[0].nodeInclude
+            assertEquals "incorrect nodeInclude",null,jobs[0].nodeInclude
+            assertEquals "incorrect nodeInclude","hostname: cypress.hill.com",jobs[0].filter
             assertEquals "incorrect project","demo",jobs[0].project
     }
 
@@ -985,7 +986,8 @@ class JobsXMLCodecTests extends GroovyTestCase {
         assertEquals  "false",jobs[0].description
         assertEquals  false, jobs[0].nodeExcludePrecedence
         assertEquals  false, jobs[0].nodeKeepgoing
-        assertEquals  "false", jobs[0].nodeInclude
+        assertEquals  null, jobs[0].nodeInclude
+        assertEquals  "hostname: false", jobs[0].filter
         assertEquals  "false",jobs[0].project
         assertEquals  1, jobs[0].workflow.commands.size()
         assertEquals  "false", jobs[0].workflow.commands[0].adhocRemoteString
@@ -1033,7 +1035,8 @@ class JobsXMLCodecTests extends GroovyTestCase {
             def jobs = JobsXMLCodec.decode(filter1)
             assertNotNull jobs
             assertEquals "incorrect size",1,jobs.size()
-            assertEquals "incorrect nodefilter nodeInclude","centos5",jobs[0].nodeInclude
+            assertEquals "incorrect nodefilter nodeInclude","hostname: centos5",jobs[0].filter
+            assertEquals "incorrect nodefilter nodeInclude",null,jobs[0].nodeInclude
             assertEquals "incorrect nodefilter nodeIncludeTags",null,jobs[0].nodeIncludeTags
             assertEquals "incorrect nodefilter nodeIncludeOsName",null,jobs[0].nodeIncludeOsName
             assertEquals "incorrect nodefilter nodeIncludeOsFamily",null,jobs[0].nodeIncludeOsFamily
@@ -1087,13 +1090,14 @@ class JobsXMLCodecTests extends GroovyTestCase {
             jobs = JobsXMLCodec.decode(filter2)
             assertNotNull jobs
             assertEquals "incorrect size",1,jobs.size()
-            assertEquals "incorrect nodefilter nodeInclude","centos5",jobs[0].nodeInclude
-            assertEquals "incorrect nodefilter nodeIncludeTags","a+b,c",jobs[0].nodeIncludeTags
-            assertEquals "incorrect nodefilter nodeIncludeOsName","Win.*",jobs[0].nodeIncludeOsName
-            assertEquals "incorrect nodefilter nodeIncludeOsFamily","windows",jobs[0].nodeIncludeOsFamily
-            assertEquals "incorrect nodefilter nodeIncludeOsArch","x86,sparc",jobs[0].nodeIncludeOsArch
-            assertEquals "incorrect nodefilter nodeIncludeOsVersion","4\\..*",jobs[0].nodeIncludeOsVersion
-            assertEquals "incorrect nodefilter nodeIncludeName","mynodename",jobs[0].nodeIncludeName
+            assertEquals "incorrect nodefilter nodeInclude","hostname: centos5 tags: a+b,c os-name: Win.* os-family: windows os-arch: x86,sparc os-version: 4\\..* name: mynodename",jobs[0].filter
+            assertEquals "incorrect nodefilter nodeInclude",null,jobs[0].nodeInclude
+            assertEquals "incorrect nodefilter nodeIncludeTags", null,jobs[0].nodeIncludeTags
+            assertEquals "incorrect nodefilter nodeIncludeOsName", null,jobs[0].nodeIncludeOsName
+            assertEquals "incorrect nodefilter nodeIncludeOsFamily", null,jobs[0].nodeIncludeOsFamily
+            assertEquals "incorrect nodefilter nodeIncludeOsArch", null,jobs[0].nodeIncludeOsArch
+            assertEquals "incorrect nodefilter nodeIncludeOsVersion", null,jobs[0].nodeIncludeOsVersion
+            assertEquals "incorrect nodefilter nodeIncludeName", null,jobs[0].nodeIncludeName
 
             assertEquals "incorrect nodefilter nodeExclude",null,jobs[0].nodeExclude
             assertEquals "incorrect nodefilter nodeExcludeTags",null,jobs[0].nodeExcludeTags
@@ -1141,6 +1145,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
             jobs = JobsXMLCodec.decode(filter3)
             assertNotNull jobs
             assertEquals "incorrect size",1,jobs.size()
+        assertEquals "incorrect nodefilter nodeInclude", "!hostname: centos5 !tags: a+b,c !os-name: Win.* !os-family: windows !os-arch: x86,sparc !os-version: 4\\..* !name: mynodename", jobs[0].filter
             assertEquals "incorrect nodefilter nodeInclude",null,jobs[0].nodeInclude
             assertEquals "incorrect nodefilter nodeIncludeTags",null,jobs[0].nodeIncludeTags
             assertEquals "incorrect nodefilter nodeIncludeOsName",null,jobs[0].nodeIncludeOsName
@@ -1149,13 +1154,13 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect nodefilter nodeIncludeOsVersion",null,jobs[0].nodeIncludeOsVersion
             assertEquals "incorrect nodefilter nodeIncludeName",null,jobs[0].nodeIncludeName
 
-            assertEquals "incorrect nodefilter nodeExclude","centos5",jobs[0].nodeExclude
-            assertEquals "incorrect nodefilter nodeExcludeTags","a+b,c",jobs[0].nodeExcludeTags
-            assertEquals "incorrect nodefilter nodeExcludeOsName","Win.*",jobs[0].nodeExcludeOsName
-            assertEquals "incorrect nodefilter nodeExcludeOsFamily","windows",jobs[0].nodeExcludeOsFamily
-            assertEquals "incorrect nodefilter nodeExcludeOsArch","x86,sparc",jobs[0].nodeExcludeOsArch
-            assertEquals "incorrect nodefilter nodeExcludeOsVersion","4\\..*",jobs[0].nodeExcludeOsVersion
-            assertEquals "incorrect nodefilter nodeExcludeName","mynodename",jobs[0].nodeExcludeName
+            assertEquals "incorrect nodefilter nodeExclude", null,jobs[0].nodeExclude
+            assertEquals "incorrect nodefilter nodeExcludeTags", null,jobs[0].nodeExcludeTags
+            assertEquals "incorrect nodefilter nodeExcludeOsName", null,jobs[0].nodeExcludeOsName
+            assertEquals "incorrect nodefilter nodeExcludeOsFamily", null,jobs[0].nodeExcludeOsFamily
+            assertEquals "incorrect nodefilter nodeExcludeOsArch", null,jobs[0].nodeExcludeOsArch
+            assertEquals "incorrect nodefilter nodeExcludeOsVersion", null,jobs[0].nodeExcludeOsVersion
+            assertEquals "incorrect nodefilter nodeExcludeName", null,jobs[0].nodeExcludeName
             assertFalse "incorrect nodefilter nodeExcludePrecedence",jobs[0].nodeExcludePrecedence
             assertTrue "incorrect nodefilter doNodedispatch",jobs[0].doNodedispatch
     }
@@ -3591,23 +3596,10 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertNotNull doc
             assertEquals "missing nodefilters",1,doc.job[0].nodefilters.size()
             assertEquals "unexpected nodefilters exclude",0,doc.job[0].nodefilters[0].exclude.size()
-            assertEquals "missing nodefilters include",1,doc.job[0].nodefilters[0].include.size()
-            assertEquals "incorrect number of nodefilters include elements",7,doc.job[0].nodefilters[0].include[0].children().size()
-            assertEquals "incorrect nodefilters include hostname",1,doc.job[0].nodefilters[0].include[0].hostname.size()
-            assertEquals "incorrect nodefilters include hostname",'myhostname',doc.job[0].nodefilters[0].include[0].hostname[0].text()
-            assertEquals "incorrect nodefilters include tags",1,doc.job[0].nodefilters[0].include[0].tags.size()
-            assertEquals "incorrect nodefilters include tags",'a+b,c',doc.job[0].nodefilters[0].include[0].tags[0].text()
-            assertEquals "incorrect nodefilters include os-name",1,doc.job[0].nodefilters[0].include[0].'os-name'.size()
-            assertEquals "incorrect nodefilters include os-name",'Windows.*',doc.job[0].nodefilters[0].include[0].'os-name'[0].text()
-            assertEquals "incorrect nodefilters include os-family",1,doc.job[0].nodefilters[0].include[0].'os-family'.size()
-            assertEquals "incorrect nodefilters include os-family",'windows',doc.job[0].nodefilters[0].include[0].'os-family'[0].text()
-            assertEquals "incorrect nodefilters include os-arch",1,doc.job[0].nodefilters[0].include[0].'os-arch'.size()
-            assertEquals "incorrect nodefilters include os-arch",'x86,sparc',doc.job[0].nodefilters[0].include[0].'os-arch'[0].text()
-            assertEquals "incorrect nodefilters include os-version",1,doc.job[0].nodefilters[0].include[0].'os-version'.size()
-            assertEquals "incorrect nodefilters include os-version",'4\\..*',doc.job[0].nodefilters[0].include[0].'os-version'[0].text()
-            def tname=doc.job[0].nodefilters[0].include[0].'name'[0].text()
-            assertEquals "incorrect nodefilters include name",'mynode',tname
-            assertEquals "incorrect nodefilters include name",1,doc.job[0].nodefilters[0].include[0].'name'.size()
+            assertEquals "missing nodefilters include",0,doc.job[0].nodefilters[0].include.size()
+            assertEquals "incorrect nodefilters include hostname", 'hostname: myhostname name: mynode tags: a+b,c os-name: Windows.* ' +
+                    'os-family: windows os-arch: x86,sparc os-version: 4\\..*', doc.job[0].nodefilters[0].filter[0].text()
+
 
 
         //set node dispatch to true, and assert 'exclude' nodefilters are generated
@@ -3640,22 +3632,11 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertNotNull doc
             assertEquals "missing nodefilters",1,doc.job[0].nodefilters.size()
             assertEquals "unexpected nodefilters include",0,doc.job[0].nodefilters[0].include.size()
-            assertEquals "missing nodefilters exclude",1,doc.job[0].nodefilters[0].exclude.size()
-            assertEquals "incorrect number of nodefilters exclude elements",7,doc.job[0].nodefilters[0].exclude[0].children().size()
-            assertEquals "incorrect nodefilters exclude hostname",1,doc.job[0].nodefilters[0].exclude[0].hostname.size()
-            assertEquals "incorrect nodefilters exclude hostname",'myhostname',doc.job[0].nodefilters[0].exclude[0].hostname[0].text()
-            assertEquals "incorrect nodefilters exclude tags",1,doc.job[0].nodefilters[0].exclude[0].tags.size()
-            assertEquals "incorrect nodefilters exclude tags",'a+b,c',doc.job[0].nodefilters[0].exclude[0].tags[0].text()
-            assertEquals "incorrect nodefilters exclude os-name",1,doc.job[0].nodefilters[0].exclude[0].'os-name'.size()
-            assertEquals "incorrect nodefilters exclude os-name",'Windows.*',doc.job[0].nodefilters[0].exclude[0].'os-name'[0].text()
-            assertEquals "incorrect nodefilters exclude os-family",1,doc.job[0].nodefilters[0].exclude[0].'os-family'.size()
-            assertEquals "incorrect nodefilters exclude os-family",'windows',doc.job[0].nodefilters[0].exclude[0].'os-family'[0].text()
-            assertEquals "incorrect nodefilters exclude os-arch",1,doc.job[0].nodefilters[0].exclude[0].'os-arch'.size()
-            assertEquals "incorrect nodefilters exclude os-arch",'x86,sparc',doc.job[0].nodefilters[0].exclude[0].'os-arch'[0].text()
-            assertEquals "incorrect nodefilters exclude os-version",1,doc.job[0].nodefilters[0].exclude[0].'os-version'.size()
-            assertEquals "incorrect nodefilters exclude os-version",'4\\..*',doc.job[0].nodefilters[0].exclude[0].'os-version'[0].text()
-            assertEquals "incorrect nodefilters exclude name",1,doc.job[0].nodefilters[0].exclude[0].'name'.size()
-            assertEquals "incorrect nodefilters exclude name",'mynode',doc.job[0].nodefilters[0].exclude[0].'name'[0].text()
+            assertEquals "missing nodefilters exclude",0,doc.job[0].nodefilters[0].exclude.size()
+            assertEquals "incorrect nodefilters string", '!hostname: myhostname !name: mynode !tags: a+b,' +
+                'c !os-name: Windows.* ' +
+                '!os-family: windows !os-arch: x86,sparc !os-version: 4\\..*', doc.job[0].nodefilters[0].filter[0].text()
+
 
 
         //set node dispatch to true, and assert both 'include' and 'exclude' nodefilters are generated
@@ -3695,39 +3676,12 @@ class JobsXMLCodecTests extends GroovyTestCase {
             doc = parser.parse(new StringReader(xmlstr))
             assertNotNull doc
             assertEquals "missing nodefilters",1,doc.job[0].nodefilters.size()
-            assertEquals "missing nodefilters exclude",1,doc.job[0].nodefilters[0].exclude.size()
-            assertEquals "incorrect number of nodefilters exclude elements",7,doc.job[0].nodefilters[0].exclude[0].children().size()
-            assertEquals "incorrect nodefilters exclude hostname",1,doc.job[0].nodefilters[0].exclude[0].hostname.size()
-            assertEquals "incorrect nodefilters exclude hostname",'myhostname',doc.job[0].nodefilters[0].exclude[0].hostname[0].text()
-            assertEquals "incorrect nodefilters exclude tags",1,doc.job[0].nodefilters[0].exclude[0].tags.size()
-            assertEquals "incorrect nodefilters exclude tags",'a+b,c',doc.job[0].nodefilters[0].exclude[0].tags[0].text()
-            assertEquals "incorrect nodefilters exclude os-name",1,doc.job[0].nodefilters[0].exclude[0].'os-name'.size()
-            assertEquals "incorrect nodefilters exclude os-name",'Windows.*',doc.job[0].nodefilters[0].exclude[0].'os-name'[0].text()
-            assertEquals "incorrect nodefilters exclude os-family",1,doc.job[0].nodefilters[0].exclude[0].'os-family'.size()
-            assertEquals "incorrect nodefilters exclude os-family",'windows',doc.job[0].nodefilters[0].exclude[0].'os-family'[0].text()
-            assertEquals "incorrect nodefilters exclude os-arch",1,doc.job[0].nodefilters[0].exclude[0].'os-arch'.size()
-            assertEquals "incorrect nodefilters exclude os-arch",'x86,sparc',doc.job[0].nodefilters[0].exclude[0].'os-arch'[0].text()
-            assertEquals "incorrect nodefilters exclude os-version",1,doc.job[0].nodefilters[0].exclude[0].'os-version'.size()
-            assertEquals "incorrect nodefilters exclude os-version",'4\\..*',doc.job[0].nodefilters[0].exclude[0].'os-version'[0].text()
-            assertEquals "incorrect nodefilters exclude name",1,doc.job[0].nodefilters[0].exclude[0].'name'.size()
-            assertEquals "incorrect nodefilters exclude name",'mynode',doc.job[0].nodefilters[0].exclude[0].'name'[0].text()
+            assertEquals "missing nodefilters exclude",0,doc.job[0].nodefilters[0].exclude.size()
+            assertEquals "missing nodefilters exclude",0,doc.job[0].nodefilters[0].include.size()
+        assertEquals "incorrect nodefilters include hostname", 'hostname: anotherhost name: annode tags: prod os-name: Mac.* os-family: unix os-arch: 686 os-version: 10\\..* ' +
+                '!hostname: myhostname !name: mynode !tags: a+b,c !os-name: Windows.* !os-family: windows !os-arch: x86,' +
+                'sparc !os-version: 4\\..*', doc.job[0].nodefilters[0].filter[0].text()
 
-            assertEquals "missing nodefilters include",1,doc.job[0].nodefilters[0].include.size()
-            assertEquals "incorrect number of nodefilters include elements",7,doc.job[0].nodefilters[0].include[0].children().size()
-            assertEquals "incorrect nodefilters include hostname",1,doc.job[0].nodefilters[0].include[0].hostname.size()
-            assertEquals "incorrect nodefilters include hostname",'anotherhost',doc.job[0].nodefilters[0].include[0].hostname[0].text()
-            assertEquals "incorrect nodefilters include tags",1,doc.job[0].nodefilters[0].include[0].tags.size()
-            assertEquals "incorrect nodefilters include tags",'prod',doc.job[0].nodefilters[0].include[0].tags[0].text()
-            assertEquals "incorrect nodefilters include os-name",1,doc.job[0].nodefilters[0].include[0].'os-name'.size()
-            assertEquals "incorrect nodefilters include os-name",'Mac.*',doc.job[0].nodefilters[0].include[0].'os-name'[0].text()
-            assertEquals "incorrect nodefilters include os-family",1,doc.job[0].nodefilters[0].include[0].'os-family'.size()
-            assertEquals "incorrect nodefilters include os-family",'unix',doc.job[0].nodefilters[0].include[0].'os-family'[0].text()
-            assertEquals "incorrect nodefilters include os-arch",1,doc.job[0].nodefilters[0].include[0].'os-arch'.size()
-            assertEquals "incorrect nodefilters include os-arch",'686',doc.job[0].nodefilters[0].include[0].'os-arch'[0].text()
-            assertEquals "incorrect nodefilters include os-version",1,doc.job[0].nodefilters[0].include[0].'os-version'.size()
-            assertEquals "incorrect nodefilters include os-version",'10\\..*',doc.job[0].nodefilters[0].include[0].'os-version'[0].text()
-            assertEquals "incorrect nodefilters include name",1,doc.job[0].nodefilters[0].include[0].'name'.size()
-            assertEquals "incorrect nodefilters include name",'annode',doc.job[0].nodefilters[0].include[0].'name'[0].text()
 
     }
 

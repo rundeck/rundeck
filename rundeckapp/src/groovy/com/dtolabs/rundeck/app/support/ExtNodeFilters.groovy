@@ -39,9 +39,9 @@ public class ExtNodeFilters extends BaseNodeFilters{
     }
 
     public static from(BaseNodeFilters filters, String project){
-        def filterProperties = filterKeys.values().collect { 'nodeInclude' + it } + filterKeys.values().collect { 'nodeExclude' + it }
-        def filters1 = new ExtNodeFilters(filters.properties.subMap(filterProperties))
+        def filters1 = new ExtNodeFilters()
         filters1.project=project
+        filters1.filter=filters.asFilter()
         return filters1
     }
 }

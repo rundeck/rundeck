@@ -43,6 +43,7 @@ public class NodeFilter {
     String nodeExcludeOsVersion
     Boolean nodeExcludePrecedence=true
     String project
+    String filter
 
     static belongsTo = [user:User]
     static constraints={
@@ -63,6 +64,7 @@ public class NodeFilter {
         nodeExcludeOsVersion(nullable: true)
         nodeExcludePrecedence(nullable: true)
         project(nullable: true)
+        filter(nullable: true)
     }
     static mapping = {
 
@@ -80,10 +82,11 @@ public class NodeFilter {
         nodeExcludeOsArch(type: 'text')
         nodeIncludeOsVersion(type: 'text')
         nodeExcludeOsVersion(type: 'text')
+        filter(type: 'text')
     }
 
     public ExtNodeFilters createExtNodeFilters(){
-        ExtNodeFilters query = new ExtNodeFilters(this.properties.findAll{it.key=~/^(project|node(Include|Exclude).*)$/})
+        ExtNodeFilters query = new ExtNodeFilters(this.properties.findAll{it.key=~/^(filter|project|node(Include|Exclude).*)$/})
         return query
     }
 }

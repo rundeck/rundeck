@@ -62,6 +62,7 @@ class ScheduledExecution extends ExecutionContext {
         nodeIncludeOsVersion(nullable:true)
         nodeExcludeOsVersion(nullable:true)
         nodeExcludePrecedence(nullable:true)
+        filter(nullable:true)
         user(nullable:true)
         userRoleList(nullable:true)
         loglevel(nullable:true)
@@ -102,6 +103,7 @@ class ScheduledExecution extends ExecutionContext {
         nodeExcludeOsArch(type: 'text')
         nodeIncludeOsVersion(type: 'text')
         nodeExcludeOsVersion(type: 'text')
+        filter(type: 'text')
         userRoleList(type: 'text')
 
         argString type: 'text'
@@ -153,25 +155,15 @@ class ScheduledExecution extends ExecutionContext {
             map.multipleExecutions=true
         }
         if(doNodedispatch){
-            def yfilters=["":"hostname"]
             map.nodefilters=[dispatch:[threadcount:null!=nodeThreadcount?nodeThreadcount:1,keepgoing:nodeKeepgoing?true:false,excludePrecedence:nodeExcludePrecedence?true:false]]
             if(nodeRankAttribute){
                 map.nodefilters.dispatch.rankAttribute= nodeRankAttribute
             }
             map.nodefilters.dispatch.rankOrder= (null== nodeRankOrderAscending || nodeRankOrderAscending)?'ascending':'descending'
-            final Collection inclFilters = BaseNodeFilters.filterKeys.keySet().findAll {this["nodeInclude"+filterKeys[it]]}
-            if(inclFilters){
-                map.nodefilters.include=[:]
-                inclFilters.each{ ek->
-                    map.nodefilters.include[yfilters[ek]?:ek]=this["nodeInclude${filterKeys[ek]}"]
-                }
-            }
-            final Collection exclFilters = BaseNodeFilters.filterKeys.keySet().findAll {this["nodeExclude"+filterKeys[it]]}
-            if(exclFilters){
-                map.nodefilters.exclude=[:]
-                exclFilters.each{ ek->
-                    map.nodefilters.exclude[yfilters[ek]?:ek]=this["nodeExclude${filterKeys[ek]}"]
-                }
+            if(this.filter){
+                map.nodefilters.filter = this.filter
+            }else{
+                map.nodefilters.filter = asFilter()
             }
         }
         if(notifications){
@@ -268,22 +260,29 @@ class ScheduledExecution extends ExecutionContext {
             if(data.nodefilters.dispatch.containsKey('rankOrder')){
                 se.nodeRankOrderAscending = data.nodefilters.dispatch.rankOrder=='ascending'
             }
-            if(data.nodefilters.include){
-                se.doNodedispatch = true
-                data.nodefilters.include.keySet().each{ inf->
-                    if(null!=filterKeys[inf]){
-                        se["nodeInclude${filterKeys[inf]}"]=data.nodefilters.include[inf]
+            if(data.nodefilters.filter){
+                se.doNodedispatch=true
+                se.filter= data.nodefilters.filter
+            }else{
+                def map = [include: [:], exclude: [:]]
+                if (data.nodefilters.include) {
+                    se.doNodedispatch = true
+                    data.nodefilters.include.keySet().each { inf ->
+                        if (null != filterKeys[inf]) {
+                            map.include[inf] = data.nodefilters.include[inf]
+                        }
                     }
-                }
 
-            }
-            if(data.nodefilters.exclude){
-                se.doNodedispatch = true
-                data.nodefilters.exclude.keySet().each{ inf->
-                    if(null!=filterKeys[inf]){
-                        se["nodeExclude${filterKeys[inf]}"]=data.nodefilters.exclude[inf]
+                }
+                if (data.nodefilters.exclude) {
+                    se.doNodedispatch = true
+                    data.nodefilters.exclude.keySet().each { inf ->
+                        if (null != filterKeys[inf]) {
+                            map.exclude[inf] = data.nodefilters.exclude[inf]
+                        }
                     }
                 }
+                se.filter = asFilter(map)
             }
         }
         if(data.notification){

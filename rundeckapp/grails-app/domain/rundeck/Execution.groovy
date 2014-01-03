@@ -1,6 +1,7 @@
 package rundeck
 import com.dtolabs.rundeck.app.support.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.ExecutionContext
+import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.util.XmlParserUtil
 
 /**
@@ -132,25 +133,15 @@ class Execution extends ExecutionContext {
         map.id= this.id
         map.doNodedispatch= this.doNodedispatch
         if(doNodedispatch){
-            def yfilters = ["": "hostname"]
             map.nodefilters = [dispatch: [threadcount: nodeThreadcount?:1, keepgoing: nodeKeepgoing, excludePrecedence: nodeExcludePrecedence]]
             if (nodeRankAttribute) {
                 map.nodefilters.dispatch.rankAttribute = nodeRankAttribute
             }
             map.nodefilters.dispatch.rankOrder = (null == nodeRankOrderAscending || nodeRankOrderAscending) ? 'ascending' : 'descending'
-            final Collection inclFilters = BaseNodeFilters.filterKeys.keySet().findAll {this["nodeInclude" + filterKeys[it]]}
-            if (inclFilters) {
-                map.nodefilters.include = [:]
-                inclFilters.each { ek ->
-                    map.nodefilters.include[yfilters[ek] ?: ek] = this["nodeInclude${filterKeys[ek]}"]
-                }
-            }
-            final Collection exclFilters = BaseNodeFilters.filterKeys.keySet().findAll {this["nodeExclude" + filterKeys[it]]}
-            if (exclFilters) {
-                map.nodefilters.exclude = [:]
-                exclFilters.each { ek ->
-                    map.nodefilters.exclude[yfilters[ek] ?: ek] = this["nodeExclude${filterKeys[ek]}"]
-                }
+            if (filter) {
+                map.nodefilters.filter = filter
+            } else {
+                map.nodefilters.filter = asFilter()
             }
         }
         map.project= this.project
@@ -187,22 +178,29 @@ class Execution extends ExecutionContext {
             if (data.nodefilters.dispatch?.containsKey('rankOrder')) {
                 exec.nodeRankOrderAscending = data.nodefilters.dispatch.rankOrder == 'ascending'
             }
-            if (data.nodefilters.include) {
+            if (data.nodefilters.filter) {
                 exec.doNodedispatch = true
-                data.nodefilters.include.keySet().each { inf ->
-                    if (null != filterKeys[inf]) {
-                        exec["nodeInclude${filterKeys[inf]}"] = data.nodefilters.include[inf]
+                exec.filter = data.nodefilters.filter
+            } else {
+                def map=[include:[:],exclude:[:]]
+                if (data.nodefilters.include) {
+                    exec.doNodedispatch = true
+                    data.nodefilters.include.keySet().each { inf ->
+                        if (null != filterKeys[inf]) {
+                            map.include[inf]= data.nodefilters.include[inf]
+                        }
                     }
-                }
 
-            }
-            if (data.nodefilters.exclude) {
-                exec.doNodedispatch = true
-                data.nodefilters.exclude.keySet().each { inf ->
-                    if (null != filterKeys[inf]) {
-                        exec["nodeExclude${filterKeys[inf]}"] = data.nodefilters.exclude[inf]
+                }
+                if (data.nodefilters.exclude) {
+                    exec.doNodedispatch = true
+                    data.nodefilters.exclude.keySet().each { inf ->
+                        if (null != filterKeys[inf]) {
+                            map.exclude[inf] = data.nodefilters.exclude[inf]
+                        }
                     }
                 }
+                exec.filter=asFilter(map)
             }
         }
         exec.project = data.project
