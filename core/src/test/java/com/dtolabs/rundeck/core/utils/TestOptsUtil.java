@@ -35,14 +35,14 @@ public class TestOptsUtil extends TestCase {
         return new TestSuite(TestOptsUtil.class);
     }
 
-    public void testBurstWhiteSpace() {
+    public void testBurstSpace() {
         String[] args = OptsUtil.burst("-arg1 one -whitespaces 'string with white space'");
         assertEquals("unexpected: " + args[0], "-arg1", args[0]);
         assertEquals("unexpected: " + args[1], "one", args[1]);
         assertEquals("unexpected: " + args[2], "-whitespaces", args[2]);
         assertEquals("unexpected: " + args[3], "string with white space", args[3]);
     }
-    public void testBurstDoubleQuoteWhiteSpace(){
+    public void testBurstDoubleQuoteSpace(){
         String[] args = OptsUtil.burst("-arg1 one -whitespaces \"string with white space\"");
         assertEquals("unexpected: " + args[0], "-arg1", args[0]);
         assertEquals("unexpected: " + args[1], "one", args[1]);
@@ -52,12 +52,22 @@ public class TestOptsUtil extends TestCase {
 
     }
 
-    public void testBurstDoubleQuoteExtraWhiteSpace() {
+    public void testBurstDoubleQuoteExtraSpace() {
 
         String[] args = OptsUtil.burst("-whitespaces     \"string    with   white space\" -arg1 one   ");
         assertEquals("wrong: " + Arrays.asList(args), 4, args.length);
         assertEquals("unexpected: " + args[0], "-whitespaces", args[0]);
         assertEquals("unexpected: " + args[1], "string    with   white space", args[1]);
+        assertEquals("unexpected: " + args[2], "-arg1", args[2]);
+        assertEquals("unexpected: " + args[3], "one", args[3]);
+
+    }
+    public void testBurstDoubleQuoteExtraWhiteSpace() {
+
+        String[] args = OptsUtil.burst("-whitespaces\t     \"string  \r\n  with   white space\" -arg1\r\n one   ");
+        assertEquals("wrong: " + Arrays.asList(args), 4, args.length);
+        assertEquals("unexpected: " + args[0], "-whitespaces", args[0]);
+        assertEquals("unexpected: " + args[1], "string  \r\n  with   white space", args[1]);
         assertEquals("unexpected: " + args[2], "-arg1", args[2]);
         assertEquals("unexpected: " + args[3], "one", args[3]);
 

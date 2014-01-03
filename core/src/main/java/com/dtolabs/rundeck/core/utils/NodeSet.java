@@ -257,8 +257,6 @@ public class NodeSet  implements NodesSelector {
 
     /**
      * Return true if any attribute selector matches the corresponding attribute value
-     * @param inputSelector
-     * @param propValue
      * @param matchAll if true, require all selectors match a value, otherwise return true if any selector matches
      * @return
      */
@@ -286,7 +284,6 @@ public class NodeSet  implements NodesSelector {
      * E.g.:  "a , b" - matches if either "a" or "b" are in the value set
      *
      * @param inputSelector
-     * @param selector
      *
      * @return
      */
@@ -371,6 +368,62 @@ public class NodeSet  implements NodesSelector {
         return match || inputSelector.trim().equals(item);
     }
 
+    /**
+     * Parse textual filter and return a map of maps: [include: [key:value,...], exclude: [key:value,...]]
+     *
+     * @param filter
+     *
+     * @return
+     */
+    public static Map<String,Map<String, String>> parseFilter(String filter) {
+        Map<String, String> exclude = new HashMap<String, String>();
+        Map<String, String> include = new HashMap<String, String>();
+        HashMap<String, Map<String, String>> result = new HashMap<String, Map<String, String>>();
+        result.put("include", include);
+        result.put("exclude", exclude);
+
+        String[] burst = OptsUtil.burst(filter);
+        String key = null;
+        for (int i = 0; i < burst.length; i++) {
+            String t = burst[i];
+            if (t.endsWith(":") && key==null) {
+                key = t.substring(0, t.lastIndexOf(':'));
+                continue;
+            }else if (t.contains(":") && key==null) {
+                key = t.substring(0, t.indexOf(':'));
+                t = t.substring(t.indexOf(':') + 1);
+                if("".equals(t)){
+                    continue;
+                }
+            }
+            if (key!=null) {
+                if (key.startsWith("!")) {
+                    key = key.substring(1);
+                    exclude.put(key, t);
+                } else {
+                    include.put(key, t);
+                }
+                key = null;
+            } else {
+                key = t;
+            }
+        }
+        return result;
+    }
+    public static String generateFilter(NodeSet set) {
+        ArrayList<String> buf = new ArrayList<String>();
+        Map<String, String> incMap = set.includes.toMap();
+        for (String inc : incMap.keySet()) {
+            buf.add(inc + ":");
+            buf.add(incMap.get(inc));
+        }
+        Map<String, String> excMap = set.excludes.toMap();
+        for (String inc : excMap.keySet()) {
+            buf.add("!" + inc + ":");
+            buf.add(excMap.get(inc));
+        }
+        return OptsUtil.join(buf);
+    }
     /**
      * Creates an {@link Exclude} object populating its
      * properties from the keys of the map
@@ -551,6 +604,37 @@ public class NodeSet  implements NodesSelector {
             }
             builder.append("}");
             return builder.toString();
+        }
+        public Map<String,String> toMap(){
+            HashMap<String, String> map = new HashMap<String, String>();
+            if (!isBlank(hostname)) {
+                map.put("hostname", getHostname());
+            }
+            if (!isBlank(osfamily)) {
+                map.put("osfamily", getOsfamily());
+            }
+            if (!isBlank(osarch)) {
+                map.put("osarch", getOsarch());
+            }
+            if (!isBlank(osname)) {
+                map.put("osname", getOsname());
+            }
+            if (!isBlank(osversion)) {
+                map.put("osversion", getOsversion());
+            }
+            if (!isBlank(tags)) {
+                map.put("tags", getTags());
+            }
+            if (!isBlank(name)) {
+                map.put("name", getName());
+            }
+//            builder.append("dominant=").append(isDominant()).append(", ");
+
+            if (null != getAttributesMap() && getAttributesMap().size() > 0) {
+                map.putAll(getAttributesMap());
+
+            }
+            return map;
         }
 
         public boolean isBlank(String value) {

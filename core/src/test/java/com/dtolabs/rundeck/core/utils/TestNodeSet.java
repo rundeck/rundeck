@@ -96,7 +96,107 @@ public class TestNodeSet extends TestCase {
         junit.textui.TestRunner.run(suite());
     }
 
+    public static void assertFilterMap(Map<String, String> expectInclude, Map<String, String> expectExclude,
+            Map<String, Map<String, String>> result) {
+        Map<String, String> resultInclude = result.get("include");
+        Map<String, String> resultExclude = result.get("exclude");
 
+        assertNotNull(resultInclude);
+        assertNotNull(resultExclude);
+        if(null!=expectInclude){
+            assertEquals("wrong include size: "+ expectInclude,expectInclude.size(), resultInclude.size());
+            for (String s : expectInclude.keySet()) {
+                assertNotNull("expected non-null for "+s + "( "+result+" )", resultInclude.get(s));
+                assertEquals("expected value for " + s +": "+ expectInclude.get(s) + "( " + result + " )", expectInclude.get(s), resultInclude.get(s));
+            }
+        }else{
+            assertEquals(0, resultInclude.size());
+        }
+        if (null != expectExclude) {
+            assertEquals("wrong exclude size: " + expectExclude,expectExclude.size(), resultExclude.size());
+            for (String s : expectExclude.keySet()) {
+                assertNotNull("expected non-null for " + s + "( " + result + " )", resultExclude.get(s));
+                assertEquals("expected value for " + s + ": " + expectExclude.get(s) + "( " + result + " )", expectExclude.get(s),
+                        resultExclude.get(s));
+            }
+        } else {
+            assertEquals(0, resultExclude.size());
+        }
+
+    }
+    public void testParseFilterBasic() {
+        HashMap<String, String> expect = new HashMap<String, String>();
+        expect.put("tags", "xyz");
+        assertFilterMap(expect, null, NodeSet.parseFilter("tags: xyz"));
+    }
+    public void testParseFilterMultiInclude() {
+        HashMap<String, String> expect = new HashMap<String, String>();
+        expect.put("tags", "xyz");
+        expect.put("name", "monkey toe");
+        assertFilterMap(expect, null, NodeSet.parseFilter("tags: xyz  name: 'monkey toe'"));
+    }
+    public void testParseFilterNoSpace() {
+        HashMap<String, String> expect = new HashMap<String, String>();
+        expect.put("tags", "xyz");
+        assertFilterMap(expect, null, NodeSet.parseFilter("tags:xyz"));
+    }
+    public void testParseFilterBasicExclude() {
+        HashMap<String, String> expect = new HashMap<String, String>();
+        expect.put("tags", "xyz");
+        assertFilterMap(null, expect, NodeSet.parseFilter("!tags: xyz"));
+    }
+    public void testParseFilterMultiExclude() {
+        HashMap<String, String> expect = new HashMap<String, String>();
+        expect.put("tags", "xyz");
+        expect.put("name", "macaroon brigade");
+        assertFilterMap(null, expect, NodeSet.parseFilter("!tags: xyz !name: 'macaroon brigade' "));
+    }
+    public void testParseFilterBasicExcludeNoSpace() {
+        HashMap<String, String> expect = new HashMap<String, String>();
+        expect.put("tags", "xyz");
+        assertFilterMap(null, expect, NodeSet.parseFilter("!tags:xyz"));
+    }
+
+    public void testParseFilterMultiMixed() {
+        HashMap<String, String> expect = new HashMap<String, String>();
+        HashMap<String, String> expectX = new HashMap<String, String>();
+        expect.put("tags", "xyz,vwz");
+        expectX.put("name", "macaroon brigade");
+        assertFilterMap(expect, expectX, NodeSet.parseFilter("tags: xyz,vwz !name: 'macaroon brigade' "));
+    }
+
+    public void testParseFilterMultiMixedIgnoreSpaces() {
+        HashMap<String, String> expect = new HashMap<String, String>();
+        HashMap<String, String> expectX = new HashMap<String, String>();
+        expect.put("tags", "xyz,vwz");
+        expectX.put("name", "macaroon brigade");
+        assertFilterMap(expect, expectX, NodeSet.parseFilter("    tags:   xyz,vwz  !name:    \"macaroon brigade\""));
+    }
+    public void testParseFilterMultiMixedIgnoreTabs() {
+        HashMap<String, String> expect = new HashMap<String, String>();
+        HashMap<String, String> expectX = new HashMap<String, String>();
+        expectX.put("cloud.display_name", "Rackspace Open Cloud - Chicago");
+        expectX.put("cloud.xyz", "monkeyfill");
+        assertFilterMap(expect, expectX, NodeSet.parseFilter("!cloud.display_name:\t 'Rackspace Open Cloud - Chicago' !cloud.xyz:\r\n 'monkeyfill'"));
+    }
+    public void testParseFilterQuotedKeyValue() {
+        HashMap<String, String> expect = new HashMap<String, String>();
+        HashMap<String, String> expectX = new HashMap<String, String>();
+        expectX.put("test", "money pants");
+        assertFilterMap(expect, expectX, NodeSet.parseFilter(" '!test:money pants'  "));
+    }
+    public void testParseFilterQuotedKeyValueMultipleColon() {
+        HashMap<String, String> expect = new HashMap<String, String>();
+        HashMap<String, String> expectX = new HashMap<String, String>();
+        expectX.put("test", "xyz:money pants");
+        assertFilterMap(expect, expectX, NodeSet.parseFilter(" '!test:xyz:money pants'  "));
+    }
+
+    public void testParseFilterColonInKey() {
+        HashMap<String, String> expect = new HashMap<String, String>();
+        expect.put("as:test", "elf");
+        assertFilterMap(expect, null, NodeSet.parseFilter("as:test: elf"));
+    }
     public void testNodeSet() {
         set = new NodeSet();
         NodeSet.Exclude ex = set.createExclude();

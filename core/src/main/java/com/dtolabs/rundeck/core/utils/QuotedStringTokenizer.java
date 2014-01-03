@@ -28,7 +28,7 @@ public class QuotedStringTokenizer implements Iterator<String>, Iterable<String>
         this.string = chars;
         this.pos = pos;
         buffer = new ArrayDeque<String>();
-        delimiterMatcher = StrMatcher.spaceMatcher();
+        delimiterMatcher = StrMatcher.trimMatcher();
         quoteMatcher = StrMatcher.quoteMatcher();
         whitespaceMatcher = StrMatcher.trimMatcher();
         quashDelimiters=true;
