@@ -30,7 +30,7 @@
             <g:set var="resName" value="${node.nodename}"/>
 
             <tr class="${i%2==1?'alternateRow':''} node_entry ${nodedata.islocal?'server':''}">
-                <td class="nodeident" title="Name">
+                <td class="nodeident" title="${node.description?.encodeAsHTML()}" >
                     <g:if test="${expanddetail||params.expanddetail}">
                         <g:expander key="${ukey+'node_detail_'+i}" imgfirst="true">
                         <span class="node_ident" id="${ukey}_${node.nodename}_key">
@@ -47,11 +47,8 @@
                     </g:else>
                     <g:link class=" textbtn  " action="nodes" params="${[nodeIncludeName: resName]}"
                             title="Select only this node">
-                        <i class="glyphicon glyphicon-circle-arrow-right"></i>
-                    </g:link>
-                    </td>
-                <td class="desc nodedesc"  title="Description">
-                    ${node.description?.encodeAsHTML()}
+                        <i class="glyphicon glyphicon-circle-arrow-right"></i></g:link>
+                    <span class="nodedesc"></span>
                 </td>
                 <td  title="Tags" class="nodetags">
                     <g:if test="${node.tags}">

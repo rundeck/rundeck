@@ -1131,9 +1131,15 @@ section{
   }
 }
 
-  .node_entry.server .nodedesc:before, .nodedetail.server span.desc:before {
+  .node_entry.server .nodedesc:before {
+    color: #f66;
+    content: " server ";
+    padding-left: 18px;
+  }
+  .nodedetail.server .nodedesc:before {
     color: #f66;
     content: " server " "\2022" " ";
+    padding-left: 18px;
   }
 
 //override padding for list-group-item

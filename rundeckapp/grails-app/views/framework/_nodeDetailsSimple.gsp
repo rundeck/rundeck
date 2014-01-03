@@ -1,5 +1,12 @@
 <%@ page import="com.dtolabs.rundeck.core.common.NodeEntryImpl" %>
     <table class="table table-condensed table-embed">
+        <g:if test="${node.description}">
+            <tr>
+                <td class="value text-muted" colspan="2">
+                    ${node.description?.encodeAsHTML()}
+                </td>
+            </tr>
+        </g:if>
         <tr>
             <td class="key">
                 <g:message code="node.metadata.os"/>

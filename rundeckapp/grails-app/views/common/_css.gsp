@@ -135,7 +135,7 @@
           width: 24px;
           height: 24px;
     }
-    .rdicon.app-logo{
+    .rdicon.app-logo, .nodedetail.server .nodedesc, .node_entry.server .nodedesc{
           width: ${appLogoW};
           height: ${appLogoH};
         vertical-align: baseline;
@@ -157,8 +157,9 @@
     .rdicon.icon.shell, .rdicon.icon.command, .rdicon.icon.script, .rdicon.icon.scriptfile{
           background-image: url("${resource(dir:'images',file:'icon-shell.png')}");
     }
-    .rdicon.app-logo{
+    .rdicon.app-logo, .nodedetail.server .nodedesc, .node_entry.server .nodedesc{
           background-image: url("${resource(dir: 'images', file: appLogo)}");
+        background-repeat: no-repeat;
     }
 
     .rdicon.icon-small.plugin {
@@ -194,7 +195,7 @@
                  background-size: 16px 10px;
                  background-image: url("${resource(dir:'images',file:'icon-small-Node@2x.png')}");
              }
-            .rdicon.app-logo{
+            .rdicon.app-logo, .nodedetail.server .nodedesc, .node_entry.server .nodedesc{
                 background-image: url("${resource(dir: 'images', file: appLogoHires)}");
                 background-size: ${appLogoW} ${appLogoH};
             }
