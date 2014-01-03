@@ -61,101 +61,42 @@
 <g:set var="NODE_FILTERS_X" value="${['','OsName','OsFamily','OsArch','OsVersion']}"/>
 <g:set var="NODE_FILTER_MAP" value="${['':'Hostname','OsName':'OS Name','OsFamily':'OS Family','OsArch':'OS Architecture','OsVersion':'OS Version']}"/>
 
-        <div class="form-group  ${hasErrors(bean: query, field: 'nodeInclude', 'has-error')}">
-            <div class="col-sm-12">
-            <span class="h5 ">
-                Include Nodes Matching:
-            </span>
-
-            <g:render template="/common/nodefilterRegexSyntaxNote"/>
-            </div>
-
+        <div class="form-group  ${hasErrors(bean: query, field: 'filter', 'has-error')} ${filterErrors?'has-error':''}">
 
             <g:hiddenField name="formInput" value="true"/>
 
-            <g:hasErrors bean="${query}" field="nodeInclude">
+            <g:hasErrors bean="${query}" field="filter">
                 <div class="col-sm-12">
-                <div class="text-warning">
-                    <g:renderErrors bean="${query}" as="list" field="nodeInclude"/>
-                    <i class="glyphicon glyphicon-warning-sign"></i>
-                </div>
-                </div>
-            </g:hasErrors>
-            <div id="nodeFilterDivInclude" style="">
-                <g:each var="key" in="${NODE_FILTERS}">
-                    <g:render template="nodeFilterField" model="${[key:key,include:true,query:query,NODE_FILTER_MAP:NODE_FILTER_MAP]}"/>
-                </g:each>
-            </div>
-
-        </div>
-
-<div class="row">
-    <div class="col-sm-12">
-        <g:expander key="${rkey}nodeXtraFilters">Extended Filters&hellip;</g:expander>
-    </div>
-</div>%{--//extended filters toggle--}%
-    <div id="${rkey}nodeXtraFilters" style="display:none" class="subfields">
-        <div class="form-group">
-            <div class="col-sm-12">
-            <span class="h5 ${hasErrors(bean: query, field: 'nodeExclude', 'has-error')}">
-                Include Nodes Matching:
-            </span>
-            </div>
-
-            <div id="nodeFilterDivInclude2" style="">
-                <g:each var="key" in="${NODE_FILTERS_X}">
-                    <g:render template="nodeFilterField"
-                              model="${[key: key, include: true, query: query, NODE_FILTER_MAP: NODE_FILTER_MAP]}"/>
-                </g:each>
-            </div>
-        </div>
-        <div class="form-group">
-            <div class="col-sm-12">
-            <span class="h5 ${hasErrors(bean: query, field: 'nodeExclude', 'has-error')}">
-                Exclude Nodes Matching:
-            </span>
-            </div>
-
-
-                <g:hasErrors bean="${query}" field="nodeExclude">
-                    <div class="col-sm-12">
-                    <div class="has-error">
-                        <g:renderErrors bean="${query}" as="list" field="nodeExclude"/>
+                    <div class="text-warning">
+                        <g:renderErrors bean="${query}" as="list" field="filter"/>
                         <i class="glyphicon glyphicon-warning-sign"></i>
                     </div>
+                </div>
+            </g:hasErrors>
+            <div id="nodeFilterDivFilter" style="">
+                %{--<label class="control-label col-sm-2"--}%
+                       %{--for="schedJobNodeFilter">Filter:</label>--}%
+                <g:set var="filtvalue"
+                       value="${query?.('filter')?.encodeAsHTML()}"/>
+                <div class="col-sm-12 nfilteritem">
+
+                    <div class="input-group">
+                        <input type='text' name="filter" class="filterIncludeText form-control"
+                            placeholder="Enter a node filter"
+                               value="${filtvalue}" id="schedJobNodeFilter" onchange="_matchNodes();"/>
+
+                        <span class="input-group-btn">
+                            <a class="btn btn-info" data-toggle='collapse' href="#queryFilterHelp">
+                                <i class="glyphicon glyphicon-question-sign"></i>
+                            </a>
+                        </span>
                     </div>
-                </g:hasErrors>
-
-
-            <div id="nodeFilterDivExclude" style="">
-                <g:each var="key" in="${NODE_FILTERS_ALL}">
-                    <g:render template="nodeFilterField" model="${[key:key,include:false,query:query,NODE_FILTER_MAP:NODE_FILTER_MAP]}"/>
-                </g:each>
-            </div>
-
-        </div>
-        <g:if test="${filterErrors?.filter}">
-            <div class="row">
-                <div class="col-sm-12">
-                    <span class="error filter">${filterErrors?.filter}</span>
+                </div>
+                <div class="col-sm-12 collapse" id="queryFilterHelp">
+                    <div class="help-block">
+                    <g:render template="/common/nodefilterStringHelp"/>
+                    </div>
                 </div>
             </div>
-        </g:if>
-        <div class="form-group">
-            <label class="col-sm-2  control-label">Precedence to:</label>
-
-            <div class="col-sm-10">
-                <label title="Include more nodes" class="radio-inline">
-                    <g:radio name="nodeExcludePrecedence" value="false"
-                             checked="${!query?.nodeExcludePrecedence}"
-                             id="nodeExcludePrecedenceFalse" onchange="_matchNodes()"/>
-                    Included</label>
-
-                <label title="Exclude more nodes" class="radio-inline">
-                    <g:radio name="nodeExcludePrecedence" value="true"
-                             checked="${query?.nodeExcludePrecedence}"
-                             id="nodeExcludePrecedenceTrue" onchange="_matchNodes()"/>
-                    Excluded</label>
-            </div>
         </div>
-    </div>
+

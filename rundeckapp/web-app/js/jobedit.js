@@ -62,6 +62,7 @@ function _formUpdateMatchedNodes() {
             params['nodeExclude' + key] = $F('schedJobNodeExclude' + key);
         }
     }
+    params['filter']=$F('schedJobNodeFilter');
     if ($('nodeExcludePrecedenceTrue').checked) {
         params.nodeExcludePrecedence = "true";
     } else {

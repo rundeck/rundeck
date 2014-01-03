@@ -453,59 +453,23 @@
 
     <g:render template="/common/messages"/>
     <div id="error" class="error message" style="display:none;"></div>
-    <g:if test="${session.project}">
-        <div>
-        <div class="row">
-        <div class="col-sm-9">
-            <span class="h4">
-                <g:if test="${summaryOnly}">
-                    <span class="obs_nodes_allcount">${total}</span>
-                    Node<span class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span>
-                    in this project
-                </g:if>
-                <g:else>
-                    <span class="obs_nodes_allcount">${total}</span>
-                    Node<span class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span> matching filter
-                </g:else>
-            </span>
-            <g:if test="${tagsummary}">
-                <g:render template="tagsummary"
-                          model="${[tagsummary: tagsummary, link: [action: 'nodes', controller: 'framework', param: 'nodeIncludeTags']]}"/>
-            </g:if>
-            <g:elseif test="${tagsummary?.size()==0}">
-                %{--<span class="text-muted">no tags</span>--}%
-            </g:elseif>
-        </div>
-            <g:if test="${session.project && run_authorized}">
-                <g:form class="form form-inline"  action="adhoc" controller="framework" method="get">
-                <div class=" form-inline clearfix" id="runbox">
-                    <g:hiddenField name="project" value="${session.project}"/>
-                    <g:if test="${filterName}">
-                        <g:hiddenField name="filterName" value="${filterName}"/>
-                    </g:if>
-                    <g:else>
-                        <g:render template="nodeFiltersHidden" model="${[params: params, query: query]}"/>
-                    </g:else>
-                    <div class=" col-sm-3">
-                    <g:if test="${total!=null && !summaryOnly}">
-                        <div class="input-group pull-right ">
-                            <button class="btn btn-success ${total>0?'runbutton':'disabled '} ">
-                                Run command on <span class="obs_nodes_allcount">${total}</span> Node<span
-                                    class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span> …
-                                <span class="glyphicon glyphicon-arrow-right"></span>
-                            </button>
-                        </div>
-                    </g:if>
 
-                    </div>
+<div class="row ">
+<div class="col-sm-12">
+    <g:if test="${filterset}">
+        <g:render template="/common/selectFilter"
+                  model="[filterLinks: true, filterset: filterset, filterName: filterName, prefName: 'nodes', noSelection: filterName ? '-All Nodes-' : null]"/>
 
-                    <div class="hiderun" id="runerror" style="display:none"></div>
-                </div>
-                </g:form>
-            </g:if>
-        </div>
-        </div>
     </g:if>
+    <g:if test="${params.formInput != 'true' || filterName}">
+        <g:link class="btn btn-default btn-sm"
+                action="nodes" controller="framework"
+                params="[showall: true]">
+            Show all nodes
+        </g:link>
+    </g:if>
+</div>
+</div>
 <div class="row row-space">
 <div  class="col-sm-12">
     <g:set var="wasfiltered" value="${ paginateParams?.keySet().grep(~/(?!proj).*Filter|groupPath|project$/)||(query && !query.nodeFilterIsEmpty() && !summaryOnly)}"/>
@@ -520,31 +484,25 @@
                 <div class="panel panel-default ">
                     <div class="panel-heading">
                         <g:if test="${summaryOnly}">
-                            Filter Nodes
+                            Enter Filter
                         </g:if>
                         <g:else>
                             <span class="textbtn textbtn-info act_filtertoggle">
-                                Filter Nodes
+                                Edit Filter
                                 <b class="glyphicon glyphicon-chevron-down"></b>
                             </span>
                         </g:else>
 
-                        <g:if test="${filterset}">
-                            <g:render template="/common/selectFilter"
-                                      model="[filterLinks: true, filterset: filterset, filterName: filterName, prefName: 'nodes', noSelection: filterName ? '-All Nodes-' : null]"/>
 
-                        </g:if>
-                        <g:if test="${params.formInput != 'true' || filterName}">
-                            <g:link class="btn btn-default btn-sm"
-                                action="nodes" controller="framework"
-                                params="[showall:true]">
-                                Show all nodes
-                            </g:link>
-                        </g:if>
                         <g:unless test="${summaryOnly}">
                             <a href="#" class="close act_filtertoggle">&times;</a>
                         </g:unless>
                     </div>
+                    <g:if test="${filterName}">
+                        <div class="panel-heading">
+                            <span class="h4">${filterName.encodeAsHTML()}</span>
+                        </div>
+                    </g:if>
 
 
                     <g:hiddenField name="max" value="${max}"/>
@@ -559,9 +517,17 @@
 
                     <div class="panel-body  obs_hide_filtermgr">
                         <g:render template="nodeFilterInputs" model="${[params:params,query:query]}"/>
+                        <g:if test="${filterErrors}">
+                            <pre class="filtererror">${filterErrors.filter}</pre>
+                        </g:if>
                     </div>
 
-                    <div class="panel-footer obs_hide_filtermgr text-right" >
+                    <div class="panel-footer obs_hide_filtermgr clearfix buttons" >
+
+                        <g:submitButton name="Filter" onclick="return _submitNodeFilters();"
+                                        id="nodefiltersubmit" value="Filter Nodes" class="btn btn-primary btn-sm"/>
+
+
                         <g:if test="${!filterName}">
                                 <button class="btn btn-success btn-sm"
                                         data-toggle="modal"
@@ -570,19 +536,13 @@
                                 </button>
                         </g:if>
                         <g:else>
-                            <span class="">Saved filter: <strong>${filterName.encodeAsHTML()}</strong></span>
-                            <button class="btn btn-danger btn-sm" data-toggle="modal"
+                            <button class="btn btn-danger btn-sm pull-right" data-toggle="modal"
                                     data-target="#deleteFilterModal">
                                 Delete saved filter&hellip;
                                 <i class="glyphicon glyphicon-remove"></i>
                             </button>
                         </g:else>
 
-                        <g:submitButton name="Clear" onclick="return _clearNodeFilters();" value="Clear"
-                                        class="btn btn-default btn-sm"/>
-
-                        <g:submitButton  name="Filter" onclick="return _submitNodeFilters();"
-                                         id="nodefiltersubmit" value="Apply Filter" class="btn btn-primary btn-sm"/>
 
                     </div>
                 </div>
@@ -606,11 +566,11 @@
                         <span id='${ukey}filterdispbtn' style="${!filtersOpen ? '' : 'display:none;'}" >
                             <span title="Click to modify filter" class="textbtn textbtn-default query  act_filtertoggle" >
                                 <g:if test="${filterName}">
-                                    ${filterName.encodeAsHTML()}:
+                                    ${filterName.encodeAsHTML()}
                                 </g:if>
-                                <g:if test="${!summaryOnly}">
+                                <g:elseif test="${!summaryOnly}">
                                     <g:render template="displayNodeFilters" model="${[displayParams:query]}"/>
-                                </g:if>
+                                </g:elseif>
                                 <g:else>
                                     Enter a Filter
                                 </g:else>
@@ -618,26 +578,61 @@
                             </span>
                         </span>
 
-
-                        <g:if test="${filterset}">
-                            <g:render template="/common/selectFilter" model="[filterLinks: true, filterset:filterset,filterName:filterName,prefName:'nodes',noSelection:filterName?'-All Nodes-':null]"/>
-
-                        </g:if>
-
-                        <g:if test="${!(params.formInput == 'true' || params.showall) || filterName}">
-
-                            <g:link class="btn btn-default btn-sm"
-                                    action="nodes" controller="framework"
-                                    params="[showall: true]">
-                                Show all nodes
-                            </g:link>
-                        </g:if>
                     </div>
 
                 </div>
                 </g:if>
 
         </div>
+    </div>
+    <div class="row row-space">
+        <div class="col-sm-9">
+            <span class="h4">
+                <g:if test="${summaryOnly}">
+                    <span class="obs_nodes_allcount">${total}</span>
+                    Node<span class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span>
+                    in this project
+                </g:if>
+                <g:else>
+                    <span class="obs_nodes_allcount">${total}</span>
+                    Node<span class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span> matching filter
+                </g:else>
+            </span>
+            <g:if test="${tagsummary}">
+                <g:render template="tagsummary"
+                          model="${[hidetop:!summaryOnly,tagsummary: tagsummary, link: [action: 'nodes', controller: 'framework', param: 'nodeIncludeTags']]}"/>
+            </g:if>
+            <g:elseif test="${tagsummary?.size() == 0}">
+            %{--<span class="text-muted">no tags</span>--}%
+            </g:elseif>
+        </div>
+        <g:if test="${session.project && run_authorized}">
+            <g:form class="form form-inline" action="adhoc" controller="framework" method="get">
+                <div class=" form-inline clearfix" id="runbox">
+                    <g:hiddenField name="project" value="${session.project}"/>
+                    <g:if test="${filterName}">
+                        <g:hiddenField name="filterName" value="${filterName}"/>
+                    </g:if>
+                    <g:else>
+                        <g:render template="nodeFiltersHidden" model="${[params: params, query: query]}"/>
+                    </g:else>
+                    <div class=" col-sm-3">
+                        <g:if test="${total != null && total>0 && !summaryOnly}">
+                            <div class="input-group pull-right ">
+                                <button class="btn btn-success ${total > 0 ? 'runbutton' : 'disabled '} ">
+                                    Run command on <span class="obs_nodes_allcount">${total}</span> Node<span
+                                        class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span> …
+                                    <span class="glyphicon glyphicon-arrow-right"></span>
+                                </button>
+                            </div>
+                        </g:if>
+
+                    </div>
+
+                    <div class="hiderun" id="runerror" style="display:none"></div>
+                </div>
+            </g:form>
+        </g:if>
     </div>
 
     <div class="row row-space">

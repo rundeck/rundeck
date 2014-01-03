@@ -523,245 +523,89 @@ var applinks={
     </div>
 </div>
 
-<div class="form-group">
-<div class="${offsetColSize}">
-<div style="${wdgt.styleVisible(if: scheduledExecution?.doNodedispatch)}" class="subfields nodeFilterFields container">
+<div class="form-group  ${hasErrors(bean: scheduledExecution, field: 'filter', 'has-error')}">
+<div style="${wdgt.styleVisible(if: scheduledExecution?.doNodedispatch)}" class="subfields nodeFilterFields ">
+    <label class="${labelColSize} control-label">
+        Node Filter
+    </label>
+
+    <div class="${fieldColSize}">
+        <g:hiddenField name="formInput" value="true"/>
+        <g:hasErrors bean="${scheduledExecution}" field="filter">
+
+            <div class="text-warning">
+                <g:renderErrors bean="${scheduledExecution}" as="list" field="filter"/>
+                <i class="glyphicon glyphicon-warning-sign"></i>
+            </div>
+
+        </g:hasErrors>
+        <g:set var="filtvalue" value="${scheduledExecution.asFilter().encodeAsHTML()}"/>
+        <div class="input-group">
+        <input type='text' name="filter" class="filterIncludeText form-control"
+               placeholder="Enter a node filter"
+               value="${filtvalue}" id="schedJobNodeFilter" onchange="_matchNodes();"/>
+
+            <span class="input-group-btn">
+                <a class="btn btn-info" data-toggle='collapse' href="#queryFilterHelp">
+                    <i class="glyphicon glyphicon-question-sign"></i>
+                </a>
+            </span>
+        </div>
+    </div>
+
+    <div class="${offsetColSize} collapse" id="queryFilterHelp">
+        <div class="help-block">
+            <g:render template="/common/nodefilterStringHelp"/>
+        </div>
+    </div>
+</div>
+</div>
+
+<div style="${wdgt.styleVisible(if: scheduledExecution?.doNodedispatch)}" class="subfields nodeFilterFields ">
 
 <div class="form-group ${hasErrors(bean: scheduledExecution, field: 'nodeInclude', 'has-error')}">
-    <span class="h4 ">
-        Include Nodes Matching:
-    </span>
 
-    <g:render template="/common/nodefilterRegexSyntaxNote"/>
-    <div>
+    <label class="col-sm-2  control-label">Precedence to:</label>
 
-        <g:hasErrors bean="${scheduledExecution}" field="nodeInclude">
-            <div class="has-error">
-                <g:renderErrors bean="${scheduledExecution}" as="list" field="nodeInclude"/>
-            </div>
-        </g:hasErrors>
-        <g:hasErrors bean="${scheduledExecution}" field="nodeInclude">
-            <i class="glyphicon glyphicon-warning-sign"></i>
-        </g:hasErrors>
-        <div id="nodeFilterDivInclude" >
-            <g:each var="key" in="${NODE_FILTERS_ALL}">
-                <g:set var="predefinedDefaults" value="${g.message(code: 'node.metadata.' + key + '.defaults', default: '')}"/>
-                <div id="nodeFilterInclude${key}"
-                     style="${wdgt.styleVisible(if: scheduledExecution?.('nodeInclude' + key))}"
-                     class="nodefilterfield form-group">
-                    <span class="input">
-                        <label class="control-label col-sm-2" for="schedJobNodeInclude${key}">${NODE_FILTER_MAP[key] ? NODE_FILTER_MAP[key] : key}:</label>
-                        <g:set var="filtvalue"
-                               value="${scheduledExecution?.('nodeInclude' + key)?.encodeAsHTML()}"/>
-                        <div class="${predefinedDefaults?'col-sm-4':'col-sm-6'}">
-                        <g:if test="${filtvalue && filtvalue.length() > 30}">
-                            <textarea name="nodeInclude${key}" id="schedJobNodeInclude${key}" class="form-control"
-                                      onchange="_matchNodes();"
-                                      style="vertical-align:top;"
-                                      rows="6" cols="40">${filtvalue}</textarea>
-                        </g:if>
-                        <g:else>
-                            <input type='text' name="nodeInclude${key}" class="filterIncludeText form-control input-sm"
-                                   value="${filtvalue}" id="schedJobNodeInclude${key}" onchange="_matchNodes();"/>
-                        </g:else>
-                    </div>
+    <div class="col-sm-10">
+        <label title="Include more nodes" class="radio-inline">
+            <g:radio name="nodeExcludePrecedence" value="false"
+                     checked="${!scheduledExecution?.nodeExcludePrecedence}"
+                     id="nodeExcludePrecedenceFalse" onchange="_matchNodes()"/>
+            Included</label>
 
-
-
-                        <g:if test="${predefinedDefaults}">
-                            <div class="col-sm-2">
-                            <g:select from="${predefinedDefaults.split(',').sort()}"
-                                      onchange="setFilter('${key}',true,this.value);_matchNodesKeyPress();"
-                                class="form-control col-sm-2 input-sm"
-                                      name="_${key}defaults"/>
-                            </div>
-                        </g:if>
-
-
-
-                    <div class="col-sm-4">
-                        <span title="Remove filter for ${NODE_FILTER_MAP[key] ? NODE_FILTER_MAP[key] : key}"
-                              class="filterRemove action textbtn textbtn-danger form-control-static"
-                              onclick="removeFilter('${key}', true);">
-                            <i class="glyphicon glyphicon-remove"></i>
-                            remove
-                              </span>
-                        </div>
-                        <g:javascript>
-                                    Event.observe(window,'load',function(){ $('schedJobNodeInclude${key}').onkeypress=_matchNodesKeyPress; });
-                        </g:javascript>
-                    </span>
-                </div>
-            </g:each>
-
-        </div>
-
-        <div class="row">
-        <div class="col-sm-10 col-sm-offset-2">
-            <g:each var="key" in="${NODE_FILTERS}">
-                <span
-                        style="${wdgt.styleVisible(unless: scheduledExecution?.('nodeInclude' + key))}"
-                        title="Add Filter for ${NODE_FILTER_MAP[key] ? NODE_FILTER_MAP[key] : key}"
-                        class="filterAdd btn btn-default btn-sm"
-                        id="filterAddInclude${key}"
-                        onclick="addFilter('${key}', true, '${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}');">
-                    <i class="glyphicon glyphicon-plus"></i>
-                    ${NODE_FILTER_MAP[key] ? NODE_FILTER_MAP[key] : key}
-                </span>
-            </g:each>
-            <span class="filterAdd button textbtn action" onclick="Element.show('${rkey}moreIncludeFilters');
-            Element.hide(this);">more&hellip;</span>
-        </div>
-
-        <div id="${rkey}moreIncludeFilters" style="display:none;" class="col-sm-10 col-sm-offset-2">
-            <g:each var="key" in="${NODE_FILTERS_X}">
-                <span
-                        style="${wdgt.styleVisible(unless: scheduledExecution?.('nodeInclude' + key))}"
-                        title="Add Filter for ${NODE_FILTER_MAP[key] ? NODE_FILTER_MAP[key] : key}"
-                        class="filterAdd btn btn-default btn-sm"
-                        id="filterAddInclude${key}"
-                        onclick="addFilter('${key}', true, '${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}');">
-                    <i class="glyphicon glyphicon-plus"></i>
-                    ${NODE_FILTER_MAP[key] ? NODE_FILTER_MAP[key] : key}
-                </span>
-            </g:each>
-        </div>
-        </div>
-    </div>
-</div>%{--//include filters--}%
-<div class="form-group">
-    <div>
-    </div>
-
-    <div>
-        <g:expander key="extNodeFilters">Extended Filters&hellip;</g:expander>
-    </div>
-</div>%{--//extended filters toggle--}%
-<div style="display:none" class="subfields" id="extNodeFilters">
-    <div class="form-group">
-        <span class="h4 ${hasErrors(bean: scheduledExecution, field: 'nodeExclude', 'has-error')}">
-            Exclude Nodes Matching:
-        </span>
-
-        <div>
-            <div>
-                <g:hasErrors bean="${scheduledExecution}" field="nodeExclude">
-                    <div class="has-error">
-                        <g:renderErrors bean="${scheduledExecution}" as="list" field="nodeExclude"/>
-                    </div>
-                </g:hasErrors>
-                <g:hasErrors bean="${scheduledExecution}" field="nodeExclude">
-                    <i class="glyphicon glyphicon-warning-sign"></i>
-                </g:hasErrors>
-            </div>
-
-            <div id="nodeFilterDivExclude">
-                <g:each var="key" in="${NODE_FILTERS_ALL}">
-                    <g:set var="predefinedDefaults" value="${g.message(code: 'node.metadata.' + key + '.defaults', default: '')}"/>
-                    <div id="nodeFilterExclude${key}"
-                         style="${wdgt.styleVisible(if: scheduledExecution?.('nodeExclude' + key))}"
-                         class="nodefilterfield form-group">
-                        <span class="input">
-                            <label class="control-label col-sm-2" for="schedJobNodeExclude${key}">${NODE_FILTER_MAP[key] ? NODE_FILTER_MAP[key] : key}:</label>
-
-                            <div class="${predefinedDefaults ? 'col-sm-4' : 'col-sm-6'}">
-                            <g:set var="filtvalue"
-                                       value="${scheduledExecution?.('nodeExclude' + key)?.encodeAsHTML()}"/>
-                                <g:if test="${filtvalue && filtvalue.length() > 30}">
-                                    <textarea name="nodeExclude${key}" id="schedJobNodeExclude${key}"
-                                              onchange="_matchNodes();"
-                                              style="vertical-align:top;"
-                                              rows="6" cols="40">${filtvalue}</textarea>
-                                </g:if>
-                                <g:else>
-                                    <input type='text' name="nodeExclude${key}"
-                                           value="${filtvalue}" id="schedJobNodeExclude${key}"
-                                        class="form-control input-sm"
-                                           onchange="_matchNodes();"/>
-                                </g:else>
-
-                            <g:javascript>
-                                    Event.observe(window,'load',function(){ $('schedJobNodeExclude${key}').onkeypress=_matchNodesKeyPress; });
-                            </g:javascript>
-                            </div>
-                        </span>
-                        <g:if test="${predefinedDefaults}">
-                            <div class="col-sm-2">
-                            <g:select from="${predefinedDefaults.split(',').sort()}"
-                                      onchange="setFilter('${key}',false,this.value);_matchNodesKeyPress();"
-                                class="form-control  input-sm"
-                                      name="_${key}defaults"/>
-                            </div>
-                        </g:if>
-                        <div class="col-sm-4">
-                        <span class="filterRemove action textbtn textbtn-danger form-control-static"
-                              onclick="removeFilter('${key}', false);">
-                                <i class="glyphicon glyphicon-remove"></i>
-                            remove
-                              </span>
-                        </div>
-                    </div>
-                </g:each>
-
-            </div>
-
-            <div class="row">
-            <div class="col-sm-10 col-sm-offset-2">
-                <g:each var="key" in="${NODE_FILTERS_ALL}">
-                    <span
-                            style="${wdgt.styleVisible(unless: scheduledExecution?.('nodeExclude' + key))}"
-                            title="Add Filter: ${NODE_FILTER_MAP[key] ? NODE_FILTER_MAP[key] : key}"
-                            class="filterAdd btn btn-default btn-sm"
-                            id="filterAddExclude${key}"
-                            onclick="addFilter('${key}', false, '${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}');">
-                        <i class="glyphicon glyphicon-plus"></i>
-                        ${NODE_FILTER_MAP[key] ? NODE_FILTER_MAP[key] : key}
-                    </span>
-                </g:each>
-            </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="form-group">
-        <label class="col-sm-2  control-label">Precedence to:</label>
-
-        <div class="col-sm-10">
-            <label title="Include more nodes" class="radio-inline">
-                <g:radio name="nodeExcludePrecedence" value="false"
-                         checked="${!scheduledExecution?.nodeExcludePrecedence}"
-                         id="nodeExcludePrecedenceFalse" onchange="_matchNodes()"/>
-                Included</label>
-
-            <label title="Exclude more nodes" class="radio-inline">
-                <g:radio name="nodeExcludePrecedence" value="true"
-                         checked="${scheduledExecution?.nodeExcludePrecedence}"
-                         id="nodeExcludePrecedenceTrue" onchange="_matchNodes()"/>
-                Excluded</label>
-        </div>
+        <label title="Exclude more nodes" class="radio-inline">
+            <g:radio name="nodeExcludePrecedence" value="true"
+                     checked="${scheduledExecution?.nodeExcludePrecedence}"
+                     id="nodeExcludePrecedenceTrue" onchange="_matchNodes()"/>
+            Excluded</label>
     </div>
 </div>%{--//extended filters--}%
 
 <div style="${wdgt.styleVisible(if: scheduledExecution?.doNodedispatch)}" class="subfields nodeFilterFields">
-    <h4>Matched Nodes:</h4>
-    <div class="row">
-        <div onclick="_formUpdateMatchedNodes()" class="col-sm-2">
-            <span class="btn btn-info btn-sm" title="click to refresh">
+
+    <div class="form-group">
+        <label class="${labelColClass}">
+            Matched Nodes:
+        </label>
+
+        <div class=" col-sm-8  ">
+            <div class="well well-sm embed matchednodes" id='matchednodes'>
+            <span class="btn btn-sm btn-info" onclick="_formUpdateMatchedNodes()">Update...</span>
+            </div>
+        </div>
+        <div class="col-sm-2">
+            <span class="btn btn-info btn-sm" title="click to refresh" onclick="_formUpdateMatchedNodes()">
                 refresh
                 <i class="glyphicon glyphicon-refresh"></i>
             </span>
             <span id="mnodeswait"></span>
         </div>
-
-        <div id="matchednodes" class=" col-sm-10 embed matchednodes well">
-            <span class="action textbtn" onclick="_formUpdateMatchedNodes()">Update...</span>
-        </div>
     </div>
 
 
-    <div id="nodeDispatchFields" style="${wdgt.styleVisible(if: scheduledExecution?.doNodedispatch)} "
-         class="subfields">
-        <h4>Dispatch Options</h4>
+    <div id="nodeDispatchFields" class="subfields ">
+
 
         <div class="form-group ${hasErrors(bean: scheduledExecution, field: 'nodeThreadcount', 'has-error')}">
             <label for="schedJobnodeThreadcount" class="${labelColClass}">
@@ -867,10 +711,9 @@ var applinks={
         </div>
     </div>
 </div>
-</div>
-</div>
-</div>
+
 </div>%{--//Node Dispatch--}%
+</div>
 
     %{--Notifications--}%
     <div class="list-group-item"  >

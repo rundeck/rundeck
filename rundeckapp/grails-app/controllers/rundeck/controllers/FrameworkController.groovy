@@ -277,8 +277,7 @@ class FrameworkController  {
             try {
                 nodeset = com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(nset, nodes1)
             } catch (PatternSyntaxException e) {
-                request.error='<pre>'+e.getMessage()+'</pre>'
-                filterErrors['filter']='<pre>'+e.getMessage()+'</pre>'
+                filterErrors['filter']=e.getMessage()
                 nodeset=new NodeSetImpl()
             }
         }else if("true"==params.defaultAllNodes){

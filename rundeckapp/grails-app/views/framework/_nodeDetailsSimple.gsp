@@ -12,18 +12,16 @@
                 <g:message code="node.metadata.os"/>
             </td>
             <td class="value">
-                <g:if test="${node['osName']}">
-                    ${node['osName'].encodeAsHTML()}
-                </g:if>
-                <g:if test="${node['osFamily']}">
-                    (${node['osFamily'].encodeAsHTML()})
-                </g:if>
-                <g:if test="${node['osVersion']}">
-                    ${node['osVersion'].encodeAsHTML()}
-                </g:if>
-                <g:if test="${node['osArch']}">
-                    (${node['osArch'].encodeAsHTML()})
-                </g:if>
+                <g:each in="['osName','osFamily','osVersion','osArch']" var="oskey">
+                    <g:if test="${node[oskey]}">
+                        <g:set var="useparens" value="${oskey in ['osFamily', 'osArch']}"/>
+                        <tmpl:nodeFilterLink
+                            prefix="${useparens?'(':''}"
+                            suffix="${useparens ? ')' : ''}"
+                            key="${oskey}" value="${node[oskey]}"
+                        />
+                    </g:if>
+                </g:each>
             </td>
         </tr>
         <g:if test="${(!exclude || !exclude.contains('hostname') || !exclude.contains('username'))}">
@@ -32,7 +30,8 @@
                     <g:message code="node.metadata.username-at-hostname"/>
                 </td>
                 <td class="value">
-                    ${node['username']?.encodeAsHTML()}@${node['hostname']?.encodeAsHTML()}
+                    <tmpl:nodeFilterLink key="username" value="${node['username']}"
+                    />@<tmpl:nodeFilterLink key="hostname" value="${node['hostname']}"/>
                 </td>
             </tr>
         </g:if>
@@ -41,10 +40,7 @@
             <td class="">
                 <span class="nodetags">
                     <g:each var="tag" in="${node.tags.sort()}">
-                        <g:link class="tag textbtn" action="nodes" params="${[nodeIncludeTags: tag]}"
-                                title="Filter by tag: ${tag.encodeAsHTML()}">
-                            ${tag.encodeAsHTML()}</g:link>
-                    %{--<span class="action textbtn" onclick="setTagFilter('${tag.encodeAsJavaScript()}');" title="Add to existing filter">+</span>--}%
+                        <tmpl:nodeFilterLink key="tags" value="${tag}"/>
                     </g:each>
                 </span>
             </td></tr>
@@ -54,7 +50,10 @@
             <g:each var="setting" in="${nodeAttrs.keySet().grep{nodeAttrs[it]}.sort()}">
                 <tr>
                     <td class="key setting">${setting.encodeAsHTML()}:</td>
-                    <td class="setting"><div class="value">${nodeAttrs[setting]?.encodeAsHTML()}</div></td>
+                    <td class="setting"><div class="value">
+                        <tmpl:nodeFilterLink key="${setting}" value="${nodeAttrs[setting]}"/>
+                    </div>
+                    </td>
                 </tr>
             </g:each>
         </g:if>

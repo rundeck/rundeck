@@ -183,22 +183,14 @@
         if(!project){
             return;
         }
-        var params ={project:project,view:'embed',declarenone:true,fullresults:true};
+        var params =Object.extend({project:project,view:'embed',declarenone:true,fullresults:true},data);
         if(null!==inparams){
             Object.extend(params,inparams);
         }
         if(localnodeonly){
             params.localNodeOnly='true';
         }
-        for(i in node_filter_keys){
-            var key=node_filter_keys[i];
-            if(data['nodeInclude'+key]){
-                params['nodeInclude'+key]=data['nodeInclude'+key];
-            }
-            if(data['nodeExclude'+key]){
-                params['nodeExclude'+key]=data['nodeExclude'+key];
-            }
-        }
+
         if(typeof(data.nodeExcludePrecedence) == 'string' && data.nodeExcludePrecedence==="true"
             || typeof(data.nodeExcludePrecedence)=='boolean' && data.nodeExcludePrecedence){
             params.nodeExcludePrecedence="true";

@@ -22,6 +22,26 @@
     $Id$
  --%>
 <g:set var="varStr" value=""/> <% varStr = '${' %>
+<g:if test="${displayParams.filter}">
+    <g:set var="filters" value="${com.dtolabs.rundeck.core.utils.NodeSet.parseFilter(displayParams.filter)}"/>
+    <g:set var="filtersInc" value="${filters.include}"/>
+    <g:set var="filtersExc" value="${filters.exclude}"/>
+    <g:each in="${filtersInc.keySet().sort()}" var="qparam">
+        <g:if test="${filtersInc[qparam]}">
+            <span class="querykey include">${qparam.encodeAsHTML()}</span>:
+            <span class="queryvalue text include ${filtersInc[qparam].contains(varStr) ? 'variable' : ''}">
+                <g:truncate max="50" title="${filtersInc[qparam].toString().encodeAsHTML()}">${filtersInc[qparam].toString().encodeAsHTML()}</g:truncate></span>
+        </g:if>
+    </g:each>
+    <g:each in="${filtersExc.keySet().sort()}" var="qparam">
+        <g:if test="${filtersExc[qparam]}">
+            <span class="querykey exclude">${qparam.encodeAsHTML()}</span>:
+            <span class="queryvalue text exclude ${filtersExc[qparam].contains(varStr) ? 'variable' : ''}">
+                <g:truncate max="50" title="${filtersExc[qparam].toString().encodeAsHTML()}">${filtersExc[qparam].toString().encodeAsHTML()}</g:truncate></span>
+        </g:if>
+    </g:each>
+</g:if>
+<g:else>
 <g:each in="${displayParams.properties.keySet().grep{it=~/^(node(Include|Exclude)(?!Precedence).*)$/}.sort()}" var="qparam">
     <g:if test="${displayParams[qparam]}">
     <span class="querykey ${qparam=~/Exclude/?'exclude':'include'}"><g:message code="BaseNodeFilters.title.${qparam}"/></span>:
@@ -29,3 +49,4 @@
         <g:truncate max="50" title="${displayParams[qparam].toString().encodeAsHTML()}"><g:message code="${'BaseNodeFilters.title.'+qparam+'.'+displayParams[qparam]}" default="${displayParams[qparam].toString().encodeAsHTML()}"/></g:truncate></span>
     </g:if>
 </g:each>
+</g:else>

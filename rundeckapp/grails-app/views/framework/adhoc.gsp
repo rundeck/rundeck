@@ -321,112 +321,134 @@
     <g:render template="/common/messages"/>
     <div id="error" class="error message" style="display:none;"></div>
         <div>
-        <div class="row">
+            <div class="row ">
+                <g:if test="${run_authorized}">
+                    <div class=" form-inline clearfix" id="runbox">
+                        <g:hiddenField name="project" value="${session.project}"/>
+                        <g:render template="nodeFiltersHidden" model="${[params: params, query: query]}"/>
+                        <div class=" col-sm-12">
+                            <div class="input-group">
+                                <g:textField name="exec" size="50" placeholder="Enter a shell command"
+                                             value="${runCommand}"
+                                             id="runFormExec"
+                                             class="form-control"
+                                             autofocus="true"/>
+
+                                <span class="input-group-btn">
+                                    <button class="btn btn-default has_tooltip" type="button"
+                                            title="Node Dispatch Settings"
+                                            data-placement="left"
+                                            data-container="body"
+                                            data-toggle="collapse" data-target="#runconfig">
+                                        <i class="glyphicon glyphicon-cog"></i>
+                                    </button>
+
+                                    <button class="btn btn-success runbutton " onclick="runFormSubmit('runbox');">
+                                        Run <span class="glyphicon glyphicon-play"></span>
+                                    </button>
+                                </span>
+                            </div>
+
+                        <div class="collapse well well-sm " id="runconfig">
+                                <div class="row">
+                                    <div class="col-sm-12">
+                                        <div class="form-group text-muted ">Node Dispatch Settings:</div>
+
+                                        <div class="form-group has_tooltip"
+                                             title="Maximum number of parallel threads to use"
+                                             data-placement="bottom">
+                                            Thread count
+                                        </div>
+
+                                        <div class="form-group">
+                                            <input min="1" type="number" name="nodeThreadcount" id="runNodeThreadcount"
+                                                   size="2"
+                                                   placeholder="Maximum threadcount for nodes" value="1"
+                                                   class="form-control  input-sm"/>
+                                        </div>
+
+                                        <div class="form-group">On node failure:</div>
+
+                                        <div class="radio">
+                                            <label class="has_tooltip" title="Continue to execute on other nodes"
+                                                   data-placement="bottom">
+                                                <input type="radio" name="nodeKeepgoing"
+                                                       value="true"
+                                                       checked/> <strong>Continue</strong>
+                                            </label>
+                                        </div>
+
+                                        <div class="radio">
+                                            <label class="has_tooltip" title="Do not execute on any other nodes"
+                                                   data-placement="bottom">
+                                                <input type="radio" name="nodeKeepgoing"
+                                                       value="false"/> <strong>Stop</strong>
+                                            </label>
+                                        </div>
+
+                                        <div class="pull-right">
+                                            <button class="close " data-toggle="collapse"
+                                                    data-target="#runconfig">&times;</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="hiderun" id="runerror" style="display:none"></div>
+                    </div>
+                </g:if>
+            </div>
+        <div class="row row-space">
             <div class="col-sm-12">
 
             <g:link class="textbtn textbtn-default query"
                     title="Click to modify the filter"
                     action="nodes" controller="framework"
-                    params="${filterName?[filterName:filterName]:filterParams}">
-                Node Filter:
-                <g:if test="${filterName}">
-                    <i class="glyphicon glyphicon-filter"></i>
-                    ${filterName.encodeAsHTML()}:
-                </g:if>
-                <g:render template="displayNodeFilters" model="${[displayParams: query]}"/>
+                    params="${query.filter?[filter:query.filter]:filterName?[filterName:filterName]:filterParams}">
+                <i class="glyphicon glyphicon-filter"></i>
+                %{--Node Filter:--}%
+                %{--<g:if test="${filterName}">--}%
+                    %{--<i class="glyphicon glyphicon-filter"></i>--}%
+                    %{--${filterName.encodeAsHTML()}:--}%
+                %{--</g:if>--}%
+                %{--<g:if test="${query.filter}">--}%
+                    %{--${query.filter.encodeAsHTML()}--}%
+                %{--</g:if>--}%
+                %{--<g:else>--}%
+                    %{--<g:render template="displayNodeFilters" model="${[displayParams: query]}"/>--}%
+                %{--</g:else>--}%
 
-                <i class="glyphicon glyphicon-edit"></i>
-                edit …
+                %{--<i class="glyphicon glyphicon-edit"></i>--}%
+                %{--edit …--}%
+                %{----}%
             </g:link>
 
-            <g:if test="${!emptyQuery}">
-                <a class="h4 " data-toggle="collapse" href="#${ukey}nodeForm">
+             <g:if test="${!emptyQuery}">
+                <g:if test="${total>5}">
+
+                    <a class="h4 " data-toggle="collapse" href="#${ukey}nodeForm">
+                        <span class="obs_nodes_allcount">${total}</span> Node<span
+                            class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span>
+                        <b class="glyphicon glyphicon-chevron-right"></b>
+                    </a>
+                </g:if>
+                 <g:else>
                     <span class="obs_nodes_allcount">${total}</span> Node<span class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span>
-                    <b class="glyphicon glyphicon-chevron-right"></b>
-                </a>
+                 </g:else>
             </g:if>
+                <span id="${ukey}nodeForm" class="${total>5?'collapse collapse-expandable':''}">
+                    <g:render template="allnodes"
+                              model="${[nodeview: 'embed', expanddetail: true, allnodes: allnodes, totalexecs: totalexecs, jobs: jobs, params: params, total: total, allcount: allcount, page: page, max: max, nodeauthrun: nodeauthrun, tagsummary: tagsummary]}"/>
+                </span>
         </div>
 
 
         </div>
         <div class="row ">
-            <div id="${ukey}nodeForm" class="collapse collapse-expandable col-sm-12">
-                <g:render template="allnodes"
-                          model="${[nodeview: 'embed', expanddetail: true, allnodes: allnodes, totalexecs: totalexecs, jobs: jobs, params: params, total: total, allcount: allcount, page: page, max: max, nodeauthrun: nodeauthrun, tagsummary: tagsummary]}"/>
-            </div>
+
         </div>
-        <div class="row row-space">
-            <g:if test="${run_authorized && !emptyQuery}">
-                <div class=" form-inline clearfix" id="runbox">
-                    <g:hiddenField name="project" value="${session.project}"/>
-                    <g:render template="nodeFiltersHidden" model="${[params: params, query: query]}"/>
-                    <div class=" col-sm-12">
-                        <div class="input-group">
-                            <g:textField name="exec" size="50" placeholder="Enter a shell command"
-                                         value="${runCommand}"
-                                         id="runFormExec"
-                                        class="form-control"
-                                         autofocus="true"/>
 
-                            <span class="input-group-btn">
-                                <button class="btn btn-default has_tooltip" type="button"
-                                        title="Node Dispatch Settings"
-                                        data-placement="left"
-                                        data-container="body"
-                                        data-toggle="collapse" data-target="#runconfig">
-                                    <i class="glyphicon glyphicon-cog"></i>
-                                </button>
-
-                                <button class="btn btn-success runbutton " onclick="runFormSubmit('runbox');">
-                                    Run <span class="glyphicon glyphicon-play"></span>
-                                </button>
-                            </span>
-                        </div>
-                        <div class="collapse well well-sm " id="runconfig">
-                            <div class="row">
-                            <div class="col-sm-12">
-                                <div class="form-group text-muted ">Node Dispatch Settings: </div>
-                                <div class="form-group has_tooltip" title="Maximum number of parallel threads to use"
-                                     data-placement="bottom">
-                                    Thread count
-                                </div>
-                                <div class="form-group">
-                                    <input min="1" type="number" name="nodeThreadcount" id="runNodeThreadcount"
-                                           size="2"
-                                           placeholder="Maximum threadcount for nodes" value="1"
-                                           class="form-control  input-sm"/>
-                                </div>
-
-                                <div class="form-group">On node failure:</div>
-                                <div class="radio">
-                                    <label class="has_tooltip" title="Continue to execute on other nodes" data-placement="bottom">
-                                        <input type="radio" name="nodeKeepgoing"
-                                               value="true"
-                                            checked
-                                        /> <strong>Continue</strong>
-                                    </label>
-                                </div>
-
-                                <div class="radio">
-                                    <label class="has_tooltip" title="Do not execute on any other nodes"
-                                           data-placement="bottom">
-                                        <input type="radio" name="nodeKeepgoing"
-                                               value="false"
-                                               /> <strong>Stop</strong>
-                                    </label>
-                                </div>
-                                <div class="pull-right">
-                                    <button class="close " data-toggle="collapse" data-target="#runconfig">&times;</button>
-                                </div>
-                            </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="hiderun" id="runerror" style="display:none"></div>
-                </div>
-            </g:if>
-        </div>
 
 
     <div id="runcontent" class="clearfix nodes_run_content" style="display: none"></div>

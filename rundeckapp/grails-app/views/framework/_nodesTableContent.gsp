@@ -55,10 +55,7 @@
                         <span class="nodetags">
                             <i class="glyphicon glyphicon-tags text-muted"></i>
                             <g:each var="tag" in="${node.tags.sort()}">
-                                <g:link class="tag textbtn" action="nodes" params="${[nodeIncludeTags:tag]}"
-                                        title="Filter by tag: ${tag.encodeAsHTML()}">
-                                    ${tag.encodeAsHTML()}</g:link>
-                            %{--<span class="action textbtn" onclick="setTagFilter('${tag.encodeAsJavaScript()}');" title="Add to existing filter">+</span>--}%
+                                <tmpl:nodeFilterLink key="tags" value="${tag}"/>
                             </g:each>
                         </span>
                     </g:if>
@@ -66,11 +63,13 @@
 
                 <td class="username"  title="Username">
                     <g:if test="${node.username}">
-                        ${node.username?.encodeAsHTML()} <span class="atsign">@</span>
+
+                        <tmpl:nodeFilterLink key="username" value="${node['username']}"/>
+                        <span class="atsign">@</span>
                     </g:if>
                 </td>
                 <td class="hostname"  title="Hostname">
-                        ${node.hostname?.encodeAsHTML()}
+                    <tmpl:nodeFilterLink key="hostname" value="${node['hostname']}"/>
                     <g:if test="${null!=nodeauthrun && !nodeauthrun[node.nodename]}">
                         <span title="Not authorized to 'run' on this node" class="text-warning has_tooltip" >
                             <i class="glyphicon glyphicon-warning-sign"></i>
@@ -102,9 +101,9 @@
                 %{--<g:link  controller="reports" action="index" params="${[nodeFilter:node.nodename]}" title="View History for Node ${node.nodename}">--}%
                     <!--&raquo; history-->
                 %{--</g:link>--}%
-                <tr id="${ukey}node_detail_${i}" class="detail_content nodedetail" style="display:none">
+                <tr id="${ukey}node_detail_${i}" class="detail_content nodedetail ${nodedata.islocal ? 'server' : ''}" style="display:none">
                     <td colspan="6">
-                        <g:render template="nodeDetailsSimple" model="[node:node,key:ukey+'_'+node.nodename+'_key',projects:nodedata.projects,exclude:['username','hostname']]"/>
+                        <g:render template="nodeDetailsSimple" model="[linkAttrs: true, node:node,key:ukey+'_'+node.nodename+'_key',projects:nodedata.projects,exclude:['username','hostname']]"/>
                     </td>
                 </tr>
             </g:if>

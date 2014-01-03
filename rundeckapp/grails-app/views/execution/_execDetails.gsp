@@ -137,7 +137,7 @@
                 <td >
                     <span id="matchednodes_${rkey}" class="matchednodes embed">
                         <span class="text-muted"><g:message code="include.nodes.matching" /></span>
-                        <g:set var="jsdata" value="${execdata.properties.findAll{it.key==~/^node(In|Ex)clude.*$/ &&it.value}}"/>
+                        <g:set var="jsdata" value="${execdata.properties.findAll{it.key==~/^(filter|node(In|Ex)clude.*)$/ &&it.value}}"/>
                     <g:set var="varStr" value=""/>
                     <%varStr='${'%>
                     <g:set var="hasVar" value="${jsdata.find{it.value.toString()?.contains(varStr)}}"/>

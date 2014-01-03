@@ -22,7 +22,7 @@
 
 <%@ page contentType="text/html;charset=UTF-8" %>
 <g:if test="${tagsummary}">
-        <g:set var="hidetop" value="${tagsummary.findAll {it.value>1}.size()>30}"/>
+        <g:set var="hidetop" value="${hidetop?:tagsummary.findAll {it.value>1}.size()>30}"/>
         <g:if test="${hidetop}">
             <span class="action button receiver" title="Show tag demographics" onclick="Element.show('tagdemo');
             Element.hide(this);">
