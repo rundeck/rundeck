@@ -29,6 +29,7 @@ import org.springframework.web.multipart.MultipartHttpServletRequest
 import org.springframework.web.multipart.commons.CommonsMultipartFile
 import rundeck.CommandExec
 import rundeck.Execution
+import rundeck.NodeFilter
 import rundeck.Option
 import rundeck.ScheduledExecution
 import rundeck.User
@@ -42,6 +43,7 @@ import rundeck.services.ExecutionServiceException
 import rundeck.services.FrameworkService
 import rundeck.services.NotificationService
 import rundeck.services.ScheduledExecutionService
+import rundeck.services.UserService
 
 import javax.servlet.http.HttpServletResponse
 import java.util.regex.Pattern
@@ -79,6 +81,7 @@ class ScheduledExecutionController  {
     def ScheduledExecutionService scheduledExecutionService
     def NotificationService notificationService
     def ApiService apiService
+    def UserService userService
 
  
     def index = { redirect(controller:'menu',action:'jobs',params:params) }
@@ -1352,6 +1355,17 @@ class ScheduledExecutionController  {
             params.nodeThreadcount= params.nodeThreadcount?:1
             params.workflow = new Workflow(commands: [new CommandExec(adhocRemoteString: params.remove('exec'), adhocExecution: true)])
             params.description = params.description ?: ""
+        }
+        if (params.filterName) {
+            def User u = userService.findOrCreateUser(session.user)
+            //load a named filter and create a query from it
+            if (u) {
+                NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, u)
+                if (filter) {
+                    def query2 = filter.createExtNodeFilters()
+                    params.put('filter',query2.asFilter())
+                }
+            }
         }
 
         //pass session-stored edit state in params map

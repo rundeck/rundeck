@@ -1,4 +1,4 @@
-<%@ page import="com.dtolabs.rundeck.core.utils.OptsUtil" %>%{--
+%{--
   Copyright 2014 SimplifyOps Inc, <http://simplifyops.com>
 
   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,15 @@
   See the License for the specific language governing permissions and
   limitations under the License.
   --}%
-${prefix ?: ''}<g:link class="nodefilterlink textbtn tag" action="nodes" params="${[filter: OptsUtil.join([key + ":",value])]}"
-    data-node-filter="${OptsUtil.join([key + ":", value])}"
-title="Filter by ${key.encodeAsHTML()} value">${(linktext?:value)?.encodeAsHTML()}</g:link>${suffix?:''}
+<g:if test="${filterset}">
+    <div>
+    <g:render template="/common/selectFilter"
+              model="[filterLinks: true, filterset: filterset, filterName: filterName, prefName: 'nodes', noSelection: filterName ? '-All Nodes-' : null]"/>
+    </div>
+</g:if>
+<g:if test="${tagsummary}">
+    <div>
+    <g:render template="tagsummary"
+              model="${[hidetop: false, tagsummary: tagsummary, link: [action: 'nodes', controller: 'framework', param: 'filter']]}"/>
+    </div>
+</g:if>

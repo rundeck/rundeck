@@ -38,8 +38,9 @@
                 <g:if test="${tagsummary[tag]>1 || tagsummary.size()<=30}">
                     <span class="summary nodetags">
                         <g:if test="${link}">
-                            <g:link class=" tag textbtn" action="${link.action}" controller="${link.controller}" params="${[(link.param):tag]}"
-                                    title="Filter by tag: ${tag}">${tag.encodeAsHTML()} : ${tagsummary[tag]}</g:link>
+                            <g:render template="nodeFilterLink"
+                                model="[key:'tags',value:tag,linktext:tag+' : '+tagsummary[tag],css:'tag textbtn']"
+                                      />
                         </g:if>
                         <g:elseif test="${action}">
                             <span class="${action.classnames}" onclick="${action.onclick}" data-tag="${tag.encodeAsHTML()}" title="Filter by tag: ${tag}">${tag.encodeAsHTML()}:${tagsummary[tag]}</span>

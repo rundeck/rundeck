@@ -63,7 +63,7 @@
                         <span class="textbtn textbtn-default textbtn-on-hover selectnone">None</span>
                         <g:if test="${tagsummary}">
                             <g:render template="/framework/tagsummary"
-                                      model="${[tagsummary:tagsummary,action:[classnames:'tag tagselected textbtn obs_tag_group',onclick:'']]}"/>
+                                      model="${[tagsummary:tagsummary,action:[classnames:'tag active textbtn obs_tag_group',onclick:'']]}"/>
                         </g:if>
                     </div>
                     <g:each in="${namegroups.keySet().sort()}" var="group">
@@ -92,7 +92,7 @@
                                     <span class="textbtn textbtn-default textbtn-on-hover selectall" >All</span>
                                     <span class="textbtn textbtn-default textbtn-on-hover selectnone" >None</span>
                                     <g:if test="${grouptags && grouptags[group]}">
-                                        <g:render template="/framework/tagsummary" model="${[tagsummary:grouptags[group],action:[classnames:'tag tagselected textbtn  obs_tag_group',onclick:'']]}"/>
+                                        <g:render template="/framework/tagsummary" model="${[tagsummary:grouptags[group],action:[classnames:'tag active textbtn  obs_tag_group',onclick:'']]}"/>
                                     </g:if>
                                 </div>
                                 </g:if>
@@ -145,7 +145,7 @@
                         });
                         $(e).up('.group_section').select('span.textbtn.obs_tag_group').each(function(e) {
                             $(e).setAttribute('data-tagselected', 'true');
-                            $(e).addClassName('tagselected');
+                            $(e).addClassName('active');
                         });
                     });
                 });
@@ -158,7 +158,7 @@
                         });
                         $(e).up('.group_section').select('span.textbtn.obs_tag_group').each(function(e) {
                             $(e).setAttribute('data-tagselected', 'false');
-                            $(e).removeClassName('tagselected');
+                            $(e).removeClassName('active');
                         });
                     });
                 });
@@ -167,9 +167,9 @@
                         var ischecked = e.getAttribute('data-tagselected') != 'false';
                         e.setAttribute('data-tagselected', ischecked ? 'false' : 'true');
                         if (!ischecked) {
-                            $(e).addClassName('tagselected');
+                            $(e).addClassName('active');
                         } else {
-                            $(e).removeClassName('tagselected');
+                            $(e).removeClassName('active');
                         }
                         $(e).up('.group_section').select('input[data-tag~="' + e.getAttribute('data-tag') + '"]').each(function(
                         el) {
@@ -181,9 +181,9 @@
                         el) {
                             el.setAttribute('data-tagselected', ischecked ? 'false' : 'true');
                             if (!ischecked) {
-                                $(el).addClassName('tagselected');
+                                $(el).addClassName('active');
                             } else {
-                                $(el).removeClassName('tagselected');
+                                $(el).removeClassName('active');
                             }
                         });
                     });

@@ -29,7 +29,8 @@
     <g:each in="${filterset.sort({ a, b -> a.name.compareTo(b.name) })}" var="filter">
         <g:if test="${filter.name != filterName}">
         <li>
-            <g:link action="nodes" controller="framework" params="[filterName: filter.name]" class="textbtn textbtn-primary has_tooltip"
+            <g:link action="nodes" controller="framework" params="[filterName: filter.name]" class="textbtn textbtn-primary has_tooltip nodefilterlink"
+                data-node-filter-name="${filter.name}"
                 data-placement="bottom"
                     title="Apply filter: ${filter.name.encodeAsHTML()}">
                 ${filter.name.encodeAsHTML()}

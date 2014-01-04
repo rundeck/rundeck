@@ -237,7 +237,7 @@
          * Handle embedded content updates
          */
         function _updateBoxInfo(name,data){
-            if(name=='nodetable'){
+            if(name=='nodes'){
                 if(data.total && data.total!="0"){
                     enableRunBar();
                 }else{
@@ -247,25 +247,73 @@
                     $$('.obs_nodes_page_total').each(function(e){
                         e.innerHTML=data.total;
                     });
-                }
-                if(null!=data.allcount){
-                    $$('.obs_nodes_allcount').each(function (e) {
-                        e.innerHTML = data.allcount;
+                    $$('.obs_nodes_allcount').each(function(e){
+                        e.innerHTML=data.total;
                     });
                     $$('.obs_nodes_allcount_plural').each(function (e) {
-                        e.innerHTML = data.allcount==1?'':'s';
+                        e.innerHTML = data.total == 1 ? '' : 's';
                     });
                 }
             }
         }
 
+        function _matchNodes(){
+            //use form field
+            jQuery('.nodefilterlink').removeClass('active');
+            loadNodeFilter(null,jQuery('#schedJobNodeFilter').val());
+        }
+        function setNodeFilterLink(e){
+            jQuery('.nodefilterlink').removeClass('active');
+            jQuery(e).addClass('active');
+            var filterName = jQuery(e).data('node-filter-name');
+            var filterString = jQuery(e).data('node-filter');
+            loadNodeFilter(filterName,filterString);
+        }
+        function setNodeFilterLinkAction(result){
+            result.find('.nodefilterlink').click(function (evt) {
+                evt.preventDefault();
+                setNodeFilterLink(this);
+            });
+        }
+        function loadNodeFilter(filterName, filterString){
+            var completion = function (data) {
+                jQuery("#${ukey}nodeForm").html(data.responseText);
+                jQuery('#hiddenNodeFilter').val(filterString?filterString:'');
+                jQuery('#schedJobNodeFilter').val(filterString?filterString:'');
+                jQuery('#hiddenNodeFilterName').val(filterName?filterName:'');
+                setNodeFilterLinkAction(jQuery('#${ukey}nodeForm'));
+            };
+            if(filterString){
+                var filter= filterString;
+                jQuery.get("${g.createLink(controller: 'framework',action: 'nodesFragment',params: [maxShown:10,requireRunAuth:'true',project: session.project, view:'embed'])}&filter="+(encodeURIComponent(filter)))
+                        .complete(completion);
+            }else if(filterName){
+                jQuery.get("${g.createLink(controller: 'framework',action: 'nodesFragment',params: [maxShown:10,requireRunAuth:'true',project: session.project, view:'embed'])}&filterName=" + (encodeURIComponent(filterName)))
+                        .complete(completion);
+            }
+        }
 
+        function loadFilterPresets(){
+            jQuery.get("${g.createLink(controller: 'framework',action: 'nodeFilterPresets',params:[projFilter: session.project])}").complete(function(data){
+                jQuery("#filterPresets").html(data.responseText);
+                setNodeFilterLinkAction(jQuery('#filterPresets'));
+            });
+        }
 
         /**
          * START page init
          */
-
         function init() {
+            jQuery('.act_showinlinenodefilter').click(function(e){
+                //load filters/tags
+                loadFilterPresets();
+
+            });
+            jQuery('.act_setinlinenodefilter').click(function (e) {
+                //apply new filter
+                _matchNodes();
+            });
+            setNodeFilterLinkAction(jQuery('#${ukey}nodeForm'));
             $$('#runbox input').each(function(elem){
                 if(elem.type=='text'){
                     elem.observe('keypress',function(evt){
@@ -325,7 +373,9 @@
                 <g:if test="${run_authorized}">
                     <div class=" form-inline clearfix" id="runbox">
                         <g:hiddenField name="project" value="${session.project}"/>
+
                         <g:render template="nodeFiltersHidden" model="${[params: params, query: query]}"/>
+
                         <div class=" col-sm-12">
                             <div class="input-group">
                                 <g:textField name="exec" size="50" placeholder="Enter a shell command"
@@ -401,51 +451,48 @@
             </div>
         <div class="row row-space">
             <div class="col-sm-12">
+%{--
+                <g:link class="textbtn textbtn-default query"
+                        title="Click to modify the filter"
+                        action="nodes" controller="framework"
+                        params="${query.filter?[filter:query.filter]:filterName?[filterName:filterName]:filterParams}">
+                    <i class="glyphicon glyphicon-filter"></i>
+                </g:link>--}%
+                <a class="textbtn textbtn-default query act_showinlinenodefilter"
+                        title="Click to modify the filter"
+                        href="#nodeFilterInline"
+                        data-toggle="collapse"
+                        >
+                    <i class="glyphicon glyphicon-filter"></i>
+                </a>
 
-            <g:link class="textbtn textbtn-default query"
-                    title="Click to modify the filter"
-                    action="nodes" controller="framework"
-                    params="${query.filter?[filter:query.filter]:filterName?[filterName:filterName]:filterParams}">
-                <i class="glyphicon glyphicon-filter"></i>
-                %{--Node Filter:--}%
-                %{--<g:if test="${filterName}">--}%
-                    %{--<i class="glyphicon glyphicon-filter"></i>--}%
-                    %{--${filterName.encodeAsHTML()}:--}%
-                %{--</g:if>--}%
-                %{--<g:if test="${query.filter}">--}%
-                    %{--${query.filter.encodeAsHTML()}--}%
-                %{--</g:if>--}%
-                %{--<g:else>--}%
-                    %{--<g:render template="displayNodeFilters" model="${[displayParams: query]}"/>--}%
-                %{--</g:else>--}%
+                 <g:if test="${!emptyQuery}">
+                    <g:if test="${total>5}">
 
-                %{--<i class="glyphicon glyphicon-edit"></i>--}%
-                %{--edit …--}%
-                %{----}%
-            </g:link>
-
-             <g:if test="${!emptyQuery}">
-                <g:if test="${total>5}">
-
-                    <a class="h4 " data-toggle="collapse" href="#${ukey}nodeForm">
-                        <span class="obs_nodes_allcount">${total}</span> Node<span
-                            class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span>
-                        <b class="glyphicon glyphicon-chevron-right"></b>
-                    </a>
+                        <a class="h4 " data-toggle="collapse" href="#${ukey}nodeForm">
+                            <span class="obs_nodes_allcount">${total}</span> Node<span
+                                class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span>
+                            <b class="glyphicon glyphicon-chevron-right"></b>
+                        </a>
+                    </g:if>
+                     <g:else>
+                        <span class="obs_nodes_allcount">${total}</span> Node<span class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span>
+                     </g:else>
                 </g:if>
-                 <g:else>
-                    <span class="obs_nodes_allcount">${total}</span> Node<span class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span>
-                 </g:else>
-            </g:if>
                 <span id="${ukey}nodeForm" class="${total>5?'collapse collapse-expandable':''}">
                     <g:render template="allnodes"
                               model="${[nodeview: 'embed', expanddetail: true, allnodes: allnodes, totalexecs: totalexecs, jobs: jobs, params: params, total: total, allcount: allcount, page: page, max: max, nodeauthrun: nodeauthrun, tagsummary: tagsummary]}"/>
                 </span>
-        </div>
+            </div>
+            <div class="col-sm-12 form-horizontal collapse" id="nodeFilterInline">
+                <div id="filterPresets">
+                    presets...
+                </div>
+                <div>
+                <g:render template="nodeFilterInputs"/>
+                </div>
+            </div>
 
-
-        </div>
-        <div class="row ">
 
         </div>
 

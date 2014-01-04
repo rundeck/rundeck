@@ -1,6 +1,15 @@
 <g:if test="${params.declarenone && nodes.size()<1}">
     <span class="warn note">None</span>
 </g:if>
+<g:set var="max" value="${-1}"/>
+<g:if test="${params.maxShown}">
+    <g:set var="max" value="${params.maxShown.toInteger()}"/>
+</g:if>
+<g:if test="${max>0 && nodes.size()>max}">
+<a href="#embednodeset" class="textbtn textbtn-default" data-toggle="collapse">Show all ${nodes.size()} Nodes
+</a>
+</g:if>
+<span id="embednodeset" class=" ${max > 0 && nodes.size() > max? 'collapse':''} ">
         <% def i =0 %>
         <g:each in="${nodes.keySet().sort{a,b->a.compareTo(b)}}" var="nodename">
 
@@ -25,3 +34,4 @@
                         }
 
         </g:javascript>
+</span>

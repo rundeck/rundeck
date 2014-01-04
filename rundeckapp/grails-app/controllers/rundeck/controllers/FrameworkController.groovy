@@ -84,9 +84,13 @@ class FrameworkController  {
         return render(view: '/common/error', model: [:])
     }
 
+    def nodeFilterPresets = { ExtNodeFilters query->
+        query.filter = 'name: .*'
+        def model = nodesdata(query)
+        def filterset=User.findByLogin(session.user)?.nodefilters
+        render(template: 'nodeFilterPresets', model:model + [filterset:filterset])
+    }
     def nodes ={ ExtNodeFilters query ->
-        Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if(params.fromExecId|| params.retryFailedExecId) {
             return redirect(action: 'adhoc',params: params)
         }else if(params.exec){
@@ -94,12 +98,6 @@ class FrameworkController  {
         }
         def User u = userService.findOrCreateUser(session.user)
         def usedFilter = null
-//        if (!params.filterName && u && query.nodeFilterIsEmpty() && params.formInput != 'true') {
-//            Map filterpref = userService.parseKeyValuePref(u.filterPref)
-//            if (filterpref['nodes']) {
-//                params.filterName = filterpref['nodes']
-//            }
-//        }
         if (params.filterName) {
             //load a named filter and create a query from it
             if (u) {
@@ -214,7 +212,7 @@ class FrameworkController  {
         }
         def result
         if(!query.nodeFilterIsEmpty()){
-
+            params.requireRunAuth='true'
             result = nodesdata(query)
         }else{
             result= [query: query, params: params, allnodes:[:]]

@@ -24,15 +24,7 @@
 <g:set var="NODE_FILTER_MAP" value="${['':'Hostname','OsName':'OS Name','OsFamily':'OS Family','OsArch':'OS Architecture','OsVersion':'OS Version']}"/>
 <g:hiddenField name="formInput" value="true"/>
 
-<input type="hidden" name="filter" value="${query?.filter}"/>
-<g:each var="key" in="${NODE_FILTERS}">
-    <g:if test="${query?.('nodeInclude'+key)}">
-        <input type='hidden' name="nodeInclude${key}"
-            value="${query?.('nodeInclude'+key)?.encodeAsHTML()}" />
-    </g:if>
-    <g:if test="${query?.('nodeExclude'+key)}">
-            <input type='hidden' name="nodeExclude${key}"
-                value="${query?.('nodeExclude'+key)?.encodeAsHTML()}" />
-    </g:if>
-</g:each>
+<input type="hidden" name="filter" value="${query?.filter}" id="hiddenNodeFilter"/>
+<input type="hidden" name="filterName" value="${filterName?:''}" id="hiddenNodeFilterName"/>
+
 <input type="hidden" name="nodeExcludePrecedence" value="${query?.nodeExcludePrecedence}" />
