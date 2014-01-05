@@ -213,7 +213,8 @@ class FrameworkController  {
         def result
         if(!query.nodeFilterIsEmpty()){
             params.requireRunAuth='true'
-            result = nodesdata(query)
+            result = [query: query, params: params, allnodes: [:]]
+//            result = nodesdata(query)
         }else{
             result= [query: query, params: params, allnodes:[:]]
         }

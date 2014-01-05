@@ -338,6 +338,7 @@
                     loadHistoryLink(history, ajaxHistoryLink, this.getAttribute('href'));
                 });
             }
+            _matchNodes();
         }
         jQuery(document).ready(init);
 
@@ -486,7 +487,6 @@
             </div>
             <div class="col-sm-12 form-horizontal collapse" id="nodeFilterInline">
                 <div id="filterPresets">
-                    presets...
                 </div>
                 <div>
                 <g:render template="nodeFilterInputs"/>
