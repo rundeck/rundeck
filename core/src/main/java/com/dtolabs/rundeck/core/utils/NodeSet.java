@@ -39,6 +39,7 @@ public class NodeSet  implements NodesSelector {
     public static final String OS_VERSION = "os-version";
 
     private String singleNodeName;
+    public static final String DEFAULT_FILTER_KEY = "name";
 
     /**
      * default constructor
@@ -376,6 +377,9 @@ public class NodeSet  implements NodesSelector {
      * @return
      */
     public static Map<String,Map<String, String>> parseFilter(String filter) {
+        return parseFilter(filter, true, DEFAULT_FILTER_KEY);
+    }
+    public static Map<String,Map<String, String>> parseFilter(String filter, final boolean joinMulti, final String defaultKey) {
         Map<String, String> exclude = new HashMap<String, String>();
         Map<String, String> include = new HashMap<String, String>();
         HashMap<String, Map<String, String>> result = new HashMap<String, Map<String, String>>();
@@ -386,22 +390,29 @@ public class NodeSet  implements NodesSelector {
         String key = null;
         for (int i = 0; i < burst.length; i++) {
             String t = burst[i];
-            if (t.endsWith(":") && key==null) {
+            if (t.endsWith(":") && key == null) {
                 key = t.substring(0, t.lastIndexOf(':'));
                 continue;
-            }else if (t.contains(":") && key==null) {
+            } else if (t.contains(":") && key == null) {
                 key = t.substring(0, t.indexOf(':'));
                 t = t.substring(t.indexOf(':') + 1);
-                if("".equals(t)){
+                if ("".equals(t)) {
                     continue;
                 }
+            }else if(key==null && null!= defaultKey){
+                //default filter key
+                key= defaultKey;
             }
-            if (key!=null) {
+            if (key != null) {
+                Map<String, String> set=include;
                 if (key.startsWith("!")) {
                     key = key.substring(1);
-                    exclude.put(key, t);
+                    set = exclude;
+                }
+                if (null != set.get(key) && joinMulti) {
+                    set.put(key, set.get(key) + "," + t);
                 } else {
-                    include.put(key, t);
+                    set.put(key, t);
                 }
                 key = null;
             } else {

@@ -129,6 +129,21 @@ public class TestNodeSet extends TestCase {
         expect.put("tags", "xyz");
         assertFilterMap(expect, null, NodeSet.parseFilter("tags: xyz"));
     }
+    public void testParseFilterDefaultKey() {
+        HashMap<String, String> expect = new HashMap<String, String>();
+        expect.put("name", "xyz");
+        assertFilterMap(expect, null, NodeSet.parseFilter("xyz"));
+    }
+    public void testParseFilterJoinMultiDefaultKey() {
+        HashMap<String, String> expect = new HashMap<String, String>();
+        expect.put("name", "xyz,abc");
+        assertFilterMap(expect, null, NodeSet.parseFilter("xyz abc"));
+    }
+    public void testParseFilterJoinMultiKey() {
+        HashMap<String, String> expect = new HashMap<String, String>();
+        expect.put("tags", "xyz,abc");
+        assertFilterMap(expect, null, NodeSet.parseFilter("tags:xyz tags:abc"));
+    }
     public void testParseFilterMultiInclude() {
         HashMap<String, String> expect = new HashMap<String, String>();
         expect.put("tags", "xyz");
