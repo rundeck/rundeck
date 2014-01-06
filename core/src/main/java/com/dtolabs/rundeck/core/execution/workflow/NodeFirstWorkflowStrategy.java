@@ -132,6 +132,7 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
             }
         } catch (RuntimeException e) {
             exception = e;
+            e.printStackTrace();
             executionContext.getExecutionListener().log(Constants.ERR_LEVEL, "Exception: " + e.getClass() + ": " + e
                     .getMessage());
             wfsuccess = false;
@@ -407,8 +408,9 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
                 }else if (NodeDispatchStepExecutor.isWrappedDispatcherException(executionResult)) {
                     DispatcherException exception
                         = NodeDispatchStepExecutor.extractDispatcherException(executionResult);
-                    NodeStepResult stepResult = exception.getResultMap().get(node.getNodename());
-                    if(null!=stepResult){
+                    Map<String, NodeStepResult> resultMap = exception.getResultMap();
+                    if(null!=resultMap && null!= resultMap.get(node.getNodename())){
+                        NodeStepResult stepResult = resultMap.get(node.getNodename());
                         results.add(stepResult);
                     }
                 }
@@ -433,8 +435,9 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
                 } else if (NodeDispatchStepExecutor.isWrappedDispatcherException(executionResult)) {
                     DispatcherException exception
                         = NodeDispatchStepExecutor.extractDispatcherException(executionResult);
-                    NodeStepResult stepResult = exception.getResultMap().get(node.getNodename());
-                    if (null != stepResult) {
+                    Map<String, NodeStepResult> resultMap = exception.getResultMap();
+                    if (null!=resultMap && null != resultMap.get(node.getNodename())) {
+                        NodeStepResult stepResult = resultMap.get(node.getNodename());
                         results.put(num, stepResult);
                     }
                 }

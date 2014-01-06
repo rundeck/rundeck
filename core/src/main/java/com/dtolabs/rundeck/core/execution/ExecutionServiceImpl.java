@@ -35,15 +35,8 @@ import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcher;
 import com.dtolabs.rundeck.core.execution.service.*;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener;
-import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl;
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.*;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.*;
 import com.dtolabs.rundeck.core.utils.*;
 import org.apache.commons.collections.Predicate;
 
@@ -151,12 +144,18 @@ class ExecutionServiceImpl implements ExecutionService {
         NodeStepResult result = null;
         try {
             final ExecutionContextImpl nodeContext = new ExecutionContextImpl.Builder(context)
-                .singleNodeContext(node,true)
-                .build();
+                    .singleNodeContext(node, true)
+                    .build();
             result = interpreter.executeNodeStep(nodeContext, item, node);
             if (!result.isSuccess()) {
                 context.getExecutionListener().log(0, "Failed: " + result.toString());
             }
+        } catch (NodeStepException e) {
+            result = new NodeStepResultImpl(e, e.getFailureReason(), e.getMessage(), node);
+            throw e;
+        }catch (RuntimeException t) {
+            result = new NodeStepResultImpl(t, StepFailureReason.Unknown, t.getMessage(), node);
+            throw t;
         } finally {
             if (null != getWorkflowListener(context)) {
                 getWorkflowListener(context).finishExecuteNodeStep(result, context, item, node);

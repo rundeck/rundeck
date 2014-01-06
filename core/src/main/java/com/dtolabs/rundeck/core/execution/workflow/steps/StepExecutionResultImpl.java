@@ -39,7 +39,7 @@ import java.util.Map;
  */
 public class StepExecutionResultImpl implements StepExecutionResult, HasSourceResult {
     private boolean success;
-    private Exception exception;
+    private Throwable exception;
     private StatusResult sourceResult;
     private Map<String, Object> resultData;
     private Map<String, Object> failureData;
@@ -52,7 +52,7 @@ public class StepExecutionResultImpl implements StepExecutionResult, HasSourceRe
         failureData = new HashMap<String, Object>();
     }
 
-    public StepExecutionResultImpl(Exception exception, FailureReason failureReason, String failureMessage) {
+    public StepExecutionResultImpl(Throwable exception, FailureReason failureReason, String failureMessage) {
         this();
         this.success=false;
         this.exception = exception;
@@ -71,7 +71,7 @@ public class StepExecutionResultImpl implements StepExecutionResult, HasSourceRe
         this.success = success;
     }
 
-    public Exception getException() {
+    public Throwable getException() {
         return exception;
     }
 

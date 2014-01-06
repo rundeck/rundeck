@@ -289,6 +289,9 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
                         }
                     }
                 }
+            }catch (RuntimeException t) {
+                stepResult = new StepExecutionResultImpl(t, StepFailureReason.Unknown, t.getMessage());
+                throw t;
             } finally {
                 if (null != wlistener) {
                     wlistener.finishWorkflowItem(c, cmd, stepResult);
@@ -440,7 +443,10 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
                     if (!failures.containsKey(key)) {
                         failures.put(key, new ArrayList<StepExecutionResult>());
                     }
-                    failures.get(key).add(e.getResultMap().get(node.getNodename()));
+                    Map<String, NodeStepResult> resultMap = e.getResultMap();
+                    if (null != resultMap && null != resultMap.get(node.getNodename())) {
+                        failures.get(key).add(resultMap.get(node.getNodename()));
+                    }
                 } else {
                     //dispatch failed for a set of nodes
                     for (final String s : e.getResultMap().keySet()) {

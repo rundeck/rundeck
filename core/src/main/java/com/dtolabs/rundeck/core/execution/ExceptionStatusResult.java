@@ -33,5 +33,5 @@ public interface ExceptionStatusResult extends StatusResult {
     /**
      * Return any exception that was caught
      */
-    public Exception getException();
+    public Throwable getException();
 }

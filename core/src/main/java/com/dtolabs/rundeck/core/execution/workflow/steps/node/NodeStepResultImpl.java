@@ -49,7 +49,7 @@ public class NodeStepResultImpl extends StepExecutionResultImpl implements NodeS
      * Create a failure result
      */
     public NodeStepResultImpl(
-                              Exception exception,
+                              Throwable exception,
                               FailureReason failureReason,
                               String failureMessage,
                               INodeEntry node) {

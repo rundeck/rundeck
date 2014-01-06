@@ -121,16 +121,16 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
     }
 
     private String resultMessage(StepExecutionResult result) {
-        return result.getFailureMessage();
+        return null!=result?result.getFailureMessage():null;
     }
 
     private ExecutionState resultState(StepExecutionResult result) {
-        return result.isSuccess() ? ExecutionState.SUCCEEDED :
+        return (null!=result && result.isSuccess()) ? ExecutionState.SUCCEEDED :
                 ExecutionState.FAILED;
     }
 
     private Map<String, Object> resultMetadata(StepExecutionResult result) {
-        if(result.isSuccess()){
+        if(null!=result && result.isSuccess()){
             return null;
         }
         HashMap<String, Object> map = new HashMap<String, Object>();
