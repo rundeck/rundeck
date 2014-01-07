@@ -46,9 +46,8 @@
                 </g:if>
 
             </g:else>
-        </div>
-        <div class="col-sm-6">
-            <span  class="retrybuttons execRerun pull-right" style="${wdgt.styleVisible(if: null != execution.dateCompleted)}">
+
+            <span class="retrybuttons execRerun " style="${wdgt.styleVisible(if: null != execution.dateCompleted)}">
                 <g:if test="${scheduledExecution}">
                     <g:if test="${authChecks[AuthConstants.ACTION_RUN]}">
                         <g:link controller="scheduledExecution"
@@ -75,6 +74,9 @@
                     </g:if>
                 </g:else>
             </span>
+        </div>
+        <div class="col-sm-6">
+            <button class="close closeoutput">&times;</button>
         </div>
         %{--<td width="50%">--}%
             %{--<div id="progressContainer" class="progressContainer">--}%

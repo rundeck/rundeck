@@ -72,14 +72,16 @@
             }
         }
         var _runBtnHtml;
-        function disableRunBar(){
+        function disableRunBar(runnning){
             if($('runbox')){
                 $('runbox').down('input[type="text"]').disable();
                 if ($('runbox').down('button.runbutton')) {
                     $('runbox').down('button.runbutton').disabled = true;
                     $('runbox').down('button.runbutton').addClassName('disabled');
-                    _runBtnHtml= $('runbox').down('button.runbutton').innerHTML;
-                    $('runbox').down('button.runbutton').innerHTML="Running…";
+                    if(runnning){
+                        _runBtnHtml= $('runbox').down('button.runbutton').innerHTML;
+                        $('runbox').down('button.runbutton').innerHTML="Running…";
+                    }
                 }
             }
         }
@@ -116,6 +118,7 @@
             running=false;
             $$('.showafterrun').each(Element.show);
             $$('.hideafterrun').each(Element.hide);
+            $$('.execRerun').each(Element.show);
             $('runFormExec').focus();
         }
         function runError(msg){
@@ -137,7 +140,7 @@
                 return false;
             }
             var data = Form.serialize(elem);
-            disableRunBar();
+            disableRunBar(true);
             runStarted();
             $('runcontent').loading('Starting Execution&hellip;');
             new Ajax.Request("${createLink(controller:'scheduledExecution',action:'runAdhocInline')}",{
@@ -241,7 +244,7 @@
                 if(data.total && data.total!="0"){
                     enableRunBar();
                 }else{
-                    disableRunBar();
+                    disableRunBar(false);
                 }
                 if(null !=data.total){
                     $$('.obs_nodes_page_total').each(function(e){
@@ -278,16 +281,6 @@
             loadNodeFilter(filterName,filterString);
         }
         /**
-         * find all node filter links within the element and set handlers to load the filter
-         * @param elem
-         */
-        function setNodeFilterLinkAction(elem){
-            elem.find('.nodefilterlink').click(function (evt) {
-                evt.preventDefault();
-                selectNodeFilterLink(this);
-            });
-        }
-        /**
         * load either filter string or saved filter
         * @param filterName
         * @param filterString
@@ -298,7 +291,6 @@
                 jQuery('.hiddenNodeFilter').val(filterString?filterString:'');
                 jQuery('.schedJobNodeFilter').val(filterString?filterString:'');
                 jQuery('.hiddenNodeFilterName').val(filterName?filterName:'');
-                setNodeFilterLinkAction(jQuery('#${ukey}nodeForm'));
             };
             if(filterString){
                 var filter= filterString;
@@ -310,30 +302,27 @@
             }
         }
 
-        /**
-         * load saved filters
-         */
-        function loadFilterPresets(){
-            jQuery.get("${g.createLink(controller: 'framework',action: 'nodeFilterPresets',params:[projFilter: session.project])}").complete(function(data){
-                jQuery("#filterPresets").html(data.responseText);
-                setNodeFilterLinkAction(jQuery('#filterPresets'));
-            });
-        }
 
         /**
          * START page init
          */
         function init() {
-            jQuery('.act_showinlinenodefilter').click(function(e){
-                //load filters/tags
-                loadFilterPresets();
-
-            });
             jQuery('.act_setinlinenodefilter').click(function (e) {
                 //apply new filter
                 _matchNodes();
             });
-            setNodeFilterLinkAction(jQuery('#${ukey}nodeForm'));
+            jQuery('#schedJobNodeFilter').on('change',function (e) {
+                //apply new filter
+                _matchNodes();
+            });
+            jQuery('#nodesContent').on('click','.nodefilterlink',function (evt) {
+                evt.preventDefault();
+                selectNodeFilterLink(this);
+            });
+            jQuery('#nodesContent').on('click', '.closeoutput', function (evt) {
+                evt.preventDefault();
+                jQuery('#runcontent').hide();
+            });
             $$('#runbox input').each(function(elem){
                 if(elem.type=='text'){
                     elem.observe('keypress',function(evt){
@@ -350,7 +339,6 @@
             var history = new History(ajaxHistoryLink);
             ko.applyBindings(history, document.getElementById('activity_section'));
             setupActivityLinks('activity_section', history, ajaxHistoryLink);
-
             //if empty query, automatically load first activity_link
             if("${emptyQuery}"=='true'){
                 jQuery('ul.activity_links > li:first-child').addClass('active');
@@ -376,28 +364,95 @@
         table.execoutput {
             font-size: 100%;
         }
-        #nodesPaging{
-            margin-top:5px;
-        }
     </style>
 </head>
 <body>
+
+<g:if test="${session.user && User.findByLogin(session.user)?.nodefilters}">
+    <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters}"/>
+</g:if>
 
 <div id="nodesContent">
     <g:set var="run_authorized" value="${auth.adhocAllowedTest( action:AuthConstants.ACTION_RUN)}"/>
 
 
     <g:render template="/common/messages"/>
-    <div id="error" class="error message" style="display:none;"></div>
         <div>
             <div class="row ">
+                <div class="col-sm-6">
+                    <div class=" form-inline " id="nodeFilterInline">
+                            <g:hiddenField name="max" value="${max}"/>
+                            <g:hiddenField name="offset" value="${offset}"/>
+                            <g:hiddenField name="formInput" value="true"/>
+                            <g:set var="filtvalue"
+                                   value="${query?.('filter')?.encodeAsHTML()}"/>
+
+                            <div class="form-group">
+                                <span class="input-group">
+                                    %{--Filter navigation/selection dropdown--}%
+                                    <span class="input-group-btn">
+                                        <button type="button" class="btn btn-default dropdown-toggle"
+                                                data-toggle="dropdown">Filter <span
+                                                class="caret"></span></button>
+                                        <ul class="dropdown-menu">
+
+                                            <li>
+                                                <g:link class="nodefilterlink"
+                                                        action="nodes" controller="framework"
+                                                        data-node-filter=".*"
+                                                        data-node-filter-all="true"
+                                                        params="[showall: 'true']">
+                                                    All nodes
+                                                </g:link>
+                                            </li>
+                                            <li class="divider"></li>
+                                            <li class="dropdown-header"><i
+                                                    class="glyphicon glyphicon-filter"></i> Saved Filters</li>
+                                            <g:if test="${filterset}">
+                                                <g:render template="/common/selectFilter"
+                                                          model="[filterList: true, filterset: filterset, filterName: filterName, prefName: 'nodes', noSelection: filterName ? '-All Nodes-' : null]"/>
+                                            </g:if>
+                                        </ul>
+                                    </span>
+                                    <input type='search' name="filter" class="schedJobNodeFilter form-control"
+                                           data-bind="value: filterWithoutAll"
+                                           placeholder="Enter a node filter"
+                                           data-toggle='popover'
+                                           data-popover-content-ref="#queryFilterHelp"
+                                           data-placement="bottom"
+                                           data-trigger="manual"
+                                           data-container="body"
+                                           value="${filtvalue}" id="schedJobNodeFilter"/>
+
+
+                                    <span class="input-group-btn">
+                                        <a class="btn btn-info" data-toggle='popover-for'
+                                           data-target="#schedJobNodeFilter">
+                                            <i class="glyphicon glyphicon-question-sign"></i>
+                                        </a>
+                                        <button class="btn btn-success" type="submit">
+                                            <i class="glyphicon glyphicon-search"></i>
+                                        </button>
+                                    </span>
+                                </span>
+                            </div>
+
+
+                        <div class=" collapse" id="queryFilterHelp">
+                            <div class="help-block">
+                                <g:render template="/common/nodefilterStringHelp"/>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
                 <g:if test="${run_authorized}">
-                    <div class=" form-inline clearfix" id="runbox">
-                        <g:hiddenField name="project" value="${session.project}"/>
 
-                        <g:render template="nodeFiltersHidden" model="${[params: params, query: query]}"/>
+                        <div class=" col-sm-6">
+                            <div class=" form-inline clearfix" id="runbox">
+                                <g:hiddenField name="project" value="${session.project}"/>
 
-                        <div class=" col-sm-12">
+                                <g:render template="nodeFiltersHidden" model="${[params: params, query: query]}"/>
                             <div class="input-group">
                                 <g:textField name="exec" size="50" placeholder="Enter a shell command"
                                              value="${runCommand}"
@@ -469,52 +524,32 @@
                         <div class="hiderun" id="runerror" style="display:none"></div>
                     </div>
                 </g:if>
-            </div>
-        <div class="row row-space">
-            <div class="col-sm-12">
-%{--
-                <g:link class="textbtn textbtn-default query"
-                        title="Click to modify the filter"
-                        action="nodes" controller="framework"
-                        params="${query.filter?[filter:query.filter]:filterName?[filterName:filterName]:filterParams}">
-                    <i class="glyphicon glyphicon-filter"></i>
-                </g:link>--}%
-                <a class="textbtn textbtn-default query act_showinlinenodefilter"
-                        title="Click to modify the filter"
-                        href="#nodeFilterInline"
-                        data-toggle="collapse"
-                        >
-                    <i class="glyphicon glyphicon-filter"></i>
-                </a>
-
-                 <g:if test="${!emptyQuery}">
-                    <g:if test="${total>5}">
-
-                        <a class="h4 " data-toggle="collapse" href="#${ukey}nodeForm">
-                            <span class="obs_nodes_allcount">${total!=null?total:'Loading'}</span> Node<span
-                                class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span>
-                            <b class="glyphicon glyphicon-chevron-right"></b>
-                        </a>
-                    </g:if>
-                     <g:else>
-                        <span class="obs_nodes_allcount">${total}</span> Node<span class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span>
-                     </g:else>
-                </g:if>
-                <span id="${ukey}nodeForm" class="${total>5?'collapse collapse-expandable':''}">
-                    <g:render template="allnodes"
-                              model="${[nodeview: 'embed', expanddetail: true, allnodes: allnodes, totalexecs: totalexecs, jobs: jobs, params: params, total: total, allcount: allcount, page: page, max: max, nodeauthrun: nodeauthrun, tagsummary: tagsummary]}"/>
-                </span>
-            </div>
-            <div class="col-sm-12 form-horizontal collapse" id="nodeFilterInline">
-                <div>
-                    <g:render template="nodeFilterInputs"/>
-                </div>
-                <div id="filterPresets">
-                </div>
-            </div>
 
 
         </div>
+            <div class="row row-space">
+                <div class="col-sm-12">
+
+                    <g:if test="${!emptyQuery}">
+                        <g:if test="${total > 5}">
+
+                            <a class="h4 " data-toggle="collapse" href="#${ukey}nodeForm">
+                                <span class="obs_nodes_allcount">${total != null ? total : 'Loading'}</span> Node<span
+                                    class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span>
+                                <b class="glyphicon glyphicon-chevron-right"></b>
+                            </a>
+                        </g:if>
+                        <g:else>
+                            <span class="obs_nodes_allcount">${total}</span> Node<span
+                                class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span>
+                        </g:else>
+                    </g:if>
+                    <span id="${ukey}nodeForm" class="${total > 5 ? 'collapse collapse-expandable' : ''}">
+                        <g:render template="allnodes"
+                                  model="${[nodeview: 'embed', expanddetail: true, allnodes: allnodes, totalexecs: totalexecs, jobs: jobs, params: params, total: total, allcount: allcount, page: page, max: max, nodeauthrun: nodeauthrun, tagsummary: tagsummary]}"/>
+                    </span>
+                </div>
+            </div>
 
 
 
