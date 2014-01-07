@@ -262,12 +262,25 @@
          * END remote edit code
          */
 
-        function NodeFilters(filterName, filterString) {
+        function NodeFilters(data) {
             var self = this;
-            self.filterName = ko.observable(filterName);
-            self.filter = ko.observable(filterString);
+            self.filterName = ko.observable(data.filterName);
+            self.filter = ko.observable(data.filter);
             self.total = ko.observable();
             self.allcount = ko.observable();
+            self.filterAll = ko.observable(data.filterAll);
+            self.filterWithoutAll=ko.computed({
+                read: function () {
+                    if (self.filterAll() && self.filter() == '.*') {
+                        return '';
+                    }
+                    return self.filter();
+                },
+                write: function (value) {
+                    self.filter(value);
+                },
+                owner: this
+            });
             self.hasNodes=ko.computed(function(){
                 return 0!=self.allcount();
             });
@@ -292,38 +305,35 @@
         function selectNodeFilterLink(e) {
             var filterName = jQuery(e).data('node-filter-name');
             var filterString = jQuery(e).data('node-filter');
-            loadNodeFilter(filterName, filterString);
-        }
-        /**
-         * find all node filter links within the element and set handlers to load the filter
-         * @param elem
-         */
-        function setNodeFilterLinkAction(elem) {
-            elem.find('.nodefilterlink').click(function (evt) {
-                evt.preventDefault();
-                selectNodeFilterLink(this);
-            });
+            var filterAll = jQuery(e).data('node-filter-all')?true:false;
+            loadNodeFilter(filterName, filterString,filterAll);
         }
 
         var nodespage=0;
         var pagingMax=20;
         function expandResultNodes(page,elem){
-            var filterString=$F('schedJobNodeFilter');
-            var filterName=null;
-            loadNodeFilter(filterName,filterString,elem,page);
+            loadNodeFilter(null,nodeFilter.filter(),false,elem,page);
         }
-            /**
-             * load either filter string or saved filter
-             * @param filterName
-             * @param filterString
-             */
-        function loadNodeFilter(filterName, filterString,elem,page) {
+        /**
+         * load either filter string or saved filter
+         * @param filterName name of saved filter
+         * @param filterString string filter
+         * @param filterAll if true, "all nodes" was selected
+         * @param elem target element
+         * @param page number to load
+         */
+        function loadNodeFilter(filterName, filterString,filterAll,elem,page) {
             jQuery('.nodefilterlink').removeClass('active');
             if (!page) {
                 page = 0;
             }
             if (!elem) {
                 elem = 'nodelist';
+            }
+            if(!filterName&&!filterString&&null==filterAll){
+                filterName=nodeFilter.filterName();
+                filterString=nodeFilter.filter();
+                filterAll=nodeFilter.filterAll();
             }
             nodespage = page;
             var view = page == 0 ? 'table' : 'tableContent';
@@ -338,11 +348,11 @@
 //                jQuery('.schedJobNodeFilter').val(filterString);
                 jQuery('.hiddenNodeFilterName').val('');
             }
+            nodeFilter.filterAll(filterAll);
+            nodeFilter.filterName(filterName);
+            nodeFilter.filter(filterString);
             _updateMatchedNodes(data,elem,'${session.project}',false,{view:view,expanddetail:true,inlinepaging:true,
                 page:page,max:pagingMax},function(xht){
-                setNodeFilterLinkAction(jQuery($(elem)));
-                nodeFilter.filterName(filterName);
-                nodeFilter.filter(filterString);
             });
         }
         function _loadNextNodesPageTable(max,total,tbl,elem){
@@ -444,12 +454,15 @@
                     });
                 }
             });
-            var filterParams =${[filterName:params.filterName,filter:query?.filter].encodeAsJSON()};
-            nodeFilter = new NodeFilters(filterParams.filterName, filterParams.filter);
+            var filterParams =${[filterName:params.filterName,filter:query?.filter,filterAll:params.showall in ['true',true]].encodeAsJSON()};
+            nodeFilter = new NodeFilters(filterParams);
             ko.applyBindings(nodeFilter);
 
-            setNodeFilterLinkAction(jQuery('#nodesContent'));
-            loadNodeFilter(filterParams.filterName, filterParams.filter);
+            jQuery('#nodesContent').on('click', '.nodefilterlink', function (evt) {
+                evt.preventDefault();
+                selectNodeFilterLink(this);
+            });
+            loadNodeFilter();
             jQuery('#searchForm').submit(_submitNodeFilters);
 
         }
@@ -564,6 +577,7 @@
                             <g:link class="nodefilterlink"
                                     action="nodes" controller="framework"
                                     data-node-filter=".*"
+                                    data-node-filter-all="true"
                                     params="[showall: 'true']">
                                 Show all nodes
                             </g:link>
@@ -577,14 +591,14 @@
                     </ul>
                 </span>
                 <input type='search' name="filter" class="schedJobNodeFilter form-control"
-                    data-bind="value: filter()"
+                    data-bind="value: filterWithoutAll"
                        placeholder="Enter a node filter"
                        data-toggle='popover'
                        data-popover-content-ref="#queryFilterHelp"
                        data-placement="bottom"
                        data-trigger="manual"
                        data-container="body"
-                       value="${filtvalue}" id="schedJobNodeFilter" onchange="_matchNodes();"/>
+                       value="${filtvalue}" id="schedJobNodeFilter" />
 
 
                 <span class="input-group-btn">

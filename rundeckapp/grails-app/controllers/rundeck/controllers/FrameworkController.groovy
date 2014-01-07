@@ -116,11 +116,12 @@ class FrameworkController  {
             query = new ExtNodeFilters()
             usedFilter = null
         }
-        if(params.showall){
+        if(params.showall=='true'){
             query.filter = '.*'
 
         }else if (query.nodeFilterIsEmpty() && 'true'!=params.formInput) {
             query.filter = '.*'
+            params.showall='true'
 //            summaryOnly=true
             //filter all and summarize
         }
