@@ -280,7 +280,7 @@
             self.saveJob=function(){
                 document.location = _genUrl("${g.createLink(action: 'create',controller: 'scheduledExecution',params:[project:session.project])}", {
                     filter: self.filter(),
-                    filterName: self.filterName(),
+                    filterName: self.filterName()
                 });
             };
         }
@@ -330,12 +330,12 @@
             var data = filterName? {filterName: filterName} : {filter: filterString};
             if(filterName){
                 jQuery('a[data-node-filter-name=\''+filterName+'\']').addClass('active');
-                jQuery('.hiddenNodeFilter').val('');
-                jQuery('.schedJobNodeFilter').val('');
+                jQuery('.hiddenNodeFilter').val(filterString);
+//                jQuery('.schedJobNodeFilter').val(filterString);
                 jQuery('.hiddenNodeFilterName').val(filterName);
             }else{
                 jQuery('.hiddenNodeFilter').val(filterString );
-                jQuery('.schedJobNodeFilter').val(filterString);
+//                jQuery('.schedJobNodeFilter').val(filterString);
                 jQuery('.hiddenNodeFilterName').val('');
             }
             _updateMatchedNodes(data,elem,'${session.project}',false,{view:view,expanddetail:true,inlinepaging:true,
@@ -413,6 +413,11 @@
                     });
                     if(typeof(nodeFilter) != 'undefined'){
                         nodeFilter.allcount(data.allcount);
+                    }
+                }
+                if(null!=data.filter){
+                    if (typeof(nodeFilter) != 'undefined') {
+                        nodeFilter.filter(data.filter);
                     }
                 }
             }
@@ -539,7 +544,9 @@
             <g:set var="filtvalue"
                    value="${query?.('filter')?.encodeAsHTML()}"/>
 
-            <div class="input-group">
+            <div class="form-group">
+                <span class="input-group" >
+                    %{--Filter navigation/selection dropdown--}%
                 <span class="input-group-btn" >
                     <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">Filter <span
                             class="caret"></span></button>
@@ -551,22 +558,26 @@
                                 Save this filter&hellip;
                             </a>
                         </li>
-                        <li data-bind="visible: filterName()">
-                            <a href="#"
-                               data-toggle="modal"
-                               data-target="#deleteFilterModal">
-                                <i class="glyphicon glyphicon-remove"></i>
-                                Delete filter <strong data-bind="text: filterName"></strong>&hellip;
-                            </a>
+
+                        <li class="divider" data-bind="visible: !filterName()"></li>
+                        <li >
+                            <g:link class="nodefilterlink"
+                                    action="nodes" controller="framework"
+                                    data-node-filter=".*"
+                                    params="[showall: 'true']">
+                                Show all nodes
+                            </g:link>
                         </li>
+                        <li class="divider"></li>
+                        <li class="dropdown-header"><i class="glyphicon glyphicon-filter"></i> Saved Filters</li>
+                        <g:if test="${filterset}">
+                            <g:render template="/common/selectFilter"
+                                      model="[filterList: true, filterset: filterset, filterName: filterName, prefName: 'nodes', noSelection: filterName ? '-All Nodes-' : null]"/>
+                        </g:if>
                     </ul>
                 </span>
-                %{--<span class="input-group-addon" >--}%
-                    %{--<span data-bind="visible: !filterName()">Query:</span>--}%
-                    %{--<span data-bind="visible: filterName()">Filter:</span>--}%
-                %{--</span>--}%
-
                 <input type='search' name="filter" class="schedJobNodeFilter form-control"
+                    data-bind="value: filter()"
                        placeholder="Enter a node filter"
                        data-toggle='popover'
                        data-popover-content-ref="#queryFilterHelp"
@@ -574,7 +585,6 @@
                        data-trigger="manual"
                        data-container="body"
                        value="${filtvalue}" id="schedJobNodeFilter" onchange="_matchNodes();"/>
-
 
 
                 <span class="input-group-btn">
@@ -585,16 +595,19 @@
                         <i class="glyphicon glyphicon-search"></i>
                     </button>
                 </span>
+                </span>
             </div>
 
-            <div class=" collapse" id="queryFilterHelp">
-                <div class="help-block">
-                    <g:render template="/common/nodefilterStringHelp"/>
-                </div>
-            </div>
+
+
 
         </g:form>
 
+    <div class=" collapse" id="queryFilterHelp">
+        <div class="help-block">
+            <g:render template="/common/nodefilterStringHelp"/>
+        </div>
+    </div>
     </div>
 
 
@@ -632,29 +645,44 @@
 
         </div>
 
-    <div class="col-sm-6">
+    <div class="col-sm-3">
+        <div class="well well-sm">
+        <div data-bind="if: filterName()">
 
-        <g:link class="btn btn-xs btn-default nodefilterlink"
-                action="nodes" controller="framework"
-                data-node-filter=".*"
-                params="[filter: '.*']">
-            Show all nodes
-        </g:link>
+            Selected Filter:  <strong data-bind="text: filterName()">${filterName.encodeAsHTML()}</strong>
+                    <span data-bind="visible: filterName()">
+                        <a href="#"
+                            class="textbtn textbtn-danger"
+                           data-toggle="modal"
+                           data-target="#deleteFilterModal">
+                            <i class="glyphicon glyphicon-remove"></i>
+                            delete &hellip;
+                        </a>
+                    </span>
 
-        <g:if test="${filterset}">
-            <g:render template="/common/selectFilter"
-                      model="[filterLinks: true, filterset: filterset, filterName: filterName, prefName: 'nodes', noSelection: filterName ? '-All Nodes-' : null]"/>
-        </g:if>
-        <g:form class="form form-horizontal">
-            <g:render template="nodeFiltersHidden"/>
-            <g:render template="/common/queryFilterManagerModal"
-                      model="${[rkey: ukey, filterName: filterName, filterset: filterset,
-                              filterLinks: true,
-                              formId: "${ukey}filter",
-                              ko: true,
-                              deleteActionSubmit: 'deleteNodeFilter', storeActionSubmit: 'storeNodeFilter']}"/>
-        </g:form>
+        </div>
+        <div data-bind="if: !filterName()">
+                <a href="#"
+                    class="textbtn textbtn-success"
+                   data-toggle="modal"
+                   data-target="#saveFilterModal">
+                    <i class="glyphicon glyphicon-plus"></i>
+                    Save this filter&hellip;
+                </a>
+        </div>
+        </div>
     </div>
+
+    %{--Form for saving/deleting node filters--}%
+    <g:form class="form form-horizontal">
+        <g:render template="nodeFiltersHidden"/>
+        <g:render template="/common/queryFilterManagerModal"
+                  model="${[rkey: ukey, filterName: filterName, filterset: filterset,
+                          filterLinks: true,
+                          formId: "${ukey}filter",
+                          ko: true,
+                          deleteActionSubmit: 'deleteNodeFilter', storeActionSubmit: 'storeNodeFilter']}"/>
+    </g:form>
 </div>
     <div class="row row-space">
         <div class="col-sm-9">
@@ -689,13 +717,15 @@
                             </a>
                         </li>
                     </g:if>
-                    <li data-bind="visible: hasNodes()">
+                    <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_CREATE}">
+                    <li >
                         <a href="#" data-bind="click: saveJob">
                             <i class="glyphicon glyphicon-plus"></i>
                             Create a job for <span data-bind="text: allcount">${total}</span> Node<span
                                 class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span> …
                         </a>
                     </li>
+                    </auth:resourceAllowed>
                 </ul>
             </div>
         </div>

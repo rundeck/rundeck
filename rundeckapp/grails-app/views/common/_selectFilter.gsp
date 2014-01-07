@@ -22,7 +22,19 @@
     $Id$
  --%>
 
-<g:if test="${filterLinks && filterset}">
+<g:if test="${filterList && filterset}">
+    <g:each in="${filterset.sort({ a, b -> a.name.compareTo(b.name) })}" var="filter">
+        <g:set var="isActive" value="${filter.name == filterName}"/>
+        <li>
+        <g:link action="nodes" controller="framework" params="[filterName: filter.name]"
+                class="${isActive ? 'active' : ''} textbtn textbtn-primary nodefilterlink "
+            data-node-filter-name="${filter.name}"
+                title="Apply filter: ${filter.name.encodeAsHTML()}">
+            ${filter.name.encodeAsHTML()}</g:link>
+        </li>
+    </g:each>
+</g:if>
+<g:elseif test="${filterLinks && filterset}">
     <i class="glyphicon glyphicon-filter"></i>
     Filters:
     <span class="nav-links">
@@ -36,7 +48,7 @@
             ${filter.name.encodeAsHTML()}</g:link>
     </g:each>
     </span>
-</g:if>
+</g:elseif>
 <g:elseif test="${filterset}">
     <g:select name="filterName" optionKey="name" optionValue="name" from="${filterset?filterset.sort({a,b->a.name.compareTo(b.name)}):filterset}" value="${filterName}"
         noSelection="${['':noSelection?noSelection:'-select a filter-']}" onchange="setFilter('${prefName}',this.value);"/>

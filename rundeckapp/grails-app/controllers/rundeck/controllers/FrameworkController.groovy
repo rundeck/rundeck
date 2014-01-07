@@ -104,10 +104,8 @@ class FrameworkController  {
                 NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, u)
                 if (filter) {
                     def query2 = filter.createExtNodeFilters()
-                    //XXX: node query doesn't use pagination, as it is not an actual DB query
                     query = query2
-                    def props = query.properties
-                    params.putAll(props)
+                    params.filter=query.asFilter()
                     usedFilter = params.filterName
                 }
             }
@@ -133,7 +131,7 @@ class FrameworkController  {
 //        if (!summaryOnly && ('true' == params.formInput || usedFilter || !query.nodeFilterIsEmpty())){
 //            model = nodesdata(query)
 //        } else {
-            model = [query: query, params: params, showFilter:true]
+            model = [query: query, params: params, showFilter:true,filter:query.filter]
 //        }
 
         if (usedFilter) {

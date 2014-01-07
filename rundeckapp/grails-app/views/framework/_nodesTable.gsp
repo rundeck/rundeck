@@ -3,11 +3,20 @@
 </g:if>
 <g:if test="${nodes && nodes.size()>0}">
     <g:if test="${tagsummary}">
-    <g:render template="tagsummary" model="${[tagsummary:tagsummary,link:[action:'nodes',controller:'framework',param:'nodeIncludeTags']]}"/>
+    <div class="row">
+    <div class="col-sm-12">
+    <div class=" col-inset">
+            <g:render template="tagsummary" model="${[tagsummary:tagsummary,link:[action:'nodes',controller:'framework',param:'nodeIncludeTags']]}"/>
+    </div>
+    </div>
+    </div>
     </g:if>
+    <div class="row row-space">
+    <div class="col-sm-12 ">
     <table cellpadding="0" cellspacing="0" width="100%" id="nodesTable" class="">
         <g:render template="nodesTableContent" model="${[nodes:nodes,params:params,total:total,allcount:allcount,page:page,max:max,nodeauthrun:nodeauthrun]}"/>
     </table>
+
     <g:if test="${page==0 && (page+1*max<total)}">
         <div id="nodesPaging">
             %{--${nodes.size()}/${allcount} (page ${page} in ${max})--}%
@@ -18,14 +27,15 @@
             <span class="btn btn-sm btn-default" onclick="_loadNextNodesPageTable(${max},-1,'nodesTable','nodesPaging');" title="Load all remaining nodes...">Load <span id="moreCount">${remainCount}</span> remaining&hellip;</span>
         </div>
     </g:if>
-
+    </div>
+    </div>
     <g:javascript>
         if(typeof(initTooltipForElements)=='function'){
             initTooltipForElements('tr.node_entry span.node_ident');
         }
     </g:javascript>
 </g:if>
-<g:render template="/common/boxinfo" model="${[name:'nodetable',model:[total:nodes?.size(),allcount:total]]}"/>
+<g:render template="/common/boxinfo" model="${[name:'nodetable',model:[total:nodes?.size(),allcount:total,filter:query?.filter]]}"/>
 
 <div id="remoteEditholder" style="display:none" class="popout">
     <span id="remoteEditHeader">

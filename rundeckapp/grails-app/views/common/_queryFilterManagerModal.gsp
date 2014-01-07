@@ -59,6 +59,17 @@
                         <g:hiddenField name="delFilterName" value="${filterName}" data-bind="value: filterName"/>
                     </div>
                 </div>
+                <g:if test="${ko}">
+                    <div class="form-group ">
+                        <label class="control-label col-sm-2">
+                            Filter:
+                        </label>
+
+                        <div class="col-sm-10">
+                            <span data-bind="text: filter" class="form-control-static "></span>
+                        </div>
+                    </div>
+                </g:if>
             </div>
             <div class="modal-body">
                 <span class="text-danger">Really delete this filter?</span>
