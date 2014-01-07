@@ -280,7 +280,7 @@ class FrameworkController  {
         }else{
             //match only local node if filters are blank
             nodeset = new NodeSetImpl()
-            nodeset.putNode(nodes1.getNode(framework.getFrameworkNodeName()))
+//            nodeset.putNode(nodes1.getNode(framework.getFrameworkNodeName()))
         }
 //            nodes = nodes.sort { INodeEntry a, INodeEntry b -> return a.nodename.compareTo(b.nodename) }
         //filter nodes by read authorization
