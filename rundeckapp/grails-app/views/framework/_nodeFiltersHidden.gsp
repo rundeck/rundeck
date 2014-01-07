@@ -20,11 +20,9 @@
     Created: Apr 14, 2010 4:07:58 PM
     $Id$
  --%>
-<g:set var="NODE_FILTERS" value="${['','Name','Tags','OsName','OsFamily','OsArch','OsVersion']}"/>
-<g:set var="NODE_FILTER_MAP" value="${['':'Hostname','OsName':'OS Name','OsFamily':'OS Family','OsArch':'OS Architecture','OsVersion':'OS Version']}"/>
 <g:hiddenField name="formInput" value="true"/>
 
-<input type="hidden" name="filter" value="${query?.filter}" id="hiddenNodeFilter"/>
-<input type="hidden" name="filterName" value="${filterName?:''}" id="hiddenNodeFilterName"/>
+<input type="hidden" name="filter" value="${query?.filter}"  class="hiddenNodeFilter"/>
+<input type="hidden" name="filterName" value="${filterName?:''}"  class="hiddenNodeFilterName"/>
 
 <input type="hidden" name="nodeExcludePrecedence" value="${query?.nodeExcludePrecedence}" />

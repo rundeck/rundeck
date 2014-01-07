@@ -257,30 +257,47 @@
             }
         }
 
+        /**
+         * override action of the filter input text field to load via ajax
+         * @private
+         */
         function _matchNodes(){
             //use form field
-            jQuery('.nodefilterlink').removeClass('active');
             loadNodeFilter(null,jQuery('#schedJobNodeFilter').val());
+            jQuery('.nodefilterlink').removeClass('active');
         }
-        function setNodeFilterLink(e){
+        /**
+         * node filter link action
+         * @param e
+         */
+        function selectNodeFilterLink(e){
             jQuery('.nodefilterlink').removeClass('active');
             jQuery(e).addClass('active');
             var filterName = jQuery(e).data('node-filter-name');
             var filterString = jQuery(e).data('node-filter');
             loadNodeFilter(filterName,filterString);
         }
-        function setNodeFilterLinkAction(result){
-            result.find('.nodefilterlink').click(function (evt) {
+        /**
+         * find all node filter links within the element and set handlers to load the filter
+         * @param elem
+         */
+        function setNodeFilterLinkAction(elem){
+            elem.find('.nodefilterlink').click(function (evt) {
                 evt.preventDefault();
-                setNodeFilterLink(this);
+                selectNodeFilterLink(this);
             });
         }
+        /**
+        * load either filter string or saved filter
+        * @param filterName
+        * @param filterString
+         */
         function loadNodeFilter(filterName, filterString){
             var completion = function (data) {
                 jQuery("#${ukey}nodeForm").html(data.responseText);
-                jQuery('#hiddenNodeFilter').val(filterString?filterString:'');
-                jQuery('#schedJobNodeFilter').val(filterString?filterString:'');
-                jQuery('#hiddenNodeFilterName').val(filterName?filterName:'');
+                jQuery('.hiddenNodeFilter').val(filterString?filterString:'');
+                jQuery('.schedJobNodeFilter').val(filterString?filterString:'');
+                jQuery('.hiddenNodeFilterName').val(filterName?filterName:'');
                 setNodeFilterLinkAction(jQuery('#${ukey}nodeForm'));
             };
             if(filterString){
@@ -293,6 +310,9 @@
             }
         }
 
+        /**
+         * load saved filters
+         */
         function loadFilterPresets(){
             jQuery.get("${g.createLink(controller: 'framework',action: 'nodeFilterPresets',params:[projFilter: session.project])}").complete(function(data){
                 jQuery("#filterPresets").html(data.responseText);
@@ -471,7 +491,7 @@
                     <g:if test="${total>5}">
 
                         <a class="h4 " data-toggle="collapse" href="#${ukey}nodeForm">
-                            <span class="obs_nodes_allcount">${total}</span> Node<span
+                            <span class="obs_nodes_allcount">${total!=null?total:'Loading'}</span> Node<span
                                 class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span>
                             <b class="glyphicon glyphicon-chevron-right"></b>
                         </a>
@@ -486,10 +506,10 @@
                 </span>
             </div>
             <div class="col-sm-12 form-horizontal collapse" id="nodeFilterInline">
-                <div id="filterPresets">
-                </div>
                 <div>
-                <g:render template="nodeFilterInputs"/>
+                    <g:render template="nodeFilterInputs"/>
+                </div>
+                <div id="filterPresets">
                 </div>
             </div>
 

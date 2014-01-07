@@ -24,15 +24,16 @@
 <g:if test="${tagsummary}">
         <g:set var="hidetop" value="${hidetop?:tagsummary.findAll {it.value>1}.size()>30}"/>
         <g:if test="${hidetop}">
-            <span class="action button receiver" title="Show tag demographics" onclick="Element.show('tagdemo');
-            Element.hide(this);">
-                <i class="glyphicon glyphicon-tags text-muted"></i>
-
-                Show ${tagsummary.size()} tags&hellip;
-            </span>
+            <span class="textbtn textbtn-secondary tag"
+                  title="Show tag demographics" onclick="Element.toggle('tagdemo'); Element.toggleClassName(this,'active');">
+                <i class="glyphicon glyphicon-tags text-muted "></i>
+                ${tagsummary.size()} tags
+                <i class="glyphicon glyphicon-chevron-right"></i></span>
         </g:if>
         <span id="tagdemo" style="${wdgt.styleVisible(unless: hidetop)}">
-            <i class="glyphicon glyphicon-tags text-muted"></i>
+            <g:if test="${!hidetop}">
+                <i class="glyphicon glyphicon-tags text-muted"></i>
+            </g:if>
             <g:set var="singletag" value="${[]}"/>
             <g:each var="tag" in="${tagsummary.sort{a,b->a.value>b.value?-1:a.value<b.value?1:a.key<=>b.key}.keySet()}">
                 <g:if test="${tagsummary[tag]>1 || tagsummary.size()<=30}">
@@ -55,16 +56,14 @@
                 </g:else>
             </g:each>
             <g:if test="${singletag}">
-                <span class="action button receiver" title="See all tags" onclick="Element.show('singletags');
+                <span class="btn btn-sm btn-default receiver" title="See all tags" onclick="Element.show('singletags');
                 Element.hide(this);">Show All&hellip;</span>
                 <span style="display:none" id="singletags">
                     <g:each var="tag" in="${singletag}">
                         <span class="summary">
                             <g:if test="${link}">
-                                <g:link class=" action" action="${link.action}" controller="${link.controller}"
-                                        params="${[(link.param):tag]}"
-                                        title="Filter by tag: ${tag}">${tag.encodeAsHTML()}</g:link>
-                                :${tagsummary[tag]}
+                                <g:render template="nodeFilterLink"
+                                          model="[key: 'tags', value: tag, linktext: tag + ' : ' + tagsummary[tag], css: 'tag textbtn']"/>
                             </g:if>
                             <g:elseif test="${action}">
                                 <span class=" ${action.classnames}" onclick="${action.onclick}"
@@ -73,7 +72,7 @@
                             </g:elseif>
                             <g:else>
                                 ${tag.encodeAsHTML()}
-                                :${tagsummary[tag]}
+                                : ${tagsummary[tag]}
                             </g:else></span>
                     </g:each>
                 </span>

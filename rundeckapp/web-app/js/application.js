@@ -590,6 +590,24 @@ function _initPopoverContentRef(parent){
             });
     });
 }
+/**
+ * jQuery/bootstrap utility functions
+ */
+function _initPopoverContentFor(parent){
+    var sel= '[data-toggle=popover-for]';
+    jQuery(parent!=null?parent+' '+sel:sel).each(function (i, e) {
+        var ref = jQuery(e).data('target')|| e.href();
+        var found=jQuery(ref);
+        jQuery(e).on(found.data('data-trigger')||'click',function(){
+            found.popover('toggle');
+        });
+        found.on('shown.bs.popover',function(){
+            jQuery(e).toggleClass('active');
+        }).on('hidden.bs.popover',function(){
+                jQuery(e).toggleClass('active');
+            });
+    });
+}
 
 /** page init */
 function _initAffix(){
@@ -654,6 +672,7 @@ function _initCollapseExpander(){
         jQuery(document).ready(function () {
             jQuery('.has_tooltip').tooltip({});
             _initPopoverContentRef();
+            _initPopoverContentFor();
             _initAffix();
             _initIEPlaceholder();
             _initCollapseExpander();

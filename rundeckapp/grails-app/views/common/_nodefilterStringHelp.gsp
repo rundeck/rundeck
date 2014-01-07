@@ -14,15 +14,39 @@
   limitations under the License.
   --}%
 
-<p>
-    To include nodes with matching attributes: <code>attribute: value</code>.
+<strong>Filter nodes by attribute value:</strong>
+<ul>
+    <li>Include: <code>attribute: value</code></li>
 
-    To exclude nodes with matching attributes: <code>!attribute: value</code>
+    <li>Exclude: <code>!attribute: value</code></li>
+</ul>
+
+
+<strong>Use Regular Expressions:</strong>
+<p>
+    <code>hostname: dev(\d+).test.com</code>.
 </p>
 
-
-Regular expressions can be used. E.g.: <code>hostname: dev(\d+).test.com</code>.
-
+<strong>Regex syntax checking:</strong>
 <p>
-Use <code>attribute: /regex/</code> to provide syntax checking for the regular expression.
+    <code>attribute: /regex/</code>
 </p>
+<p>
+    <code>attribute: /regex/</code>
+</p>
+
+<strong>Examples:</strong>
+<dl>
+    <dt>All nodes</dt>
+    <dd><g:link class="nodefilterlink" action="nodes" controller="framework" params="[filter:'.*']"
+        data-node-filter="name: .*"
+    >name: .*</g:link> </dd>
+    <dt>Nodes tagged "production"</dt>
+    <dd><g:link class="nodefilterlink" action="nodes" controller="framework" params="[filter:'tags: production']"
+        data-node-filter="tags: production"
+    >tags: production</g:link> </dd>
+    <dt>Unix nodes</dt>
+    <dd><g:link class="nodefilterlink" action="nodes" controller="framework" params="[filter:'osFamily: unix']"
+        data-node-filter="osFamily: unix"
+    >osFamily: unix</g:link> </dd>
+</dl>

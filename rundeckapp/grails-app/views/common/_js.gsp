@@ -178,7 +178,7 @@
       /** node filter preview code */
 
     var node_filter_keys=${['','Name','Type','Tags','OsName','OsFamily','OsArch','OsVersion'].encodeAsJSON()};
-    function _updateMatchedNodes(data,elem,project,localnodeonly,inparams){
+    function _updateMatchedNodes(data,elem,project,localnodeonly,inparams,callback){
         var i;
         if(!project){
             return;
@@ -197,10 +197,15 @@
         }else{
             params.nodeExcludePrecedence="false";
         }
-        $(elem).loading();
+//        $(elem).loading();
         new Ajax.Updater(elem,"${createLink(controller:'framework',action:'nodesFragment')}",{parameters:params,evalScripts:true,
-         onSuccess: function(transport) {
-            $(elem).removeClassName('depress');
+         onComplete: function(transport) {
+             $(elem).removeClassName('depress');
+             if (transport.request.success()) {
+                 if(typeof(callback)=='function'){
+                     callback(transport);
+                 }
+             }
          }});
     }
 

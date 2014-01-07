@@ -13,9 +13,9 @@
             %{--${nodes.size()}/${allcount} (page ${page} in ${max})--}%
             <g:set var="remainCount" value="${total - (page+1*max)}"/>
             <g:if test="${remainCount>max}">
-            <span id="nextPageButton" class="action button" onclick="_loadNextNodesPageTable(${max},${total},'nodesTable','nodesPaging');" title="Load next ${max} nodes...">Next ${max}&hellip;</span>
+            <span id="nextPageButton" class="btn btn-sm btn-default" onclick="_loadNextNodesPageTable(${max},${total},'nodesTable','nodesPaging');" title="Load next ${max} nodes...">Next ${max}&hellip;</span>
             </g:if>
-            <span class="action button" onclick="_loadNextNodesPageTable(${max},-1,'nodesTable','nodesPaging');" title="Load all remaining nodes...">Load <span id="moreCount">${remainCount}</span> remaining&hellip;</span>
+            <span class="btn btn-sm btn-default" onclick="_loadNextNodesPageTable(${max},-1,'nodesTable','nodesPaging');" title="Load all remaining nodes...">Load <span id="moreCount">${remainCount}</span> remaining&hellip;</span>
         </div>
     </g:if>
 

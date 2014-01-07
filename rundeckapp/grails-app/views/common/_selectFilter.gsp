@@ -24,21 +24,18 @@
 
 <g:if test="${filterLinks && filterset}">
     <i class="glyphicon glyphicon-filter"></i>
-    Saved filters:
-    <ul class="nav nav-links nav-links-inline">
+    Filters:
+    <span class="nav-links">
     <g:each in="${filterset.sort({ a, b -> a.name.compareTo(b.name) })}" var="filter">
-        <g:if test="${filter.name != filterName}">
-        <li>
-            <g:link action="nodes" controller="framework" params="[filterName: filter.name]" class="textbtn textbtn-primary has_tooltip nodefilterlink"
-                data-node-filter-name="${filter.name}"
-                data-placement="bottom"
-                    title="Apply filter: ${filter.name.encodeAsHTML()}">
-                ${filter.name.encodeAsHTML()}
-            </g:link>
-        </li>
-        </g:if>
+        <g:set var="isActive" value="${filter.name == filterName}"/>
+        <g:link action="nodes" controller="framework" params="[filterName: filter.name]"
+                class="${isActive ? 'active' : ''} textbtn textbtn-primary has_tooltip nodefilterlink "
+            data-node-filter-name="${filter.name}"
+            data-placement="bottom"
+                title="Apply filter: ${filter.name.encodeAsHTML()}">
+            ${filter.name.encodeAsHTML()}</g:link>
     </g:each>
-    </ul>
+    </span>
 </g:if>
 <g:elseif test="${filterset}">
     <g:select name="filterName" optionKey="name" optionValue="name" from="${filterset?filterset.sort({a,b->a.name.compareTo(b.name)}):filterset}" value="${filterName}"

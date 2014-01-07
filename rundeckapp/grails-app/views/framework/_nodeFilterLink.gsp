@@ -15,4 +15,5 @@
   --}%
 ${prefix ?: ''}<g:link class="nodefilterlink textbtn tag" action="nodes" params="${[filter: OptsUtil.join([key + ":",value])]}"
     data-node-filter="${OptsUtil.join([key + ":", value])}"
-title="Filter by ${key.encodeAsHTML()} value">${(linktext?:value)?.encodeAsHTML()}</g:link>${suffix?:''}
+title="Filter by ${key.encodeAsHTML()} value"><g:if test="${linkicon}"><i class="${linkicon}"></i></g:if
+    ><g:else>${(linktext?:value)?.encodeAsHTML()}</g:else></g:link>${suffix?:''}

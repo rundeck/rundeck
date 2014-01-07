@@ -48,21 +48,15 @@
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                <h4 class="modal-title" id="deleteFilterModalLabel">Delete Saved Filter: <strong>${filterName.encodeAsHTML()}</strong></h4>
+                <h4 class="modal-title" id="deleteFilterModalLabel">Delete Saved Filter</h4>
             </div>
 
-            <div class="modal-body">
+            <div class="modal-body container">
                 <div class="form-group">
                     <label class="control-label col-sm-2">Name: </label>
-                    <div class="col-sm-10"><span class="form-control-static">${filterName.encodeAsHTML()}</span></div>
-                </div>
-                <g:hiddenField name="delFilterName" value="${filterName}"/>
-                <div class="form-group">
-                <label class="control-label col-sm-2">Filter: </label>
                     <div class="col-sm-10">
-                        <span class="form-control-static query">
-                            <g:render template="displayNodeFilters" model="${[displayParams: query]}"/>
-                        </span>
+                        <span class="form-control-static" data-bind="text: filterName">${filterName.encodeAsHTML()}</span>
+                        <g:hiddenField name="delFilterName" value="${filterName}" data-bind="value: filterName"/>
                     </div>
                 </div>
             </div>
@@ -93,12 +87,22 @@
                 <h4 class="modal-title" id="saveFilterModalLabel">Save Filter</h4>
             </div>
 
-            <div class="modal-body">
+            <div class="modal-body container">
                 <div class="form-group">
-                    <label for="newFilterName" class="col-sm-2">Name:</label>
+                    <label for="newFilterName" class="control-label col-sm-2">Name:</label>
 
                     <div class="col-sm-10"><g:textField name="newFilterName" class="form-control input-sm"/></div>
                 </div>
+                <g:if test="${ko}">
+                    <div class="form-group ">
+                        <label class="control-label col-sm-2">
+                            Filter:
+                        </label>
+                        <div class="col-sm-10">
+                            <span data-bind="text: filter" class="form-control-static "></span>
+                        </div>
+                    </div>
+                </g:if>
             </div>
 
             <div class="modal-footer">

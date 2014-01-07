@@ -1,4 +1,4 @@
-<%@ page import="rundeck.User; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
+<%@ page import="grails.util.Environment; rundeck.User; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 <html>
 <head>
     <g:set var="ukey" value="${g.rkey()}" />
@@ -6,11 +6,14 @@
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="nodes"/>
     <title><g:message code="gui.menu.Nodes"/> - ${session.project.encodeAsHTML()}</title>
-    <g:javascript library="executionControl"/>
     <g:javascript library="yellowfade"/>
-    <g:javascript library="pagehistory"/>
-    <g:set var="defaultLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.default}"/>
-    <g:set var="maxLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.max}"/>
+    <g:if test="${grails.util.Environment.current == Environment.DEVELOPMENT}">
+        <g:javascript src="knockout-3.0.0.debug.js"/>
+    </g:if>
+    <g:else>
+        <g:javascript src="knockout-3.0.0-min.js"/>
+    </g:else>
+    <g:javascript src="knockout.mapping-latest.js"/>
     <script type="text/javascript">
         function showError(message) {
             $("error").innerHTML += message;
@@ -29,19 +32,11 @@
 
         //method called by _nodeFilterInputs
         function _matchNodes(){
-
-        }
-        function _clearNodeFilters(){
-            $$('.nfilteritem input').each(function(e){
-                if(e.value){
-                    doyft(e);
-                }
-                e.value='';
-            });
-            return false;
+            expandResultNodes()
         }
         function _submitNodeFilters(){
-            return true;
+            _matchNodes();
+            return false;
         }
 
         /*********
@@ -267,22 +262,88 @@
          * END remote edit code
          */
 
+        function NodeFilters(filterName, filterString) {
+            var self = this;
+            self.filterName = ko.observable(filterName);
+            self.filter = ko.observable(filterString);
+            self.total = ko.observable();
+            self.allcount = ko.observable();
+            self.hasNodes=ko.computed(function(){
+                return 0!=self.allcount();
+            });
+            self.runCommand=function(){
+                document.location=_genUrl("${g.createLink(action: 'adhoc',controller: 'framework',params:[project:session.project])}",{
+                    filter:self.filter(),
+                    filterName:self.filterName()
+                });
+            };
+            self.saveJob=function(){
+                document.location = _genUrl("${g.createLink(action: 'create',controller: 'scheduledExecution',params:[project:session.project])}", {
+                    filter: self.filter(),
+                    filterName: self.filterName(),
+                });
+            };
+        }
+        var nodeFilter;
+        /**
+         * node filter link action
+         * @param e
+         */
+        function selectNodeFilterLink(e) {
+            var filterName = jQuery(e).data('node-filter-name');
+            var filterString = jQuery(e).data('node-filter');
+            loadNodeFilter(filterName, filterString);
+        }
+        /**
+         * find all node filter links within the element and set handlers to load the filter
+         * @param elem
+         */
+        function setNodeFilterLinkAction(elem) {
+            elem.find('.nodefilterlink').click(function (evt) {
+                evt.preventDefault();
+                selectNodeFilterLink(this);
+            });
+        }
 
-        <g:set var="jsdata" value="${summaryOnly?[:]:query?.properties.findAll{it.key==~/^(node(In|Ex)clude.*|project)$/ &&it.value}}"/>
-
-        var nodeFilterData_${ukey}=${jsdata.encodeAsJSON()};
         var nodespage=0;
         var pagingMax=20;
         function expandResultNodes(page,elem){
-            if(!page){
-                page=0;
+            var filterString=$F('schedJobNodeFilter');
+            var filterName=null;
+            loadNodeFilter(filterName,filterString,elem,page);
+        }
+            /**
+             * load either filter string or saved filter
+             * @param filterName
+             * @param filterString
+             */
+        function loadNodeFilter(filterName, filterString,elem,page) {
+            jQuery('.nodefilterlink').removeClass('active');
+            if (!page) {
+                page = 0;
             }
-            nodespage=page;
-            if(!elem){
-                elem='nodelist';
+            if (!elem) {
+                elem = 'nodelist';
             }
-            var view=page==0?'table':'tableContent';
-            _updateMatchedNodes(nodeFilterData_${ukey},elem,'${session.project}',false,{view:view,expanddetail:true,inlinepaging:true,page:page,max:pagingMax});
+            nodespage = page;
+            var view = page == 0 ? 'table' : 'tableContent';
+            var data = filterName? {filterName: filterName} : {filter: filterString};
+            if(filterName){
+                jQuery('a[data-node-filter-name=\''+filterName+'\']').addClass('active');
+                jQuery('.hiddenNodeFilter').val('');
+                jQuery('.schedJobNodeFilter').val('');
+                jQuery('.hiddenNodeFilterName').val(filterName);
+            }else{
+                jQuery('.hiddenNodeFilter').val(filterString );
+                jQuery('.schedJobNodeFilter').val(filterString);
+                jQuery('.hiddenNodeFilterName').val('');
+            }
+            _updateMatchedNodes(data,elem,'${session.project}',false,{view:view,expanddetail:true,inlinepaging:true,
+                page:page,max:pagingMax},function(xht){
+                setNodeFilterLinkAction(jQuery($(elem)));
+                nodeFilter.filterName(filterName);
+                nodeFilter.filter(filterString);
+            });
         }
         function _loadNextNodesPageTable(max,total,tbl,elem){
             if(!nodespage){
@@ -343,18 +404,16 @@
          */
         function _updateBoxInfo(name,data){
             if(name=='nodetable'){
-                if(null !=data.total){
-                    $$('.obs_nodes_page_total').each(function(e){
-                        e.innerHTML=data.total;
-                    });
+                if(null !=data.total && typeof(nodeFilter)!='undefined'){
+                    nodeFilter.total(data.total);
                 }
                 if(null!=data.allcount){
-                    $$('.obs_nodes_allcount').each(function (e) {
-                        e.innerHTML = data.allcount;
-                    });
                     $$('.obs_nodes_allcount_plural').each(function (e) {
                         e.innerHTML = data.allcount==1?'':'s';
                     });
+                    if(typeof(nodeFilter) != 'undefined'){
+                        nodeFilter.allcount(data.allcount);
+                    }
                 }
             }
         }
@@ -366,9 +425,7 @@
          */
 
         function init() {
-            $$('.act_filtertoggle').each(function(e) {
-                Event.observe(e, 'click', filterToggle);
-            });
+            jQuery('.act_filtertoggle').click( filterToggle);
 
             $$('#${ukey}filter div.filter input').each(function(elem) {
                 if (elem.type == 'text') {
@@ -382,6 +439,14 @@
                     });
                 }
             });
+            var filterParams =${[filterName:params.filterName,filter:query?.filter].encodeAsJSON()};
+            nodeFilter = new NodeFilters(filterParams.filterName, filterParams.filter);
+            ko.applyBindings(nodeFilter);
+
+            setNodeFilterLinkAction(jQuery('#nodesContent'));
+            loadNodeFilter(filterParams.filterName, filterParams.filter);
+            jQuery('#searchForm').submit(_submitNodeFilters);
+
         }
         jQuery(document).ready(init);
 
@@ -452,103 +517,85 @@
 
 
     <g:render template="/common/messages"/>
-    <div id="error" class="error message" style="display:none;"></div>
 
 <div class="row ">
-<div class="col-sm-12">
-    <g:if test="${filterset}">
-        <g:render template="/common/selectFilter"
-                  model="[filterLinks: true, filterset: filterset, filterName: filterName, prefName: 'nodes', noSelection: filterName ? '-All Nodes-' : null]"/>
-
-    </g:if>
-    <g:if test="${params.formInput != 'true' || filterName}">
-        <g:link class="btn btn-default btn-sm"
-                action="nodes" controller="framework"
-                params="[showall: true]">
-            Show all nodes
-        </g:link>
-    </g:if>
-</div>
-</div>
-<div class="row row-space">
-<div  class="col-sm-12">
+%{--<g:if test="${grails.util.Environment.current == Environment.DEVELOPMENT}">--}%
+    %{--<div class="col-sm-12">--}%
+        %{--<span data-bind="text: filter"></span>--}%
+        %{--<span data-bind="text: filterName"></span>--}%
+        %{--<span data-bind="text: total"></span>--}%
+        %{--<span data-bind="text: allcount"></span>--}%
+    %{--</div>--}%
+%{--</g:if>--}%
+<div  class="col-sm-6">
     <g:set var="wasfiltered" value="${ paginateParams?.keySet().grep(~/(?!proj).*Filter|groupPath|project$/)||(query && !query.nodeFilterIsEmpty() && !summaryOnly)}"/>
     <g:set var="filtersOpen" value="${summaryOnly || showFilter||params.createFilters||params.editFilters||params.saveFilter || filterErrors?true:false}"/>
 
-        <g:if test="${!params.nofilters}">
-            <div style=" ${wdgt.styleVisible(if:filtersOpen)}" id="${ukey}filter">
-            <g:form action="nodes" controller="framework" class="form form-horizontal">
-                <g:if test="${params.compact}">
-                    <g:hiddenField name="compact" value="${params.compact}"/>
-                </g:if>
-                <div class="panel panel-default ">
-                    <div class="panel-heading">
-                        <g:if test="${summaryOnly}">
-                            Enter Filter
-                        </g:if>
-                        <g:else>
-                            <span class="textbtn textbtn-info act_filtertoggle">
-                                Edit Filter
-                                <b class="glyphicon glyphicon-chevron-down"></b>
-                            </span>
-                        </g:else>
+    <div id="${ukey}filter">
+        <g:form action="nodes" controller="framework" class="form form-inline" name="searchForm">
+            <g:hiddenField name="max" value="${max}"/>
+            <g:hiddenField name="offset" value="${offset}"/>
+            <g:hiddenField name="formInput" value="true"/>
+            <g:set var="filtvalue"
+                   value="${query?.('filter')?.encodeAsHTML()}"/>
 
-
-                        <g:unless test="${summaryOnly}">
-                            <a href="#" class="close act_filtertoggle">&times;</a>
-                        </g:unless>
-                    </div>
-                    <g:if test="${filterName}">
-                        <div class="panel-heading">
-                            <span class="h4">${filterName.encodeAsHTML()}</span>
-                        </div>
-                    </g:if>
-
-
-                    <g:hiddenField name="max" value="${max}"/>
-                    <g:hiddenField name="offset" value="${offset}"/>
-                    <g:hiddenField name="exec" value="" class="execCommand"/>
-
-                    <g:render template="/common/queryFilterManagerModal"
-                              model="${[rkey: ukey, filterName: filterName, filterset: filterset,
-                                      filterLinks:true,
-                                      formId:"${ukey}filter",
-                                      deleteActionSubmit: 'deleteNodeFilter', storeActionSubmit: 'storeNodeFilter']}"/>
-
-                    <div class="panel-body  obs_hide_filtermgr">
-                        <g:render template="nodeFilterInputs" model="${[params:params,query:query]}"/>
-                        <g:if test="${filterErrors}">
-                            <pre class="filtererror">${filterErrors.filter}</pre>
-                        </g:if>
-                    </div>
-
-                    <div class="panel-footer obs_hide_filtermgr clearfix buttons" >
-
-                        <g:submitButton name="Filter" onclick="return _submitNodeFilters();"
-                                        id="nodefiltersubmit" value="Filter Nodes" class="btn btn-primary btn-sm"/>
-
-
-                        <g:if test="${!filterName}">
-                                <button class="btn btn-success btn-sm"
-                                        data-toggle="modal"
-                                        data-target="#saveFilterModal">
-                                    Save this filter&hellip;
-                                </button>
-                        </g:if>
-                        <g:else>
-                            <button class="btn btn-danger btn-sm pull-right" data-toggle="modal"
-                                    data-target="#deleteFilterModal">
-                                Delete saved filter&hellip;
+            <div class="input-group">
+                <span class="input-group-btn" >
+                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">Filter <span
+                            class="caret"></span></button>
+                    <ul class="dropdown-menu">
+                        <li data-bind="visible: !filterName()">
+                            <a href="#"
+                               data-toggle="modal"
+                               data-target="#saveFilterModal">
+                                Save this filter&hellip;
+                            </a>
+                        </li>
+                        <li data-bind="visible: filterName()">
+                            <a href="#"
+                               data-toggle="modal"
+                               data-target="#deleteFilterModal">
                                 <i class="glyphicon glyphicon-remove"></i>
-                            </button>
-                        </g:else>
+                                Delete filter <strong data-bind="text: filterName"></strong>&hellip;
+                            </a>
+                        </li>
+                    </ul>
+                </span>
+                %{--<span class="input-group-addon" >--}%
+                    %{--<span data-bind="visible: !filterName()">Query:</span>--}%
+                    %{--<span data-bind="visible: filterName()">Filter:</span>--}%
+                %{--</span>--}%
+
+                <input type='search' name="filter" class="schedJobNodeFilter form-control"
+                       placeholder="Enter a node filter"
+                       data-toggle='popover'
+                       data-popover-content-ref="#queryFilterHelp"
+                       data-placement="bottom"
+                       data-trigger="manual"
+                       data-container="body"
+                       value="${filtvalue}" id="schedJobNodeFilter" onchange="_matchNodes();"/>
 
 
-                    </div>
-                </div>
-            </g:form>
+
+                <span class="input-group-btn">
+                    <a class="btn btn-info" data-toggle='popover-for' data-target="#schedJobNodeFilter">
+                        <i class="glyphicon glyphicon-question-sign"></i>
+                    </a>
+                    <button class="btn btn-success" type="submit">
+                        <i class="glyphicon glyphicon-search"></i>
+                    </button>
+                </span>
             </div>
-        </g:if>
+
+            <div class=" collapse" id="queryFilterHelp">
+                <div class="help-block">
+                    <g:render template="/common/nodefilterStringHelp"/>
+                </div>
+            </div>
+
+        </g:form>
+
+    </div>
 
 
 
@@ -556,7 +603,7 @@
                        value="${auth.resourceAllowedTest(kind:'node',action:[AuthConstants.ACTION_REFRESH])}"/>
                 <g:if test="${adminauth}">
                     <g:if test="${selectedProject && selectedProject.shouldUpdateNodesResourceFile()}">
-                        <span class="floatr"><g:link action="reloadNodes" params="${[project:selectedProject.name]}" class="action button" title="Click to update the resources.xml file from the source URL, for project ${selectedProject.name}" onclick="\$(this.parentNode).loading();">Update Nodes for project ${selectedProject.name}</g:link></span>
+                        <span class="floatr"><g:link action="reloadNodes" params="${[project:selectedProject.name]}" class="btn btn-sm btn-default" title="Click to update the resources.xml file from the source URL, for project ${selectedProject.name}" onclick="\$(this.parentNode).loading();">Update Nodes for project ${selectedProject.name}</g:link></span>
                     </g:if>
                 </g:if>
                 <g:if test="${!params.nofilters}">
@@ -584,17 +631,40 @@
                 </g:if>
 
         </div>
+
+    <div class="col-sm-6">
+
+        <g:link class="btn btn-xs btn-default nodefilterlink"
+                action="nodes" controller="framework"
+                data-node-filter=".*"
+                params="[filter: '.*']">
+            Show all nodes
+        </g:link>
+
+        <g:if test="${filterset}">
+            <g:render template="/common/selectFilter"
+                      model="[filterLinks: true, filterset: filterset, filterName: filterName, prefName: 'nodes', noSelection: filterName ? '-All Nodes-' : null]"/>
+        </g:if>
+        <g:form class="form form-horizontal">
+            <g:render template="nodeFiltersHidden"/>
+            <g:render template="/common/queryFilterManagerModal"
+                      model="${[rkey: ukey, filterName: filterName, filterset: filterset,
+                              filterLinks: true,
+                              formId: "${ukey}filter",
+                              ko: true,
+                              deleteActionSubmit: 'deleteNodeFilter', storeActionSubmit: 'storeNodeFilter']}"/>
+        </g:form>
     </div>
+</div>
     <div class="row row-space">
         <div class="col-sm-9">
             <span class="h4">
                 <g:if test="${summaryOnly}">
-                    <span class="obs_nodes_allcount">${total}</span>
+                    <span data-bind="text: allcount">${total}</span>
                     Node<span class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span>
-                    in this project
                 </g:if>
                 <g:else>
-                    <span class="obs_nodes_allcount">${total}</span>
+                    <span data-bind="text: allcount">${total}</span>
                     Node<span class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span> matching filter
                 </g:else>
             </span>
@@ -605,34 +675,38 @@
             <g:elseif test="${tagsummary?.size() == 0}">
             %{--<span class="text-muted">no tags</span>--}%
             </g:elseif>
-        </div>
-        <g:if test="${session.project && run_authorized}">
-            <g:form class="form form-inline" action="adhoc" controller="framework" method="get">
-                <div class=" form-inline clearfix" id="runbox">
-                    <g:hiddenField name="project" value="${session.project}"/>
-                    <g:if test="${filterName}">
-                        <g:hiddenField name="filterName" value="${filterName}"/>
+            <div class=" btn-group ">
+                <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                    Action <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu" role="menu">
+                    <g:if test="${session.project && run_authorized}">
+                        <li data-bind="visible: hasNodes()">
+                            <a href="#" data-bind="click: runCommand">
+                                <i class="glyphicon glyphicon-play"></i>
+                                Run a command on <span data-bind="text: allcount">${total}</span> Node<span
+                                    class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span> …
+                            </a>
+                        </li>
                     </g:if>
-                    <g:else>
-                        <g:render template="nodeFiltersHidden" model="${[params: params, query: query]}"/>
-                    </g:else>
-                    <div class=" col-sm-3">
-                        <g:if test="${total != null && total>0 && !summaryOnly}">
-                            <div class="input-group pull-right ">
-                                <button class="btn btn-success ${total > 0 ? 'runbutton' : 'disabled '} ">
-                                    Run command on <span class="obs_nodes_allcount">${total}</span> Node<span
-                                        class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span> …
-                                    <span class="glyphicon glyphicon-arrow-right"></span>
-                                </button>
-                            </div>
-                        </g:if>
+                    <li data-bind="visible: hasNodes()">
+                        <a href="#" data-bind="click: saveJob">
+                            <i class="glyphicon glyphicon-plus"></i>
+                            Create a job for <span data-bind="text: allcount">${total}</span> Node<span
+                                class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span> …
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <g:form class="form form-inline" action="adhoc" controller="framework" method="get" name="runform">
+            <g:hiddenField name="project" value="${session.project}"/>
+            <g:render template="nodeFiltersHidden" model="${[params: params, query: query]}"/>
+        </g:form>
+        <div class="col-sm-3">
 
-                    </div>
+        </div>
 
-                    <div class="hiderun" id="runerror" style="display:none"></div>
-                </div>
-            </g:form>
-        </g:if>
     </div>
 
     <div class="row row-space">
@@ -649,6 +723,5 @@
 
 
 </div>
-<div id="loaderror"></div>
 </body>
 </html>

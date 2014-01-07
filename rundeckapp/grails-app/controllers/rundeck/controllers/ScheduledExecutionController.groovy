@@ -1131,6 +1131,23 @@ class ScheduledExecutionController  {
             }
             scheduledExecution.argString=params.argString
         }
+        if(params.filterName){
+            if (params.filterName) {
+                def User u = userService.findOrCreateUser(session.user)
+                //load a named filter and create a query from it
+                if (u) {
+                    NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, u)
+                    if (filter) {
+                        def query2 = filter.createExtNodeFilters()
+                        params.put('filter', query2.asFilter())
+                    }
+                }
+            }
+        }
+        if (params.filter){
+            scheduledExecution.filter=params.filter
+            scheduledExecution.doNodedispatch=true
+        }
         //clear session workflow
         if(session.editWFPassThru){
             //do not clear the session's editWF , as this action was called by createFromExecution

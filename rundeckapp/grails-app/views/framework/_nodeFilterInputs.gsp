@@ -21,67 +21,19 @@
     $Id$
  --%>
 <g:set var="rkey" value="${rkey()}"/>
-<g:javascript>
-    function _addNodeFilterInput(name, isinclude, label) {
-        var prefix = (isinclude ? 'Include' : 'Exclude');
-        if ($('nodeFilter' + prefix + name)) {
-            $('nodeFilter' + prefix + name).show();
-            if ($('filterAdd' + prefix + name)) {
-                $('filterAdd' + prefix + name).hide();
-            }
-            return;
-        }
-    }
-
-    function _setNodeFilterDefault(name, isinclude, value) {
-        var prefix = (isinclude ? 'Include' : 'Exclude');
-        if ($('schedJobNode' + prefix + name)) {
-            $('schedJobNode' + prefix + name).setValue(value);
-            _matchNodes();
-        }
-    }
-    function _removeNodeFilterInput(name, isinclude) {
-        var prefix = (isinclude ? 'Include' : 'Exclude');
-        if ($('nodeFilter' + prefix + name)) {
-            $('nodeFilter' + prefix + name).hide();
-            if ($('schedJobNode' + prefix + name)) {
-                $('schedJobNode' + prefix + name).setValue('');
-                if ($('filterAdd' + prefix + name)) {
-                    $('filterAdd' + prefix + name).show();
-                }
-                _matchNodes();
-                return;
-            }
-        }
-    }
-</g:javascript>
-
-<g:set var="NODE_FILTERS_ALL" value="${['Name','Tags','','OsName','OsFamily','OsArch','OsVersion']}"/>
-<g:set var="NODE_FILTERS" value="${['Name','Tags']}"/>
-<g:set var="NODE_FILTERS_X" value="${['','OsName','OsFamily','OsArch','OsVersion']}"/>
-<g:set var="NODE_FILTER_MAP" value="${['':'Hostname','OsName':'OS Name','OsFamily':'OS Family','OsArch':'OS Architecture','OsVersion':'OS Version']}"/>
 
         <div class="form-group  ${hasErrors(bean: query, field: 'filter', 'has-error')} ${filterErrors?'has-error':''}">
 
             <g:hiddenField name="formInput" value="true"/>
 
-            <g:hasErrors bean="${query}" field="filter">
-                <div class="col-sm-12">
-                    <div class="text-warning">
-                        <g:renderErrors bean="${query}" as="list" field="filter"/>
-                        <i class="glyphicon glyphicon-warning-sign"></i>
-                    </div>
-                </div>
-            </g:hasErrors>
+
             <div id="nodeFilterDivFilter" style="">
-                %{--<label class="control-label col-sm-2"--}%
-                       %{--for="schedJobNodeFilter">Filter:</label>--}%
                 <g:set var="filtvalue"
                        value="${query?.('filter')?.encodeAsHTML()}"/>
                 <div class="col-sm-12 nfilteritem">
 
                     <div class="input-group">
-                        <input type='text' name="filter" class="filterIncludeText form-control"
+                        <input type='text' name="filter" class="form-control schedJobNodeFilter"
                             placeholder="Enter a node filter"
                                value="${filtvalue}" id="schedJobNodeFilter" onchange="_matchNodes();"/>
 

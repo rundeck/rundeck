@@ -119,26 +119,22 @@ class FrameworkController  {
             usedFilter = null
         }
         if(params.showall){
-            query.filter = 'name: .*'
+            query.filter = '.*'
 
         }else if (query.nodeFilterIsEmpty() && 'true'!=params.formInput) {
-//            if ('true' == params.defaultLocalNode) {
-//                query.nodeIncludeName = framework.getFrameworkNodeName()
-//            } else {
-            query.filter = 'name: .*'
-            summaryOnly=true
-//            }
+            query.filter = '.*'
+//            summaryOnly=true
             //filter all and summarize
         }
         if (query && !query.project && session.project) {
             query.project = session.project
         }
         def model
-        if ('true' == params.formInput || usedFilter || !query.nodeFilterIsEmpty()) {
-            model = nodesdata(query)
-        } else {
+//        if (!summaryOnly && ('true' == params.formInput || usedFilter || !query.nodeFilterIsEmpty())){
+//            model = nodesdata(query)
+//        } else {
             model = [query: query, params: params, showFilter:true]
-        }
+//        }
 
         if (usedFilter) {
             model['filterName'] = usedFilter

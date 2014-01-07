@@ -45,9 +45,8 @@
                             ${resName.encodeAsHTML()}
                         </span>
                     </g:else>
-                    <g:link class=" textbtn  " action="nodes" params="${[nodeIncludeName: resName]}"
-                            title="Select only this node">
-                        <i class="glyphicon glyphicon-circle-arrow-right"></i></g:link>
+                    <tmpl:nodeFilterLink key="name" value="${resName}"
+                                         linkicon="glyphicon glyphicon-circle-arrow-right"/>
                     <span class="nodedesc"></span>
                 </td>
                 <td  title="Tags" class="nodetags">
