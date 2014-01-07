@@ -451,8 +451,8 @@ class FrameworkController  {
             usedFilter = null
         }
         if (query.nodeFilterIsEmpty()) {
-            if (params.formInput == 'true' && 'true' != params.defaultLocalNode) {
-                query.filter = 'name: .*'
+            if ('true' != params.defaultLocalNode) {
+                query.filter = '.*'
             } else {
                 query.nodeIncludeName = framework.getFrameworkNodeName()
             }

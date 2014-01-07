@@ -91,7 +91,7 @@
         * @param elem
          */
         function expandResultNodes(page,elem){
-            loadNodeFilter(null,nodeFilter.filter(),false,elem,page);
+            loadNodeFilter(null,nodeFilter.filter(),nodeFilter.filterAll(),elem,page);
         }
         /**
          * load either filter string or saved filter
@@ -113,6 +113,10 @@
                 filterName=nodeFilter.filterName();
                 filterString=nodeFilter.filter();
                 filterAll=nodeFilter.filterAll();
+            }
+            if(!filterName && !filterString){
+                //if blank input and no filtername selected, do nothing
+                return;
             }
             nodespage = page;
             var view = page == 0 ? 'table' : 'tableContent';
@@ -194,6 +198,11 @@
                         nodesTitlePlural:"${g.message(code:'Node.plural',default:'Nodes')}"
                     }));
             ko.applyBindings(nodeFilter);
+            nodeFilter.filter.subscribe(function(newValue){
+                if(newValue==''){
+                    nodeFilter.filterAll(true);
+                }
+            });
             jQuery('#nodesContent').on('click', '.nodefilterlink', function (evt) {
                 evt.preventDefault();
                 selectNodeFilterLink(this);
@@ -217,7 +226,7 @@
     <g:render template="/common/messages"/>
 
 <div class="row ">
-<div  class="col-sm-6">
+<div  class="col-sm-9">
     <g:set var="wasfiltered" value="${ paginateParams?.keySet().grep(~/(?!proj).*Filter|groupPath|project$/)||(query && !query.nodeFilterIsEmpty() && !summaryOnly)}"/>
     <g:set var="filtersOpen" value="${summaryOnly || showFilter||params.createFilters||params.editFilters||params.saveFilter || filterErrors?true:false}"/>
 
@@ -236,7 +245,7 @@
                     <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">Filter <span
                             class="caret"></span></button>
                     <ul class="dropdown-menu">
-                        
+
                         <li >
                             <g:link class="nodefilterlink"
                                     action="nodes" controller="framework"
@@ -299,31 +308,31 @@
                 </g:if>
         </div>
 
-    <div class="col-sm-3">
-        <div class="well well-sm">
-        <div data-bind="if: filterName()">
+    <div class="col-sm-3" data-bind="visible: filterName() || filterWithoutAll()">
+        <div class="well well-sm inline ">
+            <div data-bind="visible: filterName()">
 
-            Selected Filter:  <strong data-bind="text: filterName()">${filterName.encodeAsHTML()}</strong>
-                    <span data-bind="visible: filterName()">
-                        <a href="#"
-                            class="textbtn textbtn-danger"
-                           data-toggle="modal"
-                           data-target="#deleteFilterModal">
-                            <i class="glyphicon glyphicon-remove"></i>
-                            delete &hellip;
-                        </a>
-                    </span>
+                Selected Filter:  <strong data-bind="text: filterName()">${filterName.encodeAsHTML()}</strong>
+                        <span data-bind="visible: filterName()">
+                            <a href="#"
+                                class="textbtn textbtn-danger"
+                               data-toggle="modal"
+                               data-target="#deleteFilterModal">
+                                <i class="glyphicon glyphicon-remove"></i>
+                                delete &hellip;
+                            </a>
+                        </span>
 
-        </div>
-        <div data-bind="if: !filterName()">
-                <a href="#"
-                    class="textbtn textbtn-success"
-                   data-toggle="modal"
-                   data-target="#saveFilterModal">
-                    <i class="glyphicon glyphicon-plus"></i>
-                    Save this filter&hellip;
-                </a>
-        </div>
+            </div>
+            <div data-bind="visible: !filterName() && filterWithoutAll()">
+                    <a href="#"
+                        class="textbtn textbtn-success"
+                       data-toggle="modal"
+                       data-target="#saveFilterModal">
+                        <i class="glyphicon glyphicon-plus"></i>
+                        Save this filter&hellip;
+                    </a>
+            </div>
         </div>
     </div>
 
@@ -339,7 +348,7 @@
     </g:form>
 </div>
     <div class="row row-space">
-        <div class="col-sm-9">
+        <div class="col-sm-12">
             <span class="h4">
                 <g:if test="${summaryOnly}">
                     <span data-bind="text: allcount">${total}</span>
@@ -357,9 +366,9 @@
             <g:elseif test="${tagsummary?.size() == 0}">
             %{--<span class="text-muted">no tags</span>--}%
             </g:elseif>
-            <div class=" btn-group ">
+            <div class=" btn-group pull-right ">
                 <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-                    Action <span class="caret"></span>
+                   Node Actions <span class="caret"></span>
                 </button>
                 <ul class="dropdown-menu" role="menu">
                     <g:if test="${session.project && run_authorized}">
@@ -387,9 +396,6 @@
             <g:hiddenField name="project" value="${session.project}"/>
             <g:render template="nodeFiltersHidden" model="${[params: params, query: query]}"/>
         </g:form>
-        <div class="col-sm-3">
-
-        </div>
 
     </div>
 
