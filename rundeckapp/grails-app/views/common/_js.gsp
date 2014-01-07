@@ -13,7 +13,9 @@
         frameworkViewResourceModelConfig: "${createLink(action: 'viewResourceModelConfig', controller: 'framework')}",
         frameworkCheckResourceModelConfig: "${createLink(action: 'checkResourceModelConfig', controller: 'framework')}",
         frameworkEditResourceModelConfig: "${createLink(action: 'editResourceModelConfig', controller: 'framework')}",
-        frameworkCreateResourceModelConfig: "${createLink(action: 'createResourceModelConfig', controller: 'framework')}"
+        frameworkCreateResourceModelConfig: "${createLink(action: 'createResourceModelConfig', controller: 'framework')}",
+        frameworkNodes: "${createLink(controller:"framework",action:"nodes")}",
+        frameworkReloadNodes: "${createLink(controller:"framework",action:"reloadNodes")}"
     } ;
     //compatibility with WB javascript:
     var AppImages = {
