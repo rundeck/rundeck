@@ -262,12 +262,19 @@
          * END remote edit code
          */
 
-        function NodeFilters(data) {
+        function NodeFilters(baseRunUrl, baseSaveJobUrl, data) {
             var self = this;
+            self.baseRunUrl=baseRunUrl;
+            self.baseSaveJobUrl=baseSaveJobUrl;
             self.filterName = ko.observable(data.filterName);
             self.filter = ko.observable(data.filter);
             self.total = ko.observable();
             self.allcount = ko.observable();
+            self.nodesTitle=ko.computed(function(){
+                return self.allcount()==1?
+                        data.nodesTitleSingular||'Node':
+                        data.nodesTitlePlural||'Nodes' ;
+            });
             self.filterAll = ko.observable(data.filterAll);
             self.filterWithoutAll=ko.computed({
                 read: function () {
@@ -285,13 +292,13 @@
                 return 0!=self.allcount();
             });
             self.runCommand=function(){
-                document.location=_genUrl("${g.createLink(action: 'adhoc',controller: 'framework',params:[project:session.project])}",{
+                document.location=_genUrl(self.baseRunUrl,{
                     filter:self.filter(),
                     filterName:self.filterName()
                 });
             };
             self.saveJob=function(){
-                document.location = _genUrl("${g.createLink(action: 'create',controller: 'scheduledExecution',params:[project:session.project])}", {
+                document.location = _genUrl(baseSaveJobUrl, {
                     filter: self.filter(),
                     filterName: self.filterName()
                 });
@@ -418,9 +425,6 @@
                     nodeFilter.total(data.total);
                 }
                 if(null!=data.allcount){
-                    $$('.obs_nodes_allcount_plural').each(function (e) {
-                        e.innerHTML = data.allcount==1?'':'s';
-                    });
                     if(typeof(nodeFilter) != 'undefined'){
                         nodeFilter.allcount(data.allcount);
                     }
@@ -438,92 +442,26 @@
         /**
          * START page init
          */
-
         function init() {
-            jQuery('.act_filtertoggle').click( filterToggle);
-
-            $$('#${ukey}filter div.filter input').each(function(elem) {
-                if (elem.type == 'text') {
-                    elem.observe('keypress', function(evt) {
-                        if (!noenter(evt)) {
-                            $('nodefiltersubmit').click();
-                            return false;
-                        } else {
-                            return true;
-                        }
-                    });
-                }
-            });
             var filterParams =${[filterName:params.filterName,filter:query?.filter,filterAll:params.showall in ['true',true]].encodeAsJSON()};
-            nodeFilter = new NodeFilters(filterParams);
+            nodeFilter = new NodeFilters("${g.createLink(action: 'adhoc',controller: 'framework',params:[project:session.project])}",
+                    "${g.createLink(action: 'create',controller: 'scheduledExecution',params:[project:session.project])}",
+                    Object.extend(filterParams,{
+                        nodesTitleSingular:"${g.message(code:'Node',default:'Node')}",
+                        nodesTitlePlural:"${g.message(code:'Node.plural',default:'Nodes')}"
+                    }));
             ko.applyBindings(nodeFilter);
-
             jQuery('#nodesContent').on('click', '.nodefilterlink', function (evt) {
                 evt.preventDefault();
                 selectNodeFilterLink(this);
             });
             loadNodeFilter();
             jQuery('#searchForm').submit(_submitNodeFilters);
-
         }
         jQuery(document).ready(init);
 
     </script>
-    <style type="text/css">
-        .detail_content{
-            padding:4px 10px;
-        }
-        .filterSetButtons{
-            width:200px;
-            line-height:24px;
-            margin-right:10px;
-        }
-        .filterSetButtons .button{
-            white-space:nowrap;
-        }
 
-        #remoteEditholder{
-            margin: 0px 20px 0 20px;
-
-        }
-        #remoteEditholder iframe{
-            border:0;
-        }
-        #remoteEditholder .toolbar{
-            margin:4px;
-        }
-
-        .commandcontent{
-            margin:0;
-        }
-
-        table.execoutput {
-            font-size: 100%;
-        }
-        div.header{
-            padding:3px 10px;
-            background: #eee;
-            border-top: 1px solid #ddd;
-            border-left: 1px solid #ddd;
-            border-right: 1px solid #ddd;
-            color: black;
-            font-weight:bold;
-        }
-        #histcontent div.jobsreport{
-            margin:0;
-            padding:0;
-        }
-        #histcontent table.queryTable > tbody > tr > td{
-            padding:0;
-            margin:0;
-        }
-        #histcontent table{
-            width:100%;
-        }
-        #nodesPaging{
-            margin-top:5px;
-        }
-    </style>
 </head>
 <body>
 
@@ -633,30 +571,6 @@
                         <span class="floatr"><g:link action="reloadNodes" params="${[project:selectedProject.name]}" class="btn btn-sm btn-default" title="Click to update the resources.xml file from the source URL, for project ${selectedProject.name}" onclick="\$(this.parentNode).loading();">Update Nodes for project ${selectedProject.name}</g:link></span>
                     </g:if>
                 </g:if>
-                <g:if test="${!params.nofilters}">
-                <div id="${ukey}nodesfilterholder" >
-
-                    <div class="obs_filtertoggle" style="${!filtersOpen ? '' : 'display:none;'}">
-                        <span id='${ukey}filterdispbtn' style="${!filtersOpen ? '' : 'display:none;'}" >
-                            <span title="Click to modify filter" class="textbtn textbtn-default query  act_filtertoggle" >
-                                <g:if test="${filterName}">
-                                    ${filterName.encodeAsHTML()}
-                                </g:if>
-                                <g:elseif test="${!summaryOnly}">
-                                    <g:render template="displayNodeFilters" model="${[displayParams:query]}"/>
-                                </g:elseif>
-                                <g:else>
-                                    Enter a Filter
-                                </g:else>
-                                <b class="glyphicon glyphicon-chevron-right"></b>
-                            </span>
-                        </span>
-
-                    </div>
-
-                </div>
-                </g:if>
-
         </div>
 
     <div class="col-sm-3">
@@ -703,11 +617,11 @@
             <span class="h4">
                 <g:if test="${summaryOnly}">
                     <span data-bind="text: allcount">${total}</span>
-                    Node<span class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span>
+                    <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span>
                 </g:if>
                 <g:else>
                     <span data-bind="text: allcount">${total}</span>
-                    Node<span class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span> matching filter
+                    <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span> matching filter
                 </g:else>
             </span>
             <g:if test="${tagsummary}">
@@ -726,8 +640,8 @@
                         <li data-bind="visible: hasNodes()">
                             <a href="#" data-bind="click: runCommand">
                                 <i class="glyphicon glyphicon-play"></i>
-                                Run a command on <span data-bind="text: allcount">${total}</span> Node<span
-                                    class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span> …
+                                Run a command on <span data-bind="text: allcount">${total}</span>
+                                <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span> …
                             </a>
                         </li>
                     </g:if>
@@ -735,8 +649,8 @@
                     <li >
                         <a href="#" data-bind="click: saveJob">
                             <i class="glyphicon glyphicon-plus"></i>
-                            Create a job for <span data-bind="text: allcount">${total}</span> Node<span
-                                class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span> …
+                            Create a job for <span data-bind="text: allcount">${total}</span>
+                            <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span> …
                         </a>
                     </li>
                     </auth:resourceAllowed>
