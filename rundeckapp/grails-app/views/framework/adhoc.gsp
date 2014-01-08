@@ -33,46 +33,6 @@
          */
         <g:set var="filterParams" value="${query?.properties.findAll{it.key==~/^(node(In|Ex)clude.*|project)$/ &&it.value}}"/>
 
-        var nodeFilterData_${ukey}=${filterParams.encodeAsJSON()};
-        var nodespage=0;
-        var pagingMax=20;
-        function expandResultNodes(page,elem){
-            if(!page){
-                page=0;
-            }
-            nodespage=page;
-            if(!elem){
-                elem='nodelist';
-            }
-            var view=page==0?'table':'tableContent';
-            _updateMatchedNodes(nodeFilterData_${ukey},elem,'${session.project}',false,{view:view,expanddetail:true,inlinepaging:true,page:page,max:pagingMax});
-        }
-        function _loadNextNodesPageTable(max,total,tbl,elem){
-            if(!nodespage){
-                nodespage=0;
-            }
-            var next=nodespage+1;
-            if(total<0 || max*next<total){
-                //create sibling of elem
-                var div= new Element('tbody');
-                $(tbl).insert({bottom:div});
-                //total < 0 means load all remaining, so invert next page
-                expandResultNodes(next* (total<0?-1:1),Element.identify(div));
-            }
-//            console.log("next: "+(max*(next+1))+", total: "+total);
-            var loadCount = max*(next+1);
-            if(loadCount>=total || total<0){
-                //hide pager button area
-                $(elem).hide();
-            }else{
-                //update moreCount
-                $('moreCount').innerHTML=total-loadCount;
-                if(total-loadCount<max){
-                    $('nextPageButton').hide();
-                }
-            }
-        }
-        var _runBtnHtml;
         function disableRunBar(runnning){
             var runbox = jQuery('#runbox');
             runbox.find('input[type="text"]').prop('disabled', true);
@@ -254,11 +214,9 @@
          * @param filterString string filter
          * @param filterAll if true, "all nodes" was selected
          * @param elem target element
-         * @param page number to load
          */
-        function loadNodeFilter(filterName, filterString, filterAll, elem, page) {
+        function loadNodeFilter(filterName, filterString, filterAll, elem) {
             jQuery('.nodefilterlink').removeClass('active');
-            page = null;
             if (!elem) {
                 elem = '${ukey}nodeForm';
             }
@@ -271,7 +229,6 @@
                 //if blank input and no filtername selected, do nothing
                 return;
             }
-            nodespage = page;
             var view = 'embed';
             var data = filterName ? {filterName: filterName} : {filter: filterString};
             if (filterName) {
@@ -285,8 +242,8 @@
             nodeFilter.filterAll(filterAll);
             nodeFilter.filterName(filterName);
             nodeFilter.filter(filterString);
-            _updateMatchedNodes(data, elem, '${session.project}', false, {view: view, expanddetail: true, inlinepaging: true,
-                page: page, max: null, maxShown: 20}, function (xht) {
+            _updateMatchedNodes(data, elem, '${session.project}', false, {view: view, expanddetail: true,
+                inlinepaging: false, maxShown: 20}, function (xht) {
             });
         }
 
