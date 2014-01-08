@@ -20,8 +20,8 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, data) {
     self.baseSaveJobUrl = baseSaveJobUrl;
     self.filterName = ko.observable(data.filterName);
     self.filter = ko.observable(data.filter);
-    self.total = ko.observable();
-    self.allcount = ko.observable();
+    self.total = ko.observable(0);
+    self.allcount = ko.observable(0);
     self.nodesTitle = ko.computed(function () {
         return self.allcount() == 1 ?
             data.nodesTitleSingular || 'Node' :
