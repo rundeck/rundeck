@@ -19,6 +19,7 @@
     <g:javascript src="moment.min.js"/>
     <asset:javascript src="momentutil.js"/>
     <g:javascript src="historyKO.js"/>
+    <asset:javascript src="nodeFiltersKO.js"/>
     <g:set var="defaultLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.default}"/>
     <g:set var="maxLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.max}"/>
     <script type="text/javascript">
@@ -222,29 +223,30 @@
             afterRun();
         }
 
-        /**
-         * START tag filter link code
-         */
-        function setTagFilter(value){
-            if($('schedJobNodeIncludeTags').value){
-                $('schedJobNodeIncludeTags').value+=","+value;
-            }else{
-                $('schedJobNodeIncludeTags').value=value;
-
-            }
-            $('${ukey}filter').down('form').submit();
-        }
-
+        var nodeFilter;
 
         /**
          * Handle embedded content updates
          */
         function _updateBoxInfo(name,data){
-            if(name=='nodes'){
+            if(name=='nodetable'){
                 if(data.total && data.total!="0"){
                     enableRunBar();
                 }else{
                     disableRunBar(false);
+                }
+                if (null != data.total && typeof(nodeFilter) != 'undefined') {
+                    nodeFilter.total(data.total);
+                }
+                if (null != data.allcount) {
+                    if (typeof(nodeFilter) != 'undefined') {
+                        nodeFilter.allcount(data.allcount);
+                    }
+                }
+                if (null != data.filter) {
+                    if (typeof(nodeFilter) != 'undefined') {
+                        nodeFilter.filter(data.filter);
+                    }
                 }
                 if(null !=data.total){
                     $$('.obs_nodes_page_total').each(function(e){
@@ -266,52 +268,69 @@
          */
         function _matchNodes(){
             //use form field
-            loadNodeFilter(null,jQuery('#schedJobNodeFilter').val());
-            jQuery('.nodefilterlink').removeClass('active');
+            loadNodeFilter(null, nodeFilter.filter(), nodeFilter.filterAll());
+            return false;
         }
         /**
          * node filter link action
          * @param e
          */
         function selectNodeFilterLink(e){
-            jQuery('.nodefilterlink').removeClass('active');
             jQuery(e).addClass('active');
             var filterName = jQuery(e).data('node-filter-name');
             var filterString = jQuery(e).data('node-filter');
-            loadNodeFilter(filterName,filterString);
+            var filterAll = jQuery(e).data('node-filter-all');
+            loadNodeFilter(filterName,filterString,filterAll);
         }
         /**
-        * load either filter string or saved filter
-        * @param filterName
-        * @param filterString
+         * load either filter string or saved filter
+         * @param filterName name of saved filter
+         * @param filterString string filter
+         * @param filterAll if true, "all nodes" was selected
+         * @param elem target element
+         * @param page number to load
          */
-        function loadNodeFilter(filterName, filterString){
-            var completion = function (data) {
-                jQuery("#${ukey}nodeForm").html(data.responseText);
-                jQuery('.hiddenNodeFilter').val(filterString?filterString:'');
-                jQuery('.schedJobNodeFilter').val(filterString?filterString:'');
-                jQuery('.hiddenNodeFilterName').val(filterName?filterName:'');
-            };
-            if(filterString){
-                var filter= filterString;
-                jQuery.get("${g.createLink(controller: 'framework',action: 'nodesFragment',params: [maxShown:10,requireRunAuth:'true',project: session.project, view:'embed'])}&filter="+(encodeURIComponent(filter)))
-                        .complete(completion);
-            }else if(filterName){
-                jQuery.get("${g.createLink(controller: 'framework',action: 'nodesFragment',params: [maxShown:10,requireRunAuth:'true',project: session.project, view:'embed'])}&filterName=" + (encodeURIComponent(filterName)))
-                        .complete(completion);
+        function loadNodeFilter(filterName, filterString, filterAll, elem, page) {
+            jQuery('.nodefilterlink').removeClass('active');
+            if (!page) {
+                page = 0;
             }
+            if (!elem) {
+                elem = '${ukey}nodeForm';
+            }
+            if (!filterName && !filterString && null == filterAll) {
+                filterName = nodeFilter.filterName();
+                filterString = nodeFilter.filter();
+                filterAll = nodeFilter.filterAll();
+            }
+            if (!filterName && !filterString) {
+                //if blank input and no filtername selected, do nothing
+                return;
+            }
+            nodespage = page;
+            var view = page == 0 ? 'table' : 'tableContent';
+            var data = filterName ? {filterName: filterName} : {filter: filterString};
+            if (filterName) {
+                jQuery('a[data-node-filter-name=\'' + filterName + '\']').addClass('active');
+                jQuery('.hiddenNodeFilter').val(filterString);
+                jQuery('.hiddenNodeFilterName').val(filterName);
+            } else {
+                jQuery('.hiddenNodeFilter').val(filterString);
+                jQuery('.hiddenNodeFilterName').val('');
+            }
+            nodeFilter.filterAll(filterAll);
+            nodeFilter.filterName(filterName);
+            nodeFilter.filter(filterString);
+            _updateMatchedNodes(data, elem, '${session.project}', false, {view: view, expanddetail: true, inlinepaging: true,
+                page: page, max: pagingMax}, function (xht) {
+            });
         }
-
 
         /**
          * START page init
          */
         function init() {
             jQuery('.act_setinlinenodefilter').click(function (e) {
-                //apply new filter
-                _matchNodes();
-            });
-            jQuery('#schedJobNodeFilter').on('change',function (e) {
                 //apply new filter
                 _matchNodes();
             });
@@ -335,6 +354,8 @@
                     });
                 }
             });
+
+            //history tabs binding
             var ajaxHistoryLink="${g.createLink(controller: 'reports', action: 'eventsAjax', absolute: true)}";
             var history = new History(ajaxHistoryLink);
             ko.applyBindings(history, document.getElementById('activity_section'));
@@ -346,6 +367,22 @@
                     loadHistoryLink(history, ajaxHistoryLink, this.getAttribute('href'));
                 });
             }
+
+            //setup node filters knockout bindings
+            var filterParams =${[filterName:params.filterName,filter:query?.filter,filterAll:params.showall in ['true',true]].encodeAsJSON()};
+            nodeFilter = new NodeFilters("${g.createLink(action: 'adhoc',controller: 'framework',params:[project:session.project])}",
+                    "${g.createLink(action: 'create',controller: 'scheduledExecution',params:[project:session.project])}",
+                    Object.extend(filterParams, {
+                        nodesTitleSingular: "${g.message(code:'Node',default:'Node')}",
+                        nodesTitlePlural: "${g.message(code:'Node.plural',default:'Nodes')}"
+                    }));
+            ko.applyBindings(nodeFilter,document.getElementById('tabsarea'));
+            nodeFilter.filter.subscribe(function (newValue) {
+                if (newValue == '') {
+                    nodeFilter.filterAll(true);
+                }
+            });
+            jQuery('#searchForm').submit(_matchNodes);
             _matchNodes();
         }
         jQuery(document).ready(init);
@@ -379,15 +416,30 @@
     <g:render template="/common/messages"/>
         <div>
             <div class="row ">
-                <div class="col-sm-6">
-                    <div class=" form-inline " id="nodeFilterInline">
-                            <g:hiddenField name="max" value="${max}"/>
-                            <g:hiddenField name="offset" value="${offset}"/>
-                            <g:hiddenField name="formInput" value="true"/>
-                            <g:set var="filtvalue"
-                                   value="${query?.('filter')?.encodeAsHTML()}"/>
+                <div class="col-sm-12" id="tabsarea">
+                    <ul class="nav nav-tabs">
+                        <li class="${emptyQuery?'active':''}">
+                            <a href="#nodeFilterInline" data-toggle="tab" >
+                                <span data-bind="text: allcount()"></span>
+                                <span data-bind="text: nodesTitle()">Node</span>
+                            </a>
+                        </li>
+                        <li class="${emptyQuery ? '' : 'active'}">
+                            <a href="#runtab" data-toggle="tab">Run</a>
+                        </li>
+                    </ul>
+                    <div class="tab-content ">
+                    <div class="tab-pane  ${emptyQuery ? 'active' : ''}" id="nodeFilterInline">
+                        <div class="row row-space">
+                        <div class="col-sm-12">
+                        <g:form action="adhoc" class="form form-inline" name="searchForm">
+                        <g:hiddenField name="max" value="${max}"/>
+                        <g:hiddenField name="offset" value="${offset}"/>
+                        <g:hiddenField name="formInput" value="true"/>
+                        <g:set var="filtvalue"
+                               value="${query?.('filter')?.encodeAsHTML()}"/>
 
-                            <div class="form-group">
+                        <div class="form-group">
                                 <span class="input-group">
                                     %{--Filter navigation/selection dropdown--}%
                                     <span class="input-group-btn">
@@ -436,124 +488,118 @@
                                     </span>
                                 </span>
                             </div>
-
+                        </g:form>
 
                         <div class=" collapse" id="queryFilterHelp">
                             <div class="help-block">
                                 <g:render template="/common/nodefilterStringHelp"/>
                             </div>
                         </div>
+                        </div>
+                        </div>
+                        <div class="row row-space">
+                            <div class="col-sm-12">
 
-                    </div>
-                </div>
-                <g:if test="${run_authorized}">
-
-                        <div class=" col-sm-6">
-                            <div class=" form-inline clearfix" id="runbox">
-                                <g:hiddenField name="project" value="${session.project}"/>
-
-                                <g:render template="nodeFiltersHidden" model="${[params: params, query: query]}"/>
-                            <div class="input-group">
-                                <g:textField name="exec" size="50" placeholder="Enter a shell command"
-                                             value="${runCommand}"
-                                             id="runFormExec"
-                                             class="form-control"
-                                             autofocus="true"/>
-
-                                <span class="input-group-btn">
-                                    <button class="btn btn-default has_tooltip" type="button"
-                                            title="Node Dispatch Settings"
-                                            data-placement="left"
-                                            data-container="body"
-                                            data-toggle="collapse" data-target="#runconfig">
-                                        <i class="glyphicon glyphicon-cog"></i>
-                                    </button>
-
-                                    <button class="btn btn-success runbutton " onclick="runFormSubmit('runbox');">
-                                        Run <span class="glyphicon glyphicon-play"></span>
-                                    </button>
+                                <span id="${ukey}nodeForm" class="${total > 5 ? 'collapse collapse-expandable' : ''}">
+                                    <g:render template="allnodes"
+                                              model="${[nodeview: 'embed', expanddetail: true, allnodes: allnodes, totalexecs: totalexecs, jobs: jobs, params: params, total: total, allcount: allcount, page: page, max: max, nodeauthrun: nodeauthrun, tagsummary: tagsummary]}"/>
                                 </span>
                             </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane ${emptyQuery ? '' : 'active'} " id="runtab">
+                        <div class="row row-space">
+                            <div class="col-sm-12">
+                            <g:if test="${run_authorized}">
 
-                        <div class="collapse well well-sm " id="runconfig">
-                                <div class="row">
-                                    <div class="col-sm-12">
-                                        <div class="form-group text-muted ">Node Dispatch Settings:</div>
 
-                                        <div class="form-group has_tooltip"
-                                             title="Maximum number of parallel threads to use"
-                                             data-placement="bottom">
-                                            Thread count
-                                        </div>
+                                <div class=" form-inline clearfix" id="runbox">
+                                        <g:hiddenField name="project" value="${session.project}"/>
 
-                                        <div class="form-group">
-                                            <input min="1" type="number" name="nodeThreadcount" id="runNodeThreadcount"
-                                                   size="2"
-                                                   placeholder="Maximum threadcount for nodes" value="1"
-                                                   class="form-control  input-sm"/>
-                                        </div>
+                                        <g:render template="nodeFiltersHidden" model="${[params: params, query: query]}"/>
+                                    <div class="input-group">
+                                        <g:textField name="exec" size="50" placeholder="Enter a shell command"
+                                                     value="${runCommand}"
+                                                     id="runFormExec"
+                                                     class="form-control"
+                                                     autofocus="true"/>
 
-                                        <div class="form-group">On node failure:</div>
+                                        <span class="input-group-btn">
+                                            <button class="btn btn-default has_tooltip" type="button"
+                                                    title="Node Dispatch Settings"
+                                                    data-placement="left"
+                                                    data-container="body"
+                                                    data-toggle="collapse" data-target="#runconfig">
+                                                <i class="glyphicon glyphicon-cog"></i>
+                                            </button>
 
-                                        <div class="radio">
-                                            <label class="has_tooltip" title="Continue to execute on other nodes"
-                                                   data-placement="bottom">
-                                                <input type="radio" name="nodeKeepgoing"
-                                                       value="true"
-                                                       checked/> <strong>Continue</strong>
-                                            </label>
-                                        </div>
+                                            <button class="btn btn-success runbutton " onclick="runFormSubmit('runbox');">
+                                                Run <span class="glyphicon glyphicon-play"></span>
+                                            </button>
+                                        </span>
+                                    </div>
 
-                                        <div class="radio">
-                                            <label class="has_tooltip" title="Do not execute on any other nodes"
-                                                   data-placement="bottom">
-                                                <input type="radio" name="nodeKeepgoing"
-                                                       value="false"/> <strong>Stop</strong>
-                                            </label>
-                                        </div>
+                                <div class="collapse well well-sm " id="runconfig">
+                                        <div class="row">
+                                            <div class="col-sm-12">
+                                                <div class="form-group text-muted ">Node Dispatch Settings:</div>
 
-                                        <div class="pull-right">
-                                            <button class="close " data-toggle="collapse"
-                                                    data-target="#runconfig">&times;</button>
+                                                <div class="form-group has_tooltip"
+                                                     title="Maximum number of parallel threads to use"
+                                                     data-placement="bottom">
+                                                    Thread count
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <input min="1" type="number" name="nodeThreadcount" id="runNodeThreadcount"
+                                                           size="2"
+                                                           placeholder="Maximum threadcount for nodes" value="1"
+                                                           class="form-control  input-sm"/>
+                                                </div>
+
+                                                <div class="form-group">On node failure:</div>
+
+                                                <div class="radio">
+                                                    <label class="has_tooltip" title="Continue to execute on other nodes"
+                                                           data-placement="bottom">
+                                                        <input type="radio" name="nodeKeepgoing"
+                                                               value="true"
+                                                               checked/> <strong>Continue</strong>
+                                                    </label>
+                                                </div>
+
+                                                <div class="radio">
+                                                    <label class="has_tooltip" title="Do not execute on any other nodes"
+                                                           data-placement="bottom">
+                                                        <input type="radio" name="nodeKeepgoing"
+                                                               value="false"/> <strong>Stop</strong>
+                                                    </label>
+                                                </div>
+
+                                                <div class="pull-right">
+                                                    <button class="close " data-toggle="collapse"
+                                                            data-target="#runconfig">&times;</button>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
+
+                                <div class="hiderun" id="runerror" style="display:none"></div>
+
+                                <div id="runcontent" class="panel panel-default nodes_run_content" style="display: none"></div>
+                            </g:if>
                             </div>
                         </div>
-
-                        <div class="hiderun" id="runerror" style="display:none"></div>
                     </div>
-                </g:if>
-
-
-        </div>
-            <div class="row row-space">
-                <div class="col-sm-12">
-
-                    <g:if test="${!emptyQuery}">
-                        <g:if test="${total > 5}">
-
-                            <a class="h4 " data-toggle="collapse" href="#${ukey}nodeForm">
-                                <span class="obs_nodes_allcount">${total != null ? total : 'Loading'}</span> Node<span
-                                    class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span>
-                                <b class="glyphicon glyphicon-chevron-right"></b>
-                            </a>
-                        </g:if>
-                        <g:else>
-                            <span class="obs_nodes_allcount">${total}</span> Node<span
-                                class="obs_nodes_allcount_plural">${1 != total ? 's' : ''}</span>
-                        </g:else>
-                    </g:if>
-                    <span id="${ukey}nodeForm" class="${total > 5 ? 'collapse collapse-expandable' : ''}">
-                        <g:render template="allnodes"
-                                  model="${[nodeview: 'embed', expanddetail: true, allnodes: allnodes, totalexecs: totalexecs, jobs: jobs, params: params, total: total, allcount: allcount, page: page, max: max, nodeauthrun: nodeauthrun, tagsummary: tagsummary]}"/>
-                    </span>
                 </div>
+
+
             </div>
+        </div>
 
 
 
-    <div id="runcontent" class="clearfix nodes_run_content" style="display: none"></div>
 
     <g:if test="${run_authorized}">
     <div class="row" id="activity_section">
