@@ -159,11 +159,6 @@
                         nodesTitlePlural:"${g.message(code:'Node.plural',default:'Nodes')}"
                     }));
             ko.applyBindings(nodeFilter);
-            nodeFilter.filter.subscribe(function(newValue){
-                if(newValue==''){
-                    nodeFilter.filterAll(true);
-                }
-            });
             jQuery('#nodesContent').on('click', '.nodefilterlink', function (evt) {
                 evt.preventDefault();
                 selectNodeFilterLink(this);

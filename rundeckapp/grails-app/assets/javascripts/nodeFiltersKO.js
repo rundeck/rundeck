@@ -41,6 +41,11 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
         },
         owner: this
     });
+    self.filter.subscribe(function (newValue) {
+        if (newValue == '') {
+            self.filterAll(true);
+        }
+    });
     self.hasNodes = ko.computed(function () {
         return 0 != self.allcount();
     });

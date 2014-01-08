@@ -49,6 +49,7 @@
                     .removeClass('disabled')
                     .button('reset');
         }
+        var running = false;
         function runStarted(){
             running=true;
         }
@@ -66,7 +67,6 @@
         function requestFailure(trans){
             runError("Request failed: "+trans.statusText);
         }
-        var running=false;
         /**
          * Run the command
          * @param elem
@@ -300,16 +300,6 @@
                         nodesTitlePlural: "${g.message(code:'Node.plural',default:'Nodes')}"
                     }));
             ko.applyBindings(nodeFilter,document.getElementById('tabsarea'));
-            nodeFilter.filter.subscribe(function (newValue) {
-                if (newValue == '') {
-                    nodeFilter.filterAll(true);
-                }
-            });
-            nodeFilter.runCommand = function () {
-                //select run tab
-                jQuery('ul > li > a[href=#runtab]').click();
-                jQuery('#runFormExec').focus();
-            };
             jQuery('#searchForm').submit(_matchNodes);
             _matchNodes();
         }
@@ -521,7 +511,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-2">
+                <div class="col-sm-2" >
 
                     <button class="btn btn-success runbutton pull-right"
                             data-bind="attr: { disabled: allcount()<1 } "
