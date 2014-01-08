@@ -169,12 +169,6 @@ class FrameworkController  {
         }
         def User u = userService.findOrCreateUser(session.user)
         def usedFilter = null
-//        if (!params.filterName && u && query.nodeFilterIsEmpty() && params.formInput != 'true') {
-//            Map filterpref = userService.parseKeyValuePref(u.filterPref)
-//            if (filterpref['nodes']) {
-//                params.filterName = filterpref['nodes']
-//            }
-//        }
         if (params.filterName) {
             //load a named filter and create a query from it
             if (u) {
@@ -195,13 +189,6 @@ class FrameworkController  {
             usedFilter = null
         }
 
-        if (query.nodeFilterIsEmpty()) {
-//            if ('true' == params.defaultLocalNode) {
-                query.nodeIncludeName = framework.getFrameworkNodeName()
-//            } else {
-//                query.nodeIncludeName = '.*'
-//            }
-        }
         if (query && !query.project && session.project) {
             query.project = session.project
         }
@@ -209,7 +196,6 @@ class FrameworkController  {
         if(!query.nodeFilterIsEmpty()){
             params.requireRunAuth='true'
             result = [query: query, params: params, allnodes: [:]]
-//            result = nodesdata(query)
         }else{
             result= [query: query, params: params, allnodes:[:]]
         }
