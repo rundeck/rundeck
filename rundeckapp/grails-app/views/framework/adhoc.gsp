@@ -208,35 +208,22 @@
          * Handle embedded content updates
          */
         function _updateBoxInfo(name,data){
-            if(name=='nodetable'){
-                if(data.total && data.total!="0" && !running){
-                    enableRunBar();
-                }else if(!running){
-                    disableRunBar(false);
+            if(data.total && data.total!="0" && !running){
+                enableRunBar();
+            }else if(!running){
+                disableRunBar(false);
+            }
+            if (null != data.total && typeof(nodeFilter) != 'undefined') {
+                nodeFilter.total(data.total);
+            }
+            if (null != data.allcount) {
+                if (typeof(nodeFilter) != 'undefined') {
+                    nodeFilter.allcount(data.allcount);
                 }
-                if (null != data.total && typeof(nodeFilter) != 'undefined') {
-                    nodeFilter.total(data.total);
-                }
-                if (null != data.allcount) {
-                    if (typeof(nodeFilter) != 'undefined') {
-                        nodeFilter.allcount(data.allcount);
-                    }
-                }
-                if (null != data.filter) {
-                    if (typeof(nodeFilter) != 'undefined') {
-                        nodeFilter.filter(data.filter);
-                    }
-                }
-                if(null !=data.total){
-                    $$('.obs_nodes_page_total').each(function(e){
-                        e.innerHTML=data.total;
-                    });
-                    $$('.obs_nodes_allcount').each(function(e){
-                        e.innerHTML=data.total;
-                    });
-                    $$('.obs_nodes_allcount_plural').each(function (e) {
-                        e.innerHTML = data.total == 1 ? '' : 's';
-                    });
+            }
+            if (null != data.filter) {
+                if (typeof(nodeFilter) != 'undefined') {
+                    nodeFilter.filter(data.filter);
                 }
             }
         }
@@ -271,9 +258,7 @@
          */
         function loadNodeFilter(filterName, filterString, filterAll, elem, page) {
             jQuery('.nodefilterlink').removeClass('active');
-            if (!page) {
-                page = 0;
-            }
+            page = null;
             if (!elem) {
                 elem = '${ukey}nodeForm';
             }
@@ -287,7 +272,7 @@
                 return;
             }
             nodespage = page;
-            var view = page == 0 ? 'table' : 'tableContent';
+            var view = 'embed';
             var data = filterName ? {filterName: filterName} : {filter: filterString};
             if (filterName) {
                 jQuery('a[data-node-filter-name=\'' + filterName + '\']').addClass('active');
@@ -301,7 +286,7 @@
             nodeFilter.filterName(filterName);
             nodeFilter.filter(filterString);
             _updateMatchedNodes(data, elem, '${session.project}', false, {view: view, expanddetail: true, inlinepaging: true,
-                page: page, max: pagingMax}, function (xht) {
+                page: page, max: null, maxShown: 20}, function (xht) {
             });
         }
 
@@ -349,8 +334,10 @@
 
             //setup node filters knockout bindings
             var filterParams =${[filterName:params.filterName,filter:query?.filter,filterAll:params.showall in ['true',true]].encodeAsJSON()};
-            nodeFilter = new NodeFilters("${g.createLink(action: 'adhoc',controller: 'framework',params:[project:session.project])}",
+            nodeFilter = new NodeFilters(
+                    "${g.createLink(action: 'adhoc',controller: 'framework',params:[project:session.project])}",
                     "${g.createLink(action: 'create',controller: 'scheduledExecution',params:[project:session.project])}",
+                    "${g.createLink(action: 'nodes',controller: 'framework',params:[project:session.project])}",
                     Object.extend(filterParams, {
                         nodesTitleSingular: "${g.message(code:'Node',default:'Node')}",
                         nodesTitlePlural: "${g.message(code:'Node.plural',default:'Nodes')}"
@@ -397,33 +384,105 @@
 
 
     <g:render template="/common/messages"/>
-        <div>
+        <div id="tabsarea">
             <div class="row ">
-                <div class="col-sm-12" id="tabsarea">
-                    <ul class="nav nav-tabs">
-                        <li class="${emptyQuery?'active':''}">
-                            <a href="#nodeFilterInline" data-toggle="tab" >
-                                <span data-bind="text: allcount()"></span>
-                                <span data-bind="text: nodesTitle()">Node</span>
-                            </a>
-                        </li>
-                        <li class="${emptyQuery ? '' : 'active'}">
-                            <a href="#runtab" data-toggle="tab">Run</a>
-                        </li>
-                    </ul>
-                    <div class="tab-content ">
-                    <div class="tab-pane  ${emptyQuery ? 'active' : ''}" id="nodeFilterInline">
-                        <div class="row row-space">
-                        <div class="col-sm-12">
-                        <g:form action="adhoc" class="form form-inline" name="searchForm">
+                <div class="col-sm-10" >
+                    <g:if test="${run_authorized}">
+                    <div class="" id="runtab">
+                            <div class="form form-horizontal clearfix" id="runbox">
+                                <g:hiddenField name="project" value="${session.project}"/>
+
+                                <g:render template="nodeFiltersHidden"
+                                          model="${[params: params, query: query]}"/>
+                                <div class="form-group ">
+                                <label class="col-sm-2 text-right form-control-static" for="runFormExec">Command:</label>
+                                <div class=" col-sm-10">
+                                    <span class="input-group">
+                                    <g:textField name="exec" size="50" placeholder="Enter a command"
+                                                 value="${runCommand}"
+                                                 id="runFormExec"
+                                                 class="form-control"
+                                                 autofocus="true"/>
+
+                                    <span class="input-group-btn">
+                                        <button class="btn btn-default has_tooltip" type="button"
+                                                title="Node Dispatch Settings"
+                                                data-placement="left"
+                                                data-container="body"
+                                                data-toggle="collapse" data-target="#runconfig">
+                                            <i class="glyphicon glyphicon-cog"></i>
+                                        </button>
+
+                                    </span>
+                                    </span>
+
+                                <div class="collapse well well-sm inline form-inline" id="runconfig">
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <div class="form-group text-muted ">Node Dispatch Settings:</div>
+
+                                            <div class="form-group has_tooltip"
+                                                 title="Maximum number of parallel threads to use"
+                                                 data-placement="bottom">
+                                                Thread count
+                                            </div>
+
+                                            <div class="form-group">
+                                                <input min="1" type="number" name="nodeThreadcount"
+                                                       id="runNodeThreadcount"
+                                                       size="2"
+                                                       placeholder="Maximum threadcount for nodes" value="1"
+                                                       class="form-control  input-sm"/>
+                                            </div>
+
+                                            <div class="form-group">On node failure:</div>
+
+                                            <div class="radio">
+                                                <label class="has_tooltip"
+                                                       title="Continue to execute on other nodes"
+                                                       data-placement="bottom">
+                                                    <input type="radio" name="nodeKeepgoing"
+                                                           value="true"
+                                                           checked/> <strong>Continue</strong>
+                                                </label>
+                                            </div>
+
+                                            <div class="radio">
+                                                <label class="has_tooltip"
+                                                       title="Do not execute on any other nodes"
+                                                       data-placement="bottom">
+                                                    <input type="radio" name="nodeKeepgoing"
+                                                           value="false"/> <strong>Stop</strong>
+                                                </label>
+                                            </div>
+
+                                            <div class="pull-right">
+                                                <button class="close " data-toggle="collapse"
+                                                        data-target="#runconfig">&times;</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                </div>
+                            </div>
+                            </div>
+
+                    </div>
+                    </g:if>
+                    <div class="${emptyQuery ? 'active' : ''}" id="nodeFilterInline">
+                        <div class="spacing">
+                        <div class="">
+                        <g:form action="adhoc" class="form form-horizontal" name="searchForm">
                         <g:hiddenField name="max" value="${max}"/>
                         <g:hiddenField name="offset" value="${offset}"/>
                         <g:hiddenField name="formInput" value="true"/>
                         <g:set var="filtvalue"
                                value="${query?.('filter')?.encodeAsHTML()}"/>
 
-                        <div class="form-group">
-                                <span class="input-group">
+                            <div class="form-group">
+                                <label class="col-sm-2 text-right form-control-static" for="schedJobNodeFilter">Nodes:</label>
+                                <div class="col-sm-10">
+                                <span class=" input-group" >
                                     %{--Filter navigation/selection dropdown--}%
                                     <span class="input-group-btn">
                                         <button type="button" class="btn btn-default dropdown-toggle"
@@ -466,10 +525,11 @@
                                             <i class="glyphicon glyphicon-question-sign"></i>
                                         </a>
                                         <button class="btn btn-success" type="submit">
-                                            <i class="glyphicon glyphicon-search"></i>
+                                            Set Filter
                                         </button>
                                     </span>
                                 </span>
+                                </div>
                             </div>
                         </g:form>
 
@@ -480,119 +540,57 @@
                         </div>
                         </div>
                         </div>
-                        <div class="row row-space">
-                            <div class="col-sm-12">
-                                <span data-bind="if: allcount()>0" class="pull-right">
-                                    <a href="#" data-bind="click: runCommand" class="btn btn-sm btn-default">
-                                        <i class="glyphicon glyphicon-play"></i>
-                                        Run a command on <span data-bind="text: allcount">${total}</span>
-                                        <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span> …
-                                    </a>
-                                </span>
-                                <span id="${ukey}nodeForm" >
+
+                    </div>
+
+                    <div class="row row-space">
+                        <div class="col-sm-10 col-sm-offset-2">
+                            <div class="spacing text-warning" id="emptyerror"
+                                 style="display: none"
+                                 data-bind="visible: !allcount() || allcount()==0">
+                                <span class="errormessage">
+                                    No nodes selected. Match nodes by selecting or entering a filter.
                                 </span>
                             </div>
-                        </div>
-                    </div>
-                    <div class="tab-pane ${emptyQuery ? '' : 'active'} " id="runtab">
-                        <div class="row row-space">
-                            <div class="col-sm-12">
-                            <g:if test="${run_authorized}">
-
-
-                                <div class=" form-inline clearfix" id="runbox">
-                                        <g:hiddenField name="project" value="${session.project}"/>
-
-                                        <g:render template="nodeFiltersHidden" model="${[params: params, query: query]}"/>
-                                    <div class="input-group">
-                                        <g:textField name="exec" size="50" placeholder="Enter a shell command"
-                                                     value="${runCommand}"
-                                                     id="runFormExec"
-                                                     class="form-control"
-                                                     autofocus="true"/>
-
-                                        <span class="input-group-btn">
-                                            <button class="btn btn-default has_tooltip" type="button"
-                                                    title="Node Dispatch Settings"
-                                                    data-placement="left"
-                                                    data-container="body"
-                                                    data-toggle="collapse" data-target="#runconfig">
-                                                <i class="glyphicon glyphicon-cog"></i>
-                                            </button>
-
-                                            <button class="btn btn-success runbutton " onclick="runFormSubmit('runbox');" data-loading-text="Running…">
-                                                Run <span class="glyphicon glyphicon-play"></span>
-                                            </button>
-                                        </span>
-                                    </div>
-
-                                <div class="collapse well well-sm " id="runconfig">
-                                        <div class="row">
-                                            <div class="col-sm-12">
-                                                <div class="form-group text-muted ">Node Dispatch Settings:</div>
-
-                                                <div class="form-group has_tooltip"
-                                                     title="Maximum number of parallel threads to use"
-                                                     data-placement="bottom">
-                                                    Thread count
-                                                </div>
-
-                                                <div class="form-group">
-                                                    <input min="1" type="number" name="nodeThreadcount" id="runNodeThreadcount"
-                                                           size="2"
-                                                           placeholder="Maximum threadcount for nodes" value="1"
-                                                           class="form-control  input-sm"/>
-                                                </div>
-
-                                                <div class="form-group">On node failure:</div>
-
-                                                <div class="radio">
-                                                    <label class="has_tooltip" title="Continue to execute on other nodes"
-                                                           data-placement="bottom">
-                                                        <input type="radio" name="nodeKeepgoing"
-                                                               value="true"
-                                                               checked/> <strong>Continue</strong>
-                                                    </label>
-                                                </div>
-
-                                                <div class="radio">
-                                                    <label class="has_tooltip" title="Do not execute on any other nodes"
-                                                           data-placement="bottom">
-                                                        <input type="radio" name="nodeKeepgoing"
-                                                               value="false"/> <strong>Stop</strong>
-                                                    </label>
-                                                </div>
-
-                                                <div class="pull-right">
-                                                    <button class="close " data-toggle="collapse"
-                                                            data-target="#runconfig">&times;</button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class=" alert alert-warning collapse" id="runerror" >
-                                    <span class="errormessage"></span>
-                                    <a class="close" data-toggle="collapse" href="#runerror" aria-hidden="true">&times;</a>
-                                </div>
-                                <div class="spacing alert alert-warning" id="emptyerror"
-                                    style="display: none"
-                                     data-bind="visible: !allcount() || allcount()==0">
-                                    <span class="errormessage">
-                                        No nodes selected. Select nodes by choosing a filter in the Nodes tab.
-                                    </span>
-                                </div>
-
-                                <div id="runcontent" class="panel panel-default nodes_run_content" style="display: none"></div>
-                            </g:if>
+                            <div data-bind="visible: allcount()>0" class="well well-sm inline">
+                                <span data-bind="text: allcount()">0</span>
+                                <span data-bind="text: nodesTitle">Nodes</span> Matched.
+                                <a class="textbtn textbtn-default pull-right" data-bind="click: nodesPageView">
+                                    View in Nodes Page &raquo;
+                                </a>
                             </div>
+                            <span id="${ukey}nodeForm">
+                            </span>
                         </div>
                     </div>
+                </div>
+                <div class="col-sm-2">
+
+                    <button class="btn btn-success runbutton pull-right"
+                            data-bind="attr: { disabled: allcount()<1 } "
+                            onclick="runFormSubmit('runbox');" data-loading-text="Running…">
+                        Run on <span data-bind="text: allcount">0</span> <span data-bind="text: nodesTitle">Nodes</span> <span class="glyphicon glyphicon-play"></span>
+                    </button>
                 </div>
 
 
             </div>
+
+
+    <div class="row row-space">
+        <div class="col-sm-12">
+
+            <div class=" alert alert-warning collapse" id="runerror">
+                <span class="errormessage"></span>
+                <a class="close" data-toggle="collapse" href="#runerror"
+                   aria-hidden="true">&times;</a>
+            </div>
+
+            <div id="runcontent" class="panel panel-default nodes_run_content"
+                 style="display: none"></div>
+        </div>
+    </div>
+
         </div>
 
 
