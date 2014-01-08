@@ -74,58 +74,33 @@
         }
         var _runBtnHtml;
         function disableRunBar(runnning){
-            if($('runbox')){
-                $('runbox').down('input[type="text"]').disable();
-                if ($('runbox').down('button.runbutton')) {
-                    $('runbox').down('button.runbutton').disabled = true;
-                    $('runbox').down('button.runbutton').addClassName('disabled');
-                    if(runnning){
-                        _runBtnHtml= $('runbox').down('button.runbutton').innerHTML;
-                        $('runbox').down('button.runbutton').innerHTML="Running…";
-                    }
-                }
+            var runbox = jQuery('#runbox');
+            runbox.find('input[type="text"]').prop('disabled', true);
+            runbox.find('button.runbutton').prop('disabled', true).addClass('disabled');
+            if(runnning){
+                runbox.find('button.runbutton').button('loading');
             }
         }
         function enableRunBar(){
-            if ($('runbox')) {
-                $('runbox').down('input[type="text"]').enable();
-                if($('runbox').down('button.runbutton')){
-                    $('runbox').down('button.runbutton').disabled=false;
-                    $('runbox').down('button.runbutton').removeClassName('disabled');
-                    $('runbox').down('button.runbutton').innerHTML = 'Run <span class="glyphicon glyphicon-play"></span>';
-                }
-            }
-        }
-        function collapseNodeView(){
-//            $$('.obs_shownodes').each(Element.show);
-            $$('.obs_shownodes').each(function(e){Expander.close(e,null);});
-
-            $$('.nodeview').each(Element.hide);
-            $$('.nodeviewsummary').each(Element.show);
-        }
-        function showNodeView(){
-//            $$('.obs_shownodes').each(Element.hide);
-            $$('.obs_shownodes').each(function(e){Expander.open(e,null);});
-            $$('.nodeview').each(Element.show);
-            $$('.nodeviewsummary').each(Element.hide);
+            var runbox = jQuery('#runbox');
+            runbox.find('input[type="text"]').prop('disabled',false);
+            runbox.find('button.runbutton')
+                    .prop('disabled', false)
+                    .removeClass('disabled')
+                    .button('reset');
         }
         function runStarted(){
             running=true;
-            $$('.hiderun').each(Element.hide);
-            $$('.showrun').each(Element.show);
-            collapseNodeView();
         }
         function afterRun(){
             running=false;
-            $$('.showafterrun').each(Element.show);
-            $$('.hideafterrun').each(Element.hide);
-            $$('.execRerun').each(Element.show);
-            $('runFormExec').focus();
+            jQuery('.execRerun').show();
+            jQuery('#runFormExec').focus();
         }
         function runError(msg){
-            $('runerror').innerHTML=msg;
-            $('runerror').show();
-            $('runcontent').hide();
+            jQuery('.errormessage').html(msg);
+            jQuery('#runerror').collapse('show');
+            jQuery('#runcontent').hide();
             onRunComplete();
         }
         function requestFailure(trans){
@@ -138,6 +113,10 @@
          */
         function runFormSubmit(elem){
             if(running || !$F('runFormExec')){
+                return false;
+            }
+            if(!nodeFilter.filter() && !nodeFilter.filterName()){
+                //no node filter
                 return false;
             }
             var data = Form.serialize(elem);
@@ -230,9 +209,9 @@
          */
         function _updateBoxInfo(name,data){
             if(name=='nodetable'){
-                if(data.total && data.total!="0"){
+                if(data.total && data.total!="0" && !running){
                     enableRunBar();
-                }else{
+                }else if(!running){
                     disableRunBar(false);
                 }
                 if (null != data.total && typeof(nodeFilter) != 'undefined') {
@@ -382,6 +361,11 @@
                     nodeFilter.filterAll(true);
                 }
             });
+            nodeFilter.runCommand = function () {
+                //select run tab
+                jQuery('ul > li > a[href=#runtab]').click();
+                jQuery('#runFormExec').focus();
+            };
             jQuery('#searchForm').submit(_matchNodes);
             _matchNodes();
         }
@@ -390,8 +374,7 @@
     </script>
     <style type="text/css">
         #runerror{
-            color:red;
-            margin:5px 20px;
+            margin:5px 0;
         }
 
         .commandcontent{
@@ -499,10 +482,14 @@
                         </div>
                         <div class="row row-space">
                             <div class="col-sm-12">
-
-                                <span id="${ukey}nodeForm" class="${total > 5 ? 'collapse collapse-expandable' : ''}">
-                                    <g:render template="allnodes"
-                                              model="${[nodeview: 'embed', expanddetail: true, allnodes: allnodes, totalexecs: totalexecs, jobs: jobs, params: params, total: total, allcount: allcount, page: page, max: max, nodeauthrun: nodeauthrun, tagsummary: tagsummary]}"/>
+                                <span data-bind="if: allcount()>0" class="pull-right">
+                                    <a href="#" data-bind="click: runCommand" class="btn btn-sm btn-default">
+                                        <i class="glyphicon glyphicon-play"></i>
+                                        Run a command on <span data-bind="text: allcount">${total}</span>
+                                        <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span> …
+                                    </a>
+                                </span>
+                                <span id="${ukey}nodeForm" >
                                 </span>
                             </div>
                         </div>
@@ -533,7 +520,7 @@
                                                 <i class="glyphicon glyphicon-cog"></i>
                                             </button>
 
-                                            <button class="btn btn-success runbutton " onclick="runFormSubmit('runbox');">
+                                            <button class="btn btn-success runbutton " onclick="runFormSubmit('runbox');" data-loading-text="Running…">
                                                 Run <span class="glyphicon glyphicon-play"></span>
                                             </button>
                                         </span>
@@ -585,7 +572,17 @@
                                     </div>
                                 </div>
 
-                                <div class="hiderun" id="runerror" style="display:none"></div>
+                                <div class=" alert alert-warning collapse" id="runerror" >
+                                    <span class="errormessage"></span>
+                                    <a class="close" data-toggle="collapse" href="#runerror" aria-hidden="true">&times;</a>
+                                </div>
+                                <div class="spacing alert alert-warning" id="emptyerror"
+                                    style="display: none"
+                                     data-bind="visible: !allcount() || allcount()==0">
+                                    <span class="errormessage">
+                                        No nodes selected. Select nodes by choosing a filter in the Nodes tab.
+                                    </span>
+                                </div>
 
                                 <div id="runcontent" class="panel panel-default nodes_run_content" style="display: none"></div>
                             </g:if>
