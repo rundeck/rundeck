@@ -14,6 +14,7 @@
         <g:javascript src="knockout-3.0.0-min.js"/>
     </g:else>
     <g:javascript src="knockout.mapping-latest.js"/>
+    <asset:javascript src="nodeFiltersKO"/>
     <script type="text/javascript">
         function showError(message) {
             $("error").innerHTML += message;
@@ -29,48 +30,6 @@
             return false;
         }
 
-        function NodeFilters(baseRunUrl, baseSaveJobUrl, data) {
-            var self = this;
-            self.baseRunUrl=baseRunUrl;
-            self.baseSaveJobUrl=baseSaveJobUrl;
-            self.filterName = ko.observable(data.filterName);
-            self.filter = ko.observable(data.filter);
-            self.total = ko.observable();
-            self.allcount = ko.observable();
-            self.nodesTitle=ko.computed(function(){
-                return self.allcount()==1?
-                        data.nodesTitleSingular||'Node':
-                        data.nodesTitlePlural||'Nodes' ;
-            });
-            self.filterAll = ko.observable(data.filterAll);
-            self.filterWithoutAll=ko.computed({
-                read: function () {
-                    if (self.filterAll() && self.filter() == '.*') {
-                        return '';
-                    }
-                    return self.filter();
-                },
-                write: function (value) {
-                    self.filter(value);
-                },
-                owner: this
-            });
-            self.hasNodes=ko.computed(function(){
-                return 0!=self.allcount();
-            });
-            self.runCommand=function(){
-                document.location=_genUrl(self.baseRunUrl,{
-                    filter:self.filter(),
-                    filterName:self.filterName()
-                });
-            };
-            self.saveJob=function(){
-                document.location = _genUrl(baseSaveJobUrl, {
-                    filter: self.filter(),
-                    filterName: self.filterName()
-                });
-            };
-        }
         var nodeFilter;
         /**
          * node filter link action
