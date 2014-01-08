@@ -12,5 +12,5 @@
 </g:if>
     <g:render template="${views[nodeview]?:views['']}" model="${[nodes:allnodes,totalexecs:totalexecs,jobs:jobs,params:params,total:total,allcount:allcount,page:page,max:max,nodeauthrun:nodeauthrun,tagsummary:tagsummary]}"/>
 <g:if test="${!nodeview || nodeview!='tableContent'}">
-    <g:render template="/common/boxinfo" model="${[name:'nodes',model:[title:'Nodes',total:total,allcount:allcount,linkUrl:createLink(controller:'framework',action:'nodes')]]}"/>
+    <g:render template="/common/boxinfo" model="${[name:'nodes',model:[title:'Nodes',total:total,allcount:allcount?:total,filter:query?.asFilter(),linkUrl:createLink(controller:'framework',action:'nodes')]]}"/>
 </g:if>
