@@ -58,7 +58,7 @@ class UrlMappings {
         //simplified url mappings for link generation
         "/nodes/"(controller: 'framework', action: 'nodes')
         "/run/"(controller: 'framework', action: 'nodes')
-        "/run/adhoc"(controller: 'framework',action: 'adhoc')
+        "/command/run"(controller: 'framework',action: 'adhoc')
         "/activity"(controller: 'reports', action: 'index')
         "/history"(controller: 'reports', action: 'index')
         "/jobs/$groupPath**?"(controller: 'menu', action: 'jobs')
