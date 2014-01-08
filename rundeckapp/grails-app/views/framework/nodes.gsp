@@ -150,8 +150,10 @@
          */
         function init() {
             var filterParams =${[filterName:params.filterName,filter:query?.filter,filterAll:params.showall in ['true',true]].encodeAsJSON()};
-            nodeFilter = new NodeFilters("${g.createLink(action: 'adhoc',controller: 'framework',params:[project:session.project])}",
+            nodeFilter = new NodeFilters(
+                    "${g.createLink(action: 'adhoc',controller: 'framework',params:[project:session.project])}",
                     "${g.createLink(action: 'create',controller: 'scheduledExecution',params:[project:session.project])}",
+                    "${g.createLink(action: 'nodes',controller: 'framework',params:[project:session.project])}",
                     Object.extend(filterParams,{
                         nodesTitleSingular:"${g.message(code:'Node',default:'Node')}",
                         nodesTitlePlural:"${g.message(code:'Node.plural',default:'Nodes')}"

@@ -14,10 +14,11 @@
  limitations under the License.
  */
 
-function NodeFilters(baseRunUrl, baseSaveJobUrl, data) {
+function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     var self = this;
     self.baseRunUrl = baseRunUrl;
     self.baseSaveJobUrl = baseSaveJobUrl;
+    self.baseNodesPageUrl = baseNodesPageUrl;
     self.filterName = ko.observable(data.filterName);
     self.filter = ko.observable(data.filter);
     self.total = ko.observable(0);
@@ -46,13 +47,19 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, data) {
     self.runCommand = function () {
         document.location = _genUrl(self.baseRunUrl, {
             filter: self.filter(),
-            filterName: self.filterName()
+            filterName: self.filterName() ? self.filterName() : ''
         });
     };
     self.saveJob = function () {
-        document.location = _genUrl(baseSaveJobUrl, {
+        document.location = _genUrl(self.baseSaveJobUrl, {
             filter: self.filter(),
-            filterName: self.filterName()
+            filterName: self.filterName() ? self.filterName() : ''
         });
     };
+    self.nodesPageView=function(){
+        document.location = _genUrl(self.baseNodesPageUrl, {
+            filter: self.filter(),
+            filterName: self.filterName()? self.filterName():''
+        });
+    }
 }
