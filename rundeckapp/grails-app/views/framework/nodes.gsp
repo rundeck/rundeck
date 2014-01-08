@@ -14,7 +14,7 @@
         <g:javascript src="knockout-3.0.0-min.js"/>
     </g:else>
     <g:javascript src="knockout.mapping-latest.js"/>
-    <asset:javascript src="nodeFiltersKO"/>
+    <asset:javascript src="nodeFiltersKO.js"/>
     <script type="text/javascript">
         function showError(message) {
             $("error").innerHTML += message;
