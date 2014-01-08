@@ -14,6 +14,14 @@
   limitations under the License.
   --}%
 
+<strong>Select nodes by name:</strong>
+<p>
+    <code>mynode1 mynode2</code>
+</p>
+<p>
+    This will select both nodes.
+</p>
+
 <strong>Filter nodes by attribute value:</strong>
 <ul>
     <li>Include: <code>attribute: value</code></li>
