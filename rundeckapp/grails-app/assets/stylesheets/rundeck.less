@@ -791,16 +791,16 @@ section{
 
   //run output in nodes page has horizontal border
   .nodes_run_content{
-    .row();
     margin-top: 10px;
-    margin-bottom: 10px;
-    border-top: 1px solid @panel-primary-border;
-    border-bottom: 1px solid @panel-primary-border;
-    .inlinestatus{
-      padding: 5px;
-      background-color: @panel-default-heading-bg;
+    & .inlineexecution{
+      .row();
     }
   }
+
+  .outputcontrols{
+    border-bottom: 1px solid @nav-tabs-border-color;
+  }
+
   .btn-group .btn.force-last-child{
     .border-right-radius(@border-radius-base) !important;
   }
@@ -847,7 +847,6 @@ section{
   // execution output table view
 
   table.execoutput {
-    border: 1px solid @table-border-color;
     border-collapse: separate;
     .stepnum.short:before {
       content: "•";

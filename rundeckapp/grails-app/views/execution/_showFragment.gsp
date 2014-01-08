@@ -2,7 +2,9 @@
 
 
 <g:if test="${inlineView}">
-    <div class="inlinestatus row" id="jobInfo_${execution.id}">
+    <div class="panel-heading">
+    <div class=" " id="jobInfo_${execution.id}">
+        <div class="row">
             <div class="col-sm-6">
                 <span class="inline_only ">
                     <g:link class="primary"
@@ -75,23 +77,18 @@
                 </g:else>
             </span>
         </div>
-        <div class="col-sm-6">
-            <button class="close closeoutput">&times;</button>
+            <div class="col-sm-6">
+                <button class="close closeoutput">&times;</button>
+            </div>
         </div>
-        %{--<td width="50%">--}%
-            %{--<div id="progressContainer" class="progressContainer">--}%
-                %{--<div class="progressBar" id="progressBar"--}%
-                     %{--title="Progress is an estimate based on average execution time for this ${g.message(code: 'domain.ScheduledExecution.title')}.">0%</div>--}%
-            %{--</div>--}%
-        %{--</td>--}%
+    </div>
     </div>
 </g:if>
-
-<div id="commandFlow" class="commandFlow">
+<div class="${inlineView?'panel-body inlineexecution':''}">
+<div id="commandFlow" class="outputcontrols">
 
 <form action="#" id="outputappendform">
 <div class="row row-space">
-
     <div class="col-sm-8" style="margin-bottom: 10px">
 
     <a href="#" class="textbtn textbtn-default btn-xs pull-left collapser"
@@ -194,3 +191,4 @@
 <div id="commandPerform" class="commandcontent" style="display:none;  "></div>
 
 <div id="log"></div>
+</div>
