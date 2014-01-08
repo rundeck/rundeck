@@ -6,10 +6,11 @@
     <g:set var="max" value="${params.maxShown.toInteger()}"/>
 </g:if>
 <g:if test="${max>0 && nodes.size()>max}">
-<a href="#embednodeset" class="textbtn textbtn-default" data-toggle="collapse">Show all ${nodes.size()} Nodes
+<a href="#embednodeset" class="textbtn textbtn-default " data-toggle="collapse">Show all ${nodes.size()} Nodes
+    <i class="auto-caret"></i>
 </a>
 </g:if>
-<span id="embednodeset" class=" ${max > 0 && nodes.size() > max? 'collapse':''} ">
+<span id="embednodeset" class=" ${max > 0 && nodes.size() > max? 'collapse collapse-expandable':''}">
         <% def i =0 %>
         <g:each in="${nodes.keySet().sort{a,b->a.compareTo(b)}}" var="nodename">
 
