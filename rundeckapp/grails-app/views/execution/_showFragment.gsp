@@ -48,36 +48,41 @@
                 </g:if>
 
             </g:else>
-
-            <span class="retrybuttons execRerun " style="${wdgt.styleVisible(if: null != execution.dateCompleted)}">
-                <g:if test="${scheduledExecution}">
-                    <g:if test="${authChecks[AuthConstants.ACTION_RUN]}">
-                        <g:link controller="scheduledExecution"
-                                action="execute"
-                                id="${scheduledExecution.extid}"
-                                params="${[retryExecId: execution.id]}"
-                                class="btn btn-default btn-xs"
-                                title="${g.message(code: 'execution.job.action.runAgain')}">
-                            <i class="glyphicon glyphicon-play"></i>
-                            <g:message code="execution.action.runAgain"/>&hellip;
-                        </g:link>
+                <span class="retrybuttons execRerun " style="${wdgt.styleVisible(if: null != execution.dateCompleted)}">
+                    <g:if test="${scheduledExecution}">
+                        <g:if test="${authChecks[AuthConstants.ACTION_RUN]}">
+                            <g:link controller="scheduledExecution"
+                                    action="execute"
+                                    id="${scheduledExecution.extid}"
+                                    params="${[retryExecId: execution.id]}"
+                                    class="btn btn-default btn-xs"
+                                    title="${g.message(code: 'execution.job.action.runAgain')}">
+                                <i class="glyphicon glyphicon-play"></i>
+                                <g:message code="execution.action.runAgain"/>&hellip;
+                            </g:link>
+                        </g:if>
                     </g:if>
-                </g:if>
-                <g:else>
-                    <g:if test="${jobCreateAllowed}">
-                        <g:link
-                                controller="scheduledExecution"
-                                action="createFromExecution"
-                                params="${[executionId: execution.id]}"
-                                class="btn btn-default btn-xs"
-                                title="${g.message(code: 'execution.action.saveAsJob', default: 'Save as Job')}">
-                            <g:message code="execution.action.saveAsJob" default="Save as Job"/>&hellip;
-                        </g:link>
-                    </g:if>
-                </g:else>
-            </span>
-        </div>
+                    <g:else>
+                        <g:if test="${jobCreateAllowed}">
+                            <g:link
+                                    controller="scheduledExecution"
+                                    action="createFromExecution"
+                                    params="${[executionId: execution.id]}"
+                                    class="btn btn-default btn-xs"
+                                    title="${g.message(code: 'execution.action.saveAsJob', default: 'Save as Job')}">
+                                <g:message code="execution.action.saveAsJob" default="Save as Job"/>&hellip;
+                            </g:link>
+                        </g:if>
+                    </g:else>
+                </span>
+            </div>
             <div class="col-sm-6">
+                <g:render template="wfItemView" model="[
+                        item: execution.workflow.commands[0],
+                        icon: 'icon-med',
+                        iwidth: '24px',
+                        iheight: '24px',
+                ]"/>
                 <button class="close closeoutput">&times;</button>
             </div>
         </div>
