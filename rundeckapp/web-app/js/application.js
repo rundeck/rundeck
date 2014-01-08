@@ -651,16 +651,19 @@ function _initIEPlaceholder(){
     });
 }
 function _initCollapseExpander(){
-    jQuery('.collapse.collapse-expandable').on('show.bs.collapse',function(e){
+    jQuery(document).on('show.bs.collapse', '.collapse.collapse-expandable',function(e){
         var elem=jQuery(this);
         var hrefs=jQuery('[data-toggle=collapse][href=\'#'+elem.attr('id')+'\']')
+            .addClass('active')
             .children('.glyphicon')
             .removeClass('glyphicon-chevron-right')
             .addClass('glyphicon-chevron-down');
     });
-    jQuery('.collapse.collapse-expandable').on('hide.bs.collapse',function(e){
+    jQuery(document).on('hide.bs.collapse', '.in.collapse-expandable',function(e){
         var elem=jQuery(this);
+        console.log(elem.attr('class'));
         var hrefs=jQuery('[data-toggle=collapse][href=\'#'+elem.attr('id')+'\']')
+            .removeClass('active')
             .children('.glyphicon')
             .removeClass('glyphicon-chevron-down')
             .addClass('glyphicon-chevron-right');
