@@ -15,7 +15,9 @@
         frameworkEditResourceModelConfig: "${createLink(action: 'editResourceModelConfig', controller: 'framework')}",
         frameworkCreateResourceModelConfig: "${createLink(action: 'createResourceModelConfig', controller: 'framework')}",
         frameworkNodes: "${createLink(controller:"framework",action:"nodes")}",
-        frameworkReloadNodes: "${createLink(controller:"framework",action:"reloadNodes")}"
+        frameworkReloadNodes: "${createLink(controller:"framework",action:"reloadNodes")}",
+        reportsEventsAjax: "${g.createLink(controller: 'reports', action: 'eventsAjax', absolute: true)}",
+        menuNowrunningAjax: "${g.createLink(controller: 'menu', action: 'nowrunningAjax', absolute: true)}"
     } ;
     //compatibility with WB javascript:
     var AppImages = {
