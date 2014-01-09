@@ -169,11 +169,8 @@
             if(document.getElementById('activity_section')){
                 var history = new History(appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
                 history.nowRunningEnabled(${null != execution?.dateCompleted});
-                nodeflowvm.completed.subscribe(function(newValue){
-                    if(newValue){
-                        history.nowRunningEnabled(true);
-                    }
-                })
+                //enable now running activity tab once execution completes
+                nodeflowvm.completed.subscribe(history.nowRunningEnabled);
                 ko.applyBindings(history, document.getElementById('activity_section'));
                 setupActivityLinks('activity_section', history, appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
            }
