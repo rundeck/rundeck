@@ -207,21 +207,28 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                      schedfilts.remove('groupPath')
                  }
                  if(schedfilts){
-                     scheduledExecution {
-
-                         schedExactFilters.each{key,v->
-                             if (query["${key}Filter"]) {
-                                 eq(v, query["${key}Filter"] )
+                     if(schedfilts['jobId'] == 'null'){
+                         isNull('scheduledExecution')
+                     }else{
+                         scheduledExecution {
+                             schedExactFilters.each{key,v->
+                                 if (query["${key}Filter"] == 'null') {
+                                     isNull(v)
+                                 } else if (query["${key}Filter"] == '!null') {
+                                     isNotNull(v)
+                                 } else if (query["${key}Filter"]) {
+                                     eq(v, query["${key}Filter"] )
+                                 }
                              }
-                         }
-                         schedTxtFilters.each{key,v->
-                             if (query["${key}Filter"]) {
-                                 ilike(v, '%'+query["${key}Filter"] + '%')
+                             schedTxtFilters.each{key,v->
+                                 if (query["${key}Filter"]) {
+                                     ilike(v, '%'+query["${key}Filter"] + '%')
+                                 }
                              }
-                         }
-                         schedPathFilters.each{key,v->
-                             if (query["${key}Filter"]) {
-                                 ilike(v, query["${key}Filter"] + '%')
+                             schedPathFilters.each{key,v->
+                                 if (query["${key}Filter"]) {
+                                     ilike(v, query["${key}Filter"] + '%')
+                                 }
                              }
                          }
                      }
@@ -306,11 +313,41 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                      }
                  }
 
-                 //original Job name filter
-                 if(query.jobFilter){
-                    scheduledExecution{
-                        ilike('jobName','%'+query.jobFilter+'%')
-                    }
+                 def schedfilts = [:]
+                 schedFilterKeys.each {
+                     if (query["${it}Filter"]) {
+                         schedfilts[it] = query["${it}Filter"]
+                     }
+                 }
+                 if (schedfilts.groupPath == '*') {
+                     schedfilts.remove('groupPath')
+                 }
+                 if (schedfilts) {
+                     if (schedfilts['jobId'] == 'null') {
+                         isNull('scheduledExecution')
+                     } else {
+                         scheduledExecution {
+                             schedExactFilters.each { key, v ->
+                                 if (query["${key}Filter"] == 'null') {
+                                     isNull(v)
+                                 } else if (query["${key}Filter"] == '!null') {
+                                     isNotNull(v)
+                                 } else if (query["${key}Filter"]) {
+                                     eq(v, query["${key}Filter"])
+                                 }
+                             }
+                             schedTxtFilters.each { key, v ->
+                                 if (query["${key}Filter"]) {
+                                     ilike(v, '%' + query["${key}Filter"] + '%')
+                                 }
+                             }
+                             schedPathFilters.each { key, v ->
+                                 if (query["${key}Filter"]) {
+                                     ilike(v, query["${key}Filter"] + '%')
+                                 }
+                             }
+                         }
+                     }
                  }
 
                 isNull("dateCompleted")
