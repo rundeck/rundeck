@@ -97,6 +97,7 @@ function History(ajaxHistoryLink) {
     self.reports = ko.observableArray([]);
     self.nowrunning = ko.observableArray([]);
     self.showReports=ko.observable(false);
+    self.nowRunningEnabled=ko.observable(true);
     self.href = ko.observable();
     self.selected = ko.observable(false);
     self.max = ko.observable(20);
@@ -194,9 +195,12 @@ function setupActivityLinks(id, history, ajaxHistoryLink, ajaxNowrunningLink) {
     jQuery('#' + id + ' a.running_link').click(function (e) {
         e.preventDefault();
         var me = jQuery(this)[0];
-        jQuery('#' + id + ' .activity_links > li').removeClass('active');
-        jQuery(me.parentNode).addClass('active');
-        history.showReports(false);
-        loadHistoryLink(history, ajaxNowrunningLink, me.getAttribute('href'), jQuery(this).data('auto-refresh'));
+        if(history.nowRunningEnabled()){
+            jQuery('#' + id + ' .activity_links > li').removeClass('active');
+            jQuery(me.parentNode).addClass('active');
+            history.showReports(false);
+
+            loadHistoryLink(history, ajaxNowrunningLink, me.getAttribute('href'), jQuery(this).data('auto-refresh'));
+        }
     });
 }

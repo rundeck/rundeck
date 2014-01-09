@@ -15,24 +15,28 @@
   --}%
 
 <g:set var="linkParams" value="${filter?:[projFilter:project?:session.project]}"/>
+<g:set var="runningParams" value="${filter?:[projFilter:project?:session.project]}"/>
 <g:if test="${scheduledExecution}">
     <g:set var="linkParams" value="${[jobIdFilter: scheduledExecution.id, projFilter: scheduledExecution.project]}"/>
+    <g:set var="runningParams" value="${[jobIdFilter: scheduledExecution.extid, projFilter: scheduledExecution.project]}"/>
 </g:if>
 <ul class="nav nav-tabs activity_links">
-    <li>
+    %{--<g:unless test="${hideNowRunning}">--}%
+    <li data-bind="css: { disabled: !nowRunningEnabled() }">
         <g:link controller="reports" action="index" class="running_link"
                 title="All activity for this job"
                 data-auto-refresh="2"
-                params="${linkParams + [runningFilter: 'running']}">
-            <i class="glyphicon glyphicon-refresh"></i>
-            now
+                params="${runningParams + [runningFilter: 'running']}">
+            <i class="glyphicon glyphicon-play-circle"></i>
+            running
         </g:link>
     </li>
+    %{--</g:unless>--}%
     <li>
         <g:link controller="reports" action="index" class="activity_link"
                 title="All activity for this job"
                 params="${linkParams}">
-            <i class="glyphicon glyphicon-list"></i>
+            <i class="glyphicon glyphicon-time"></i>
             recent
         </g:link>
     </li>

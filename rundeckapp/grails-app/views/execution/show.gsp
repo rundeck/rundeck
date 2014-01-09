@@ -168,6 +168,12 @@
             init();
             if(document.getElementById('activity_section')){
                 var history = new History(appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
+                history.nowRunningEnabled(${null != execution?.dateCompleted});
+                nodeflowvm.completed.subscribe(function(newValue){
+                    if(newValue){
+                        history.nowRunningEnabled(true);
+                    }
+                })
                 ko.applyBindings(history, document.getElementById('activity_section'));
                 setupActivityLinks('activity_section', history, appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
            }
@@ -548,7 +554,7 @@
         <div class="row row-space" id="activity_section">
             <div class="col-sm-12 ">
                 <h4 class="text-muted "><g:message code="page.section.Activity.for.this.job"/></h4>
-                <g:render template="/reports/activityLinks" model="[execution:execution,scheduledExecution: scheduledExecution, knockoutBinding: true]"/>
+                <g:render template="/reports/activityLinks" model="[hideNowRunning:!execution.dateCompleted,execution:execution,scheduledExecution: scheduledExecution, knockoutBinding: true]"/>
             </div>
         </div>
     </g:if>
