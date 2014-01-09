@@ -277,15 +277,16 @@
             });
 
             //history tabs binding
-            var ajaxHistoryLink="${g.createLink(controller: 'reports', action: 'eventsAjax', absolute: true)}";
+            var ajaxHistoryLink=appLinks.reportsEventsAjax;
+            var ajaxRunningLink= appLinks.menuNowrunningAjax;
             var history = new History(ajaxHistoryLink);
             ko.applyBindings(history, document.getElementById('activity_section'));
-            setupActivityLinks('activity_section', history, ajaxHistoryLink);
+            setupActivityLinks('activity_section', history, ajaxHistoryLink, ajaxRunningLink);
             //if empty query, automatically load first activity_link
             if("${emptyQuery}"=='true'){
                 jQuery('ul.activity_links > li:first-child').addClass('active');
                 jQuery('ul.activity_links > li:first-child > a').each(function(e){
-                    loadHistoryLink(history, ajaxHistoryLink, this.getAttribute('href'));
+                    loadHistoryLink(history, ajaxRunningLink, this.getAttribute('href'));
                 });
             }
 

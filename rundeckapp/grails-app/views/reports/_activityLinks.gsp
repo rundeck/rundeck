@@ -20,11 +20,20 @@
 </g:if>
 <ul class="nav nav-tabs activity_links">
     <li>
+        <g:link controller="reports" action="index" class="running_link"
+                title="All activity for this job"
+                data-auto-refresh="2"
+                params="${linkParams + [runningFilter: 'running']}">
+            <i class="glyphicon glyphicon-refresh"></i>
+            now
+        </g:link>
+    </li>
+    <li>
         <g:link controller="reports" action="index" class="activity_link"
                 title="All activity for this job"
                 params="${linkParams}">
             <i class="glyphicon glyphicon-list"></i>
-            all
+            recent
         </g:link>
     </li>
 
@@ -65,22 +74,22 @@
 <div data-bind="visible: selected()"  class="panel panel-default panel-tab-content" style="display: none;">
     <table class=" table table-hover table-condensed events-table"
            style="width:100%; display: none"
-           data-bind="visible: reports().length > 0">
+           data-bind="visible: results().length > 0">
         <tbody ></tbody>
-        <tbody data-bind=" foreach: reports ">
+        <tbody data-bind=" foreach: results ">
         <tr class="link"
             data-bind="css: { 'succeed': status()=='succeed', 'fail': status()=='fail' } "
             onclick="$(this).down('a._defaultAction').click();"
             >
             <td style="width:12px;" class="eventicon">
                 <i class="exec-status icon"
-                   data-bind="css: { 'succeed': status()=='succeed', 'fail': status()=='fail', 'warn': status()=='cancel' } "
+                   data-bind="css: { 'succeed': status()=='succeed', 'fail': status()=='fail', 'warn': status()=='cancel', 'running': status()=='running' } "
                 ></i>
             </td>
-            <td class="eventtitle" data-bind="css: { job: jcJobId(), adhoc: !jcJobId() }">
-                <a href="#" data-bind="text: '#'+jcExecId(), attr: { href: executionHref() }" class="_defaultAction"></a>
+            <td class="eventtitle" data-bind="css: { job: jobId(), adhoc: !jobId() }">
+                <a href="#" data-bind="text: '#'+executionId(), attr: { href: executionHref() }" class="_defaultAction"></a>
                 <g:if test="${showTitle}">
-                    <span data-bind="text: jcJobId()?reportId():title(), css: {  } "></span>
+                    <span data-bind="text: jobId()?jobName():executionString()"></span>
                 </g:if>
             </td>
             <td class="eventargs" >
@@ -96,11 +105,34 @@
                         <span class="duration" data-bind="text: durationHumanize()"></span>
                     </span>
                 </span>
+                <span data-bind="if: !dateCompleted()">
+                    <div data-bind="if: !jobId() || jobAverageDuration()==0">
+                    <g:render template="/common/progressBar" model="${[
+                            indefinite: true, title: 'Running', innerContent: 'Running', width: 120,
+                            progressClass: 'rd-progress-exec progress-striped active indefinite progress-embed',
+                            progressBarClass: 'progress-bar-info',
+                    ]}"/>
+                    </div>
+                    <div data-bind="if: jobId() && jobAverageDuration()>0">
+                        <g:render template="/common/progressBar"
+                                  model="[completePercent: 0,
+                                          progressClass: 'rd-progress-exec progress-embed',
+                                          progressBarClass: '',
+                                          containerId: 'progressContainer2',
+                                          innerContent: '',
+                                          showpercent: true,
+                                          progressId: 'progressBar',
+                                          bind: 'jobPercentageFixed()',
+                                          bindText: '(jobPercentageFixed()  < 105 ? jobPercentageFixed() + \'%\' : \'+\' + jobOverrunDuration()) + \' of average \' + MomentUtil.formatDurationHumanize(jobAverageDuration())',
+                                          progressBind: ', css: { \'progress-bar-info\': jobPercentageFixed() < 105 ,  \'progress-bar-warning\': jobPercentageFixed() &gt; 104  }',
+                                  ]"/>
+                    </div>
+                </span>
             </td>
 
             <td class="  user text-right" style="white-space: nowrap;">
                 <em>by</em>
-                <span data-bind="text: author"></span>
+                <span data-bind="text: user"></span>
             </td>
 
 
@@ -109,7 +141,7 @@
     </table>
 
 
-    <div data-bind="visible: selected() && reports().length < 1 " class="panel-body" style="display: none;">
+    <div data-bind="visible: selected() && results().length < 1 " class="panel-body" style="display: none;">
         <div class="">
         <span class="text-muted">No matching activity found</span>
         </div>
@@ -139,7 +171,7 @@
             </ul>
         <span data-bind="if: max() > 0" class="text-info">
             showing
-            <span data-bind="text: reports().length + ' of ' + total()"></span>
+            <span data-bind="text: results().length + ' of ' + total()"></span>
         </span>
         <a href="#" class="textbtn textbtn-default" data-bind="attr: { href: href() } ">
             Filter activity…

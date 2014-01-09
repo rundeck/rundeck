@@ -21,10 +21,13 @@ function Report(data) {
     self.dateStarted = ko.observable();
     self.execution = ko.observable();
     self.executionHref = ko.observable();
+    self.jobId = ko.observable();
+    self.executionId = ko.observable();
+    self.reportId = ko.observable();
+    self.title = ko.observable();
+    self.jobAverageDuration = ko.observable(0);
+    self.duration = ko.observable(0);
 
-    self.duration = ko.computed(function () {
-        return MomentUtil.duration(ko.utils.unwrapObservable(self.dateStarted()), ko.utils.unwrapObservable(self.dateCompleted()));
-    });
     self.durationSimple = ko.computed(function () {
         return MomentUtil.formatDurationSimple(self.duration());
     });
@@ -37,23 +40,53 @@ function Report(data) {
     self.endTimeSimple = ko.computed(function () {
         return MomentUtil.formatTimeSimple(self.dateCompleted());
     });
+
+    self.jobPercentage = ko.computed(function () {
+        if (self.jobAverageDuration() > 0) {
+            return 100 * (self.duration() / self.jobAverageDuration());
+        } else {
+            return -1;
+        }
+    });
+    self.jobPercentageFixed = ko.computed(function () {
+        var pct = self.jobPercentage();
+        if (pct >= 0) {
+            return pct.toFixed(0)
+        } else {
+            return '0';
+        }
+    });
+    self.jobOverrunDuration = ko.computed(function () {
+        var jobAverageDuration = self.jobAverageDuration();
+        var execDuration = self.duration();
+        if (jobAverageDuration > 0 && execDuration > jobAverageDuration) {
+            return MomentUtil.formatDurationSimple(execDuration - jobAverageDuration);
+        } else {
+            return '';
+        }
+    });
     self.endTimeFormat = function (format) {
         var value = self.dateCompleted();
         return MomentUtil.formatTime(value, format);
     };
     self.nodeFailCount = ko.computed(function () {
         var ncount = ko.utils.unwrapObservable(self.node);
-        var ns = ncount.split('/');
-        if (ns.length == 3) {
-            return parseInt(ns[1]);
+        if(ncount){
+            var ns = ncount.split('/');
+            if (ns.length == 3) {
+                return parseInt(ns[1]);
+            }
         }
     });
 
     self.nodeSucceedCount = ko.computed(function () {
         var ncount = ko.utils.unwrapObservable(self.node);
+        if(ncount){
+
         var ns = ncount.split('/');
         if (ns.length == 3) {
             return parseInt(ns[0]);
+        }
         }
     });
     ko.mapping.fromJS(data, {}, self);
@@ -62,12 +95,22 @@ function History(ajaxHistoryLink) {
     var self = this;
     self.ajaxHistoryLink = ajaxHistoryLink;
     self.reports = ko.observableArray([]);
+    self.nowrunning = ko.observableArray([]);
+    self.showReports=ko.observable(false);
     self.href = ko.observable();
     self.selected = ko.observable(false);
     self.max = ko.observable(20);
     self.total = ko.observable(0);
     self.offset = ko.observable(0);
     self.params = ko.observable();
+    self.reloadInterval=ko.observable(0);
+    self.results=ko.computed(function(){
+       if(self.showReports()){
+           return self.reports()
+       } else{
+           return self.nowrunning()
+       }
+    });
     self.count = ko.computed(function () {
         return self.reports().length + self.offset() * self.max();
     });
@@ -108,14 +151,52 @@ var binding = {
         create: function (options) {
             return new Report(options.data);
         }
+    },
+    'nowrunning': {
+        key: function (data) {
+            return ko.utils.unwrapObservable(data.id);
+        },
+        create: function (options) {
+            return new Report(jQuery.extend({execution: options.data},options.data));
+        }
     }
 };
-function loadHistoryLink(history, ajaxBaseUrl, href) {
+function loadHistoryLink(history, ajaxBaseUrl, href,reload) {
     var params = href.substring(href.indexOf('?'));
     var url = ajaxBaseUrl + params;
 
-    jQuery.getJSON(url, function (data) {
+    var handleResult;
+    var load=function(){
+        history.href(href);
+        jQuery.getJSON(url, handleResult);
+    }
+    handleResult= function (data) {
         history.selected(true);
-        ko.mapping.fromJS(Object.extend(data, { href: href, params: params }), binding, history);
+        ko.mapping.fromJS(Object.extend(data, { params: params }), binding, history);
+        setTimeout(function(){
+            if (reload && history.href() == href) {
+                load();
+            }
+        }, reload * 1000);
+    };
+    load();
+}
+
+function setupActivityLinks(id, history, ajaxHistoryLink, ajaxNowrunningLink) {
+    jQuery('#' + id + ' a.activity_link').click(function (e) {
+        e.preventDefault();
+        var me = jQuery(this)[0];
+        jQuery('#' + id + ' .activity_links > li').removeClass('active');
+        jQuery(me.parentNode).addClass('active');
+        history.showReports(true);
+        loadHistoryLink(history, ajaxHistoryLink, me.getAttribute('href'),jQuery(this).data('auto-refresh'));
+    });
+    jQuery('#' + id + ' a.running_link').click(function (e) {
+        e.preventDefault();
+        var me = jQuery(this)[0];
+        jQuery('#' + id + ' .activity_links > li').removeClass('active');
+        jQuery(me.parentNode).addClass('active');
+        history.showReports(false);
+        loadHistoryLink(history, ajaxNowrunningLink, me.getAttribute('href'), jQuery(this).data('auto-refresh'));
     });
 }

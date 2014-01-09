@@ -5,6 +5,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import grails.converters.JSON
 import rundeck.Execution
+import rundeck.ScheduledExecution
 import rundeck.services.ApiService
 import rundeck.services.ExecutionService
 
@@ -243,16 +244,30 @@ class ReportsController {
             return unauthorized("Read Events for project ${session.project}",true)
         }
         def results = index(query)
-        results.reports=results.reports*.toMap()
-        results.reports?.each{
-            if(it.jcExecId){
-                try{
-                    it.execution= Execution.get(Long.parseLong(it.jcExecId))
-                    it.executionHref=createLink(controller: 'execution',action: 'show',absolute: true,id: it.jcExecId)
-                }catch (Exception e){
+        results.reports=results.reports.collect{
+            def map=it.toMap()
+            map.duration= (it.dateCompleted ?: new Date()).time - it.dateStarted.time
+            if(map.jcExecId){
+                map.executionId= map.remove('jcExecId')
+                try {
+                    map.execution = Execution.get(Long.parseLong(map.executionId)).toMap()
+                    map.executionHref = createLink(controller: 'execution', action: 'show', absolute: true, id: map.executionId)
+                } catch (Exception e) {
 
                 }
             }
+            if(map.jcJobId){
+                map.jobId= map.remove('jcJobId')
+                try {
+                    map.jobId=ScheduledExecution.get(Long.parseLong(map.jobId))?.extid
+                }catch(Exception e){
+
+                }
+            }
+            map.user= map.remove('author')
+            map.jobName= map.remove('reportId')
+            map.executionString= map.remove('title')
+            return map
         }
         results.params=params
         render(contentType: 'application/json', text: results as JSON)

@@ -104,10 +104,28 @@ class MenuController {
         def results = nowrunning(query)
         return results
     }
-    def nowrunningData = {QueueQuery query->
+    def nowrunningAjax = {QueueQuery query->
         def results = nowrunning(query)
         //structure dataset for client-side event status processing
-        render results.nowrunning as JSON
+        def running= results.nowrunning.collect {
+            def map = it.toMap()
+            def data = [
+                    status: ExecutionService.getExecutionState(it),
+                    executionHref: createLink(controller: 'execution', action: 'show', absolute: true, id: it.id),
+                    executionId: it.id,
+                    duration: (it.dateCompleted?:new Date()).time - it.dateStarted.time
+            ]
+            if(!it.scheduledExecution){
+                data['executionString']=map.workflow.commands[0].exec
+            }else{
+                data['jobName']=it.scheduledExecution.jobName
+                if (it.scheduledExecution && it.scheduledExecution.totalTime >= 0 && it.scheduledExecution.execCount > 0) {
+                    data['jobAverageDuration']= Math.floor(it.scheduledExecution.totalTime / it.scheduledExecution.execCount)
+                }
+            }
+            map + data
+        }
+        render( ([nowrunning:running] + results.subMap(['total','max','offset'])) as JSON)
     }
     def queueFragment = {QueueQuery query->
         def results = nowrunning(query)

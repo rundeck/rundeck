@@ -167,9 +167,9 @@
         jQuery(document).ready(function(){
             init();
             if(document.getElementById('activity_section')){
-                var history = new History("${g.createLink(controller: 'reports', action: 'eventsAjax', absolute: true)}");
+                var history = new History(appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
                 ko.applyBindings(history, document.getElementById('activity_section'));
-                setupActivityLinks('activity_section', history, "${g.createLink(controller: 'reports', action: 'eventsAjax', absolute: true)}");
+                setupActivityLinks('activity_section', history, appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
            }
         });
       </g:javascript>
