@@ -286,7 +286,7 @@
             if("${emptyQuery}"=='true'){
                 jQuery('ul.activity_links > li:first-child').addClass('active');
                 jQuery('ul.activity_links > li:first-child > a').each(function(e){
-                    loadHistoryLink(history, ajaxRunningLink, this.getAttribute('href'));
+                    loadHistoryLink(history, ajaxRunningLink, this.getAttribute('href'), jQuery(this).data('auto-refresh'));
                 });
             }
 
