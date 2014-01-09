@@ -53,7 +53,6 @@
 <body>
 <g:render template="/common/topbar"/>
 <div class="container">
-    <g:render template="/common/pageMessage"/>
     <g:layoutBody/>
 </div>
 
