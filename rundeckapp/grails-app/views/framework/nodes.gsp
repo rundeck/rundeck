@@ -235,7 +235,7 @@
                         <i class="glyphicon glyphicon-question-sign"></i>
                     </a>
                     <button class="btn btn-success" type="submit">
-                        <i class="glyphicon glyphicon-search"></i>
+                        Set Filter
                     </button>
                 </span>
                 </span>
