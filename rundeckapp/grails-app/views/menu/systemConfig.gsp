@@ -21,7 +21,7 @@
     </div>
 
     <g:set var="flatConfig" value="${grailsApplication.config.flatten()}"/>
-    <g:set var="fwkProps" value="${session['Framework'].propertyLookup.propertiesMap}"/>
+    <g:set var="fwkProps" value="${rundeckFramework.propertyLookup.propertiesMap}"/>
     <div class="col-sm-9">
     <div class="well well-sm">
     <div class="text-info">
@@ -29,7 +29,7 @@
     </div>
     </div>
     <h4>Server Connection Info</h4>
-        <g:set var="fwkPropFile" value="${Framework.getPropertyFile(session['Framework'].getConfigDir())}"/>
+        <g:set var="fwkPropFile" value="${Framework.getPropertyFile(rundeckFramework.getConfigDir())}"/>
 
         <div class="text-muted">${fwkPropFile.absolutePath.encodeAsHTML()}:</div>
 

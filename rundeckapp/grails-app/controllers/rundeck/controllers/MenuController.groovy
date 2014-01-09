@@ -521,6 +521,7 @@ class MenuController {
             response.setStatus(403)
             render(view: '/common/error', model: [:])
         }
+        [rundeckFramework: frameworkService.rundeckFramework]
     }
     def securityConfig(){
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
@@ -530,6 +531,7 @@ class MenuController {
             response.setStatus(403)
             render(view: '/common/error', model: [:])
         }
+        [rundeckFramework: frameworkService.rundeckFramework]
     }
 
     def systemInfo = {

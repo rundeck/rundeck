@@ -48,7 +48,7 @@
             To modify Access Control rules, create or edit a .aclpolicy file in the Rundeck etc directory.
         </div>
         <div>
-            <g:set var="fwkConfigDir" value="${session['Framework'].getConfigDir()}"/>
+            <g:set var="fwkConfigDir" value="${rundeckFramework.getConfigDir()}"/>
             List of ACL Policy Files in directory <code>${fwkConfigDir.absolutePath.encodeAsHTML()}</code>:
             <ul>
             <g:each in="${fwkConfigDir.listFiles().grep{it.name=~/\.aclpolicy$/}}" var="file">
