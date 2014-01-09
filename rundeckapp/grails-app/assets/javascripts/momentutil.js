@@ -20,7 +20,7 @@
      var self=  {
 
     duration : function (start, end) {
-        return moment(end).diff(moment(start));
+        return (end?moment(end):moment()).diff(moment(start));
     },
 
     formatTime : function (text, format) {
