@@ -10,7 +10,7 @@
                     <g:link class="primary"
                             title="Show execution #${execution.id}"
                             controller="execution" action="show" id="${execution.id}"
-                            params="">
+                            params="[project:execution.project]">
                         <i class="exec-status icon ${!execution.dateCompleted ? 'running' : execution.status == 'true' ? 'succeed' : execution.cancelled ? 'warn' : 'fail'}">
                         </i>
                         <g:message code="execution.identity" args="[execution.id]"/>
@@ -54,7 +54,7 @@
                             <g:link controller="scheduledExecution"
                                     action="execute"
                                     id="${scheduledExecution.extid}"
-                                    params="${[retryExecId: execution.id]}"
+                                    params="${[retryExecId: execution.id,project:execution.project]}"
                                     class="btn btn-default btn-xs"
                                     title="${g.message(code: 'execution.job.action.runAgain')}">
                                 <i class="glyphicon glyphicon-play"></i>
@@ -67,7 +67,7 @@
                             <g:link
                                     controller="scheduledExecution"
                                     action="createFromExecution"
-                                    params="${[executionId: execution.id]}"
+                                    params="${[executionId: execution.id, project: execution.project]}"
                                     class="btn btn-default btn-xs"
                                     title="${g.message(code: 'execution.action.saveAsJob', default: 'Save as Job')}">
                                 <g:message code="execution.action.saveAsJob" default="Save as Job"/>&hellip;
@@ -163,14 +163,15 @@
                         <g:link class="textbtn" style="padding:5px;"
                                 title="View raw text output"
                                 controller="execution" action="downloadOutput" id="${execution.id}"
-                                params="[view: 'inline', formatted: false]">
+                                params="[view: 'inline', formatted: false, project: execution.project]">
                             Raw</g:link>
                     </span>
 
                     <span class="sepL">
                         <g:link class="textbtn" style="padding:5px;"
                                 title="Download ${filesize > 0 ? filesize + ' bytes' : ''}"
-                                controller="execution" action="downloadOutput" id="${execution.id}">
+                                controller="execution" action="downloadOutput" id="${execution.id}"
+                                params="[project: execution.project]">
                             <b class="glyphicon glyphicon-file"></b>
                             Download</g:link>
                     </span>
