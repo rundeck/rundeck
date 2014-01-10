@@ -39,9 +39,9 @@
         var pageparams=${pageparams.encodeAsJSON()};
         var autoLoad=${params.refresh == 'true' ? true : false};
         var links = {
-            events:'${createLink(controller: "reports", action: "eventsFragment")}',
-            nowrunning:'${createLink(controller: "menu", action: "nowrunningFragment")}',
-            baseUrl:"${createLink(controller: "reports", action: "index")}"
+            events:'${createLink(controller: "reports", action: "eventsFragment", params: [project: params.project])}',
+            nowrunning:'${createLink(controller: "menu", action: "nowrunningFragment",params: [project:params.project])}',
+            baseUrl:"${createLink(controller: "reports", action: "index", params: [project: params.project])}"
         };
         var runupdate;
         function loadNowRunning(){
