@@ -1,3 +1,19 @@
+%{--
+  Copyright 2014 SimplifyOps Inc, <http://simplifyops.com>
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+  --}%
+
 <g:set var="timeNow" value="${new Date().getTime()}"/>
 <%
     def runcount = 0;
@@ -30,8 +46,9 @@
                 </td>
                 <g:if test="${scheduledExecution}">
                     <td class=" eventtitle job">
-
-                        #${execution.id}
+                        <g:link title="View execution output" controller="execution" action="show" id="${execution.id}"
+                                params="[project: execution.project]"
+                                class="_defaultAction">#${execution.id}</g:link>
                         ${scheduledExecution.groupPath ? scheduledExecution.groupPath + '/' : ''}${scheduledExecution.jobName.encodeAsHTML()}
                     </td>
 
@@ -43,7 +60,10 @@
                 </g:if>
                 <g:else>
                     <td class="jobname adhoc ">
-                        #${execution.id}
+                        <g:link title="View execution output" controller="execution" action="show" id="${execution.id}"
+                            params="[project:execution.project]"
+                                class="_defaultAction">#${execution.id}</g:link>
+
                         ${execution.workflow.commands[0].adhocRemoteString.encodeAsHTML()}
                     </td>
                     <td class="eventargs">
@@ -113,9 +133,6 @@
                     </g:else>
                 </td>
 
-                <td class="outputlink hilite action ${!execution.dateCompleted ? 'nowrunning' : ''}">
-                    <g:link title="View execution output" controller="execution" action="show" id="${execution.id}" class="_defaultAction">Show &raquo;</g:link>
-                </td>
 
             </tr>
             <% j++ %>
