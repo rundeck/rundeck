@@ -56,7 +56,7 @@
             }
             new Ajax.Updater(
                 'execDivContent',
-                '${createLink(controller:"scheduledExecution",action:"executeFragment",params:[project:params.project ?: request.project])}', {
+                appLinks.scheduledExecutionExecuteFragment, {
                 parameters: params,
                 evalScripts:true,
                 onComplete: function(transport) {
@@ -71,7 +71,7 @@
         function execSubmit(elem){
             var params=Form.serialize(elem);
             new Ajax.Request(
-                '${createLink(controller:"scheduledExecution",action:"runJobInline",params:[project:params.project ?: request.project])}', {
+                appLinks.scheduledExecutionRunJobInline, {
                 parameters: params,
                 evalScripts:true,
                 onComplete: function(trans) {
@@ -265,7 +265,7 @@
             bcontent.loading();
 
 
-            new Ajax.Updater('jobIdDetailContent','${createLink(controller:'scheduledExecution',action:'detailFragment',params: [project:params.project ?: request.project])}',{
+            new Ajax.Updater('jobIdDetailContent',appLinks.scheduledExecutionDetailFragment,{
                 parameters:{id:matchId},
                 evalScripts:true,
                 onComplete: function(trans){
