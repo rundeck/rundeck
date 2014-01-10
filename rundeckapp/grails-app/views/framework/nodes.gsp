@@ -336,7 +336,7 @@
                             </a>
                         </li>
                     </g:if>
-                    <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_CREATE}">
+                    <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_CREATE}" project="${params.project?:request.project}">
                     <li >
                         <a href="#" data-bind="click: saveJob">
                             <i class="glyphicon glyphicon-plus"></i>

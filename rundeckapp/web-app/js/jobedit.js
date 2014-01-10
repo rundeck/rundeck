@@ -52,7 +52,7 @@ function _formUpdateMatchedNodes() {
         $('mnodeswait').hide();
         return;
     }
-    var params = {project:project,view:'embed',declarenone:true,defaultLocalNode:true,fullresults:true,formInput:true,requireRunAuth:true};
+    var params = {view:'embed',declarenone:true,defaultLocalNode:true,fullresults:true,formInput:true,requireRunAuth:true};
     for (i in node_filter_keys) {
         var key = node_filter_keys[i];
         if ($('schedJobNodeInclude' + key) && $F('schedJobNodeInclude' + key)) {

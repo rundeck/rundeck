@@ -110,7 +110,7 @@
         <li class="headright">
             <g:set var="adminauth" value="${false}"/>
             <g:if test="${params.project ?: request.project}">
-            <g:set var="adminauth" value="${auth.resourceAllowedTest(type:'project',name: params.project ?: request.project,action:[AuthConstants.ACTION_ADMIN,AuthConstants.ACTION_READ],context:'application')}"/>
+            <g:set var="adminauth" value="${auth.resourceAllowedTest(type:'project',name: (params.project ?: request.project),action:[AuthConstants.ACTION_ADMIN,AuthConstants.ACTION_READ],context:'application')}"/>
             <g:ifPageProperty name='meta.tabpage'>
                 <g:ifPageProperty name='meta.tabpage' equals='configure'>
                     <g:set var="cfgselected" value="active"/>
