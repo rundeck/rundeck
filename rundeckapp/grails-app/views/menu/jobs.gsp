@@ -160,19 +160,6 @@
             }
         }
 
-        //now running
-        var runupdate;
-        function loadNowRunning(){
-            runupdate=new Ajax.PeriodicalUpdater({success:'nowrunning'},'${createLink(controller:"menu",action:"nowrunningFragment",params: execQueryParams?:[project: params.project ?: request.project])}',{
-                evalScripts:true,
-                onFailure:function (response) {
-                    showError("AJAX error: Now Running ["+ runupdate.url+"]: "+response.status+" "+response.statusText);
-                    runupdate.stop();
-                }
-            });
-        }
-
-
         /////////////
         // Job context detail popup code
         /////////////
