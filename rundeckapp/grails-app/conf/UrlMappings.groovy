@@ -57,7 +57,7 @@ class UrlMappings {
 
         //simplified url mappings for link generation
         "/project/$project/nodes/"(controller: 'framework', action: 'nodes')
-        "/project/$project/run/"(controller: 'framework', action: 'adhoc')
+        "/project/$project/run/"(controller: 'framework', action: 'nodes')
         "/project/$project/command/run"(controller: 'framework',action: 'adhoc')
         "/project/$project/activity"(controller: 'reports', action: 'index')
         "/project/$project/history"(controller: 'reports', action: 'index')
