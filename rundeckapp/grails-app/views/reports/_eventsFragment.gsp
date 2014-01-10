@@ -62,8 +62,7 @@
                                         title="click to load new events"
                                         params="${filterName ? [filterName: filterName] : params}"><span
                                         class="badge newcontent active" id="eventsCountContent"
-                                        title="click to load new events"></span>
-                                </g:link>
+                                        title="click to load new events"></span></g:link>
                             </span>
                         </g:if>
                         <g:if test="${includeAutoRefresh}">
