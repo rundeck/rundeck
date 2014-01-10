@@ -151,9 +151,9 @@
         function init() {
             var filterParams =${[filterName:params.filterName,filter:query?.filter,filterAll:params.showall in ['true',true]].encodeAsJSON()};
             nodeFilter = new NodeFilters(
-                    "${g.createLink(action: 'adhoc',controller: 'framework',params:[project:params.project?:request.project])}",
-                    "${g.createLink(action: 'create',controller: 'scheduledExecution',params:[project:params.project?:request.project])}",
-                    "${g.createLink(action: 'nodes',controller: 'framework',params:[project:params.project?:request.project])}",
+                    appLinks.frameworkAdhoc,
+                    appLinks.scheduledExecutionCreate,
+                    appLinks.frameworkNodes,
                     Object.extend(filterParams,{
                         nodesTitleSingular:"${g.message(code:'Node',default:'Node')}",
                         nodesTitlePlural:"${g.message(code:'Node.plural',default:'Nodes')}"
