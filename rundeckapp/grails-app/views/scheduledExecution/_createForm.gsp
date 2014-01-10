@@ -16,6 +16,7 @@
 
                 <div class="col-sm-2 ">
                     <g:link controller="scheduledExecution" action="upload"
+                            params="[project: params.project?:request.project]"
                             class="btn btn-default btn-sm pull-right">
                         <i class="glyphicon glyphicon-upload"></i>
                         Upload Definition&hellip;

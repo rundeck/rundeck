@@ -17,10 +17,6 @@
 <g:set var="fieldColSize" value="col-sm-10"/>
 <g:set var="fieldColHalfSize" value="col-sm-5"/>
 <g:set var="offsetColSize" value="col-sm-10 col-sm-offset-2"/>
-<g:set var="NODE_FILTERS" value="${['Name','Tags']}"/>
-<g:set var="NODE_FILTERS_X" value="${['','OsName','OsFamily','OsArch','OsVersion']}"/>
-<g:set var="NODE_FILTERS_ALL" value="${['Name','Tags','','OsName','OsFamily','OsArch','OsVersion']}"/>
-<g:set var="NODE_FILTER_MAP" value="${['':'Hostname','OsName':'OS Name','OsFamily':'OS Family','OsArch':'OS Architecture','OsVersion':'OS Version']}"/>
 
 <g:set var="isWorkflow" value="${true}"/>
 <g:set var="editSchedExecId" value="${scheduledExecution?.id? scheduledExecution.id:null}"/>
@@ -33,8 +29,6 @@
         var selFrameworkProject='${project.encodeAsJavaScript()}';
         var selArgs='${scheduledExecution?.argString?.encodeAsJavaScript()}';
         var isWorkflow=${isWorkflow};
-var node_filter_map =${NODE_FILTER_MAP.encodeAsJSON()};
-var node_filter_keys =${NODE_FILTERS_ALL.encodeAsJSON()};
 var curSEID =${editSchedExecId?editSchedExecId:"null"};
 function getCurSEID(){
     return curSEID;
@@ -60,7 +54,9 @@ var applinks={
     editOptsRemove:'${createLink(controller:"editOpts",action:"remove",params:[project:project])}',
     editOptsUndo:'${createLink(controller:"editOpts",action:"undo",params:[project:project])}',
     editOptsRedo:'${createLink(controller:"editOpts",action:"redo",params:[project:project])}',
-    editOptsRevert:'${createLink(controller:"editOpts",action:"revert",params:[project:project])}'
+    editOptsRevert:'${createLink(controller:"editOpts",action:"revert",params:[project:project])}',
+    menuJobsPicker:'${createLink(controller:"menu",action:"jobsPicker",params:[project:project])}',
+    scheduledExecutionGroupTreeFragment:'${createLink(controller:"scheduledExecution",action:"groupTreeFragment",params:[project:project])}'
 };
 
 //]>
@@ -88,15 +84,15 @@ var applinks={
             $(elem).addClassName('active');
             new Ajax.Updater(
                 'jobChooserContent',
-                '${createLink(controller:"menu",action:"jobsPicker")}',
+                    applinks.menuJobsPicker,
                 {
-                parameters: {jobsjscallback:'jobChosen',projFilter:project,runAuthRequired:true},
+                parameters: {jobsjscallback:'jobChosen',runAuthRequired:true},
                  onSuccess: function(transport) {
                     new MenuController().showRelativeTo(elem,target);
                      jQuery('#jobChooseBtn').button('reset');
                  },
-                 onFailure: function() {
-                     showError("Error performing request: groupTreeFragment");
+                 onFailure: function(transport) {
+                     showError("Error performing request: menuJobsPicker: "+ transport);
                      jQuery('#jobChooseBtn').button('reset');
                  }
                 });
@@ -396,8 +392,7 @@ var applinks={
                         jQuery('#groupChooseBtn').popover('hide');
                         jQuery('#groupChooseBtn').button('reset');
                     }else{
-                        jQuery.get('${createLink(controller:"scheduledExecution",action:"groupTreeFragment")}?jscallback=groupChosen&project='+project
-                                , function (d) {
+                        jQuery.get(applinks.scheduledExecutionGroupTreeFragment+'?jscallback=groupChosen', function (d) {
                             jQuery('#groupChooseBtn').popover({html:true, container:'body', placement: 'left',content: d,trigger:'manual'}).popover('show');
                             jQuery('#groupChooseBtn').button('reset');
                         });
