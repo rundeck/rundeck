@@ -13,7 +13,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
   --}%
-${prefix ?: ''}<g:link class="nodefilterlink textbtn tag" action="nodes" params="${[filter: OptsUtil.join([key + ":",value])]}"
+${prefix ?: ''}<g:link class="nodefilterlink textbtn tag" action="nodes" params="${[filter: OptsUtil.join([key + ":",value]), project: params.project ?: request.project]}"
     data-node-filter="${OptsUtil.join([key + ":", value])}"
 title="Filter by ${key.encodeAsHTML()} value"><g:if test="${linkicon}"><i class="${linkicon}"></i></g:if
     ><g:else>${(linktext?:value)?.encodeAsHTML()}</g:else></g:link>${suffix?:''}
