@@ -222,6 +222,7 @@
                                     <g:if test="${eprev}">
                                         <li>
                                             <g:link action="show" controller="execution" id="${eprev.id}"
+                                                params="[project: eprev.project]"
                                                     title="Previous Execution #${eprev.id}">
                                                 <i class="glyphicon glyphicon-arrow-left"></i>
                                                 <g:message
@@ -239,6 +240,7 @@
                                         <li>
                                             <g:link action="show" controller="execution"
                                                     title="Next Execution #${enext.id}"
+                                                    params="[project: enext.project]"
                                                     id="${enext.id}">
                                                 <g:message code="${scheduledExecution ? 'job' : 'adhoc'}.next.execution"
                                                            args="${[enext.id]}"/>
@@ -314,7 +316,7 @@
                                         <g:link
                                                 controller="scheduledExecution"
                                                 action="createFromExecution"
-                                                params="${[executionId: execution.id]}"
+                                                params="${[executionId: execution.id,project:execution.project]}"
                                                 class=" btn btn-primary btn-sm header execRerun execRetry"
                                                 title="${g.message(code: 'execution.action.saveAsJob')}"
                                                 style="${wdgt.styleVisible(if: null != execution.dateCompleted)}"
@@ -330,7 +332,7 @@
                                     <g:link
                                             controller="framework"
                                             action="nodes"
-                                            params="${[fromExecId: execution.id]}"
+                                            params="${[fromExecId: execution.id, project: execution.project]}"
                                             title="${g.message(code: 'execution.action.runAgain')}"
                                             class="btn btn-default btn-sm force-last-child execRerun"
                                             style="${wdgt.styleVisible(if: null != execution.dateCompleted && null == execution.failedNodeList)}"
@@ -355,7 +357,7 @@
                                                     <g:link
                                                             controller="framework"
                                                             action="nodes"
-                                                            params="${[fromExecId: execution.id]}"
+                                                            params="${[fromExecId: execution.id, project: execution.project]}"
                                                             title="${g.message(code: 'execution.action.runAgain')}">
 
                                                         <b class="glyphicon glyphicon-play"></b>
@@ -369,7 +371,7 @@
                                                     <g:link
                                                             controller="framework"
                                                             action="nodes"
-                                                            params="${[retryFailedExecId: execution.id]}"
+                                                            params="${[retryFailedExecId: execution.id, project: execution.project]}"
                                                             title="${g.message(code: 'retry.failed.nodes.description')}">
 
                                                         <b class="glyphicon glyphicon-play"></b>
@@ -388,6 +390,7 @@
                                     <g:if test="${!groupOnly && auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_UPDATE)}">
                                         <g:link controller="scheduledExecution" title="Edit Job" action="edit"
                                                        id="${scheduledExecution.extid}"
+                                                       params="[project:scheduledExecution.project]"
                                                        class="btn btn-info btn-sm">
                                             <i class="glyphicon glyphicon-edit"></i>
                                             edit Job
@@ -399,7 +402,7 @@
                                                 action="execute"
                                                 id="${scheduledExecution.extid}"
                                                 class="btn btn-default btn-sm execRerun"
-                                                params="${[retryExecId: execution.id]}"
+                                                params="${[retryExecId: execution.id, project: execution.project]}"
                                                 title="${g.message(code: 'execution.job.action.runAgain')}"
                                                 style="${wdgt.styleVisible(if: null != execution.dateCompleted && null == execution.failedNodeList)};"
                                             data-bind="visible: completed() && !failed()"
@@ -423,7 +426,7 @@
                                                     <g:link controller="scheduledExecution"
                                                             action="execute"
                                                             id="${scheduledExecution.extid}"
-                                                            params="${[retryExecId: execution.id]}"
+                                                            params="${[retryExecId: execution.id, project: execution.project]}"
                                                             title="${g.message(code: 'execution.job.action.runAgain')}"
                                                             data-bind="visible: completed()"
                                                     >
@@ -437,7 +440,7 @@
                                                 <li class="retrybuttons">
                                                     <g:link controller="scheduledExecution" action="execute"
                                                             id="${scheduledExecution.extid}"
-                                                            params="${[retryFailedExecId: execution.id]}"
+                                                            params="${[retryFailedExecId: execution.id, project: execution.project]}"
                                                             title="${g.message(code: 'retry.job.failed.nodes')}">
                                                         <b class="glyphicon glyphicon-play"></b>
                                                         <g:message code="retry.failed.nodes"/>&hellip;
