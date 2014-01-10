@@ -242,7 +242,7 @@
             nodeFilter.filterAll(filterAll);
             nodeFilter.filterName(filterName);
             nodeFilter.filter(filterString);
-            _updateMatchedNodes(data, elem, '${session.project}', false, {view: view, expanddetail: true,
+            _updateMatchedNodes(data, elem, '${params.project?:request.project}', false, {view: view, expanddetail: true,
                 inlinepaging: false, maxShown: 20}, function (xht) {
             });
         }
@@ -293,9 +293,9 @@
             //setup node filters knockout bindings
             var filterParams =${[filterName:params.filterName,filter:query?.filter,filterAll:params.showall in ['true',true]].encodeAsJSON()};
             nodeFilter = new NodeFilters(
-                    "${g.createLink(action: 'adhoc',controller: 'framework',params:[project:session.project])}",
-                    "${g.createLink(action: 'create',controller: 'scheduledExecution',params:[project:session.project])}",
-                    "${g.createLink(action: 'nodes',controller: 'framework',params:[project:session.project])}",
+                    "${g.createLink(action: 'adhoc',controller: 'framework',params:[project:params.project?:request.project])}",
+                    "${g.createLink(action: 'create',controller: 'scheduledExecution',params:[project:params.project?:request.project])}",
+                    "${g.createLink(action: 'nodes',controller: 'framework',params:[project:params.project?:request.project])}",
                     Object.extend(filterParams, {
                         nodesTitleSingular: "${g.message(code:'Node',default:'Node')}",
                         nodesTitlePlural: "${g.message(code:'Node.plural',default:'Nodes')}"
@@ -338,7 +338,7 @@
                     <g:if test="${run_authorized}">
                     <div class="" id="runtab">
                             <div class="form form-horizontal clearfix" id="runbox">
-                                <g:hiddenField name="project" value="${session.project}"/>
+                                <g:hiddenField name="project" value="${params.project ?: request.project}"/>
 
                                 <g:render template="nodeFiltersHidden"
                                           model="${[params: params, query: query]}"/>
@@ -361,7 +361,6 @@
                                             <i class="glyphicon glyphicon-cog"></i>
                                         </button>
 
-<<<<<<< HEAD
                                     </span>
                                     </span>
 
@@ -411,50 +410,6 @@
                                             </div>
                                         </div>
                                     </div>
-=======
-                </div>
-        </div>
-        <div class="row ">
-            <div id="${ukey}nodeForm" class="collapse collapse-expandable col-sm-12">
-                <g:render template="allnodes"
-                          model="${[nodeview: 'embed', expanddetail: true, allnodes: allnodes, totalexecs: totalexecs, jobs: jobs, params: params, total: total, allcount: allcount, page: page, max: max, nodeauthrun: nodeauthrun, tagsummary: tagsummary]}"/>
-            </div>
-        </div>
-        <div class="row row-space">
-            <g:if test="${run_authorized}">
-                <div class=" form-inline clearfix" id="runbox">
-                    <g:hiddenField name="project" value="${params.project ?: request.project}"/>
-                    <g:render template="nodeFiltersHidden" model="${[params: params, query: query]}"/>
-                    <div class=" col-sm-12">
-                        <div class="input-group">
-                            <g:textField name="exec" size="50" placeholder="Enter a shell command"
-                                         value="${runCommand}"
-                                         id="runFormExec"
-                                        class="form-control"
-                                         autofocus="true"/>
-
-                            <span class="input-group-btn">
-                                <button class="btn btn-default has_tooltip" type="button"
-                                        title="Node Dispatch Settings"
-                                        data-placement="left"
-                                        data-container="body"
-                                        data-toggle="collapse" data-target="#runconfig">
-                                    <i class="glyphicon glyphicon-cog"></i>
-                                </button>
-
-                                <button class="btn btn-success runbutton " onclick="runFormSubmit('runbox');">
-                                    Run <span class="glyphicon glyphicon-play"></span>
-                                </button>
-                            </span>
-                        </div>
-                        <div class="collapse well well-sm " id="runconfig">
-                            <div class="row">
-                            <div class="col-sm-12">
-                                <div class="form-group text-muted ">Node Dispatch Settings: </div>
-                                <div class="form-group has_tooltip" title="Maximum number of parallel threads to use"
-                                     data-placement="bottom">
-                                    Thread count
->>>>>>> Initial sweep: move project to url
                                 </div>
                                 </div>
                             </div>

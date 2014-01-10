@@ -109,7 +109,7 @@
         var lastRunExec = 0;
         var lastRunTime = 0;
         var checkUpdatedUrl='';
-        var pageTitle="${g.message(code: 'gui.menu.Events').encodeAsJavaScript()} - ${session?.project.encodeAsJavaScript()}";
+        var pageTitle="${g.message(code: 'gui.menu.Events').encodeAsJavaScript()} - ${(params.project ?: request.project).encodeAsJavaScript()}";
         var firstLoad=true;
         var firstparams=Object.extend({refresh:${params.refresh == 'true' ? true : false}},eventsparams);
         window.onpopstate = function(event) {

@@ -151,9 +151,9 @@
         function init() {
             var filterParams =${[filterName:params.filterName,filter:query?.filter,filterAll:params.showall in ['true',true]].encodeAsJSON()};
             nodeFilter = new NodeFilters(
-                    "${g.createLink(action: 'adhoc',controller: 'framework',params:[project:session.project])}",
-                    "${g.createLink(action: 'create',controller: 'scheduledExecution',params:[project:session.project])}",
-                    "${g.createLink(action: 'nodes',controller: 'framework',params:[project:session.project])}",
+                    "${g.createLink(action: 'adhoc',controller: 'framework',params:[project:params.project?:request.project])}",
+                    "${g.createLink(action: 'create',controller: 'scheduledExecution',params:[project:params.project?:request.project])}",
+                    "${g.createLink(action: 'nodes',controller: 'framework',params:[project:params.project?:request.project])}",
                     Object.extend(filterParams,{
                         nodesTitleSingular:"${g.message(code:'Node',default:'Node')}",
                         nodesTitlePlural:"${g.message(code:'Node.plural',default:'Nodes')}"
@@ -327,7 +327,7 @@
                    Node Actions <span class="caret"></span>
                 </button>
                 <ul class="dropdown-menu" role="menu">
-                    <g:if test="${session.project && run_authorized}">
+                    <g:if test="${run_authorized}">
                         <li data-bind="visible: hasNodes()">
                             <a href="#" data-bind="click: runCommand">
                                 <i class="glyphicon glyphicon-play"></i>
@@ -349,7 +349,7 @@
             </div>
         </div>
         <g:form class="form form-inline" action="adhoc" controller="framework" method="get" name="runform">
-            <g:hiddenField name="project" value="${session.project}"/>
+            <g:hiddenField name="project" value="${params.project ?: request.project}"/>
             <g:render template="nodeFiltersHidden" model="${[params: params, query: query]}"/>
         </g:form>
 

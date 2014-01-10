@@ -1,4 +1,6 @@
 <script type="text/javascript">
+    <g:set var="currentProject" value="${params.project?:request.project}"/>
+    <g:set var="projParams" value="${currentProject?[project:currentProject]:[:]}"/>
     var appLinks = {
         disclosureIcon: '${resource(dir:"images",file:"icon-tiny-disclosure.png")}',
         disclosureIconOpen: '${resource(dir:"images",file:"icon-tiny-disclosure-open.png")}',
@@ -9,15 +11,15 @@
         iconSpinner: '${resource(dir:"images",file:"icon-tiny-disclosure-waiting.gif")}',
         executionCancelExecution: '${createLink(controller:"execution",action:"cancelExecution")}.json',
         tailExecutionOutput: '${createLink(controller: "execution", action: "tailExecutionOutput")}.json',
-        reportsEventsFragment:"${createLink(controller:'reports',action:'eventsFragment',params:[project:params.project?:request.project])}",
+        reportsEventsFragment:"${createLink(controller:'reports',action:'eventsFragment',params:projParams)}",
         frameworkViewResourceModelConfig: "${createLink(action: 'viewResourceModelConfig', controller: 'framework')}",
         frameworkCheckResourceModelConfig: "${createLink(action: 'checkResourceModelConfig', controller: 'framework')}",
         frameworkEditResourceModelConfig: "${createLink(action: 'editResourceModelConfig', controller: 'framework')}",
         frameworkCreateResourceModelConfig: "${createLink(action: 'createResourceModelConfig', controller: 'framework')}",
-        frameworkNodes: "${createLink(controller:"framework",action:"nodes",params:[project:params.project?:request.project])}",
-        frameworkReloadNodes: "${createLink(controller:"framework",action:"reloadNodes",params:[project:params.project?:request.project])}",
-        reportsEventsAjax: "${g.createLink(controller: 'reports', action: 'eventsAjax', absolute: true,params:[project:params.project?:request.project])}",
-        menuNowrunningAjax: "${g.createLink(controller: 'menu', action: 'nowrunningAjax', absolute: true,params:[project:params.project?:request.project])}"
+        frameworkNodes: "${createLink(controller:"framework",action:"nodes",params:projParams)}",
+        frameworkReloadNodes: "${createLink(controller:"framework",action:"reloadNodes",params:projParams)}",
+        reportsEventsAjax: "${g.createLink(controller: 'reports', action: 'eventsAjax', absolute: true,params:projParams)}",
+        menuNowrunningAjax: "${g.createLink(controller: 'menu', action: 'nowrunningAjax', absolute: true,params:projParams)}"
     } ;
     //compatibility with WB javascript:
     var AppImages = {
