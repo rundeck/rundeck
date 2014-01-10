@@ -22,6 +22,7 @@
                 </g:if>
                 <g:hiddenField name="formInput" value="true"/>
                 <g:hiddenField name="projFilter" value="${params.project ?: request.project}"/>
+                <g:hiddenField name="project" value="${params.project ?: request.project}"/>
 
                 <g:ifServletContextAttribute attribute="RSS_ENABLED" value="true">
                     <a title="RSS 2.0" class="floatr"

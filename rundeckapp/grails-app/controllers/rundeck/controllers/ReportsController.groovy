@@ -321,7 +321,7 @@ class ReportsController {
                 return render(template:"/common/error")
             }
         }
-        redirect(controller:'reports',action:params.fragment?'eventsFragment':'index',params:[filterName:filter.name])
+        redirect(controller:'reports',action:params.fragment?'eventsFragment':'index',params:[filterName:filter.name,project:params.project])
     }
 
     def deleteFilter={
@@ -337,7 +337,7 @@ class ReportsController {
             ffilter.delete(flush:true)
             flash.message="Filter deleted: ${filtername}"
         }
-        redirect(controller:'reports',action:params.fragment?'eventsFragment':'index')
+        redirect(controller:'reports',action:params.fragment?'eventsFragment':'index',params:[project:params.project])
     }
    
 
