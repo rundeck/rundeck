@@ -62,10 +62,11 @@
 
             <td style="text-align:left;vertical-align:top;width:200px; ${wdgt.styleVisible(if:filtersOpen)}" id="${rkey}filter" class="wffilter" >
 
-            <g:form action="jobs" method="get" class="form">
+            <g:form action="jobs" params="[project:params.project]" method="get" class="form">
                 <g:if test="${params.compact}">
                     <g:hiddenField name="compact" value="${params.compact}"/>
                 </g:if>
+                <g:hiddenField name="project" value="${params.project}"/>
                 <span class="textbtn textbtn-default obs_filtertoggle">
                     Filter
                     <b class="glyphicon glyphicon-chevron-down"></b>

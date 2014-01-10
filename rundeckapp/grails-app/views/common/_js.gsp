@@ -23,7 +23,9 @@
         menuNowrunningAjax: "${g.createLink(controller: 'menu', action: 'nowrunningAjax', absolute: true,params:projParams)}",
         scheduledExecutionRunAdhocInline: "${createLink(controller:'scheduledExecution',action:'runAdhocInline',params:projParams)}",
         scheduledExecutionCreate: "${createLink(controller:'scheduledExecution',action:'create',params:projParams)}",
-        executionFollowFragment: "${createLink(controller:'execution',action:'followFragment',params:projParams)}"
+        executionFollowFragment: "${createLink(controller:'execution',action:'followFragment',params:projParams)}",
+        menuJobs: "${createLink(controller:'menu',action:'jobs',params: projParams)}",
+        userAddFilterPref: "${createLink(controller:'user',action:'addFilterPref',params:projParams)}"
     } ;
     //compatibility with WB javascript:
     var AppImages = {

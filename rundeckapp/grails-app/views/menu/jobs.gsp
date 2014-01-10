@@ -130,7 +130,7 @@
             if(data){
                 var bfilters=data.filterpref;
                 //reload page
-                document.location="${createLink(controller:'menu',action:'jobs',params: [project:params.project ?: request.project])}"+(bfilters[name]?"&filterName="+encodeURIComponent(bfilters[name]):'');
+                document.location=_genUrl(appLinks.menuJobs , bfilters[name] ? {filterName:bfilters[name]} : {});
             }
         }
         function setFilter(name,value){
@@ -138,7 +138,7 @@
                 value="!";
             }
             var str=name+"="+value;
-            new Ajax.Request("${createLink(controller:'user',action:'addFilterPref',params:[project:params.project ?: request.project])}",{parameters:{filterpref:str}, evalJSON:true,onSuccess:function(response){
+            new Ajax.Request(appLinks.userAddFilterPref,{parameters:{filterpref:str}, evalJSON:true,onSuccess:function(response){
                 _setFilterSuccess(response,name);
             }});
         }

@@ -442,7 +442,7 @@ class MenuController {
                 return render(template:"/common/error")
             }
         }
-        redirect(controller:'menu',action:params.fragment?'jobsFragment':'jobs',params:[filterName:filter.name,compact:params.compact?'true':''])
+        redirect(controller:'menu',action:params.fragment?'jobsFragment':'jobs',params:[filterName:filter.name,project:params.project])
     }
     
     
@@ -459,7 +459,7 @@ class MenuController {
             ffilter.delete(flush:true)
             flash.message="Filter deleted: ${filtername.encodeAsHTML()}"
         }
-        redirect(controller:'menu',action:params.fragment?'jobsFragment':'jobs',params:[compact:params.compact?'true':''])
+        redirect(controller:'menu',action:params.fragment?'jobsFragment':'jobs',params:[project: params.project])
     }
 
     def admin={
