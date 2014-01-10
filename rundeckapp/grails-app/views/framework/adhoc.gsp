@@ -83,7 +83,7 @@
             disableRunBar(true);
             runStarted();
             $('runcontent').loading('Starting Execution&hellip;');
-            new Ajax.Request("${createLink(controller:'scheduledExecution',action:'runAdhocInline')}",{
+            new Ajax.Request(appLinks.scheduledExecutionRunAdhocInline,{
                 parameters:data,
                 evalScripts:true,
                 evalJSON:true,
@@ -112,7 +112,7 @@
                 runError("Server response was invalid: "+data.toString());
             }else {
                 $('runcontent').loading('Loading Output&hellip;');
-                new Ajax.Updater('runcontent',"${createLink(controller:'execution',action:'followFragment')}",{
+                new Ajax.Updater('runcontent',appLinks.executionFollowFragment,{
                 parameters:{id:data.id,mode:'tail'},
                 evalScripts:true,
                 onComplete: function(transport) {
@@ -293,9 +293,9 @@
             //setup node filters knockout bindings
             var filterParams =${[filterName:params.filterName,filter:query?.filter,filterAll:params.showall in ['true',true]].encodeAsJSON()};
             nodeFilter = new NodeFilters(
-                    "${g.createLink(action: 'adhoc',controller: 'framework',params:[project:params.project?:request.project])}",
-                    "${g.createLink(action: 'create',controller: 'scheduledExecution',params:[project:params.project?:request.project])}",
-                    "${g.createLink(action: 'nodes',controller: 'framework',params:[project:params.project?:request.project])}",
+                    appLinks.frameworkAdhoc,
+                    appLinks.scheduledExecutionCreate,
+                    appLinks.frameworkNodes,
                     Object.extend(filterParams, {
                         nodesTitleSingular: "${g.message(code:'Node',default:'Node')}",
                         nodesTitlePlural: "${g.message(code:'Node.plural',default:'Nodes')}"

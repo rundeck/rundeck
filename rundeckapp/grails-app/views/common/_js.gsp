@@ -17,9 +17,13 @@
         frameworkEditResourceModelConfig: "${createLink(action: 'editResourceModelConfig', controller: 'framework')}",
         frameworkCreateResourceModelConfig: "${createLink(action: 'createResourceModelConfig', controller: 'framework')}",
         frameworkNodes: "${createLink(controller:"framework",action:"nodes",params:projParams)}",
+        frameworkAdhoc: "${createLink(controller:"framework",action:"adhoc",params:projParams)}",
         frameworkReloadNodes: "${createLink(controller:"framework",action:"reloadNodes",params:projParams)}",
         reportsEventsAjax: "${g.createLink(controller: 'reports', action: 'eventsAjax', absolute: true,params:projParams)}",
-        menuNowrunningAjax: "${g.createLink(controller: 'menu', action: 'nowrunningAjax', absolute: true,params:projParams)}"
+        menuNowrunningAjax: "${g.createLink(controller: 'menu', action: 'nowrunningAjax', absolute: true,params:projParams)}",
+        scheduledExecutionRunAdhocInline: "${createLink(controller:'scheduledExecution',action:'runAdhocInline',params:projParams)}",
+        scheduledExecutionCreate: "${createLink(controller:'scheduledExecution',action:'create',params:projParams)}",
+        executionFollowFragment: "${createLink(controller:'execution',action:'followFragment',params:projParams)}"
     } ;
     //compatibility with WB javascript:
     var AppImages = {
