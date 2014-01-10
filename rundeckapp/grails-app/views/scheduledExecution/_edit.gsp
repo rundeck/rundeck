@@ -323,7 +323,9 @@ var applinks={
     }
 </style>
 
-<input type="hidden" name="id" value="${scheduledExecution?.id}"/>
+<g:if test="${scheduledExecution && scheduledExecution.id}">
+    <input type="hidden" name="id" value="${scheduledExecution.extid}"/>
+</g:if>
 
 
 <div class="alert alert-danger" style="display: none" id="editerror">
