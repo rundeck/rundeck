@@ -572,7 +572,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     static String generateExecutionURL(Execution execution) {
         RequestHelper.doWithMockRequest {
-            new ExecutionController().createExecutionUrl(execution.id)
+            new ExecutionController().createExecutionUrl(execution.id,execution.project)
         }
     }
     static String generateServerURL() {

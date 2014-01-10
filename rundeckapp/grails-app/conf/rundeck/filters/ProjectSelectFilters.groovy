@@ -45,7 +45,6 @@ import com.dtolabs.rundeck.core.common.Framework
  * allow the create project form to be used. 
  */
 public class ProjectSelectFilters {
-    def userService
     def frameworkService
     
     def dependsOn = [ApiRequestFilters]
@@ -64,59 +63,34 @@ public class ProjectSelectFilters {
                 if(controllerName=='user' && ( actionName in ['logout','login'] )){
                     return
                 }
+                if(controllerName=='menu' && ( actionName in ['home'] )){
+                    return
+                }
                 if(controllerName=='assets'){
                     return
                 }
                 if (session && session.user) {
                     //get user authorizations
-                    session.projectSelectFilterApplied = true
-                    def Framework fw = frameworkService.rundeckFramework
                     def AuthContext authContext = frameworkService.userAuthContext(session)
 
 
                     def selected = params.project
-                    if (selected && (!frameworkService.existsFrameworkProject(selected)
-                            || !frameworkService.authorizeApplicationResourceAll(authContext, [type: 'project', name: selected], ['read']))) {
-                        selected = null
+                    if (selected && !frameworkService.existsFrameworkProject(selected)) {
+                        response.setStatus(404)
+                        flash.title= 'Not Found'
+                        flash.errorCode= 'scheduledExecution.project.invalid.message'
+                        flash.errorArgs= [params.project]
+                        params.project=null
+                        render(view: '/common/error')
+                        AA_TimerFilters.afterRequest(request, response, session)
+                        return false
                     }
-                    if (selected) {
-                        session.project = selected
-                        return
-                    }
-
-                    selected = session.project
-                    //check project exists
-                    if (selected && (!frameworkService.existsFrameworkProject(selected)
-                            || !frameworkService.authorizeApplicationResourceAll(authContext, [type: 'project', name: selected], ['read']))) {
-                        selected = null
-                    }
-                    if (selected) {
-                        session.project = selected
-                        return
-                    }
-                    //use last stored filter pref
-                    def prefs = userService.getFilterPref(session.user)
-                    if (prefs.project && (!frameworkService.existsFrameworkProject(prefs.project)
-                            || !frameworkService.authorizeApplicationResourceAll(authContext, [type: 'project', name: prefs.project], ['read']))) {
-                        selected = prefs.project
-                    }
-                    if (selected) {
-                        session.project = selected
-                        return
-                    }
-
-                    //use alphabetically first project
-                    def projs = frameworkService.projects(authContext).sort {a, b -> a.name <=> b.name}
-                    if (projs) {
-                        selected = projs[0].name
-                    }
-                    session.project = selected
-                    if (!selected) {
-                        if (!frameworkService.authorizeApplicationResourceTypeAll(authContext, 'project', ['create'])) {
-                            redirect(action: 'noProjectAccess', controller: 'framework')
-                        }else{
-                            redirect(action: 'createProject', controller: 'framework')
-                        }
+                    if (selected
+                            && !frameworkService.authorizeApplicationResourceAll(authContext, [type: 'project', name: selected], ['read'])) {
+                        response.setStatus(403)
+                        flash.error = "Unauthorized: " + selected
+                        params.project = null
+                        render(view: '/common/error')
                         AA_TimerFilters.afterRequest(request, response, session)
                         return false
                     }

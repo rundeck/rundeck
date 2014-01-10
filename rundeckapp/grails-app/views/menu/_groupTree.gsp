@@ -90,7 +90,7 @@
                 </g:if>
             </g:expander>
             <g:if test="${!jobsjscallback}">
-            <a class=" groupname secondary" href="${createLink(controller: 'menu', action: 'jobs', params: [groupPath: prefix ? prefix + '/' + group.key : group.key])}">${displaygroup}</a>
+            <a class=" groupname secondary" href="${createLink(controller: 'menu', action: 'jobs', params: [project:params.project,groupPath: prefix ? prefix + '/' + group.key : group.key])}">${displaygroup}</a>
             </g:if>
         </g:else>
         </div>

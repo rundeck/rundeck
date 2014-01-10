@@ -1,8 +1,8 @@
 <%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 
 <g:render template="/common/errorFragment"/>
-<auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE}">
-    <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_DELETE)}">
+<auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE}" project="${scheduledExecution.project?: params.project ?: request.project}">
+    <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_DELETE,project:scheduledExecution.project)}">
         <div class="modal" id="jobdelete" tabindex="-1" role="dialog" aria-labelledby="deletejobtitle" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -58,7 +58,7 @@
                 <g:actionSubmit value="Save" action="Update" class="btn btn-primary "/>
 
             </div>
-            <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE}">
+            <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE}" project="${scheduledExecution.project}">
                 <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_DELETE)}">
                     <div class="  col-sm-2">
 

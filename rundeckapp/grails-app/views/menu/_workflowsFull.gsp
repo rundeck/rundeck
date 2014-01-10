@@ -62,10 +62,11 @@
 
             <td style="text-align:left;vertical-align:top;width:200px; ${wdgt.styleVisible(if:filtersOpen)}" id="${rkey}filter" class="wffilter" >
 
-            <g:form action="jobs" method="get" class="form">
+            <g:form action="jobs" params="[project:params.project]" method="get" class="form">
                 <g:if test="${params.compact}">
                     <g:hiddenField name="compact" value="${params.compact}"/>
                 </g:if>
+                <g:hiddenField name="project" value="${params.project}"/>
                 <span class="textbtn textbtn-default obs_filtertoggle">
                     Filter
                     <b class="glyphicon glyphicon-chevron-down"></b>
@@ -114,7 +115,7 @@
 
                 <div class="jobscontent head">
     <g:if test="${!params.compact}">
-        <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_CREATE}">
+        <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_CREATE}" project="${params.project ?: request.project}">
         <div class=" pull-right" >
             <div class="btn-group">
             <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
@@ -123,6 +124,7 @@
             </button>
             <ul class="dropdown-menu pull-right" role="menu">
                 <li><g:link controller="scheduledExecution" action="create"
+                    params="[project: params.project ?: request.project]"
                             class="">
                     <i class="glyphicon glyphicon-plus"></i>
                     New <g:message
@@ -131,6 +133,7 @@
                 </li>
                 <li>
                     <g:link controller="scheduledExecution" action="upload"
+                            params="[project: params.project ?: request.project]"
                             class="">
                         <i class="glyphicon glyphicon-upload"></i>
                         Upload Definition&hellip;
@@ -208,7 +211,8 @@
                     <div class="newjob">
                     <span class="popout message note" style="background:white">
                         ${flash.savedJobMessage?flash.savedJobMessage:'Saved changes to Job'}:
-                        <g:link controller="scheduledExecution" action="show" id="${flash.savedJob.id}">${flash.savedJob.generateFullName().encodeAsHTML()}</g:link>
+                        <g:link controller="scheduledExecution" action="show" id="${flash.savedJob.id}"
+                                params="[project: params.project ?: request.project]">${flash.savedJob.generateFullName().encodeAsHTML()}</g:link>
                     </span>
                     </div>
                     <g:javascript>
@@ -222,7 +226,7 @@
                 <g:if test="${ jobgroups}">
                     <g:timerStart key="groupTree"/>
                     <g:form controller="scheduledExecution" action="deleteBulk">
-                    <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE  }">
+                    <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE  }" project="${params.project ?: request.project}">
                         <div class="modal fade" id="bulk_del_confirm" tabindex="-1" role="dialog" aria-hidden="true">
                             <div class="modal-dialog">
                                 <div class="modal-content">
@@ -281,11 +285,13 @@
                     <div class="presentation">
                         No Jobs have been defined.
 
-                        <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_CREATE}">
+                        <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_CREATE}" project="${params.project ?: request.project}">
                             <ul>
                             <li style="padding:5px"><g:link controller="scheduledExecution" action="create"
+                                                            params="[project: params.project ?: request.project]"
                                                             class="btn btn-default btn-sm">Create a new Job&hellip;</g:link></li>
                             <li style="padding:5px"><g:link controller="scheduledExecution" action="upload"
+                                                            params="[project: params.project ?: request.project]"
                                                             class="btn btn-default btn-sm">Upload a Job definition&hellip;</g:link></li>
                             </ul>
                         </auth:resourceAllowed>

@@ -74,12 +74,16 @@ class ExecutionController {
                 filesize = file.length()
             }
         }
-        Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
         if (e && !frameworkService.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_READ])) {
             return unauthorized("Read Execution ${params.id}")
         }
+        if(!params.project || params.project!=e.project) {
+            return redirect(controller: 'execution', action: 'show', params: [id: params.id, project: e.project])
+        }
+        params.project=e.project
+        request.project=e.project
 
         def enext,eprev
         def result= Execution.withCriteria {
@@ -801,8 +805,9 @@ class ExecutionController {
     * API actions
      */
 
-    public String createExecutionUrl(def id){
-        return g.createLink(controller: 'execution', action: 'follow', id: id, absolute: true)
+    public String createExecutionUrl(def id,def project) {
+        return g.createLink(controller: 'execution', action: 'follow', id: id, absolute: true,
+                params: [project: project])
     }
     public String createServerUrl() {
         return g.createLink(controller: 'menu', action: 'index', absolute: true)
@@ -814,7 +819,8 @@ class ExecutionController {
         apiService.renderExecutionsXml(execlist.collect{ Execution e->
             [
                 execution:e,
-                href: g.createLink(controller: 'execution', action: 'follow', id: e.id, absolute: true),
+                href: g.createLink(controller: 'execution', action: 'follow', id: e.id, absolute: true,
+                        params: [project: e.project]),
                 status: executionService.getExecutionState(e),
                 summary: executionService.summarizeJob(e.scheduledExecution, e)
             ]
@@ -829,7 +835,8 @@ class ExecutionController {
             e = Execution.get(e.id)
             def emap =[
                 id: e.id,
-                href: g.createLink(controller: 'execution', action: 'follow', id: e.id, absolute: true),
+                href: g.createLink(controller: 'execution', action: 'follow', id: e.id, absolute: true,
+                        params: [project: e.project]),
                 status: executionService.getExecutionState(e),
                 user:e.user,
                 dateStarted: e.dateStarted,
@@ -853,7 +860,9 @@ class ExecutionController {
             if (e.scheduledExecution) {
                 emap.job = [
                     id: e.scheduledExecution.extid,
-                    href: g.createLink(controller: 'scheduledExecution', action: 'show', id: e.scheduledExecution.extid, absolute: true),
+                    href: g.createLink(controller: 'scheduledExecution', action: 'show',
+                            id: e.scheduledExecution.extid, absolute: true,
+                            params: [project: e.project]),
                     name: e.scheduledExecution.jobName,
                     group: e.scheduledExecution.groupPath ?: '',
                     project: e.scheduledExecution.project,

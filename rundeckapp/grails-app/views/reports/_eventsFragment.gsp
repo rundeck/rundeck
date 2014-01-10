@@ -21,7 +21,8 @@
                     <g:hiddenField name="compact" value="${params.compact}"/>
                 </g:if>
                 <g:hiddenField name="formInput" value="true"/>
-                <g:hiddenField name="projFilter" value="${session.project}"/>
+                <g:hiddenField name="projFilter" value="${params.project ?: request.project}"/>
+                <g:hiddenField name="project" value="${params.project ?: request.project}"/>
 
                 <g:ifServletContextAttribute attribute="RSS_ENABLED" value="true">
                     <a title="RSS 2.0" class="floatr"
@@ -61,8 +62,7 @@
                                         title="click to load new events"
                                         params="${filterName ? [filterName: filterName] : params}"><span
                                         class="badge newcontent active" id="eventsCountContent"
-                                        title="click to load new events"></span>
-                                </g:link>
+                                        title="click to load new events"></span></g:link>
                             </span>
                         </g:if>
                         <g:if test="${includeAutoRefresh}">
@@ -100,7 +100,7 @@
                  </div>
 
 <g:if test="${lastDate}">
-<g:set var="checkUpdatedParams" value="${[since:lastDate]}"/>
+<g:set var="checkUpdatedParams" value="${[since:lastDate,project:params.project]}"/>
 %{
     if(filterName){
     checkUpdatedParams.filterName=filterName

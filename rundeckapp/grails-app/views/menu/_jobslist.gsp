@@ -54,6 +54,7 @@
                                         <g:if test="${jobauthorizations && jobauthorizations[AuthConstants.ACTION_RUN]?.contains(scheduledExecution.id.toString())}">
                                             <g:link controller="scheduledExecution" action="execute"
                                                     id="${scheduledExecution.extid}" class=" btn btn-default btn-xs has_tooltip"
+                                                    params="[project: scheduledExecution.project]"
                                                     data-toggle="tooltip"
                                                     title="Choose options and Run Job…"
                                                     data-job-id="${scheduledExecution.extid}"
@@ -63,7 +64,8 @@
                                         </g:if>
                                     </span>
 
-                                    <g:link action="show" controller="scheduledExecution" id="${scheduledExecution.extid}" >
+                                    <g:link action="show" controller="scheduledExecution" id="${scheduledExecution.extid}"
+                                            params="[project: scheduledExecution.project]">
                                         <g:if test="${showIcon}">
                                             <i class="glyphicon glyphicon-book"></i>
                                         </g:if>
@@ -72,6 +74,7 @@
 
                                 <g:if test="${jobauthorizations && jobauthorizations[AuthConstants.ACTION_UPDATE]?.contains(scheduledExecution.id.toString())}">
                                     <g:link action="edit" controller="scheduledExecution"
+                                            params="[project: scheduledExecution.project]"
                                             id="${scheduledExecution.extid}"
                                             class="jobIdLink textbtn textbtn-info textbtn-on-hover"
                                             data-job-id="${scheduledExecution.extid}">

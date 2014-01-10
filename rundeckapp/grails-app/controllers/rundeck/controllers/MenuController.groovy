@@ -59,7 +59,9 @@ class MenuController {
             query.recentFilter="1h"
             params.recentFilter="1h"
         }
-        
+        if(!query.projFilter && params.project){
+            query.projFilter=params.project
+        }
         if(null!=query){
             query.configureFilter()
         }
@@ -144,26 +146,29 @@ class MenuController {
         if(params.page){
             startpage=params.page
         }
+        if(params.project){
+            startpage='jobs'
+        }
         switch (startpage){
             case 'home':
                 return redirect(controller: 'menu', action: 'home')
             case 'run':
             case 'nodes':
-                return redirect(controller:'framework',action:'nodes')
+                return redirect(controller:'framework',action:'nodes',params:[project:params.project])
             case 'jobs':
-                return redirect(controller:'menu',action:'jobs')
+                return redirect(controller:'menu',action:'jobs', params: [project: params.project])
             case 'createJob':
-                return redirect(controller:'scheduledExecution',action: 'create')
+                return redirect(controller:'scheduledExecution',action: 'create', params: [project: params.project])
             case 'uploadJob':
-                return redirect(controller: 'scheduledExecution', action: 'upload')
+                return redirect(controller: 'scheduledExecution', action: 'upload', params: [project: params.project])
             case 'configure':
-                return redirect(controller: 'menu', action: 'admin')
+                return redirect(controller: 'menu', action: 'admin', params: [project: params.project])
             case 'history':
             case 'activity':
             case 'events':
-                return redirect(controller:'reports',action:'index')
+                return redirect(controller:'reports',action:'index', params: [project: params.project])
         }
-        return redirect(controller:'framework',action:'nodes')
+        return redirect(controller:'framework',action:'nodes', params: [project: params.project])
     }
     
     def jobs = {ScheduledExecutionQuery query ->
@@ -174,6 +179,9 @@ class MenuController {
             if(filterpref['workflows']){
                 params.filterName=filterpref['workflows']
             }
+        }
+        if(!params.project){
+            return redirect(controller: 'menu',action: 'home')
         }
         
         def results = jobsFragment(query)
@@ -201,7 +209,6 @@ class MenuController {
     
     def jobsFragment = {ScheduledExecutionQuery query ->
         long start=System.currentTimeMillis()
-        Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def usedFilter=null
         
@@ -224,8 +231,8 @@ class MenuController {
             query=new ScheduledExecutionQuery()
             usedFilter=null
         }
-        if(query && !query.projFilter && session.project){
-            query.projFilter=session.project
+        if(query && !query.projFilter && params.project){
+            query.projFilter= params.project
         }
         def results=listWorkflows(query,authContext,session.user)
         if(usedFilter){
@@ -248,8 +255,8 @@ class MenuController {
         if(!query){
             query = new ScheduledExecutionQuery()
         }
-        if(query && !query.projFilter && session.project){
-            query.projFilter=session.project
+        if(query && !query.projFilter && params.project){
+            query.projFilter= params.project
         }
         def results=listWorkflows(query,authContext,session.user)
         if(usedFilter){
@@ -435,7 +442,7 @@ class MenuController {
                 return render(template:"/common/error")
             }
         }
-        redirect(controller:'menu',action:params.fragment?'jobsFragment':'jobs',params:[filterName:filter.name,compact:params.compact?'true':''])
+        redirect(controller:'menu',action:params.fragment?'jobsFragment':'jobs',params:[filterName:filter.name,project:params.project])
     }
     
     
@@ -452,20 +459,20 @@ class MenuController {
             ffilter.delete(flush:true)
             flash.message="Filter deleted: ${filtername.encodeAsHTML()}"
         }
-        redirect(controller:'menu',action:params.fragment?'jobsFragment':'jobs',params:[compact:params.compact?'true':''])
+        redirect(controller:'menu',action:params.fragment?'jobsFragment':'jobs',params:[project: params.project])
     }
 
     def admin={
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if (!frameworkService.authorizeApplicationResourceAll(authContext,[type:'project',name:session.project],[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_READ])) {
+        if (!frameworkService.authorizeApplicationResourceAll(authContext,[type:'project',name: params.project],[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_READ])) {
             flash.error = "User ${session.user} unauthorized for: Project Admin"
             flash.title = "Unauthorized"
             response.setStatus(403)
             render(view: '/common/error', model: [:])
-        }else if (session.project){
+        }else if (params.project){
 
-            def project=session.project
+            def project= params.project
             def fproject = frameworkService.getFrameworkProject(project)
             def configs = fproject.listResourceModelConfigurations()
 

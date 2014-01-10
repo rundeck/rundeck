@@ -40,7 +40,7 @@
         [AuthConstants.ACTION_DELETE,AuthConstants.ACTION_RUN,AuthConstants.ACTION_READ,AuthConstants.ACTION_UPDATE].each{action->
             jobauthorizations[action]=auth.jobAllowedTest(job:scheduledExecution,action:action)?[idKey]:[]
         }
-        jobauthorizations[AuthConstants.ACTION_CREATE]=auth.resourceAllowedTest(kind:'job',action: AuthConstants.ACTION_CREATE)
+        jobauthorizations[AuthConstants.ACTION_CREATE]=auth.resourceAllowedTest(kind:'job',action: AuthConstants.ACTION_CREATE,project:scheduledExecution.project)
     %>
 </g:if>
 <g:set var="jobAuths" value="${ jobauthorizations }"/>
@@ -63,7 +63,7 @@
                             height="${width}"/></g:link>
                 </g:if>
                 <g:if test="${!execPage}">
-                    <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE}">
+                    <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE}" project="${scheduledExecution.project}">
                         <g:if test="${jobAuths[AuthConstants.ACTION_DELETE]?.contains(idKey) }">
                             <span class="icon button " title="Delete ${g.message(code:'domain.ScheduledExecution.title')}" onclick="menus.showRelativeTo(this,'${ukey}jobDisplayDeleteConf${scheduledExecution.id}',-2,-2);return false;"><img src="${resource(dir:'images',file: iname+'-removex.png')}" alt="delete" width="${width}" height="${width}"/></span>
                         </g:if>

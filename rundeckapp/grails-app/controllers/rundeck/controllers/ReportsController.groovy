@@ -39,12 +39,11 @@ class ReportsController {
     def index = { ExecQuery query->
        //find previous executions
         def usedFilter
-        Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
         if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'event'], ['read'],
-            session.project)) {
-            return unauthorized("Read Events for project ${session.project}")
+            params.project)) {
+            return unauthorized("Read Events for project ${params.project}")
         }
         def User u = userService.findOrCreateUser(session.user)
         def filterPref= userService.parseKeyValuePref(u.filterPref)
@@ -88,8 +87,8 @@ class ReportsController {
         if(null!=query && !params.find{ it.key.endsWith('Filter')}){
             //no default filter
         }
-        if(query && !query.projFilter && session.project){
-            query.projFilter = session.project
+        if(query && !query.projFilter && params.project){
+            query.projFilter = params.project
         }
         if(params.sessionOnly){
             //auto date filter based on session login
@@ -125,12 +124,11 @@ class ReportsController {
     def since = { ExecQuery query->
        //find previous executions
         def usedFilter
-        Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
         if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'event'], ['read'],
-            session.project)) {
-            return unauthorized("Read Events for project ${session.project}")
+                params.project)) {
+            return unauthorized("Read Events for project ${params.project}")
         }
         def User u = userService.findOrCreateUser(session.user)
         
@@ -153,8 +151,8 @@ class ReportsController {
         if(null!=query && !params.find{ it.key.endsWith('Filter')}){
             //no default filter
         }
-        if(query && !query.projFilter && session.project){
-            query.projFilter = session.project
+        if(query && !query.projFilter && params.project){
+            query.projFilter = params.project
         }
 
 //        if(null!=query){
@@ -229,8 +227,8 @@ class ReportsController {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
         if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'event'], ['read'],
-            session.project)) {
-            return unauthorized("Read Events for project ${session.project}",true)
+                params.project)) {
+            return unauthorized("Read Events for project ${params.project}",true)
         }
         def results = index(query)
         results.params=params
@@ -240,8 +238,8 @@ class ReportsController {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
         if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'event'], ['read'],
-            session.project)) {
-            return unauthorized("Read Events for project ${session.project}",true)
+                params.project)) {
+            return unauthorized("Read Events for project ${params.project}",true)
         }
         def results = index(query)
         results.reports=results.reports.collect{
@@ -251,7 +249,7 @@ class ReportsController {
                 map.executionId= map.remove('jcExecId')
                 try {
                     map.execution = Execution.get(Long.parseLong(map.executionId)).toMap()
-                    map.executionHref = createLink(controller: 'execution', action: 'show', absolute: true, id: map.executionId)
+                    map.executionHref = createLink(controller: 'execution', action: 'show', absolute: true, id: map.executionId, params: [project: params.project])
                 } catch (Exception e) {
 
                 }
@@ -276,8 +274,8 @@ class ReportsController {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
         if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'event'], ['read'],
-            session.project)) {
-            return unauthorized("Read Events for project ${session.project}", true)
+                params.project)) {
+            return unauthorized("Read Events for project ${params.project}", true)
         }
         def results = jobs(query)
         results.params=params
@@ -323,7 +321,7 @@ class ReportsController {
                 return render(template:"/common/error")
             }
         }
-        redirect(controller:'reports',action:params.fragment?'eventsFragment':'index',params:[filterName:filter.name])
+        redirect(controller:'reports',action:params.fragment?'eventsFragment':'index',params:[filterName:filter.name,project:params.project])
     }
 
     def deleteFilter={
@@ -339,7 +337,7 @@ class ReportsController {
             ffilter.delete(flush:true)
             flash.message="Filter deleted: ${filtername}"
         }
-        redirect(controller:'reports',action:params.fragment?'eventsFragment':'index')
+        redirect(controller:'reports',action:params.fragment?'eventsFragment':'index',params:[project:params.project])
     }
    
 

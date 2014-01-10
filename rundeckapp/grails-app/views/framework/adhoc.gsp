@@ -4,8 +4,8 @@
     <g:set var="ukey" value="${g.rkey()}" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
-    <meta name="tabpage" content="adhoc"/>
-    <title><g:message code="gui.menu.Nodes"/> - ${session.project.encodeAsHTML()}</title>
+    <meta name="tabpage" content="nodes"/>
+    <title><g:message code="gui.menu.Nodes"/> - ${(params.project ?: request.project).encodeAsHTML()}</title>
     <g:javascript library="executionControl"/>
     <g:javascript library="yellowfade"/>
     <g:javascript library="pagehistory"/>
@@ -83,7 +83,7 @@
             disableRunBar(true);
             runStarted();
             $('runcontent').loading('Starting Execution&hellip;');
-            new Ajax.Request("${createLink(controller:'scheduledExecution',action:'runAdhocInline')}",{
+            new Ajax.Request(appLinks.scheduledExecutionRunAdhocInline,{
                 parameters:data,
                 evalScripts:true,
                 evalJSON:true,
@@ -112,7 +112,7 @@
                 runError("Server response was invalid: "+data.toString());
             }else {
                 $('runcontent').loading('Loading Output&hellip;');
-                new Ajax.Updater('runcontent',"${createLink(controller:'execution',action:'followFragment')}",{
+                new Ajax.Updater('runcontent',appLinks.executionFollowFragment,{
                 parameters:{id:data.id,mode:'tail'},
                 evalScripts:true,
                 onComplete: function(transport) {
@@ -242,7 +242,7 @@
             nodeFilter.filterAll(filterAll);
             nodeFilter.filterName(filterName);
             nodeFilter.filter(filterString);
-            _updateMatchedNodes(data, elem, '${session.project}', false, {view: view, expanddetail: true,
+            _updateMatchedNodes(data, elem, '${params.project?:request.project}', false, {view: view, expanddetail: true,
                 inlinepaging: false, maxShown: 20}, function (xht) {
             });
         }
@@ -293,9 +293,9 @@
             //setup node filters knockout bindings
             var filterParams =${[filterName:params.filterName,filter:query?.filter,filterAll:params.showall in ['true',true]].encodeAsJSON()};
             nodeFilter = new NodeFilters(
-                    "${g.createLink(action: 'adhoc',controller: 'framework',params:[project:session.project])}",
-                    "${g.createLink(action: 'create',controller: 'scheduledExecution',params:[project:session.project])}",
-                    "${g.createLink(action: 'nodes',controller: 'framework',params:[project:session.project])}",
+                    appLinks.frameworkAdhoc,
+                    appLinks.scheduledExecutionCreate,
+                    appLinks.frameworkNodes,
                     Object.extend(filterParams, {
                         nodesTitleSingular: "${g.message(code:'Node',default:'Node')}",
                         nodesTitlePlural: "${g.message(code:'Node.plural',default:'Nodes')}"
@@ -328,7 +328,7 @@
 </g:if>
 
 <div id="nodesContent">
-    <g:set var="run_authorized" value="${auth.adhocAllowedTest( action:AuthConstants.ACTION_RUN)}"/>
+    <g:set var="run_authorized" value="${auth.adhocAllowedTest( action:AuthConstants.ACTION_RUN,project: params.project ?: request.project)}"/>
 
 
     <g:render template="/common/messages"/>
@@ -338,7 +338,7 @@
                     <g:if test="${run_authorized}">
                     <div class="" id="runtab">
                             <div class="form form-horizontal clearfix" id="runbox">
-                                <g:hiddenField name="project" value="${session.project}"/>
+                                <g:hiddenField name="project" value="${params.project ?: request.project}"/>
 
                                 <g:render template="nodeFiltersHidden"
                                           model="${[params: params, query: query]}"/>
@@ -551,7 +551,7 @@
         <g:render template="/reports/activityLinks" model="[filter: [
                 jobIdFilter: 'null',
                 userFilter: session.user,
-                projFilter: session.project
+                projFilter: params.project ?: request.project
         ],
         knockoutBinding:true, showTitle:true]"/>
     </div>

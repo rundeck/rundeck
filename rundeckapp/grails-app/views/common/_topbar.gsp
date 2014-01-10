@@ -33,17 +33,17 @@
     </g:ifPageProperty>
     <g:if test="${! homeselected}">
 
-    <g:if test="${session?.project || session?.projects}">
+    <g:if test="${params.project ?: request.project || session?.projects}">
         <g:if test="${session.frameworkProjects}">
             <li class="dropdown" id="projectSelect">
                 <g:render template="/framework/projectSelect"
-                          model="${[projects: session.frameworkProjects, project: session.project, selectParams: selectParams]}"/>
+                          model="${[projects: session.frameworkProjects, project: params.project ?: request.project, selectParams: selectParams]}"/>
             </li>
         </g:if>
         <g:else>
             <li id="projectSelect" class="dropdown">
                 <span class="action textbtn button" onclick="loadProjectSelect();"
-                      title="Select project...">${session?.project ? session.project : 'Select project&hellip;'}
+                      title="Select project...">${params.project ?: request.project?: 'Select project&hellip;'}
                 </span>
             </li>
         </g:else>
@@ -75,20 +75,24 @@
                 <g:set var="eventsselected" value="${selectedclass}"/>
             </g:ifPageProperty>
         </g:ifPageProperty>
-
-        <li class="${wfselected}"><g:link controller="menu" action="jobs" class=" toptab ${wfselected}" >
+        <g:if test="${params.project?:request.project}">
+        <li class="${wfselected}"><g:link controller="menu" action="jobs" class=" toptab ${wfselected}"
+                                          params="[project: params.project ?: request.project]">
            <g:message code="gui.menu.Workflows"/>
         </g:link></li><!--
-        --><li class="${resselected}"><g:link controller="framework" action="nodes" class=" toptab ${resselected}" >
+        --><li class="${resselected}"><g:link controller="framework" action="nodes" class=" toptab ${resselected}"
+                                              params="[project: params.project ?: request.project]" >
            <g:message code="gui.menu.Nodes"/>
        </g:link></li><!--
-        --><li class="${adhocselected}"><g:link controller="framework" action="adhoc" class=" toptab ${adhocselected}" >
+        --><li class="${adhocselected}"><g:link controller="framework" action="adhoc" class=" toptab ${adhocselected}"
+                                                params="[project: params.project ?: request.project]">
            <g:message code="gui.menu.Adhoc"/>
        </g:link></li><!--
-        --><li class="${eventsselected}"><g:link controller="reports"  action="index" class=" toptab ${eventsselected}"  >
+        --><li class="${eventsselected}"><g:link controller="reports"  action="index" class=" toptab ${eventsselected}"
+                                                 params="[project: params.project ?: request.project]" >
             <g:message code="gui.menu.Events"/>
         </g:link></li>
-
+        </g:if>
 
     <g:unless test="${session.frameworkProjects}">
         <g:javascript>
@@ -105,8 +109,8 @@
     <g:if test="${session?.user && request.subject}">
         <li class="headright">
             <g:set var="adminauth" value="${false}"/>
-            <g:if test="${session.project}">
-            <g:set var="adminauth" value="${auth.resourceAllowedTest(type:'project',name:session.project,action:[AuthConstants.ACTION_ADMIN,AuthConstants.ACTION_READ],context:'application')}"/>
+            <g:if test="${params.project ?: request.project}">
+            <g:set var="adminauth" value="${auth.resourceAllowedTest(type:'project',name: (params.project ?: request.project),action:[AuthConstants.ACTION_ADMIN,AuthConstants.ACTION_READ],context:'application')}"/>
             <g:ifPageProperty name='meta.tabpage'>
                 <g:ifPageProperty name='meta.tabpage' equals='configure'>
                     <g:set var="cfgselected" value="active"/>
@@ -114,7 +118,8 @@
             </g:ifPageProperty>
             <g:if test="${adminauth}">
             <li class="${cfgselected ?: ''}">
-                <g:link controller="menu" action="admin" title="${g.message(code:'gui.menu.Admin')}">
+                <g:link controller="menu" action="admin" title="${g.message(code:'gui.menu.Admin')}"
+                        params="[project: params.project?:request.project]">
                     <i class="glyphicon glyphicon-cog"></i>
                 </g:link>
             </li>

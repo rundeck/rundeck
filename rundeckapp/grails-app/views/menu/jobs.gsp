@@ -5,7 +5,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="jobs"/>
-    <title><g:message code="gui.menu.Workflows"/> - ${session.project.encodeAsHTML()}</title>
+    <title><g:message code="gui.menu.Workflows"/> - ${(params.project ?: request.project).encodeAsHTML()}</title>
     <g:javascript library="yellowfade"/>
     <g:javascript library="pagehistory"/>
     <g:javascript library="prototype/effects"/>
@@ -56,7 +56,7 @@
             }
             new Ajax.Updater(
                 'execDivContent',
-                '${createLink(controller:"scheduledExecution",action:"executeFragment")}', {
+                appLinks.scheduledExecutionExecuteFragment, {
                 parameters: params,
                 evalScripts:true,
                 onComplete: function(transport) {
@@ -71,7 +71,7 @@
         function execSubmit(elem){
             var params=Form.serialize(elem);
             new Ajax.Request(
-                '${createLink(controller:"scheduledExecution",action:"runJobInline")}', {
+                appLinks.scheduledExecutionRunJobInline, {
                 parameters: params,
                 evalScripts:true,
                 onComplete: function(trans) {
@@ -130,7 +130,7 @@
             if(data){
                 var bfilters=data.filterpref;
                 //reload page
-                document.location="${createLink(controller:'menu',action:'jobs')}"+(bfilters[name]?"?filterName="+encodeURIComponent(bfilters[name]):'');
+                document.location=_genUrl(appLinks.menuJobs , bfilters[name] ? {filterName:bfilters[name]} : {});
             }
         }
         function setFilter(name,value){
@@ -138,7 +138,7 @@
                 value="!";
             }
             var str=name+"="+value;
-            new Ajax.Request("${createLink(controller:'user',action:'addFilterPref')}",{parameters:{filterpref:str}, evalJSON:true,onSuccess:function(response){
+            new Ajax.Request(appLinks.userAddFilterPref,{parameters:{filterpref:str}, evalJSON:true,onSuccess:function(response){
                 _setFilterSuccess(response,name);
             }});
         }
@@ -159,19 +159,6 @@
                 lastRunExec = data.lastExecId;
             }
         }
-
-        //now running
-        var runupdate;
-        function loadNowRunning(){
-            runupdate=new Ajax.PeriodicalUpdater({success:'nowrunning'},'${createLink(controller:"menu",action:"nowrunningFragment",params: execQueryParams?:[projFilter: session.project])}',{
-                evalScripts:true,
-                onFailure:function (response) {
-                    showError("AJAX error: Now Running ["+ runupdate.url+"]: "+response.status+" "+response.statusText);
-                    runupdate.stop();
-                }
-            });
-        }
-
 
         /////////////
         // Job context detail popup code
@@ -278,7 +265,7 @@
             bcontent.loading();
 
 
-            new Ajax.Updater('jobIdDetailContent','${createLink(controller:'scheduledExecution',action:'detailFragment')}',{
+            new Ajax.Updater('jobIdDetailContent',appLinks.scheduledExecutionDetailFragment,{
                 parameters:{id:matchId},
                 evalScripts:true,
                 onComplete: function(trans){
@@ -315,7 +302,6 @@
             }
         }
         function init(){
-            loadNowRunning();
             <g:if test="${!(grailsApplication.config.rundeck?.gui?.enableJobHoverInfo in ['false',false])}">
             initJobIdLinks();
             </g:if>
@@ -397,7 +383,7 @@
     <div class="col-sm-12 ">
         <h4 class="text-muted "><g:message code="page.section.Activity.for.jobs" /></h4>
         <g:render template="/reports/activityLinks"
-                  model="[filter: [projFilter:session.project, jobIdFilter: '!null',], knockoutBinding: true, showTitle:true]"/>
+                  model="[filter: [projFilter: params.project ?: request.project, jobIdFilter: '!null',], knockoutBinding: true, showTitle:true]"/>
     </div>
 </div>
 </body>

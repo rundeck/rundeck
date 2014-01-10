@@ -163,8 +163,8 @@ var binding = {
     }
 };
 function loadHistoryLink(history, ajaxBaseUrl, href,reload) {
-    var params = href.substring(href.indexOf('?'));
-    var url = ajaxBaseUrl + params;
+    var params = href.substring(href.indexOf('?')+1);
+    var url = ajaxBaseUrl.indexOf("?")>0? ajaxBaseUrl+'&' + params : ajaxBaseUrl+'?' + params;
 
     var handleResult;
     var load=function(){

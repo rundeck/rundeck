@@ -16,6 +16,7 @@
 
                 <div class="col-sm-2 ">
                     <g:link controller="scheduledExecution" action="upload"
+                            params="[project: params.project?:request.project]"
                             class="btn btn-default btn-sm pull-right">
                         <i class="glyphicon glyphicon-upload"></i>
                         Upload Definition&hellip;
@@ -37,17 +38,17 @@
                 <g:actionSubmit id="createFormCancelButton" value="Cancel"
                                 onclick="if(typeof(jobEditCancelled)=='function'){jobEditCancelled();}"
                                 class="btn btn-default"/>
-                <g:if test="${auth.resourceAllowedTest( kind:'job',action:[AuthConstants.ACTION_CREATE])}">
+                <g:if test="${auth.resourceAllowedTest( kind:'job',action:[AuthConstants.ACTION_CREATE],project: params.project ?: request.project)}">
                     <g:actionSubmit action="save" value="Create"
                                     class="cformAllowSave cformAllowSaveOnly btn btn-primary" />
                 </g:if>
 
-                <g:if test="${auth.resourceAllowedTest( kind:'job', action:[AuthConstants.ACTION_CREATE])}">
+                <g:if test="${auth.resourceAllowedTest( kind:'job', action:[AuthConstants.ACTION_CREATE],project: params.project ?: request.project)}">
                     <g:actionSubmit action="saveAndExec" value="Create And Run"
                                     class="cformAllowSave cformAllowRun btn btn-primary"/>
                 </g:if>
 
-                <g:if test="${auth.resourceAllowedTest( has:false, kind:'job', action:[AuthConstants.ACTION_CREATE])}">
+                <g:if test="${auth.resourceAllowedTest( has:false, kind:'job', action:[AuthConstants.ACTION_CREATE],project: params.project ?: request.project)}">
                     <span class="error message cformAllowRunAndForget cformAllowRun">Not authorized to Save Jobs</span>
                 </g:if>
             </div>

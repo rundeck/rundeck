@@ -56,20 +56,21 @@ class UrlMappings {
         "/api/$api_version/$action?"(controller: 'api', action: 'invalid')
 
         //simplified url mappings for link generation
-        "/nodes/"(controller: 'framework', action: 'nodes')
-        "/run/"(controller: 'framework', action: 'nodes')
-        "/command/run"(controller: 'framework',action: 'adhoc')
-        "/activity"(controller: 'reports', action: 'index')
-        "/history"(controller: 'reports', action: 'index')
-        "/jobs/$groupPath**?"(controller: 'menu', action: 'jobs')
-        "/job/show/$id/$fullName**?"(controller: 'scheduledExecution',action: 'show')
-        "/job/$action?/$id?"(controller: 'scheduledExecution')
+        "/project/$project/nodes/"(controller: 'framework', action: 'nodes')
+        "/project/$project/run/"(controller: 'framework', action: 'nodes')
+        "/project/$project/command/run"(controller: 'framework',action: 'adhoc')
+        "/project/$project/activity"(controller: 'reports', action: 'index')
+        "/project/$project/history"(controller: 'reports', action: 'index')
+        "/project/$project/jobs/$groupPath**?"(controller: 'menu', action: 'jobs')
+        "/project/$project/job/show/$id/$fullName**?"(controller: 'scheduledExecution', action: 'show')
+        "/project/$project/job/$action?/$id?"(controller: 'scheduledExecution')
         "/resources/createProject"(controller: 'framework') {
             action = [GET: 'createProject', POST: 'createProjectPost']
         }
         "/resources/$action?/$id?"(controller: 'framework')
-        "/events/$action?/$id?"(controller: 'reports')
-        "/configure"(controller: 'menu', action: 'admin')
+        "/project/$project/events/$action?/$id?"(controller: 'reports')
+        "/project/$project/configure"(controller: 'menu', action: 'admin')
+        "/project/$project/execution/$id"(controller: 'execution',action: 'show')
         "500"(view: '/error')
     }
 }

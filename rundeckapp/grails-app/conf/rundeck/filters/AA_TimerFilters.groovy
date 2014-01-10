@@ -81,7 +81,7 @@ class AA_TimerFilters {
                     method: request.method,
                     secure: request.isSecure() ? 'https' : 'http',
                     contentType: response.isCommitted()?response.getContentType():null,
-                    project: session.project
+                    project: request.parameterMap['project']?:request.getAttribute('project')?:'?'
             ]
             map.findAll {it.value!=null}.each{ MDC.put(it.key,it.value)}
             try{

@@ -187,7 +187,8 @@ class WorkflowController {
         _pushUndoAction(params.scheduledExecutionId, result.undo)
         _clearRedoStack(params.scheduledExecutionId)
 
-        return render(template: "/execution/wflistContent", model: [workflow: editwf, edit: params.edit, highlight: toi, project:session.project])
+        return render(template: "/execution/wflistContent", model: [workflow: editwf, edit: params.edit, highlight: toi,
+                project: params.project])
     }
 
     /**
@@ -218,7 +219,7 @@ class WorkflowController {
         _pushUndoAction(params.scheduledExecutionId, result.undo)
         _clearRedoStack(params.scheduledExecutionId)
 
-        return render(template: "/execution/wflistContent", model: [workflow: editwf, edit: params.edit, project: session.project])
+        return render(template: "/execution/wflistContent", model: [workflow: editwf, edit: params.edit, project: params.project])
     }
 
 
@@ -249,7 +250,8 @@ class WorkflowController {
             _pushRedoAction(params.scheduledExecutionId, result.undo)
         }
 
-        return render(template: "/execution/wflistContent", model: [workflow: editwf, edit: params.edit, highlight: num, project: session.project])
+        return render(template: "/execution/wflistContent", model: [workflow: editwf, edit: params.edit, highlight: num,
+                project: params.project])
     }
 
 
@@ -278,7 +280,7 @@ class WorkflowController {
             _pushUndoAction(params.scheduledExecutionId, result.undo)
         }
 
-        return render(template: "/execution/wflistContent", model: [workflow: editwf, edit: params.edit, highlight: num, project: session.project])
+        return render(template: "/execution/wflistContent", model: [workflow: editwf, edit: params.edit, highlight: num, project: params.project])
     }
 
     /**
@@ -291,7 +293,8 @@ class WorkflowController {
         session.redoWF?.remove(uid)
         def Workflow editwf = _getSessionWorkflow()
 
-        return render(template: "/execution/wflistContent", model: [workflow: editwf, edit: true, project: session.project])
+        return render(template: "/execution/wflistContent", model: [workflow: editwf, edit: true,
+                project: params.project])
     }
 
 

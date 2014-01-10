@@ -123,11 +123,11 @@ public class ApiRequestFilters {
                     return false;
                 }
                 request.api_version = VersionMap[params.api_version]
-                request['ApiRequestFilters.request.parameters.project']=params.project?:''
+                request['ApiRequestFilters.request.parameters.project']=params.project?:request.project?:''
                 return true
             }
             after = {
-                logDetail(request, request['ApiRequestFilters.request.parameters.project']?:session.project?:'', actionName, controllerName)
+                logDetail(request, request['ApiRequestFilters.request.parameters.project']?:'', actionName, controllerName)
             }
         }
     }

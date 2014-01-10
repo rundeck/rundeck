@@ -120,7 +120,7 @@
         <% j++; %>
     </g:each>
 <g:if test="${lastDate}">
-    <g:set var="checkUpdatedParams" value="${[since: lastDate]}"/>
+    <g:set var="checkUpdatedParams" value="${[since: lastDate,project:params.project]}"/>
     %{
         if (filterName) {
             checkUpdatedParams.filterName = filterName

@@ -47,11 +47,9 @@
 
 
                         <g:plural code="Project" count="${projectSummary.size()}" textOnly="${true}"/>:
-                        <g:each var="project" in="${projectSummary}" status="i">
-                            <g:link action="selectProject" controller="framework"
-                                    params="[project: project, page: 'jobs']" class="">
-                                ${project}
-                            </g:link><g:if test="${i < projectSummary.size() - 1}">,</g:if>
+                        <g:each var="project" in="${projectSummary.sort()}" status="i">
+                            <g:link action="jobs" controller="menu" params="[project: project]">
+                                ${project}</g:link><g:if test="${i < projectSummary.size() - 1}">,</g:if>
                         </g:each>
                     </div>
                 </g:if>
@@ -82,15 +80,14 @@
 <div class="row row-space">
     <div class="col-sm-12">
     <div class="list-group">
-        <g:each in="${projectSummaries}" var="projectData">
+        <g:each in="${projectSummaries.sort{a,b->a.key<=>b.key}}" var="projectData">
             <g:set var="project" value="${projectData.key}"/>
             <g:set var="data" value="${projectData.value}"/>
 %{--Template for project details--}%
 <div class="list-group-item">
             <div class="row">
                 <div class="col-sm-6 col-md-4">
-                    <g:link action="selectProject" controller="framework"
-                        params="[project:project,page:'jobs']" class="h3">
+                    <g:link action="jobs" controller="menu" params="[project: project]" class="h3">
                         <i class="glyphicon glyphicon-tasks"></i>
                         ${project}
                     </g:link>
@@ -106,7 +103,7 @@
                 <div class="clearfix visible-sm"></div>
                 <div class="col-sm-6 col-md-4">
                     <a class="h4 ${data.execCount > 0 ? '' : 'text-muted'}"
-                       href="${g.createLink(controller: "framework", action: "selectProject", params: [page: 'activity', project: project])}"
+                       href="${g.createLink(controller: "reports", action: "index", params: [project: project])}"
 
                     >
                         <span class="summary-count ${data.execCount > 0 ? 'text-info' : '' }">${data.execCount}</span>
@@ -146,7 +143,7 @@
                     <div class="col-sm-12 col-md-4">
                     <div class="pull-right">
                         <g:if test="${data.auth?.admin}">
-                            <a href="${g.createLink(controller: "framework", action: "selectProject", params: [page: 'configure', project: project])}"
+                            <a href="${g.createLink(controller: "menu", action: "admin", params: [project: project])}"
                                class="btn btn-default btn-sm">
                                 <g:message code="gui.menu.Admin"/>
                             </a>
@@ -159,7 +156,7 @@
                                 <span class="caret"></span>
                             </button>
                             <ul class="dropdown-menu pull-right" role="menu">
-                                <li><a href="${g.createLink(controller: "framework", action: "selectProject", params: [page: 'createJob', project: project])}">
+                                <li><a href="${g.createLink(controller: "scheduledExecution", action: "create", params: [project: project])}">
                                     <i class="glyphicon glyphicon-plus"></i>
                                     New <g:message
                                         code="domain.ScheduledExecution.title"/>&hellip;
@@ -169,7 +166,7 @@
                                 <li class="divider">
                                 </li>
                                 <li>
-                                    <a href="${g.createLink(controller: "framework", action: "selectProject", params: [page: 'uploadJob', project: project])}"
+                                    <a href="${g.createLink(controller: "scheduledExecution", action: "upload", params: [project: project])}"
                                        class="">
                                         <i class="glyphicon glyphicon-upload"></i>
                                         Upload Definition&hellip;

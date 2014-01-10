@@ -1,11 +1,11 @@
 <%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants; rundeck.ScheduledExecution" %>
-<g:set var="execInfo" value="${scheduledExecution}"/>
 
 <div class="jobHead col-sm-12" >
 <div class="jobInfo " id="jobInfo_">
     <span class="jobInfoSection h3">
         <g:link controller="scheduledExecution" action="show"
             class="primary"
+            params="[project: scheduledExecution.project]"
                 id="${scheduledExecution.extid}"
                 absolute="${absolute ? 'true' : 'false'}">
             <i class="glyphicon glyphicon-book"></i>
@@ -32,18 +32,18 @@
         </g:elseif>
 
         <span class="h4 jobInfoSection">
-            <span class="text-muted">${execInfo?.description?.encodeAsHTML()}</span>
+            <span class="text-muted">${scheduledExecution?.description?.encodeAsHTML()}</span>
         </span>
 
         <span class="h4  jobGroup ">
-            <g:if test="${execInfo.groupPath}">
+            <g:if test="${scheduledExecution.groupPath}">
                 <g:link controller="menu" action="jobs"
                         class="secondary"
-                        params="${[groupPath: execInfo.groupPath]}"
+                        params="${[groupPath: scheduledExecution.groupPath, project:scheduledExecution.groupPath]}"
                         title="${'View ' + g.message(code: 'domain.ScheduledExecution.title') + 's in this group'}"
                         absolute="${absolute ? 'true' : 'false'}">
                     <g:if test="${!noimgs}"><b class="glyphicon glyphicon-folder-close"></b></g:if>
-                    ${execInfo.groupPath.encodeAsHTML()}
+                    ${scheduledExecution.groupPath.encodeAsHTML()}
                 </g:link>
             </g:if>
         </span>
