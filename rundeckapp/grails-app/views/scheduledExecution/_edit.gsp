@@ -19,7 +19,7 @@
 <g:set var="offsetColSize" value="col-sm-10 col-sm-offset-2"/>
 
 <g:set var="isWorkflow" value="${true}"/>
-<g:set var="editSchedExecId" value="${scheduledExecution?.id? scheduledExecution.id:null}"/>
+<g:set var="editSchedExecId" value="${scheduledExecution?.id? scheduledExecution.extid:null}"/>
 <g:javascript library="prototype/scriptaculous"/>
 <g:javascript library="prototype/effects"/>
 <g:javascript library="prototype/dragdrop"/>
@@ -29,7 +29,7 @@
         var selFrameworkProject='${project.encodeAsJavaScript()}';
         var selArgs='${scheduledExecution?.argString?.encodeAsJavaScript()}';
         var isWorkflow=${isWorkflow};
-var curSEID =${editSchedExecId?editSchedExecId:"null"};
+var curSEID ='${editSchedExecId?editSchedExecId:""}';
 function getCurSEID(){
     return curSEID;
 }

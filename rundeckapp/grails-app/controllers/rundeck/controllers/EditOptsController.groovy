@@ -453,7 +453,7 @@ class EditOptsController {
         if (params?.scheduledExecutionId) {
             optid = params.scheduledExecutionId
             if (null == session.editOPTS[optid]) {
-                ScheduledExecution sched = ScheduledExecution.get(params.scheduledExecutionId)
+                ScheduledExecution sched = ScheduledExecution.getByIdOrUUID(params.scheduledExecutionId)
                 if (!sched) {
                     session.editOPTS[optid] = [:]
                 }else if (sched.options) {

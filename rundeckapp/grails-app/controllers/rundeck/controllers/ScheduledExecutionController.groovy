@@ -1200,10 +1200,10 @@ class ScheduledExecutionController  {
 
     static void transferSessionEditState(session,params,id){
         //pass session-stored edit state in params map
-        if (params['_sessionwf'] && session.editWF && null != session.editWF[id]) {
+        if ((params['_sessionwf'] in ['true',true]) && session.editWF && null != session.editWF[id]) {
             params['_sessionEditWFObject'] = session.editWF[id]
         }
-        if (params['_sessionopts'] && session.editOPTS && null != session.editOPTS[id]) {
+        if ((params['_sessionopts'] in ['true',true]) && session.editOPTS && null != session.editOPTS[id]) {
             params['_sessionEditOPTSObject'] = session.editOPTS[id]
         }
     }

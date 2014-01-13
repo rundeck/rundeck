@@ -599,7 +599,7 @@ class WorkflowController {
         if (params?.scheduledExecutionId) {
             wfid = params.scheduledExecutionId
             if (!session.editWF[wfid]) {
-                ScheduledExecution sched = ScheduledExecution.get(params.scheduledExecutionId)
+                ScheduledExecution sched = ScheduledExecution.getByIdOrUUID(params.scheduledExecutionId)
                 if (!sched) {
                     session.editWF[wfid] = new Workflow()
                 }
