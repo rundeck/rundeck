@@ -7,7 +7,7 @@ Rundeck provides a Web API for use with your application.
 API Version Number
 ----
 
-The current API version is `9`.
+The current API version is `10`.
 
 For API endpoints described in this document, the *minimum* API version required for their
 use is indicated by the URL used, e.g.:
@@ -34,6 +34,16 @@ If the version number is not included or if the requested version number is unsu
 ### Changes
 
 Changes introduced by API Version number:
+
+**Version 10**:
+
+* New endpoints
+    - `/api/10/execution/[ID]/state` - [Execution State](#execution-state)
+        + Retrieve workflow step and node state information
+    - `/api/10/execution/[ID]/output/state` - [Execution Output with State](#execution-output-with-state)
+        + Retrieve log output with state change information
+    - `/api/10/execution/[ID]/output/node/[NODENAME]` and `/api/10/execution/[ID]/output/step/[STEPCTX]` - [Execution Output](#execution-output)
+        + Retrieve log output for a particular node or step
 
 **Version 9**:
 
@@ -816,15 +826,381 @@ Paging parameters:
 * `max`: maximum number of results to include in response. (default: 20)
 * `offset`: offset for first result to include. (default: 0)
 
+### Execution State
+
+Get detail about the node and step state of an execution by ID. The execution can be currently running or completed.
+
+URL:
+
+    /api/10/execution/[ID]/state
+
+Specify expected output format with the `Accept: ` HTTP header. Supported formats:
+
+* `text/xml`
+* `application/json`
+
+The content of the response contains state information for different parts of the workflow:
+
+* overall state
+* per-node overall state
+* per-step node state
+
+A workflow can have a step which consists of a sub-workflow, so each particular step has a "Step Context Identifier" which defines its location in the workflow(s), and looks something like "1/5/2". Each number identifies the step number (starting at 1) at a workflow level. If there is a "/" in the context identifier, it means there are sub-workflow step numbers, and each preceding number corresponds to a step which has a sub-workflow.
+
+To identify the state of a particular node at a particular step, both a Node name, and a Step Context Identifier are necessary.
+
+In the result set returned by this API call, state information is organized primarily by Step and is structured in the same way as the workflow.  This means that sub-workflows will have nested state structures for their steps.
+
+The state information for a Node will not contain the full set of details for the Step and Node, since this information is present in the workflow structure which contains the step state.
+
+#### State Result Content
+
+The result set contains this top-level structure:
+
+* general overal state information
+    - `startTime` execution start time (see *Timestamp format* below)
+    - `endTime` execution end time if complete
+    - `timestamp` last update time
+    - `executionState` overall execution state
+* `allNodes` contains a *Node Name List* (see below) of nodes known to be targetted in some workflow
+* `nodes` contains an *Overall Node State List* of per-node step states
+* `serverNode` name of the server node
+* `executionId` current execution ID
+* `completed` true/false whether the execution is completed
+* A *Workflow Section* (see below)
+
+**Workflow Section**
+
+Each Workflow Section within the result set will contain these structures
+
+* `stepCount` Number of steps in the workflow
+* `targetNodes` contains a Node Name List identifying the target nodes of the current workflow
+* `steps` contains a *Step State List* (see below) of information and state for each step
+
+**Node Name List**
+
+Consists of a sequence of node name entries, identifying each entry by a name.
+
+In XML, a sequence of `node` elements:
+
+      <node name="abc" />
+      <node name="xyz" />
+      <!-- ... more node elements -->
+
+In JSON, an array of node names.
+
+**Overall Node State List**
+
+Consists of a sequence of entries for each Node. Each entry contains
+
+* `name` node name
+* `steps` list of simple state indicator for steps executed by this node
+
+State Indicators:
+
+* `stepctx` Step Context Identifier
+* `executionState` execution state for this step and node
+
+In XML:
+
+        <node name="abc">
+          <steps>
+            <step>
+              <stepctx>1</stepctx>
+              <executionState>SUCCEEDED</executionState>
+            </step>
+            <step>
+              <stepctx>2/1</stepctx>
+              <executionState>SUCCEEDED</executionState>
+            </step>
+          </steps>
+        </node>
+        <!-- more node elements -->
+
+In JSON: an object where each key is a node name, and the value is an array of State indicators.  A state indicator is an object with two keys, `stepctx` and `executionState`
+
+    {
+        "abc": [
+          {
+            "executionState": "SUCCEEDED",
+            "stepctx": "1"
+          },
+          {
+            "executionState": "SUCCEEDED",
+            "stepctx": "2/1"
+          }
+        ]
+      }
+
+**Step State List**
+
+A list of Step State information.  Each step is identified by its number in the workflow (starting at 1) and its step context
+
+* `num` the step number (XML)
+* `id` the step number (JSON)
+* `stepctx` the step context identifier in the workflow
+* general overall state information for the step
+    - `startTime` execution start time
+    - `endTime` execution end time if complete
+    - `timestamp` last update time
+    - `executionState` overall execution state
+* `nodeStep` true/false. true if this step directly targets each node from the targetNodes list.  If true, this means the step will contain a `nodeStates` section
+* `nodeStates` a *Node Step State Detail List* (see below) for the target nodes if this is a node step.
+* `hasSubworkflow` true/false. true if this step has a sub-workflow and a `workflow` entry
+* `workflow` this section contains a Workflow Section
+
+**Node Step State Detail List**
+
+A sequence of state details for a set of Nodes for the containing step. Each entry will contain:
+
+* `name` the node name
+* state information for the Node 
+    - `startTime` execution start time
+    - `endTime` execution end time if complete
+    - `timestamp` last update time
+    - `executionState` overall execution state
+
+In XML:
+
+    <nodeState name="abc">
+      <startTime>2014-01-13T20:58:59Z</startTime>
+      <updateTime>2014-01-13T20:59:04Z</updateTime>
+      <endTime>2014-01-13T20:59:04Z</endTime>
+      <executionState>SUCCEEDED</executionState>
+    </nodeState>
+    <!-- more nodeState elements -->
+
+In JSON: an object with node names as keys.  Values are objects containing the state information entries.
+
+          {
+            "abc": {
+              "executionState": "SUCCEEDED",
+              "endTime": "2014-01-13T20:38:31Z",
+              "updateTime": "2014-01-13T20:38:31Z",
+              "startTime": "2014-01-13T20:38:25Z"
+            }
+          }
+
+**Full XML Example**
+
+Within the `<result>` element:
+
+    <executionState id="135">
+      <startTime>2014-01-13T20:58:59Z</startTime>
+      <timestamp>2014-01-13T20:59:10Z</timestamp>
+      <stepCount>2</stepCount>
+      <allNodes>
+        <nodes>
+          <node name="dignan" />
+        </nodes>
+      </allNodes>
+      <targetNodes>
+        <nodes>
+          <node name="dignan" />
+        </nodes>
+      </targetNodes>
+      <executionId>135</executionId>
+      <serverNode>dignan</serverNode>
+      <endTime>2014-01-13T20:59:10Z</endTime>
+      <executionState>SUCCEEDED</executionState>
+      <completed>true</completed>
+      <steps>
+        <step stepctx="1" id="1">
+          <startTime>2014-01-13T20:58:59Z</startTime>
+          <nodeStep>true</nodeStep>
+          <updateTime>2014-01-13T20:58:59Z</updateTime>
+          <endTime>2014-01-13T20:59:04Z</endTime>
+          <executionState>SUCCEEDED</executionState>
+          <nodeStates>
+            <nodeState name="dignan">
+              <startTime>2014-01-13T20:58:59Z</startTime>
+              <updateTime>2014-01-13T20:59:04Z</updateTime>
+              <endTime>2014-01-13T20:59:04Z</endTime>
+              <executionState>SUCCEEDED</executionState>
+            </nodeState>
+          </nodeStates>
+        </step>
+        <step stepctx="2" id="2">
+          <startTime>2014-01-13T20:59:04Z</startTime>
+          <nodeStep>false</nodeStep>
+          <updateTime>2014-01-13T20:59:10Z</updateTime>
+          <hasSubworkflow>true</hasSubworkflow>
+          <endTime>2014-01-13T20:59:10Z</endTime>
+          <executionState>SUCCEEDED</executionState>
+          <workflow>
+            <startTime>2014-01-13T20:59:04Z</startTime>
+            <timestamp>2014-01-13T20:59:10Z</timestamp>
+            <stepCount>1</stepCount>
+            <allNodes>
+              <nodes>
+                <node name="dignan" />
+              </nodes>
+            </allNodes>
+            <targetNodes>
+              <nodes>
+                <node name="dignan" />
+              </nodes>
+            </targetNodes>
+            <endTime>2014-01-13T20:59:10Z</endTime>
+            <executionState>SUCCEEDED</executionState>
+            <completed>true</completed>
+            <steps>
+              <step stepctx="2/1" id="1">
+                <startTime>2014-01-13T20:59:04Z</startTime>
+                <nodeStep>true</nodeStep>
+                <updateTime>2014-01-13T20:59:04Z</updateTime>
+                <endTime>2014-01-13T20:59:10Z</endTime>
+                <executionState>SUCCEEDED</executionState>
+                <nodeStates>
+                  <nodeState name="dignan">
+                    <startTime>2014-01-13T20:59:04Z</startTime>
+                    <updateTime>2014-01-13T20:59:10Z</updateTime>
+                    <endTime>2014-01-13T20:59:10Z</endTime>
+                    <executionState>SUCCEEDED</executionState>
+                  </nodeState>
+                </nodeStates>
+              </step>
+            </steps>
+          </workflow>
+        </step>
+      </steps>
+      <nodes>
+        <node name="dignan">
+          <steps>
+            <step>
+              <stepctx>1</stepctx>
+              <executionState>SUCCEEDED</executionState>
+            </step>
+            <step>
+              <stepctx>2/1</stepctx>
+              <executionState>SUCCEEDED</executionState>
+            </step>
+          </steps>
+        </node>
+      </nodes>
+    </executionState>
+
+**Full JSON example**
+
+    {
+      "completed": true,
+      "executionState": "SUCCEEDED",
+      "endTime": "2014-01-13T20:38:36Z",
+      "serverNode": "dignan",
+      "startTime": "2014-01-13T20:38:25Z",
+      "timestamp": "2014-01-13T20:38:36Z",
+      "stepCount": 2,
+      "allNodes": [
+        "dignan"
+      ],
+      "targetNodes": [
+        "dignan"
+      ],
+      "nodes": {
+        "dignan": [
+          {
+            "executionState": "SUCCEEDED",
+            "stepctx": "1"
+          },
+          {
+            "executionState": "SUCCEEDED",
+            "stepctx": "2/1"
+          }
+        ]
+      },
+      "executionId": 134,
+      "steps": [
+        {
+          "executionState": "SUCCEEDED",
+          "endTime": "2014-01-13T20:38:31Z",
+          "nodeStates": {
+            "dignan": {
+              "executionState": "SUCCEEDED",
+              "endTime": "2014-01-13T20:38:31Z",
+              "updateTime": "2014-01-13T20:38:31Z",
+              "startTime": "2014-01-13T20:38:25Z"
+            }
+          },
+          "updateTime": "2014-01-13T20:38:25Z",
+          "nodeStep": true,
+          "id": "1",
+          "startTime": "2014-01-13T20:38:25Z"
+        },
+        {
+          "workflow": {
+            "completed": true,
+            "startTime": "2014-01-13T20:38:31Z",
+            "timestamp": "2014-01-13T20:38:36Z",
+            "stepCount": 1,
+            "allNodes": [
+              "dignan"
+            ],
+            "targetNodes": [
+              "dignan"
+            ],
+            "steps": [
+              {
+                "executionState": "SUCCEEDED",
+                "endTime": "2014-01-13T20:38:36Z",
+                "nodeStates": {
+                  "dignan": {
+                    "executionState": "SUCCEEDED",
+                    "endTime": "2014-01-13T20:38:36Z",
+                    "updateTime": "2014-01-13T20:38:36Z",
+                    "startTime": "2014-01-13T20:38:31Z"
+                  }
+                },
+                "updateTime": "2014-01-13T20:38:31Z",
+                "nodeStep": true,
+                "id": "1",
+                "startTime": "2014-01-13T20:38:31Z"
+              }
+            ],
+            "endTime": "2014-01-13T20:38:36Z",
+            "executionState": "SUCCEEDED"
+          },
+          "executionState": "SUCCEEDED",
+          "endTime": "2014-01-13T20:38:36Z",
+          "hasSubworkflow": true,
+          "updateTime": "2014-01-13T20:38:36Z",
+          "nodeStep": false,
+          "id": "2",
+          "startTime": "2014-01-13T20:38:31Z"
+        }
+      ]
+    }
+
+**Timestamp format:**
+
+The timestamp format is ISO8601: `yyyy-MM-dd'T'HH:mm:ss'Z'`
+
+**Execution states:**
+
+* `WAITING` - Waiting to start running
+* `RUNNING` - Currently running
+* `RUNNING_HANDLER` - Running error handler\*
+* `SUCCEEDED` - Finished running successfully
+* `FAILED` - Finished with a failure
+* `ABORTED` - Execution was aborted
+* `NODE_PARTIAL_SUCCEEDED` - Partial success for some nodes\*
+* `NODE_MIXED` - Mixed states among nodes\*
+* `NOT_STARTED` - After waiting the execution did not start\*
+
+\* these states only apply to steps/nodes and do not apply to the overall execution or workflow.
+
 ### Execution Output
 
-Get the output for an execution by ID.  The execution can be currently running or may have already completed.
+Get the output for an execution by ID.  The execution can be currently running or may have already completed. Output can be filtered down to a specific node or workflow step.
 
 URL:
 
     /api/5/execution/[ID]/output
+    /api/10/execution/[ID]/output/node/[NODE]
+    /api/10/execution/[ID]/output/step/[STEPCTX]
 
 The log output for each execution is stored in a file on the Rundeck server, and this API endpoint allows you to retrieve some or all of the output, in several possible formats: json, XML, and plain text.  When retrieving the plain text output, some metadata about the log is included in HTTP Headers.  JSON and XML output formats include metadata about each output log line, as well as metadata about the state of the execution and log file, and your current index location in the file.
+
+Output can be selected by Node or Step Context as of API v10.
 
 Several parameters can be used to retrieve only part of the output log data.  You can use these parameters to more efficiently retrieve the log content over time while an execution is running.
 
@@ -968,6 +1344,27 @@ Included in the response will be some HTTP headers that provide the metadata abo
 * `X-Rundeck-Exec-Duration`: the `execDuration` field
 * `X-Rundeck-ExecOutput-LastModifed`: The `lastModified` field
 * `X-Rundeck-ExecOutput-TotalSize`: The `totalSize` field
+
+### Execution Output with State
+
+Get the metadata associated with workflow step state changes along with the log output, optionally excluding log output.
+
+URL:
+
+    /api/10/execution/[ID]/output/state
+    /api/10/execution/[ID]/output/state?stateOnly=true
+
+This API endpoint provides the sequential log of state changes for steps and nodes, optionally interleaved with the actual log output.
+
+The output format is the same as [Execution Output](#execution-output), with this change:
+
+* in the `entries` section, each entry will have a `type` value indicating the entry type
+    - `log` a normal log entry
+    - `stepbegin` beginning of the step indicated by the `stepctx`
+    - `stepend` finishing of the step
+    - `nodebegin` beginning of execution of a node for the given step
+    - `nodeend` finishing of execution of a node for the given step
+* metadata about the entry may be included in the entry
 
 ### Aborting Executions
 
