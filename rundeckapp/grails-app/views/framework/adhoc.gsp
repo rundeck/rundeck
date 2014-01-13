@@ -4,7 +4,7 @@
     <g:set var="ukey" value="${g.rkey()}" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
-    <meta name="tabpage" content="nodes"/>
+    <meta name="tabpage" content="adhoc"/>
     <title><g:message code="gui.menu.Nodes"/> - ${(params.project ?: request.project).encodeAsHTML()}</title>
     <g:javascript library="executionControl"/>
     <g:javascript library="yellowfade"/>
