@@ -335,7 +335,7 @@ class ExecutionController {
     /**
      * Use a builder delegate to render tailExecutionOutput result in XML or JSON
      */
-    private def renderOutputClosure= {String outf, Map data, List outputData, apiVersion,delegate ->
+    private def renderOutputClosure= {String outf, Map data, List outputData, apiVersion,delegate, stateoutput=false ->
         def keys= ['id','offset','completed','empty','unmodified', 'error','message','execCompleted', 'hasFailedNodes',
                 'execState', 'lastModified', 'execDuration', 'percentLoaded', 'totalSize', 'lastLinesSupported']
         def setProp={k,v->
@@ -364,16 +364,16 @@ class ExecutionController {
         def timeFmt = new SimpleDateFormat("HH:mm:ss")
         def dataClos= {
             outputData.each {
-                def datamap = [
+                def datamap = stateoutput?(it + [
                         time: timeFmt.format(it.time),
                         absolute_time: g.w3cDateValue([date: it.time]),
-                        level: it.level,
                         log: it.mesg?.replaceAll(/\r?\n$/, ''),
-                        user: it.user,
-                        command: it.command,
-                        stepctx: it.stepctx,
-                        node: it.node,
-                ]
+                ]):([
+                        time: timeFmt.format(it.time),
+                        absolute_time: g.w3cDateValue([date: it.time]),
+                        log: it.mesg?.replaceAll(/\r?\n$/, ''),
+                ]+it.subMap(['level','user','command','stepctx','node']))
+                datamap.remove('mesg')
                 if (it.loghtml) {
                     datamap.loghtml = it.loghtml
                 }
@@ -401,7 +401,7 @@ class ExecutionController {
      * API: /api/execution/{id}/output/state, version ?
      */
     def apiExecutionStateOutput = {
-        if (!new ApiController().requireVersion(ApiRequestFilters.V9)) {
+        if (!apiService.requireVersion(request,response,ApiRequestFilters.V10)) {
             return
         }
         params.stateOutput = true
@@ -771,13 +771,13 @@ class ExecutionController {
             xml {
                 apiService.renderSuccessXml(response) {
                     output {
-                        renderOutputClosure('xml', resultData, entry, request.api_version, delegate)
+                        renderOutputClosure('xml', resultData, entry, request.api_version, delegate, stateoutput)
                     }
                 }
             }
             json {
                 render(contentType: "application/json") {
-                    renderOutputClosure('json', resultData, entry, request.api_version, delegate)
+                    renderOutputClosure('json', resultData, entry, request.api_version, delegate, stateoutput)
                 }
             }
             text{
@@ -904,9 +904,12 @@ class ExecutionController {
         return executionService.respondExecutionsXml(response, [e])
     }
     /**
-     * API: /api/execution/{id}/state/$path**? , version 1
+     * API: /api/execution/{id}/state , version 10
      */
     def apiExecutionState= {
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V10)) {
+            return
+        }
         def Execution e = Execution.get(params.id)
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (!e) {
@@ -960,43 +963,58 @@ class ExecutionController {
         }
         def convertNodeList={Collection tnodes->
             def tnodemap = []
-            tnodes.each { String nname ->
-                tnodemap << [(BuilderUtil.ATTR_PREFIX + 'name'): nname]
+            tnodes.each { anode ->
+                if(anode instanceof String){
+                    tnodemap << [(BuilderUtil.ATTR_PREFIX + 'name'): anode]
+                }else if(anode instanceof Map.Entry){
+                    tnodemap << [(BuilderUtil.ATTR_PREFIX + 'name'): anode.key] + anode.value
+                }
             }
             tnodemap
         }
         def convertXml;
         convertXml={Map map->
+            Map newmap=[:]+map
             //for each step
-            map.steps.each{Map step->
+            newmap.steps=map.steps.collect{Map step->
+                Map newstep=[:] + step
                 if(step.workflow){
                     //convert sub workflow
-                    convertXml(step.workflow)
+                    newstep.workflow=convertXml(newstep.workflow)
                 }
-                //change 'id' to an attribute named num
-                step.num=step.remove('id')
-                BuilderUtil.makeAttribute(step,'num')
+                newstep[BuilderUtil.asAttributeName('stepctx')]= newstep.remove('stepctx')
+                BuilderUtil.makeAttribute(newstep,'id')
                 if(step.nodeStates){
-                    def nstates=step.remove('nodeStates')
-                    step.nodeStates=nstates.collect {String node,Map nodestate->
+                    newstep.nodeStates=step['nodeStates'].collect {String node,Map nodestate->
                         def nmap= [name: node] + nodestate
                         BuilderUtil.makeAttribute(nmap,'name')
                         nmap
                     }
-                    BuilderUtil.makePlural(step,'nodeStates')
+                    BuilderUtil.makePlural(newstep,'nodeStates')
                 }
                 if (step.stepTargetNodes) {
-                    step.stepTargetNodes = [(BuilderUtil.pluralize('nodes')):convertNodeList(step.remove('stepTargetNodes'))]
+                    newstep.stepTargetNodes = [(BuilderUtil.pluralize('nodes')):convertNodeList(step['stepTargetNodes'])]
                 }
+                newstep
             }
-            if(map.steps){
+            if(newmap.steps){
                 //make steps into a <steps><step/><step/>..</steps>
-                BuilderUtil.makePlural(map,'steps')
+                BuilderUtil.makePlural(newmap,'steps')
             }
             if (map.targetNodes) {
-                map.targetNodes = [(BuilderUtil.pluralize('nodes')):convertNodeList(map.remove('targetNodes'))]
+                newmap.targetNodes = [(BuilderUtil.pluralize('nodes')):convertNodeList(map['targetNodes'])]
             }
-            map
+            if (map.allNodes) {
+                newmap.allNodes = [(BuilderUtil.pluralize('nodes')):convertNodeList(map['allNodes'])]
+            }
+            if (map.nodes) {
+                def nodesteps = [:]
+                newmap.remove('nodes').each{
+                    nodesteps[(it.key)]= [(BuilderUtil.pluralize('steps')): it.value]
+                }
+                newmap[(BuilderUtil.pluralize('nodes'))] = convertNodeList(nodesteps.entrySet())
+            }
+            newmap
         }
         withFormat {
             json{

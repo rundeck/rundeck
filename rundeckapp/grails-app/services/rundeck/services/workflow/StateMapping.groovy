@@ -56,8 +56,9 @@ class StateMapping {
 
     def Map mapOf(WorkflowStepState state, StepIdentifier parent = null, Map nodestates, List<String> allNodes) {
         def map = [:]
+        StepIdentifier ident = parent ? StateUtils.stepIdentifier(parent.context + state.stepIdentifier.context) :
+            state.stepIdentifier
         if (state.hasSubWorkflow()) {
-            StepIdentifier ident = parent ? StateUtils.stepIdentifier(parent.context + state.stepIdentifier.context) : state.stepIdentifier
             map += [
                     hasSubworkflow: state.hasSubWorkflow(),
                     workflow: mapOf(state.subWorkflowState, ident, nodestates, allNodes)
@@ -78,6 +79,7 @@ class StateMapping {
         }
         map + [
                 id: stepIdentifierToString(state.stepIdentifier),
+                stepctx: stepIdentifierToString(ident),
                 nodeStep: state.nodeStep
         ] + mapOf(state.stepState)
     }

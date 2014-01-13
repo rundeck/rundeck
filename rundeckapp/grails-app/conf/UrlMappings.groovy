@@ -10,13 +10,15 @@ class UrlMappings {
         * API url paths, v1
         */
         "/api/$api_version/execution/$id"(controller: 'execution', action: 'apiExecution')
-        "/api/$api_version/execution/$id/state/$path**?"(controller: 'execution', action: 'apiExecutionState')
+        "/api/$api_version/execution/$id/state"(controller: 'execution', action: 'apiExecutionState')
         "/api/$api_version/execution/$id/abort"(controller: 'execution', action: 'apiExecutionAbort')
         /** v5 */
         "/api/$api_version/execution/$id/output"(controller: 'execution', action: 'apiExecutionOutput')
+        /** v10 */
         "/api/$api_version/execution/$id/output/state"(controller: 'execution', action: 'apiExecutionStateOutput')
         "/api/$api_version/execution/$id/output/node/$nodename"(controller: 'execution', action: 'apiExecutionOutput')
         "/api/$api_version/execution/$id/output/step/$stepctx**?"(controller: 'execution', action: 'apiExecutionOutput')
+
         "/api/$api_version/executions/running"(controller: 'menu', action: 'apiExecutionsRunning')
         "/api/$api_version/executions"(controller: 'execution', action: 'apiExecutionsQuery')
         "/api/$api_version/history"(controller: 'reports', action: 'apiHistory')
