@@ -2,7 +2,7 @@
     <table class="table table-condensed table-embed">
         <g:if test="${node.description}">
             <tr>
-                <td class="value text-muted" colspan="2">
+                <td class="value text-muted" colspan="4">
                     ${node.description?.encodeAsHTML()}
                 </td>
             </tr>
@@ -23,21 +23,26 @@
                     </g:if>
                 </g:each>
             </td>
+            <g:if test="${(!exclude || !exclude.contains('hostname') || !exclude.contains('username'))}">
+                <td class="key"><g:message code="node.metadata.username-at-hostname"/></td>
+                <td>
+                    <g:if test="${node.username}">
+                        <tmpl:nodeFilterLink key="username" value="${node['username']}"/>
+                        <span class="atsign">@</span>
+                    </g:if>
+                    <tmpl:nodeFilterLink key="hostname" value="${node['hostname']}"/>
+                    <g:if test="${null != nodeauthrun && !nodeauthrun[node.nodename]}">
+                        <span title="Not authorized to 'run' on this node" class="text-warning has_tooltip">
+                            <i class="glyphicon glyphicon-warning-sign"></i>
+                        </span>
+                    </g:if>
+                </td>
+            </g:if>
         </tr>
-        <g:if test="${(!exclude || !exclude.contains('hostname') || !exclude.contains('username'))}">
-            <tr>
-                <td class="key">
-                    <g:message code="node.metadata.username-at-hostname"/>
-                </td>
-                <td class="value">
-                    <tmpl:nodeFilterLink key="username" value="${node['username']}"
-                    />@<tmpl:nodeFilterLink key="hostname" value="${node['hostname']}"/>
-                </td>
-            </tr>
-        </g:if>
+
         <g:if test="${(!exclude || !exclude.contains('tags')) && node['tags']}">
         <tr><td class="key"><i class="glyphicon glyphicon-tags text-muted"></i></td>
-            <td class="">
+            <td class="" colspan="3">
                 <span class="nodetags">
                     <g:each var="tag" in="${node.tags.sort()}">
                         <tmpl:nodeFilterLink key="tags" value="${tag}" linkclass="textbtn tag"/>
@@ -52,7 +57,8 @@
                     <td class="key setting">
                         <tmpl:nodeFilterLink key="${setting}" value="${'.*'}" linktext="${setting}" suffix=":"/>
                     </td>
-                    <td class="setting"><div class="value">
+                    <td class="setting" colspan="3">
+                        <div class="value">
                         ${nodeAttrs[setting].encodeAsHTML()}
                         <tmpl:nodeFilterLink key="${setting}" value="${nodeAttrs[setting]}"
                                              linkclass="textbtn textbtn-info"
