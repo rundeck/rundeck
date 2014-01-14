@@ -40,7 +40,7 @@
             <td class="">
                 <span class="nodetags">
                     <g:each var="tag" in="${node.tags.sort()}">
-                        <tmpl:nodeFilterLink key="tags" value="${tag}"/>
+                        <tmpl:nodeFilterLink key="tags" value="${tag}" linkclass="textbtn tag"/>
                     </g:each>
                 </span>
             </td></tr>
@@ -49,9 +49,14 @@
         <g:if test="${nodeAttrs}">
             <g:each var="setting" in="${nodeAttrs.keySet().grep{nodeAttrs[it]}.sort()}">
                 <tr>
-                    <td class="key setting">${setting.encodeAsHTML()}:</td>
+                    <td class="key setting">
+                        <tmpl:nodeFilterLink key="${setting}" value="${'.*'}" linktext="${setting}" suffix=":"/>
+                    </td>
                     <td class="setting"><div class="value">
-                        <tmpl:nodeFilterLink key="${setting}" value="${nodeAttrs[setting]}"/>
+                        ${nodeAttrs[setting].encodeAsHTML()}
+                        <tmpl:nodeFilterLink key="${setting}" value="${nodeAttrs[setting]}"
+                                             linkclass="textbtn textbtn-info"
+                                             linkicon="glyphicon glyphicon-search"/>
                     </div>
                     </td>
                 </tr>
