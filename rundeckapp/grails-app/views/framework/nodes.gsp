@@ -39,6 +39,11 @@
             var filterName = jQuery(e).data('node-filter-name');
             var filterString = jQuery(e).data('node-filter');
             var filterAll = jQuery(e).data('node-filter-all')?true:false;
+            //additive filter string
+            if(filterString && !filterName && nodeFilter.filter() && !nodeFilter.filterAll() && !filterAll){
+                nodeFilter.filter(nodeFilter.filter()+' '+filterString);
+                filterString=nodeFilter.filter();
+            }
             loadNodeFilter(filterName, filterString,filterAll);
         }
 
