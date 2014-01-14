@@ -13,8 +13,8 @@
     </g:if>
     <div class="row row-space">
     <div class="col-sm-12 ">
-    <table cellpadding="0" cellspacing="0" width="100%" id="nodesTable" class="">
-        <g:render template="nodesTableContent" model="${[nodes:nodes,params:params,total:total,allcount:allcount,page:page,max:max,nodeauthrun:nodeauthrun]}"/>
+    <table cellpadding="0" cellspacing="0" width="100%" id="nodesTable" class="nodesTable">
+        <g:render template="nodesTableContent" model="${[nodes:nodes, colkeys: colkeys,params:params,total:total,allcount:allcount,page:page,max:max,nodeauthrun:nodeauthrun]}"/>
     </table>
     </div>
     </div>

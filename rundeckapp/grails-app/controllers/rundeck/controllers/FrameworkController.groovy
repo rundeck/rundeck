@@ -128,18 +128,28 @@ class FrameworkController  {
         if (query && !query.project && params.project) {
             query.project = params.project
         }
-        def model
-//        if (!summaryOnly && ('true' == params.formInput || usedFilter || !query.nodeFilterIsEmpty())){
-//            model = nodesdata(query)
-//        } else {
-            model = [query: query, params: params, showFilter:true,filter:query.filter]
-//        }
+        def sortkeys = filterSummaryKeys(query)
+        def model = [query: query, params: params, showFilter:true,filter:query.filter,colkeys:sortkeys]
 
         if (usedFilter) {
             model['filterName'] = usedFilter
         }
 
         return model + [summaryOnly: summaryOnly]
+    }
+
+    /**
+     * Return the list of filter keys used in the query, excluding the 'name' key
+     * @param query
+     * @return
+     */
+    private List filterSummaryKeys(ExtNodeFilters query) {
+        def filter = NodeSet.parseFilter(query.filter)
+        def incset = filter.include.keySet()
+        incset.removeAll(['name'])
+        def excset = filter.exclude.keySet()
+        excset.removeAll(['name'])
+        return new ArrayList(incset + excset)
     }
 
     def adhoc = { ExtNodeFilters query ->
@@ -447,6 +457,7 @@ class FrameworkController  {
             query.project = params.project
         }
         def result = nodesdata(query)
+        result.colkeys= filterSummaryKeys(query)
         if (usedFilter) {
             result['filterName'] = usedFilter
         }

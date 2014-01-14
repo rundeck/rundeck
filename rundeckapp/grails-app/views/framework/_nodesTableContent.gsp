@@ -21,6 +21,18 @@
     Created: Jan 13, 2011 10:03:47 AM
  --%>
 <%@ page import="com.dtolabs.rundeck.core.dispatcher.DataContextUtils" %><g:set var="ukey" value="${g.rkey()}"/>
+<g:set var="cols" value="${colkeys && colkeys.size()<4 ? colkeys.sort() : colkeys ? colkeys.sort()[0..2] : ['tags']}"/>
+<g:if test="${cols && cols!=['tags'] && page==0}">
+    <tr>
+        <th>Node</th>
+        <g:each in="${cols}" var="colname">
+            <th>${colname.encodeAsHTML()}</th>
+        </g:each>
+        <g:if test="${colkeys.size()<3}">
+        <th colspan="3" class="text-center">User @ Host</th>
+        </g:if>
+    </tr>
+</g:if>
 <% def seen=false %>
         <g:each in="${nodes.keySet().sort()}" var="nodekey" status="i">
             <g:set var="nodedata" value="${nodes[nodekey]}"/>
@@ -49,17 +61,34 @@
                                          linkicon="glyphicon glyphicon-circle-arrow-right"/>
                     <span class="nodedesc"></span>
                 </td>
-                <td  title="Tags" class="nodetags">
-                    <g:if test="${node.tags}">
-                        <span class="nodetags">
-                            <i class="glyphicon glyphicon-tags text-muted"></i>
-                            <g:each var="tag" in="${node.tags.sort()}">
-                                <tmpl:nodeFilterLink key="tags" value="${tag}"/>
-                            </g:each>
-                        </span>
+                <g:each in="${cols.sort()}" var="colname" status="coli">
+                    <g:if test="${colname=='tags'}">
+                        <td  title="Tags" class="nodetags" colspan="${coli==2?'2':'1'}">
+                            <g:if test="${node.tags}">
+                                <span class="nodetags">
+                                    <i class="glyphicon glyphicon-tags text-muted"></i>
+                                    <g:each var="tag" in="${node.tags.sort()}">
+                                        <tmpl:nodeFilterLink key="tags" value="${tag}" linkclass="textbtn tag"/>
+                                    </g:each>
+                                </span>
+                            </g:if>
+                        </td>
                     </g:if>
-                </td>
+                    <g:else>
+                        <td colspan="${coli == 2 ? '2' : '1'}">
+                            <g:if test="${node.attributes[colname]}">
+                                <span class="value">
+                                    ${node.attributes[colname].encodeAsHTML()}
+                                    <tmpl:nodeFilterLink key="${colname}" value="${node.attributes[colname]}"
+                                                         linkicon="glyphicon glyphicon-search"
+                                                         linkclass="textbtn textbtn-info"/>
+                                </span>
+                            </g:if>
+                        </td>
+                    </g:else>
+                </g:each>
 
+                <g:if test="${colkeys.size() < 3}">
                 <td class="username"  title="Username">
                     <g:if test="${node.username}">
 
@@ -75,6 +104,7 @@
                         </span>
                     </g:if>
                 </td>
+                </g:if>
                 <td>
                     <g:if test="${node.attributes?.remoteUrl}">
                         <g:set var="nodecontextdata" value="${DataContextUtils.nodeData(node)}"/>
@@ -101,7 +131,7 @@
                     <!--&raquo; history-->
                 %{--</g:link>--}%
                 <tr id="${ukey}node_detail_${i}" class="detail_content nodedetail ${nodedata.islocal ? 'server' : ''}" style="display:none">
-                    <td colspan="6">
+                    <td colspan="${(4+cols.size())}">
                         <g:render template="nodeDetailsSimple" model="[linkAttrs: true, node:node,key:ukey+'_'+node.nodename+'_key',projects:nodedata.projects,exclude:['username','hostname']]"/>
                     </td>
                 </tr>
