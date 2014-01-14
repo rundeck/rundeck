@@ -122,6 +122,21 @@ class ExecutionJob implements InterruptableJob {
         }
         return null;
     }
+    /**
+     * Attempt to get the list of failed nodes from a caught NodesetFailureException if the thread is
+     * @return the list of failed node names, or null
+     */
+    private static Set<String> extractSucceededNodes(Map execmap=null) {
+        if(null==execmap){
+            return null;
+        }
+        if(null!=execmap.noderecorder && execmap.noderecorder instanceof NodeRecorder){
+            final recorder = (NodeRecorder) execmap.noderecorder
+            def nodes = recorder.getSuccessfulNodes()
+            return nodes
+        }
+        return null;
+    }
 
     public void interrupt(){
         _interrupted=true;
@@ -334,6 +349,7 @@ class ExecutionJob implements InterruptableJob {
     def saveState(ExecutionService executionService,Execution execution, boolean success, boolean _interrupted,
                   boolean isTemp, long scheduledExecutionId=-1, Map execmap) {
         Map<String,Object> failedNodes=extractFailedNodes(execmap)
+        Set<String> succeededNodes=extractSucceededNodes(execmap)
 
         //save Execution state
         def dateCompleted = new Date()
@@ -343,6 +359,7 @@ class ExecutionJob implements InterruptableJob {
                 cancelled: _interrupted,
                 failedNodes: failedNodes?.keySet(),
                 failedNodesMap: failedNodes,
+                succeededNodes: succeededNodes,
         ]
         def saveStateComplete=false
         def saveStateException=null

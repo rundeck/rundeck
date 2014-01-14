@@ -251,6 +251,20 @@ class ApiService {
                     }
                     description(summary)
                     argstring(e.argString)
+                    if(e.succeededNodeList){
+                        successfulNodes{
+                            e.succeededNodeList.split(',').each {
+                                node(name:it)
+                            }
+                        }
+                    }
+                    if(e.failedNodeList){
+                        failedNodes {
+                            e.failedNodeList.split(',').each {
+                                node(name: it)
+                            }
+                        }
+                    }
                 }
             }
         }

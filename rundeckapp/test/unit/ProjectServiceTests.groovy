@@ -47,6 +47,7 @@ class ProjectServiceTests  {
     <status>true</status>'''
     static String EXEC_XML_TEST1_REST = '''
     <failedNodeList />
+    <succeededNodeList />
     <abortedby />
     <cancelled>false</cancelled>
     <argString>-test args</argString>

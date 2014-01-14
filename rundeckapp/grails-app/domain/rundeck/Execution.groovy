@@ -15,6 +15,7 @@ class Execution extends ExecutionContext {
     String status
     String outputfilepath
     String failedNodeList
+    String succeededNodeList
     String abortedby
     boolean cancelled
     Workflow workflow
@@ -49,6 +50,7 @@ class Execution extends ExecutionContext {
         nodeRankOrderAscending(nullable: true)
         nodeRankAttribute(nullable: true)
         failedNodeList(nullable:true, blank:true)
+        succeededNodeList(nullable:true, blank:true)
         abortedby(nullable:true, blank:true)
         serverNodeUUID(size:36..36, blank: true, nullable: true, validator: { val, obj ->
             if (null == val) return true;
@@ -65,6 +67,7 @@ class Execution extends ExecutionContext {
         argString type: 'text'
 
         failedNodeList type: 'text'
+        succeededNodeList type: 'text'
         outputfilepath type: 'text'
         nodeInclude(type: 'text')
         nodeExclude(type: 'text')
@@ -126,6 +129,7 @@ class Execution extends ExecutionContext {
         map.status=status
         map.outputfilepath=outputfilepath
         map.failedNodeList = failedNodeList
+        map.succeededNodeList = succeededNodeList
         map.abortedby=abortedby
         map.cancelled=cancelled
         map.argString= argString
@@ -159,6 +163,7 @@ class Execution extends ExecutionContext {
         exec.status=data.status
         exec.outputfilepath = data.outputfilepath
         exec.failedNodeList = data.failedNodeList
+        exec.succeededNodeList = data.succeededNodeList
         exec.abortedby = data.abortedby
         exec.cancelled = XmlParserUtil.stringToBool(data.cancelled,false)
         exec.argString = data.argString

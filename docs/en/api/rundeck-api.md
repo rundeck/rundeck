@@ -44,6 +44,9 @@ Changes introduced by API Version number:
         + Retrieve log output with state change information
     - `/api/10/execution/[ID]/output/node/[NODENAME]` and `/api/10/execution/[ID]/output/step/[STEPCTX]` - [Execution Output](#execution-output)
         + Retrieve log output for a particular node or step
+* Updated endpoints
+    - `/api/10/execution/[ID]` - [Execution Info](#execution-info)
+        + added `successfulNodes` and `failedNodes` detail.
 
 **Version 9**:
 
@@ -731,6 +734,18 @@ Result: An Item List of `executions`.  Each `execution` of the form:
         
         <!-- if the execution was aborted, the username who aborted it: -->
         <abortedby>[username]</abortedby>
+
+        <!-- if the execution was is finished, a list of node names that succeeded -->
+        <successfulNodes>
+            <node name="node1"/>
+            <node name="node2"/>
+        </successfulNodes>
+
+        <!-- if the execution was is finished, a list of node names that failed -->
+        <failedNodes>
+            <node name="node3"/>
+            <node name="node4"/>
+        </failedNodes>
         
     </execution>
 
@@ -751,7 +766,9 @@ If known, the average duration of the associated Job will be indicated (in milli
 
 **API v9 and above**: `project="[project]"` is the project name of the execution.
 
-### Getting Execution Info
+`successfulNodes` and `failedNodes` list the names of nodes which succeeded or failed. **API v10 and above**.
+
+### Execution Info
 
 Get the status for an execution by ID.
 

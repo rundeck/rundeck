@@ -847,6 +847,8 @@ class ExecutionController {
                 project: e.project,
                 failedNodeListString:  e.failedNodeList,
                 failedNodeList:  e.failedNodeList?.split(",") as List,
+                succeededNodeListString:  e.succeededNodeList,
+                succeededNodeList:  e.succeededNodeList?.split(",") as List,
                 loglevel : ExecutionService.textLogLevels[e.loglevel] ?: e.loglevel
             ]
             if (null != e.dateCompleted) {

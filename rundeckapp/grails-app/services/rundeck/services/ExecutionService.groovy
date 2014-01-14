@@ -1378,6 +1378,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if (props.failedNodes) {
             execution.failedNodeList = props.failedNodes.join(",")
         }
+        if (props.succeededNodes) {
+            execution.succeededNodeList = props.succeededNodes.join(",")
+        }
         def boolean execSaved=false
         if (execution.save(flush:true)) {
             log.debug("saved execution status. id: ${execution.id}")
