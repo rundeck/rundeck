@@ -1290,8 +1290,14 @@ var FollowControl = Class.create({
         //tdtime.setAttribute('width', '20');
         tdtime.addClassName('info');
         tdtime.addClassName('time');
-        tdtime.innerHTML = "<span class=\"" + data.level + "\">" + data.time + "</span>";
+        var timespan = new Element('span');
+        timespan.addClassName(data.level);
+        timespan.innerHTML=data.time;
+        tdtime.appendChild(timespan);
         if(data.absolute_time){
+            if(typeof(moment)=='function'){
+                timespan.innerHTML= MomentUtil.formatTime(data.absolute_time,'HH:mm:ss');
+            }
             tdtime.setAttribute('title', data.absolute_time);
         }
         var cellndx=1;
