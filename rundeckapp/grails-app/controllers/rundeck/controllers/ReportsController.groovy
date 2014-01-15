@@ -261,6 +261,9 @@ class ReportsController {
                 }catch(Exception e){
 
                 }
+                if(map.execution.argString){
+                    map.execution.jobArguments=frameworkService.parseOptsFromString(map.execution.argString)
+                }
             }
             map.user= map.remove('author')
             map.jobName= map.remove('reportId')

@@ -98,7 +98,15 @@
                 </g:if>
             </td>
             <td class="eventargs" >
+                <span data-bind="if: execution().jobArguments">
+                    <span data-bind="foreachprop: execution().jobArguments">
+                        <span data-bind="text: key"></span>:
+                        <span data-bind="text: value" class="optvalue"></span>
+                    </span>
+                </span>
+                <!-- ko if: !execution().jobArguments -->
                 <span data-bind="text: execution().argString"></span>
+                <!-- /ko -->
             </td>
             <td style="white-space:nowrap" class="right date">
                 <span data-bind="if: dateCompleted()">
