@@ -29,8 +29,7 @@
       <g:javascript src="executionControl.js"/>
       <g:javascript src="workflow.js"/>
       <g:javascript src="executionState.js"/>
-      <asset:javascript src="executionStateKO.js"/>
-      <asset:javascript src="historyKO.js"/>
+      <asset:javascript src="executionState_HistoryKO.js"/>
       <g:javascript library="prototype/effects"/>
       <g:javascript>
 
