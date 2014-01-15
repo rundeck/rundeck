@@ -88,8 +88,8 @@ grails.project.dependency.resolution = {
         compile ":code-coverage:1.2.6"
         build ':jetty:2.0.3'
         compile ":twitter-bootstrap:3.0.3"
-        compile ":asset-pipeline:1.0.4"
-        compile ":less-asset-pipeline:0.8.2"
+        compile ":asset-pipeline:1.3.1"
+        compile ":less-asset-pipeline:1.2.1"
     }
     dependencies {
         

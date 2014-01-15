@@ -1,3 +1,8 @@
+//= require momentutil
+//= require knockout-min
+//= require knockout-foreachprop
+//= require knockout-mapping
+
 /*
  Copyright 2013 SimplifyOps Inc, <http://simplifyops.com>
 

@@ -1,6 +1,4 @@
- /*
- *= require moment.min
- */
+//= require moment-min
 /*
  Copyright 2013 SimplifyOps Inc, <http://simplifyops.com>
 

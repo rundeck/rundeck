@@ -26,20 +26,11 @@
 
       <g:set var="defaultLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.default}"/>
       <g:set var="maxLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.max}"/>
-      <g:javascript src="moment.min.js"/>
-      <asset:javascript src="momentutil.js"/>
       <g:javascript src="executionControl.js"/>
       <g:javascript src="workflow.js"/>
       <g:javascript src="executionState.js"/>
-      <g:if test="${grails.util.Environment.current==Environment.DEVELOPMENT}">
-            <g:javascript src="knockout-3.0.0.debug.js"/>
-      </g:if>
-      <g:else>
-          <g:javascript src="knockout-3.0.0-min.js"/>
-      </g:else>
-      <g:javascript src="knockout.mapping-latest.js"/>
       <asset:javascript src="executionStateKO.js"/>
-      <g:javascript src="historyKO.js"/>
+      <asset:javascript src="historyKO.js"/>
       <g:javascript library="prototype/effects"/>
       <g:javascript>
 

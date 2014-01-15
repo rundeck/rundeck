@@ -1,3 +1,19 @@
+%{--
+  Copyright 2014 SimplifyOps Inc, <http://simplifyops.com>
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+  --}%
+
 <%@ page import="grails.util.Environment; rundeck.User; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 <html>
 <head>
@@ -9,16 +25,7 @@
     <g:javascript library="executionControl"/>
     <g:javascript library="yellowfade"/>
     <g:javascript library="pagehistory"/>
-    <g:if test="${grails.util.Environment.current == Environment.DEVELOPMENT}">
-        <g:javascript src="knockout-3.0.0.debug.js"/>
-    </g:if>
-    <g:else>
-        <g:javascript src="knockout-3.0.0-min.js"/>
-    </g:else>
-    <g:javascript src="knockout.mapping-latest.js"/>
-    <g:javascript src="moment.min.js"/>
-    <asset:javascript src="momentutil.js"/>
-    <g:javascript src="historyKO.js"/>
+    <asset:javascript src="historyKO.js"/>
     <asset:javascript src="nodeFiltersKO.js"/>
     <g:set var="defaultLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.default}"/>
     <g:set var="maxLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.max}"/>

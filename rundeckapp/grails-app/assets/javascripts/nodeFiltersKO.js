@@ -1,3 +1,5 @@
+//= require knockout-min
+//= require knockout-mapping
 /*
  Copyright 2014 SimplifyOps Inc, <http://simplifyops.com>
 

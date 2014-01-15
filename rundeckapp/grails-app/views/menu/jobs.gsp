@@ -10,16 +10,7 @@
     <g:javascript library="pagehistory"/>
     <g:javascript library="prototype/effects"/>
     <g:javascript library="executionOptions"/>
-    <g:if test="${grails.util.Environment.current == Environment.DEVELOPMENT}">
-        <g:javascript src="knockout-3.0.0.debug.js"/>
-    </g:if>
-    <g:else>
-        <g:javascript src="knockout-3.0.0-min.js"/>
-    </g:else>
-    <g:javascript src="knockout.mapping-latest.js"/>
-    <g:javascript src="moment.min.js"/>
-    <asset:javascript src="momentutil.js"/>
-    <g:javascript src="historyKO.js"/>
+    <asset:javascript src="historyKO.js"/>
     <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
     <script type="text/javascript">
 
