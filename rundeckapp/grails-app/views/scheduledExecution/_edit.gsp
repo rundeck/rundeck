@@ -1,4 +1,4 @@
-<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
+<%@ page import="rundeck.User; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 <div class="list-group">
 <g:if test="${flash.message}">
     <div class="list-group-item">
@@ -134,6 +134,43 @@ var applinks={
             }
              return true;
          }
+        function _updateBoxInfo(name, data) {
+            if(name=='nodes'){
+                if (data.total && data.total != "0") {
+                }
+                if (null != data.total) {
+                }
+                if (null != data.allcount) {
+                    jQuery('.matchednodes_count').html(data.allcount);
+                    jQuery('.matchednodes_show').show();
+                    jQuery('.matchednodes_hide').hide();
+                }else{
+                    jQuery('.matchednodes_show').hide();
+                }
+                if (null != data.filter) {
+                }
+            }
+        }
+        function selectNodeFilterLink(e){
+            var field = jQuery('#schedJobNodeFilter');
+            var oldfilter= field.val();
+            var filterName = jQuery(e).data('node-filter-name');
+            var filterString = jQuery(e).data('node-filter');
+            var filterAll = jQuery(e).data('node-filter-all');
+            if (filterString && !filterName && oldfilter && !filterAll && oldfilter!='.*') {
+                filterString = oldfilter + ' ' + filterString;
+            }else if(filterAll){
+                filterString='.*'
+            }
+            field.val(filterString);
+            _matchNodes();
+        }
+        function _beforeMatchNodes(){
+            jQuery('.btn.refresh_nodes').button('loading');
+        }
+        function _afterMatchNodes(){
+            jQuery('.btn.refresh_nodes').button('reset');
+        }
         function pageinit(){
             _enableDragdrop();
 
@@ -144,9 +181,25 @@ var applinks={
                 }
                 return true;
             },false);
+            jQuery('#nodefiltersmenu').on('click', '.nodefilterlink', function (evt) {
+                evt.preventDefault();
+                selectNodeFilterLink(this);
+            });
+            jQuery('#matchednodes').on('click', '.nodefilterlink', function (evt) {
+                evt.preventDefault();
+                selectNodeFilterLink(this);
+            });
+            jQuery('.refresh_nodes').on('click', function (evt) {
+                _formUpdateMatchedNodes();
+            });
+            jQuery('#schedJobNodeFilter').on('keydown',function (evt) {
+                if(!noenter(evt)){
+                    _formUpdateMatchedNodes();
+                }
+            });
         }
 
-        Event.observe(window,'load',pageinit);
+        jQuery(pageinit);
 //]>
 </script>
 <style lang="text/css">
@@ -537,24 +590,69 @@ var applinks={
 
         </g:hasErrors>
         <g:set var="filtvalue" value="${scheduledExecution.asFilter().encodeAsHTML()}"/>
-        <div class="input-group">
-        <input type='text' name="filter" class="filterIncludeText form-control"
-               placeholder="Enter a node filter"
-               value="${filtvalue}" id="schedJobNodeFilter" onchange="_matchNodes();"/>
 
-            <span class="input-group-btn">
-                <a class="btn btn-info" data-toggle='collapse' href="#queryFilterHelp">
-                    <i class="glyphicon glyphicon-question-sign"></i>
-                </a>
-            </span>
+                <span class=" input-group">
+                    %{--Filter navigation/selection dropdown--}%
+                    <span class="input-group-btn">
+                        <button type="button" class="btn btn-default dropdown-toggle"
+                                data-toggle="dropdown">Filter <span
+                                class="caret"></span></button>
+                        <ul class="dropdown-menu" id='nodefiltersmenu'>
+
+                            <li>
+                                <g:link class="nodefilterlink"
+                                        action="nodes" controller="framework"
+                                        data-node-filter=".*"
+                                        data-node-filter-all="true"
+                                        params="[showall: 'true']">
+                                    All nodes
+                                </g:link>
+                            </li>
+                            <li class="divider"></li>
+                            <li class="dropdown-header"><i
+                                    class="glyphicon glyphicon-filter"></i> Saved Filters</li>
+
+                            <g:if test="${session.user && User.findByLogin(session.user)?.nodefilters}">
+                                <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters}"/>
+                            </g:if>
+                            <g:if test="${filterset}">
+                                <g:render template="/common/selectFilter"
+                                          model="[project:params.project, filterList: true, filterset: filterset, filterName: filterName, prefName: 'nodes', noSelection: filterName ? '-All Nodes-' : null]"/>
+                            </g:if>
+                        </ul>
+                    </span>
+                    <input type='search' name="filter" class="schedJobNodeFilter form-control"
+                           data-bind="value: filterWithoutAll"
+                           placeholder="Enter a node filter"
+                           data-toggle='popover'
+                           data-popover-content-ref="#queryFilterHelp"
+                           data-placement="bottom"
+                           data-trigger="manual"
+                           data-container="body"
+                           value="${filtvalue}" id="schedJobNodeFilter" />
+
+
+                    <span class="input-group-btn">
+                        <a class="btn btn-info" data-toggle='popover-for'
+                           data-target="#schedJobNodeFilter">
+                            <i class="glyphicon glyphicon-question-sign"></i>
+                        </a>
+                        <button class="btn btn-success" type="submit">
+                            Set Filter
+                        </button>
+                    </span>
+                </span>
+
+        <div class=" collapse" id="queryFilterHelp">
+            <div class="help-block">
+                <g:render template="/common/nodefilterStringHelp"/>
+            </div>
         </div>
+
+        
     </div>
 
-    <div class="${offsetColSize} collapse" id="queryFilterHelp">
-        <div class="help-block">
-            <g:render template="/common/nodefilterStringHelp"/>
-        </div>
-    </div>
+
 </div>
 </div>
 
@@ -586,17 +684,21 @@ var applinks={
             Matched Nodes:
         </label>
 
-        <div class=" col-sm-8  ">
-            <div class="well well-sm embed matchednodes" id='matchednodes'>
-            <span class="btn btn-sm btn-info" onclick="_formUpdateMatchedNodes()">Update...</span>
+        <div class=" col-sm-10  ">
+
+            <div class="well well-sm embed matchednodes">
+                <button type="button" class="pull-right btn btn-info btn-sm refresh_nodes"
+                        data-loading-text="Loading..."
+                        title="click to refresh">
+                    refresh
+                    <i class="glyphicon glyphicon-refresh"></i>
+                </button>
+                <span class="matchednodes_show text-muted" style="display: none;">
+                    <span class="matchednodes_count "></span> Nodes Matched
+                </span>
+                <div id='matchednodes' class="clearfix">
+                </div>
             </div>
-        </div>
-        <div class="col-sm-2">
-            <span class="btn btn-info btn-sm" title="click to refresh" onclick="_formUpdateMatchedNodes()">
-                refresh
-                <i class="glyphicon glyphicon-refresh"></i>
-            </span>
-            <span id="mnodeswait"></span>
         </div>
     </div>
 

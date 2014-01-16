@@ -26,9 +26,10 @@
     <g:each in="${filterset.sort({ a, b -> a.name.compareTo(b.name) })}" var="filter">
         <g:set var="isActive" value="${filter.name == filterName}"/>
         <li>
-        <g:link action="nodes" controller="framework" params="[filterName: filter.name]"
+        <g:link action="nodes" controller="framework" params="[filterName: filter.name, project: project ?: params.project]"
                 class="${isActive ? 'active' : ''} textbtn textbtn-primary nodefilterlink "
             data-node-filter-name="${filter.name}"
+            data-node-filter="${filter.asFilter()}"
                 title="Apply filter: ${filter.name.encodeAsHTML()}">
             ${filter.name.encodeAsHTML()}</g:link>
         </li>
@@ -40,9 +41,10 @@
     <span class="nav-links">
     <g:each in="${filterset.sort({ a, b -> a.name.compareTo(b.name) })}" var="filter">
         <g:set var="isActive" value="${filter.name == filterName}"/>
-        <g:link action="nodes" controller="framework" params="[filterName: filter.name]"
+        <g:link action="nodes" controller="framework" params="[filterName: filter.name,project:project?:params.project]"
                 class="${isActive ? 'active' : ''} textbtn textbtn-primary has_tooltip nodefilterlink "
             data-node-filter-name="${filter.name}"
+            data-node-filter="${filter.asFilter()}"
             data-placement="bottom"
                 title="Apply filter: ${filter.name.encodeAsHTML()}">
             ${filter.name.encodeAsHTML()}</g:link>

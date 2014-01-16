@@ -5,7 +5,7 @@
   Time: 4:54:53 PM
   To change this template use File | Settings | File Templates.
 --%>
-<g:set var="views" value="${[table:'nodesTable',embed:'nodesEmbed','':'nodes',tableContent:'nodesTableContent']}"/>
+<g:set var="views" value="${[table:'nodesTable',embed:'nodesEmbed','':'nodesEmbed',tableContent:'nodesTableContent']}"/>
 <g:set var="nodeview" value="${nodeview?:params.view?:''}"/>
 <g:if test="${!nodeview || nodeview!='tableContent'}">
     <g:render template="/common/messages"/>

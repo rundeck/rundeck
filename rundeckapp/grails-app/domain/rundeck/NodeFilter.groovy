@@ -89,4 +89,7 @@ public class NodeFilter {
         ExtNodeFilters query = new ExtNodeFilters(this.properties.findAll{it.key=~/^(filter|project|node(Include|Exclude).*)$/})
         return query
     }
+    public String asFilter(){
+        return createExtNodeFilters().asFilter()
+    }
 }

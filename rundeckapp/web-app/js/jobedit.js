@@ -47,43 +47,27 @@ function prepJobType(data) {
 var mnodetimer = null;
 function _formUpdateMatchedNodes() {
     var i;
-    var project = $('schedEditFrameworkProject').value;
-    if (!project) {
-        $('mnodeswait').hide();
-        return;
-    }
     var params = {view:'embed',declarenone:true,defaultLocalNode:true,fullresults:true,formInput:true,requireRunAuth:true};
-    for (i in node_filter_keys) {
-        var key = node_filter_keys[i];
-        if ($('schedJobNodeInclude' + key) && $F('schedJobNodeInclude' + key)) {
-            params['nodeInclude' + key] = $F('schedJobNodeInclude' + key);
-        }
-        if ($('schedJobNodeExclude' + key) && $F('schedJobNodeExclude' + key)) {
-            params['nodeExclude' + key] = $F('schedJobNodeExclude' + key);
-        }
-    }
+
     params['filter']=$F('schedJobNodeFilter');
     if ($('nodeExcludePrecedenceTrue').checked) {
         params.nodeExcludePrecedence = "true";
     } else {
         params.nodeExcludePrecedence = "false";
     }
-    if ($('mnodeswait')) {
-        $('mnodeswait').show();
-        $('mnodeswait').loading("");
+    if(typeof(_beforeMatchNodes)=='function'){
+        _beforeMatchNodes();
     }
     new Ajax.Updater('matchednodes', applinks.frameworkNodesFragment, {parameters:params,evalScripts:true,onSuccess:function(
         e) {
-        $('mnodeswait').hide();
+        if (typeof(_afterMatchNodes) == 'function') {
+            _afterMatchNodes();
+        }
     }});
 }
 function _matchNodes() {
     if (mnodetimer) {
         clearTimeout(mnodetimer);
-    }
-    if ($('mnodeswait')) {
-        $('mnodeswait').show();
-        $('mnodeswait').loading("");
     }
     mnodetimer = setTimeout(_formUpdateMatchedNodes, 500);
 }
