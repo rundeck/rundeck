@@ -25,8 +25,7 @@
     <g:javascript library="executionControl"/>
     <g:javascript library="yellowfade"/>
     <g:javascript library="pagehistory"/>
-    <asset:javascript src="historyKO.js"/>
-    <asset:javascript src="nodeFiltersKO.js"/>
+    <asset:javascript src="nodeFilters_HistoryKO.js"/>
     <g:set var="defaultLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.default}"/>
     <g:set var="maxLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.max}"/>
     <script type="text/javascript">
