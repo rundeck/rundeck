@@ -7,13 +7,6 @@
     <meta name="tabpage" content="nodes"/>
     <title><g:message code="gui.menu.Nodes"/> - ${(params.project ?: request.project).encodeAsHTML()}</title>
     <g:javascript library="yellowfade"/>
-    <g:if test="${grails.util.Environment.current == Environment.DEVELOPMENT}">
-        <g:javascript src="knockout-3.0.0.debug.js"/>
-    </g:if>
-    <g:else>
-        <g:javascript src="knockout-3.0.0-min.js"/>
-    </g:else>
-    <g:javascript src="knockout.mapping-latest.js"/>
     <asset:javascript src="nodeFiltersKO.js"/>
     <script type="text/javascript">
         function showError(message) {
