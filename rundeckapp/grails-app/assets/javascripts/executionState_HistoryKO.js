@@ -1,5 +1,5 @@
 //= require momentutil
-//= require knockout-min
+//= require knockout.min
 //= require knockout-mapping
 //= require knockout-foreachprop
 //= require historyKO

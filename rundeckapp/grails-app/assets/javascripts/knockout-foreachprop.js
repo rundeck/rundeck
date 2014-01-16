@@ -1,4 +1,4 @@
-//= require knockout-min
+//= require knockout.min
 /*
  source: http://stackoverflow.com/questions/14838135/how-to-use-knockout-to-iterate-over-an-object-not-array
  */
