@@ -21,7 +21,7 @@
     Created: Jan 13, 2011 10:03:47 AM
  --%>
 <%@ page import="com.dtolabs.rundeck.core.dispatcher.DataContextUtils" %><g:set var="ukey" value="${g.rkey()}"/>
-<g:set var="cols" value="${colkeys && colkeys.size()<4 ? colkeys.sort() : colkeys ? colkeys.sort()[0..2] : []}"/>
+<g:set var="cols" value="${colkeys ? colkeys.sort() :  []}"/>
 <g:if test="${cols && cols!=['tags'] && page==0}">
     <tr>
         <th>Node</th>
