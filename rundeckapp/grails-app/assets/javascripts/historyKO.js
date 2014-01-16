@@ -96,9 +96,10 @@ function Report(data) {
     });
     ko.mapping.fromJS(data, {}, self);
 }
-function History(ajaxHistoryLink) {
+function History(ajaxHistoryLink,ajaxNowRunningLink) {
     var self = this;
     self.ajaxHistoryLink = ajaxHistoryLink;
+    self.ajaxNowRunningLink = ajaxNowRunningLink;
     self.reports = ko.observableArray([]);
     self.nowrunning = ko.observableArray([]);
     self.showReports=ko.observable(false);
@@ -146,6 +147,12 @@ function History(ajaxHistoryLink) {
     });
     self.visitPage=function(page){
         loadHistoryLink(self,self.ajaxHistoryLink,page.url);
+    };
+    self.activateNowRunningTab=function() {
+        jQuery('ul.activity_links > li:first-child').addClass('active');
+        jQuery('ul.activity_links > li:first-child > a').each(function (e) {
+            loadHistoryLink(self, self.ajaxNowRunningLink, this.getAttribute('href'), jQuery(this).data('auto-refresh'));
+        });
     };
 }
 

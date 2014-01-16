@@ -294,10 +294,7 @@
             setupActivityLinks('activity_section', history, ajaxHistoryLink, ajaxRunningLink);
             //if empty query, automatically load first activity_link
             if("${emptyQuery}"=='true'){
-                jQuery('ul.activity_links > li:first-child').addClass('active');
-                jQuery('ul.activity_links > li:first-child > a').each(function(e){
-                    loadHistoryLink(history, ajaxRunningLink, this.getAttribute('href'), jQuery(this).data('auto-refresh'));
-                });
+                history.activateNowRunningTab();
             }
 
             //setup node filters knockout bindings

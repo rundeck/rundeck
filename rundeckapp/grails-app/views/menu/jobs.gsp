@@ -13,7 +13,8 @@
     <asset:javascript src="historyKO.js"/>
     <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
     <script type="text/javascript">
-
+        /** knockout binding for activity */
+        var pageActivity;
         function showError(message){
              $('error').innerHTML+=message;
              $("error").show();
@@ -76,6 +77,9 @@
                         if (result.follow && result.href) {
                             document.location = result.href;
                         }else{
+                            if(!pageActivity.selected()){
+                                pageActivity.activateNowRunningTab();
+                            }
                             unloadExec();
                         }
                     }else if(result.error==='invalid'){
@@ -319,9 +323,9 @@
         jQuery(document).ready(function () {
             init();
             if (jQuery('#activity_section')) {
-                var history = new History(appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
-                ko.applyBindings(history, document.getElementById('activity_section'));
-                setupActivityLinks('activity_section', history, appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
+                pageActivity = new History(appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
+                ko.applyBindings(pageActivity, document.getElementById('activity_section'));
+                setupActivityLinks('activity_section', pageActivity, appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
             }
         });
     </script>
