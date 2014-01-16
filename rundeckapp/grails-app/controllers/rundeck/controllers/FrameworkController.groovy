@@ -560,7 +560,7 @@ class FrameworkController  {
                 return render(template:"/common/error")
             }
         }
-        redirect(controller:'framework',action:params.fragment?'nodesFragment':'nodes',params:[filterName:filter.name])
+        redirect(controller:'framework',action:params.fragment?'nodesFragment':'nodes',params:[filterName:filter.name,project:params.project])
     }
     def deleteNodeFilter={
         def User u = userService.findOrCreateUser(session.user)
@@ -573,9 +573,8 @@ class FrameworkController  {
         final def ffilter = NodeFilter.findByNameAndUser(filtername, u)
         if(ffilter){
             ffilter.delete(flush:true)
-            flash.message="Filter deleted: ${filtername}"
         }
-        redirect(controller:'framework',action:params.fragment?'nodesFragment':'nodes',params:[compact:params.compact?'true':''])
+        redirect(controller:'framework',action:params.fragment?'nodesFragment':'nodes',params:[project: params.project])
     }
 
     /**

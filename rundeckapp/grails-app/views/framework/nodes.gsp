@@ -292,6 +292,7 @@
 
     %{--Form for saving/deleting node filters--}%
     <g:form class="form form-horizontal">
+        <g:hiddenField name="project" value="${params.project}"/>
         <g:render template="nodeFiltersHidden"/>
         <g:render template="/common/queryFilterManagerModal"
                   model="${[rkey: ukey, filterName: filterName, filterset: filterset,
