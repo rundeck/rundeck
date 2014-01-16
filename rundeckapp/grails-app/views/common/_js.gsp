@@ -17,6 +17,7 @@
         frameworkEditResourceModelConfig: "${createLink(action: 'editResourceModelConfig', controller: 'framework')}",
         frameworkCreateResourceModelConfig: "${createLink(action: 'createResourceModelConfig', controller: 'framework')}",
         frameworkNodes: "${createLink(controller:"framework",action:"nodes",params:projParams)}",
+        frameworkNodesFragment: "${createLink(controller:"framework",action:"nodesFragment",params:projParams)}",
         frameworkAdhoc: "${createLink(controller:"framework",action:"adhoc",params:projParams)}",
         frameworkReloadNodes: "${createLink(controller:"framework",action:"reloadNodes",params:projParams)}",
         reportsEventsAjax: "${g.createLink(controller: 'reports', action: 'eventsAjax', absolute: true,params:projParams)}",
@@ -192,13 +193,12 @@
     });
       /** node filter preview code */
 
-    var node_filter_keys=${['','Name','Type','Tags','OsName','OsFamily','OsArch','OsVersion'].encodeAsJSON()};
     function _updateMatchedNodes(data,elem,project,localnodeonly,inparams,callback){
         var i;
         if(!project){
             return;
         }
-        var params =Object.extend({project:project,view:'embed',declarenone:true,fullresults:true},data);
+        var params =Object.extend({view:'embed',declarenone:true,fullresults:true},data);
         if(null!==inparams){
             Object.extend(params,inparams);
         }
@@ -213,7 +213,7 @@
             params.nodeExcludePrecedence="false";
         }
 //        $(elem).loading();
-        new Ajax.Updater(elem,"${createLink(controller:'framework',action:'nodesFragment')}",{parameters:params,evalScripts:true,
+        new Ajax.Updater(elem,appLinks.frameworkNodesFragment,{parameters:params,evalScripts:true,
          onComplete: function(transport) {
              $(elem).removeClassName('depress');
              if (transport.request.success()) {
