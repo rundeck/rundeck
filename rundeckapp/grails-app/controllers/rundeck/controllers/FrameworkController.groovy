@@ -238,7 +238,7 @@ class FrameworkController  {
         }
         if(!query.project){
             request.error="No project selected"
-            return [allnodes: [],
+            return [allnodes: [:],
                 params:params,
                 total:0,
                 query:query]
@@ -435,8 +435,6 @@ class FrameworkController  {
                     def query2 = filter.createExtNodeFilters()
                     //XXX: node query doesn't use pagination, as it is not an actual DB query
                     query = query2
-                    def props = query.properties
-                    params.putAll(props)
                     usedFilter = params.filterName
                 }
             }
@@ -462,7 +460,7 @@ class FrameworkController  {
             result['filterName'] = usedFilter
         }
         if(!result.nodesvalid){
-            request.error="Error parsing file \"${result.nodesfile}\": "+result.nodeserror? result.nodeserror*.message.join("\n"):'no message'
+            request.error="Error parsing file \"${result.nodesfile}\": "+result.nodeserror? result.nodeserror*.message?.join("\n"):'no message'
         }
         render(template:"allnodes",model: result)
     }
