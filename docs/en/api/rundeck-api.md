@@ -44,6 +44,7 @@ Changes introduced by API Version number:
         + Retrieve log output with state change information
     - `/api/10/execution/[ID]/output/node/[NODENAME]` and `/api/10/execution/[ID]/output/step/[STEPCTX]` - [Execution Output](#execution-output)
         + Retrieve log output for a particular node or step
+        + Can combine both node and step context
 * Updated endpoints
     - `/api/10/execution/[ID]` - [Execution Info](#execution-info)
         + added `successfulNodes` and `failedNodes` detail.
@@ -1213,11 +1214,12 @@ URL:
 
     /api/5/execution/[ID]/output
     /api/10/execution/[ID]/output/node/[NODE]
+    /api/10/execution/[ID]/output/node/[NODE]/step/[STEPCTX]
     /api/10/execution/[ID]/output/step/[STEPCTX]
 
 The log output for each execution is stored in a file on the Rundeck server, and this API endpoint allows you to retrieve some or all of the output, in several possible formats: json, XML, and plain text.  When retrieving the plain text output, some metadata about the log is included in HTTP Headers.  JSON and XML output formats include metadata about each output log line, as well as metadata about the state of the execution and log file, and your current index location in the file.
 
-Output can be selected by Node or Step Context as of API v10.
+Output can be selected by Node or Step Context or both as of API v10.
 
 Several parameters can be used to retrieve only part of the output log data.  You can use these parameters to more efficiently retrieve the log content over time while an execution is running.
 
@@ -1324,6 +1326,9 @@ Entries:
 * `execDuration`: (long integer), millisecond duration of the execution
 * `percentLoaded`: (float), percentage of the output which has been loaded by the parameters to this request
 * `totalSize`: (integer), total bytes available in the output file
+* `filter` - if a `node` or `step` filter was used
+    - `nodename` - value of the node name filter
+    - `stepctx` - value of the step context filter
 
 Each log entry will be included in a section called `entries`.
 
