@@ -47,7 +47,7 @@ public interface WorkflowState {
      *
      * @return
      */
-    public Date getTimestamp();
+    public Date getUpdateTime();
 
     public Date getStartTime();
 

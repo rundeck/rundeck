@@ -878,7 +878,7 @@ The result set contains this top-level structure:
 * general overal state information
     - `startTime` execution start time (see *Timestamp format* below)
     - `endTime` execution end time if complete
-    - `timestamp` last update time
+    - `updateTime` last update time
     - `executionState` overall execution state
 * `allNodes` contains a *Node Name List* (see below) of nodes known to be targetted in some workflow
 * `nodes` contains an *Overall Node State List* of per-node step states
@@ -960,7 +960,7 @@ A list of Step State information.  Each step is identified by its number in the 
 * general overall state information for the step
     - `startTime` execution start time
     - `endTime` execution end time if complete
-    - `timestamp` last update time
+    - `updateTime` last update time
     - `executionState` overall execution state
 * `nodeStep` true/false. true if this step directly targets each node from the targetNodes list.  If true, this means the step will contain a `nodeStates` section
 * `nodeStates` a *Node Step State Detail List* (see below) for the target nodes if this is a node step.
@@ -975,7 +975,7 @@ A sequence of state details for a set of Nodes for the containing step. Each ent
 * state information for the Node 
     - `startTime` execution start time
     - `endTime` execution end time if complete
-    - `timestamp` last update time
+    - `updateTime` last update time
     - `executionState` overall execution state
 
 In XML:
@@ -1005,7 +1005,7 @@ Within the `<result>` element:
 
     <executionState id="135">
       <startTime>2014-01-13T20:58:59Z</startTime>
-      <timestamp>2014-01-13T20:59:10Z</timestamp>
+      <updateTime>2014-01-13T20:59:10Z</updateTime>
       <stepCount>2</stepCount>
       <allNodes>
         <nodes>
@@ -1047,7 +1047,7 @@ Within the `<result>` element:
           <executionState>SUCCEEDED</executionState>
           <workflow>
             <startTime>2014-01-13T20:59:04Z</startTime>
-            <timestamp>2014-01-13T20:59:10Z</timestamp>
+            <updateTime>2014-01-13T20:59:10Z</updateTime>
             <stepCount>1</stepCount>
             <allNodes>
               <nodes>
@@ -1106,7 +1106,7 @@ Within the `<result>` element:
       "endTime": "2014-01-13T20:38:36Z",
       "serverNode": "dignan",
       "startTime": "2014-01-13T20:38:25Z",
-      "timestamp": "2014-01-13T20:38:36Z",
+      "updateTime": "2014-01-13T20:38:36Z",
       "stepCount": 2,
       "allNodes": [
         "dignan"
@@ -1148,7 +1148,7 @@ Within the `<result>` element:
           "workflow": {
             "completed": true,
             "startTime": "2014-01-13T20:38:31Z",
-            "timestamp": "2014-01-13T20:38:36Z",
+            "updateTime": "2014-01-13T20:38:36Z",
             "stepCount": 1,
             "allNodes": [
               "dignan"

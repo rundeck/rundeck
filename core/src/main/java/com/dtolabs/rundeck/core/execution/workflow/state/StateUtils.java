@@ -155,7 +155,7 @@ public class StateUtils {
 
     public static WorkflowState workflowState(List<String> nodeSet, List<String> allNodes, long stepCount,
             ExecutionState executionState,
-            Date timestamp,
+            Date updateTime,
             Date startTime,
             Date endTime,
             String serverNode,
@@ -163,7 +163,7 @@ public class StateUtils {
             boolean setupNodeStates
     ) {
         WorkflowStateImpl workflowState = new WorkflowStateImpl(nodeSet, allNodes, stepCount, executionState,
-                timestamp, startTime, endTime, serverNode,stepStates, null);
+                updateTime, startTime, endTime, serverNode,stepStates, null);
         if (setupNodeStates) {
             setupNodeStates(workflowState);
         }

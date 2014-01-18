@@ -47,7 +47,7 @@ class StateMapping {
                 targetNodes: workflowState.nodeSet,
                 allNodes: workflowState.allNodes,
                 stepCount: workflowState.stepCount,
-                timestamp: encodeDate(workflowState.timestamp),
+                updateTime: encodeDate(workflowState.updateTime),
                 startTime: encodeDate(workflowState.startTime),
                 endTime: encodeDate(workflowState.endTime),
                 steps: workflowState.stepStates.collect { mapOf(it, parent, nodestates, allNodes) },
@@ -130,14 +130,14 @@ class StateMapping {
         ExecutionState state = ExecutionState.valueOf(map.executionState)
         List<String> nodes = map.targetNodes
         int stepCount = map.stepCount
-        Date timestamp = map.timestamp ? decodeDate(map.timestamp) : null
+        Date updateTime = map.updateTime ? decodeDate(map.updateTime) : null
         Date startTime = map.startTime ? decodeDate(map.startTime) : null
         Date endTime = map.endTime ? decodeDate(map.endTime) : null
         List stepStates = map.steps.collect {
             workflowStepStateFromMap(it)
         }
         String serverNode = map.serverNode ?: null;
-        return StateUtils.workflowState(nodes, nodes, stepCount, state, timestamp, startTime, endTime, serverNode, stepStates, true)
+        return StateUtils.workflowState(nodes, nodes, stepCount, state, updateTime, startTime, endTime, serverNode, stepStates, true)
     }
 
     WorkflowStepState workflowStepStateFromMap(Map map) {

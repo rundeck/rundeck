@@ -13,7 +13,7 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
     def ArrayList<String> mutableAllNodes;
     def long stepCount;
     def ExecutionState executionState;
-    def Date timestamp;
+    def Date updateTime;
     def Date startTime;
     def Date endTime;
     def Map<Integer,MutableWorkflowStepState> mutableStepStates;
@@ -385,8 +385,8 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
 
     private void touchWFState(Date timestamp) {
         executionState = transitionStateIfWaiting(executionState)
-        if (null == this.timestamp || this.timestamp < timestamp) {
-            this.timestamp = timestamp
+        if (null == this.updateTime || this.updateTime < timestamp) {
+            this.updateTime = timestamp
         }
         if (null == this.startTime) {
             this.startTime = timestamp
@@ -543,7 +543,7 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
                     mutableWorkflowStepState.stepIdentifier,
                     mutableWorkflowStepState.stepIdentifier.context.size(),
                     executionState,
-                    timestamp,
+                    updateTime,
                     null,
                     this
             )
@@ -579,7 +579,7 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
                 "nodes=" + mutableNodeSet +
                 ", stepCount=" + stepCount +
                 ", state=" + executionState +
-                ", timestamp=" + timestamp +
+                ", timestamp=" + updateTime +
                 ", steps=" + mutableStepStates +
                 '}';
     }
