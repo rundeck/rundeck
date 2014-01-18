@@ -21,7 +21,7 @@
 </auth:resourceAllowed>
         <g:each var="project" in="${projectSet}">
             <li>
-                <g:link controller="menu" action="index" params="${[project: project] + selectParams}" >
+                <g:link controller="menu" action="index" params="${selectParams + [project: project]}" >
                     <i class="glyphicon glyphicon-tasks"></i>
                     ${project.encodeAsHTML()}
                 </g:link>
