@@ -7,6 +7,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.Framework
 
 import com.dtolabs.rundeck.core.common.INodeEntry
+import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
@@ -251,7 +252,7 @@ class ScheduledExecutionController  {
                 remoteClusterNodeUUID: remoteClusterNodeUUID,
                 notificationPlugins: notificationService.listNotificationPlugins(),
                 max: params.max ? params.max : 10,
-                offset: params.offset ? params.offset : 0] + _prepareExecute(scheduledExecution, framework)
+                offset: params.offset ? params.offset : 0] + _prepareExecute(scheduledExecution, framework,authContext)
         withFormat{
             html{
                 dataMap
@@ -1581,7 +1582,7 @@ class ScheduledExecutionController  {
         return redirect(action: 'show',params:params)
     }
 
-    private _prepareExecute(ScheduledExecution scheduledExecution, final def framework){
+    private _prepareExecute(ScheduledExecution scheduledExecution, final def framework, final AuthContext authContext){
         def model=[scheduledExecution:scheduledExecution]
         model.authorized=true
         //test nodeset to make sure there are matches
@@ -1590,7 +1591,12 @@ class ScheduledExecutionController  {
             def project=frameworkService.getFrameworkProject(scheduledExecution.project)
 //            def nodes=project.getNodes().filterNodes(nset)
             model.nodeset=nset
-            def nodes= com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(nset, project.getNodeSet()).nodes
+            def nodes = frameworkService.filterAuthorizedNodes(
+                    scheduledExecution.project,
+                    new HashSet<String>(["read", "run"]),
+                    frameworkService.filterNodeSet(nset, scheduledExecution.project),
+                    authContext).nodes;
+
             if(!nodes || nodes.size()<1){
                 //error
                 model.nodesetempty=true
@@ -1794,7 +1800,7 @@ class ScheduledExecutionController  {
         if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN], scheduledExecution.project)) {
             return unauthorized("Execute Job ${scheduledExecution.extid}",true)
         }
-        def model = _prepareExecute(scheduledExecution, framework)
+        def model = _prepareExecute(scheduledExecution, framework,authContext)
         if(params.dovalidate){
             model.jobexecOptionErrors=session.jobexecOptionErrors
             model.selectedoptsmap=session.selectedoptsmap
