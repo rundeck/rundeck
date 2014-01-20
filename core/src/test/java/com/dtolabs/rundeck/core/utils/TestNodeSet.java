@@ -25,10 +25,12 @@ package com.dtolabs.rundeck.core.utils;
 
 
 import com.dtolabs.rundeck.core.common.NodeEntryImpl;
+import junit.framework.Assert;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -367,6 +369,71 @@ public class TestNodeSet extends TestCase {
         }
 
 
+    }
+    public void testPopulateSetSelector() throws Exception {
+        set = new NodeSet();
+        NodeSet.SetSelector sel = set.createInclude();
+        Map map = new HashMap();
+        map.put(NodeSet.NAME, "abc");
+        map.put(NodeSet.HOSTNAME, "hostname1");
+        map.put(NodeSet.OS_NAME, "osname1");
+        map.put(NodeSet.OS_ARCH, "osarch1");
+        map.put(NodeSet.OS_FAMILY, "osfam1");
+        map.put(NodeSet.OS_VERSION, "osvers1");
+        map.put(NodeSet.TAGS, "tags1");
+        map.put("anything", "anything1");
+        set.populateSetSelector(map, sel);
+        Assert.assertEquals("abc", sel.getName());
+        Assert.assertEquals("hostname1", sel.getHostname());
+        Assert.assertEquals("osname1", sel.getOsname());
+        Assert.assertEquals("osarch1", sel.getOsarch());
+        Assert.assertEquals("osfam1", sel.getOsfamily());
+        Assert.assertEquals("osvers1", sel.getOsversion());
+        Assert.assertEquals("tags1", sel.getTags());
+        Assert.assertEquals("anything1", sel.getAttributesMap().get("anything"));
+    }
+    public void testPopulateSetSelectorArrayValue() throws Exception {
+        set = new NodeSet();
+        NodeSet.SetSelector sel = set.createInclude();
+        Map map = new HashMap();
+        map.put(NodeSet.NAME, new String[]{"name1", "name2"});
+        map.put(NodeSet.OS_NAME, new String[]{"osname1", "osname2"});
+        map.put(NodeSet.TAGS, new String[]{"tag1", "tag2"});
+        map.put("anything", new String[]{"anything1", "anything2"});
+        set.populateSetSelector(map, sel);
+        Assert.assertEquals("name1,name2", sel.getName());
+        Assert.assertEquals("osname1,osname2", sel.getOsname());
+        Assert.assertEquals("tag1,tag2", sel.getTags());
+        Assert.assertEquals("anything1,anything2", sel.getAttributesMap().get("anything"));
+    }
+    public void testPopulateSetSelectorCollectionValue() throws Exception {
+        set = new NodeSet();
+        NodeSet.SetSelector sel = set.createInclude();
+        Map map = new HashMap();
+        map.put(NodeSet.NAME, 1L);
+        map.put(NodeSet.OS_NAME, new Object(){
+            @Override
+            public String toString() {
+                return "osname1";
+            }
+        });
+        set.populateSetSelector(map, sel);
+        Assert.assertEquals("1", sel.getName());
+        Assert.assertEquals("osname1", sel.getOsname());
+    }
+    public void testPopulateSetSelectorObjectValue() throws Exception {
+        set = new NodeSet();
+        NodeSet.SetSelector sel = set.createInclude();
+        Map map = new HashMap();
+        map.put(NodeSet.NAME, Arrays.asList("name1", "name2"));
+        map.put(NodeSet.OS_NAME, Arrays.asList("osname1","osname2"));
+        map.put(NodeSet.TAGS, Arrays.asList("tag1", "tag2"));
+        map.put("anything", Arrays.asList("anything1", "anything2"));
+        set.populateSetSelector(map, sel);
+        Assert.assertEquals("name1,name2", sel.getName());
+        Assert.assertEquals("osname1,osname2", sel.getOsname());
+        Assert.assertEquals("tag1,tag2", sel.getTags());
+        Assert.assertEquals("anything1,anything2", sel.getAttributesMap().get("anything"));
     }
 
     public void testMatchesInputMap() throws Exception {

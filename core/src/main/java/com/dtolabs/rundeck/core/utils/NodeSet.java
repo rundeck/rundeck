@@ -19,6 +19,7 @@ package com.dtolabs.rundeck.core.utils;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.NodesSelector;
 import com.dtolabs.rundeck.core.common.SelectorUtils;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.File;
 import java.util.*;
@@ -471,7 +472,7 @@ public class NodeSet  implements NodesSelector {
         for (final Object o : map.entrySet()) {
             final Map.Entry entry = (Map.Entry) o;
             final String key = (String) entry.getKey();
-            final String value = (String) entry.getValue();
+            final String value = asString(entry.getValue(), ",");
             if (HOSTNAME.equals(key)) {
                 setselector.setHostname(value);
             } else if (OS_FAMILY.equals(key)) {
@@ -492,6 +493,22 @@ public class NodeSet  implements NodesSelector {
         }
         setselector.setAttributesMap(attrs);
         return setselector;
+    }
+
+    private String asString(Object value, String delim) {
+        if(null==value){
+            return null;
+        }
+        if(value instanceof String){
+            return (String) value;
+        }else if(value instanceof String[]) {
+            String[] s = (String[]) value;
+            return StringArrayUtil.asString(s, delim);
+        }else if(value instanceof Collection) {
+            return StringUtils.join((Collection) value, delim);
+        }else {
+            return value.toString();
+        }
     }
 
     @Override
