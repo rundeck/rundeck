@@ -104,19 +104,6 @@ class ExecutionServiceTests  {
         )
         se.save()
 
-        Execution e = new Execution(project: "test", user: 'bob', dateStarted: new Date(), dateCompleted: new Date(),
-                scheduledExecution: se, workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]))
-        def valid = e.validate()
-        e.errors.allErrors.each { println it.toString() }
-        assertTrue(valid)
-        assertNotNull(e.save())
-//        ScheduledExecution.metaClass.static.lock={id-> return se}
-//        ScheduledExecution.metaClass.static.withNewSession = {clos -> clos.call([clear: {}])}
-//        def myCriteria = new Expando();
-//        myCriteria.get = {Closure cls -> return null}
-//        Execution.metaClass.static.createCriteria = {myCriteria }
-//        Execution.metaClass.static.executeQuery = {q, h -> []}
-
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = new FrameworkService()
@@ -124,7 +111,103 @@ class ExecutionServiceTests  {
 
         Execution e2=svc.createExecution(se,null,"user1")
 
-        assertNotNull(e)
+        assertNotNull(e2)
+        assertEquals('-a b -c d', e2.argString)
+        assertEquals(se, e2.scheduledExecution)
+        assertNotNull(e2.dateStarted)
+        assertNull(e2.dateCompleted)
+        assertEquals('user1', e2.user)
+        def execs = se.executions
+        assertNotNull(execs)
+        assertTrue(execs.contains(e2))
+    }
+    void testCreateExecutionOverrideNodefilter(){
+        ConfigurationHolder.config=[:]
+
+        ScheduledExecution se = new ScheduledExecution(
+            jobName: 'blue',
+            project: 'AProject',
+            groupPath: 'some/where',
+            description: 'a job',
+            argString: '-a b -c d',
+            doNodedispatch: true,
+            filter: ".*",
+            workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+        )
+        se.save()
+
+        ExecutionService svc = new ExecutionService()
+        FrameworkService fsvc = new FrameworkService()
+        svc.frameworkService=fsvc
+
+        Execution e2=svc.createExecution(se,null,"user1",[('_replaceNodeFilters'):"true",filter:'name: monkey'])
+
+        assertNotNull(e2)
+        assertEquals('name: monkey', e2.filter)
+        assertEquals('-a b -c d', e2.argString)
+        assertEquals(se, e2.scheduledExecution)
+        assertNotNull(e2.dateStarted)
+        assertNull(e2.dateCompleted)
+        assertEquals('user1', e2.user)
+        def execs = se.executions
+        assertNotNull(execs)
+        assertTrue(execs.contains(e2))
+    }
+    void testCreateExecutionOverrideNodefilterOldParams(){
+        ConfigurationHolder.config=[:]
+
+        ScheduledExecution se = new ScheduledExecution(
+            jobName: 'blue',
+            project: 'AProject',
+            groupPath: 'some/where',
+            description: 'a job',
+            argString: '-a b -c d',
+            doNodedispatch: true,
+            filter: ".*",
+            workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+        )
+        se.save()
+
+        ExecutionService svc = new ExecutionService()
+        FrameworkService fsvc = new FrameworkService()
+        svc.frameworkService=fsvc
+
+        Execution e2=svc.createExecution(se,null,"user1",[('_replaceNodeFilters'):"true",nodeIncludeName: 'monkey'])
+
+        assertNotNull(e2)
+        assertEquals('name: monkey', e2.filter)
+        assertEquals('-a b -c d', e2.argString)
+        assertEquals(se, e2.scheduledExecution)
+        assertNotNull(e2.dateStarted)
+        assertNull(e2.dateCompleted)
+        assertEquals('user1', e2.user)
+        def execs = se.executions
+        assertNotNull(execs)
+        assertTrue(execs.contains(e2))
+    }
+    void testCreateExecutionOverrideNodefilterOldParamsMulti(){
+        ConfigurationHolder.config=[:]
+
+        ScheduledExecution se = new ScheduledExecution(
+            jobName: 'blue',
+            project: 'AProject',
+            groupPath: 'some/where',
+            description: 'a job',
+            argString: '-a b -c d',
+            doNodedispatch: true,
+            filter: ".*",
+            workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+        )
+        se.save()
+
+        ExecutionService svc = new ExecutionService()
+        FrameworkService fsvc = new FrameworkService()
+        svc.frameworkService=fsvc
+
+        Execution e2=svc.createExecution(se,null,"user1",[('_replaceNodeFilters'):"true",nodeIncludeName: ['monkey','banana']])
+
+        assertNotNull(e2)
+        assertEquals('name: monkey,banana', e2.filter)
         assertEquals('-a b -c d', e2.argString)
         assertEquals(se, e2.scheduledExecution)
         assertNotNull(e2.dateStarted)

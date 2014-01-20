@@ -6,6 +6,7 @@ import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.app.internal.workflow.MultiWorkflowExecutionListener
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.INodeEntry
+import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem
@@ -1081,7 +1082,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             return [success:false,error: exc.code?:'failed', message: msg, options:extra.option]
         }
     }
-    private Execution int_createExecution(ScheduledExecution se,framework,user,extra){
+    Execution int_createExecution(ScheduledExecution se,framework,user,extra){
         def props = [:]
 
         se = ScheduledExecution.get(se.id)
@@ -1091,7 +1092,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         if (extra && 'true' == extra['_replaceNodeFilters']) {
             //remove all existing node filters to replace with input filters
-            props = props.findAll {!(it.key =~ /^node(Include|Exclude).*$/)}
+            props = props.findAll {!(it.key =~ /^(filter|node(Include|Exclude).*)$/)}
+
+            def filterprops = extra.findAll { it.key =~ /^(filter|node(Include|Exclude).*)$/ }
+            def nset = filtersAsNodeSet(filterprops)
+            extra.filter = NodeSet.generateFilter(nset)
         }
         if (extra) {
             props.putAll(extra)
