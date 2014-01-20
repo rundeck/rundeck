@@ -65,7 +65,7 @@
                 </g:if>
                     <tbody id="${nkey}_ns_${nsname}"  style="${wdgt.styleVisible(if:nsname=='')}" class="${nsname!=''?'subattrs':''}">
                         <g:if test="${nsAttrs?.size()>0}">
-                            <g:each var="inNsAttrName" in="${nsAttrs.keySet().sort()}">
+                            <g:each var="inNsAttrName" in="${nsAttrs.keySet().findAll{nsAttrs[it]?.get(1)}.sort()}">
                                 <g:set var="origAttrName" value="${nsAttrs[inNsAttrName][0]}"/>
                                 <g:set var="value" value="${nsAttrs[inNsAttrName][1]}"/>
                                 <tr>
