@@ -73,14 +73,18 @@ public class NodeEntryFactory {
             }
             final HashSet set = new HashSet();
             for (final String s : data) {
-                set.add(s.trim());
+                if (null != s && !"".equals(s.trim())) {
+                    set.add(s.trim());
+                }
             }
             newmap.put("tags", set);
         } else if (null != newmap.get("tags") && newmap.get("tags") instanceof Collection) {
             Collection tags = (Collection) newmap.get("tags");
             HashSet data = new HashSet();
             for (final Object tag : tags) {
-                data.add(tag.toString().trim());
+                if(null!=tag && !"".equals(tag.toString().trim())){
+                    data.add(tag.toString().trim());
+                }
             }
             newmap.put("tags", data);
         }else if (null != newmap.get("tags")) {
