@@ -355,6 +355,39 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
     }
 
     /**
+     * Return the node attributes broken into namespaces, the result map will be contructed as:
+     * "namespace" : { "key": ["attr","value"] }  where "attr" is the source full attribute name
+     */
+    public static Map<String, Map<String, List<String>>> nodeNamespacedAttributes(final INodeEntry node) {
+        final Map<String, String> attrs = nodeExtendedAttributes(node);
+        final Map<String, Map<String, List<String>>> nsAttrs = new HashMap<String, Map<String, List<String>>>();
+        for (String s : attrs.keySet()) {
+            String[] parts=null;
+            String ns="";
+            String key=null;
+            if (s.contains(":")) {
+                parts = s.split(":", 2);
+            }
+            if (null != parts && parts.length > 1) {
+                ns = notBlank(parts[0], "");
+                key = parts[1];
+            } else {
+                ns = "";
+                key = s;
+            }
+            if (null == nsAttrs.get(ns)) {
+                nsAttrs.put(ns, new HashMap<String, List<String>>());
+            }
+            nsAttrs.get(ns).put(key, Arrays.asList(s, attrs.get(s)));
+        }
+        return nsAttrs;
+    }
+
+    private static String notBlank(String part, String defaultValue) {
+        return null != part && !"".equals(part.trim()) ? part : defaultValue;
+    }
+
+    /**
      * Get the value for a specific attribute
      *
      * @param name attribute name

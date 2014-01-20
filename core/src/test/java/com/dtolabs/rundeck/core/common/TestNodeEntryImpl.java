@@ -16,9 +16,13 @@
 
 package com.dtolabs.rundeck.core.common;
 
+import junit.framework.Assert;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * Tests the INodeEntry implementation
@@ -165,5 +169,37 @@ public class TestNodeEntryImpl extends AbstractBaseTest {
         node = (NodeEntryImpl) NodeEntryImpl.create("host", "name");
         extracted = node.extractPort();
         assertNull("did not correctly extract user: '" + extracted + "'", extracted);
+    }
+
+    public void testNodeNamespacedAttrs(){
+        NodeEntryImpl node = new NodeEntryImpl("name");
+        node.setAttribute("abc", "def1");
+        node.setAttribute("xyz:abc", "def2");
+        node.setAttribute("xyz:123", "def3");
+        node.setAttribute(":123", "def4");
+        node.setAttribute("  :456", "def5");
+        node.setAttribute(":zyx:blah:", "def6");
+
+        Map<String,Map<String,List<String>>> attrs = NodeEntryImpl.nodeNamespacedAttributes(node);
+        Assert.assertNotNull(attrs);
+        Assert.assertNotNull(attrs.get(""));
+        Assert.assertNotNull(attrs.get("xyz"));
+
+        Assert.assertEquals(2, attrs.get("xyz").size());
+        Assert.assertEquals("xyz:abc", attrs.get("xyz").get("abc").get(0));
+        Assert.assertEquals("def2", attrs.get("xyz").get("abc").get(1));
+        Assert.assertEquals("xyz:123", attrs.get("xyz").get("123").get(0));
+        Assert.assertEquals("def3", attrs.get("xyz").get("123").get(1));
+
+        Assert.assertEquals(4, attrs.get("").size());
+        Assert.assertEquals("abc", attrs.get("").get("abc").get(0));
+        Assert.assertEquals("def1", attrs.get("").get("abc").get(1));
+        Assert.assertEquals(":123", attrs.get("").get("123").get(0));
+        Assert.assertEquals("def4", attrs.get("").get("123").get(1));
+        Assert.assertEquals("  :456", attrs.get("").get("456").get(0));
+        Assert.assertEquals("def5", attrs.get("").get("456").get(1));
+        Assert.assertEquals(":zyx:blah:", attrs.get("").get("zyx:blah:").get(0));
+        Assert.assertEquals("def6", attrs.get("").get("zyx:blah:").get(1));
+
     }
 }
