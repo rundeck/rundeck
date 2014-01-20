@@ -39,18 +39,20 @@
             </div>
         </g:elseif>
         <g:elseif test="${nodes}">
+            <g:set var="selectedNodes" value="${failedNodes? failedNodes.split(','):[]}"/>
             <div class="container">
             <div class="row">
                 <div class="col-sm-12 checkbox">
                 <input name="extra._replaceNodeFilters" value="true" type="checkbox"
                         data-toggle="collapse"
                         data-target="#nodeSelect"
+                    ${failedNodes?'checked':''}
                               id="doReplaceFilters"/> <label for="doReplaceFilters">Change the Target Nodes
                 (${nodes.size()})</label>
                 </div>
             </div>
             </div>
-            <div class=" matchednodes embed jobmatchednodes group_section collapse" id="nodeSelect">
+            <div class=" matchednodes embed jobmatchednodes group_section collapse ${failedNodes ? 'in' : ''}" id="nodeSelect">
                 <%--
                  split node names into groups, in several patterns
                   .*\D(\d+)
@@ -70,7 +72,7 @@
                         <div class="panel panel-default">
                       <div class="panel-heading">
                           <g:set var="expkey" value="${g.rkey()}"/>
-                            <g:expander key="${expkey}">
+                            <g:expander key="${expkey}" open="${failedNodes?'true':'false'}">
                                 <g:if test="${group!='other'}">
                                     <span class="prompt">
                                     ${namegroups[group][0].encodeAsHTML()}</span>
@@ -85,7 +87,7 @@
                                 (${namegroups[group].size()})
                             </g:expander>
                         </div>
-                        <div id="${expkey}" style="display:none;" class="group_section panel-body">
+                        <div id="${expkey}" style="${wdgt.styleVisible(if:failedNodes)}" class="group_section panel-body">
                                 <g:if test="${namegroups.size()>1}">
                                 <div class="group_select_control" style="display:none">
                                     Select:
@@ -106,9 +108,10 @@
                                                    type="checkbox"
                                                    name="extra.nodeIncludeName"
                                                    value="${node.nodename}"
-                                                   disabled="true"
+                                                   ${failedNodes ? '':'disabled' }
                                                    data-tag="${node.tags?.join(' ').encodeAsHTML()}"
-                                                   checked="true"/>${node.nodename.encodeAsHTML()}</label>
+                                                    ${selectedNodes.contains(node.nodename)?'checked':''}
+                                                   />${node.nodename.encodeAsHTML()}</label>
 
                                         </div>
                                     </g:each>
