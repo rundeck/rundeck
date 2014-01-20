@@ -438,7 +438,9 @@
 .textbtn-variant( @color ; @background-color ; @background-higlight) {
     color: @gray;
     background-color: @background-color ;
-
+  &.textbtn-saturated{
+    color: @color;
+  }
   &.action{
     text-decoration: underline;
   }
@@ -677,6 +679,9 @@ section{
   table.nodesTable th{
     .text-muted();
     text-transform: capitalize;
+  }
+  table.nodesTable tbody.subattrs td{
+    background-color: @table-bg-accent;
   }
 
   //content with padding like nav-tabs links
@@ -1118,6 +1123,9 @@ section{
    & tr td.key {
     width: 200px;
     vertical-align: top;
+     &.namespace{
+       padding-right: 20px;
+     }
    }
   & .key{
     text-align: right;

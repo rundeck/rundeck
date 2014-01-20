@@ -50,6 +50,46 @@
                 </span>
             </td></tr>
         </g:if>
+        <g:if test="${useNamespace}">
+            <g:set var="nkey" value="${g.rkey()}"/>
+            <g:set var="nodeNamespaces" value="${NodeEntryImpl.nodeNamespacedAttributes(node)}"/>
+            <g:if test="${nodeNamespaces}">
+                <g:each var="nsname" in="${nodeNamespaces.keySet().grep { nodeNamespaces[it] }.sort()}">
+                <g:set var="nsAttrs" value="${nodeNamespaces[nsname]}"/>
+                <g:if test="${nsname!=''}">
+                <tr>
+                    <td class="key namespace">
+                        <g:expander key="${nkey}_ns_${nsname}" classnames="textbtn-muted textbtn-saturated">${nsname} (${nsAttrs.size()})</g:expander>
+                    </td>
+                </tr>
+                </g:if>
+                    <tbody id="${nkey}_ns_${nsname}"  style="${wdgt.styleVisible(if:nsname=='')}" class="${nsname!=''?'subattrs':''}">
+                        <g:if test="${nsAttrs?.size()>0}">
+                            <g:each var="inNsAttrName" in="${nsAttrs.keySet().sort()}">
+                                <g:set var="origAttrName" value="${nsAttrs[inNsAttrName][0]}"/>
+                                <g:set var="value" value="${nsAttrs[inNsAttrName][1]}"/>
+                                <tr>
+                                    <td class="key setting">
+                                        <tmpl:nodeFilterLink key="${origAttrName}" value="${'.*'}" linktext="${inNsAttrName}"
+                                                             suffix=":"/>
+                                    </td>
+                                    <td class="setting" colspan="3">
+                                        <div class="value">
+                                            ${value.encodeAsHTML()}
+                                            <tmpl:nodeFilterLink key="${origAttrName}" value="${value}"
+                                                                 linkclass="textbtn textbtn-info"
+                                                                 linkicon="glyphicon glyphicon-search"/>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </g:each>
+                        </g:if>
+                        </tbody>
+
+                </g:each>
+            </g:if>
+        </g:if>
+        <g:else>
         <g:set var="nodeAttrs" value="${NodeEntryImpl.nodeExtendedAttributes(node)}"/>
         <g:if test="${nodeAttrs}">
             <g:each var="setting" in="${nodeAttrs.keySet().grep{nodeAttrs[it]}.sort()}">
@@ -68,4 +108,5 @@
                 </tr>
             </g:each>
         </g:if>
+        </g:else>
     </table>

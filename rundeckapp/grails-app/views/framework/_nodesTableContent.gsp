@@ -143,7 +143,7 @@
                 %{--</g:link>--}%
                 <tr id="${ukey}node_detail_${i}" class="detail_content nodedetail ${nodedata.islocal ? 'server' : ''}" style="display:none">
                     <td colspan="${(4+cols.size())}">
-                        <g:render template="nodeDetailsSimple" model="[linkAttrs: true, node:node,key:ukey+'_'+node.nodename+'_key',projects:nodedata.projects,exclude: cols?null:['username','hostname']]"/>
+                        <g:render template="nodeDetailsSimple" model="[useNamespace:true, linkAttrs: true, node:node,key:ukey+'_'+node.nodename+'_key',projects:nodedata.projects,exclude: cols?null:['username','hostname']]"/>
                     </td>
                 </tr>
             </g:if>
