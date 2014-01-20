@@ -68,17 +68,18 @@
                             <g:each var="inNsAttrName" in="${nsAttrs.keySet().findAll{nsAttrs[it]?.get(1)}.sort()}">
                                 <g:set var="origAttrName" value="${nsAttrs[inNsAttrName][0]}"/>
                                 <g:set var="value" value="${nsAttrs[inNsAttrName][1]}"/>
-                                <tr>
+                                <tr class="hover-action-holder">
                                     <td class="key setting">
                                         <tmpl:nodeFilterLink key="${origAttrName}" value="${'.*'}" linktext="${inNsAttrName}"
+                                                             titletext="(any value)"
                                                              suffix=":"/>
                                     </td>
-                                    <td class="setting" colspan="3">
+                                    <td class="setting " colspan="3">
                                         <div class="value">
                                             ${value.encodeAsHTML()}
                                             <tmpl:nodeFilterLink key="${origAttrName}" value="${value}"
-                                                                 linkclass="textbtn textbtn-info"
-                                                                 linkicon="glyphicon glyphicon-search"/>
+                                                                 linkclass="textbtn textbtn-info textbtn-saturated hover-action"
+                                                                 linkicon="glyphicon glyphicon-search "/>
                                         </div>
                                     </td>
                                 </tr>
@@ -93,7 +94,7 @@
         <g:set var="nodeAttrs" value="${NodeEntryImpl.nodeExtendedAttributes(node)}"/>
         <g:if test="${nodeAttrs}">
             <g:each var="setting" in="${nodeAttrs.keySet().grep{nodeAttrs[it]}.sort()}">
-                <tr>
+                <tr class="hover-action-holder">
                     <td class="key setting">
                         <tmpl:nodeFilterLink key="${setting}" value="${'.*'}" linktext="${setting}" suffix=":"/>
                     </td>
@@ -101,8 +102,8 @@
                         <div class="value">
                         ${nodeAttrs[setting].encodeAsHTML()}
                         <tmpl:nodeFilterLink key="${setting}" value="${nodeAttrs[setting]}"
-                                             linkclass="textbtn textbtn-info"
-                                             linkicon="glyphicon glyphicon-search"/>
+                                             linkclass="textbtn textbtn-info textbtn-saturated hover-action"
+                                             linkicon="glyphicon glyphicon-search "/>
                     </div>
                     </td>
                 </tr>

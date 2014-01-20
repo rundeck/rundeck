@@ -42,7 +42,7 @@
             <g:set var="resources" value="${nodedata.resources}"/>
             <g:set var="resName" value="${node.nodename}"/>
 
-            <tr class="${i%2==1?'alternateRow':''} node_entry ${nodedata.islocal?'server':''}">
+            <tr class="${i%2==1?'alternateRow':''} node_entry ${nodedata.islocal?'server':''} hover-action-holder">
                 <td class="nodeident" title="${node.description?.encodeAsHTML()}" >
                     <g:if test="${expanddetail||params.expanddetail}">
                         <g:expander key="${ukey+'node_detail_'+i}" imgfirst="true">
@@ -81,7 +81,7 @@
                                 <span class="value">
                                     ${node.attributes[colname].encodeAsHTML()}
                                     <tmpl:nodeFilterLink key="${colname}" value="${node.attributes[colname]}"
-                                                         linkicon="glyphicon glyphicon-search"
+                                                         linkicon="glyphicon glyphicon-search textbtn-saturated hover-action"
                                                          linkclass="textbtn textbtn-info"/>
                                 </span>
                             </g:if>
