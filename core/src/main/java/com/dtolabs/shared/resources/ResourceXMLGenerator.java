@@ -66,7 +66,7 @@ public class ResourceXMLGenerator implements NodesFileGenerator {
     /**
      * Constructor for the ResourceXMLGenerator
      *
-     * @param file destination output file
+     * @param output destination output file
      */
     public ResourceXMLGenerator(final OutputStream output) {
         this.output = output;
@@ -202,9 +202,9 @@ public class ResourceXMLGenerator implements NodesFileGenerator {
         for (final String key:entity.getProperties().stringPropertyNames()){
             if (!ResourceXMLConstants.allPropSet.contains(key)) {
                 //test attribute name is a valid XML attribute name
-                if(XMLChar.isValidName(key) && !key.contains(":") ){
+                if (XMLChar.isValidName(key) && !key.contains(":") && !key.contains(".")) {
                     ent.addAttribute(key, entity.getProperties().getProperty(key));
-                }else {
+                } else {
                     //add sub element
                     final Element atelm = ent.addElement(ATTRIBUTE_TAG);
                     atelm.addAttribute(ATTRIBUTE_NAME_ATTR, key);
@@ -264,7 +264,7 @@ public class ResourceXMLGenerator implements NodesFileGenerator {
     /**
      * Write Document to a file
      *
-     * @param file
+     * @param output
      * @param doc
      *
      * @throws IOException
