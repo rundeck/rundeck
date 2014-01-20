@@ -2,7 +2,7 @@
 
 This document describes how to configure Rundeck for SSL/HTTPS
 support, and assumes you are using the rundeck-launcher standalone
-launcher.
+launcher.  If you are using RPM/deb install, refer to the appropriate configuration file paths from [Configuration -> Configuration Layout](configuration.html#configuration-layout).
 
 (1) Before beginning, do a first-run of the launcher, as it will create
 the base directory for Rundeck and generate configuration files.
@@ -70,8 +70,17 @@ An example ssl.properties file (from the RPM package).
 Set them to the appropriate https protocol, and change the port to
 4443, or to the value of your `-Dserver.https.port` runtime
 configuration property.
+        
+(7) Configure server URL so that Rundeck knows its external address.  Modify the file
+`$RDECK_BASE/server/config/rundeck-config.properties` and change the `grails.serverURL`: 
 
-(6) Launch the rundeck launcher and tell it where to read the ssl.properties
+    * `grails.serverURL=https://myhostname:4443`
+    
+Set the URL to include the appropriate https protocol, and change the port to
+4443, or to the value of your `-Dserver.https.port` runtime
+configuration property.
+
+(7) Launch the rundeck launcher and tell it where to read the ssl.properties
 
         java -Drundeck.ssl.config=$RDECK_BASE/server/config/ssl.properties -jar rundeck-launcher-1.1.0.jar
     
