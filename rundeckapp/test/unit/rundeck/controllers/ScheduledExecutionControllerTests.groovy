@@ -18,7 +18,6 @@ package rundeck.controllers
 import grails.test.ControllerUnitTestCase
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
-import org.codehaus.groovy.grails.commons.ConfigurationHolder
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.mock.web.MockMultipartHttpServletRequest
 import rundeck.services.ApiService
@@ -65,7 +64,6 @@ class ScheduledExecutionControllerTests  {
     }
 
     public void testExpandUrl() {
-        ConfigurationHolder.metaClass.getConfig = {-> [:] }
         ScheduledExecution se = new ScheduledExecution(jobName: 'blue', groupPath:'some/where',description:'a job',project:'AProject',argString:'-a b -c d')
 
         final Option option = new Option(name: 'test1', enforced: false)

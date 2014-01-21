@@ -9,7 +9,6 @@ import com.dtolabs.rundeck.plugins.logging.StreamingLogReaderPlugin
 import com.dtolabs.rundeck.plugins.logging.StreamingLogWriterPlugin
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogReaderPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogWriterPluginProviderService
-import org.codehaus.groovy.grails.commons.ConfigurationHolder
 import rundeck.Execution
 import rundeck.services.logging.DisablingLogWriter
 import rundeck.services.logging.ExecutionLogReader
@@ -29,7 +28,7 @@ class LoggingService {
     def grailsApplication
 
     public boolean isLocalFileStorageEnabled(){
-        boolean fileDisabled = ConfigurationHolder.config?.rundeck?.execution?.logs?.localFileStorageEnabled in ['false', false]
+        boolean fileDisabled = grailsApplication.config?.rundeck?.execution?.logs?.localFileStorageEnabled in ['false', false]
         boolean readerPluginConfigured= getConfiguredStreamingReaderPluginName()
         return !(fileDisabled && readerPluginConfigured)
     }
@@ -84,15 +83,15 @@ class LoggingService {
     }
 
     String getConfiguredStreamingReaderPluginName() {
-        if (ConfigurationHolder.config?.rundeck?.execution?.logs?.streamingReaderPlugin) {
-            return ConfigurationHolder.config?.rundeck?.execution?.logs?.streamingReaderPlugin.toString()
+        if (grailsApplication.config?.rundeck?.execution?.logs?.streamingReaderPlugin) {
+            return grailsApplication.config?.rundeck?.execution?.logs?.streamingReaderPlugin.toString()
         }
         null
     }
 
     List<String> listConfiguredStreamingWriterPluginNames() {
-        if(ConfigurationHolder.config?.rundeck?.execution?.logs?.streamingWriterPlugins){
-            return ConfigurationHolder.config?.rundeck?.execution?.logs?.streamingWriterPlugins.toString().split(/,\s*/) as List
+        if(grailsApplication.config?.rundeck?.execution?.logs?.streamingWriterPlugins){
+            return grailsApplication.config?.rundeck?.execution?.logs?.streamingWriterPlugins.toString().split(/,\s*/) as List
         }
         []
     }

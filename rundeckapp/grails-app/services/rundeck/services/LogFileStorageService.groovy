@@ -12,7 +12,6 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
 import com.dtolabs.rundeck.server.plugins.services.ExecutionFileStoragePluginProviderService
-import org.codehaus.groovy.grails.commons.ConfigurationHolder
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.core.task.AsyncTaskExecutor
 import rundeck.Execution
@@ -39,6 +38,7 @@ class LogFileStorageService implements InitializingBean{
     def frameworkService
     def AsyncTaskExecutor logFileTaskExecutor
     def executorService
+    def grailsApplication
 
     /**
      * Scheduled executor for retries
@@ -68,10 +68,10 @@ class LogFileStorageService implements InitializingBean{
             //System.err.println("LogFileStoragePlugin not configured, disabling...")
             return
         }
-        logFileTaskExecutor.execute( new TaskRunner<Map>(storageRequests,{ Map task ->
+        logFileTaskExecutor?.execute( new TaskRunner<Map>(storageRequests,{ Map task ->
             runStorageRequest(task)
         }))
-        logFileTaskExecutor.execute( new TaskRunner<Map>(retrievalRequests,{ Map task ->
+        logFileTaskExecutor?.execute( new TaskRunner<Map>(retrievalRequests,{ Map task ->
             runRetrievalRequest(task)
         }))
     }
@@ -156,7 +156,7 @@ class LogFileStorageService implements InitializingBean{
      * @return
      */
     int getConfiguredStorageRetryCount() {
-        def count = ConfigurationHolder.config.rundeck?.execution?.logs?.fileStorage?.storageRetryCount ?: 0
+        def count = grailsApplication.config?.rundeck?.execution?.logs?.fileStorage?.storageRetryCount ?: 0
         if(count instanceof String){
             count = count.toInteger()
         }
@@ -167,7 +167,7 @@ class LogFileStorageService implements InitializingBean{
      * @return
      */
     int getConfiguredStorageRetryDelay() {
-        def delay = ConfigurationHolder.config.rundeck?.execution?.logs?.fileStorage?.storageRetryDelay ?: 0
+        def delay = grailsApplication.config?.rundeck?.execution?.logs?.fileStorage?.storageRetryDelay ?: 0
         if (delay instanceof String) {
             delay = delay.toInteger()
         }
@@ -178,7 +178,7 @@ class LogFileStorageService implements InitializingBean{
      * @return
      */
     int getConfiguredRetrievalRetryCount() {
-        def count = ConfigurationHolder.config.rundeck?.execution?.logs?.fileStorage?.retrievalRetryCount ?: 0
+        def count = grailsApplication.config.rundeck?.execution?.logs?.fileStorage?.retrievalRetryCount ?: 0
         if(count instanceof String){
             count = count.toInteger()
         }
@@ -189,7 +189,7 @@ class LogFileStorageService implements InitializingBean{
      * @return
      */
     int getConfiguredRetrievalRetryDelay() {
-        def delay = ConfigurationHolder.config.rundeck?.execution?.logs?.fileStorage?.retrievalRetryDelay ?: 0
+        def delay = grailsApplication.config.rundeck?.execution?.logs?.fileStorage?.retrievalRetryDelay ?: 0
         if (delay instanceof String) {
             delay = delay.toInteger()
         }
@@ -200,7 +200,7 @@ class LogFileStorageService implements InitializingBean{
      * @return
      */
     int getConfiguredRemotePendingDelay() {
-        def delay = ConfigurationHolder.config.rundeck?.execution?.logs?.fileStorage?.remotePendingDelay ?: 0
+        def delay = grailsApplication.config.rundeck?.execution?.logs?.fileStorage?.remotePendingDelay ?: 0
         if (delay instanceof String) {
             delay = delay.toInteger()
         }
@@ -212,7 +212,7 @@ class LogFileStorageService implements InitializingBean{
      * @return
      */
     String getConfiguredPluginName() {
-        def plugin = ConfigurationHolder.config.rundeck?.execution?.logs?.fileStoragePlugin
+        def plugin = grailsApplication.config?.rundeck?.execution?.logs?.fileStoragePlugin
         return (plugin instanceof String) ? plugin : null
     }
     /**

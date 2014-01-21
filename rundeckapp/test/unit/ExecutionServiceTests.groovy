@@ -7,7 +7,6 @@ import grails.test.GrailsUnitTestCase
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import groovy.mock.interceptor.MockFor
-import org.codehaus.groovy.grails.commons.ConfigurationHolder
 import org.grails.plugins.metricsweb.MetricService
 import rundeck.ScheduledExecution
 import rundeck.User
@@ -92,7 +91,6 @@ class ExecutionServiceTests  {
         assertNotNull(execution)
     }
     void testCreateExecutionSimple(){
-        ConfigurationHolder.config=[:]
 
         ScheduledExecution se = new ScheduledExecution(
             jobName: 'blue',
@@ -122,7 +120,6 @@ class ExecutionServiceTests  {
         assertTrue(execs.contains(e2))
     }
     void testCreateExecutionOverrideNodefilter(){
-        ConfigurationHolder.config=[:]
 
         ScheduledExecution se = new ScheduledExecution(
             jobName: 'blue',
@@ -154,7 +151,6 @@ class ExecutionServiceTests  {
         assertTrue(execs.contains(e2))
     }
     void testCreateExecutionOverrideNodefilterOldParams(){
-        ConfigurationHolder.config=[:]
 
         ScheduledExecution se = new ScheduledExecution(
             jobName: 'blue',
@@ -186,7 +182,6 @@ class ExecutionServiceTests  {
         assertTrue(execs.contains(e2))
     }
     void testCreateExecutionOverrideNodefilterOldParamsMulti(){
-        ConfigurationHolder.config=[:]
 
         ScheduledExecution se = new ScheduledExecution(
             jobName: 'blue',
@@ -218,7 +213,6 @@ class ExecutionServiceTests  {
         assertTrue(execs.contains(e2))
     }
     void testCreateExecutionJobUser(){
-        ConfigurationHolder.config=[:]
 
         ScheduledExecution se = new ScheduledExecution(
             jobName: 'blue',
@@ -256,7 +250,6 @@ class ExecutionServiceTests  {
         assertTrue(execs.contains(e))
     }
     void testCreateExecutionAsUser(){
-        ConfigurationHolder.config=[:]
 
         ScheduledExecution se = new ScheduledExecution(
             jobName: 'blue',
@@ -795,7 +788,6 @@ class ExecutionServiceTests  {
      * Test createContext method
      */
     void testCreateContext(){
-        ConfigurationHolder.metaClass.getConfig = {-> [:] }
 
         def testService = new ExecutionService()
         def fcontrol = mockFor(FrameworkService, true)
@@ -829,7 +821,6 @@ class ExecutionServiceTests  {
      * Test createContext method
      */
     void testCreateContextDatacontext() {
-        ConfigurationHolder.metaClass.getConfig = {-> [:] }
 
         def testService = new ExecutionService()
         def fcontrol = mockFor(FrameworkService, true)
@@ -863,7 +854,6 @@ class ExecutionServiceTests  {
      * Test createContext method
      */
     void testCreateContextArgsarray() {
-        ConfigurationHolder.metaClass.getConfig = {-> [:] }
 
         def testService = new ExecutionService()
         def fcontrol = mockFor(FrameworkService, true)
@@ -898,7 +888,6 @@ class ExecutionServiceTests  {
      * Test createContext method
      */
     void testCreateContextJobData() {
-        ConfigurationHolder.metaClass.getConfig = {-> [:] }
 
         def testService = new ExecutionService()
         def fcontrol = mockFor(FrameworkService, true)
@@ -932,7 +921,6 @@ class ExecutionServiceTests  {
      * Test createContext method
      */
     void testCreateContextJobDataEmptyNodeset() {
-        ConfigurationHolder.metaClass.getConfig = {-> [:] }
 
         def testService = new ExecutionService()
         def fcontrol = mockFor(FrameworkService, true)
@@ -962,7 +950,6 @@ class ExecutionServiceTests  {
      * Test createContext method
      */
     void testCreateContextJobDataNodeInclude() {
-        ConfigurationHolder.metaClass.getConfig = {-> [:] }
 
         def testService = new ExecutionService()
         def fcontrol = mockFor(FrameworkService, true)
@@ -996,7 +983,6 @@ class ExecutionServiceTests  {
      * Test createContext method
      */
     void testCreateContextJobDataNodeExclude() {
-        ConfigurationHolder.metaClass.getConfig = {-> [:] }
 
         def testService = new ExecutionService()
         def fcontrol = mockFor(FrameworkService, true)

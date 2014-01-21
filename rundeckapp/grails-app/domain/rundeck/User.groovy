@@ -1,6 +1,5 @@
 package rundeck
 
-import org.codehaus.groovy.grails.commons.ConfigurationHolder
 
 class User {
     String login

@@ -1,7 +1,6 @@
 package rundeck
 
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
-import org.codehaus.groovy.grails.commons.ConfigurationHolder
 
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
@@ -629,8 +628,8 @@ class UtilityTagLib{
         }
         def helpBase='http://rundeck.org/' + grailsApplication.metadata['app.version']
         def helpUrl
-        if(ConfigurationHolder.config.rundeck?.gui?.helpLink){
-            helpBase= ConfigurationHolder.config.rundeck?.gui?.helpLink
+        if(grailsApplication.config.rundeck?.gui?.helpLink){
+            helpBase= grailsApplication.config.rundeck?.gui?.helpLink
             helpUrl=helpBase + path + fragment
         }else{
             def helpParams = [utm_source: 'rundeckapp', utm_medium: 'app', utm_campaign: 'helplink', utm_content: (controllerName + '/' + actionName)].collect { k, v -> k + '=' + v }.join('&')

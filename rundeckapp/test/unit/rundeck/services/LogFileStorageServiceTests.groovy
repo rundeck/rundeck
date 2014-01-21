@@ -11,18 +11,21 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
 import grails.test.*
-import org.codehaus.groovy.grails.commons.ConfigurationHolder
+import grails.test.mixin.Mock
+import grails.test.mixin.TestFor
 import rundeck.Execution
 import rundeck.LogFileStorageRequest
 import rundeck.services.logging.EventStreamingLogWriter
 import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.logging.ExecutionLogState
 
-class LogFileStorageServiceTests extends GrailsUnitTestCase {
+@TestFor(LogFileStorageService)
+@Mock([LogFileStorageRequest,Execution])
+class LogFileStorageServiceTests  {
     File testLogFile1
     File testLogFileDNE
-    protected void setUp() {
-        super.setUp()
+
+    public void setUp() {
 
         testLogFile1 = File.createTempFile("LogFileStorageServiceTests", ".txt")
         testLogFile1.deleteOnExit()
@@ -30,128 +33,117 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         testLogFileDNE.delete()
     }
 
-    protected void tearDown() {
-        super.tearDown()
-        if(testLogFile1.exists()){
+    public void tearDown() {
+        if(null!=testLogFile1 && testLogFile1.exists()){
             testLogFile1.delete()
         }
     }
 
     void testConfiguredPluginName() {
-        LogFileStorageService svc = new LogFileStorageService()
+        grailsApplication.config.clear()
 
-        ConfigurationHolder.config = [:]
-        assertNull(svc.getConfiguredPluginName())
+        assertNull(service.getConfiguredPluginName())
 
 
-        ConfigurationHolder.config = [:]
-        ConfigurationHolder.config.rundeck.execution.logs.fileStoragePlugin = "test1"
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
 
-        assertEquals("test1", svc.getConfiguredPluginName())
+        assertEquals("test1", service.getConfiguredPluginName())
     }
     void testConfiguredRetry() {
-        LogFileStorageService svc = new LogFileStorageService()
 
-        ConfigurationHolder.config = [:]
-        assertEquals(60,svc.getConfiguredStorageRetryDelay())
-        assertEquals(1,svc.getConfiguredStorageRetryCount())
+        grailsApplication.config.clear()
+        assertEquals(60,service.getConfiguredStorageRetryDelay())
+        assertEquals(1, service.getConfiguredStorageRetryCount())
 
 
-        ConfigurationHolder.config = [:]
-        ConfigurationHolder.config.rundeck.execution.logs.fileStorage.storageRetryDelay = 30
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.execution.logs.fileStorage.storageRetryDelay = 30
 
-        assertEquals(30, svc.getConfiguredStorageRetryDelay())
-        assertEquals(1, svc.getConfiguredStorageRetryCount())
+        assertEquals(30, service.getConfiguredStorageRetryDelay())
+        assertEquals(1, service.getConfiguredStorageRetryCount())
 
-        ConfigurationHolder.config = [:]
-        ConfigurationHolder.config.rundeck.execution.logs.fileStorage.storageRetryDelay = 30
-        ConfigurationHolder.config.rundeck.execution.logs.fileStorage.storageRetryCount = 10
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.execution.logs.fileStorage.storageRetryDelay = 30
+        grailsApplication.config.rundeck.execution.logs.fileStorage.storageRetryCount = 10
 
-        assertEquals(30, svc.getConfiguredStorageRetryDelay())
-        assertEquals(10, svc.getConfiguredStorageRetryCount())
+        assertEquals(30, service.getConfiguredStorageRetryDelay())
+        assertEquals(10, service.getConfiguredStorageRetryCount())
     }
     void testConfiguredRetrievalRetry() {
-        LogFileStorageService svc = new LogFileStorageService()
 
-        ConfigurationHolder.config = [:]
-        assertEquals(60,svc.getConfiguredRetrievalRetryDelay())
-        assertEquals(3,svc.getConfiguredRetrievalRetryCount())
+        grailsApplication.config.clear()
+        assertEquals(60,service.getConfiguredRetrievalRetryDelay())
+        assertEquals(3,service.getConfiguredRetrievalRetryCount())
 
 
-        ConfigurationHolder.config = [:]
-        ConfigurationHolder.config.rundeck.execution.logs.fileStorage.retrievalRetryDelay = 30
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.execution.logs.fileStorage.retrievalRetryDelay = 30
 
-        assertEquals(30, svc.getConfiguredRetrievalRetryDelay())
-        assertEquals(3, svc.getConfiguredRetrievalRetryCount())
+        assertEquals(30, service.getConfiguredRetrievalRetryDelay())
+        assertEquals(3, service.getConfiguredRetrievalRetryCount())
 
-        ConfigurationHolder.config = [:]
-        ConfigurationHolder.config.rundeck.execution.logs.fileStorage.retrievalRetryDelay = 30
-        ConfigurationHolder.config.rundeck.execution.logs.fileStorage.retrievalRetryCount = 10
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.execution.logs.fileStorage.retrievalRetryDelay = 30
+        grailsApplication.config.rundeck.execution.logs.fileStorage.retrievalRetryCount = 10
 
-        assertEquals(30, svc.getConfiguredRetrievalRetryDelay())
-        assertEquals(10, svc.getConfiguredRetrievalRetryCount())
+        assertEquals(30, service.getConfiguredRetrievalRetryDelay())
+        assertEquals(10, service.getConfiguredRetrievalRetryCount())
     }
     void testIsCachedItemFresh() {
-        LogFileStorageService svc = new LogFileStorageService()
 
-        ConfigurationHolder.config = [:]
-        assertTrue(svc.isResultCacheItemFresh([time: new Date(), count: 0]))
-        assertTrue(svc.isResultCacheItemAllowedRetry([time: new Date(), count: 0]))
+        grailsApplication.config.clear()
+        assertTrue(service.isResultCacheItemFresh([time: new Date(), count: 0]))
+        assertTrue(service.isResultCacheItemAllowedRetry([time: new Date(), count: 0]))
 
-        assertFalse(svc.isResultCacheItemFresh([time: new Date(System.currentTimeMillis()- (61*1000)), count: 0]))
-        assertFalse(svc.isResultCacheItemAllowedRetry([time: new Date(), count: 3]))
-
-
-        ConfigurationHolder.config = [:]
-        ConfigurationHolder.config.rundeck.execution.logs.fileStorage.retrievalRetryDelay = 30
-
-        assertTrue(svc.isResultCacheItemFresh([time: new Date(System.currentTimeMillis() - (25 * 1000)), count: 0]))
-        assertFalse(svc.isResultCacheItemFresh([time: new Date(System.currentTimeMillis() - (31 * 1000)), count: 0]))
-        assertFalse(svc.isResultCacheItemAllowedRetry([time: new Date(), count: 3]))
+        assertFalse(service.isResultCacheItemFresh([time: new Date(System.currentTimeMillis()- (61*1000)), count: 0]))
+        assertFalse(service.isResultCacheItemAllowedRetry([time: new Date(), count: 3]))
 
 
-        ConfigurationHolder.config = [:]
-        ConfigurationHolder.config.rundeck.execution.logs.fileStorage.retrievalRetryDelay = 30
-        ConfigurationHolder.config.rundeck.execution.logs.fileStorage.retrievalRetryCount = 10
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.execution.logs.fileStorage.retrievalRetryDelay = 30
 
-        assertTrue(svc.isResultCacheItemFresh([time: new Date(System.currentTimeMillis() - (25 * 1000)), count: 0]))
-        assertFalse(svc.isResultCacheItemFresh([time: new Date(System.currentTimeMillis() - (31 * 1000)), count: 0]))
-        assertTrue(svc.isResultCacheItemAllowedRetry([time: new Date(), count: 3]))
-        assertFalse(svc.isResultCacheItemAllowedRetry([time: new Date(), count: 10]))
+        assertTrue(service.isResultCacheItemFresh([time: new Date(System.currentTimeMillis() - (25 * 1000)), count: 0]))
+        assertFalse(service.isResultCacheItemFresh([time: new Date(System.currentTimeMillis() - (31 * 1000)), count: 0]))
+        assertFalse(service.isResultCacheItemAllowedRetry([time: new Date(), count: 3]))
+
+
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.execution.logs.fileStorage.retrievalRetryDelay = 30
+        grailsApplication.config.rundeck.execution.logs.fileStorage.retrievalRetryCount = 10
+
+        assertTrue(service.isResultCacheItemFresh([time: new Date(System.currentTimeMillis() - (25 * 1000)), count: 0]))
+        assertFalse(service.isResultCacheItemFresh([time: new Date(System.currentTimeMillis() - (31 * 1000)), count: 0]))
+        assertTrue(service.isResultCacheItemAllowedRetry([time: new Date(), count: 3]))
+        assertFalse(service.isResultCacheItemAllowedRetry([time: new Date(), count: 10]))
     }
     void testGetFileForLocalPath(){
-        mockLogging(LogFileStorageService)
-        LogFileStorageService svc = new LogFileStorageService()
         def fmock = mockFor(FrameworkService)
         fmock.demand.getFrameworkProperties() {->
             PropertyResolverFactory.instanceRetriever('framework.logs.dir': '/tmp/logs')
         }
-        svc.frameworkService = fmock.createMock()
-        def result = svc.getFileForLocalPath("abc")
+        service.frameworkService = fmock.createMock()
+        def result = service.getFileForLocalPath("abc")
         assertNotNull(result)
         assertEquals(new File("/tmp/logs/rundeck/abc"),result)
     }
     void testGetFileForLocalPathNotFound(){
-        mockLogging(LogFileStorageService)
         def fmock = mockFor(FrameworkService)
         fmock.demand.getFrameworkProperties() {->
             PropertyResolverFactory.instanceRetriever([:])
         }
-        LogFileStorageService svc = new LogFileStorageService()
-        svc.frameworkService = fmock.createMock()
+        service.frameworkService = fmock.createMock()
         try {
-            def result = svc.getFileForLocalPath("abc")
+            def result = service.getFileForLocalPath("abc")
             fail("Expected exception")
         } catch (IllegalStateException e) {
             assertEquals("framework.logs.dir is not set in framework.properties", e.message)
         }
     }
     void testCacheResult(){
-        mockLogging(LogFileStorageService)
-        LogFileStorageService svc = new LogFileStorageService()
-        ConfigurationHolder.config=[:]
-        ConfigurationHolder.config.rundeck.execution.logs.fileStoragePlugin = "test1"
-        def result = svc.cacheRetrievalState("1", LogFileState.NOT_FOUND, 0, 'error','errorCode',['errorData'])
+        grailsApplication.config=[:]
+        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
+        def result = service.cacheRetrievalState("1", LogFileState.NOT_FOUND, 0, 'error','errorCode',['errorData'])
         assertNotNull(result)
         assertEquals("1",result.id)
         assertEquals(0, result.count)
@@ -160,17 +152,15 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         assertEquals('error',result.error)
         assertEquals('test1',result.name)
         assertEquals(LogFileState.NOT_FOUND,result.state)
-        assertEquals(1, svc.getCurrentRetrievalResults().size())
+        assertEquals(1, service.getCurrentRetrievalResults().size())
 
-        Map result1 = svc.getRetrievalCacheResult("1")
+        Map result1 = service.getRetrievalCacheResult("1")
         assertNotNull(result1)
     }
     void testCacheResultDefaults(){
-        mockLogging(LogFileStorageService)
-        LogFileStorageService svc = new LogFileStorageService()
-        ConfigurationHolder.config=[:]
-        ConfigurationHolder.config.rundeck.execution.logs.fileStoragePlugin = "test1"
-        def result = svc.cacheRetrievalState("1", LogFileState.NOT_FOUND, 0, 'error', null, null)
+        grailsApplication.config=[:]
+        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
+        def result = service.cacheRetrievalState("1", LogFileState.NOT_FOUND, 0, 'error', null, null)
         assertNotNull(result)
         assertEquals("1",result.id)
         assertEquals(0, result.count)
@@ -179,15 +169,13 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         assertEquals('error',result.error)
         assertEquals('test1',result.name)
         assertEquals(LogFileState.NOT_FOUND,result.state)
-        assertEquals(1, svc.getCurrentRetrievalResults().size())
+        assertEquals(1, service.getCurrentRetrievalResults().size())
 
-        Map result1 = svc.getRetrievalCacheResult("1")
+        Map result1 = service.getRetrievalCacheResult("1")
         assertNotNull(result1)
     }
     void testgetLogFileWriterWithoutPlugin(){
-        mockDomain(Execution)
-        mockLogging(LogFileStorageService)
-        ConfigurationHolder.config = [:]
+        grailsApplication.config.clear()
         Execution e = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
         assertNotNull(e.save())
         def fmock = mockFor(FrameworkService)
@@ -197,14 +185,12 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         fmock.demand.getFrameworkPropertyResolver() { project ->
             assert project == "testproj"
         }
-        registerMetaClass(ExecutionService)
         ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
             [:]
         }
-        LogFileStorageService svc = new LogFileStorageService()
-        svc.frameworkService=fmock.createMock()
+        service.frameworkService=fmock.createMock()
 
-        def writer = svc.getLogFileWriterForExecution(e, [:])
+        def writer = service.getLogFileWriterForExecution(e, [:])
         assertNotNull(writer)
         assert writer instanceof EventStreamingLogWriter
     }
@@ -277,8 +263,8 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         }
     }
     void testgetLogFileWriterWithPlugin(){
-        ConfigurationHolder.config = [:]
-        ConfigurationHolder.config.rundeck.execution.logs.fileStoragePlugin = "test1"
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
 
         def test = new testStoragePlugin()
 
@@ -305,8 +291,8 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
     }
 
     void testPluginLogFileWriterOnCloseShouldStartStorageRequest(){
-        ConfigurationHolder.config = [:]
-        ConfigurationHolder.config.rundeck.execution.logs.fileStoragePlugin = "test1"
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
 
         def test = new testStoragePlugin()
         LogFileStorageService svc
@@ -319,9 +305,6 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
     }
 
     private StreamingLogWriter performWriterRequest(testStoragePlugin test, Execution e, Closure clos=null) {
-        mockDomain(Execution)
-        mockDomain(LogFileStorageRequest)
-        mockLogging(LogFileStorageService)
         assertNotNull(e.save())
         def fmock = mockFor(FrameworkService)
         fmock.demand.getFrameworkProperties() {->
@@ -336,25 +319,23 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
             assert scope == PropertyScope.Instance
             [instance: test, configuration: [:]]
         }
-        registerMetaClass(ExecutionService)
         ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
             [:]
         }
-        LogFileStorageService svc = new LogFileStorageService()
-        svc.frameworkService = fmock.createMock()
-        svc.pluginService = pmock.createMock()
+        service.frameworkService = fmock.createMock()
+        service.pluginService = pmock.createMock()
 
         assertEquals(0, LogFileStorageRequest.list().size())
         if(null!=clos){
-            svc.with(clos)
+            service.with(clos)
         }
-        return svc.getLogFileWriterForExecution(e, [:])
+        return service.getLogFileWriterForExecution(e, [:])
 
     }
 
     void testRunStorageRequestSuccess(){
-        ConfigurationHolder.config = [:]
-        ConfigurationHolder.config.rundeck.execution.logs.fileStoragePlugin = "test1"
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
 
         def test = new testStoragePlugin()
         test.storeLogFileSuccess=true
@@ -375,8 +356,8 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         assertEquals(1,svc.getCurrentRequests().size())
     }
     void testRunStorageRequestFailure(){
-        ConfigurationHolder.config = [:]
-        ConfigurationHolder.config.rundeck.execution.logs.fileStoragePlugin = "test1"
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
 
         def test = new testStoragePlugin()
         test.storeLogFileSuccess=false
@@ -397,15 +378,14 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         assertEquals(0, svc.getCurrentRequests().size())
     }
     void testRunStorageRequestFailureWithRetry(){
-        ConfigurationHolder.config = [:]
-        ConfigurationHolder.config.rundeck.execution.logs.fileStoragePlugin = "test1"
-        ConfigurationHolder.config.rundeck.execution.logs.fileStorage.storageRetryDelay = 30
-        ConfigurationHolder.config.rundeck.execution.logs.fileStorage.storageRetryCount = 2
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
+        grailsApplication.config.rundeck.execution.logs.fileStorage.storageRetryDelay = 30
+        grailsApplication.config.rundeck.execution.logs.fileStorage.storageRetryCount = 2
 
 
         def test = new testStoragePlugin()
         test.storeLogFileSuccess=false
-        registerMetaClass(LogFileStorageService)
         LogFileStorageService svc
         boolean queued=false
         Map task=performRunStorage(test, "rdlog", createExecution(), testLogFile1) { LogFileStorageService service ->
@@ -431,9 +411,6 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
     }
 
     private Map performRunStorage(testStoragePlugin test, String filetype, Execution e, File testfile, Closure clos = null) {
-        mockDomain(Execution)
-        mockDomain(LogFileStorageRequest)
-        mockLogging(LogFileStorageService)
         assertNotNull(e.save())
         def fmock = mockFor(FrameworkService)
         fmock.demand.getFrameworkPropertyResolver() { project ->
@@ -451,23 +428,22 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
             emock.executeCalled=true
             assertNotNull(cls)
         }
-        LogFileStorageService svc = new LogFileStorageService()
-        svc.frameworkService = fmock.createMock()
-        svc.pluginService = pmock.createMock()
-        svc.executorService=emock
+        service.frameworkService = fmock.createMock()
+        service.pluginService = pmock.createMock()
+        service.executorService=emock
 
         assertEquals(0, LogFileStorageRequest.list().size())
         if (null != clos) {
-            svc.with(clos)
+            service.with(clos)
         }
         def task = [id: e.id.toString(), file: testfile, storage: test, filetype: filetype]
-        svc.runStorageRequest(task)
+        service.runStorageRequest(task)
         return task
     }
 
     void testRequestLogFileReaderFileDNE(){
 
-        ConfigurationHolder.config = [:]
+        grailsApplication.config.clear()
 
         def test = null
 
@@ -481,7 +457,7 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
 
     void testRequestLogFileReaderFileDNEWaiting() {
 
-        ConfigurationHolder.config = [:]
+        grailsApplication.config.clear()
 
         def test = null
 
@@ -497,7 +473,7 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
     }
     void testRequestLogFileReaderFileDNEClusterModePendingRemote() {
 
-        ConfigurationHolder.config = [:]
+        grailsApplication.config.clear()
 
         def test = new testStoragePlugin()
         test.available = false
@@ -515,7 +491,7 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
     }
     void testRequestLogFileReaderFileExists(){
 
-        ConfigurationHolder.config = [:]
+        grailsApplication.config.clear()
 
         def test = new testStoragePlugin()
         test.available = false
@@ -533,8 +509,8 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
 
 
     void testRequestLogFileReaderFileDNEPluginAvailableFalseShouldResultInPendingRemote() {
-        ConfigurationHolder.config = [:]
-        ConfigurationHolder.config.rundeck.execution.logs.fileStoragePlugin = "test1"
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
 
         def test = new testStoragePlugin()
         test.available = false
@@ -551,8 +527,8 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
     }
 
     void testRequestLogFileReaderFileDNEPluginAvailableTrueShouldResultInAvailableRemote() {
-        ConfigurationHolder.config = [:]
-        ConfigurationHolder.config.rundeck.execution.logs.fileStoragePlugin = "test1"
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
 
         def test = new testStoragePlugin()
         test.available = true
@@ -569,8 +545,8 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
     }
 
     void testRequestLogFileReaderFileDNEPluginAvailableErrorShouldResultInError() {
-        ConfigurationHolder.config = [:]
-        ConfigurationHolder.config.rundeck.execution.logs.fileStoragePlugin = "test1"
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
 
         def test = new testStoragePlugin()
         test.available = true
@@ -589,8 +565,8 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         assertNull(reader.reader)
     }
     void testRequestLogFileReaderFileDNEPluginRequestAlreadyPending() {
-        ConfigurationHolder.config = [:]
-        ConfigurationHolder.config.rundeck.execution.logs.fileStoragePlugin = "test1"
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
 
         def test = new testStoragePlugin()
         test.available = true
@@ -610,8 +586,8 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
         assertNull(reader.reader)
     }
     void testRequestLogFileReaderFileDNEStartsANewRequest() {
-        ConfigurationHolder.config = [:]
-        ConfigurationHolder.config.rundeck.execution.logs.fileStoragePlugin = "test1"
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
 
         def test = new testStoragePlugin()
         test.available = true
@@ -633,9 +609,6 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
     }
 
     private ExecutionLogReader performReaderRequest(test, boolean isClustered, File logfile, boolean performLoad, Execution e, Closure svcClosure=null) {
-        mockDomain(Execution)
-        mockDomain(LogFileStorageRequest)
-        mockLogging(LogFileStorageService)
 
         assertNotNull(e.save())
         def fmock = mockFor(FrameworkService)
@@ -648,34 +621,31 @@ class LogFileStorageServiceTests extends GrailsUnitTestCase {
             assert scope == PropertyScope.Instance
             [instance: test, configuration: [:]]
         }
-        registerMetaClass(ExecutionService)
         ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
             [:]
         }
-        LogFileStorageService svc = new LogFileStorageService()
-        svc.frameworkService = fmock.createMock()
-        svc.frameworkService.serverUUID = null
-        svc.frameworkService.metaClass.isClusterModeEnabled = {
+        service.frameworkService = fmock.createMock()
+        service.frameworkService.serverUUID = null
+        service.frameworkService.metaClass.isClusterModeEnabled = {
             return isClustered
         }
-        svc.frameworkService.metaClass.getServerUUID = {
+        service.frameworkService.metaClass.getServerUUID = {
             UUID.randomUUID()
         }
-        svc.pluginService = pmock.createMock()
-        svc.metaClass.getFileForExecutionFiletype = { Execution e2, String filetype ->
+        service.pluginService = pmock.createMock()
+        service.metaClass.getFileForExecutionFiletype = { Execution e2, String filetype ->
             assert e == e2
             assert "rdlog"==filetype
             logfile
         }
         if(null!= svcClosure){
-            svc.with(svcClosure)
+            service.with(svcClosure)
         }
 
-        return svc.requestLogFileReader(e, LoggingService.LOG_FILE_FILETYPE,performLoad)
+        return service.requestLogFileReader(e, LoggingService.LOG_FILE_FILETYPE,performLoad)
     }
 
     private Execution createExecution(Closure clos=null) {
-        mockDomain(Execution)
         def e = new Execution(argString: "-test args", user: "testuser", project: "testprojz", loglevel: 'WARN', doNodedispatch: false)
         if(null!=clos){
             e.with(clos)
