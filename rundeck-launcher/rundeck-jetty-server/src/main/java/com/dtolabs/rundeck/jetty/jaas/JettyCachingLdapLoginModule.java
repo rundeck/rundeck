@@ -305,14 +305,13 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
         String filter = "(&(objectClass={0})({1}={2}))";
 
-//        Log.debug("Searching for users with filter: \'" + filter + "\'" + " from base dn: " + _userBaseDn);
 
         try {
             Object[] filterArguments = { _userObjectClass, _userIdAttribute, username };
             NamingEnumeration results = _rootContext.search(_userBaseDn, filter, filterArguments,
                     ctls);
 
-            Log.debug("Found user?: " + results.hasMoreElements());
+            LOG.debug("Found user?: " + results.hasMoreElements());
 
             if (!results.hasMoreElements()) {
                 throw new LoginException("User not found.");
@@ -329,14 +328,14 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
                     ldapCredential = new String(value);
                 } catch (NamingException e) {
-                    Log.debug("no password available under attribute: " + _userPasswordAttribute);
+                    LOG.debug("no password available under attribute: " + _userPasswordAttribute);
                 }
             }
         } catch (NamingException e) {
             throw new LoginException("Root context binding failure.");
         }
 
-        Log.debug("user cred is: " + ldapCredential);
+        LOG.debug("user cred is: " + ldapCredential);
 
         return ldapCredential;
     }
@@ -367,7 +366,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         if (dirContext == null || _roleBaseDn == null || (_roleMemberAttribute == null
                                                           && _roleUsernameMemberAttribute == null)
                 || _roleObjectClass == null) {
-            Log.warn("JettyCachingLdapLoginModule: No user roles found: roleBaseDn, roleObjectClass and roleMemberAttribute or roleUsernameMemberAttribute must be specified.");
+            LOG.warn("JettyCachingLdapLoginModule: No user roles found: roleBaseDn, roleObjectClass and roleMemberAttribute or roleUsernameMemberAttribute must be specified.");
             return roleList;
         }
 
@@ -405,7 +404,6 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
             while (roles.hasMore()) {
                 if (_rolePrefix != null && !"".equalsIgnoreCase(_rolePrefix)) {
                     String role = (String) roles.next();
-                    // Log.info("Role for user " + userDn + ": " + role); 
                     roleList.add(role.replace(_rolePrefix, ""));
                 } else {
                     roleList.add(roles.next());
@@ -413,9 +411,9 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
             }
         }
         if (roleList.size() < 1) {
-            Log.warn("JettyCachingLdapLoginModule: User '" + username + "' has no role membership; role query configuration may be incorrect");
+            LOG.warn("JettyCachingLdapLoginModule: User '" + username + "' has no role membership; role query configuration may be incorrect");
         }else{
-            Log.debug("JettyCachingLdapLoginModule: User '" + username + "' has roles: " + roleList);
+            LOG.debug("JettyCachingLdapLoginModule: User '" + username + "' has roles: " + roleList);
         }
 
         return roleList;
@@ -455,7 +453,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
             if(_reportStatistics)
             {
                 DecimalFormat percentHit = new DecimalFormat("#.##");
-                Log.info("Login attempts: " + loginAttempts + ", Hits: " + userInfoCacheHits + 
+                LOG.info("Login attempts: " + loginAttempts + ", Hits: " + userInfoCacheHits + 
                         ", Ratio: " + percentHit.format((double)userInfoCacheHits / loginAttempts * 100f) + "%.");
             }
             
@@ -524,18 +522,18 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
             CachedUserInfo cached = USERINFOCACHE.get(cacheToken);
             if (cached != null) {
                 if (System.currentTimeMillis() < cached.expires) {
-                    Log.debug("Cache Hit for " + username + ".");
+                    LOG.debug("Cache Hit for " + username + ".");
                     userInfoCacheHits++;
                     
                     setCurrentUser(new JAASUserInfo(cached.userInfo));
                     setAuthenticated(true);
                     return true;
                 } else {
-                    Log.info("Cache Eviction for " + username + ".");
+                    LOG.info("Cache Eviction for " + username + ".");
                     USERINFOCACHE.remove(cacheToken);
                 }
             } else {
-                Log.debug("Cache Miss for " + username + ".");
+                LOG.debug("Cache Miss for " + username + ".");
             }
         }
         
@@ -543,7 +541,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
         String userDn = searchResult.getNameInNamespace();
 
-        Log.info("Attempting authentication: " + userDn);
+        LOG.info("Attempting authentication: " + userDn);
 
         Hashtable environment = getEnvironment();
         environment.put(Context.SECURITY_PRINCIPAL, userDn);
@@ -554,7 +552,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         // use _rootContext to find roles, if configured to doso
         if ( _forceBindingLoginUseRootContextForRoles ) {
             dirContext = _rootContext;
-            Log.debug("Using _rootContext for role lookup.");
+            LOG.debug("Using _rootContext for role lookup.");
         }
         List roles = getUserRolesByDn(dirContext, userDn, username);
 
@@ -563,7 +561,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
             USERINFOCACHE.put(cacheToken,
                 new CachedUserInfo(userInfo,
                     System.currentTimeMillis() + _cacheDuration));
-            Log.debug("Adding " + username + " set to expire: " + System.currentTimeMillis() + _cacheDuration);
+            LOG.debug("Adding " + username + " set to expire: " + System.currentTimeMillis() + _cacheDuration);
         }
         setCurrentUser(new JAASUserInfo(userInfo));
         setAuthenticated(true);
@@ -579,13 +577,13 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
         String filter = "(&(objectClass={0})({1}={2}))";
 
-        Log.debug("Searching for users with filter: \'" + filter + "\'" + " from base dn: "
+        LOG.debug("Searching for users with filter: \'" + filter + "\'" + " from base dn: "
                 + _userBaseDn);
 
         Object[] filterArguments = new Object[] { _userObjectClass, _userIdAttribute, username };
         NamingEnumeration results = _rootContext.search(_userBaseDn, filter, filterArguments, ctls);
 
-        Log.debug("Found user?: " + results.hasMoreElements());
+        LOG.debug("Found user?: " + results.hasMoreElements());
 
         if (!results.hasMoreElements()) {
             throw new LoginException("User not found.");
@@ -642,7 +640,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
             try {
                 _cacheDuration = Integer.parseInt(cacheDurationSetting);
             } catch (NumberFormatException e) {
-                Log.warn("Unable to parse cacheDurationMillis to a number: " + cacheDurationSetting,
+                LOG.warn("Unable to parse cacheDurationMillis to a number: " + cacheDurationSetting,
                         ". Using default: " + _cacheDuration, e);
             }
         }
@@ -705,7 +703,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
                     url += ":" + _port + "/";
                 } 
             
-                Log.warn("Using hostname and port.  Use providerUrl instead: " + url);
+                LOG.warn("Using hostname and port.  Use providerUrl instead: " + url);
             }
         }
         env.put(Context.PROVIDER_URL, url);
