@@ -54,7 +54,14 @@ public class AuthorizationFilters {
                     def principal = request.userPrincipal
                     def subject = new Subject();
                     subject.principals << new Username(principal.name)
-                    if(principal.hasProperty('roles')){
+                    if(principal.hasProperty('subject')){
+                        Subject osubject = (Subject) principal.subject
+                        osubject.getPrincipals().each {p->
+                            if(p.class.name.equals('org.eclipse.jetty.plus.jaas.JAASRole') || p.class.name.contains('Role')){
+                                subject.principals << new Group(p.name)
+                            }
+                        }
+                    }else if (principal.hasProperty('roles')){
                         if(principal.roles instanceof Iterator){
                             def Iterator iter= principal.roles
                             while(iter.hasNext()){
