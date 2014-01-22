@@ -49,7 +49,6 @@ def manifest=[
         "com/dtolabs/rundeck/#+",// require 1+ files in dir
         "pkgs/webapp/WEB-INF/classes/#+",
         "pkgs/webapp/WEB-INF/lib/rundeck-core-${version}.jar",
-        "pkgs/webapp/WEB-INF/lib/rundeck-jetty-server-${version}.jar",
         // ##file : require checksum verify to top level
         "pkgs/webapp/WEB-INF/lib/rundeck-core-${version}.jar##core/${target}/rundeck-core-${version}.jar",
         "libext/rundeck-script-plugin-${version}.jar",
@@ -71,7 +70,6 @@ def manifest=[
         "lib/jetty-all-7.6.0.v20120127.jar",
         "lib/log4j-1.2.16.jar",
         "lib/rundeck-jetty-server-${version}.jar",
-        "lib/rundeck-jetty-server-${version}.jar##rundeck-launcher/rundeck-jetty-server/${target}/rundeck-jetty-server-${version}.jar",
         "lib/servlet-api-2.5.jar",
         "lib/jna-3.2.2.jar",
         "lib/libpam4j-1.5.jar",

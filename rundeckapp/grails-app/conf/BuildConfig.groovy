@@ -68,18 +68,6 @@ grails.project.dependency.resolution = {
         }
     }
 
-    grails.war.resources = {def stagingDir ->
-        delete(file: "${stagingDir}/WEB-INF/lib/commons-collections-3.1.jar")
-        delete(file: "${stagingDir}/WEB-INF/lib/servlet-api-2.5-20081211.jar")
-        delete(file: "${stagingDir}/WEB-INF/lib/jetty-6.1.21.jar")
-        delete(file: "${stagingDir}/WEB-INF/lib/jetty-plus-6.1.21.jar")
-        delete(file: "${stagingDir}/WEB-INF/lib/jetty-util-6.1.21.jar")
-        delete(file: "${stagingDir}/WEB-INF/lib/jetty-naming-6.1.21.jar")
-        delete(file: "${stagingDir}/WEB-INF/lib/jsp-api-2.0-6.1.21.jar")
-        delete(file: "${stagingDir}/WEB-INF/lib/jasper-runtime-5.5.15.jar")
-        delete(file: "${stagingDir}/WEB-INF/lib/jasper-compiler-5.5.15.jar")
-        delete(file: "${stagingDir}/WEB-INF/lib/jasper-compiler-jdt-5.5.15.jar")
-    }
 
     rundeckVersion = System.getProperty("RUNDECK_VERSION", appVersion)
     println "Application Version: ${rundeckVersion}"
@@ -123,4 +111,9 @@ grails.project.dependency.resolution = {
             changing = true
         }
     }
+}
+grails.war.resources = { stagingDir, args ->
+    delete(file: "${stagingDir}/WEB-INF/lib/jetty-all-7.6.0.v20120127.jar")
+    delete(file: "${stagingDir}/WEB-INF/lib/rundeck-jetty-server-${rundeckVersion}.jar")
+    delete(file: "${stagingDir}/WEB-INF/lib/servlet-api-2.5.jar")
 }
