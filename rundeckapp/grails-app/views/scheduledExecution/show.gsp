@@ -13,7 +13,7 @@
         jQuery(document).ready(function(){
             var history = new History(appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
             ko.applyBindings(history, document.getElementById('activity_section'));
-            setupActivityLinks('activity_section', history, appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
+            setupActivityLinks('activity_section', history);
         });
     </g:javascript>
   </head>

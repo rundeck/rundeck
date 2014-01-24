@@ -325,7 +325,7 @@
             if (jQuery('#activity_section')) {
                 pageActivity = new History(appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
                 ko.applyBindings(pageActivity, document.getElementById('activity_section'));
-                setupActivityLinks('activity_section', pageActivity, appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
+                setupActivityLinks('activity_section', pageActivity);
             }
         });
     </script>

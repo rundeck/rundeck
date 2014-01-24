@@ -287,11 +287,9 @@
             });
 
             //history tabs binding
-            var ajaxHistoryLink=appLinks.reportsEventsAjax;
-            var ajaxRunningLink= appLinks.menuNowrunningAjax;
-            var history = new History(ajaxHistoryLink);
+            var history = new History(appLinks.reportsEventsAjax,appLinks.menuNowrunningAjax);
             ko.applyBindings(history, document.getElementById('activity_section'));
-            setupActivityLinks('activity_section', history, ajaxHistoryLink, ajaxRunningLink);
+            setupActivityLinks('activity_section', history);
             //if empty query, automatically load first activity_link
             if("${emptyQuery}"=='true'){
                 history.activateNowRunningTab();

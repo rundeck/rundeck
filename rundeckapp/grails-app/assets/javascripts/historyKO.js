@@ -195,14 +195,14 @@ function loadHistoryLink(history, ajaxBaseUrl, href,reload) {
     load();
 }
 
-function setupActivityLinks(id, history, ajaxHistoryLink, ajaxNowrunningLink) {
+function setupActivityLinks(id, history) {
     jQuery('#' + id + ' a.activity_link').click(function (e) {
         e.preventDefault();
         var me = jQuery(this)[0];
         jQuery('#' + id + ' .activity_links > li').removeClass('active');
         jQuery(me.parentNode).addClass('active');
         history.showReports(true);
-        loadHistoryLink(history, ajaxHistoryLink, me.getAttribute('href'),jQuery(this).data('auto-refresh'));
+        loadHistoryLink(history, history.ajaxHistoryLink, me.getAttribute('href'),jQuery(this).data('auto-refresh'));
     });
     jQuery('#' + id + ' a.running_link').click(function (e) {
         e.preventDefault();
@@ -212,7 +212,7 @@ function setupActivityLinks(id, history, ajaxHistoryLink, ajaxNowrunningLink) {
             jQuery(me.parentNode).addClass('active');
             history.showReports(false);
 
-            loadHistoryLink(history, ajaxNowrunningLink, me.getAttribute('href'), jQuery(this).data('auto-refresh'));
+            loadHistoryLink(history, history.ajaxNowRunningLink, me.getAttribute('href'), jQuery(this).data('auto-refresh'));
         }
     });
 }

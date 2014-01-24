@@ -162,7 +162,7 @@
                 //enable now running activity tab once execution completes
                 nodeflowvm.completed.subscribe(history.nowRunningEnabled);
                 ko.applyBindings(history, document.getElementById('activity_section'));
-                setupActivityLinks('activity_section', history, appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
+                setupActivityLinks('activity_section', history);
            }
         });
       </g:javascript>
