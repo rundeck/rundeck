@@ -50,6 +50,7 @@
 
         <td class="eventtitle ${rpt?.jcJobId ? 'job' : 'adhoc'}" colspan="${rpt?.jcJobId?1:2}">
             <g:link controller="execution" action="show" id="${rpt.jcExecId}" class="_defaultAction"
+                params="[project:execution?execution.project:rpt.ctxProject?:params.project]"
                     title="View execution output" absolute="${absoluteLinks}">#${rpt.jcExecId}</g:link>
             <g:if test="${options.summary}">
                 <g:if test="${rpt?.jcJobId}">
