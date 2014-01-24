@@ -175,7 +175,7 @@
             Download an archive of project <strong>${(params.project ?: request.project).encodeAsHTML()}</strong>
         </div>
         <div class="panel-body">
-                <g:link controller="project" action="export" params="[name: params.project ?: request.project]"
+                <g:link controller="project" action="export" params="[project: params.project ?: request.project]"
                     class="btn btn-success"
                 >
                     <i class="glyphicon glyphicon-download-alt"></i>
@@ -188,7 +188,8 @@
 </div>
 
 <div class="tab-pane" id="import">
-    <g:form controller="project" action="importArchive" enctype="multipart/form-data" class="form">
+    <g:form controller="project" action="importArchive" params="[project:params.project ?: request.project]"
+            enctype="multipart/form-data" class="form">
     <div class="list-group list-group-tab-content">
         <div class="list-group-item">
             <div class="form-group">
@@ -245,7 +246,6 @@
                 <span class="help-block">Does not import any Executions or History</span>
             </div>
         </div>
-            <g:hiddenField name="name" value="${params.project ?: request.project}"/>
         <div class="list-group-item">
             <div class="buttons">
                 <div id="uploadFormButtons">

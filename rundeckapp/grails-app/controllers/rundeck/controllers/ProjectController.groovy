@@ -23,7 +23,7 @@ class ProjectController {
     }
 
     def export={
-        def project=params.name
+        def project=params.project?:params.name
         if (!project){
             request.error = "Project parameter is required"
             return render(template: "/common/error")
@@ -63,7 +63,7 @@ class ProjectController {
     }
 
     def importArchive={
-        def project = params.name
+        def project = params.project?:params.name
         if (!project) {
             request.error = "Project parameter is required"
             return render(template: "/common/error")
@@ -98,7 +98,7 @@ class ProjectController {
                 flash.error="Failed to import some jobs"
                 flash.joberrors=result.joberrors
             }
-            return redirect(controller: 'menu',action: 'admin')
+            return redirect(controller: 'menu',action: 'admin',params:[project:project])
         }
     }
 }
