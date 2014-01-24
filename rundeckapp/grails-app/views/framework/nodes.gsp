@@ -176,7 +176,7 @@
 </g:if>
 <div id="nodesContent">
     <g:set var="run_authorized" value="${auth.adhocAllowedTest( action:AuthConstants.ACTION_RUN,project: params.project ?: request.project)}"/>
-
+    <g:set var="job_create_authorized" value="${auth.resourceAllowedTest(kind:'job', action: AuthConstants.ACTION_CREATE,project: params.project ?: request.project)}"/>
     <g:render template="/common/messages"/>
 
 <div class="row ">
@@ -326,24 +326,29 @@
                    Node Actions <span class="caret"></span>
                 </button>
                 <ul class="dropdown-menu" role="menu">
-                    <g:if test="${run_authorized}">
-                        <li data-bind="visible: hasNodes()">
-                            <a href="#" data-bind="click: runCommand">
-                                <i class="glyphicon glyphicon-play"></i>
-                                Run a command on <span data-bind="text: allcount">${total}</span>
-                                <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span> …
-                            </a>
-                        </li>
-                    </g:if>
-                    <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_CREATE}" project="${params.project?:request.project}">
-                    <li >
-                        <a href="#" data-bind="click: saveJob">
+                    <li data-bind="visible: hasNodes()" class="${run_authorized?'':'disabled'}">
+                        <a href="#" data-bind="${run_authorized?'click: runCommand':''}"
+                           title="${run_authorized ? '' : 'Not authorized'}"
+                           class="${run_authorized ? '' : 'has_tooltip'}"
+                           data-placement="left"
+                        >
+                            <i class="glyphicon glyphicon-play"></i>
+                            Run a command on <span data-bind="text: allcount">${total}</span>
+                            <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span> …
+                        </a>
+                    </li>
+
+                    <li class="${job_create_authorized?'':'disabled'}">
+                        <a href="#" data-bind="${job_create_authorized?'click: saveJob':''}"
+                            title="${job_create_authorized?'':'Not authorized'}"
+                            class="${job_create_authorized?'':'has_tooltip'}"
+                            data-placement="left"
+                        >
                             <i class="glyphicon glyphicon-plus"></i>
                             Create a job for <span data-bind="text: allcount">${total}</span>
                             <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span> …
                         </a>
                     </li>
-                    </auth:resourceAllowed>
                 </ul>
             </div>
         </div>
