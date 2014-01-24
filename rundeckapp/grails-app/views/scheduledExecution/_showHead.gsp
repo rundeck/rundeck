@@ -39,7 +39,7 @@
             <g:if test="${scheduledExecution.groupPath}">
                 <g:link controller="menu" action="jobs"
                         class="secondary"
-                        params="${[groupPath: scheduledExecution.groupPath, project:scheduledExecution.groupPath]}"
+                        params="${[groupPath: scheduledExecution.groupPath, project:scheduledExecution.project]}"
                         title="${'View ' + g.message(code: 'domain.ScheduledExecution.title') + 's in this group'}"
                         absolute="${absolute ? 'true' : 'false'}">
                     <g:if test="${!noimgs}"><b class="glyphicon glyphicon-folder-close"></b></g:if>
