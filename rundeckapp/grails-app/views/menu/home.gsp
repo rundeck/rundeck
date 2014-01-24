@@ -19,7 +19,7 @@
 </head>
 <body>
 
-
+<g:if test="${projCount>0}">
 <div class="row row-space">
     <div class="col-sm-4">
         <span class="h3 text-muted">
@@ -76,6 +76,42 @@
         </div>
     </auth:resourceAllowed>
 </div>
+</g:if>
+<g:if test="${!projCount}">
+<div class="row row-space">
+<div class="col-sm-12">
+    <auth:resourceAllowed action="create" kind="project" context="application" has="false">
+        <div class="well">
+            <g:set var="roles" value="${request.subject?.getPrincipals(com.dtolabs.rundeck.core.authentication.Group.class)?.collect { it.name }?.join(", ")}"/>
+            <h2 class="text-warning">
+                <g:message code="no.authorized.access.to.projects" />
+            </h2>
+            <p>
+            <g:message code="no.authorized.access.to.projects.contact.your.administrator.user.roles.0" args="[roles]" />
+            </p>
+        </div>
+    </auth:resourceAllowed>
+    <auth:resourceAllowed action="create" kind="project" context="application" has="true">
+        <div class="jumbotron">
+            <g:set var="appTitle"
+                   value="${grailsApplication.config.rundeck.gui.title ? grailsApplication.config.rundeck.gui.title : g.message(code: 'main.app.name')}"/>
+            <h1>Welcome to ${appTitle}</h1>
+
+            <p>
+                To get started, create a new project.
+            </p>
+            <p>
+                <g:link controller="framework" action="createProject" class="btn  btn-success btn-lg ">
+                    New Project
+                    <b class="glyphicon glyphicon-plus"></b>
+                </g:link>
+            </p>
+        </div>
+    </auth:resourceAllowed>
+</div>
+</div>
+</g:if>
+
 
 <div class="row row-space">
     <div class="col-sm-12">
