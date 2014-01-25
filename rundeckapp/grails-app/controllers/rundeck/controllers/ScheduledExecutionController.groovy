@@ -661,8 +661,9 @@ class ScheduledExecutionController  {
             request.error = result.error.message
             return error()
         } else {
+            def project = result.success.job?result.success.job.project:params.project
             flash.bulkDeleteResult = [success: [result.success]]
-            redirect(controller: 'menu', action: 'jobs')
+            redirect(controller: 'menu', action: 'jobs',params:[project:project])
         }
     }
     /**
