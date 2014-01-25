@@ -343,8 +343,6 @@
                     <g:if test="${run_authorized}">
                     <div class="" id="runtab">
                             <div class="form form-horizontal clearfix" id="runbox">
-                                <g:hiddenField name="project" value="${params.project ?: request.project}"/>
-
                                 <g:render template="nodeFiltersHidden"
                                           model="${[params: params, query: query]}"/>
                                 <div class="form-group ">
