@@ -44,8 +44,6 @@ class LoggingServiceTests  {
         assertFalse(svc.isLocalFileStorageEnabled())
     }
     void testLoggingReaderPluginConfiguration() {
-//        LoggingService svc = new LoggingService()
-//        svc.grailsApplication=grailsApplication
         grailsApplication.config.clear()
         assertNull(service.getConfiguredStreamingReaderPluginName())
 
@@ -54,7 +52,7 @@ class LoggingServiceTests  {
         assertEquals("test", service.getConfiguredStreamingReaderPluginName())
     }
     void testLoggingWriterPluginsConfiguration() {
-
+        grailsApplication.config.clear()
         assertEquals(0,service.listConfiguredStreamingWriterPluginNames().size())
 
         grailsApplication.config.clear()
@@ -252,6 +250,7 @@ class LoggingServiceTests  {
         }
     }
     void testGetLogReaderWithoutPlugin(){
+        grailsApplication.config.clear()
         Execution e = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
         assertNotNull(e.save())
         def test=new ExecutionLogReader()
