@@ -20,9 +20,7 @@
     <![endif]-->
     <asset:javascript src="jquery.js"/>
     <asset:javascript src="bootstrap.js"/>
-    <g:javascript library="prototype"/>
     <asset:javascript src="application"/>
-    <g:javascript library="menus"/>
     <g:render template="/common/js"/>
     <g:render template="/common/css"/>
 
