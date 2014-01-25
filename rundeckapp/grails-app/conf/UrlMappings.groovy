@@ -80,7 +80,7 @@ class UrlMappings {
         "/job/$action?/$id?"(controller: 'scheduledExecution')
         "/job/show/$id"(controller: 'scheduledExecution',action: 'show')
         "/execution/$action?/$id?"(controller: 'execution')
-        "/execution/$id"(controller: 'execution',action: 'show')
+        "/execution/show/$id"(controller: 'execution',action: 'show')
         "500"(view: '/error')
     }
 }
