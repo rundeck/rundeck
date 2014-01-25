@@ -522,6 +522,10 @@ public class FrameworkProject extends FrameworkResourceParent {
                 logger.error("Cannot get nodes from ["+nodesSource.toString()+"]: "+e.getMessage(), e);
                 nodesSourceExceptions.add(new ResourceModelSourceException(
                     "Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage(), e));
+            }catch (Throwable e) {
+                logger.error("Cannot get nodes from ["+nodesSource.toString()+"]: "+e.getMessage(), e);
+                nodesSourceExceptions.add(new ResourceModelSourceException(
+                    "Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage()));
             }
         }
         return list;

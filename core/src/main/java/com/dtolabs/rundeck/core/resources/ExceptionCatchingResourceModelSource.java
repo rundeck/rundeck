@@ -45,14 +45,14 @@ public abstract class ExceptionCatchingResourceModelSource extends DelegateResou
             nodes = getDelegate().getNodes();
         } catch (ResourceModelSourceException e) {
             logException(e);
-        } catch (RuntimeException e) {
+        } catch (Throwable e) {
             logException(e);
         }
         try {
             return returnResultNodes(nodes);
         } catch (ResourceModelSourceException e) {
             logException(e);
-        } catch (RuntimeException e) {
+        } catch (Throwable e) {
             logException(e);
         }
         return nodes;
