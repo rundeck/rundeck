@@ -321,7 +321,7 @@
                                         %{--run again only--}%
                                     <g:link
                                             controller="framework"
-                                            action="nodes"
+                                            action="adhoc"
                                             params="${[fromExecId: execution.id, project: execution.project]}"
                                             title="${g.message(code: 'execution.action.runAgain')}"
                                             class="btn btn-default btn-sm force-last-child execRerun"
@@ -346,7 +346,7 @@
                                             <li >
                                                     <g:link
                                                             controller="framework"
-                                                            action="nodes"
+                                                            action="adhoc"
                                                             params="${[fromExecId: execution.id, project: execution.project]}"
                                                             title="${g.message(code: 'execution.action.runAgain')}">
 
@@ -360,7 +360,7 @@
                                             <li>
                                                     <g:link
                                                             controller="framework"
-                                                            action="nodes"
+                                                            action="adhoc"
                                                             params="${[retryFailedExecId: execution.id, project: execution.project]}"
                                                             title="${g.message(code: 'retry.failed.nodes.description')}">
 
