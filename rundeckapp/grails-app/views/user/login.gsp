@@ -19,10 +19,7 @@
     <g:javascript library="respond.min"/>
     <![endif]-->
     <asset:javascript src="jquery.js"/>
-    <g:javascript library="prototype"/>
-    <g:javascript library="application"/>
-    <g:javascript library="menus"/>
-    <g:render template="/common/js"/>
+    <asset:javascript src="prototype.min.js"/>
     <g:render template="/common/css"/>
     <script language="javascript">
         //<!--
