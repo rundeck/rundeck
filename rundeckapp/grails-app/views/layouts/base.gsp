@@ -20,7 +20,8 @@
     <![endif]-->
     <asset:javascript src="jquery.js"/>
     <asset:javascript src="bootstrap.js"/>
-    <asset:javascript src="application"/>
+    <asset:javascript src="prototype.min.js"/>
+    <asset:javascript src="application.js"/>
     <g:render template="/common/js"/>
     <g:render template="/common/css"/>
 

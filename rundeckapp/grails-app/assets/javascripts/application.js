@@ -1,4 +1,3 @@
-//= require prototype
 //= require noconflict
 //= require_self
 //= require menus
