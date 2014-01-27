@@ -40,7 +40,7 @@
                     <span class="summary nodetags">
                         <g:if test="${link}">
                             <g:render template="nodeFilterLink"
-                                model="[key:'tags',value:tag,linktext:tag+' : '+tagsummary[tag],css:'tag textbtn']"
+                                model="[key:'tags',value:tag,linktext:tag+' ('+tagsummary[tag]+')',css:'tag textbtn']"
                                       />
                         </g:if>
                         <g:elseif test="${action}">
@@ -63,7 +63,7 @@
                         <span class="summary">
                             <g:if test="${link}">
                                 <g:render template="nodeFilterLink"
-                                          model="[key: 'tags', value: tag, linktext: tag + ' : ' + tagsummary[tag], css: 'tag textbtn']"/>
+                                          model="[key: 'tags', value: tag, linktext: tag + ' (' + tagsummary[tag]+')', css: 'tag textbtn']"/>
                             </g:if>
                             <g:elseif test="${action}">
                                 <span class=" ${action.classnames}" onclick="${action.onclick}"
@@ -72,7 +72,7 @@
                             </g:elseif>
                             <g:else>
                                 ${tag.encodeAsHTML()}
-                                : ${tagsummary[tag]}
+                                (${tagsummary[tag]})
                             </g:else></span>
                     </g:each>
                 </span>
