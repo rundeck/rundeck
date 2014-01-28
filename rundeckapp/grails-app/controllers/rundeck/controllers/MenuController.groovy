@@ -338,6 +338,7 @@ class MenuController {
         def pviewmap=[:]
         def newschedlist=[]
         def unauthcount=0
+        def readauthcount=0
 
         /*
          'group/name' -> [ jobs...]
@@ -359,6 +360,7 @@ class MenuController {
             }
 
         }
+        readauthcount= newschedlist.size()
 
         if(grailsApplication.config.rundeck?.gui?.realJobTree != "false") {
             //Adding group entries for empty hierachies to have a "real" tree 
@@ -397,7 +399,8 @@ class MenuController {
         total: total,
         max: finishq.max,
         offset:finishq.offset,
-        unauthorizedcount:unauthcount
+        unauthorizedcount:unauthcount,
+        totalauthorized: readauthcount,
         ]
     }
     

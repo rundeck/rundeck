@@ -148,7 +148,7 @@
                 <g:if test="${wasfiltered}">
                     <div>
                     <g:if test="${!params.compact}">
-                        <span class="h4">${total} <g:message code="domain.ScheduledExecution.title"/>s</span>
+                        <span class="h4">${totalauthorized} <g:message code="domain.ScheduledExecution.title"/>s</span>
                             matching filter:
                     </g:if>
 
@@ -184,7 +184,7 @@
                 </g:if>
                 <g:else>
                     <g:if test="${!params.compact}">
-                    <span class="h4"><g:message code="domain.ScheduledExecution.title"/>s (${total})</span>
+                    <span class="h4"><g:message code="domain.ScheduledExecution.title"/>s (${totalauthorized})</span>
                     </g:if>
 
                     <span class="textbtn textbtn-default obs_filtertoggle"  id="${rkey}filter-toggle">
@@ -283,7 +283,6 @@
                 </g:if>
                 <g:else>
                     <div class="presentation">
-                        No Jobs have been defined.
 
                         <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_CREATE}" project="${params.project ?: request.project}">
                             <ul>
