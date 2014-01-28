@@ -1654,7 +1654,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
           return RequestContextHolder.currentRequestAttributes().getSession()
       }
 
-    def createJobReferenceContext(ScheduledExecution se, StepExecutionContext executionContext, String[] newargs)
+    def createJobReferenceContext(ScheduledExecution se, StepExecutionContext executionContext, String[] newargs,dovalidate=true)
         throws ExecutionServiceValidationException{
 
         //substitute any data context references in the arguments
@@ -1699,7 +1699,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         //validate the option values
-        validateOptionValues(se, evalPlainOpts + evalSecOpts + evalSecAuthOpts)
+        if(dovalidate){
+            validateOptionValues(se, evalPlainOpts + evalSecOpts + evalSecAuthOpts)
+        }
 
         //arg list for new context
         def stringList = evalPlainOpts.collect { ["-" + it.key, it.value] }.flatten()
