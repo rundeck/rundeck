@@ -108,8 +108,10 @@ class LoggingServiceTests  {
             assertEquals([test: "blah"], defaultMeta)
             writer
         }
-        lfmock.demand.generateLogFilepathForExecution(1..1) { Execution e2 ->
+        lfmock.demand.getFileForExecutionFiletype(1..1) { Execution e2, String filetype, boolean stored ->
             assertEquals(1, e2.id)
+            assertEquals("rdlog", filetype)
+            assertEquals(false, stored)
             new File("/test/file/path")
         }
 
@@ -172,8 +174,10 @@ class LoggingServiceTests  {
             assertEquals([test: "blah"], defaultMeta)
             writer
         }
-        lfmock.demand.generateLogFilepathForExecution(1..1) { Execution e2 ->
+        lfmock.demand.getFileForExecutionFiletype(1..1) { Execution e2, String filetype, boolean stored ->
             assertEquals(1, e2.id)
+            assertEquals("rdlog", filetype)
+            assertEquals(false, stored)
             new File("/test/file/path")
         }
         service.logFileStorageService=lfmock.createMock()

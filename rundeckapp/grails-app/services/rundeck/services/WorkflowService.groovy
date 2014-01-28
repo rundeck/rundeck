@@ -26,8 +26,6 @@ import rundeck.services.logging.ExecutionLogState
 import rundeck.services.logging.WorkflowStateFileLoader
 import rundeck.services.workflow.StateMapping
 
-import java.text.SimpleDateFormat
-
 class WorkflowService implements ApplicationContextAware{
     public static final String STATE_FILE_FILETYPE = "state.json"
 
@@ -156,7 +154,7 @@ class WorkflowService implements ApplicationContextAware{
      * @return
      */
     public File getStateFileForExecution(Execution execution) {
-        logFileStorageService.getFileForExecutionFiletype(execution, STATE_FILE_FILETYPE)
+        logFileStorageService.getFileForExecutionFiletype(execution, STATE_FILE_FILETYPE, true)
     }
 
     def persistExecutionState(Closure storagerequest, Long id, WorkflowState state, File file) {

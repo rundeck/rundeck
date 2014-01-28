@@ -223,7 +223,7 @@ class LogFileStorageService implements InitializingBean{
      */
     StreamingLogWriter getLogFileWriterForExecution(Execution e, Map<String, String> defaultMeta) {
         def filetype = LoggingService.LOG_FILE_FILETYPE
-        File file = getFileForLocalPath(generateLocalPathForExecutionFile(e, filetype))
+        File file = getFileForExecutionFiletype(e, filetype,false)
 
         if (!file.getParentFile().isDirectory()) {
             if (!file.getParentFile().mkdirs()) {
@@ -291,7 +291,7 @@ class LogFileStorageService implements InitializingBean{
             Execution e = request.execution
             if (serverUUID == e.serverNodeUUID) {
                 log.info("re-queueing incomplete log storage request for execution ${e.id}")
-                File file = getFileForLocalPath(generateLocalPathForExecutionFile(e, request.filetype))
+                File file = getFileForExecutionFiletype(e, request.filetype,true)
                 def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolver(e.project))
                 if(null!=plugin) {
                     //re-queue storage request
@@ -305,32 +305,29 @@ class LogFileStorageService implements InitializingBean{
     }
 
     /**
-     * Return the File for the execution log
-     * @param execution
-     * @return
-     */
-    File generateLogFilepathForExecution(Execution execution) {
-        return getFileForLocalPath(generateLocalPathForExecutionFile(execution, LoggingService.LOG_FILE_FILETYPE))
-    }
-
-    /**
      * Return the local file path for a stored file for the execution given the filetype
-     * @param execution
-     * @return
+     * @param execution the execution
+     * @param filetype filetype (extension)
+     * @param useStoredPath if true, use the original path stored in the execution (support pre 1.6 rundeck), otherwise generate the path dynamically based on the execution/job
+     * @return the file
      */
-    def File getFileForExecutionFiletype(Execution execution, String filetype) {
-        //execution on another rundeck server, generate a local filepath
-        return getFileForLocalPath(generateLocalPathForExecutionFile(execution, filetype))
+    def File getFileForExecutionFiletype(Execution execution, String filetype, boolean useStoredPath) {
+        if (useStoredPath && execution.outputfilepath) {
+            //use previously stored outputfilepath if present, substitute correct filetype
+            String path = execution.outputfilepath.replaceAll(/\.([^\.]+)$/,'')
+            return new File(path+'.'+filetype)
+        } else{
+            return getFileForLocalPath(generateLocalPathForExecutionFile(execution, filetype))
+        }
     }
     /**
      * Generate a relative path for log file of the given execution
      * @param execution
      * @return
      */
-
     public static String generateLocalPathForExecutionFile(Execution execution, String extension) {
         if (execution.scheduledExecution) {
-            return "${execution.project}/job/${execution.scheduledExecution.generateFullName()}/logs/${execution.id}."+extension
+            return "${execution.project}/job/${execution.scheduledExecution.extid}/logs/${execution.id}."+extension
         } else {
             return "${execution.project}/run/logs/${execution.id}."+ extension
         }
@@ -375,7 +372,7 @@ class LogFileStorageService implements InitializingBean{
      * @return state of the execution log
      */
     private Map getLogFileState(Execution execution, String filetype, ExecutionFileStoragePlugin plugin) {
-        File file = getFileForExecutionFiletype(execution, filetype)
+        File file = getFileForExecutionFiletype(execution, filetype, true)
         def key = logFileRetrievalKey(execution,filetype)
 
         //check local file
@@ -545,7 +542,7 @@ class LogFileStorageService implements InitializingBean{
         def loader= requestLogFileLoad(e, filetype, performLoad)
         def reader=null
         if(loader.file){
-            reader = getLogReaderForFile(getFileForExecutionFiletype(e, filetype))
+            reader = getLogReaderForFile(loader.file)
         }
         return new ExecutionLogReader(state: loader.state, reader: reader,
                 errorCode: loader.errorCode, errorData: loader.errorData)
@@ -572,7 +569,7 @@ class LogFileStorageService implements InitializingBean{
         def file = null
         switch (state) {
             case ExecutionLogState.AVAILABLE:
-                file= getFileForExecutionFiletype(e, filetype)
+                file= getFileForExecutionFiletype(e, filetype, true)
                 break
             case ExecutionLogState.AVAILABLE_REMOTE:
                 if (performLoad) {
@@ -618,7 +615,7 @@ class LogFileStorageService implements InitializingBean{
      */
     private ExecutionLogState requestLogFileRetrieval(Execution execution, String filetype, ExecutionFileStorage plugin){
         def key=logFileRetrievalKey(execution,filetype)
-        def file = getFileForExecutionFiletype(execution,filetype)
+        def file = getFileForExecutionFiletype(execution, filetype, false)
         Map newstate = [state: ExecutionLogState.PENDING_LOCAL, file: file, filetype: filetype,
                 storage: plugin, id: key, name: getConfiguredPluginName(),count:0]
         def previous = logFileRetrievalResults.get(key)

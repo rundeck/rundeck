@@ -186,7 +186,7 @@ class ExecutionController {
             flash.error = "Execution not found for id: "+params.id
             return render(template:"/common/error")
         }
-        def file = new File(e.outputfilepath)
+        def file = new File(loggingService.getLogFileForExecution(e))
         def filesize=-1
         if (file.exists()) {
             filesize = file.length()
@@ -896,13 +896,7 @@ class ExecutionController {
                             args: [AuthConstants.ACTION_READ, "Execution", params.id]
                     ])
         }
-        def filesize=-1
-        if(null!=e.outputfilepath){
-            def file = new File(e.outputfilepath)
-            if (file.exists()) {
-                filesize = file.length()
-            }
-        }
+
         return executionService.respondExecutionsXml(response, [e])
     }
     /**

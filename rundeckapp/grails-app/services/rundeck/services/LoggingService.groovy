@@ -60,7 +60,7 @@ class LoggingService {
         def outfilepath=null
         if (plugins.size() < 1 || isLocalFileStorageEnabled()) {
             plugins << logFileStorageService.getLogFileWriterForExecution(execution, defaultMeta)
-            outfilepath = getLogFileForExecution(execution)
+            outfilepath = logFileStorageService.getFileForExecutionFiletype(execution, LOG_FILE_FILETYPE, false)
         }else{
             log.debug("File log writer disabled for execution ${execution.id}")
         }
@@ -79,7 +79,7 @@ class LoggingService {
      * Return the log file for the execution
      */
     public File getLogFileForExecution(Execution execution) {
-        logFileStorageService.generateLogFilepathForExecution(execution)
+        logFileStorageService.getFileForExecutionFiletype(execution, LOG_FILE_FILETYPE, true)
     }
 
     String getConfiguredStreamingReaderPluginName() {
