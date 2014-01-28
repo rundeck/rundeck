@@ -247,6 +247,13 @@ class ApiService {
                             group(e.scheduledExecution.groupPath ?: '')
                             project(e.scheduledExecution.project)
                             description(e.scheduledExecution.description)
+                            if(e.argString){
+                                options{
+                                    FrameworkService.parseOptsFromString(e.argString).each{k,v->
+                                        option(name:k,value:v)
+                                    }
+                                }
+                            }
                         }
                     }
                     description(summary)

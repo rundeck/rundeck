@@ -48,6 +48,7 @@ Changes introduced by API Version number:
 * Updated endpoints
     - `/api/10/execution/[ID]` - [Execution Info](#execution-info)
         + added `successfulNodes` and `failedNodes` detail.
+        + added `job/options` data
 
 **Version 9**:
 
@@ -720,6 +721,10 @@ Result: An Item List of `executions`.  Each `execution` of the form:
             <name>..</name>
             <group>..</group>
             <description>..</description>
+            <!-- optional if arguments are passed to the job since v10->
+            <options>
+                <option name="optname" value="optvalue"/>...
+            </options>
         </job>
         
         <!-- description of the execution -->
@@ -768,6 +773,12 @@ If known, the average duration of the associated Job will be indicated (in milli
 **API v9 and above**: `project="[project]"` is the project name of the execution.
 
 `successfulNodes` and `failedNodes` list the names of nodes which succeeded or failed. **API v10 and above**.
+
+The `job` section contains `options` if an `argstring` value is set (**API v10 and above**).  Inside `options` is a sequence of `<option>` elements with two attributes:
+
+* `name` the parsed option name
+* `value` the parsed option value
+
 
 ### Execution Info
 
