@@ -253,7 +253,7 @@
             nodeFilter.filterName(filterName);
             nodeFilter.filter(filterString);
             _updateMatchedNodes(data, elem, '${params.project?:request.project}', false, {view: view, expanddetail: true,
-                inlinepaging: false, maxShown: 20}, function (xht) {
+                inlinepaging: false, maxShown: 20, requireRunAuth:true}, function (xht) {
             });
         }
 
