@@ -15,7 +15,7 @@
    id="svg2"
    version="1.1"
    inkscape:version="0.48.2 r9819"
-   sodipodi:docname="icon-node.svg">
+   sodipodi:docname="icon-node-bw.svg">
   <defs
      id="defs4">
     <linearGradient
@@ -279,7 +279,7 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.5"
+     inkscape:zoom="0.70710678"
      inkscape:cx="256"
      inkscape:cy="309.90345"
      inkscape:document-units="px"
@@ -298,7 +298,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -311,13 +311,13 @@
        inkscape:connector-curvature="0"
        id="path3759"
        d="m 84.989399,638.80771 -85.0052705,221.85998 512.0317415,0 -85.00527,-221.85998 z"
-       style="color:#000000;fill:#a3a3a3;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:63.99999619;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+       style="color:#000000;fill:#a3a3a3;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:63.99999619000000450;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
        sodipodi:nodetypes="ccccc"
        inkscape:export-filename="/Users/greg/devel/rundeck2/rundeckapp/web-app/images/icon-small-Node.png"
        inkscape:export-xdpi="2.8099999"
        inkscape:export-ydpi="2.8099999" />
     <path
-       style="color:#000000;fill:#7a7a7a;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:63.99999619;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+       style="color:#000000;fill:#7a7a7a;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:63.99999619000000450;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
        d="m -0.0158715,860.66769 0,93.24896 512.0317415,0 0,-93.24896 z"
        id="rect2985"
        inkscape:connector-curvature="0"
@@ -330,53 +330,43 @@
        inkscape:connector-curvature="0"
        id="path3979"
        d="m 392.95981,890.4001 100,0 0,33.78414 -100,0 z"
-       style="color:#000000;fill:#a3a3a3;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:4;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+       style="color:#000000;fill:#00ff00;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:4;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
        inkscape:export-filename="/Users/greg/devel/rundeck2/rundeckapp/web-app/images/icon-small-Node.png"
        inkscape:export-xdpi="2.8099999"
        inkscape:export-ydpi="2.8099999" />
-    <path
-       inkscape:export-ydpi="5.6199999"
-       inkscape:export-xdpi="5.6199999"
-       inkscape:export-filename="/Users/greg/devel/rundeck2/rundeckapp/web-app/images/icon-small-Node@2x.png"
-       style="color:#000000;fill:#a3a3a3;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:4;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
-       d="m 30.80038,890.4001 100,0 0,33.78414 -100,0 z"
-       id="path4769"
-       inkscape:connector-curvature="0"
-       sodipodi:nodetypes="ccccc" />
-    <path
-       sodipodi:nodetypes="ccccc"
-       inkscape:connector-curvature="0"
-       id="path4771"
-       d="m 151.52019,890.4001 100,0 0,33.78414 -100,0 z"
-       style="color:#000000;fill:#a3a3a3;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:4;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
-       inkscape:export-filename="/Users/greg/devel/rundeck2/rundeckapp/web-app/images/icon-small-Node@2x.png"
-       inkscape:export-xdpi="5.6199999"
-       inkscape:export-ydpi="5.6199999" />
-    <path
-       inkscape:export-ydpi="5.6199999"
-       inkscape:export-xdpi="5.6199999"
-       inkscape:export-filename="/Users/greg/devel/rundeck2/rundeckapp/web-app/images/icon-small-Node@2x.png"
-       style="color:#000000;fill:#ffff00;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:4;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
-       d="m 272.23999,890.4001 100,0 0,33.78414 -100,0 z"
-       id="path4773"
-       inkscape:connector-curvature="0"
-       sodipodi:nodetypes="ccccc" />
-    <path
-       sodipodi:type="star"
-       style="color:#000000;fill:none;stroke:#ffff00;stroke-width:28.80759239;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
-       id="path3876"
-       sodipodi:sides="3"
-       sodipodi:cx="240"
-       sodipodi:cy="162"
-       sodipodi:r1="160.12495"
-       sodipodi:r2="80.062477"
-       sodipodi:arg1="0.52359878"
-       sodipodi:arg2="1.5707963"
-       inkscape:flatsided="true"
-       inkscape:rounded="0"
-       inkscape:randomized="0"
-       d="m 378.67228,242.06248 -277.34456,0 L 240,1.8750458 z"
-       transform="matrix(0.55612953,0,0,0.5546896,122.52891,682.0829)"
-       inkscape:transform-center-y="-22.204906" />
+    <g
+       id="g5421"
+       style="fill:#a3a3a3;fill-opacity:1"
+       inkscape:export-filename="/Users/greg/devel/rundeck2/rundeckapp/web-app/images/icon-small-Node.png"
+       inkscape:export-xdpi="2.8099999"
+       inkscape:export-ydpi="2.8099999">
+      <path
+         sodipodi:nodetypes="ccccc"
+         inkscape:connector-curvature="0"
+         id="path4769"
+         d="m 30.80038,890.4001 100,0 0,33.78414 -100,0 z"
+         style="color:#000000;fill:#a3a3a3;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:4;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+         inkscape:export-filename="/Users/greg/devel/rundeck2/rundeckapp/web-app/images/icon-small-Node@2x.png"
+         inkscape:export-xdpi="5.6199999"
+         inkscape:export-ydpi="5.6199999" />
+      <path
+         inkscape:export-ydpi="5.6199999"
+         inkscape:export-xdpi="5.6199999"
+         inkscape:export-filename="/Users/greg/devel/rundeck2/rundeckapp/web-app/images/icon-small-Node@2x.png"
+         style="color:#000000;fill:#a3a3a3;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:4;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+         d="m 151.52019,890.4001 100,0 0,33.78414 -100,0 z"
+         id="path4771"
+         inkscape:connector-curvature="0"
+         sodipodi:nodetypes="ccccc" />
+      <path
+         sodipodi:nodetypes="ccccc"
+         inkscape:connector-curvature="0"
+         id="path4773"
+         d="m 272.23999,890.4001 100,0 0,33.78414 -100,0 z"
+         style="color:#000000;fill:#a3a3a3;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:4;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+         inkscape:export-filename="/Users/greg/devel/rundeck2/rundeckapp/web-app/images/icon-small-Node@2x.png"
+         inkscape:export-xdpi="5.6199999"
+         inkscape:export-ydpi="5.6199999" />
+    </g>
   </g>
 </svg>

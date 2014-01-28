@@ -151,6 +151,9 @@
         height: 10px;
         background-image: url("${resource(dir:'images',file:'icon-small-Node.png')}");
     }
+    .rdicon.icon-small.node.node-runnable{
+        background-image: url("${resource(dir:'images',file:'icon-small-node-run.png')}");
+    }
     .rdicon.icon-med.shell,.rdicon.icon-med.command,.rdicon.icon-med.script,.rdicon.icon-med.scriptfile{
           background-image: url("${resource(dir:'images',file:'icon-med-shell.png')}");
     }
@@ -194,6 +197,9 @@
              .rdicon.icon-small.node {
                  background-size: 16px 10px;
                  background-image: url("${resource(dir:'images',file:'icon-small-Node@2x.png')}");
+             }
+             .rdicon.icon-small.node.node-runnable {
+                 background-image: url("${resource(dir:'images',file:'icon-small-Node-run@2x.png')}");
              }
             .rdicon.app-logo, .nodedetail.server .nodedesc, .node_entry.server .nodedesc{
                 background-image: url("${resource(dir: 'images', file: appLogoHires)}");

@@ -41,20 +41,21 @@
             <g:set var="executions" value="${nodedata.executions}"/>
             <g:set var="resources" value="${nodedata.resources}"/>
             <g:set var="resName" value="${node.nodename}"/>
+            <g:set var="runnable" value="${null == nodeauthrun || nodeauthrun[node.nodename]}"/>
 
             <tr class="${i%2==1?'alternateRow':''} node_entry ${nodedata.islocal?'server':''} hover-action-holder">
                 <td class="nodeident" title="${node.description?.encodeAsHTML()}" >
                     <g:if test="${expanddetail||params.expanddetail}">
                         <g:expander key="${ukey+'node_detail_'+i}" imgfirst="true">
                         <span class="node_ident" id="${ukey}_${node.nodename}_key">
-                            <i class="rdicon node icon-small"></i>
+                            <i class="rdicon node ${runnable?'node-runnable':''} icon-small"></i>
                             ${resName.encodeAsHTML()}
                         </span>
                         </g:expander>
                     </g:if>
                     <g:else>
                         <span class="node_ident" id="${ukey}_${node.nodename}_key">
-                            <i class="rdicon node icon-small"></i>
+                            <i class="rdicon node ${runnable ? 'node-runnable' : ''} icon-small"></i>
                             ${resName.encodeAsHTML()}
                         </span>
                     </g:else>
@@ -112,11 +113,6 @@
                     </td>
                 </g:if>
                 <td>
-                    <g:if test="${null != nodeauthrun && !nodeauthrun[node.nodename]}">
-                        <span title="Not authorized to 'run' on this node" class="text-warning has_tooltip">
-                            <i class="glyphicon glyphicon-warning-sign"></i>
-                        </span>
-                    </g:if>
                     <g:if test="${node.attributes?.remoteUrl}">
                         <g:set var="nodecontextdata" value="${DataContextUtils.nodeData(node)}"/>
                         <%
@@ -143,11 +139,11 @@
                 %{--</g:link>--}%
                 <tr id="${ukey}node_detail_${i}" class="detail_content nodedetail ${nodedata.islocal ? 'server' : ''}" style="display:none">
                     <td colspan="${(4+cols.size())}">
-                        <g:render template="nodeDetailsSimple" model="[useNamespace:true, linkAttrs: true, node:node,key:ukey+'_'+node.nodename+'_key',projects:nodedata.projects,exclude: cols?null:['username','hostname']]"/>
+                        <g:render template="nodeDetailsSimple" model="[runnable:runnable, useNamespace:true, linkAttrs: true, node:node,key:ukey+'_'+node.nodename+'_key',projects:nodedata.projects,exclude: cols?null:['username','hostname']]"/>
                     </td>
                 </tr>
             </g:if>
             <g:else>
-                <g:render template="nodeTooltipView" model="[node:node,key:ukey+'_'+node.nodename+'_key',includeDescription:true]"/>
+                <g:render template="nodeTooltipView" model="[runnable: runnable, node:node,key:ukey+'_'+node.nodename+'_key',includeDescription:true]"/>
             </g:else>
         </g:each>

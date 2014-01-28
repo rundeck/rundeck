@@ -8,6 +8,11 @@
             </tr>
         </g:if>
         <tr>
+            <td class="value text-muted" colspan="4">
+                You ${runnable?'':'do not'} have access to execute commands on this node.
+            </td>
+        </tr>
+        <tr>
             <td class="key">
                 <g:message code="node.metadata.os"/>
             </td>
