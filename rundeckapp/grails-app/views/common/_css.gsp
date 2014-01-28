@@ -152,7 +152,7 @@
         background-image: url("${resource(dir:'images',file:'icon-small-Node.png')}");
     }
     .rdicon.icon-small.node.node-runnable{
-        background-image: url("${resource(dir:'images',file:'icon-small-node-run.png')}");
+        background-image: url("${resource(dir:'images',file:'icon-small-Node-run.png')}");
     }
     .rdicon.icon-med.shell,.rdicon.icon-med.command,.rdicon.icon-med.script,.rdicon.icon-med.scriptfile{
           background-image: url("${resource(dir:'images',file:'icon-med-shell.png')}");
