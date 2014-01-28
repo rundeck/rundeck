@@ -262,7 +262,7 @@ class ReportsController {
 
                 }
                 if(map.execution.argString){
-                    map.execution.jobArguments=frameworkService.parseOptsFromString(map.execution.argString)
+                    map.execution.jobArguments=FrameworkService.parseOptsFromString(map.execution.argString)
                 }
             }
             map.user= map.remove('author')

@@ -422,7 +422,7 @@ class FrameworkService implements ApplicationContextAware {
      * can have quoted values, using single or double quotes, and allows double/single to be
      * embedded. To embed single/single or double/double, the quotes should be repeated.
      */
-    def Map<String,String> parseOptsFromString(String argstring){
+    public static Map<String,String> parseOptsFromString(String argstring){
         if(!argstring){
             return null;
         }
@@ -435,7 +435,7 @@ class FrameworkService implements ApplicationContextAware {
      * @param tokens
      * @return
      */
-    def Map<String,String> parseOptsFromArray(String[] tokens){
+    public static Map<String,String> parseOptsFromArray(String[] tokens){
         def Map<String,String> optsmap = new HashMap<String,String>()
         def String key=null
         for(int i=0;i<tokens.length;i++){

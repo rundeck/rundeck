@@ -1699,10 +1699,10 @@ class ScheduledExecutionController  {
         if(params.retryExecId){
             Execution e = Execution.get(params.retryExecId)
             if(e){
-                model.selectedoptsmap=frameworkService.parseOptsFromString(e.argString)
+                model.selectedoptsmap=FrameworkService.parseOptsFromString(e.argString)
             }
         }else if(params.argString){
-            model.selectedoptsmap = frameworkService.parseOptsFromString(params.argString)
+            model.selectedoptsmap = FrameworkService.parseOptsFromString(params.argString)
         }
         model.localNodeName=framework.getFrameworkNodeName()
 

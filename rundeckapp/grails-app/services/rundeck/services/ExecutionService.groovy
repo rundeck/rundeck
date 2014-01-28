@@ -799,7 +799,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         //convert argString into Map<String,String>
         def String[] args = execMap.argString? OptsUtil.burst(execMap.argString):inputargs
-        def Map<String, String> optsmap = execMap.argString ? frameworkService.parseOptsFromString(execMap.argString) : null!=args? frameworkService.parseOptsFromArray(args):[:]
+        def Map<String, String> optsmap = execMap.argString ? FrameworkService.parseOptsFromString(execMap.argString) : null!=args? frameworkService.parseOptsFromArray(args):[:]
         if(extraParamsExposed){
             optsmap.putAll(extraParamsExposed)
         }
@@ -1174,7 +1174,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     private HashMap validateJobInputOptions(Map props, ScheduledExecution scheduledExec) {
         def optparams = filterOptParams(props)
         if (!optparams && props.argString) {
-            optparams = frameworkService.parseOptsFromString(props.argString)
+            optparams = FrameworkService.parseOptsFromString(props.argString)
         }
         optparams = addOptionDefaults(scheduledExec, optparams)
         validateOptionValues(scheduledExec, optparams)
@@ -1189,7 +1189,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def results=[:]
         def optparams
         if (params?.argString) {
-            optparams = frameworkService.parseOptsFromString(params.argString)
+            optparams = FrameworkService.parseOptsFromString(params.argString)
         }else if(params?.optparams){
             optparams=params.optparams
         }else{
@@ -1363,7 +1363,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @return map of option name to value, where value is a String or a List of Strings
      */
     def Map parseJobOptsFromString(ScheduledExecution scheduledExecution, String argString){
-        def optparams = frameworkService.parseOptsFromString(argString)
+        def optparams = FrameworkService.parseOptsFromString(argString)
         if(optparams){
             //look for multi-valued options and try to split on delimiters
             scheduledExecution.options.each{Option opt->

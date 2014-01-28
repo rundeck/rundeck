@@ -1,6 +1,7 @@
 package rundeck
 
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
+import rundeck.services.FrameworkService
 
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
@@ -10,8 +11,7 @@ class UtilityTagLib{
     def public static daysofweekord = ScheduledExecution.daysofweeklist;
     def public static monthsofyearord = ScheduledExecution.monthsofyearlist;
 	static returnObjectForTags = ['rkey','w3cDateValue','sortGroupKeys','helpLinkUrl','parseOptsFromString']
-    def frameworkService
-  
+
     private static Random rand=new java.util.Random()
     /**
      * Return a new random string every time it is called.  Attrs are:
@@ -29,7 +29,7 @@ class UtilityTagLib{
     }
 
     def parseOptsFromString={attrs,body->
-        return frameworkService.parseOptsFromString(attrs.args)
+        return FrameworkService.parseOptsFromString(attrs.args)
     }
     /**
      * Return the group map sorted by group path

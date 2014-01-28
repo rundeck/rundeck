@@ -125,7 +125,7 @@ class MenuController {
                     data['jobAverageDuration']= Math.floor(it.scheduledExecution.totalTime / it.scheduledExecution.execCount)
                 }
                 if (it.argString) {
-                    data.jobArguments = frameworkService.parseOptsFromString(it.argString)
+                    data.jobArguments = FrameworkService.parseOptsFromString(it.argString)
                 }
             }
             map + data

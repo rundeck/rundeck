@@ -61,19 +61,17 @@ class FrameworkServiceTests  {
         props1=null
     }
 
-    void testParseOptsFromString(){
-        def FrameworkService testService = new FrameworkService();
-
-        test:{
-            def m1 = testService.parseOptsFromString("-test 1")
+    void testParseOptsFromString1(){
+            def m1 = FrameworkService.parseOptsFromString("-test 1")
             assertNotNull(m1)
             assertTrue(m1 instanceof Map<String, String>)
             assertEquals(1, m1.size())
             assertNotNull(m1['test'])
             assertEquals("1", m1['test'])
-        }
-        test:{
-            def m1 = testService.parseOptsFromString("-test 1 -test2 flamjamps")
+    }
+
+    void testParseOptsFromString2() {
+            def m1 = FrameworkService.parseOptsFromString("-test 1 -test2 flamjamps")
             assertNotNull(m1)
             assertTrue(m1 instanceof Map<String, String>)
             assertEquals(2, m1.keySet().size())
@@ -81,9 +79,10 @@ class FrameworkServiceTests  {
             assertEquals("1", m1['test'])
             assertNotNull(m1['test2'])
             assertEquals("flamjamps", m1['test2'])
-        }
-        test:{
-            def m1 = testService.parseOptsFromString("-test 1 -test2 'flam jamps'")
+    }
+
+    void testParseOptsFromStringQuoted() {
+            def m1 = FrameworkService.parseOptsFromString("-test 1 -test2 'flam jamps'")
             assertNotNull(m1)
             assertTrue(m1 instanceof Map<String, String>)
             assertEquals(2, m1.size())
@@ -92,8 +91,9 @@ class FrameworkServiceTests  {
             assertNotNull(m1['test2'])
             assertEquals("flam jamps", m1['test2'])
         }
-        test:{
-            def m1 = testService.parseOptsFromString("-test 1 -test2 'flam jamps' notparsed")
+
+    void testParseOptsFromStringIgnored() {
+            def m1 = FrameworkService.parseOptsFromString("-test 1 -test2 'flam jamps' notparsed")
             assertNotNull(m1)
             assertTrue(m1 instanceof Map<String, String>)
             assertEquals(2, m1.size())
@@ -101,20 +101,17 @@ class FrameworkServiceTests  {
             assertEquals("1", m1['test'])
             assertNotNull(m1['test2'])
             assertEquals("flam jamps", m1['test2'])
-        }
     }
 
     void testParseOptsIgnoredValues() {
-        def FrameworkService testService = new FrameworkService();
         //ignores unassociated string and trailing -opt
-        def m1 = testService.parseOptsFromString("-test 1 -test2 'flam jamps' notparsed -ignored")
+        def m1 = FrameworkService.parseOptsFromString("-test 1 -test2 'flam jamps' notparsed -ignored")
         assertNotNull(m1)
         assertEquals(['test':'1',test2:'flam jamps'],m1)
     }
 
     void testParseOptsFromStringShouldPreserveDashedValue() {
-        def FrameworkService testService = new FrameworkService();
-        def m1 = testService.parseOptsFromString("-test -blah")
+        def m1 = FrameworkService.parseOptsFromString("-test -blah")
         assertNotNull(m1)
         assertTrue(m1 instanceof Map<String, String>)
         assertEquals(1, m1.size())
@@ -122,8 +119,7 @@ class FrameworkServiceTests  {
         assertEquals("-blah", m1['test'])
     }
     void testParseOptsFromArrayShouldPreserveDashedValue() {
-        def FrameworkService testService = new FrameworkService();
-        def m1 = testService.parseOptsFromArray(["-test","-blah"] as String[])
+        def m1 = FrameworkService.parseOptsFromArray(["-test","-blah"] as String[])
         assertNotNull(m1)
         assertTrue(m1 instanceof Map<String, String>)
         assertEquals(1, m1.size())
