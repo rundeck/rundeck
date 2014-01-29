@@ -361,22 +361,5 @@
        id="path4773"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="ccccc" />
-    <path
-       sodipodi:type="star"
-       style="color:#000000;fill:none;stroke:#ffff00;stroke-width:28.80759239;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
-       id="path3876"
-       sodipodi:sides="3"
-       sodipodi:cx="240"
-       sodipodi:cy="162"
-       sodipodi:r1="160.12495"
-       sodipodi:r2="80.062477"
-       sodipodi:arg1="0.52359878"
-       sodipodi:arg2="1.5707963"
-       inkscape:flatsided="true"
-       inkscape:rounded="0"
-       inkscape:randomized="0"
-       d="m 378.67228,242.06248 -277.34456,0 L 240,1.8750458 z"
-       transform="matrix(0.55612953,0,0,0.5546896,122.52891,682.0829)"
-       inkscape:transform-center-y="-22.204906" />
   </g>
 </svg>

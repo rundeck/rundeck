@@ -50,9 +50,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.5"
-     inkscape:cx="521.8543"
-     inkscape:cy="386.32072"
+     inkscape:zoom="2.7922377"
+     inkscape:cx="-73.681859"
+     inkscape:cy="329.42082"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -71,7 +71,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -394,7 +394,7 @@
     <g
        id="g3984"
        transform="translate(-183,17)"
-       inkscape:export-filename="/Users/greg/Desktop/rundeck logos/logo-square-1024.png"
+       inkscape:export-filename="/Users/greg/Desktop/rundeck-logo1-square-1024.png"
        inkscape:export-xdpi="550.27002"
        inkscape:export-ydpi="550.27002">
       <g
@@ -733,55 +733,51 @@
          x="190.80487"
          y="766.73236"
          id="tspan3267">res icons</tspan></text>
-    <g
-       id="g3471"
-       transform="matrix(0.69597196,0,0,0.69597196,30.341971,219.79443)">
-      <rect
-         inkscape:export-ydpi="25.790001"
-         inkscape:export-xdpi="25.790001"
-         inkscape:export-filename="/Users/greg/devel/rundeck-plugin/src/main/webapp/images/rundeck_48x48.png"
-         style="color:#000000;fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:16;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
-         id="rect3395"
-         width="167.48175"
-         height="167.49693"
-         x="16.059034"
-         y="639.19287" />
-      <path
-         inkscape:export-ydpi="3.2"
-         inkscape:export-xdpi="3.2"
-         inkscape:export-filename="/Users/greg/devel/rundeck/rundeckapp/web-app/images/app-logo-small.png"
-         style="color:#000000;fill:#ff0000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:16;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
-         d="m 27.99702,663.2856 6.453324,9.60007 31.946681,0 -6.4,-9.60007 -32.000005,0 z m 12.908335,19.20005 3.09165,4.60011 -3.333321,4.99999 32.133329,0 3.200007,-4.80003 -3.200007,-4.80007 -31.891658,0 z m -6.641671,19.20008 -6.266664,9.40003 0,0.19984 32.000005,0 6.4,-9.59996 -32.133341,0 z"
-         id="path3399"
-         inkscape:connector-curvature="0" />
-      <flowRoot
-         transform="matrix(0.32127168,0,0,0.31642285,-24.570892,526.4812)"
-         style="font-size:12px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#ffffff;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
-         id="flowRoot3401"
-         xml:space="preserve"><flowRegion
-           id="flowRegion3403"><rect
-             style="fill:#ffffff;fill-opacity:1"
-             y="420.03323"
-             x="319.07568"
-             height="261.37891"
-             width="892.4491"
-             id="rect3405" /></flowRegion><flowPara
-           style="font-size:140px;font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;font-family:Futura;-inkscape-font-specification:Futura Medium"
-           id="flowPara3407">RUN</flowPara></flowRoot>      <flowRoot
-         transform="matrix(0.39125954,0,0,0.38535441,-96.96596,564.8149)"
-         style="font-size:12px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#ffffff;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
-         id="flowRoot3409"
-         xml:space="preserve"><flowRegion
-           id="flowRegion3411"><rect
-             style="fill:#ffffff;fill-opacity:1"
-             y="420.03323"
-             x="319.07568"
-             height="261.37891"
-             width="892.4491"
-             id="rect3413" /></flowRegion><flowPara
-           style="font-size:140px;font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;font-family:Futura;-inkscape-font-specification:Futura Medium"
-           id="flowPara3415">DECK</flowPara></flowRoot>    </g>
     <rect
+       y="664.65472"
+       x="41.518608"
+       height="116.57317"
+       width="116.5626"
+       id="rect3395"
+       style="color:#000000;fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:16;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+       inkscape:export-filename="/Users/greg/devel/rundeck-plugin/src/main/webapp/images/rundeck_48x48.png"
+       inkscape:export-xdpi="25.790001"
+       inkscape:export-ydpi="25.790001" />
+    <path
+       inkscape:connector-curvature="0"
+       id="path3399"
+       d="m 49.827112,681.42261 4.491332,6.68138 22.233995,0 -4.454221,-6.68138 -22.271106,0 z m 8.983839,13.3627 2.151702,3.20154 -2.319898,3.47986 22.363896,0 2.227115,-3.34069 -2.227115,-3.34071 -22.1957,0 z m -4.622417,13.36271 -4.361422,6.54216 0,0.13908 22.271106,0 4.454221,-6.6813 -22.363905,0 z"
+       style="color:#000000;fill:#ff0000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:16;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+       inkscape:export-filename="/Users/greg/devel/rundeck/rundeckapp/web-app/images/app-logo-small.png"
+       inkscape:export-xdpi="3.2"
+       inkscape:export-ydpi="3.2" />
+    <flowRoot
+       xml:space="preserve"
+       id="flowRoot3401"
+       style="font-size:12px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#ffffff;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       transform="matrix(0.22359608,0,0,0.22022143,13.241319,586.21058)"><flowRegion
+         id="flowRegion3403"><rect
+           id="rect3405"
+           width="892.4491"
+           height="261.37891"
+           x="319.07568"
+           y="420.03323"
+           style="fill:#ffffff;fill-opacity:1" /></flowRegion><flowPara
+         id="flowPara3407"
+         style="font-size:140px;font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;font-family:Futura;-inkscape-font-specification:Futura Medium">RUN</flowPara></flowRoot>    <flowRoot
+       xml:space="preserve"
+       id="flowRoot3409"
+       style="font-size:12px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#ffffff;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       transform="matrix(0.27230567,0,0,0.26819586,-37.143618,612.88976)"><flowRegion
+         id="flowRegion3411"><rect
+           id="rect3413"
+           width="892.4491"
+           height="261.37891"
+           x="319.07568"
+           y="420.03323"
+           style="fill:#ffffff;fill-opacity:1" /></flowRegion><flowPara
+         id="flowPara3415"
+         style="font-size:140px;font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;font-family:Futura;-inkscape-font-specification:Futura Medium">DECK</flowPara></flowRoot>    <rect
        style="color:#000000;fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:2;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
        id="rect3489"
        width="167.48175"
@@ -866,5 +862,57 @@
            width="892.4491"
            id="rect3560" /></flowRegion><flowPara
          style="font-size:140px;font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;font-family:Futura;-inkscape-font-specification:Futura Medium"
-         id="flowPara3562">DECK</flowPara></flowRoot>  </g>
+         id="flowPara3562">DECK</flowPara></flowRoot>    <rect
+       inkscape:export-ydpi="25.790001"
+       inkscape:export-xdpi="25.790001"
+       inkscape:export-filename="/Users/greg/devel/rundeck-plugin/src/main/webapp/images/rundeck_48x48.png"
+       style="color:#000000;fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:16;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+       id="rect3182"
+       width="116.5626"
+       height="116.57317"
+       x="-184.4814"
+       y="664.65472" />
+    <g
+       id="g3273"
+       transform="translate(0,-1.899302)">
+      <g
+         transform="translate(3.2721192e-6,0)"
+         id="g3266">
+        <path
+           inkscape:export-ydpi="3.2"
+           inkscape:export-xdpi="3.2"
+           inkscape:export-filename="/Users/greg/devel/rundeck/rundeckapp/web-app/images/app-logo-small.png"
+           style="color:#000000;fill:#ff0000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:16;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+           d="m -178.44478,691.00753 3.94876,5.87424 19.54805,0 -3.91613,-5.87424 -19.58068,0 z m 7.89856,11.74844 1.89176,2.81478 -2.03964,3.05948 19.66225,0 1.95807,-2.93713 -1.95807,-2.93713 -19.51437,0 z m -4.06402,11.74844 -3.83454,5.75184 0,0.12228 19.58068,0 3.91613,-5.87417 -19.66227,0 z"
+           id="path3184"
+           inkscape:connector-curvature="0" />
+        <flowRoot
+           transform="matrix(0.25028099,0,0,0.2465036,-227.17432,581.52195)"
+           style="font-size:12px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#ffffff;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+           id="flowRoot3186"
+           xml:space="preserve"><flowRegion
+             id="flowRegion3188"><rect
+               style="fill:#ffffff;fill-opacity:1"
+               y="420.03323"
+               x="319.07568"
+               height="261.37891"
+               width="892.4491"
+               id="rect3190" /></flowRegion><flowPara
+             style="font-size:140px;font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;font-family:Futura;-inkscape-font-specification:Futura Medium"
+             id="flowPara3192">RUN</flowPara></flowRoot>      </g>
+      <flowRoot
+         xml:space="preserve"
+         id="flowRoot3231"
+         style="font-size:12px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#ffffff;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+         transform="matrix(0.27230567,0,0,0.26819586,-265.23156,608.8078)"><flowRegion
+           id="flowRegion3233"><rect
+             id="rect3235"
+             width="892.4491"
+             height="261.37891"
+             x="319.07568"
+             y="420.03323"
+             style="fill:#ffffff;fill-opacity:1" /></flowRegion><flowPara
+           id="flowPara3237"
+           style="font-size:140px;font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;font-family:Futura;-inkscape-font-specification:Futura Medium">DECK</flowPara></flowRoot>    </g>
+  </g>
 </svg>
