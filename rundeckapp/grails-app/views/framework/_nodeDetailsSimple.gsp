@@ -7,11 +7,14 @@
                 </td>
             </tr>
         </g:if>
+        <g:if test="${!runnable}">
         <tr>
             <td class="value text-muted" colspan="4">
-                You ${runnable?'':'do not'} have access to execute commands on this node.
+                <i class="glyphicon glyphicon-ban-circle"></i>
+                <g:message code="node.access.not-runnable.message" />
             </td>
         </tr>
+        </g:if>
         <tr>
             <td class="key">
                 <g:message code="node.metadata.os"/>
@@ -36,11 +39,6 @@
                         <span class="atsign">@</span>
                     </g:if>
                     <tmpl:nodeFilterLink key="hostname" value="${node['hostname']}"/>
-                    <g:if test="${null != nodeauthrun && !nodeauthrun[node.nodename]}">
-                        <span title="Not authorized to 'run' on this node" class="text-warning has_tooltip">
-                            <i class="glyphicon glyphicon-warning-sign"></i>
-                        </span>
-                    </g:if>
                 </td>
             </g:if>
         </tr>
