@@ -4,6 +4,7 @@
     <meta name="tabpage" content="jobs"/>
     <meta name="layout" content="base"/>
     <title><g:message code="main.app.name"/> - Create New <g:message code="domain.ScheduledExecution.title"/></title>
+    <asset:javascript src="jobedit.js"/>
 </head>
 <body>
 

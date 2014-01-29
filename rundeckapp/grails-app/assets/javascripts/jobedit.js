@@ -58,7 +58,7 @@ function _formUpdateMatchedNodes() {
     if(typeof(_beforeMatchNodes)=='function'){
         _beforeMatchNodes();
     }
-    new Ajax.Updater('matchednodes', applinks.frameworkNodesFragment, {parameters:params,evalScripts:true,onSuccess:function(
+    new Ajax.Updater('matchednodes', appLinks.frameworkNodesFragment, {parameters:params,evalScripts:true,onSuccess:function(
         e) {
         if (typeof(_afterMatchNodes) == 'function') {
             _afterMatchNodes();
@@ -122,7 +122,7 @@ function _wfiedit(key,num,isErrorHandler) {
         params.scheduledExecutionId = getCurSEID();
     }
     new Ajax.Updater($('wfli_' + key),
-        applinks.workflowEdit, {
+        appLinks.workflowEdit, {
         parameters: params,
         evalScripts:true,
         onSuccess: function(transport) {
@@ -149,7 +149,7 @@ function _wfiview(key,num,isErrorHandler) {
         params['scheduledExecutionId'] = getCurSEID();
     }
     new Ajax.Updater($('wfli_' + key),
-        applinks.workflowRender, {
+        appLinks.workflowRender, {
         parameters: params,
         evalScripts:true,
         onSuccess: function(transport) {
@@ -159,7 +159,7 @@ function _wfiview(key,num,isErrorHandler) {
 }
 function _wfisave(key,num, formelem,iseh) {
     new Ajax.Updater($('wfli_' + key),
-        applinks.workflowSave, {
+        appLinks.workflowSave, {
         parameters: Form.serialize(formelem),
         evalScripts: true,
         onComplete: function(transport) {
@@ -210,7 +210,7 @@ function _wfiaddnew(type,nodestep) {
     parentli.appendChild(ehUlElement);
     olist.appendChild(parentli);
     new Ajax.Updater(newitemElem,
-        applinks.workflowEdit, {
+        appLinks.workflowEdit, {
         parameters: params,
         evalScripts:true,
         onComplete: function(transport) {
@@ -279,7 +279,7 @@ function _addAceTextarea(textarea){
 function _wfisavenew(formelem) {
     var params = Form.serialize(formelem);
     new Ajax.Updater(newitemElem,
-        applinks.workflowSave, {
+        appLinks.workflowSave, {
         parameters: params,
         evalScripts: true,
         onComplete: function(transport) {
@@ -425,7 +425,7 @@ function _wfiaddNewErrorHandler(elem,type,num,nodestep){
     _hideAddNewEH();
 
     new Ajax.Updater(wfiehli,
-        applinks.workflowEdit, {
+        appLinks.workflowEdit, {
             parameters:params,
             evalScripts:true,
             onComplete:function (transport) {
@@ -450,7 +450,7 @@ function _doMoveItem(from, to) {
     }
 
     new Ajax.Updater($('workflowContent').down('ol'),
-        applinks.workflowReorder, {
+        appLinks.workflowReorder, {
         parameters: params,
         evalScripts:true,
         onComplete: function(transport) {
@@ -470,7 +470,7 @@ function _doRemoveItem(key,num,isErrorHandler) {
     Effect.Fade($('wfivis_' + key), {duration:0.2,afterFinish:
         function(f) {
             new Ajax.Updater($('workflowContent').down('ol'),
-                applinks.workflowRemove, {
+                appLinks.workflowRemove, {
                 parameters: params,
                 evalScripts:true,
                 onComplete: function(transport) {
@@ -491,7 +491,7 @@ function _doUndoWFAction() {
     }
 
     new Ajax.Updater($('workflowContent').down('ol'),
-        applinks.workflowUndo, {
+        appLinks.workflowUndo, {
         parameters: params,
         evalScripts:true,
         onComplete: function(transport) {
@@ -510,7 +510,7 @@ function _doRedoWFAction() {
     }
 
     new Ajax.Updater($('workflowContent').down('ol'),
-        applinks.workflowRedo, {
+        appLinks.workflowRedo, {
         parameters: params,
         evalScripts:true,
         onComplete: function(transport) {
@@ -529,7 +529,7 @@ function _doResetWFAction() {
     }
 
     new Ajax.Updater($('workflowContent').down('ol'),
-        applinks.workflowRevert, {
+        appLinks.workflowRevert, {
         parameters: params,
         evalScripts:true,
         onComplete: function(transport) {
@@ -546,7 +546,7 @@ function _updateWFUndoRedo() {
     if (getCurSEID()) {
         params['scheduledExecutionId'] = getCurSEID();
     }
-    new Ajax.Updater($('wfundoredo'), applinks.workflowRenderUndo, {parameters:params,evalScripts:true});
+    new Ajax.Updater($('wfundoredo'), appLinks.workflowRenderUndo, {parameters:params,evalScripts:true});
 }
 
 
@@ -660,7 +660,7 @@ function _updateOptsUndoRedo() {
     if (getCurSEID()) {
         params['scheduledExecutionId'] = getCurSEID();
     }
-    new Ajax.Updater($('optundoredo'), applinks.editOptsRenderUndo, {parameters:params});
+    new Ajax.Updater($('optundoredo'), appLinks.editOptsRenderUndo, {parameters:params});
 }
 
 function _configureInputRestrictions(target) {
@@ -683,7 +683,7 @@ function _optedit(name, elem) {
     }
     $('optsload').loading();
     new Ajax.Updater(elem,
-        applinks.editOptsEdit, {
+        appLinks.editOptsEdit, {
         parameters: params,
         evalScripts:true,
         onSuccess: function(transport) {
@@ -706,7 +706,7 @@ function _optview(name, target) {
         params['scheduledExecutionId'] = getCurSEID();
     }
     new Ajax.Updater(target,
-        applinks.editOptsRender, {
+        appLinks.editOptsRender, {
         parameters: params,
         evalScripts:true,
         onComplete: function(transport) {
@@ -719,7 +719,7 @@ function _optview(name, target) {
 function _optsave(formelem, target) {
     $('optsload').loading();
     new Ajax.Updater(target,
-        applinks.editOptsSave, {
+        appLinks.editOptsSave, {
         parameters: Form.serialize(formelem),
         evalScripts: true,
         onComplete: function(transport) {
@@ -762,7 +762,7 @@ function _optaddnew() {
     olist.appendChild(newoptli);
     $('optsload').loading();
     new Ajax.Updater(createElement,
-        applinks.editOptsEdit, {
+        appLinks.editOptsEdit, {
         parameters: params,
         evalScripts:true,
         onComplete: function(transport) {
@@ -790,7 +790,7 @@ function _reloadOpts() {
     var optslist = $('optionsContent').down('ul.options');
     $('optsload').loading();
     new Ajax.Updater(optslist,
-        applinks.editOptsRenderAll, {
+        appLinks.editOptsRenderAll, {
         parameters: params,
         evalScripts: true,
         onComplete: function(transport) {
@@ -810,7 +810,7 @@ function _summarizeOpts() {
     var optssummary = $('optssummary');
     $('optsload').loading();
     new Ajax.Updater(optssummary,
-        applinks.editOptsRenderSummary, {
+        appLinks.editOptsRenderSummary, {
         parameters: params,
         evalScripts: true,
         onComplete: function(transport) {
@@ -825,7 +825,7 @@ function _optsavenew(formelem) {
     var params = Form.serialize(formelem);
     $('optsload').loading();
     new Ajax.Updater(newoptli,
-        applinks.editOptsSave, {
+        appLinks.editOptsSave, {
         parameters: params,
         evalScripts: true,
         onComplete: function(transport) {
@@ -851,7 +851,7 @@ function _doRemoveOption(name, elem) {
     Effect.Fade($(elem), {duration:0.2,afterFinish:
         function(f) {
             new Ajax.Updater($('optionsContent').down('ul'),
-                applinks.editOptsRemove, {
+                appLinks.editOptsRemove, {
                 parameters: params,
                 evalScripts:true,
                 onComplete: function(transport) {
@@ -871,7 +871,7 @@ function _doUndoOptsAction() {
     }
 
     new Ajax.Updater($('optionsContent').down('ul'),
-        applinks.editOptsUndo, {
+        appLinks.editOptsUndo, {
         parameters: params,
         evalScripts:true,
         onComplete: function(transport) {
@@ -888,7 +888,7 @@ function _doRedoOptsAction() {
     }
 
     new Ajax.Updater($('optionsContent').down('ul'),
-        applinks.editOptsRedo, {
+        appLinks.editOptsRedo, {
         parameters: params,
         evalScripts:true,
         onComplete: function(transport) {
@@ -905,7 +905,7 @@ function _doRevertOptsAction() {
     }
 
     new Ajax.Updater($('optionsContent').down('ul'),
-        applinks.editOptsRevert, {
+        appLinks.editOptsRevert, {
         parameters: params,
         evalScripts:true,
         onComplete: function(transport) {

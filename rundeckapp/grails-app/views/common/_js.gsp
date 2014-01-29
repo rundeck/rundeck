@@ -29,7 +29,30 @@
         scheduledExecutionDetailFragment: '${createLink(controller:'scheduledExecution',action:'detailFragment',params: projParams)}',
         executionFollowFragment: "${createLink(controller:'execution',action:'followFragment',params:projParams)}",
         menuJobs: "${createLink(controller:'menu',action:'jobs',params: projParams)}",
-        userAddFilterPref: "${createLink(controller:'user',action:'addFilterPref',params:projParams)}"
+        userAddFilterPref: "${createLink(controller:'user',action:'addFilterPref',params:projParams)}",
+
+        workflowEdit: '${createLink(controller:"workflow",action:"edit",params:projParams)}',
+        workflowRender: '${createLink(controller:"workflow",action:"render",params:projParams)}',
+        workflowSave: '${createLink(controller:"workflow",action:"save",params:projParams)}',
+        workflowReorder: '${createLink(controller:"workflow",action:"reorder",params:projParams)}',
+        workflowRemove: '${createLink(controller:"workflow",action:"remove",params:projParams)}',
+        workflowUndo: '${createLink(controller:"workflow",action:"undo",params:projParams)}',
+        workflowRedo: '${createLink(controller:"workflow",action:"redo",params:projParams)}',
+        workflowRevert: '${createLink(controller:"workflow",action:"revert",params:projParams)}',
+        workflowRenderUndo: '${createLink(controller:"workflow",action:"renderUndo",params:projParams)}',
+
+        editOptsRenderUndo: '${createLink(controller:"editOpts",action:"renderUndo",params:projParams)}',
+        editOptsEdit: '${createLink(controller:"editOpts",action:"edit",params:projParams)}',
+        editOptsRender: '${createLink(controller:"editOpts",action:"render",params:projParams)}',
+        editOptsSave: '${createLink(controller:"editOpts",action:"save",params:projParams)}',
+        editOptsRenderAll: '${createLink(controller:"editOpts",action:"renderAll",params:projParams)}',
+        editOptsRenderSummary: '${createLink(controller:"editOpts",action:"renderSummary",params:projParams)}',
+        editOptsRemove: '${createLink(controller:"editOpts",action:"remove",params:projParams)}',
+        editOptsUndo: '${createLink(controller:"editOpts",action:"undo",params:projParams)}',
+        editOptsRedo: '${createLink(controller:"editOpts",action:"redo",params:projParams)}',
+        editOptsRevert: '${createLink(controller:"editOpts",action:"revert",params:projParams)}',
+        menuJobsPicker: '${createLink(controller:"menu",action:"jobsPicker",params:projParams)}',
+        scheduledExecutionGroupTreeFragment: '${createLink(controller:"scheduledExecution",action:"groupTreeFragment",params:projParams)}'
     } ;
     //compatibility with WB javascript:
     var AppImages = {

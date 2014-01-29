@@ -33,38 +33,6 @@ var curSEID ='${editSchedExecId?editSchedExecId:""}';
 function getCurSEID(){
     return curSEID;
 }
-var applinks={
-    frameworkNodesFragment:"${createLink(controller:'framework',action:'nodesFragment',params:[project:project])}",
-    workflowEdit:'${createLink(controller:"workflow",action:"edit",params:[project:project])}',
-    workflowRender:'${createLink(controller:"workflow",action:"render",params:[project:project])}',
-    workflowSave:'${createLink(controller:"workflow",action:"save",params:[project:project])}',
-    workflowReorder:'${createLink(controller:"workflow",action:"reorder",params:[project:project])}',
-    workflowRemove:'${createLink(controller:"workflow",action:"remove",params:[project:project])}',
-    workflowUndo:'${createLink(controller:"workflow",action:"undo",params:[project:project])}',
-    workflowRedo:'${createLink(controller:"workflow",action:"redo",params:[project:project])}',
-    workflowRevert:'${createLink(controller:"workflow",action:"revert",params:[project:project])}',
-    workflowRenderUndo:'${createLink(controller:"workflow",action:"renderUndo",params:[project:project])}',
-
-    editOptsRenderUndo:'${createLink(controller:"editOpts",action:"renderUndo",params:[project:project])}',
-    editOptsEdit:'${createLink(controller:"editOpts",action:"edit",params:[project:project])}',
-    editOptsRender:'${createLink(controller:"editOpts",action:"render",params:[project:project])}',
-    editOptsSave:'${createLink(controller:"editOpts",action:"save",params:[project:project])}',
-    editOptsRenderAll:'${createLink(controller:"editOpts",action:"renderAll",params:[project:project])}',
-    editOptsRenderSummary:'${createLink(controller:"editOpts",action:"renderSummary",params:[project:project])}',
-    editOptsRemove:'${createLink(controller:"editOpts",action:"remove",params:[project:project])}',
-    editOptsUndo:'${createLink(controller:"editOpts",action:"undo",params:[project:project])}',
-    editOptsRedo:'${createLink(controller:"editOpts",action:"redo",params:[project:project])}',
-    editOptsRevert:'${createLink(controller:"editOpts",action:"revert",params:[project:project])}',
-    menuJobsPicker:'${createLink(controller:"menu",action:"jobsPicker",params:[project:project])}',
-    scheduledExecutionGroupTreeFragment:'${createLink(controller:"scheduledExecution",action:"groupTreeFragment",params:[project:project])}'
-};
-
-//]>
-</script>
-<g:javascript library="jobedit"/>
-
-<script type="text/javascript">
-//<!CDATA[
 
         function jobChosen(name,group){
             $('jobNameField').setValue(name);
@@ -84,7 +52,7 @@ var applinks={
             $(elem).addClassName('active');
             new Ajax.Updater(
                 'jobChooserContent',
-                    applinks.menuJobsPicker,
+                    appLinks.menuJobsPicker,
                 {
                 parameters: {jobsjscallback:'jobChosen',runAuthRequired:true},
                  onSuccess: function(transport) {
@@ -447,7 +415,7 @@ var applinks={
                         jQuery('#groupChooseBtn').popover('hide');
                         jQuery('#groupChooseBtn').button('reset');
                     }else{
-                        jQuery.get(applinks.scheduledExecutionGroupTreeFragment+'?jscallback=groupChosen', function (d) {
+                        jQuery.get(appLinks.scheduledExecutionGroupTreeFragment+'?jscallback=groupChosen', function (d) {
                             jQuery('#groupChooseBtn').popover({html:true, container:'body', placement: 'left',content: d,trigger:'manual'}).popover('show');
                             jQuery('#groupChooseBtn').button('reset');
                         });
