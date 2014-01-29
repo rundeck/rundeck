@@ -32,7 +32,7 @@ h1.brand{
   padding-left: 18px;
 }
 
-#TOC {
+#RDTOC {
     padding-top: .5em;
     padding-bottom: .5em;
     border-top: 2px solid #aaa;
@@ -47,7 +47,7 @@ h1.brand{
     width: 250px;
 }
 
-#TOC a {
+#RDTOC a {
     color: #666;
 }
 
