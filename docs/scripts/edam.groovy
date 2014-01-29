@@ -518,7 +518,7 @@ def generateAll(allpages,toc,templates,File dir, File outdir, crumbs, subdirs){
             def result=proc.waitFor()
             if(0!=result){
                 println "Error running pandoc, result: ${result}"
-                throw new RuntimeException("Pandoc run failed: ${result}")
+                throw new RuntimeException("Pandoc run failed: ${result} with args ${pargs}")
             }
             println "${outfile}"
         }else{

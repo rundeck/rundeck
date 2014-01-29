@@ -36,6 +36,7 @@ clean: $(DIRS)
 	for i in $^ ; do \
 	$(MAKE) -C $$i clean ; \
 	done ;
+	rm -rf dist
 
 notes: en/history/toc.conf en/RELEASE.md
 
