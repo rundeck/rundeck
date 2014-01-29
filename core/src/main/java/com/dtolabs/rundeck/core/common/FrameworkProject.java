@@ -50,6 +50,7 @@ public class FrameworkProject extends FrameworkResourceParent {
     public static final String PROJECT_RESOURCES_ALLOWED_URL_PREFIX = "project.resources.allowedURL.";
     public static final String FRAMEWORK_RESOURCES_ALLOWED_URL_PREFIX = "framework.resources.allowedURL.";
     public static final String RESOURCES_SOURCE_PROP_PREFIX = "resources.source";
+    public static final String PROJECT_RESOURCES_MERGE_NODE_ATTRIBUTES = "project.resources.mergeNodeAttributes";
     /**
      * Reference to deployments base directory
      */
@@ -504,7 +505,7 @@ public class FrameworkProject extends FrameworkResourceParent {
      */
     public INodeSet getNodeSet() throws NodeFileParserException {
         //iterate through sources, and add nodes
-        final AdditiveListNodeSet list = new AdditiveListNodeSet();
+        final NodeSetMerge list = getNodeSetMerge();
         nodesSourceExceptions = new ArrayList<Exception>();
         for (final ResourceModelSource nodesSource : getResourceModelSources()) {
             try {
@@ -530,6 +531,19 @@ public class FrameworkProject extends FrameworkResourceParent {
         }
         return list;
 
+    }
+
+    /**
+     * Create a {@link NodeSetMerge} based on project configuration, it defaults to merge all node attributes unless "project.resources.mergeNodeAttributes" is false
+     *
+     * @return a NodeSetMerge
+     */
+    private NodeSetMerge getNodeSetMerge() {
+        if (hasProperty(PROJECT_RESOURCES_MERGE_NODE_ATTRIBUTES) && "false".equals(getProperty
+                (PROJECT_RESOURCES_MERGE_NODE_ATTRIBUTES))) {
+            return new AdditiveListNodeSet();
+        }
+        return new MergedAttributesNodeSet();
     }
 
     /**

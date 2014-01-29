@@ -705,7 +705,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
         props1.setProperty(FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".3.type", "directory");
         props1.setProperty(FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".3.config.directory", "/test/file/path3");
         projectPropsFile.getParentFile().mkdirs();
-        writeProps(props1,projectPropsFile);
+        writeProps(props1, projectPropsFile);
 
         //default properties should contain project.resources.file
         FrameworkProject project = FrameworkProject.create(PROJECT_NAME, new File(getFrameworkProjectsBase()), getFrameworkInstance().getFrameworkProjectMgr());
@@ -722,6 +722,161 @@ public class TestFrameworkProject extends AbstractBaseTest {
         assertNotNull(nodeSet.getNode("set1node1"));
         assertNotNull(nodeSet.getNode("set2node1"));
         assertNotNull(nodeSet.getNode("set3node1"));
+        projectPropsFile.delete();
+    }
+
+    /**
+     * Multiple node definitions should have merged attributes in final result by default
+     * @throws Exception
+     */
+    public void testMergedAttributesDefault() throws Exception {
+
+        final ResourceModelSourceService service = ResourceModelSourceService.getInstanceForFramework(
+            getFrameworkInstance());
+        testSource provider1 = new testSource();
+        final NodeSetImpl set1 = new NodeSetImpl();
+        set1.putNode(new NodeEntryImpl("set1node1"));
+
+        provider1.returnNodes = set1;
+        testFactory factory1 = new testFactory();
+        factory1.returnProvider=provider1;
+
+        testSource provider2 = new testSource();
+        final NodeSetImpl set2 = new NodeSetImpl();
+        NodeEntryImpl set2node1_orig = new NodeEntryImpl("set2node1");
+        set2node1_orig.setAttribute("abc", "123");
+        set2node1_orig.setAttribute("def", "456");
+        set2.putNode(set2node1_orig);
+        provider2.returnNodes = set2;
+        testFactory factory2 = new testFactory();
+        factory2.returnProvider = provider2;
+
+
+        testSource provider3 = new testSource();
+        final NodeSetImpl set3 = new NodeSetImpl();
+        NodeEntryImpl set2node1 = new NodeEntryImpl("set2node1");
+        set2node1.setAttribute("abc", "321");
+        set2node1.setAttribute("ghi", "789");
+        set3.putNode(set2node1);
+        provider3.returnNodes = set3;
+        testFactory factory3 = new testFactory();
+        factory3.returnProvider = provider3;
+
+
+        service.registerInstance("file", factory1);
+        service.registerInstance("url", factory2);
+        service.registerInstance("directory", factory3);
+
+        //backup a copy project.properties
+
+        //add framework.resources.url property
+        Properties props1 = new Properties();
+        props1.setProperty("project.resources.file", nodesfile.getAbsolutePath());
+        props1.setProperty("project.resources.url", "http://example.com/test1");
+        props1.setProperty(FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".1.type", "file");
+        props1.setProperty(FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".1.config.file", "/test/file/path");
+        props1.setProperty(FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".2.type", "url");
+        props1.setProperty(FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".2.config.url", "http://example.com/test2");
+        props1.setProperty(FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".3.type", "directory");
+        props1.setProperty(FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".3.config.directory", "/test/file/path3");
+        projectPropsFile.getParentFile().mkdirs();
+        writeProps(props1,projectPropsFile);
+
+        //default properties should contain project.resources.file
+        FrameworkProject project = FrameworkProject.create(PROJECT_NAME, new File(getFrameworkProjectsBase()), getFrameworkInstance().getFrameworkProjectMgr());
+        final INodeSet nodeSet = project.getNodeSet();
+        assertNotNull(nodeSet);
+        assertEquals(4, factory1.called);
+        assertEquals(2,provider1.called);
+        assertEquals(2, factory2.called);
+        assertEquals(2,provider2.called);
+        assertEquals(1, factory3.called);
+        assertEquals(1,provider3.called);
+
+        assertEquals(2, nodeSet.getNodes().size());
+        assertNotNull(nodeSet.getNode("set1node1"));
+        assertNotNull(nodeSet.getNode("set2node1"));
+        assertEquals("321", nodeSet.getNode("set2node1").getAttributes().get("abc"));
+        assertEquals("456", nodeSet.getNode("set2node1").getAttributes().get("def"));
+        assertEquals("789", nodeSet.getNode("set2node1").getAttributes().get("ghi"));
+        assertNull(nodeSet.getNode("set3node1"));
+        projectPropsFile.delete();
+    }
+
+    /**
+     * Multiple node definitions should have not merge attributes if disabled
+     */
+    public void testMergedAttributesDisabled() throws Exception {
+        Properties props1 = new Properties();
+        //disable merged attributes
+        props1.setProperty(FrameworkProject.PROJECT_RESOURCES_MERGE_NODE_ATTRIBUTES, "false");
+
+        final ResourceModelSourceService service = ResourceModelSourceService.getInstanceForFramework(
+            getFrameworkInstance());
+        testSource provider1 = new testSource();
+        final NodeSetImpl set1 = new NodeSetImpl();
+        set1.putNode(new NodeEntryImpl("set1node1"));
+
+        provider1.returnNodes = set1;
+        testFactory factory1 = new testFactory();
+        factory1.returnProvider=provider1;
+
+        testSource provider2 = new testSource();
+        final NodeSetImpl set2 = new NodeSetImpl();
+        NodeEntryImpl set2node1_orig = new NodeEntryImpl("set2node1");
+        set2node1_orig.setAttribute("abc", "123");
+        set2node1_orig.setAttribute("def", "456");
+        set2.putNode(set2node1_orig);
+        provider2.returnNodes = set2;
+        testFactory factory2 = new testFactory();
+        factory2.returnProvider = provider2;
+
+
+        testSource provider3 = new testSource();
+        final NodeSetImpl set3 = new NodeSetImpl();
+        NodeEntryImpl set2node1 = new NodeEntryImpl("set2node1");
+        set2node1.setAttribute("abc", "321");
+        set2node1.setAttribute("ghi", "789");
+        set3.putNode(set2node1);
+        provider3.returnNodes = set3;
+        testFactory factory3 = new testFactory();
+        factory3.returnProvider = provider3;
+
+
+        service.registerInstance("file", factory1);
+        service.registerInstance("url", factory2);
+        service.registerInstance("directory", factory3);
+
+
+        props1.setProperty("project.resources.file", nodesfile.getAbsolutePath());
+        props1.setProperty("project.resources.url", "http://example.com/test1");
+        props1.setProperty(FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".1.type", "file");
+        props1.setProperty(FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".1.config.file", "/test/file/path");
+        props1.setProperty(FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".2.type", "url");
+        props1.setProperty(FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".2.config.url", "http://example.com/test2");
+        props1.setProperty(FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".3.type", "directory");
+        props1.setProperty(FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".3.config.directory", "/test/file/path3");
+        projectPropsFile.getParentFile().mkdirs();
+        writeProps(props1,projectPropsFile);
+
+        //default properties should contain project.resources.file
+        FrameworkProject project = FrameworkProject.create(PROJECT_NAME, new File(getFrameworkProjectsBase()), getFrameworkInstance().getFrameworkProjectMgr());
+        final INodeSet nodeSet = project.getNodeSet();
+        assertNotNull(nodeSet);
+        assertEquals(4, factory1.called);
+        assertEquals(2,provider1.called);
+        assertEquals(2, factory2.called);
+        assertEquals(2,provider2.called);
+        assertEquals(1, factory3.called);
+        assertEquals(1,provider3.called);
+
+        assertEquals(2, nodeSet.getNodes().size());
+        assertNotNull(nodeSet.getNode("set1node1"));
+        assertNotNull(nodeSet.getNode("set2node1"));
+        assertEquals("321", nodeSet.getNode("set2node1").getAttributes().get("abc"));
+        assertEquals(null, nodeSet.getNode("set2node1").getAttributes().get("def"));
+        assertEquals("789", nodeSet.getNode("set2node1").getAttributes().get("ghi"));
+        assertNull(nodeSet.getNode("set3node1"));
         projectPropsFile.delete();
     }
 }

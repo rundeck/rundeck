@@ -64,6 +64,16 @@ This configures the remote URL for loading the Resources model data.
 In addition, multiple [Resource Model Source Plugin](../manual/plugins.html#resource-model-source-plugins) can
 be configured to add additional sources of Resource Model data.
 
+The ordering of sources defines the order that node definitions are retrieved.
+By default in Rundeck 2.0+, any identically named nodes that are reported by
+multiple sources have all of their attributes merged, with later attribute
+values overriding earlier values.
+
+To disable attribute merging, you can set
+`project.resources.mergeNodeAttributes=false` in project.properties.  This
+means that later node definitions completely override any earlier definitions
+with the same node name.
+
 ### Implementations and Examples ###
 
 

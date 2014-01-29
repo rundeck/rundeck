@@ -30,7 +30,7 @@ import java.util.*;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class AdditiveListNodeSet implements INodeSet {
+public class AdditiveListNodeSet implements INodeSet, NodeSetMerge {
     List<INodeSet> nodeSetList;
     TreeSet<String> nodeNames;
     HashMap<String,INodeSet> nodeIndex;
@@ -41,6 +41,7 @@ public class AdditiveListNodeSet implements INodeSet {
         nodeIndex=new HashMap<String, INodeSet>();
     }
 
+    @Override
     public void addNodeSet(final INodeSet nodeSet) {
         if(null==nodeSet){
             return;
@@ -62,11 +63,9 @@ public class AdditiveListNodeSet implements INodeSet {
 
     public INodeEntry getNode(final String name) {
         INodeEntry result = null;
-        for (final INodeSet iNodeSet : nodeSetList) {
-            final INodeEntry node = iNodeSet.getNode(name);
-            if (null != node) {
-                result = node;
-            }
+        INodeSet iNodeEntries = nodeIndex.get(name);
+        if(null!=iNodeEntries) {
+            result=iNodeEntries.getNode(name);
         }
         return result;
     }
