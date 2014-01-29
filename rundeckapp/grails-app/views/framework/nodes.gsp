@@ -8,6 +8,7 @@
     <title><g:message code="gui.menu.Nodes"/> - ${(params.project ?: request.project).encodeAsHTML()}</title>
     <g:javascript library="yellowfade"/>
     <asset:javascript src="nodeFiltersKO.js"/>
+    <asset:javascript src="nodeRemoteEdit.js"/>
     <script type="text/javascript">
         function showError(message) {
             $("error").innerHTML += message;
