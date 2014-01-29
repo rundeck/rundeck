@@ -81,6 +81,7 @@ class LegacyLogEntryLineIteratorTest extends GroovyTestCase {
         def linelens2 = (lines2*.toString().bytes.length)
         //running sum of line lengths == list of offsets from start
         lengths2 = linelens2.inject([0]) { List s, v -> s << s[-1] + v }
+        testfile2.text=''
         testfile2.withWriter { w -> lines2.each { w << it } }
     }
 
