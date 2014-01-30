@@ -82,8 +82,8 @@
            data-bind="visible: results().length > 0">
         <tbody ></tbody>
         <tbody data-bind=" foreach: results ">
-        <tr class="link"
-            data-bind="css: { 'succeed': status()=='succeed', 'fail': status()=='fail' } "
+        <tr class="link activity_row"
+            data-bind="css: { 'succeed': status()=='succeed', 'fail': status()=='fail', 'highlight': $root.highlightExecutionId()==executionId() } "
             onclick="$(this).down('a._defaultAction').click();"
             >
             <td style="width:12px;" class="eventicon">

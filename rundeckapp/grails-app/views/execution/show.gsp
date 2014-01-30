@@ -153,16 +153,17 @@
                 followOutput();
             });
         }
-
+        var activity;
         jQuery(document).ready(function(){
             init();
             if(document.getElementById('activity_section')){
-                var history = new History(appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
-                history.nowRunningEnabled(${null != execution?.dateCompleted});
+                activity = new History(appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
+                activity.nowRunningEnabled(${null != execution?.dateCompleted});
                 //enable now running activity tab once execution completes
-                nodeflowvm.completed.subscribe(history.nowRunningEnabled);
-                ko.applyBindings(history, document.getElementById('activity_section'));
-                setupActivityLinks('activity_section', history);
+                activity.highlightExecutionId("${execution.id}");
+                nodeflowvm.completed.subscribe(activity.nowRunningEnabled);
+                ko.applyBindings(activity, document.getElementById('activity_section'));
+                setupActivityLinks('activity_section', activity);
            }
         });
       </g:javascript>

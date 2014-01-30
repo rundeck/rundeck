@@ -111,6 +111,7 @@ function History(ajaxHistoryLink,ajaxNowRunningLink) {
     self.offset = ko.observable(0);
     self.params = ko.observable();
     self.reloadInterval=ko.observable(0);
+    self.highlightExecutionId=ko.observable();
     self.results=ko.computed(function(){
        if(self.showReports()){
            return self.reports()
