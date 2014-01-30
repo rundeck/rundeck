@@ -155,9 +155,8 @@
 
 
     <div data-bind="visible: selected() && results().length < 1 " class="panel-body" style="display: none;">
-        <div class="">
-        <span class="text-muted">No matching activity found</span>
-        </div>
+        <span class="text-muted" data-bind="if: !showReports()">No running executions found</span>
+        <span class="text-muted" data-bind="if: showReports()">No matching activity found</span>
     </div>
 
     <div data-bind="visible: selected()" class="panel-footer" style="display: none">
