@@ -1,5 +1,6 @@
 <nav class="navbar navbar-inverse navbar-static-top" role="navigation">
   <!-- Brand and toggle get grouped for better mobile display -->
+  <div class="container-fluid">
   <div class="navbar-header">
     <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
       <span class="sr-only">Toggle navigation</span>
@@ -46,5 +47,6 @@
       </div>
       <button type="submit" class="btn btn-default">Submit</button>
     </form>
+  </div>
   </div>
 </nav>

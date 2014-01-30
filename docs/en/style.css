@@ -8,6 +8,7 @@ a.navbar-brand{
   background-repeat: no-repeat;
   background-position: 15px 18px;
   padding-left: 35px;
+  height: 60px;
 }
 
 /* tweaks to base bootstrap */
