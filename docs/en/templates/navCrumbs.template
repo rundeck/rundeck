@@ -1,0 +1,13 @@
+$if(crumbs)$
+<div class="container $navclass$ breadcrumb_holder">
+<div class="row">
+<div class="col-sm-12">
+<ol class="breadcrumb $navclass$">
+    $for(crumb)$
+        <li>$if(crumblink)$<a href="$crumblink$">$crumbtitle$</a>$endif$$if(crumbname)$$crumbname$$endif$</li>
+    $endfor$
+</ol>
+</div>
+</div>
+</div>
+$endif(crumbs)$

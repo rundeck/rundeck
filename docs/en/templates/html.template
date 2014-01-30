@@ -2,6 +2,7 @@
 <html>
 <head>
   <title>$if(title-prefix)$$title-prefix$ - $endif$$if(pagetitle)$$pagetitle$$endif$</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <meta name="generator" content="pandoc" />
 $for(author)$
@@ -10,6 +11,23 @@ $endfor$
 $if(date)$
   <meta name="date" content="$date$" />
 $endif$
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css">
+
+<!-- Optional theme -->
+<link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap-theme.min.css">
+
+<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+<!-- Latest compiled and minified JavaScript -->
+<script src="http://netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script>
+<script type="text/javascript">
+jQuery(function(){
+jQuery('.toc-nav').on('activate.bs.scrollspy', function () {
+  // do something…
+  
+})
+});
+</script>
 $if(highlighting-css)$
   <style type="text/css">
 $highlighting-css$
@@ -25,19 +43,29 @@ $for(header-includes)$
   $header-includes$
 $endfor$
 </head>
-<body>
+<body data-spy="scroll" data-target=".toc-nav">
 $for(include-before)$
 $include-before$
 $endfor$
-$if(title)$
-<h1 class="title">$title$</h1>
-$endif$
+<div class="container">
+<div class="row">
 $if(toc)$
-<div id="RDTOC">
+<div class="col-sm-3 toc-nav">
+<div class="nav"  data-spy="affix" data-offset-top="136" data-offset-bottom="400" >
 $toc$
+</div>
+</div>
+$endif$
+<div class="col-sm-9">
+$if(title)$
+<div class="page-header">
+<h1 class="title">$title$</h1>
 </div>
 $endif$
 $body$
+</div>
+</div>
+</div>
 $for(include-after)$
 $include-after$
 $endfor$
