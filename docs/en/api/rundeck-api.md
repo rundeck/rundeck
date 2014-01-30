@@ -1729,16 +1729,6 @@ The `events` element will also have `max`, `offset`, and `total` attributes, to 
 `max` is the paging size as specified in the request, or with the default value of 20.
 `offset` is the offset specified, or default value of 0.
 
-### Creating History Event Reports
-
-**REMOVED in version 8**
-
-URL:
-
-    /api/1/report/create
-
-Requests will now return HTTP status code `404`.
-
 ### Listing Resources
 
 List or query the resources for a project.
