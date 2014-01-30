@@ -66,13 +66,18 @@ a.navbar-brand{
   background: #428bca;
   color: white;
 }
-
-.container.bottom{
-  margin-top:15px;
+.page-header{
+  margin: 0 0 10px 0;
 }
-.container.bottom .nav.nav-pills.bottom{
-  display: none;
+.page-header h1{
+  margin:0;
 }
-.container.footer{
-
+#docbody, .container.bottom, .container.top{
+  margin-bottom:15px;
+}
+.breadcrumb{
+  margin-bottom: 0;
+}
+.breadcrumb li.active a{
+  font-weight: bold;
 }
