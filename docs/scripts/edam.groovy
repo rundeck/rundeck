@@ -341,7 +341,7 @@ def runPandoc(List longparams){
     endif=quote('$endif$')
     crendif=quote('$endif(crumbs)$')
 endfor=quote('$endfor$')
-navPats=[tocpagelink:quote('$if(tocpage)$'),nextpagelink:quote('$if(nextpage)$'),prevpagelink:quote('$if(prevpage)$'),crumbs:quote('$if(crumbs)$')]
+navPats=[currentpagelink:quote('$if(currentpage)$'),tocpagelink:quote('$if(tocpage)$'),nextpagelink:quote('$if(nextpage)$'),prevpagelink:quote('$if(prevpage)$'),crumbs:quote('$if(crumbs)$')]
 
 def replaceNavContent(Map navs,String navcontent){
     //replace ifclauses
