@@ -20,14 +20,6 @@ $endif$
 <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
 <!-- Latest compiled and minified JavaScript -->
 <script src="http://netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script>
-<script type="text/javascript">
-jQuery(function(){
-jQuery('.toc-nav').on('activate.bs.scrollspy', function () {
-  // do something…
-  
-})
-});
-</script>
 $if(highlighting-css)$
   <style type="text/css">
 $highlighting-css$
@@ -51,7 +43,7 @@ $endfor$
 <div class="row">
 $if(toc)$
 <div class="col-sm-3 toc-nav">
-<div class="nav"  data-spy="affix" data-offset-top="136" data-offset-bottom="400" >
+<div class="nav">
 $toc$
 </div>
 </div>
