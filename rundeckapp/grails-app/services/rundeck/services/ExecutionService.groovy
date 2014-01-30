@@ -6,7 +6,6 @@ import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.app.internal.workflow.MultiWorkflowExecutionListener
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.INodeEntry
-import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem
@@ -34,6 +33,8 @@ import com.dtolabs.rundeck.execution.ExecutionItemFactory
 import com.dtolabs.rundeck.execution.JobExecutionItem
 import com.dtolabs.rundeck.execution.JobReferenceFailureReason
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import org.apache.log4j.Logger
+import org.apache.log4j.MDC
 import org.hibernate.StaleObjectStateException
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
@@ -55,7 +56,7 @@ import java.util.regex.Pattern
  * Coordinates Command executions via Ant Project objects
  */
 class ExecutionService implements ApplicationContextAware, StepExecutor, NodeStepExecutor{
-
+    static Logger executionStatusLogger = Logger.getLogger("org.rundeck.execution.status")
     static transactional = true
     def FrameworkService frameworkService
     def notificationService
@@ -506,6 +507,52 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
     }
 
+    /**
+     * Log details about execution start and finish to a log4j listener named org.rundeck.execution.status
+     * @param e
+     * @return
+     */
+    def logExecutionLog4j(Execution e) {
+        def state = getExecutionState(e)
+        def execprops = ['user', 'id', 'abortedby', 'dateStarted', 'dateCompleted', 'project']
+        def jobProps = ['uuid', 'jobName', 'groupPath']
+        def rmprops=[]
+        execprops.each { k ->
+            def v = e[k]
+            if (v instanceof Date) {
+                //TODO: reformat date
+                MDC.put(k, v.toString())
+                MDC.put("${k}Time", v.time.toString())
+                rmprops << "${k}Time"
+            } else if (v instanceof String) {
+                MDC.put(k, v ? v : "-")
+            } else {
+                final string = v.toString()
+                MDC.put(k, string ? string : "-")
+            }
+            rmprops<<k
+        }
+        MDC.put('state',state)
+        final jobstring = ''
+        if(e.scheduledExecution){
+            jobProps.each { k ->
+                final var = e.scheduledExecution[k]
+                MDC.put(k, var ? var : '-')
+                rmprops << k
+            }
+            jobstring= " job: "+ e.scheduledExecution.extid+" " + (e.scheduledExecution.groupPath ?: '') + "/" + e.scheduledExecution.jobName
+        }else{
+            def adhocCommand = e.workflow.commands[0].adhocRemoteString
+            if(adhocCommand){
+                MDC.put("command",adhocCommand)
+                rmprops << "command"
+                jobstring+=" command: "+ adhocCommand
+            }
+        }
+
+        executionStatusLogger.info(state+" id: "+e.id +" project: "+ e.project  + " user: "+e.user + jobstring)
+        rmprops.each(MDC.&remove)
+    }
 
     public logExecution(uri,project,user,issuccess,execId,Date startDate=null, jobExecId=null, jobName=null, jobSummary=null,iscancelled=false, nodesummary=null, abortedby=null){
 
@@ -632,10 +679,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             final nis = NodeStepExecutionService.getInstanceForFramework(framework);
             nis.registerInstance(JobExecutionItem.STEP_EXECUTION_TYPE, this)
 
+            logExecutionLog4j(execution)
             if (scheduledExecution) {
                 //send onstart notification
                 def result = notificationService.triggerJobNotification('start', scheduledExecution.id,
                         [execution: execution, context:executioncontext])
+
             }
             //install custom outputstreams for System.out and System.err for this thread and any child threads
             //output will be sent to loghandler instead.
@@ -1426,6 +1475,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             logExecution(null, execution.project, execution.user, "true" == execution.status, exId,
                 execution.dateStarted, jobid, jobname, summary, props.cancelled,
                 node, execution.abortedby)
+            logExecutionLog4j(execution)
 
             def context = execmap?.thread?.context
             notificationService.triggerJobNotification(props.status == 'true' ? 'success' : 'failure', schedId, [execution: execution,nodestatus:[succeeded:sucCount,failed:failedCount,total:totalCount],context:context])
