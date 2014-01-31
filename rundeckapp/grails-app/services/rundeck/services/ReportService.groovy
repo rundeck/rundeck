@@ -229,17 +229,23 @@ class ReportService  {
 
                 eqfilters.each { key, val ->
                     if (query["${key}Filter"] == 'null') {
-                        isNull(val)
+                        or{
+                            isNull(val)
+                            eq(val,'')
+                        }
                     } else if (query["${key}Filter"] == '!null') {
-                        isNotNull(val)
+                        and {
+                            isNotNull(val)
+                            ne(val, '')
+                        }
                     } else if (query["${key}Filter"]) {
                         eq(val, query["${key}Filter"])
                     }
                 }
                 if (query.titleFilter) {
                     or {
-                        eq('jobId', '')
-                        isNull('jobId')
+                        eq('jcJobId', '')
+                        isNull('jcJobId')
                     }
                 }
                 if (query.jobListFilter || query.excludeJobListFilter) {
