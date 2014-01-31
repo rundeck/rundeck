@@ -178,9 +178,9 @@ class FrameworkController  {
         } else if (params.exec) {
             runCommand = params.exec
         }
-        def User u = userService.findOrCreateUser(session.user)
         def usedFilter = null
         if (params.filterName) {
+            def User u = userService.findOrCreateUser(session.user)
             //load a named filter and create a query from it
             if (u) {
                 NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, u)
