@@ -10,13 +10,25 @@ set -x
 vagrant up --provider aws --no-provision
 
 xit=$?
-if [ $xit != 0 ] ; then
-    echo "Failed vagrant up, sleeping 30 to attempt provision"
+sleep 30
+# loop over the provision call until either it works or we've given up (10sec sleep, 12 tries = ~ 2-3 minutes)
+count=0
+max=10
+while :
+do
+    vagrant provision
+    xit=$?
+    if [ $xit -eq 0 ]; then
+        vagrant destroy --force
+        exit 0
+    fi
     sleep 30
-fi
-
-vagrant provision
-xit=$?
+    let count++
+    if [ $count -gt $max ]; then
+        vagrant destroy --force
+        exit $xit
+    fi
+done
 
 vagrant destroy -f
 
