@@ -1,16 +1,19 @@
-Release 2.0.0-beta1
+Release 2.0.0
 ===========
 
-Date: 2014-01-09
+Date: 2014-01-31
 
-Rundeck 2.0.0-beta1 introduces a large number of major changes, both enhancements and bug fixes, that build on top of the work done for Rundeck 2.0.0-alpha1
+Rundeck 2.0.0 introduces a large number of major changes. We have revamped the
+entire UI and overhauled the underpinnings. Our goals were to improve the user
+experience and cut down some of the technical debt which had accrued.
 
-## Beta1
+Note that the documentation is still being updated. We will update it as it improves at <http://rundeck.org/2.0.0>
 
-This is the first "beta" for Rundeck 2.0, please read these notes:
+Before you upgrade to Rundeck 2.0, please be sure to read the Upgrading Guide
+located in the documentation.
 
-* Upgrading from Rundeck 1.6 is not yet described in the documentation.  As such, if you want to use your 1.6 projects, please do a project Export and then an import into a clean install of rundeck 2.0 beta1.
-* There are probably some bugs due to some of the new features and updates
+Many thanks to everyone who was able to contribute ideas, feedback, code, time
+or money in helping us to improve Rundeck.
 
 Please report bugs you find:
 
@@ -22,14 +25,13 @@ Please report bugs you find:
 ## Notable Changes
 
 * New feature: live execution state view
-    * Live view of your job execution to see what step is running where.
-    * Collates the output by node and step.
+    * Live view of job executions to see what step is running on which node.
     * Instantly drill in to view the output for the step and node that failed
     * View node metrics and collated output.
     * **Please give a big thank-you to (an anonymous) "sponsored development client" for funding the work for this feature!**
 * New Projects home page displays readme and message of the day files that can be customized with markdown to display notices to users
 * Improved Node filter
-    * Now supports attribute searches
+    * Now supports all custom node attributes
     * New filter expression syntax, simple examples: 
         - `tags: a+b` filters by tags
         - `environment: (prod|qa)` Regular expression filter on an attribute called `environment`
@@ -40,6 +42,7 @@ Please report bugs you find:
 * New Commands page dedicated to ad hoc command execution.
     * Controls over thread count and error handling
     * Reference saved defined filters or express your own.
+* Step descriptions for workflow steps. Give your step a brief description, which will be displayed during execution.
 * Improved Activity views with tabbed views for common queries
     * Tabs for Now running, recent, errors and executions by you.
 * Box score metrics for executions. Use Rundeck as an information radiator.
@@ -47,18 +50,15 @@ Please report bugs you find:
 
 ## Enhancements
 
-* Knockout JS, Bootstrap 3, flatly
+* New coat of paint: new logo, new GUI style using Bootstrap 3 and Flatly theme
 * Caching and error catching for resource model source plugins
-* New node filter expressions
 * Execution model API and json representation stored with log output
 * Optimized internals to reduce service loading time
-* Cruft removal  (legacy formats and syntaxes)
-* Step descriptions for job steps. Give your step a brief description to show your users during execution.
+* Cruft removal (legacy formats and syntaxes), upgraded frameworks
 * Copy file step plugin copies files from rundeck server to remote nodes.
 * API
     * Better REST-ful behavior
     * removed use of 302 redirects between requests and some responses
-
 
 ## Acknowledgements
 
@@ -66,12 +66,29 @@ Please report bugs you find:
 * Greg Schueler
 * Damon Edwards
 * John Burbridge
+* Moto Ohno
+* kim.ho
 * Matt Wise at Nextdoor.com
 * Etienne Grignon at Disney
 * Srinivas Peri and Aya Ivtan at Adobe
 * Mark Maun and Eddie Wizelman at Ticketmaster
+* As well as *(anonymous) Sponsored Development Clients* - thank you!
 
 ## Issues
+
+* [Update docs for Upgrading to 2.0](https://github.com/rundeck/rundeck/issues/629)
+* [Multiple node sources should merge the attributes for a node](https://github.com/rundeck/rundeck/issues/628)
+* [Running Rundeck in Tomcat and integrating with Jenkins ](https://github.com/rundeck/rundeck/issues/626)
+* [[2.0-beta1] Execution log could not be found after renaming the job](https://github.com/rundeck/rundeck/issues/622)
+* [2.0-beta1: LDAP authentication is broken for RPM install](https://github.com/rundeck/rundeck/issues/621)
+* ["Change the Target Nodes" option not work in Rundeck 2.0beta1](https://github.com/rundeck/rundeck/issues/619)
+* [NPE parsing YAML with empty tag](https://github.com/rundeck/rundeck/issues/613)
+* [named steps](https://github.com/rundeck/rundeck/issues/567)
+* [Emit execution status logs via Log4j](https://github.com/rundeck/rundeck/issues/553)
+* [SSH authentication in a workflow node step plugin](https://github.com/rundeck/rundeck/issues/527)
+* [update rundeck page URLs to include project context](https://github.com/rundeck/rundeck/issues/149)
+
+## Fixed in beta1
 
 * [Rundeck should catch errors and cache node data from Resource Model Source providers](https://github.com/dtolabs/rundeck/issues/609)
 * [MS IE / Rundeck Nodes Page: "Enter a shell command" caption not visible](https://github.com/dtolabs/rundeck/issues/607)
