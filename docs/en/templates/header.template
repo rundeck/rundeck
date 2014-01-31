@@ -1,43 +1,52 @@
-<div class="rundecksite">
-<nav class="site" >
-      <ul  class="container_12">
-    <li class="item index grid_2 alpha">
-    <a href="http://rundeck.org/index.html">
-      <h1 class="brand">Rundeck</h1>
-      <p class="rd_version">Open-Source Workflow Automation</p>
-      </a>
-    </li>
-    <li class="item about grid_2 selected">
-      <a href="http://rundeck.org/about.html">
-        <h1>About</h1>
-        <p>News, Videos, Docs</p>
-      </a>
-    </li>
-    <li class="item help grid_2">
-      <a href="http://rundeck.org/help.html">
-        <h1>Get Help</h1>
-        <p>IRC List Tracker</p>
-      </a>
-    </li>
-    <li class="item plugins grid_2">
-      <a href="http://rundeck.org/plugins/index.html">
-        <h1>Plugins</h1>
-        <p>Integrate Rundeck</p>
-      </a>
-    </li>
-    <li class="item downloads grid_2 omega">
-    <a href="http://rundeck.org/downloads.html">
-      <h1>Download</h1>
-      <p class="rd_version">${VERSION}</p>
-      </a>
-    </li>
-    <li class="grid_2">
-        <form action="http://rundeck.org/search/">
-            <input type="search" name="q" placeholder="search docs"/>
-        </form>
-    </li>
-<div class="clear"></div>
-</ul>
-    </nav>
+<nav class="navbar navbar-inverse navbar-static-top" role="navigation">
+  <!-- Brand and toggle get grouped for better mobile display -->
+  <div class="container-fluid">
+  <div class="navbar-header">
+    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+      <span class="sr-only">Toggle navigation</span>
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+    </button>
+    <a class="navbar-brand" href="http://rundeck.org/index.html">
+      Rundeck
+      <p class="small rd_version">Open-Source Workflow Automation</p>
+    </a>
+  </div>
+  <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+    <ul class="nav navbar-nav">
     
-</div>
+    <li class="item about selected">
+      <a href="http://rundeck.org/about.html">
+        About
+        <p class="small">News, Videos, Docs</p>
+      </a>
+    </li>
+    <li class="item help">
+      <a href="http://rundeck.org/help.html">
+        Get Help
+        <p class="small">IRC List Tracker</p>
+      </a>
+    </li>
+    <li class="item plugins ">
+      <a href="http://rundeck.org/plugins/index.html">
+        Plugins
+        <p class="small">Integrate Rundeck</p>
+      </a>
+    </li>
+    <li class="item downloads  omega">
+    <a href="http://rundeck.org/downloads.html">
+      Download
+      <p class="small rd_version">${VERSION}</p>
+      </a>
+    </li>
+    </ul>
+    <form class="navbar-form navbar-left" role="search"  action="http://rundeck.org/search/">
+      <div class="form-group">
+        <input type="text" class="form-control" name="q" placeholder="Search">
+      </div>
+      <button type="submit" class="btn btn-default">Submit</button>
+    </form>
+  </div>
+  </div>
+</nav>

@@ -33,7 +33,9 @@
 package com.dtolabs.rundeck.core.common;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * $INTERFACE is ... User: greg Date: 1/21/14 Time: 2:52 PM
@@ -47,9 +49,18 @@ public class MergedAttributesNodeSet extends AdditiveListNodeSet {
                 //merge attributes
                 INodeEntry node = nodeIndex.get(iNodeEntry.getNodename()).getNode(iNodeEntry.getNodename());
                 HashMap<String, String> newAttributes = new HashMap<String, String>(node.getAttributes());
+                //merge tags
+                HashSet tags = new HashSet();
+                if (null != node.getTags()) {
+                    tags.addAll(node.getTags());
+                }
+                if(null!= iNodeEntry.getTags()) {
+                    tags.addAll(iNodeEntry.getTags());
+                }
                 newAttributes.putAll(iNodeEntry.getAttributes());
                 NodeEntryImpl nodeEntry = new NodeEntryImpl(iNodeEntry.getNodename());
                 nodeEntry.setAttributes(newAttributes);
+                nodeEntry.setTags(tags);
                 iNodeEntries.putNode(nodeEntry);
             }else{
                 iNodeEntries.putNode(iNodeEntry);

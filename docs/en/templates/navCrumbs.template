@@ -1,0 +1,22 @@
+
+<div class="container $navclass$ breadcrumb_holder">
+<div class="row">
+<div class="col-sm-6">
+<ol class="breadcrumb $navclass$">
+$if(crumbs)$
+    $for(crumb)$
+        <li>$if(crumblink)$<a href="$crumblink$">$crumbtitle$</a>$endif$$if(crumbname)$$crumbname$$endif$</li>
+    $endfor$
+    $endif(crumbs)$
+    $if(tocpage)$<li ><a href="$tocpagelink$">$tocpage$</a></li>$endif$
+    $if(currentpage)$<li class="active"><a href="$currentpagelink$">$currentpage$</a></li>$endif$
+</ol>
+</div>
+<div class="col-sm-6">
+    <ul class="pager">
+      $if(prevpage)$<li class="previous"><a href="$prevpagelink$"><i class="glyphicon glyphicon-arrow-left"></i> $prevpage$</a></li>$endif$
+      $if(nextpage)$<li class="next"><a href="$nextpagelink$">$nextpage$ <i class="glyphicon glyphicon-arrow-right"></i></a></li>$endif$
+    </ul>
+</div>
+</div>
+</div>

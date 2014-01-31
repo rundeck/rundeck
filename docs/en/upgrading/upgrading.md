@@ -1,435 +1,57 @@
 % Upgrade Guide
 % Greg Schueler
-% September 12, 2011
+% January 30, 2014
 
-## Important Changes in Rundeck 1.5
+## Upgrading to Rundeck 2.0 from 1.6.x
 
-If you are upgrading from Rundeck 1.4.x, please follow the following directions to migrate your projects.  It is also recommended that if you are using the default Hsqldb datastore, you should migrate to using H2 which is now the default.
+Rundeck 2.0 has some under-the-hood changes, so please follow this guide when upgrading from Rundeck 1.6.x.
 
-### Database changes
+The first step is always to make a backup of all important data for your existing Rundeck installation.  Refer to the [Administration - Backup and Recovery](../administration/backup-and-recovery.html) section.
 
-Rundeck has changed some of the schema used for the database since the 1.4 release.  These changes can't be handled by the Grails automatic schema updating.  To make a general solution to upgrade, we introduced the [Project Export](../administration/backup-and-recovery.html#project-import-and-export) feature in Rundeck 1.4.4.  You can easily use this to export Rundeck 1.4.4+ projects and re-import them into a Rundeck 1.5 project.
+## Clean install
 
-1. Before you install Rundeck 1.5, follow the instructions for [Project Import and Export](../administration/backup-and-recovery.html#project-import-and-export) feature for any projects you want to migrate. 
-2. You should do the other [Backup procedures](../administration/backup-and-recovery.html#backup) of your data to ensure you have an operational backup of your 1.4.x intallation.
-2. (Optional) Configure your `rundeck-config.properties` file with a new database backend. It is recommended that you use H2 which is now the default database (see below), or you can use another [relational database](../administration/relational-database.html).
-3. Drop or remove the previous 1.4.x database contents if you are using the same data store. (If you used the default hsqldb installation, you can remove the files located under `$RDECK_BASE/server/data`.)
-4. Remove the old log files located in `$RDECK_BASE/var/logs/rundeck`: these files will be recreated by the project import process.
+The most direct upgrade method is to use the project export/import method and a clean install of Rundeck 2.0.
 
-Once you have done these steps, you can upgrade to Rundeck 1.5.  Then you can import any project archives you created in step 1.
+Before shutting down your 1.6.x installation, perform **Project Export** for each project you wish to migrate:
 
-### Default database
+1. Select your project
+2. Click the *Configure* tab in the header.
+3. Click the link under *Export Project Archive* to save it to your local disk.
+4. Make a copy of all project files under the projects directory for the project, e.g. `$RDECK_BASE/projects/NAME` (launcher) or `/var/rundeck/projects/NAME` (RPM/Deb).  This includes the project.properties configuration as well as resources files.
 
-The default database for new installations is now H2, instead of Hsqldb.  
+Perform a *clean* install Rundeck 2.0 (no cheating!).
 
-If you are migrating from Rundeck 1.4 you can modify your `rundeck-config.properties` to specify the new dataSource URL:
+Then Import the projects you exported:
 
-    dataSource.url = jdbc:h2:file:/path/to/datastore
+1. Create a new project, or select an existing project.
+2. Click the *gear icon* for the Configure page in the header.
+3. Click the *Import Archive* Tab
+4. Under *Choose a Rundeck Archive* pick the archive file you downloaded earlier
+5. Click *Import*
 
-### Maintaining use of Hsqldb
+Finally, restore the project files for the imported project.
 
-If you still want to use hsqldb, you will now have to manually specify the right JDBC driver classname, by adding this to your `rundeck-config.properties` since the default is now H2:
+## Upgrading JAAS properties file
 
-    dataSource.driverClassName=org.hsqldb.jdbcDriver
+If you are not doing a clean install, and you want to maintain your JAAS login module configuration, you may have to change your jaas.conf file.
 
-### Plugins
+The default jaas-loginmodule.conf file included with Rundeck 1.6.x uses the `org.mortbay.jetty.plus.jaas.spi.PropertyFileLoginModule` class.  You will have to change your file to specify `org.eclipse.jetty.plus.jaas.spi.PropertyFileLoginModule` ("org.eclipse").
 
-Rundeck plugins created for 1.4.x or earlier will not work with Rundeck 1.5 without some minor changes.
+Modify the `$RDECK_BASE/server/config/jaas-loginmodule.conf` (launcher install) or `/etc/rundeck/jaas-loginmodule.conf` (RPM/Deb install).
 
-For Plugin developers, please read the [Plugin Development > Changes in Rundeck 1.5](../developer/plugin-development.html#changes-in-rundeck-1.5) section.
+## Upgrading an existing H2 Database
 
-## Important Changes in Rundeck 1.4.1
+If you want to migrate your existing H2 Database, you will have to download an additional jar file to enable upgrading to the newer H2 version used in Rundeck 2.0.
 
-In Rundeck 1.4.0.x, the new ACL Policy format used an incorrect property key ("job") to check Job Authorizations by name.  The correct key was used in all documentation, but not in the underlying code.  The correct key is "name".
+Download the `h2mig_pagestore_addon.jar` file linked on this page:
 
-This issue has been fixed in Rundeck 1.4.1, however if you were using the incorrect key previously, you will have to change your aclpolicy files to the correct key.
+* [H2 Database Upgrade](http://www.h2database.com/html/advanced.html#database_upgrade)
+* Direct link: <http://h2database.com/h2mig_pagestore_addon.jar>
 
-The [Project Scope Resources and Actions](../administration/authorization.html#project-scope-resources-and-actions) section shows the correct way to authorize Job resources by name:
+Copy the file to `$RDECK_BASE/server/lib` (launcher jar) or `/var/lib/rundeck/bootstrap` (RPM/Deb install).
 
-    for:
-      job:
-        - equals:
-            name: bob
-          allow: [run]
+## Upgrading an existing Mysql or other Database
 
+Rundeck 2.0 will add some columns to the existing tables, but should allow in-place migration of the mysql database.  
 
-## Important Changes in Rundeck 1.4
-
-These changes in version 1.4 are important to note if you are upgrading an
-existing Rundeck installation.
-
-1. [Database table and field name changes to support Mysql & Oracle](#database-changes)
-2. [ACL Policy file format and behavior changes](#acl-policy-changes)
-
-**Note:** before upgrading, it is a good idea to back up your Rundeck installation using the instructions here: [Backup and Recovery](../administration/backup-and-recovery.html).
-
-## Upgrade procedure
-
-### System packaging
-
-If you are using RPM or Debian packaging, refer to the basic [Install Instructions](http://rundeck.org/downloads.html), and simply upgrade the package.
-
-### Launcher Jar
-
-For the Rundeck Launcher jar, you can follow this basic procedure:
-
-1. Stop the currently running Rundeck java process
-2. Copy the new `rundeck-launcher-1.4x.jar` file either to your `$RDECK_BASE` directory, or wherever you had your previous jar
-3. Remove these directories from your previous `$RDECK_BASE`:
-    * `$RDECK_BASE/server/lib`
-    * `$RDECK_BASE/server/exp`
-    * `$RDECK_BASE/tools`
-4. You can now start Rundeck with the new launcher jar, either specifying the `-b basedir` option, or leaving it off to use the directory the launcher jar is in.
-
-## Database changes
-
-Unfortunately, Rundeck 1.3 and earlier used domain class names that conflicted with some reserved words in Mysql and Oracle, specifically "user" and "option".
-
-To fix this, we have changed the table/field mappings to "rduser" and "rdoption"
-for the domain classes that used these names.
-
-The new table/field names are only used if a new config value is set to `true`
-in the rundeck-config.properties file:
-
-    rundeck.v14.rdbsupport=true
-
-This value is set to `false` by default on new installations, so if you have a previous
-1.3 installation using the file-based datasource, upgrading to 1.4 should not
-cause any issues.
-
-To configure a relational database backend, you must set this to "true".  See the section in the Rundeck Guide Administration chapter: [Enable rdbsupport](../administration/relational-database.html#enable-rdbsupport).
-
-## ACL Policy changes
-
-NOTE: If you are installing Rundeck 1.4 from scratch, your installation will come with default aclpolicy files will get you up and running, this document is merely a guide for people upgrading from Rundeck 1.3 or earlier who have customized their aclpolicy files.
-
-### Shortest Path
-
-The simplest way to upgrade is to add or replace the "admin.aclpolicy" file with
-the [Example admin.aclpolicy](#example-admin.aclpolicy) at the end of this document. 
-
-This will give full authorization to 'admin' role users.
-
-### Authorization and Acl Policy changes
-
-The authorization system in Rundeck 1.4 has been updated.  Previously some authorizations only for Job-related actions were declared in the "*.aclpolicy" files located in your `etc` directory for Rundeck, and some GUI layer authorizations were defined as "Mapped Roles" in your `rundeck-config.properties` file.
-
-We've removed the "Mapped Roles" completely, and revamped the ACL Policy code to support authorization of these types of Application-layer actions, as well as improved the ACL policy layer to support restricting access to resources other than just Jobs.
-
-The consequence of these changes is that if you upgrade from Rundeck 1.3 or earlier, your authorization configuration will have to change.  If you don't modify your configuration, you will log into Rundeck and likely be told you don't have authorization to see certain resources or perform certain actions.
-
-These are the changes you will have to make when you upgrade
-
-* convert your old aclpolicy Job authorization rules to the new format
-* add new authorizations rules for the new types of authorization checks in Rundeck 1.4
-* translate any custom "Mapped Role" definitions into .aclpolicy files
-
-Practically, this means you will have to:
-
-* convert any XML formatted .aclpolicy files to YAML
-* update any YAML .aclpolicy files 
-* add new authorization rules for the new authorization checks
-* add new authorization rules for the old "Mapped Roles"
-
-Highlights of the benefits of the new authorization changes:
-
-* Acccess control on resources other than Jobs can now be declared
-* Project level access control is now supported
-* "Deny" rules can now be declared
-* Application level access control is also supported, replacing the Role mapping
-* The Rundeck server no longer uses role-mapping and instead defers to the aclpolicy for all authorizations
-
-### Managing ACL Policy files
-
-The `*.aclpolicy` files live in the Rundeck `etc` dir.
-
-Each file can contain multiple policy definitions, and there can be multiple files in the directory.
-
-So when upgrading you have a few options for how to manage the transition from old to new file formats:
-
-2. modify your files in place to convert them, and add the new authorizations to them
-1. leave your old files where they are, and create new aclpolicy files in the new format for job authorizations as well as all of the new authorizations
-3. modify your file simply to convert it to the new format, and add new files to support the new authorizations
-
-Leaving your old aclpolicy files in place will not cause any problems, because even though they are read by the authorization code they will simply not grant the necessary authorizations until converted to the new format.
-
-Note: to add multiple policy definitions to a single file, use the YAML document separator "---" on a line by itself between the definitions.
-
-### Format
-
-The updated ACL Policy file format lets you allow and deny actions on particular resources for certain users and in certain contexts.
-
-It is a more expressive language than the previous formats, although this adds some complexity. 
-
-The important new features are:
-
-`Context`
-
-:    You now declare access control within a particular project or at the Application level. You specify this in the `context` section.
-
-`Actions` and `Resources`
-
-:   Actions are allowed or denied for a particular Resource.  If an action is to be restricted on *all* resources of a certain type, or for example on creating *any* resource of a certain type, then we use a Generic Resource Type as the Resource.
-
-`Specific Resources` 
-
-:   An example of this is: allow "run" action on a particular Job `[type: job, name: "Test Job", group: "my/group/path"]`. All Resources have a particular "type" and some associated identifying properties. 
-
-`Generic Resource Type`
-
-:   An example of this is: allow "create" action for jobs in general. The resource that would be tested is: `[type: resource, kind: job]`. In this example, the type is genericized as "resource", and the identifying property is the "kind" which is "job".
-
-`Resource Patterns`
-
-:   The Resource for the authorization request is matched against the Resource Patterns defined in the ACL Policy to find Rules defined for it. Each Resource Pattern is specified first by the value of the "type" of the resource, and subsequently by different matching patterns on the properties of the resource. All matching Resource Patterns are applied to the request, and depending on the rules, the specific action is allowed, denied or rejected.
-
-`Rules`
-
-:   Each Resource Pattern can declare the set of Actions that it allows and/or denies. If a matching resource pattern rule allows an action, the action is marked temporarily as "allowed", but subsequent matching Resource Patterns and rules are still applied. If any matching rule Denies an action, the action is immediately denied. If no Resource Patterns match a resource, or no matching Patterns have a rule that allows the action, then the action is also denied.
-
-`Subject`
-
-:   The subject is the user or account to authorize the action for. They can be identified by name, or by group (role) membership in the `by` section.
-
-### Action names
-
-Action names have changed from the previous formats.
-
-Instead of `workflow_X` and `event_Y` type action names, the actions have been simplified to this set, although not all actions are used by every kind of resource:
-
-* `create`
-* `read`
-* `update`
-* `delete`
-* `run`
-* `kill`
-* `admin`
-* `refresh`
-
-The actions are now specified directly on a resource or type in the aclpolicy definition.
-
-### Converting XML aclpolicy files
-
-You may have the old XML format in your current installation.
-
-You can convert the XML to yaml:
-
-    <policies>
-      <policy description="Administrative group that has access to execute all actions.">
-        <context project="*">
-          <command group="*" job="*" actions="*"/>
-        </context>
-        <by>
-          <group name="admin"/>
-        </by>
-      </policy>
-    </policies>
-
-This would convert to:
-
-    description: Administrative group that has access to execute all actions.
-    context:
-      project: '.*'
-    for:
-      job:
-        - equals:
-            group: '.*'
-            name: '.*'
-          allow: '*'
-    by:
-      group: admin
-
-However, this YAML document merely allows access to certain Jobs, and it doesn't allow any access to application level resources, or other project level resources besides jobs. You must add that access as you see fit.
-
-Here is a [XMLStarlet](http://xmlstar.sourceforge.net/) command to convert your xml to the supported yaml format:
-
-    FILE=$RDECK_BASE/etc/role.aclpolicy
-    NEWFILE=$RDECK_BASE/etc/role-new.aclpolicy
-    xmlstarlet sel -t --match '//policy' -o '---' -n -o 'description: ' -v '@description' -n \
-        -o 'context: ' -n -o '  project: &quot;' -v 'context/@project' -o '&quot;' -n \
-        -o 'for:' -n \
-        -o '  job:' -n \
-        --match 'context/command' \
-        -o '    - equals: ' -n \
-        -o '        group: &quot;' -v '@group' -o '&quot;' -n \
-        -o '        name: &quot;' -v '@job' -o '&quot;' -n \
-        -o '      allow: &quot;' -v '@actions' -o '&quot;' -n \
-        -b \
-        -m 'by/group' \
-        -o 'by:' -n \
-        -o '  group: &quot;' -v '@name' -o '&quot;' -n $FILE > $NEWFILE
-
-### Converting older YAML files
-
-Your yaml aclpolicy file may be out of date, and look like this:
-
-    description: Yaml Policy 1
-    rules:
-      ^$:
-        actions: 'foobar'
-      /groupa/.*:
-        actions: 'exact_match'
-      .*/job1: 
-        actions: pattern_match
-      /listAction/.*:
-        actions: [action_list_1,action_list_2]
-    by:
-        username: 'yml_usr_1'
-        group: 'yml_group_1'
-
-You can convert each "rules:" entry to a job resource pattern. For example the rule value ".*/job1" matches only jobs named "job1":
-
-    for:
-      job:
-        - equals: #use "equals" to match exactly
-            name: 'job1' # compare name property only, ignore group
-          allow: [read]
-
-And a rule value of "/groupa/.*" matches any jobs in group "matcha" or a subgroup. The equivalent is:
-
-    for:
-      job:
-        - match: # use "match" to match via regular expression
-            group: '^groupa/.*$' # compare group property, ignore name
-          allow: [read,run]
-          deny: [delete,update,kill]
-
-Note, if you need to authorize actions on adhoc executions, use the 'adhoc' resource type and allow/deny the "run" and "kill" actions:
-
-    for:
-      adhoc:
-        - allow: [run,kill]
-
-### Adding the new Authorizations
-
-The old ACL Policies only defined authorizations on Job actions and some adhoc execution actions.  If you converted an old file as described above you will now have give access to some actions on Jobs in one or more projects, but this is not sufficient to use all features of Rundeck.
-
-Authorizations you need to grant to run jobs:
-
-* 'read' access to some of the projects, at the Application context
-  * This determines what projects a user can see, and is necessary for any access to jobs
-* 'read' access to node resources in a project context
-  * this allows the user to view the nodes for a project, and is necessary to run jobs or adhoc executions
-* 'read' and 'run' actions to specific nodes in a project context
-  * this allows the user to view specific nodes, and 'run' allows executing jobs or adhoc executions on the node
-
-Other authorizations you may want to grant:
-
-* 'read' access to events in the project context, to allow viewing the execution history of jobs and acho executions
-* 'create' access to generic resource type 'job' in the project context, to allow creating new jobs
-
-Note: you must separate Project and Application context policies into separate policy definitions.
-
-For Application context: To grant read access to certain projects:
-
-    description: Allow 'user' group access to all projects
-    context:
-      application: 'rundeck'
-    for:
-      project:
-        - match:
-            name: '.*'
-          allow: [read] # allow view/admin of all projects
-          deny: [admin] # explicitly deny project configuration changes
-    by:
-      group: 'user'
-
-The following are all at Project context:
-
-To grant read access generic Node resources:
-
-    description: read access to nodes
-    context:
-      project: '.*' # all projects
-    for:
-      resource:
-        - equals:
-            kind: node
-          allow: [read] # view the nodes  
-          deny: [create,update,refresh] # deny modification of nodes
-    by:
-      group: 'user'
-
-To grant read and run access to all nodes:
-
-    description: read access to nodes
-    context:
-      project: '.*' # all projects
-    for:
-      node:
-        - allow: [read,run] # view the nodes  
-    by:
-      group: 'user'
-      
-To grant read access to history events:
-
-    description: read access to history
-    context:
-      project: '.*' # all projects
-    for:
-      resource:
-        - equals:
-            kind: event
-          allow: [read] # view history events
-    by:
-      group: 'user'
-
-To allow Job creation:
-
-    description: grant job creation ability
-    context:
-      project: '.*' # all projects
-    for:
-      resource:
-        - equals:
-            kind: job
-          allow: [create] # allow create jobs
-    by:
-      group: 'user'
-
-You can add any or all of these policies, or combine them with your job policies.
-
-### Converting Mapped Roles
-
-Mapped roles defined in `rundeck-config.properties` were used to authorize actions in the Rundeck GUI in Rundeck 1.3 and earlier.
-
-Here is the list of old "application roles", and how to translate them into the new aclpolicy format:
-
-`mappedRoles.admin=[role list]`
-
-:   "Admin" is no longer a special role given any special access other than the access granted to it in aclpolicy.  
-
-`mappedRoles.user_admin=[role list]`
-
-:   The "admin" action can be granted on generic resources of kind "user" at the application context level.
-
-`mappedRoles.workflow_create=[role list]`
-
-:   The "create" action can be granted on generic resources of kind "job" at the project level.
-
-`mappedRoles.workflow_\*=[role list]`
-
-:   For actions other than "create", ("read", "update", "delete", "run", "kill"), you can grant them to specific "job" resources within a project context.
-
-`mappedRoles.events_read=[role list]`
-`mappedRoles.events_create=[role list]`
-
-:   You can grant "read" and "create" to generic resources of kind "event" at the project level.
-
-`mappedRoles.resources_read=[role list]`
-`mappedRoles.resources_create=[role list]`
-`mappedRoles.resources_update=[role list]`
-`mappedRoles.resources_delete=[role list]`
-
-:   You can grant ("read", "create", "update") to generic resources of kind "node" at the project level.  You can also grant "refresh", which allows refreshing the Node resources from a predefined URL.
-
-`mappedRoles.job_view_unauthorized=[role list]`
-
-:   This is equivalent to allowing "read" action on a "job" resource.  If "read" is not allowed for a job it is not shown in the GUI.  If "run" is not allowed for a job but "read" is, it will be shown but not be runnable.
-    
-### Example admin.aclpolicy
-
-This file grants all authorizations to 'admin' role, and explicitly enumerates the actions granted for each resource.  It could be simplified into a much shorter file by allowing '*' and not explicitly matching the resources.
-
-* See the [Man pages - Formats - ACLPolicy v10.5 Format - Example admin.aclpolicy](../manpages/man5/aclpolicy-v10.html#example-admin-policy).
-* See the [Administration Guide - Authorization](../administration/authorization.html#rundeck-resource-authorizations) for detail about authorization.
+However, make sure you take appropriate backups of your data prior to upgrading.

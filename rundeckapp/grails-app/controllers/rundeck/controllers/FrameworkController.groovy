@@ -8,6 +8,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.resources.FileResourceModelSource
 import com.dtolabs.rundeck.core.resources.FileResourceModelSourceFactory
 import com.dtolabs.rundeck.core.utils.NodeSet
+import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.shared.resources.ResourceXMLGenerator
 
 import grails.converters.JSON
@@ -168,18 +169,23 @@ class FrameworkController  {
                     runCommand = cmd.adhocRemoteString
                     //configure node filters
                     if (params.retryFailedExecId) {
-                        query = new ExtNodeFilters(nodeIncludeName: e.failedNodeList, project: e.project)
+                        query = new ExtNodeFilters(filter: OptsUtil.join("name:", e.failedNodeList), project: e.project)
                     } else {
-                        query = ExtNodeFilters.from(e, e.project)
+                        if(e.doNodedispatch){
+                            query = ExtNodeFilters.from(e, e.project)
+                        }else{
+                            query=new ExtNodeFilters(filter: OptsUtil.join("name:", frameworkService.getFrameworkNodeName()),
+                                    project: e.project)
+                        }
                     }
                 }
             }
         } else if (params.exec) {
             runCommand = params.exec
         }
-        def User u = userService.findOrCreateUser(session.user)
         def usedFilter = null
         if (params.filterName) {
+            def User u = userService.findOrCreateUser(session.user)
             //load a named filter and create a query from it
             if (u) {
                 NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, u)

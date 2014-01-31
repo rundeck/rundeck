@@ -26,7 +26,7 @@ endif
 
 EDAM=groovy ../scripts/edam.groovy
 
-.PHONY: man html clean oldlinks
+.PHONY: man html clean 
 
 all : man html resources
 
@@ -35,13 +35,10 @@ man :
 	$(MAKE) VERSION=$(RVERSION) -C manpages/man1
 	$(MAKE) VERSION=$(RVERSION) -C manpages/man5
 
-html: oldlinks
+html: 
 	mkdir -p $(DIST)/html
-	$(EDAM) -o $(DIST)/html -r -O 'recurseDirPatternIgnore=(dist|figures|oldlinks|temp)' -V "VERSION=$(RVERSION)" -V "APIVERS=$(APIVERS)" -V "DATE=$(DATE)" -V "HRDATE=$(HRDATE)"
+	$(EDAM) -o $(DIST)/html  -r -O 'recurseDirPatternIgnore=(dist|figures|temp)' -V "VERSION=$(RVERSION)" -V "APIVERS=$(APIVERS)" -V "DATE=$(DATE)" -V "HRDATE=$(HRDATE)"
 
-oldlinks: oldlinks/*.md
-	mkdir -p $(DIST)/html
-	$(EDAM) -o $(DIST)/html -d oldlinks -t templates -V "DATE=$(DATE)" -V "HRDATE=$(HRDATE)"
 
 resources :  $(CSS) ../figures/*.png
 	mkdir -p $(DIST)/html/figures

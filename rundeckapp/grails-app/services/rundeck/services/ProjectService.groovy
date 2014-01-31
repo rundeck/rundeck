@@ -28,6 +28,7 @@ class ProjectService {
     def scheduledExecutionService
     def executionService
     def loggingService
+    def logFileStorageService
     def workflowService
     static transactional = false
 
@@ -482,7 +483,8 @@ class ProjectService {
                 if (e.outputfilepath && execout[e.outputfilepath]) {
                     File oldfile = execout[e.outputfilepath]
                     //move to appropriate location and update outputfilepath
-                    String filename = loggingService.getLogFileForExecution(e)
+                    String filename = logFileStorageService.getFileForExecutionFiletype(e,
+                            LoggingService.LOG_FILE_FILETYPE, false)
                     File newfile = new File(filename)
                     try{
                         FileUtils.moveFile(oldfile, newfile)
@@ -497,7 +499,8 @@ class ProjectService {
                 //copy state.json file
                 if(execout["state-${oldids[e]}.state.json"]){
                     File statefile= execout["state-${oldids[e]}.state.json"]
-                    String filename = workflowService.getStateFileForExecution(e)
+                    String filename = logFileStorageService.getFileForExecutionFiletype(e,
+                            WorkflowService.STATE_FILE_FILETYPE, false)
                     File newfile = new File(filename)
                     try {
                         FileUtils.moveFile(statefile, newfile)
