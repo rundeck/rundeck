@@ -6,6 +6,8 @@
 
 Rundeck 2.0 has some under-the-hood changes, so please follow this guide when upgrading from Rundeck 1.6.x.
 
+The first step is always to make a backup of all important data for your existing Rundeck installation.  Refer to the [Administration - Backup and Recovery](../administration/backup-and-recovery.html) section.
+
 ## Clean install
 
 The most direct upgrade method is to use the project export/import method and a clean install of Rundeck 2.0.
@@ -15,6 +17,7 @@ Before shutting down your 1.6.x installation, perform **Project Export** for eac
 1. Select your project
 2. Click the *Configure* tab in the header.
 3. Click the link under *Export Project Archive* to save it to your local disk.
+4. Make a copy of all project files under the projects directory for the project, e.g. `$RDECK_BASE/projects/NAME` (launcher) or `/var/rundeck/projects/NAME` (RPM/Deb).  This includes the project.properties configuration as well as resources files.
 
 Perform a *clean* install Rundeck 2.0 (no cheating!).
 
@@ -25,6 +28,8 @@ Then Import the projects you exported:
 3. Click the *Import Archive* Tab
 4. Under *Choose a Rundeck Archive* pick the archive file you downloaded earlier
 5. Click *Import*
+
+Finally, restore the project files for the imported project.
 
 ## Upgrading JAAS properties file
 
