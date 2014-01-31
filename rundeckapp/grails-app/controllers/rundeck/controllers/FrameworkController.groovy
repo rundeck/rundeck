@@ -8,6 +8,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.resources.FileResourceModelSource
 import com.dtolabs.rundeck.core.resources.FileResourceModelSourceFactory
 import com.dtolabs.rundeck.core.utils.NodeSet
+import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.shared.resources.ResourceXMLGenerator
 
 import grails.converters.JSON
@@ -168,7 +169,7 @@ class FrameworkController  {
                     runCommand = cmd.adhocRemoteString
                     //configure node filters
                     if (params.retryFailedExecId) {
-                        query = new ExtNodeFilters(nodeIncludeName: e.failedNodeList, project: e.project)
+                        query = new ExtNodeFilters(filter: OptsUtil.join("name:", e.failedNodeList), project: e.project)
                     } else {
                         query = ExtNodeFilters.from(e, e.project)
                     }
