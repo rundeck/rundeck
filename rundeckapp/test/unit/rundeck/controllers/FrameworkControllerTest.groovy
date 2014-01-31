@@ -68,4 +68,64 @@ class FrameworkControllerTest {
         assertNotNull(result.runCommand)
         assertEquals("a remote string",result.runCommand)
     }
+    public void testAdhocFromExecId_nodeDispatch(){
+        def exec = new Execution(
+                user: "testuser", project: "testproj", loglevel: 'WARN',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true,
+                        adhocRemoteString: 'a remote string')]).save(),
+                doNodedispatch: true,
+                nodeIncludeName: "abc",
+                nodeIncludeTags: "xyz"
+        )
+        assertNotNull exec.save()
+        params.fromExecId=exec.id
+
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getRundeckFramework {-> return null }
+        fwkControl.demand.getAuthContextForSubject { subject -> return null }
+        fwkControl.demand.authorizeProjectExecutionAll {ctx,e,actions->
+            assertEquals(exec,e)
+            assertEquals([AuthConstants.ACTION_READ],actions)
+            true
+        }
+        fwkControl.demand.projects { return [] }
+        fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
+        fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
+        fwkControl.demand.getRundeckFramework {-> return null }
+        fwkControl.demand.getRundeckFramework {-> return null }
+        controller.frameworkService = fwkControl.createMock()
+
+        def result=controller.adhoc(new ExtNodeFilters())
+        assertNotNull(result.query)
+        assertEquals("name: abc tags: xyz",result.query.filter)
+        assertNotNull(result.runCommand)
+        assertEquals("a remote string",result.runCommand)
+    }
+    public void testAdhocFromExecId_local(){
+        def exec = new Execution(
+                user: "testuser", project: "testproj", loglevel: 'WARN',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true,
+                        adhocRemoteString: 'a remote string')]).save(),
+                doNodedispatch: false,
+        )
+        assertNotNull exec.save()
+        params.fromExecId=exec.id
+
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getRundeckFramework {-> return null }
+        fwkControl.demand.getAuthContextForSubject { subject -> return null }
+        fwkControl.demand.authorizeProjectExecutionAll {ctx,e,actions->
+            assertEquals(exec,e)
+            assertEquals([AuthConstants.ACTION_READ],actions)
+            true
+        }
+        fwkControl.demand.getFrameworkNodeName { -> return "monkey1" }
+        controller.frameworkService = fwkControl.createMock()
+
+        def result=controller.adhoc(new ExtNodeFilters())
+        assertNotNull(result.query)
+        assertEquals("name: monkey1",result.query.filter)
+        assertNotNull(result.runCommand)
+        assertEquals("a remote string",result.runCommand)
+    }
 }

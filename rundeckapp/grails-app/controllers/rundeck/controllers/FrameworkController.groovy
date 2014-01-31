@@ -171,7 +171,12 @@ class FrameworkController  {
                     if (params.retryFailedExecId) {
                         query = new ExtNodeFilters(filter: OptsUtil.join("name:", e.failedNodeList), project: e.project)
                     } else {
-                        query = ExtNodeFilters.from(e, e.project)
+                        if(e.doNodedispatch){
+                            query = ExtNodeFilters.from(e, e.project)
+                        }else{
+                            query=new ExtNodeFilters(filter: OptsUtil.join("name:", frameworkService.getFrameworkNodeName()),
+                                    project: e.project)
+                        }
                     }
                 }
             }
