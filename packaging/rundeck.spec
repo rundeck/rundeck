@@ -48,6 +48,7 @@ fi
 
 %attr(6775, rundeck, rundeck) %dir /var/log/rundeck
 %dir /var/lib/rundeck
+%dir /var/lib/rundeck/.ssh
 %dir /var/lib/rundeck/logs
 %dir /var/lib/rundeck/data
 %dir /var/lib/rundeck/work
