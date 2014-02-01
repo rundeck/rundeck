@@ -1,14 +1,14 @@
 SHELL=/bin/bash
 
-VNUMBER=$(shell grep version.number= ${PWD}/version.properties | cut -d= -f 2)
+VNUMBER=$(shell grep version.number= $${PWD}/version.properties | cut -d= -f 2)
 ifndef TAG
-TAG=$(shell grep version.tag= ${PWD}/version.properties | cut -d= -f 2)
+TAG=$(shell grep version.tag= $${PWD}/version.properties | cut -d= -f 2)
 endif
 VERSION=${VNUMBER}-${TAG}
 ifeq ($(strip $(TAG)),GA)
 VERSION=${VNUMBER}
 endif
-RELEASE=$(shell grep version.release.number= ${PWD}/version.properties | cut -d= -f 2)
+RELEASE=$(shell grep version.release.number= $${PWD}/version.properties | cut -d= -f 2)
 
 PROXY_DEFS=
 ifdef http_proxy
