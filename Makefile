@@ -39,6 +39,7 @@ core-snapshot:
 
 release: 
 	GRADLE_OPTS="-Xmx1024m -Xms256m" ./gradlew $(PROXY_DEFS) --no-daemon -Penvironment=release -PbuildNum=$(RELEASE) uploadArchives
+	./gradlew $(PROXY_DEFS) --no-daemon nexusStagingRelease
 
 #test via gradle
 
