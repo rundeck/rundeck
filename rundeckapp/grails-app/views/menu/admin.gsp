@@ -105,7 +105,7 @@
                                 </g:if>
                                 <g:else>
                                     <span
-                                        class="warn note">Invalid Resurce Model Source configuration: Provider not found: ${config.type.encodeAsHTML()}</span>
+                                        class="warn note">Invalid Resource Model Source configuration: Provider not found: ${config.type.encodeAsHTML()}</span>
                                 </g:else>
                             </div>
                         </li>
