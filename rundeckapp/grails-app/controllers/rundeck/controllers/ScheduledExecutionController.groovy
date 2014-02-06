@@ -2224,15 +2224,25 @@ class ScheduledExecutionController  {
             return
         }
 
+        def script
         //read attached script content
-        def file = request.getFile("scriptFile")
-        if(file.empty) {
-            return apiService.renderErrorXml(response, [
-                    status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: 'api.error.run-script.upload.is-empty'])
+        if (request instanceof MultipartHttpServletRequest) {
+            def file = request.getFile("scriptFile")
+            if(!file) {
+                return apiService.renderErrorXml(response, [
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code: 'api.error.run-script.upload.missing',args:['scriptFile']])
+            }else if(file.empty) {
+                return apiService.renderErrorXml(response, [
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code: 'api.error.run-script.upload.is-empty'])
+            }
+            script = new String(file.bytes)
+        }else if(params.scriptFile){
+            script=params.scriptFile
         }
 
-        def script=new String(file.bytes)
+
 
         //remote any input parameters that should not be used when creating the execution
         ['options','scheduled'].each{params.remove(it)}
