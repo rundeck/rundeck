@@ -149,15 +149,15 @@ class MenuController {
         if(params.page){
             startpage=params.page
         }
-        if(params.project && !params.page){
-            startpage='jobs'
+        if(!params.project){
+            startpage='home'
         }
         switch (startpage){
             case 'home':
                 return redirect(controller: 'menu', action: 'home')
-            case 'run':
             case 'nodes':
                 return redirect(controller:'framework',action:'nodes',params:[project:params.project])
+            case 'run':
             case 'adhoc':
                 return redirect(controller:'framework',action:'adhoc',params:[project:params.project])
             case 'jobs':

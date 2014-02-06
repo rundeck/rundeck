@@ -123,7 +123,7 @@
 <div class="list-group-item">
             <div class="row">
                 <div class="col-sm-6 col-md-4">
-                    <g:link action="jobs" controller="menu" params="[project: project]" class="h3">
+                    <g:link action="index" controller="menu" params="[project: project]" class="h3">
                         <i class="glyphicon glyphicon-tasks"></i>
                         ${project}
                     </g:link>
