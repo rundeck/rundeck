@@ -49,7 +49,7 @@ rpm:
 	@mkdir -p rpmdist/SOURCES/var/lib/rundeck
 	@mkdir -p rpmdist/SOURCES/var/lib/rundeck/exp/webapp
 	@mkdir -p rpmdist/SOURCES/var/lib/rundeck/{data,work,logs,cli,libext,bootstrap}
-	@mkdir -p rpmdist/SOURCES/var/log/rundeck
+	@mkdir -p rpmdist/SOURCES/var/log/rundeck/.ssh
 	@mkdir -p rpmdist/SOURCES/var/lib/rundeck/var/tmp
 	@mkdir -p rpmdist/SOURCES/tmp/rundeck
 	@mkdir -p rpmdist/SOURCES/var/rundeck/projects
