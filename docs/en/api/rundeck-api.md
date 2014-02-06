@@ -1455,7 +1455,7 @@ URL:
 
 Method: `POST`
 
-Expected Content-Type: `application/x-www-form-urlencoded`
+Expected Content-Type: `multipart/form-data`
 
 Required Parameters:
 
@@ -1463,7 +1463,7 @@ Required Parameters:
 
 Required Content:
 
-* `scriptFile`: A `x-www-form-urlencoded` request parameter containing the script file content.
+* `scriptFile`: the script file contents (`scriptFile` being the `name` attribute of the `Content-Disposition` header)
 
 Optional Parameters:
 
