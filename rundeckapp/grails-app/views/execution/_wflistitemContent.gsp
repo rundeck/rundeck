@@ -28,6 +28,7 @@
             <span class="info note"><g:message code="Workflow.stepErrorHandler.label.on.error" /></span>
         </g:if>
         <g:render template="/execution/wfItemView" model="${[item:item,edit:edit,noimgs:noimgs, workflow: workflow, project: project]}"/>
+        <g:if test="${edit}">
         <div id="itemdel_${i}" class="panel panel-danger collapse">
             <div class="panel-heading">
                 <g:message code="${'Workflow.' + (isErrorHandler ? 'stepErrorHandler' : 'step') + '.action.delete.label'}"/>
@@ -47,6 +48,7 @@
                 <span class="btn btn-danger btn-xs" onclick=" _doRemoveItem('${i}', '${stepNum}', ${isErrorHandler?true:false});"><g:message code="delete"/></span>
             </div>
         </div>
+        </g:if>
         <g:if test="${isErrorHandler}">
             <g:if test="${item.keepgoingOnSuccess}">
                 <span class=" succeed" title="${g.message(code:'Workflow.stepErrorHandler.keepgoingOnSuccess.description').encodeAsHTML()}"><g:message code="Workflow.stepErrorHandler.label.keep.going.on.success" /></span>

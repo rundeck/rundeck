@@ -298,7 +298,7 @@ div.progressContainer div.progressContent{
         </div>
         <span class="prompt">Details</span>
         <div class="presentation" id="schedExDetails${scheduledExecution?.id}">
-            <g:render template="/execution/execDetails" model="[execdata:execution,noimgs:true,nomatchednodes:true]"/>
+            <g:render template="/execution/execDetails" model="[showEdit:false, execdata:execution,noimgs:true,nomatchednodes:true]"/>
         </div>
         %{--<g:set var="nodestatus" value="${[succeeded:20,failed:0,total:20]}"/>--}%
         <g:if test="${nodestatus || execution?.failedNodeList}">
