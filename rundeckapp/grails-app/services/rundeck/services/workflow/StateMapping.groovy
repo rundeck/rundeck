@@ -63,8 +63,7 @@ class StateMapping {
                     hasSubworkflow: state.hasSubWorkflow(),
                     workflow: mapOf(state.subWorkflowState, ident, nodestates, allNodes)
             ]
-        }
-        if (state.nodeStateMap) {
+        } else if (state.nodeStateMap) {
             def nmap = [:]
             state.nodeStateMap.each { String node, StepState nstate ->
                 nmap[node] = mapOf(nstate)
