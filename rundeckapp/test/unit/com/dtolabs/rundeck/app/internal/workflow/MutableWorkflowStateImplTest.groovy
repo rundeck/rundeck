@@ -695,7 +695,10 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
         assertEquals(ExecutionState.SUCCEEDED, step1.nodeStateMap['a'].executionState)
 
     }
-    public void testNodeStepSubWorkflow() {
+    /**
+     * A step which is both a node-step and a sub-workflow step, should finalize correctly
+     */
+    public void testNodeStepSubWorkflowSuccess() {
         //sub step 1
         def mutableStep11 = new MutableWorkflowStepStateImpl(stepIdentifier(1))
         mutableStep11.nodeStep = true
@@ -774,6 +777,80 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
         assertEquals(ExecutionState.SUCCEEDED, step11.nodeStateMap['a'].executionState)
         assertNotNull(step11.nodeStateMap['b'])
         assertEquals(ExecutionState.SUCCEEDED, step11.nodeStateMap['b'].executionState)
+        assertNotNull(step11.nodeStateMap['c'])
+        assertEquals(ExecutionState.NOT_STARTED, step11.nodeStateMap['c'].executionState)
+
+    }
+    /**
+     * A step which is both a node-step and a sub-workflow step, abort should finalize node and step
+     */
+    public void testNodeStepSubWorkflowAbort() {
+        //sub step 1
+        def mutableStep11 = new MutableWorkflowStepStateImpl(stepIdentifier(1))
+        mutableStep11.nodeStep = true
+
+        //sub workflow
+        MutableWorkflowStateImpl sub1 = new MutableWorkflowStateImpl(['c'], 1, [0: mutableStep11], StateUtils.stepIdentifier(1), 'a');
+
+        //step 1, both a node step and a subworkflow
+        def mutableStep1 = new MutableWorkflowStepStateImpl(stepIdentifier(1), sub1)
+        mutableStep1.nodeStep = true
+
+
+        //top workflow runs on two nodes
+        MutableWorkflowStateImpl mutableWorkflowState = new MutableWorkflowStateImpl(['a','b'], 1, [0: mutableStep1], null, 'a');
+
+        def date = new Date()
+
+        //workflow start
+        mutableWorkflowState.updateWorkflowState(ExecutionState.RUNNING, date, ['a','b'])
+        //step 1 start
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1), 0,stepStateChange(stepState(ExecutionState.RUNNING)), date)
+
+        //step 1; start on node a
+        def node='a'
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1), 0, stepStateChange(stepState(ExecutionState.RUNNING), node), date)
+
+        //step1; workflow start
+        mutableWorkflowState.updateSubWorkflowState(stepIdentifier(1), 0, false, ExecutionState.RUNNING, date, [node], null)
+        //step 1/1 run on node a
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1, 1), 0, stepStateChange(stepState(ExecutionState.RUNNING)), date)
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1, 1), 0, stepStateChange(stepState(ExecutionState.RUNNING), node), date)
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1, 1), 0, stepStateChange(stepState(ExecutionState.SUCCEEDED), node), date)
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1, 1), 0, stepStateChange(stepState(ExecutionState.SUCCEEDED)), date)
+        //step 1 finish workflow
+        mutableWorkflowState.updateSubWorkflowState(stepIdentifier(1), 0, false, ExecutionState.SUCCEEDED, date, [node], null)
+        assertEquals(ExecutionState.RUNNING,mutableWorkflowState.stepStates[0].stepState.executionState)
+        //setp 1; finish on node
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1), 0, stepStateChange(stepState(ExecutionState.SUCCEEDED), node), date)
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1), 0, stepStateChange(stepState(ExecutionState.SUCCEEDED)), date)
+
+        //fail workflow before running on node b
+        mutableWorkflowState.updateWorkflowState(ExecutionState.FAILED, date, null)
+        assertEquals(ExecutionState.FAILED, mutableWorkflowState.executionState)
+
+
+        assertEquals(['a', 'b'], mutableWorkflowState.nodeSet)
+
+        def step1 = mutableWorkflowState[1]
+        assertStepId(1, step1.stepIdentifier)
+        assertEquals(ExecutionState.NODE_PARTIAL_SUCCEEDED, step1.stepState.executionState)
+        assertEquals(['a', 'b'], step1.nodeStepTargets)
+        assertNotNull(step1.nodeStateMap['a'])
+        assertEquals(ExecutionState.SUCCEEDED, step1.nodeStateMap['a'].executionState)
+        assertNotNull(step1.nodeStateMap['b'])
+        assertEquals(ExecutionState.NOT_STARTED, step1.nodeStateMap['b'].executionState)
+
+        MutableWorkflowState subworkflow = step1.mutableSubWorkflowState
+
+        def step11 = subworkflow.stepStates[0]
+        assertStepId(1, step11.stepIdentifier)
+        println(step11.nodeStateMap)
+        assertEquals(ExecutionState.NODE_PARTIAL_SUCCEEDED, step11.stepState.executionState)
+        assertEquals(['c'], step11.nodeStepTargets)
+        assertNotNull(step11.nodeStateMap['a'])
+        assertEquals(ExecutionState.SUCCEEDED, step11.nodeStateMap['a'].executionState)
+        assertNull(step11.nodeStateMap['b'])
         assertNotNull(step11.nodeStateMap['c'])
         assertEquals(ExecutionState.NOT_STARTED, step11.nodeStateMap['c'].executionState)
 
