@@ -1,10 +1,12 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.app.internal.workflow.LogMutableWorkflowState
 import com.dtolabs.rundeck.app.internal.workflow.MutableWorkflowState
 import com.dtolabs.rundeck.app.internal.workflow.MutableWorkflowStateImpl
 import com.dtolabs.rundeck.app.internal.workflow.MutableWorkflowStateListener
 import com.dtolabs.rundeck.app.internal.workflow.MutableWorkflowStepStateImpl
 import com.dtolabs.rundeck.app.internal.workflow.WorkflowStateListenerAction
+import com.dtolabs.rundeck.app.internal.workflow.ExceptionHandlingMutableWorkflowState
 import com.dtolabs.rundeck.app.support.ExecutionContext
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.Framework
@@ -132,6 +134,15 @@ class WorkflowService implements ApplicationContextAware{
 
         MutableWorkflowState state = createStateForWorkflow(execution, execution.workflow, execution.project, framework,
                 authContext, jobcontext, secureOpts)
+        def logstate = new LogMutableWorkflowState(state)
+        state = logstate
+        state = new ExceptionHandlingMutableWorkflowState(state)
+        state.illegalStateHandler = { name, Exception e ->
+            log.error(name + ": " + e.message, e)
+            log.error(logstate.stateChanges)
+            log.error(stateMapping.mapOf(id, state).encodeAsJSON())
+        }
+
 
         activeStates.put(id, state)
         def mutablestate = new MutableWorkflowStateListener(state)
