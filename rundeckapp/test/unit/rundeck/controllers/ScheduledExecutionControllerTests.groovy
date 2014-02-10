@@ -531,8 +531,6 @@ class ScheduledExecutionControllerTests  {
     }
 
     public void testRunAdhocBasic() {
-        def sec = new ScheduledExecutionController()
-        if (true) {//test basic copy action
 
             def se = new ScheduledExecution(
                     jobName: 'monkey1', project: 'testProject', description: 'blah',
@@ -551,7 +549,7 @@ class ScheduledExecutionControllerTests  {
             fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
             fwkControl.demand.getRundeckFramework {-> return null }
             fwkControl.demand.getRundeckFramework {-> return null }
-            sec.frameworkService = fwkControl.createMock()
+            controller.frameworkService = fwkControl.createMock()
             def seServiceControl = mockFor(ScheduledExecutionService, true)
 
             seServiceControl.demand.getByIDorUUID {id -> return se }
@@ -565,7 +563,7 @@ class ScheduledExecutionControllerTests  {
                 return exec.id
             }
             seServiceControl.demand.logJobChange {changeinfo, properties ->}
-            sec.scheduledExecutionService = seServiceControl.createMock()
+        controller.scheduledExecutionService = seServiceControl.createMock()
 
             def eServiceControl = mockFor(ExecutionService, true)
             def exec = new Execution(
@@ -576,10 +574,10 @@ class ScheduledExecutionControllerTests  {
             eServiceControl.demand.createExecutionAndPrep {params, framework, user ->
                 return exec
             }
-            sec.executionService = eServiceControl.createMock()
+        controller.executionService = eServiceControl.createMock()
 
 
-            sec.metaClass.message = {params -> params?.code ?: 'messageCodeMissing'}
+        controller.metaClass.message = {params -> params?.code ?: 'messageCodeMissing'}
 
             def params = [
                     jobName: 'monkey1',
@@ -587,20 +585,97 @@ class ScheduledExecutionControllerTests  {
                     description: 'blah',
                     workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'a remote string']]
             ]
-            sec.params.putAll(params)
+        controller.params.putAll(params)
             final subject = new Subject()
             subject.principals << new Username('test')
             subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
-            sec.request.setAttribute("subject", subject)
+        controller.request.setAttribute("subject", subject)
 
-            def model=sec.runAdhoc()
+            def model= controller.runAdhoc()
 
             assertNull model.failed
             assertNotNull model.execution
             assertNotNull exec.id
             assertEquals exec, model.execution
             assertEquals('notequal',exec.id.toString(), model.id.toString())
+    }
+    /**
+     * User input provides old node filters, runAdhoc should supply new filter string to scheduleTempJob
+     */
+    public void testRunAdhocOldNodeFilters() {
+
+        def se = new ScheduledExecution(
+                jobName: 'monkey1', project: 'testProject', description: 'blah',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save(),
+                doNodedispatch: true,
+                nodeIncludeTags: 'balogna',
+                nodeIncludeName: 'rambo',
+                nodeExcludeOsArch: 'x86',
+                nodeExclude: 'somehostname',
+        )
+        se.save()
+//
+        assertNotNull se.id
+
+        //try to do update of the ScheduledExecution
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getRundeckFramework {-> return null }
+        fwkControl.demand.getAuthContextForSubject { subject -> return null }
+        fwkControl.demand.projects {return []}
+        fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
+        fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+        fwkControl.demand.getRundeckFramework {-> return null }
+        fwkControl.demand.getRundeckFramework {-> return null }
+        controller.frameworkService = fwkControl.createMock()
+        def seServiceControl = mockFor(ScheduledExecutionService, true)
+
+        seServiceControl.demand.userAuthorizedForAdhoc {request, scheduledExecution, framework -> return true }
+        seServiceControl.demand._dovalidate {params, user, rolelist, framework ->
+            assertEquals('Temporary_Job',params.jobName)
+            assertEquals('adhoc',params.groupPath)
+            [failed: false, scheduledExecution: se]
         }
+        seServiceControl.demand.scheduleTempJob {user,subject,params,exec ->
+            assertNotNull(params.filter)
+            assertEquals("name: rambo tags: balogna !hostname: somehostname !os-arch: x86",params.filter)
+            return exec.id
+        }
+        seServiceControl.demand.logJobChange {changeinfo, properties ->}
+        controller.scheduledExecutionService = seServiceControl.createMock()
+
+        def eServiceControl = mockFor(ExecutionService, true)
+        def exec = new Execution(
+                user: "testuser", project: "testproj", loglevel: 'WARN',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
+                )
+        assertNotNull exec.save()
+        eServiceControl.demand.createExecutionAndPrep {params, framework, user ->
+            return exec
+        }
+        controller.executionService = eServiceControl.createMock()
+
+
+        controller.metaClass.message = {params -> params?.code ?: 'messageCodeMissing'}
+
+        def params = [
+                jobName: 'monkey1',
+                project: 'testProject',
+                description: 'blah',
+                workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'a remote string']]
+        ]
+        controller.params.putAll(params)
+        final subject = new Subject()
+        subject.principals << new Username('test')
+        subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
+        controller.request.setAttribute("subject", subject)
+
+        def model= controller.runAdhoc()
+
+        assertNull model.failed
+        assertNotNull model.execution
+        assertNotNull exec.id
+        assertEquals exec, model.execution
+        assertEquals('notequal',exec.id.toString(), model.id.toString())
     }
 
     public void testRunAdhocFailed() {

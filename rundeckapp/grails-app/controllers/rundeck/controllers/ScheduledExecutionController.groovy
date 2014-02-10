@@ -1453,6 +1453,8 @@ class ScheduledExecutionController  {
         }
         params.workflow=new Workflow(scheduledExecution.workflow)
         params.argString=scheduledExecution.argString
+        params.doNodedispatch=scheduledExecution.doNodedispatch
+        params.filter=scheduledExecution.asFilter()
 
         def Execution e
         try {
@@ -2189,7 +2191,6 @@ class ScheduledExecutionController  {
 
         //remote any input parameters that should not be used when creating the execution
         ['options','scheduled'].each{params.remove(it)}
-        params.workflow=new Workflow(commands:[new CommandExec(adhocRemoteString:params.remove('exec'), adhocExecution:true)])
         params.description=params.description?:""
 
         //convert api parameters to node filter parameters

@@ -132,17 +132,15 @@ class ScheduledExServiceTests {
         assertEquals(se2, result)
     }
 
-    public void testDoValidate() {
-        def testService = new ScheduledExecutionService()
+    public void testDoValidateEmptyInput() {
 
-        if (true) {//failure on empty input
             def fwkControl = mockFor(FrameworkService, true)
             fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
             fwkControl.demand.existsFrameworkProject { project, framework -> return false }
-            testService.frameworkService = fwkControl.createMock()
+            service.frameworkService = fwkControl.createMock()
 
             def params = [:]
-            def results = testService._dovalidate(params, 'test', 'test', null)
+            def results = service._dovalidate(params, 'test', 'test', null)
             if (results.scheduledExecution.errors.hasErrors()) {
                 results.scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -163,7 +161,8 @@ class ScheduledExServiceTests {
             assertFalse(execution.errors.hasFieldErrors('type'))
             assertFalse(execution.errors.hasFieldErrors('command'))
         }
-        if (true) {//test basic passing input
+
+    public void testDoValidateBasic() {
             def fwkControl = mockFor(FrameworkService, true)
             fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
             fwkControl.demand.existsFrameworkProject { project, framework ->
@@ -176,12 +175,12 @@ class ScheduledExServiceTests {
                 assertEquals 'aCommand', command
                 return null
             }
-            testService.frameworkService = fwkControl.createMock()
+        service.frameworkService = fwkControl.createMock()
 
             def params = [jobName: 'monkey1', project: 'testProject', description: 'blah',
                     workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'a command']]
             ]
-            def results = testService._dovalidate(params, 'test', 'test', null)
+            def results = service._dovalidate(params, 'test', 'test', null)
             assertFalse(results.failed)
             assertNotNull(results.scheduledExecution)
             assertTrue(results.scheduledExecution instanceof ScheduledExecution)
@@ -202,7 +201,8 @@ class ScheduledExServiceTests {
             assertEquals 'a command', exec.adhocRemoteString
             assertTrue exec.adhocExecution
         }
-        if (true) {//test invalid job name
+
+    public void testDoValidateInvalidJobName() {
             def fwkControl = mockFor(FrameworkService, true)
             fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
             fwkControl.demand.existsFrameworkProject { project, framework ->
@@ -215,17 +215,43 @@ class ScheduledExServiceTests {
                 assertEquals 'aCommand', command
                 return null
             }
-            testService.frameworkService = fwkControl.createMock()
+        service.frameworkService = fwkControl.createMock()
 
             def params = [jobName: 'test/monkey', project: 'testProject', description: 'blah', adhocExecution: true, adhocRemoteString: 'a command']
-            def results = testService._dovalidate(params, 'test', 'test', null)
+            def results = service._dovalidate(params, 'test', 'test', null)
             assertTrue(results.failed)
             def sce = results.scheduledExecution
 
             assertTrue sce.errors.hasErrors()
             assertTrue sce.errors.hasFieldErrors('jobName')
 
-        }
+    }
+    /**
+     * input params nodeInclude/nodeExclude* should be converted into the filter string
+     */
+    public void testDoValidateNodeDispatchOldFilterAsString() {
+            def fwkControl = mockFor(FrameworkService, true)
+            fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+            fwkControl.demand.existsFrameworkProject { project, framework ->
+                assertEquals 'testProject', project
+                return true
+            }
+            service.frameworkService = fwkControl.createMock()
+
+        def params = [jobName: 'monkey1', project: 'testProject', description: 'blah',
+                workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true,
+                        adhocRemoteString: 'a command']],
+                doNodedispatch: true,
+                    nodeIncludeName: "bongo",
+            nodeExcludeOsFamily: "windows",
+            nodeIncludeTags: "spaghetti"]
+            def results = service._dovalidate(params, 'test', 'test', null)
+            assertFalse(results.failed)
+            def sce = results.scheduledExecution
+
+            assertFalse sce.errors.hasErrors()
+            assertNotNull sce.filter
+            assertEquals "name: bongo tags: spaghetti !os-family: windows",sce.filter
     }
 
     public void testDoValidateNodedispatchIsBlank() {
