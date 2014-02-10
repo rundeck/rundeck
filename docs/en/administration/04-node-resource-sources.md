@@ -1,4 +1,4 @@
-% Node Resource Sources
+% Node Sources
 
 Rundeck can integrate with external data by configuring the use of *Providers* or *Sources*.  Providers are third-party services or systems that export data that Rundeck can import. Additionally, Rundeck supports an external Editor for Node data.
 
@@ -6,22 +6,23 @@ Rundeck makes use of common data formats (XML, JSON & YAML).  Third-party softwa
 
 There are a few types of external integration:
 
-[*Resource Model Source*](node-resource-sources.html#resource-model-source)
+[*Resource Model Source*](#resource-model-source)
 :   Provides a set of Nodes in XML or YAML format. E.g. a CMDB or hosted virtual machines service. Rundeck can be configured to use a different provider for each Project, and can refresh the Resources it uses from this provider.
 
-[*Resource Editor*](node-resource-sources.html#resource-editor)
+[*Resource Editor*](#resource-editor)
 :   Provides a web-based editor to manage the Node definitions. Rundeck can link to this editor from the Run page, and has optional JavaScript interactions to make editing externally-managed Node resources integrated with the Rundeck GUI.
 
 ## Resource Model Source
 
-The Resource model source is a way to transfer Node definitions from other systems, tools or services into Rundeck. The means of providing the Resource model data can be done in whichever way suits your environment best.
+The Resource model source is a way to transfer Node definitions from other systems, tools or services into Rundeck. The means of providing the Resource model da
+ta can be done in whichever way suits your environment best.
 
 Rundeck supports plugins to provide different kinds of sources, but has built-in
 support for URLs or File based sources.
 
 Resource model data is a set of Node descriptors, each with a uniquely identifying name.  In addition to Name, some pieces of metadata are required (like `hostname`, and `username`), and some are optional.
 
-(See [Resource Model Document Formats](../manual/rundeck-basics.html#resource-model-document-formats) for more information on what format the files need to be in.)
+(See [Resource Model Document Formats]) for more information on what format the files need to be in.)
 
 The Resource model data is stored on the server as a set of files.  Each Project in Rundeck has at least a single Resources file, and may have multiple additional sources (such as a URL or a directory containing multiple files). All of these sources will be combined into the set of all Nodes that are available for the project.  Each node's metadata can define how to connect to it and run commands.
 
@@ -29,7 +30,7 @@ The Resource model data is stored on the server as a set of files.  Each Project
 
 In order to provide the Resource model data to Rundeck:
 
-1. The data must be in one of the supported [Resource Model Document Formats](../manual/rundeck-basics.html#resource-model-document-formats)
+1. The data must be in one of the supported [Resource Model Document Formats])
 2. Each Node entry must have a unique `name` value. You may have to convert the external system's identifier to be unique, or create one yourself.
 
 This means you can provide the data in the way that best suits your specific use-case.  Some examples:
@@ -40,16 +41,17 @@ This means you can provide the data in the way that best suits your specific use
     * You could do this with a cron-job, or via some external trigger.  Rundeck will simply read the resource.xml/resource.yaml file identified in the configuration file.
 * Data generated from a simple CGI script which interfaces with another third-party or external service.
     * You could run Apache and host a simple CGI script.  The CGI script would communicate to some other system and then return the XML/YAML content.  You could tell Rundeck to refresh the Resource model, which would in turn cause the CGI to access the external data and return the reformatted content.
-* Using a [Resource Model Source Plugin](../manual/plugins.html#resource-model-source-plugins), the data could come from some other external source
+* Using a [Resource Model Source Plugin], the data could come from some other external source
 
 The Resource model data does not have to include the Rundeck server Node, as it is implicitly included.
 
 ### Configuration ###
 
-Resource model sources are defined on a per-project basis, in the [`project.properties`](configuration.html#project.properties) file.
+Resource model sources are defined on a per-project basis, in the 
+[project.properties] file.
 
 The only required configuration value is `project.resources.file`, which defines a single file containing resource model data stored on-disk.  Each new project will have a good default location, but you may change either the location or the file extension. The file
-extension determines the format of the data. (See [Resource Model Document Formats](../manual/rundeck-basics.html#resource-model-document-formats).)
+extension determines the format of the data. (See [Resource Model Document Formats].)
 
     project.resources.file = ..
     
@@ -61,7 +63,7 @@ You may also specify a URL, which will be automatically retrieved and stored in 
     
 This configures the remote URL for loading the Resources model data.
 
-In addition, multiple [Resource Model Source Plugin](../manual/plugins.html#resource-model-source-plugins) can
+In addition, multiple [Resource Model Source Plugin] can
 be configured to add additional sources of Resource Model data.
 
 The ordering of sources defines the order that node definitions are retrieved.
@@ -77,11 +79,6 @@ with the same node name.
 ### Implementations and Examples ###
 
 
-[curl]: http://curl.haxx.se/
-[xmlstarlet]: http://xmlstar.sourceforge.net/
-[CMDB]: http://en.wikipedia.org/wiki/Configuration_management_database
-[AJAX]: http://en.wikipedia.org/wiki/Ajax_(programming)
-
 #### Simple VCS URL resource model source
 
 Putting the resources.xml/resources.yaml file under the control of a source code
@@ -92,20 +89,24 @@ log. Most source code management tools provide a web interface to
 retrieve file revisions based on a URL and thus make it accessible as
 a resource model source.
 
-Going back to the [Acme Anvils Example](../manual/rundeck-by-example.html#acme-anvils) section, imagine the
+Going back to the [Tutorial] chapter, imagine the
 administrator decides the VCS approach is a good first step to
 control versioning for the anvils resource model. Acme is a [subversion] user
 and installed [viewvc] to give web access to the repository.
 
 First, the current resources.xml is added to the repository and committed:
 
-    svn add resources.xml http://svn.acme.com/ops/anvils/resources.xml
-    svn commit -m "added resource model for anvils" resources.xml
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
+svn add resources.xml http://svn.acme.com/ops/anvils/resources.xml
+svn commit -m "added resource model for anvils" resources.xml
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 
 To test access, the administrator downloads the latest revision (ie,
 "HEAD") via the "viewvc" interface.
 
-     curl http://svn.acme.com/viewvc/ops/anvils/resources.xml?revision=HEAD
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
+curl http://svn.acme.com/viewvc/ops/anvils/resources.xml?revision=HEAD
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 
 Next, the anvils project.properties configuration file is modified to
 reference the URL to retrieve the "HEAD" revision:
@@ -162,7 +163,7 @@ The EC2 plugin will automatically add tags for the nodes based on an EC2 Instanc
 
 You can add filters to the EC2 Plugin configuration under the "Filter Params" configuration area, with the sytanx of: `filter=value;filter2=value2`. The available filter names are listed in [AWS API - DescribeInstances](http://docs.amazonwebservices.com/AWSEC2/latest/APIReference/ApiReference-query-DescribeInstances.html).
 
-You can also configure your EC2 Plugin manually or automatically by creating or modifying the [project.properties](configuration#project.properties) file, and defining a [Resource Model Source](../manual/plugins.html#resource-model-sources) provider, like this:
+You can also configure your EC2 Plugin manually or automatically by creating or modifying the [project.properties](configuration#project.properties) file, and defining a [Resource Model Source] provider, like this:
 
     resources.source.1.type=aws-ec2
     resources.source.1.config.accessKey=...
@@ -281,33 +282,45 @@ Here are some examples of using the `editUrl` and `remoteUrl` in a resources.xml
 
 Specify a simple URL for editing, which will simply produce a link:
 
-    <node name="venkman" editUrl="http://mycmdb:8080/node/edit" ... />
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.xml}
+<node name="venkman" editUrl="http://mycmdb:8080/node/edit" ... />
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
    
 Specify a URL for editing, with embedded "name" property as a parameter:
 
-    <node name="venkman" editUrl="http://mycmdb:8080/node/edit?name=${node.name}" ... />
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.xml}
+<node name="venkman" editUrl="http://mycmdb:8080/node/edit?name=${node.name}" ... />
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
    
 Specify a remote URL with embedded "name" and "project" properties as parameters:
 
-    <node name="venkman" remoteUrl="http://mycmdb:8080/node/edit?name=${node.name}&amp;project=${node.project}" ... />
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.xml}
+<node name="venkman" remoteUrl="http://mycmdb:8080/node/edit?name=${node.name}&amp;project=${node.project}" ... />
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
    
 Specify a remote URL with embedded "name" property as part of the path:
 
-    <node name="venkman" remoteUrl="http://mycmdb:8080/node/edit/${node.name}"  ... />
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.xml}
+<node name="venkman" remoteUrl="http://mycmdb:8080/node/edit/${node.name}"  ... />
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 
 In YAML, some examples:
 
 Specify a remote URL with embedded "name" and "project" properties as parameters:
 
-    venkman:
-      nodename: venkman
-      remoteUrl: http://mycmdb:8080/node/edit?name=${node.name}&amp;project=${node.project}
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.yaml}
+venkman:
+  nodename: venkman
+  remoteUrl: http://mycmdb:8080/node/edit?name=${node.name}&amp;project=${node.project}
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 
 Specify a remote URL with embedded "name" property as part of the path:
 
-    venkman:
-      nodename: venkman
-      remoteUrl: "http://mycmdb:8080/node/edit/${node.name}
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.yaml}
+venkman:
+  nodename: venkman
+  remoteUrl: "http://mycmdb:8080/node/edit/${node.name}
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 
 #### Simple site integration ####
 
@@ -348,3 +361,11 @@ So the JavaScript for integrating with Rundeck is then added to the following pa
 To complete the round-trip of editing a Node and then showing the results back in Rundeck, the ndbtest project would have to export XML formatted Resource data, and then your Rundeck project.properties file would have to point to the appropriate URL.  (This is left as an exercise to the reader.)
 
 
+
+[curl]: http://curl.haxx.se/
+[xmlstarlet]: http://xmlstar.sourceforge.net/
+[CMDB]: http://en.wikipedia.org/wiki/Configuration_management_database
+[AJAX]: http://en.wikipedia.org/wiki/Ajax_(programming)
+
+[project.properties]: (configuration-file-reference.html#project.properties)
+[Tutorial]: (../tutorials/index.html)

@@ -1,4 +1,4 @@
-% RESOURCE-V13(5) Rundeck User Manuals | Version 1.3
+% RESOURCE-XML
 % Alex Honor
 % November 20, 2010
 
@@ -26,9 +26,11 @@ Can contain the following elements:
 
 *Example*
 
-    <project>
-      <node .../>
-    </project>
+~~~~~~~~ {.xml}
+<project>
+    <node .../>
+</project>
+~~~~~~~~ 
 
 ## node
 
@@ -104,61 +106,74 @@ Alternatively, the value can be specified as nested text content.
 
 Examples:
 
-    <attribute name="server-path" value="/var/myapp"/>
-
-    <attribute name="server-port">9010</attribute>
+~~~~~~~~ {.xml}
+<attribute name="server-path" value="/var/myapp"/>
+<attribute name="server-port">9010</attribute>
+~~~~~~~~ 
 
 ## Examples
 
 Define a node named "strongbad":
 
-    <node name="strongbad" type="Node"
-        description="a development host"
-        hostname="strongbad.local"
-        osArch="i386" osFamily="unix" osName="Darwin" osVersion="9.2.2"
-        username="alexh"/>
+~~~~~~~~ {.xml}
+<node name="strongbad" type="Node"
+    description="a development host"
+    hostname="strongbad.local"
+    osArch="i386" osFamily="unix" osName="Darwin" osVersion="9.2.2"
+    username="alexh"/>
+~~~~~~~~ 
 
 Define a node of the type LinuxNode that has a `https-port` attribute:
 
-    <node type="LinuxNode" name="centos54" hostname="centos54.local"
-          description="Sample Linux node" tags="sample,linux"
-          >
-        <attribute name="https-port" value="435"/>
-    </node>
+~~~~~~~~ {.xml}
+<node type="LinuxNode" name="centos54" hostname="centos54.local"
+      description="Sample Linux node" tags="sample,linux"
+      >
+    <attribute name="https-port" value="435"/>
+</node>
+~~~~~~~~ 
 
 Define a node named that uses a non standard SSH port. The "hostname"
 value is overloaded to include the port (192.168.1.106:4022):
 
-    <node name="centos54" type="Node"
-        description="a centos host"
-        hostname="192.168.1.106:4022"
-        username="deploy"
-        />
+~~~~~~~~ {.xml}
+<node name="centos54" type="Node"
+    description="a centos host"
+    hostname="192.168.1.106:4022"
+    username="deploy"
+    />
+~~~~~~~~ 
 
 An example using just the required attributes:
 
-    <node name="centos54" type="Node"
-        hostname="192.168.1.106:4022"
-        username="deploy"/>
+~~~~~~~~ {.xml}
+<node name="centos54" type="Node"
+    hostname="192.168.1.106:4022"
+    username="deploy"/>
+~~~~~~~~ 
 
 An example with a custom attribute "appname" specified in the `<node>` element:
 
-    <node name="centos54" type="Node"
-        hostname="192.168.1.106:4022"
-        username="deploy"
-        appname="CoolApp"
-        />
+~~~~~~~~ {.xml}
+<node name="centos54" type="Node"
+    hostname="192.168.1.106:4022"
+    username="deploy"
+    appname="CoolApp"
+    />
+~~~~~~~~ 
 
 An example with tags and custom attributes that describe the server role and environment for this node:
 
-    <node name="centos54"
-        hostname="192.168.1.106"
-        username="deploy"
-        role="redis_server"
-        environment="production"
-        tags="redis_server, production"
-        />
+~~~~~~~~ {.xml}
+<node name="centos54"
+    hostname="192.168.1.106"
+    username="deploy"
+    role="redis_server"
+    environment="production"
+    tags="redis_server, production"
+    />
+~~~~~~~~ 
 
 
 The Rundeck source code and all documentation may be downloaded from
-<https://github.com/dtolabs/rundeck/>.
+<https://github.com/rundeck/rundeck/>.

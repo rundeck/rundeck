@@ -1,4 +1,4 @@
-% ACLPOLICY(5) Rundeck User Manuals | Version 1.5
+% ACLPOLICY
 % Noah Campbell;Greg Schueler
 % December 20, 2013
 
@@ -80,23 +80,25 @@ If you have YAML formatted files, you will also need to upgrade them slightly.
 
 An example policy document.
 
-    description: Yaml Policy 1
-    context: # declares the context of the ACL
-      project: '.*' # applies to projects matching a regex.
-    for:
-      resource:
-         - equals:
-            kind: job
-           allow: '*'
-      job:
-         - allow: '*'
-         - match:
-             group: 'group1/.*'
-           deny: '*'
+~~~~~~~~ {.yaml .numberLines}
+description: Yaml Policy 1
+context: # declares the context of the ACL
+  project: '.*' # applies to projects matching a regex.
+for:
+  resource:
+     - equals:
+        kind: job
+       allow: '*'
+  job:
+     - allow: '*'
+     - match:
+         group: 'group1/.*'
+       deny: '*'
 
-    by:
-        username: 'yml_usr_1'
-        group: ['yml_group_1','group2']
+by:
+    username: 'yml_usr_1'
+    group: ['yml_group_1','group2']
+~~~~~~~~ 
 
 An .aclpolicy supports multiple policy definitions in the form of YAML 
 documents usign the `---` separator.  There are four elements that make a 
@@ -155,12 +157,16 @@ sequence is defined using multiple `-` indicators, or within `[` and `]` and sep
 
 Yaml sequences:
 
+~~~~~~~~ {.yaml}
     - a
     - b
+~~~~~~~~ 
 
 also:
 
+~~~~~~~~ {.yaml}
     [ a, b ]
+~~~~~~~~ 
 
 ### Type rules
 
@@ -188,21 +194,27 @@ of the resource to test, and what value or values to apply the matching rule to.
 For example, to declare a rule for a resource with a "name" property of "bob"
 exactly, use `equals`:
 
+~~~~~~~~ {.yaml}
     equals:
       name: bob
     allow: [action1, action2]
     deny: action3
+~~~~~~~~ 
 
 For regular expression matching, use `match`:
 
+~~~~~~~~ {.yaml}
     match:
       name: 'bob|sam'
+~~~~~~~~ 
 
 For set membership matches, such as matching a Node that must have three 
 different tags, you can use `contains`
 
+~~~~~~~~ {.yaml}
     contains:
       tags: [a,b,c]
+~~~~~~~~ 
 
 The `match` and `contains` allow a list of property values, and all of them
 must match the resource's property for the rule to match.  This allows the basic
@@ -222,6 +234,7 @@ A single match will result in further evaluation of the policy.
 
 Examples:
 
+~~~~~~~~ {.yaml}
     by:
       username: 'bob'
 
@@ -238,6 +251,7 @@ Examples:
       username: 
         - simon
         - frank
+~~~~~~~~ 
 
 ### `actions` element
 
@@ -262,51 +276,53 @@ This will show all the options as they're being evaluated.
 
 This document grants full permissions to an 'admin' role:
 
-    description: Admin project level access control. Applies to resources within a specific project.
-    context:
-      project: '.*' # all projects
-    for:
-      resource:
-        - equals:
-            kind: job
-          allow: [create] # allow create jobs
-        - equals:
-            kind: node
-          allow: [read,create,update,refresh] # allow refresh node sources
-        - equals:
-            kind: event
-          allow: [read,create] # allow read/create events
-      adhoc:
-        - allow: [read,run,runAs,kill,killAs] # allow running/killing adhoc jobs
-      job: 
-        - allow: [create,read,update,delete,run,runAs,kill,killAs] # allow create/read/write/delete/run/kill of all jobs
-      node:
-        - allow: [read,run] # allow read/run for nodes
-    by:
-      group: admin
-    
-    ---
-    
-    description: Admin Application level access control, applies to creating/deleting projects, admin of user profiles, viewing projects and reading system information.
-    context:
-      application: 'rundeck'
-    for:
-      resource:
-        - equals:
-            kind: project
-          allow: [create] # allow create of projects
-        - equals:
-            kind: system
-          allow: [read] # allow read of system info
-        - equals:
-            kind: user
-          allow: [admin] # allow modify user profiles
-      project:
-        - match:
-            name: '.*'
-          allow: [read,admin] # allow view/admin of all projects
-    by:
-      group: admin
+~~~~~~~~ {.yaml .numberLines}
+description: Admin project level access control. Applies to resources within a specific project.
+context:
+  project: '.*' # all projects
+for:
+  resource:
+    - equals:
+        kind: job
+      allow: [create] # allow create jobs
+    - equals:
+        kind: node
+      allow: [read,create,update,refresh] # allow refresh node sources
+    - equals:
+        kind: event
+      allow: [read,create] # allow read/create events
+  adhoc:
+    - allow: [read,run,runAs,kill,killAs] # allow running/killing adhoc jobs
+  job: 
+    - allow: [create,read,update,delete,run,runAs,kill,killAs] # allow create/read/write/delete/run/kill of all jobs
+  node:
+    - allow: [read,run] # allow read/run for nodes
+by:
+  group: admin
+
+---
+
+description: Admin Application level access control, applies to creating/deleting projects, admin of user profiles, viewing projects and reading system information.
+context:
+  application: 'rundeck'
+for:
+  resource:
+    - equals:
+        kind: project
+      allow: [create] # allow create of projects
+    - equals:
+        kind: system
+      allow: [read] # allow read of system info
+    - equals:
+        kind: user
+      allow: [admin] # allow modify user profiles
+  project:
+    - match:
+        name: '.*'
+      allow: [read,admin] # allow view/admin of all projects
+by:
+  group: admin
+~~~~~~~~ 
 
 The Rundeck source code and all documentation may be downloaded from
-<https://github.com/dtolabs/rundeck/>.
+<https://github.com/rundeck/rundeck/>.

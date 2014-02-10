@@ -1,4 +1,4 @@
-% rd-jobs(1) | Version ${VERSION}
+% rd-jobs
 % Greg Schueler; Alex Honor
 % November 20, 2010
 
@@ -8,7 +8,7 @@ rd-jobs - List, load or delete jobs from the Rundeck server
 
 # SYNOPSIS
 
-rd-jobs [*action*] [*action options*]...
+`rd-jobs [*action*] [*action options*]...`
 
 # DESCRIPTION
 
@@ -16,55 +16,56 @@ The rd-jobs command lists Jobs stored on the server and optionally downloads the
 
 The tool works in one of two *ACTION* modes:
 
-* list
+* `list`
 : list the stored Jobs on the server (default action)
 
-* load
+* `load`
 : upload job definitions up to the server
 
-* purge
+* `purge`
 : delete job definitions on the server
 
 # OPTIONS
 
 
--h, \--help
+`-h, --help`
 : Print usage message.
 
--v
+`-v`
 : Run verbosely.
 
--p, \--project *PROJECT*
+`-p, --project *PROJECT*`
 : Project name to Load, List or Purge jobs.
 
 ## LIST ACTION OPTIONS
 
--g, \--group *GROUP*
+`-g, --group *GROUP*`
 : Group name. List jobs within this group or sub-group
 
--i, \--idlist	*ID*
+`-i, --idlist	*ID*`
 : Job ID List. List Jobs with these IDs explicitly. Comma-separated, e.g.: 1,2,3.
 
--n, \--name *NAME*
+`-n, --name *NAME*`
 : Job Name. List jobs matching this name.
 
--f, \--file *FILE*
+`-f, --file *FILE*`
 : File path. For list action, path to store the job definitions found in XML/Yaml.
 
--F, \--format *FORMAT*
+`-F, --format *FORMAT*`
 : File Format. For list action, format for the output document. Values: "xml" or "yaml". Default: "xml".
 
 ## LOAD ACTION OPTIONS
 
--d, \--duplicate *update|skip|create*
+`-d, --duplicate *update|skip|create*`
 : Duplicate job behavior option. When loading jobs, treat definitions that already exist on the server in the given manner: 'update' existing jobs,'skip' the uploaded definitions, or 'create' them anyway. (load action. default: update)
--r, \--remove-uuids
+
+`-r, --remove-uuids`
 : When loading jobs, remove UUIDs to avoid conflicts. (load action. default: false)
 
--f, \--file *FILE*
+`-f, --file *FILE*`
 : File path. For load action, path to a FILE to upload.
 
--F, \--format *FORMAT*
+`-F, --format *FORMAT*`
 : File Format. For load action, format for the input document. Values: "xml" or "yaml". Default: "xml".
 
 ## PURGE ACTION OPTIONS
@@ -86,23 +87,33 @@ If no `-p/--project` option is specified, and only one project exists, the singl
 
 List all jobs on the server for the only project:
 
-    rd-jobs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
+rd-jobs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 List all jobs in the project "demo"
 
-    rd-jobs -p demo
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
+rd-jobs -p demo
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 
 List only a single job by ID:
 
-    rd-jobs -i 123 -p demo
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
+rd-jobs -i 123 -p demo
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 List a set of jobs by ID and store them in a XML file:
 
-    rd-jobs -i 1,23,4 --file out.xml -p demo
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
+rd-jobs -i 1,23,4 --file out.xml -p demo
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
     
 List a set of jobs by ID and store them in a Yaml file:
 
-    rd-jobs -i 1,23,4 --file out.yaml --format yaml -p demo
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
+rd-jobs -i 1,23,4 --file out.yaml --format yaml -p demo
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 
 Output from the command will list the job name, ID number in brackets,
 and the URL to view the Job in the server.
@@ -131,8 +142,10 @@ The `-p,--project` option specifies the Project to import jobs to. If unspecifie
 
 Load a file to the server in XML or Yaml format:
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
     rd-jobs load -f jobs.xml
     rd-jobs load -f jobs.yaml -F yaml
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 
 Output:
 
@@ -143,7 +156,9 @@ Output:
 
 If a Job was not successfully created, you will see it mentioned along with a message about why it failed. The number next to the Job name indicates the index of the definition in the uploaded XML:
 
-    rd-jobs load -f jobs.xml
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
+rd-jobs load -f jobs.xml
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 
 Output:
 
@@ -157,7 +172,9 @@ Output:
 
 If the -d skip is specified, then any jobs definitions that were skipped will be listed:
 
-    rd-jobs load -f jobs.xml -d skip
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
+rd-jobs load -f jobs.xml -d skip
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Output:
 
@@ -179,7 +196,7 @@ If no `-p/--project` option is specified, and only one project exists, the singl
    
 # SEE ALSO
 
-[`run` (1)](run.html).
+[`run`](run.html).
 
 The Rundeck source code and all documentation may be downloaded from
 <https://github.com/dtolabs/rundeck/>.

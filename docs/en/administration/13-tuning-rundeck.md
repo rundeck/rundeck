@@ -17,32 +17,42 @@ _On Linux nodes_
 
 List the current limit with the [ulimit](http://ss64.com/bash/ulimit.html) command:
 
-    ulimit -n
+~~~~~ {.bash}
+ulimit -n
+~~~~~~
 
 If the limit is low (eg ``1024``) it should be raised.
 
 You can get the current number of open file descriptors used by the 
 Rundeck server process with [lsof](http://linux.die.net/man/8/lsof):
 
-    losf -p <rundeck pid> | wc -l
+~~~~~ {.bash}
+losf -p <rundeck pid> | wc -l
+~~~~~ 
 
 Increase the limit for a wide margin. 
 Edit [/etc/security/limits.conf](http://ss64.com/bash/limits.conf.html) file
 to raise the hard and soft limits. Here they are raised to ``65535`` for 
 the "rundeck" system account:
 
-    rundeck hard nofile 65535
-    rundeck soft nofile 65535
+~~~~~ {.bash}
+rundeck hard nofile 65535
+rundeck soft nofile 65535
+~~~~~ 
 
 
 The system file descriptor limit is set in /proc/sys/fs/file-max. 
 The following command will increase the limit to 65535:
 
-    echo 65535 > /proc/sys/fs/file-max
+~~~~~ {.bash}
+echo 65535 > /proc/sys/fs/file-max
+~~~~~ 
 
 In a new shell, run the ulimit command to set the new level:
 
-    ulimit -n 65535
+~~~~~ {.bash}
+ulimit -n 65535
+~~~~~ 
 
 The ulimit setting can be set in the [rundeckd](#rundeckd) 
 startup script, or [profile](configuration.html#profile).
@@ -66,19 +76,25 @@ You can increase these by updating the Rundeck [profile](configuration.html#prof
 To see the current values, grep the ``profile`` for 
 the Xmx and Xms patterns:
 
-* Launcher installs:
+**Launcher installs:**
 
-        egrep '(Xmx|Xms)' $RDECK_BASE/etc/profile
+~~~~~ {.bash}
+egrep '(Xmx|Xms)' $RDECK_BASE/etc/profile
+~~~~~ 
    
-* RPM installs:
+**RPM installs:**
 
-        egrep '(Xmx|Xms)' /etc/rundeck/profile
+~~~~~ {.bash}
+egrep '(Xmx|Xms)' /etc/rundeck/profile
+~~~~~ 
    
 The default settings initialized by the installer 
 sets these to 1024 megabytes maximum
 and 256 megabytes initial:
 
-    export RDECK_JVM="$RDECK_JVM -Xmx1024m -Xms256m"
+~~~~~ {.bash}
+export RDECK_JVM="$RDECK_JVM -Xmx1024m -Xms256m"
+~~~~~ 
 
 _Sizing advice_
 
@@ -93,15 +109,17 @@ For example, if your installation has dozens of active users
 that manage a large environment (1000+ nodes), and has
 sufficient system memory, the following sizings might be more suitable:
 
-    export RDECK_JVM="$RDECK_JVM -Xmx4096m -Xms1024m -XX:MaxPermSize=256m"
+~~~~~ {.bash}
+export RDECK_JVM="$RDECK_JVM -Xmx4096m -Xms1024m -XX:MaxPermSize=256m"
+~~~~~ 
 
 ### Quartz job threadCount
 
 The maximum number of threads used by Rundeck for concurrent jobs 
 is set in the ``quartz.properties`` file. By default, this is set to ``10``.
 
-* RPM install: ``/var/lib/rundeck/server/exp/webapp/WEB-INF/classes/quartz.properties``
-* Launcher install: ``$RDECK_BASE/server/exp/webapp/WEB-INF/classes/quartz.properties``
+* RPM install: `/var/lib/rundeck/server/exp/webapp/WEB-INF/classes/quartz.properties`
+* Launcher install: `$RDECK_BASE/server/exp/webapp/WEB-INF/classes/quartz.properties`
 
 To change the maximum threadCount modify this file and alter the line:
 
@@ -127,7 +145,9 @@ _Note_: For more background information on JMX, see
 Enable local JMX monitoring by adding the ``com.sun.management.jmxremote``
 flag to the startup parameters in the [profile](configuration.html#profile).
 
-    export RDECK_JVM="$RDECK_JVM -Dcom.sun.management.jmxremote"
+~~~~~ {.bash}
+export RDECK_JVM="$RDECK_JVM -Dcom.sun.management.jmxremote"
+~~~~~ 
 
 You use a JMX client to monitor JMX agents. 
 This can be a desktop GUI like JConsole run locally.

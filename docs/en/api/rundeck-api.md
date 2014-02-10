@@ -23,13 +23,15 @@ The API Version Number is required to be included in all API calls within the UR
 
 If the version number is not included or if the requested version number is unsupported, then the API call will fail.  The error response will include the code "api-version-unsupported" and have HTTP status code of `400 Bad Request`:
 
-    <result error="true" apiversion="2">
-        <error code="api-version-unsupported">
-            <message>
-            Unsupported API Version "1". API Request: /rundeck/api/1/project/test/jobs. Reason: Minimum supported version: 2
-            </message>
-        </error>
-    </result>
+~~~~~~~~~~ {.xml}
+<result error="true" apiversion="2">
+    <error code="api-version-unsupported">
+        <message>
+        Unsupported API Version "1". API Request: /rundeck/api/1/project/test/jobs. Reason: Minimum supported version: 2
+        </message>
+    </error>
+</result>
+~~~~~~~~~~~~~~~~~~~
 
 ### Changes
 
@@ -215,22 +217,24 @@ Response Format
 
 The XML Response format will conform to this document structure:
 
-    <result success/error="true" apiversion="X">
-        <!-- error included if error="true" -->
-        <error>
-            <message><!-- error message text --></message>
-            <!-- ... multiple message elements -->
-        </error>
-        
-        <!-- optional success element if declared for the endpoint -->
-        <success>
-            <message><!-- success message --></message>
-        </success>
-        
-        <!-- 
-            Specific API results..
-        -->
-    </result>
+~~~~~~~~~~ {.xml}
+<result success/error="true" apiversion="X">
+    <!-- error included if error="true" -->
+    <error>
+        <message><!-- error message text --></message>
+        <!-- ... multiple message elements -->
+    </error>
+    
+    <!-- optional success element if declared for the endpoint -->
+    <success>
+        <message><!-- success message --></message>
+    </success>
+    
+    <!-- 
+        Specific API results..
+    -->
+</result>
+~~~~~~~~~~~~
 
 If an error occurred, then the `error` attribute of the `<result>` element will be "true". Otherwise a `success` attribute will have the value "true".
 
@@ -281,50 +285,52 @@ Parameters: none
 
 Result: Success response, with included system info and stats in this format:
 
-    <system>
-        <timestamp epoch="1305909785806" unit="ms">
-            <datetime>2011-05-20T16:43:05Z</datetime>
-        </timestamp>
-        <rundeck>
-            <version>1.2.1</version>
-            <apiversion>2</apiversion>
-            <build>1.2.1-0-beta</build>
-            <node>Venkman.local</node>
-            <base>/Users/greg/rundeck121</base>
-        </rundeck>
-        <os>
-            <arch>x86_64</arch>
-            <name>Mac OS X</name>
-            <version>10.6.7</version>
-        </os>
-        <jvm>
-            <name>Java HotSpot(TM) 64-Bit Server VM</name>
-            <vendor>Apple Inc.</vendor>
-            <version>19.1-b02-334</version>
-        </jvm>
-        <stats>
-            <uptime duration="300584" unit="ms">
-                <since epoch="1305909485222" unit="ms">
-                    <datetime>2011-05-20T16:38:05Z</datetime>
-                </since>
-            </uptime>
-            <cpu>
-                <loadAverage unit="percent">0.40234375</loadAverage>
-                <processors>4</processors>
-            </cpu>
-            <memory unit="byte">
-                <max>477233152</max>
-                <free>76626216</free>
-                <total>257163264</total>
-            </memory>
-            <scheduler>
-                <running>0</running>
-            </scheduler>
-            <threads>
-                <active>24</active>
-            </threads>
-        </stats>
-    </system>
+~~~~~~~~~~~~~ {.xml}
+<system>
+    <timestamp epoch="1305909785806" unit="ms">
+        <datetime>2011-05-20T16:43:05Z</datetime>
+    </timestamp>
+    <rundeck>
+        <version>1.2.1</version>
+        <apiversion>2</apiversion>
+        <build>1.2.1-0-beta</build>
+        <node>Venkman.local</node>
+        <base>/Users/greg/rundeck121</base>
+    </rundeck>
+    <os>
+        <arch>x86_64</arch>
+        <name>Mac OS X</name>
+        <version>10.6.7</version>
+    </os>
+    <jvm>
+        <name>Java HotSpot(TM) 64-Bit Server VM</name>
+        <vendor>Apple Inc.</vendor>
+        <version>19.1-b02-334</version>
+    </jvm>
+    <stats>
+        <uptime duration="300584" unit="ms">
+            <since epoch="1305909485222" unit="ms">
+                <datetime>2011-05-20T16:38:05Z</datetime>
+            </since>
+        </uptime>
+        <cpu>
+            <loadAverage unit="percent">0.40234375</loadAverage>
+            <processors>4</processors>
+        </cpu>
+        <memory unit="byte">
+            <max>477233152</max>
+            <free>76626216</free>
+            <total>257163264</total>
+        </memory>
+        <scheduler>
+            <running>0</running>
+        </scheduler>
+        <threads>
+            <active>24</active>
+        </threads>
+    </stats>
+</system>
+~~~~~~~~~~~~~~~
 
 Description of included elements:
 
@@ -448,12 +454,14 @@ The following parameters can also be used to narrow down the result set.
 
 Result:  An Item List of `jobs`. Each `job` is of the form:
 
+~~~~~~~~~~ {.xml}
     <job id="ID">
         <name>Job Name</name>
         <group>Job Name</group>
         <project>Project Name</project>
         <description>...</description>
     </job>
+~~~~~~~~~~~~
 
 Note: If neither `groupPath` nor `groupPathExact` are specified, then the default `groupPath` value of "*" will be used (matching jobs in all groups).  `groupPathExact` cannot be combined with `groupPath`.  You can set either one to "-" to match only the top-level jobs which are not within a group.
 
@@ -475,12 +483,14 @@ The following parameters can also be used to narrow down the result set.
 
 Result:  An Item List of `jobs`. Each `job` is of the form:
 
-    <job id="ID">
-        <name>Job Name</name>
-        <group>Job Name</group>
-        <project>Project Name</project>
-        <description>...</description>
-    </job>
+~~~~~~~~~~ {.xml}
+<job id="ID">
+    <name>Job Name</name>
+    <group>Job Name</group>
+    <project>Project Name</project>
+    <description>...</description>
+</job>
+~~~~~~~~~~ 
 
 Note: If neither `groupPath` nor `groupPathExact` are specified, then the default `groupPath` value of "*" will be used (matching jobs in all groups).  `groupPathExact` cannot be combined with `groupPath`.  You can set either one to "-" to match only the top-level jobs which are not within a group.
 
@@ -560,6 +570,7 @@ Result:
 
 A set of status results.  Each imported job definition will be either "succeeded", "failed" or "skipped".  These status sections contain a `count` attribute declaring how many jobs they contain.  Within each one there will be 0 or more `job` elements. 
 
+~~~~~~~~~~ {.xml}
     <succeeded count="x">
         <!-- job elements -->
     </succeeded>
@@ -569,18 +580,21 @@ A set of status results.  Each imported job definition will be either "succeeded
     <skipped count="x">
         <!-- job elements -->
     </skipped>
+~~~~~~~~~~ 
 
 Each Job element will be of the form:
 
-    <job>
-        <!-- ID may not exist if the job was not created yet -->
-        <id>ID</id>
-        <name>job name</name>
-        <group>job group</group>
-        <project>job project</project>
-        <!--if within the failed section, then an error section will be included -->
-        <error>Error message</error> 
-    </job>
+~~~~~~~~~~ {.xml}
+<job>
+    <!-- ID may not exist if the job was not created yet -->
+    <id>ID</id>
+    <name>job name</name>
+    <group>job group</group>
+    <project>job project</project>
+    <!--if within the failed section, then an error section will be included -->
+    <error>Error message</error> 
+</job>
+~~~~~~~~~~~~~~
 
 ### Getting a Job Definition ###
 
@@ -618,9 +632,11 @@ The common `result` element described in the [Response Format](#response-format)
 
 If successful, then the `result` will contain a `success/message` element with the result message:
 
-    <success>
-    <message>Job was successfully deleted: ... </message>
-    </success>
+~~~~~~~~~~ {.xml}
+<success>
+   <message>Job was successfully deleted: ... </message>
+</success>
+~~~~~~~~~~
 
 ### Bulk Job Delete ###
 
@@ -645,18 +661,20 @@ The common `result` element described in the [Response Format](#response-format)
 
 If successful, then the `result` will contain a `deleteJobs` element with two sections of results, `succeeded` and `failed`:
 
-    <deleteJobs requestCount="#" allsuccessful="true/false">
-        <succeeded count="1">
-            <deleteJobRequest id="[job ID]">
-                <message>[message]</message>
-            </deleteJobRequest>
-        </succeeded>
-        <failed count="1">
-            <deleteJobRequest id="[job ID]" errorCode="[code]">
-                <error>[message]</error>
-            </deleteJobRequest>
-        </failed>
-    </deleteJobs>
+~~~~~~~~~~ {.xml}
+<deleteJobs requestCount="#" allsuccessful="true/false">
+    <succeeded count="1">
+        <deleteJobRequest id="[job ID]">
+            <message>[message]</message>
+        </deleteJobRequest>
+    </succeeded>
+    <failed count="1">
+        <deleteJobRequest id="[job ID]" errorCode="[code]">
+            <error>[message]</error>
+        </deleteJobRequest>
+    </failed>
+</deleteJobs>
+~~~~~~~~~~
 
 `deleteJobs` will have two attributes:
 
@@ -712,48 +730,50 @@ Required Parameters:
 
 Result: An Item List of `executions`.  Each `execution` of the form:
 
-    <execution id="[ID]" href="[url]" status="[status]" project="[project]">
-        <user>[user]</user>
-        <date-started unixtime="[unixtime]">[datetime]</date-started>
-        
-        <!-- optional job context if the execution is associated with a job -->
-        <job id="jobID" averageDuration="[milliseconds]">
-            <name>..</name>
-            <group>..</group>
-            <description>..</description>
-            <!-- optional if arguments are passed to the job since v10->
-            <options>
-                <option name="optname" value="optvalue"/>...
-            </options>
-        </job>
-        
-        <!-- description of the execution -->
-        <description>...</description>
+~~~~~~~~~~ {.xml}
+<execution id="[ID]" href="[url]" status="[status]" project="[project]">
+    <user>[user]</user>
+    <date-started unixtime="[unixtime]">[datetime]</date-started>
+    
+    <!-- optional job context if the execution is associated with a job -->
+    <job id="jobID" averageDuration="[milliseconds]">
+        <name>..</name>
+        <group>..</group>
+        <description>..</description>
+        <!-- optional if arguments are passed to the job since v10 -->
+        <options>
+            <option name="optname" value="optvalue"/>...
+        </options>
+    </job>
+    
+    <!-- description of the execution -->
+    <description>...</description>
 
-        <!-- argString (arguments) of the execution -->
-        <argstring>...</argstring>
-               
-        <!-- The following elements included only if the execution has ended -->
+    <!-- argString (arguments) of the execution -->
+    <argstring>...</argstring>
+           
+    <!-- The following elements included only if the execution has ended -->
 
-        <!-- the completion time of the execution -->
-        <date-ended unixtime="[unixtime]">[datetime]</date-ended> 
-        
-        <!-- if the execution was aborted, the username who aborted it: -->
-        <abortedby>[username]</abortedby>
+    <!-- the completion time of the execution -->
+    <date-ended unixtime="[unixtime]">[datetime]</date-ended> 
+    
+    <!-- if the execution was aborted, the username who aborted it: -->
+    <abortedby>[username]</abortedby>
 
-        <!-- if the execution was is finished, a list of node names that succeeded -->
-        <successfulNodes>
-            <node name="node1"/>
-            <node name="node2"/>
-        </successfulNodes>
+    <!-- if the execution was is finished, a list of node names that succeeded -->
+    <successfulNodes>
+        <node name="node1"/>
+        <node name="node2"/>
+    </successfulNodes>
 
-        <!-- if the execution was is finished, a list of node names that failed -->
-        <failedNodes>
-            <node name="node3"/>
-            <node name="node4"/>
-        </failedNodes>
-        
-    </execution>
+    <!-- if the execution was is finished, a list of node names that failed -->
+    <failedNodes>
+        <node name="node3"/>
+        <node name="node4"/>
+    </failedNodes>
+    
+</execution>
+~~~~~~~~~~
 
 The `[status]` value indicates the execution status.  It is one of:
 
@@ -932,34 +952,38 @@ State Indicators:
 
 In XML:
 
-        <node name="abc">
-          <steps>
-            <step>
-              <stepctx>1</stepctx>
-              <executionState>SUCCEEDED</executionState>
-            </step>
-            <step>
-              <stepctx>2/1</stepctx>
-              <executionState>SUCCEEDED</executionState>
-            </step>
-          </steps>
-        </node>
-        <!-- more node elements -->
+~~~~~~~~~~ {.xml}
+<node name="abc">
+  <steps>
+    <step>
+      <stepctx>1</stepctx>
+      <executionState>SUCCEEDED</executionState>
+    </step>
+    <step>
+      <stepctx>2/1</stepctx>
+      <executionState>SUCCEEDED</executionState>
+    </step>
+  </steps>
+</node>
+<!-- more node elements -->
+~~~~~~~~~~ 
 
 In JSON: an object where each key is a node name, and the value is an array of State indicators.  A state indicator is an object with two keys, `stepctx` and `executionState`
 
-    {
-        "abc": [
-          {
-            "executionState": "SUCCEEDED",
-            "stepctx": "1"
-          },
-          {
-            "executionState": "SUCCEEDED",
-            "stepctx": "2/1"
-          }
-        ]
+~~~~~~~~~~ {.json}
+{
+    "abc": [
+      {
+        "executionState": "SUCCEEDED",
+        "stepctx": "1"
+      },
+      {
+        "executionState": "SUCCEEDED",
+        "stepctx": "2/1"
       }
+    ]
+}
+~~~~~~~~~~ 
 
 **Step State List**
 
@@ -991,6 +1015,7 @@ A sequence of state details for a set of Nodes for the containing step. Each ent
 
 In XML:
 
+~~~~~~~~~~ {.xml}
     <nodeState name="abc">
       <startTime>2014-01-13T20:58:59Z</startTime>
       <updateTime>2014-01-13T20:59:04Z</updateTime>
@@ -998,9 +1023,11 @@ In XML:
       <executionState>SUCCEEDED</executionState>
     </nodeState>
     <!-- more nodeState elements -->
+~~~~~~~~~~ 
 
 In JSON: an object with node names as keys.  Values are objects containing the state information entries.
 
+~~~~~~~~~~ {.json}
           {
             "abc": {
               "executionState": "SUCCEEDED",
@@ -1009,108 +1036,112 @@ In JSON: an object with node names as keys.  Values are objects containing the s
               "startTime": "2014-01-13T20:38:25Z"
             }
           }
+~~~~~~~~~~ 
 
 **Full XML Example**
 
 Within the `<result>` element:
 
-    <executionState id="135">
+~~~~~~~~~~ {.xml}
+<executionState id="135">
+  <startTime>2014-01-13T20:58:59Z</startTime>
+  <updateTime>2014-01-13T20:59:10Z</updateTime>
+  <stepCount>2</stepCount>
+  <allNodes>
+    <nodes>
+      <node name="dignan" />
+    </nodes>
+  </allNodes>
+  <targetNodes>
+    <nodes>
+      <node name="dignan" />
+    </nodes>
+  </targetNodes>
+  <executionId>135</executionId>
+  <serverNode>dignan</serverNode>
+  <endTime>2014-01-13T20:59:10Z</endTime>
+  <executionState>SUCCEEDED</executionState>
+  <completed>true</completed>
+  <steps>
+    <step stepctx="1" id="1">
       <startTime>2014-01-13T20:58:59Z</startTime>
-      <updateTime>2014-01-13T20:59:10Z</updateTime>
-      <stepCount>2</stepCount>
-      <allNodes>
-        <nodes>
-          <node name="dignan" />
-        </nodes>
-      </allNodes>
-      <targetNodes>
-        <nodes>
-          <node name="dignan" />
-        </nodes>
-      </targetNodes>
-      <executionId>135</executionId>
-      <serverNode>dignan</serverNode>
-      <endTime>2014-01-13T20:59:10Z</endTime>
+      <nodeStep>true</nodeStep>
+      <updateTime>2014-01-13T20:58:59Z</updateTime>
+      <endTime>2014-01-13T20:59:04Z</endTime>
       <executionState>SUCCEEDED</executionState>
-      <completed>true</completed>
-      <steps>
-        <step stepctx="1" id="1">
+      <nodeStates>
+        <nodeState name="dignan">
           <startTime>2014-01-13T20:58:59Z</startTime>
-          <nodeStep>true</nodeStep>
-          <updateTime>2014-01-13T20:58:59Z</updateTime>
+          <updateTime>2014-01-13T20:59:04Z</updateTime>
           <endTime>2014-01-13T20:59:04Z</endTime>
           <executionState>SUCCEEDED</executionState>
-          <nodeStates>
-            <nodeState name="dignan">
-              <startTime>2014-01-13T20:58:59Z</startTime>
-              <updateTime>2014-01-13T20:59:04Z</updateTime>
-              <endTime>2014-01-13T20:59:04Z</endTime>
-              <executionState>SUCCEEDED</executionState>
-            </nodeState>
-          </nodeStates>
-        </step>
-        <step stepctx="2" id="2">
-          <startTime>2014-01-13T20:59:04Z</startTime>
-          <nodeStep>false</nodeStep>
-          <updateTime>2014-01-13T20:59:10Z</updateTime>
-          <hasSubworkflow>true</hasSubworkflow>
-          <endTime>2014-01-13T20:59:10Z</endTime>
-          <executionState>SUCCEEDED</executionState>
-          <workflow>
+        </nodeState>
+      </nodeStates>
+    </step>
+    <step stepctx="2" id="2">
+      <startTime>2014-01-13T20:59:04Z</startTime>
+      <nodeStep>false</nodeStep>
+      <updateTime>2014-01-13T20:59:10Z</updateTime>
+      <hasSubworkflow>true</hasSubworkflow>
+      <endTime>2014-01-13T20:59:10Z</endTime>
+      <executionState>SUCCEEDED</executionState>
+      <workflow>
+        <startTime>2014-01-13T20:59:04Z</startTime>
+        <updateTime>2014-01-13T20:59:10Z</updateTime>
+        <stepCount>1</stepCount>
+        <allNodes>
+          <nodes>
+            <node name="dignan" />
+          </nodes>
+        </allNodes>
+        <targetNodes>
+          <nodes>
+            <node name="dignan" />
+          </nodes>
+        </targetNodes>
+        <endTime>2014-01-13T20:59:10Z</endTime>
+        <executionState>SUCCEEDED</executionState>
+        <completed>true</completed>
+        <steps>
+          <step stepctx="2/1" id="1">
             <startTime>2014-01-13T20:59:04Z</startTime>
-            <updateTime>2014-01-13T20:59:10Z</updateTime>
-            <stepCount>1</stepCount>
-            <allNodes>
-              <nodes>
-                <node name="dignan" />
-              </nodes>
-            </allNodes>
-            <targetNodes>
-              <nodes>
-                <node name="dignan" />
-              </nodes>
-            </targetNodes>
+            <nodeStep>true</nodeStep>
+            <updateTime>2014-01-13T20:59:04Z</updateTime>
             <endTime>2014-01-13T20:59:10Z</endTime>
             <executionState>SUCCEEDED</executionState>
-            <completed>true</completed>
-            <steps>
-              <step stepctx="2/1" id="1">
+            <nodeStates>
+              <nodeState name="dignan">
                 <startTime>2014-01-13T20:59:04Z</startTime>
-                <nodeStep>true</nodeStep>
-                <updateTime>2014-01-13T20:59:04Z</updateTime>
+                <updateTime>2014-01-13T20:59:10Z</updateTime>
                 <endTime>2014-01-13T20:59:10Z</endTime>
                 <executionState>SUCCEEDED</executionState>
-                <nodeStates>
-                  <nodeState name="dignan">
-                    <startTime>2014-01-13T20:59:04Z</startTime>
-                    <updateTime>2014-01-13T20:59:10Z</updateTime>
-                    <endTime>2014-01-13T20:59:10Z</endTime>
-                    <executionState>SUCCEEDED</executionState>
-                  </nodeState>
-                </nodeStates>
-              </step>
-            </steps>
-          </workflow>
+              </nodeState>
+            </nodeStates>
+          </step>
+        </steps>
+      </workflow>
+    </step>
+  </steps>
+  <nodes>
+    <node name="dignan">
+      <steps>
+        <step>
+          <stepctx>1</stepctx>
+          <executionState>SUCCEEDED</executionState>
+        </step>
+        <step>
+          <stepctx>2/1</stepctx>
+          <executionState>SUCCEEDED</executionState>
         </step>
       </steps>
-      <nodes>
-        <node name="dignan">
-          <steps>
-            <step>
-              <stepctx>1</stepctx>
-              <executionState>SUCCEEDED</executionState>
-            </step>
-            <step>
-              <stepctx>2/1</stepctx>
-              <executionState>SUCCEEDED</executionState>
-            </step>
-          </steps>
-        </node>
-      </nodes>
-    </executionState>
+    </node>
+  </nodes>
+</executionState>
+~~~~~~~~~~
 
 **Full JSON example**
 
+~~~~~~~~~~ {.json}
     {
       "completed": true,
       "executionState": "SUCCEEDED",
@@ -1198,6 +1229,7 @@ Within the `<result>` element:
         }
       ]
     }
+~~~~~~~~~~ 
 
 **Timestamp format:**
 
@@ -1413,9 +1445,11 @@ Optional Parameters:
 
 Result:  The result will contain a `success/message` element will contain a descriptive message.  The status of the abort action will be included as an element:
 
+~~~~~~~~~~ {.xml}
     <abort status="[abort-state]">
         <execution id="[id]" status="[status]"/>
     </abort>
+~~~~~~~~~~ 
 
 The `[abort-state]` will be one of: "pending", "failed", or "aborted".
 
@@ -1443,7 +1477,9 @@ Node filter parameters as described under [Using Node Filters](#using-node-filte
 Result: A success message, and a single `<execution>` item identifying the
 new execution by ID:
 
+~~~~~~~~~~ {.xml}
     <execution id="X"/>
+~~~~~~~~~~
 
 ### Running Adhoc Scripts
 
@@ -1517,7 +1553,9 @@ Node filter parameters as described under [Using Node Filters](#using-node-filte
 Result: A success message, and a single `<execution>` item identifying the
 new execution by ID:
 
+~~~~~~~~~~ {.xml}
     <execution id="X"/>
+~~~~~~~~~~
 
 **Since API version 8**: The script interpreter and whether the arguments to the interpreter are quoted can be specified.
 
@@ -1541,17 +1579,21 @@ URL:
 
 Result:  An Item List of `projects` with one `project`.  The `project` is of the form:
 
-    <project>
-        <name>Project Name</name>
-        <description>...</description>
-        <!-- additional items -->
-    </project>
+~~~~~~~~~~ {.xml}
+<project>
+    <name>Project Name</name>
+    <description>...</description>
+    <!-- additional items -->
+</project>
+~~~~~~~~~~
 
 If the project defines a Resource Model Provider URL, then the additional items are:
 
+~~~~~~~~~~ {.xml}
     <resources>
         <providerURL>URL</providerURL>
     </resources>
+~~~~~~~~~~
 
 ### Updating and Listing Resources for a Project
 
@@ -1701,22 +1743,24 @@ The format for the `jobListFilter` and `excludeJobListFilter` is the job's group
 
 Result:  an Item List of `events`.  Each `event` has this form:
 
-    <event starttime="[unixtime]" endtime="[unixtime]">
-      <title>[job title, or "adhoc"]</title>
-      <status>[status]</status>
-      <summary>[summary text]</summary>
-      <node-summary succeeded="[X]" failed="[Y]" total="[Z]"/>
-      <user>[user]</user>
-      <project>[project]</project>
-      <date-started>[start date]</date-started>
-      <date-ended>[end date]</date-ended>
-      <!-- if the execution was aborted, the username who aborted it: -->
-      <abortedby>[username]</abortedby>
-      <!-- if associated with an Execution, include the execution id: -->
-      <execution id="[execid]"/>
-      <!-- if associated with a Job, include the Job ID: -->
-      <job id="[jobid]"/>
-    </event>
+~~~~~~~~~~ {.xml}
+<event starttime="[unixtime]" endtime="[unixtime]">
+  <title>[job title, or "adhoc"]</title>
+  <status>[status]</status>
+  <summary>[summary text]</summary>
+  <node-summary succeeded="[X]" failed="[Y]" total="[Z]"/>
+  <user>[user]</user>
+  <project>[project]</project>
+  <date-started>[start date]</date-started>
+  <date-ended>[end date]</date-ended>
+  <!-- if the execution was aborted, the username who aborted it: -->
+  <abortedby>[username]</abortedby>
+  <!-- if associated with an Execution, include the execution id: -->
+  <execution id="[execid]"/>
+  <!-- if associated with a Job, include the Job ID: -->
+  <job id="[jobid]"/>
+</event>
+~~~~~~~~~~ 
 
 The `events` element will also have `max`, `offset`, and `total` attributes, to indicate the state of paged results.  E.G:
 
@@ -1858,27 +1902,30 @@ If request was XML, then Standard API response containing the following addition
 
 Example XML Response:
 
-    <result success='true' apiversion='7'>
-      <message>Schedule Takeover successful for 2/2 Jobs.</message>
-      <self>
-        <server uuid='C677C663-F902-4B97-B8AC-4AA57B58DDD6' />
-      </self>
-      <takeoverSchedule>
-        <server uuid='8F3D5976-2232-4529-847B-8E45764608E3' />
-        <jobs total='2'>
-          <successful count='2'>
-            <job id='a1aa53ac-73a6-4ead-bbe4-34afbff8e057'
-            href='http://localhost:9090/rundeck/job/show/a1aa53ac-73a6-4ead-bbe4-34afbff8e057' />
-            <job id='116e2025-7895-444a-88f7-d96b4f19fdb3'
-            href='http://localhost:9090/rundeck/job/show/116e2025-7895-444a-88f7-d96b4f19fdb3' />
-          </successful>
-          <failed count='0'></failed>
-        </jobs>
-      </takeoverSchedule>
-    </result>
+~~~~~~~~~~ {.xml}
+<result success='true' apiversion='7'>
+  <message>Schedule Takeover successful for 2/2 Jobs.</message>
+  <self>
+    <server uuid='C677C663-F902-4B97-B8AC-4AA57B58DDD6' />
+  </self>
+  <takeoverSchedule>
+    <server uuid='8F3D5976-2232-4529-847B-8E45764608E3' />
+    <jobs total='2'>
+      <successful count='2'>
+        <job id='a1aa53ac-73a6-4ead-bbe4-34afbff8e057'
+        href='http://localhost:9090/rundeck/job/show/a1aa53ac-73a6-4ead-bbe4-34afbff8e057' />
+        <job id='116e2025-7895-444a-88f7-d96b4f19fdb3'
+        href='http://localhost:9090/rundeck/job/show/116e2025-7895-444a-88f7-d96b4f19fdb3' />
+      </successful>
+      <failed count='0'></failed>
+    </jobs>
+  </takeoverSchedule>
+</result>
+~~~~~~~~~~ 
 
 If request was JSON, then the following JSON:
 
+~~~~~~~~~~ {.json}
     {
       "takeoverSchedule": {
         "jobs": {
@@ -1908,4 +1955,5 @@ If request was JSON, then the following JSON:
       "apiversion": 7,
       "success": true
     }
+~~~~~~~~~~ 
 

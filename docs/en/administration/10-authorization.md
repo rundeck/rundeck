@@ -1,13 +1,10 @@
-% Authorization
+% Role-based Access Control
 
 Two dimensions of information dictate authorization inside Rundeck:
 
 * *group* memberships assigned to a *user* login.  
 * access control policy that grants access to one or more *policy
   action*s to a *group*  or *user*.
-
-The chapter on [Authentication](authentication.html) discusses how to
-assign group memberships to users.
 
 The remainder of this section will describe how to use the access
 control policy.
@@ -25,7 +22,7 @@ group is allowed to perform which actions.
 Please read over this document for information on how to define it, and how to
 grant access for certain actions to certain resources:
 
-*  [aclpolicy-v10(5)](../manpages/man5/aclpolicy-v10.html)
+*  [aclpolicy](../man5/aclpolicy.html)
 
 Policies can be organized into more than one file to help organize
 access by group or pattern of use. The normal Rundeck install will
@@ -36,51 +33,53 @@ Jobs.
 
 File listing: admin.aclpolicy example
 
-    description: Admin project level access control. Applies to resources within a specific project.
-    context:
-      project: '.*' # all projects
-    for:
-      resource:
-        - equals:
-            kind: job
-          allow: [create] # allow create jobs
-        - equals:
-            kind: node
-          allow: [read,create,update,refresh] # allow refresh node sources
-        - equals:
-            kind: event
-          allow: [read,create] # allow read/create events
-      adhoc:
-        - allow: [read,run,runAs,kill,killAs] # allow running/killing adhoc jobs
-      job: 
-        - allow: [read,update,delete,run,runAs,kill,killAs] # allow read/write/delete/run/kill of all jobs
-      node:
-        - allow: [read,run] # allow read/run for all nodes
-    by:
-      group: admin
-    
-    ---
-    
-    description: Admin Application level access control, applies to creating/deleting projects, admin of user profiles, viewing projects and reading system information.
-    context:
-      application: 'rundeck'
-    for:
-      resource:
-        - equals:
-            kind: project
-          allow: [create] # allow create of projects
-        - equals:
-            kind: system
-          allow: [read] # allow read of system info
-        - equals:
-            kind: user
-          allow: [admin] # allow modify user profiles
-      project:
-        - match:
-            name: '.*'
-          allow: [read,admin] # allow view/admin of all projects
-    by:
-      group: admin
+~~~~~~ {.yaml .numberLines}
+description: Admin project level access control. Applies to resources within a specific project.
+context:
+  project: '.*' # all projects
+for:
+  resource:
+    - equals:
+        kind: job
+      allow: [create] # allow create jobs
+    - equals:
+        kind: node
+      allow: [read,create,update,refresh] # allow refresh node sources
+    - equals:
+        kind: event
+      allow: [read,create] # allow read/create events
+  adhoc:
+    - allow: [read,run,runAs,kill,killAs] # allow running/killing adhoc jobs
+  job: 
+    - allow: [read,update,delete,run,runAs,kill,killAs] # allow read/write/delete/run/kill of all jobs
+  node:
+    - allow: [read,run] # allow read/run for all nodes
+by:
+  group: admin
+
+---
+
+description: Admin level access control. Pretty much allows anything.
+context:
+  application: 'rundeck'
+for:
+  resource:
+    - equals:
+        kind: project
+      allow: [create] # allow create of projects
+    - equals:
+        kind: system
+      allow: [read] # allow read of system info
+    - equals:
+        kind: user
+      allow: [admin] # allow modify user profiles
+  project:
+    - match:
+        name: '.*'
+      allow: [read,admin] # allow view/admin of all projects
+by:
+  group: admin
+~~~~~~~~~~
 
 The example policy document above demonstrates the access granted to
 the users in group "admin".
@@ -231,20 +230,24 @@ Note: `runAs` and `killAs` actions only apply to certain API endpoints, and allo
 
 Recall that defining rules for a resource type is done in this way:
 
-    for:
-      resource:
-        - equals:
-            kind: 'project'
-          allow: [create]
+~~~~~~~~ {.yaml}
+for:
+  resource:
+    - equals:
+        kind: 'project'
+      allow: [create]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Whereas defining rules for specific resources of a certain type is done in this
 way:
 
-    for:
-      job:
-        - equals:
-            name: bob
-          allow: [run]
+~~~~~~~~~ {.yaml}
+for:
+  job:
+    - equals:
+        name: bob
+      allow: [run]
+~~~~~~~~~~~~~~~~~~~~~~~
 
 #### Node resource properties
 
@@ -278,42 +281,44 @@ the "stop" and "start" jobs will not be visible.
 
 File listing: restart_user.aclpolicy example
 
-    description: Limited user access for adm restart action
-    context:
-      project: '.*'
-    for:
-      job:
-        - equals:
-            group: 'adm'
-            name: 'Restart'
-          allow: [run,read]
-        - equals:
-            group: 'adm'
-            name: 'stop'
-          allow: [run]
-        - equals:
-            group: 'adm'
-            name: 'start'
-          allow: [run]
-    by:
-      group: [restart_user]
+~~~~~~ {.yaml .numberLines}
+description: Limited user access for adm restart action
+context:
+  project: '.*'
+for:
+  job:
+    - equals:
+        group: 'adm'
+        name: 'Restart'
+      allow: [run,read]
+    - equals:
+        group: 'adm'
+        name: 'stop'
+      allow: [run]
+    - equals:
+        group: 'adm'
+        name: 'start'
+      allow: [run]
+by:
+  group: [restart_user]
 
-    ---
-    
-    description: Limited user access for adm restart action.
-    context:
-      application: 'rundeck'
-    for:
-      resource:
-        - equals:
-            kind: system
-          allow: [read] # allow read of system info
-      project:
-        - match:
-            name: '.*'
-          allow: [read] # allow view of all projects
-    by:
-      group: [restart_user]
+---
+
+description: Limited user access for adm restart action.
+context:
+  application: 'rundeck'
+for:
+  resource:
+    - equals:
+        kind: system
+      allow: [read] # allow read of system info
+  project:
+    - match:
+        name: '.*'
+      allow: [read] # allow view of all projects
+by:
+  group: [restart_user]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ### Troubleshooting access control policy
 

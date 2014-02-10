@@ -1,4 +1,4 @@
-% SSL
+% Configuring SSL
 
 This document describes how to configure Rundeck for SSL/HTTPS
 support, and assumes you are using the rundeck-launcher standalone

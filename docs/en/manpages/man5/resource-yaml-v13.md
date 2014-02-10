@@ -1,4 +1,4 @@
-% RESOURCE-YAML-V13(5) Rundeck User Manuals | Version 1.3
+% RESOURCE-YAML 
 % Greg Schueler
 % February 25, 2011
 
@@ -16,17 +16,21 @@ The resource format supports two structures: either a Yaml Sequence of [Node def
 
 Example:
 
-    - somenode: ...
-      ...
-    - somenode2: ...
+~~~~~~~~ {.yaml}
+- somenode: ...
+  ...
+- somenode2: ...
+~~~~~~~~ 
 
 OR
 
-    somenode:
-       hostname: ...
-       ...
-    somenode2:
-       hostname: ...
+~~~~~~~~ {.yaml}
+somenode:
+   hostname: ...
+   ...
+somenode2:
+   hostname: ...
+~~~~~~~~ 
 
 In the second case, the `nodename` entry is not required.
 
@@ -95,43 +99,49 @@ Optional Entries:
 Here's a node, Venkman.local, described with several of the required and optional
 attributes discussed above.
 
-    Venkman.local:
-      description: Rundeck server node
-      hostname: Venkman.local
-      nodename: Venkman.local
-      osArch: x86_64
-      osFamily: unix
-      osName: Mac OS X
-      osVersion: 10.6.6
-      tags: ''
-      username: greg
+~~~~~~~~ {.yaml}
+Venkman.local:
+  description: Rundeck server node
+  hostname: Venkman.local
+  nodename: Venkman.local
+  osArch: x86_64
+  osFamily: unix
+  osName: Mac OS X
+  osVersion: 10.6.6
+  tags: ''
+  username: greg
+~~~~~~~~ 
 
 Tags are very useful for node filtering and can be used
 to describe the role, environment, group, or class to which a node belongs.
 The Homestar.local example below describes a node that plays the role of a redis server in the
 production environment. 
 
-    Homestar.local:
-      description: The production redis server.
-      hostname: Homestar.local
-      nodename: Homestar.local
-      osArch: x86_64
-      osFamily: unix
-      osName: Linux
-      tags: 'redis_server,production'
-      username: greg
+~~~~~~~~ {.yaml}
+Homestar.local:
+  description: The production redis server.
+  hostname: Homestar.local
+  nodename: Homestar.local
+  osArch: x86_64
+  osFamily: unix
+  osName: Linux
+  tags: 'redis_server,production'
+  username: greg
+~~~~~~~~ 
 
 Here's a node, bartholemew, that specifies some custom attributes (app-port, https-port):
 
-    bartholemew:
-      description: Webapp node
-      hostname: bartholemew
-      nodename: bartholemew
-      tags: 'web,app'
-      username: greg
-      app-port: 8080
-      https-port: 8443
+~~~~~~~~ {.yaml}
+bartholemew:
+  description: Webapp node
+  hostname: bartholemew
+  nodename: bartholemew
+  tags: 'web,app'
+  username: greg
+  app-port: 8080
+  https-port: 8443
+~~~~~~~~ 
 
 
 The Rundeck source code and all documentation may be downloaded from
-<https://github.com/dtolabs/rundeck/>.
+<https://github.com/rundeck/rundeck/>.

@@ -1,4 +1,4 @@
-% JOB-V20(5) Rundeck User Manuals | Version 2.0
+% JOB-XML
 % Alex Honor
 % November 20, 2010
 
@@ -11,14 +11,18 @@ current Rundeck "jobs" XML.
 
 ## Loading and unloading
 
-This file can be batch loaded via *rd-jobs* load command:
+This file can be batch loaded via [rd-jobs] load command:
 
-    rd-jobs load --file /path/to/jobs.xml
+~~~~~~~~ {.bash}
+rd-jobs load -p project --file /path/to/jobs.xml
+~~~~~~~~ 
 
 Rundeck job definitions can be dumped and saved to a file via
 rd-jobs list command:
 
-    rd-jobs list --file /tmp/jobs.xml
+~~~~~~~~ {.bash}
+rd-jobs list -p project --file /tmp/jobs.xml
+~~~~~~~~ 
 
 # joblist 
 
@@ -32,15 +36,16 @@ The root (aka "top-level") element of the jobs XML file.
 
 *Example*
 
-    <joblist>
-      <job>
-       ...
-      </job>
-      <job>
-       ...
-      </job>
-    </joblist>
-
+~~~~~~~~ {.xml}
+<joblist>
+  <job>
+   ...
+  </job>
+  <job>
+   ...
+  </job>
+</joblist>
+~~~~~~~~~~~
 
 ## job
 
@@ -109,82 +114,88 @@ Jobs execute a sequence of commands. Commands come in several styles:
 
 Execute the Unix 'who' command
 
-    <joblist>
-      <job>
-        <name>who's logged in?</name>
-        <description>Runs the unix who command</description>
-        <group>sysadm/users</group>
-        <context>
-          <project>default</project>
-        </context>
-        <sequence>
-          <command>
-            <!-- the Unix 'who' command -->
-            <exec>who</exec>
-          </command>
-         </sequence>
-        <nodefilters excludeprecedence="true">
-          <include>
-            <os-family>unix</os-family>
-          </include>
-        </nodefilters>
-        <dispatch>
-          <threadcount>1</threadcount>
-          <keepgoing>true</keepgoing>
-        </dispatch>
-      </job>
-    </joblist>
+~~~~~~~~ {.xml .numberLines}
+<joblist>
+  <job>
+    <name>who's logged in?</name>
+    <description>Runs the unix who command</description>
+    <group>sysadm/users</group>
+    <context>
+      <project>default</project>
+    </context>
+    <sequence>
+      <command>
+        <!-- the Unix 'who' command -->
+        <exec>who</exec>
+      </command>
+     </sequence>
+    <nodefilters excludeprecedence="true">
+      <include>
+        <os-family>unix</os-family>
+      </include>
+    </nodefilters>
+    <dispatch>
+      <threadcount>1</threadcount>
+      <keepgoing>true</keepgoing>
+    </dispatch>
+  </job>
+</joblist>
+~~~~~~~~ 
 
 Execute a Bash script
 
-    <joblist>
-      <job>
-        <name>a simple script</name>
-        <description>Runs a trivial bash script</description>
-        <group>sysadm/users</group>
-        <context>
-          <project>default</project>
-        </context>
-        <sequence>
-          <command>
-            <script><![CDATA[#!/bin/bash
-    echo this is an example job running on $(hostname)
-    echo whatever
-    exit 0 ]]></script>
-          </command>
-         </sequence>
-        <dispatch>
-          <threadcount>1</threadcount>
-          <keepgoing>true</keepgoing>
-        </dispatch>
-      </job>
-    </joblist>
+~~~~~~~~ {.xml .numberLines}
+<joblist>
+  <job>
+    <name>a simple script</name>
+    <description>Runs a trivial bash script</description>
+    <group>sysadm/users</group>
+    <context>
+      <project>default</project>
+    </context>
+    <sequence>
+      <command>
+        <script><![CDATA[#!/bin/bash
+echo this is an example job running on $(hostname)
+echo whatever
+exit 0 ]]></script>
+      </command>
+     </sequence>
+    <dispatch>
+      <threadcount>1</threadcount>
+      <keepgoing>true</keepgoing>
+    </dispatch>
+  </job>
+</joblist>
+~~~~~~~~ 
 
 Execute a sequence of other commands, scripts and jobs:
 
-    <joblist>
-      <job>
-        <name>test coreutils</name>
-        <description/>
-        <context>
-          <project>default</project>
-        </context>
-        <sequence>         
-         <!-- the Unix 'who' command -->
-         <command>
-            <exec>who</exec>
-         </command>
-         <!-- a Job named test/other tests -->
-         <command>
-            <jobref group="test" name="other tests"/>
-         </command>
-        </sequence>
-        <dispatch>
-          <threadcount>1</threadcount>
-          <keepgoing>false</keepgoing>
-        </dispatch>
-      </job>
-    </joblist>
+~~~~~~~~ {.xml .numberLines}
+<joblist>
+  <job>
+    <name>test coreutils</name>
+    <description/>
+    <context>
+      <project>default</project>
+    </context>
+    <sequence>         
+     <!-- the Unix 'who' command -->
+     <command>
+        <exec>who</exec>
+     </command>
+     <!-- a Job named test/other tests -->
+     <command>
+        <jobref group="test" name="other tests"/>
+     </command>
+    </sequence>
+    <dispatch>
+      <threadcount>1</threadcount>
+      <keepgoing>false</keepgoing>
+    </dispatch>
+  </job>
+</joblist>
+~~~~~~~~ 
 
 ## uuid
 
@@ -215,22 +226,26 @@ directory structure.
 
 *Example*
 
-    <job>
-        <name>who</name>
-        <description>who is logged in?</description>
-        <group>/sysadm/users</group>
-    </job>
+~~~~~~~~ {.xml }
+<job>
+    <name>who</name>
+    <description>who is logged in?</description>
+    <group>/sysadm/users</group>
+</job>
+~~~~~~~~ 
 
 ## multipleExecutions
 
 Boolean value: 'true/false'.  If 'true', then the job can be run multiple times at once.  Otherwise, the Job can only have a single execution at a time.
 
-    <job>
-        <name>who</name>
-        <description>who is logged in?</description>
-        <group>/sysadm/users</group>
-        <multipleExecutions>true</multipleExecutions>
-    </job>
+~~~~~~~~ {.xml }
+<job>
+    <name>who</name>
+    <description>who is logged in?</description>
+    <group>/sysadm/users</group>
+    <multipleExecutions>true</multipleExecutions>
+</job>
+~~~~~~~~ 
 
 ## schedule
      
@@ -268,22 +283,25 @@ specified using embedded elements as shown below, or using a single
 
 Run the job every morning at 6AM, 7AM and 8AM.
 
-    <schedule>
-	 <time hour="06,07,08" minute="00"/>
-	 <weekday day="*"/>
-	 <month month="*"/>
-     </schedule>
+~~~~~~~~ {.xml}
+<schedule>
+  <time hour="06,07,08" minute="00"/>
+  <weekday day="*"/>
+  <month month="*"/>
+</schedule>
+~~~~~~~~ 
 
 Run the job every morning at 6:00:02AM, 7:00:02AM and 8:00:02AM only
 in the year 2010:
 
-
-    <schedule>
-	 <time hour="06,07,08" minute="00" seconds="02"/>
-	 <weekday day="*"/>
-	 <month month="*"/>
-	 <year year="2010"/>
-    </schedule>
+~~~~~~~~ {.xml}
+<schedule>
+  <time hour="06,07,08" minute="00" seconds="02"/>
+  <weekday day="*"/>
+  <month month="*"/>
+  <year year="2010"/>
+</schedule>
+~~~~~~~~ 
 
 Run the job every morning at 6:00:02AM, 7:00:02AM and 8:00:02AM only
 in the year 2010, using a single crontab attribute to express it:
@@ -379,9 +397,11 @@ preserveOrder
 
 *Example*
 
-    <options>
-        <option name="detail" value="true"/>
-    </options>
+~~~~~~~~ {.xml}
+<options>
+    <option name="detail" value="true"/>
+</options>
+~~~~~~~~ 
 
 #### option
 
@@ -437,31 +457,41 @@ secure
 
 Define defaults for the "port" option, requiring regex match. 
 
-    <option name="port" value="80" values="80,8080,8888" regex="\d+"/>
+~~~~~~~~ {.xml}
+<option name="port" value="80" values="80,8080,8888" regex="\d+"/>
+~~~~~~~~ 
 
 Define defaults for the "port" option, enforcing the values list.
 
-    <option name="port" value="80" values="80,8080,8888" enforcedvalues="true" />
+~~~~~~~~ {.xml}
+<option name="port" value="80" values="80,8080,8888" enforcedvalues="true" />
+~~~~~~~~ 
 
 Define defaults for the "ports" option, allowing multiple values separated by ",".
 
-    <option name="port" value="80" values="80,8080,8888" enforcedvalues="true" multivalued="true" delimiter="," />
+~~~~~~~~ {.xml}
+<option name="port" value="80" values="80,8080,8888" enforcedvalues="true" 
+        multivalued="true" delimiter="," />
+~~~~~~~~ 
 
 
 #### valuesUrl JSON 
 
 The data returned from the valuesUrl can be formatted as a list of values:
 
-    ["x value","y value"]
+~~~~~~~~ {.json}
+["x value","y value"]
+~~~~~~~~ 
 
 or as Name-value list:
 
-    [
-      {name:"X Label", value:"x value"},
-      {name:"Y Label", value:"y value"},
-      {name:"A Label", value:"a value"}
-    ] 
-
+~~~~~~~~ {.json .numberLines}
+[
+  {name:"X Label", value:"x value"},
+  {name:"Y Label", value:"y value"},
+  {name:"A Label", value:"a value"}
+] 
+~~~~~~~~ 
 ## dispatch 
 
      
@@ -488,12 +518,14 @@ general information.
 
 *Example*
 
-    <dispatch>
-      <threadcount>1</threadcount>
-      <keepgoing>false</keepgoing>
-      <rankAttribute>nodename</rankAttribute>
-      <rankOrder>descending</rankOrder>
-    </dispatch>
+~~~~~~~~ {.xml}
+<dispatch>
+  <threadcount>1</threadcount>
+  <keepgoing>false</keepgoing>
+  <rankAttribute>nodename</rankAttribute>
+  <rankOrder>descending</rankOrder>
+</dispatch>
+~~~~~~~~ 
 
 ### threadcount
 
@@ -553,19 +585,20 @@ excludeprecedence
 
 *Example*
 
-    <nodefilters excludeprecedence="true">
-      <include>
-        <hostname/>
-        <type/>
-        <tags>tomcats</tags>
-        <os-name/>
-        <os-family/>
-        <os-arch/>
-        <os-version/>
-        <name/>
-      </include>
-    </nodefilters>
-
+~~~~~~~~ {.xml}
+<nodefilters excludeprecedence="true">
+  <include>
+    <hostname/>
+    <type/>
+    <tags>tomcats</tags>
+    <os-name/>
+    <os-family/>
+    <os-arch/>
+    <os-version/>
+    <name/>
+  </include>
+</nodefilters>
+~~~~~~~~ 
 
 ### include
 
@@ -680,37 +713,44 @@ See:
 
 Example:
 
-    <errorhandler>
-       <exec>echo this is a shell command</exec>
-    </errorhandler>
+~~~~~~~~ {.xml}
+<errorhandler>
+   <exec>echo this is a shell command</exec>
+</errorhandler>
+~~~~~~~~ 
 
 Inline script.  Note that using CDATA section will preserve linebreaks
 in the script.  Simply put the script within a <code>script</code>
 element:
 
-
-    <errorhandler>
-        <script><![CDATA[#!/bin/bash
-    echo this is a test
-    echo whatever
-    exit 2 ]></script>
-    </errorhandler>
+~~~~~~~~ {.xml}
+<errorhandler>
+    <script><![CDATA[#!/bin/bash
+echo this is a test
+echo whatever
+exit 2 ]></script>
+</errorhandler>
+~~~~~~~~ 
 
 
 Script File:
 
-    <errorhandler>
-        <scriptfile>/path/to/a/script</scriptfile>
-        <scriptargs>-whatever something</scriptargs>
-    </errorhandler>      
+~~~~~~~~ {.xml}
+<errorhandler>
+    <scriptfile>/path/to/a/script</scriptfile>
+    <scriptargs>-whatever something</scriptargs>
+</errorhandler>      
+~~~~~~~~
 
 Example job reference:
 
-    <errorhandler >
-        <jobref group="My group" name="My Job">
-           <arg line="-option value -option2 value2"/>
-        </jobref>
-    </errorhandler>      
+~~~~~~~~ {.xml}
+<errorhandler >
+    <jobref group="My group" name="My Job">
+       <arg line="-option value -option2 value2"/>
+    </jobref>
+</errorhandler>      
+~~~~~~~~ 
 
 ### description
  
@@ -718,10 +758,12 @@ Defines a description for a step.
 
 Example:
 
-    <command>
-       <exec>echo this is a shell command</exec>
-       <description>Demonstrate echo command</description>
-    </command>
+~~~~~~~~ {.xml}
+<command>
+   <exec>echo this is a shell command</exec>
+   <description>Demonstrate echo command</description>
+</command>
+~~~~~~~~ 
 
 ### Script sequence step 
 
@@ -733,37 +775,43 @@ Script steps can be defined in three ways within a command element:
 
 Example exec step:
 
-
-    <command>
-       <exec>echo this is a shell command</exec>
-    </command>
+~~~~~~~~ {.xml}
+<command>
+   <exec>echo this is a shell command</exec>
+</command>
+~~~~~~~~ 
 
 Inline script.  Note that using CDATA section will preserve linebreaks
 in the script.  Simply put the script within a <code>script</code>
 element:
 
-
-    <command>
-        <script><![CDATA[#!/bin/bash
-    echo this is a test
-    echo whatever
-    exit 2 ]></script>
-    </command>
+~~~~~~~~ {.xml}
+<command>
+    <script><![CDATA[#!/bin/bash
+echo this is a test
+echo whatever
+exit 2 ]></script>
+</command>
+~~~~~~~~
 
 
 Script File:
 
-    <command >
-        <scriptfile>/path/to/a/script</scriptfile>
-        <scriptargs>-whatever something</scriptargs>
-    </command>      
+~~~~~~~~ {.xml}
+<command >
+    <scriptfile>/path/to/a/script</scriptfile>
+    <scriptargs>-whatever something</scriptargs>
+</command>      
+~~~~~~~~ 
 
 Script URL:
 
-    <command >
-        <scripturl>http://example.com/path/to/a/script</scripturl>
-        <scriptargs>-whatever something</scriptargs>
-    </command>      
+~~~~~~~~ {.xml}
+<command >
+    <scripturl>http://example.com/path/to/a/script</scripturl>
+    <scriptargs>-whatever something</scriptargs>
+</command>      
+~~~~~~~~ 
 
 #### Script Interpreter
 
@@ -771,27 +819,35 @@ When using `<script>`, or `<scriptfile>`, you can declare an interpreter to use 
 
 Add `<scriptinterpreter>` to the `<command>`:
 
-    <command >
-        <scriptinterpreter>sudo -u usera</scriptinterpreter>
-        <scripturl>http://example.com/path/to/a/script</scripturl>
-        <scriptargs>-whatever something</scriptargs>
-    </command>
+~~~~~~~~ {.xml}
+<command >
+    <scriptinterpreter>sudo -u usera</scriptinterpreter>
+    <scripturl>http://example.com/path/to/a/script</scripturl>
+    <scriptargs>-whatever something</scriptargs>
+</command>
+~~~~~~~~ 
 
 This will be executed effectively with this commandline:
 
-    sudo -u usera script.sh -whatever something
+~~~~~~~~ {.bash}
+sudo -u usera script.sh -whatever something
+~~~~~~~~ 
 
 If the filename and arguments need to be quoted when passed to the interpreter, you can declare `argsQuoted='true'`:
 
-    <command >
-        <scriptinterpreter argsquoted='true'>sudo -u usera sh -c </scriptinterpreter>
-        <scripturl>http://example.com/path/to/a/script</scripturl>
-        <scriptargs>-whatever something</scriptargs>
-    </command>
+~~~~~~~~ {.xml}
+<command >
+    <scriptinterpreter argsquoted='true'>sudo -u usera sh -c </scriptinterpreter>
+    <scripturl>http://example.com/path/to/a/script</scripturl>
+    <scriptargs>-whatever something</scriptargs>
+</command>
+~~~~~~~~ 
 
 This will execute as:
 
-    sudo -u usera sh -c 'script.sh -whatever something'
+~~~~~~~~ {.bash}
+sudo -u usera sh -c 'script.sh -whatever something'
+~~~~~~~~ 
 
 ### Job sequence step
 
@@ -824,11 +880,13 @@ Optional "arg" element can be embedded:
 
 Example passing arguments to the job:
 
-    <command >
-        <jobref group="My group" name="My Job">
-           <arg line="-option value -option2 value2"/>
-        </jobref>
-    </command>      
+~~~~~~~~ {.xml}
+<command >
+    <jobref group="My group" name="My Job">
+       <arg line="-option value -option2 value2"/>
+    </jobref>
+</command>      
+~~~~~~~~ 
 
 If `nodeStep` is set to "true", then the Job Reference step will operate as a *Node Step* instead of the
 default.  As a *Node Step* it will execute once for each matched node in the containing Job workflow, and
@@ -866,25 +924,29 @@ Optional 'configuration' can be embedded containing a list of 'entry' key/value 
 
 Example node step plugin definition:
 
-    <command>
-        <node-step-plugin type="my-node-step-plugin">
-           <configuration>
-            <entry key="someconfig" value="a value"/>
-            <entry key="timout" value="2000"/>
-           </configuration>
-        </node-step-plugin>
-    </command> 
+~~~~~~~~ {.xml}
+<command>
+    <node-step-plugin type="my-node-step-plugin">
+       <configuration>
+        <entry key="someconfig" value="a value"/>
+        <entry key="timout" value="2000"/>
+       </configuration>
+    </node-step-plugin>
+</command> 
+~~~~~~~~ 
 
 Example workflow step plugin definition:
 
-    <command>
-        <step-plugin type="my-step-plugin">
-           <configuration>
-            <entry key="repeat" value="12"/>
-            <entry key="debug" value="true"/>
-           </configuration>
-        </step-plugin>
-    </command>     
+~~~~~~~~ {.xml}
+<command>
+    <step-plugin type="my-step-plugin">
+       <configuration>
+        <entry key="repeat" value="12"/>
+        <entry key="debug" value="true"/>
+       </configuration>
+    </step-plugin>
+</command>     
+~~~~~~~~ 
 
 #### node-step-plugin
 
@@ -933,22 +995,24 @@ Defines email, webhook or plugin notifications for Job success and failure, with
 
 *Example*
 
-    <notification>
-        <onfailure>
-            <email recipients="test@example.com,foo@example.com" />
-        </onfailure>
-        <onsuccess>
-            <email recipients="test@example.com" />
-            <webhook urls="http://example.com?id=${execution.id}" />
-       </onsuccess>
-        <onstart>
-            <plugin type="MyPlugin">
-              <configuration>
-                <entry key="customkey" value="customvalue"/>
-              </configuration>
-            </plugin>
-       </onstart>
-    </notification>      
+~~~~~~~~ {.xml}
+<notification>
+    <onfailure>
+        <email recipients="test@example.com,foo@example.com" />
+    </onfailure>
+    <onsuccess>
+        <email recipients="test@example.com" />
+        <webhook urls="http://example.com?id=${execution.id}" />
+   </onsuccess>
+    <onstart>
+        <plugin type="MyPlugin">
+          <configuration>
+            <entry key="customkey" value="customvalue"/>
+          </configuration>
+        </plugin>
+   </onstart>
+</notification>      
+~~~~~~~~ 
 
  
 ### onsuccess 
@@ -1019,7 +1083,9 @@ urls
 
 *Example*
 
-        <webhook urls="http://server/callback?id=${execution.id}&status=${execution.status}&trigger=${notification.trigger}"/>
+~~~~~~~~ {.xml }
+<webhook urls="http://server/callback?id=${execution.id}&status=${execution.status}&trigger=${notification.trigger}"/>
+~~~~~~~~ 
 
 * For more information about the Webhook mechanism used, see the chapter [Integration - Webhooks](manual/jobs.html#webhooks).
 
@@ -1052,14 +1118,16 @@ Optional 'configuration' can be embedded containing a list of 'entry' key/value 
 
 Example notification plugin definition:
 
-    <onstart>
-        <plugin type="my-notification-plugin">
-           <configuration>
-            <entry key="someconfig" value="a value"/>
-            <entry key="timout" value="2000"/>
-           </configuration>
-        </plugin>
-    </onstart> 
+~~~~~~~~ {.xml}
+<onstart>
+    <plugin type="my-notification-plugin">
+       <configuration>
+        <entry key="someconfig" value="a value"/>
+        <entry key="timout" value="2000"/>
+       </configuration>
+    </plugin>
+</onstart> 
+~~~~~~~~ 
 
 #### configuration
 
@@ -1082,7 +1150,7 @@ value
 
 # SEE ALSO
 
-`rd-jobs` (1).
+`[rd-jobs](../man1/rd-jobs.html)`
 
 The Rundeck source code and all documentation may be downloaded from
-<https://github.com/dtolabs/rundeck/>.
+<https://github.com/rundeck/rundeck/>.

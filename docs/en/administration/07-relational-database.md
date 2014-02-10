@@ -1,4 +1,4 @@
-% Relational Database
+% Setting up a RDB Datasource
 
 You can configure Rundeck to use a RDB instead of the default file-based data storage.
 
@@ -8,21 +8,27 @@ You must modify the `server/config/rundeck-config.properties` file, to change th
 
 The default dataSource is configured for filesystem storage using HSQLDB:
 
-    dataSource.url = jdbc:hsqldb:file:/var/lib/rundeck/data/grailsdb;shutdown=true
+~~~~~~ {.java}
+dataSource.url = jdbc:hsqldb:file:/var/lib/rundeck/data/grailsdb;shutdown=true
+~~~~~~ 
 
 Here is an example configuration to use an Oracle backend:
 
-    dataSource.url = jdbc:oracle:thin:@localhost:1521:XE
-    dataSource.driverClassName = oracle.jdbc.driver.OracleDriver
-    dataSource.username = dbuser
-    dataSource.password = dbpass
-    dataSource.dialect = org.hibernate.dialect.Oracle10gDialect
+~~~~~~ {.java .numberLines }
+dataSource.url = jdbc:oracle:thin:@localhost:1521:XE
+dataSource.driverClassName = oracle.jdbc.driver.OracleDriver
+dataSource.username = dbuser
+dataSource.password = dbpass
+dataSource.dialect = org.hibernate.dialect.Oracle10gDialect
+~~~~~~~~
 
 Here is an example configuration to use Mysql:
 
-    dataSource.url = jdbc:mysql://myserver/rundeckdb?autoReconnect=true
-    dataSource.username = dbuser
-    dataSource.password = dbpass
+~~~~~~ {.java .numberLines }
+dataSource.url = jdbc:mysql://myserver/rundeckdb?autoReconnect=true
+dataSource.username = dbuser
+dataSource.password = dbpass
+~~~~~~
 
 NB: for Mysql, the `autoReconnect=true` will fix a common problem where the Rundeck server's connection to Mysql is dropped after a period of inactivity, resulting in an error message: "Message: Can not read response from server. Expected to read 4 bytes, read 0 bytes before connection was unexpectedly lost."
 
@@ -32,8 +38,12 @@ See more about [configuring the Mysql JDBC Connector/J URL](http://dev.mysql.com
 
 Copy the appropriate JDBC driver, such as "ojdbc14.jar" for Oracle into the server `lib` dir:
 
-    cp ojdbc14.jar $RDECK_BASE/server/lib
+~~~~~~ {.bash}
+cp ojdbc14.jar $RDECK_BASE/server/lib
+~~~~~~
 
 Or:
 
-    cp mysql-connector-java-5.1.17-bin.jar $RDECK_BASE/server/lib
+~~~~~~ {.bash}
+cp mysql-connector-java-5.1.17-bin.jar $RDECK_BASE/server/lib
+~~~~~~ 

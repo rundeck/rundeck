@@ -1,1 +1,1 @@
-% Commands | Man(1)
+% Command Line Tools

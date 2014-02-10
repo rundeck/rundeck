@@ -1,1 +1,1 @@
-% Formats | Man(5)
+% Document Format Reference

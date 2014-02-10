@@ -1,4 +1,4 @@
-% JOB-YAML-V12(5) Rundeck User Manuals | Version 1.2
+% JOB-YAML
 % Greg Schueler
 % February 25, 2011
 
@@ -10,21 +10,27 @@ job-yaml-v12 - The 'job' YAML file declares job entries for Rundeck.
 
 This file can be batch loaded via *rd-jobs* load command:
 
-    rd-jobs load --file /path/to/jobs.yaml -F yaml
+~~~~~~~~ {.bash}
+rd-jobs load -p project --file /path/to/jobs.yaml -F yaml
+~~~~~~~~ 
 
 Rundeck job definitions can be dumped and saved to a file via
 rd-jobs list command:
 
-    rd-jobs list --file /tmp/jobs.yaml -F yaml
+~~~~~~~~ {.bash}
+rd-jobs list -p project --file /tmp/jobs.yaml -F yaml
+~~~~~~~~ 
 
 ## Structure
 
 The YAML document can contain multiple Job definitions, in a sequence:
 
-    - # job 1
-      name: ...
-    - # job 2
-      name: ...
+~~~~~~~~ {.yaml}
+- # job 1
+  name: ...
+- # job 2
+  name: ...
+~~~~~~~~ 
 
 Each Job definition is a Map consisting of some required and some optional entries, as listed below.
 
@@ -64,11 +70,13 @@ Each Job definition requires these values:
 
 A minimal job definition example:
 
-    name: job name
-    description: ''
-    loglevel: INFO
-    sequence: 
-      - exec: a command
+~~~~~~~~ {.yaml}
+name: job name
+description: ''
+loglevel: INFO
+sequence: 
+  - exec: a command
+~~~~~~~~ 
 
 In addition, these optional entries can be present:
 
@@ -110,26 +118,28 @@ This defines the Workflow options and execution sequence.
 
 Example:
 
-    sequence:
-      keepgoing: true
-      strategy: node-first
-      commands: 
-      - exec: ...
-      - script: ...
-        args: ...
-      - scriptfile: ...
-        args:
-      - scripturl: ...
-        args:
-      - jobref:
-          name: jobname
-          group: group
-          args: args
-      - nodeStep: true/false
-        type: plugin-type
-        configuration: 
-          key: value
-          another: value
+~~~~~~~~ {.yaml}
+  sequence:
+    keepgoing: true
+    strategy: node-first
+    commands: 
+    - exec: ...
+    - script: ...
+      args: ...
+    - scriptfile: ...
+      args:
+    - scripturl: ...
+      args:
+    - jobref:
+        name: jobname
+        group: group
+        args: args
+    - nodeStep: true/false
+      type: plugin-type
+      configuration: 
+        key: value
+        another: value
+~~~~~~~~ 
 
 The sequence has these required entries:
 
@@ -211,12 +221,14 @@ This [Command](#command) executes the script content specified.
 
 Example:
 
-     - script: |-
-        #!/bin/bash
+~~~~~~~~ {.yaml}
+   - script: |-
+      #!/bin/bash
 
-        echo this is a script
-        echo this is option value: @option.test@
-      args: arguments passed to the script
+      echo this is a script
+      echo this is option value: @option.test@
+    args: arguments passed to the script
+~~~~~~~~ 
 
 ### Script File Execution Entry
 
@@ -232,8 +244,10 @@ This [Command](#command) executes a script file stored on the server.
 
 Example:
 
-    - scriptfile: /path/to/script
-      args: arguments to script
+~~~~~~~~ {.yaml}
+  - scriptfile: /path/to/script
+    args: arguments to script
+~~~~~~~~ 
 
 ### Script URL Execution Entry
 
@@ -249,8 +263,10 @@ This [Command](#command) downloads a script file from a URL and executes it.
 
 Example:
 
-    - scripturl: http://example.com/path/to/script
-      args: arguments to script
+~~~~~~~~ {.yaml}
+  - scripturl: http://example.com/path/to/script
+    args: arguments to script
+~~~~~~~~ 
 
 ### Script Interpreter
 
@@ -262,13 +278,15 @@ For `script`, `scriptfile` and `scripturl`, you can optionally declare an "inter
 
 Example:
 
-     - script: |-
-        #!/bin/bash
+~~~~~~~~ {.yaml}
+   - script: |-
+      #!/bin/bash
 
-        echo this is a script
-        echo this is option value: @option.test@
-      args: arguments passed to the script
-      scriptInterpreter: interpreter -flag
+      echo this is a script
+      echo this is option value: @option.test@
+    args: arguments passed to the script
+    scriptInterpreter: interpreter -flag
+~~~~~~~~ 
 
 This script will then be executed as:
 
@@ -308,10 +326,12 @@ This [Command](#command) executes another Rundeck Job.
 
 Example:
 
-    - jobref:
-        group: test
-        name: simple job test
-        args: args for the job
+~~~~~~~~ {.yaml}
+  - jobref:
+      group: test
+      name: simple job test
+      args: args for the job
+~~~~~~~~
 
 
 If `nodeStep` is set to "true", then the Job Reference step will operate as a *Node Step* instead of the
@@ -336,20 +356,24 @@ This [Command](#command) executes a plugin.  There are two types of step plugins
 
 Example:
 
-    - nodeStep: false
-      type: jenkins-build
-      configuration:
-        job: "${option.job}"
+~~~~~~~~ {.yaml}
+  - nodeStep: false
+    type: jenkins-build
+    configuration:
+      job: "${option.job}"
+~~~~~~~~ 
 
 ### Options
 
 Options for a job can be specified with a map. Each map key is the name of the option, and the content is a map defining the [Option](#option).
 
-    options:
-      optname1:
-        [definition..]
-      optname2:
-        [definition..]
+~~~~~~~~ {.yaml}
+  options:
+    optname1:
+      [definition..]
+    optname2:
+      [definition..]
+~~~~~~~~ 
 
 ### Option
 
@@ -407,33 +431,39 @@ Optional map entries are:
 
 Example:
 
-    test:
-      required: true
-      description: a test option
-      value: dvalue
-      regex: ^[abcd]value$
-      values:
-      - avalue
-      - bvalue
-      - cvalue
-      multivalued: true
-      delimiter: ','
+~~~~~~~~ {.yaml}
+  test:
+    required: true
+    description: a test option
+    value: dvalue
+    regex: ^[abcd]value$
+    values:
+    - avalue
+    - bvalue
+    - cvalue
+    multivalued: true
+    delimiter: ','
+~~~~~~~~ 
 
 #### valuesUrl JSON 
 
 The data returned from the valuesUrl can be formatted as a list of values:
 
-    ["x value","y value"]
+~~~~~~~~ {.json}
+["x value","y value"]
+~~~~~~~~ 
 
 or as Name-value list:
 
-    [
-      {name:"X Label", value:"x value"},
-      {name:"Y Label", value:"y value"},
-      {name:"A Label", value:"a value"}
-    ] 
+~~~~~~~~ {.json}
+[
+  {name:"X Label", value:"x value"},
+  {name:"Y Label", value:"y value"},
+  {name:"A Label", value:"a value"}
+] 
+~~~~~~~~
 
-* See the [Rundeck Guide](manual/job-options.html#remote-option-values) for more info.
+* See the [Jobs Guide](manual/jobs.html#remote-option-values) for more info.
 
 ### Schedule
 
@@ -481,11 +511,14 @@ Or use a structure of explicit components. All of these are optional, but likely
 
 Example using crontab string:
 
+~~~~~~~~ {.yaml}
     schedule:
       crontab: '0 30 */6 ? Jan Mon *'
+~~~~~~~~
 
 Example using structure:
 
+~~~~~~~~ {.yaml}
     schedule:
       time:
         hour: '05'
@@ -495,6 +528,7 @@ Example using structure:
       year: '*'
       weekday:
         day: FRI,MON,TUE
+~~~~~~~~ 
 
 ### Nodefilters
 
@@ -560,18 +594,20 @@ The `nodefilters` must also contain ONE of `include` or `exclude` filter specifi
 
 Example:
 
-    nodefilters:
-      dispatch:
-        threadcount: 1
-        keepgoing: false
-        excludePrecedence: true
-        rankAttribute: rank
-        rankOrder: descending
-      include:
-        tags: web
-        name: web-.*
-      exclude:
-        os-family: windows
+~~~~~~~~ {.yaml}
+  nodefilters:
+    dispatch:
+      threadcount: 1
+      keepgoing: false
+      excludePrecedence: true
+      rankAttribute: rank
+      rankOrder: descending
+    include:
+      tags: web
+      name: web-.*
+    exclude:
+      os-family: windows
+~~~~~~~~ 
 
 ### Notification
 
@@ -596,24 +632,26 @@ Defines a notification for the job.  You can include any of `onsuccess`, `onfail
 
 Example:
 
-    notification:
-      onfailure:
-        recipients: tom@example.com,shirley@example.com
-      onsuccess:
-        urls: 'http://server/callback?id=${execution.id}&status=${execution.status}&trigger=${notification.trigger}'
-        plugin:
+~~~~~~~~ {.yaml}
+  notification:
+    onfailure:
+      recipients: tom@example.com,shirley@example.com
+    onsuccess:
+      urls: 'http://server/callback?id=${execution.id}&status=${execution.status}&trigger=${notification.trigger}'
+      plugin:
+        type: myplugin
+        configuration:
+          somekey: somevalue
+    onstart:
+      -  plugin:
           type: myplugin
           configuration:
             somekey: somevalue
-      onstart:
-        -  plugin:
-            type: myplugin
-            configuration:
-              somekey: somevalue
-        -  plugin:
-            type: otherplugin
-            configuration:
-              a: b
+      -  plugin:
+          type: otherplugin
+          configuration:
+            a: b
+~~~~~~~~ 
 
 * For more information about the Webhook mechanism used, see the chapter [Integration - Webhooks](manual/jobs.html#webhooks).
 
@@ -631,9 +669,9 @@ Defines a plugin notification section, can contain a single Map, or a Sequence o
 
 # SEE ALSO
 
-`rd-jobs` (1).
+`[rd-jobs](../man1/rd-jobs.html)`
 
 <http://yaml.org/>
 
 The Rundeck source code and all documentation may be downloaded from
-<https://github.com/dtolabs/rundeck/>.
+<https://github.com/rundeck/rundeck/>.

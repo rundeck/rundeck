@@ -1,4 +1,4 @@
-% rd-project(1) | Version ${VERSION}
+% rd-project
 % Greg Schueler
 % August 17, 2011
 
@@ -8,7 +8,7 @@ rd-project - Create projects.
 
 # SYNOPSIS
 
-rd-project [-vh] -a create -p projectname [ \--property=value ]...
+`rd-project [-vh] -a create -p projectname [ --property=value ]...`
 
 # DESCRIPTION
 
@@ -55,17 +55,22 @@ of rd-setup:
 
 Create a new project named "production":
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
     rd-project -a create -p production
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 
 Create a new project and specify the "project.ssh-keypath" value as well as a path for the nodes data.
 
-    rd-project -a create -p production --project.ssh-keypath=/path/to/keyfile \
-    --resources.source.1.config.file=/path/to/nodesfile
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
+    rd-project -a create -p production \
+       --project.ssh-keypath=/path/to/keyfile \
+       --resources.source.1.config.file=/path/to/resources
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 
 
 # SEE ALSO
 
-[`rd-setup` (1)](rd-setup.html).
+[`rd-setup`](rd-setup.html).
 
 The Rundeck source code and all documentation may be downloaded from
 <https://github.com/dtolabs/rundeck/>.

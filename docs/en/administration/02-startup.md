@@ -4,6 +4,7 @@ Rundeck installation includes a control script used for starting and
 stopping the Rundeck server process.
 The control script provides a number of actions:
 
+
     rundeckd [start|stop|restart|condrestart|status]
 
 ### RPM
@@ -15,17 +16,21 @@ The script is located here: `/etc/init.d/rundeckd`
 
 *Startup*
 
-    /etc/init.d/rundeckd start
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
+/etc/init.d/rundeckd start
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 
 *Shutdown*
 
-    /etc/initd./rundeckd stop
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
+/etc/initd./rundeckd stop
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
     
 #### Setting JAVA_HOME
 
 When using the RPM, by default rundeck will use _java_ found in your path.  Various RPM based 
 distributions provide ways of managing which version of java is found.  CentOS uses 
-_/usr/sbin/alternatives_ and the processing of setting alternatives can be found here: 
+`/usr/sbin/alternatives` and the processing of setting alternatives can be found here: 
 [http://wiki.centos.org/HowTos/JavaOnCentOS](http://wiki.centos.org/HowTos/JavaOnCentO).
 
 If you have installed a JDK or JRE in a unique directory and do not want to alter the global system
@@ -41,11 +46,15 @@ The script is located here: `$RDECK_BASE/server/sbin/rundeckd`.
 
 *Startup*
 
-    $RDECK_BASE/server/sbin/rundeckd start
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
+$RDECK_BASE/server/sbin/rundeckd start
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 
 *Shutdown*
 
-    $RDECK_BASE/server/sbin/rundeckd stop
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
+$RDECK_BASE/server/sbin/rundeckd stop
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 
 You may choose to incorporate this script into your server's operating
 system specific boot process.

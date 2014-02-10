@@ -2,181 +2,242 @@
 % Alex Honor; Greg Schueler
 % November 20, 2010
 
-This chapter helps new users getting started with Rundeck. We will begin
-by explaining the basics, covering essential Rundeck concepts and
-terminology and then move on to installation and finally, setup.
-At the end of this chapter you should understand what Rundeck is, how
-you should use it and you should be all setup to do so.
+This chapter helps new users get started with Rundeck. We will begin
+by explaining a few essential Rundeck concepts and
+terminology and then discuss installation, project setup and introduce
+you to the top level navigation of the interface.
 
-## Rundeck Basics
+## Essential Concepts
 
-Several fundamental concepts underly and drive the development of the
-Rundeck system. If you are a new user, knowing about them will
-help you use and integrate Rundeck into your environment.
+Several fundamental concepts underly and drive the Rundeck system. 
+If you are a new user, knowing about them will
+help you use or integrate Rundeck into your environment.
 
-### Plugins
+Role-based Access Control Policies
 
-Most of what Rundeck does is via one of its plugins. Plugins exist
-to execute commands on nodes, perform a step in a workflow, 
-send a notification about job status, gather
-information about the hosts in your network, copy a file to a remote
-server, store and stream logs, or talk to a user directory.
+:   A Rundeck *access control policy* grants users
+	and user groups certain
+    privileges to perform actions against rundeck resources
+    like projects, jobs, nodes, commands and API.
+    Every action requested by a user is evaulated by the
+    Rundeck authorization system and logged for 
+    reporting and auditing purposes.
 
-### Node execution
+    Since Rundeck respects the policy definition, you can define role-based
+    authorization to restrict users to only a subset of actions. This
+    enables a self-service type interface, where some users have
+    access to a limited set of executable actions.
 
-Rundeck supports a notion called *node execution* wherein a
-user specifies a "command" and a "node filter" to match a list of nodes.
-Rundeck uses the filter to produce a list of matching nodes and
-then dispatches the command to them.
-A *node executor* is a Rundeck plugin that implements how to
-communicate with the Node and how to invoke the command action.
+Projects
 
-The command executes in a data context that contains information 
-about the Node resource, job, and job option data. Your command
-can use this data and thus avoid hard coding node or environment
-specific values.
+:   A *project* is a place to separate management activity.
+    All Rundeck activities occur within the context of a project.
+    Multiple projects can be maintained on the same Rundeck server.
+    Projects are independent from one another, so you can use them to
+    organize unrelated systems within a single Rundeck
+    installation. This can be useful for managing different infrastructures,
+    environments or applications.
+    Projects can be archived and imported to other Rundeck servers to help
+    promote changes between environments.
 
 
-### Jobs
+Jobs
 
-*Jobs* encapsulate a sequence of steps, node filter and job options
-to provide a single executable action. Jobs can be given a unique
-ID, a name and group to organize them to run any time 
-or they may be scheduled to run periodically.
+:   *Jobs* encapsulate a sequence of steps, job options and
+    a nodes where the steps execute.
+    Jobs can be given a unique
+    ID, a name, and group to organize them. Jobs can be
+    run on demand or they may be scheduled to run periodically.
+    Jobs can send notifications when they begin, succeed or fail.
+    Jobs take a number of parameters to control execution, including
+    what to do when an error occurs in one of the steps or
+    how many threads to execute actions across a list of nodes.
 
-Jobs take a number of parameters to control execution, including
-what to do when an error occurs in one of the steps or
-how many threads to execute actions across a list of nodes.
+    Jobs can be composed out of other jobs. Each job can be a step
+    in another job sequence. 
 
-Jobs can be composed out of other jobs. Each job can be a step
-in another job sequence. 
+Nodes
 
-### Resource model
+:   A _Node_  is a resource that is either a physical or virtual instance
+    of a network accessible host.
+    Nodes have a number of basic attributes but these attributes can be
+    extended to include arbitrary named key/value pairs. 
+    A *node filter* is a search expression that matches a set of nodes
+    by their attributes. Rundeck  node filters let you match Nodes based on a pattern like "tags" or any node attribute.
+ 
+    A *resource model* is a representation of Nodes in a project.
+    Each project can be configured to have multiple resource model sources
+    and each model source can contribute its own set of nodes and node attributes.
 
-The *resource model* is a representation of hosts deployed in your
-network. A _Node_  is a resource that is either a physical or virtual instance
-of a network accessible host.
 
-Nodes have a number of basic attributes but these attributes can be
-extended to include arbitrary named key/value pairs. Rundeck 
-node filters let you match Nodes based on a pattern like "tags" or
-a node attribute.
+Commands
 
-A *resource model source* is a Rundeck plugin that produces a set of
-node definitions for a project.
-You can configure Rundeck to retrieve and store resource model data
-from multiple sources, and Rundeck defines several resource model
-document formats to facilitate the transfer of this information. 
+:   A _command_ is a single executable string executed on a Node.
+    Rundeck invokes commands on nodes via a *node executor*
+    which evaluates the command string and executes it. 
+    Node executors evaluate the command string in a data context
+    containing information about the Node resource. Command strings
+    can reference this data and thus avoid hard coding node or environment
+    specific values.
 
-Resource Model data sources can be local files on disk, or remotely
-accessible services. A *URL resource model source* is an external service
-accessible via the HTTP GET method that returns data in one of the supported
-resource document formats.
+Executions
 
-Rundeck currently supports XML and YAML document formats. 
-See [Resource Model Document formats](rundeck-basics.html#resource-model-document-formats))
-to learn how to introduce your own format.
+:   An _execution_ is a representation of the activity of a running or completed 
+    command or job. The data about the execution is used in rundeck to monitor
+    the progress of a job or command and later for reporting about what happened.
 
-Each project can be configured to have multiple sources of Resource Model data. 
-See [Resource Model Sources](plugins.html#resource-model-sources).
+    Each execution contains any output generated by commands or job steps,
+    a record of the nodes where they occurred and the start/end time and status
+    for each step.
 
-### Authorization
+Plugins
 
-Rundeck enforces an *access control policy* that grants certain
-privileges to groups of users.
-Every action executed through the Rundeck node executor must meet
-the requirements of an access control policy definition. 
+:   Most of what Rundeck does is via one of its plugins. Plugins exist
+    to execute commands on nodes, perform a step in a workflow, 
+    send a notification about job status, gather
+    information about the hosts in your network, copy a file to a remote
+    server, store and stream logs, or talk to a user directory.
+    A *node executor* is a Rundeck plugin that implements how to
+    communicate with the Node and how to invoke the command action.
 
-Since Rundeck respects the policy definition, you can define role-based
-authorization to restrict some users to only a subset of actions. This
-enables a self-service type interface, where some users have
-access to only a limited set of executable actions.
+## Download and Installation
 
-See: [Authorization](../administration/authorization.html).
+If a running Rundeck instance isn't already available to you, 
+[download](http://rundeck.org/downloads.html) and 
+install it. There are several package formats. 
+Choose the one that best suits your infrastructure.
 
-### Project
+After installation, be sure Rundeck has been started.
+See [Startup](../administration/startup-and-shutdown.html) to learn how to
+startup and shutdown rundeck.
 
-A *project* is a place to separate management activity.
-All Rundeck activities occur within the context of a project.
-Each project has its own resource model and Job store.
+The default port for the web interface is `4440`. If you
+installed Rundeck on your local machine, go to this URL: <http://localhost:4440>
 
-Multiple projects can be maintained on the same Rundeck server.
-Projects are independent from one another, so you can use them to
-organize unrelated systems within a single Rundeck
-installation. This can be useful for managing different infrastructures.
+## Login
 
-### API
+Rundeck requires every user to login. The default installation
+defines an "admin" user with access to perform all actions.
+Use "admin" for username and password.
+
+![Login form](../figures/fig0202.png)
+
+## Project setup
+
+A new installation will not contain any projects so Rundeck will present
+you with a dialog to create one. Press the "New Project" button to create
+a project. 
+Fill the project creation form with a desired name. Project names can
+contain letters and numbers but do not use spaces or special characters.
+The [Project setup](../administration/project-setup.html) 
+chapter in the Administrator guide
+will show you how to learn to add Nodes, automate the creation and maintenance of
+Rundeck projects.
+
+Once the project has been created you are ready to use your Rundeck instance.
+
+## Rundeck Graphical Console
+
+
+### Navigation
+
+The Rundeck page header contains global navigation control to move
+between tabbed pages: Jobs, Nodes, Commands and Activity. It also has links to
+Configure the project, logout, view your user profile and a link to this online help.
+
+![Top navigation bar](../figures/fig0201.png)
+
+Project menu
+
+:    The top navigation bar contains a menu to select the
+     desired project. If only one project exists, the menu will
+     automatically be selected. You can create new projects from
+     this menu, too.
+   
+Jobs
+
+:    From the Jobs page, one can list, create and run Jobs. A
+     configurable filter allows a user to limit the Job listing to those
+     Jobs matching the filtering criteria. These filter settings can be
+     saved to a Users profile. Only authorized jobs will be visible.
+     
+     See [Jobs](jobs.html).
+
+Nodes
+
+:    The Nodes page is used to browse your Nodes configured in your
+     Project resource model. A filter  control can be used to 
+     limit the listing to just the Node resources
+     matching the filter criteria. Given the appropriate authorization
+     you can also execute ad hoc commands to your filtered node set.
+     
+     See [Nodes](nodes.html).
+
+Commands
+
+:    The Commands page lets you execute abitrary commands against the
+     nodes that match the node filter.
+     
+     See [Commands](commands.html).
+
+Activity
+
+:    From the Activity page, one can view currently executing commands
+     and Jobs or browse execution history. The execution
+     history can be filtered based on user selected parameters. Once the
+     filter has been set, the matching history is displayed. The current
+     filter settings also configure an RSS link, found in the top right of
+     the page (see Rundeck Administration to enable RSS). 
+     
+     See [Activity](activity.html).
+
+  
+Configure
+
+:    If your login belongs to the "admin" group and therefore granted
+     "admin" privileges, a "Configure" icon will be displayed in
+     the top navigation bar. 
+     From the Configure page you can edit project configuration,
+     export and import project archives, view system information,
+     and see what plugins are installed.
+     
+     See [Configure](configure.html)
+
+User
+
+:    The User menu lets you logout and view your profile page. 
+     Your user profile lists your group memberships and a form to list
+     and generate API tokens.
+     
+     See [User](user.html)
+
+Help
+
+:    Opens a page to this user manual.
+
+
+## Command Line Tools 
+
+Rundeck includes a number of shell tools to dispatch commands, load
+and run Job definitions and interact with the dispatcher queue. These
+command tools are an alternative to functions accessible in the
+graphical console.
+
+See the [Command line tools](../man1/index.html).
+
+## API
 
 You can also use the Web API to interface with all aspects of node
-and Job execution. (See the [Rundeck API](../api/index.html).)
+and Job execution. 
 
-## Installing Rundeck
+See the [Rundeck API](../api/index.html) page for a reference on the
+endpoints and examples.
 
-For more detailed install instructions, see the [Administration - Installation](../administration/installation.html) chapter.
+## Document Formats
 
-The simplest way to try Rundeck is by using the Launcher jar.  
-Simply download it, and place it into a directory that will be the `RDECK_BASE` base directory.
+If you prefer to manage job and resource definitions using text files
+you can do so using XML or YAML formats.
 
-Start the Rundeck server by running the jar using java:
+See the [Document Format Reference](../man5/index.html).
 
-    java -jar rundeck-launcher-2.0.0.jar
 
-This will extract the contents into the current working directory and start the service.
-You can Ctl-C the process and then start and stop it using the `rundeckd` script
-(see [startup and shutdown](../administration/startup-and-shutdown.html)).
-
-## Upgrading Rundeck
-
-If you are upgrading Rundeck from a previous version, 
-please read the [Rundeck Upgrade Guide](../upgrading/index.html).
-
-## First-Time Setup
-
-### Logins 
-
-Rundeck supports a number of user directory configurations. By
-default, the installation uses a file based directory, but connectivity to
-LDAP is also available. 
-See [Administration - Authentication](../administration/authentication.html).
-
-The Rundeck installation process will have defined a set of temporary
-logins useful during the getting started phase.
-
-* `user`: Has access to run commands and jobs but unable to modify job
-  definitions. Password: "user"
-* `admin`: Belongs to the "admin" group and is automatically granted
-  the "admin" and "user" role privileges. Password: "admin"
-  
-### Group membership
-
-If you installed Rundeck using the RPM installation method, it will
-have created a unix group called "rundeck".
-
-    $ groups rundeck
-    rundeck : rundeck
-
-It also made several log files writable to members of the "rundeck" group.
-
-    $ ls -l /var/log/rundeck/command.log
-    -rw-rw-r-- 1 rundeck rundeck 588 Dec  2 11:24 /var/log/rundeck/command.log
-
-If you want to use the Rundeck shell tools, be sure to add that group
-to the necessary user accounts.
-
-Rundeck shell tool users that do not belong to group, rundeck, will
-get error messages like so:
-
-    $ rd-jobs
-    log4j:ERROR setFile(null,true) call failed. java.io.FileNotFoundException: /var/log/rundeck/command.log (Permission denied)
-
-Consult the [usermod] command to modify a user account.
-
-[usermod]: http://linux.die.net/man/8/usermod
-
-## Summary 
-
-You should now have a basic understanding of Rundeck. You
-should also have a working version of Rundeck on your system
-and login access. It is now time to learn some Rundeck basics.
-
-  
