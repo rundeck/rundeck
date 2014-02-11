@@ -28,8 +28,8 @@ these properties in the [rundeck-config.properties](configuration.html#rundeck-c
                                             empty groups. **Default: true**           
 
 `rundeck.gui.startpage`                     Change the default page shown after  'jobs'
-                                            login. values: 'run','jobs' or 
-                                            'history'. Default: 'run'.
+                                            choosing a project. values: 'run',
+                                            'jobs' or 'history'. Default: 'jobs'.
 
 `rundeck.gui.execution.tail.lines.default`  Change the default number of lines   50
                                             shown in the execution page in tail 
