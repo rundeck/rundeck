@@ -82,7 +82,7 @@
                     <span class="argString"><g:truncate max="150" showtitle="true">${item.adhocRemoteString.encodeAsHTML()}</g:truncate></span>
                 </g:if>
                 <g:elseif test="${item.adhocLocalString}">
-                    <g:render template="/execution/scriptDetailDisplay" model="${[script:item.adhocLocalString,label: 'Script: ',edit:edit]}"/>
+                    <g:render template="/execution/scriptDetailDisplay" model="${[rkey: g.rkey(),script:item.adhocLocalString,label: 'Script: ',edit:edit]}"/>
                 </g:elseif>
                 <g:elseif test="${item.adhocFilepath}">
                     <g:if test="${item.scriptInterpreter}">

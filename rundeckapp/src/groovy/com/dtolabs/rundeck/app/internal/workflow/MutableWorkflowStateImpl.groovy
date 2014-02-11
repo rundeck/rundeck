@@ -18,7 +18,6 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
     def Date endTime;
     def Map<Integer,MutableWorkflowStepState> mutableStepStates;
     def Map<String,MutableWorkflowNodeState> mutableNodeStates;
-    def List<Map<Date,Map>> stateChanges=[]
     private StepIdentifier parentStepId
     def String serverNode
 
@@ -107,7 +106,6 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
             descendUpdateStateForStep(currentStep, identifier, index, stepStateChange, timestamp)
             return
         }
-        addStateChange(timestamp, stepStateChange)
 
         //update the step found
         List<MutableStepState> toUpdate=[]
@@ -251,24 +249,6 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         return currentStep.mutableNodeStateMap[nodeName]
     }
 
-    private void addStateChange(Date timestamp, StepStateChange stepStateChange) {
-        this.stateChanges << [(timestamp): asChangeMap(stepStateChange)]
-    }
-
-    static Map asChangeMap(StepStateChange stepStateChange) {
-        [
-                node: stepStateChange.nodeName,
-                nodeState: stepStateChange.nodeState,
-        ] + asChangeMap(stepStateChange.stepState)
-    }
-
-    static Map asChangeMap(StepState stepState) {
-        [
-                errorMessage: stepState.errorMessage,
-                executionState: stepState.executionState.toString(),
-                meta: stepState.metadata,
-        ]
-    }
 /**
      * Descend into a sub workflow to update state
      * @param currentStep
@@ -441,11 +421,13 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
 
     @Override
     void updateWorkflowState(ExecutionState executionState, Date timestamp, List<String> nodenames) {
-        updateWorkflowState(null,executionState,timestamp,nodenames,this)
+        updateWorkflowState(null,false,executionState,timestamp,nodenames,this)
     }
-    void updateWorkflowState(StepIdentifier identifier,ExecutionState executionState, Date timestamp, List<String> nodenames, MutableWorkflowState parent) {
+    void updateWorkflowState(StepIdentifier identifier, boolean quellFinalState, ExecutionState executionState, Date timestamp, List<String> nodenames, MutableWorkflowState parent) {
         touchWFState(timestamp)
-        this.executionState = updateState(this.executionState, executionState)
+        if (!(quellFinalState && executionState.isCompletedState())) {
+            this.executionState = updateState(this.executionState, executionState)
+        }
         if (null != nodenames && (null == mutableNodeSet || mutableNodeSet.size() < 1)) {
             mutableNodeSet = new ArrayList<>(nodenames)
             def mutableNodeStates=parent.mutableNodeStates
@@ -508,21 +490,51 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
      * @param mutableWorkflowStepState
      */
     def resolveStepCompleted(ExecutionState executionState, Date date, int i, MutableWorkflowStepState mutableWorkflowStepState) {
+        boolean finalized=false
         if(mutableWorkflowStepState.nodeStep){
             finalizeNodeStep(executionState,mutableWorkflowStepState,date)
-        }else{
-            finalizeWorkflowStep(mutableWorkflowStepState, executionState, date)
+            finalized=true
+        }
+        if(mutableWorkflowStepState.hasSubWorkflow()){
+            finalizeSubWorkflowStep(mutableWorkflowStepState, executionState, date)
+        } else if (!mutableWorkflowStepState.nodeStep && serverNode) {
+            finalizeNodeStep(executionState, mutableWorkflowStepState, date)
+            finalized=true
+        }
+        if(!finalized){
+            finalizeStepExecutionState(mutableWorkflowStepState, executionState, date)
         }
     }
 
     /**
-     * Finalize the execution state of a non-node step. If it has a subworkflow, finalize the sub workflow.  Otherwise
+     * Finalize the execution state of a non node-step. If it has a subworkflow, finalize the sub workflow.  Otherwise
      * finalize the serverNode state.
      * @param mutableWorkflowStepState
      * @param executionState
      * @param date
      */
-    private void finalizeWorkflowStep(MutableWorkflowStepState mutableWorkflowStepState, ExecutionState executionState, Date date) {
+    private void finalizeSubWorkflowStep(MutableWorkflowStepState mutableWorkflowStepState, ExecutionState executionState, Date date) {
+        //resolve the sub workflow
+        mutableWorkflowStepState.mutableSubWorkflowState.updateSubWorkflowState(
+                mutableWorkflowStepState.stepIdentifier,
+                mutableWorkflowStepState.stepIdentifier.context.size(),
+                false,
+                executionState,
+                updateTime,
+                null,
+                this
+        )
+
+    }
+
+    /**
+     * Finalize execution state only for a step
+     * @param mutableWorkflowStepState
+     * @param executionState
+     * @param date
+     */
+    private void finalizeStepExecutionState(MutableWorkflowStepState mutableWorkflowStepState,
+                                            ExecutionState executionState, Date date) {
         def curstate = mutableWorkflowStepState.mutableStepState.executionState
         def newstate = executionState
         switch (curstate) {
@@ -537,26 +549,12 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         }
         mutableWorkflowStepState.mutableStepState.executionState = updateState(curstate, newstate)
         mutableWorkflowStepState.mutableStepState.endTime = date
-        if (mutableWorkflowStepState.hasSubWorkflow()) {
-            //resolve the sub workflow
-            mutableWorkflowStepState.mutableSubWorkflowState.updateSubWorkflowState(
-                    mutableWorkflowStepState.stepIdentifier,
-                    mutableWorkflowStepState.stepIdentifier.context.size(),
-                    executionState,
-                    updateTime,
-                    null,
-                    this
-            )
-        }else if (serverNode) {
-            finalizeNodeStep(executionState, mutableWorkflowStepState, date)
-        }
     }
 
     @Override
-    void updateSubWorkflowState(StepIdentifier identifier, int index,ExecutionState executionState, Date timestamp, List<String> nodeNames, MutableWorkflowState parent) {
+    void updateSubWorkflowState(StepIdentifier identifier, int index, boolean quellFinalState, ExecutionState executionState, Date timestamp, List<String> nodeNames, MutableWorkflowState parent) {
         touchWFState(timestamp)
         Map<Integer, MutableWorkflowStepState> states = mutableStepStates;
-
         if (identifier.context.size() - index > 0) {
             //descend one step
             MutableWorkflowStepState nextStep = locateStepWithContext(identifier, index, states)
@@ -566,10 +564,10 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
 
             transitionIfWaiting(nextStep.mutableStepState)
             //more steps to descend
-            nextWorkflow.updateSubWorkflowState(identifier, index + 1, executionState, timestamp, nodeNames, parent ?: this);
+            nextWorkflow.updateSubWorkflowState(identifier, index + 1, nextStep.nodeStep, executionState, timestamp, nodeNames, parent ?: this);
         } else {
             //update the workflow state for this workflow
-            updateWorkflowState(identifier, executionState, timestamp, nodeNames, parent ?: this)
+            updateWorkflowState(identifier,  quellFinalState, executionState, timestamp, nodeNames, parent ?: this)
         }
     }
 

@@ -48,7 +48,7 @@ import java.util.*;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class ScriptPluginFileCopier extends BaseScriptPlugin implements FileCopier {
+class ScriptPluginFileCopier extends BaseScriptPlugin implements DestinationFileCopier {
     @Override
     public boolean isAllowCustomProperties() {
         return false;
@@ -71,15 +71,15 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements FileCopier {
     public String copyFileStream(final ExecutionContext executionContext, final InputStream inputStream,
                                  final INodeEntry node) throws FileCopierException {
 
-        return copyFile(executionContext, null, inputStream, null, node);
+        return copyFile(executionContext, null, inputStream, null, node, null, false);
     }
 
     /**
      * Copy existing file
      */
-    public String copyFile(final ExecutionContext executionContext, final File file, final INodeEntry node) throws
-                                                                                                            FileCopierException {
-        return copyFile(executionContext, file, null, null, node);
+    public String copyFile(final ExecutionContext executionContext, final File file,
+            final INodeEntry node) throws FileCopierException {
+        return copyFile(executionContext, file, null, null, node, null, false);
     }
 
     /**
@@ -88,8 +88,34 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements FileCopier {
     public String copyScriptContent(final ExecutionContext executionContext, final String s,
                                     final INodeEntry node) throws
                                                            FileCopierException {
-        return copyFile(executionContext, null, null, s, node);
+        return copyFile(executionContext, null, null, s, node, null, false);
     }
+    /**
+     * Copy inputstream
+     */
+    public String copyFileStream(final ExecutionContext executionContext, final InputStream inputStream,
+                                 final INodeEntry node, String destination) throws FileCopierException {
+
+        return copyFile(executionContext, null, inputStream, null, node, destination, null == destination);
+    }
+
+    /**
+     * Copy existing file
+     */
+    public String copyFile(final ExecutionContext executionContext, final File file, final INodeEntry node,
+            final String destination) throws FileCopierException {
+        return copyFile(executionContext, file, null, null, node, destination, null == destination);
+    }
+
+    /**
+     * Copy string content
+     */
+    public String copyScriptContent(final ExecutionContext executionContext, final String s,
+                                    final INodeEntry node, final String destination) throws
+                                                           FileCopierException {
+        return copyFile(executionContext, null, null, s, node, destination, null==destination);
+    }
+
 
     static enum ScriptPluginFailureReason implements FailureReason {
         /**
@@ -102,25 +128,36 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements FileCopier {
      * Internal copy method accepting file, inputstream or string
      */
     String copyFile(final ExecutionContext executionContext, final File file, final InputStream input,
-                    final String content, final INodeEntry node) throws
+            final String content, final INodeEntry node, String destination, boolean expandTokens) throws
                                                                  FileCopierException {
         final String pluginname = getProvider().getName();
         final Map<String, Map<String, String>> localDataContext = createScriptDataContext(
             executionContext.getFramework(),
             executionContext.getFrameworkProject(),
             executionContext.getDataContext());
-
         //add node context data
         localDataContext.put("node", DataContextUtils.nodeData(node));
 
-        //write the temp file and replace tokens in the script with values from the dataContext
-        final File tempfile = BaseFileCopier.writeScriptTempFile(executionContext, file, input, content, node);
+        final File srcFile =
+                expandTokens ?
+                        //write the temp file and replace tokens in a script with values from the dataContext
+                        BaseFileCopier.writeScriptTempFile(executionContext, file, input, content, node)
+                        :
+                        null != file ?
+                                file
+                                //write the temp file and do not replace tokens, the file will not be modified
+                                : BaseFileCopier.writeTempFile(executionContext, file, input, content);
 
-
+        String destFilePath=destination;
+        //put file in a directory
+        if (null != destFilePath && destFilePath.endsWith("/")) {
+            destFilePath += srcFile.getName();
+        }
         //add some more data context values to allow templatized script-copy attribute
         final HashMap<String, String> scptexec = new HashMap<String, String>();
         //set up the data context to include the local temp file
-        scptexec.put("file", tempfile.getAbsolutePath());
+        scptexec.put("file", srcFile.getAbsolutePath());
+        scptexec.put("destination", null != destFilePath ? destFilePath : "");
         localDataContext.put("file-copy", scptexec);
 
         final String[] finalargs = createScriptArgs(localDataContext);
@@ -145,6 +182,10 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements FileCopier {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new FileCopierException(e.getMessage(), StepFailureReason.Interrupted);
+        }
+
+        if (null != destination) {
+            return destFilePath;
         }
 
         //load string of output from outputstream

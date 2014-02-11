@@ -21,7 +21,7 @@
     Created: Jun 14, 2010 10:54:02 AM
     $Id$
  --%>
-<g:set var="rkey" value="${g.rkey()}"/>
+<g:set var="rkey" value="${rkey?:g.rkey()}"/>
 <g:set var="split" value="${script.split('(\r?\n)') as List}"/>
 <g:if test="${edit}">
     <span class="">${label ? label : ''}${split.size()} lines</span>

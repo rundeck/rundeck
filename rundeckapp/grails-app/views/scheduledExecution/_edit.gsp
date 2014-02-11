@@ -149,7 +149,7 @@ function getCurSEID(){
                 }
                 return true;
             },false);
-            jQuery('#nodefiltersmenu').on('click', '.nodefilterlink', function (evt) {
+            jQuery('.nodefilters .dropdown-menu').on('click', '.nodefilterlink', function (evt) {
                 evt.preventDefault();
                 selectNodeFilterLink(this);
             });
@@ -158,6 +158,10 @@ function getCurSEID(){
                 selectNodeFilterLink(this);
             });
             jQuery('.refresh_nodes').on('click', function (evt) {
+                _formUpdateMatchedNodes();
+            });
+            jQuery('.nodefilters [type=submit]').on('click', function (evt) {
+                evt.preventDefault();
                 _formUpdateMatchedNodes();
             });
             jQuery('#schedJobNodeFilter').on('keydown',function (evt) {
@@ -559,7 +563,7 @@ function getCurSEID(){
         </g:hasErrors>
         <g:set var="filtvalue" value="${scheduledExecution.asFilter().encodeAsHTML()}"/>
 
-                <span class=" input-group">
+                <span class="input-group nodefilters">
                     <g:if test="${session.user && User.findByLogin(session.user)?.nodefilters}">
                         <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters}"/>
                     </g:if>

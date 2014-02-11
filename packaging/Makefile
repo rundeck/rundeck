@@ -46,7 +46,7 @@ rpm:
 	@mkdir -p rpmdist/RPMS/noarch
 	@mkdir -p rpmdist/SOURCES
 	@mkdir -p rpmdist/SOURCES/usr/bin
-	@mkdir -p rpmdist/SOURCES/var/lib/rundeck
+	@mkdir -p rpmdist/SOURCES/var/lib/rundeck/.ssh
 	@mkdir -p rpmdist/SOURCES/var/lib/rundeck/exp/webapp
 	@mkdir -p rpmdist/SOURCES/var/lib/rundeck/{data,work,logs,cli,libext,bootstrap}
 	@mkdir -p rpmdist/SOURCES/var/log/rundeck

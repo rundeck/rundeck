@@ -169,7 +169,16 @@ public class BaseFileCopier {
         return nodename.replaceAll("[^a-zA-Z0-9_.-]", "_");
     }
 
-    protected static File writeTempFile(ExecutionContext context, File original, InputStream input,
+    /**
+     * Write the file, stream, or text to a local temp file and return the file
+     * @param context context
+     * @param original source file, or null
+     * @param input source inputstream or null
+     * @param script source text, or null
+     * @return temp file
+     * @throws FileCopierException if IOException occurs
+     */
+    public static File writeTempFile(ExecutionContext context, File original, InputStream input,
             String script) throws FileCopierException {
         File tempfile = null;
         try {

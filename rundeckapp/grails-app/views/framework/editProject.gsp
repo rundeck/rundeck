@@ -26,7 +26,7 @@
     <g:set var="rkey" value="${g.rkey()}"/>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
-    <meta name="tabpage" content="nodes"/>
+    <meta name="tabpage" content="configure"/>
     <title><g:message code="domain.Project.choose.title" default="Edit Project"/></title>
 
     <g:javascript library="prototype/effects"/>

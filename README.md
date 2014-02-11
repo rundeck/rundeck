@@ -37,8 +37,6 @@ Artifacts:
 Notes: 
 
 * the underlying Grails build requires the MaxPermSize to be increased in the MAVEN_OPTS as shown above.
-* to include docs for the launcher, do `make clean docs` first.)
-
 
 Other builds
 ======
@@ -71,7 +69,7 @@ There are several install options: a self-contained jar file, or RPM, or Debian.
 
 To start from the rundeck-launcher.jar, put it in a directory named ~/rundeck, then execute:
 
-    java -jar rundeck-launcher-1.6.0.jar
+    java -XX:MaxPermSize=256m -Xmx1024m -Xms256m -server -jar rundeck-launcher-2.0.0.jar
 
 If you'd like to install via RPM, you can use Yum:
 
@@ -80,7 +78,7 @@ If you'd like to install via RPM, you can use Yum:
 
 OR install directly from RPM:
 
-    rpm -ivh rundeck-1.6.0-xxx.rpm rundeck-config-1.6.0-xxx.rpm
+    rpm -ivh rundeck-2.0.0-xxx.rpm rundeck-config-2.0.0-xxx.rpm
 
 Once the RPM is installed, execute:
 
@@ -90,14 +88,14 @@ The server should launch on port 4440, with default username/password of `admin/
 
 For Debian, download the .deb from the [downloads page](http://rundeck.org/downloads.html), then run:
 
-    dpkg -i rundeck-1.6.x-x.deb
+    dpkg -i rundeck-2.0.0-x.deb
 
 * For more info and configuration information, see the [Rundeck docs](http://docs.rundeck.org).
 
 Requirements
 =======
 
-Java 6 (openjdk, sun)
+Java 6/7 (openjdk, sun)
 
 [Pandoc](http://johnmacfarlane.net/pandoc/) (documentation build only)
 
@@ -106,20 +104,22 @@ Documentation
 
 Available online at <http://rundeck.org/docs>
 
+FAQ: <https://github.com/rundeck/rundeck/wiki/FAQ>
+
 Development
 ======
 
-Refer to the [IDE Development Environment](https://github.com/dtolabs/rundeck/wiki/IDE-Development-Environment) to get set up using IntelliJ IDEA or Eclipse/STS.
+Refer to the [IDE Development Environment](https://github.com/rundeck/rundeck/wiki/IDE-Development-Environment) to get set up using IntelliJ IDEA or Eclipse/STS.
 
-* [Issue tracker](https://github.com/dtolabs/rundeck/issues) at github.com
+* [Issue tracker](https://github.com/rundeck/rundeck/issues) at github.com
 * [Fresh builds](http://build.rundeck.org) served by Jenkins
 
-Do you have changes to contribute? Please see the [Development](https://github.com/dtolabs/rundeck/wiki/Development) wiki page.
+Do you have changes to contribute? Please see the [Development](https://github.com/rundeck/rundeck/wiki/Development) wiki page.
 
 License
 ======
 
-Copyright 2013 SimplifyOps
+Copyright 2014 SimplifyOps
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

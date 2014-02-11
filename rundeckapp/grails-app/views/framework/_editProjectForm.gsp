@@ -63,7 +63,7 @@
                         <g:set var="desc" value="${resourceModelConfigDescriptions.find {it.name==config.type}}"/>
                         <g:if test="${!desc}">
                             <span
-                                class="warn note invalidProvider">Invalid Resurce Model Source configuration: Provider not found: ${config.type.encodeAsHTML()}</span>
+                                class="warn note invalidProvider">Invalid Resource Model Source configuration: Provider not found: ${config.type.encodeAsHTML()}</span>
                         </g:if>
                         <g:render template="viewResourceModelConfig"
                                   model="${[prefix: prefixKey+'.'+(n+1)+'.', values: config.props, includeFormFields: true, description: desc, saved:true,type:config.type]}"/>

@@ -5,9 +5,17 @@
  * artifacts, however it allows us to set defaults for the subjects and provides 
  * Groovy syntax highlighting for gradle build files (like this one)
  **/
-
+ buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.adaptc.gradle:nexus-workflow:0.5'
+    }
+}
 description = 'The master-build project for Rundeck';
 
+apply plugin: 'nexus-workflow'
 apply plugin: 'eclipse';
 apply plugin: 'idea'
 

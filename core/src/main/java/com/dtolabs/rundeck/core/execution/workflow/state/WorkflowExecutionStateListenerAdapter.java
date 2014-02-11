@@ -156,7 +156,7 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
     }
 
     public void finishWorkflowItem(int step, StepExecutionItem item, StepExecutionResult result) {
-        if (NodeDispatchStepExecutor.STEP_EXECUTION_TYPE.equals(item.getType())) {
+        if (NodeDispatchStepExecutor.STEP_EXECUTION_TYPE.equals(item.getType()) || item instanceof NodeStepExecutionItem) {
             //dont notify
         } else {
             notifyAllStepState(createIdentifier(), createStepStateChange(result), new Date());

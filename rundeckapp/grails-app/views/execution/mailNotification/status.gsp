@@ -226,7 +226,9 @@ div.progressContainer div.progressContent{
             <g:if test="${execstate=='aborted'}">
                 by <em>${execution.abortedby}</em>
             </g:if>
-            - <g:link absolute="true" controller="execution" action="show" id="${execution.id}" title="View execution output">View Output &raquo;</g:link>
+            - <g:link absolute="true" controller="execution"
+                      params="[project: execution.project]"
+                      action="show" id="${execution.id}" title="View execution output">View Output &raquo;</g:link>
         </div>
         <g:if test="${execstate!='running'}">
         <div class="presentation">
@@ -235,6 +237,7 @@ div.progressContainer div.progressContent{
                 controller="execution"
                 action="downloadOutput"
                 absolute="true"
+                params="[project:execution.project]"
                 id="${execution.id}">
                 Download Output
             </g:link>
@@ -298,7 +301,7 @@ div.progressContainer div.progressContent{
         </div>
         <span class="prompt">Details</span>
         <div class="presentation" id="schedExDetails${scheduledExecution?.id}">
-            <g:render template="/execution/execDetails" model="[execdata:execution,noimgs:true,nomatchednodes:true]"/>
+            <g:render template="/execution/execDetails" model="[showEdit:false, execdata:execution,noimgs:true,nomatchednodes:true]"/>
         </div>
         %{--<g:set var="nodestatus" value="${[succeeded:20,failed:0,total:20]}"/>--}%
         <g:if test="${nodestatus || execution?.failedNodeList}">
@@ -345,9 +348,10 @@ div.progressContainer div.progressContent{
 </div>
 <div class="foot">
     <g:message code="main.app.name"/> :
-    <g:link absolute="true" controller="framework" action="nodes"><g:message code="gui.menu.Nodes"/> &raquo;</g:link>
-    <g:link absolute="true" controller="menu" action="jobs"><g:message code="gui.menu.Workflows"/> &raquo;</g:link>
-    <g:link absolute="true" controller="reports" action="index"><g:message code="gui.menu.Events"/> &raquo;</g:link>
+    ${execution.project.encodeAsHTML()}
+    <g:link absolute="true" controller="framework" params="[project: execution.project]" action="nodes"><g:message code="gui.menu.Nodes"/> &raquo;</g:link>
+    <g:link absolute="true" controller="menu" params="[project: execution.project]" action="jobs"><g:message code="gui.menu.Workflows"/> &raquo;</g:link>
+    <g:link absolute="true" controller="reports" params="[project: execution.project]" action="index"><g:message code="gui.menu.Events"/> &raquo;</g:link>
 </div>
 
 </body>

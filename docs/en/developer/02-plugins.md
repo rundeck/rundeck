@@ -200,15 +200,15 @@ More information is available in the Javadoc.
 A File Copier provider copies a file or script to a remote
 or local node.
 
-Your provider class must implement the `com.dtolabs.rundeck.core.execution.service.FileCopier` interface:
+Your provider class must implement the `com.dtolabs.rundeck.core.execution.service.DestinationFileCopier` interface:
 
-    public interface FileCopier {
-        public String copyFileStream(final ExecutionContext context, InputStream input, INodeEntry node) throws
+    public interface DestinationFileCopier extends FileCopier {
+        public String copyFileStream(final ExecutionContext context, InputStream input, INodeEntry node, String destination) throws
             FileCopierException;
 
-        public String copyFile(final ExecutionContext context, File file, INodeEntry node) throws FileCopierException;
+        public String copyFile(final ExecutionContext context, File file, INodeEntry node, String destination) throws FileCopierException;
 
-        public String copyScriptContent(final ExecutionContext context, String script, INodeEntry node) throws
+        public String copyScriptContent(final ExecutionContext context, String script, INodeEntry node, String destination) throws
             FileCopierException;
     }
 
@@ -219,6 +219,8 @@ interface. It is up to your plugin implementation to use configuration propertie
 from the `FrameworkProject` instance to configure itself. You must also be sure
 to return an appropriate mapping in the `getPropertiesMapping` method of the `Description` interface to declare the property names to be used in the 
 `project.properties` file.
+
+Note: the `destination` parameter may or may not be specified.  If it is not null, it indicates that the file must be copied to the requested destination filepath.  If it is null, it indicates that the copied file is likely a script file, and it should be copied to a temporary file location. In either case, the resulting file path **must** be returned as the result of the method call.
 
 More information is available in the Javadoc.
 
@@ -481,7 +483,7 @@ specific Service will provide some additional context properties that can be use
 
 * NodeExecutor will define `${exec.command}` containing the command to be executed
 * FileCopier will define `${file-copy.file}` containing the local path to the file
-that needs to be copied.
+that needs to be copied, and `${file-copy.destination}` containing the remote destination path that is requested, if available.
 * ResourceModelSource will define `${config.KEY}` for each configuration property KEY that is defined.
 
 All script-plugins will also be provided with these context entries:

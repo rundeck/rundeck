@@ -1453,6 +1453,8 @@ class ScheduledExecutionController  {
         }
         params.workflow=new Workflow(scheduledExecution.workflow)
         params.argString=scheduledExecution.argString
+        params.doNodedispatch=scheduledExecution.doNodedispatch
+        params.filter=scheduledExecution.asFilter()
 
         def Execution e
         try {
@@ -2189,7 +2191,6 @@ class ScheduledExecutionController  {
 
         //remote any input parameters that should not be used when creating the execution
         ['options','scheduled'].each{params.remove(it)}
-        params.workflow=new Workflow(commands:[new CommandExec(adhocRemoteString:params.remove('exec'), adhocExecution:true)])
         params.description=params.description?:""
 
         //convert api parameters to node filter parameters
@@ -2224,15 +2225,25 @@ class ScheduledExecutionController  {
             return
         }
 
+        def script
         //read attached script content
-        def file = request.getFile("scriptFile")
-        if(file.empty) {
-            return apiService.renderErrorXml(response, [
-                    status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: 'api.error.run-script.upload.is-empty'])
+        if (request instanceof MultipartHttpServletRequest) {
+            def file = request.getFile("scriptFile")
+            if(!file) {
+                return apiService.renderErrorXml(response, [
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code: 'api.error.run-script.upload.missing',args:['scriptFile']])
+            }else if(file.empty) {
+                return apiService.renderErrorXml(response, [
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code: 'api.error.run-script.upload.is-empty'])
+            }
+            script = new String(file.bytes)
+        }else if(params.scriptFile){
+            script=params.scriptFile
         }
 
-        def script=new String(file.bytes)
+
 
         //remote any input parameters that should not be used when creating the execution
         ['options','scheduled'].each{params.remove(it)}

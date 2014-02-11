@@ -25,6 +25,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
+    <meta name="tabpage" content="configure"/>
     <title><g:message code="gui.menu.SystemInfo" /></title>
 </head>
 

@@ -1913,6 +1913,9 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         def scheduledExecution = new ScheduledExecution()
         final Map nonopts = params.findAll {!it.key.startsWith("option.") && it.key != 'workflow' && it.key != 'options' && it.key != 'notifications'}
         scheduledExecution.properties = nonopts
+        if(scheduledExecution.doNodedispatch && !scheduledExecution.filter){
+            scheduledExecution.filter=scheduledExecution.asFilter()
+        }
 
         //fix potential null/blank issue after upgrading rundeck to 1.3.1/1.4
         if (!scheduledExecution.description) {

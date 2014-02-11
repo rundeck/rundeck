@@ -186,16 +186,17 @@ class ExecutionController {
             flash.error = "Execution not found for id: "+params.id
             return render(template:"/common/error")
         }
-        def file = new File(loggingService.getLogFileForExecution(e))
+        def file = loggingService.getLogFileForExecution(e)
         def filesize=-1
         if (file.exists()) {
             filesize = file.length()
         }
+        final state = ExecutionService.getExecutionState(e)
         if(e.scheduledExecution){
             def ScheduledExecution se = e.scheduledExecution //ScheduledExecution.get(e.scheduledExecutionId)
-            return render(view:"mailNotification/status" ,model: [scheduledExecution: se, execution:e, filesize:filesize])
+            return render(view:"mailNotification/status" ,model: [execstate: state, scheduledExecution: se, execution:e, filesize:filesize])
         }else{
-            return render(view:"mailNotification/status" ,model:  [execution:e, filesize:filesize])
+            return render(view:"mailNotification/status" ,model:  [execstate: state, execution:e, filesize:filesize])
         }
     }
 

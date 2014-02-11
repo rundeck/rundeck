@@ -29,7 +29,7 @@ import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
-import com.dtolabs.rundeck.core.execution.service.FileCopier;
+import com.dtolabs.rundeck.core.execution.service.DestinationFileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
@@ -61,14 +61,16 @@ import java.util.Map;
  * </p> <p> The script-copy attribute is used as the entire command to execute to copy the file.  The destination file
  * location should be the only output from the command. </p><p>   In addition to normal Data context references in this
  * attribute, you can include these special data references: </p> <ul>
- * <li><pre>${script-copy.file}</pre>: This is the local filepath of the file that should be copied to the node.</li>
- * <li><pre>${script-copy.dir}</pre>: This is the value of the script-copy-dir attribute</li>
+ * <li><pre>${file-copy.file}</pre>: This is the local filepath of the file that should be copied to the node.</li>
+ * <li><pre>${file-copy.dir}</pre>: This is the value of the script-copy-dir attribute</li>
+ * <li><pre>${file-copy.filename}</pre>: This is the name of the file without any path</li>
+ * <li><pre>${file-copy.destination}</pre>: This is the value of the expected destination filepath for the file</li>
  * </ul> <p> So for example, if you wanted to change the way the script is invoked, you could specify the script-copy
  * like:
  * <pre>
  *         &lt;node name="mynode" ...
  *         remotecopy="/bin/remotecopy"
- *         script-copy="${node.remotecopy} ${script-copy.file} -- ${node.username}@${node.name}"/>
+ *         script-copy="${node.remotecopy} ${script-copy.file} ${file-copy.destination} -- ${node.username}@${node.name}"/>
  * </pre>
  * This would execute /bin/remotecopy and pass the path of the file to copy followed by -- and the node info
  * "username@hostname". </p>
@@ -76,7 +78,7 @@ import java.util.Map;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 @Plugin(name = "script-copy", service = ServiceNameConstants.FileCopier)
-public class ScriptFileCopier implements FileCopier, Describable {
+public class ScriptFileCopier implements DestinationFileCopier, Describable {
     public static String SERVICE_PROVIDER_NAME = "script-copy";
     public static String SCRIPT_ATTRIBUTE = "script-copy";
     public static String DIR_ATTRIBUTE = "script-copy-dir";
@@ -101,16 +103,26 @@ public class ScriptFileCopier implements FileCopier, Describable {
 
     static {
         properties.add(PropertyUtil.string(CONFIG_COMMAND, "Command",
-                                           "Shell command to execute the file copy",
+                                           "Shell command to execute the file copy. Can include references to these variables:\n" +
+                                                   "${file-copy.file}: This is the local path of the source file" +
+                                                   " that should be copied to the node.\n" +
+                                                   "${file-copy.dir}: Local working directory when executing the command.\n" +
+                                                   "${file-copy.filename}: Source file name without path.\n" +
+                                                   "${file-copy.destination}: This is the value " +
+                                                   "of the expected destination filepath for the file",
                                            true, null));
         properties.add(PropertyUtil.string(CONFIG_FILEPATH, "Remote Filepath",
-                                           "Remote filepath destination for the script.",
+                                           "Remote filepath destination for copied scripts, can include " +
+                                                   "${file-copy.filename} or any node or job attributes. If " +
+                                                   "${file-copy.filename} is not specified, then it is assumed the path " +
+                                                   "is a directory path, and the script file will be placed within the " +
+                                                   "directory.",
                                            false, null));
         properties.add(PropertyUtil.string(CONFIG_INTERPRETER, "Interpreter",
                                            "Shell or interpreter to pass the command string to. Not required.",
                                            false, null));
         properties.add(PropertyUtil.string(CONFIG_DIRECTORY, "Directory",
-                                           "Directory to execute within",
+                                           "Directory to execute within (optional)",
                                            false, null));
 
         final Map<String, String> mapping = new HashMap<String, String>();
@@ -119,11 +131,6 @@ public class ScriptFileCopier implements FileCopier, Describable {
         mapping.put(CONFIG_INTERPRETER, SCRIPT_COPY_DEFAULT_REMOTE_SHELL);
         mapping.put(CONFIG_DIRECTORY, SCRIPT_COPY_DEFAULT_DIR_PROPERTY);
         CONFIG_MAPPING = Collections.unmodifiableMap(mapping);
-        final Map<String, String> mapping2 = new HashMap<String, String>();
-        mapping2.put(CONFIG_COMMAND, SCRIPT_COPY_DEFAULT_COMMAND_PROPERTY);
-        mapping2.put(CONFIG_FILEPATH, SCRIPT_COPY_DEFAULT_REMOTE_FILEPATH_PROPERTY);
-        mapping2.put(CONFIG_INTERPRETER, SCRIPT_COPY_DEFAULT_REMOTE_SHELL);
-        mapping2.put(CONFIG_DIRECTORY, SCRIPT_COPY_DEFAULT_DIR_PROPERTY);
 
         CONFIG_MAPPING_FWK = Collections.unmodifiableMap(mapping);
     }
@@ -166,7 +173,7 @@ public class ScriptFileCopier implements FileCopier, Describable {
     public String copyFileStream(final ExecutionContext executionContext, final InputStream inputStream,
                                  final INodeEntry node) throws FileCopierException {
 
-        return copyFile(executionContext, null, inputStream, null, node);
+        return copyFile(executionContext, null, inputStream, null, node, null, true);
     }
 
     /**
@@ -174,7 +181,7 @@ public class ScriptFileCopier implements FileCopier, Describable {
      */
     public String copyFile(final ExecutionContext executionContext, final File file, final INodeEntry node) throws
                                                                                                             FileCopierException {
-        return copyFile(executionContext, file, null, null, node);
+        return copyFile(executionContext, file, null, null, node,null,true);
     }
 
     /**
@@ -183,24 +190,38 @@ public class ScriptFileCopier implements FileCopier, Describable {
     public String copyScriptContent(final ExecutionContext executionContext, final String s,
                                     final INodeEntry node) throws
                                                            FileCopierException {
-        return copyFile(executionContext, null, null, s, node);
+        return copyFile(executionContext, null, null, s, node, null, true);
     }
 
     static enum Reason implements FailureReason {
         ScriptFileCopierPluginExpectedOutputMissing
     }
 
+    @Override
+    public String copyFileStream(ExecutionContext context, InputStream input, INodeEntry node, String destination) throws FileCopierException {
+        return copyFile(context, null, input, null, node, destination, destination == null);
+    }
+
+    @Override
+    public String copyFile(ExecutionContext context, File file, INodeEntry node, String destination) throws FileCopierException {
+        return copyFile(context, file, null, null, node, destination, destination == null);
+    }
+
+    @Override
+    public String copyScriptContent(ExecutionContext context, String script, INodeEntry node, String destination) throws FileCopierException {
+        return copyFile(context, null, null, script, node, destination, destination == null);
+    }
+
     /**
      * Internal copy method accepting file, inputstream or string
      */
     String copyFile(final ExecutionContext executionContext, final File file, final InputStream input,
-                    final String content, final INodeEntry node) throws
+            final String content, final INodeEntry node, String remotePath, boolean expandTokens) throws
                                                                  FileCopierException {
 
         File workingdir = null;
         String scriptargs;
         String dirstring;
-        String attrRemoteFilepath;
 
         //get project or framework property for script-exec args
         final Framework framework = executionContext.getFramework();
@@ -231,41 +252,62 @@ public class ScriptFileCopier implements FileCopier, Describable {
             workingdir = new File(dirstring);
         }
 
-        attrRemoteFilepath = framework.getProjectProperty(executionContext.getFrameworkProject(),
-                                                          SCRIPT_COPY_DEFAULT_REMOTE_FILEPATH_PROPERTY);
-        if (null != node.getAttributes().get(REMOTE_FILEPATH_ATTRIBUTE)) {
-            attrRemoteFilepath = node.getAttributes().get(REMOTE_FILEPATH_ATTRIBUTE);
+        final File srcFile =
+                expandTokens ?
+                        //write the temp file and replace tokens in a script with values from the dataContext
+                        BaseFileCopier.writeScriptTempFile(executionContext, file, input, content, node)
+                        :
+                        null != file ?
+                                file
+                                //write the temp file and do not replace tokens, the file will not be modified
+                                : BaseFileCopier.writeTempFile(executionContext, file, input, content);
+
+
+        //create context data with node attributes
+        Map<String, Map<String, String>> newDataContext;
+        final Map<String, Map<String, String>> nodeContext =
+                DataContextUtils.addContext("node", DataContextUtils.nodeData(node), executionContext.getDataContext());
+
+        final HashMap<String, String> scptexec = new HashMap<String, String>(){{
+            //set filename of source file
+            put("filename", srcFile.getName());
+        }};
+
+        newDataContext = DataContextUtils.addContext("file-copy", scptexec, nodeContext);
+
+        //expand remote filepath if we are copying a script
+        String copiedFilepath;
+        if (null == remotePath) {
+            copiedFilepath = framework.getProjectProperty(executionContext.getFrameworkProject(),
+                    SCRIPT_COPY_DEFAULT_REMOTE_FILEPATH_PROPERTY);
+            if (null != node.getAttributes().get(REMOTE_FILEPATH_ATTRIBUTE)) {
+                copiedFilepath = node.getAttributes().get(REMOTE_FILEPATH_ATTRIBUTE);
+            }
+            if (null != copiedFilepath) {
+                if (!copiedFilepath.contains("${file-copy.filename}") && !copiedFilepath.endsWith("/")) {
+                    copiedFilepath += "/";
+                }
+                copiedFilepath = DataContextUtils.replaceDataReferences(copiedFilepath, newDataContext);
+            }
+        } else {
+            //we are copying to a specific destination
+            copiedFilepath = remotePath;
         }
 
-        final Map<String, Map<String, String>> origDataContext = executionContext.getDataContext();
+        //put file in a directory
+        if (null != copiedFilepath && copiedFilepath.endsWith("/")) {
+            copiedFilepath += srcFile.getName();
+        }
 
-        //add node context data
-        final Map<String, Map<String, String>> nodeContext =
-            DataContextUtils.addContext("node", DataContextUtils.nodeData(node), origDataContext);
-
-
-        //write the temp file and replace tokens in the script with values from the dataContext
-        final File tempfile = BaseFileCopier.writeScriptTempFile(executionContext, file, input, content, node);
-        //add some more data context values to allow templatized script-copy attribute
-        final HashMap<String, String> scptexec = new HashMap<String, String>();
-        //set up the data context to include the local temp file
-        scptexec.put("file", tempfile.getAbsolutePath());
-        scptexec.put("filename", tempfile.getName());
+        //add file, dir, destination to the file-copy data
+        scptexec.put("file", srcFile.getAbsolutePath());
         if (null != workingdir) {
             //set up the data context to include the working dir
             scptexec.put("dir", workingdir.getAbsolutePath());
         }
+        scptexec.put("destination", null != copiedFilepath ? copiedFilepath : "");
 
-        final Map<String, Map<String, String>> newDataContext = DataContextUtils.addContext("file-copy", scptexec,
-                                                                                            nodeContext);
-
-        final String copiedFilepath;
-        if (null != attrRemoteFilepath) {
-            copiedFilepath = DataContextUtils.replaceDataReferences(attrRemoteFilepath, newDataContext);
-        } else {
-            copiedFilepath = null;
-        }
-
+        newDataContext = DataContextUtils.addContext("file-copy", scptexec, nodeContext);
 
         final Process exec;
 
