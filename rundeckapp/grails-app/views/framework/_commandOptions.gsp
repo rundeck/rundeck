@@ -16,7 +16,7 @@ used by _editOptions.gsp template
         }
     %>
     <div id="_commandOptions">
-        <g:each var="optName" in="${optionordering?:optsmap.keySet().sort()}">
+        <g:each var="optName" in="${optionordering?:optsmap.keySet().sort()}" status="oindex">
             <g:set var="optionSelect" value="${optsmap[optName].selopt }"/>
             <g:set var="optRequired" value="${optionSelect.required}"/>
             <g:set var="optDescription" value="${optionSelect.description}"/>
@@ -57,7 +57,7 @@ used by _editOptions.gsp template
                     <g:else>
                         <div class=" col-sm-9">
                         <g:render template="/framework/optionValuesSelect"
-                            model="${[elemTarget:rkey+'_'+optName,optionSelect:optionSelect, fieldPrefix:usePrefix,fieldName:'option.'+optName,selectedoptsmap:selectedoptsmap,fieldkey: fieldhiddenid]}"/>
+                            model="${[rkey: rkey+'_'+oindex,elemTarget:rkey+'_'+optName,optionSelect:optionSelect, fieldPrefix:usePrefix,fieldName:'option.'+optName,selectedoptsmap:selectedoptsmap,fieldkey: fieldhiddenid]}"/>
                         </div>
                     </g:else>
                 <div class="col-sm-1">

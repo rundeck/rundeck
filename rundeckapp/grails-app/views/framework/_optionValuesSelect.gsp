@@ -22,7 +22,7 @@
     $Id$
  --%>
 
-<g:set var="rkey" value="${g.rkey()}"/>
+<g:set var="rkey" value="${rkey?:g.rkey()}"/>
 <g:set var="fkey" value="${rkey}"/>
 <g:set var="realFieldName" value="${(fieldPrefix?fieldPrefix:'')+(fieldName?fieldName:'option.'+optionSelect.name)}"/>
 
