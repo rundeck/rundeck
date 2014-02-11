@@ -565,7 +565,7 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
         final HelpFormatter formatter = new HelpFormatter();
         formatter.printHelp(80,
                 "dispatch [-h] [-v] [-V] [-q] [-p project] " +
-                        "[-I nodes] [-X xnodes] " +
+                        "[-F node-filter] " +
                         "[--threadcount <1>] [--keepgoing] " +
                         "[[-S] | [-s <>] | [-u <url>] | [-- command-args]]",
                 null,
@@ -573,7 +573,7 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
                 "Examples:\n"
                         + "| dispatch\n | => Prints all nodes\n"
                         + "| dispatch -p default -f -- whoami\n | => Runs the whoami command on all nodes\n"
-                        + "| dispatch -X node1 -f -- uptime\n | => Runs the uptime command on all nodes except node1\n"
+                        + "| dispatch -F '!name: node1' -f -- uptime\n | => Runs the uptime command on all nodes except node1\n"
                         + "| dispatch -s myscript.sh -f\n | => Copies and then runs myscript.sh to matching nodes\n"
                         + "| dispatch -u http://server/script.sh\n | => Downloads script URL, then runs on matching nodes\n"
                         + "\n"
