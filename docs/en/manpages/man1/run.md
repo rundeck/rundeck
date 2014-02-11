@@ -8,7 +8,7 @@ run - execute a stored Job on the Rundeck server
 
 # SYNOPSIS
 
-`run [-h] [-v] [-l level] [nodefilters] [-i id] [-j group/name][-- arguments]`
+`run [-h] [-v] [-l level] [-F nodefilters] [-i id] [-j group/name][-- arguments]`
 
 # DESCRIPTION 
 
@@ -25,6 +25,8 @@ if the execution succeeded or failed.  If `-r`,`--progress` is used
 instead, then progress of the execution is indicated periodically
 by echoed '.' characters.
 
+The `-F`/`--filter` option can be used to specify a node filter string. See [User Guide - Node Filters](../manual/node-filters.html).
+
 # OPTIONS
 
 `-h, --help`
@@ -37,11 +39,8 @@ by echoed '.' characters.
 : Run the command using the specified LEVEL. *LEVEL* can be `verbose`,
 `info`, `warning`, `error`.
 
-`-I *FILTER*`
-: Include node filter.
-
-`-X *FILTER*`
-: Exclude node filter.
+`-F, --filter *FILTER*`
+: A node filter string
 
 `-C *COUNT*`
 : Threadcount, defaults to 1.
@@ -127,7 +126,7 @@ Error: Failed request to run a job: Server reported an error: No unique job matc
 Running a Job and specifying Node filters:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}    
-run -I tags=dev -X os-family=windows -C 2 -K -j 'test/Job 1'
+run -F 'tags: dev !os-family: windows' -C 2 -K -j 'test/Job 1'
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  
 Run a job by name, and follow the output until it finishes.
@@ -138,8 +137,6 @@ run -j QA/Test/Full --follow
 
 # SEE ALSO
 
-[`rd-queue`](rd-queue.html), [`rd-jobs`](rd-jobs.html).
-
-The Rundeck source code and all documentation may be downloaded from
-<https://github.com/dtolabs/rundeck/>.
+* [`rd-queue`](rd-queue.html), [`rd-jobs`](rd-jobs.html)
+* [User Guide - Node Filters](../manual/node-filters.html)
 

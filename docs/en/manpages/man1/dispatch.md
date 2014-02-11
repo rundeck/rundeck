@@ -35,11 +35,8 @@ on a set of nodes which are specified by the filter options.
 `-K, --keepgoing`
 : Keep going when an error occurs on multiple dispatch.
 
-`-I, --nodes *FILTER*`
-: Include node parameter list.
-
-`-X, --xnodes *FILTER*`
-: Exclude node parameter list.
+`-F, --filter *FILTER*`
+: A node filter string
 
 `-filter-exclude-precedence *true|false*`
 : Set the exclusion filter to have precedence or not.
@@ -84,6 +81,8 @@ if the execution succeeded or failed.  If `-r`/`--progress` is used
 instead, then progress of the execution is indicated periodically
 by echoed '.' characters.
 
+The `-F`/`--filter` option can be used to specify a node filter string. See [User Guide - Node Filters](../manual/node-filters.html).
+
 ## COMMAND STRING (`--`) ##
 
 The remote (or locally) shell command that is invoked is specified
@@ -96,21 +95,21 @@ arguments you want to pass to it.
 Execute the apachectl restart command across Nodes tagged "web":
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
-dispatch -I tags=web -- sudo apachectl restart
+dispatch -F 'tags: web' -- sudo apachectl restart
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Execute apachectl status using the "keepgoing" flag across nodes that
 have a hostname that begin with "web":
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
-dispatch -I hostname=web.* -K -- apachectl status
+dispatch -F 'hostname: web.*' -K -- apachectl status
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Run the locally installed update.sh script in three threads and
 keepgoing if an error occurs:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
-dispatch -I tags=dev -K -C 3 -- sh -c update.sh 
+dispatch -F 'tags: dev' -K -C 3 -- sh -c update.sh 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ## SCRIPT (`-s`) ##
@@ -126,7 +125,7 @@ file is copied to the remote target machines and then executed.
 Execute the "myscript.sh" shell script across the Nodes tagged "web":
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
-dispatch -I tags=web -s myscript.sh
+dispatch -F 'tags: web' -s myscript.sh
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Note: The script file is copied to a temporary directory on the target
@@ -142,7 +141,7 @@ target nodes.
 Execute a shell script available at a URL across the Nodes tagged "web":
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
-dispatch -I tags=web -u http://ops.example.com/scripts/myscript.sh
+dispatch -F 'tags: dev' -u http://ops.example.com/scripts/myscript.sh
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 
 Note: The script file is copied to a temporary directory on the target
@@ -162,7 +161,7 @@ script"), dispatch can also read command input from stdin.
 Execute the uname command across all Unix nodes
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
-echo "uname -a" | dispatch -I os-family=unix --stdin
+echo "uname -a" | dispatch -F 'os-family: unix' --stdin
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Multi-line scripts are easier to write using a here document:
@@ -227,12 +226,12 @@ porky:
    tags: [testing]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 
-When combined with the -I/-X Node Filtering options, you can easily
+When combined with the -F Node Filter option, you can easily
 determine which nodes will be the target of any remotely executed
 command prior to invoking it:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
-dispatch -v -X os-family=unix
+dispatch -v -F '!os-family: unix'
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -261,7 +260,7 @@ Here `dispatch` is used to run the Unix `uptime` command to
 print system status:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
-dispatch -I os-family=unix -- uptime
+dispatch -F 'os-family: unix' -- uptime
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -276,7 +275,7 @@ Sometimes it is desirable to execute the command
 and follow the output from the console. Use the `-f` flag to echo the output as the command is executed by the server:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
-dispatch -I os-family=unix -f -- uptime
+dispatch -F 'os-family: unix' -f -- uptime
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    
@@ -294,7 +293,7 @@ Execute the Unix `whoami` command to see what user ID is
 used by that Node to run dispatched commands:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
-dispatch -I os-family=unix -f -- whoami
+dispatch -F 'os-family: unix' -f -- whoami
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    
@@ -325,7 +324,7 @@ echo uname=`uname -a`
 Use the -s option to specify the "info.sh" script file:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
-dispatch -I os-family=unix -s info.sh
+dispatch -F 'os-family: unix' -s info.sh
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
     
 The `dispatch` command copies the "info.sh" script located
@@ -342,7 +341,7 @@ example that runs the uptime command across the Linux hosts with two
 threads:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
-dispatch -I os-name=Linux -C 2 -- uptime
+dispatch -F 'os-name: Linux' -C 2 -- uptime
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 
 The keepgoing and retry flags control when to exit incase an error
@@ -365,7 +364,7 @@ Commands or scripts that exit with a non-zero exit code will cause the
 dispatch to fail unless the keepgoing flag is set.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
-dispatch -I os-family=unix -s /tmp/listening.sh -f
+dispatch -F 'os-family: unix' -s /tmp/listening.sh -f
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    
@@ -382,7 +381,7 @@ will cause dispatch to continue and print on which nodes the script
 failed:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
-dispatch -f -K -I tags=web -s /tmp/listening.sh
+dispatch -f -K -F 'tags: web' -s /tmp/listening.sh
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    
@@ -397,7 +396,7 @@ dispatch -f -K -I tags=web -s /tmp/listening.sh
 [examples@ubuntu dispatch][ERROR] Failed execution for node: ubuntu: Remote command failed with exit status 1
 error: Execution failed on the following 2 nodes: [centos54, ubuntu]
 error: Execute this command to retry on the failed nodes:
-  dispatch -K -s /tmp/listening.sh -p examples -I  name=centos54,ubuntu
+  dispatch -K -s /tmp/listening.sh -p examples -F  'centos54,ubuntu'
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
 ### Queuing commands 
@@ -424,11 +423,11 @@ echo "Not listening on $port after $i checks" ; exit 1
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Running `dispatch` causes the execution to queue in
-Rundeck and controlled as  temporary Job. The `-I centos54` limits
+Rundeck and controlled as  temporary Job. The `-F centos54` limits
 execution to just the "centos54" node:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
-dispatch -I centos54 -s ~/bin/checkagain.sh 
+dispatch -F centos54 -s ~/bin/checkagain.sh 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    
@@ -442,7 +441,7 @@ dash):
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
 iters=5 secs=60 port=4440
 
-dispatch -I centos54 -s ~/bin/checkagain.sh -- $iters $secs $ports
+dispatch -F centos54 -s ~/bin/checkagain.sh -- $iters $secs $ports
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 
 
@@ -462,7 +461,5 @@ occurs.
    
 # SEE ALSO
 
-[`rd-filtering-options`](rd-options.html), [`rd-queue`](rd-queue.html).
-
-The Rundeck source code and all documentation may be downloaded from
-<https://github.com/dtolabs/rundeck/>.
+* [`rd-filtering-options`](rd-options.html), [`rd-queue`](rd-queue.html).
+* [User Guide - Node Filters](../manual/node-filters.html)
