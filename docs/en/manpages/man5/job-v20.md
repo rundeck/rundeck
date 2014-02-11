@@ -574,16 +574,28 @@ excludeprecedence
 
 *Nested elements*
 
+[filter](#filter)
+
+:    node filter string
+
 [include](#include)
 
-:    include filter
+:    include filter (deprecated)
 
 [exclude](#exclude)
 
-:    exclude filter
+:    exclude filter (deprecated)
 
 
 *Example*
+
+~~~~~~~~ {.xml}
+<nodefilters excludeprecedence="true">
+  <filter>.*</filter>
+</nodefilters>
+~~~~~~~~ 
+
+*Example* (deprecated filter `include` element)
 
 ~~~~~~~~ {.xml}
 <nodefilters excludeprecedence="true">
@@ -600,6 +612,12 @@ excludeprecedence
 </nodefilters>
 ~~~~~~~~ 
 
+### filter
+
+The filter string to select matching nodes.
+
+The content of this element is the full node filter string. See [User Guide - Node Filters](../manual/node-filters.html).
+
 ### include
 
 See [Include/exclude patterns](#includeexclude-patterns)
@@ -610,7 +628,9 @@ See [Include/exclude patterns](#includeexclude-patterns)
 
 ### Include/exclude patterns 
 
-The [nodefilters](#nodefilters) include and exclude patterns.
+The [nodefilters](#nodefilters) include and exclude patterns.  
+
+**Note:** These elements are deprecated and will be removed in a later version of Rundeck.  Use the [filter](#filter) string.
 
 *Nested elements*
 

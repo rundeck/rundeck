@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.cli;
 
 import com.dtolabs.rundeck.core.Constants;
+import com.dtolabs.rundeck.core.VersionConstants;
 import org.apache.commons.cli.*;
 import org.apache.log4j.PropertyConfigurator;
 
@@ -166,7 +167,7 @@ public abstract class BaseTool implements CLITool {
             helpString,
             "options:",
             getOptions(),
-            "");
+                "[RUNDECK version " + VersionConstants.VERSION + " (" + VersionConstants.BUILD + ")]");
     }
 
 

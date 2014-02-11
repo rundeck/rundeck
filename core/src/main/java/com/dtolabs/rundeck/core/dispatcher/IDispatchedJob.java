@@ -36,9 +36,4 @@ public interface IDispatchedJob extends IDispatchedExecution{
      */
     public IStoredJobRef getJobRef();
 
-    /**
-     * Return true or false for node dispatch keepgoing option, or null if unspecified. 
-     * @return
-     */
-    public Boolean isKeepgoing();
 }

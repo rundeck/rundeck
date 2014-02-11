@@ -67,7 +67,23 @@ public class JobDefinitionSerializerTest extends TestCase {
             return null;
         }
 
-        public NodeSet getNodeSet() {
+        @Override
+        public Boolean getNodeExcludePrecedence() {
+            return true;
+        }
+
+        @Override
+        public int getNodeThreadcount() {
+            return -1;
+        }
+
+        @Override
+        public Boolean isKeepgoing() {
+            return false;
+        }
+
+        @Override
+        public String getNodeFilter() {
             return null;
         }
 
@@ -205,13 +221,15 @@ public class JobDefinitionSerializerTest extends TestCase {
          */
         final IDispatchedScript simpleCommand2 = new testScript() {
             private NodeSet nset;
-            public NodeSet getNodeSet() {
-                if(null==nset){
-                    nset=new NodeSet();
-                    nset.setKeepgoing(true);
-                    nset.setThreadCount(3);
-                }
-                return nset;
+
+            @Override
+            public int getNodeThreadcount() {
+                return 3;
+            }
+
+            @Override
+            public Boolean isKeepgoing() {
+                return true;
             }
 
             public String getFrameworkProject() {

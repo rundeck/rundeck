@@ -558,6 +558,27 @@ Specifies the Nodes to use for the job,  and the node-dispatch options.  Contain
 
     :    Order direction for node ranking. Either "ascending" or "descending" (default "ascending")
     
+The `nodefilters` should contain a `filter` entry.  The value is a string defining a node filter. See [User Guide - Node Filters](../manual/node-filters.html).
+
+`filter`
+
+:    A node filter string
+
+Example:
+
+~~~~~~~~ {.yaml}
+  nodefilters:
+    dispatch:
+      threadcount: 1
+      keepgoing: false
+      excludePrecedence: true
+      rankAttribute: rank
+      rankOrder: descending
+    filter: 'tags: web name: web-.* !os-family: windows'
+~~~~~~~~ 
+
+**Note:** The `include` and `exclude` map entries are deprecated and will be removed in a later version of Rundeck.
+
 The `nodefilters` must also contain ONE of `include` or `exclude` filter specifiers.
 
 `include`/`exclude`
@@ -592,7 +613,7 @@ The `nodefilters` must also contain ONE of `include` or `exclude` filter specifi
 
     :    OS Version filter
 
-Example:
+Deprecated Example:
 
 ~~~~~~~~ {.yaml}
   nodefilters:
