@@ -1395,17 +1395,17 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
      */
     public static void addAPINodeSetParams(final HashMap<String, String> params,
             final Boolean isKeepgoing, String nodeFilter, int threadcount, Boolean excludePrecedence) {
-        if (null != nodeFilter) {
+        if (null != nodeFilter && !"".equals(nodeFilter.trim())) {
             params.put("filter", nodeFilter);
+            if (null != excludePrecedence) {
+                params.put("exclude-precedence", Boolean.toString(excludePrecedence));
+            }
         }
         if (threadcount > 0) {
             params.put("nodeThreadcount", Integer.toString(threadcount));
         }
         if (null != isKeepgoing) {
             params.put("nodeKeepgoing", Boolean.toString(isKeepgoing));
-        }
-        if(null!=excludePrecedence){
-            params.put("exclude-precedence", Boolean.toString(excludePrecedence));
         }
     }
 

@@ -109,7 +109,32 @@ public class TestRundeckAPICentralDispatcher extends TestCase {
         }
 
 
+    /**
+     * blank filter string should not be included
+     * @throws Exception
+     */
+    public void testAddNodeSetParamsBlankFilter() throws Exception {
+            //test basic hostname
+            HashMap<String, String> params = new HashMap<String, String>();
+            RundeckAPICentralDispatcher.addAPINodeSetParams(params, false, "", 1, null);
+            assertEquals("incorrect size: " + params, 2 /* keepgoing==false */, params.size());
+            assertTrue(params.containsKey("nodeThreadcount"));
+            assertEquals("1", params.get("nodeThreadcount"));
+            assertTrue(params.containsKey("nodeKeepgoing"));
+            assertEquals("false", params.get("nodeKeepgoing"));
+            assertFalse(params.containsKey("filter"));
+        }
 
+
+    /**
+     * precedence value should only be included if filter is included
+     * @throws Exception
+     */
+    public void testAddNodeSetParamsNoPrecedenceWithoutFilter() throws Exception {
+        HashMap<String, String> params = new HashMap<String, String>();
+        RundeckAPICentralDispatcher.addAPINodeSetParams(params, null, null, -1, true);
+        assertEquals("incorrect size: " + params, 0 /* keepgoing==false */, params.size());
+    }
 
 
     public void testAddNodeSetParamsFiltersPrecedence() throws Exception {
