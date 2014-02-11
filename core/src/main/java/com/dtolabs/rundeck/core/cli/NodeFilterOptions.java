@@ -27,11 +27,8 @@ import com.dtolabs.rundeck.core.utils.NodeSet;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 
-import java.io.File;
 import java.util.Map;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Arrays;
 
 /**
  * NodeFilterOptions presents common Nodeset filter options for a CLI Tool.
@@ -48,12 +45,12 @@ public class NodeFilterOptions implements CLIToolOptions {
     private boolean argKeepgoing;
     private boolean argKeepgoingSet;
     private int argThreadCount=-1;
-    private File failedNodes;
     private Map<String, String> includeMap;
     private Map<String, String> excludeMap;
+    private String argNodeFilter;
     private String argIncludeNodes;
     private String argExcludeNodes;
-    private boolean argExcludePrecedence;
+    private Boolean argExcludePrecedence;
     /**
      * Long option for filter exclude precedence option
      */
@@ -68,10 +65,9 @@ public class NodeFilterOptions implements CLIToolOptions {
     public static final String KEEPGOING_LONG = "keepgoing";
     public static final String DONTKEEPGOING = "N";
     public static final String DONTKEEPGOING_LONG = "nokeepgoing";
-    public static final String FAILEDNODES = "F";
-    public static final String FAILEDNODES_LONG = "failednodes";
+    public static final String FILTER = "F";
+    public static final String FILTER_LONG = "filter";
 
-    private boolean includeFailednodes;
 
     /**
      * Create options, specify whether failednodes file option is included
@@ -79,7 +75,6 @@ public class NodeFilterOptions implements CLIToolOptions {
      * @param includeFailednodes if true, include failednodes file option
      */
     public NodeFilterOptions(final boolean includeFailednodes) {
-        this.includeFailednodes = includeFailednodes;
     }
 
     /**
@@ -91,14 +86,12 @@ public class NodeFilterOptions implements CLIToolOptions {
 
     public void addOptions(final Options options) {
         options.addOption(THREADCOUNT, THREADCOUNT_LONG, true, "number of threads");
+        options.addOption(FILTER, FILTER_LONG, true, "node filter string");
         options.addOption(FILTER_INCLUDE, FILTER_INCLUDE_LONG, true, "include node parameter list");
         options.addOption(FILTER_EXCLUDE, FILTER_EXCLUDE_LONG, true, "exclude node parameter list");
         options.addOption(KEEPGOING, KEEPGOING_LONG, false, "Continue node dispatch when execution on one node fails");
         options.addOption(DONTKEEPGOING, DONTKEEPGOING_LONG, false,
             "Force early failure if execution on one node fails");
-        if (includeFailednodes) {
-            options.addOption(FAILEDNODES, FAILEDNODES_LONG, true, "Filepath to store failed nodes");
-        }
         options.addOption(FILTER_EXCLUDE_PRECEDENCE_OPT,
             FILTER_EXCLUDE_PRECEDENCE_LONG, true,
             "true/false. if true, exclusion filters have precedence over inclusion filters");
@@ -106,43 +99,31 @@ public class NodeFilterOptions implements CLIToolOptions {
 
     public void parseArgs(final CommandLine cli, final String[] original) {
         if (cli.hasOption(DONTKEEPGOING)) {
-            argKeepgoing = false;
+            setArgKeepgoing(false);
             argKeepgoingSet = true;
         } else if (cli.hasOption(KEEPGOING)) {
-            argKeepgoing = true;
+            setArgKeepgoing(true);
             argKeepgoingSet = true;
         }
 
         if (cli.hasOption(THREADCOUNT)) {
             try {
-                argThreadCount = Integer.valueOf(cli.getOptionValue(THREADCOUNT));
+                setArgThreadCount(Integer.valueOf(cli.getOptionValue(THREADCOUNT)));
             } catch (NumberFormatException e) {
                 throw new IllegalArgumentException("threadcount must be an integer");
             }
         }
-        if (cli.hasOption(FAILEDNODES)) {
-            failedNodes = new File(cli.getOptionValue(FAILEDNODES));
-        }
-        boolean parsedFailedNodes = false;
-        //if failedNodes file exists, parse it for a list of node names to include.
-        if (null != failedNodes && failedNodes.exists()) {
-            includeMap = FailedNodesFilestore.parseFailedNodes(failedNodes);
-            if (includeMap.size() > 0) {
-                parsedFailedNodes = true;
-            }
-        }
-        if (!parsedFailedNodes) {
-            final String[] keys = NodeSet.FILTER_KEYS_LIST.toArray(new String[NodeSet.FILTER_KEYS_LIST.size()]);
-            excludeMap = parseExcludeArgs(keys, cli);
-            includeMap = parseIncludeArgs(keys, cli);
-        }
+        setArgNodeFilter(cli.getOptionValue(FILTER));
+        final String[] keys = NodeSet.FILTER_KEYS_LIST.toArray(new String[NodeSet.FILTER_KEYS_LIST.size()]);
+        excludeMap = parseExcludeArgs(keys, cli);
+        includeMap = parseIncludeArgs(keys, cli);
         if (cli.hasOption(FILTER_INCLUDE)) {
             argIncludeNodes = cli.getOptionValue(FILTER_INCLUDE);
         }
         if (cli.hasOption(FILTER_EXCLUDE)) {
             argExcludeNodes = cli.getOptionValue(FILTER_EXCLUDE);
         }
-        argExcludePrecedence = determineExclusionPrecedenceForArgs(original, cli);
+        setArgExcludePrecedence(determineExclusionPrecedenceForArgs(original, cli));
     }
 
     public void validate(CommandLine cli, String[] original) throws CLIToolOptionsException {
@@ -220,14 +201,11 @@ public class NodeFilterOptions implements CLIToolOptions {
     public NodeSet getNodeSet() {
         final NodeSet nodeset = new NodeSet();
         final NodeSet.Include include = nodeset.createInclude(includeMap);
-        include.setDominant(!argExcludePrecedence);
+        include.setDominant(!isArgExcludePrecedence());
         final NodeSet.Exclude exclude = nodeset.createExclude(excludeMap);
-        exclude.setDominant(argExcludePrecedence);
-        nodeset.setKeepgoing(argKeepgoing);
-        nodeset.setThreadCount(argThreadCount);
-        if (null != failedNodes) {
-            nodeset.setFailedNodesfile(failedNodes);
-        }
+        exclude.setDominant(isArgExcludePrecedence());
+        nodeset.setKeepgoing(isArgKeepgoing());
+        nodeset.setThreadCount(getArgThreadCount());
 
         return nodeset;
     }
@@ -272,5 +250,37 @@ public class NodeFilterOptions implements CLIToolOptions {
 
     public String getArgExcludeNodes() {
         return argExcludeNodes;
+    }
+
+    public String getArgNodeFilter() {
+        return argNodeFilter;
+    }
+
+    public void setArgNodeFilter(String argNodeFilter) {
+        this.argNodeFilter = argNodeFilter;
+    }
+
+    public Boolean isArgExcludePrecedence() {
+        return argExcludePrecedence;
+    }
+
+    public void setArgExcludePrecedence(boolean argExcludePrecedence) {
+        this.argExcludePrecedence = argExcludePrecedence;
+    }
+
+    public boolean isArgKeepgoing() {
+        return argKeepgoing;
+    }
+
+    public void setArgKeepgoing(boolean argKeepgoing) {
+        this.argKeepgoing = argKeepgoing;
+    }
+
+    public int getArgThreadCount() {
+        return argThreadCount;
+    }
+
+    public void setArgThreadCount(int argThreadCount) {
+        this.argThreadCount = argThreadCount;
     }
 }

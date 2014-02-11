@@ -27,7 +27,6 @@ import com.dtolabs.client.utils.WebserviceResponse;
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.dispatcher.*;
-import com.dtolabs.rundeck.core.utils.NodeSet;
 import com.dtolabs.rundeck.core.utils.OptsUtil;
 import com.dtolabs.utils.Streams;
 import org.apache.commons.httpclient.URIException;
@@ -289,7 +288,8 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
             params.put("argString", OptsUtil.join(args));
         }
         addLoglevelParams(params, iDispatchedScript.getLoglevel());
-        addAPINodeSetParams(params, iDispatchedScript.getNodeSet(), iDispatchedScript.getNodeSet().isKeepgoing());
+        addAPINodeSetParams(params, iDispatchedScript.isKeepgoing(), iDispatchedScript.getNodeFilter(),
+                iDispatchedScript.getNodeThreadcount(), iDispatchedScript.getNodeExcludePrecedence());
 
         return submitRunRequest(uploadFile,
                                 params,
@@ -1354,7 +1354,8 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
 
         }
 
-        addAPINodeSetParams(params, dispatchedJob.getNodeSet(), dispatchedJob.isKeepgoing());
+        addAPINodeSetParams(params, dispatchedJob.isKeepgoing(), dispatchedJob
+                .getNodeFilter(), dispatchedJob.getNodeThreadcount(), dispatchedJob.getNodeExcludePrecedence());
         addLoglevelParams(params, dispatchedJob.getLoglevel());
         if (null != dispatchedJob.getArgs() && dispatchedJob.getArgs().length > 0) {
             params.put("argString", OptsUtil.join(dispatchedJob.getArgs()));
@@ -1392,60 +1393,20 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
     /**
      * Add entries to the Map for node filter parameters from the nodeset
      */
-    public static void addAPINodeSetParams(final HashMap<String, String> params, final NodeSet nodeSet,
-                                           final Boolean isKeepgoing) {
-
-        if (null == nodeSet) {
-            return;
+    public static void addAPINodeSetParams(final HashMap<String, String> params,
+            final Boolean isKeepgoing, String nodeFilter, int threadcount, Boolean excludePrecedence) {
+        if (null != nodeFilter) {
+            params.put("filter", nodeFilter);
         }
-        if (nodeSet.getThreadCount() > 0) {
-            params.put("nodeThreadcount", Integer.toString(nodeSet.getThreadCount()));
+        if (threadcount > 0) {
+            params.put("nodeThreadcount", Integer.toString(threadcount));
         }
         if (null != isKeepgoing) {
             params.put("nodeKeepgoing", Boolean.toString(isKeepgoing));
         }
-        if (nodeSet.isBlank()) {
-            return;
+        if(null!=excludePrecedence){
+            params.put("exclude-precedence", Boolean.toString(excludePrecedence));
         }
-        boolean excludeprecedence = true;
-        if (null != nodeSet.getExclude() && nodeSet.getExclude().isDominant()) {
-            excludeprecedence = true;
-        } else if (null != nodeSet.getInclude() && nodeSet.getInclude().isDominant()) {
-            excludeprecedence = false;
-        }
-        params.put("exclude-precedence", Boolean.toString(excludeprecedence));
-
-        final NodeSet.Include include = nodeSet.getInclude();
-
-        for (final NodeSet.FILTER_ENUM filter : NodeSet.FILTER_ENUM.values()) {
-            String value = null;
-            if (null != include && !include.isBlank()) {
-                value = filter.value(include);
-            }
-
-            final String key = filter.getName();
-            if (null != value && !"".equals(value)) {
-                params.put(key, value);
-            } else {
-                params.put(key, "");
-            }
-        }
-        final NodeSet.Exclude exclude = nodeSet.getExclude();
-
-        for (final NodeSet.FILTER_ENUM filter : NodeSet.FILTER_ENUM.values()) {
-            String value = null;
-            if (null != exclude && !exclude.isBlank()) {
-                value = filter.value(exclude);
-            }
-            final String key = filter.getName();
-            if (null != value && !"".equals(value)) {
-                params.put("exclude-" + key, value);
-            } else {
-                params.put("exclude-" + key, "");
-            }
-        }
-
-
     }
 
     public Collection<IStoredJobLoadResult> loadJobs(final ILoadJobsRequest iLoadJobsRequest, final File input,

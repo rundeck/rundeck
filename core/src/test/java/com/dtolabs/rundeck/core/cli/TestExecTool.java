@@ -939,15 +939,10 @@ public class TestExecTool extends AbstractBaseTest {
                 new String[]{"-p", "testProject", "-K", "-C", "2", "-I", "hostname1", "-X", "tags=baloney", "-Q", "--",
                     "shell", "command", "string"});
             test.assertQueueScriptOnlyCalled();
-            assertNotNull(test.passedinScript.getNodeSet());
-            assertNotNull(test.passedinScript.getNodeSet().getInclude());
-            assertNotNull(test.passedinScript.getNodeSet().getExclude());
-            assertFalse(test.passedinScript.getNodeSet().getInclude().isBlank());
-            assertFalse(test.passedinScript.getNodeSet().getExclude().isBlank());
-            assertEquals("hostname1", test.passedinScript.getNodeSet().getInclude().getHostname());
-            assertEquals("baloney", test.passedinScript.getNodeSet().getExclude().getTags());
-            assertEquals(2, test.passedinScript.getNodeSet().getThreadCount());
-            assertEquals(true, test.passedinScript.getNodeSet().isKeepgoing());
+            assertNotNull(test.passedinScript.getNodeFilter());
+            assertEquals("hostname: hostname1 !tags: baloney", test.passedinScript.getNodeFilter());
+            assertEquals(2, test.passedinScript.getNodeThreadcount());
+            assertEquals(Boolean.TRUE, test.passedinScript.isKeepgoing());
 
         }
 

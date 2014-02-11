@@ -371,6 +371,18 @@ public class NodeSet  implements NodesSelector {
     }
 
     /**
+     * Create a NodeSet from a filter
+     * @param filter
+     * @return
+     */
+    public static NodeSet fromFilter(String filter) {
+        Map<String, Map<String, String>> stringMapMap = parseFilter(filter);
+        NodeSet nodeSet = new NodeSet();
+        nodeSet.createInclude(stringMapMap.get("include"));
+        nodeSet.createExclude(stringMapMap.get("exclude"));
+        return nodeSet;
+    }
+    /**
      * Parse textual filter and return a map of maps: [include: [key:value,...], exclude: [key:value,...]]
      *
      * @param filter

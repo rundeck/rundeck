@@ -424,9 +424,11 @@ public class RunTool extends BaseTool {
         final boolean argFollow=followOptions.argFollow;
         final boolean argProgress=followOptions.argProgress;
         final boolean argQuiet=followOptions.argQuiet;
-
-        final NodeSet nodeset = nodefilterOptions.getNodeSet();
-        final Boolean argKeepgoing = nodefilterOptions.isKeepgoingSet() ? nodeset.isKeepgoing() : null;
+        final String nodeFilter = null != nodefilterOptions.getArgNodeFilter() ? nodefilterOptions.getArgNodeFilter() :
+                null != nodefilterOptions.getNodeSet() ? NodeSet.generateFilter(nodefilterOptions.getNodeSet()) : null;
+        final Boolean argKeepgoing = nodefilterOptions.isKeepgoingSet() ? nodefilterOptions.isArgKeepgoing() : null;
+        final Boolean argExcludePrecedence= nodefilterOptions.isArgExcludePrecedence();
+        final int nodeThreadcount = nodefilterOptions.getArgThreadCount();
         final int loglevel = loglevelOptions.getLogLevel();
         final String[] extraOpts = extendedOptions.getExtendedOptions();
 
@@ -444,8 +446,18 @@ public class RunTool extends BaseTool {
                     return null;
                 }
 
-                public NodeSet getNodeSet() {
-                    return nodeset;
+                @Override
+                public String getNodeFilter() {
+                    return nodeFilter;
+                }
+
+                public Boolean getNodeExcludePrecedence() {
+                    return argExcludePrecedence;
+                }
+
+                @Override
+                public int getNodeThreadcount() {
+                    return nodeThreadcount;
                 }
 
                 public IStoredJobRef getJobRef() {

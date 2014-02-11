@@ -25,22 +25,10 @@ import com.dtolabs.rundeck.core.dispatcher.CentralDispatcherException;
 import com.dtolabs.rundeck.core.dispatcher.IDispatchedScript;
 import com.dtolabs.rundeck.core.dispatcher.QueuedItem;
 import com.dtolabs.rundeck.core.dispatcher.QueuedItemResult;
-import com.dtolabs.rundeck.core.execution.*;
-import com.dtolabs.rundeck.core.execution.workflow.ContextLogger;
-import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
-import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListenerImpl;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandBase;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptURLCommandBase;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCommandBase;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
-import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
-import com.dtolabs.rundeck.core.resources.FileResourceModelSource;
-import com.dtolabs.rundeck.core.resources.ResourceModelSourceException;
 import com.dtolabs.rundeck.core.utils.*;
 import org.apache.commons.cli.*;
 import org.apache.log4j.PropertyConfigurator;
-import org.apache.tools.ant.BuildEvent;
-import org.apache.tools.ant.BuildListener;
 import org.apache.tools.ant.Project;
 
 import java.io.*;
@@ -69,9 +57,7 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
 
     private boolean argKeepgoing;
 
-    private File failedNodes;
-
-    private Integer argThreadCount = 1;
+    private Integer nodeThreadcount = 1;
 
     private String argProject;
 
@@ -102,9 +88,9 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
         options.addOption("q", "quiet", false, "quiet mode");
         options.addOption("K", "keepgoing", false, "keep going if there are errors");
         options.addOption("C", "threadcount", true, "number of threads");
-        options.addOption("I", "nodes", true, "include node list");
-        options.addOption("X", "xnodes", true, "exclude node list");
-        options.addOption("F", "failednodes", true, "Filepath to store failed nodes");
+        options.addOption("F", "filter", true, "node filter string");
+        options.addOption("I", "nodes", true, "include node list (deprecated, use --filter)");
+        options.addOption("X", "xnodes", true, "exclude node list (deprecated, use --filter)");
         options.addOption("p", "project", true, "project name");
         options.addOption(FILTER_EXCLUDE_PRECEDENCE_OPT,
                 FILTER_EXCLUDE_PRECEDENCE_LONG,
@@ -123,15 +109,13 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
     private Framework framework;
     private String baseDir;
     protected NodeFormatter nodeFormatter;
+    private String nodeFilter;
 
     void setFramework(Framework framework) {
         this.framework = framework;
     }
 
-    /**
-     * boolean value specifying that exclusion node filters have precedence over inclusion filters
-     */
-    private boolean argExcludePrecedence = true;
+    private boolean nodeExcludePrecedence = true;
     private String scriptpath;
     private InputStream scriptAsStream;
     private boolean inlineScript;
@@ -241,7 +225,7 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
         }
 
         if (cli.hasOption("F")) {
-            failedNodes = new File(cli.getOptionValue("F"));
+            setNodeFilter(cli.getOptionValue("F"));
         }
 
         if (cli.hasOption('p')) {
@@ -255,7 +239,7 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
 
         if (cli.hasOption("C")) {
             try {
-                argThreadCount = Integer.valueOf(cli.getOptionValue("C"));
+                setNodeThreadcount(Integer.valueOf(cli.getOptionValue("C")));
             } catch (NumberFormatException e) {
                 throw new IllegalArgumentException("threadcount must be an integer");
             }
@@ -266,21 +250,13 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
             exit(1);
         }
 
-        boolean parsedFailedNodes = false;
         //if failedNodes file exists, parse it for a list of node names to include.
-        if (null != failedNodes && failedNodes.exists()) {
-            includeMap = FailedNodesFilestore.parseFailedNodes(failedNodes);
-            if (includeMap.size() > 0) {
-                parsedFailedNodes = true;
-            }
-        }
-        if (!parsedFailedNodes) {
-            final String[] keys = NodeSet.FILTER_KEYS_LIST.toArray(new String[NodeSet.FILTER_KEYS_LIST.size()]);
-            excludeMap = parseExcludeArgs(keys);
-            includeMap = parseIncludeArgs(keys);
-        }
 
-        argExcludePrecedence = determineExclusionPrecedenceForArgs(args, cli);
+        final String[] keys = NodeSet.FILTER_KEYS_LIST.toArray(new String[NodeSet.FILTER_KEYS_LIST.size()]);
+        excludeMap = parseExcludeArgs(keys);
+        includeMap = parseIncludeArgs(keys);
+
+        setNodeExcludePrecedence(determineExclusionPrecedenceForArgs(args, cli));
         if (null == argProject) {
             throw new IllegalArgumentException("project parameter not specified");
         }
@@ -320,17 +296,13 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
         if (inlineScript) {
             list.add("-S");
         }
-        if (null != failedNodes) {
-            list.add("-F");
-            list.add(failedNodes.getAbsolutePath());
-        }
         if (null != argProject) {
             list.add("-p");
             list.add(argProject);
         }
-        if (1 != argThreadCount) {
+        if (1 != getNodeThreadcount()) {
             list.add("-C");
-            list.add(argThreadCount.toString());
+            list.add(Integer.toString(getNodeThreadcount()));
         }
         if (null != filterArgs) {
             for (final Map.Entry<String, String> entry : filterArgs.entrySet()) {
@@ -401,16 +373,6 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
                 t.printStackTrace();
             }
             error(t);
-            if (t instanceof NodesetFailureException) {
-                NodesetFailureException nfe = (NodesetFailureException) t;
-                HashMap<String, String> failmap = new HashMap<String, String>();
-                if (null != nfe.getNodeset() && nfe.getNodeset().size() > 0 && null == failedNodes) {
-                    failmap.put("-I", "name=" + StringArrayUtil.asString(nfe.getNodeset().toArray(
-                            new String[nfe.getNodeset().size()]), ","));
-                }
-                error("Execute this command to retry on the failed nodes:\n\t" + generateExecLine(failmap));
-                exitCode = NodesetFailureException.EXIT_CODE;
-            }
             if (t instanceof NodesetEmptyException) {
                 exitCode = NODESET_EMPTY_EXIT_CODE;
             }
@@ -514,7 +476,15 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
      * @return NodeSet
      */
     protected NodeSet createFilterNodeSelector() {
-        return createNodeSet(includeMap, excludeMap, argExcludePrecedence, argThreadCount, argKeepgoing, failedNodes);
+        if(null!=nodeFilter){
+            NodeSet nodeSet = NodeSet.fromFilter(nodeFilter);
+            nodeSet.setKeepgoing(isKeepgoing());
+            nodeSet.setThreadCount(getNodeThreadcount());
+            nodeSet.getInclude().setDominant(!getNodeExcludePrecedence());
+            nodeSet.getExclude().setDominant(getNodeExcludePrecedence());
+            return nodeSet;
+        }
+        return createNodeSet(includeMap, excludeMap, getNodeExcludePrecedence(), getNodeThreadcount(), argKeepgoing, null);
     }
 
     /**
@@ -526,7 +496,7 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
      * @return NodeSet
      */
     protected NodeSet createNodeSet(final Map includeMap, final Map excludeMap) {
-        return createNodeSet(includeMap, excludeMap, true, argThreadCount, argKeepgoing, failedNodes);
+        return createNodeSet(includeMap, excludeMap, true, getNodeThreadcount(), argKeepgoing, null);
     }
 
     /**
@@ -722,7 +692,7 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
     }
 
     public int getThreadCount() {
-        return argThreadCount;
+        return getNodeThreadcount();
     }
 
     public String getNodeRankAttribute() {
@@ -733,7 +703,7 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
         return true;
     }
 
-    public boolean isKeepgoing() {
+    public Boolean isKeepgoing() {
         return argKeepgoing;
     }
 
@@ -905,6 +875,40 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
 
     public String getScriptURLString() {
         return scriptURLString;
+    }
+
+    public String getNodeFilter() {
+        if(null!=nodeFilter){
+            return nodeFilter;
+        }
+        NodeSet nodeSet = getNodeSet();
+        if(null!= nodeSet) {
+            return NodeSet.generateFilter(nodeSet);
+        }
+        return null;
+    }
+
+    public void setNodeFilter(String nodeFilter) {
+        this.nodeFilter = nodeFilter;
+    }
+
+    /**
+     * boolean value specifying that exclusion node filters have precedence over inclusion filters
+     */
+    public Boolean getNodeExcludePrecedence() {
+        return nodeExcludePrecedence;
+    }
+
+    public void setNodeExcludePrecedence(boolean nodeExcludePrecedence) {
+        this.nodeExcludePrecedence = nodeExcludePrecedence;
+    }
+
+    public int getNodeThreadcount() {
+        return nodeThreadcount;
+    }
+
+    public void setNodeThreadcount(Integer nodeThreadcount) {
+        this.nodeThreadcount = nodeThreadcount;
     }
 
     /**
