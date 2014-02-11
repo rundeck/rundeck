@@ -12,7 +12,7 @@ describe the properties of a node or reflect the state of the node.
 One of a Node's built in attributes is called "tags" which is a list
 of classifications or categories about that Node. 
 
-## Commands tab overview
+## Nodes tab overview
 
 Navigate to this page by clicking on the "Nodes" tab in the navigation
 bar.
