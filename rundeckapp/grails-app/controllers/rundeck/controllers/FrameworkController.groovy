@@ -1374,18 +1374,24 @@ class FrameworkController  {
      */
     public static Map extractApiNodeFilterParams(Map params){
         def result=[:]
-
+        def value=false
         //convert api parameters to node filter parameters
         BaseNodeFilters.filterKeys.each{k,v->
             if(params[k]){
                 result["nodeInclude${v}"]=params[k]
+                value=true
             }
             if(params["exclude-"+k]){
                 result["nodeExclude${v}"]=params["exclude-"+k]
+                value = true
             }
         }
-        if(params.'exclude-precedence'){
-            result.nodeExcludePrecedence=params['exclude-precedence']=='true'
+        if(params.filter){
+            result.filter=params.filter
+            value=true
+        }
+        if (value && null!=params.'exclude-precedence') {
+            result.nodeExcludePrecedence = params['exclude-precedence'] == 'true'
         }
         return result
     }

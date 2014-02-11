@@ -37,6 +37,95 @@ import rundeck.services.FrameworkService
 @TestFor(FrameworkController)
 @Mock([ScheduledExecution, Workflow, WorkflowStep, CommandExec, Execution])
 class FrameworkControllerTest {
+    public void testextractApiNodeFilterParamsEmpty(){
+        def params = FrameworkController.extractApiNodeFilterParams([:])
+        assertEquals(0,params.size())
+    }
+    public void testextractApiNodeFilterParamsLegacyFilters(){
+        def params = FrameworkController.extractApiNodeFilterParams([
+                'hostname':'host1',
+                'tags':'tags1',
+                'name':'name1',
+                'os-name':'osname1',
+                'os-arch':'osarch1',
+                'os-version':'osvers1',
+                'os-family':'osfam1',
+        ])
+        assertEquals(7,params.size())
+        assertEquals([
+                'nodeInclude': 'host1',
+                'nodeIncludeTags': 'tags1',
+                'nodeIncludeName': 'name1',
+                'nodeIncludeOsName': 'osname1',
+                'nodeIncludeOsArch': 'osarch1',
+                'nodeIncludeOsVersion': 'osvers1',
+                'nodeIncludeOsFamily': 'osfam1',
+        ],params)
+    }
+    public void testextractApiNodeFilterParamsLegacyFiltersExclude(){
+        def params = FrameworkController.extractApiNodeFilterParams([
+                'exclude-hostname':'host1',
+                'exclude-tags':'tags1',
+                'exclude-name':'name1',
+                'exclude-os-name':'osname1',
+                'exclude-os-arch':'osarch1',
+                'exclude-os-version':'osvers1',
+                'exclude-os-family':'osfam1',
+        ])
+        assertEquals(7,params.size())
+        assertEquals([
+                'nodeExclude': 'host1',
+                'nodeExcludeTags': 'tags1',
+                'nodeExcludeName': 'name1',
+                'nodeExcludeOsName': 'osname1',
+                'nodeExcludeOsArch': 'osarch1',
+                'nodeExcludeOsVersion': 'osvers1',
+                'nodeExcludeOsFamily': 'osfam1',
+        ],params)
+    }
+    public void testextractApiNodeFilterParamsLegacyFiltersPrecedenceWithFilter(){
+        def params = FrameworkController.extractApiNodeFilterParams([
+                'exclude-precedence':'true',
+                'hostname':'boing'
+        ])
+        assertEquals(2,params.size())
+        assertEquals([
+                'nodeExcludePrecedence': true,
+                'nodeInclude': 'boing',
+        ],params)
+    }
+    public void testextractApiNodeFilterParamsLegacyFiltersPrecedenceWithoutFilter(){
+        def params = FrameworkController.extractApiNodeFilterParams([
+                'exclude-precedence':'true',
+        ])
+        assertEquals(0,params.size())
+    }
+    public void testextractApiNodeFilterParamsLegacyFiltersPrecedenceFalseWithFilter(){
+        def params = FrameworkController.extractApiNodeFilterParams([
+                'exclude-precedence':'false',
+                'hostname':'boing'
+        ])
+        assertEquals(2,params.size())
+        assertEquals([
+                'nodeExcludePrecedence': false,
+                'nodeInclude': 'boing',
+        ],params)
+    }
+    public void testextractApiNodeFilterParamsLegacyFiltersPrecedenceFalseWithoutFilter(){
+        def params = FrameworkController.extractApiNodeFilterParams([
+                'exclude-precedence':'false',
+        ])
+        assertEquals(0,params.size())
+    }
+    public void testextractApiNodeFilterParamsFilterString(){
+        def params = FrameworkController.extractApiNodeFilterParams([
+                'filter':'mynode !tags: blah',
+        ])
+        assertEquals(1,params.size())
+        assertEquals([
+                'filter': 'mynode !tags: blah',
+        ],params)
+    }
     public void testAdhocRetryFailedExecId(){
         def exec = new Execution(
                 user: "testuser", project: "testproj", loglevel: 'WARN',
