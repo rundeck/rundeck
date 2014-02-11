@@ -151,6 +151,8 @@ class MenuController {
         }
         if(!params.project){
             startpage='home'
+        }else if (params.project && startpage == 'home') {
+            startpage = 'jobs'
         }
         switch (startpage){
             case 'home':
