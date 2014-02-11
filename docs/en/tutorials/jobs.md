@@ -83,8 +83,8 @@ set -eu
   grep '^#/ usage:' <"$0" | cut -c4- >&2 ; exit 2;
 }
 DIR=$1
-mkdir -p $DIR
-echo $$ > $DIR/pid
+mkdir -p "$DIR"
+echo $$ > "$DIR/pid"
 echo "- Web started (pid=$$)"
 ~~~~~~~~ 
 
@@ -98,10 +98,9 @@ set -eu
   grep '^#/ usage:' <"$0" | cut -c4- >&2 ; exit 2;
 }
 DIR=$1
-[[ ! -f $DIR/pid ]] && { echo DOWN; exit 1; }
-PID=$(cat $DIR/pid)
+[[ ! -f "$DIR/pid" ]] && { echo DOWN; exit 1; }
+PID=$(cat "$DIR/pid")
 [[ -z "$PID" ]] && { echo "DOWN"; exit 1; } || { echo "- RUNNING (pid=$PID)"; }
-exit $?
 ~~~~~~~~ 
 
 File listing: stop
@@ -115,10 +114,10 @@ set -eu
 }
 DIR=$1
 METHOD=$2
-if [[ -f $DIR/pid ]]
+if [[ -f "$DIR/pid" ]]
 then
-  pid=$(cat $DIR/pid)
-  rm -f $DIR/pid; #approximates a stop process
+  pid=$(cat "$DIR/pid")
+  rm -f "$DIR/pid"; #approximates a kill process
   exit_code=$?
   echo "- Web stopped (pid=${pid}) using method: $METHOD"
 fi
@@ -240,10 +239,10 @@ set -eu
 }
 DIR=$1
 METHOD=$2
-if [[ -f $DIR/pid ]]
+if [[ -f "$DIR/pid" ]]
 then
-        pid=$(cat $DIR/pid)
-        rm -f $DIR/pid; #approximates a stop process
+        pid=$(cat "$DIR/pid")
+        rm -f "$DIR/pid"; #approximates a kill process
         exit_code=$?
         echo "- Web stopped (pid=${pid}) using method: $METHOD"
 fi
@@ -253,8 +252,8 @@ exit ${exit_code:-0}]]></script>
        </sequence>  
        <nodefilters excludeprecedence="true"> 
          <include> 
-          <tags>web</tags> 
-          </include> 
+           <tags>www</tags> 
+         </include> 
        </nodefilters>  
        <dispatch> 
          <threadcount>1</threadcount>  
@@ -294,14 +293,14 @@ set -eu
   grep '^#/ usage:' <"$0" | cut -c4- >&2 ; exit 2;
 }
 DIR=$1
-mkdir -p $DIR
-echo $$ > $DIR/pid
+mkdir -p "$DIR"
+echo $$ > "$DIR/pid"
 echo "- Web started (pid=$$)"]]></script>
      </command> 
   </sequence>  
     <nodefilters excludeprecedence="true"> 
       <include> 
-        <tags>web</tags> 
+        <tags>www</tags> 
       </include> 
    </nodefilters>  
    <dispatch> 
@@ -339,15 +338,15 @@ set -eu
   grep '^#/ usage:' <"$0" | cut -c4- >&2 ; exit 2;
 }
 DIR=$1
-[[ ! -f $DIR/pid ]] && { echo DOWN; exit 1; }
-PID=$(cat $DIR/pid)
+[[ ! -f "$DIR/pid" ]] && { echo DOWN; exit 1; }
+PID=$(cat "$DIR/pid")
 [[ -z "$PID" ]] && { echo "DOWN"; exit 1; } || { echo "- RUNNING (pid=$PID)"; }
-exit $?]]></script>
+]]></script>
      </command> 
   </sequence>  
     <nodefilters excludeprecedence="true"> 
       <include> 
-        <tags>web</tags> 
+        <tags>www</tags> 
       </include> 
    </nodefilters>  
    <dispatch> 
@@ -360,7 +359,8 @@ exit $?]]></script>
 
 Defines Job, /web/status, that also executes a shell script to
 Nodes tagged "web".
-File listing: restart.xml
+
+> Note, these examples demonstrate Jobs with inline scripts. This is for the purpose of providing a simple and transparent example. You may rightly consider other approaches such as external scriptfiles or custom steps to further encapsulate the code from the job definition.
 
 ### Restart Job composition
 
@@ -370,6 +370,8 @@ This is done by declaring a sequence of Job calls,
 using the `jobref` xml tag. 
 Restart also must pass the "dir" and "method" options so it
 declares those too and uses the `arg` xml tag to pass them.
+
+File listing: restart.xml
 
 ~~~~~~~~ {.xml .numberLines}
 <joblist>	
