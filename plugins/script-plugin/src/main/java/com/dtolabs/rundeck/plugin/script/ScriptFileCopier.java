@@ -360,6 +360,13 @@ public class ScriptFileCopier implements DestinationFileCopier, Describable {
             throw new FileCopierException(e.getMessage(), StepFailureReason.IOFailure, e);
         }
         if (!success) {
+            if (scriptargs.contains("${file-copy.destination}") && null == copiedFilepath) {
+                executionContext.getExecutionListener().log(0,
+                        "[script-copy]: ${file-copy.destination} is referenced in the file-copy script, but its value " +
+                                "could not be determined. " +
+                                "The node " + node.getNodename() + " may need a " + REMOTE_FILEPATH_ATTRIBUTE
+                                + " attribute.");
+            }
             throw new FileCopierException("[script-copy]: external script failed with exit code: " + result,
                                           NodeStepFailureReason.NonZeroResultCode);
         }
