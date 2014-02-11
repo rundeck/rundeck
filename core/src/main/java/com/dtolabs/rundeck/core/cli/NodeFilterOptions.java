@@ -87,8 +87,8 @@ public class NodeFilterOptions implements CLIToolOptions {
     public void addOptions(final Options options) {
         options.addOption(THREADCOUNT, THREADCOUNT_LONG, true, "number of threads");
         options.addOption(FILTER, FILTER_LONG, true, "node filter string");
-        options.addOption(FILTER_INCLUDE, FILTER_INCLUDE_LONG, true, "include node parameter list");
-        options.addOption(FILTER_EXCLUDE, FILTER_EXCLUDE_LONG, true, "exclude node parameter list");
+        options.addOption(FILTER_INCLUDE, FILTER_INCLUDE_LONG, true, "include node parameter list (deprecated, use --filter)");
+        options.addOption(FILTER_EXCLUDE, FILTER_EXCLUDE_LONG, true, "exclude node parameter list (deprecated, use --filter)");
         options.addOption(KEEPGOING, KEEPGOING_LONG, false, "Continue node dispatch when execution on one node fails");
         options.addOption(DONTKEEPGOING, DONTKEEPGOING_LONG, false,
             "Force early failure if execution on one node fails");
