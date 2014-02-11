@@ -145,7 +145,7 @@ To configure script-copy you must specify a commandline string to execute.  Opti
 you may specify a directory to be used as the working directory when executing
 the commandline string, and a shell to use to interpret the command.  
 
-You must also specify the filepath on the target node where the copied file will be placed, which can be done in two different ways.
+You must also specify the filepath on the target node where the script files will be placed, which can be done in two different ways.
 
 You can configure these across all projects (framework-wide), a single project
 (project-wide), or specifically for each node, with the most specific configuration
@@ -236,6 +236,18 @@ In addition, the plugin provides these new data context properties:
 
 :   The name of the file without any path information.
 
+`file-copy.destination`
+
+:   The full destination path to copy the file to.
+
+The plugin will be executed in two scenarios:
+
+1. A script must be copied to the remote node into a temporary location in order to be executed
+    * In this case, the `${file-copy.destination}` will be generated based on the [script-copy filepath](#defining-the-script-copy-filepath) property.
+    * If the "script-copy filepath" is not set, then the `${file-copy.destination}` will be unknown, and be blank
+2. A file must be copied to a specific destination path
+    * In this case the `${file-copy.destination}` will be specified
+
 Example:
 
 If you wanted to run some external remote connection command ("/bin/copyremote") in lieu of the
@@ -244,7 +256,7 @@ built-in SCP command, you could specify these attributes for node:
 ~~~~~~~~~ {.yaml}
 mynode:
     file-copier: script-copy
-    script-copy: /bin/copyremote -host ${node.hostname} -user ${node.username} -- ${file-copy.file} ${node.destdir}
+    script-copy: /bin/copyremote -host ${node.hostname} -user ${node.username} -- ${file-copy.file} ${file-copy.destination}
 ~~~~~~~~~~~~~~~
 
 At run time, the properties specified would be expanded to the values for the
@@ -253,16 +265,17 @@ specific node and command string to execute.
 OR, you could specify a default to apply to all nodes within the project.properties
 file located at `$RDECK_BASE/projects/NAME/etc/project.properties`.
 
-    script-copy.default.command=/bin/copyremote -host ${node.hostname} -user ${node.username} -- ${file-copy.file} ${node.destdir}
+    script-copy.default.command=/bin/copyremote -host ${node.hostname} -user ${node.username} -- ${file-copy.file} ${file-copy.destination}
 
 Similarly for the `$RDECK_BASE/etc/framework.properties` file to apply to all
 projects.
 
 #### Defining the script-copy filepath
 
+This property is used when copying a *script file* to the remote node, as the location that temporary script files should be placed.  When copying any other type of file (such as using the Copy File Workflow Node Step Plugin), the destination will be provided and the script-copy filepath is not used.
+
 The value of this property or attribute should be the complete filepath on
-the target node where the copied file is placed. This is to tell the FileCopier service where the remote file exists after your script copies it over, so that it
-can later be executed.
+the target node where copied script files are to be placed.
 
 You can do this in *two* ways, either as a configuration property as described here, or via output from your script, as described under [Requirements of script-copy command](plugins.html#requirements-of-script-copy-command).
 
@@ -289,7 +302,7 @@ the file will exist after being copied.  We know the filename of the file is ava
 ~~~~~~ {.yaml}
 mynode:
     file-copier: script-copy
-    script-copy: /bin/copyremote -host ${node.hostname} -user ${node.username} -- ${file-copy.file} ${node.destdir}
+    script-copy: /bin/copyremote -host ${node.hostname} -user ${node.username} -- ${file-copy.file} ${file-copy.destination}
     script-copy-remote-filepath: ${node.destdir}/${file-copy.filename}
 ~~~~~~~~~~~~~
 
@@ -356,22 +369,23 @@ Node definition:
 mynode:
     file-copier: script-copy
     destdir: /some/node/dir
+    script-copy-remote-filepath: ${node.destdir}/${file-copy.filename}
 ~~~~~~~~~~
 
 System-wide config in `framework.properties`:
 
-    plugin.script-copy.default.command=/tmp/mycopy.sh ${node.hostname} ${node.username} ${node.destdir} ${file-copy.file}
+    plugin.script-copy.default.command=/tmp/mycopy.sh ${node.hostname} ${node.username} ${file-copy.destination} ${file-copy.file}
 
 Contents of `/tmp/mycopy.sh`:
 
 ~~~~~~~~~ {.bash .numberLines}
 #!/bin/bash
 
-# args are [hostname] [username] [destdir] [filepath]
+# args are [hostname] [username] [destpath] [filepath]
 
 host=$1; shift
 user=$1; shift
-dir=$1; shift
+dest=$1; shift
 file=$1
 
 name=${file##*/}
@@ -379,9 +393,9 @@ name=${file##*/}
 # copy to node
 CPCMD=scp
 
-"$CPCMD" "$file" "$user@$host:$dir/$name" >/dev/null || exit $?
+"$CPCMD" "$file" "$user@$host:$dest" >/dev/null || exit $?
 
-echo "$dir/$name"
+echo "$dest"
 ~~~~~~~~~~~~
 
 **Example system ssh replacement**:
@@ -401,7 +415,7 @@ mynode:
     file-copier: script-copy
     destdir: /tmp
     script-copy-shell: bash -c
-    script-copy: scp ${file-copy.file} ${node.username}@${node.hostname}:${node.destdir}
+    script-copy: scp ${file-copy.file} ${node.username}@${node.hostname}:${file-copy.destination}
     script-copy-remote-filepath: ${node.destdir}/${file-copy.filename}
 ~~~~~~~~~~~
 
@@ -418,7 +432,7 @@ This could all be set as defaults in the project.properties file, such as:
     service.FileCopier.default.provider=script-copy
 
     #set script-copy defaults
-    plugin.script-copy.default.command=scp ${file-copy.file} ${node.username}@${node.hostname}:${node.destdir}
+    plugin.script-copy.default.command=scp ${file-copy.file} ${node.username}@${node.hostname}:${file-copy.destination}
     plugin.script-copy.default.shell: bash -c
     plugin.script-copy.default.remote-filepath: ${node.destdir}/${file-copy.filename}
 
