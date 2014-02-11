@@ -48,7 +48,7 @@
 
                         <g:plural code="Project" count="${projectSummary.size()}" textOnly="${true}"/>:
                         <g:each var="project" in="${projectSummary.sort()}" status="i">
-                            <g:link action="jobs" controller="menu" params="[project: project]">
+                            <g:link action="index" controller="menu" params="[project: project]">
                                 ${project}</g:link><g:if test="${i < projectSummary.size() - 1}">,</g:if>
                         </g:each>
                     </div>
