@@ -144,7 +144,7 @@
                             $$('#${fieldwatchid.encodeAsJavaScript()} input[type="checkbox"]').each(function(e){
                                 Event.observe(e,'change',ExecutionOptions.multiVarCheckboxChangeWarningHandler.curry('${optName.encodeAsJavaScript()}'));
                             });
-                            $$('.obs_addvar').each(function(e){
+                            $$('#${fieldwatchid.encodeAsJavaScript()} .obs_addvar').each(function(e){
                                 Event.observe(e,'click', function(evt){
                                     var roc=_remoteOptionControl('_commandOptions');
                                     ExecutionOptions.addMultivarValue('${optName.encodeAsJavaScript()}','${rkey.encodeAsJavaScript()}varinput',null,roc.observeMultiCheckbox.bind(roc));
