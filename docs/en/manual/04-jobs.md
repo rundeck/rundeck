@@ -316,14 +316,22 @@ will be displayed when the Job is listed:
 ![Scheduled job icon](../figures/fig0308.png)
 
 ## Job Notifications
-
-You can configure notifications to occur when a Job Execution finishes with either success or failure.
+Job notifications are messages triggered by a job event.
+You can configure notifications to occur when a Job Execution starts 
+or finishes, with either success or failure.
+The notification form will list all the installed notification plugins.
 
 If you want to receive notifications, click Yes under "Send Notification?". 
 
 ![Notification form](../figures/fig0322.png)
 
-You can enable notifications for either Success or Failure or Start, and either notification by email, by webhooks or a plugin (like HipChat).  Click the checkbox next to the type of notification to enable.
+You can enable notifications for either Start, Success or Failure events 
+and choose the notifier, using a builtin like mail, or webhook.
+Alternatively, you can use a
+[notification plugin](../plugins-user-guide/notifications.html) 
+like HipChat (shown above), Jira, Jabber, IRC, PagerDuty, or script your own.  
+
+Click the checkbox next to the type of notification to enable.
 
 ![Notifications enabled](../figures/fig0323.png)
 
@@ -444,6 +452,8 @@ So for example, this URL:
     http://server/callback?id=${execution.id}&status=${execution.status}&trigger=${notification.trigger}
 
 Will have the tokens replaced with the appropriate values prior to making the webhook request.
+
+
 
 ## Job history
 
