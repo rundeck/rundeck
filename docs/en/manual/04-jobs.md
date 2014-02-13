@@ -192,34 +192,47 @@ menu contains items to create a job definition or upload a definition from a fil
 
 For the first Job example, create a Job that calls the info script.
 
-1.   Like in the earlier example, begin by pressing the "New Job" menu item.
-1.   Within the new job form:
-     -   For "Job Name", enter "info" and for the "Group", enter
-     "adm/resources". 
-     -   If you want to specify your own UUID you can enter it in the field. 
-     Otherwise a unique value will be set for you.
-     -   Providing a description will be come helpful to other users to understand the intent and purpose for the Job.
-     -   Check the box for "Dispatch to Nodes"
-     -   Choose the "Node Exclude Filters" and enter the name of your Rundeck server. This will cause the job to run on just the remote Nodes (eg., centos54 and ubuntu).
-     -   Type in shell script that produces some information (eg, `uname -a`)
-     -   Save the Workflow step
-     -   Press the "Create" button at the bottom of the page.
-     ![Simple saved job form](../figures/fig0303.png)
-1.   After the the job is created, the browser is directed to the Jobs page. The folder structure reflecting the group naming will show one Job.
-     -    Navigate through the folders buttons to the new job 
-1.   Notice the play button before the job name.
-     -    Press the play button to run the Job.
-     ![Simple saved job](../figures/fig0304.png)
+Like in the earlier example, begin by pressing the "New Job" menu item.
 
-1.   Press the "Run Job Now" button to begin execution.
-     -    The job will be queued and executed. 
-1.   Look in the "Now running" section.
-     -    Press the "Show >>" link to go to the execution follow page.
-     ![Simple saved job output](../figures/fig0305.png)
+Within the new job form:
+
+For "Job Name", enter "info" and for the "Group", enter     "adm/resources". 
+If you want to specify your own UUID you can enter it in the field. 
+Otherwise a unique value will be set for you.
+Providing a description will be come helpful to other users to understand the intent and purpose for the Job.
+
+Check the box for "Dispatch to Nodes".
+Choose the "Node Exclude Filters" and enter the name of your Rundeck server. 
+This will cause the job to run on just the remote Nodes (eg., centos54 and ubuntu).
+
+Type in shell script that produces some information (eg, `uname -a`)
+
+Save the Workflow step.
+
+Press the "Create" button at the bottom of the page.
+
+![Simple saved job form](../figures/fig0303.png)
+
+After the the job is created, the browser is directed to the Jobs page. 
+The folder structure reflecting the group naming will show one Job.
+Navigate through the folders buttons to the new job 
+Notice the play button before the job name.
+
+Press the play button to run the Job.
+
+![Simple saved job](../figures/fig0304.png)
+
+Press the "Run Job Now" button to begin execution.
+The job will be queued and executed. 
+
+Look in the "Now running" section.
+Press the progress bar in the Activity area to go to the execution follow page.
+
+![Simple saved job output](../figures/fig0305.png)
 
 ### Multiple Executions
 
-By default, a job runs as a is "Single Execution" -- it can only have a single execution running at a time.  This is useful if the steps the Job performs might be interfered with if another separate process was also performing them on the same Node(s).
+By default, a job runs as a "Single Execution" -- it can only have a single execution running at a time.  This is useful if the steps the Job performs might be interfered with if another separate process was also performing them on the same Node(s).
 
 However, in some cases it is useful to allow a Job to be executed more than once simultaneously.
 
@@ -295,7 +308,7 @@ expression.
 
 ![Scheduled job crontab form](../figures/fig0307.png)
 
-Use the crontab syntax referenced here: [CronExpression](http://www.quartz-scheduler.org/docs/api/1.8.1/org/quartz/CronExpression.html)
+Use the crontab syntax referenced here: [CronExpression].
 
 After the Job has been updated to include a schedule, a clock icon
 will be displayed when the Job is listed:
@@ -614,7 +627,7 @@ Clicking the "edit" link opens a new form that lets you modify all
 aspects of that option.
 
 Options can also be defined as part of a job definition and later
-loaded to the Rundeck server. See [job-xml](../man5/job-xml.html)(XML) and [job-yaml](../man5/job-yaml.html)(YAML) and 
+loaded to the Rundeck server. See [job-xml] and [job-yaml] and 
 [rd-jobs] pages if you prefer using an textual Job definition.
 
 ## Defining an option
@@ -898,7 +911,7 @@ Each Option entry for a Job can be configured to get the set of possible values 
 
 e.g.:
 
-    <option valuesUrl="http://site.example.com/values.json" ...
+    <option valuesUrl="http://site.example.com/values.json" ... />
 
 > Note, File URL scheme is also acceptable (e.g, `file:/path/to/job/options/optA.json`).
 
@@ -1488,3 +1501,4 @@ Context variables can be used in a few ways in a Job step, with slightly differe
 [job-xml]: ../man5/job-xml.html
 [job-yaml]: ../man5/job-yaml.html
 
+[CronExpression]: http://www.quartz-scheduler.org/docs/api/1.8.1/org/quartz/CronExpression.html

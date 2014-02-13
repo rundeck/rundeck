@@ -2,6 +2,14 @@
 % Alex Honor; Greg Schueler
 % January 30, 2014
 
+A _command_ is a single executable string executed on a Node.
+Rundeck invokes commands on nodes via a *node executor*
+which evaluates the command string and executes it. 
+Node executors evaluate the command string in a data context
+containing information about the Node resource. Command strings
+can reference this data and thus avoid hard coding node or environment
+specific values.
+
 
 The Rundeck graphical console provides the ability to execute
 commands to a set of filtered Node resources.
