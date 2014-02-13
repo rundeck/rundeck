@@ -40,13 +40,17 @@ server, store and stream logs, or talk to a user directory.
 ## Download and Installation
 
 If a running Rundeck instance isn't already available to you, 
-[download](http://rundeck.org/downloads.html) and 
-install it. There are several package formats. 
-Choose the one that best suits your infrastructure.
+there are a couple ways you can try it.
 
+* You can [download](http://rundeck.org/downloads.html) and 
+install the Rundeck software. There are several package formats. 
+Choose the one that best suits your infrastructure.
 After installation, be sure Rundeck has been started.
 See [Startup](../administration/startup-and-shutdown.html) to learn how to
 startup and shutdown rundeck.
+* You can run the [vagrant](http://github.com/rundeck/anvils-demo) demo. 
+The demo contains a project with tagged nodes, example job workflows with
+dynamic options, and a set of users, each with varying degrees of privilege.
 
 The default port for the web interface is `4440`. If you
 installed Rundeck on your local machine, go to this URL: <http://localhost:4440>
