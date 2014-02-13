@@ -319,13 +319,13 @@ class JobsXMLCodec {
 
                         cmd.nodeStep=true
                         cmd.type = plugin.type
-                        cmd.configuration=parsePluginConfig(plugin.configuration)
+                        cmd.configuration= plugin.configuration?parsePluginConfig(plugin.configuration):null
                     }else if(cmd['step-plugin']){
                         def plugin= cmd.remove('step-plugin')
 
                         cmd.nodeStep = false
                         cmd.type = plugin.type
-                        cmd.configuration = parsePluginConfig(plugin.configuration)
+                        cmd.configuration = plugin.configuration ? parsePluginConfig(plugin.configuration) : null
                     }
                 }
                 if(null!= cmd.keepgoingOnSuccess){
@@ -523,14 +523,17 @@ class JobsXMLCodec {
                 def pluginconf= cmd.remove('configuration')
                 def entries=[]
                 //wrap key/value in 'entry'
-                pluginconf.keySet().sort().each{k->
+                pluginconf?.keySet()?.sort()?.each{k->
                     def entry = [key: k, value: pluginconf[k]]
                     BuilderUtil.makeAttribute(entry, 'key')
                     BuilderUtil.makeAttribute(entry, 'value')
                     entries<<entry
                 }
 
-                def cdata= [type: cmd.remove('type'), configuration: [entry:entries]]
+                def cdata= [type: cmd.remove('type')]
+                if(entries){
+                    cdata.putAll([configuration: [entry: entries]])
+                }
                 BuilderUtil.makeAttribute(cdata, 'type')
 
                 cmd[(nodestep?'node-':'')+'step-plugin']=cdata

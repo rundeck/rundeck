@@ -1,5 +1,6 @@
 import org.yaml.snakeyaml.Yaml
 import rundeck.Notification
+import rundeck.PluginStep
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.CommandExec
@@ -164,6 +165,87 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
         assertEquals(1,doc[0].notification.onsuccess.size())
         assertEquals([type:'test1', configuration:['blah':'blee']],doc[0].notification.onsuccess.plugin)
 
+    }
+    void testEncodeStepPlugin() {
+        def Yaml yaml = new Yaml()
+        ScheduledExecution se = new ScheduledExecution([
+            jobName: 'test job 1',
+            description: 'test descrip',
+            loglevel: 'INFO',
+            project: 'test1',
+            workflow: new Workflow([keepgoing: false, threadcount: 1, commands: [
+                new PluginStep(
+                    type: 'monkey',
+                    nodeStep: true,
+                    configuration: [elf: 'hider']
+                )
+            ]]),
+        ])
+        def jobs1 = [se]
+        def  ymlstr = JobsYAMLCodec.encode(jobs1)
+        assertNotNull ymlstr
+        assertTrue ymlstr instanceof String
+
+        def doc = yaml.load(ymlstr)
+        assertNotNull doc
+        System.out.println("yaml: ${ymlstr}");
+        System.out.println("doc: ${doc}");
+        assertEquals(1,doc[0].sequence.commands.size())
+        assertEquals([type:'monkey', nodeStep:true, configuration: [elf: 'hider']], doc[0].sequence.commands[0])
+    }
+    void testEncodeStepPluginEmptyConfig() {
+        def Yaml yaml = new Yaml()
+        ScheduledExecution se = new ScheduledExecution([
+            jobName: 'test job 1',
+            description: 'test descrip',
+            loglevel: 'INFO',
+            project: 'test1',
+            workflow: new Workflow([keepgoing: false, threadcount: 1, commands: [
+                new PluginStep(
+                    type: 'monkey',
+                    nodeStep: true,
+                    configuration: [:]
+                )
+            ]]),
+        ])
+        def jobs1 = [se]
+        def  ymlstr = JobsYAMLCodec.encode(jobs1)
+        assertNotNull ymlstr
+        assertTrue ymlstr instanceof String
+
+        def doc = yaml.load(ymlstr)
+        assertNotNull doc
+        System.out.println("yaml: ${ymlstr}");
+        System.out.println("doc: ${doc}");
+        assertEquals(1,doc[0].sequence.commands.size())
+        assertEquals([type:'monkey', nodeStep:true], doc[0].sequence.commands[0])
+    }
+    void testEncodeStepPluginNullConfig() {
+        def Yaml yaml = new Yaml()
+        ScheduledExecution se = new ScheduledExecution([
+            jobName: 'test job 1',
+            description: 'test descrip',
+            loglevel: 'INFO',
+            project: 'test1',
+            workflow: new Workflow([keepgoing: false, threadcount: 1, commands: [
+                new PluginStep(
+                    type: 'monkey',
+                    nodeStep: true,
+                    configuration: null
+                )
+            ]]),
+        ])
+        def jobs1 = [se]
+        def  ymlstr = JobsYAMLCodec.encode(jobs1)
+        assertNotNull ymlstr
+        assertTrue ymlstr instanceof String
+
+        def doc = yaml.load(ymlstr)
+        assertNotNull doc
+        System.out.println("yaml: ${ymlstr}");
+        System.out.println("doc: ${doc}");
+        assertEquals(1,doc[0].sequence.commands.size())
+        assertEquals([type:'monkey', nodeStep:true], doc[0].sequence.commands[0])
     }
     void testEncodeErrorHandlers(){
 
@@ -758,6 +840,90 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
         assertEquals('test2', n2.type)
         assertEquals([x:'yz'], n2.configuration)
 
+    }
+    void testDecodeStepPlugin(){
+        def ymlstr1 = """- project: test1
+  loglevel: INFO
+  sequence:
+    keepgoing: false
+    strategy: node-first
+    commands:
+    - type: monkey
+      nodeStep: true
+      configuration:
+        elf: hider
+  description: test descrip
+  name: test job 1
+"""
+        def list = JobsYAMLCodec.decode(ymlstr1)
+        assertNotNull list
+        assertEquals(1, list.size())
+        def obj = list[0]
+        assertTrue(obj instanceof ScheduledExecution)
+        ScheduledExecution se = (ScheduledExecution) list[0]
+
+
+        assertNotNull se.workflow.commands[0]
+        assertTrue(se.workflow.commands[0] instanceof  PluginStep)
+        PluginStep cmd1= se.workflow.commands[0]
+        assertEquals('monkey',cmd1.type)
+        assertEquals(true,cmd1.nodeStep)
+        assertEquals([elf:'hider'],cmd1.configuration)
+    }
+    void testDecodeStepPluginEmptyConfig(){
+        def ymlstr1 = """- project: test1
+  loglevel: INFO
+  sequence:
+    keepgoing: false
+    strategy: node-first
+    commands:
+    - type: monkey
+      nodeStep: true
+      configuration:
+  description: test descrip
+  name: test job 1
+"""
+        def list = JobsYAMLCodec.decode(ymlstr1)
+        assertNotNull list
+        assertEquals(1, list.size())
+        def obj = list[0]
+        assertTrue(obj instanceof ScheduledExecution)
+        ScheduledExecution se = (ScheduledExecution) list[0]
+
+
+        assertNotNull se.workflow.commands[0]
+        assertTrue(se.workflow.commands[0] instanceof  PluginStep)
+        PluginStep cmd1= se.workflow.commands[0]
+        assertEquals('monkey',cmd1.type)
+        assertEquals(true,cmd1.nodeStep)
+        assertEquals(null,cmd1.configuration)
+    }
+    void testDecodeStepPluginNullConfig(){
+        def ymlstr1 = """- project: test1
+  loglevel: INFO
+  sequence:
+    keepgoing: false
+    strategy: node-first
+    commands:
+    - type: monkey
+      nodeStep: true
+  description: test descrip
+  name: test job 1
+"""
+        def list = JobsYAMLCodec.decode(ymlstr1)
+        assertNotNull list
+        assertEquals(1, list.size())
+        def obj = list[0]
+        assertTrue(obj instanceof ScheduledExecution)
+        ScheduledExecution se = (ScheduledExecution) list[0]
+
+
+        assertNotNull se.workflow.commands[0]
+        assertTrue(se.workflow.commands[0] instanceof  PluginStep)
+        PluginStep cmd1= se.workflow.commands[0]
+        assertEquals('monkey',cmd1.type)
+        assertEquals(true,cmd1.nodeStep)
+        assertEquals(null,cmd1.configuration)
     }
 
     void testShouldPassthruCrontabString() {
