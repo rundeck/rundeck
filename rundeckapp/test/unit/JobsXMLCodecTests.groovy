@@ -2084,6 +2084,100 @@ class JobsXMLCodecTests extends GroovyTestCase {
         assertEquals "incorrect configuration", [elf:'monkey',ok:'howdy'], cmd1.configuration
 
     }
+    void testDecodePluginNodeStepEmptyConfig() {
+        //simple workflow with options
+        def jobs = JobsXMLCodec.decode("""<joblist>
+  <job>
+    <id>5</id>
+    <name>wait1</name>
+    <description></description>
+    <loglevel>INFO</loglevel>
+    <context>
+        <project>test1</project>
+        <options>
+          <option name="buildstamp" value="789" values="123,456,789" enforcedvalues="false" regex="abc"/>
+        </options>
+    </context>
+    <sequence>
+        <command>
+            <node-step-plugin type="blah">
+                <configuration>
+                </configuration>
+            </node-step-plugin>
+        </command>
+    </sequence>
+    <dispatch>
+      <threadcount>1</threadcount>
+      <keepgoing>false</keepgoing>
+    </dispatch>
+    <schedule>
+      <time hour='11' minute='21' />
+      <weekday day='*' />
+      <month month='*' />
+    </schedule>
+  </job>
+</joblist>
+""")
+        assertNotNull jobs
+        assertEquals "incorrect size", 1, jobs.size()
+        assertNotNull "incorrect workflow", jobs[0].workflow
+        assertNotNull "incorrect workflow", jobs[0].workflow.commands
+        assertEquals "incorrect workflow size", 1, jobs[0].workflow.commands.size()
+        def cmd1 = jobs[0].workflow.commands[0]
+        assertNotNull "incorrect workflow", cmd1
+        assertTrue "incorrect type: ${cmd1}", (cmd1 instanceof PluginStep)
+        assertNotNull("incorrect nodeStep", cmd1.nodeStep)
+        assertTrue("incorrect nodeStep", cmd1.nodeStep)
+        assertEquals "incorrect type", 'blah', cmd1.type
+        assertEquals "incorrect configuration", null, cmd1.configuration
+
+    }
+    void testDecodePluginNodeStepMissingConfig() {
+        //simple workflow with options
+        def jobs = JobsXMLCodec.decode("""<joblist>
+  <job>
+    <id>5</id>
+    <name>wait1</name>
+    <description></description>
+    <loglevel>INFO</loglevel>
+    <context>
+        <project>test1</project>
+        <options>
+          <option name="buildstamp" value="789" values="123,456,789" enforcedvalues="false" regex="abc"/>
+        </options>
+    </context>
+    <sequence>
+        <command>
+            <node-step-plugin type="blah">
+            </node-step-plugin>
+        </command>
+    </sequence>
+    <dispatch>
+      <threadcount>1</threadcount>
+      <keepgoing>false</keepgoing>
+    </dispatch>
+    <schedule>
+      <time hour='11' minute='21' />
+      <weekday day='*' />
+      <month month='*' />
+    </schedule>
+  </job>
+</joblist>
+""")
+        assertNotNull jobs
+        assertEquals "incorrect size", 1, jobs.size()
+        assertNotNull "incorrect workflow", jobs[0].workflow
+        assertNotNull "incorrect workflow", jobs[0].workflow.commands
+        assertEquals "incorrect workflow size", 1, jobs[0].workflow.commands.size()
+        def cmd1 = jobs[0].workflow.commands[0]
+        assertNotNull "incorrect workflow", cmd1
+        assertTrue "incorrect type: ${cmd1}", (cmd1 instanceof PluginStep)
+        assertNotNull("incorrect nodeStep", cmd1.nodeStep)
+        assertTrue("incorrect nodeStep", cmd1.nodeStep)
+        assertEquals "incorrect type", 'blah', cmd1.type
+        assertEquals "incorrect configuration", null, cmd1.configuration
+
+    }
     void testDecodePluginStep() {
         //simple workflow with options
         def jobs = JobsXMLCodec.decode("""<joblist>
@@ -2131,6 +2225,97 @@ class JobsXMLCodecTests extends GroovyTestCase {
         assertFalse("incorrect nodeStep", cmd1.nodeStep)
         assertEquals "incorrect type", 'blah', cmd1.type
         assertEquals "incorrect configuration", [elf:'monkey',ok:'howdy'], cmd1.configuration
+    }
+    void testDecodePluginStepEmptyConfig() {
+        //simple workflow with options
+        def jobs = JobsXMLCodec.decode("""<joblist>
+  <job>
+    <id>5</id>
+    <name>wait1</name>
+    <description></description>
+    <loglevel>INFO</loglevel>
+    <context>
+        <project>test1</project>
+        <options>
+          <option name="buildstamp" value="789" values="123,456,789" enforcedvalues="false" regex="abc"/>
+        </options>
+    </context>
+    <sequence>
+        <command>
+            <step-plugin type="blah">
+                <configuration>
+                </configuration>
+            </step-plugin>
+        </command>
+    </sequence>
+    <dispatch>
+      <threadcount>1</threadcount>
+      <keepgoing>false</keepgoing>
+    </dispatch>
+    <schedule>
+      <time hour='11' minute='21' />
+      <weekday day='*' />
+      <month month='*' />
+    </schedule>
+  </job>
+</joblist>
+""")
+        assertNotNull jobs
+        assertEquals "incorrect size", 1, jobs.size()
+        assertNotNull "incorrect workflow", jobs[0].workflow
+        assertNotNull "incorrect workflow", jobs[0].workflow.commands
+        assertEquals "incorrect workflow size", 1, jobs[0].workflow.commands.size()
+        def cmd1 = jobs[0].workflow.commands[0]
+        assertNotNull "incorrect workflow", cmd1
+        assertTrue "incorrect type: ${cmd1}", (cmd1 instanceof PluginStep)
+        assertFalse("incorrect nodeStep", cmd1.nodeStep)
+        assertEquals "incorrect type", 'blah', cmd1.type
+        assertEquals "incorrect configuration", null, cmd1.configuration
+    }
+
+    void testDecodePluginStepMissingConfig() {
+        //simple workflow with options
+        def jobs = JobsXMLCodec.decode("""<joblist>
+  <job>
+    <id>5</id>
+    <name>wait1</name>
+    <description></description>
+    <loglevel>INFO</loglevel>
+    <context>
+        <project>test1</project>
+        <options>
+          <option name="buildstamp" value="789" values="123,456,789" enforcedvalues="false" regex="abc"/>
+        </options>
+    </context>
+    <sequence>
+        <command>
+            <step-plugin type="blah">
+            </step-plugin>
+        </command>
+    </sequence>
+    <dispatch>
+      <threadcount>1</threadcount>
+      <keepgoing>false</keepgoing>
+    </dispatch>
+    <schedule>
+      <time hour='11' minute='21' />
+      <weekday day='*' />
+      <month month='*' />
+    </schedule>
+  </job>
+</joblist>
+""")
+        assertNotNull jobs
+        assertEquals "incorrect size", 1, jobs.size()
+        assertNotNull "incorrect workflow", jobs[0].workflow
+        assertNotNull "incorrect workflow", jobs[0].workflow.commands
+        assertEquals "incorrect workflow size", 1, jobs[0].workflow.commands.size()
+        def cmd1 = jobs[0].workflow.commands[0]
+        assertNotNull "incorrect workflow", cmd1
+        assertTrue "incorrect type: ${cmd1}", (cmd1 instanceof PluginStep)
+        assertFalse("incorrect nodeStep", cmd1.nodeStep)
+        assertEquals "incorrect type", 'blah', cmd1.type
+        assertEquals "incorrect configuration", null, cmd1.configuration
     }
 
 
@@ -4768,6 +4953,40 @@ class JobsXMLCodecTests extends GroovyTestCase {
         assertEquals "wrong configuration", 'elf', doc.job[0].sequence[0].command[0]['node-step-plugin'].configuration[0].entry[0].'@key'.text()
         assertEquals "wrong configuration", 'hider', doc.job[0].sequence[0].command[0]['node-step-plugin'].configuration[0].entry[0].'@value'.text()
     }
+    void testEncodePluginNodeStepEmptyConfig(){
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+
+                         workflow: new Workflow(keepgoing: true, commands: [
+                                 new PluginStep(
+                                     type: 'monkey',
+                                     nodeStep: true,
+                                 )]
+                         ),
+                         nodeThreadcount: 1,
+                         nodeKeepgoing: true,
+                                     )
+        ]
+
+        def xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "missing job", 1, doc.job.size()
+        assertEquals "missing sequence", 1, doc.job.sequence.size()
+        assertEquals "wrong command count", 1, doc.job[0].sequence[0].command.size()
+        assertEquals "wrong command/node-step-plugin size", 1, doc.job[0].sequence[0].command[0]['node-step-plugin'].size()
+        assertNotNull "missing type", doc.job[0].sequence[0].command[0]['node-step-plugin'].'@type'
+        assertEquals "wrong plugin type", "monkey", doc.job[0].sequence[0].command[0]['node-step-plugin'].'@type'.text()
+        assertEquals "missing configuration", 0, doc.job[0].sequence[0].command[0]['node-step-plugin'].configuration.size()
+    }
     void testEncodePluginStep(){
         def XmlSlurper parser = new XmlSlurper()
         def jobs1 = [
@@ -4806,6 +5025,41 @@ class JobsXMLCodecTests extends GroovyTestCase {
         assertEquals "missing configuration", 1, doc.job[0].sequence[0].command[0]['step-plugin'].configuration[0].entry.size()
         assertEquals "wrong configuration", 'alert', doc.job[0].sequence[0].command[0]['step-plugin'].configuration[0].entry[0].'@key'.text()
         assertEquals "wrong configuration", 'magpie', doc.job[0].sequence[0].command[0]['step-plugin'].configuration[0].entry[0].'@value'.text()
+    }
+    void testEncodePluginStepEmptyConfig(){
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+
+                         workflow: new Workflow(keepgoing: true, commands: [
+                                 new PluginStep(
+                                     type: 'bonkey',
+                                     nodeStep: false,
+                                 )]
+                         ),
+                         nodeThreadcount: 1,
+                         nodeKeepgoing: true,
+                                     )
+        ]
+
+        def xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+        println xmlstr
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "missing job", 1, doc.job.size()
+        assertEquals "missing sequence", 1, doc.job.sequence.size()
+        assertEquals "wrong command count", 1, doc.job[0].sequence[0].command.size()
+        assertEquals "wrong command/step-plugin size", 1, doc.job[0].sequence[0].command[0]['step-plugin'].size()
+        assertNotNull "missing type", doc.job[0].sequence[0].command[0]['step-plugin'].'@type'
+        assertEquals "wrong plugin type", "bonkey", doc.job[0].sequence[0].command[0]['step-plugin'].'@type'.text()
+        assertEquals "missing configuration", 0, doc.job[0].sequence[0].command[0]['step-plugin'].configuration.size()
     }
     void testEncodeNotification(){
             def XmlSlurper parser = new XmlSlurper()

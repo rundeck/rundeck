@@ -39,7 +39,10 @@ class PluginStep extends WorkflowStep{
     }
 
     public Map toMap() {
-        def map=[type: type, nodeStep:nodeStep,configuration: this.configuration]
+        def map=[type: type, nodeStep:nodeStep]
+        if(this.configuration){
+            map.put('configuration',this.configuration)
+        }
         if (description) {
             map.description = description
         }
