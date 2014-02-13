@@ -1,4 +1,18 @@
-% Role-based Access Control
+% Access Control Policy
+
+A Rundeck *access control policy* grants users
+and user groups certain
+privileges to perform actions against rundeck resources
+like projects, jobs, nodes, commands and API.
+Every action requested by a user is evaulated by the
+Rundeck authorization system and logged for 
+reporting and auditing purposes.
+
+Since Rundeck respects the policy definition, you can define role-based
+authorization to restrict users to only a subset of actions. This
+enables a self-service type interface, where some users have
+access to a limited set of executable actions.
+
 
 Two dimensions of information dictate authorization inside Rundeck:
 
