@@ -83,6 +83,7 @@ class Execution extends ExecutionContext {
         nodeExcludeOsArch(type: 'text')
         nodeIncludeOsVersion(type: 'text')
         nodeExcludeOsVersion(type: 'text')
+        filter(type: 'text')
 
     }
 
