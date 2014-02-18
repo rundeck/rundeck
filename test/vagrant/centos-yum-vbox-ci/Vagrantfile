@@ -1,7 +1,7 @@
 
 Vagrant.configure("2") do |config|
 
-  repo_url = "https://bintray.com/gschueler/ci-rundeck2-rpm/rpm"
+  repo_url = "https://bintray.com/rundeck/ci-snapshot-rpm/rpm"
   config.vm.box = "CentOS-6.3-x86_64-minimal"
   config.vm.box_url = "https://dl.dropbox.com/u/7225008/Vagrant/CentOS-6.3-x86_64-minimal.box"
 
