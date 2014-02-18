@@ -9,7 +9,7 @@ DIR=$1
 cd $DIR
 
 if [ -f ./run-vagrant-test.sh ] ; then
-    exec sh ./run-vagrant-test.sh
+    exec bash ./run-vagrant-test.sh
 fi
 
 vagrant up
