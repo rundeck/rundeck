@@ -6,7 +6,6 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.resourcetree.ResourceStoragePlugin;
 
 /**
- * $INTERFACE is ... User: greg Date: 2/19/14 Time: 2:27 PM
  */
 public class ResourceStoragePluginProviderService extends BasePluggableProviderService<ResourceStoragePlugin> {
     public static final String SERVICE_NAME = ServiceNameConstants.ResourceStorage;
