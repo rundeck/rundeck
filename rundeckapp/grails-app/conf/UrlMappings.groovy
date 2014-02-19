@@ -54,6 +54,14 @@ class UrlMappings {
 
         //incubator endpoints
         "/api/$api_version/incubator/jobs/takeoverSchedule"(controller: 'scheduledExecution', action: 'apiJobClusterTakeoverSchedule')
+        "/api/$api_version/incubator/resource/$resourcePath**"(controller: 'resource') {
+            action = [
+                    GET: "apiGetResource",
+                    PUT: "apiPutResource",
+                    POST: "apiPostResource",
+                    DELETE: "apiDeleteResource"
+            ]
+        }
 
         //catchall
         "/api/$api_version/$action?"(controller: 'api', action: 'invalid')

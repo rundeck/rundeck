@@ -11,6 +11,9 @@ import com.dtolabs.rundeck.server.plugins.services.StreamingLogReaderPluginProvi
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogWriterPluginProviderService
 import groovy.io.FileType
 import org.springframework.core.task.SimpleAsyncTaskExecutor
+import us.vario.greg.lct.data.file.DirectFilepathMapper
+import us.vario.greg.lct.data.file.FileTree
+import us.vario.greg.lct.data.file.JsonMetadataMapper
 
 beans={
     log4jConfigurer(org.springframework.beans.factory.config.MethodInvokingFactoryBean) {
@@ -86,6 +89,10 @@ beans={
         concurrencyLimit= 2 + (application.config.rundeck?.execution?.logs?.fileStorage?.concurrencyLimit ?: 5)
     }
 
+    File resDir = new File(rdeckBase,"var/resources")
+    filetreeMapper(DirectFilepathMapper,resDir)
+    jsonmetadataMapper(JsonMetadataMapper)
+    rundeckResourceTree(FileTree,filetreeMapper,jsonmetadataMapper)
     /**
      * Define groovy-based plugins as Spring beans, registered in a hash map
      */

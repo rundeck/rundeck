@@ -27,8 +27,9 @@ dependencies {
         'com.jcraft:jsch:0.1.50',
         'org.yaml:snakeyaml:1.9',
         'xerces:xercesImpl:2.6.2',
-        'xml-apis:xml-apis:2.0.2' 
-    
+        'xml-apis:xml-apis:2.0.2',
+        'us.vario.greg.lct:lct-conf:0.1'
+
     compile ('jaxen:jaxen:1.1') {
         // Remove xerces apis as that should be provided by jdk 
         exclude group: 'xerces', module: 'xmlParserAPIs'
