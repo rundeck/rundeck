@@ -1,0 +1,23 @@
+apply from: "${rootDir}/gradle/java.gradle"
+subprojects {
+    apply from: "${rootDir}/gradle/java.gradle"
+    apply plugin: "groovy"
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        testCompile "org.codehaus.groovy:groovy-all:1.8.9"
+        testCompile "org.spockframework:spock-core:0.6-groovy-1.8"
+    }
+
+
+    jar {
+        manifest.attributes provider: 'gradle'
+    }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '1.10'
+}

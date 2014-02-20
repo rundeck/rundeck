@@ -1,0 +1,5 @@
+
+
+dependencies {
+    compile project(":rundeck-storage:rundeck-storage-api")
+}

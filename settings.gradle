@@ -1,5 +1,10 @@
 rootProject.name = 'rundeck'
 include ':core', 
+    ':rundeck-storage',
+    ':rundeck-storage:rundeck-storage-api', 
+    ':rundeck-storage:rundeck-storage-data', 
+    ':rundeck-storage:rundeck-storage-conf', 
+    ':rundeck-storage:rundeck-storage-filesys',
 	':plugins:localexec-plugin',
 	':plugins:script-plugin', 
 	':plugins:stub-plugin',
