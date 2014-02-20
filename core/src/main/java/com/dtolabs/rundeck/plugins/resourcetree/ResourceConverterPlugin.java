@@ -1,10 +1,8 @@
 package com.dtolabs.rundeck.plugins.resourcetree;
 
-import com.dtolabs.rundeck.core.resourcetree.HasResourceStream;
 import com.dtolabs.rundeck.core.resourcetree.ResourceMetaBuilder;
+import us.vario.greg.lct.model.HasInputStream;
 import us.vario.greg.lct.model.Path;
-
-import java.io.InputStream;
 
 /**
  * Plugin to convert resource data
@@ -17,12 +15,12 @@ public interface ResourceConverterPlugin {
      *
      * @param path                input path
      * @param resourceMetaBuilder builder to modify metadata
-     * @param hasResourceStream   accessor for underlying data stream
+     * @param hasInputStream   accessor for underlying data stream
      *
      * @return new data stream, or null
      */
-    HasResourceStream readResource(Path path, ResourceMetaBuilder resourceMetaBuilder,
-            HasResourceStream hasResourceStream);
+    HasInputStream readResource(Path path, ResourceMetaBuilder resourceMetaBuilder,
+            HasInputStream hasInputStream);
 
     /**
      * Convert a resource during create operation and return a new data stream, or null to pass the data without
@@ -30,12 +28,12 @@ public interface ResourceConverterPlugin {
      *
      * @param path                input path
      * @param resourceMetaBuilder builder to modify metadata
-     * @param hasResourceStream   accessor for underlying data stream
+     * @param hasInputStream   accessor for underlying data stream
      *
      * @return new data stream, or null
      */
-    HasResourceStream createResource(Path path, ResourceMetaBuilder resourceMetaBuilder,
-            HasResourceStream hasResourceStream);
+    HasInputStream createResource(Path path, ResourceMetaBuilder resourceMetaBuilder,
+            HasInputStream hasInputStream);
 
     /**
      * Convert a resource during update operation and return a new data stream, or null to pass the data without
@@ -43,10 +41,10 @@ public interface ResourceConverterPlugin {
      *
      * @param path                input path
      * @param resourceMetaBuilder builder to modify metadata
-     * @param hasResourceStream   accessor for underlying data stream
+     * @param hasInputStream   accessor for underlying data stream
      *
      * @return new data stream, or null
      */
-    HasResourceStream updateResource(Path path, ResourceMetaBuilder resourceMetaBuilder,
-            HasResourceStream hasResourceStream);
+    HasInputStream updateResource(Path path, ResourceMetaBuilder resourceMetaBuilder,
+            HasInputStream hasInputStream);
 }

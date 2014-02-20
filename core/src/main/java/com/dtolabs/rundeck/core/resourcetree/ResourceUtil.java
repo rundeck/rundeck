@@ -1,7 +1,8 @@
 package com.dtolabs.rundeck.core.resourcetree;
 
-import us.vario.greg.lct.impl.DelegateTree;
+import us.vario.greg.lct.data.file.ContentFactory;
 import us.vario.greg.lct.model.ContentMeta;
+import us.vario.greg.lct.model.HasInputStream;
 import us.vario.greg.lct.model.Tree;
 
 import java.io.IOException;
@@ -17,7 +18,7 @@ import java.util.TimeZone;
 /**
  * $INTERFACE is ... User: greg Date: 2/19/14 Time: 11:41 AM
  */
-public class ResourceUtil {
+public class ResourceUtil  {
     public static final String RES_META_RUNDECK_CONTENT_TYPE = "Rundeck-content-type";
     public static final String RES_META_RUNDECK_CONTENT_LENGTH = "Rundeck-content-size";
     public static final String RES_META_RUNDECK_CONTENT_CREATION_TIME = "Rundeck-content-creation-time";
@@ -30,6 +31,15 @@ public class ResourceUtil {
             return fmt;
         }
     };
+
+    public static ContentFactory<ResourceMeta> factory(){
+        return new ContentFactory<ResourceMeta>() {
+            @Override
+            public ResourceMeta create(HasInputStream hasInputStream, Map<String, String> metadata) {
+                return withStream(hasInputStream, metadata);
+            }
+        };
+    }
 
     /**
      * Create a new builder
@@ -73,7 +83,7 @@ public class ResourceUtil {
      *
      * @return
      */
-    public static ResourceMeta withStream(final HasResourceStream stream, final Map<String, String> meta) {
+    public static ResourceMeta withStream(final HasInputStream stream, final Map<String, String> meta) {
         return new BaseResource(meta) {
             @Override
             public InputStream readContent() throws IOException {
@@ -88,16 +98,6 @@ public class ResourceUtil {
                 return stream;
             }
         };
-    }
-
-    static HasResourceStream wrapStream(final ContentMeta contentMeta) {
-        return new HasResourceStream() {
-            @Override
-            public InputStream getInputStream() throws IOException {
-                return contentMeta.readContent();
-            }
-        };
-
     }
 
     static ResourceMeta wrap(final ContentMeta contentMeta) {

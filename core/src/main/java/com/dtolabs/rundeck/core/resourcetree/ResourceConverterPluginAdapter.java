@@ -1,18 +1,19 @@
 package com.dtolabs.rundeck.core.resourcetree;
 
 import com.dtolabs.rundeck.plugins.resourcetree.ResourceConverterPlugin;
+import us.vario.greg.lct.model.HasInputStream;
 import us.vario.greg.lct.model.Path;
+import us.vario.greg.lct.model.PathUtil;
 
-import java.io.InputStream;
 import java.util.HashMap;
 
 /**
  * Adapter for a {@link ResourceConverterPlugin} to use as a {@link ResourceConverter}
  */
-public class ConvertPluginAdapter implements ResourceConverter {
+public class ResourceConverterPluginAdapter implements ResourceConverter {
     ResourceConverterPlugin plugin;
 
-    public ConvertPluginAdapter(ResourceConverterPlugin plugin) {
+    public ResourceConverterPluginAdapter(ResourceConverterPlugin plugin) {
         this.plugin = plugin;
     }
 
@@ -30,8 +31,8 @@ public class ConvertPluginAdapter implements ResourceConverter {
     private ResourceMeta filter(Path path, ResourceMeta resourceMeta, Operation op) {
         ResourceMetaBuilder resourceMetaBuilder = ResourceUtil.create(new HashMap<String,
                 String>(resourceMeta.getMeta()));
-        HasResourceStream wrappedStream = ResourceUtil.wrapStream(resourceMeta);
-        final HasResourceStream result;
+        HasInputStream wrappedStream = PathUtil.wrapStream(resourceMeta);
+        final HasInputStream result;
         switch (op) {
             case READ:
                 result = plugin.readResource(path, resourceMetaBuilder, wrappedStream);
