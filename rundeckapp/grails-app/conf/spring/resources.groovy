@@ -7,12 +7,14 @@ import com.dtolabs.rundeck.server.plugins.PluginCustomizer
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import com.dtolabs.rundeck.server.plugins.services.ExecutionFileStoragePluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.NotificationPluginProviderService
+import com.dtolabs.rundeck.server.plugins.services.ResourceConverterPluginProviderService
+import com.dtolabs.rundeck.server.plugins.services.ResourceStoragePluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogReaderPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogWriterPluginProviderService
+import com.dtolabs.rundeck.server.resourcetree.ResourceTreeFactory
 import groovy.io.FileType
 import org.springframework.core.task.SimpleAsyncTaskExecutor
 import us.vario.greg.lct.data.file.DirectFilepathMapper
-import us.vario.greg.lct.data.file.FileTree
 import us.vario.greg.lct.data.file.JsonMetadataMapper
 
 beans={
@@ -89,10 +91,26 @@ beans={
         concurrencyLimit= 2 + (application.config.rundeck?.execution?.logs?.fileStorage?.concurrencyLimit ?: 5)
     }
 
-    File resDir = new File(rdeckBase,"var/resources")
-    filetreeMapper(DirectFilepathMapper,resDir)
-    jsonmetadataMapper(JsonMetadataMapper)
-    rundeckResourceTree(FileTree,filetreeMapper,jsonmetadataMapper)
+    resourceStoragePluginProviderService(ResourceStoragePluginProviderService) {
+        rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
+    }
+
+    resourceConverterPluginProviderService(ResourceConverterPluginProviderService) {
+        rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
+    }
+
+//    File resDir = new File(rdeckBase,"var/resources")
+//    filetreeMapper(DirectFilepathMapper,resDir)
+//    jsonmetadataMapper(JsonMetadataMapper)
+//    rundeckResourceTree(FileTree,filetreeMapper,jsonmetadataMapper)
+
+    rundeckResourceTree(ResourceTreeFactory){
+        rundeckFramework=ref('rundeckFramework')
+        //XXX: use pluginRegistry?
+        rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
+        pluginRegistry=ref("rundeckPluginRegistry")
+        serverConfig=application.config
+    }
     /**
      * Define groovy-based plugins as Spring beans, registered in a hash map
      */
