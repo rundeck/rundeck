@@ -1,9 +1,9 @@
 package com.dtolabs.rundeck.core.resourcetree;
 
 import com.dtolabs.rundeck.plugins.resourcetree.ResourceConverterPlugin;
-import us.vario.greg.lct.model.HasInputStream;
-import us.vario.greg.lct.model.Path;
-import us.vario.greg.lct.model.PathUtil;
+import org.rundeck.storage.api.HasInputStream;
+import org.rundeck.storage.api.Path;
+import org.rundeck.storage.api.PathUtil;
 
 import java.util.HashMap;
 

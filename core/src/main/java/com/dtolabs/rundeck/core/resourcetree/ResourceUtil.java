@@ -1,9 +1,10 @@
 package com.dtolabs.rundeck.core.resourcetree;
 
-import us.vario.greg.lct.data.file.ContentFactory;
-import us.vario.greg.lct.model.ContentMeta;
-import us.vario.greg.lct.model.HasInputStream;
-import us.vario.greg.lct.model.Tree;
+
+import org.rundeck.storage.api.ContentFactory;
+import org.rundeck.storage.api.ContentMeta;
+import org.rundeck.storage.api.HasInputStream;
+import org.rundeck.storage.api.Tree;
 
 import java.io.IOException;
 import java.io.InputStream;

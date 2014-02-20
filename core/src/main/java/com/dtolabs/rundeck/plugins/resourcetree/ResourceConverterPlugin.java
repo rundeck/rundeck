@@ -1,8 +1,8 @@
 package com.dtolabs.rundeck.plugins.resourcetree;
 
 import com.dtolabs.rundeck.core.resourcetree.ResourceMetaBuilder;
-import us.vario.greg.lct.model.HasInputStream;
-import us.vario.greg.lct.model.Path;
+import org.rundeck.storage.api.HasInputStream;
+import org.rundeck.storage.api.Path;
 
 /**
  * Plugin to convert resource data

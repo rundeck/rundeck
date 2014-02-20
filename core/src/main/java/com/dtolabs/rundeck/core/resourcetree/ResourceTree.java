@@ -1,6 +1,6 @@
 package com.dtolabs.rundeck.core.resourcetree;
 
-import us.vario.greg.lct.model.Tree;
+import org.rundeck.storage.api.Tree;
 
 /**
  * Tree subtype that provides {@link ResourceMeta} content.

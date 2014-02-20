@@ -1,6 +1,6 @@
 package com.dtolabs.rundeck.core.resourcetree;
 
-import us.vario.greg.lct.model.ContentMeta;
+import org.rundeck.storage.api.ContentMeta;
 
 import java.util.Date;
 

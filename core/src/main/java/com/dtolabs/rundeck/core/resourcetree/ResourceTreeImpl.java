@@ -1,7 +1,7 @@
 package com.dtolabs.rundeck.core.resourcetree;
 
-import us.vario.greg.lct.impl.DelegateTree;
-import us.vario.greg.lct.model.Tree;
+import org.rundeck.storage.api.Tree;
+import org.rundeck.storage.impl.DelegateTree;
 
 /**
  * ResourceTreeImpl is ...

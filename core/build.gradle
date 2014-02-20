@@ -14,6 +14,11 @@ archivesBaseName = 'rundeck-core'
 defaultTasks 'clean','assemble'
 
 dependencies {
+    compile project(":rundeck-storage")
+    compile project(":rundeck-storage:rundeck-storage-api")
+    compile project(":rundeck-storage:rundeck-storage-data")
+    compile project(":rundeck-storage:rundeck-storage-filesys")
+    compile project(":rundeck-storage:rundeck-storage-conf")
     compile 'org.apache.ant:ant:1.7.1',
         'log4j:log4j:1.2.16',
         'commons-codec:commons-codec:1.5',
@@ -27,8 +32,7 @@ dependencies {
         'com.jcraft:jsch:0.1.50',
         'org.yaml:snakeyaml:1.9',
         'xerces:xercesImpl:2.6.2',
-        'xml-apis:xml-apis:2.0.2',
-        'us.vario.greg.lct:lct-conf:0.1'
+        'xml-apis:xml-apis:2.0.2'
 
     compile ('jaxen:jaxen:1.1') {
         // Remove xerces apis as that should be provided by jdk 
