@@ -1,6 +1,8 @@
 package com.dtolabs.rundeck.core.resourcetree;
 
+import us.vario.greg.lct.impl.DelegateTree;
 import us.vario.greg.lct.model.ContentMeta;
+import us.vario.greg.lct.model.Tree;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -108,6 +110,15 @@ public class ResourceUtil {
                 return contentMeta.readContent();
             }
         };
+    }
+
+    /**
+     * Coerce a Tree of ResourceMeta into A ResourceTree
+     * @param impl the tree
+     * @return a ResourceTree
+     */
+    public static ResourceTree asResourceTree(Tree<ResourceMeta> impl) {
+        return new ResourceTreeImpl(impl);
     }
 
     static long parseLong(String s, long defval) {
