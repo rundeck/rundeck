@@ -1,6 +1,6 @@
-package com.dtolabs.rundeck.core.resourcetree;
+package com.dtolabs.rundeck.core.storage;
 
-import com.dtolabs.rundeck.plugins.resourcetree.ResourceConverterPlugin;
+import com.dtolabs.rundeck.plugins.storage.ResourceConverterPlugin;
 import org.rundeck.storage.api.HasInputStream;
 import org.rundeck.storage.api.Path;
 import org.rundeck.storage.api.PathUtil;

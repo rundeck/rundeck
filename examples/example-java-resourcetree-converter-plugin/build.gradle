@@ -39,7 +39,7 @@ apply plugin: 'maven'
 task createPom << {
     pom {
         project {
-            artifactId 'rundeck-example-resourcetree-converter-plugin'
+            artifactId 'rundeck-example-storage-converter-plugin'
             groupId "org.rundeck.plugins"
             inceptionYear '2014'
             packaging 'jar'

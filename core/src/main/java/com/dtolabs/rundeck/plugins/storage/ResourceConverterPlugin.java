@@ -1,6 +1,6 @@
-package com.dtolabs.rundeck.plugins.resourcetree;
+package com.dtolabs.rundeck.plugins.storage;
 
-import com.dtolabs.rundeck.core.resourcetree.ResourceMetaBuilder;
+import com.dtolabs.rundeck.core.storage.ResourceMetaBuilder;
 import org.rundeck.storage.api.HasInputStream;
 import org.rundeck.storage.api.Path;
 

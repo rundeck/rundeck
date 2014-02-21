@@ -1,13 +1,13 @@
-package com.dtolabs.rundeck.server.resourcetree;
+package com.dtolabs.rundeck.server.storage;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService;
-import com.dtolabs.rundeck.core.resourcetree.ResourceConverterPluginAdapter;
-import com.dtolabs.rundeck.core.resourcetree.ResourceMeta;
-import com.dtolabs.rundeck.core.resourcetree.ResourceTree;
-import com.dtolabs.rundeck.core.resourcetree.ResourceUtil;
-import com.dtolabs.rundeck.plugins.resourcetree.ResourceConverterPlugin;
-import com.dtolabs.rundeck.plugins.resourcetree.ResourceStoragePlugin;
+import com.dtolabs.rundeck.core.storage.ResourceConverterPluginAdapter;
+import com.dtolabs.rundeck.core.storage.ResourceMeta;
+import com.dtolabs.rundeck.core.storage.ResourceTree;
+import com.dtolabs.rundeck.core.storage.ResourceUtil;
+import com.dtolabs.rundeck.plugins.storage.ResourceConverterPlugin;
+import com.dtolabs.rundeck.plugins.storage.ResourceStoragePlugin;
 import com.dtolabs.rundeck.server.plugins.ConfiguredPlugin;
 import com.dtolabs.rundeck.server.plugins.PluginRegistry;
 import com.dtolabs.rundeck.server.plugins.services.ResourceConverterPluginProviderService;

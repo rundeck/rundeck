@@ -3,7 +3,7 @@ package com.dtolabs.rundeck.server.plugins.services;
 import com.dtolabs.rundeck.core.plugins.BasePluggableProviderService;
 import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
-import com.dtolabs.rundeck.plugins.resourcetree.ResourceStoragePlugin;
+import com.dtolabs.rundeck.plugins.storage.ResourceStoragePlugin;
 
 /**
  */

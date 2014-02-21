@@ -1,4 +1,4 @@
-package com.dtolabs.rundeck.core.resourcetree;
+package com.dtolabs.rundeck.core.storage;
 
 import java.util.Map;
 

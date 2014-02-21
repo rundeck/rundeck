@@ -1,10 +1,10 @@
 package org.rundeck.plugin.example;
 
 import com.dtolabs.rundeck.core.plugins.Plugin;
-import com.dtolabs.rundeck.core.resourcetree.HasResourceStream;
-import com.dtolabs.rundeck.core.resourcetree.ResourceMetaBuilder;
+import com.dtolabs.rundeck.core.storage.HasResourceStream;
+import com.dtolabs.rundeck.core.storage.ResourceMetaBuilder;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
-import com.dtolabs.rundeck.plugins.resourcetree.ResourceConverterPlugin;
+import com.dtolabs.rundeck.plugins.storage.ResourceConverterPlugin;
 import org.apache.commons.codec.binary.Base64InputStream;
 import us.vario.greg.lct.model.Path;
 

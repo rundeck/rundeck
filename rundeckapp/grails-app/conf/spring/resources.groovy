@@ -11,7 +11,7 @@ import com.dtolabs.rundeck.server.plugins.services.ResourceConverterPluginProvid
 import com.dtolabs.rundeck.server.plugins.services.ResourceStoragePluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogReaderPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogWriterPluginProviderService
-import com.dtolabs.rundeck.server.resourcetree.ResourceTreeFactory
+import com.dtolabs.rundeck.server.storage.ResourceTreeFactory
 import groovy.io.FileType
 import org.springframework.core.task.SimpleAsyncTaskExecutor
 

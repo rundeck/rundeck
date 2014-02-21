@@ -1,4 +1,4 @@
-package com.dtolabs.rundeck.core.resourcetree;
+package com.dtolabs.rundeck.core.storage;
 
 import org.rundeck.storage.api.ContentMeta;
 

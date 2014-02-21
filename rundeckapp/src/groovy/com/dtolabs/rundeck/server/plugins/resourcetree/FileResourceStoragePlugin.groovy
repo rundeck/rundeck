@@ -1,10 +1,10 @@
 package com.dtolabs.rundeck.server.plugins.resourcetree
 
 import com.dtolabs.rundeck.core.plugins.Plugin
-import com.dtolabs.rundeck.core.resourcetree.ResourceMeta
+import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
-import com.dtolabs.rundeck.plugins.resourcetree.ResourceStoragePlugin
+import com.dtolabs.rundeck.plugins.storage.ResourceStoragePlugin
 import org.rundeck.storage.api.Tree
 import org.rundeck.storage.data.file.FileTreeUtil
 

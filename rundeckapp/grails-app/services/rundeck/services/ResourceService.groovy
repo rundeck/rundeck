@@ -1,7 +1,7 @@
 package rundeck.services
 
-import com.dtolabs.rundeck.core.resourcetree.ResourceTree
-import com.dtolabs.rundeck.core.resourcetree.ResourceUtil
+import com.dtolabs.rundeck.core.storage.ResourceTree
+import com.dtolabs.rundeck.core.storage.ResourceUtil
 import org.rundeck.storage.data.DataUtil
 
 class ResourceService {
