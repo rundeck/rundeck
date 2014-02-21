@@ -1,6 +1,7 @@
 package com.dtolabs.rundeck.server.plugins
 
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException
 import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
@@ -203,14 +204,26 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
         }
         //try loading via ServiceProviderLoader
         if (rundeckServerServiceProviderLoader && service) {
+            //attempt to load directly
+            def instance
             try {
-                def instance = rundeckServerServiceProviderLoader.loadProvider(service, name)
+                instance=service.providerOfType(name);
+            } catch (ExecutionServiceException ignored) {
+                //not already loaded, attempt to load...
+            }
+            if(null==instance){
+                try {
+                    instance = rundeckServerServiceProviderLoader.loadProvider(service, name)
+                } catch (MissingProviderException exception) {
+                    log.error("Plugin ${name} for service: ${service.name} was not found")
+                    log.debug("Plugin ${name} for service: ${service.name} was not found",exception)
+                } catch (ProviderLoaderException exception) {
+                    log.error("Failure loading Rundeck plugin: ${name} for service: : ${service.name}", exception)
+                }
+            }
+            if(null!=instance){
                 def d = service.listDescriptions().find { it.name == name }
-                return new DescribedPlugin<T>(instance: instance, description: d, name:name)
-            } catch (MissingProviderException exception) {
-                log.error("Plugin ${name} for service: ${service.name} was not found")
-            } catch (ProviderLoaderException exception) {
-                log.error("Failure loading Rundeck plugin: ${name} for service: : ${service.name}", exception)
+                return new DescribedPlugin<T>(instance: instance, description: d, name: name)
             }
         }
         null
@@ -268,7 +281,14 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
         }
         if (rundeckServerServiceProviderLoader && service) {
             service.listProviders().each { ProviderIdent ident ->
-                def instance = rundeckServerServiceProviderLoader.loadProvider(service, ident.providerName)
+                def instance
+                try {
+                    instance= service.providerOfType(ident.providerName)
+                } catch (ExecutionServiceException ignored) {
+                }
+                if(null==instance){
+                    instance = rundeckServerServiceProviderLoader.loadProvider(service, ident.providerName)
+                }
                 if (!groovyPluginType.isAssignableFrom(instance.class)) {
                     return
                 }
