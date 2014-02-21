@@ -1,5 +1,0 @@
-
-
-dependencies {
-    compile project(":rundeck-storage:rundeck-storage-data")
-}

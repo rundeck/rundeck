@@ -12,9 +12,9 @@ apply plugin: 'signing'
 
 archivesBaseName = 'rundeck-core'
 defaultTasks 'clean','assemble'
+ext.rundeckToolsDependencies=''
 
 dependencies {
-    compile project(":rundeck-storage")
     compile project(":rundeck-storage:rundeck-storage-api")
     compile project(":rundeck-storage:rundeck-storage-data")
     compile project(":rundeck-storage:rundeck-storage-filesys")
@@ -47,12 +47,22 @@ dependencies {
         'org.mockito:mockito-all:1.8.5'
 }
 
-def rundeckToolsDependencies = configurations.runtime.files.collect { "$it.name" }.join(" ")
 
+
+compileJava.doLast {
+
+    rundeckToolsDependencies = configurations.runtime.files.collect { "$it.name" }.join(" ")
+
+    jar {
+        manifest {
+            attributes 'Rundeck-Tools-Dependencies': rundeckToolsDependencies
+        }
+    }
+}
 jar {
     manifest {
-        attributes 'Rundeck-Version': version, 
-                   'Rundeck-Tools-Dependencies': rundeckToolsDependencies
+        attributes 'Rundeck-Version': version,
+                   'Rundeck-Tools-Dependencies': project.rundeckToolsDependencies
     }
 }
 
@@ -223,7 +233,7 @@ def buildpom=pom {
                         archive{
                           manifestEntries{
                             'Rundeck-Version'(version)
-                            'Rundeck-Tools-Dependencies'(rundeckToolsDependencies)
+                            'Rundeck-Tools-Dependencies'(project.rundeckToolsDependencies)
                           }
                         }
                     }
