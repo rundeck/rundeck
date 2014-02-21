@@ -6,6 +6,7 @@ import com.dtolabs.rundeck.core.storage.ResourceConverterPluginAdapter;
 import com.dtolabs.rundeck.core.storage.ResourceMeta;
 import com.dtolabs.rundeck.core.storage.ResourceTree;
 import com.dtolabs.rundeck.core.storage.ResourceUtil;
+import com.dtolabs.rundeck.core.utils.PropertyUtil;
 import com.dtolabs.rundeck.plugins.storage.ResourceConverterPlugin;
 import com.dtolabs.rundeck.plugins.storage.ResourceStoragePlugin;
 import com.dtolabs.rundeck.server.plugins.ConfiguredPlugin;
@@ -45,6 +46,9 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
     private String storageConfigPrefix = RUNDECK_RESOURCE_STORAGE;
     private String converterConfigPrefix = RUNDECK_RESOURCE_CONVERTER;
     private String defaultPluginType = DEFAULT_PLUGIN_TYPE;
+    private static Map<String,String> defaultDefaultPluginConfig = new HashMap<String, String>(){{
+        put("baseDir", "${framework.var.dir}/storage");
+    }};
     private Map<String,String> defaultPluginConfig = new HashMap<String, String>();
 
     private Tree<ResourceMeta> constructedTree;
@@ -65,6 +69,12 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
         if (null == pluginRegistry) {
             throw new FactoryBeanNotInitializedException("'pluginRegistry' is required");
         }
+        if (null == resourceStoragePluginProviderService) {
+            throw new FactoryBeanNotInitializedException("'resourceStoragePluginProviderService' is required");
+        }
+        if (null == resourceConverterPluginProviderService) {
+            throw new FactoryBeanNotInitializedException("'resourceConverterPluginProviderService' is required");
+        }
         return ResourceUtil.asResourceTree(buildTree());
     }
 
@@ -80,10 +90,7 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        if(getDefaultPluginConfig().size()<1){
-            //set defaults
 
-        }
     }
 
     private Tree<ResourceMeta> buildTree() {
@@ -98,7 +105,8 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
         }
         if (!seen) {
             //load default resource storage
-            builder.base(loadDefaultStoragePlugin());
+            ResourceStoragePlugin base = loadDefaultStoragePlugin();
+            builder.base(base);
         }
         int converterIndex = 1;
         while (rundeckFramework.hasProperty(getConverterConfigPrefix() + SEP + converterIndex + TYPE)) {
@@ -129,7 +137,11 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
 
         Map<String, String> config = subPropertyMap(pref1 + SEP + CONFIG + SEP, rundeckFramework.getPropertyLookup().getPropertiesMap());
 
-        ResourceConverterPlugin converterPlugin = loadPlugin(pluginType, config, resourceConverterPluginProviderService);
+        ResourceConverterPlugin converterPlugin = loadPlugin(
+                pluginType,
+                expandConfig(config),
+                resourceConverterPluginProviderService
+        );
         //convert tree under the subpath if specified, AND matching the selector if specified
         builder.convert(new ResourceConverterPluginAdapter(converterPlugin),
                 null != path ? PathUtil.asPath(path.trim()) : null,
@@ -218,7 +230,11 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
 
         Map<String, String> config = subPropertyMap(pref1 + SEP + CONFIG + SEP, rundeckFramework.getPropertyLookup().getPropertiesMap());
 
-        Tree<ResourceMeta> resourceMetaTree = loadPlugin(pluginType, config, resourceStoragePluginProviderService);
+        Tree<ResourceMeta> resourceMetaTree = loadPlugin(
+                pluginType,
+                expandConfig(config),
+                resourceStoragePluginProviderService
+        );
         if (index == 1 && "/".equals(path.trim())) {
             builder.base(resourceMetaTree);
         } else {
@@ -227,13 +243,49 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
     }
 
     private ResourceStoragePlugin loadDefaultStoragePlugin() {
-        return loadPlugin(getDefaultPluginType(), getDefaultPluginConfig(), resourceStoragePluginProviderService);
+        return loadPlugin(
+                getDefaultPluginType(),
+                expandConfig(createDefaultPluginConfig()),
+                resourceStoragePluginProviderService
+        );
+    }
+
+    private Map<String, String> createDefaultPluginConfig() {
+        Map<String, String> result = getDefaultPluginConfig();
+
+        if(result.size()<1) {
+            result.putAll(defaultDefaultPluginConfig);
+        }
+
+        return result;
+    }
+
+    /**
+     * Expand embedded framework property references in the map values
+     * @param result
+     * @return
+     */
+    private Map<String, String> expandConfig(Map<String, String> result) {
+        return expandAllProperties(result, rundeckFramework.getPropertyLookup().getPropertiesMap());
+    }
+
+    private Map<String, String> expandAllProperties(Map<String, String> source, Map values) {
+        HashMap<String, String> result = new HashMap<String, String>();
+        for (String s : source.keySet()) {
+            result.put(s, PropertyUtil.expand(source.get(s), values));
+        }
+        return result;
     }
 
     private <T> T loadPlugin(String pluginType, Map<String, String> config,
-            PluggableProviderService<T> resourceStoragePluginProviderService1) {
-        ConfiguredPlugin<T> configured = getPluginRegistry().configurePluginByName(pluginType,
-                resourceStoragePluginProviderService1, config);
+            PluggableProviderService<T> service) {
+        ConfiguredPlugin<T> configured = getPluginRegistry().configurePluginByName(pluginType, service,
+                rundeckFramework, null, config);
+        if (null == configured) {
+            throw new IllegalArgumentException(service.getName() + " Plugin named \"" + pluginType + "\" could not be" +
+                    " " +
+                    "loaded");
+        }
         return configured.getInstance();
     }
 
