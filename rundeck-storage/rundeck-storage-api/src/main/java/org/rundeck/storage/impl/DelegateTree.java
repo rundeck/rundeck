@@ -8,6 +8,8 @@ import java.util.Set;
  * storage defers to a delegate
  */
 public class DelegateTree<T extends ContentMeta> extends BaseDelegateTree<T> implements Tree<T> {
+    public DelegateTree() {
+    }
 
     public DelegateTree(Tree<T> delegate) {
         super(delegate);

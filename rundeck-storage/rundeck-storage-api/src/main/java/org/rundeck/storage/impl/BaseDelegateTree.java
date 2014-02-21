@@ -9,15 +9,19 @@ import org.rundeck.storage.api.Tree;
 public abstract class BaseDelegateTree<T extends ContentMeta> extends StringToPathTree<T> implements Tree<T> {
     private Tree<T> delegate;
 
-    private BaseDelegateTree() {
+    public BaseDelegateTree() {
 
     }
 
     public BaseDelegateTree(Tree<T> delegate) {
-        this.delegate = delegate;
+        this.setDelegate(delegate);
     }
 
     public Tree<T> getDelegate() {
         return delegate;
+    }
+
+    public void setDelegate(Tree<T> delegate) {
+        this.delegate = delegate;
     }
 }
