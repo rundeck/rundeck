@@ -49,7 +49,7 @@ dependencies {
 
 
 
-compileJava.doLast {
+jar.doFirst {
 
     rundeckToolsDependencies = configurations.runtime.files.collect { "$it.name" }.join(" ")
 
