@@ -104,10 +104,8 @@ beans={
 
     rundeckResourceTree(ResourceTreeFactory){
         rundeckFramework=ref('rundeckFramework')
-        //XXX: use pluginRegistry?
-        rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
         pluginRegistry=ref("rundeckPluginRegistry")
-        serverConfig=application.config
+//        serverConfig=application.config
     }
     /**
      * Define groovy-based plugins as Spring beans, registered in a hash map
