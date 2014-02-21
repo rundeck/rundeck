@@ -8,6 +8,7 @@ import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import com.dtolabs.rundeck.server.plugins.services.ExecutionFileStoragePluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.NotificationPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.ResourceConverterPluginProviderService
+import com.dtolabs.rundeck.server.plugins.services.PluggableResourceStoragePluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.ResourceStoragePluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogReaderPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogWriterPluginProviderService
@@ -89,23 +90,26 @@ beans={
         concurrencyLimit= 2 + (application.config.rundeck?.execution?.logs?.fileStorage?.concurrencyLimit ?: 5)
     }
 
-    resourceStoragePluginProviderService(ResourceStoragePluginProviderService) {
+    pluggableResourceStoragePluginProviderService(PluggableResourceStoragePluginProviderService) {
         rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
+    }
+    resourceStoragePluginProviderService(ResourceStoragePluginProviderService,rundeckFramework) {
+        pluggableResourceStoragePluginProviderService = ref('pluggableResourceStoragePluginProviderService')
     }
 
     resourceConverterPluginProviderService(ResourceConverterPluginProviderService) {
         rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
     }
 
-//    File resDir = new File(rdeckBase,"var/resources")
-//    filetreeMapper(DirectFilepathMapper,resDir)
-//    jsonmetadataMapper(JsonMetadataMapper)
-//    rundeckResourceTree(FileTree,filetreeMapper,jsonmetadataMapper)
-
     rundeckResourceTree(ResourceTreeFactory){
         rundeckFramework=ref('rundeckFramework')
         pluginRegistry=ref("rundeckPluginRegistry")
-//        serverConfig=application.config
+        resourceStoragePluginProviderService=ref('resourceStoragePluginProviderService')
+        resourceConverterPluginProviderService=ref('resourceConverterPluginProviderService')
+        storageConfigPrefix='rundeck.storage.provider'
+        converterConfigPrefix='rundeck.storage.converter'
+        defaultPluginType='file'
+        defaultPluginConfig=['baseDir':'${framework.var.dir}/storage']
     }
     /**
      * Define groovy-based plugins as Spring beans, registered in a hash map
