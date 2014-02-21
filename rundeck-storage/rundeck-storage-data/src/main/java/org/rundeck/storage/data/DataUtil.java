@@ -17,6 +17,10 @@ public class DataUtil {
         return withText(text, contentFactory());
     }
 
+    public static DataContent dataWithText(String text, Map<String, String> meta) {
+        return withText(text, meta, contentFactory());
+    }
+
     public static <T extends ContentMeta> T withText(String text, ContentFactory<T> factory) {
         return withText(text, null, factory);
     }
