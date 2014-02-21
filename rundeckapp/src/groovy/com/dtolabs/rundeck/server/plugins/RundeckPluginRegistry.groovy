@@ -79,6 +79,9 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
     public <T> ConfiguredPlugin<T> configurePluginByName(String name, PluggableProviderService<T> service,
     PropertyResolver resolver, PropertyScope defaultScope) {
         DescribedPlugin<T> pluginDesc = loadPluginDescriptorByName(name, service)
+        if(null==pluginDesc){
+            return null
+        }
         T plugin = pluginDesc.instance
         def description = pluginDesc.description
         Map<String, Object> config=null
@@ -91,6 +94,9 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
     public <T> Map<String,Object> getPluginConfigurationByName(String name, PluggableProviderService<T> service,
                                                PropertyResolver resolver, PropertyScope defaultScope) {
         DescribedPlugin<T> pluginDesc = loadPluginDescriptorByName(name, service)
+        if (null == pluginDesc) {
+            return null
+        }
         def description = pluginDesc.description
         Map<String, Object> config=[:]
         if (description && description instanceof Description) {
@@ -154,7 +160,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
     PropertyResolver resolver,
                                   PropertyScope defaultScope, PropertyScope ignoredScope) {
         def pluginDesc = loadPluginDescriptorByName(name, service)
-        if(!pluginDesc) {
+        if(null==pluginDesc) {
             return null
         }
         ValidatedPlugin result = new ValidatedPlugin()
@@ -179,7 +185,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
      * Load a plugin instance with the given bean or provider name
      * @param name name of bean or provider
      * @param service provider service
-     * @return map containing [instance:(plugin instance), description: (map or Description),
+     * @return DescribedPlugin, or null if it cannot be loaded
      */
     public <T> DescribedPlugin<T> loadPluginDescriptorByName(String name, PluggableProviderService<T> service) {
         try {
