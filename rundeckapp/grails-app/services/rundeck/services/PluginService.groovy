@@ -98,7 +98,7 @@ class PluginService {
                               PropertyScope defaultScope) {
         def validation = rundeckPluginRegistry?.validatePluginByName(name, service,
                 PropertyResolverFactory.createPrefixedResolver(resolver, name, service.name), defaultScope)
-        if(!validation){
+        if(null==validation){
             return null
         }
         if(!validation.valid) {

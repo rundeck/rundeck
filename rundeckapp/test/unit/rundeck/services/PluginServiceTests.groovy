@@ -99,21 +99,21 @@ class PluginServiceTests extends GrailsUnitTestCase {
         <T> ConfiguredPlugin<T> configurePluginByName(String name, PluggableProviderService<T> service,
                                                      Map configuration) {
             cpbnMapCalled = true
-            return [instance:plugin,configuration: extraConfiguration]
+            return new ConfiguredPlugin<T>(instance:plugin,configuration: extraConfiguration)
         }
 
         @Override
         <T> ConfiguredPlugin<T> configurePluginByName(String name, PluggableProviderService<T> service,
         Framework framework, String project, Map instanceConfiguration) {
             cpWithFrameworkCalled=true
-            return [instance: plugin, configuration: extraConfiguration]
+            return new ConfiguredPlugin<T>(instance: plugin, configuration: extraConfiguration)
         }
 
         @Override
         <T> ConfiguredPlugin<T> configurePluginByName(String name, PluggableProviderService<T> service,
         PropertyResolver resolver, PropertyScope defaultScope) {
             cpWithResolverCalled=true
-            return [instance: plugin, configuration: extraConfiguration]
+            return new ConfiguredPlugin<T>(instance: plugin, configuration: extraConfiguration)
         }
 
         @Override
@@ -259,7 +259,7 @@ class PluginServiceTests extends GrailsUnitTestCase {
         def TestRegistry testReg = new TestRegistry()
         service.rundeckPluginRegistry = testReg
         assertFalse(testReg.cpbnMapCalled)
-        assertNull(service.configurePlugin("blah", [:], new testProvider()))
+        assertNull(service.configurePlugin("blah", [:], new testProvider('test')))
         assertTrue(testReg.cpbnMapCalled)
     }
     void testConfigurePluginByNameExists(){
@@ -267,12 +267,13 @@ class PluginServiceTests extends GrailsUnitTestCase {
         def service = new PluginService()
         def TestRegistry testReg = new TestRegistry()
         service.rundeckPluginRegistry = testReg
-        def test = "Test configure"
+        def test = 'Test configure'
         testReg.plugin= test
-        testReg.pluginValidation = [valid: true]
+        testReg.pluginValidation = new ValidatedPlugin(valid: true)
         assertFalse(testReg.cpbnMapCalled)
         assertFalse(testReg.validateWithMapCalled)
-        def result = service.configurePlugin("blah", [:], new testProvider())
+        def result = service.configurePlugin("blah", [:], new testProvider('test'))
+        assertNotNull(result)
         assertEquals(test, result.instance)
         assertTrue(testReg.cpbnMapCalled)
         assertTrue(testReg.validateWithMapCalled)
@@ -284,7 +285,7 @@ class PluginServiceTests extends GrailsUnitTestCase {
         service.rundeckPluginRegistry = testReg
         def test = "Test configure"
         testReg.plugin= test
-        testReg.pluginValidation = [valid: false]
+        testReg.pluginValidation = new ValidatedPlugin(valid: false)
         assertFalse(testReg.cpbnMapCalled)
         assertFalse(testReg.validateWithMapCalled)
         assertNull(service.configurePlugin("blah", [:], new testProvider()))
@@ -302,6 +303,7 @@ class PluginServiceTests extends GrailsUnitTestCase {
         assertFalse(testReg.cpWithFrameworkCalled)
         assertFalse(testReg.validateWithFrameworkCalled)
         def result = service.configurePlugin("blah", [:], "project", (Framework) null, new testProvider())
+        assertNotNull(result)
         assertEquals(test, result.instance)
         assertTrue(testReg.cpWithFrameworkCalled)
         assertTrue(testReg.validateWithFrameworkCalled)
@@ -325,13 +327,16 @@ class PluginServiceTests extends GrailsUnitTestCase {
         def service = new PluginService()
         def TestRegistry testReg = new TestRegistry()
         service.rundeckPluginRegistry = testReg
-        def test = "Test configure"
+        def test = 'Test configure'
         testReg.plugin= test
-        testReg.pluginValidation= [valid: true]
+        testReg.pluginValidation= new ValidatedPlugin()
+        testReg.pluginValidation.valid=true
+        assertTrue(testReg.pluginValidation.valid)
         assertFalse(testReg.cpWithResolverCalled)
         assertFalse(testReg.validateWithResolverCalled)
-        def map = service.configurePlugin("blah", new testProvider(), null, null)
-        assertEquals(test, map.instance)
+        def result = service.configurePlugin("blah", new testProvider('test'), null, null)
+        assertNotNull(result)
+        assertEquals(test, result.instance)
         assertTrue(testReg.cpWithResolverCalled)
         assertTrue(testReg.validateWithResolverCalled)
     }
