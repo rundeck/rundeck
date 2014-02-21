@@ -92,11 +92,21 @@ task extractGrails(dependsOn: downloadGrails) {
 	}
 }
 
+def projDeps = [
+        ":core",
+        ":rundeck-storage:rundeck-storage-api",
+        ":rundeck-storage:rundeck-storage-data",
+        ":rundeck-storage:rundeck-storage-filesys",
+        ":rundeck-storage:rundeck-storage-conf",
+        ":rundeck-launcher:rundeck-jetty-server"
+].collect{
+    project(it).install
+}
 /**
  * "core" needs to be built and installed into the local ~/.m2 repo before 
  * we attempt to do anything further with Grails. 
  */
-task installDependencies(dependsOn: [project(":core").install, project(":rundeck-launcher:rundeck-jetty-server").install]) << {
+task installDependencies(dependsOn: projDeps) << {
 	description = "Builds and installs dependencies on other subprojects"
 }
 

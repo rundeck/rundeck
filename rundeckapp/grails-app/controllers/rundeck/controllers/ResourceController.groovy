@@ -1,8 +1,8 @@
 package rundeck.controllers
 
 import org.apache.commons.fileupload.util.Streams
+import org.rundeck.storage.api.Resource
 import rundeck.services.ResourceService
-import us.vario.greg.lct.model.Resource
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -58,7 +58,7 @@ class ResourceController {
         withFormat {
             json {
                 render(contentType: 'application/json') {
-                    resources=array{
+                    delegate.'resources'=array{
                         def builder = delegate
                         dirlist.each{ diritem->
                             builder.element{

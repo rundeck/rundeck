@@ -14,8 +14,6 @@ import com.dtolabs.rundeck.server.plugins.services.StreamingLogWriterPluginProvi
 import com.dtolabs.rundeck.server.resourcetree.ResourceTreeFactory
 import groovy.io.FileType
 import org.springframework.core.task.SimpleAsyncTaskExecutor
-import us.vario.greg.lct.data.file.DirectFilepathMapper
-import us.vario.greg.lct.data.file.JsonMetadataMapper
 
 beans={
     log4jConfigurer(org.springframework.beans.factory.config.MethodInvokingFactoryBean) {

@@ -5,11 +5,8 @@ import com.dtolabs.rundeck.core.resourcetree.ResourceMeta
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.resourcetree.ResourceStoragePlugin
-import us.vario.greg.lct.data.file.FileTree
-import us.vario.greg.lct.data.file.FileTreeUtil
-import us.vario.greg.lct.model.Path
-import us.vario.greg.lct.model.Resource
-import us.vario.greg.lct.model.Tree
+import org.rundeck.storage.api.Tree
+import org.rundeck.storage.data.file.FileTreeUtil
 
 /**
  * FileResourceStoragePlugin is ...
