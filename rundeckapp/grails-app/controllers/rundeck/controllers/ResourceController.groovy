@@ -2,6 +2,7 @@ package rundeck.controllers
 
 import org.apache.commons.fileupload.util.Streams
 import org.rundeck.storage.api.Resource
+import rundeck.filters.ApiRequestFilters
 import rundeck.services.ResourceService
 
 import javax.servlet.http.HttpServletRequest
@@ -17,10 +18,20 @@ class ResourceController {
     ]
     ResourceService resourceService
 
-    private def jsonRenderResource(builder,Resource res){
+    private def pathUrl(path){
+        return createLink(
+                absolute: true,
+                uri: "/api/${ApiRequestFilters.API_CURRENT_VERSION}/incubator/resource/$path"
+                )
+    }
+    private def jsonRenderResource(builder,Resource res, dirlist=[]){
         builder.with{
             path = res.path.toString()
             type = res.directory ? 'directory' : 'file'
+            if(!res.directory){
+                name = res.path.name
+            }
+            url = pathUrl(res.path)
             if (!res.directory) {
                 if (res.contents.meta) {
                     def bd = delegate
@@ -36,10 +47,26 @@ class ResourceController {
 
                 }
             }
+            if(dirlist){
+                delegate.'resources' = array {
+                    def builder2 = delegate
+                    dirlist.each { diritem ->
+                        builder2.element {
+                            jsonRenderResource(delegate, diritem,[])
+                        }
+                    }
+                }
+            }
         }
     }
-    private def xmlRenderResource(builder,Resource res){
-        builder.'resource'(path: res.path.toString(), type: res.directory ? 'directory' : 'file') {
+    private def xmlRenderResource(builder,Resource res,dirlist=[]){
+        def map=[path: res.path.toString(),
+                type: res.directory ? 'directory' : 'file',
+                url: pathUrl(res.path)]
+        if(!res.directory){
+            map.name= res.path.name
+        }
+        builder.'resource'(map) {
             if (!res.directory) {
                 def data = res.contents.meta
                 delegate.'resource-meta' {
@@ -50,6 +77,13 @@ class ResourceController {
                         }
                     }
                 }
+            }else if (dirlist){
+                delegate.'contents'(count: dirlist.size()) {
+                    def builder2 = delegate
+                    dirlist.each { diritem ->
+                        xmlRenderResource(builder2, diritem,[])
+                    }
+                }
             }
         }
     }
@@ -58,27 +92,12 @@ class ResourceController {
         withFormat {
             json {
                 render(contentType: 'application/json') {
-                    delegate.'resources'=array{
-                        def builder = delegate
-                        dirlist.each{ diritem->
-                            builder.element{
-                                jsonRenderResource(delegate,diritem)
-                            }
-                        }
-                    }
+                    jsonRenderResource(delegate, resource,dirlist)
                 }
             }
             xml {
-
                 render {
-                    delegate.'resource'(path: resource.path.toString(), type: resource.directory ? 'directory' : 'file') {
-                        delegate.'contents'(count:dirlist.size()){
-                            def builder=delegate
-                            dirlist.each{diritem->
-                                xmlRenderResource(builder,diritem)
-                            }
-                        }
-                    }
+                    xmlRenderResource(delegate, resource, dirlist)
                 }
             }
         }
@@ -88,10 +107,10 @@ class ResourceController {
         def cmask=resource.contents?.meta?.getAt(RES_META_RUNDECK_CONTENT_MASK)?.split(',') as Set
         //
         def maskContent=cmask?.contains('content')
-        
+
         def askedForContent= resContentType && request.getHeader('Accept').contains(resContentType)
         def anyContent= response.format == 'all'
-        
+
         if (askedForContent && maskContent) {
             //content is masked, issue 403
             response.status = 403
@@ -142,10 +161,12 @@ class ResourceController {
 
     def apiPostResource() {
         String resourcePath = params.resourcePath
-        def found = resourceService.hasResource(resourcePath)
-        if (found) {
+        if (resourceService.hasResource(resourcePath)) {
             response.status = 409
             return renderError("resource already exists: ${resourcePath}")
+        }else if(resourceService.hasPath(resourcePath)){
+            response.status = 409
+            return renderError("directory already exists: ${resourcePath}")
         }
         def map = [
                 (RES_META_RUNDECK_CONTENT_TYPE): request.contentType,
@@ -180,7 +201,7 @@ class ResourceController {
     }
     def apiGetResource() {
         String resourcePath = params.resourcePath
-        def found = resourceService.hasResource(resourcePath)
+        def found = resourceService.hasPath(resourcePath)
         if(!found){
             response.status=404
             return renderError("resource not found: ${resourcePath}")
