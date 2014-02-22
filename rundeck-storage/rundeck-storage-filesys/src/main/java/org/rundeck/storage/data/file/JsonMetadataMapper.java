@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -32,6 +34,10 @@ public class JsonMetadataMapper implements MetadataMapper {
     @Override
     @SuppressWarnings("unchecked")
     public Map<String, String> readMetadata(File metadata) throws IOException {
-        return objectMapper.readValue(metadata, Map.class);
+        if(metadata.isFile()){
+            return objectMapper.readValue(metadata, Map.class);
+        } else {
+            return Collections.<String, String>emptyMap();
+        }
     }
 }
