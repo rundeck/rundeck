@@ -1,12 +1,12 @@
 package org.rundeck.plugin.example;
 
 import com.dtolabs.rundeck.core.plugins.Plugin;
-import com.dtolabs.rundeck.core.storage.HasResourceStream;
 import com.dtolabs.rundeck.core.storage.ResourceMetaBuilder;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.storage.ResourceConverterPlugin;
 import org.apache.commons.codec.binary.Base64InputStream;
-import us.vario.greg.lct.model.Path;
+import org.rundeck.storage.api.HasInputStream;
+import org.rundeck.storage.api.Path;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,15 +22,15 @@ public class ExampleConverterPlugin implements ResourceConverterPlugin {
     public static final String X_EXAMPLE_B64_CONVERTER_WAS_ENCODED = "x-example-b64-converter:is-b64-encoded";
 
     /**
-     * Returns a {@link HasResourceStream} as a lazy way to wrap an input stream with a base64 encode/decode stream
+     * Returns a {@link HasInputStream} as a lazy way to wrap an input stream with a base64 encode/decode stream
      *
      * @param hasResourceStream source
      * @param doEncode          true to encode
      *
      * @return lazy stream
      */
-    private static HasResourceStream wrap(final HasResourceStream hasResourceStream, final boolean doEncode) {
-        return new HasResourceStream() {
+    private static HasInputStream wrap(final HasInputStream hasResourceStream, final boolean doEncode) {
+        return new HasInputStream() {
             @Override
             public InputStream getInputStream() throws IOException {
                 return new Base64InputStream(hasResourceStream.getInputStream(), doEncode);
@@ -38,11 +38,11 @@ public class ExampleConverterPlugin implements ResourceConverterPlugin {
         };
     }
 
-    private HasResourceStream decode(HasResourceStream hasResourceStream) {
+    private HasInputStream decode(HasInputStream hasResourceStream) {
         return wrap(hasResourceStream, false);
     }
 
-    private HasResourceStream encode(HasResourceStream hasResourceStream) {
+    private HasInputStream encode(HasInputStream hasResourceStream) {
         return wrap(hasResourceStream, true);
     }
 
@@ -78,7 +78,7 @@ public class ExampleConverterPlugin implements ResourceConverterPlugin {
      * @return
      */
     @Override
-    public HasResourceStream readResource(Path path, ResourceMetaBuilder resourceMetaBuilder, final HasResourceStream
+    public HasInputStream readResource(Path path, ResourceMetaBuilder resourceMetaBuilder, final HasInputStream
             hasResourceStream) {
         if (wasEncoded(resourceMetaBuilder)) {
             return decode(hasResourceStream);
@@ -88,15 +88,15 @@ public class ExampleConverterPlugin implements ResourceConverterPlugin {
     }
 
     @Override
-    public HasResourceStream createResource(Path path, ResourceMetaBuilder resourceMetaBuilder,
-            HasResourceStream hasResourceStream) {
+    public HasInputStream createResource(Path path, ResourceMetaBuilder resourceMetaBuilder,
+            HasInputStream hasResourceStream) {
         addMetadataWasEncoded(resourceMetaBuilder);
         return encode(hasResourceStream);
     }
 
     @Override
-    public HasResourceStream updateResource(Path path, ResourceMetaBuilder resourceMetaBuilder,
-            HasResourceStream hasResourceStream) {
+    public HasInputStream updateResource(Path path, ResourceMetaBuilder resourceMetaBuilder,
+            HasInputStream hasResourceStream) {
         addMetadataWasEncoded(resourceMetaBuilder);
         return encode(hasResourceStream);
     }
