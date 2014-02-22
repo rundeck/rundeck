@@ -108,8 +108,8 @@ beans={
         resourceConverterPluginProviderService=ref('resourceConverterPluginProviderService')
         storageConfigPrefix='rundeck.storage.provider'
         converterConfigPrefix='rundeck.storage.converter'
-        defaultPluginType='file'
-        defaultPluginConfig=['baseDir':'${framework.var.dir}/storage']
+        baseStorageType='file'
+        baseStorageConfig=['baseDir':'${framework.var.dir}/storage']
     }
     /**
      * Define groovy-based plugins as Spring beans, registered in a hash map

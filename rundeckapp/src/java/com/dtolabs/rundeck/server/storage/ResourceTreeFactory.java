@@ -13,6 +13,7 @@ import com.dtolabs.rundeck.server.plugins.ConfiguredPlugin;
 import com.dtolabs.rundeck.server.plugins.PluginRegistry;
 import com.dtolabs.rundeck.server.plugins.services.ResourceConverterPluginProviderService;
 import com.dtolabs.rundeck.server.plugins.services.ResourceStoragePluginProviderService;
+import org.apache.log4j.Logger;
 import org.rundeck.storage.api.PathUtil;
 import org.rundeck.storage.api.ResourceSelector;
 import org.rundeck.storage.api.Tree;
@@ -31,27 +32,20 @@ import java.util.Map;
  * @since 2/19/14 3:24 PM
  */
 public class ResourceTreeFactory implements FactoryBean<ResourceTree>, InitializingBean {
+    static Logger logger = Logger.getLogger(ResourceTreeFactory.class);
     public static final String TYPE = "type";
     public static final String PATH = "path";
     public static final String CONFIG = "config";
     public static final String SEP = ".";
     public static final String REMOVE_PATH_PREFIX = "removePathPrefix";
-    public static final String RUNDECK_RESOURCE_STORAGE = "rundeck.resource.storage";
-    public static final String RUNDECK_RESOURCE_CONVERTER = "rundeck.resource.converter";
-    public static final String DEFAULT_PLUGIN_TYPE = "file";
     public static final String RESOURCE_SELECTOR = "resourceSelector";
     Framework rundeckFramework;
     private PluginRegistry pluginRegistry;
-//    private ConfigObject serverConfig;
-    private String storageConfigPrefix = RUNDECK_RESOURCE_STORAGE;
-    private String converterConfigPrefix = RUNDECK_RESOURCE_CONVERTER;
-    private String defaultPluginType = DEFAULT_PLUGIN_TYPE;
-    private static Map<String,String> defaultDefaultPluginConfig = new HashMap<String, String>(){{
-        put("baseDir", "${framework.var.dir}/storage");
-    }};
-    private Map<String,String> defaultPluginConfig = new HashMap<String, String>();
+    private String storageConfigPrefix ;
+    private String converterConfigPrefix ;
+    private String baseStorageType;
+    private Map<String,String> baseStorageConfig = new HashMap<String, String>();
 
-    private Tree<ResourceMeta> constructedTree;
     private ResourceStoragePluginProviderService resourceStoragePluginProviderService;
     private ResourceConverterPluginProviderService resourceConverterPluginProviderService;
 
@@ -75,7 +69,16 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
         if (null == resourceConverterPluginProviderService) {
             throw new FactoryBeanNotInitializedException("'resourceConverterPluginProviderService' is required");
         }
-        return ResourceUtil.asResourceTree(buildTree());
+        if (null == storageConfigPrefix) {
+            throw new FactoryBeanNotInitializedException("'storageConfigPrefix' is required");
+        }
+        if (null == converterConfigPrefix) {
+            throw new FactoryBeanNotInitializedException("'converterConfigPrefix' is required");
+        }
+        if (null == baseStorageType) {
+            throw new FactoryBeanNotInitializedException("'baseStorageType' is required");
+        }
+        return ResourceUtil.asResourceTree(buildTree(rundeckFramework.getPropertyLookup().getPropertiesMap()));
     }
 
     @Override
@@ -93,57 +96,82 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
 
     }
 
-    private Tree<ResourceMeta> buildTree() {
+    private Tree<ResourceMeta> buildTree(Map configProps) {
         //configure the tree
         TreeBuilder<ResourceMeta> builder = TreeBuilder.builder();
+        //set base using file storage, could be overridden
+        Map<String, String> config1 = expandConfig(getBaseStorageConfig());
+        logger.debug("Configuring base storage provider: " + getBaseStorageType() + ", " +
+                "config: " + config1);
+        ResourceStoragePlugin base = loadPlugin(
+                getBaseStorageType(),
+                config1,
+                resourceStoragePluginProviderService
+        );
+        builder.base(base);
+        Map<String, String> config = stringStringMap(rundeckFramework.getPropertyLookup().getPropertiesMap());
         int storeIndex = 1;
-        boolean seen=false;
-        while (rundeckFramework.hasProperty(getStorageConfigPrefix() + SEP + storeIndex + TYPE)) {
-            configureStoragePlugin(builder, storeIndex);
-            seen=true;
+
+        while (configProps.containsKey(getStorageConfigPrefix() + SEP + storeIndex + SEP + TYPE)) {
+            configureStoragePlugin(builder, storeIndex, config);
             storeIndex++;
         }
-        if (!seen) {
-            //load default resource storage
-            ResourceStoragePlugin base = loadDefaultStoragePlugin();
-            builder.base(base);
+        if (1 == storeIndex) {
+            logger.debug("No storage plugins configured with prefix " + getStorageConfigPrefix());
         }
         int converterIndex = 1;
-        while (rundeckFramework.hasProperty(getConverterConfigPrefix() + SEP + converterIndex + TYPE)) {
-            builder=configureConverterPlugin(builder, converterIndex);
+        while (configProps.containsKey(getConverterConfigPrefix() + SEP + converterIndex + SEP + TYPE)) {
+            builder=configureConverterPlugin(builder, converterIndex, config);
             converterIndex++;
         }
+        if(1==converterIndex){
+            logger.debug("No converter plugins configured with prefix "+getConverterConfigPrefix());
+        }
         return builder.build();
+    }
+
+    private Map<String,String> stringStringMap(Map map) {
+        HashMap<String, String> stringStringHashMap = new HashMap<String, String>();
+        for (Object o : map.keySet()) {
+            stringStringHashMap.put(o.toString(), map.get(o).toString());
+        }
+        return stringStringHashMap;
     }
 
     /**
      * Configure converter plugins for the builder
      * @param builder builder
      * @param index given index
+     * @param configProps configuration properties
      * @return builder
      */
-    private TreeBuilder<ResourceMeta> configureConverterPlugin(TreeBuilder<ResourceMeta> builder, int index) {
+    private TreeBuilder<ResourceMeta> configureConverterPlugin(TreeBuilder<ResourceMeta> builder, int index,
+            Map<String,String> configProps) {
         String pref1 = getConverterConfigPrefix() + SEP + index;
-        String pluginType = rundeckFramework.getProperty(pref1 + SEP + TYPE);
+        String pluginType = configProps.get(pref1 + SEP + TYPE);
         String pathProp = pref1 + SEP + PATH;
         String selectorProp = pref1 + SEP + RESOURCE_SELECTOR;
-        String path = rundeckFramework.getProperty(pathProp);
-        String selector = rundeckFramework.getProperty(selectorProp);
+        String path = configProps.get(pathProp);
+        String selector = configProps.get(selectorProp);
         if(null==path && null==selector) {
             throw new IllegalArgumentException("Converter plugin [" + index + "] specified by " + (pref1) + " MUST " +
                     "define one of: " +
                     pathProp + " OR " + selectorProp);
         }
 
-        Map<String, String> config = subPropertyMap(pref1 + SEP + CONFIG + SEP, rundeckFramework.getPropertyLookup().getPropertiesMap());
-
+        Map<String, String> config = subPropertyMap(pref1 + SEP + CONFIG + SEP, configProps);
+        config= expandConfig(config);
+        logger.debug("Add Converter[" + index + "]:"
+                + (null != path ? path : "/")
+                +  "[" + (null != selector?selector:"*") + "]"
+                + " " + pluginType + ", config: " + config);
         ResourceConverterPlugin converterPlugin = loadPlugin(
                 pluginType,
-                expandConfig(config),
+                config,
                 resourceConverterPluginProviderService
         );
         //convert tree under the subpath if specified, AND matching the selector if specified
-        builder.convert(new ResourceConverterPluginAdapter(converterPlugin),
+        builder=builder.convert(new ResourceConverterPluginAdapter(converterPlugin),
                 null != path ? PathUtil.asPath(path.trim()) : null,
                 createResourceMetaSelector(selector));
         return builder;
@@ -159,7 +187,7 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
      * @return a resource selector corresponding to the parsed selector string
      */
     private ResourceSelector<ResourceMeta> createResourceMetaSelector(String selector) {
-        if(null==selector){
+        if(null==selector || "*".equals(selector)){
             return null;
         }
         String[] split = selector.split(";");
@@ -218,21 +246,24 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
 
     /**
      * Configures storage plugins with the builder
-     * @param builder
-     * @param index
+     * @param builder builder
+     * @param index current prop index
+     * @param configProps configuration properties
      */
-    private void configureStoragePlugin(TreeBuilder<ResourceMeta> builder, int index) {
+    private void configureStoragePlugin(TreeBuilder<ResourceMeta> builder, int index,Map<String,String> configProps) {
         String pref1 = getStorageConfigPrefix() + SEP + index;
-        String pluginType = rundeckFramework.getProperty(pref1 + SEP + TYPE);
-        String path = rundeckFramework.getProperty(pref1 + SEP + PATH);
-        boolean removePathPrefix = Boolean.parseBoolean(rundeckFramework.getProperty(pref1 + SEP +
+        String pluginType = configProps.get(pref1 + SEP + TYPE);
+        String path = configProps.get(pref1 + SEP + PATH);
+        boolean removePathPrefix = Boolean.parseBoolean(configProps.get(pref1 + SEP +
                 REMOVE_PATH_PREFIX));
 
-        Map<String, String> config = subPropertyMap(pref1 + SEP + CONFIG + SEP, rundeckFramework.getPropertyLookup().getPropertiesMap());
-
+        Map<String, String> config = subPropertyMap(pref1 + SEP + CONFIG + SEP, configProps);
+        config = expandConfig(config);
+        logger.debug("Add Storage["+index+"]:"+ path+" " + pluginType + ", " +
+                "config: " + config);
         Tree<ResourceMeta> resourceMetaTree = loadPlugin(
                 pluginType,
-                expandConfig(config),
+                config,
                 resourceStoragePluginProviderService
         );
         if (index == 1 && "/".equals(path.trim())) {
@@ -242,31 +273,13 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
         }
     }
 
-    private ResourceStoragePlugin loadDefaultStoragePlugin() {
-        return loadPlugin(
-                getDefaultPluginType(),
-                expandConfig(createDefaultPluginConfig()),
-                resourceStoragePluginProviderService
-        );
-    }
-
-    private Map<String, String> createDefaultPluginConfig() {
-        Map<String, String> result = getDefaultPluginConfig();
-
-        if(result.size()<1) {
-            result.putAll(defaultDefaultPluginConfig);
-        }
-
-        return result;
-    }
-
     /**
      * Expand embedded framework property references in the map values
-     * @param result
-     * @return
+     * @param map map
+     * @return expanded map
      */
-    private Map<String, String> expandConfig(Map<String, String> result) {
-        return expandAllProperties(result, rundeckFramework.getPropertyLookup().getPropertiesMap());
+    private Map<String, String> expandConfig(Map<String, String> map) {
+        return expandAllProperties(map, rundeckFramework.getPropertyLookup().getPropertiesMap());
     }
 
     private Map<String, String> expandAllProperties(Map<String, String> source, Map values) {
@@ -331,19 +344,19 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
         this.resourceStoragePluginProviderService = resourceStoragePluginProviderService;
     }
 
-    public String getDefaultPluginType() {
-        return defaultPluginType;
+    public String getBaseStorageType() {
+        return baseStorageType;
     }
 
-    public void setDefaultPluginType(String defaultPluginType) {
-        this.defaultPluginType = defaultPluginType;
+    public void setBaseStorageType(String baseStorageType) {
+        this.baseStorageType = baseStorageType;
     }
 
-    public Map<String, String> getDefaultPluginConfig() {
-        return defaultPluginConfig;
+    public Map<String, String> getBaseStorageConfig() {
+        return baseStorageConfig;
     }
 
-    public void setDefaultPluginConfig(Map<String, String> defaultPluginConfig) {
-        this.defaultPluginConfig = defaultPluginConfig;
+    public void setBaseStorageConfig(Map<String, String> baseStorageConfig) {
+        this.baseStorageConfig = baseStorageConfig;
     }
 }
