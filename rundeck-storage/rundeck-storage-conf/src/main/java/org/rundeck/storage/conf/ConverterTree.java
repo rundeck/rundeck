@@ -55,30 +55,45 @@ public class ConverterTree<T extends ContentMeta> extends DelegateTree<T> implem
     @Override
     public Resource<T> getResource(Path path) {
         final Resource<T> resource = super.getResource(path);
-        if (shouldConvert(path, resource.getContents())) {
+        if (!resource.isDirectory() && shouldConvert(path, resource.getContents(), pathSelector, resourceSelector)) {
             return filterGetResource(path, resource);
         }
         return resource;
     }
 
-    private boolean shouldConvert(Path path, T content) {
-        return matchesPathOr(path, true) && matchesContentOr(content, true);
+    @Override
+    public Resource<T> getPath(Path path) {
+        final Resource<T> resource = super.getPath(path);
+        if (!resource.isDirectory() && shouldConvert(path, resource.getContents(), pathSelector, resourceSelector)) {
+            return filterGetResource(path, resource);
+        }
+        return resource;
     }
 
-    private boolean matchesContentOr(T content, boolean b) {
-        if (null != resourceSelector) {
-            return resourceSelector.matchesContent(content);
+    /**
+     * Return true if the path and content match the specified path selector and resource selector
+     * @param path path
+     * @param content content
+     * @param pathSelector1 selector, or null matches all paths
+     * @param resourceSelector1 resource selector, or null matches all resources
+     * @param <T> type
+     * @return true if both match
+     */
+    static <T extends ContentMeta> boolean shouldConvert(Path path, T content, PathSelector pathSelector1,
+            ResourceSelector<T> resourceSelector1) {
+        boolean result;
+        if (null != pathSelector1) {
+            result = pathSelector1.matchesPath(path);
         } else {
-            return b;
+            result = true;
         }
-    }
-
-    private boolean matchesPathOr(Path path, boolean or) {
-        if (null != pathSelector) {
-            return pathSelector.matchesPath(path);
+        boolean result1;
+        if (null != resourceSelector1) {
+            result1 = resourceSelector1.matchesContent(content);
         } else {
-            return or;
+            result1 = true;
         }
+        return result && result1;
     }
 
     private Resource<T> filterGetResource(Path path, final Resource<T> resource) {
@@ -93,7 +108,7 @@ public class ConverterTree<T extends ContentMeta> extends DelegateTree<T> implem
 
     @Override
     public Resource<T> createResource(Path path, T content) {
-        if (shouldConvert(path, content)) {
+        if (shouldConvert(path, content, pathSelector, resourceSelector)) {
             return super.createResource(path, filterCreateData(path, content));
         }
         return super.createResource(path, content);
@@ -101,7 +116,7 @@ public class ConverterTree<T extends ContentMeta> extends DelegateTree<T> implem
 
     @Override
     public Resource<T> updateResource(Path path, T content) {
-        if (shouldConvert(path, content)) {
+        if (shouldConvert(path, content, pathSelector, resourceSelector)) {
             return super.updateResource(path, filterUpdateData(path, content));
         }
         return super.updateResource(path, content);
