@@ -47,6 +47,15 @@ public class FileTree<T extends ContentMeta> extends StringToPathTree<T> impleme
         }
     }
 
+    @Override
+    public Resource<T> getPath(Path path) {
+        try {
+            return loadResource(path);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to read resource: " + path + ": " + e.getMessage(), e);
+        }
+    }
+
     private Resource<T> loadResource(Path path) throws IOException {
         File datafile = filepathMapper.contentFileForPath(path);
         boolean directory = datafile.isDirectory();
@@ -134,6 +143,7 @@ public class FileTree<T extends ContentMeta> extends StringToPathTree<T> impleme
         HashSet<Resource<T>> files = new HashSet<Resource<T>>();
         try {
             for (File file1 : file.listFiles()) {
+
                 Resource<T> res = loadResource(filepathMapper.pathForContentFile(file1));
                 if (null == test || test.apply(res)) {
                     files.add(res);

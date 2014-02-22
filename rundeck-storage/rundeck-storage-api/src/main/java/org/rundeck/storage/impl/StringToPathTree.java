@@ -29,6 +29,11 @@ public abstract class StringToPathTree<T extends ContentMeta> implements Tree<T>
     }
 
     @Override
+    public Resource<T> getPath(String path) {
+        return getPath(PathUtil.asPath(path));
+    }
+
+    @Override
     public Resource<T> getResource(String path) {
         return getResource(PathUtil.asPath(path));
     }

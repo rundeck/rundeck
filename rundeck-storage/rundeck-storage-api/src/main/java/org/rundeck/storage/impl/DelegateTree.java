@@ -31,6 +31,11 @@ public class DelegateTree<T extends ContentMeta> extends BaseDelegateTree<T> imp
     }
 
     @Override
+    public Resource<T> getPath(Path path) {
+        return getDelegate().getPath(path);
+    }
+
+    @Override
     public Resource<T> getResource(Path path) {
         return getDelegate().getResource(path);
     }

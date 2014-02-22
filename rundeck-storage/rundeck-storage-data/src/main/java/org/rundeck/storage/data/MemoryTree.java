@@ -105,6 +105,14 @@ public class MemoryTree<T extends ContentMeta> extends StringToPathTree<T> imple
     }
 
     @Override
+    public Resource<T> getPath(Path path) {
+        if (!hasPath(path)) {
+            throw new IllegalArgumentException("No path: " + path);
+        }
+        return index.get(path).res;
+    }
+
+    @Override
     public Set<Resource<T>> listDirectoryResources(Path path) {
         if (!hasDirectory(path)) {
             throw new IllegalArgumentException("No directory for path: " + path);

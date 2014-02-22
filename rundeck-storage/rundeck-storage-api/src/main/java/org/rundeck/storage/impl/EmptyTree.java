@@ -26,37 +26,42 @@ public class EmptyTree<T extends ContentMeta> extends StringToPathTree<T> {
     }
 
     @Override
+    public Resource<T> getPath(Path path) {
+        throw new IllegalArgumentException("Empty: no resource or directory for path: " + path);
+    }
+
+    @Override
     public Resource<T> getResource(Path path) {
-        throw new IllegalArgumentException("no resource for path: " + path);
+        throw new IllegalArgumentException("Empty: no resource for path: " + path);
     }
 
     @Override
     public Set<Resource<T>> listDirectoryResources(Path path) {
-        throw new IllegalArgumentException("no resource for path: " + path);
+        throw new IllegalArgumentException("Empty: no resource for path: " + path);
     }
 
     @Override
     public Set<Resource<T>> listDirectory(Path path) {
-        throw new IllegalArgumentException("no resource for path: " + path);
+        throw new IllegalArgumentException("Empty: no resource for path: " + path);
     }
 
     @Override
     public Set<Resource<T>> listDirectorySubdirs(Path path) {
-        throw new IllegalArgumentException("no resource for path: " + path);
+        throw new IllegalArgumentException("Empty: no resource for path: " + path);
     }
 
     @Override
     public boolean deleteResource(Path path) {
-        throw new IllegalArgumentException("no resource for path: " + path);
+        throw new IllegalArgumentException("Empty: no resource for path: " + path);
     }
 
     @Override
     public Resource<T> createResource(Path path, T content) {
-        throw new IllegalArgumentException("No tree storage");
+        throw new IllegalArgumentException("Empty: cannot create resource");
     }
 
     @Override
     public Resource<T> updateResource(Path path, T content) {
-        throw new IllegalArgumentException("No tree storage");
+        throw new IllegalArgumentException("Empty: no resource for path: " + path);
     }
 }

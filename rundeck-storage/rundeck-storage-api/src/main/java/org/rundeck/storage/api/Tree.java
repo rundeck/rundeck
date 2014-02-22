@@ -41,11 +41,23 @@ public interface Tree<T extends ContentMeta> {
     boolean hasDirectory(String path);
 
     /**
+     * Return the resource or directory at the path
+     *
+     * @param path path
+     *
+     * @return Resource or directory
+     */
+    Resource<T> getPath(Path path);
+
+    Resource<T> getPath(String path);
+
+    /**
      * Return the resource at the path
      *
-     * @param path
+     * @param path path
      *
-     * @return
+     * @return Resource
+     * @throws IllegalArgumentException if the path is a directory or does not exist
      */
     Resource<T> getResource(Path path);
 
@@ -90,6 +102,7 @@ public interface Tree<T extends ContentMeta> {
      * @param path path
      *
      * @return true if the resource was deleted
+     * @throws IllegalArgumentException if the path is a directory or does not exist
      */
     boolean deleteResource(Path path);
 
@@ -101,6 +114,7 @@ public interface Tree<T extends ContentMeta> {
      * @param path path
      *
      * @return the resource
+     * @throws IllegalArgumentException if the path is a directory
      */
     Resource<T> createResource(Path path, T content);
 
@@ -113,6 +127,7 @@ public interface Tree<T extends ContentMeta> {
      * @param path path
      *
      * @return the resource
+     * @throws IllegalArgumentException if the path is a directory or does not exist
      */
     Resource<T> updateResource(Path path, T content);
 

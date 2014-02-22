@@ -24,6 +24,11 @@ public class TreeStack<T extends ContentMeta> extends DelegateTree<T> {
     }
 
     @Override
+    public Resource<T> getPath(Path path) {
+        return getContentStorage(path).getPath(path);
+    }
+
+    @Override
     public Set<Resource<T>> listDirectoryResources(Path path) {
         return getContentStorage(path).listDirectoryResources(path);
     }

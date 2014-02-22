@@ -88,6 +88,11 @@ public class SubPathTree<T extends ContentMeta> extends DelegateTree<T> implemen
     }
 
     @Override
+    public Resource<T> getPath(Path path) {
+        return translateResourceExternal(super.getPath(translatePathInternal(path)));
+    }
+
+    @Override
     public Set<Resource<T>> listDirectory(Path path) {
         return translateAllExternal(super.listDirectory(translatePathInternal(path)));
     }
