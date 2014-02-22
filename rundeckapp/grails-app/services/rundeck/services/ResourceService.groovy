@@ -7,11 +7,14 @@ import org.rundeck.storage.data.DataUtil
 class ResourceService {
     ResourceTree rundeckResourceTree
 
-    def hasResource(String path) {
+    def hasPath(String path) {
         rundeckResourceTree.hasPath(path)
     }
+    def hasResource(String path) {
+        rundeckResourceTree.hasResource(path)
+    }
     def getResource(String path) {
-        rundeckResourceTree.getResource(path)
+        rundeckResourceTree.getPath(path)
     }
 
     def putResource(String path, Map<String, String> meta, String data) {
