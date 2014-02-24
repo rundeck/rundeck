@@ -2,8 +2,8 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.server.authorization.AuthConstants
-import org.codehaus.groovy.grails.web.util.StreamCharBuffer
 import rundeck.filters.ApiRequestFilters
 import rundeck.services.ProjectServiceException
 
@@ -107,17 +107,44 @@ class ProjectController extends ControllerBase{
     }
     /**
      * Render project info result using a builder
+     * @param pject framework project object
+     * @param delegate builder delegate for response
+     * @param hasConfigAuth true if 'configure' action is allowed
+     * @param vers api version requested
      */
-    def renderApiProject = { pject, delegate ->
+    private def renderApiProjectXml (FrameworkProject pject, delegate, hasConfigAuth=false, vers=1){
         delegate.'project'(href: generateProjectApiUrl(pject.name)) {
             name(pject.name)
             description(pject.hasProperty('project.description') ? pject.getProperty('project.description') : '')
-            if (pject.hasProperty("project.resources.url")) {
-                resources {
-                    providerURL(pject.getProperty("project.resources.url"))
+            if(vers<ApiRequestFilters.V11){
+                if (pject.hasProperty("project.resources.url")) {
+                    resources {
+                        providerURL(pject.getProperty("project.resources.url"))
+                    }
+                }
+            }else if(hasConfigAuth){
+                //include config data
+                config{
+                    loadProjectProperties(pject).each{k,v->
+                        delegate.'property'(key: k, value: v)
+                    }
                 }
             }
         }
+    }
+
+    private Map loadProjectProperties(FrameworkProject pject) {
+        Properties props = new Properties()
+        try {
+            final FileInputStream fileInputStream = new FileInputStream(pject.getPropertyFile());
+            try{
+                props.load(fileInputStream)
+            }finally {
+                fileInputStream.close()
+            }
+        }catch (IOException e){
+        }
+        return props
     }
 
     /**
@@ -137,8 +164,9 @@ class ProjectController extends ControllerBase{
         def projlist = frameworkService.projects(authContext)
         return apiService.renderSuccessXml(response) {
             delegate.'projects'(count: projlist.size()) {
-                projlist.each { pject ->
-                    renderApiProject(pject, delegate)
+                projlist.sort{a,b->a.name<=>b.name}.each { pject ->
+                    //don't include config data
+                    renderApiProjectXml(pject, delegate, false, request.api_version)
                 }
             }
         }
@@ -153,7 +181,8 @@ class ProjectController extends ControllerBase{
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])
         }
-        if (!frameworkService.authorizeApplicationResourceAll(authContext, [type: 'project', name: params.project], ['read'])) {
+        if (!frameworkService.authorizeApplicationResourceAll(authContext, [type: 'project', name: params.project],
+                [AuthConstants.ACTION_READ])) {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Read', 'Project', params.project]])
         }
@@ -162,10 +191,12 @@ class ProjectController extends ControllerBase{
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist', args: ['project', params.project]])
         }
+        def configAuth= frameworkService.authorizeApplicationResourceAll(authContext, [type: 'project',
+                name: params.project], [AuthConstants.ACTION_CONFIGURE])
         def pject = frameworkService.getFrameworkProject(params.project)
         return apiService.renderSuccessXml(response) {
             delegate.'projects'(count: 1) {
-                renderApiProject(pject, delegate)
+                renderApiProjectXml(pject, delegate, configAuth, request.api_version)
             }
         }
     }
