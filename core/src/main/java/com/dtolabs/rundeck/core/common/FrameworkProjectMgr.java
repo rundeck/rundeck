@@ -118,6 +118,18 @@ public class FrameworkProjectMgr extends FrameworkResourceParent implements IFra
     }
 
     /**
+     * Remove a project definition
+     * @param projectName name of the project
+     */
+    @Override
+    public void removeFrameworkProject(final String projectName){
+        synchronized (projectCache) {
+            super.remove(projectName);
+            projectCache.remove(projectName);
+        }
+    }
+
+    /**
      * returns a collection of Depot objects
      *
      * @return

@@ -81,4 +81,10 @@ public interface IFrameworkProjectMgr extends IFrameworkResourceParent, IPropert
      * @param properties additional properties to include in the project's properties file
      */
     FrameworkProject createFrameworkProject(String projectName, Properties properties);
+
+    /**
+     * Remove a project definition
+     * @param projectName name of the project
+     */
+    void removeFrameworkProject(String projectName);
 }
