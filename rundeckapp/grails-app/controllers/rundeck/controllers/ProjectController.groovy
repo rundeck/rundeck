@@ -3,8 +3,11 @@ package rundeck.controllers
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import org.codehaus.groovy.grails.web.util.StreamCharBuffer
+import rundeck.filters.ApiRequestFilters
 import rundeck.services.ProjectServiceException
 
+import javax.servlet.http.HttpServletResponse
 import java.text.SimpleDateFormat
 import org.apache.commons.fileupload.util.Streams
 import org.springframework.web.multipart.MultipartHttpServletRequest
@@ -14,6 +17,7 @@ import com.dtolabs.rundeck.core.authentication.Group
 class ProjectController extends ControllerBase{
     def frameworkService
     def projectService
+    def apiService
     def static allowedMethods = [
             importArchive: ['POST'],
     ]
@@ -100,5 +104,79 @@ class ProjectController extends ControllerBase{
             }
             return redirect(controller: 'menu',action: 'admin',params:[project:project])
         }
+    }
+    /**
+     * Render project info result using a builder
+     */
+    def renderApiProject = { pject, delegate ->
+        delegate.'project'(href: generateProjectApiUrl(pject.name)) {
+            name(pject.name)
+            description(pject.hasProperty('project.description') ? pject.getProperty('project.description') : '')
+            if (pject.hasProperty("project.resources.url")) {
+                resources {
+                    providerURL(pject.getProperty("project.resources.url"))
+                }
+            }
+        }
+    }
+
+    /**
+     * Generate absolute api URL for the project
+     * @param projectName
+     * @return
+     */
+    private String generateProjectApiUrl(String projectName) {
+        g.createLink(absolute: true, uri: "/api/${ApiRequestFilters.API_CURRENT_VERSION}/project/${projectName}")
+    }
+
+    /**
+     * API: /api/11/projects
+     */
+    def apiProjectList(){
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        def projlist = frameworkService.projects(authContext)
+        return apiService.renderSuccessXml(response) {
+            delegate.'projects'(count: projlist.size()) {
+                projlist.each { pject ->
+                    renderApiProject(pject, delegate)
+                }
+            }
+        }
+    }
+
+    /**
+     * API: /api/11/project/NAME
+     */
+    def apiProjectGet(){
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if (!params.project) {
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.parameter.required', args: ['project']])
+        }
+        if (!frameworkService.authorizeApplicationResourceAll(authContext, [type: 'project', name: params.project], ['read'])) {
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
+                    code: 'api.error.item.unauthorized', args: ['Read', 'Project', params.project]])
+        }
+        def exists = frameworkService.existsFrameworkProject(params.project)
+        if (!exists) {
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.item.doesnotexist', args: ['project', params.project]])
+        }
+        def pject = frameworkService.getFrameworkProject(params.project)
+        return apiService.renderSuccessXml(response) {
+            delegate.'projects'(count: 1) {
+                renderApiProject(pject, delegate)
+            }
+        }
+    }
+
+    def apiProjectCreate() {
+
+    }
+    def apiProjectDelete(){
+
+    }
+    def apiProjectConfig(){
+
     }
 }

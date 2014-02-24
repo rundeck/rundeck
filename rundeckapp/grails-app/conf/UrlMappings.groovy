@@ -32,7 +32,9 @@ class UrlMappings {
         "/api/$api_version/jobs/export"(controller: 'menu', action: 'apiJobsExport')
         "/api/$api_version/jobs/import"(controller: 'scheduledExecution', action: 'apiJobsImport')
         "/api/$api_version/jobs/delete"(controller: 'scheduledExecution', action: 'apiJobDeleteBulk')
-        "/api/$api_version/project/$project?"(controller: 'framework', action: 'apiProject')
+        "/api/$api_version/project/$project?"(controller: 'project'){
+            action = [GET: 'apiProjectGet', DELETE:'apiProjectDelete']
+        }
         /** v2 */
         "/api/$api_version/project/$project/resources/refresh"(controller: 'framework', action: 'apiProjectResourcesRefresh')
         /** v2  */
@@ -41,7 +43,9 @@ class UrlMappings {
         }
         /** v2 */
         "/api/$api_version/project/$project/jobs"(controller: 'menu', action: 'apiJobsListv2')
-        "/api/$api_version/projects"(controller: 'framework', action: 'apiProjects')
+        "/api/$api_version/projects"(controller: 'project'){
+            action = [GET: 'apiProjectList', POST:'apiProjectCreate']
+        }
 //        "/api/renderError"(controller: 'api', action: 'renderError')
 //        "/api/error"(controller: 'api', action: 'error')
         "/api/$api_version/report/create"(controller: 'reports', action: 'apiReportCreate')
