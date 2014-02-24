@@ -292,7 +292,48 @@ class ProjectController extends ControllerBase{
 
     }
     def apiProjectDelete(){
+        String project = params.project
+        if (!project) {
+            return apiService.renderErrorFormat(response,
+                    [
+                            status: HttpServletResponse.SC_BAD_REQUEST,
+                            code: "api.error.parameter.required",
+                            args: ['project']
+                    ])
+        }
+        Framework framework = frameworkService.getRundeckFramework()
+        if (!frameworkService.existsFrameworkProject(project)) {
 
+            return apiService.renderErrorFormat(response,
+                    [
+                            status: HttpServletResponse.SC_NOT_FOUND,
+                            code: "api.error.item.doesnotexist",
+                            args: ['Project',project]
+                    ])
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        if (!frameworkService.authorizeApplicationResourceAll(authContext,
+                [type: 'project', name: project], [AuthConstants.ACTION_DELETE])) {
+            return apiService.renderErrorFormat(response,
+                    [
+                            status: HttpServletResponse.SC_FORBIDDEN,
+                            code: "api.error.item.unauthorized",
+                            args: [AuthConstants.ACTION_DELETE, "Project",project]
+                    ])
+        }
+        def project1 = frameworkService.getFrameworkProject(project)
+
+        def result = projectService.deleteProject(project1, framework)
+        if (!result.success) {
+            return apiService.renderErrorFormat(response,
+                    [
+                            status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                            message: result.error,
+                    ])
+        }
+        //success
+        response.status=HttpServletResponse.SC_NO_CONTENT
     }
     def apiProjectConfig(){
 
