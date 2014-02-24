@@ -20,6 +20,7 @@ class ProjectController extends ControllerBase{
     def apiService
     def static allowedMethods = [
             importArchive: ['POST'],
+            delete: ['POST'],
     ]
 
     def index () {
@@ -105,6 +106,39 @@ class ProjectController extends ControllerBase{
             return redirect(controller: 'menu',action: 'admin',params:[project:project])
         }
     }
+
+    def delete = {
+        def project = params.project
+        if (!project) {
+            request.error = "Project parameter is required"
+            return render(view: "/common/error")
+        }
+        Framework framework = frameworkService.getRundeckFramework()
+        if (!frameworkService.existsFrameworkProject(project)) {
+            response.setStatus(404)
+            request.error = g.message(code: 'scheduledExecution.project.invalid.message', args: [project])
+            return render(view: "/common/error")
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if (!frameworkService.authorizeApplicationResourceAll(authContext, [type: 'project', name: project],
+                [AuthConstants.ACTION_DELETE])) {
+            response.setStatus(403)
+            request.error = g.message(code: 'api.error.item.unauthorized', args: [AuthConstants.ACTION_DELETE,
+                    "Project", params.project])
+            return render(view: "/common/error")
+        }
+        def project1 = frameworkService.getFrameworkProject(project)
+
+        def result = projectService.deleteProject(project1, framework)
+        if (!result.success) {
+            log.error("Failed to delete project: ${result.error}")
+            flash.error = result.error
+            return redirect(controller: 'menu', action: 'admin', params: [project: project])
+        }
+        flash.message = 'Deleted project: ' + project
+        return redirect(controller: 'menu', action: 'home')
+    }
+
     /**
      * Render project XML result using a builder
      * @param pject framework project object

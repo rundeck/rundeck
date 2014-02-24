@@ -23,6 +23,8 @@ import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
+import java.util.jar.Attributes
+import org.springframework.transaction.TransactionStatus
 
 class ProjectService {
     def grailsApplication
@@ -522,6 +524,53 @@ class ProjectService {
         }
         log.info("Loaded ${loadexecresults.size()} executions, map: ${execidmap}")
         execidmap
+    }
+
+    /**
+     * Delete a project completely
+     * @param project framework project
+     * @param framework frameowkr
+     * @return map [success:true/false, error: (String errorMessage)]
+     */
+    def deleteProject(FrameworkProject project, Framework framework){
+        def result = [success: false]
+        BaseReport.withTransaction { TransactionStatus status ->
+
+            try {
+                //delete all reports
+                BaseReport.findAllByCtxProject(project.name).each { e ->
+                    e.delete(flush: true)
+                }
+                ExecReport.findAllByCtxProject(project.name).each { e ->
+                    e.delete(flush: true)
+                }
+                //delete all executions
+                Execution.findAllByProject(project.name).each{ e->
+                    //delete related log files
+                    [LoggingService.LOG_FILE_FILETYPE,WorkflowService.STATE_FILE_FILETYPE].each{ ftype->
+                        def file = logFileStorageService.getFileForExecutionFiletype(e, ftype, true)
+                        if (null!=file && file.exists() && !FileUtils.deleteQuietly(file)) {
+                            log.warn("Failed to delete file while deleting project ${project.name}: ${file.absolutePath}")
+                        }
+                    }
+                    e.delete(flush: true)
+                }
+                //delete all jobs
+                ScheduledExecution.findAllByProject(project.name).each{ se->
+                    se.delete(flush: true)
+                }
+                result = [success: true]
+            } catch (Exception e) {
+                status.setRollbackOnly()
+                log.error("Failed to delete project ${project.name}", e)
+                result = [error: "Failed to delete project ${project.name}: ${e}", success: false]
+            }
+        }
+        //if success, delete framework dir
+        if(result.success){
+            framework.getFrameworkProjectMgr().removeFrameworkProject(project.name)
+        }
+        return result
     }
 }
 
