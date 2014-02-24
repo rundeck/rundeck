@@ -106,7 +106,7 @@ class ProjectController extends ControllerBase{
         }
     }
     /**
-     * Render project info result using a builder
+     * Render project XML result using a builder
      * @param pject framework project object
      * @param delegate builder delegate for response
      * @param hasConfigAuth true if 'configure' action is allowed
@@ -116,16 +116,16 @@ class ProjectController extends ControllerBase{
         delegate.'project'(href: generateProjectApiUrl(pject.name)) {
             name(pject.name)
             description(pject.hasProperty('project.description') ? pject.getProperty('project.description') : '')
-            if(vers<ApiRequestFilters.V11){
+            if (vers < ApiRequestFilters.V11) {
                 if (pject.hasProperty("project.resources.url")) {
                     resources {
                         providerURL(pject.getProperty("project.resources.url"))
                     }
                 }
-            }else if(hasConfigAuth){
+            } else if (hasConfigAuth) {
                 //include config data
-                config{
-                    loadProjectProperties(pject).each{k,v->
+                config {
+                    frameworkService.loadProjectProperties(pject).each { k, v ->
                         delegate.'property'(key: k, value: v)
                     }
                 }

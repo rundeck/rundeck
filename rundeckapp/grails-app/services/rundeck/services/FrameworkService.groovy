@@ -584,4 +584,23 @@ class FrameworkService implements ApplicationContextAware {
         }
         return props
     }
+
+    /**
+     * Load direct project properties as a map
+     * @param pject the project
+     * @return loaded properties
+     */
+    def Map loadProjectProperties(FrameworkProject pject) {
+        Properties props = new Properties()
+        try {
+            final FileInputStream fileInputStream = new FileInputStream(pject.getPropertyFile());
+            try {
+                props.load(fileInputStream)
+            } finally {
+                fileInputStream.close()
+            }
+        } catch (IOException e) {
+        }
+        return props
+    }
 }
