@@ -41,5 +41,8 @@ public class AuthConstants {
     public static final String ACTION_REFRESH = "refresh";
     public static final String ACTION_RUNAS = "runAs";
     public static final String ACTION_KILLAS = "killAs";
+    public static final String ACTION_CONFIGURE = "configure";
+    public static final String ACTION_IMPORT= "import";
+    public static final String ACTION_EXPORT= "export";
 
 }
