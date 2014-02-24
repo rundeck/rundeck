@@ -185,7 +185,7 @@ class ProjectService {
         def execidmap=[:]
         def ecount=0
         doc.execution.each{ enode->
-            def object = XmlParserUtil.toObject(enode)
+            def object = XmlParserUtil.toObject(enode,false)
             if (object instanceof Map) {
                 JobsXMLCodec.convertXmlWorkflowToMap(object.workflow)
                 //remap job id if necessary
@@ -195,6 +195,9 @@ class ProjectService {
                 }else if(object.jobId && skipJobIds && skipJobIds.contains(object.jobId)){
                     log.debug("Execution skipped ${object.id} for job ${object.jobId}")
                     return
+                }
+                if(object.id){
+                    object.id=XmlParserUtil.stringToInt(object.id,-1)
                 }
                 //convert dates
                 convertStringsToDates(object, ['dateStarted', 'dateCompleted'], "Execution($ecount) ID ${object.id}")

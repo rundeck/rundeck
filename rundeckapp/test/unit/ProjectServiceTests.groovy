@@ -86,6 +86,39 @@ class ProjectServiceTests  {
     static String EXEC_XML_TEST3 = EXEC_XML_TEST1_START + '''
     <outputfilepath />''' + '''
     <jobId>jobid1</jobId>''' + EXEC_XML_TEST1_REST
+    /**
+     * Execution xml with associated job ID
+     */
+    static String EXEC_XML_TEST4 = EXEC_XML_TEST1_START + '''
+    <outputfilepath>output-1.rdlog</outputfilepath>''' + '''
+    <failedNodeList />
+    <succeededNodeList />
+    <abortedby />
+    <cancelled>false</cancelled>
+    <argString>-test args</argString>
+    <loglevel>WARN</loglevel>
+    <doNodedispatch>true</doNodedispatch>
+    <nodefilters>
+      <dispatch>
+        <threadcount>1</threadcount>
+        <keepgoing>false</keepgoing>
+        <excludePrecedence>true</excludePrecedence>
+        <rankOrder>ascending</rankOrder>
+      </dispatch>
+      <filter>hostname: test1 !tags: monkey</filter>
+    </nodefilters>
+    <project>testproj</project>
+    <user>testuser</user>
+    <workflow keepgoing='false' strategy='node-first'>
+      <command>
+        <jobref name='echo' nodeStep='true'>
+          <arg line='-name ${node.name}' />
+        </jobref>
+        <description>echo on node</description>
+      </command>
+    </workflow>
+  </execution>
+</executions>'''
 
     def testExportExecution(){
         ProjectService svc = new ProjectService()
@@ -271,12 +304,31 @@ class ProjectServiceTests  {
                 status: 'true',
         ]
         assertPropertiesEquals expected,e
+        assertEquals e,e
+        assertEquals 1,result.execidmap.size()
+        assertEquals e,result.execidmap.keySet().first()
+        assertEquals 1,result.execidmap.values().first()
         assertEquals( [(e):1],result.execidmap)
 
         assertNotNull e.workflow
         assertNotNull e.workflow.commands
         assertEquals 1,e.workflow.commands.size()
         assertPropertiesEquals( [adhocRemoteString: 'exec command'],e.workflow.commands[0])
+    }
+    def testImportExecutionWorkflow(){
+        ProjectService svc = new ProjectService()
+        def result = svc.loadExecutions(EXEC_XML_TEST4)
+        assertNotNull result
+        assertNotNull result.executions
+        assertNotNull result.execidmap
+        assertEquals 1,result.executions.size()
+        def Execution e = result.executions[0]
+        assertNotNull e.workflow
+        assertNotNull e.workflow.commands
+        assertEquals 1,e.workflow.commands.size()
+        assertPropertiesEquals( [jobName: 'echo', nodeStep:true,argString: '-name ${node.name}',
+                description: 'echo on node'],
+                e.workflow.commands[0])
     }
     /**
      * Imported execution where jobId should be skipped, should not be loaded

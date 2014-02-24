@@ -149,10 +149,10 @@ class JobsXMLCodec {
                         optm.values = [optm.values.toString()]
                     }
                     if(null!=optm.enforcedvalues) {
-                        optm.enforced = Boolean.parseBoolean(optm.remove('enforcedvalues'))
+                        optm.enforced = XmlParserUtil.stringToBool(optm.remove('enforcedvalues'),false)
                     }
                     if(null!=optm.required) {
-                        optm.required = Boolean.parseBoolean(optm.remove('required'))
+                        optm.required = XmlParserUtil.stringToBool(optm.remove('required'),false)
                     }
                     if(ndx>-1){
                         optm.sortIndex=ndx++;
@@ -173,7 +173,7 @@ class JobsXMLCodec {
                 //convert to integer
                 def value= map.nodefilters.dispatch.threadcount
                 try{
-                    map.nodefilters.dispatch.threadcount=Integer.parseInt(value)
+                    map.nodefilters.dispatch.threadcount= XmlParserUtil.stringToInt(value,1)
                 }catch (NumberFormatException e){
                     throw new JobXMLException("Not a valid threadcount: "+value)
                 }
@@ -181,12 +181,12 @@ class JobsXMLCodec {
             if(null!=map.nodefilters.dispatch.keepgoing){
                 //convert to boolean
                 def value= map.nodefilters.dispatch.keepgoing
-                map.nodefilters.dispatch.keepgoing=Boolean.parseBoolean(value)
+                map.nodefilters.dispatch.keepgoing= XmlParserUtil.stringToBool(value,false)
             }
             if(null!=map.nodefilters.dispatch.excludePrecedence){
                 //convert to boolean
                 def value= map.nodefilters.dispatch.excludePrecedence
-                map.nodefilters.dispatch.excludePrecedence=Boolean.parseBoolean(value)
+                map.nodefilters.dispatch.excludePrecedence= XmlParserUtil.stringToBool(value,false)
             }
         }
         if(map.schedule){
@@ -279,7 +279,8 @@ class JobsXMLCodec {
                 if (cmd.scriptfile!=null || cmd.script!=null || cmd.scripturl!=null) {
                     cmd.args = cmd.remove('scriptargs')?.toString()
                     if(cmd.scriptinterpreter instanceof Map){
-                        cmd.interpreterArgsQuoted = Boolean.parseBoolean(cmd.scriptinterpreter.remove('argsquoted'))
+                        cmd.interpreterArgsQuoted = XmlParserUtil.stringToBool(cmd.scriptinterpreter.remove
+                                ('argsquoted'),false)
                         cmd.scriptInterpreter = cmd.scriptinterpreter.remove('<text>')
                     }else if(cmd.scriptinterpreter instanceof String){
                         cmd.scriptInterpreter = cmd.remove('scriptinterpreter')
@@ -298,7 +299,7 @@ class JobsXMLCodec {
                         cmd.jobref.remove('arg')
                     }
                     if (null != cmd.jobref.nodeStep) {
-                        cmd.jobref.nodeStep = Boolean.parseBoolean(cmd.jobref.nodeStep)
+                        cmd.jobref.nodeStep = XmlParserUtil.stringToBool(cmd.jobref.nodeStep, false)
                     }
                 }else if(cmd['node-step-plugin'] || cmd['step-plugin']){
                     def parsePluginConfig={ plc->
@@ -329,7 +330,7 @@ class JobsXMLCodec {
                     }
                 }
                 if(null!= cmd.keepgoingOnSuccess){
-                    cmd.keepgoingOnSuccess=Boolean.parseBoolean(cmd.keepgoingOnSuccess)
+                    cmd.keepgoingOnSuccess= XmlParserUtil.stringToBool(cmd.keepgoingOnSuccess,false)
                 }
             }
             data.commands.each(fixup)
@@ -340,7 +341,7 @@ class JobsXMLCodec {
             }
         }
         if(null!=data.keepgoing && data.keepgoing instanceof String){
-            data.keepgoing = Boolean.parseBoolean(data.keepgoing)
+            data.keepgoing = XmlParserUtil.stringToBool(data.keepgoing,false)
         }
     }
     /**
