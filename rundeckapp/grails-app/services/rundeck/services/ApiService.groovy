@@ -58,6 +58,22 @@ class ApiService {
         }
     }
 
+    /**
+     * Render error in either JSON or XML format, depending on expected response
+     * @param response
+     * @param error
+     * @return
+     */
+    def renderErrorFormat(HttpServletResponse response, Map error){
+        response.withFormat{
+            json{
+                renderErrorJson(response,error)
+            }
+            xml{
+                renderErrorXml(response,error)
+            }
+        }
+    }
     def renderErrorXml(HttpServletResponse response, Map error){
         if(error.status){
             response.setStatus(error.status)
