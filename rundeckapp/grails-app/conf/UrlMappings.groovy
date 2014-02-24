@@ -82,6 +82,7 @@ class UrlMappings {
         "/project/$project/export"(controller: 'project',action: 'export')
         "/project/$project/importArchive"(controller: 'project',action: 'importArchive')
         "/project/$project"(controller: 'menu',action: 'index')
+        "/project/$project/$action"(controller: 'project')
         "/job/show/$id"(controller: 'scheduledExecution',action: 'show')
         "/execution/show/$id"(controller: 'execution',action: 'show')
         "404"(view: '/404')
