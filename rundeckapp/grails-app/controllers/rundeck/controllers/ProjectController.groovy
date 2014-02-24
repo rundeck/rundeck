@@ -132,20 +132,27 @@ class ProjectController extends ControllerBase{
             }
         }
     }
-
-    private Map loadProjectProperties(FrameworkProject pject) {
-        Properties props = new Properties()
-        try {
-            final FileInputStream fileInputStream = new FileInputStream(pject.getPropertyFile());
-            try{
-                props.load(fileInputStream)
-            }finally {
-                fileInputStream.close()
+    /**
+     * Render project JSON result using a builder
+     * @param pject framework project object
+     * @param delegate builder delegate for response
+     * @param hasConfigAuth true if 'configure' action is allowed
+     * @param vers api version requested
+     */
+    private def renderApiProjectJson (FrameworkProject pject, delegate, hasConfigAuth=false, vers=1){
+        delegate.href= generateProjectApiUrl(pject.name)
+        delegate.name=pject.name
+        delegate.description=pject.hasProperty('project.description') ? pject.getProperty('project.description') : ''
+        if(hasConfigAuth){
+            def builder = delegate
+            delegate.config {
+                frameworkService.loadProjectProperties(pject).each { k, v ->
+                    builder."${k}" = v
+                }
             }
-        }catch (IOException e){
         }
-        return props
     }
+
 
     /**
      * Generate absolute api URL for the project
@@ -162,14 +169,33 @@ class ProjectController extends ControllerBase{
     def apiProjectList(){
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def projlist = frameworkService.projects(authContext)
-        return apiService.renderSuccessXml(response) {
-            delegate.'projects'(count: projlist.size()) {
-                projlist.sort{a,b->a.name<=>b.name}.each { pject ->
-                    //don't include config data
-                    renderApiProjectXml(pject, delegate, false, request.api_version)
+        withFormat{
+
+            xml{
+                return apiService.renderSuccessXml(response) {
+                    delegate.'projects'(count: projlist.size()) {
+                        projlist.sort { a, b -> a.name <=> b.name }.each { pject ->
+                            //don't include config data
+                            renderApiProjectXml(pject, delegate, false, request.api_version)
+                        }
+                    }
+                }
+            }
+            json{
+                return render(contentType: 'application/json'){
+                    projects=array{
+                        def builder = delegate
+                        projlist.sort { a, b -> a.name <=> b.name }.each { pject ->
+                            //don't include config data
+                            project{
+                                renderApiProjectJson(pject, builder, false, request.api_version)
+                            }
+                        }
+                    }
                 }
             }
         }
+
     }
 
     /**
@@ -194,14 +220,41 @@ class ProjectController extends ControllerBase{
         def configAuth= frameworkService.authorizeApplicationResourceAll(authContext, [type: 'project',
                 name: params.project], [AuthConstants.ACTION_CONFIGURE])
         def pject = frameworkService.getFrameworkProject(params.project)
-        return apiService.renderSuccessXml(response) {
-            delegate.'projects'(count: 1) {
-                renderApiProjectXml(pject, delegate, configAuth, request.api_version)
+        withFormat{
+            xml{
+
+                return apiService.renderSuccessXml(response) {
+                    delegate.'projects'(count: 1) {
+                        renderApiProjectXml(pject, delegate, configAuth, request.api_version)
+                    }
+                }
+            }
+            json{
+                return render(contentType: 'application/json'){
+                    renderApiProjectJson(pject, delegate, configAuth, request.api_version)
+                }
             }
         }
     }
 
     def apiProjectCreate() {
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V11)) {
+            return
+        }
+
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if (!frameworkService.authorizeApplicationResourceTypeAll(authContext, 'project', ['create'])) {
+            return apiService.renderErrorFormat(response,
+                    [
+                            status: HttpServletResponse.SC_FORBIDDEN,
+                            code: "api.error.item.unauthorized",
+                            args: [AuthConstants.ACTION_CREATE, "Rundeck", "Project"]
+                    ])
+        }
+
+        def prefixKey = 'plugin'
+        Framework framework = frameworkService.getRundeckFramework()
+        def project = params.newproject
 
     }
     def apiProjectDelete(){
