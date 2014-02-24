@@ -202,9 +202,9 @@ class ReportService  {
                 stat: 'status',
                 reportId: 'reportId',
                 jobId: 'jcJobId',
+                proj: 'ctxProject',
         ]
         def txtfilters = [
-                proj: 'ctxProject',
                 user: 'author',
                 node: 'node',
                 message: 'message',
@@ -304,9 +304,9 @@ class ReportService  {
                 stat: 'status',
                 reportId: 'reportId',
                 jobId: 'jcJobId',
+                proj: 'ctxProject',
         ]
         def txtfilters = [
-                proj: 'ctxProject',
                 user: 'author',
                 node: 'node',
                 message: 'message',

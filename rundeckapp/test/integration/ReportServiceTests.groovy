@@ -70,6 +70,39 @@ class ReportServiceTests extends GroovyTestCase {
         assertQueryResult([reportIdFilter: 'blah3'], [r3])
         assertQueryResult([reportIdFilter: 'blah4'], [])
     }
+    void testgetExecReportsProjFilterIsExact(){
+        def r1,r2,r3
+
+        ExecReport.withNewSession {
+            r1=proto(reportId:'blah', jcExecId: '123', ctxProject:'abc')
+            assert r1.validate()
+            assert null!=r1.save(flush: true)
+            assert 'blah'==r1.reportId
+            assertNotNull(r1.id)
+            r2 = proto(reportId: 'blah2', jcExecId: '124', ctxProject: 'abc')
+            assert r2.validate()
+            assert null != r2.save(flush: true)
+            r3 = proto(reportId: 'blah3', jcExecId: '125', ctxProject: 'abcdef')
+            assert r3.validate()
+            println r3.save(flush: true)
+
+            sessionFactory.currentSession.flush()
+        }
+        r1=r1.refresh()
+        r2=r2.refresh()
+        r3=r3.refresh()
+        assertEquals(3,ExecReport.count())
+        def query = new ExecQuery(projFilter: 'abcdef')
+
+        def result=reportService.getExecutionReports(query,true)
+        assert result.total==1
+        assert result.reports.size()==1
+        assert result.reports.contains(r3)
+
+        assertQueryResult([projFilter: 'abc'], [r1,r2])
+        assertQueryResult([projFilter: 'abcd'], [])
+        assertQueryResult([projFilter: 'abcdef'], [r3])
+    }
     void testgetExecReportsJobListFilter(){
         def r1=proto(reportId:'group/name',jcExecId:'1')
         assert null!=r1.save(flush: true)
