@@ -19,8 +19,14 @@
 </head>
 <body>
 
+<div class="row">
+<div class="col-sm-12">
+    <g:render template="/common/messages"/>
+</div>
+</div>
 <g:if test="${projCount>0}">
 <div class="row row-space">
+
     <div class="col-sm-4">
         <span class="h3 text-muted">
             ${projCount}

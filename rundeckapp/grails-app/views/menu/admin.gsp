@@ -20,7 +20,7 @@
    Created: 6/1/11 2:22 PM
 --%>
 
-<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
@@ -70,6 +70,13 @@
             <a href="#import"
                data-toggle="tab"
                 >Import Archive</a>
+        </li>
+        <g:set var="authDelete" value="${auth.resourceAllowedTest(action:AuthConstants.ACTION_DELETE, type : "project" , name :
+        (params.project ?: request.project),context:"application")}"/>
+        <li class="${!authDelete?'disabled':''}">
+            <a href="#delete" data-toggle="${authDelete?'tab':''}" title="${authDelete?'':'Unauthorized'}">
+                <g:message code="delete.project" />
+            </a>
         </li>
     </ul>
 
@@ -185,7 +192,68 @@
         </div>
 
     </div>
+
+
 </div>
+<auth:resourceAllowed action="${AuthConstants.ACTION_DELETE}"
+                      type="project" name="${(params.project ?: request.project)}" context="application">
+<div class="tab-pane" id="delete">
+    <div class="panel panel-default panel-tab-content">
+        <div class="panel-heading">
+            Delete Project
+        </div>
+        <div class="panel-body">
+
+
+                <button class="btn btn-danger btn-lg" data-toggle="modal" data-target="#deleteProjectModal">
+                    Delete this Project&hellip;
+                    <i class="glyphicon glyphicon-remove"></i>
+                </button>
+                <g:form style="display: inline;" controller="project" action="delete" params="[project: (params.project ?: request.project)]">
+                <div class="modal fade" id="deleteProjectModal" role="dialog" aria-labelledby="deleteProjectModalLabel"
+                     aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal"
+                                        aria-hidden="true">&times;</button>
+                                <h4 class="modal-title" id="deleteProjectModalLabel">Delete Project</h4>
+                            </div>
+
+                            <div class="modal-body">
+                                <span class="text-danger">Really delete this Project?</span>
+                            </div>
+                            <div class="modal-body container">
+                                <div class="form-group">
+                                    <label class="control-label col-sm-2">Project:</label>
+
+                                    <div class="col-sm-10">
+                                        <span class="form-control-static"
+                                              data-bind="text: filterName">${(params.project ?: request.project).encodeAsHTML()}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">No</button>
+                                <button type="submit" class="btn btn-danger"><g:message code="gui.menu.ProjectDelete"
+                                                                                        default="Delete Project Now"/></button>
+                            </div>
+                        </div><!-- /.modal-content -->
+                    </div><!-- /.modal-dialog -->
+                </div>
+
+
+                </g:form>
+
+        </div>
+
+    </div>
+
+
+</div>
+</auth:resourceAllowed>
 
 <div class="tab-pane" id="import">
     <g:form controller="project" action="importArchive" params="[project:params.project ?: request.project]"
