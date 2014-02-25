@@ -25,7 +25,6 @@ import java.util.*;
 
 /**
  * DepotMgr is a framework resource that provides interfaces for looking up other resources such
- * as {@link FrameworkType} {@link FrameworkResourceInstance}, etc.
  */
 public class FrameworkProjectMgr extends FrameworkResourceParent implements IFrameworkProjectMgr {
 
@@ -53,7 +52,6 @@ public class FrameworkProjectMgr extends FrameworkResourceParent implements IFra
      * @param name       Name of manager. informational purposes
      * @param baseDir    Basedir where child resources live
      * @param framework  Framework instance
-     * @param initialize If true, calls {@link #initialize()} method.
      */
     private FrameworkProjectMgr(final String name, final File baseDir, final Framework framework) {
         super(name, baseDir, framework);
@@ -77,15 +75,23 @@ public class FrameworkProjectMgr extends FrameworkResourceParent implements IFra
 
         return project;
     }
-    /**
-     * Add a new project to the map. Checks if project has its own module library and creates
-     * a ModuleLookup object accordingly.
-     *
-     * @param projectName Name of the project
-     * @param properties additional properties to include in the project's properties file
-     */
+
     public FrameworkProject createFrameworkProject(final String projectName, final Properties properties) {
-        final FrameworkProject project = createFrameworkProjectInt(projectName,properties);
+        final FrameworkProject project = createFrameworkProjectInt(projectName,properties,false);
+
+        return project;
+    }
+
+    /**
+     * Create a new project if it doesn't, otherwise throw exception
+     * @param projectName name of project
+     * @param properties config properties
+     * @return new project
+     * @throws IllegalArgumentException if the project already exists
+     */
+    @Override
+    public FrameworkProject createFrameworkProjectStrict(final String projectName, final Properties properties) {
+        final FrameworkProject project = createFrameworkProjectInt(projectName,properties,true);
 
         return project;
     }
@@ -93,25 +99,30 @@ public class FrameworkProjectMgr extends FrameworkResourceParent implements IFra
     final HashMap<String,FrameworkProject> projectCache= new HashMap<String, FrameworkProject>();
     /**
      * Create a project object without adding to child map
-     * @param projectName
+     * @param projectName name of project
      * @return
      */
     private FrameworkProject createFrameworkProjectInt(final String projectName) {
-        return createFrameworkProjectInt(projectName, null);
+        return createFrameworkProjectInt(projectName, null,false);
     }
+
     /**
      * Create a project object without adding to child map
      * @param projectName
      * @return
      */
-    private FrameworkProject createFrameworkProjectInt(final String projectName,final Properties properties) {
+    private FrameworkProject createFrameworkProjectInt(final String projectName,final Properties properties,
+            boolean strict) {
         final FrameworkProject project;
+        if (strict && existsFrameworkProject(projectName)) {
+            throw new IllegalArgumentException("project exists: " + projectName);
+        }
         synchronized (projectCache) {
             if (null != projectCache.get(projectName)) {
                 return projectCache.get(projectName);
             }
             // check if the FrameworkProject has its own module library
-            project= FrameworkProject.create(projectName, getBaseDir(), this, properties);
+            project = FrameworkProject.create(projectName, getBaseDir(), this, properties);
             projectCache.put(projectName, project);
         }
         return project;

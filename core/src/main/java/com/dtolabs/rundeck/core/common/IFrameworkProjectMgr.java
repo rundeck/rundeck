@@ -74,8 +74,7 @@ public interface IFrameworkProjectMgr extends IFrameworkResourceParent, IPropert
     FrameworkProject createFrameworkProject(String projectName);
 
     /**
-     * Add a new project to the map. Checks if project has its own module library and creates
-     * a ModuleLookup object accordingly.
+     * Create a new project if it doesn't exist, otherwise returns existing project
      *
      * @param projectName Name of the project
      * @param properties additional properties to include in the project's properties file
@@ -87,4 +86,13 @@ public interface IFrameworkProjectMgr extends IFrameworkResourceParent, IPropert
      * @param projectName name of the project
      */
     void removeFrameworkProject(String projectName);
+
+    /**
+     * Create a new project if it doesn't, otherwise throw exception
+     * @param projectName name of project
+     * @param properties config properties
+     * @return new project
+     * @throws IllegalArgumentException if the project already exists
+     */
+    FrameworkProject createFrameworkProjectStrict(String projectName, Properties properties);
 }
