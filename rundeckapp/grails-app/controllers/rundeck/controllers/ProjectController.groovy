@@ -275,21 +275,81 @@ class ProjectController extends ControllerBase{
         if (!apiService.requireVersion(request, response, ApiRequestFilters.V11)) {
             return
         }
-
+        //allow Accept: header, but default to the request format
+        def respFormat = ((response.format in ['xml', 'json']) ? response.format : request.format)
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if (!frameworkService.authorizeApplicationResourceTypeAll(authContext, 'project', ['create'])) {
+        if (!frameworkService.authorizeApplicationResourceTypeAll(authContext, 'project',
+                [AuthConstants.ACTION_CREATE])) {
             return apiService.renderErrorFormat(response,
                     [
                             status: HttpServletResponse.SC_FORBIDDEN,
                             code: "api.error.item.unauthorized",
-                            args: [AuthConstants.ACTION_CREATE, "Rundeck", "Project"]
+                            args: [AuthConstants.ACTION_CREATE, "Rundeck", "Project"],
+                            format:respFormat
                     ])
         }
 
-        def prefixKey = 'plugin'
-        Framework framework = frameworkService.getRundeckFramework()
-        def project = params.newproject
 
+        if (!(request.format in ['xml','json'])) {
+            //bad request
+            return apiService.renderErrorFormat(response,
+                    [
+                            status: HttpServletResponse.SC_BAD_REQUEST,
+                            code: "api.error.invalid.request",
+                            args: ["Expected application/xml or application/json Content-Type but was: " +
+                                    "${request.getHeader('Content-Type')}"],
+                            format: respFormat
+                    ])
+        }
+
+        def project = null
+        Map config = null
+
+        //parse request format
+        request.withFormat{
+            json{
+                def parsedProject=request.JSON
+                project=parsedProject?.name?.toString()
+                config=parsedProject?.config
+            }
+            xml{
+                def parsedProject = request.XML
+                project = parsedProject?.name[0]?.text()
+                config = [:]
+                parsedProject?.config?.property?.each{
+                    config[it.'@key'.text()]=it.'@value'.text()
+                }
+            }
+        }
+
+        if (!project) {
+            return apiService.renderErrorFormat(response,
+                    [
+                            status: HttpServletResponse.SC_BAD_REQUEST,
+                            code: "api.error.invalid.request",
+                            args: ["Project 'name' is required"],
+                            format: respFormat
+                    ])
+        }
+        def proj
+        def errors
+        (proj,errors)=frameworkService.createFrameworkProject(project,new Properties(config))
+        if(errors){
+            return apiService.renderErrorFormat(response,[status:HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    message: errors.join('; '),format: respFormat])
+        }
+        switch(respFormat) {
+            case 'xml':
+                render {
+                    renderApiProjectXml(proj,delegate,true,request.api_version)
+                }
+                break
+            case 'json':
+                render(contentType: 'application/json') {
+                    renderApiProjectJson(proj, delegate, true, request.api_version)
+                }
+                break
+        }
     }
     def apiProjectDelete(){
         String project = params.project
