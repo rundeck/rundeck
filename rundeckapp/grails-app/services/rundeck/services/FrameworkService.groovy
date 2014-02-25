@@ -87,6 +87,43 @@ class FrameworkService implements ApplicationContextAware {
         return rundeckFramework.getFrameworkProjectMgr().getFrameworkProject(project)
     }
     /**
+     * Create a new project
+     * @param project name
+     * @param properties config properties
+     * @return [project, [error list]]
+     */
+    def createFrameworkProject(String project, Properties properties){
+        def proj=null
+        def errors=[]
+        try {
+            proj = rundeckFramework.getFrameworkProjectMgr().createFrameworkProjectStrict(project, properties)
+        } catch (Error e) {
+            log.error(e.message)
+            errors << e.getMessage()
+        } catch (RuntimeException e) {
+            log.error(e.message)
+            errors << e.getMessage()
+        }
+        [proj,errors]
+    }
+    /**
+     * Update project properties by merging
+     * @param project name
+     * @param properties new properties to merge in
+     * @param removePrefixes set of string prefixes of properties to remove
+     * @return [success:boolean, error: String]
+     */
+    def updateFrameworkProjectConfig(String project,Properties properties, Set<String> removePrefixes){
+        try {
+            getFrameworkProject(project).mergeProjectProperties(properties, removePrefixes)
+        } catch (Error e) {
+            log.error(e.message)
+            log.debug(e.message,e)
+            return [success: false, error: e.message]
+        }
+        [success:true]
+    }
+    /**
      * Return a map of the project's readme and motd content
      * @param project
      * @param framework

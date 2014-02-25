@@ -680,12 +680,7 @@ class FrameworkController extends ControllerBase {
         } else if (!errors) {
             log.debug("create project, properties: ${projProps}");
             def proj
-            try {
-                proj = framework.getFrameworkProjectMgr().createFrameworkProject(project, projProps)
-            } catch (Error e) {
-                log.error(e.message)
-                errors << e.getMessage()
-            }
+            (proj, errors)=frameworkService.createFrameworkProject(project,projProps)
             if (!errors && proj) {
                 session.frameworkProjects = frameworkService.projects(authContext)
                 def result = userService.storeFilterPref(session.user, [project: proj.name])
@@ -895,11 +890,9 @@ class FrameworkController extends ControllerBase {
             removePrefixes<< FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX
 
             if(!error){
-                try {
-                    fproject.mergeProjectProperties(projProps,removePrefixes)
-                } catch (Error e) {
-                    log.error(e.message)
-                    error= e.getMessage()
+                def result = frameworkService.updateFrameworkProjectConfig(project,projProps,removePrefixes)
+                if(!result.success){
+                    error=result.error
                 }
             }
             if(!error){
