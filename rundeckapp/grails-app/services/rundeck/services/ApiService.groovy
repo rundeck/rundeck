@@ -1,10 +1,12 @@
 package rundeck.services
 
 import groovy.xml.MarkupBuilder
+import org.codehaus.groovy.grails.web.converters.exceptions.ConverterException
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.filters.ApiRequestFilters
 
+import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import java.text.SimpleDateFormat
 
@@ -56,6 +58,104 @@ class ApiService {
                 recall()
             }
         }
+    }
+
+    /**
+     * Determine appropriate response format based on allowed formats or request format. If the requested response
+     * type is in the allowed formats it is returned, otherwise if a default format is specified it is used.  If the
+     * response format is not in the allowed formats and no default is specified, the request content type format is
+     * returned.
+     * @param request request
+     * @param response response
+     * @param allowed list of allowed formats
+     * @param defformat default format, or null to use the request format
+     * @return format name
+     */
+    public String extractResponseFormat(HttpServletRequest request, HttpServletResponse response,
+                                      ArrayList<String> allowed, String defformat = null) {
+        return ((response.format in allowed) ? response.format : (defformat ?: request.format))
+    }
+    /**
+     * Require request to be a certain format, returns false if not valid and error response is already sent
+     * @param request request
+     * @param response response
+     * @param allowed allowed formats
+     * @param responseFormat response format to send ('xml' or 'json') if request is not valid, or null to use default
+     * @return true if valid, false otherwise
+     */
+    def requireRequestFormat(HttpServletRequest request, HttpServletResponse response, ArrayList<String> allowed, def
+    responseFormat = null) {
+        def test = request.format in allowed
+        if (!test) {
+            //bad request
+            renderErrorFormat(response,
+                    [
+                            status: HttpServletResponse.SC_BAD_REQUEST,
+                            code: "api.error.invalid.request",
+                            args: ["Expected request content to be one of allowed formats: [" + allowed.join(', ' +
+                                    '') + "], " +
+                                    "but was: " +
+                                    "${request.getHeader('Content-Type')}"],
+                            format: responseFormat
+                    ])
+        }
+        test
+    }
+
+    /**
+     * Parse XML or JSON input formatted data, and handle with appropriate closure.  If the input format is not
+     * supported, or there is an error parsing the input, an error response is sent, and false is returned.
+     * @param request request
+     * @param response response
+     * @param handlers handler map, using keys 'xml' or 'json'.
+     * @return true if parsing was successful, false if an error occurred and a response has already been sent
+     */
+    public boolean parseJsonXmlWith(HttpServletRequest request, HttpServletResponse response,
+                                    Map<String, Closure> handlers) {
+        def respFormat = extractResponseFormat(request, response, ['xml', 'json'])
+        if (!requireRequestFormat(request, response, ['xml', 'json'], respFormat)) {
+            return false
+        }
+        String error
+        request.withFormat {
+            json {
+                if (handlers.json) {
+                    try {
+                        def parsed = request.JSON
+
+                        if (!parsed) {
+                            error = "Could not parse JSON"
+                        } else {
+                            handlers.json(parsed)
+                        }
+                    } catch (ConverterException e) {
+                        error = e.message + (e.cause ? ": ${e.cause.message}" : '')
+                    }
+                }else{
+                    error="Unexpected content type: ${request.getHeader('Content-Type')}"
+                }
+            }
+            xml {
+                if (handlers.xml) {
+                    try {
+                        handlers.xml(request.XML)
+                    } catch (ConverterException e) {
+                        error = e.message + (e.cause ? ": ${e.cause.message}" : '')
+                    }
+                } else {
+                    error = "Unexpected content type: ${request.getHeader('Content-Type')}"
+                }
+            }
+        }
+        if (error) {
+            renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    message: error,
+                    format: respFormat
+            ])
+            return false
+        }
+        return true
     }
 
     /**
