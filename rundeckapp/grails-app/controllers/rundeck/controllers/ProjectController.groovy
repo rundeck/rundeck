@@ -469,6 +469,45 @@ class ProjectController extends ControllerBase{
 
     def apiProjectConfigPut() {
         def project = apiProjectConfigSetup()
+        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'])
+        //parse config data
+        def config=null
+        def succeed = apiService.parseJsonXmlWith(request, response, [
+                xml: { xml ->
+                    config = [:]
+                    xml?.property?.each {
+                        config[it.'@key'.text()] = it.'@value'.text()
+                    }
+                },
+                json: { json ->
+                    config = json
+                }
+        ])
+        if(!succeed){
+            return
+        }
+        def result=frameworkService.updateFrameworkProjectConfig(project.name,new Properties(config),null)
+        if(!result.success){
+            return apiService.renderErrorFormat(response,[
+                    status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    message:result.error,
+                    format:respFormat
+            ])
+        }
+
+        switch (respFormat) {
+            case 'xml':
+                render {
+                    renderApiProjectConfigXml(project, delegate)
+                }
+                break
+            case 'json':
+                render(contentType: 'application/json') {
+                    renderApiProjectConfigJson(project, delegate)
+                }
+                break
+        }
 
     }
+
 }
