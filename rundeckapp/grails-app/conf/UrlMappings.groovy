@@ -38,6 +38,10 @@ class UrlMappings {
         "/api/$api_version/project/$project/config"(controller: 'project'){
             action = [GET: 'apiProjectConfigGet', PUT: 'apiProjectConfigPut']
         }
+        "/api/$api_version/project/$project/config/$keypath**"(controller: 'project'){
+            action = [GET: 'apiProjectConfigKeyGet', PUT: 'apiProjectConfigKeyPut',
+                    DELETE: 'apiProjectConfigKeyDelete']
+        }
         /** v2 */
         "/api/$api_version/project/$project/resources/refresh"(controller: 'framework', action: 'apiProjectResourcesRefresh')
         /** v2  */

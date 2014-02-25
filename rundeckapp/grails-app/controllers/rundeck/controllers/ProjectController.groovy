@@ -413,7 +413,7 @@ class ProjectController extends ControllerBase{
      * support project/NAME/config endpoint GET and PUT: validate project and configure authorization
      * @return FrameworkProject for the project
      */
-    private def apiProjectConfigSetup(){
+    private FrameworkProject apiProjectConfigSetup(){
         if (!apiService.requireVersion(request, response, ApiRequestFilters.V11)) {
             return
         }
@@ -507,6 +507,40 @@ class ProjectController extends ControllerBase{
                 }
                 break
         }
+
+    }
+    def apiProjectConfigKeyGet() {
+        def project = apiProjectConfigSetup()
+        def key = params.keypath
+        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json','text'],'text')
+
+        switch (respFormat) {
+            case 'text':
+                render (contentType: 'text/plain', text:project.getProperty(key))
+                break
+            case 'xml':
+                render {
+                    property(key:key,value:project.getProperty(key))
+                }
+                break
+            case 'json':
+                render(contentType: 'application/json') {
+                    delegate.'key'=key
+                    value= project.getProperty(key)
+                }
+                break
+        }
+    }
+    def apiProjectConfigKeyPut() {
+        def project = apiProjectConfigSetup()
+        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'])
+
+
+    }
+    def apiProjectConfigKeyDelete() {
+        def project = apiProjectConfigSetup()
+        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'])
+
 
     }
 
