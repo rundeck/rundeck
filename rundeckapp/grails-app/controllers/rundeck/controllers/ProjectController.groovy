@@ -292,12 +292,13 @@ class ProjectController extends ControllerBase{
         }
     }
 
+
     def apiProjectCreate() {
         if (!apiService.requireVersion(request, response, ApiRequestFilters.V11)) {
             return
         }
         //allow Accept: header, but default to the request format
-        def respFormat = ((response.format in ['xml', 'json']) ? response.format : request.format)
+        def respFormat = apiService.extractResponseFormat(request,response,['xml','json'])
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (!frameworkService.authorizeApplicationResourceTypeAll(authContext, 'project',
                 [AuthConstants.ACTION_CREATE])) {
@@ -310,37 +311,25 @@ class ProjectController extends ControllerBase{
                     ])
         }
 
-
-        if (!(request.format in ['xml','json'])) {
-            //bad request
-            return apiService.renderErrorFormat(response,
-                    [
-                            status: HttpServletResponse.SC_BAD_REQUEST,
-                            code: "api.error.invalid.request",
-                            args: ["Expected application/xml or application/json Content-Type but was: " +
-                                    "${request.getHeader('Content-Type')}"],
-                            format: respFormat
-                    ])
-        }
-
         def project = null
         Map config = null
 
         //parse request format
-        request.withFormat{
-            json{
-                def parsedProject=request.JSON
-                project=parsedProject?.name?.toString()
-                config=parsedProject?.config
-            }
-            xml{
-                def parsedProject = request.XML
-                project = parsedProject?.name[0]?.text()
-                config = [:]
-                parsedProject?.config?.property?.each{
-                    config[it.'@key'.text()]=it.'@value'.text()
+        def succeeded = apiService.parseJsonXmlWith(request,response, [
+                xml: { xml ->
+                    project = xml?.name[0]?.text()
+                    config = [:]
+                    xml?.config?.property?.each {
+                        config[it.'@key'.text()] = it.'@value'.text()
+                    }
+                },
+                json: { json ->
+                    project = json?.name?.toString()
+                    config = json?.config
                 }
-            }
+        ])
+        if(!succeeded){
+            return
         }
 
         if (!project) {
@@ -372,6 +361,7 @@ class ProjectController extends ControllerBase{
                 break
         }
     }
+
     def apiProjectDelete(){
         if (!apiService.requireVersion(request, response, ApiRequestFilters.V11)) {
             return
@@ -419,6 +409,10 @@ class ProjectController extends ControllerBase{
         //success
         response.status=HttpServletResponse.SC_NO_CONTENT
     }
+    /**
+     * support project/NAME/config endpoint GET and PUT: validate project and configure authorization
+     * @return FrameworkProject for the project
+     */
     private def apiProjectConfigSetup(){
         if (!apiService.requireVersion(request, response, ApiRequestFilters.V11)) {
             return
@@ -458,7 +452,7 @@ class ProjectController extends ControllerBase{
         def proj=apiProjectConfigSetup()
         //render project config only
 
-        def respFormat = (response.format in ['xml','json']?response.format:'xml')
+        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'], 'xml')
         switch (respFormat) {
             case 'xml':
                 render {
