@@ -531,6 +531,42 @@ public class TestFrameworkProject extends AbstractBaseTest {
         assertFalse(p.containsKey("test3.something"));
         assertFalse(p.containsKey("test3.somethingelse"));
     }
+    public void testMergeProjectPropertiesFileNullPrefixes() throws IOException {
+        final FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
+            new File(getFrameworkProjectsBase()),
+            getFrameworkInstance().getFrameworkProjectMgr());
+        final Properties testprops = new Properties();
+        testprops.setProperty("test1", "value1");
+        testprops.setProperty("test2", "value2");
+        testprops.setProperty("test3.something", "value3");
+        testprops.setProperty("test3.somethingelse", "value3.else");
+        boolean overwrite = true;
+        project.generateProjectPropertiesFile(overwrite, testprops);
+
+        final File propFile = new File(project.getEtcDir(), "project.properties");
+        assertTrue("project.properties file was not generated",
+            propFile.exists());
+
+
+        //merge new values for some, and remove prefixes for others
+        final Properties testprops2 = new Properties();
+        testprops2.setProperty("test1", "xvalue1");
+        testprops2.setProperty("test2", "xvalue2");
+        project.mergeProjectProperties(testprops2, null);
+
+
+        final Properties p = new Properties();
+        loadProps(p,propFile);
+        assertFalse(p.containsKey("project.resources.file"));
+        assertTrue(p.containsKey("test1"));
+        assertEquals("xvalue1", p.getProperty("test1"));
+        assertTrue(p.containsKey("test2"));
+        assertEquals("xvalue2", p.getProperty("test2"));
+        assertTrue(p.containsKey("test3.something"));
+        assertTrue(p.containsKey("test3.somethingelse"));
+        assertEquals("value3",p.get("test3.something"));
+        assertEquals("value3.else",p.get("test3.somethingelse"));
+    }
 
     public void testCreateProjectPropertyRetriever() throws IOException {
         final FrameworkProject project = FrameworkProject.create(PROJECT_NAME,

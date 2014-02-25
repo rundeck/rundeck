@@ -865,10 +865,12 @@ public class FrameworkProject extends FrameworkResourceParent {
                 Map.Entry entry=(Map.Entry) o;
                 //determine if
                 final String key = (String) entry.getKey();
-                for (final String replacePrefix : removePrefixes) {
-                    if(key.startsWith(replacePrefix)){
-                        //skip this key
-                        continue entry;
+                if (null != removePrefixes) {
+                    for (final String replacePrefix : removePrefixes) {
+                        if (key.startsWith(replacePrefix)) {
+                            //skip this key
+                            continue entry;
+                        }
                     }
                 }
                 newProps.put(entry.getKey(), entry.getValue());
