@@ -65,12 +65,16 @@ class ApiService {
      * @return
      */
     def renderErrorFormat(HttpServletResponse response, Map error){
+        def resp=[xml: this.&renderErrorXml,json: this.&renderErrorJson]
+        if(error.format && null!=resp[error.format]){
+            return resp[error.format](response,error)
+        }
         response.withFormat{
             json{
-                renderErrorJson(response,error)
+                resp.json(response,error)
             }
             xml{
-                renderErrorXml(response,error)
+                resp.xml(response,error)
             }
         }
     }
@@ -162,7 +166,7 @@ class ApiService {
     }
     def renderErrorJson(messages, String code=null){
         def result=[
-                error: "true",
+                error: true,
                 apiversion: ApiRequestFilters.API_CURRENT_VERSION,
         ]
         if (code) {
@@ -175,6 +179,8 @@ class ApiService {
             result.messages=messages
         } else if (messages instanceof Map && messages.code) {
             result.message=(messages.message ?: messageSource.getMessage(messages.code, messages.args ? messages.args as Object[] : null, null))
+        }else if (messages instanceof Map && messages.message) {
+            result.message=messages.message
         }
         return result.encodeAsJSON()
     }
@@ -202,6 +208,8 @@ class ApiService {
                         }
                     }else if(messages instanceof Map && messages.code){
                         delegate.'message'(messages.message?:messageSource.getMessage(messages.code, messages.args?messages.args as Object[]:null, null))
+                    }else if(messages instanceof Map && messages.message){
+                        delegate.'message'(messages.message)
                     }
                 }
             }
