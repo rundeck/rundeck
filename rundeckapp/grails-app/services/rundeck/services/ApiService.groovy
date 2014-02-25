@@ -70,11 +70,11 @@ class ApiService {
             return resp[error.format](response,error)
         }
         response.withFormat{
-            json{
-                resp.json(response,error)
-            }
             xml{
                 resp.xml(response,error)
+            }
+            json {
+                resp.json(response, error)
             }
         }
     }
