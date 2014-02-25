@@ -32,8 +32,11 @@ class UrlMappings {
         "/api/$api_version/jobs/export"(controller: 'menu', action: 'apiJobsExport')
         "/api/$api_version/jobs/import"(controller: 'scheduledExecution', action: 'apiJobsImport')
         "/api/$api_version/jobs/delete"(controller: 'scheduledExecution', action: 'apiJobDeleteBulk')
-        "/api/$api_version/project/$project?"(controller: 'project'){
+        "/api/$api_version/project/$project"(controller: 'project'){
             action = [GET: 'apiProjectGet', DELETE:'apiProjectDelete']
+        }
+        "/api/$api_version/project/$project/config"(controller: 'project'){
+            action = [GET: 'apiProjectConfigGet', PUT: 'apiProjectConfigPut']
         }
         /** v2 */
         "/api/$api_version/project/$project/resources/refresh"(controller: 'framework', action: 'apiProjectResourcesRefresh')

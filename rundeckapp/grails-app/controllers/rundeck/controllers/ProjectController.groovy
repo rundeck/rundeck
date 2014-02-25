@@ -158,14 +158,23 @@ class ProjectController extends ControllerBase{
                 }
             } else if (hasConfigAuth) {
                 //include config data
-                config {
-                    frameworkService.loadProjectProperties(pject).each { k, v ->
-                        delegate.'property'(key: k, value: v)
-                    }
-                }
+                renderApiProjectConfigXml(pject,delegate)
             }
         }
     }
+    /**
+     * Render project config XML content using a builder
+     * @param pject framework project object
+     * @param delegate builder delegate for response
+     */
+    private def renderApiProjectConfigXml (FrameworkProject pject, delegate){
+        delegate.'config' {
+            frameworkService.loadProjectProperties(pject).each { k, v ->
+                delegate.'property'(key: k, value: v)
+            }
+        }
+    }
+
     /**
      * Render project JSON result using a builder
      * @param pject framework project object
@@ -178,12 +187,20 @@ class ProjectController extends ControllerBase{
         delegate.name=pject.name
         delegate.description=pject.hasProperty('project.description') ? pject.getProperty('project.description') : ''
         if(hasConfigAuth){
-            def builder = delegate
             delegate.config {
-                frameworkService.loadProjectProperties(pject).each { k, v ->
-                    builder."${k}" = v
-                }
+                renderApiProjectConfigJson(pject,delegate)
             }
+        }
+    }
+
+    /**
+     * Render project config JSON content using a builder
+     * @param pject framework project object
+     * @param delegate builder delegate for response
+     */
+    private def renderApiProjectConfigJson (FrameworkProject pject, delegate){
+        frameworkService.loadProjectProperties(pject).each { k, v ->
+            delegate."${k}" = v
         }
     }
 
@@ -352,6 +369,9 @@ class ProjectController extends ControllerBase{
         }
     }
     def apiProjectDelete(){
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V11)) {
+            return
+        }
         String project = params.project
         if (!project) {
             return apiService.renderErrorFormat(response,
@@ -395,7 +415,62 @@ class ProjectController extends ControllerBase{
         //success
         response.status=HttpServletResponse.SC_NO_CONTENT
     }
-    def apiProjectConfig(){
+    private def apiProjectConfigSetup(){
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V11)) {
+            return
+        }
+        String project = params.project
+        if (!project) {
+            return apiService.renderErrorFormat(response,
+                    [
+                            status: HttpServletResponse.SC_BAD_REQUEST,
+                            code: "api.error.parameter.required",
+                            args: ['project']
+                    ])
+        }
+        if (!frameworkService.existsFrameworkProject(project)) {
+
+            return apiService.renderErrorFormat(response,
+                    [
+                            status: HttpServletResponse.SC_NOT_FOUND,
+                            code: "api.error.item.doesnotexist",
+                            args: ['Project', project]
+                    ])
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        if (!frameworkService.authorizeApplicationResourceAll(authContext,
+                [type: 'project', name: project], [AuthConstants.ACTION_CONFIGURE])) {
+            return apiService.renderErrorFormat(response,
+                    [
+                            status: HttpServletResponse.SC_FORBIDDEN,
+                            code: "api.error.item.unauthorized",
+                            args: [AuthConstants.ACTION_CONFIGURE, "Project", project]
+                    ])
+        }
+        return frameworkService.getFrameworkProject(project)
+    }
+    def apiProjectConfigGet(){
+        def proj=apiProjectConfigSetup()
+        //render project config only
+
+        def respFormat = (response.format in ['xml','json']?response.format:'xml')
+        switch (respFormat) {
+            case 'xml':
+                render {
+                    renderApiProjectConfigXml(proj, delegate)
+                }
+                break
+            case 'json':
+                render(contentType: 'application/json') {
+                    renderApiProjectConfigJson(proj, delegate)
+                }
+                break
+        }
+    }
+
+    def apiProjectConfigPut() {
+        def project = apiProjectConfigSetup()
 
     }
 }
