@@ -658,4 +658,17 @@ class ProjectController extends ControllerBase{
         response.status=HttpServletResponse.SC_NO_CONTENT
     }
 
+    def apiProjectExport(){
+        def project = apiProjectConfigSetup(AuthConstants.ACTION_EXPORT)
+        if (!project) {
+            return
+        }
+        def framework = frameworkService.rundeckFramework
+        SimpleDateFormat dateFormater = new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US);
+        def dateStamp = dateFormater.format(new Date());
+        response.setContentType("application/zip")
+        response.setHeader("Content-Disposition", "attachment; filename=\"${project}-${dateStamp}.rdproject.jar\"")
+
+        projectService.exportProjectToOutputStream(project, framework,response.outputStream)
+    }
 }
