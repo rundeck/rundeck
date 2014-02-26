@@ -148,9 +148,11 @@ class ProjectController extends ControllerBase{
      * @param vers api version requested
      */
     private def renderApiProjectXml (FrameworkProject pject, delegate, hasConfigAuth=false, vers=1){
-        delegate.'project'(href: generateProjectApiUrl(pject.name)) {
-            name(pject.name)
-            description(pject.hasProperty('project.description') ? pject.getProperty('project.description') : '')
+        Map data = basicProjectDetails(pject)
+        def pmap = vers < ApiRequestFilters.V11 ? [:] : [url: data.url]
+        delegate.'project'(pmap) {
+            name(data.name)
+            description(data.description)
             if (vers < ApiRequestFilters.V11) {
                 if (pject.hasProperty("project.resources.url")) {
                     resources {
@@ -184,14 +186,23 @@ class ProjectController extends ControllerBase{
      * @param vers api version requested
      */
     private def renderApiProjectJson (FrameworkProject pject, delegate, hasConfigAuth=false, vers=1){
-        delegate.href= generateProjectApiUrl(pject.name)
-        delegate.name=pject.name
-        delegate.description=pject.hasProperty('project.description') ? pject.getProperty('project.description') : ''
+        Map data=basicProjectDetails(pject)
+        delegate.url = data.url
+        delegate.name = data.name
+        delegate.description = data.description
         if(hasConfigAuth){
             delegate.config {
                 renderApiProjectConfigJson(pject,delegate)
             }
         }
+    }
+
+    private Map basicProjectDetails(FrameworkProject pject) {
+        [
+                url:generateProjectApiUrl(pject.name),
+                name:pject.name,
+                description : pject.hasProperty('project.description') ? pject.getProperty('project.description') : ''
+        ]
     }
 
     /**
@@ -235,15 +246,11 @@ class ProjectController extends ControllerBase{
             }
             json{
                 return render(contentType: 'application/json'){
-                    projects=array{
                         def builder = delegate
                         projlist.sort { a, b -> a.name <=> b.name }.each { pject ->
                             //don't include config data
-                            project{
-                                renderApiProjectJson(pject, builder, false, request.api_version)
-                            }
+                            builder.'element'(basicProjectDetails(pject))
                         }
-                    }
                 }
             }
         }
