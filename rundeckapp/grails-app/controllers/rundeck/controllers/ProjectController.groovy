@@ -452,8 +452,13 @@ class ProjectController extends ControllerBase{
         def proj=apiProjectConfigSetup()
         //render project config only
 
-        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'], 'xml')
+        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json','text'], 'xml')
         switch (respFormat) {
+            case 'text':
+                render(contentType: 'text/plain') {
+                    response.outputStream<< proj.getPropertyFile().text
+                }
+                break
             case 'xml':
                 render {
                     renderApiProjectConfigXml(proj, delegate)
@@ -469,24 +474,43 @@ class ProjectController extends ControllerBase{
 
     def apiProjectConfigPut() {
         def project = apiProjectConfigSetup()
-        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'])
+        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json', 'text'])
         //parse config data
         def config=null
-        def succeed = apiService.parseJsonXmlWith(request, response, [
-                xml: { xml ->
-                    config = [:]
-                    xml?.property?.each {
-                        config[it.'@key'.text()] = it.'@value'.text()
+        def configProps=new Properties()
+        if (request.format in ['text']) {
+            def error=null
+            try{
+                configProps.load(request.inputStream)
+            }catch (Throwable t){
+                error=t.message
+            }
+            if(error){
+                return apiService.renderErrorFormat(response, [
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        message: error,
+                        format: respFormat
+                ])
+            }
+            log.error("parsed: ${configProps}")
+        }else{
+            def succeed = apiService.parseJsonXmlWith(request, response, [
+                    xml: { xml ->
+                        config = [:]
+                        xml?.property?.each {
+                            config[it.'@key'.text()] = it.'@value'.text()
+                        }
+                    },
+                    json: { json ->
+                        config = json
                     }
-                },
-                json: { json ->
-                    config = json
-                }
-        ])
-        if(!succeed){
-            return
+            ])
+            if(!succeed){
+                return
+            }
+            configProps.putAll(config)
         }
-        def result=frameworkService.updateFrameworkProjectConfig(project.name,new Properties(config),null)
+        def result=frameworkService.setFrameworkProjectConfig(project.name,configProps)
         if(!result.success){
             return apiService.renderErrorFormat(response,[
                     status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
@@ -496,6 +520,9 @@ class ProjectController extends ControllerBase{
         }
 
         switch (respFormat) {
+            case 'text':
+                render(contentType: 'text/plain',text: project.propertyFile.text)
+                break
             case 'xml':
                 render {
                     renderApiProjectConfigXml(project, delegate)
@@ -543,7 +570,7 @@ class ProjectController extends ControllerBase{
     def apiProjectConfigKeyPut() {
         def project = apiProjectConfigSetup()
         def key = apiService.restoreUriPath(request, params.keypath)
-        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json','text'])
+        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json', 'text'])
         def value=null
         if(request.format in ['text']){
            value = request.inputStream.text
