@@ -599,9 +599,18 @@ class ProjectController extends ControllerBase{
     }
     def apiProjectConfigKeyDelete() {
         def project = apiProjectConfigSetup()
-        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'])
+        def key = apiService.restoreUriPath(request, params.keypath)
+        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json','text'],'xml')
 
-
+        def result=frameworkService.removeFrameworkProjectConfigProperties(project.name,[key] as Set)
+        if (!result.success) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    message: result.error,
+                    format: respFormat
+            ])
+        }
+        response.status=HttpServletResponse.SC_NO_CONTENT
     }
 
 }
