@@ -410,11 +410,12 @@ class ProjectController extends ControllerBase{
         response.status=HttpServletResponse.SC_NO_CONTENT
     }
     /**
-     * support project/NAME/config endpoint GET and PUT: validate project and with authorization
+     * support project/NAME/config endpoints: validate project and appropriate authorization,
+     * return null if invalid and a response has already been sent.
      * @param action action to require
      * @return FrameworkProject for the project
      */
-    private FrameworkProject apiProjectConfigSetup(String action){
+    private FrameworkProject validateProjectConfigApiRequest(String action){
         if (!apiService.requireVersion(request, response, ApiRequestFilters.V11)) {
             return
         }
@@ -452,7 +453,7 @@ class ProjectController extends ControllerBase{
         return frameworkService.getFrameworkProject(project)
     }
     def apiProjectConfigGet(){
-        def proj=apiProjectConfigSetup(AuthConstants.ACTION_CONFIGURE)
+        def proj=validateProjectConfigApiRequest(AuthConstants.ACTION_CONFIGURE)
         if(!proj){
             return
         }
@@ -479,7 +480,7 @@ class ProjectController extends ControllerBase{
     }
 
     def apiProjectConfigPut() {
-        def project = apiProjectConfigSetup(AuthConstants.ACTION_CONFIGURE)
+        def project = validateProjectConfigApiRequest(AuthConstants.ACTION_CONFIGURE)
         if (!project) {
             return
         }
@@ -546,7 +547,7 @@ class ProjectController extends ControllerBase{
 
     }
     def apiProjectConfigKeyGet() {
-        def project = apiProjectConfigSetup(AuthConstants.ACTION_CONFIGURE)
+        def project = validateProjectConfigApiRequest(AuthConstants.ACTION_CONFIGURE)
         if (!project) {
             return
         }
@@ -580,7 +581,7 @@ class ProjectController extends ControllerBase{
         }
     }
     def apiProjectConfigKeyPut() {
-        def project = apiProjectConfigSetup(AuthConstants.ACTION_CONFIGURE)
+        def project = validateProjectConfigApiRequest(AuthConstants.ACTION_CONFIGURE)
         if (!project) {
             return
         }
@@ -640,7 +641,7 @@ class ProjectController extends ControllerBase{
         }
     }
     def apiProjectConfigKeyDelete() {
-        def project = apiProjectConfigSetup(AuthConstants.ACTION_CONFIGURE)
+        def project = validateProjectConfigApiRequest(AuthConstants.ACTION_CONFIGURE)
         if (!project) {
             return
         }
@@ -659,7 +660,7 @@ class ProjectController extends ControllerBase{
     }
 
     def apiProjectExport(){
-        def project = apiProjectConfigSetup(AuthConstants.ACTION_EXPORT)
+        def project = validateProjectConfigApiRequest(AuthConstants.ACTION_EXPORT)
         if (!project) {
             return
         }
