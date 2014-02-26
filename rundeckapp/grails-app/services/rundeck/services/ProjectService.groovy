@@ -253,27 +253,40 @@ class ProjectService {
      * @throws ProjectServiceException
      */
     def exportProjectToFile(FrameworkProject project, Framework framework) throws ProjectServiceException{
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
-        sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
         def outfile
         try {
             outfile = File.createTempFile("export-${project.name}", ".jar")
         } catch (IOException exc) {
             throw new ProjectServiceException("Could not create temp file for archive: " + exc.message, exc)
         }
+        outfile.withOutputStream { output ->
+            exportProjectToOutputStream(project, framework, output)
+        }
+        outfile.deleteOnExit()
+        outfile
+    }
+    /**
+     * Export the project to an outputstream
+     * @param project
+     * @param framework
+     * @return
+     * @throws ProjectServiceException
+     */
+    def exportProjectToOutputStream(FrameworkProject project, Framework framework,
+                                    OutputStream stream) throws ProjectServiceException{
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
+        sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
+
         def Manifest manifest = new Manifest()
         manifest.mainAttributes.put(Attributes.Name.MANIFEST_VERSION,'1.0')
         manifest.mainAttributes.putValue('Rundeck-Application-Version', grailsApplication.metadata['app.version'])
         manifest.mainAttributes.putValue('Rundeck-Archive-Format-Version', '1.0')
         manifest.mainAttributes.putValue('Rundeck-Archive-Project-Name', project.name)
         manifest.mainAttributes.putValue('Rundeck-Archive-Export-Date', sdf.format(new Date()))
-        outfile.withOutputStream { output ->
-            def zip = new JarOutputStream(output,manifest)
-            exportProjectToStream(project, framework, zip)
-            zip.close()
-        }
-        outfile.deleteOnExit()
-        outfile
+
+        def zip = new JarOutputStream(stream,manifest)
+        exportProjectToStream(project, framework, zip)
+        zip.close()
     }
     def exportProjectToStream(FrameworkProject project, Framework framework, ZipOutputStream output) throws ProjectServiceException {
         ZipBuilder zip = new ZipBuilder(output)
