@@ -410,46 +410,52 @@ class ProjectController extends ControllerBase{
         response.status=HttpServletResponse.SC_NO_CONTENT
     }
     /**
-     * support project/NAME/config endpoint GET and PUT: validate project and configure authorization
+     * support project/NAME/config endpoint GET and PUT: validate project and with authorization
+     * @param action action to require
      * @return FrameworkProject for the project
      */
-    private FrameworkProject apiProjectConfigSetup(){
+    private FrameworkProject apiProjectConfigSetup(String action){
         if (!apiService.requireVersion(request, response, ApiRequestFilters.V11)) {
             return
         }
         String project = params.project
         if (!project) {
-            return apiService.renderErrorFormat(response,
+            apiService.renderErrorFormat(response,
                     [
                             status: HttpServletResponse.SC_BAD_REQUEST,
                             code: "api.error.parameter.required",
                             args: ['project']
                     ])
+            return null
         }
         if (!frameworkService.existsFrameworkProject(project)) {
-
-            return apiService.renderErrorFormat(response,
+            apiService.renderErrorFormat(response,
                     [
                             status: HttpServletResponse.SC_NOT_FOUND,
                             code: "api.error.item.doesnotexist",
                             args: ['Project', project]
                     ])
+            return null
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
         if (!frameworkService.authorizeApplicationResourceAll(authContext,
-                [type: 'project', name: project], [AuthConstants.ACTION_CONFIGURE])) {
-            return apiService.renderErrorFormat(response,
+                [type: 'project', name: project], [action])) {
+            apiService.renderErrorFormat(response,
                     [
                             status: HttpServletResponse.SC_FORBIDDEN,
                             code: "api.error.item.unauthorized",
-                            args: [AuthConstants.ACTION_CONFIGURE, "Project", project]
+                            args: [action, "Project", project]
                     ])
+            return null
         }
         return frameworkService.getFrameworkProject(project)
     }
     def apiProjectConfigGet(){
-        def proj=apiProjectConfigSetup()
+        def proj=apiProjectConfigSetup(AuthConstants.ACTION_CONFIGURE)
+        if(!proj){
+            return
+        }
         //render project config only
 
         def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json','text'], 'xml')
@@ -473,7 +479,10 @@ class ProjectController extends ControllerBase{
     }
 
     def apiProjectConfigPut() {
-        def project = apiProjectConfigSetup()
+        def project = apiProjectConfigSetup(AuthConstants.ACTION_CONFIGURE)
+        if (!project) {
+            return
+        }
         def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json', 'text'])
         //parse config data
         def config=null
@@ -537,7 +546,10 @@ class ProjectController extends ControllerBase{
 
     }
     def apiProjectConfigKeyGet() {
-        def project = apiProjectConfigSetup()
+        def project = apiProjectConfigSetup(AuthConstants.ACTION_CONFIGURE)
+        if (!project) {
+            return
+        }
         def key = apiService.restoreUriPath(request, params.keypath)
         def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json','text'],'text')
         def properties = frameworkService.loadProjectProperties(project)
@@ -568,7 +580,10 @@ class ProjectController extends ControllerBase{
         }
     }
     def apiProjectConfigKeyPut() {
-        def project = apiProjectConfigSetup()
+        def project = apiProjectConfigSetup(AuthConstants.ACTION_CONFIGURE)
+        if (!project) {
+            return
+        }
         def key = apiService.restoreUriPath(request, params.keypath)
         def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json', 'text'])
         def value=null
@@ -625,7 +640,10 @@ class ProjectController extends ControllerBase{
         }
     }
     def apiProjectConfigKeyDelete() {
-        def project = apiProjectConfigSetup()
+        def project = apiProjectConfigSetup(AuthConstants.ACTION_CONFIGURE)
+        if (!project) {
+            return
+        }
         def key = apiService.restoreUriPath(request, params.keypath)
         def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json','text'],'xml')
 
