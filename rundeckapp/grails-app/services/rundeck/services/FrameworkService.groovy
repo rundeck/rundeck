@@ -124,6 +124,23 @@ class FrameworkService implements ApplicationContextAware {
         [success:true]
     }
     /**
+     * Update project properties by merging
+     * @param project name
+     * @param properties new properties to merge in
+     * @param removePrefixes set of string prefixes of properties to remove
+     * @return [success:boolean, error: String]
+     */
+    def setFrameworkProjectConfig(String project,Properties properties){
+        try {
+            getFrameworkProject(project).setProjectProperties(properties)
+        } catch (Error e) {
+            log.error(e.message)
+            log.debug(e.message,e)
+            return [success: false, error: e.message]
+        }
+        [success:true]
+    }
+    /**
      * Update project properties by removing a set of keys
      * @param project name
      * @param toremove keys to remove
@@ -134,14 +151,7 @@ class FrameworkService implements ApplicationContextAware {
         for (String s: toremove) {
             projProps.remove(s)
         }
-        try {
-            getFrameworkProject(project).setProjectProperties(projProps)
-        } catch (Error e) {
-            log.error(e.message)
-            log.debug(e.message,e)
-            return [success: false, error: e.message]
-        }
-        [success:true]
+        return setFrameworkProjectConfig(project,projProps)
     }
     /**
      * Return a map of the project's readme and motd content
