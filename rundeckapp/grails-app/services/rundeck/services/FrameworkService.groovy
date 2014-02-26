@@ -124,6 +124,26 @@ class FrameworkService implements ApplicationContextAware {
         [success:true]
     }
     /**
+     * Update project properties by removing a set of keys
+     * @param project name
+     * @param toremove keys to remove
+     * @return [success:boolean, error: String]
+     */
+    def removeFrameworkProjectConfigProperties(String project,Set<String> toremove){
+        def projProps = loadProjectProperties(getFrameworkProject(project))
+        for (String s: toremove) {
+            projProps.remove(s)
+        }
+        try {
+            getFrameworkProject(project).setProjectProperties(projProps)
+        } catch (Error e) {
+            log.error(e.message)
+            log.debug(e.message,e)
+            return [success: false, error: e.message]
+        }
+        [success:true]
+    }
+    /**
      * Return a map of the project's readme and motd content
      * @param project
      * @param framework
