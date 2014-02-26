@@ -457,7 +457,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
                                          new File(getFrameworkProjectsBase()),
                                          getFrameworkInstance().getFrameworkProjectMgr());
         boolean overwrite = true;
-        project.generateProjectPropertiesFile(overwrite);
+        project.generateProjectPropertiesFile(overwrite,null,true);
 
         final File propFile = new File(project.getEtcDir(), "project.properties");
         assertTrue("project.properties file was not generated",
@@ -479,7 +479,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
         testprops.setProperty("test3.something", "value3");
         testprops.setProperty("test3.somethingelse", "value3.else");
         boolean overwrite = true;
-        project.generateProjectPropertiesFile(overwrite,testprops);
+        project.generateProjectPropertiesFile(overwrite,testprops, false);
 
         final File propFile = new File(project.getEtcDir(), "project.properties");
         assertTrue("project.properties file was not generated",
@@ -507,7 +507,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
         testprops.setProperty("test3.something", "value3");
         testprops.setProperty("test3.somethingelse", "value3.else");
         boolean overwrite = true;
-        project.generateProjectPropertiesFile(overwrite, testprops);
+        project.generateProjectPropertiesFile(overwrite, testprops, false);
 
         final File propFile = new File(project.getEtcDir(), "project.properties");
         assertTrue("project.properties file was not generated",
@@ -541,7 +541,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
         testprops.setProperty("test3.something", "value3");
         testprops.setProperty("test3.somethingelse", "value3.else");
         boolean overwrite = true;
-        project.generateProjectPropertiesFile(overwrite, testprops);
+        project.generateProjectPropertiesFile(overwrite, testprops, false);
 
         final File propFile = new File(project.getEtcDir(), "project.properties");
         assertTrue("project.properties file was not generated",
@@ -578,7 +578,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
         testprops.setProperty("test3.something", "value3");
         testprops.setProperty("test3.somethingelse", "value3.else");
         boolean overwrite = true;
-        project.generateProjectPropertiesFile(overwrite, testprops);
+        project.generateProjectPropertiesFile(overwrite, testprops, false);
 
         final File propFile = new File(project.getEtcDir(), "project.properties");
         assertTrue("project.properties file was not generated",
