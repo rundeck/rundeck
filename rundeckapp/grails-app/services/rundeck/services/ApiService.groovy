@@ -12,6 +12,8 @@ import java.text.SimpleDateFormat
 
 class ApiService {
     static transactional = false
+    public static final String XML_CONTENT_TYPE = 'text/xml'
+    public static final String JSON_CONTENT_TYPE = 'application/json'
     def messageSource
     def grailsLinkGenerator
 
@@ -24,7 +26,7 @@ class ApiService {
         null
     }
     def respondXml(HttpServletResponse response, Closure recall) {
-        return respondOutput(response, 'text/xml', renderXml(recall))
+        return respondOutput(response, XML_CONTENT_TYPE, renderXml(recall))
     }
 
     def renderXml(Closure recall) {
@@ -48,7 +50,7 @@ class ApiService {
         if(status){
             response.status=status
         }
-        return respondOutput(response, 'text/xml', renderSuccessXml(recall))
+        return respondOutput(response, XML_CONTENT_TYPE, renderSuccessXml(recall))
     }
     def renderSuccessXml(Closure recall){
         return renderXml {
@@ -197,13 +199,13 @@ class ApiService {
         if(error.status){
             response.setStatus(error.status)
         }
-        return respondOutput(response, 'text/xml', renderErrorXml(error, error.code))
+        return respondOutput(response, XML_CONTENT_TYPE, renderErrorXml(error, error.code))
     }
     def renderErrorJson(HttpServletResponse response, Map error){
         if(error.status){
             response.setStatus(error.status)
         }
-        return respondOutput(response, 'application/json', renderErrorJson(error, error.code))
+        return respondOutput(response, JSON_CONTENT_TYPE, renderErrorJson(error, error.code))
     }
     /**
      * Require all specified parameters in the request
@@ -353,7 +355,7 @@ class ApiService {
      */
 
     public def respondExecutionsXml(HttpServletResponse response,execlist,paging=[:]) {
-        return respondOutput(response, 'text/xml', renderSuccessXml{
+        return respondOutput(response, XML_CONTENT_TYPE, renderSuccessXml{
             renderExecutionsXml(execlist, paging, delegate)
         })
     }
