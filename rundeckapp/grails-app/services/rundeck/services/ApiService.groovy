@@ -61,6 +61,20 @@ class ApiService {
     }
 
     /**
+     * Return the final portion of the request URI with the stripped extension restored
+     * @param request request
+     * @param paramValue value of final path parameter extracted via URL mapping, e.g. "/path/$paramValue**"
+     * @return paramValue with stripped file extension restored, or paramValue if it had no file extension
+     */
+    public String restoreUriPath(HttpServletRequest request, String paramValue){
+        def lastpath= request.forwardURI.substring(request.forwardURI.lastIndexOf('/')+1)
+        def extension= lastpath.indexOf('.')>=0?lastpath.substring(lastpath.lastIndexOf('.')+1):null
+        if(extension && request.forwardURI.endsWith(paramValue+'.'+extension)){
+            return paramValue+'.'+extension
+        }
+        return paramValue
+    }
+    /**
      * Determine appropriate response format based on allowed formats or request format. If the requested response
      * type is in the allowed formats it is returned, otherwise if a default format is specified it is used.  If the
      * response format is not in the allowed formats and no default is specified, the request content type format is
