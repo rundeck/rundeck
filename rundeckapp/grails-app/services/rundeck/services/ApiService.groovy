@@ -93,13 +93,14 @@ class ApiService {
      * Require request to be a certain format, returns false if not valid and error response is already sent
      * @param request request
      * @param response response
-     * @param allowed allowed formats
+     * @param allowed allowed formats or mime-types
      * @param responseFormat response format to send ('xml' or 'json') if request is not valid, or null to use default
      * @return true if valid, false otherwise
      */
     def requireRequestFormat(HttpServletRequest request, HttpServletResponse response, ArrayList<String> allowed, def
     responseFormat = null) {
-        def test = request.format in allowed
+        def contentType = request.getHeader("Content-Type")
+        def test = request.format in allowed || (contentType && (extractMimeType(contentType) in allowed))
         if (!test) {
             //bad request
             renderErrorFormat(response,
@@ -109,14 +110,17 @@ class ApiService {
                             args: ["Expected request content to be one of allowed formats: [" + allowed.join(', ' +
                                     '') + "], " +
                                     "but was: " +
-                                    "${request.getHeader('Content-Type')}"],
+                                    "${contentType}"],
                             format: responseFormat
                     ])
         }
         test
     }
 
-    /**
+    String extractMimeType(String s) {
+        return s.contains(';') ? s.split(';')[0].trim(): s;
+    }
+/**
      * Parse XML or JSON input formatted data, and handle with appropriate closure.  If the input format is not
      * supported, or there is an error parsing the input, an error response is sent, and false is returned.
      * @param request request
