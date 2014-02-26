@@ -511,22 +511,31 @@ class ProjectController extends ControllerBase{
     }
     def apiProjectConfigKeyGet() {
         def project = apiProjectConfigSetup()
-        def key = params.keypath
+        def key = apiService.restoreUriPath(request, params.keypath)
         def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json','text'],'text')
-
+        def properties = frameworkService.loadProjectProperties(project)
+        if(null==properties.get(key)){
+            return apiService.renderErrorFormat(response,[
+                    status:HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.item.doesnotexist',
+                    args:['property',key],
+                    format:respFormat
+            ])
+        }
+        def value = properties.get(key)
         switch (respFormat) {
             case 'text':
-                render (contentType: 'text/plain', text:project.getProperty(key))
+                render (contentType: 'text/plain', text: value)
                 break
             case 'xml':
                 render {
-                    property(key:key,value:project.getProperty(key))
+                    property(key:key,value:value)
                 }
                 break
             case 'json':
                 render(contentType: 'application/json') {
                     delegate.'key'=key
-                    value= project.getProperty(key)
+                    delegate.'value'= value
                 }
                 break
         }
