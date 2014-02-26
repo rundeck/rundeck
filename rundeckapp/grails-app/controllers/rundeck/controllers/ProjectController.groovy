@@ -21,6 +21,7 @@ class ProjectController extends ControllerBase{
     def static allowedMethods = [
             importArchive: ['POST'],
             delete: ['POST'],
+            apiProjectImport:['PUT']
     ]
 
     def index () {
@@ -671,5 +672,56 @@ class ProjectController extends ControllerBase{
         response.setHeader("Content-Disposition", "attachment; filename=\"${project}-${dateStamp}.rdproject.jar\"")
 
         projectService.exportProjectToOutputStream(project, framework,response.outputStream)
+    }
+
+    def apiProjectImport(){
+        def project = validateProjectConfigApiRequest(AuthConstants.ACTION_EXPORT)
+        if (!project) {
+            return
+        }
+        if(!apiService.requireRequestFormat(request,response,['application/zip'])){
+            return
+        }
+        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'], 'xml')
+        def framework = frameworkService.rundeckFramework
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        //uploaded file
+        def stream = request.getInputStream()
+
+
+        String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
+
+        def importOptions = [
+                executionImportBehavior: Boolean.parseBoolean(params.importExecutions) ? 'import' : 'skip',
+                jobUUIDBehavior: params.jobUuidOption?:'preserve'
+        ]
+        def result = projectService.importToProject(project, session.user, roleList, framework, authContext,
+                new ZipInputStream(stream), importOptions)
+        switch (respFormat){
+            case 'json':
+                render(contentType: 'application/json'){
+                    import_status=result.success?'successful':'failed'
+                    if (!result.success) {
+                        //list errors
+                        delegate.'errors'=result.joberrors
+                    }
+                }
+                break;
+            case 'xml':
+                apiService.renderSuccessXml(response){
+                    delegate.'import'(status: result.success ? 'successful' : 'failed'){
+                        if(!result.success){
+                            //list errors
+                            delegate.'errors'(count: result.joberrors.size()){
+                                result.joberrors.each{
+                                    delegate.'error'(it)
+                                }
+                            }
+                        }
+                    }
+                }
+                break;
+
+        }
     }
 }
