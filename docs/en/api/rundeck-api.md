@@ -7,7 +7,7 @@ Rundeck provides a Web API for use with your application.
 API Version Number
 ----
 
-The current API version is `10`.
+The current API version is `11`.
 
 For API endpoints described in this document, the *minimum* API version required for their
 use is indicated by the URL used, e.g.:
@@ -23,7 +23,7 @@ The API Version Number is required to be included in all API calls within the UR
 
 If the version number is not included or if the requested version number is unsupported, then the API call will fail.  The error response will include the code "api-version-unsupported" and have HTTP status code of `400 Bad Request`:
 
-~~~~~~~~~~ {.xml}
+~~~~~~~~~~~~~~~~~~~ {.xml}
 <result error="true" apiversion="2">
     <error code="api-version-unsupported">
         <message>
@@ -36,6 +36,26 @@ If the version number is not included or if the requested version number is unsu
 ### Changes
 
 Changes introduced by API Version number:
+
+**Version 11**:
+
+In this version, all new and updated endpoints support XML or JSON request and response content where appropriate.
+
+* New endpoints
+    - `/api/11/project/[NAME]/config` 
+        - PUT and GET for [Project Configuration](#project-configuration)
+    - `/api/11/project/[NAME]/config/[KEY]`
+        + PUT, GET, DELETE for [Project Configuration Keys](#project-configuration-keys)
+    - `/api/11/project/[NAME]/export`
+        + GET to retrieve archive of a project - [Project Archive Export](#project-archive-export)
+    - `/api/11/project/[NAME]/import`
+        + PUT to import an archive to a project - [Project Archive Import](#project-archive-import)
+* Updated endpoints
+    - `/api/11/project/[NAME]`
+        + DELETE method can delete a project - [Project Deletion](#project-deletion)
+        + GET method response updated - [Getting Project Info](#getting-project-info)
+    - `/api/11/projects`
+        + POST method can be used to create a new project - [Project creation](#project-creation)
 
 **Version 10**:
 
@@ -142,10 +162,16 @@ The root URL path for all calls to the API in this version is:
 
     $RUNDECK_SERVER_URL/api/2
 
-XML
+XML and JSON
 ----
 
-The majority of API calls require XML for input and output.  Some import/export features support YAML formatted documents, but XML is used for all API-level information.  (JSON support is planned for a future API version.)
+The majority of API calls use XML for input and output.  Some import/export features support YAML formatted documents, but XML is used for most API-level information.
+
+As of API version 11, new and updated endpoints will support JSON format, with content type `application/json`.
+
+JSON results can be retrieved by sending the HTTP "Accept" header with a `application/json` value.  JSON request content is supported when the HTTP "Content-Type" header specifies `application/json`.
+
+If an "Accept" header is not specified, then the response will be either the same format as the request content (for POST, or PUT requests), or XML by default.
 
 Authentication
 -----
@@ -1575,23 +1601,64 @@ URL:
 
 Result:  An Item List of `projects`, each `project` of the form specified in the [Getting Project Info](#getting-project-info) section.
 
+*Since API version 11*: JSON content can be retrieved with `Accept: application/json`
+
+~~~~~ {.json}
+[
+    {
+        "name":"...",
+        "description":"...",
+        "url":"...",
+    }
+]
+~~~~~
+
+### Project Creation ###
+
+Create a new project.
+
+    POST /api/11/projects
+
+XML content:
+
+`Content-Type: application/xml`
+
+~~~~~~~~~~ {.xml}
+<project>
+    <name>name</name>
+    <config>
+        <property key="propname" value="propvalue"/>
+        <!-- ... -->
+    </config>
+</project>
+~~~~~~~~~~
+
+JSON content:
+
+`Content-Type: application/json`
+
+~~~~~~~~~~ {.json}
+{ "name": "myproject", "config": { "propname":"propvalue" } }
+~~~~~~~~~~
+
+Response:  XML or JSON project definition of the form indicated in the [Getting Project Info](#getting-project-info) section.
+
 ### Getting Project Info ###
 
 Get information about a project.
 
-URL:
+    GET /api/1/project/[NAME]
 
-    /api/1/project/[NAME]
+Result:  An Item List of `projects` with one `project`.  XML or JSON is determined by the `Accept` request header. The `project` is of the form:
 
-Result:  An Item List of `projects` with one `project`.  The `project` is of the form:
-
+`Content-Type: application/xml`
 ~~~~~~~~~~ {.xml}
 <project>
     <name>Project Name</name>
     <description>...</description>
     <!-- additional items -->
 </project>
-~~~~~~~~~~
+~~~~~~~~~~ 
 
 If the project defines a Resource Model Provider URL, then the additional items are:
 
@@ -1600,6 +1667,51 @@ If the project defines a Resource Model Provider URL, then the additional items 
         <providerURL>URL</providerURL>
     </resources>
 ~~~~~~~~~~
+
+Updated in version 11:
+
+    GET /api/11/project/[NAME]
+
+
+`Content-Type: application/xml`
+~~~~~~~~~~ {.xml}
+<project url="http://server:4440/api/11/project/NAME">
+    <name>Project Name</name>
+    <description>...</description>
+    <!-- additional items -->
+</project>
+~~~~~~~~~~ 
+
+`Content-Type: application/json` *since version 11*
+~~~~~~~~~~ {.json}
+{
+  "description": "",
+  "name": "NAME",
+  "url": "http://server:4440/api/11/project/NAME",
+  "config": {  }
+}
+
+~~~~~~~~~~
+
+**API version 11 and later**: If the user has `configure` authorization for the project, then the project configuration properties are included in the response.
+
+~~~~~~~~~~ {.xml}
+    <config>
+        <property key="[name]" value="[value]"/>
+        <!-- ... -->
+    </config>
+~~~~~~~~~~
+
+### Project Deletion ###
+
+Delete an existing projects on the server. Requires 'delete' authorization.
+
+    DELETE /api/11/project/[NAME]
+
+Response:
+
+    HTTP/1.1 204 No Content
+
 
 ### Updating and Listing Resources for a Project
 
