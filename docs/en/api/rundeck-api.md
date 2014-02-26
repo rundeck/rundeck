@@ -1710,8 +1710,190 @@ Delete an existing projects on the server. Requires 'delete' authorization.
 
 Response:
 
-    HTTP/1.1 204 No Content
+    204 No Content
 
+### Project Configuration ###
+
+Retrieve or modify the project configuration data.  Requires `configure` authorization for the project.
+
+#### GET Project Configuration ####
+
+`GET /api/11/project/[NAME]/config` 
+
+Response, based on `Accept` header:
+
+`Content-Type: application/xml`
+
+~~~~~ {.xml}
+<config>
+    <property key="name" value="value"/>
+    <!-- ... -->
+</config>
+~~~~~
+
+`Content-Type: application/json`
+
+~~~~~ {.json}
+{
+    "key":"value",
+    "key2":"value2..."
+}
+~~~~~
+
+`Content-Type: text/plain` ([Java Properties](http://en.wikipedia.org/wiki/.properties)-formatted text.)
+
+~~~~~ {.text}
+key=value
+key2=value
+~~~~~
+
+#### PUT Project Configuration ####
+
+Replaces all configuration data with the submitted values.
+
+`PUT /api/11/project/[NAME]/config`
+
+Request:
+
+`Content-Type: application/xml`
+
+~~~~~ {.xml}
+<config>
+    <property key="key" value="value"/>
+    <!-- ... -->
+</config>
+~~~~~
+
+`Content-Type: application/json`
+
+~~~~~ {.json}
+{
+    "key":"value",
+    "key2":"value2..."
+}
+~~~~~
+
+`Content-Type: text/plain` ([Java Properties](http://en.wikipedia.org/wiki/.properties)-formatted text.)
+
+~~~~~ {.text}
+key=value
+key2=value
+~~~~~
+
+Response: same as [GET Project Configuration](#get-project-configuration).
+
+### Project Configuration Keys ###
+
+Retrieve, change or delete individual configuration properties by their key.  Requires `configure` authorization for the project.
+
+URL:
+
+    /api/11/project/[NAME]/config/[KEY]
+
+Request and response formats:
+
+`application/xml`:
+
+~~~ {.xml}
+<property key="[KEY]" value="key value"/>
+~~~
+
+`application/json`:
+
+~~~ {.json}
+{ "[KEY]" : "key value" }
+~~~
+
+`text/plain`: the plain text key value
+
+~~~ {.text}
+key value
+~~~
+
+#### GET Project Configuration Key ####
+
+Retrieve the value.
+
+`GET /api/11/project/[NAME]/config/[KEY]`
+
+#### PUT Project Configuration Key ####
+
+Set the value.
+
+`PUT /api/11/project/[NAME]/config/[KEY]`
+
+#### DELETE Project Configuration Key ####
+
+Delete the key.
+
+`DELETE /api/11/project/[NAME]/config/[KEY]`
+
+Response will be
+
+    204 No Content
+
+### Project Archive Export ###
+
+Export a zip archive of the project.  Requires `export` authorization for the project.
+
+    GET /api/11/project/[NAME]/export
+
+Response content type is `application/zip`
+
+### Project Archive Import ###
+
+Import a zip archive to the project. Requires `import` authorization for the project.
+
+    PUT /api/11/project/[NAME]/import{?jobUuidOption,importExecutions}
+
+Parameters:
+
++ `jobUuidOption` (optional, string, `preserve/remove`) ... Option declaring how duplicate Job UUIDs should be handled. If `preserve` (default) then imported job UUIDs will not be modified, and may conflict with jobs in other projects. If `remove` then all job UUIDs will be removed before importing.
++ `importExecutions` (optional, string, `true/false`) ... If true, import all executions and logs from the archive (default). If false, do not import executions or logs.
+
+Response will indicate whether the imported contents had any errors:
+
+**All imported jobs successful:**
+
+`application/xml`
+~~~ {.xml}
+<result >
+    <import status="successful">
+    </import>
+</result>
+~~~
+
+`application/json`
+
+~~~ {.json}        
+{"import_status":"successful"}
+~~~
+
+**Some imported jobs failed:**
+
+`application/xml`
+~~~ {.xml}
+<result >
+    <import status="failed">
+        <errors count="[#]">
+            <error>Job ABC could not be validated: ...</error>
+            <error>Job XYZ could not be validated: ...</error>
+        </errors>
+    </import>
+</result>
+~~~
+
+`application/json`
+
+~~~ {.json}        
+{
+    "import_status":"failed",
+    "errors": [
+        "Job ABC could not be validated: ...",
+        "Job XYZ could not be validated: ..."
+    ]
+}
+~~~
 
 ### Updating and Listing Resources for a Project
 
