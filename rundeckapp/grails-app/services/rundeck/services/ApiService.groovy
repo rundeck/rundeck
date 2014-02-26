@@ -179,18 +179,15 @@ class ApiService {
      * @return
      */
     def renderErrorFormat(HttpServletResponse response, Map error){
-        def resp=[xml: this.&renderErrorXml,json: this.&renderErrorJson]
-        if(error.format && null!=resp[error.format]){
-            return resp[error.format](response,error)
-        }
-        response.withFormat{
-            xml{
-                resp.xml(response,error)
-            }
-            json {
-                resp.json(response, error)
-            }
-        }
+        def resp=[xml: this.&renderErrorXml,json: this.&renderErrorJson, text:{resp,err->
+            response.outputStream<< renderErrorText(err)
+        }]
+        def respFormat = error.format && resp[error.format] ?
+            error.format :
+            response.format && resp[response.format] ?
+                response.format :
+                'xml'
+        return resp[respFormat](response,error)
     }
     def renderErrorXml(HttpServletResponse response, Map error){
         if(error.status){
@@ -277,6 +274,20 @@ class ApiService {
             return false
         }
         return true
+    }
+
+    def renderErrorText(messages, String code=null){
+        if (!messages) {
+            return messageSource.getMessage("api.error.unknown", null, null)
+        }
+        if (messages instanceof List) {
+            return messages.join("\r\n")
+        }else if (messages instanceof Map && messages.message) {
+            return messages.message
+        } else if (messages instanceof Map && messages.code) {
+            return messageSource.getMessage(messages.code, messages.args ? messages.args as Object[] : null, null)
+        }
+        return messages.toString()
     }
     def renderErrorJson(messages, String code=null){
         def result=[
