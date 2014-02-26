@@ -542,9 +542,60 @@ class ProjectController extends ControllerBase{
     }
     def apiProjectConfigKeyPut() {
         def project = apiProjectConfigSetup()
-        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'])
+        def key = apiService.restoreUriPath(request, params.keypath)
+        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json','text'])
+        def value=null
+        if(request.format in ['text']){
+           value = request.inputStream.text
+        }else{
+            def succeeded = apiService.parseJsonXmlWith(request,response,[
+                    xml:{xml->
+                        value = xml?.'@value'?.text()
+                    },
+                    json:{json->
+                        value = json?.value
+                    }
+            ])
+            if(!succeeded){
+                return
+            }
+        }
+        if(!value){
+            return apiService.renderErrorFormat(response,[
+                    status:HttpServletResponse.SC_BAD_REQUEST,
+                    code:'api.error.invalid.request',
+                    args:["value was not specified"],
+                    format:respFormat
+            ])
+        }
 
+        def result=frameworkService.updateFrameworkProjectConfig(project.name,new Properties([(key): value]),null)
+        if(!result.success){
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    message:result.error,
+                    format: respFormat
+            ])
+        }
+        def properties = frameworkService.loadProjectProperties(project)
+        def resultValue= properties.get(key)
 
+        switch (respFormat) {
+            case 'text':
+                render(contentType: 'text/plain', text: resultValue)
+                break
+            case 'xml':
+                render {
+                    property(key: key, value: resultValue)
+                }
+                break
+            case 'json':
+                render(contentType: 'application/json') {
+                    delegate.'key' = key
+                    delegate.'value' = resultValue
+                }
+                break
+        }
     }
     def apiProjectConfigKeyDelete() {
         def project = apiProjectConfigSetup()
