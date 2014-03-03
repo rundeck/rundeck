@@ -25,13 +25,6 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-#test for expected /joblist element
-$XMLSTARLET el ${file} | grep -e '^result' -q
-if [ 0 != $? ] ; then
-    errorMsg "FAIL: Response did not contain expected result"
-    exit 2
-fi
-
 #If <result error="true"> then an error occured.
 waserror=$($XMLSTARLET sel -T -t -v "/result/@error" ${file})
 if [ "true" == "$waserror" ] ; then
@@ -39,6 +32,33 @@ if [ "true" == "$waserror" ] ; then
     $XMLSTARLET sel -T -t -m "/result/error/message" -v "." -n  ${file}
     exit 2
 fi
+
+
+##
+# result wrapper is NOT expected
+##
+#
+if [ -n "$API_XML_NO_WRAPPER" ] ; then
+    # fail if <result> element is present
+    $XMLSTARLET el ${file} | grep -e '^result' -q
+    if [ 0 == $? ] ; then
+        errorMsg "FAIL: Response was not expected to contain 'result' element"
+        exit 2
+    fi
+    exit 0
+fi
+
+##
+# result wrapper is expected
+##
+
+#test for expected /joblist element
+$XMLSTARLET el ${file} | grep -e '^result' -q
+if [ 0 != $? ] ; then
+    errorMsg "FAIL: Response did not contain expected result"
+    exit 2
+fi
+
 wassucc=$($XMLSTARLET sel -T -t -v "/result/@success" ${file})
 if [ "true" != "$wassucc" ] ; then
     errorMsg "FAIL: Server did not report success: "

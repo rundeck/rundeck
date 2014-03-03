@@ -34,7 +34,7 @@ xmlsel(){
     $XMLSTARLET sel -T -t -v "$xpath" $*
 }
 
-API_CURRENT_VERSION=10
+API_CURRENT_VERSION=11
 
 API_VERSION=${API_VERSION:-$API_CURRENT_VERSION}
 
@@ -45,6 +45,14 @@ if [ -n "$RDAUTH" ] ; then
     CURLOPTS="-s -S -L"
 else
     CURLOPTS="-s -S -L -c $DIR/cookies -b $DIR/cookies"
+fi
+
+if [ -z "$API_XML_NO_WRAPPER" ] ; then
+    CURLOPTS="$CURLOPTS -H X-Rundeck-API-XML-Response-Wrapper:true"
+fi
+
+if [ -n "$DEBUG" ] ; then
+    CURLOPTS="$CURLOPTS -v"
 fi
 CURL="curl $CURLOPTS"
 docurl(){
