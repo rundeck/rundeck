@@ -93,7 +93,7 @@ class ApiService {
         if (status) {
             response.status = status
         }
-        if (request && doWrapXmlResponse(request)) {
+        if (!request || doWrapXmlResponse(request)) {
             response.setHeader(XML_API_RESPONSE_WRAPPER_HEADER,"true")
             return respondOutput(response, TEXT_XML_CONTENT_TYPE, renderSuccessXml(recall))
         }else{
