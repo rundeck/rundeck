@@ -421,7 +421,7 @@ class ProjectController extends ControllerBase{
                     ])
         }
         //success
-        response.status=HttpServletResponse.SC_NO_CONTENT
+        render(status:  HttpServletResponse.SC_NO_CONTENT)
     }
     /**
      * support project/NAME/config endpoints: validate project and appropriate authorization,
