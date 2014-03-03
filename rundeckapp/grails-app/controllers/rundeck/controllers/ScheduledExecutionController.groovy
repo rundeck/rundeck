@@ -1378,7 +1378,6 @@ class ScheduledExecutionController  {
             params['user'] = params.asUser
         }
         if(params.exec){
-            params.doNodedispatch=true
             params.nodeKeepgoing= params.nodeKeepgoing?:true
             params.nodeThreadcount= params.nodeThreadcount?:1
             params.workflow = new Workflow(commands: [new CommandExec(adhocRemoteString: params.remove('exec'), adhocExecution: true)])

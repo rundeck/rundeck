@@ -354,6 +354,7 @@
                                                  id="runFormExec"
                                                  class="form-control"
                                                  autofocus="true"/>
+                                    <g:hiddenField name="doNodedispatch"  value="true"/>
 
                                     <span class="input-group-btn">
                                         <button class="btn btn-default has_tooltip" type="button"
