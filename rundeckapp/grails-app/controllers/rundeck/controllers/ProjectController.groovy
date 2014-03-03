@@ -320,12 +320,14 @@ class ProjectController extends ControllerBase{
         }
 
         def project = null
+        def description = null
         Map config = null
 
         //parse request format
         def succeeded = apiService.parseJsonXmlWith(request,response, [
                 xml: { xml ->
                     project = xml?.name[0]?.text()
+                    description = xml?.description[0]?.text()
                     config = [:]
                     xml?.config?.property?.each {
                         config[it.'@key'.text()] = it.'@value'.text()
@@ -333,11 +335,15 @@ class ProjectController extends ControllerBase{
                 },
                 json: { json ->
                     project = json?.name?.toString()
+                    description = json?.description?.toString()
                     config = json?.config
                 }
         ])
         if(!succeeded){
             return
+        }
+        if(!config['project.description'] && description){
+            config['project.description']=description
         }
 
         if (!project) {

@@ -732,6 +732,7 @@ class MenuController extends ControllerBase{
             summary[project.name]=[
                     jobCount: ScheduledExecution.countByProject(project.name),
                     execCount: Execution.countByProjectAndDateStartedGreaterThan(project.name,today),
+                    description: project.hasProperty("project.description")?project.getProperty("project.description"):''
             ]
 
             summary[project.name].userSummary=Execution.createCriteria().list {
