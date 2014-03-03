@@ -51,9 +51,11 @@ class ApiController {
         int threadActiveCount=Thread.activeCount()
         def metricsJsonUrl = createLink(uri: '/metrics/metrics?pretty=true',absolute: true)
         def metricsThreadDumpUrl = createLink(uri: '/metrics/threads',absolute: true)
-        return apiService.renderSuccessXml(response){
-            delegate.'success' {
-                delegate.'message'("System Stats for Rundeck ${appVersion} on node ${nodeName}")
+        return apiService.renderSuccessXml(request,response){
+            if(apiService.doWrapXmlResponse(request)){
+                delegate.'success' {
+                    delegate.'message'("System Stats for Rundeck ${appVersion} on node ${nodeName}")
+                }
             }
             delegate.'system'{
                 timestamp(epoch:nowDate.getTime(),unit:'ms'){

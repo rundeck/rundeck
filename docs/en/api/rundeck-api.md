@@ -41,6 +41,16 @@ Changes introduced by API Version number:
 
 In this version, all new and updated endpoints support XML or JSON request and response content where appropriate.
 
+**Modified XML Response format**:
+
+- For endpoints requiring API version 11 *only*, the default for XML responses is to *no longer* include a `<result>` element around the data.
+- For API clients that expect to see the `<result>` element, a request header of `X-Rundeck-API-XML-Response-Wrapper: true` will restore it.
+- For endpoint requests for API version 10 and earlier, the `<result>` element will be sent as it has been (described in [Response Format][])
+
+[Response Format]: #response-format
+
+Endpoints:
+    
 * New endpoints
     - `/api/11/project/[NAME]/config` 
         - PUT and GET for [Project Configuration](#project-configuration)
@@ -241,9 +251,11 @@ The response should set a cookie named `JSESSIONID`.
 Response Format
 ------
 
-The XML Response format will conform to this document structure:
+For version 11 and later API requests, XML responses will have only the content indicated in the appropriate endpoint documentation.
 
-~~~~~~~~~~ {.xml}
+For version 10 and earlier API requests, XML responses will have this document structure:
+
+~~~~~~~~~~~~ {.xml}
 <result success/error="true" apiversion="X">
     <!-- error included if error="true" -->
     <error>

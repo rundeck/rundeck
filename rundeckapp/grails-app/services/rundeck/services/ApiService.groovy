@@ -12,21 +12,24 @@ import java.text.SimpleDateFormat
 
 class ApiService {
     static transactional = false
-    public static final String XML_CONTENT_TYPE = 'text/xml'
+    public static final String TEXT_XML_CONTENT_TYPE = 'text/xml'
+    public static final String APPLICATION_XML_CONTENT_TYPE = 'application/xml'
     public static final String JSON_CONTENT_TYPE = 'application/json'
+    public static final String XML_API_RESPONSE_WRAPPER_HEADER = "X-Rundeck-API-XML-Response-Wrapper"
     def messageSource
     def grailsLinkGenerator
 
     def respondOutput(HttpServletResponse response, String contentType, String output) {
         response.setContentType(contentType)
         response.setCharacterEncoding('UTF-8')
+        response.setHeader("X-Rundeck-API-Version",ApiRequestFilters.API_CURRENT_VERSION.toString())
         def out = response.outputStream
         out << output
         out.flush()
         null
     }
     def respondXml(HttpServletResponse response, Closure recall) {
-        return respondOutput(response, XML_CONTENT_TYPE, renderXml(recall))
+        return respondOutput(response, TEXT_XML_CONTENT_TYPE, renderXml(recall))
     }
 
     def renderXml(Closure recall) {
@@ -39,23 +42,85 @@ class ApiService {
         return writer.toString()
     }
 
-    def renderSuccessXml(HttpServletResponse response, String code, List args) {
-        return renderSuccessXml(response){
-            success{
-                message(messageSource.getMessage(code,args as Object[],null))
+    /**
+     * Render xml response
+     * @param request
+     * @param response
+     * @param code
+     * @param args
+     */
+    def renderSuccessXml(HttpServletRequest request,HttpServletResponse response, String code, List args) {
+        return renderSuccessXml(request,response) {
+            success {
+                message(messageSource.getMessage(code, args as Object[], null))
             }
         }
     }
-    def renderSuccessXml(int status=0,HttpServletResponse response, Closure recall) {
-        if(status){
-            response.status=status
+
+    /**
+     * Return true if the request indicates the XML response content should be wrapped in a '&lt;result&gt;'
+     * element.  Return true if:
+     * <ul>
+     * <li>less-than: "11", and {@value  #XML_API_RESPONSE_WRAPPER_HEADER} header is not "false"</li>
+     * <li>OR, greater-than: "10" AND {@value  #XML_API_RESPONSE_WRAPPER_HEADER} header is "true"</li>
+     * </ul>
+     * @param request
+     * @return
+     */
+    public boolean doWrapXmlResponse(HttpServletRequest request) {
+        if(request.api_version < ApiRequestFilters.V11){
+            //require false to disable wrapper
+            return !"false".equals(request.getHeader(XML_API_RESPONSE_WRAPPER_HEADER))
+        } else{
+            //require true to enable wrapper
+            return "true".equals(request.getHeader(XML_API_RESPONSE_WRAPPER_HEADER))
         }
-        return respondOutput(response, XML_CONTENT_TYPE, renderSuccessXml(recall))
+    }
+
+    def renderSuccessXml(HttpServletResponse response, String code, List args) {
+        return renderSuccessXml(null,response,code,args)
+    }
+    /**
+     * Render xml response, provides "&lt;result&gt;" wrapper for api request older than v11,
+     * or if "X-Rundeck-api-xml-response-wrapper" header in request is "true".
+     * @param status status code to send
+     * @param request
+     * @param response
+     * @param recall
+     * @return
+     */
+    def renderSuccessXml(int status=0,HttpServletRequest request, HttpServletResponse response, Closure recall) {
+        if (status) {
+            response.status = status
+        }
+        if (request && doWrapXmlResponse(request)) {
+            response.setHeader(XML_API_RESPONSE_WRAPPER_HEADER,"true")
+            return respondOutput(response, TEXT_XML_CONTENT_TYPE, renderSuccessXml(recall))
+        }else{
+            response.setHeader(XML_API_RESPONSE_WRAPPER_HEADER, "false")
+            return respondOutput(response, APPLICATION_XML_CONTENT_TYPE, renderSuccessXmlUnwrapped(recall))
+        }
+    }
+    /**
+     *
+     * @param status
+     * @param response
+     * @param recall
+     * @return
+     * @deprecated use {@link #renderSuccessXml(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse, groovy.lang.Closure)}
+     */
+    def renderSuccessXml(int status=0,HttpServletResponse response, Closure recall) {
+       return renderSuccessXml (status,null,response,recall)
+    }
+    def renderSuccessXmlUnwrapped(Closure recall){
+        return renderXml {
+            recall.delegate = delegate
+            recall()
+        }
     }
     def renderSuccessXml(Closure recall){
-        return renderXml {
+        return renderSuccessXmlUnwrapped {
             result(success: "true", apiversion: ApiRequestFilters.API_CURRENT_VERSION) {
-//                recall.resolveStrategy=Closure.DELEGATE_FIRST
                 recall.delegate = delegate
                 recall()
             }
@@ -199,7 +264,7 @@ class ApiService {
         if(error.status){
             response.setStatus(error.status)
         }
-        return respondOutput(response, XML_CONTENT_TYPE, renderErrorXml(error, error.code))
+        return respondOutput(response, TEXT_XML_CONTENT_TYPE, renderErrorXml(error, error.code))
     }
     def renderErrorJson(HttpServletResponse response, Map error){
         if(error.status){
@@ -355,7 +420,7 @@ class ApiService {
      */
 
     public def respondExecutionsXml(HttpServletResponse response,execlist,paging=[:]) {
-        return respondOutput(response, XML_CONTENT_TYPE, renderSuccessXml{
+        return respondOutput(response, TEXT_XML_CONTENT_TYPE, renderSuccessXml{
             renderExecutionsXml(execlist, paging, delegate)
         })
     }

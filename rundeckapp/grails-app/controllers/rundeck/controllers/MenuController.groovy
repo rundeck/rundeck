@@ -802,7 +802,7 @@ class MenuController extends ControllerBase{
         }
         def results = jobsFragment(query)
 
-        return apiService.renderSuccessXml(response){
+        return apiService.renderSuccessXml(request,response){
             delegate.'jobs'(count:results.nextScheduled.size()){
                 results.nextScheduled.each{ ScheduledExecution se->
                     job(id:se.extid){

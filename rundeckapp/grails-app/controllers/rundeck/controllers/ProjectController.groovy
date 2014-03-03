@@ -235,7 +235,7 @@ class ProjectController extends ControllerBase{
         withFormat{
 
             xml{
-                return apiService.renderSuccessXml(response) {
+                apiService.renderSuccessXml(request, response) {
                     delegate.'projects'(count: projlist.size()) {
                         projlist.sort { a, b -> a.name <=> b.name }.each { pject ->
                             //don't include config data
@@ -282,7 +282,7 @@ class ProjectController extends ControllerBase{
         withFormat{
             xml{
 
-                return apiService.renderSuccessXml(response) {
+                apiService.renderSuccessXml(request, response) {
                     if(request.api_version<ApiRequestFilters.V11){
                         delegate.'projects'(count: 1) {
                             renderApiProjectXml(pject, delegate, configAuth, request.api_version)
@@ -358,7 +358,7 @@ class ProjectController extends ControllerBase{
         }
         switch(respFormat) {
             case 'xml':
-                render {
+                apiService.renderSuccessXml(request, response) {
                     renderApiProjectXml(proj,delegate,true,request.api_version)
                 }
                 break
@@ -475,7 +475,7 @@ class ProjectController extends ControllerBase{
                 }
                 break
             case 'xml':
-                render {
+                apiService.renderSuccessXml(request, response) {
                     renderApiProjectConfigXml(proj, delegate)
                 }
                 break
@@ -542,7 +542,7 @@ class ProjectController extends ControllerBase{
                 render(contentType: 'text/plain',text: project.propertyFile.text)
                 break
             case 'xml':
-                render {
+                apiService.renderSuccessXml(request, response) {
                     renderApiProjectConfigXml(project, delegate)
                 }
                 break
@@ -576,7 +576,7 @@ class ProjectController extends ControllerBase{
                 render (contentType: 'text/plain', text: value)
                 break
             case 'xml':
-                render {
+                apiService.renderSuccessXml(request, response) {
                     property(key:key,value:value)
                 }
                 break
@@ -636,7 +636,7 @@ class ProjectController extends ControllerBase{
                 render(contentType: 'text/plain', text: resultValue)
                 break
             case 'xml':
-                render {
+                apiService.renderSuccessXml(request, response) {
                     property(key: key, value: resultValue)
                 }
                 break
@@ -715,7 +715,7 @@ class ProjectController extends ControllerBase{
                 }
                 break;
             case 'xml':
-                apiService.renderSuccessXml(response){
+                apiService.renderSuccessXml(request, response) {
                     delegate.'import'(status: result.success ? 'successful' : 'failed'){
                         if(!result.success){
                             //list errors

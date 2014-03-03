@@ -750,7 +750,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
         if(jobs){
             response.addHeader('Location',apiService.apiHrefForJob(jobs[0]))
-            return apiService.renderSuccessXml(HttpServletResponse.SC_CREATED,response){
+            return apiService.renderSuccessXml(HttpServletResponse.SC_CREATED,request,response){
                 renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
             }
         }else{
@@ -820,10 +820,12 @@ class ScheduledExecutionController  extends ControllerBase{
 
 
         if (jobs) {
-            return apiService.renderSuccessXml(response) {
-                delegate.'link'(href: apiService.apiHrefForJob(jobs[0]), rel: 'get')
-                success {
-                    delegate.'message'(g.message(code: 'api.success.job.create.message', args: [params.id]))
+            return apiService.renderSuccessXml(request,response) {
+                if (apiService.doWrapXmlResponse(request)) {
+                    delegate.'link'(href: apiService.apiHrefForJob(jobs[0]), rel: 'get')
+                    success {
+                        delegate.'message'(g.message(code: 'api.success.job.create.message', args: [params.id]))
+                    }
                 }
                 renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
             }
@@ -869,7 +871,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 successful<< result.success
             }
         }
-        return apiService.renderSuccessXml(response) {
+        return apiService.renderSuccessXml(request,response) {
             delegate.'deleteJobs'(requestCount: ids.size(), allsuccessful:(successful.size()==ids.size())){
                 if(successful){
                     delegate.'succeeded'(count:successful.size()) {
@@ -2022,7 +2024,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def skipjobs = loadresults.skipjobs
 
 
-        apiService.renderSuccessXml(response){
+        apiService.renderSuccessXml(request,response){
             renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
         }
     }
@@ -2289,9 +2291,11 @@ class ScheduledExecutionController  extends ControllerBase{
                         code: 'api.error.execution.failed', args: [errors.join(", ")]])
             }
         } else {
-            return apiService.renderSuccessXml(response) {
-                delegate.'success' {
-                    message("Immediate execution scheduled (${results.id})")
+            return apiService.renderSuccessXml(request,response) {
+                if (apiService.doWrapXmlResponse(request)) {
+                    delegate.'success' {
+                        message("Immediate execution scheduled (${results.id})")
+                    }
                 }
                 delegate.'execution'(id: results.id)
             }
@@ -2410,7 +2414,7 @@ class ScheduledExecutionController  extends ControllerBase{
                     code: 'api.error.item.unauthorized', args: ['Reschedule Jobs', 'Server', params.serverNodeUUID]])
         }
         if(!frameworkService.isClusterModeEnabled()){
-            return apiService.renderSuccessXml(response) {
+            return apiService.renderSuccessXml(request,response) {
                 message("No action performed, cluster mode is not enabled.")
             }
         }
@@ -2449,12 +2453,19 @@ class ScheduledExecutionController  extends ControllerBase{
         def successMessage= "Schedule Takeover successful for ${successCount}/${reclaimMap.size()} Jobs."
         withFormat {
             xml{
-                return apiService.renderSuccessXml(response) {
-                    delegate.'message'(successMessage)
-                    delegate.'self'{
-                        delegate.'server'(uuid:frameworkService.getServerUUID())
+                return apiService.renderSuccessXml(request,response) {
+                    if (apiService.doWrapXmlResponse(request)) {
+                        delegate.'message'(successMessage)
+                        delegate.'self'{
+                            delegate.'server'(uuid:frameworkService.getServerUUID())
+                        }
                     }
                     delegate.'takeoverSchedule'{
+                        if(!apiService.doWrapXmlResponse(request)){
+                            delegate.'self' {
+                                delegate.'server'(uuid: frameworkService.getServerUUID())
+                            }
+                        }
                         delegate.'server'(uuid: serverUUID)
                         delegate.'jobs'(total: reclaimMap.size()){
                             delegate.'successful'(count: successCount) {
