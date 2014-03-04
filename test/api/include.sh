@@ -108,6 +108,17 @@ assert_xml_value(){
         exit 2
     fi
 }
+assert_xml_notblank(){
+    value=$($XMLSTARLET sel -T -t -v "$1" $2)
+    if [ $? != 0 ] ; then
+        errorMsg "xmlstarlet failed: $!"
+        exit 2
+    fi
+    if [ "" == "$value" ] ; then
+        errorMsg "XPath $1 wrong value, expected (blank) was $value (in file $2)"
+        exit 2
+    fi
+}
 
 ##
 # assert_json_value 'value' 'jsonquery' $file
