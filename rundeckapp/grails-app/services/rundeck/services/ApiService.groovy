@@ -251,6 +251,9 @@ class ApiService {
      */
     def renderErrorFormat(HttpServletResponse response, Map error){
         def resp=[xml: this.&renderErrorXml,json: this.&renderErrorJson, text:{resp,err->
+            if (err.status) {
+                response.setStatus(err.status)
+            }
             response.outputStream<< renderErrorText(err)
         }]
         def respFormat = error.format && resp[error.format] ?
