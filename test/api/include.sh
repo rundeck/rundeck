@@ -77,3 +77,77 @@ fi
 shift
 
 APIURL="${RDURL}/api/${API_VERSION}"
+
+##
+# utilities for testing http responses
+##
+
+assert_http_status(){
+    egrep -q "HTTP/1.1 $1" $2
+    if [ 0 != $? ] ; then
+        errorMsg "ERROR: Expected $1 result"
+        egrep 'HTTP/1.1' $2
+        exit 2
+    fi
+}
+##
+# utilities for testing xml or json
+##
+
+##
+# assert_xml_value 'value' 'xpath' $file
+##
+assert_xml_value(){
+    value=$($XMLSTARLET sel -T -t -v "$2" $3)
+    if [ $? != 0 ] ; then
+        errorMsg "xmlstarlet failed: $!"
+        exit 2
+    fi
+    if [ "$1" != "$value" ] ; then
+        errorMsg "XPath $2 wrong value, expected $1 was $value (in file $3)"
+        exit 2
+    fi
+}
+
+##
+# assert_json_value 'value' 'jsonquery' $file
+## 
+assert_json_value(){
+    JQ=`which jq`
+
+    if [ -z "$JQ" ] ; then
+        errorMsg "FAIL: Can't test JSON format, install jq"
+        exit 2
+    fi
+    propval=$($JQ -r "$2" < $3 )
+    if [ $? != 0 ] ; then
+        errorMsg "Json query invalid: $2: $!"
+        exit 2
+    fi
+    if [ "$1" != "$propval" ] ; then
+        errorMsg "Json query $2 wrong value, expected '$1' was $propval (in file $3)"
+        exit 2
+    fi
+}
+
+
+##
+# assert_json_null  'jsonquery' $file
+##
+assert_json_null(){
+    JQ=`which jq`
+
+    if [ -z "$JQ" ] ; then
+        errorMsg "FAIL: Can't test JSON format, install jq"
+        exit 2
+    fi
+    propval=$($JQ  "$1" < $2 )
+    if [ $? != 0 ] ; then
+        errorMsg "Json query invalid: $1: $!"
+        exit 2
+    fi
+    if [ "null" != "$propval" ] ; then
+        errorMsg "Json query $1 wrong value, expected null was $propval (in file $2)"
+        exit 2
+    fi
+}
