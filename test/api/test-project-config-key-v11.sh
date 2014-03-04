@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #test GET /api/11/project/name/config/key
-#using API v11, no xml result wrapper
+#using API v11, plain text
 
 # use api V11
 API_VERSION=11
@@ -46,6 +46,19 @@ assert_xml_value "test value" "/project/config/property[@key='test.property']/@v
 assert_xml_value "test value2" "/project/config/property[@key='test.property2']/@value" $DIR/curl.out
 assert_xml_value "" "/project/config/property[@key='test.property3']/@value" $DIR/curl.out
 
+
+runurl="${APIURL}/project/$test_proj/config/doesnotexist.property"
+
+echo "TEST: GET (404) $runurl"
+
+# post
+docurl -D $DIR/headers.out -H 'Accept:text/plain' ${runurl}?${params} > $DIR/curl.out
+if [ 0 != $? ] ; then
+    errorMsg "ERROR: failed GET request"
+    exit 2
+fi
+assert_http_status 404 $DIR/headers.out
+echo "OK"
 
 runurl="${APIURL}/project/$test_proj/config/test.property"
 
