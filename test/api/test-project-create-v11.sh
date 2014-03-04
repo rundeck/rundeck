@@ -48,7 +48,7 @@ if [ "$test_proj" != "$name" ] ; then
     errorMsg "/project/name wrong value, expected $name"
     exit 2
 fi
-propval=$($XMLSTARLET sel -T -t -v "/project/config/property[@key=test.property]/@value" $DIR/curl.out)
+propval=$($XMLSTARLET sel -T -t -v "/project/config/property[@key='test.property']/@value" $DIR/curl.out)
 if [ "test value" != "$propval" ] ; then
     errorMsg "/project/config/property[@key=test.property] wrong value, expected 'test value'"
     exit 2
