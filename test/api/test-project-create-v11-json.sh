@@ -34,16 +34,22 @@ cat > $DIR/proj_create.post.json <<END
 END
 
 # get listing
-docurl -X POST --data-binary @$DIR/proj_create.post.json -H Content-Type:application/json ${runurl}?${params} > $DIR/curl.out
+docurl -X POST -D $DIR/headers.out --data-binary @$DIR/proj_create.post.json -H Content-Type:application/json ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed POST request"
+    exit 2
+fi
+egrep -q 'HTTP/1.1 201' $DIR/headers.out
+if [ 0 != $? ] ; then
+    errorMsg "ERROR: Expected 201 result"
+    egrep 'HTTP/1.1' $DIR/headers.out
     exit 2
 fi
 
 #Check result
 name=$($JQ -r .name < $DIR/curl.out)
 if [ "$test_proj" != "$name" ] ; then
-    errorMsg "/project/name wrong value, expected $name"
+    errorMsg "/project/name wrong value, expected $test_proj"
     exit 2
 fi
 propval=$($JQ -r  .config['"test.property"'] < $DIR/curl.out)
@@ -53,6 +59,15 @@ if [ "test value" != "$propval" ] ; then
 fi
 
 echo "OK"
+
+# now delete the test project
+
+runurl="${APIURL}/project/$test_proj"
+docurl -X DELETE  ${runurl} > $DIR/curl.out
+if [ 0 != $? ] ; then
+    errorMsg "ERROR: failed DELETE request"
+    exit 2
+fi
 
 
 

@@ -28,9 +28,15 @@ cat > $DIR/proj_create.post <<END
 END
 
 # get listing
-docurl -X POST --data-binary @$DIR/proj_create.post -H Content-Type:application/xml ${runurl}?${params} > $DIR/curl.out
+docurl -X POST -D $DIR/headers.out --data-binary @$DIR/proj_create.post -H Content-Type:application/xml ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed POST request"
+    exit 2
+fi
+egrep -q 'HTTP/1.1 201' $DIR/headers.out
+if [ 0 != $? ] ; then
+    errorMsg "ERROR: Expected 201 result"
+    egrep 'HTTP/1.1' $DIR/headers.out
     exit 2
 fi
 
@@ -50,6 +56,14 @@ fi
 
 echo "OK"
 
+# now delete the test project
+
+runurl="${APIURL}/project/$test_proj"
+docurl -X DELETE  ${runurl} > $DIR/curl.out
+if [ 0 != $? ] ; then
+    errorMsg "ERROR: failed DELETE request"
+    exit 2
+fi
 
 
 rm $DIR/proj_create.post

@@ -359,6 +359,15 @@ class ProjectController extends ControllerBase{
                             format: respFormat
                     ])
         }
+        def exists = frameworkService.existsFrameworkProject(project)
+        if (exists) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_CONFLICT,
+                    code: 'api.error.item.alreadyexists',
+                    args: ['project', project],
+                    format: respFormat
+            ])
+        }
         def proj
         def errors
         (proj,errors)=frameworkService.createFrameworkProject(project,new Properties(config))
@@ -368,12 +377,12 @@ class ProjectController extends ControllerBase{
         }
         switch(respFormat) {
             case 'xml':
-                apiService.renderSuccessXml(request, response) {
+                apiService.renderSuccessXml(HttpServletResponse.SC_CREATED,request, response) {
                     renderApiProjectXml(proj,delegate,true,request.api_version)
                 }
                 break
             case 'json':
-                render(contentType: 'application/json') {
+                render(status: HttpServletResponse.SC_CREATED, contentType: 'application/json') {
                     renderApiProjectJson(proj, delegate, true, request.api_version)
                 }
                 break
