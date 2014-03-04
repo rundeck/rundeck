@@ -342,8 +342,12 @@ class ProjectController extends ControllerBase{
         if(!succeeded){
             return
         }
-        if(!config['project.description'] && description){
-            config['project.description']=description
+        if( description){
+            if(config && !config['project.description']){
+                config['project.description']=description
+            }else if(!config){
+                config=[('project.description'):description]
+            }
         }
 
         if (!project) {
