@@ -27,7 +27,7 @@ cat > $DIR/proj_create.post <<END
 </project>
 END
 
-# get listing
+# post
 docurl -X POST -D $DIR/headers.out --data-binary @$DIR/proj_create.post -H Content-Type:application/xml ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed POST request"
@@ -54,6 +54,22 @@ if [ "test value" != "$propval" ] ; then
     exit 2
 fi
 
+echo "OK"
+
+echo "TEST: POST /api/11/projects (existing project results in conflict)"
+
+# post xml
+docurl -X POST -D $DIR/headers.out --data-binary @$DIR/proj_create.post -H Content-Type:application/xml ${runurl}?${params} > $DIR/curl.out
+if [ 0 != $? ] ; then
+    errorMsg "ERROR: failed POST request"
+    exit 2
+fi
+egrep -q 'HTTP/1.1 409' $DIR/headers.out
+if [ 0 != $? ] ; then
+    errorMsg "ERROR: Expected 409 result"
+    egrep 'HTTP/1.1' $DIR/headers.out
+    exit 2
+fi
 echo "OK"
 
 # now delete the test project
