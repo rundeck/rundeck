@@ -58,14 +58,14 @@ CURL="curl $CURLOPTS"
 docurl(){
     if [ -n "$RDAUTH" ] ; then
         if [ "true" == "$RDDEBUG" ] ; then
-            echo $CURL -H "$AUTHHEADER" $* 1>&2
+            echo $CURL -H "$AUTHHEADER" "$@" 1>&2
         fi
-        $CURL -H "$AUTHHEADER" $*
+        $CURL -H "$AUTHHEADER" "$@"
     else    
         if [ "true" == "$RDDEBUG" ] ; then
-            echo $CURL $* 1>&2
+            echo $CURL "$@" 1>&2
         fi
-        $CURL $*
+        $CURL "$@"
     fi
 }
 
