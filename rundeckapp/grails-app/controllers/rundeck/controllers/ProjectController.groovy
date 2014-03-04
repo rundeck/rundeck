@@ -683,7 +683,7 @@ class ProjectController extends ControllerBase{
                     format: respFormat
             ])
         }
-        response.status=HttpServletResponse.SC_NO_CONTENT
+        render(status: HttpServletResponse.SC_NO_CONTENT)
     }
 
     def apiProjectExport(){
