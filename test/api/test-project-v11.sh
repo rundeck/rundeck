@@ -27,16 +27,10 @@ fi
 API_XML_NO_WRAPPER=true sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-name=$($XMLSTARLET sel -T -t -v "/project/name" $DIR/curl.out)
-if [ "$proj" != "$name" ] ; then
-    errorMsg "FAIL: expected /project/name value of $proj"
-    exit 2
-fi
-url=$($XMLSTARLET sel -T -t -v "/project/@url" $DIR/curl.out)
-if [ -z "$url" ] ; then
-    errorMsg "FAIL: expected /project/@url in result"
-    exit 2
-fi
+#
+assert_xml_value $proj "/project/name" $DIR/curl.out
+assert_xml_value "$APIURL/project/$proj" "/project/@url" $DIR/curl.out
+
 
 echo "OK"
 

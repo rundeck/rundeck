@@ -24,13 +24,8 @@ fi
 
 API_XML_NO_WRAPPER=true sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
-#Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/projects/@count" $DIR/curl.out)
-if [ "" == "$itemcount" ] ; then
-    errorMsg "Wrong count"
-    exit 2
-    
-fi
+
+assert_xml_notblank "/projects/@count" $DIR/curl.out
 
 echo "OK"
 

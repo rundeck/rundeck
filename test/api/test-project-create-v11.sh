@@ -33,26 +33,14 @@ if [ 0 != $? ] ; then
     errorMsg "ERROR: failed POST request"
     exit 2
 fi
-egrep -q 'HTTP/1.1 201' $DIR/headers.out
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: Expected 201 result"
-    egrep 'HTTP/1.1' $DIR/headers.out
-    exit 2
-fi
+assert_http_status 201 $DIR/headers.out
+
 
 API_XML_NO_WRAPPER=true sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check result
-name=$($XMLSTARLET sel -T -t -v "/project/name" $DIR/curl.out)
-if [ "$test_proj" != "$name" ] ; then
-    errorMsg "/project/name wrong value, expected $name"
-    exit 2
-fi
-propval=$($XMLSTARLET sel -T -t -v "/project/config/property[@key='test.property']/@value" $DIR/curl.out)
-if [ "test value" != "$propval" ] ; then
-    errorMsg "/project/config/property[@key=test.property] wrong value, expected 'test value'"
-    exit 2
-fi
+assert_xml_value "$test_proj" "/project/name" $DIR/curl.out
+assert_xml_value "test value" "/project/config/property[@key='test.property']/@value" $DIR/curl.out
 
 echo "OK"
 
@@ -64,12 +52,8 @@ if [ 0 != $? ] ; then
     errorMsg "ERROR: failed POST request"
     exit 2
 fi
-egrep -q 'HTTP/1.1 409' $DIR/headers.out
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: Expected 409 result"
-    egrep 'HTTP/1.1' $DIR/headers.out
-    exit 2
-fi
+assert_http_status 409 $DIR/headers.out
+
 echo "OK"
 
 # now delete the test project

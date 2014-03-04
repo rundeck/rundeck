@@ -32,20 +32,17 @@ cat > $DIR/proj_create.post <<END
 END
 
 # get listing
-docurl -X POST --data-binary @$DIR/proj_create.post -H Content-Type:application/xml ${runurl}?${params} > $DIR/curl.out
+docurl -X POST -D $DIR/headers.out --data-binary @$DIR/proj_create.post -H Content-Type:application/xml ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed POST request"
     exit 2
 fi
+assert_http_status 201 $DIR/headers.out
 
 API_XML_NO_WRAPPER=true sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check result
-name=$($XMLSTARLET sel -T -t -v "/project/name" $DIR/curl.out)
-if [ "$test_proj" != "$name" ] ; then
-    errorMsg "/project/name wrong value, expected $name"
-    exit 2
-fi
+assert_xml_value "$test_proj" "/project/name" $DIR/curl.out
 
 
 ##
@@ -60,16 +57,13 @@ if [ 0 != $? ] ; then
     errorMsg "ERROR: failed DELETE request"
     exit 2
 fi
+assert_http_status 204 $DIR/headers.out
 
-egrep -q 'HTTP/1.1 204' $DIR/headers.out 
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: expected 204 result, failed DELETE request"
-    exit 2
-fi
 
 echo "OK"
 
 
 rm $DIR/proj_create.post
 rm $DIR/curl.out
+rm $DIR/headers.out
 

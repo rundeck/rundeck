@@ -39,24 +39,11 @@ if [ 0 != $? ] ; then
     errorMsg "ERROR: failed POST request"
     exit 2
 fi
-egrep -q 'HTTP/1.1 201' $DIR/headers.out
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: Expected 201 result"
-    egrep 'HTTP/1.1' $DIR/headers.out
-    exit 2
-fi
+assert_http_status 201 $DIR/headers.out
 
 #Check result
-name=$($JQ -r .name < $DIR/curl.out)
-if [ "$test_proj" != "$name" ] ; then
-    errorMsg "/project/name wrong value, expected $test_proj"
-    exit 2
-fi
-propval=$($JQ -r  .config['"test.property"'] < $DIR/curl.out)
-if [ "test value" != "$propval" ] ; then
-    errorMsg "/project/config/property[@key=test.property] wrong value, expected 'test value'"
-    exit 2
-fi
+assert_json_value $test_proj ".name" $DIR/curl.out
+assert_json_value "test value" .config['"test.property"'] $DIR/curl.out
 
 echo "OK"
 

@@ -30,7 +30,7 @@ if [ 0 != $? ] ; then
 fi
 
 #Check projects list
-itemcount=$($JQ  length < $DIR/curl.out)
+itemcount=$($JQ length < $DIR/curl.out)
 if [ $itemcount  -lt 1  ] ; then
     errorMsg "Expected at least one project object in json array"
     exit 2
