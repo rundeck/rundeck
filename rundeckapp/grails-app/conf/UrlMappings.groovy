@@ -69,7 +69,7 @@ class UrlMappings {
         "/api/$api_version/incubator/jobs/takeoverSchedule"(controller: 'scheduledExecution', action: 'apiJobClusterTakeoverSchedule')
 
         //catchall
-        "/api/$api_version/$action?"(controller: 'api', action: 'invalid')
+        "/api/$api_version/$action**?"(controller: 'api', action: 'invalid')
 
         //simplified url mappings for link generation
         "/project/$project/nodes/"(controller: 'framework', action: 'nodes')
