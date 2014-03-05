@@ -30,20 +30,22 @@ class ProjectControllerTest {
 
     @Test
     void apiProjectList_xml(){
-        def fwct = mockFor(FrameworkService)
-        fwct.demand.getAuthContextForSubject(1..1){subj->
-            null
+        controller.frameworkService = mockWith(FrameworkService){
+            getAuthContextForSubject(1..1){subj->
+                null
+            }
+            projects(1..1){auth->
+                [
+                        [name: 'testproject'],
+                        [name: 'testproject2'],
+                ]
+            }
         }
-        fwct.demand.projects(1..1){auth->
-            ["a", "b"]
-        }
-        controller.frameworkService=fwct.createMock()
 
-        controller.apiService = mockFor(ApiService).with {
-            demand.renderSuccessXml(1..1) { req, resp, clos ->
+        controller.apiService = mockWith(ApiService){
+            renderSuccessXml(1..1) { req, resp, clos ->
 
             }
-            createMock()
         }
 
         response.format='xml'
@@ -53,19 +55,17 @@ class ProjectControllerTest {
     }
     @Test
     void apiProjectList_json(){
-        def fwct = mockFor(FrameworkService)
-        fwct.demand.getAuthContextForSubject(1..1){subj->
-            null
+        controller.frameworkService = mockWith(FrameworkService) {
+            getAuthContextForSubject(1..1) { subj ->
+                null
+            }
+            projects(1..1) { auth ->
+                [
+                        [name: 'testproject'],
+                        [name: 'testproject2'],
+                ]
+            }
         }
-        fwct.demand.projects(1..1){auth->
-            [
-                    [name:'testproject'],
-                    [name:'testproject2'],
-            ]
-        }
-        controller.frameworkService=fwct.createMock()
-
-
 
         response.format='json'
         controller.apiProjectList()
@@ -80,23 +80,22 @@ class ProjectControllerTest {
     }
     @Test
     void apiProjectList_unacceptableReceivesXml(){
-        def fwct = mockFor(FrameworkService)
-        fwct.demand.getAuthContextForSubject(1..1){subj->
-            null
+        controller.frameworkService = mockWith(FrameworkService) {
+            getAuthContextForSubject(1..1) { subj ->
+                null
+            }
+            projects(1..1) { auth ->
+                [
+                        [name: 'testproject'],
+                        [name: 'testproject2'],
+                ]
+            }
         }
-        fwct.demand.projects(1..1){auth->
-            [
-                    [name:'testproject'],
-                    [name:'testproject2'],
-            ]
-        }
-        controller.frameworkService=fwct.createMock()
 
-        controller.apiService = mockFor(ApiService).with {
-            demand.renderSuccessXml(1..1) { req, resp, clos ->
+        controller.apiService = mockWith(ApiService) {
+            renderSuccessXml(1..1) { req, resp, clos ->
 
             }
-            createMock()
         }
 
         response.format='text'
@@ -107,20 +106,18 @@ class ProjectControllerTest {
 
     @Test
     void apiProjectGet_missingProjectParam(){
-        controller.frameworkService = mockFor(FrameworkService).with{
-            demand.getAuthContextForSubject(1..1){subj->
+        controller.frameworkService = mockWith(FrameworkService){
+            getAuthContextForSubject(1..1){subj->
                 null
             }
-            createMock()
         }
 
-        controller.apiService = mockFor(ApiService).with {
-            demand.renderErrorFormat(1..1) { resp, map ->
+        controller.apiService = mockWith(ApiService) {
+            renderErrorFormat(1..1) { resp, map ->
                 assertEquals(HttpServletResponse.SC_BAD_REQUEST,map.status)
                 assertEquals('api.error.parameter.required',map.code)
                 resp.status=map.status
             }
-            createMock()
         }
 
         response.format='xml'
@@ -129,26 +126,24 @@ class ProjectControllerTest {
     }
     @Test
     void apiProjectGet_unauthorized(){
-        controller.frameworkService = mockFor(FrameworkService).with{
-            demand.getAuthContextForSubject(1..1){subj->
+        controller.frameworkService = mockWith(FrameworkService){
+            getAuthContextForSubject(1..1){subj->
                 null
             }
-            demand.authorizeApplicationResourceAll(1..1){ AuthContext authContext, Map resource, Collection actions->
+            authorizeApplicationResourceAll(1..1){ AuthContext authContext, Map resource, Collection actions->
                 assertEquals('project',resource.type)
                 assertEquals('test1',resource.name)
                 assertEquals([AuthConstants.ACTION_READ],actions)
                 false
             }
-            createMock()
         }
 
-        controller.apiService = mockFor(ApiService).with {
-            demand.renderErrorFormat(1..1) { resp, map ->
+        controller.apiService = mockWith(ApiService) {
+            renderErrorFormat(1..1) { resp, map ->
                 assertEquals(HttpServletResponse.SC_FORBIDDEN,map.status)
                 assertEquals('api.error.item.unauthorized',map.code)
                 resp.status=map.status
             }
-            createMock()
         }
 
         response.format='xml'
@@ -158,30 +153,28 @@ class ProjectControllerTest {
     }
     @Test
     void apiProjectGet_notfound(){
-        controller.frameworkService = mockFor(FrameworkService).with{
-            demand.getAuthContextForSubject(1..1){subj->
+        controller.frameworkService = mockWith(FrameworkService){
+            getAuthContextForSubject(1..1){subj->
                 null
             }
-            demand.authorizeApplicationResourceAll(1..1){ AuthContext authContext, Map resource, Collection actions->
+            authorizeApplicationResourceAll(1..1){ AuthContext authContext, Map resource, Collection actions->
                 assertEquals('project',resource.type)
                 assertEquals('test1',resource.name)
                 assertEquals([AuthConstants.ACTION_READ],actions)
                 true
             }
-            demand.existsFrameworkProject(1..1) { proj ->
+            existsFrameworkProject(1..1) { proj ->
                 assertEquals('test1',proj)
                 false
             }
-            createMock()
         }
 
-        controller.apiService = mockFor(ApiService).with {
-            demand.renderErrorFormat(1..1) { resp, map ->
+        controller.apiService = mockWith(ApiService) {
+            renderErrorFormat(1..1) { resp, map ->
                 assertEquals(HttpServletResponse.SC_NOT_FOUND,map.status)
                 assertEquals('api.error.item.doesnotexist',map.code)
                 resp.status=map.status
             }
-            createMock()
         }
 
         response.format='xml'
@@ -192,12 +185,12 @@ class ProjectControllerTest {
 
     private Object createFrameworkService(boolean configAuth, String projectName, LinkedHashMap<String,
     String> projectProperties=[:]) {
-        mockFor(FrameworkService).with {
-            demand.getAuthContextForSubject(1..1) { subj ->
+        mockWith(FrameworkService) {
+            getAuthContextForSubject(1..1) { subj ->
                 null
             }
             def count = 0
-            demand.authorizeApplicationResourceAll(1..1) { AuthContext authContext, Map resource, Collection actions ->
+            authorizeApplicationResourceAll(1..1) { AuthContext authContext, Map resource, Collection actions ->
                 assertEquals('project', resource.type)
                 assertEquals(projectName, resource.name)
                 count++
@@ -209,11 +202,11 @@ class ProjectControllerTest {
                     return configAuth
                 }
             }
-            demand.existsFrameworkProject(1..1) { proj ->
+            existsFrameworkProject(1..1) { proj ->
                 assertEquals(projectName, proj)
                 true
             }
-            demand.authorizeApplicationResourceAll(1..1) { AuthContext authContext, Map resource, Collection actions ->
+            authorizeApplicationResourceAll(1..1) { AuthContext authContext, Map resource, Collection actions ->
                 assertEquals('project', resource.type)
                 assertEquals(projectName, resource.name)
                 count++
@@ -225,17 +218,16 @@ class ProjectControllerTest {
                     return configAuth
                 }
             }
-            demand.getFrameworkProject(1..1) { String name ->
+            getFrameworkProject(1..1) { String name ->
                 assertEquals(projectName, name)
                 [name: projectName]
             }
             if(configAuth){
-                demand.loadProjectProperties(1..1){pject->
+                loadProjectProperties(1..1){pject->
                     assertEquals([name:projectName],pject)
                     projectProperties
                 }
             }
-            createMock()
         }
     }
 
@@ -404,20 +396,18 @@ class ProjectControllerTest {
         defineBeans {
             apiService(ApiService)
         }
-        controller.apiService.messageSource= mockFor(MessageSource).with {
-            demand.getMessage{code,args,locale->
+        controller.apiService.messageSource= mockWith(MessageSource) {
+            getMessage{code,args,locale->
                 code
             }
-            createMock()
         }
-        controller.frameworkService=mockFor(FrameworkService).with {
-            demand.getAuthContextForSubject(1..1){subject->null}
-            demand.authorizeApplicationResourceTypeAll{auth,type,actions->
+        controller.frameworkService=mockWith(FrameworkService) {
+            getAuthContextForSubject(1..1){subject->null}
+            authorizeApplicationResourceTypeAll{auth,type,actions->
                 assert "project"== type
                 assert ['create']==actions
                 false
             }
-            createMock()
         }
 
         request.xml='<project><name>test1</name></project>'
@@ -442,20 +432,18 @@ class ProjectControllerTest {
         defineBeans {
             apiService(ApiService)
         }
-        controller.apiService.messageSource= mockFor(MessageSource).with {
-            demand.getMessage{code,args,locale->
+        controller.apiService.messageSource= mockWith(MessageSource) {
+            getMessage{code,args,locale->
                 code
             }
-            createMock()
         }
-        controller.frameworkService=mockFor(FrameworkService).with {
-            demand.getAuthContextForSubject(1..1){subject->null}
-            demand.authorizeApplicationResourceTypeAll{auth,type,actions->
+        controller.frameworkService=mockWith(FrameworkService) {
+            getAuthContextForSubject(1..1){subject->null}
+            authorizeApplicationResourceTypeAll{auth,type,actions->
                 assert "project"== type
                 assert ['create']==actions
                 true
             }
-            createMock()
         }
 
         request.xml='<project><namex>test1</namex></project>'
