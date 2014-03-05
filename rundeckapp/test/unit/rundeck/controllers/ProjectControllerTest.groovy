@@ -993,4 +993,167 @@ class ProjectControllerTest {
             }
         }
     }
+    private def mockFrameworkServiceForProjectConfigGet(boolean exists, boolean authorized, String action,
+                                                        LinkedHashMap props, String textformat=null){
+        mockWith(FrameworkService){
+            existsFrameworkProject{String name->
+                exists
+            }
+            if(!exists){
+                return
+            }
+            getAuthContextForSubject{subj->
+                null
+            }
+            authorizeApplicationResourceAll{ctx,resource,actions->
+                assertEquals("project",resource.type)
+                assertEquals("test1",resource.name)
+                assertEquals([action],actions)
+                authorized
+            }
+            if(!authorized){
+                return
+            }
+            getFrameworkProject{name->
+                assertEquals('test1',name)
+                [name:name,propertyFile:[text:textformat]]
+            }
+            loadProjectProperties{proj->
+                props
+            }
+        }
+    }
+
+
+    @Test
+    void apiProjectConfigGet_apiversion(){
+        defineBeans { apiService(ApiService) }
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        controller.frameworkService= mockFrameworkServiceForProjectConfigGet(false, false, 'read', [:])
+        request.api_version=10
+        controller.apiProjectConfigGet()
+        assertEquals HttpServletResponse.SC_BAD_REQUEST,response.status
+        assertEquals "true", response.xml.'@error'.text()
+        assertEquals "api.error.api-version.unsupported", response.xml.error.message.text()
+    }
+    @Test
+    void apiProjectConfigGet_xml_missingparam(){
+        defineBeans { apiService(ApiService) }
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        controller.frameworkService= mockFrameworkServiceForProjectConfigGet(false, false, 'read', [:])
+        request.api_version = 11
+        controller.apiProjectConfigGet()
+        assertEquals HttpServletResponse.SC_BAD_REQUEST, response.status
+        assertEquals "true", response.xml.'@error'.text()
+        assertEquals "api.error.parameter.required", response.xml.error.message.text()
+    }
+    @Test
+    void apiProjectConfigGet_json_missingparam(){
+        defineBeans { apiService(ApiService) }
+        mockCodec(JSONCodec)
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        controller.frameworkService= mockFrameworkServiceForProjectConfigGet(false, false, 'read', [:])
+        request.api_version = 11
+        response.format='json'
+        controller.apiProjectConfigGet()
+        assertEquals HttpServletResponse.SC_BAD_REQUEST, response.status
+        assertEquals true, response.json.error
+        assertEquals "api.error.parameter.required", response.json.errorCode
+    }
+    @Test
+    void apiProjectConfigGet_xml_notfound(){
+        defineBeans { apiService(ApiService) }
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        controller.frameworkService= mockFrameworkServiceForProjectConfigGet(false, false, 'read', [:])
+        request.api_version = 11
+        params.project='test1'
+        controller.apiProjectConfigGet()
+        assertEquals HttpServletResponse.SC_NOT_FOUND, response.status
+        assertEquals "true", response.xml.'@error'.text()
+        assertEquals "api.error.item.doesnotexist", response.xml.error.message.text()
+    }
+    @Test
+    void apiProjectConfigGet_json_notfound(){
+        defineBeans { apiService(ApiService) }
+        mockCodec(JSONCodec)
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        controller.frameworkService= mockFrameworkServiceForProjectConfigGet(false, false, 'read', [:])
+        request.api_version = 11
+        params.project = 'test1'
+        response.format='json'
+        controller.apiProjectConfigGet()
+        assertEquals HttpServletResponse.SC_NOT_FOUND, response.status
+        assertEquals true, response.json.error
+        assertEquals "api.error.item.doesnotexist", response.json.errorCode
+    }
+    @Test
+    void apiProjectConfigGet_xml_unauthorized(){
+        defineBeans { apiService(ApiService) }
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        controller.frameworkService= mockFrameworkServiceForProjectConfigGet(true, false, 'configure', [:])
+        request.api_version = 11
+        params.project='test1'
+        controller.apiProjectConfigGet()
+        assertEquals HttpServletResponse.SC_FORBIDDEN, response.status
+        assertEquals "true", response.xml.'@error'.text()
+        assertEquals "api.error.item.unauthorized", response.xml.error.message.text()
+    }
+    @Test
+    void apiProjectConfigGet_json_unauthorized(){
+        defineBeans { apiService(ApiService) }
+        mockCodec(JSONCodec)
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        controller.frameworkService= mockFrameworkServiceForProjectConfigGet(true, false, 'configure', [:])
+        request.api_version = 11
+        params.project = 'test1'
+        response.format='json'
+        controller.apiProjectConfigGet()
+        assertEquals HttpServletResponse.SC_FORBIDDEN, response.status
+        assertEquals true, response.json.error
+        assertEquals "api.error.item.unauthorized", response.json.errorCode
+    }
+    @Test
+    void apiProjectConfigGet_xml_success(){
+        defineBeans { apiService(ApiService) }
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        controller.frameworkService= mockFrameworkServiceForProjectConfigGet(true, true, 'configure', ["prop1": "value1", "prop2": "value2"])
+        request.api_version = 11
+        params.project='test1'
+        controller.apiProjectConfigGet()
+        assertEquals HttpServletResponse.SC_OK, response.status
+        assertEquals "config",response.xml.name()
+        assertEquals 2,response.xml.property.size()
+        assertEquals 'prop1',response.xml.property[0].'@key'.text()
+        assertEquals 'value1',response.xml.property[0].'@value'.text()
+        assertEquals 'prop2',response.xml.property[1].'@key'.text()
+        assertEquals 'value2',response.xml.property[1].'@value'.text()
+    }
+    @Test
+    void apiProjectConfigGet_json_success(){
+        defineBeans { apiService(ApiService) }
+        mockCodec(JSONCodec)
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        controller.frameworkService= mockFrameworkServiceForProjectConfigGet(true, true, 'configure', ["prop1": "value1", "prop2": "value2"])
+        request.api_version = 11
+        params.project = 'test1'
+        response.format='json'
+        controller.apiProjectConfigGet()
+        assertEquals HttpServletResponse.SC_OK, response.status
+        assertEquals "value1",response.json['prop1']
+        assertEquals "value2",response.json['prop2']
+    }
+    @Test
+    void apiProjectConfigGet_text_success(){
+        defineBeans { apiService(ApiService) }
+        mockCodec(JSONCodec)
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        controller.frameworkService= mockFrameworkServiceForProjectConfigGet(true, true, 'configure', [:],
+                "text format for properties")
+        request.api_version = 11
+        params.project = 'test1'
+        response.format='text'
+        controller.apiProjectConfigGet()
+        assertEquals HttpServletResponse.SC_OK, response.status
+        assertEquals "text format for properties",response.text
+    }
 }
