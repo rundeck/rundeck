@@ -9,6 +9,7 @@ import org.springframework.context.MessageSource
 import rundeck.filters.ApiRequestFilters
 import rundeck.services.ApiService
 import rundeck.services.FrameworkService
+import rundeck.services.ProjectService
 
 import javax.servlet.http.HttpServletResponse
 
@@ -740,11 +741,7 @@ class ProjectControllerTest {
             apiService(ApiService)
         }
         mockCodec(JSONCodec)
-        controller.apiService.messageSource= mockWith(MessageSource){
-            getMessage{code,args,locale->
-                code
-            }
-        }
+        controller.apiService.messageSource= mockWith(MessageSource){ getMessage {code,args,locale-> code } }
         controller.frameworkService= mockFrameworkServiceForProjectCreate(true, false, [],
                 ['input1': 'value1', 'input2': 'value2'], ['prop1': 'value1', 'prop2': 'value2'])
 
@@ -801,4 +798,199 @@ class ProjectControllerTest {
         }
     }
 
+    @Test
+    void deleteProject_apiversion(){
+        request.method = 'DELETE'
+        request.setAttribute('api_version', 10) // require version 11
+        controller.apiProjectDelete()
+        assert response.status == HttpServletResponse.SC_BAD_REQUEST
+        assertEquals "true",response.xml.'@error'.text()
+        assertEquals "api.error.api-version.unsupported",response.xml.error.'@code'.text()
+    }
+    @Test
+    void deleteProject_xml_missingparam(){
+        defineBeans { apiService(ApiService) }
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        request.method = 'DELETE'
+        request.setAttribute('api_version', 11) // require version 11
+        controller.apiProjectDelete()
+        assert response.status == HttpServletResponse.SC_BAD_REQUEST
+        assertEquals "true", response.xml.'@error'.text()
+        assertEquals "api.error.parameter.required", response.xml.error.'@code'.text()
+    }
+    @Test
+    void deleteProject_json_missingparam(){
+        defineBeans { apiService(ApiService) }
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        mockCodec(JSONCodec)
+        request.method = 'DELETE'
+        response.format='json'
+        request.setAttribute('api_version', 11) // require version 11
+        controller.apiProjectDelete()
+        assert response.status == HttpServletResponse.SC_BAD_REQUEST
+        assertEquals true, response.json.error
+        assertEquals "api.error.parameter.required", response.json.errorCode
+    }
+    @Test
+    void deleteProject_xml_notfound(){
+        defineBeans { apiService(ApiService) }
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        mockCodec(JSONCodec)
+        controller.frameworkService=mockFrameworkServiceForProjectDelete(false, false)
+        request.method = 'DELETE'
+        response.format='xml'
+        params.project='test1'
+        request.setAttribute('api_version', 11) // require version 11
+        controller.apiProjectDelete()
+        assert response.status == HttpServletResponse.SC_NOT_FOUND
+        assertEquals "true", response.xml.'@error'.text()
+        assertEquals "api.error.item.doesnotexist", response.xml.error.'@code'.text()
+    }
+    @Test
+    void deleteProject_json_notfound(){
+        defineBeans { apiService(ApiService) }
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        mockCodec(JSONCodec)
+        controller.frameworkService=mockFrameworkServiceForProjectDelete(false, false)
+        request.method = 'DELETE'
+        response.format='json'
+        params.project='test1'
+        request.setAttribute('api_version', 11) // require version 11
+        controller.apiProjectDelete()
+        assert response.status == HttpServletResponse.SC_NOT_FOUND
+        assertEquals true, response.json.error
+        assertEquals "api.error.item.doesnotexist", response.json.errorCode
+    }
+    @Test
+    void deleteProject_xml_unauthorized(){
+        defineBeans { apiService(ApiService) }
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        mockCodec(JSONCodec)
+        controller.frameworkService=mockFrameworkServiceForProjectDelete(true, false)
+        request.method = 'DELETE'
+        response.format='xml'
+        params.project='test1'
+        request.setAttribute('api_version', 11) // require version 11
+        controller.apiProjectDelete()
+        assert response.status == HttpServletResponse.SC_FORBIDDEN
+        assertEquals "true", response.xml.'@error'.text()
+        assertEquals "api.error.item.unauthorized", response.xml.error.'@code'.text()
+    }
+    @Test
+    void deleteProject_json_unauthorized(){
+        defineBeans { apiService(ApiService) }
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        mockCodec(JSONCodec)
+        controller.frameworkService=mockFrameworkServiceForProjectDelete(true, false)
+        request.method = 'DELETE'
+        response.format='json'
+        params.project='test1'
+        request.setAttribute('api_version', 11) // require version 11
+        controller.apiProjectDelete()
+        assert response.status == HttpServletResponse.SC_FORBIDDEN
+        assertEquals true, response.json.error
+        assertEquals "api.error.item.unauthorized", response.json.errorCode
+    }
+    @Test
+    void deleteProject_xml_haserrors(){
+        defineBeans { apiService(ApiService) }
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        mockCodec(JSONCodec)
+        controller.frameworkService=mockFrameworkServiceForProjectDelete(true, true)
+        controller.projectService=mockProjectServiceForProjectDelete(false, 'deleteProjectFailed')
+        request.method = 'DELETE'
+        response.format='xml'
+        params.project='test1'
+        request.setAttribute('api_version', 11) // require version 11
+        controller.apiProjectDelete()
+        assert response.status == HttpServletResponse.SC_INTERNAL_SERVER_ERROR
+        assertEquals "true", response.xml.'@error'.text()
+        assertEquals "deleteProjectFailed", response.xml.error.message.text()
+    }
+
+
+    @Test
+    void deleteProject_json_haserrors(){
+        defineBeans { apiService(ApiService) }
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        mockCodec(JSONCodec)
+        controller.frameworkService=mockFrameworkServiceForProjectDelete(true, true)
+        controller.projectService = mockProjectServiceForProjectDelete(false, 'deleteProjectFailed')
+        request.method = 'DELETE'
+        response.format='json'
+        params.project='test1'
+        request.setAttribute('api_version', 11) // require version 11
+        controller.apiProjectDelete()
+        assert response.status == HttpServletResponse.SC_INTERNAL_SERVER_ERROR
+        assertEquals true, response.json.error
+        assertEquals "deleteProjectFailed", response.json.message
+    }
+    @Test
+    void deleteProject_xml_success(){
+        defineBeans { apiService(ApiService) }
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        mockCodec(JSONCodec)
+        controller.frameworkService=mockFrameworkServiceForProjectDelete(true, true)
+        controller.projectService=mockProjectServiceForProjectDelete(true, null)
+        request.method = 'DELETE'
+        response.format='xml'
+        params.project='test1'
+        request.setAttribute('api_version', 11) // require version 11
+        controller.apiProjectDelete()
+        assert response.status == HttpServletResponse.SC_NO_CONTENT
+    }
+
+
+    @Test
+    void deleteProject_json_success(){
+        defineBeans { apiService(ApiService) }
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        mockCodec(JSONCodec)
+        controller.frameworkService=mockFrameworkServiceForProjectDelete(true, true)
+        controller.projectService = mockProjectServiceForProjectDelete(true, null)
+        request.method = 'DELETE'
+        response.format='json'
+        params.project='test1'
+        request.setAttribute('api_version', 11) // require version 11
+        controller.apiProjectDelete()
+        assert response.status == HttpServletResponse.SC_NO_CONTENT
+    }
+
+    def mockProjectServiceForProjectDelete(boolean success, String errorMessage) {
+        mockWith(ProjectService) {
+            deleteProject { proj, fwk ->
+                return [success: success, error: errorMessage]
+            }
+        }
+    }
+
+    private def mockFrameworkServiceForProjectDelete(boolean exists, boolean authorized){
+        mockWith(FrameworkService){
+            getRundeckFramework{->
+                null
+            }
+            existsFrameworkProject{String name->
+                exists
+            }
+            if(!exists){
+                return
+            }
+            getAuthContextForSubject{subj->
+                null
+            }
+            authorizeApplicationResourceAll{ctx,resource,actions->
+                assertEquals("project",resource.type)
+                assertEquals("test1",resource.name)
+                assertEquals([AuthConstants.ACTION_DELETE],actions)
+                authorized
+            }
+            if(!authorized){
+                return
+            }
+            getFrameworkProject{name->
+                assertEquals('test1',name)
+                [name:name]
+            }
+        }
+    }
 }
