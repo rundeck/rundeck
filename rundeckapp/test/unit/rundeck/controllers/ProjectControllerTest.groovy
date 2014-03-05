@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.TestFor
 import org.junit.Test
+import org.springframework.context.MessageSource
 import rundeck.filters.ApiRequestFilters
 import rundeck.services.ApiService
 import rundeck.services.FrameworkService
@@ -17,6 +18,16 @@ import javax.servlet.http.HttpServletResponse
  */
 @TestFor(ProjectController)
 class ProjectControllerTest {
+
+    /**
+     * utility method to mock a class
+     */
+    private mockWith(Class clazz,Closure clos){
+        def mock = mockFor(clazz)
+        mock.demand.with(clos)
+        return mock.createMock()
+    }
+
     @Test
     void apiProjectList_xml(){
         def fwct = mockFor(FrameworkService)
@@ -387,5 +398,272 @@ class ProjectControllerTest {
         assertEquals 'test1', project.name
         assertEquals '', project.description
         assertEquals(['test.property': 'value1', 'test.property2': 'value2'], project.config)
+    }
+    @Test
+    void apiProjectCreate_xml_unauthorized() {
+        defineBeans {
+            apiService(ApiService)
+        }
+        controller.apiService.messageSource= mockFor(MessageSource).with {
+            demand.getMessage{code,args,locale->
+                code
+            }
+            createMock()
+        }
+        controller.frameworkService=mockFor(FrameworkService).with {
+            demand.getAuthContextForSubject(1..1){subject->null}
+            demand.authorizeApplicationResourceTypeAll{auth,type,actions->
+                assert "project"== type
+                assert ['create']==actions
+                false
+            }
+            createMock()
+        }
+
+        request.xml='<project><name>test1</name></project>'
+        request.method='POST'
+        response.format = 'xml'
+        request.setAttribute('api_version', 11) // require version 11
+        controller.apiProjectCreate()
+        assert response.status == HttpServletResponse.SC_FORBIDDEN
+
+        def result = response.xml
+
+        //test project element
+        assertEquals 'true', result.'@error'.text()
+        assertEquals 'api.error.item.unauthorized', result.error.'@code'.text()
+        assertEquals 'api.error.item.unauthorized', result.error.message.text()
+    }
+    /**
+     * Missing project name element
+     */
+    @Test
+    void apiProjectCreate_xml_invalid() {
+        defineBeans {
+            apiService(ApiService)
+        }
+        controller.apiService.messageSource= mockFor(MessageSource).with {
+            demand.getMessage{code,args,locale->
+                code
+            }
+            createMock()
+        }
+        controller.frameworkService=mockFor(FrameworkService).with {
+            demand.getAuthContextForSubject(1..1){subject->null}
+            demand.authorizeApplicationResourceTypeAll{auth,type,actions->
+                assert "project"== type
+                assert ['create']==actions
+                true
+            }
+            createMock()
+        }
+
+        request.xml='<project><namex>test1</namex></project>'
+        request.method='POST'
+        response.format = 'xml'
+        request.setAttribute('api_version', 11) // require version 11
+        controller.apiProjectCreate()
+        assert response.status == HttpServletResponse.SC_BAD_REQUEST
+
+        def result = response.xml
+
+        //test project element
+        assertEquals 'true', result.'@error'.text()
+        assertEquals 'api.error.invalid.request', result.error.'@code'.text()
+        assertEquals 'api.error.invalid.request', result.error.message.text()
+    }
+    /**
+     * project already exists
+     */
+    @Test
+    void apiProjectCreate_xml_projectExists() {
+        defineBeans {
+            apiService(ApiService)
+        }
+        controller.apiService.messageSource= mockWith(MessageSource){
+            getMessage{code,args,locale->
+                code
+            }
+        }
+        controller.frameworkService=mockWith(FrameworkService) {
+            getAuthContextForSubject(1..1){subject->null}
+            authorizeApplicationResourceTypeAll{auth,type,actions->
+                assert "project"== type
+                assert ['create']==actions
+                true
+            }
+            existsFrameworkProject{name->
+                assert "test1"== name
+                true
+            }
+        }
+
+        request.xml='<project><name>test1</name></project>'
+        request.method='POST'
+        response.format = 'xml'
+        request.setAttribute('api_version', 11) // require version 11
+        controller.apiProjectCreate()
+        assert response.status == HttpServletResponse.SC_CONFLICT
+
+        def result = response.xml
+
+        //test project element
+        assertEquals 'true', result.'@error'.text()
+        assertEquals 'api.error.item.alreadyexists', result.error.'@code'.text()
+        assertEquals 'api.error.item.alreadyexists', result.error.message.text()
+    }
+    /**
+     * project already exists
+     */
+    @Test
+    void apiProjectCreate_xml_withErrors() {
+        defineBeans {
+            apiService(ApiService)
+        }
+        controller.apiService.messageSource= mockWith(MessageSource){
+            getMessage{code,args,locale->
+                code
+            }
+        }
+        controller.frameworkService=mockWith(FrameworkService) {
+            getAuthContextForSubject(1..1){subject->null}
+            authorizeApplicationResourceTypeAll{auth,type,actions->
+                assert "project"== type
+                assert ['create']==actions
+                true
+            }
+            existsFrameworkProject{name->
+                assert "test1"== name
+                false
+            }
+            createFrameworkProject{name,props->
+                [null,['error1','error2']]
+            }
+        }
+
+        request.xml='<project><name>test1</name></project>'
+        request.method='POST'
+        response.format = 'xml'
+        request.setAttribute('api_version', 11) // require version 11
+        controller.apiProjectCreate()
+        assert response.status == HttpServletResponse.SC_INTERNAL_SERVER_ERROR
+
+        def result = response.xml
+
+        //test project element
+        assertEquals 'true', result.'@error'.text()
+        assertEquals 0,result.error.'@code'.size()
+        assertEquals 'error1; error2', result.error.message.text()
+    }
+    /**
+     * project already exists
+     */
+    @Test
+    void apiProjectCreate_xml_success() {
+        defineBeans {
+            apiService(ApiService)
+        }
+        controller.apiService.messageSource= mockWith(MessageSource){
+            getMessage{code,args,locale->
+                code
+            }
+        }
+        controller.frameworkService=mockWith(FrameworkService) {
+            getAuthContextForSubject(1..1){subject->null}
+            authorizeApplicationResourceTypeAll{auth,type,actions->
+                assert "project"== type
+                assert ['create']==actions
+                true
+            }
+            existsFrameworkProject{name->
+                assert "test1"== name
+                false
+            }
+            createFrameworkProject{name,props->
+                assertEquals 'test1',name
+                assertEquals 0,props.size()
+                [[name:'test1'],[]]
+            }
+            loadProjectProperties{proj->
+                assertEquals 'test1',proj.name
+                ['prop1':'value1','prop2':'value2']
+            }
+        }
+
+        request.xml='<project><name>test1</name></project>'
+        request.method='POST'
+        response.format = 'xml'
+        request.setAttribute('api_version', 11) // require version 11
+        controller.apiProjectCreate()
+        assert response.status == HttpServletResponse.SC_CREATED
+
+        def result = response.xml
+
+        //test project element
+        assertEquals 0, result.'@error'.size()
+        def project =result
+        assertEquals "test1",project.name.text()
+        assertEquals 1,project.config.size()
+        assertEquals 2, project.config.property.size()
+        assertEquals 'prop1', project.config.property[0].'@key'.text()
+        assertEquals 'value1', project.config.property[0].'@value'.text()
+        assertEquals 'prop2', project.config.property[1].'@key'.text()
+        assertEquals 'value2', project.config.property[1].'@value'.text()
+    }
+    /**
+     * Create project with input config
+     */
+    @Test
+    void apiProjectCreate_xml_withconfig() {
+        defineBeans {
+            apiService(ApiService)
+        }
+        controller.apiService.messageSource= mockWith(MessageSource){
+            getMessage{code,args,locale->
+                code
+            }
+        }
+        controller.frameworkService=mockWith(FrameworkService) {
+            getAuthContextForSubject(1..1){subject->null}
+            authorizeApplicationResourceTypeAll{auth,type,actions->
+                assert "project"== type
+                assert ['create']==actions
+                true
+            }
+            existsFrameworkProject{name->
+                assert "test1"== name
+                false
+            }
+            createFrameworkProject{name,props->
+                assertEquals 'test1',name
+                assertEquals (['input1':'value1','input2':'value2'],props)
+                [[name:'test1'],[]]
+            }
+            loadProjectProperties{proj->
+                assertEquals 'test1',proj.name
+                ['prop1':'value1','prop2':'value2']
+            }
+        }
+
+        request.xml='<project><name>test1</name><config><property key="input1" value="value1"/><property key="input2"' +
+                ' value="value2"/></config></project>'
+        request.method='POST'
+        response.format = 'xml'
+        request.setAttribute('api_version', 11) // require version 11
+        controller.apiProjectCreate()
+        assert response.status == HttpServletResponse.SC_CREATED
+
+        def result = response.xml
+
+        //test project element
+        assertEquals 0, result.'@error'.size()
+        def project =result
+        assertEquals "test1",project.name.text()
+        assertEquals 1,project.config.size()
+        assertEquals 2, project.config.property.size()
+        assertEquals 'prop1', project.config.property[0].'@key'.text()
+        assertEquals 'value1', project.config.property[0].'@value'.text()
+        assertEquals 'prop2', project.config.property[1].'@key'.text()
+        assertEquals 'value2', project.config.property[1].'@value'.text()
     }
 }
