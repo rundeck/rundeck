@@ -444,7 +444,7 @@ class ProjectController extends ControllerBase{
      * @param action action to require
      * @return FrameworkProject for the project
      */
-    private FrameworkProject validateProjectConfigApiRequest(String action){
+    private def validateProjectConfigApiRequest(String action){
         if (!apiService.requireVersion(request, response, ApiRequestFilters.V11)) {
             return
         }
@@ -492,7 +492,7 @@ class ProjectController extends ControllerBase{
         switch (respFormat) {
             case 'text':
                 render(contentType: 'text/plain') {
-                    response.outputStream<< proj.getPropertyFile().text
+                    response.outputStream<< proj.propertyFile.text
                 }
                 break
             case 'xml':
