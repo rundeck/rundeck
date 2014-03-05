@@ -1023,6 +1023,114 @@ class ProjectControllerTest {
             }
         }
     }
+    private def mockFrameworkServiceForProjectConfigPut(boolean exists, boolean authorized, String action,
+                                                        LinkedHashMap props, boolean success, String errorMessage,
+                                                        String propFileText){
+        mockWith(FrameworkService){
+            existsFrameworkProject{String name->
+                exists
+            }
+            if(!exists){
+                return
+            }
+            getAuthContextForSubject{subj->
+                null
+            }
+            authorizeApplicationResourceAll{ctx,resource,actions->
+                assertEquals("project",resource.type)
+                assertEquals("test1",resource.name)
+                assertEquals([action],actions)
+                authorized
+            }
+            if(!authorized){
+                return
+            }
+            getFrameworkProject{name->
+                assertEquals('test1',name)
+                [name:name,propertyFile: [text: propFileText]]
+            }
+            setFrameworkProjectConfig{proj,configProps->
+                assertEquals props,configProps
+                [success: success,error: errorMessage]
+            }
+            if(!success){
+                return
+            }
+            loadProjectProperties { proj ->
+                props
+            }
+        }
+    }
+    private def mockFrameworkServiceForProjectConfigKeyPut(boolean exists, boolean authorized, String action,
+                                                        LinkedHashMap props, boolean success, String errorMessage,
+                                                        String propFileText){
+        mockWith(FrameworkService){
+            existsFrameworkProject{String name->
+                exists
+            }
+            if(!exists){
+                return
+            }
+            getAuthContextForSubject{subj->
+                null
+            }
+            authorizeApplicationResourceAll{ctx,resource,actions->
+                assertEquals("project",resource.type)
+                assertEquals("test1",resource.name)
+                assertEquals([action],actions)
+                authorized
+            }
+            if(!authorized){
+                return
+            }
+            getFrameworkProject{name->
+                assertEquals('test1',name)
+                [name:name,propertyFile: [text: propFileText]]
+            }
+            updateFrameworkProjectConfig{proj,configProps, prefixes->
+                assertEquals props,configProps
+                [success: success,error: errorMessage]
+            }
+            if(!success){
+                return
+            }
+            loadProjectProperties { proj ->
+                props
+            }
+        }
+    }
+    private def mockFrameworkServiceForProjectConfigKeyDelete(boolean exists, boolean authorized, String action,
+                                                        String propname, boolean success, String errorMessage,
+                                                        String propFileText){
+        mockWith(FrameworkService){
+            existsFrameworkProject{String name->
+                exists
+            }
+            if(!exists){
+                return
+            }
+            getAuthContextForSubject{subj->
+                null
+            }
+            authorizeApplicationResourceAll{ctx,resource,actions->
+                assertEquals("project",resource.type)
+                assertEquals("test1",resource.name)
+                assertEquals([action],actions)
+                authorized
+            }
+            if(!authorized){
+                return
+            }
+            getFrameworkProject{name->
+                assertEquals('test1',name)
+                [name:name,propertyFile: [text: propFileText]]
+            }
+            removeFrameworkProjectConfigProperties{proj,removeSet->
+                assertEquals ([propname] as Set,removeSet)
+                [success: success,error: errorMessage]
+            }
+        }
+    }
 
 
     @Test
@@ -1155,5 +1263,165 @@ class ProjectControllerTest {
         controller.apiProjectConfigGet()
         assertEquals HttpServletResponse.SC_OK, response.status
         assertEquals "text format for properties",response.text
+    }
+
+    @Test
+    void apiProjectConfigPut_xml_success(){
+        defineBeans { apiService(ApiService) }
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        controller.frameworkService= mockFrameworkServiceForProjectConfigPut(true, true, 'configure', ['prop1': 'value1',
+                prop2: 'value2'], true, null, 'text')
+        request.api_version = 11
+        params.project = 'test1'
+        request.xml='<config><property key="prop1" value="value1"/><property key="prop2" value="value2"/></config>'
+        controller.apiProjectConfigPut()
+        assertEquals HttpServletResponse.SC_OK, response.status
+        assertEquals "config", response.xml.name()
+        assertEquals 2, response.xml.property.size()
+        assertEquals 'prop1', response.xml.property[0].'@key'.text()
+        assertEquals 'value1', response.xml.property[0].'@value'.text()
+        assertEquals 'prop2', response.xml.property[1].'@key'.text()
+        assertEquals 'value2', response.xml.property[1].'@value'.text()
+    }
+    @Test
+    void apiProjectConfigPut_json_success(){
+        defineBeans { apiService(ApiService) }
+        mockCodec(JSONCodec)
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        controller.frameworkService= mockFrameworkServiceForProjectConfigPut(true, true, 'configure', ['prop1': 'value1',
+                prop2: 'value2'], true, null, 'text')
+        request.api_version = 11
+        params.project = 'test1'
+        request.json='{"prop1" :"value1","prop2":"value2"}'
+        controller.apiProjectConfigPut()
+        assertEquals HttpServletResponse.SC_OK, response.status
+        assertEquals 'value1', response.json['prop1']
+        assertEquals 'value2', response.json['prop2']
+    }
+    @Test
+    void apiProjectConfigPut_text_success(){
+        defineBeans { apiService(ApiService) }
+        mockCodec(JSONCodec)
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        controller.frameworkService= mockFrameworkServiceForProjectConfigPut(true, true, 'configure', ['prop1': 'value1',
+                prop2: 'value2'], true, null, 'prop1=value1\nprop2=value2')
+        request.api_version = 11
+        params.project = 'test1'
+        request.content='prop1=value1\nprop2=value2'.bytes
+        request.contentType='text/plain'
+        controller.apiProjectConfigPut()
+        assertEquals HttpServletResponse.SC_OK, response.status
+        assertTrue response.contentType.contains('text/plain')
+        assertEquals 'prop1=value1\nprop2=value2', response.text
+    }
+
+
+    @Test
+    void apiProjectConfigKeyGet_xml_success() {
+        defineBeans { apiService(ApiService) }
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        controller.frameworkService = mockFrameworkServiceForProjectConfigGet(true, true, 'configure', ["prop1": "value1", "prop2": "value2"])
+        request.api_version = 11
+        params.project = 'test1'
+        params.keypath = 'prop1'
+        response.format='xml'
+        controller.apiProjectConfigKeyGet()
+        assertEquals HttpServletResponse.SC_OK, response.status
+        assertEquals "property", response.xml.name()
+        assertEquals 'prop1', response.xml.'@key'.text()
+        assertEquals 'value1', response.xml.'@value'.text()
+    }
+
+    @Test
+    void apiProjectConfigKeyGet_json_success() {
+        defineBeans { apiService(ApiService) }
+        mockCodec(JSONCodec)
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        controller.frameworkService = mockFrameworkServiceForProjectConfigGet(true, true, 'configure', ["prop1": "value1", "prop2": "value2"])
+        request.api_version = 11
+        params.project = 'test1'
+        params.keypath = 'prop1'
+        response.format='json'
+        controller.apiProjectConfigKeyGet()
+        assertEquals HttpServletResponse.SC_OK, response.status
+        assertEquals 'prop1', response.json.key
+        assertEquals 'value1', response.json.value
+    }
+    @Test
+    void apiProjectConfigKeyGet_text_success() {
+        defineBeans { apiService(ApiService) }
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        controller.frameworkService = mockFrameworkServiceForProjectConfigGet(true, true, 'configure', ["prop1": "value1", "prop2": "value2"])
+        request.api_version = 11
+        params.project = 'test1'
+        params.keypath = 'prop1'
+        response.format='text'
+        controller.apiProjectConfigKeyGet()
+        assertEquals HttpServletResponse.SC_OK, response.status
+        assertEquals 'value1', response.text
+    }
+
+
+    @Test
+    void apiProjectConfigKeyPut_xml_success() {
+        defineBeans { apiService(ApiService) }
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        controller.frameworkService = mockFrameworkServiceForProjectConfigKeyPut(true, true, 'configure',
+                ["prop1": "value1"],true,null,null)
+        request.api_version = 11
+        params.project = 'test1'
+        params.keypath = 'prop1'
+        request.xml='<property key="prop1" value="value1"/>'
+        controller.apiProjectConfigKeyPut()
+        assertEquals HttpServletResponse.SC_OK, response.status
+        assertEquals "property", response.xml.name()
+        assertEquals 'prop1', response.xml.'@key'.text()
+        assertEquals 'value1', response.xml.'@value'.text()
+    }
+
+    @Test
+    void apiProjectConfigKeyPut_json_success() {
+        defineBeans { apiService(ApiService) }
+        mockCodec(JSONCodec)
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        controller.frameworkService = mockFrameworkServiceForProjectConfigKeyPut(true, true, 'configure',
+                ["prop1": "value1"],true,null,null)
+        request.api_version = 11
+        params.project = 'test1'
+        params.keypath = 'prop1'
+        request.json='{"key":"prop1","value":"value1"}'
+        controller.apiProjectConfigKeyPut()
+        assertEquals HttpServletResponse.SC_OK, response.status
+        assertEquals 'prop1', response.json.key
+        assertEquals 'value1', response.json.value
+    }
+    @Test
+    void apiProjectConfigKeyPut_text_success() {
+        defineBeans { apiService(ApiService) }
+        mockCodec(JSONCodec)
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        controller.frameworkService = mockFrameworkServiceForProjectConfigKeyPut(true, true, 'configure',
+                ["prop1": "value1"],true,null,null)
+        request.api_version = 11
+        params.project = 'test1'
+        params.keypath = 'prop1'
+        request.content='value1'
+        request.contentType='text/plain'
+        controller.apiProjectConfigKeyPut()
+        assertEquals HttpServletResponse.SC_OK, response.status
+        assertEquals 'value1', response.text
+    }
+
+    @Test
+    void apiProjectConfigKeyDelete_success() {
+        defineBeans { apiService(ApiService) }
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        controller.frameworkService = mockFrameworkServiceForProjectConfigKeyDelete(true, true, 'configure',
+                'prop1', true, null, null)
+        request.api_version = 11
+        params.project = 'test1'
+        params.keypath = 'prop1'
+        controller.apiProjectConfigKeyDelete()
+        assertEquals HttpServletResponse.SC_NO_CONTENT, response.status
     }
 }
