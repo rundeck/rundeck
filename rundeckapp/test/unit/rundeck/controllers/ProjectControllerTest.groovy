@@ -3,6 +3,7 @@ package rundeck.controllers
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.TestFor
+import org.codehaus.groovy.grails.plugins.converters.codecs.JSONCodec
 import org.junit.Test
 import org.springframework.context.MessageSource
 import rundeck.filters.ApiRequestFilters
@@ -424,6 +425,40 @@ class ProjectControllerTest {
         assertEquals 'api.error.item.unauthorized', result.error.'@code'.text()
         assertEquals 'api.error.item.unauthorized', result.error.message.text()
     }
+    @Test
+    void apiProjectCreate_json_unauthorized() {
+        defineBeans {
+            apiService(ApiService)
+        }
+        mockCodec(JSONCodec)
+        controller.apiService.messageSource= mockWith(MessageSource) {
+            getMessage{code,args,locale->
+                code
+            }
+        }
+        controller.frameworkService=mockWith(FrameworkService) {
+            getAuthContextForSubject(1..1){subject->null}
+            authorizeApplicationResourceTypeAll{auth,type,actions->
+                assert "project"== type
+                assert ['create']==actions
+                false
+            }
+        }
+
+        request.json='{"name":"test1"}'
+        request.method='POST'
+        response.format = 'json'
+        request.setAttribute('api_version', 11) // require version 11
+        controller.apiProjectCreate()
+        assert response.status == HttpServletResponse.SC_FORBIDDEN
+
+        def result = response.json
+
+        //test project element
+        assertEquals true, result.error
+        assertEquals 'api.error.item.unauthorized', result.errorCode
+        assertEquals 'api.error.item.unauthorized', result.message
+    }
     /**
      * Missing project name element
      */
@@ -459,6 +494,42 @@ class ProjectControllerTest {
         assertEquals 'true', result.'@error'.text()
         assertEquals 'api.error.invalid.request', result.error.'@code'.text()
         assertEquals 'api.error.invalid.request', result.error.message.text()
+    }/**
+     * Missing project name element
+     */
+    @Test
+    void apiProjectCreate_json_invalid() {
+        defineBeans {
+            apiService(ApiService)
+        }
+        mockCodec(JSONCodec)
+        controller.apiService.messageSource= mockWith(MessageSource) {
+            getMessage{code,args,locale->
+                code
+            }
+        }
+        controller.frameworkService=mockWith(FrameworkService) {
+            getAuthContextForSubject(1..1){subject->null}
+            authorizeApplicationResourceTypeAll{auth,type,actions->
+                assert "project"== type
+                assert ['create']==actions
+                true
+            }
+        }
+
+        request.json='{"blame":"monkey"}'
+        request.method='POST'
+        response.format = 'json'
+        request.setAttribute('api_version', 11) // require version 11
+        controller.apiProjectCreate()
+        assert response.status == HttpServletResponse.SC_BAD_REQUEST
+
+        def result = response.json
+
+        //test project element
+        assertEquals true, result.error
+        assertEquals 'api.error.invalid.request', result.errorCode
+        assertEquals 'api.error.invalid.request', result.message
     }
     /**
      * project already exists
@@ -499,9 +570,49 @@ class ProjectControllerTest {
         assertEquals 'true', result.'@error'.text()
         assertEquals 'api.error.item.alreadyexists', result.error.'@code'.text()
         assertEquals 'api.error.item.alreadyexists', result.error.message.text()
+    }/**
+     * project already exists
+     */
+    @Test
+    void apiProjectCreate_json_projectExists() {
+        defineBeans {
+            apiService(ApiService)
+        }
+        mockCodec(JSONCodec)
+        controller.apiService.messageSource= mockWith(MessageSource){
+            getMessage{code,args,locale->
+                code
+            }
+        }
+        controller.frameworkService=mockWith(FrameworkService) {
+            getAuthContextForSubject(1..1){subject->null}
+            authorizeApplicationResourceTypeAll{auth,type,actions->
+                assert "project"== type
+                assert ['create']==actions
+                true
+            }
+            existsFrameworkProject{name->
+                assert "test1"== name
+                true
+            }
+        }
+
+        request.json = '{"name":"test1"}'
+        request.method='POST'
+        response.format = 'json'
+        request.setAttribute('api_version', 11) // require version 11
+        controller.apiProjectCreate()
+        assert response.status == HttpServletResponse.SC_CONFLICT
+
+        def result = response.json
+
+        //test project element
+        assertEquals true, result.error
+        assertEquals 'api.error.item.alreadyexists', result.errorCode
+        assertEquals 'api.error.item.alreadyexists', result.message
     }
     /**
-     * project already exists
+     * Failure to create project
      */
     @Test
     void apiProjectCreate_xml_withErrors() {
@@ -544,7 +655,51 @@ class ProjectControllerTest {
         assertEquals 'error1; error2', result.error.message.text()
     }
     /**
-     * project already exists
+     * Failure to create project
+     */
+    @Test
+    void apiProjectCreate_json_withErrors() {
+        defineBeans {
+            apiService(ApiService)
+        }
+        mockCodec(JSONCodec)
+        controller.apiService.messageSource= mockWith(MessageSource){
+            getMessage{code,args,locale->
+                code
+            }
+        }
+        controller.frameworkService=mockWith(FrameworkService) {
+            getAuthContextForSubject(1..1){subject->null}
+            authorizeApplicationResourceTypeAll{auth,type,actions->
+                assert "project"== type
+                assert ['create']==actions
+                true
+            }
+            existsFrameworkProject{name->
+                assert "test1"== name
+                false
+            }
+            createFrameworkProject{name,props->
+                [null,['error1','error2']]
+            }
+        }
+
+        request.json = '{"name":"test1"}'
+        request.method='POST'
+        response.format = 'json'
+        request.setAttribute('api_version', 11) // require version 11
+        controller.apiProjectCreate()
+        assert response.status == HttpServletResponse.SC_INTERNAL_SERVER_ERROR
+
+        def result = response.json
+
+        //test project element
+        assertEquals true, result.error
+        assertEquals null, result.errorCode
+        assertEquals 'error1; error2', result.message
+    }
+    /**
+     * Successful
      */
     @Test
     void apiProjectCreate_xml_success() {
@@ -597,6 +752,59 @@ class ProjectControllerTest {
         assertEquals 'value1', project.config.property[0].'@value'.text()
         assertEquals 'prop2', project.config.property[1].'@key'.text()
         assertEquals 'value2', project.config.property[1].'@value'.text()
+    }
+    /**
+     * Successful
+     */
+    @Test
+    void apiProjectCreate_json_success() {
+        defineBeans {
+            apiService(ApiService)
+        }
+        mockCodec(JSONCodec)
+        controller.apiService.messageSource= mockWith(MessageSource){
+            getMessage{code,args,locale->
+                code
+            }
+        }
+        controller.frameworkService=mockWith(FrameworkService) {
+            getAuthContextForSubject(1..1){subject->null}
+            authorizeApplicationResourceTypeAll{auth,type,actions->
+                assert "project"== type
+                assert ['create']==actions
+                true
+            }
+            existsFrameworkProject{name->
+                assert "test1"== name
+                false
+            }
+            createFrameworkProject{name,props->
+                assertEquals 'test1',name
+                assertEquals 0,props.size()
+                [[name:'test1'],[]]
+            }
+            loadProjectProperties{proj->
+                assertEquals 'test1',proj.name
+                ['prop1':'value1','prop2':'value2']
+            }
+        }
+
+        request.json = '{"name":"test1"}'
+        request.method='POST'
+        response.format = 'json'
+        request.setAttribute('api_version', 11) // require version 11
+        controller.apiProjectCreate()
+        assert response.status == HttpServletResponse.SC_CREATED
+
+        def result = response.json
+
+        //test project element
+        assertEquals null,result.error
+        def project =result
+        assertEquals "test1",project.name
+        assertEquals 2, project.config.size()
+        assertEquals 'value1', project.config['prop1']
+        assertEquals 'value2', project.config['prop2']
     }
     /**
      * Create project with input config
@@ -653,5 +861,58 @@ class ProjectControllerTest {
         assertEquals 'value1', project.config.property[0].'@value'.text()
         assertEquals 'prop2', project.config.property[1].'@key'.text()
         assertEquals 'value2', project.config.property[1].'@value'.text()
+    }
+    /**
+     * Create project with input config
+     */
+    @Test
+    void apiProjectCreate_json_withconfig() {
+        defineBeans {
+            apiService(ApiService)
+        }
+        mockCodec(JSONCodec)
+        controller.apiService.messageSource= mockWith(MessageSource){
+            getMessage{code,args,locale->
+                code
+            }
+        }
+        controller.frameworkService=mockWith(FrameworkService) {
+            getAuthContextForSubject(1..1){subject->null}
+            authorizeApplicationResourceTypeAll{auth,type,actions->
+                assert "project"== type
+                assert ['create']==actions
+                true
+            }
+            existsFrameworkProject{name->
+                assert "test1"== name
+                false
+            }
+            createFrameworkProject{name,props->
+                assertEquals 'test1',name
+                assertEquals (['input1':'value1','input2':'value2'],props)
+                [[name:'test1'],[]]
+            }
+            loadProjectProperties{proj->
+                assertEquals 'test1',proj.name
+                ['prop1':'value1','prop2':'value2']
+            }
+        }
+
+        request.json = '{"name":"test1","config": { "input1":"value1","input2":"value2" } }'
+        request.method='POST'
+        response.format = 'json'
+        request.setAttribute('api_version', 11) // require version 11
+        controller.apiProjectCreate()
+        assert response.status == HttpServletResponse.SC_CREATED
+
+        def result = response.json
+
+        //test project element
+        assertEquals null, result.error
+        def project = result
+        assertEquals "test1", project.name
+        assertEquals 2, project.config.size()
+        assertEquals 'value1', project.config['prop1']
+        assertEquals 'value2', project.config['prop2']
     }
 }
