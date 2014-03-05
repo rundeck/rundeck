@@ -147,7 +147,7 @@ class ProjectController extends ControllerBase{
      * @param hasConfigAuth true if 'configure' action is allowed
      * @param vers api version requested
      */
-    private def renderApiProjectXml (FrameworkProject pject, delegate, hasConfigAuth=false, vers=1){
+    private def renderApiProjectXml (def pject, delegate, hasConfigAuth=false, vers=1){
         Map data = basicProjectDetails(pject)
         def pmap = vers < ApiRequestFilters.V11 ? [:] : [url: data.url]
         delegate.'project'(pmap) {
@@ -170,7 +170,7 @@ class ProjectController extends ControllerBase{
      * @param pject framework project object
      * @param delegate builder delegate for response
      */
-    private def renderApiProjectConfigXml (FrameworkProject pject, delegate){
+    private def renderApiProjectConfigXml (def pject, delegate){
         delegate.'config' {
             frameworkService.loadProjectProperties(pject).each { k, v ->
                 delegate.'property'(key: k, value: v)
@@ -185,19 +185,20 @@ class ProjectController extends ControllerBase{
      * @param hasConfigAuth true if 'configure' action is allowed
      * @param vers api version requested
      */
-    private def renderApiProjectJson (FrameworkProject pject, delegate, hasConfigAuth=false, vers=1){
+    private def renderApiProjectJson (def pject, delegate, hasConfigAuth=false, vers=1){
         Map data=basicProjectDetails(pject)
         delegate.url = data.url
         delegate.name = data.name
         delegate.description = data.description
+        def ctrl=this
         if(hasConfigAuth){
             delegate.config {
-                renderApiProjectConfigJson(pject,delegate)
+                ctrl.renderApiProjectConfigJson(pject,delegate)
             }
         }
     }
 
-    private Map basicProjectDetails(FrameworkProject pject) {
+    private Map basicProjectDetails(def pject) {
         [
                 url:generateProjectApiUrl(pject.name),
                 name:pject.name,
@@ -210,7 +211,7 @@ class ProjectController extends ControllerBase{
      * @param pject framework project object
      * @param delegate builder delegate for response
      */
-    private def renderApiProjectConfigJson (FrameworkProject pject, delegate){
+    private def renderApiProjectConfigJson (def pject, delegate){
         frameworkService.loadProjectProperties(pject).each { k, v ->
             delegate."${k}" = v
         }
@@ -279,6 +280,7 @@ class ProjectController extends ControllerBase{
         def configAuth= frameworkService.authorizeApplicationResourceAll(authContext, [type: 'project',
                 name: params.project], [AuthConstants.ACTION_CONFIGURE])
         def pject = frameworkService.getFrameworkProject(params.project)
+        def ctrl=this
         withFormat{
             xml{
 
@@ -294,7 +296,7 @@ class ProjectController extends ControllerBase{
             }
             json{
                 return render(contentType: 'application/json'){
-                    renderApiProjectJson(pject, delegate, configAuth, request.api_version)
+                    ctrl.renderApiProjectJson(pject, delegate, configAuth, request.api_version)
                 }
             }
         }
