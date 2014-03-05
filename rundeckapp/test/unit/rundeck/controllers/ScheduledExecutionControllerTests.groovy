@@ -1058,7 +1058,7 @@ class ScheduledExecutionControllerTests  {
             assertEquals(['project','test'],args)
             return true
         }
-        svcMock.demand.renderSuccessXml { response, closure ->
+        svcMock.demand.renderSuccessXml { request,response, closure ->
             succeeded=true
             return true
         }
@@ -1151,7 +1151,7 @@ class ScheduledExecutionControllerTests  {
             assertEquals(5, min)
             return true
         }
-        svcMock.demand.renderSuccessXml { response, closure ->
+        svcMock.demand.renderSuccessXml { request, response, closure ->
             succeeded = true
             return true
         }
