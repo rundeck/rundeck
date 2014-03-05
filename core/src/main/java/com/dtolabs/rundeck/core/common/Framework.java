@@ -18,7 +18,6 @@ package com.dtolabs.rundeck.core.common;
 
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.CoreException;
-import com.dtolabs.rundeck.core.authentication.Authenticator;
 import com.dtolabs.rundeck.core.authorization.*;
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext;
 import com.dtolabs.rundeck.core.dispatcher.CentralDispatcher;
@@ -55,7 +54,7 @@ import java.util.*;
 /**
  * Manages the elements of the Ctl framework. Provides access to the various
  * kinds of framework resource managers like
- * {@link FrameworkProjectMgr}, {@link Authenticator}, {@link Authorization}.
+ * {@link FrameworkProjectMgr}, {@link Authorization}.
  * <p/>
  * User: alexh
  * Date: Jun 4, 2004
@@ -354,29 +353,6 @@ public class Framework extends FrameworkResourceParent {
     }
 
 
-    /**
-     * Returns an instance of Framework object. Specify the rdeck_base path and let the projects and modules dir be
-     * constructed from it.
-     *
-     * @param rdeck_base_dir path name to the rdeck_base
-     *
-     * @return a Framework instance
-     */
-    public static Framework getInstance(final String rdeck_base_dir,
-            final Authenticator authenticator) {
-
-        logger.debug("creating new Framework instance."
-                     + "  rdeck_base_dir=" + rdeck_base_dir
-        );
-        if(null==rdeck_base_dir && null==Constants.getSystemBaseDir()) {
-            throw new RuntimeException(
-                "Unable to determine rdeck base directory: system property rdeck.base is not set");
-        }
-        //determine projects dir from properties
-        String frameworkProjectsDir = Constants.getFrameworkProjectsDir(rdeck_base_dir);
-        Framework instance = new Framework(rdeck_base_dir, frameworkProjectsDir);
-        return instance;
-    }
 
 
     /**

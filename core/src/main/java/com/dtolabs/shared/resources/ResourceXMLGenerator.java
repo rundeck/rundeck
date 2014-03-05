@@ -27,8 +27,8 @@ import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.NodesFileGenerator;
 import static com.dtolabs.shared.resources.ResourceXMLConstants.*;
 
-import com.dtolabs.utils.XMLChar;
 import org.apache.log4j.Logger;
+import org.apache.xerces.util.XMLChar;
 import org.dom4j.Document;
 import org.dom4j.DocumentFactory;
 import org.dom4j.Element;

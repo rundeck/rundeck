@@ -34,7 +34,6 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResultImpl;
-import com.dtolabs.rundeck.core.tasks.dispatch.NodeExecutionStatusTask;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
@@ -325,21 +324,5 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
         }
     }
 
-    /**
-     * Add internal success notification to inform parallel node dispatcher that execution was successful on this node.
-     *
-     * @param nodeentry the node
-     * @param project   the project
-     * @param seq       the Sequential task
-     */
-    public static void addNodeContextSuccessReport(final INodeEntry nodeentry, final Project project,
-                                                   final Sequential seq) {
-        final NodeExecutionStatusTask status = new NodeExecutionStatusTask();
-        status.setProject(project);
-        status.setNodeName(nodeentry.getNodename());
-        status.setRefId(STATUS_LISTENER_REF_ID);
-        status.setFailOnError(false);
 
-        seq.addTask(status);
-    }
 }
