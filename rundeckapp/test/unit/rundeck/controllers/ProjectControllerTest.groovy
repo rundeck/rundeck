@@ -402,14 +402,7 @@ class ProjectControllerTest {
                 code
             }
         }
-        controller.frameworkService=mockWith(FrameworkService) {
-            getAuthContextForSubject(1..1){subject->null}
-            authorizeApplicationResourceTypeAll{auth,type,actions->
-                assert "project"== type
-                assert ['create']==actions
-                false
-            }
-        }
+        controller.frameworkService = mockFrameworkServiceForProjectCreate(false, true, null, null, null)
 
         request.xml='<project><name>test1</name></project>'
         request.method='POST'
@@ -436,14 +429,7 @@ class ProjectControllerTest {
                 code
             }
         }
-        controller.frameworkService=mockWith(FrameworkService) {
-            getAuthContextForSubject(1..1){subject->null}
-            authorizeApplicationResourceTypeAll{auth,type,actions->
-                assert "project"== type
-                assert ['create']==actions
-                false
-            }
-        }
+        controller.frameworkService = mockFrameworkServiceForProjectCreate(false, true, null, null, null)
 
         request.json='{"name":"test1"}'
         request.method='POST'
@@ -472,14 +458,7 @@ class ProjectControllerTest {
                 code
             }
         }
-        controller.frameworkService=mockWith(FrameworkService) {
-            getAuthContextForSubject(1..1){subject->null}
-            authorizeApplicationResourceTypeAll{auth,type,actions->
-                assert "project"== type
-                assert ['create']==actions
-                true
-            }
-        }
+        controller.frameworkService = mockFrameworkServiceForProjectCreate(true, true, null, null, null)
 
         request.xml='<project><namex>test1</namex></project>'
         request.method='POST'
@@ -508,14 +487,8 @@ class ProjectControllerTest {
                 code
             }
         }
-        controller.frameworkService=mockWith(FrameworkService) {
-            getAuthContextForSubject(1..1){subject->null}
-            authorizeApplicationResourceTypeAll{auth,type,actions->
-                assert "project"== type
-                assert ['create']==actions
-                true
-            }
-        }
+
+        controller.frameworkService = mockFrameworkServiceForProjectCreate(true, true, null, null, null)
 
         request.json='{"blame":"monkey"}'
         request.method='POST'
@@ -544,18 +517,8 @@ class ProjectControllerTest {
                 code
             }
         }
-        controller.frameworkService=mockWith(FrameworkService) {
-            getAuthContextForSubject(1..1){subject->null}
-            authorizeApplicationResourceTypeAll{auth,type,actions->
-                assert "project"== type
-                assert ['create']==actions
-                true
-            }
-            existsFrameworkProject{name->
-                assert "test1"== name
-                true
-            }
-        }
+
+        controller.frameworkService = mockFrameworkServiceForProjectCreate(true, true, null, null, null)
 
         request.xml='<project><name>test1</name></project>'
         request.method='POST'
@@ -570,7 +533,8 @@ class ProjectControllerTest {
         assertEquals 'true', result.'@error'.text()
         assertEquals 'api.error.item.alreadyexists', result.error.'@code'.text()
         assertEquals 'api.error.item.alreadyexists', result.error.message.text()
-    }/**
+    }
+    /**
      * project already exists
      */
     @Test
@@ -584,18 +548,8 @@ class ProjectControllerTest {
                 code
             }
         }
-        controller.frameworkService=mockWith(FrameworkService) {
-            getAuthContextForSubject(1..1){subject->null}
-            authorizeApplicationResourceTypeAll{auth,type,actions->
-                assert "project"== type
-                assert ['create']==actions
-                true
-            }
-            existsFrameworkProject{name->
-                assert "test1"== name
-                true
-            }
-        }
+
+        controller.frameworkService = mockFrameworkServiceForProjectCreate(true, true, null, null, null)
 
         request.json = '{"name":"test1"}'
         request.method='POST'
@@ -624,21 +578,7 @@ class ProjectControllerTest {
                 code
             }
         }
-        controller.frameworkService=mockWith(FrameworkService) {
-            getAuthContextForSubject(1..1){subject->null}
-            authorizeApplicationResourceTypeAll{auth,type,actions->
-                assert "project"== type
-                assert ['create']==actions
-                true
-            }
-            existsFrameworkProject{name->
-                assert "test1"== name
-                false
-            }
-            createFrameworkProject{name,props->
-                [null,['error1','error2']]
-            }
-        }
+        controller.frameworkService = mockFrameworkServiceForProjectCreate(true, false, ['error1', 'error2'], [:], null)
 
         request.xml='<project><name>test1</name></project>'
         request.method='POST'
@@ -668,21 +608,7 @@ class ProjectControllerTest {
                 code
             }
         }
-        controller.frameworkService=mockWith(FrameworkService) {
-            getAuthContextForSubject(1..1){subject->null}
-            authorizeApplicationResourceTypeAll{auth,type,actions->
-                assert "project"== type
-                assert ['create']==actions
-                true
-            }
-            existsFrameworkProject{name->
-                assert "test1"== name
-                false
-            }
-            createFrameworkProject{name,props->
-                [null,['error1','error2']]
-            }
-        }
+        controller.frameworkService = mockFrameworkServiceForProjectCreate(true, false, ['error1','error2'], [:], null)
 
         request.json = '{"name":"test1"}'
         request.method='POST'
@@ -711,27 +637,8 @@ class ProjectControllerTest {
                 code
             }
         }
-        controller.frameworkService=mockWith(FrameworkService) {
-            getAuthContextForSubject(1..1){subject->null}
-            authorizeApplicationResourceTypeAll{auth,type,actions->
-                assert "project"== type
-                assert ['create']==actions
-                true
-            }
-            existsFrameworkProject{name->
-                assert "test1"== name
-                false
-            }
-            createFrameworkProject{name,props->
-                assertEquals 'test1',name
-                assertEquals 0,props.size()
-                [[name:'test1'],[]]
-            }
-            loadProjectProperties{proj->
-                assertEquals 'test1',proj.name
-                ['prop1':'value1','prop2':'value2']
-            }
-        }
+        controller.frameworkService = mockFrameworkServiceForProjectCreate(true, false, [],
+                [:], ['prop1': 'value1', 'prop2': 'value2'])
 
         request.xml='<project><name>test1</name></project>'
         request.method='POST'
@@ -767,27 +674,8 @@ class ProjectControllerTest {
                 code
             }
         }
-        controller.frameworkService=mockWith(FrameworkService) {
-            getAuthContextForSubject(1..1){subject->null}
-            authorizeApplicationResourceTypeAll{auth,type,actions->
-                assert "project"== type
-                assert ['create']==actions
-                true
-            }
-            existsFrameworkProject{name->
-                assert "test1"== name
-                false
-            }
-            createFrameworkProject{name,props->
-                assertEquals 'test1',name
-                assertEquals 0,props.size()
-                [[name:'test1'],[]]
-            }
-            loadProjectProperties{proj->
-                assertEquals 'test1',proj.name
-                ['prop1':'value1','prop2':'value2']
-            }
-        }
+        controller.frameworkService = mockFrameworkServiceForProjectCreate(true, false, [],
+                [:], ['prop1': 'value1', 'prop2': 'value2'])
 
         request.json = '{"name":"test1"}'
         request.method='POST'
@@ -819,27 +707,8 @@ class ProjectControllerTest {
                 code
             }
         }
-        controller.frameworkService=mockWith(FrameworkService) {
-            getAuthContextForSubject(1..1){subject->null}
-            authorizeApplicationResourceTypeAll{auth,type,actions->
-                assert "project"== type
-                assert ['create']==actions
-                true
-            }
-            existsFrameworkProject{name->
-                assert "test1"== name
-                false
-            }
-            createFrameworkProject{name,props->
-                assertEquals 'test1',name
-                assertEquals (['input1':'value1','input2':'value2'],props)
-                [[name:'test1'],[]]
-            }
-            loadProjectProperties{proj->
-                assertEquals 'test1',proj.name
-                ['prop1':'value1','prop2':'value2']
-            }
-        }
+        controller.frameworkService = mockFrameworkServiceForProjectCreate(true, false, [],
+                ['input1': 'value1', 'input2': 'value2'], ['prop1': 'value1', 'prop2': 'value2'])
 
         request.xml='<project><name>test1</name><config><property key="input1" value="value1"/><property key="input2"' +
                 ' value="value2"/></config></project>'
@@ -876,27 +745,8 @@ class ProjectControllerTest {
                 code
             }
         }
-        controller.frameworkService=mockWith(FrameworkService) {
-            getAuthContextForSubject(1..1){subject->null}
-            authorizeApplicationResourceTypeAll{auth,type,actions->
-                assert "project"== type
-                assert ['create']==actions
-                true
-            }
-            existsFrameworkProject{name->
-                assert "test1"== name
-                false
-            }
-            createFrameworkProject{name,props->
-                assertEquals 'test1',name
-                assertEquals (['input1':'value1','input2':'value2'],props)
-                [[name:'test1'],[]]
-            }
-            loadProjectProperties{proj->
-                assertEquals 'test1',proj.name
-                ['prop1':'value1','prop2':'value2']
-            }
-        }
+        controller.frameworkService= mockFrameworkServiceForProjectCreate(true, false, [],
+                ['input1': 'value1', 'input2': 'value2'], ['prop1': 'value1', 'prop2': 'value2'])
 
         request.json = '{"name":"test1","config": { "input1":"value1","input2":"value2" } }'
         request.method='POST'
@@ -915,4 +765,40 @@ class ProjectControllerTest {
         assertEquals 'value1', project.config['prop1']
         assertEquals 'value2', project.config['prop2']
     }
+
+    private Object mockFrameworkServiceForProjectCreate(boolean authorized, boolean exists, ArrayList createErrors,
+                                                       LinkedHashMap<String, String> inputProps,
+                                                       LinkedHashMap<String, String> configProps) {
+        mockWith(FrameworkService) {
+            getAuthContextForSubject(1..1) { subject -> null }
+            authorizeApplicationResourceTypeAll { auth, type, actions ->
+                assert "project" == type
+                assert ['create'] == actions
+                authorized
+            }
+            if(!authorized){
+                return
+            }
+            existsFrameworkProject { name ->
+                assert "test1" == name
+                exists
+            }
+            if(exists){
+                return
+            }
+            createFrameworkProject { name, props ->
+                assertEquals 'test1', name
+                assertEquals(inputProps, props)
+                [createErrors.size() > 0 ? null: [name: 'test1'], createErrors]
+            }
+            if(createErrors.size()>0){
+                return
+            }
+            loadProjectProperties { proj ->
+                assertEquals 'test1', proj.name
+                configProps
+            }
+        }
+    }
+
 }
