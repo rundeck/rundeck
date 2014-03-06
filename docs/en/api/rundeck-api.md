@@ -1863,16 +1863,18 @@ Parameters:
 + `jobUuidOption` (optional, string, `preserve/remove`) ... Option declaring how duplicate Job UUIDs should be handled. If `preserve` (default) then imported job UUIDs will not be modified, and may conflict with jobs in other projects. If `remove` then all job UUIDs will be removed before importing.
 + `importExecutions` (optional, string, `true/false`) ... If true, import all executions and logs from the archive (default). If false, do not import executions or logs.
 
+Expected Request Content:
+
+`Content-Type: application/zip`
+
 Response will indicate whether the imported contents had any errors:
 
 **All imported jobs successful:**
 
 `application/xml`
 ~~~ {.xml}
-<result >
-    <import status="successful">
-    </import>
-</result>
+<import status="successful">
+</import>
 ~~~
 
 `application/json`
@@ -1885,14 +1887,12 @@ Response will indicate whether the imported contents had any errors:
 
 `application/xml`
 ~~~ {.xml}
-<result >
-    <import status="failed">
-        <errors count="[#]">
-            <error>Job ABC could not be validated: ...</error>
-            <error>Job XYZ could not be validated: ...</error>
-        </errors>
-    </import>
-</result>
+<import status="failed">
+    <errors count="[#]">
+        <error>Job ABC could not be validated: ...</error>
+        <error>Job XYZ could not be validated: ...</error>
+    </errors>
+</import>
 ~~~
 
 `application/json`
