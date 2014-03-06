@@ -1,9 +1,13 @@
 package rundeck.controllers
 
+import com.dtolabs.rundeck.core.authentication.Group
+import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.TestFor
 import org.codehaus.groovy.grails.plugins.converters.codecs.JSONCodec
+import org.codehaus.groovy.grails.plugins.testing.GrailsMockHttpServletResponse
 import org.junit.Test
 import org.springframework.context.MessageSource
 import rundeck.filters.ApiRequestFilters
@@ -11,6 +15,7 @@ import rundeck.services.ApiService
 import rundeck.services.FrameworkService
 import rundeck.services.ProjectService
 
+import javax.security.auth.Subject
 import javax.servlet.http.HttpServletResponse
 
 /**
@@ -800,6 +805,8 @@ class ProjectControllerTest {
 
     @Test
     void deleteProject_apiversion(){
+        defineBeans { apiService(ApiService) }
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         request.method = 'DELETE'
         request.setAttribute('api_version', 10) // require version 11
         controller.apiProjectDelete()
@@ -1131,6 +1138,38 @@ class ProjectControllerTest {
             }
         }
     }
+    private def mockFrameworkServiceForProjectExport(boolean exists, boolean authorized, String action){
+        mockWith(FrameworkService){
+            existsFrameworkProject{String name->
+                exists
+            }
+            if(!exists){
+                return
+            }
+            getAuthContextForSubject{subj->
+                null
+            }
+            authorizeApplicationResourceAll{ctx,resource,actions->
+                assertEquals("project",resource.type)
+                assertEquals("test1",resource.name)
+                assertEquals([action],actions)
+                authorized
+            }
+            if(!authorized){
+                return
+            }
+            getFrameworkProject{name->
+                assertEquals('test1',name)
+                [name:name]
+            }
+            getRundeckFramework{->
+                null
+            }
+            getAuthContextForSubject{subj->
+
+            }
+        }
+    }
 
 
     @Test
@@ -1151,10 +1190,15 @@ class ProjectControllerTest {
         controller.frameworkService= mockFrameworkServiceForProjectConfigGet(false, false, 'read', [:])
         request.api_version = 11
         controller.apiProjectConfigGet()
-        assertEquals HttpServletResponse.SC_BAD_REQUEST, response.status
-        assertEquals "true", response.xml.'@error'.text()
-        assertEquals "api.error.parameter.required", response.xml.error.message.text()
+        assertXmlError(response, HttpServletResponse.SC_BAD_REQUEST, "api.error.parameter.required")
     }
+
+    private void assertXmlError(GrailsMockHttpServletResponse response, int status, String code) {
+        assertEquals status, response.status
+        assertEquals "true", response.xml.'@error'.text()
+        assertEquals code, response.xml.error.message.text()
+    }
+
     @Test
     void apiProjectConfigGet_json_missingparam(){
         defineBeans { apiService(ApiService) }
@@ -1423,5 +1467,162 @@ class ProjectControllerTest {
         params.keypath = 'prop1'
         controller.apiProjectConfigKeyDelete()
         assertEquals HttpServletResponse.SC_NO_CONTENT, response.status
+    }
+    @Test
+    void apiProjectExport_success() {
+        defineBeans { apiService(ApiService) }
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'export')
+        controller.projectService=mockWith(ProjectService){
+            exportProjectToOutputStream{project,fwk,stream->
+                assertEquals 'test1',project.name
+                stream<<'some data'
+            }
+        }
+        request.api_version = 11
+        params.project = 'test1'
+        controller.apiProjectExport()
+        assertEquals HttpServletResponse.SC_OK, response.status
+        assertEquals 'application/zip', response.contentType
+        assertEquals 'some data', response.text
+
+    }
+    @Test
+    void apiProjectImport_notfound() {
+        defineBeans { apiService(ApiService) }
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        controller.frameworkService = mockFrameworkServiceForProjectExport(false, true, 'import')
+        request.api_version = 11
+        params.project = 'test1'
+        request.format='blah'
+        controller.apiProjectImport()
+        assertXmlError(response, HttpServletResponse.SC_NOT_FOUND, "api.error.item.doesnotexist")
+    }
+    @Test
+    void apiProjectImport_unauthorized() {
+        defineBeans { apiService(ApiService) }
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        controller.frameworkService = mockFrameworkServiceForProjectExport(true, false, 'import')
+        request.api_version = 11
+        params.project = 'test1'
+        request.format='blah'
+        controller.apiProjectImport()
+        assertXmlError(response, HttpServletResponse.SC_FORBIDDEN, "api.error.item.unauthorized")
+    }
+    @Test
+    void apiProjectImport_invalidFormat() {
+        defineBeans { apiService(ApiService) }
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
+        request.api_version = 11
+        params.project = 'test1'
+        request.format='blah'
+        controller.apiProjectImport()
+        assertXmlError(response, HttpServletResponse.SC_BAD_REQUEST, "api.error.invalid.request")
+    }
+    @Test
+    void apiProjectImport_xml_failure() {
+        defineBeans { apiService(ApiService) }
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
+        controller.projectService=mockWith(ProjectService){
+            importToProject{  project, String user, String roleList,  framework,
+                             AuthContext authContext,  InputStream stream, Map options->
+                assertEquals('user1',user)
+                assertTrue(roleList in ['groupa,groupb', 'groupb,groupa'])
+                [success:false,joberrors:['error1','error2']]
+            }
+        }
+        request.api_version = 11
+        params.project = 'test1'
+        request.format='application/zip'
+        response.format='xml'
+        request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
+                [] as Set, [] as Set)
+        session.user='user1'
+        controller.apiProjectImport()
+        assertEquals HttpServletResponse.SC_OK,response.status
+        assertEquals 'failed',response.xml.'@status'.text()
+        assertEquals '2',response.xml.errors.'@count'.text()
+        assertEquals 2,response.xml.errors.error.size()
+        assertEquals 'error1',response.xml.errors.error[0].text()
+        assertEquals 'error2',response.xml.errors.error[1].text()
+    }
+    @Test
+    void apiProjectImport_json_failure() {
+        defineBeans { apiService(ApiService) }
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
+        controller.projectService=mockWith(ProjectService){
+            importToProject{  project, String user, String roleList,  framework,
+                             AuthContext authContext,  InputStream stream, Map options->
+                assertEquals('user1',user)
+                assertTrue(roleList in ['groupa,groupb', 'groupb,groupa'])
+                [success:false,joberrors:['error1','error2']]
+            }
+        }
+        request.api_version = 11
+        params.project = 'test1'
+        request.format='application/zip'
+        response.format='json'
+        request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
+                [] as Set, [] as Set)
+        session.user='user1'
+        controller.apiProjectImport()
+        assertEquals HttpServletResponse.SC_OK,response.status
+        assertEquals 'failed',response.json.import_status
+        assertEquals 2,response.json.errors.size()
+        assertEquals 'error1',response.json.errors[0]
+        assertEquals 'error2',response.json.errors[1]
+    }
+    @Test
+    void apiProjectImport_xml_success() {
+        defineBeans { apiService(ApiService) }
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
+        controller.projectService=mockWith(ProjectService){
+            importToProject{  project, String user, String roleList,  framework,
+                             AuthContext authContext,  InputStream stream, Map options->
+                assertEquals('user1',user)
+                assertTrue(roleList in ['groupa,groupb', 'groupb,groupa'])
+                [success:true]
+            }
+        }
+        request.api_version = 11
+        params.project = 'test1'
+        request.format='application/zip'
+        response.format='xml'
+        request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
+                [] as Set, [] as Set)
+        session.user='user1'
+        controller.apiProjectImport()
+        assertEquals HttpServletResponse.SC_OK,response.status
+        assertEquals 'successful',response.xml.'@status'.text()
+        assertEquals 0,response.xml.errors.size()
+    }
+    @Test
+    void apiProjectImport_json_success() {
+        defineBeans { apiService(ApiService) }
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
+        controller.projectService=mockWith(ProjectService){
+            importToProject{  project, String user, String roleList,  framework,
+                             AuthContext authContext,  InputStream stream, Map options->
+                assertEquals('user1',user)
+                assertTrue(roleList in ['groupa,groupb', 'groupb,groupa'])
+                [success:true]
+            }
+        }
+        request.api_version = 11
+        params.project = 'test1'
+        request.format='application/zip'
+        response.format='json'
+        request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
+                [] as Set, [] as Set)
+        session.user='user1'
+        controller.apiProjectImport()
+        assertEquals HttpServletResponse.SC_OK,response.status
+        assertEquals 'successful',response.json.import_status
+        assertEquals null,response.json.errors
     }
 }
