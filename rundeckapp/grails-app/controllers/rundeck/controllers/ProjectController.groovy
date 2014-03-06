@@ -703,7 +703,7 @@ class ProjectController extends ControllerBase{
     }
 
     def apiProjectImport(){
-        def project = validateProjectConfigApiRequest(AuthConstants.ACTION_EXPORT)
+        def project = validateProjectConfigApiRequest(AuthConstants.ACTION_IMPORT)
         if (!project) {
             return
         }
