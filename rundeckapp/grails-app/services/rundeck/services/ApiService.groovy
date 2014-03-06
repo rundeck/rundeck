@@ -50,7 +50,7 @@ class ApiService {
      * @param args
      */
     def renderSuccessXml(HttpServletRequest request,HttpServletResponse response, String code, List args) {
-        return renderSuccessXml(request,response) {
+        return renderSuccessXmlWrap(request,response) {
             success {
                 message(messageSource.getMessage(code, args as Object[], null))
             }
@@ -81,6 +81,18 @@ class ApiService {
         return renderSuccessXml(null,response,code,args)
     }
     /**
+     * Render xml response, forces "&lt;result&gt;" wrapper
+     * @param status status code to send
+     * @param request
+     * @param response
+     * @param recall
+     * @return
+     */
+    def renderSuccessXmlWrap(HttpServletRequest request,
+                         HttpServletResponse response, Closure recall) {
+        return renderSuccessXml(0,true,request,response,recall)
+    }
+    /**
      * Render xml response, provides "&lt;result&gt;" wrapper for api request older than v11,
      * or if "X-Rundeck-api-xml-response-wrapper" header in request is "true".
      * @param status status code to send
@@ -89,11 +101,12 @@ class ApiService {
      * @param recall
      * @return
      */
-    def renderSuccessXml(int status=0,HttpServletRequest request, HttpServletResponse response, Closure recall) {
+    def renderSuccessXml(int status = 0, Boolean forceWrapper = false, HttpServletRequest request,
+                             HttpServletResponse response, Closure recall) {
         if (status) {
             response.status = status
         }
-        if (!request || doWrapXmlResponse(request)) {
+        if (!request || doWrapXmlResponse(request) || forceWrapper) {
             response.setHeader(XML_API_RESPONSE_WRAPPER_HEADER,"true")
             return respondOutput(response, TEXT_XML_CONTENT_TYPE, renderSuccessXml(recall))
         }else{
@@ -110,7 +123,7 @@ class ApiService {
      * @deprecated use {@link #renderSuccessXml(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse, groovy.lang.Closure)}
      */
     def renderSuccessXml(int status=0,HttpServletResponse response, Closure recall) {
-       return renderSuccessXml (status,null,response,recall)
+       return renderSuccessXml (status,false,null,response,recall)
     }
     def renderSuccessXmlUnwrapped(Closure recall){
         return renderXml {

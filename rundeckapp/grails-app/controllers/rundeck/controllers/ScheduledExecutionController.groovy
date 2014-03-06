@@ -750,7 +750,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
         if(jobs){
             response.addHeader('Location',apiService.apiHrefForJob(jobs[0]))
-            return apiService.renderSuccessXml(HttpServletResponse.SC_CREATED,request,response){
+            return apiService.renderSuccessXmlWrap(HttpServletResponse.SC_CREATED,request,response){
                 renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
             }
         }else{
@@ -820,12 +820,10 @@ class ScheduledExecutionController  extends ControllerBase{
 
 
         if (jobs) {
-            return apiService.renderSuccessXml(request,response) {
-                if (apiService.doWrapXmlResponse(request)) {
-                    delegate.'link'(href: apiService.apiHrefForJob(jobs[0]), rel: 'get')
-                    success {
-                        delegate.'message'(g.message(code: 'api.success.job.create.message', args: [params.id]))
-                    }
+            return apiService.renderSuccessXmlWrap(request,response) {
+                delegate.'link'(href: apiService.apiHrefForJob(jobs[0]), rel: 'get')
+                success {
+                    delegate.'message'(g.message(code: 'api.success.job.create.message', args: [params.id]))
                 }
                 renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
             }
@@ -2024,7 +2022,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def skipjobs = loadresults.skipjobs
 
 
-        apiService.renderSuccessXml(request,response){
+        apiService.renderSuccessXmlWrap(request,response){
             renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
         }
     }
@@ -2414,7 +2412,7 @@ class ScheduledExecutionController  extends ControllerBase{
                     code: 'api.error.item.unauthorized', args: ['Reschedule Jobs', 'Server', params.serverNodeUUID]])
         }
         if(!frameworkService.isClusterModeEnabled()){
-            return apiService.renderSuccessXml(request,response) {
+            return apiService.renderSuccessXmlWrap(request,response) {
                 message("No action performed, cluster mode is not enabled.")
             }
         }
