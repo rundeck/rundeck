@@ -1488,6 +1488,54 @@ class ProjectControllerTest {
 
     }
     @Test
+    void apiProjectExport_apiversion() {
+        defineBeans { apiService(ApiService) }
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'export')
+        controller.projectService=mockWith(ProjectService){
+            exportProjectToOutputStream{project,fwk,stream->
+                assertEquals 'test1',project.name
+                stream<<'some data'
+            }
+        }
+        request.api_version = 10
+        params.project = 'test1'
+        controller.apiProjectExport()
+        assertXmlError(response, HttpServletResponse.SC_BAD_REQUEST,'api.error.api-version.unsupported')
+    }
+    @Test
+    void apiProjectExport_notfound() {
+        defineBeans { apiService(ApiService) }
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        controller.frameworkService = mockFrameworkServiceForProjectExport(false, true, 'export')
+        controller.projectService=mockWith(ProjectService){
+            exportProjectToOutputStream{project,fwk,stream->
+                assertEquals 'test1',project.name
+                stream<<'some data'
+            }
+        }
+        request.api_version = 11
+        params.project = 'test1'
+        controller.apiProjectExport()
+        assertXmlError(response, HttpServletResponse.SC_NOT_FOUND,'api.error.item.doesnotexist')
+    }
+    @Test
+    void apiProjectExport_unauthorized() {
+        defineBeans { apiService(ApiService) }
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        controller.frameworkService = mockFrameworkServiceForProjectExport(true, false, 'export')
+        controller.projectService=mockWith(ProjectService){
+            exportProjectToOutputStream{project,fwk,stream->
+                assertEquals 'test1',project.name
+                stream<<'some data'
+            }
+        }
+        request.api_version = 11
+        params.project = 'test1'
+        controller.apiProjectExport()
+        assertXmlError(response, HttpServletResponse.SC_FORBIDDEN,'api.error.item.unauthorized')
+    }
+    @Test
     void apiProjectImport_notfound() {
         defineBeans { apiService(ApiService) }
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
