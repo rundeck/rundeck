@@ -1633,6 +1633,7 @@ class ProjectControllerTest {
                              AuthContext authContext,  InputStream stream, Map options->
                 assertEquals('user1',user)
                 assertTrue(roleList in ['groupa,groupb', 'groupb,groupa'])
+                assertEquals([executionImportBehavior:'import', jobUUIDBehavior:'preserve'],options)
                 [success:true]
             }
         }
@@ -1647,6 +1648,102 @@ class ProjectControllerTest {
         assertEquals HttpServletResponse.SC_OK,response.status
         assertEquals 'successful',response.xml.'@status'.text()
         assertEquals 0,response.xml.errors.size()
+    }
+    @Test
+    void apiProjectImport_importExecutionsFalse() {
+        defineBeans { apiService(ApiService) }
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
+        controller.projectService=mockWith(ProjectService){
+            importToProject{  project, String user, String roleList,  framework,
+                             AuthContext authContext,  InputStream stream, Map options->
+                assertEquals('user1',user)
+                assertTrue(roleList in ['groupa,groupb', 'groupb,groupa'])
+                assertEquals([executionImportBehavior: 'skip', jobUUIDBehavior: 'preserve'], options)
+                [success:true]
+            }
+        }
+        request.api_version = 11
+        params.project = 'test1'
+        params.importExecutions='false'
+        request.format='application/zip'
+        request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
+                [] as Set, [] as Set)
+        session.user='user1'
+        controller.apiProjectImport()
+        assertEquals HttpServletResponse.SC_OK,response.status
+    }
+    @Test
+    void apiProjectImport_importExecutionsTrue() {
+        defineBeans { apiService(ApiService) }
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
+        controller.projectService=mockWith(ProjectService){
+            importToProject{  project, String user, String roleList,  framework,
+                             AuthContext authContext,  InputStream stream, Map options->
+                assertEquals('user1',user)
+                assertTrue(roleList in ['groupa,groupb', 'groupb,groupa'])
+                assertEquals([executionImportBehavior: 'import', jobUUIDBehavior: 'preserve'], options)
+                [success:true]
+            }
+        }
+        request.api_version = 11
+        params.project = 'test1'
+        params.importExecutions='true'
+        request.format='application/zip'
+        request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
+                [] as Set, [] as Set)
+        session.user='user1'
+        controller.apiProjectImport()
+        assertEquals HttpServletResponse.SC_OK,response.status
+    }
+    @Test
+    void apiProjectImport_jobUUIDBehaviorPreserve() {
+        defineBeans { apiService(ApiService) }
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
+        controller.projectService=mockWith(ProjectService){
+            importToProject{  project, String user, String roleList,  framework,
+                             AuthContext authContext,  InputStream stream, Map options->
+                assertEquals('user1',user)
+                assertTrue(roleList in ['groupa,groupb', 'groupb,groupa'])
+                assertEquals([executionImportBehavior: 'import', jobUUIDBehavior: 'preserve'], options)
+                [success:true]
+            }
+        }
+        request.api_version = 11
+        params.project = 'test1'
+        params.jobUUIDBehavior='preserve'
+        request.format='application/zip'
+        request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
+                [] as Set, [] as Set)
+        session.user='user1'
+        controller.apiProjectImport()
+        assertEquals HttpServletResponse.SC_OK,response.status
+    }
+    @Test
+    void apiProjectImport_jobUUIDBehaviorReplace() {
+        defineBeans { apiService(ApiService) }
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
+        controller.projectService=mockWith(ProjectService){
+            importToProject{  project, String user, String roleList,  framework,
+                             AuthContext authContext,  InputStream stream, Map options->
+                assertEquals('user1',user)
+                assertTrue(roleList in ['groupa,groupb', 'groupb,groupa'])
+                assertEquals([executionImportBehavior: 'import', jobUUIDBehavior: 'preserve'], options)
+                [success:true]
+            }
+        }
+        request.api_version = 11
+        params.project = 'test1'
+        params.jobUUIDBehavior='replace'
+        request.format='application/zip'
+        request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
+                [] as Set, [] as Set)
+        session.user='user1'
+        controller.apiProjectImport()
+        assertEquals HttpServletResponse.SC_OK,response.status
     }
     @Test
     void apiProjectImport_json_success() {
