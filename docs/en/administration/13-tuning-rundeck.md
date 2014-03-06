@@ -155,4 +155,4 @@ This can be a desktop GUI like JConsole run locally.
     jconsole <rundeck pid>
     
 For instructions on remote JMX monitoring for Grails, Spring and log4j see:
-[Grails in the enterprise](http://www.ibm.com/developerworks/java/library/j-grails12168/index.html).
+[Grails in the enterprise](http://public.dhe.ibm.com/software/dw/java/j-grails12168-pdf.pdf).
