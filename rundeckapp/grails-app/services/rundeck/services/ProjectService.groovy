@@ -322,9 +322,20 @@ class ProjectService {
         }
 
     }
-    def importToProject(FrameworkProject project,String user, String roleList, Framework framework,
-                        AuthContext authContext, ZipInputStream input, Map options) throws ProjectServiceException{
-        ZipReader zip = new ZipReader(input)
+
+    /**
+     * Import a zip project archive to the project
+     * @param project project
+     * @param  user username of job owner
+     * @param roleList role list string for scheduled jobs
+     * @param framework framework
+     * @param authContext authentication context
+     * @param input input stream of zip data
+     * @param options import options
+     */
+    def importToProject(FrameworkProject project, String user, String roleList, Framework framework,
+                        AuthContext authContext, InputStream input, Map options) throws ProjectServiceException {
+        ZipReader zip = new ZipReader(new ZipInputStream(input))
 //        zip.debug=true
         def jobxml=[]
         def jobxmlmap=[:]

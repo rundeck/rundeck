@@ -96,7 +96,7 @@ class ProjectController extends ControllerBase{
                 return
             }
             String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
-            def result=projectService.importToProject(project1,session.user,roleList,framework,authContext,new ZipInputStream(file.getInputStream()),params.import)
+            def result=projectService.importToProject(project1,session.user,roleList,framework,authContext, file.getInputStream(),params.import)
 
             if(result.success){
                 flash.message="Archive successfully imported"
@@ -724,7 +724,7 @@ class ProjectController extends ControllerBase{
                 jobUUIDBehavior: params.jobUuidOption?:'preserve'
         ]
         def result = projectService.importToProject(project, session.user, roleList, framework, authContext,
-                new ZipInputStream(stream), importOptions)
+                stream, importOptions)
         switch (respFormat){
             case 'json':
                 render(contentType: 'application/json'){
