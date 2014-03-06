@@ -715,7 +715,15 @@ class ProjectController extends ControllerBase{
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         //uploaded file
         def stream = request.getInputStream()
-
+        def len = request.getContentLength()
+        if(0==len){
+            return apiService.renderErrorFormat(response,[
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.invalid.request',
+                    args: ['No content'],
+                    format:respFormat
+            ])
+        }
 
         String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
 
