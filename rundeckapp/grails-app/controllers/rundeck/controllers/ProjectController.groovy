@@ -720,7 +720,7 @@ class ProjectController extends ControllerBase{
         String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
 
         def importOptions = [
-                executionImportBehavior: Boolean.parseBoolean(params.importExecutions) ? 'import' : 'skip',
+                executionImportBehavior: Boolean.parseBoolean(params.importExecutions?:'true') ? 'import' : 'skip',
                 jobUUIDBehavior: params.jobUuidOption?:'preserve'
         ]
         def result = projectService.importToProject(project, session.user, roleList, framework, authContext,
