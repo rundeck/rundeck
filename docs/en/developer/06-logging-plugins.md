@@ -1,4 +1,4 @@
-% Logging Plugin Development
+% Logging Plugin
 % Greg Schueler
 % June 5, 2013
 
@@ -60,7 +60,7 @@ There are three types of plugins that can be created:
 
 ## Configuration
 
-See the chapter [Plugins - Using Providers - Logging](../manual/plugins.html#logging).
+See the chapter [Plugins User Guide - Configuring - Logging](../plugins-user-guide/configuring.html#logging-plugin-configuration).
 
 ## Logging Plugin Development
 
@@ -73,7 +73,7 @@ Currently "script-based" plugins (shell scripts, that is) are not supported.
 
 ### Java Logging plugins
 
-Java-based plugins can be developed just as any other Rundeck plugin, as described in the chapter [Plugin Development - Java Plugin Development](#java-plugin-development).
+Java-based plugins can be developed just as any other Rundeck plugin, as described in the chapter [Plugin Development - Java Plugin Development](plugin-development.html#java-plugin-development).
 
 Your plugin class should implement the appropriate Java interface as described in the section for that plugin:
 
