@@ -10,8 +10,10 @@ or a [Script Plugin Type](#script-plugin-type).
 
 ## Plugin configuration
 
-The `ResourceModelSource` service allows the plugins to be configured via the Rundeck Web GUI. You are thus able to declare configuration properties for
+The `ResourceModelSource`
+[(javadoc)](../javadoc/com/dtolabs/rundeck/core/resources/ResourceModelSource.html) service allows the plugins to be configured via the Rundeck Web GUI. You are thus able to declare configuration properties for
 your plugin, which will be displayed as a web form when the Project is configured, or can be manually configured in the `project.properties` file.
+
 
 ## Java Plugin Type
 
@@ -20,7 +22,8 @@ An instance of your ResourceModelSource provider will be
 re-used, so each time a new ResourceModelSource with a new configuration is required, 
 your Factory class will be invoked to produce it.
 
-Your provider class must implement the `com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory` interface:
+Your provider class must implement the interface
+[ResourceModelSourceFactory](../javadoc/com/dtolabs/rundeck/core/resources/ResourceModelSourceFactory.html):
 
 ~~~~~~{.java}
 public interface ResourceModelSourceFactory {
@@ -35,17 +38,8 @@ public interface ResourceModelSourceFactory {
 
 ### Plugin properties 
 
-A ResourceModelSource provider can also be configured via the Web GUI by
-implementing the `com.dtolabs.rundeck.core.plugins.configuration.Describable`
-interface. 
-This allows you to return a descriptor of the configuration parameters for your plugin, which is used by the GUI to render a web form. The
-properties the user configures are stored in the `project.properties` configuration file, and are passed to your factory method as the `configuration` properties.
-
 See [Plugin Development - Java Plugins - Descriptions](plugin-development.html#plugin-descriptions)
-to learn how to create configuration properties for your plugin.
-
-More information is available in the Javadoc.
-
+to learn how to create configuration properties for your ResourceModelSource plugin.
 
 ## Script Plugin Type
 
@@ -146,5 +140,6 @@ Exit code:
 
 Script output:
 
-* All output on `STDOUT` will be captured and passed to a `ResourceFormatParser` for the specified `resource-format` to create the Node definitions.
+* All output on `STDOUT` will be captured and passed to a 
+[ResourceFormatParser](model-format-parser-and-generator-plugin.html#resourceformatparser) for the specified `resource-format` to create the Node definitions.
 

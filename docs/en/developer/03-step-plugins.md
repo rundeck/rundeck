@@ -35,13 +35,14 @@ There are several reasons to create a Step Plugin:
 
 Refer to the [Plugin Development - Java Plugins](plugin-development.html#java-plugin-development)
  section for information about correct
-definition of a Plugin class, including packaging as a Jar and annotation.
+definition of a [Plugin](../javadoc/com/dtolabs/rundeck/core/plugins/Plugin.html) class, including packaging as a Jar and annotation.
 
 Be sure to use the `@Plugin` annotation on your provider implementation class
-to let it be recognized by Rundeck. Your `service` name should be one of the
+to let it be recognized by Rundeck (See [Plugin Annotations](plugin-annotations.html)). 
+
+Your `service` name should be one of the
 three listed below.  The class
-`com.dtolabs.rundeck.plugins.ServiceNameConstants` contains static definitions
-of all Rundeck Service names.
+[ServiceNameConstants](../javadoc/com/dtolabs/rundeck/plugins/ServiceNameConstants.html) contains static definitions of all Rundeck Service names.
 
 ## Workflow Step Types
 
@@ -62,7 +63,7 @@ to learn how to create configuration properties for your plugin using Java annot
 
 Annotate your class with `@Plugin` and use the service name `WorkflowStep`.
 
-Implement the interface `com.dtolabs.rundeck.plugins.step.StepPlugin`:
+Implement the interface [StepPlugin](../javadoc/com/dtolabs/rundeck/plugins/step/StepPlugin.html):
 
 ~~~~~~ {.java}
 /**
@@ -81,7 +82,7 @@ Your implementation should return `true` if it was successful, and `false` other
 
 Annotate your class with `@Plugin` and use the service name `WorkflowNodeStep`.
 
-Implement the interface `com.dtolabs.rundeck.plugins.step.NodeStepPlugin`
+Implement the interface [NodeStepPlugin](../javadoc/com/dtolabs/rundeck/plugins/step/NodeStepPlugin.html):
 
 ~~~~~ {.java}
 /**
@@ -110,7 +111,7 @@ command/script via the appropriate services.
     
 Annotate your class with `@Plugin` and use the service name `RemoteScriptNodeStep`
 
-Implement the interface `com.dtolabs.rundeck.plugins.step.RemoteScriptNodeStepPlugin`
+Implement the interface [RemoteScriptNodeStepPlugin](javadoc/com/dtolabs/rundeck/plugins/step/RemoteScriptNodeStepPlugin.html):
 
 ~~~~ {.java}
 /**
@@ -128,8 +129,8 @@ public GeneratedScript generateScript(final PluginStepContext context,
     throws NodeStepException;
 ~~~~~~~
 
-Your implementation should return a `GeneratedScript` object.  You can make use of the 
-`com.dtolabs.rundeck.plugins.step.GeneratedScriptBuilder` class to generate the appropriate return type using these
+Your implementation should return a [GeneratedScript](../javadoc/com/dtolabs/rundeck/plugins/step/GeneratedScript.html) object.  You can make use of the 
+[GeneratedScriptBuilder](../javadoc/com/dtolabs/rundeck/plugins/step/GeneratedScriptBuilder.html) class to generate the appropriate return type using these
 two factory methods:
 
 ~~~~~~ {.java}
@@ -151,7 +152,7 @@ public static GeneratedScript command(final String... command);
 
 ### Step context information
 
-Each plugin is passed a `PluginStepContext` instance that provides access to
+Each plugin is passed a [PluginStepContext](../javadoc/com/dtolabs/rundeck/plugins/step/PluginStepContext.html) instance that provides access to
 details about the step and its configuration:
 
 ~~~~ {.java}

@@ -148,7 +148,8 @@ Java examples.
 
 Java-based plugins can be developed just as any other Rundeck plugin, as described in the chapter [Plugin Development - Java Plugin Development](#java-plugin-development).
 
-These plugin classes should implement the `com.dtolabs.rundeck.plugins.notification.NotificationPlugin` interface:
+These plugin classes should implement the interface
+[NotificationPlugin](../javadoc/com/dtolabs/rundeck/plugins/notification/NotificationPlugin.html):
 
 ~~~~~~ {.java}
 public interface NotificationPlugin {
@@ -162,9 +163,9 @@ public interface NotificationPlugin {
 }
 ~~~~~~~~~~~
     
-To define configuration properties for your plugin, you use the same mechanisms as for Workflow Steps, described under the chapter [Workflow Step Plugin - Plugin Descriptions](workflow-step-plugin.html#plugin-descriptions).
+To define configuration properties for your plugin, you use the same mechanisms as for Workflow Steps, described under the chapter [Plugin Development - Plugin Descriptions](plugin-development.html#plugin-descriptions).
 
-The simplest way to do this is to use [Description Annotations](workflow-step-plugin.html#description-annotations). Here is an example class annotated to describe it to the Rundeck GUI:
+The simplest way to do this is to use [Plugin Annotations](plugin-annotations.html). Here is an example class annotated to describe it to the Rundeck GUI:
 
 ~~~~~~ {.java}
 @Plugin(service="Notification", name="example")

@@ -6,6 +6,7 @@ There are currently two ways to develop plugins:
 
 1. [Java plugin development](#java-plugin-development): Develop Java code that is distributed within a Jar file.
 2. [Script Plugin Development](#script-plugin-development): Write shell/system scripts that implement your desired behavior and put them in a zip file with some metadata.
+3. Groovy Plugin Development: Write groovy scripts to implement Notification and Logging plugins.
 
 Either way, the resultant plugin archive file, either a .jar java archive, 
 or a .zip file archive, will be placed in the plugin directory 
@@ -96,22 +97,22 @@ however typically each plugin file would contain only providers related in some 
 
 Node Execution services:
 
-* `NodeExecutor` - executes a command on a node.
-* `FileCopier` - copies a file to a node.
+* `NodeExecutor` - executes a command on a node [javadoc](../javadoc/com/dtolabs/rundeck/core/execution/service/NodeExecutor.html).
+* `FileCopier` - copies a file to a node [javadoc](../javadoc/com/dtolabs/rundeck/core/execution/service/FileCopier.html).
 
 Resource model services:
 
-* `ResourceModelSource` - produces a set of Node definitions for a project.
-* `ResourceFormatParser` - parses a document into a set of Node resources.
-* `ResourceFormatGenerator` - generates a document from a set of Node resources.
+* `ResourceModelSource` - produces a set of Node definitions for a project [javadoc](../javadoc/com/dtolabs/rundeck/core/resources/ResourceModelSource.html).
+* `ResourceFormatParser` - parses a document into a set of Node resources [javadoc](../javadoc/com/dtolabs/rundeck/core/resources/format/ResourceFormatParser.html).
+* `ResourceFormatGenerator` - generates a document from a set of Node resources [javadoc](../javadoc/com/dtolabs/rundeck/core/resources/format/ResourceFormatGenerator.html).
 
-Workflow Step services (described in [Workflow Step Plugin Development](workflow-step-plugin-development.html)):
+Workflow Step services (described in [Workflow Step Plugin](workflow-step-plugin.html)):
 
 * `WorkflowStep` - runs a single step in a workflow.
 * `WorkflowNodeStep` - runs a single step for each node in a workflow.
 * `RemoteScriptNodeStep` - generates a script or command to execute remotely for each node in a workflow.
 
-Notification services (described in [Notification Plugin Development](notification-plugin-development.html)):
+Notification services (described in [Notification Plugin](notification-plugin.html)):
 
 * `Notification` - performs an action after a Job state trigger. 
 
@@ -127,8 +128,8 @@ provider of a particular service.
 
 You should choose a unique but simple name for your provider.
 
-Each plugin class must have the "com.dtolabs.rundeck.core.plugins.Plugin"
-annotation applied to it.
+Each plugin class must have the 
+[Plugin](../javadoc/com/dtolabs/rundeck/core/plugins/Plugin.html) annotation applied to it.
 
 ~~~~~ {.java}
 @Plugin(name="myprovider", service="NodeExecutor")
@@ -144,7 +145,8 @@ class will be constructed with this constructor and passed the Framework
 instance.
 
 You may log messages to the ExecutionListener available via 
-`ExecutionContext#getExecutionListener()` method.
+[ExecutionContext#getExecutionListener()](../javadoc/com/dtolabs/rundeck/core/execution/ExecutionContext.html) method.
+
 
 You can also send output to `System.err` and `System.out` and it will be 
 captured as output of the execution.
@@ -163,14 +165,16 @@ careful not to use un-threadsafe operations.
 
 ### Plugin failure results
 
-Some plugin methods return a "Result" interface which indicates the result status of the call to the plugin class. If there is an error, some plugins allow an Exception to be thrown or for the error to be included in the Result class.  In both cases, there is now a "FailureReason" that must be specified.  Interface: `com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason`.
+Some plugin methods return a "Result" interface which indicates the result status of the call to the plugin class. If there is an error, some plugins allow an Exception to be thrown or for the error to be included in the Result class.  In both cases, there is a "FailureReason" that must be specified.  
+See the javadoc:
+[FailureReason](../javadoc/com/dtolabs/rundeck/core/execution/workflow/steps/FailureReason.html).
 
 This can be any implementation of the FailureReason interface, and this object's `toString()` method will be used to return the reason value (for example, it is passed to Error Handler steps in a Workflow as the "result.reason" string). The mechanism used internally is to provide an Enum implementation of the FailureReason interface, and to enumerate the possible reasons for failure within the enum. 
 
 You are encouraged to re-use existing FailureReasons as much as possible as they provide some basic failure causes. Existing classes:
 
-* `com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureReason`
-* `com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason`
+* [NodeStepFailureReason](../javadoc/com/dtolabs/rundeck/core/execution/workflow/steps/node/NodeStepFailureReason.html)
+* [StepFailureReason](../javadoc/com/dtolabs/rundeck/core/execution/workflow/steps/StepFailureReason.html)
 
 
 
@@ -188,19 +192,20 @@ There are several ways to declare your plugin's Description:
 
 **Collaborator interface**
 
-Implement the `com.dtolabs.rundeck.plugins.util.DescriptionBuilder#Collaborator` interface
-in your plugin class, and it will be given an opportunity to perform actions on the Builder
-object before it finally constructs a Description.
+Implement the 
+[DescriptionBuilder.Collaborator](../javadoc/com/dtolabs/rundeck/plugins/util/DescriptionBuilder.Collaborator.html) interface
+in your plugin class, and it will be given an opportunity to perform actions on the Builder object before it finally constructs a Description.
 
 
 **Describable interface**
 
 If you want to build the Description object yourself, you can do so by
-implementing the `com.dtolabs.rundeck.core.plugins.configuration.Describable`
+implementing the 
+[Describable](../javadoc/com/dtolabs/rundeck/core/plugins/configuration/Describable.html)
 interface. Return a
-`com.dtolabs.rundeck.core.plugins.configuration.Description` instance. You can
+[Description](../javadoc/com/dtolabs/rundeck/core/plugins/configuration/Description.html) instance. You can
 construct one by using the
-`com.dtolabs.rundeck.plugins.util.DescriptionBuilder` builder class.
+[DescriptionBuilder](../javadoc/com/dtolabs/rundeck/plugins/util/DescriptionBuilder.html) builder class.
 
 
 **Description Annotations**
@@ -216,13 +221,12 @@ with a script that is invoked in an external system processes by the JVM.
 
 These Services support Script Plugins:
 
-* `NodeExecutor`
-* `FileCopier`
-* `ResourceModelSource`
-* `WorkflowNodeStep`
-    * See [Workflow Step Plugin - Script-based Step Plugins](workflow-step-plugin.html#script-based-step-plugins)
+* [NodeExecutor](node-executor-plugin.html#script-plugin-type)
+* [FileCopier](file-copier-plugin.html#script-plugin-type)
+* [ResourceModelSource](resource-model-source-plugin.html#script-plugin-type)
+* [WorkflowNodeStep](workflow-step-plugin.html#script-plugin-type)
 
->Note, Currently, the ResourceFormatParser and ResourceFormatGenerator services *do not* support Script Plugins.
+>Note, the ResourceFormatParser and ResourceFormatGenerator services *do not* support the Script Plugin type.
 
 ### Script plugin zip structure
 You must create a zip file with the following structure:
@@ -367,14 +371,18 @@ Examples:
 ### Script provider requirements
 
 The specific service has expectations about
-the way your provider script behaves:
+the way your provider script behaves.
+
+#### Exit code
 
 * Exit code of 0 indicates success
 * Any other exit code indicates failure
 
+#### Output
+
 For `NodeExecutor`
 
-:   All output to `STDOUT`/`STDERR` will be captured for the job's output
+:   All output to `STDOUT`/`STDERR` will be captured for the job's output.
 
 For `FileCopier`
 

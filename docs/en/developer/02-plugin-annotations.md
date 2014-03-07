@@ -16,8 +16,7 @@ instance when it is being executed.
 
 ## Plugin Description
 You can define the display name, and descriptive text about your plugin by adding a 
-`com.dtolabs.rundeck.plugins.descriptions.PluginDescription` annotation to your
-plugin class.
+[PluginDescription](../javadoc/com/dtolabs/rundeck/plugins/descriptions/PluginDescription.html) annotation to your plugin class.
 
 Attributes of `@PluginDescription`:
 
@@ -52,8 +51,8 @@ workflow configuration.
 
 These annotation classes are used:
 
-* `com.dtolabs.rundeck.plugins.descriptions.PluginProperty` - Declares a class field as a plugin configuration property
-* `com.dtolabs.rundeck.plugins.descriptions.SelectValues` - Declares a String property to be a "Select" property, which defines a set of input values that can be chosen from a list
+* [PluginProperty](../javadoc/com/dtolabs/rundeck/plugins/descriptions/PluginProperty.html) - Declares a class field as a plugin configuration property
+* [SelectValues](..//javadoc/com/dtolabs/rundeck/plugins/descriptions/SelectValues.html) - Declares a String property to be a "Select" property, which defines a set of input values that can be chosen from a list
 
 Attributes:
 
@@ -86,7 +85,7 @@ private String fruit;
 
 ## Property Scopes
 
-You can define the scope for a property by adding `scope` to the PluginProperty annotation.  Refer to the class `com.dtolabs.rundeck.core.plugins.configuration.PropertyScope`.  These are the available scopes and how the property values can be resolved:
+You can define the scope for a property by adding `scope` to the PluginProperty annotation.  Refer to the class [PropertyScope](../javadoc/com/dtolabs/rundeck/core/plugins/configuration/PropertyScope.html).  These are the available scopes and how the property values can be resolved:
 
 * `Framework` - Only framework properties
 * `ProjectOnly` - Only Project properties
