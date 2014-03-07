@@ -41,9 +41,9 @@ class ProjectController extends ControllerBase{
         }
 
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAll(authContext, [type: 'project', name: project],
-                        [AuthConstants.ACTION_ADMIN]),
-                AuthConstants.ACTION_ADMIN, 'Project',project)) {
+                frameworkService.authorizeApplicationResourceAny(authContext, [type: 'project', name: project],
+                        [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT]),
+                AuthConstants.ACTION_EXPORT, 'Project',project)) {
             return
         }
         def project1 = frameworkService.getFrameworkProject(project)
@@ -80,9 +80,9 @@ class ProjectController extends ControllerBase{
         }
 
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAll(authContext, [type: 'project', name: project],
-                        [AuthConstants.ACTION_ADMIN]),
-                AuthConstants.ACTION_ADMIN, 'Project', project)) {
+                frameworkService.authorizeApplicationResourceAny(authContext, [type: 'project', name: project],
+                        [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT]),
+                AuthConstants.ACTION_IMPORT, 'Project', project)) {
             return
         }
 
@@ -121,8 +121,8 @@ class ProjectController extends ControllerBase{
             return render(view: "/common/error")
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if (!frameworkService.authorizeApplicationResourceAll(authContext, [type: 'project', name: project],
-                [AuthConstants.ACTION_DELETE])) {
+        if (!frameworkService.authorizeApplicationResourceAny(authContext, [type: 'project', name: project],
+                [AuthConstants.ACTION_ADMIN,AuthConstants.ACTION_DELETE])) {
             response.setStatus(403)
             request.error = g.message(code: 'api.error.item.unauthorized', args: [AuthConstants.ACTION_DELETE,
                     "Project", params.project])
@@ -267,8 +267,8 @@ class ProjectController extends ControllerBase{
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])
         }
-        if (!frameworkService.authorizeApplicationResourceAll(authContext, [type: 'project', name: params.project],
-                [AuthConstants.ACTION_READ])) {
+        if (!frameworkService.authorizeApplicationResourceAny(authContext, [type: 'project', name: params.project],
+                [AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN])) {
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Read', 'Project', params.project]])
         }
@@ -277,8 +277,8 @@ class ProjectController extends ControllerBase{
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist', args: ['project', params.project]])
         }
-        def configAuth= frameworkService.authorizeApplicationResourceAll(authContext, [type: 'project',
-                name: params.project], [AuthConstants.ACTION_CONFIGURE])
+        def configAuth= frameworkService.authorizeApplicationResourceAny(authContext, [type: 'project',
+                name: params.project], [AuthConstants.ACTION_CONFIGURE,AuthConstants.ACTION_ADMIN])
         def pject = frameworkService.getFrameworkProject(params.project)
         def ctrl=this
         withFormat{
@@ -416,8 +416,8 @@ class ProjectController extends ControllerBase{
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
-        if (!frameworkService.authorizeApplicationResourceAll(authContext,
-                [type: 'project', name: project], [AuthConstants.ACTION_DELETE])) {
+        if (!frameworkService.authorizeApplicationResourceAny(authContext,
+                [type: 'project', name: project], [AuthConstants.ACTION_DELETE,AuthConstants.ACTION_ADMIN])) {
             return apiService.renderErrorFormat(response,
                     [
                             status: HttpServletResponse.SC_FORBIDDEN,
@@ -469,8 +469,8 @@ class ProjectController extends ControllerBase{
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
-        if (!frameworkService.authorizeApplicationResourceAll(authContext,
-                [type: 'project', name: project], [action])) {
+        if (!frameworkService.authorizeApplicationResourceAny(authContext,
+                [type: 'project', name: project], [action, AuthConstants.ACTION_ADMIN])) {
             apiService.renderErrorFormat(response,
                     [
                             status: HttpServletResponse.SC_FORBIDDEN,

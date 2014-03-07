@@ -137,10 +137,11 @@ class ProjectControllerTest {
             getAuthContextForSubject(1..1){subj->
                 null
             }
-            authorizeApplicationResourceAll(1..1){ AuthContext authContext, Map resource, Collection actions->
+            authorizeApplicationResourceAny(1..1){ AuthContext authContext, Map resource, Collection actions->
                 assertEquals('project',resource.type)
                 assertEquals('test1',resource.name)
-                assertEquals([AuthConstants.ACTION_READ],actions)
+                assertTrue(AuthConstants.ACTION_READ in actions)
+                assertTrue(AuthConstants.ACTION_ADMIN in actions)
                 false
             }
         }
@@ -164,10 +165,11 @@ class ProjectControllerTest {
             getAuthContextForSubject(1..1){subj->
                 null
             }
-            authorizeApplicationResourceAll(1..1){ AuthContext authContext, Map resource, Collection actions->
+            authorizeApplicationResourceAny(1..1){ AuthContext authContext, Map resource, Collection actions->
                 assertEquals('project',resource.type)
                 assertEquals('test1',resource.name)
-                assertEquals([AuthConstants.ACTION_READ],actions)
+                assertTrue(AuthConstants.ACTION_READ in actions)
+                assertTrue(AuthConstants.ACTION_ADMIN in actions)
                 true
             }
             existsFrameworkProject(1..1) { proj ->
@@ -197,15 +199,17 @@ class ProjectControllerTest {
                 null
             }
             def count = 0
-            authorizeApplicationResourceAll(1..1) { AuthContext authContext, Map resource, Collection actions ->
+            authorizeApplicationResourceAny(1..1) { AuthContext authContext, Map resource, Collection actions ->
                 assertEquals('project', resource.type)
                 assertEquals(projectName, resource.name)
                 count++
                 if (count == 1) {
-                    assertEquals([AuthConstants.ACTION_READ], actions)
+                    assertTrue(AuthConstants.ACTION_READ in actions)
+                    assertTrue(AuthConstants.ACTION_ADMIN in actions)
                     return true
                 } else {
-                    assertEquals([AuthConstants.ACTION_CONFIGURE], actions)
+                    assertTrue(AuthConstants.ACTION_CONFIGURE in actions)
+                    assertTrue(AuthConstants.ACTION_ADMIN in actions)
                     return configAuth
                 }
             }
@@ -213,15 +217,17 @@ class ProjectControllerTest {
                 assertEquals(projectName, proj)
                 true
             }
-            authorizeApplicationResourceAll(1..1) { AuthContext authContext, Map resource, Collection actions ->
+            authorizeApplicationResourceAny(1..1) { AuthContext authContext, Map resource, Collection actions ->
                 assertEquals('project', resource.type)
                 assertEquals(projectName, resource.name)
                 count++
                 if (count == 1) {
-                    assertEquals([AuthConstants.ACTION_READ], actions)
+                    assertTrue(AuthConstants.ACTION_READ in actions)
+                    assertTrue(AuthConstants.ACTION_ADMIN in actions)
                     return true
                 } else {
-                    assertEquals([AuthConstants.ACTION_CONFIGURE], actions)
+                    assertTrue(AuthConstants.ACTION_CONFIGURE in actions)
+                    assertTrue(AuthConstants.ACTION_ADMIN in actions)
                     return configAuth
                 }
             }
@@ -985,10 +991,11 @@ class ProjectControllerTest {
             getAuthContextForSubject{subj->
                 null
             }
-            authorizeApplicationResourceAll{ctx,resource,actions->
+            authorizeApplicationResourceAny{ctx,resource,actions->
                 assertEquals("project",resource.type)
                 assertEquals("test1",resource.name)
-                assertEquals([AuthConstants.ACTION_DELETE],actions)
+                assertTrue(AuthConstants.ACTION_DELETE in actions)
+                assertTrue(AuthConstants.ACTION_ADMIN in actions)
                 authorized
             }
             if(!authorized){
@@ -1012,10 +1019,11 @@ class ProjectControllerTest {
             getAuthContextForSubject{subj->
                 null
             }
-            authorizeApplicationResourceAll{ctx,resource,actions->
+            authorizeApplicationResourceAny{ctx,resource,actions->
                 assertEquals("project",resource.type)
                 assertEquals("test1",resource.name)
-                assertEquals([action],actions)
+                assertTrue(action in actions)
+                assertTrue(AuthConstants.ACTION_ADMIN in actions)
                 authorized
             }
             if(!authorized){
@@ -1043,10 +1051,11 @@ class ProjectControllerTest {
             getAuthContextForSubject{subj->
                 null
             }
-            authorizeApplicationResourceAll{ctx,resource,actions->
+            authorizeApplicationResourceAny{ctx,resource,actions->
                 assertEquals("project",resource.type)
                 assertEquals("test1",resource.name)
-                assertEquals([action],actions)
+                assertTrue(action in actions)
+                assertTrue(AuthConstants.ACTION_ADMIN in actions)
                 authorized
             }
             if(!authorized){
@@ -1081,10 +1090,11 @@ class ProjectControllerTest {
             getAuthContextForSubject{subj->
                 null
             }
-            authorizeApplicationResourceAll{ctx,resource,actions->
+            authorizeApplicationResourceAny{ctx,resource,actions->
                 assertEquals("project",resource.type)
                 assertEquals("test1",resource.name)
-                assertEquals([action],actions)
+                assertTrue(action in actions)
+                assertTrue(AuthConstants.ACTION_ADMIN in actions)
                 authorized
             }
             if(!authorized){
@@ -1119,10 +1129,11 @@ class ProjectControllerTest {
             getAuthContextForSubject{subj->
                 null
             }
-            authorizeApplicationResourceAll{ctx,resource,actions->
+            authorizeApplicationResourceAny{ctx,resource,actions->
                 assertEquals("project",resource.type)
                 assertEquals("test1",resource.name)
-                assertEquals([action],actions)
+                assertTrue(action in actions)
+                assertTrue(AuthConstants.ACTION_ADMIN in actions)
                 authorized
             }
             if(!authorized){
@@ -1149,10 +1160,11 @@ class ProjectControllerTest {
             getAuthContextForSubject{subj->
                 null
             }
-            authorizeApplicationResourceAll{ctx,resource,actions->
+            authorizeApplicationResourceAny{ctx,resource,actions->
                 assertEquals("project",resource.type)
                 assertEquals("test1",resource.name)
-                assertEquals([action],actions)
+                assertTrue(action in actions)
+                assertTrue(AuthConstants.ACTION_ADMIN in actions)
                 authorized
             }
             if(!authorized){
