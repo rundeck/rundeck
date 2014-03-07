@@ -408,6 +408,18 @@ class FrameworkService implements ApplicationContextAware {
         return !(decisions.find {!it.authorized})
     }
     /**
+     * return true if any of the actions are authorized for the resource in the application context
+     * @param framework
+     * @param resource
+     * @param actions
+     * @return
+     */
+    def boolean authorizeApplicationResourceAny(AuthContext authContext, Map resource, List actions) {
+        return actions.any {
+            authorizeApplicationResourceAll(authContext,resource,[it])
+        }
+    }
+    /**
      * return true if the action is authorized for the resource type in the application context
      * @param framework
      * @param resourceType

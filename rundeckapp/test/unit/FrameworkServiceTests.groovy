@@ -155,6 +155,35 @@ class FrameworkServiceTests  {
         def tfwk = ctrl.createMock()
         call.call(tfwk)
     }
+    def assertTestAuthorizeAll(FrameworkService test, Map expected, List results, List<String> expectActions,
+                               String projectName, Closure call){
+        def mcontrol = mockFor(MetricService, false)
+        mcontrol.demand.withTimer(results.size()..results.size()) { String clsName, String argString, Closure clos ->
+            clos.call()
+        }
+        test.metricService = mcontrol.createMock()
+        def ctrl = mockFor(AuthContext)
+        def ndx=0
+        ctrl.demand.evaluate(results.size()..results.size()) { Set resources, Set actions, Collection env ->
+            assertEquals 1, resources.size()
+            def res1 = resources.iterator().next()
+            assertEquals expected, res1
+            assertEquals 1, actions.size()
+            assertEquals(expectActions[ndx],actions.first())
+            Attribute attr = env.iterator().next()
+            if (projectName) {
+                assertEquals "http://dtolabs.com/rundeck/env/project", attr.property.toString()
+                assertEquals projectName, attr.value
+            } else {
+                assertEquals "http://dtolabs.com/rundeck/env/application", attr.property.toString()
+                assertEquals "rundeck", attr.value
+            }
+            ndx++
+            return [results[ndx-1]] as Set
+        }
+        def tfwk = ctrl.createMock()
+        call.call(tfwk)
+    }
     def assertTestAuthorizeSingle(FrameworkService test, Map expected, Map result, String projectName, Closure call){
         def mcontrol = mockFor(MetricService, false)
         mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
@@ -382,6 +411,33 @@ class FrameworkServiceTests  {
         assertTestAuthorizeSingle(test, [type: 'job', name: 'name1', group: 'blah/blee'], decision,
                 null) { AuthContext it ->
             assertFalse(test.authorizeApplicationResource(it, resource, 'test'))
+        }
+    }
+
+    void testAuthorizeApplicationResourceAnySuccess() {
+        FrameworkService test = new FrameworkService();
+        def decision = [[authorized: true], [authorized: false]]
+        def resource = [type: 'job', name: 'name1', group: 'blah/blee']
+        assertTestAuthorizeAll(test, [type: 'job', name: 'name1', group: 'blah/blee'], decision, ['test', 'test2'], null) { AuthContext it ->
+            assertTrue(test.authorizeApplicationResourceAny(it, resource, ['test', 'test2']))
+        }
+        def decision2 = [[authorized: false], [authorized: true]]
+        assertTestAuthorizeAll(test, [type: 'job', name: 'name1', group: 'blah/blee'], decision2, ['test', 'test2'],
+                null) { AuthContext it ->
+            assertTrue(test.authorizeApplicationResourceAny(it, resource, ['test', 'test2']))
+        }
+        def decision3 = [[authorized: true], [authorized: true]]
+        assertTestAuthorizeAll(test, [type: 'job', name: 'name1', group: 'blah/blee'], decision2, ['test', 'test2'],
+                null) { AuthContext it ->
+            assertTrue(test.authorizeApplicationResourceAny(it, resource, ['test', 'test2']))
+        }
+    }
+    void testAuthorizeApplicationResourceAnyFailure() {
+        FrameworkService test = new FrameworkService();
+        def decision = [[authorized: false], [authorized: false]]
+        def resource = [type: 'job', name: 'name1', group: 'blah/blee']
+        assertTestAuthorizeAll(test, [type: 'job', name: 'name1', group: 'blah/blee'], decision, ['test', 'test2'], null) { AuthContext it ->
+            assertFalse(test.authorizeApplicationResourceAny(it, resource, ['test', 'test2']))
         }
     }
     void testAuthorizeApplicationResourceAllSuccess(){
