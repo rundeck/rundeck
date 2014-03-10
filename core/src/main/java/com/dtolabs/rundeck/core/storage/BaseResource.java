@@ -4,7 +4,7 @@ import java.util.Date;
 import java.util.Map;
 
 /**
- * $INTERFACE is ... User: greg Date: 2/19/14 Time: 11:38 AM
+ * Abstract base implementation of {@link ResourceMeta}
  */
 abstract class BaseResource implements ResourceMeta {
     Map<String,String> meta;

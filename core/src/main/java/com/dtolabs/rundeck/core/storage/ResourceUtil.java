@@ -17,13 +17,28 @@ import java.util.Map;
 import java.util.TimeZone;
 
 /**
- * $INTERFACE is ... User: greg Date: 2/19/14 Time: 11:41 AM
+ * Provides utility methods for use by the storage layer, or implementing plugins.
  */
 public class ResourceUtil  {
+    /**
+     * Metadata key for the content-type
+     */
     public static final String RES_META_RUNDECK_CONTENT_TYPE = "Rundeck-content-type";
+    /**
+     * Metadata key for the content size
+     */
     public static final String RES_META_RUNDECK_CONTENT_LENGTH = "Rundeck-content-size";
+    /**
+     * Metadata key for the creation time
+     */
     public static final String RES_META_RUNDECK_CONTENT_CREATION_TIME = "Rundeck-content-creation-time";
+    /**
+     * Metadata key for the modification time
+     */
     public static final String RES_META_RUNDECK_CONTENT_MODIFY_TIME = "Rundeck-content-modify-time";
+    /**
+     * Date format for stored date/time
+     */
     public static final String ISO_8601_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";
     private static final ThreadLocal<DateFormat> w3cDateFormat = new ThreadLocal<DateFormat>() {
         protected DateFormat initialValue() {
@@ -33,6 +48,10 @@ public class ResourceUtil  {
         }
     };
 
+    /**
+     * Return a factory for ResourceMeta
+     * @return
+     */
     public static ContentFactory<ResourceMeta> factory(){
         return new ContentFactory<ResourceMeta>() {
             @Override

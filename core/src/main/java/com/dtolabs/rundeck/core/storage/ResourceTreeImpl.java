@@ -4,7 +4,7 @@ import org.rundeck.storage.api.Tree;
 import org.rundeck.storage.impl.DelegateTree;
 
 /**
- * ResourceTreeImpl is ...
+ * ResourceTree implementation using a delegate.
  *
  * @author greg
  * @since 2014-02-19

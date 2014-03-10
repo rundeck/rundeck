@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * $INTERFACE is ... User: greg Date: 2/19/14 Time: 11:49 AM
+ * Mutable set of rundeck resource metadata.
  */
 public class ResourceMetaBuilder implements CanSetResourceMeta, HasResourceMeta {
     Map<String, String> meta;

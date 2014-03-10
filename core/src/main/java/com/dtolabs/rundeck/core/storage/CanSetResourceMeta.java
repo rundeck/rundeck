@@ -4,7 +4,7 @@ import java.util.Date;
 import java.util.Map;
 
 /**
- * $INTERFACE is ... User: greg Date: 2/19/14 Time: 11:48 AM
+ * Mutable interface for metadata
  */
 public interface CanSetResourceMeta {
     public void setMeta(Map<String,String> meta);
