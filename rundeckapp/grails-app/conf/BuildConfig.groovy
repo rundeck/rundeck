@@ -98,6 +98,7 @@ grails.project.dependency.resolution = {
             changing = true
             excludes("xalan")
         }
+        compile("org.rundeck:rundeck-storage-filesys:${rundeckVersion}")
 
         runtime 'org.yaml:snakeyaml:1.9', 'org.apache.ant:ant:1.7.1', 'org.apache.ant:ant-launcher:1.7.1',
                 'org.apache.ant:ant-jsch:1.7.1','com.jcraft:jsch:0.1.50', 'org.springframework:spring-test:3.0.5.RELEASE',
