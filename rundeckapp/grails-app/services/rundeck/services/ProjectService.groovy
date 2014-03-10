@@ -331,7 +331,7 @@ class ProjectService {
      * @param framework framework
      * @param authContext authentication context
      * @param input input stream of zip data
-     * @param options import options
+     * @param options import options, [jobUUIDBehavior: (replace/preserve), executionImportBehavior: (import/skip)]
      */
     def importToProject(FrameworkProject project, String user, String roleList, Framework framework,
                         AuthContext authContext, InputStream input, Map options) throws ProjectServiceException {
