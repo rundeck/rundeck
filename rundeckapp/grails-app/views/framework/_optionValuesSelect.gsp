@@ -1,3 +1,4 @@
+<%@ page import="java.util.regex.Pattern" %>
 <%--
  Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
 
@@ -104,7 +105,7 @@
                         </div>
                         <g:if test="${selectedoptsmap && selectedoptsmap[optName] && selectedoptsmap[optName] instanceof String}">
                             %{
-                                selectedoptsmap[optName]= selectedoptsmap[optName].split(optionSelect.delimiter) as List
+                                selectedoptsmap[optName]= selectedoptsmap[optName].split(Pattern.quote(optionSelect.delimiter)) as List
                                 }%
                         </g:if>
                         <g:set var="newvals" value="${selectedoptsmap ? optionSelect.values?selectedoptsmap[optName].findAll { !optionSelect.values.contains(it) } : selectedoptsmap[optName] : null}"/>
