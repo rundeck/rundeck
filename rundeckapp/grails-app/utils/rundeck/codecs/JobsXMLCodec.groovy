@@ -190,14 +190,18 @@ class JobsXMLCodec {
             }
         }
         if(map.schedule){
-            if(map.schedule.month?.day){
+            if(map.schedule.month && map.schedule.month instanceof Map && map.schedule.month?.day){
                 map.schedule.dayofmonth=[day:map.schedule.month.remove('day')]
             }
-            if(map.schedule.month?.month){
+            if(map.schedule.month && map.schedule.month instanceof Map && map.schedule.month?.month){
                 map.schedule.month=map.schedule.month.remove('month')
+            }else{
+                map.schedule.month=null
             }
-            if(map.schedule.year?.year){
+            if(map.schedule.year && map.schedule.year instanceof Map && map.schedule.year?.year){
                 map.schedule.year=map.schedule.year.remove('year')
+            }else{
+                map.schedule.year=null
             }
         }
         if(!map.sequence){

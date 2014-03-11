@@ -1554,6 +1554,96 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect crontab.month.DEC",null,datemap.'month.DEC'
 
     }
+    /**
+     * Empty year attribute
+     */
+    void testDecodeScheduledEmptyYear(){
+        def jobs = JobsXMLCodec.decode("""<joblist>
+  <job>
+    <id>5</id>
+    <name>wait1</name>
+    <description>a simple desc</description>
+    <loglevel>INFO</loglevel>
+    <group>some/group</group>
+    <context>
+      <project>test1</project>
+      <options>
+        <option name='delay' value='60' />
+      </options>
+    </context>
+    <sequence><command><exec>test</exec></command></sequence>
+    <dispatch>
+      <threadcount>1</threadcount>
+      <keepgoing>false</keepgoing>
+    </dispatch>
+    <schedule >
+      <time hour='*/4' minute='21' seconds='0' />
+      <weekday day='?' />
+      <month month='*/6' day='*/4'/>
+      <year year=""/>
+    </schedule>
+  </job>
+</joblist>
+""")
+        assertNotNull jobs
+        assertEquals "incorrect size", 1, jobs.size()
+
+        assertEquals "incorrect scheduled", "true", jobs[0].scheduled.toString()
+        assertNull "incorrect scheduled", jobs[0].crontabString
+        assertEquals("*/4",jobs[0].hour)
+        assertEquals("21",jobs[0].minute)
+        assertEquals("0",jobs[0].seconds)
+        assertEquals("?",jobs[0].dayOfWeek)
+        assertEquals("*/4",jobs[0].dayOfMonth)
+        assertEquals("*/6",jobs[0].month)
+        assertEquals("*",jobs[0].year)
+
+    }
+    /**
+     * Incomplete year element
+     */
+    void testDecodeScheduledIncompleteYear(){
+        def jobs = JobsXMLCodec.decode("""<joblist>
+  <job>
+    <id>5</id>
+    <name>wait1</name>
+    <description>a simple desc</description>
+    <loglevel>INFO</loglevel>
+    <group>some/group</group>
+    <context>
+      <project>test1</project>
+      <options>
+        <option name='delay' value='60' />
+      </options>
+    </context>
+    <sequence><command><exec>test</exec></command></sequence>
+    <dispatch>
+      <threadcount>1</threadcount>
+      <keepgoing>false</keepgoing>
+    </dispatch>
+    <schedule >
+      <time hour='*/4' minute='21' seconds='0' />
+      <weekday day='?' />
+      <month month='*/6' day='*/4'/>
+      <year />
+    </schedule>
+  </job>
+</joblist>
+""")
+        assertNotNull jobs
+        assertEquals "incorrect size", 1, jobs.size()
+
+        assertEquals "incorrect scheduled", "true", jobs[0].scheduled.toString()
+        assertNull "incorrect scheduled", jobs[0].crontabString
+        assertEquals("*/4",jobs[0].hour)
+        assertEquals("21",jobs[0].minute)
+        assertEquals("0",jobs[0].seconds)
+        assertEquals("?",jobs[0].dayOfWeek)
+        assertEquals("*/4",jobs[0].dayOfMonth)
+        assertEquals("*/6",jobs[0].month)
+        assertEquals("*",jobs[0].year)
+
+    }
 
 
 
