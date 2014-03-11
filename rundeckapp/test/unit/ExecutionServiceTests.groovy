@@ -1108,6 +1108,40 @@ class ExecutionServiceTests  {
             assertEquals("n,3 blah something/else bill testproj", val.nodeSelector.exclude.osversion)
         }
     }
+    /**
+     * Test use of ${option.x} and ${job.y} parameter expansion in node filter tag and name filters.
+     */
+    void testCreateContextParameterizedAttributeFilters() {
+        def testService = new ExecutionService()
+        def fcontrol = mockFor(FrameworkService, true)
+        fcontrol.demand.parseOptsFromString(1..1) {argString ->
+            [test: 'args', test3: 'something']
+        }
+        fcontrol.demand.filterNodeSet(1..1) {fwk, sel, proj ->
+            new NodeSetImpl()
+        }
+        fcontrol.demand.filterAuthorizedNodes(1..1) { project, actions, unfiltered, authContext ->
+            new NodeSetImpl()
+        }
+        testService.frameworkService = fcontrol.createMock()
+        //create mock user
+        User u1 = new User(login: 'testuser')
+        u1.save()
+
+
+
+        Execution se = new Execution(argString: "-test args -test3 something", user: "testuser", project: "testproj", loglevel: 'WARN',
+            doNodedispatch: true,
+            filter: "monkey:a,\${option.test} !environment:b,\${option.test3},d",
+        )
+        def val = testService.createContext(se, null, null, null, null, [id:'3',name:'blah',group:'something/else',username:'bill',project:'testproj'], null, null)
+        assertNotNull(val)
+        assertNotNull(val.nodeSelector)
+        assertNotNull(val.nodeSelector.exclude)
+        assertNotNull(val.nodeSelector.include)
+        assertEquals("a,args", val.nodeSelector.include.toMap().monkey)
+        assertEquals("b,something,d", val.nodeSelector.exclude.toMap().environment)
+    }
 
     void testItemForWFCmdItem(){
         def testService = new ExecutionService()
