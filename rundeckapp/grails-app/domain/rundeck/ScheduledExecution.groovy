@@ -432,6 +432,12 @@ class ScheduledExecution extends ExecutionContext {
         }
         return false
     }
+    public static String zeroPaddedString(int max,String value){
+        if(value && value=~/^\d+$/){
+            return String.format("%0${max}d",Integer.parseInt(value))
+        }
+        return value;
+    }
     /**
      * parse the request parameters, and populate the dayOfWeek and month fields.
      * if 'everyDayOfWeek' is 'true', then dayOfWeek will be "*".

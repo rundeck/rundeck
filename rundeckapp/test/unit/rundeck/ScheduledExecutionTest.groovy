@@ -335,6 +335,15 @@ class ScheduledExecutionTest  {
         assertFalse(new ScheduledExecution(minute: '12').shouldUseCrontabString())
     }
 
+    void testZeroPaddedString() {
+        assertEquals("00", ScheduledExecution.zeroPaddedString(2, "0"))
+        assertEquals("01", ScheduledExecution.zeroPaddedString(2, "1"))
+        assertEquals("10", ScheduledExecution.zeroPaddedString(2, "10"))
+        assertEquals("100", ScheduledExecution.zeroPaddedString(2, "100"))
+        assertEquals("", ScheduledExecution.zeroPaddedString(2, ""))
+        assertEquals("asdf", ScheduledExecution.zeroPaddedString(2, "asdf"))
+        assertEquals(null, ScheduledExecution.zeroPaddedString(2, null))
+    }
     void testFilterCrontabParams() {
         def ScheduledExecution se = new ScheduledExecution()
 

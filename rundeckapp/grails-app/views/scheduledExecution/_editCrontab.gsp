@@ -65,9 +65,12 @@ jQuery(window).load(function(){
     <div class="panel-body">
     <div class="col-sm-4" id="hourTab">
         <div>
-            <g:select name="hour" from="${(0..23).collect{it<10?'0'+it.toString():it.toString()}}" value="${scheduledExecution?.hour}"/>
+            <g:set var="hourString" value="${rundeck.ScheduledExecution.zeroPaddedString(2, scheduledExecution?.hour)}"/>
+            <g:set var="minString"
+                   value="${rundeck.ScheduledExecution.zeroPaddedString(2, scheduledExecution?.minute)}"/>
+            <g:select name="hour" from="${(0..23).collect{it<10?'0'+it.toString():it.toString()}}" value="${hourString}"/>
             :
-            <g:select name="minute" from="${(0..59).collect{it<10?'0'+it.toString():it.toString()}}" value="${scheduledExecution?.minute}"/>
+            <g:select name="minute" from="${(0..59).collect{it<10?'0'+it.toString():it.toString()}}" value="${minString}"/>
         </div>
     </div>
 
