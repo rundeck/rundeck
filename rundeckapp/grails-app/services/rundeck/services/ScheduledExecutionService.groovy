@@ -1089,16 +1089,20 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             } else {
                 scheduledExecution.serverNodeUUID = null
             }
-            if (!CronExpression.isValidExpression(params.crontabString ? params.crontabString : scheduledExecution.generateCrontabExression())) {
+            def genCron = params.crontabString ? params.crontabString : scheduledExecution.generateCrontabExression()
+            if (!CronExpression.isValidExpression(genCron)) {
                 failed = true;
-                scheduledExecution.errors.rejectValue('crontabString', 'scheduledExecution.crontabString.invalid.message')
+                scheduledExecution.errors.rejectValue('crontabString',
+                        'scheduledExecution.crontabString.invalid.message', [genCron] as Object[], "Invalid: {0}")
             } else {
                 //test for valid schedule
-                CronExpression c = new CronExpression(params.crontabString ? params.crontabString : scheduledExecution.generateCrontabExression())
+                CronExpression c = new CronExpression(genCron)
                 def next = c.getNextValidTimeAfter(new Date());
                 if (!next) {
                     failed = true;
-                    scheduledExecution.errors.rejectValue('crontabString', 'scheduledExecution.crontabString.noschedule.message')
+                    scheduledExecution.errors.rejectValue('crontabString',
+                            'scheduledExecution.crontabString.noschedule.message', [genCron] as Object[],
+                            "Invalid: {0}")
                 }
             }
         } else {
@@ -1610,16 +1614,19 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                 failed = true;
                 scheduledExecution.errors.rejectValue('crontabString', 'scheduledExecution.crontabString.invalid.message')
             }
-            if (!CronExpression.isValidExpression(scheduledExecution.generateCrontabExression())) {
+            def genCron = scheduledExecution.generateCrontabExression()
+            if (!CronExpression.isValidExpression(genCron)) {
                 failed = true;
-                scheduledExecution.errors.rejectValue('crontabString', 'scheduledExecution.crontabString.invalid.message')
+                scheduledExecution.errors.rejectValue('crontabString',
+                        'scheduledExecution.crontabString.invalid.message',[genCron] as Object[],"invalid: {0}")
             } else {
                 //test for valid schedule
-                CronExpression c = new CronExpression(scheduledExecution.generateCrontabExression())
+                CronExpression c = new CronExpression(genCron)
                 def next = c.getNextValidTimeAfter(new Date());
                 if (!next) {
                     failed = true;
-                    scheduledExecution.errors.rejectValue('crontabString', 'scheduledExecution.crontabString.noschedule.message')
+                    scheduledExecution.errors.rejectValue('crontabString',
+                            'scheduledExecution.crontabString.noschedule.message', [genCron] as Object[], "invalid: {0}")
                 }
             }
         } else {
@@ -1935,16 +1942,19 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
 
             scheduledExecution.populateTimeDateFields(params)
 
-            if (!CronExpression.isValidExpression(params.crontabString ? params.crontabString : scheduledExecution.generateCrontabExression())) {
+            def genCron = params.crontabString ? params.crontabString : scheduledExecution.generateCrontabExression()
+            if (!CronExpression.isValidExpression(genCron)) {
                 failed = true;
-                scheduledExecution.errors.rejectValue('crontabString', 'scheduledExecution.crontabString.invalid.message')
+                scheduledExecution.errors.rejectValue('crontabString',
+                        'scheduledExecution.crontabString.invalid.message', [genCron] as Object[], "invalid: {0}")
             } else {
                 //test for valid schedule
-                CronExpression c = new CronExpression(params.crontabString ? params.crontabString : scheduledExecution.generateCrontabExression())
+                CronExpression c = new CronExpression(genCron)
                 def next = c.getNextValidTimeAfter(new Date());
                 if (!next) {
                     failed = true;
-                    scheduledExecution.errors.rejectValue('crontabString', 'scheduledExecution.crontabString.noschedule.message')
+                    scheduledExecution.errors.rejectValue('crontabString',
+                            'scheduledExecution.crontabString.noschedule.message', [genCron] as Object[], "invalid: {0}")
                 }
             }
         } else {
