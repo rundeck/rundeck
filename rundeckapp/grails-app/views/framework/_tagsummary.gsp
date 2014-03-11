@@ -19,7 +19,7 @@
     Author: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
     Created: 10/24/11 12:27 PM
  --%>
-
+<g:set var="urkey" value="${g.rkey()}"/>
 <%@ page contentType="text/html;charset=UTF-8" %>
 <g:if test="${tagsummary}">
         <g:set var="hidetop" value="${hidetop?:tagsummary.findAll {it.value>1}.size()>30}"/>
@@ -56,9 +56,10 @@
                 </g:else>
             </g:each>
             <g:if test="${singletag}">
-                <span class="btn btn-sm btn-default receiver" title="See all tags" onclick="Element.show('singletags');
+                <span class="btn btn-sm btn-default receiver" title="See all tags"
+                      onclick="Element.show('${urkey}singletags');
                 Element.hide(this);">Show All&hellip;</span>
-                <span style="display:none" id="singletags">
+                <span style="display:none" id="${urkey}singletags">
                     <g:each var="tag" in="${singletag}">
                         <span class="summary">
                             <g:if test="${link}">
