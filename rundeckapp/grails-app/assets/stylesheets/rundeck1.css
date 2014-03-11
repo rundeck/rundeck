@@ -101,16 +101,19 @@ div.buttonholder, td.buttonholder, span.buttonholder {
     font-weight: bold;
 }
 
-.optionvaluemulti label {
-    padding: 2px 4px;
+.optionvaluemulti-add {
+    padding: 6px;
 }
-
 .optionvaluemulti label {
+    padding: 6px;
+    margin:0;
     display: block;
+    font-weight: normal;
 }
 
 .optionvaluemulti label:hover {
     background: #e3edfa;
+    cursor: pointer;
 }
 
 .optionvaluemulti span.action {

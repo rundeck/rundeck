@@ -88,18 +88,20 @@
 
             <g:if test="${optionSelect.multivalued}">
                 <!-- use checkboxes -->
-                <div class="optionmultiarea container" id="${fieldwatchid.encodeAsHTML()}">
+                <div class="optionmultiarea " id="${fieldwatchid.encodeAsHTML()}">
                     <g:if test="${!optionSelect.enforced}">
                         <%-- variable input text fields --%>
+                        <div class="container">
                         <div class="row">
-                        <div class="optionvaluemulti col-sm-12">
+                        <div class="col-sm-12 optionvaluemulti-add">
                             <span class="btn btn-default btn-xs obs_addvar" >
                                 New Value <i class="glyphicon glyphicon-plus"></i>
                             </span>
                         </div>
                         </div>
-                        <div class="row">
-                        <div id="${rkey.encodeAsHTML()}varinput" class="col-sm-12">
+                        </div>
+                        <div class="">
+                        <div id="${rkey.encodeAsHTML()}varinput" class="">
 
                         </div>
                         </div>
@@ -127,9 +129,9 @@
                     </g:if>
                     <g:each in="${labelsSet}" var="sellabel">
                         <g:set var="entry" value="${sellabel instanceof Map?sellabel:[name:sellabel,value:sellabel]}"/>
-                        <div class="row">
-                        <div class="col-sm-12">
-                        <div class="optionvaluemulti checkbox">
+                        <div class="">
+                        <div class="">
+                        <div class="optionvaluemulti ">
                             <label>
                                 <input type="checkbox" name="${realFieldName.encodeAsHTML()}" value="${entry.value.encodeAsHTML()}" ${selectedvalue && entry.value == selectedvalue || entry.value == optionSelect.defaultValue || selectedoptsmap && entry.value in selectedoptsmap[optName] ? 'checked' : ''} />
                                 ${entry.name.encodeAsHTML()}
