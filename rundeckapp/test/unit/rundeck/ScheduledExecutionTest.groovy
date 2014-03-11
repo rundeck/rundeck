@@ -29,6 +29,190 @@ class ScheduledExecutionTest  {
         assertEquals(4, jobMap.options.size())
     }
 
+    void testFromMapScheduleCrontabString() {
+        ScheduledExecution se = ScheduledExecution.fromMap(
+                [
+                        jobName: 'abc',
+                        schedule: [
+                                crontab: '* * * * ? *'
+                        ]
+                ]
+        )
+        assertNotNull(se)
+        assertEquals('* * * * ? *', se.crontabString)
+    }
+    void testFromMapSchedule() {
+        ScheduledExecution se = ScheduledExecution.fromMap(
+                [
+                        jobName: 'abc',
+                        schedule: [
+                                time:[
+                                        seconds:'1',
+                                        minute: '2',
+                                        hour: '3'
+                                ]
+                        ]
+                ]
+        )
+        assertNotNull(se)
+        assertNull(se.crontabString)
+        assertEquals('1',se.seconds)
+        assertEquals('2',se.minute)
+        assertEquals('3',se.hour)
+        assertEquals('*',se.month)
+        assertEquals('*',se.year)
+        assertEquals('?', se.dayOfMonth)
+        assertEquals('*', se.dayOfWeek)
+    }
+    void testFromMapScheduleMonth() {
+        ScheduledExecution se = ScheduledExecution.fromMap(
+                [
+                        jobName: 'abc',
+                        schedule: [
+                                time: [
+                                    seconds: '1',
+                                    minute: '2',
+                                    hour: '3'
+                                ],
+                                month: '4',
+                        ]
+                ]
+        )
+        assertNotNull(se)
+        assertNull(se.crontabString)
+        assertEquals('1',se.seconds)
+        assertEquals('2',se.minute)
+        assertEquals('3',se.hour)
+        assertEquals('4',se.month)
+        assertEquals('*',se.year)
+        assertEquals('?', se.dayOfMonth)
+        assertEquals('*', se.dayOfWeek)
+    }
+    void testFromMapScheduleYear() {
+        ScheduledExecution se = ScheduledExecution.fromMap(
+                [
+                        jobName: 'abc',
+                        schedule: [
+                                time: [
+                                        seconds: '1',
+                                        minute: '2',
+                                        hour: '3'
+                                ],
+                                year: '4',
+                        ]
+                ]
+        )
+        assertNotNull(se)
+        assertNull(se.crontabString)
+        assertEquals('1',se.seconds)
+        assertEquals('2',se.minute)
+        assertEquals('3',se.hour)
+        assertEquals('*',se.month)
+        assertEquals('4',se.year)
+        assertEquals('?',se.dayOfMonth)
+        assertEquals('*',se.dayOfWeek)
+    }
+    void testFromMapScheduleDayOfMonth() {
+        ScheduledExecution se = ScheduledExecution.fromMap(
+                [
+                        jobName: 'abc',
+                        schedule: [
+                                time: [
+                                        seconds: '1',
+                                        minute: '2',
+                                        hour: '3'
+                                ],
+                                dayofmonth: [
+                                        day:'4'
+                                ],
+                        ]
+                ]
+        )
+        assertNotNull(se)
+        assertNull(se.crontabString)
+        assertEquals('1',se.seconds)
+        assertEquals('2',se.minute)
+        assertEquals('3',se.hour)
+        assertEquals('*',se.month)
+        assertEquals('*',se.year)
+        assertEquals('4',se.dayOfMonth)
+        assertEquals('?',se.dayOfWeek)
+    }
+    void testFromMapScheduleDayOfMonthInvalid() {
+        ScheduledExecution se = ScheduledExecution.fromMap(
+                [
+                        jobName: 'abc',
+                        schedule: [
+                                time: [
+                                        seconds: '1',
+                                        minute: '2',
+                                        hour: '3'
+                                ],
+                                dayofmonth:'4',
+                        ]
+                ]
+        )
+        assertNotNull(se)
+        assertNull(se.crontabString)
+        assertEquals('1',se.seconds)
+        assertEquals('2',se.minute)
+        assertEquals('3',se.hour)
+        assertEquals('*',se.month)
+        assertEquals('*',se.year)
+        assertEquals('?',se.dayOfMonth)
+        assertEquals('*',se.dayOfWeek)
+    }
+    void testFromMapScheduleDayOfWeek() {
+        ScheduledExecution se = ScheduledExecution.fromMap(
+                [
+                        jobName: 'abc',
+                        schedule: [
+                                time: [
+                                        seconds: '1',
+                                        minute: '2',
+                                        hour: '3'
+                                ],
+                                weekday: [
+                                        day:'4'
+                                ],
+                        ]
+                ]
+        )
+        assertNotNull(se)
+        assertNull(se.crontabString)
+        assertEquals('1',se.seconds)
+        assertEquals('2',se.minute)
+        assertEquals('3',se.hour)
+        assertEquals('*',se.month)
+        assertEquals('*',se.year)
+        assertEquals('?',se.dayOfMonth)
+        assertEquals('4',se.dayOfWeek)
+    }
+    void testFromMapScheduleDayOfWeekInvalid() {
+        ScheduledExecution se = ScheduledExecution.fromMap(
+                [
+                        jobName: 'abc',
+                        schedule: [
+                                time: [
+                                        seconds: '1',
+                                        minute: '2',
+                                        hour: '3'
+                                ],
+                                weekday: '4',
+                        ]
+                ]
+        )
+        assertNotNull(se)
+        assertNull(se.crontabString)
+        assertEquals('1',se.seconds)
+        assertEquals('2',se.minute)
+        assertEquals('3',se.hour)
+        assertEquals('*',se.month)
+        assertEquals('*',se.year)
+        assertEquals('?',se.dayOfMonth)
+        assertEquals('*',se.dayOfWeek)
+    }
+
     void testValidateBasic() {
         ScheduledExecution se = createBasicScheduledExecution()
         assertTrue(se.validate())

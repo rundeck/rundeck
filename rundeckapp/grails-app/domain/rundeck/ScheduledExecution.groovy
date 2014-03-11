@@ -219,27 +219,38 @@ class ScheduledExecution extends ExecutionContext {
                     //
                 se.crontabString = data.schedule.crontab
             }else{
-                if(null!=data.schedule.time.seconds){
-                    se.seconds=data.schedule.time.seconds
-                }
-                if(null!=data.schedule.time.minute){
-                    se.minute=data.schedule.time.minute
-                }
-                if(null!=data.schedule.time.hour){
-                    se.hour=data.schedule.time.hour
+                if(data.schedule.time && data.schedule.time instanceof Map){
+                    if(null!=data.schedule.time.seconds){
+                        se.seconds=data.schedule.time.seconds
+                    }
+                    if(null!=data.schedule.time.minute){
+                        se.minute=data.schedule.time.minute
+                    }
+                    if(null!=data.schedule.time.hour){
+                        se.hour=data.schedule.time.hour
+                    }
                 }
                 if(null!=data.schedule.month){
                     se.month=data.schedule.month
+                } else {
+                    se.month = '*'
                 }
                 if(null!=data.schedule.year){
                     se.year=data.schedule.year
+                } else {
+                    se.year = '*'
                 }
-                if(data.schedule.dayofmonth){
+                if(data.schedule.dayofmonth && data.schedule.dayofmonth instanceof Map
+                        && data.schedule.dayofmonth.day){
                     se.dayOfMonth = data.schedule.dayofmonth.day
                     se.dayOfWeek = '?'
-                }else if(data.schedule.weekday){
+                }else if(data.schedule.weekday && data.schedule.weekday instanceof Map
+                        && data.schedule.weekday.day){
                     se.dayOfWeek=data.schedule.weekday.day
                     se.dayOfMonth = '?'
+                }else{
+                    se.dayOfMonth='?'
+                    se.dayOfWeek='*'
                 }
             }
         }
