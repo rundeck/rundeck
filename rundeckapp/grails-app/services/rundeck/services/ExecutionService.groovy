@@ -866,22 +866,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         if (execMap.doNodedispatch) {
             //set nodeset for the context if doNodedispatch parameter is true
-            NodeSet nodeset = filtersAsNodeSet(execMap)
+            NodeSet nodeset = filtersAsNodeSet(execMap,datacontext)
             nodeselector=nodeset
             // enhnacement to allow ${option.xyz} in tags and names
             if (nodeset != null) {
-                final nodesetProperties = ['name', 'tags', 'hostname', 'osfamily', 'osname', 'osversion', 'osarch']
-                nodesetProperties.each {key ->
-                    if (nodeset.include && nodeset.include[key]) {
-                        nodeset.include[key] = DataContextUtils.replaceDataReferences(nodeset.include[key], datacontext)
-                    }
-                    if (nodeset.exclude && nodeset.exclude[key]) {
-                        nodeset.exclude[key] = DataContextUtils.replaceDataReferences(nodeset.exclude[key], datacontext)
-                    }
-                }
                 threadCount=nodeset.threadCount
                 keepgoing=nodeset.keepgoing
-                //TODO: apply to attributes once nodefilters support attributes
             }
         } else if(framework){
             //blank?
@@ -1006,6 +996,25 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         final NodeSet nodeset = new NodeSet();
         nodeset.createExclude(BaseNodeFilters.asExcludeMap(econtext)).setDominant(econtext.nodeExcludePrecedence ? true : false);
         nodeset.createInclude(BaseNodeFilters.asIncludeMap(econtext)).setDominant(!econtext.nodeExcludePrecedence ? true : false);
+        return nodeset
+    }
+    /**
+     * Return a NodeSet using the filters in the execution context and expanding variables by using the supplied
+     * datacontext
+     * @param econtext execution context
+     * @param datacontext data values
+     * @return nodeset
+     */
+    public static NodeSet filtersAsNodeSet(ExecutionContext econtext, Map<String,Map<String,String>> datacontext) {
+        final NodeSet nodeset = new NodeSet();
+        nodeset.createExclude(
+                DataContextUtils.replaceDataReferences(BaseNodeFilters.asExcludeMap(econtext),datacontext)
+        ).setDominant(econtext.nodeExcludePrecedence ? true : false);
+        nodeset.createInclude(
+                DataContextUtils.replaceDataReferences(BaseNodeFilters.asIncludeMap(econtext),datacontext)
+        ).setDominant(!econtext.nodeExcludePrecedence ? true : false);
+        nodeset.setKeepgoing(econtext.nodeKeepgoing ? true : false)
+        nodeset.setThreadCount(econtext.nodeThreadcount ? econtext.nodeThreadcount : 1)
         return nodeset
     }
     /**
