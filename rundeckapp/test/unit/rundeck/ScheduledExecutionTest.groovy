@@ -322,6 +322,18 @@ class ScheduledExecutionTest  {
 
 
     }
+    void testShouldUseCrontabString(){
+        assertTrue(new ScheduledExecution(seconds: '1').shouldUseCrontabString())
+        assertFalse(new ScheduledExecution(seconds: '0').shouldUseCrontabString())
+        assertTrue(new ScheduledExecution(year: '123').shouldUseCrontabString())
+        assertFalse(new ScheduledExecution(year: '*').shouldUseCrontabString())
+        assertTrue(new ScheduledExecution(hour: '*').shouldUseCrontabString())
+        assertTrue(new ScheduledExecution(hour: '*/2').shouldUseCrontabString())
+        assertFalse(new ScheduledExecution(hour: '12').shouldUseCrontabString())
+        assertTrue(new ScheduledExecution(minute: '*').shouldUseCrontabString())
+        assertTrue(new ScheduledExecution(minute: '*/2').shouldUseCrontabString())
+        assertFalse(new ScheduledExecution(minute: '12').shouldUseCrontabString())
+    }
 
     void testFilterCrontabParams() {
         def ScheduledExecution se = new ScheduledExecution()

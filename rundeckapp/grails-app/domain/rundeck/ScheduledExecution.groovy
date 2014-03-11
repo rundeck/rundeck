@@ -400,7 +400,11 @@ class ScheduledExecution extends ExecutionContext {
      * should be modified as a crontab string instead of using a simplified form
      */
     def boolean shouldUseCrontabString(){
-        if('0'!=seconds || '*'!=year || [minute,hour,dayOfMonth,dayOfWeek].find {crontabSpecialValue(it)} || crontabSpecialMonthValue(month)){
+        if ('0' != seconds
+                || '*' != year
+                || ('*' in [minute, hour])
+                || [minute, hour, dayOfMonth, dayOfWeek].find { crontabSpecialValue(it) }
+                || crontabSpecialMonthValue(month)) {
             return true
         }
         return false
