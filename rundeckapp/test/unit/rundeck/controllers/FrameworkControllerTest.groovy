@@ -145,6 +145,11 @@ class FrameworkControllerTest {
             true
         }
         fwkControl.demand.projects { return [] }
+        fwkControl.demand.authorizeProjectResource { framework, resource, actions, project ->
+            assertEquals([type:'adhoc'],resource)
+            assertEquals('run',actions)
+            return true
+        }
         fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
         fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
         fwkControl.demand.getRundeckFramework {-> return null }
@@ -178,6 +183,11 @@ class FrameworkControllerTest {
             true
         }
         fwkControl.demand.projects { return [] }
+        fwkControl.demand.authorizeProjectResource { framework, resource, actions, project ->
+            assertEquals([type: 'adhoc'], resource)
+            assertEquals('run', actions)
+            return true
+        }
         fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
         fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
         fwkControl.demand.getRundeckFramework {-> return null }
@@ -203,6 +213,11 @@ class FrameworkControllerTest {
         def fwkControl = mockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.getAuthContextForSubject { subject -> return null }
+        fwkControl.demand.authorizeProjectResource {ctx,resource,action,proj->
+            assertEquals([type: 'adhoc'], resource)
+            assertEquals('run', action)
+            true
+        }
         fwkControl.demand.authorizeProjectExecutionAll {ctx,e,actions->
             assertEquals(exec,e)
             assertEquals([AuthConstants.ACTION_READ],actions)
