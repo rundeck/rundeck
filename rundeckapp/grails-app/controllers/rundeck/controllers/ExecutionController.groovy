@@ -674,9 +674,10 @@ class ExecutionController extends ControllerBase{
             }
             if(params.stepctx && params.stepctx==~/^(\d+e?\/?)+$/){
                 if(params.stepctx.endsWith("/")){
+                    def pref= params.stepctx[0..-2]
                     if(data.metadata.stepctx?.startsWith(params.stepctx)
-                            || data.metadata.stepctx[0..-2] == params.stepctx
-                            || data.metadata.stepctx[0..-2] == params.stepctx + 'e'){
+                            || data.metadata.stepctx == pref
+                            || data.metadata.stepctx == pref + 'e'){
                         return data
                     }else{
                         return false
