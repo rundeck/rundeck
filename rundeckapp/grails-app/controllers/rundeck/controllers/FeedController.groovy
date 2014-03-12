@@ -3,7 +3,9 @@ package rundeck.controllers
 import com.dtolabs.rundeck.app.support.ExecQuery
 import rundeck.services.ReportService
 
-class FeedController {
+import javax.servlet.http.HttpServletResponse
+
+class FeedController  extends ControllerBase{
     ReportService reportService
 
     def index = {ExecQuery query ->
@@ -24,9 +26,8 @@ class FeedController {
 
     protected checkEnabled() {
         if ('true' != servletContext.getAttribute('RSS_ENABLED')) {
-            response.setStatus 404
-            flash.error="Not found"
-            render(template:"/common/error")
+            response.status=HttpServletResponse.SC_NOT_FOUND
+            renderErrorView("Not found")
             return false
         }
         return true

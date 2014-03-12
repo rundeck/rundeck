@@ -1,8 +1,6 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.common.Framework
-
 import grails.converters.JSON
 import org.apache.commons.lang.RandomStringUtils
 import com.dtolabs.rundeck.server.authorization.AuthConstants
@@ -11,7 +9,7 @@ import rundeck.AuthToken
 import rundeck.services.FrameworkService
 import rundeck.services.UserService
 
-class UserController {
+class UserController extends ControllerBase{
     UserService userService
     FrameworkService frameworkService
     def grailsApplication
@@ -47,18 +45,17 @@ class UserController {
     }
     def denied={
         response.setStatus(403)
-        render(view: '/common/error',model:[:])
+        renderErrorView('Access denied')
     }
     def deniedFragment={
         response.setStatus(403)
-        render(template:'/common/messages',model:[:])
+        renderErrorFragment('Access denied')
     }
     def list={
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if(!frameworkService.authorizeApplicationResourceType(authContext,'user', AuthConstants.ACTION_ADMIN)){
-            flash.error="User Admin role required"
-            flash.title="Unauthorized"
-            return denied()
+        if(unauthorizedResponse(frameworkService.authorizeApplicationResourceType(authContext, 'user', AuthConstants.ACTION_ADMIN),
+                AuthConstants.ACTION_ADMIN, 'User', 'accounts')) {
+            return
         }
         [users:User.listOrderByLogin()]
     }
@@ -70,20 +67,18 @@ class UserController {
             params.login=session.user
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if(params.login!=session.user && !frameworkService.authorizeApplicationResourceType(authContext, 'user', AuthConstants.ACTION_ADMIN)){
-            flash.error="Unauthorized: admin role required"
-            return render(template:"/common/error")
+        if(unauthorizedResponse(params.login == session.user || frameworkService.authorizeApplicationResourceType
+                (authContext, 'user', AuthConstants.ACTION_ADMIN), AuthConstants.ACTION_ADMIN,'Users',params.login)){
+            return
         }
         def User u = User.findByLogin(params.login)
-        if(!u){
-            if(params.login==session.user){
-                //redirect to profile edit page, so user can setup their profile
-                flash.message="Please fill out your profile"
-                return redirect(action:register)
-            }else{
-                flash.error="User not found: ${params.login}"
-                return render(template:"/common/error")
-            }
+        if(!u && params.login==session.user){
+            //redirect to profile edit page, so user can setup their profile
+            flash.message="Please fill out your profile"
+            return redirect(action:register)
+        }
+        if(notFoundResponse(u, 'User', params['login'])){
+            return
         }
         [user:u]
     }
@@ -107,15 +102,15 @@ class UserController {
     def store={
 
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if(params.login!=session.user && !frameworkService.authorizeApplicationResourceType(authContext, 'user', AuthConstants.ACTION_ADMIN)) {
-            //require user_admin/admin if modifying a different user profile
-            flash.error="Unauthorized: admin role required"
-            return render(template:"/common/error")
+
+        if (unauthorizedResponse(params.login == session.user || frameworkService.authorizeApplicationResourceType
+                (authContext, 'user', AuthConstants.ACTION_ADMIN), AuthConstants.ACTION_ADMIN, 'Users', params.login)) {
+            return
         }
+
         def User u = User.findByLogin(params.login)
         if(u){
-            flash.error="User alread exists: ${params.login}"
-            return render(template:"/common/error")
+            return renderErrorView("User alread exists: ${params.login}")
         }
         u = new User(params.subMap(['login','firstName','lastName','email']))
 
@@ -132,21 +127,21 @@ class UserController {
         //check auth to view profile
         //default to current user profile
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if(params.login!=session.user && !frameworkService.authorizeApplicationResourceType(authContext, 'user', AuthConstants.ACTION_ADMIN)) {
-            flash.error="Unauthorized: admin role required"
-            return render(template:"/common/error")
+        if(unauthorizedResponse(params.login == session.user || frameworkService.authorizeApplicationResourceType
+                (authContext, 'user',
+                AuthConstants.ACTION_ADMIN), AuthConstants.ACTION_ADMIN,'User',params.login)){
+            return
         }
         def User u = User.findByLogin(params.login)
-        if(!u){
-            flash.error="User not found: ${params.login}"
-            return render(template:"/common/error")
+        if(notFoundResponse(u,'User',params.login)){
+            return
         }
 
         bindData(u,params.subMap(['firstName','lastName','email']))
 
         if(!u.save(flush:true)){
             def errmsg= u.errors.allErrors.collect { g.message(error:it) }.join("\n")
-            flash.error="Error updating user: ${errmsg}"
+            request.error="Error updating user: ${errmsg}"
             return render(view:'edit',model:[user:u])
         }
         flash.message="User profile updated: ${params.login}"
@@ -253,8 +248,7 @@ class UserController {
         if(user && token){
             return render(template: 'token',model: [user:user,token:token]);
         }else{
-            flash.error=result.error
-            return render(template:'/common/error')
+            return renderErrorFragment(result.error)
         }
 
     }
@@ -321,17 +315,10 @@ class UserController {
     }
     def setDashboardPref={
         def User u = userService.findOrCreateUser(session.user)
-        if(!u){
-            log.error("Couldn't find user: ${session.user}")
-            flash.error="Couldn't find user: ${session.user}"
-
-            return render(template:"/common/error")
-        }
         def list=params.dpref.split(",").collect{Integer.parseInt(it)}
         (1..4).each{
             if(!list.contains(it)){
-                flash.error="Invalid pref order: ${params.dpref}"
-                return render(template:"/common/error")
+                return renderErrorView("Invalid pref order: ${params.dpref}")
             }
         }
         u.dashboardPref=params.dpref
@@ -346,8 +333,7 @@ class UserController {
     def addFilterPref={
         def result = userService.storeFilterPref(session.user,params.filterpref)
         if(result.error){
-            flash.error=result.error
-            return render(template:"/common/error")
+            return renderErrorFragment(result.error)
         }
         def storedpref=result.storedpref
 

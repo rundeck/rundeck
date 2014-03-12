@@ -8,7 +8,6 @@ import com.dtolabs.rundeck.core.logging.LogUtil
 import com.dtolabs.rundeck.core.logging.ReverseSeekingStreamingLogReader
 import com.dtolabs.rundeck.core.logging.StreamingLogReader
 import com.dtolabs.rundeck.app.support.ExecutionQuery
-import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import rundeck.Execution
 import rundeck.PluginStep
@@ -31,7 +30,7 @@ import java.text.SimpleDateFormat
 /**
 * ExecutionController
 */
-class ExecutionController {
+class ExecutionController extends ControllerBase{
 
     FrameworkService frameworkService
     ExecutionService executionService
@@ -51,21 +50,10 @@ class ExecutionController {
         return render(view:'showFragment',model:show())
     }
 
-    private unauthorized(String action, boolean fragment = false) {
-        if (!fragment) {
-            response.setStatus(HttpServletResponse.SC_FORBIDDEN)
-        }
-        flash.title = "Unauthorized"
-        flash.error = "${request.remoteUser} is not authorized to: ${action}"
-        response.setHeader(Constants.X_RUNDECK_ACTION_UNAUTHORIZED_HEADER, flash.error)
-        render(template: fragment ? '/common/errorFragment' : '/common/error', model: [:])
-    }
     def show ={
         def Execution e = Execution.get(params.id)
-        if(!e){
-            log.error("Execution not found for id: "+params.id)
-            flash.error = "Execution not found for id: "+params.id
-            return render(template:"/common/error")
+        if(notFoundResponse(e,'Execution ID',params.id)){
+            return
         }
         def filesize=-1
         if(null!=e.outputfilepath){
@@ -76,8 +64,9 @@ class ExecutionController {
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
-        if (e && !frameworkService.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_READ])) {
-            return unauthorized("Read Execution ${params.id}")
+        if (unauthorizedResponse(frameworkService.authorizeProjectExecutionAll(authContext, e,
+                [AuthConstants.ACTION_READ]), AuthConstants.ACTION_READ,'Execution',params.id)) {
+            return
         }
         if(!params.project || params.project!=e.project) {
             return redirect(controller: 'execution', action: 'show', params: [id: params.id, project: e.project])
@@ -181,10 +170,8 @@ class ExecutionController {
     }
     def mail ={
         def Execution e = Execution.get(params.id)
-        if(!e){
-            log.error("Execution not found for id: "+params.id)
-            flash.error = "Execution not found for id: "+params.id
-            return render(template:"/common/error")
+        if (notFoundResponse(e, 'Execution ID', params.id)) {
+            return
         }
         def file = loggingService.getLogFileForExecution(e)
         def filesize=-1

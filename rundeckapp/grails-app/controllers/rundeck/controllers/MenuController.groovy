@@ -33,7 +33,7 @@ import rundeck.services.UserService
 import javax.servlet.http.HttpServletResponse
 import java.lang.management.ManagementFactory
 
-class MenuController {
+class MenuController extends ControllerBase{
     FrameworkService frameworkService
     ExecutionService executionService
     UserService userService
@@ -409,11 +409,6 @@ class MenuController {
     
     def storeJobfilter={ScheduledExecutionQuery query->
         def User u = userService.findOrCreateUser(session.user)
-        if(!u){
-            log.error("Couldn't find user: ${session.user}")
-            flash.error="Couldn't find user: ${session.user}"
-            return render(template:"/common/error")
-        }
         def ScheduledExecutionFilter filter
         def boolean saveuser=false
         if(params.newFilterName && !params.existsFilterName){
@@ -446,10 +441,7 @@ class MenuController {
         }
         if(saveuser){
             if(!u.save(flush:true)){
-                //                u.errors.allErrors.each { log.error(g.message(error:it)) }
-                //                flash.error="Unable to save filter for user"
-                flash.error=filter.errors.allErrors.collect { g.message(error:it).encodeAsHTML()}.join("\n")
-                return render(template:"/common/error")
+                return renderErrorView(filter.errors.allErrors.collect { g.message(error: it).encodeAsHTML() }.join("\n"))
             }
         }
         redirect(controller:'menu',action:params.fragment?'jobsFragment':'jobs',params:[filterName:filter.name,project:params.project])
@@ -458,11 +450,6 @@ class MenuController {
     
     def deleteJobfilter={
         def User u = userService.findOrCreateUser(session.user)
-        if(!u){
-            log.error("Couldn't find user: ${session.user}")
-            flash.error="Couldn't find user: ${session.user}"
-            return render(template:"/common/error")
-        }
         def filtername=params.delFilterName
         final def ffilter = ScheduledExecutionFilter.findByNameAndUser(filtername, u)
         if(ffilter){
@@ -475,12 +462,15 @@ class MenuController {
     def admin={
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if (!frameworkService.authorizeApplicationResourceAll(authContext,[type:'project',name: params.project],[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_READ])) {
-            flash.error = "User ${session.user} unauthorized for: Project Admin"
-            flash.title = "Unauthorized"
-            response.setStatus(403)
-            render(view: '/common/error', model: [:])
-        }else if (params.project){
+
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAll(authContext, [type: 'project', name: params.project], [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_READ]),
+                AuthConstants.ACTION_ADMIN, 'Project', params.project)) {
+            return
+        }
+        if (!params.project){
+            return renderErrorView('Project parameter is required')
+        }
 
             def project= params.project
             def fproject = frameworkService.getFrameworkProject(project)
@@ -528,37 +518,40 @@ class MenuController {
                 nodeExecDescriptions: nodeexecdescriptions,
                 fileCopyDescriptions: filecopydescs,
             ]
-        }
     }
     def systemConfig(){
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if (!frameworkService.authorizeApplicationResource(authContext, [type: 'resource', kind: 'system'], 'read')) {
-            flash.error = "User Admin role required"
-            flash.title = "Unauthorized"
-            response.setStatus(403)
-            render(view: '/common/error', model: [:])
+
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResource(authContext, [type: 'resource', kind: 'system'], AuthConstants.ACTION_READ),
+                AuthConstants.ACTION_READ, 'System configuration')) {
+            return
         }
         [rundeckFramework: frameworkService.rundeckFramework]
     }
     def securityConfig(){
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if (!frameworkService.authorizeApplicationResource(authContext, [type: 'resource', kind: 'system'], 'read')) {
-            flash.error = "User Admin role required"
-            flash.title = "Unauthorized"
-            response.setStatus(403)
-            render(view: '/common/error', model: [:])
+
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResource(authContext, [type: 'resource', kind: 'system'],
+                        AuthConstants.ACTION_READ),
+                AuthConstants.ACTION_READ, 'System configuration')) {
+            return
         }
+
         [rundeckFramework: frameworkService.rundeckFramework]
     }
 
     def systemInfo = {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if (!frameworkService.authorizeApplicationResource(authContext,[type:'resource',kind:'system'],'read')) {
-            flash.error = "User Admin role required"
-            flash.title = "Unauthorized"
-            response.setStatus(403)
-            render(view: '/common/error', model: [:])
+
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResource(authContext, [type: 'resource', kind: 'system'],
+                        AuthConstants.ACTION_READ),
+                AuthConstants.ACTION_READ, 'System configuration')) {
+            return
         }
+
         Date nowDate = new Date();
         String nodeName = servletContext.getAttribute("FRAMEWORK_NODE")
         String appVersion = grailsApplication.metadata['app.version']
