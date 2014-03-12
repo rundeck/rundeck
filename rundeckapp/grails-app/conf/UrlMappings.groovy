@@ -80,6 +80,7 @@ class UrlMappings {
         "/project/$project"(controller: 'menu',action: 'index')
         "/job/show/$id"(controller: 'scheduledExecution',action: 'show')
         "/execution/show/$id"(controller: 'execution',action: 'show')
+        "404"(view: '/404')
         "500"(view: '/error')
     }
 }

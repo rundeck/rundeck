@@ -9,24 +9,20 @@ import rundeck.PluginStep
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import rundeck.services.ExecutionService
 
-class WorkflowController {
+class WorkflowController extends ControllerBase {
     def frameworkService
     def index = {
         return redirect(controller: 'menu', action: 'index')
     }
 
 
-    def error ={
-        render(template:"/common/errorFragment")
-    }
     /**
      * Render the edit form for a workflow item
      */
     def edit = {
         if (!params.num && !params['newitemtype']) {
             log.error("num parameter is required")
-            flash.error = "num parameter is required"
-            return error.call()
+            return renderErrorFragment("num parameter is required")
         }
 
         def Workflow editwf = _getSessionWorkflow()
@@ -35,8 +31,7 @@ class WorkflowController {
             numi = Integer.parseInt(params.num)
             if (numi >= editwf.commands.size()) {
                 log.error("num parameter is invalid: ${numi}")
-                flash.error = "num parameter is invalid: ${numi}"
-                return error.call()
+                return renderErrorFragment("num parameter is invalid: ${numi}")
             }
         }
         def item = null != numi ? editwf.commands.get(numi) : null
@@ -49,8 +44,7 @@ class WorkflowController {
                 item = item.errorHandler
                 if(!item){
                     log.error("num parameter is invalid: ${numi} no error handler")
-                    flash.error = "num parameter is invalid: ${numi} no error handler"
-                    return error.call()
+                    return renderErrorFragment("num parameter is invalid: ${numi} no error handler")
                 }
             }
         }
@@ -82,16 +76,14 @@ class WorkflowController {
     def render = {
         if (!params.num) {
             log.error("num parameter is required")
-            flash.error = "num parameter is required"
-            return error.call()
+            return renderErrorFragment("num parameter is required")
         }
 
         def Workflow editwf = _getSessionWorkflow()
         def numi = Integer.parseInt(params.num)
         if (numi >= editwf.commands.size()) {
             log.error("num parameter is invalid: ${numi}")
-            flash.error = "num parameter is invalid: ${numi}"
-            return error.call()
+            return renderErrorFragment("num parameter is invalid: ${numi}")
         }
         def item = editwf.commands.get(numi)
         final isErrorHandler = params.isErrorHandler == 'true'
@@ -99,8 +91,7 @@ class WorkflowController {
             item = item.errorHandler
             if (!item) {
                 log.error("num parameter is invalid: ${numi} no error handler")
-                flash.error = "num parameter is invalid: ${numi} no error handler"
-                return error.call()
+                return renderErrorFragment("num parameter is invalid: ${numi} no error handler")
             }
         }
         def itemDescription = item.instanceOf(PluginStep)?getPluginStepDescription(item.nodeStep, item.type):null
@@ -114,8 +105,7 @@ class WorkflowController {
     def save = {
         if (!params.num && !params.newitem) {
             log.error("num parameter is required")
-            flash.error = "num parameter is required"
-            return error.call()
+            return renderErrorFragment("num parameter is required")
         }
         def Workflow editwf = _getSessionWorkflow()
         def item
@@ -165,13 +155,11 @@ class WorkflowController {
     def reorder = {
         if (!params.fromnum) {
             log.error("fromnum parameter required")
-            flash.error = "fromnum parameter required"
-            return error.call()
+            return renderErrorFragment("fromnum parameter required")
         }
         if (!params.tonum) {
             log.error("tonum parameter required")
-            flash.error = "tonum parameter required"
-            return error.call()
+            return renderErrorFragment("tonum parameter required")
         }
 
         def Workflow editwf = _getSessionWorkflow()
@@ -181,8 +169,7 @@ class WorkflowController {
         def result = _applyWFEditAction(editwf, [action: 'move', from: fromi, to: toi])
         if (result.error) {
             log.error(result.error)
-            flash.error = result.error
-            return error.call()
+            return renderErrorFragment(result.error)
         }
         _pushUndoAction(params.scheduledExecutionId, result.undo)
         _clearRedoStack(params.scheduledExecutionId)
@@ -198,8 +185,7 @@ class WorkflowController {
 
         if (!params.delnum) {
             log.error("delnum parameter required")
-            flash.error = "delnum parameter required"
-            return error.call()
+            return renderErrorFragment("delnum parameter required")
         }
         def Workflow editwf = _getSessionWorkflow()
 
@@ -213,8 +199,7 @@ class WorkflowController {
         def result = _applyWFEditAction(editwf, [action: wfEditAction, num: fromi])
         if (result.error) {
             log.error(result.error)
-            flash.error = result.error
-            return error.call()
+            return renderErrorFragment(result.error)
         }
         _pushUndoAction(params.scheduledExecutionId, result.undo)
         _clearRedoStack(params.scheduledExecutionId)
@@ -236,8 +221,7 @@ class WorkflowController {
             def result = _applyWFEditAction(editwf, action)
             if (result.error) {
                 log.error(result.error)
-                flash.error = result.error
-                return error.call()
+                return renderErrorFragment(result.error)
             }
             if (null != action.num) {
                 num = action.num
@@ -269,8 +253,7 @@ class WorkflowController {
             def result = _applyWFEditAction(editwf, action)
             if (result.error) {
                 log.error(result.error)
-                flash.error = result.error
-                return error.call()
+                return renderErrorFragment(result.error)
             }
             if (null != action.num) {
                 num = action.num

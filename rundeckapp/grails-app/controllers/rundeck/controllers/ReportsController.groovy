@@ -3,6 +3,7 @@ package rundeck.controllers
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
 import rundeck.Execution
 import rundeck.ScheduledExecution
@@ -20,30 +21,22 @@ import rundeck.ReportFilter
 import rundeck.services.FrameworkService
 import rundeck.filters.ApiRequestFilters
 
-class ReportsController {
+class ReportsController extends ControllerBase{
     def reportService
     def userService
     def FrameworkService frameworkService
     def scheduledExecutionService
     def ApiService apiService
 
-    private unauthorized(String action, boolean fragment = false) {
-        if (!fragment) {
-            response.setStatus(403)
-        }
-        flash.title = "Unauthorized"
-        flash.error = "${request.remoteUser} is not authorized to: ${action}"
-        response.setHeader(Constants.X_RUNDECK_ACTION_UNAUTHORIZED_HEADER, flash.error)
-        render(template: fragment ? '/common/errorFragment' : '/common/error', model: [:])
-    }
     def index = { ExecQuery query->
        //find previous executions
         def usedFilter
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
-        if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'event'], ['read'],
-            params.project)) {
-            return unauthorized("Read Events for project ${params.project}")
+        if(unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource',
+                kind: 'event'], [AuthConstants.ACTION_READ],
+                params.project), AuthConstants.ACTION_READ,'Events in project',params.project)){
+            return
         }
         def User u = userService.findOrCreateUser(session.user)
         def filterPref= userService.parseKeyValuePref(u.filterPref)
@@ -126,9 +119,10 @@ class ReportsController {
         def usedFilter
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
-        if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'event'], ['read'],
-                params.project)) {
-            return unauthorized("Read Events for project ${params.project}")
+        if (unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource',
+                kind: 'event'], [AuthConstants.ACTION_READ],
+                params.project), AuthConstants.ACTION_READ, 'Events for project', params.project)) {
+            return
         }
         def User u = userService.findOrCreateUser(session.user)
         
@@ -170,7 +164,6 @@ class ReportsController {
             query.doendafterFilter=true
             }catch(NumberFormatException e){
                 errmsg=e.getMessage()
-                flash.error="Invalid date: ${errmsg}"
             }
         }
 
@@ -183,7 +176,7 @@ class ReportsController {
         withFormat{
             html{
                 if(errmsg){
-                    return render(template:"/common/error")
+                    return renderErrorFragment("Invalid date: ${errmsg}")
                 }else{
                     render(contentType:"text/html"){
                         span('class':'eventsCountContent',count+" new")
@@ -226,9 +219,10 @@ class ReportsController {
     def eventsFragment={ ExecQuery query ->
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
-        if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'event'], ['read'],
-                params.project)) {
-            return unauthorized("Read Events for project ${params.project}",true)
+        if (unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource',
+                kind: 'event'], [AuthConstants.ACTION_READ],
+                params.project), AuthConstants.ACTION_READ, 'Events for project', params.project)) {
+            return
         }
         def results = index(query)
         results.params=params
@@ -237,9 +231,11 @@ class ReportsController {
     def eventsAjax={ ExecQuery query ->
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
-        if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'event'], ['read'],
-                params.project)) {
-            return unauthorized("Read Events for project ${params.project}",true)
+
+        if (unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource',
+                kind: 'event'], [AuthConstants.ACTION_READ],
+                params.project), AuthConstants.ACTION_READ, 'Events for project', params.project)) {
+            return
         }
         def results = index(query)
         results.reports=results.reports.collect{
@@ -276,9 +272,10 @@ class ReportsController {
     def jobsFragment={ ExecQuery query ->
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
-        if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'event'], ['read'],
-                params.project)) {
-            return unauthorized("Read Events for project ${params.project}", true)
+        if (unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource',
+                kind: 'event'], [AuthConstants.ACTION_READ],
+                params.project), AuthConstants.ACTION_READ, 'Events for project', params.project)) {
+            return
         }
         def results = jobs(query)
         results.params=params
@@ -288,11 +285,6 @@ class ReportsController {
 
     def storeFilter={ReportQuery query->
         def User u = userService.findOrCreateUser(session.user)
-        if(!u){
-            log.error("Couldn't find user: ${session.user}")
-            flash.error="Couldn't find user: ${session.user}"
-            return render(template:"/common/error")
-        }
         def ReportFilter filter
         def boolean saveuser=false
         if(params.newFilterName && !params.existsFilterName){
@@ -318,10 +310,7 @@ class ReportsController {
         }
         if(saveuser){
             if(!u.save(flush:true)){
-//                u.errors.allErrors.each { log.error(g.message(error:it)) }
-//                flash.error="Unable to save filter for user"
-                flash.error=u.errors.allErrors.collect { g.message(error:it) }.join("\n")
-                return render(template:"/common/error")
+                return renderErrorView(u.errors.allErrors.collect { g.message(error: it) }.join("\n"))
             }
         }
         redirect(controller:'reports',action:params.fragment?'eventsFragment':'index',params:[filterName:filter.name,project:params.project])
@@ -329,11 +318,6 @@ class ReportsController {
 
     def deleteFilter={
          def User u = userService.findOrCreateUser(session.user)
-        if(!u){
-            log.error("Couldn't find user: ${session.user}")
-            flash.error="Couldn't find user: ${session.user}"
-            return render(template:"/common/error")
-        }
         def filtername=params.delFilterName
         final def ffilter = ReportFilter.findByNameAndUser(filtername, u)
         if(ffilter){
