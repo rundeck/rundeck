@@ -529,7 +529,7 @@ function getCurSEID(){
 <div class="form-group">
     <div class="${offsetColSize}">
         <span class="help-block">
-            Choose whether the Job will run on filtered nodes or only on the local node.
+            <g:message code="scheduledExecution.property.doNodedispatch.description" />
         </span>
 
         <g:javascript>
