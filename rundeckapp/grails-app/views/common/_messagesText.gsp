@@ -2,7 +2,8 @@
         ${flash.message?.encodeAsHTML()}${request.message?.encodeAsHTML()}
 </g:if>
 <g:if test="${flash.error || request.error || flash.errorCode || request.errorCode}">
-        ${flash.error?.encodeAsHTML()}${request.error?.encodeAsHTML()}
+        ${flash.error?.encodeAsHTML()}${request.error && request.error instanceof String?
+    request.error.encodeAsHTML():''}
         <g:if test="${flash.errorCode ?: request.errorCode}">
             <g:message code="${flash.errorCode ?: request.errorCode}" args="${flash.errorArgs ?: request.errorArgs}"/>
         </g:if>
