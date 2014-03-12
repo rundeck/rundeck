@@ -71,7 +71,11 @@ class FrameworkController  {
         request.title = "Unauthorized"
         request.error = "${request.remoteUser} is not authorized to: ${action}"
         response.setHeader(Constants.X_RUNDECK_ACTION_UNAUTHORIZED_HEADER, request.error)
-        render(template: fragment ? '/common/errorFragment' : '/common/error', model: [:])
+        if(fragment){
+            render(template: '/common/errorFragment' , model: [:])
+        }else{
+            render(view: '/common/error',model: [:] )
+        }
     }
 
     def noProjectAccess = {
