@@ -241,11 +241,11 @@ class ScheduledExecution extends ExecutionContext {
                     se.year = '*'
                 }
                 if(data.schedule.dayofmonth && data.schedule.dayofmonth instanceof Map
-                        && data.schedule.dayofmonth.day){
+                        && null !=data.schedule.dayofmonth.day){
                     se.dayOfMonth = data.schedule.dayofmonth.day
                     se.dayOfWeek = '?'
                 }else if(data.schedule.weekday && data.schedule.weekday instanceof Map
-                        && data.schedule.weekday.day){
+                        && null!=data.schedule.weekday.day){
                     se.dayOfWeek=data.schedule.weekday.day
                     se.dayOfMonth = '?'
                 }else{
