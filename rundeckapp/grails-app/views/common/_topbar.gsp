@@ -84,10 +84,14 @@
                                               params="[project: params.project ?: request.project]" >
            <g:message code="gui.menu.Nodes"/>
        </g:link></li><!--
-        --><li class="${adhocselected}"><g:link controller="framework" action="adhoc" class=" toptab ${adhocselected}"
+        --><g:if
+                test="${auth.adhocAllowedTest(action:AuthConstants.ACTION_RUN,project: params.project?:request.project)}"><li
+                    class="${adhocselected} disabled"><g:link
+                controller="framework" action="adhoc"
+                                                  class=" toptab ${adhocselected}"
                                                 params="[project: params.project ?: request.project]">
            <g:message code="gui.menu.Adhoc"/>
-       </g:link></li><!--
+       </g:link></li></g:if><!--
         --><li class="${eventsselected}"><g:link controller="reports"  action="index" class=" toptab ${eventsselected}"
                                                  params="[project: params.project ?: request.project]" >
             <g:message code="gui.menu.Events"/>

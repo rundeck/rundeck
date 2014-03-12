@@ -333,14 +333,12 @@
 </g:if>
 
 <div id="nodesContent">
-    <g:set var="run_authorized" value="${auth.adhocAllowedTest( action:AuthConstants.ACTION_RUN,project: params.project ?: request.project)}"/>
 
 
     <g:render template="/common/messages"/>
         <div id="tabsarea">
             <div class="row ">
                 <div class="col-sm-10" >
-                    <g:if test="${run_authorized}">
                     <div class="" id="runtab">
                             <div class="form form-horizontal clearfix" id="runbox">
                                 <g:render template="nodeFiltersHidden"
@@ -420,7 +418,6 @@
                             </div>
 
                     </div>
-                    </g:if>
                     <div class="${emptyQuery ? 'active' : ''}" id="nodeFilterInline">
                         <div class="spacing">
                         <div class="">
@@ -505,7 +502,6 @@
 
 
 
-    <g:if test="${run_authorized}">
     <div class="row" id="activity_section">
     <div class="col-sm-12">
         <h4 class="text-muted"><g:message code="page.section.Activity.for.adhoc.commands" /></h4>
@@ -517,7 +513,6 @@
         knockoutBinding:true, showTitle:true]"/>
     </div>
     </div>
-    </g:if>
 
 </div>
 <div id="loaderror"></div>

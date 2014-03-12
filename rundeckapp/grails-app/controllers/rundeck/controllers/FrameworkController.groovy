@@ -158,8 +158,11 @@ class FrameworkController  {
     }
 
     def adhoc = { ExtNodeFilters query ->
-        Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if(!frameworkService.authorizeProjectResource(authContext, [type: 'adhoc'], AuthConstants.ACTION_RUN,
+                params.project)){
+            return unauthorized("Run adhoc commands")
+        }
         String runCommand;
         if (params.fromExecId || params.retryFailedExecId) {
             Execution e = Execution.get(params.fromExecId ?: params.retryFailedExecId)
