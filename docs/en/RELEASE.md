@@ -1,33 +1,48 @@
-Release 2.0.1
-===========
+Release 2.0.2
+=============
 
-Date: 2014-02-11
+Date: 2014-03-13
 
 This is a bugfix release.
 
-Contributors:
+*Important Upgrade Note*: This bug [Issue 661](https://github.com/rundeck/rundeck/issues/661)
+is caused by the VARCHAR length being too small for a database column.  Unfortunately grails won't
+automatically update the VARCHAR size when you upgrade.
 
-* Alex Honor
-* Diomidis Spinellis
+* If you are using a different database (mysql, etc.), you will have
+to update your schema manually.
+* If you are using H2, you can use this
+script to update your database:
+
+    1. Shutdown rundeck
+    2. Run [rundeck-2.0.2-h2-upgrade.sh](https://gist.github.com/gschueler/9534814#file-rundeck-2-0-2-h2-upgrade-sh)
+    3. Start rundeck
+
+
+## Contributors
+
+* David Wittman
 * Greg Schueler
-* Mark LaPerriere
+* Alex Honor
 
-Issues:
+## Issues
 
-* [Option values select boxes only fill the first option](https://github.com/rundeck/rundeck/issues/654)
-* [Update doc screenshots and improve organization](https://github.com/rundeck/rundeck/issues/652)
-* [`dispatch` command uses old node filter syntax](https://github.com/rundeck/rundeck/issues/651)
-* [`dispatch` command node filtering broken](https://github.com/rundeck/rundeck/issues/647)
-* [2.0: Copy file doesn't rename the file](https://github.com/rundeck/rundeck/issues/646)
-* [Rundeck 2.0 - Job fails if workflow execute another job 'for each node'](https://github.com/rundeck/rundeck/issues/641)
-* [Rundeck 2.0 - "Unable to create URL for mapping" on home page when rundeck.gui.startpage=jobs](https://github.com/rundeck/rundeck/issues/639)
-* [Configure Project should highlight the "Configure" tab (not Nodes)](https://github.com/rundeck/rundeck/issues/638)
-* [Rundeck 2.0 - Can not send email notifications](https://github.com/rundeck/rundeck/issues/637)
-* [Fix typo](https://github.com/rundeck/rundeck/pull/635)
-* [Rundeck 2.0.0: Job Add or Edit > Node Filter > Set Filter button broken](https://github.com/rundeck/rundeck/issues/634)
-* [Ensure rundeck/.ssh directory is created](https://github.com/rundeck/rundeck/pull/633)
-* [Run ssh-keygen after home directory is installed](https://github.com/rundeck/rundeck/pull/632)
-* [Rundeck RPM pre-install script fails to create home directory](https://github.com/rundeck/rundeck/issues/631)
-* [Running make outside bash fails to pickup the package version](https://github.com/rundeck/rundeck/issues/624)
-* [API Run Script Documentation Misleading](https://github.com/rundeck/rundeck/issues/596)
-* [Expanding inline script in definition view](https://github.com/rundeck/rundeck/issues/593)
+* [Grammar fix in Job editor view](https://github.com/rundeck/rundeck/pull/702)
+* [Import of an Exported Rundeck Project Results in "No such property: year for class: java.lang.String"](https://github.com/rundeck/rundeck/issues/698)
+* [Plugin development guide broken into per plugin pages](https://github.com/rundeck/rundeck/issues/695)
+* [Custom Attributes unusable in dynamic filters](https://github.com/rundeck/rundeck/issues/691)
+* [ Required options are not visible when the job page is refreshed](https://github.com/rundeck/rundeck/issues/690)
+* [[2.0.1] Option field is split when use Run Again... button](https://github.com/rundeck/rundeck/issues/684)
+* [Rundeck 2.0.1 - cron settings reset in ui](https://github.com/rundeck/rundeck/issues/678)
+* [Rundeck 2.0.1 - Improve look of unauthorized access pages](https://github.com/rundeck/rundeck/issues/675)
+* [Activity page: can show activity for wrong project](https://github.com/rundeck/rundeck/issues/674)
+* [Project import: failure if execution workflow has nodeStep jobref](https://github.com/rundeck/rundeck/issues/673)
+* [Rundeck 2.0.1 - Can not hide 'Command' / adhoc section](https://github.com/rundeck/rundeck/issues/672)
+* [Update upstart init script to allow service stop command](https://github.com/rundeck/rundeck/pull/670)
+* [Rundeck can't be stopped/restarted on Ubuntu](https://github.com/rundeck/rundeck/issues/669)
+* [Show all tags button doesn't work correctly on Job run page](https://github.com/rundeck/rundeck/issues/668)
+* [rundeck 2.0.1 - change target nodes - sql error when run is activated ](https://github.com/rundeck/rundeck/issues/661)
+* [Rundeck 2.0.1 - remove UUID doesn't work when uploading job definition ](https://github.com/rundeck/rundeck/issues/658)
+* [Rundeck 2.0.1 - 2013 copyright in footer](https://github.com/rundeck/rundeck/issues/657)
+* [Export archive failed with NullPointerException in Rundeck 2.0.0](https://github.com/rundeck/rundeck/issues/656)
+
