@@ -14,6 +14,7 @@ import rundeck.ExecReport
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.codecs.JobsXMLCodec
+import rundeck.controllers.JobXMLException
 
 import java.text.ParseException
 import java.text.SimpleDateFormat
@@ -359,7 +360,13 @@ class ProjectService {
             def name=jobxmlmap[jxml].name
             def jobset
             jxml.withInputStream {
-                jobset = it.decodeJobsXML()
+                try {
+                    jobset = it.decodeJobsXML()
+                } catch (JobXMLException e) {
+                    log.error("Failed parsing jobs from XML at archive path: ${path}${name}")
+                    loadjoberrors << "Job XML file at archive path: ${path}${name} had errors: ${e.message}"
+                    return
+                }
                 if (null == jobset) {
                     log.error("failed decoding jobs xml from zip: ${path}${name}")
                     return [errorCode: 'api.error.jobs.import.empty']
