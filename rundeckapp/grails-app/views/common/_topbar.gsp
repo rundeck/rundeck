@@ -86,7 +86,7 @@
        </g:link></li><!--
         --><g:if
                 test="${auth.adhocAllowedTest(action:AuthConstants.ACTION_RUN,project: params.project?:request.project)}"><li
-                    class="${adhocselected} disabled"><g:link
+                    class="${adhocselected}"><g:link
                 controller="framework" action="adhoc"
                                                   class=" toptab ${adhocselected}"
                                                 params="[project: params.project ?: request.project]">
