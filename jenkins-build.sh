@@ -33,7 +33,7 @@ elif [ "$REL" = "upload" ] ; then
       ${RELEASE_OPTS} uploadArchives
 
     # close nexus staging repos
-    ./gradlew ${PROXY_DEFS} --no-daemon nexusStagingRelease
+    ./gradlew ${PROXY_DEFS} --no-daemon ${RELEASE_OPTS} nexusStagingRelease
     exit $?
 else
     ./gradlew -Penvironment=build build
