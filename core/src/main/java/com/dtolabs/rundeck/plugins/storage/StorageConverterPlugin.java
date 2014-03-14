@@ -5,9 +5,9 @@ import org.rundeck.storage.api.HasInputStream;
 import org.rundeck.storage.api.Path;
 
 /**
- * Plugin to convert resource data
+ * Plugin to convert storage resource data
  */
-public interface ResourceConverterPlugin {
+public interface StorageConverterPlugin {
 
     /**
      * Convert a resource during read operation and return a new data stream, or null to pass the data without

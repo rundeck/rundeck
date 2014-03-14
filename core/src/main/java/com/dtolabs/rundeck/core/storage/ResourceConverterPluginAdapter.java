@@ -1,6 +1,6 @@
 package com.dtolabs.rundeck.core.storage;
 
-import com.dtolabs.rundeck.plugins.storage.ResourceConverterPlugin;
+import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin;
 import org.rundeck.storage.api.HasInputStream;
 import org.rundeck.storage.api.Path;
 import org.rundeck.storage.api.PathUtil;
@@ -8,12 +8,12 @@ import org.rundeck.storage.api.PathUtil;
 import java.util.HashMap;
 
 /**
- * Adapter for a {@link ResourceConverterPlugin} to use as a {@link ResourceConverter}
+ * Adapter for a {@link com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin} to use as a {@link ResourceConverter}
  */
 public class ResourceConverterPluginAdapter implements ResourceConverter {
-    ResourceConverterPlugin plugin;
+    StorageConverterPlugin plugin;
 
-    public ResourceConverterPluginAdapter(ResourceConverterPlugin plugin) {
+    public ResourceConverterPluginAdapter(StorageConverterPlugin plugin) {
         this.plugin = plugin;
     }
 

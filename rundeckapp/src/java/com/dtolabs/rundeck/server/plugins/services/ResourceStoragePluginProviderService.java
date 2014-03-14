@@ -8,7 +8,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableServiceUtil;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
-import com.dtolabs.rundeck.plugins.storage.ResourceStoragePlugin;
+import com.dtolabs.rundeck.plugins.storage.StoragePlugin;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,20 +20,20 @@ import java.util.List;
  * @author greg
  * @since 2014-02-21
  */
-public class ResourceStoragePluginProviderService extends ChainedProviderService<ResourceStoragePlugin> implements
-        DescribableService, PluggableProviderService<ResourceStoragePlugin> {
+public class ResourceStoragePluginProviderService extends ChainedProviderService<StoragePlugin> implements
+        DescribableService, PluggableProviderService<StoragePlugin> {
     public static final String SERVICE_NAME = ServiceNameConstants.ResourceStorage;
 
-    private List<ProviderService<ResourceStoragePlugin>> serviceList;
+    private List<ProviderService<StoragePlugin>> serviceList;
     private PluggableResourceStoragePluginProviderService pluggableResourceStoragePluginProviderService;
 
     public ResourceStoragePluginProviderService(Framework framework) {
-        serviceList = new ArrayList<ProviderService<ResourceStoragePlugin>>();
+        serviceList = new ArrayList<ProviderService<StoragePlugin>>();
         serviceList.add(new BuiltinResourceStoragePluginProviderService(framework, SERVICE_NAME));
     }
 
     @Override
-    protected List<ProviderService<ResourceStoragePlugin>> getServiceList() {
+    protected List<ProviderService<StoragePlugin>> getServiceList() {
         return serviceList;
     }
 
@@ -66,7 +66,7 @@ public class ResourceStoragePluginProviderService extends ChainedProviderService
     }
 
     @Override
-    public ResourceStoragePlugin createProviderInstance(Class<ResourceStoragePlugin> resourceStoragePluginClass, String s) throws PluginException, ProviderCreationException {
+    public StoragePlugin createProviderInstance(Class<StoragePlugin> resourceStoragePluginClass, String s) throws PluginException, ProviderCreationException {
         return getPluggableResourceStoragePluginProviderService().createProviderInstance(resourceStoragePluginClass, s);
     }
 
@@ -76,7 +76,7 @@ public class ResourceStoragePluginProviderService extends ChainedProviderService
     }
 
     @Override
-    public ResourceStoragePlugin createScriptProviderInstance(ScriptPluginProvider scriptPluginProvider) throws
+    public StoragePlugin createScriptProviderInstance(ScriptPluginProvider scriptPluginProvider) throws
             PluginException {
         return null;
     }

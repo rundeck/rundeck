@@ -5,19 +5,18 @@ import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.ResourceUtil
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
-import com.dtolabs.rundeck.plugins.storage.ResourceStoragePlugin
+import com.dtolabs.rundeck.plugins.storage.StoragePlugin
 import org.rundeck.storage.api.Tree
 import org.rundeck.storage.data.file.FileTreeUtil
-import org.rundeck.storage.impl.BaseDelegateTree
 import org.rundeck.storage.impl.DelegateTree
 
 /**
- * FileResourceStoragePlugin is ...
+ * FileStoragePlugin provides the basic file-system storage layer.
  * @author greg
  * @since 2014-02-19
  */
-@Plugin(name = FileResourceStoragePlugin.PROVIDER_NAME, service = ServiceNameConstants.ResourceStorage)
-class FileResourceStoragePlugin extends DelegateTree<ResourceMeta> implements ResourceStoragePlugin {
+@Plugin(name = FileStoragePlugin.PROVIDER_NAME, service = ServiceNameConstants.ResourceStorage)
+class FileStoragePlugin extends DelegateTree<ResourceMeta> implements StoragePlugin {
     public static final String PROVIDER_NAME = "file"
     @PluginProperty(description = "Base directory", required = true)
     String baseDir

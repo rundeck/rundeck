@@ -7,8 +7,8 @@ import com.dtolabs.rundeck.core.storage.ResourceMeta;
 import com.dtolabs.rundeck.core.storage.ResourceTree;
 import com.dtolabs.rundeck.core.storage.ResourceUtil;
 import com.dtolabs.rundeck.core.utils.PropertyUtil;
-import com.dtolabs.rundeck.plugins.storage.ResourceConverterPlugin;
-import com.dtolabs.rundeck.plugins.storage.ResourceStoragePlugin;
+import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin;
+import com.dtolabs.rundeck.plugins.storage.StoragePlugin;
 import com.dtolabs.rundeck.server.plugins.ConfiguredPlugin;
 import com.dtolabs.rundeck.server.plugins.PluginRegistry;
 import com.dtolabs.rundeck.server.plugins.services.ResourceConverterPluginProviderService;
@@ -98,17 +98,8 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
 
     private Tree<ResourceMeta> buildTree(Map configProps) {
         //configure the tree
-        TreeBuilder<ResourceMeta> builder = TreeBuilder.builder();
-        //set base using file storage, could be overridden
-        Map<String, String> config1 = expandConfig(getBaseStorageConfig());
-        logger.debug("Configuring base storage provider: " + getBaseStorageType() + ", " +
-                "config: " + config1);
-        ResourceStoragePlugin base = loadPlugin(
-                getBaseStorageType(),
-                config1,
-                resourceStoragePluginProviderService
-        );
-        builder.base(base);
+        TreeBuilder<ResourceMeta> builder = addBaseStorage(TreeBuilder.<ResourceMeta>builder());
+
         Map<String, String> config = stringStringMap(rundeckFramework.getPropertyLookup().getPropertiesMap());
         int storeIndex = 1;
 
@@ -121,16 +112,38 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
         }
         int converterIndex = 1;
         while (configProps.containsKey(getConverterConfigPrefix() + SEP + converterIndex + SEP + TYPE)) {
-            builder=configureConverterPlugin(builder, converterIndex, config);
+            builder = configureConverterPlugin(builder, converterIndex, config);
             converterIndex++;
         }
-        if(1==converterIndex){
-            logger.debug("No converter plugins configured with prefix "+getConverterConfigPrefix());
+        if (1 == converterIndex) {
+            logger.debug("No converter plugins configured with prefix " + getConverterConfigPrefix());
         }
         return builder.build();
     }
 
-    private Map<String,String> stringStringMap(Map map) {
+
+    /**
+     * Set up the base storage layer for the tree
+     *
+     * @param builder builder
+     *
+     * @return builder
+     */
+    private TreeBuilder<ResourceMeta> addBaseStorage(TreeBuilder<ResourceMeta> builder) {
+        //set base using file storage, could be overridden
+        Map<String, String> config1 = expandConfig(getBaseStorageConfig());
+        logger.debug("Configuring base storage provider: " + getBaseStorageType() + ", " +
+                "config: " + config1);
+
+        StoragePlugin base = loadPlugin(
+                getBaseStorageType(),
+                config1,
+                resourceStoragePluginProviderService
+        );
+        return builder.base(base);
+    }
+
+    private Map<String, String> stringStringMap(Map map) {
         HashMap<String, String> stringStringHashMap = new HashMap<String, String>();
         for (Object o : map.keySet()) {
             stringStringHashMap.put(o.toString(), map.get(o).toString());
@@ -140,97 +153,72 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
 
     /**
      * Configure converter plugins for the builder
-     * @param builder builder
-     * @param index given index
+     *
+     * @param builder     builder
+     * @param index       given index
      * @param configProps configuration properties
+     *
      * @return builder
      */
     private TreeBuilder<ResourceMeta> configureConverterPlugin(TreeBuilder<ResourceMeta> builder, int index,
-            Map<String,String> configProps) {
+            Map<String, String> configProps) {
         String pref1 = getConverterConfigPrefix() + SEP + index;
         String pluginType = configProps.get(pref1 + SEP + TYPE);
         String pathProp = pref1 + SEP + PATH;
         String selectorProp = pref1 + SEP + RESOURCE_SELECTOR;
         String path = configProps.get(pathProp);
         String selector = configProps.get(selectorProp);
-        if(null==path && null==selector) {
+        if (null == path && null == selector) {
             throw new IllegalArgumentException("Converter plugin [" + index + "] specified by " + (pref1) + " MUST " +
                     "define one of: " +
                     pathProp + " OR " + selectorProp);
         }
 
         Map<String, String> config = subPropertyMap(pref1 + SEP + CONFIG + SEP, configProps);
-        config= expandConfig(config);
+        config = expandConfig(config);
         logger.debug("Add Converter[" + index + "]:"
                 + (null != path ? path : "/")
-                +  "[" + (null != selector?selector:"*") + "]"
+                + "[" + (null != selector ? selector : "*") + "]"
                 + " " + pluginType + ", config: " + config);
-        ResourceConverterPlugin converterPlugin = loadPlugin(
+
+
+        return buildConverterPlugin(builder, pluginType, path, selector, config);
+    }
+
+    /**
+     * Append a converter plugin to the tree builder
+     *
+     * @param builder    builder
+     * @param pluginType converter plugin type
+     * @param path       path
+     * @param selector   metadata selector
+     * @param config     plugin config data
+     *
+     * @return builder
+     */
+    private TreeBuilder<ResourceMeta> buildConverterPlugin(TreeBuilder<ResourceMeta> builder, String pluginType,
+            String path, String selector, Map<String, String> config) {
+        StorageConverterPlugin converterPlugin = loadPlugin(
                 pluginType,
                 config,
                 resourceConverterPluginProviderService
         );
         //convert tree under the subpath if specified, AND matching the selector if specified
-        builder=builder.convert(new ResourceConverterPluginAdapter(converterPlugin),
+        return builder.convert(
+                new ResourceConverterPluginAdapter(converterPlugin),
                 null != path ? PathUtil.asPath(path.trim()) : null,
-                createResourceMetaSelector(selector));
-        return builder;
-    }
-
-    /**
-     * Selector syntax:<br/>
-     * <pre>
-     * key OP value [; key OP value]*
-     * </pre>
-     * OP can be "=" or "=~" to indicate a regular expression match.
-     * @param selector the selector syntax string to parse
-     * @return a resource selector corresponding to the parsed selector string
-     */
-    private ResourceSelector<ResourceMeta> createResourceMetaSelector(String selector) {
-        if(null==selector || "*".equals(selector)){
-            return null;
-        }
-        String[] split = selector.split(";");
-        Map<String, String> values = new HashMap<String, String>();
-        Map<String, String> regexes = new HashMap<String, String>();
-        for (int i = 0; i < split.length; i++) {
-            String s = split[i].trim();
-            String[] split1 = s.split("=", 2);
-            if(split1.length==2) {
-                String key = split1[0].trim();
-                String value = split1[1].trim();
-                if (value.startsWith("~")) {
-                    //regex
-                    regexes.put(key, value.substring(1));
-                }else {
-                    values.put(key, value);
-                }
-            }
-        }
-        ResourceSelector<ResourceMeta> equalsSelector=null;
-        ResourceSelector<ResourceMeta> regexSelector=null;
-
-        if(values.size()>0) {
-            equalsSelector = PathUtil.exactMetadataResourceSelector(values, true);
-        }
-        if(regexes.size()>0) {
-            regexSelector  = PathUtil.regexMetadataResourceSelector(regexes, true);
-        }
-        if(null==equalsSelector){
-            return regexSelector;
-        }
-        if(null==regexSelector){
-            return equalsSelector;
-        }
-        return PathUtil.composeSelector(equalsSelector, regexSelector, true);
+                PathUtil.<ResourceMeta>resourceSelector(selector)
+        );
     }
 
 
     /**
      * Extract a map of the property values starting with the given prefix
-     * @return map
-     * @param configPrefix prefix
+     *
+     * @param configPrefix  prefix
      * @param propertiesMap input
+     *
+     * @return map
      */
     private Map<String, String> subPropertyMap(String configPrefix, Map propertiesMap) {
         Map<String, String> config = new HashMap<String, String>();
@@ -246,11 +234,12 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
 
     /**
      * Configures storage plugins with the builder
-     * @param builder builder
-     * @param index current prop index
+     *
+     * @param builder     builder
+     * @param index       current prop index
      * @param configProps configuration properties
      */
-    private void configureStoragePlugin(TreeBuilder<ResourceMeta> builder, int index,Map<String,String> configProps) {
+    private void configureStoragePlugin(TreeBuilder<ResourceMeta> builder, int index, Map<String, String> configProps) {
         String pref1 = getStorageConfigPrefix() + SEP + index;
         String pluginType = configProps.get(pref1 + SEP + TYPE);
         String path = configProps.get(pref1 + SEP + PATH);
@@ -259,7 +248,7 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
 
         Map<String, String> config = subPropertyMap(pref1 + SEP + CONFIG + SEP, configProps);
         config = expandConfig(config);
-        logger.debug("Add Storage["+index+"]:"+ path+" " + pluginType + ", " +
+        logger.debug("Add Storage[" + index + "]:" + path + " " + pluginType + ", " +
                 "config: " + config);
         Tree<ResourceMeta> resourceMetaTree = loadPlugin(
                 pluginType,
@@ -275,7 +264,9 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
 
     /**
      * Expand embedded framework property references in the map values
+     *
      * @param map map
+     *
      * @return expanded map
      */
     private Map<String, String> expandConfig(Map<String, String> map) {
