@@ -8,7 +8,7 @@ import java.io.InputStream;
 import java.util.Map;
 
 /**
- * $INTERFACE is ... User: greg Date: 2/18/14 Time: 12:30 PM
+ * Basic implementation of ContentMeta
  */
 public class DataContent implements ContentMeta {
     InputStream stream;
