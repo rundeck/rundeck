@@ -41,6 +41,18 @@ class MemoryTreeSpecification extends Specification {
         storage.hasDirectory("/sub/path")
         storage.hasDirectory("/sub")
 
+        then: "has directory contents"
+        storage.listDirectory("/sub/path").size() == 1
+        storage.listDirectory("/sub").size() == 1
+
+        then: "has resource contents"
+        storage.listDirectoryResources("/sub/path").size() == 1
+        storage.listDirectoryResources("/sub").size() == 0
+
+        then: "has directory subdirs"
+        storage.listDirectorySubdirs("/sub/path").size() == 0
+        storage.listDirectorySubdirs("/sub").size() == 1
+
         then: "doesn't have other paths"
         !storage.hasDirectory("/subpath")
         !storage.hasDirectory("/sub/path2")

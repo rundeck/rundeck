@@ -24,6 +24,7 @@ public class MemoryTree<T extends ContentMeta> extends StringToPathTree<T> imple
         DirRes(Path path) {
             this.path = path;
             dir = true;
+            res = new MyRes<T>(path, null, true);
             dirList = new HashMap<Path, DirRes<T>>();
         }
 
@@ -78,7 +79,10 @@ public class MemoryTree<T extends ContentMeta> extends StringToPathTree<T> imple
 
     @Override
     public Set<Resource<T>> listDirectorySubdirs(Path path) {
-        return null;
+        if (!hasDirectory(path)) {
+            throw new IllegalArgumentException("No directory for path: " + path);
+        }
+        return index.get(path).dirListDirs();
     }
 
     @Override
@@ -125,7 +129,7 @@ public class MemoryTree<T extends ContentMeta> extends StringToPathTree<T> imple
         if (!hasDirectory(path)) {
             throw new IllegalArgumentException("No directory for path: " + path);
         }
-        return index.get(path).dirListDirs();
+        return index.get(path).dirListAll();
     }
 
     @Override
