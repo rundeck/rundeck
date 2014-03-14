@@ -7,7 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Builder for Resource Trees.  Allows extending a base tree with other trees at sub paths.  Content converters can be
+ * Builder for Resource Trees.  Allows extending a base tree with other trees at sub paths.  Content converters
+ * and listeners can be
  * added selectively to sub paths, or based on analyzing the content.
  */
 public class TreeBuilder<T extends ContentMeta> {
@@ -141,6 +142,75 @@ public class TreeBuilder<T extends ContentMeta> {
      */
     public TreeBuilder<T> convert(ContentConverter<T> converter) {
         return TreeBuilder.<T>builder(new ConverterTree<T>(build(), converter, PathUtil.allpathSelector()));
+    }
+
+    /**
+     * Listen to events on all paths of the tree
+     *
+     * @param listener listener
+     *
+     * @return builder
+     */
+    public TreeBuilder<T> listen(Listener<T> listener) {
+        return listen(listener, PathUtil.allpathSelector());
+    }
+
+    /**
+     * Listen to events on selective paths of the tree
+     *
+     * @param listener listener
+     * @param pathSelector path selector
+     * @return builder
+     */
+    public TreeBuilder<T> listen(Listener<T> listener, PathSelector pathSelector) {
+        return TreeBuilder.<T>builder(new ListenerTree<T>(build(), listener, pathSelector));
+    }
+    /**
+     * Listen to events on selective paths of the tree
+     *
+     * @param listener listener
+     * @param subpath sub path
+     * @return builder
+     */
+    public TreeBuilder<T> listen(Listener<T> listener, Path subpath) {
+        return TreeBuilder.<T>builder(new ListenerTree<T>(build(), listener, PathUtil.subpathSelector(subpath)));
+    }
+
+    /**
+     * Listen to events on selective resources of the tree
+     *
+     * @param listener listener
+     * @param resourceSelector resource selector
+     * @return builder
+     */
+    private TreeBuilder<T> listen(Listener<T> listener, ResourceSelector<T> resourceSelector) {
+        return TreeBuilder.<T>builder(new ListenerTree<T>(build(), listener, resourceSelector));
+    }
+    /**
+     * Listen to events on selective resources of the tree
+     *
+     * @param listener listener
+     * @param resourceSelector resource selector
+     * @return builder
+     */
+    private TreeBuilder<T> listen(Listener<T> listener, String resourceSelector) {
+        return TreeBuilder.<T>builder(new ListenerTree<T>(build(), listener,
+                PathUtil.<T>resourceSelector(resourceSelector)));
+    }
+
+    /**
+     * Listen to events on selective resources and paths of the tree
+     *
+     * @param listener         listener
+     * @param pathSelector     path selector
+     * @param resourceSelector resource selector
+     *
+     * @return builder
+     */
+    private TreeBuilder<T> listen(Listener<T> listener, PathSelector pathSelector,
+            ResourceSelector<T> resourceSelector) {
+        return TreeBuilder.<T>builder(new ListenerTree<T>(build(), listener,
+                pathSelector, resourceSelector));
     }
 
     /**
