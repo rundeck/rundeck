@@ -282,7 +282,7 @@ public class PathUtil {
     /**
      * A resource selector which always matches
      *
-     * @param <T>
+     * @param <T> content type
      *
      * @return selector
      */
@@ -311,6 +311,7 @@ public class PathUtil {
             }
         };
     }
+
     /**
      * Lazy mechanism for stream loading
      *
@@ -342,5 +343,62 @@ public class PathUtil {
             }
         };
 
+    }
+
+    /**
+     * Return a {@link ResourceSelector} constructed using this selector syntax:<br/>
+     * <pre>
+     * key OP value [; key OP value]*
+     * </pre>
+     * OP can be "=" (exact match) or "=~" (regular expression match).
+     * <br/>
+     * The returned selector effectively "AND"s the match requirements.
+     * <br/>
+     * The special string "*" equates to {@link #allResourceSelector()}
+     *
+     * @param selector the selector syntax string to parse, not null
+     *
+     * @return a resource selector corresponding to the parsed selector string
+     */
+    public static <T extends ContentMeta> ResourceSelector<T> resourceSelector(String selector) {
+        if (null == selector) {
+            throw new NullPointerException();
+        }
+        if("*".equals(selector)) {
+            return allResourceSelector();
+        }
+        String[] split = selector.split(";");
+        Map<String, String> values = new HashMap<String, String>();
+        Map<String, String> regexes = new HashMap<String, String>();
+        for (int i = 0; i < split.length; i++) {
+            String s = split[i].trim();
+            String[] split1 = s.split("=", 2);
+            if (split1.length == 2) {
+                String key = split1[0].trim();
+                String value = split1[1];
+                if (value.startsWith("~")) {
+                    //regex
+                    regexes.put(key, value.substring(1).trim());
+                } else {
+                    values.put(key, value.trim());
+                }
+            }
+        }
+        ResourceSelector<T> equalsSelector = null;
+        ResourceSelector<T> regexSelector = null;
+
+        if (values.size() > 0) {
+            equalsSelector = PathUtil.exactMetadataResourceSelector(values, true);
+        }
+        if (regexes.size() > 0) {
+            regexSelector = PathUtil.regexMetadataResourceSelector(regexes, true);
+        }
+        if (null == equalsSelector) {
+            return regexSelector;
+        }
+        if (null == regexSelector) {
+            return equalsSelector;
+        }
+        return PathUtil.composeSelector(equalsSelector, regexSelector, true);
     }
 }
