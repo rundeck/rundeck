@@ -24,14 +24,17 @@ class FileTreeSpecification extends Specification {
         expect:
         dir.exists()
         dir.isDirectory()
-        new File(dir,"_meta").exists()
-        new File(dir,"_meta").isDirectory()
+        new File(dir,"meta").exists()
+        new File(dir,"meta").isDirectory()
+        new File(dir,"content").exists()
+        new File(dir,"content").isDirectory()
     }
     def "store basic resource"(){
         def dir = new File(testDir, "root1")
-        def metadir = new File(testDir, "root1/_meta")
+        def contentdir = new File(dir,"content")
+        def metadir = new File(testDir, "root1/meta")
         def ft = FileTreeUtil.forRoot(dir, DataUtil.contentFactory())
-        def expectedDataFile = new File(dir, "test/a/bc/mydata.txt")
+        def expectedDataFile = new File(contentdir, "test/a/bc/mydata.txt")
         def expectedMetaFile = new File(metadir, "test/a/bc/mydata.txt")
         expectedDataFile.deleteOnExit()
         expectedMetaFile.deleteOnExit()
