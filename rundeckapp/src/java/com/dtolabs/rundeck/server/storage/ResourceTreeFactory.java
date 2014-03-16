@@ -13,9 +13,9 @@ import com.dtolabs.rundeck.server.plugins.ConfiguredPlugin;
 import com.dtolabs.rundeck.server.plugins.PluginRegistry;
 import com.dtolabs.rundeck.server.plugins.services.ResourceConverterPluginProviderService;
 import com.dtolabs.rundeck.server.plugins.services.ResourceStoragePluginProviderService;
+import com.dtolabs.rundeck.server.plugins.storage.StorageLogger;
 import org.apache.log4j.Logger;
 import org.rundeck.storage.api.PathUtil;
-import org.rundeck.storage.api.ResourceSelector;
 import org.rundeck.storage.api.Tree;
 import org.rundeck.storage.conf.TreeBuilder;
 import org.springframework.beans.factory.FactoryBean;
@@ -32,6 +32,7 @@ import java.util.Map;
  * @since 2/19/14 3:24 PM
  */
 public class ResourceTreeFactory implements FactoryBean<ResourceTree>, InitializingBean {
+    public static final String ORG_RUNDECK_STORAGE_EVENTS_LOGGER_NAME = "org.rundeck.storage.events";
     static Logger logger = Logger.getLogger(ResourceTreeFactory.class);
     public static final String TYPE = "type";
     public static final String PATH = "path";
@@ -41,10 +42,11 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
     public static final String RESOURCE_SELECTOR = "resourceSelector";
     Framework rundeckFramework;
     private PluginRegistry pluginRegistry;
-    private String storageConfigPrefix ;
-    private String converterConfigPrefix ;
+    private String storageConfigPrefix;
+    private String converterConfigPrefix;
     private String baseStorageType;
-    private Map<String,String> baseStorageConfig = new HashMap<String, String>();
+    private String baseLoggerName=ORG_RUNDECK_STORAGE_EVENTS_LOGGER_NAME;
+    private Map<String, String> baseStorageConfig = new HashMap<String, String>();
 
     private ResourceStoragePluginProviderService resourceStoragePluginProviderService;
     private ResourceConverterPluginProviderService resourceConverterPluginProviderService;
@@ -118,9 +120,21 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
         if (1 == converterIndex) {
             logger.debug("No converter plugins configured with prefix " + getConverterConfigPrefix());
         }
+        builder = addFinal(builder);
         return builder.build();
     }
 
+    /**
+     * Append final listeners to the tree
+     *
+     * @param builder
+     *
+     * @return
+     */
+    private TreeBuilder<ResourceMeta> addFinal(TreeBuilder<ResourceMeta> builder) {
+        logger.debug("Add log4j logger for storage with name: " + getBaseLoggerName());
+        return builder.listen(new StorageLogger(getBaseLoggerName()));
+    }
 
     /**
      * Set up the base storage layer for the tree
@@ -207,7 +221,7 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
         return builder.convert(
                 new ResourceConverterPluginAdapter(converterPlugin),
                 null != path ? PathUtil.asPath(path.trim()) : null,
-                PathUtil.<ResourceMeta>resourceSelector(selector)
+                null != selector ? PathUtil.<ResourceMeta>resourceSelector(selector) : null
         );
     }
 
@@ -349,5 +363,13 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
 
     public void setBaseStorageConfig(Map<String, String> baseStorageConfig) {
         this.baseStorageConfig = baseStorageConfig;
+    }
+
+    public String getBaseLoggerName() {
+        return baseLoggerName;
+    }
+
+    public void setBaseLoggerName(String baseLoggerName) {
+        this.baseLoggerName = baseLoggerName;
     }
 }
