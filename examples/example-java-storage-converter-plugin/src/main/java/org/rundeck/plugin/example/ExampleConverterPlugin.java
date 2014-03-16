@@ -3,7 +3,7 @@ package org.rundeck.plugin.example;
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.core.storage.ResourceMetaBuilder;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
-import com.dtolabs.rundeck.plugins.storage.ResourceConverterPlugin;
+import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin;
 import org.apache.commons.codec.binary.Base64InputStream;
 import org.rundeck.storage.api.HasInputStream;
 import org.rundeck.storage.api.Path;
@@ -17,7 +17,7 @@ import java.io.InputStream;
  * encoded.
  */
 @Plugin(service = ServiceNameConstants.ResourceConverter, name = "example-b64-converter")
-public class ExampleConverterPlugin implements ResourceConverterPlugin {
+public class ExampleConverterPlugin implements StorageConverterPlugin {
 
     public static final String X_EXAMPLE_B64_CONVERTER_WAS_ENCODED = "x-example-b64-converter:is-b64-encoded";
 
