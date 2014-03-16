@@ -7,9 +7,9 @@ import org.rundeck.storage.api.Path;
  * Converts ContentMeta
  */
 public interface ContentConverter<T extends ContentMeta> {
-    T filterReadData(Path path, T contents);
+    T convertReadData(Path path, T contents);
 
-    T filterCreateData(Path path, T contents);
+    T convertCreateData(Path path, T contents);
 
-    T filterUpdateData(Path path, T content);
+    T convertUpdateData(Path path, T content);
 }

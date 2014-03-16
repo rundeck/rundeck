@@ -37,15 +37,15 @@ public class ConverterTree<T extends ContentMeta> extends DelegateTree<T> {
 
 
     private T filterReadData(Path path, T contents) {
-        return null != converter ? converter.filterReadData(path, contents) : contents;
+        return null != converter ? converter.convertReadData(path, contents) : contents;
     }
 
     private T filterCreateData(Path path, T contents) {
-        return null != converter ? converter.filterCreateData(path, contents) : contents;
+        return null != converter ? converter.convertCreateData(path, contents) : contents;
     }
 
     private T filterUpdateData(Path path, T content) {
-        return null != converter ? converter.filterUpdateData(path, content) : content;
+        return null != converter ? converter.convertUpdateData(path, content) : content;
     }
 
     @Override
