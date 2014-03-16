@@ -110,6 +110,7 @@ beans={
         converterConfigPrefix='rundeck.storage.converter'
         baseStorageType='file'
         baseStorageConfig=['baseDir':'${framework.var.dir}/storage']
+        baseLoggerName='org.rundeck.storage.events'
     }
     /**
      * Define groovy-based plugins as Spring beans, registered in a hash map
