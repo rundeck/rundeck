@@ -28,7 +28,7 @@ class StorageLogger extends BaseListener<ResourceMeta> {
 
     @Override
     void didGetPath(Path path, Resource<ResourceMeta> resource) {
-        logger.info("get:${path}: " + resource.contents.meta)
+        logger.info("get:${path}: " + (resource.contents!=null? resource.contents.meta:"(dir)"))
     }
 
     @Override
