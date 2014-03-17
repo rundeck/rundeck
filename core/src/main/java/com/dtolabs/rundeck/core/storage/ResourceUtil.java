@@ -79,7 +79,6 @@ public class ResourceUtil  {
      */
     public static ResourceMetaBuilder create(Map<String, String> meta) {
         ResourceMetaBuilder mutableRundeckResourceMeta = new ResourceMetaBuilder(meta);
-        mutableRundeckResourceMeta.setCreationTime(new Date());
         return mutableRundeckResourceMeta;
     }
 
