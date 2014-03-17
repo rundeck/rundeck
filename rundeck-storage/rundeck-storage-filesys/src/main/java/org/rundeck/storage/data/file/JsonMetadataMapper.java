@@ -28,7 +28,12 @@ public class JsonMetadataMapper implements MetadataMapper {
         if (!destination.getParentFile().exists()) {
             destination.getParentFile().mkdirs();
         }
-        objectMapper.writeValue(destination, meta);
+        HashMap<String, String> stringStringHashMap = new HashMap<String, String>();
+        Map map=meta;
+        for (Object o : map.keySet()) {
+            stringStringHashMap.put(o.toString(), map.get(o).toString());
+        }
+        objectMapper.writeValue(destination, stringStringHashMap);
     }
 
     @Override
