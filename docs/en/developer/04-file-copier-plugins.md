@@ -47,6 +47,17 @@ to learn how to create configuration properties for your plugin.
 See the [Script Plugin Development](plugin-development.html#script-plugin-development) 
 for the basics of developing script-based plugins for Rundeck.
 
+### Additional data context properties
+
+The data context used in the script plugin definition can use these additional properties:
+
+`${file-copy.file}`
+
+  : The local path to the file that needs to be copied.
+
+`${file-copy.destination}`
+
+  : The remote destination path that is requested, if available.
 
 ### Provider Script Requirements
 

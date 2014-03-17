@@ -30,8 +30,19 @@ to learn how to create configuration properties for your plugin.
 See the [Script Plugin Development](plugin-development.html#script-plugin-development) 
 for the basics of developing script-based plugins for Rundeck.
 
+### Additional data context properties
 
-### Provider Script equirements
+The data context used in the script plugin definition can use these additional properties:
+
+`${exec.command}`
+
+  : The user command to execute.
+
+For example, in the `metadata.yaml`, you could pass the command string to your script implementation as:
+
+    script-args: ${node.name} ${exec.command}
+
+### Provider Script requirements
 
 The specific service has expectations about the way your provider script behaves:
 
