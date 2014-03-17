@@ -8,12 +8,12 @@ import org.rundeck.storage.api.PathUtil;
 import java.util.HashMap;
 
 /**
- * Adapter for a {@link com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin} to use as a {@link ResourceConverter}
+ * Adapter for a {@link com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin} to use as a {@link StorageConverter}
  */
-public class ResourceConverterPluginAdapter implements ResourceConverter {
+public class StorageConverterPluginAdapter implements StorageConverter {
     StorageConverterPlugin plugin;
 
-    public ResourceConverterPluginAdapter(StorageConverterPlugin plugin) {
+    public StorageConverterPluginAdapter(StorageConverterPlugin plugin) {
         this.plugin = plugin;
     }
 
@@ -51,17 +51,17 @@ public class ResourceConverterPluginAdapter implements ResourceConverter {
     }
 
     @Override
-    public ResourceMeta filterReadData(Path path, ResourceMeta resourceMeta) {
+    public ResourceMeta convertReadData(Path path, ResourceMeta resourceMeta) {
         return filter(path, resourceMeta, Operation.READ);
     }
 
     @Override
-    public ResourceMeta filterCreateData(Path path, ResourceMeta resourceMeta) {
+    public ResourceMeta convertCreateData(Path path, ResourceMeta resourceMeta) {
         return filter(path, resourceMeta, Operation.CREATE);
     }
 
     @Override
-    public ResourceMeta filterUpdateData(Path path, ResourceMeta resourceMeta) {
+    public ResourceMeta convertUpdateData(Path path, ResourceMeta resourceMeta) {
         return filter(path, resourceMeta, Operation.UPDATE);
     }
 }

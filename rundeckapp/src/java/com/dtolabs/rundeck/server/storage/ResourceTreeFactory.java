@@ -2,16 +2,13 @@ package com.dtolabs.rundeck.server.storage;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService;
-import com.dtolabs.rundeck.core.storage.ResourceConverterPluginAdapter;
-import com.dtolabs.rundeck.core.storage.ResourceMeta;
-import com.dtolabs.rundeck.core.storage.ResourceTree;
-import com.dtolabs.rundeck.core.storage.ResourceUtil;
+import com.dtolabs.rundeck.core.storage.*;
 import com.dtolabs.rundeck.core.utils.PropertyUtil;
 import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin;
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin;
 import com.dtolabs.rundeck.server.plugins.ConfiguredPlugin;
 import com.dtolabs.rundeck.server.plugins.PluginRegistry;
-import com.dtolabs.rundeck.server.plugins.services.ResourceConverterPluginProviderService;
+import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService;
 import com.dtolabs.rundeck.server.plugins.services.ResourceStoragePluginProviderService;
 import com.dtolabs.rundeck.server.plugins.storage.StorageLogger;
 import org.apache.log4j.Logger;
@@ -49,7 +46,7 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
     private Map<String, String> baseStorageConfig = new HashMap<String, String>();
 
     private ResourceStoragePluginProviderService resourceStoragePluginProviderService;
-    private ResourceConverterPluginProviderService resourceConverterPluginProviderService;
+    private StorageConverterPluginProviderService storageConverterPluginProviderService;
 
     //injected
     public void setRundeckFramework(Framework framework) {
@@ -68,8 +65,8 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
         if (null == resourceStoragePluginProviderService) {
             throw new FactoryBeanNotInitializedException("'resourceStoragePluginProviderService' is required");
         }
-        if (null == resourceConverterPluginProviderService) {
-            throw new FactoryBeanNotInitializedException("'resourceConverterPluginProviderService' is required");
+        if (null == storageConverterPluginProviderService) {
+            throw new FactoryBeanNotInitializedException("'storageConverterPluginProviderService' is required");
         }
         if (null == storageConfigPrefix) {
             throw new FactoryBeanNotInitializedException("'storageConfigPrefix' is required");
@@ -215,11 +212,11 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
         StorageConverterPlugin converterPlugin = loadPlugin(
                 pluginType,
                 config,
-                resourceConverterPluginProviderService
+                storageConverterPluginProviderService
         );
         //convert tree under the subpath if specified, AND matching the selector if specified
         return builder.convert(
-                new ResourceConverterPluginAdapter(converterPlugin),
+                new StorageConverterPluginAdapter(converterPlugin),
                 null != path ? PathUtil.asPath(path.trim()) : null,
                 null != selector ? PathUtil.<ResourceMeta>resourceSelector(selector) : null
         );
@@ -331,13 +328,13 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
         this.pluginRegistry = pluginRegistry;
     }
 
-    public ResourceConverterPluginProviderService getResourceConverterPluginProviderService() {
-        return resourceConverterPluginProviderService;
+    public StorageConverterPluginProviderService getStorageConverterPluginProviderService() {
+        return storageConverterPluginProviderService;
     }
 
-    public void setResourceConverterPluginProviderService(ResourceConverterPluginProviderService
-            resourceConverterPluginProviderService) {
-        this.resourceConverterPluginProviderService = resourceConverterPluginProviderService;
+    public void setStorageConverterPluginProviderService(StorageConverterPluginProviderService
+            storageConverterPluginProviderService) {
+        this.storageConverterPluginProviderService = storageConverterPluginProviderService;
     }
 
     public ResourceStoragePluginProviderService getResourceStoragePluginProviderService() {

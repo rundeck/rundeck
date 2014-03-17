@@ -7,9 +7,9 @@ import com.dtolabs.rundeck.server.plugins.PluginCustomizer
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import com.dtolabs.rundeck.server.plugins.services.ExecutionFileStoragePluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.NotificationPluginProviderService
-import com.dtolabs.rundeck.server.plugins.services.ResourceConverterPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.PluggableResourceStoragePluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.ResourceStoragePluginProviderService
+import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogReaderPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogWriterPluginProviderService
 import com.dtolabs.rundeck.server.storage.ResourceTreeFactory
@@ -97,7 +97,7 @@ beans={
         pluggableResourceStoragePluginProviderService = ref('pluggableResourceStoragePluginProviderService')
     }
 
-    resourceConverterPluginProviderService(ResourceConverterPluginProviderService) {
+    storageConverterPluginProviderService(StorageConverterPluginProviderService) {
         rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
     }
 
@@ -105,7 +105,7 @@ beans={
         rundeckFramework=ref('rundeckFramework')
         pluginRegistry=ref("rundeckPluginRegistry")
         resourceStoragePluginProviderService=ref('resourceStoragePluginProviderService')
-        resourceConverterPluginProviderService=ref('resourceConverterPluginProviderService')
+        storageConverterPluginProviderService=ref('storageConverterPluginProviderService')
         storageConfigPrefix='rundeck.storage.provider'
         converterConfigPrefix='rundeck.storage.converter'
         baseStorageType='file'

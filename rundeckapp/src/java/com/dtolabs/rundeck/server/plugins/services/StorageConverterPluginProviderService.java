@@ -7,11 +7,11 @@ import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin;
 
 /**
  */
-public class ResourceConverterPluginProviderService extends BasePluggableProviderService<StorageConverterPlugin> {
-    public static final String SERVICE_NAME = ServiceNameConstants.ResourceConverter;
+public class StorageConverterPluginProviderService extends BasePluggableProviderService<StorageConverterPlugin> {
+    public static final String SERVICE_NAME = ServiceNameConstants.StorageConverter;
     private ServiceProviderLoader rundeckServerServiceProviderLoader;
 
-    public ResourceConverterPluginProviderService() {
+    public StorageConverterPluginProviderService() {
         super(SERVICE_NAME, StorageConverterPlugin.class);
     }
 
