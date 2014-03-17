@@ -30,6 +30,7 @@ import com.jcraft.jsch.*;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.taskdefs.optional.ssh.SSHBase;
+import org.apache.tools.ant.taskdefs.optional.ssh.SSHUserInfo;
 import org.apache.tools.ant.types.Environment;
 import org.apache.tools.ant.types.Resource;
 import org.apache.tools.ant.types.resources.FileResource;
@@ -40,12 +41,13 @@ import org.apache.tools.ant.util.TeeOutputStream;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Executes a command on a remote machine via ssh.
  * @since     Ant 1.6 (created February 2, 2003)
  */
-public class ExtSSHExec extends SSHBase {
+public class ExtSSHExec extends SSHBase implements SSHTaskBuilder.SSHExecInterface {
 
     private static final int BUFFER_SIZE = 8192;
     private static final int RETRY_INTERVAL = 500;
@@ -109,6 +111,9 @@ public class ExtSSHExec extends SSHBase {
      */
     public void setTimeout(long timeout) {
         maxwait = timeout;
+    }
+    public long getTimeout(){
+        return maxwait;
     }
 
     /**
@@ -205,11 +210,11 @@ public class ExtSSHExec extends SSHBase {
         this.disconnectHolder = disconnectHolder;
     }
 
-    public PluginLogger getLogger() {
+    public PluginLogger getPluginLogger() {
         return logger;
     }
 
-    public void setLogger(PluginLogger logger) {
+    public void setPluginLogger(PluginLogger logger) {
         this.logger = logger;
     }
 
@@ -219,6 +224,14 @@ public class ExtSSHExec extends SSHBase {
 
     public void setAntLogLevel(int antLogLevel) {
         this.antLogLevel = antLogLevel;
+    }
+
+    public Map<String, String> getSshConfig() {
+        return sshConfig;
+    }
+
+    public InputStream getSshKeyData() {
+        return sshKeyData;
     }
 
     /**
@@ -254,7 +267,8 @@ public class ExtSSHExec extends SSHBase {
             throw new BuildException("Username is required.");
         }
         if (getUserInfo().getKeyfile() == null
-            && getUserInfo().getPassword() == null) {
+            && getUserInfo().getPassword() == null
+            && getSshKeyData() == null) {
             throw new BuildException("Password or Keyfile is required.");
         }
         if (command == null && commandResource == null) {
@@ -505,6 +519,12 @@ public class ExtSSHExec extends SSHBase {
 
     private String knownHosts;
 
+    private InputStream sshKeyData;
+    @Override
+    public void setSshKeyData(InputStream sshKeyData) {
+        this.sshKeyData=sshKeyData;
+    }
+
     /**
      * Sets the path to the file that has the identities of
      * all known hosts.  This is used by SSH protocol to validate
@@ -518,6 +538,12 @@ public class ExtSSHExec extends SSHBase {
         super.setKnownhosts(knownHosts);
     }
 
+    private Map<String,String> sshConfig;
+    @Override
+    public void setSshConfig(Map<String, String> config) {
+        this.sshConfig=config;
+    }
+
 
     /**
      * Open an ssh seession.
@@ -527,52 +553,10 @@ public class ExtSSHExec extends SSHBase {
      * @throws JSchException on error
      */
     protected Session openSession() throws JSchException {
-        JSch jsch = new JSch();
-        JSch.setLogger(ThreadBoundJschLogger.getInstance(logger, getJschLogLevel()));
-        if (null != getUserInfo().getKeyfile()) {
-            jsch.addIdentity(getUserInfo().getKeyfile());
-        }
-        //todo: jsch.addIdentity(String name, byte[]prvkey, byte[]pubkey, byte[] passphrase)
-
-        if (!getUserInfo().getTrust() && knownHosts != null) {
-            log("Using known hosts: " + knownHosts, Project.MSG_DEBUG);
-            jsch.setKnownHosts(knownHosts);
-        }
-
-        Session session = jsch.getSession(getUserInfo().getName(), getHost(), getPort());
-        session.setTimeout( (int) maxwait);
-         if (getVerbose()) {
-            log("Set timeout to " + maxwait);
-        }
-        session.setUserInfo(getUserInfo());
-        if (getVerbose()) {
-            log("Connecting to " + getHost() + ":" + getPort());
-        }
-        session.setConfig("MaxAuthTries", "1");//jsch 0.1.46+
-        //use keyboard-interactive last
-        session.setConfig("PreferredAuthentications", "publickey,password,keyboard-interactive");
-        session.connect();
-        return session;
+        return SSHTaskBuilder.openSession(this);
     }
 
     private int antLogLevel=Project.MSG_INFO;
-    private int getJschLogLevel() {
-        // reassign log levels, to quell Jsch logging at normal levels, but
-        // pass more log info at verbose levels
-        //
-        switch (antLogLevel){
-            case Project.MSG_DEBUG:
-                return Logger.DEBUG;
-            case Project.MSG_VERBOSE:
-                return Logger.INFO;
-            case Project.MSG_ERR:
-                return Logger.FATAL;
-            case Project.MSG_WARN:
-            case Project.MSG_INFO:
-            default:
-                return Logger.ERROR;
-        }
-    }
 
     public InputStream getInputStream() {
         return inputStream;
@@ -594,5 +578,19 @@ public class ExtSSHExec extends SSHBase {
      */
     public void setSecondaryStream(final OutputStream secondaryStream) {
         this.secondaryStream = secondaryStream;
+    }
+
+    @Override
+    public String getKeyfile() {
+        return getUserInfo().getKeyfile();
+    }
+
+    @Override
+    public String getKnownhosts() {
+        return knownHosts;
+    }
+
+    public SSHUserInfo getUserInfo(){
+        return super.getUserInfo();
     }
 }

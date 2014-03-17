@@ -45,6 +45,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.plugins.configuration.Property;
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil;
+import com.dtolabs.rundeck.core.storage.ResourceMeta;
 import com.dtolabs.rundeck.core.tasks.net.ExtSSHExec;
 import com.dtolabs.rundeck.core.tasks.net.SSHTaskBuilder;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
@@ -53,8 +54,10 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.log4j.Logger;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
+import org.rundeck.storage.api.PathUtil;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.net.NoRouteToHostException;
@@ -82,12 +85,15 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     public static final String FWK_PROP_AUTH_FAIL_MSG_DEFAULT =
         "Authentication failure connecting to node: \"{0}\". Password incorrect.";
     public static final String NODE_ATTR_SSH_KEYPATH = "ssh-keypath";
+    public static final String NODE_ATTR_SSH_KEY_RESOURCE = "ssh-key-resource";
 
     public static final String PROJ_PROP_PREFIX = "project.";
     public static final String FWK_PROP_PREFIX = "framework.";
 
     public static final String FWK_PROP_SSH_KEYPATH = FWK_PROP_PREFIX + NODE_ATTR_SSH_KEYPATH;
     public static final String PROJ_PROP_SSH_KEYPATH = PROJ_PROP_PREFIX + NODE_ATTR_SSH_KEYPATH;
+    public static final String FWK_PROP_SSH_KEY_RESOURCE = FWK_PROP_PREFIX + NODE_ATTR_SSH_KEY_RESOURCE;
+    public static final String PROJ_PROP_SSH_KEY_RESOURCE = PROJ_PROP_PREFIX + NODE_ATTR_SSH_KEY_RESOURCE;
 
     public static final String NODE_ATTR_SSH_AUTHENTICATION = "ssh-authentication";
     public static final String NODE_ATTR_SSH_PASSWORD_OPTION = "ssh-password-option";
@@ -473,6 +479,32 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             }
         }
 
+        public InputStream getPrivateKeyResourceData() throws IOException{
+            String privateKeyResourcePath = getPrivateKeyResourcePath();
+            if(null==privateKeyResourcePath){
+                return null;
+            }
+            ResourceMeta contents = framework.getResourceTree().getResource(context.getAuthContext(),PathUtil.asPath
+                    ("/ssh-key/" + privateKeyResourcePath))
+                    .getContents();
+            return contents.readContent();
+        }
+        public String getPrivateKeyResourcePath() {
+            if (null != node.getAttributes().get(NODE_ATTR_SSH_KEY_RESOURCE)) {
+                return node.getAttributes().get(NODE_ATTR_SSH_KEY_RESOURCE);
+            }
+
+            if (frameworkProject.hasProperty(PROJ_PROP_SSH_KEY_RESOURCE)) {
+                return frameworkProject.getProperty(PROJ_PROP_SSH_KEY_RESOURCE);
+            } else if (framework.hasProperty(FWK_PROP_SSH_KEY_RESOURCE)) {
+                return framework.getProperty(FWK_PROP_SSH_KEY_RESOURCE);
+            } else if(framework.hasProperty(Constants.SSH_KEYRESOURCE_PROP)) {
+                //return default framework level
+                return framework.getProperty(Constants.SSH_KEYRESOURCE_PROP);
+            }
+            return null;
+        }
+
         public String getPrivateKeyPassphrase() {
             if (null != node.getAttributes().get(NODE_ATTR_SSH_KEY_PASSPHRASE_OPTION)) {
                 return evaluateSecureOption(node.getAttributes().get(NODE_ATTR_SSH_KEY_PASSPHRASE_OPTION), context);
@@ -553,6 +585,11 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
                 return DataContextUtils.replaceDataReferences(user, context.getDataContext());
             }
             return user;
+        }
+
+        @Override
+        public Map<String, String> getSshConfig() {
+            return SSHTaskBuilder.sshConfigFromNode(node,SSHTaskBuilder.getDefaultSshConfig());
         }
     }
 

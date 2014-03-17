@@ -140,7 +140,7 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier, Des
         try {
 
             scp = SSHTaskBuilder.buildScp(node, project, remotefile, localTempfile, nodeAuthentication,
-                    context.getLoglevel());
+                    context.getLoglevel(),context.getExecutionListener());
         } catch (SSHTaskBuilder.BuilderException e) {
             throw new FileCopierException("Configuration error: " + e.getMessage(),
                     StepFailureReason.ConfigurationFailure, e);
