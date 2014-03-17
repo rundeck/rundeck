@@ -97,7 +97,7 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
 
     private Tree<ResourceMeta> buildTree(Map configProps) {
         //configure the tree
-        TreeBuilder<ResourceMeta> builder = addBaseStorage(TreeBuilder.<ResourceMeta>builder());
+        TreeBuilder<ResourceMeta> builder = baseConverter(baseStorage(TreeBuilder.<ResourceMeta>builder()));
 
         Map<String, String> config = stringStringMap(rundeckFramework.getPropertyLookup().getPropertiesMap());
         int storeIndex = 1;
@@ -122,6 +122,19 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
     }
 
     /**
+     * Apply base converters for metadata timestamps
+     * @param builder
+     * @return
+     */
+    private TreeBuilder<ResourceMeta> baseConverter(TreeBuilder<ResourceMeta> builder) {
+        return builder.convert(
+                new StorageConverterPluginAdapter(
+                        new StorageTimestamperConverter()
+                )
+        );
+    }
+
+    /**
      * Append final listeners to the tree
      *
      * @param builder
@@ -140,7 +153,7 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
      *
      * @return builder
      */
-    private TreeBuilder<ResourceMeta> addBaseStorage(TreeBuilder<ResourceMeta> builder) {
+    private TreeBuilder<ResourceMeta> baseStorage(TreeBuilder<ResourceMeta> builder) {
         //set base using file storage, could be overridden
         Map<String, String> config1 = expandConfig(getBaseStorageConfig());
         logger.debug("Configuring base storage provider: " + getBaseStorageType() + ", " +
