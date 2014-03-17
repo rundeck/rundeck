@@ -1064,11 +1064,11 @@ class ScheduledExecutionController  extends ControllerBase{
         log.debug("ScheduledExecutionController: create : params: " + params)
         Execution execution = Execution.get(params.executionId)
 
-        if (notFoundResponse(scheduled, 'Execution', params.executionId)) {
+        if (notFoundResponse(execution, 'Execution', params.executionId)) {
             return
         }
         if (unauthorizedResponse(frameworkService.authorizeProjectExecutionAll(authContext, execution,
-                [AuthConstants.ACTION_READ], scheduledExecution.project), AuthConstants.ACTION_READ, 'Execution',
+                [AuthConstants.ACTION_READ], execution.project), AuthConstants.ACTION_READ, 'Execution',
                 params.executionId)) {
             return
         }
