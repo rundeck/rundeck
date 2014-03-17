@@ -16,7 +16,7 @@ import java.io.InputStream;
  * data, it adds metadata it can read later.  When asked to decode, it first checks if the metadata indicates it was
  * encoded.
  */
-@Plugin(service = ServiceNameConstants.ResourceConverter, name = "example-b64-converter")
+@Plugin(service = ServiceNameConstants.StorageConverter, name = "example-b64-converter")
 public class ExampleConverterPlugin implements StorageConverterPlugin {
 
     public static final String X_EXAMPLE_B64_CONVERTER_WAS_ENCODED = "x-example-b64-converter:is-b64-encoded";
