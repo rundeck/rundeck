@@ -1104,7 +1104,7 @@ and *Strategy*.
 
 ![Workflow controls](../figures/fig0401.png)
 
-*Keepgoing*: This manages what to do if a step incurs and error:
+*Keepgoing*: This manages what to do if a step incurs an error:
 
 *   Stop at the failed step: Fail immediately (default).
 *   Run remaining steps before failing: Continue to next steps and fail the job at the end.
