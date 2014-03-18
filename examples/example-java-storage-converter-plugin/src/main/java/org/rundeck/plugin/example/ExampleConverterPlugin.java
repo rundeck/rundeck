@@ -64,7 +64,7 @@ public class ExampleConverterPlugin implements StorageConverterPlugin {
      * @param resourceMetaBuilder metadata
      */
     static void addMetadataWasEncoded(ResourceMetaBuilder resourceMetaBuilder) {
-        resourceMetaBuilder.setMeta(X_EXAMPLE_B64_CONVERTER_WAS_ENCODED, Boolean.toString(true));
+        resourceMetaBuilder.setMeta(X_EXAMPLE_B64_CONVERTER_WAS_ENCODED, Boolean.TRUE.toString());
     }
 
 
