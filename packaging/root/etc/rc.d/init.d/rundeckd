@@ -24,7 +24,7 @@ start() {
 		echo
 		return 1
 	fi
-        nohup runuser -s /bin/bash -l rundeck -c "$rundeckd" &>>$servicelog &
+        nohup runuser -s /bin/bash -l rundeck -c "$rundeckd" >>$servicelog 2>&1 &
  	RETVAL=$?	
 	PID=$!
 	echo $PID > $PID_FILE
