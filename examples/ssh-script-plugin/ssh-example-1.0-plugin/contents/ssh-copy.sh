@@ -4,12 +4,12 @@
 # ssh-copy.sh
 # This script executes the system "scp" command to copy a file
 # to a remote node.
-# usage: ssh-copy.sh [username] [hostname] [file]
+# usage: ssh-copy.sh [username] [hostname] [file] [destination]
 #
 # It uses some environment variables set by RunDeck if they exist.  
 #
 # RD_NODE_SCP_DIR: the "scp-dir" attribute indicating the target
-#   directory to copy the file to.
+#   directory to copy the file to if destination is not set.
 # RD_NODE_SSH_PORT:  the "ssh-port" attribute value for the node to specify
 #   the target port, if it exists
 # RD_NODE_SSH_KEYFILE: the "ssh-keyfile" attribute set for the node to
@@ -27,8 +27,12 @@ shift
 HOST=$1
 shift
 FILE=$1
+shift
+DEST=$1
 
-DIR=${RD_NODE_SCP_DIR:?"scp-dir attribute was not set for the node $RD_NODE_NAME"}
+if [ -z "$DEST" ] ; then
+    DEST=${RD_NODE_SCP_DIR:?"scp-dir attribute was not set for the node $RD_NODE_NAME"}/$(basename $FILE)
+fi
 
 # use RD env variable from node attributes for ssh-port value, default to 22:
 PORT=${RD_NODE_SSH_PORT:-22}
@@ -56,15 +60,15 @@ elif [ ! -z "$RD_NODE_SSH_OPTS" ] ; then
 fi
 
 
-RUNSSH="scp $SSHOPTS $FILE $USER@$HOST:$DIR"
+RUNSSH="scp $SSHOPTS $FILE $USER@$HOST:$DEST"
 
 #if ssh-test is set to "true", do a dry run
 if [ "true" = "$RD_NODE_SSH_TEST" ] ; then
     echo "[ssh-example]" $RUNSSH 1>&2
-    echo $DIR/$(basename $FILE) # echo remote filepath
+    echo $DEST # echo remote filepath
     exit 0
 fi
 
 #finally, execute scp but don't print to STDOUT
 $RUNSSH 1>&2 || exit $? # exit if not successful
-echo $DIR/$(basename $FILE) # echo remote filepath
+echo $DEST # echo remote filepath

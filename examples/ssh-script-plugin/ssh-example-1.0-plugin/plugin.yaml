@@ -21,4 +21,4 @@ providers:
       plugin-type: script
       script-interpreter: /bin/bash
       script-file: ssh-copy.sh
-      script-args: ${node.username} ${node.hostname} ${file-copy.file}
+      script-args: ${node.username} ${node.hostname} ${file-copy.file} ${file-copy.destination}
