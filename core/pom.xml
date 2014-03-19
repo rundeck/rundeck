@@ -111,7 +111,7 @@
           <archive>
             <manifestEntries>
               <Rundeck-Version>2.1.0-SNAPSHOT</Rundeck-Version>
-              <Rundeck-Tools-Dependencies>ant-1.7.1.jar log4j-1.2.16.jar commons-codec-1.5.jar commons-beanutils-1.8.3.jar commons-collections-3.2.1.jar commons-logging-1.1.1.jar commons-lang-2.6.jar dom4j-1.6.1.jar commons-cli-1.0.jar ant-jsch-1.7.1.jar jsch-0.1.50.jar snakeyaml-1.9.jar xercesImpl-2.6.2.jar jaxen-1.1.jar commons-httpclient-3.0.1.jar ant-launcher-1.7.1.jar jdom-1.0.jar icu4j-2.6.1.jar xom-1.0.jar</Rundeck-Tools-Dependencies>
+              <Rundeck-Tools-Dependencies>rundeck-storage-api-2.1.0-SNAPSHOT.jar rundeck-storage-conf-2.1.0-SNAPSHOT.jar ant-1.7.1.jar log4j-1.2.16.jar commons-codec-1.5.jar commons-beanutils-1.8.3.jar commons-collections-3.2.1.jar commons-logging-1.1.1.jar commons-lang-2.6.jar dom4j-1.6.1.jar commons-cli-1.0.jar ant-jsch-1.7.1.jar jsch-0.1.50.jar snakeyaml-1.9.jar xercesImpl-2.6.2.jar jaxen-1.1.jar commons-httpclient-3.0.1.jar rundeck-storage-data-2.1.0-SNAPSHOT.jar ant-launcher-1.7.1.jar jdom-1.0.jar xom-1.0.jar icu4j-2.6.1.jar</Rundeck-Tools-Dependencies>
             </manifestEntries>
           </archive>
         </configuration>
@@ -212,9 +212,9 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>xerces</groupId>
-      <artifactId>xercesImpl</artifactId>
-      <version>2.6.2</version>
+      <groupId>org.rundeck</groupId>
+      <artifactId>rundeck-storage-api</artifactId>
+      <version>2.1.0-SNAPSHOT</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -227,6 +227,18 @@
       <groupId>org.apache.ant</groupId>
       <artifactId>ant-jsch</artifactId>
       <version>1.7.1</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>xerces</groupId>
+      <artifactId>xercesImpl</artifactId>
+      <version>2.6.2</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.rundeck</groupId>
+      <artifactId>rundeck-storage-conf</artifactId>
+      <version>2.1.0-SNAPSHOT</version>
       <scope>compile</scope>
     </dependency>
     <dependency>

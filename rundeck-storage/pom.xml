@@ -3,18 +3,17 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.rundeck</groupId>
-    <artifactId>rundeck-project</artifactId>
+    <artifactId>rundeck-storage</artifactId>
     <packaging>pom</packaging>
     <version>2.1.0-SNAPSHOT</version>
-    <name>RunDeck parent project</name>
+    <name>RunDeck storage project</name>
     <url>http://rundeck.org</url>
 
     <modules>
-        <module>core</module>
-        <module>plugins</module>
-        <module>rundeckapp</module>
-        <module>rundeck-launcher</module>
-        <module>rundeck-storage</module>
+        <module>rundeck-storage-api</module>
+        <module>rundeck-storage-conf</module>
+        <module>rundeck-storage-data</module>
+        <module>rundeck-storage-filesys</module>
     </modules>
 
     <build>
