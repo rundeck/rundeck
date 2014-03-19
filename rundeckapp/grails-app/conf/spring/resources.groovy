@@ -7,8 +7,12 @@ import com.dtolabs.rundeck.server.plugins.PluginCustomizer
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import com.dtolabs.rundeck.server.plugins.services.ExecutionFileStoragePluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.NotificationPluginProviderService
+import com.dtolabs.rundeck.server.plugins.services.PluggableResourceStoragePluginProviderService
+import com.dtolabs.rundeck.server.plugins.services.ResourceStoragePluginProviderService
+import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogReaderPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogWriterPluginProviderService
+import com.dtolabs.rundeck.server.storage.ResourceTreeFactory
 import groovy.io.FileType
 import org.springframework.core.task.SimpleAsyncTaskExecutor
 
@@ -48,6 +52,7 @@ beans={
      */
     rundeckFramework(Framework, rdeckBase){bean->
         bean.factoryMethod='getInstanceWithoutProjectsDir'
+        resourceTree=ref('rundeckResourceTree')
     }
     def configDir = new File(Constants.getFrameworkConfigDir(rdeckBase))
     rundeckPolicyAuthorization(SAREAuthorization, configDir){
@@ -86,6 +91,28 @@ beans={
         concurrencyLimit= 2 + (application.config.rundeck?.execution?.logs?.fileStorage?.concurrencyLimit ?: 5)
     }
 
+    pluggableResourceStoragePluginProviderService(PluggableResourceStoragePluginProviderService) {
+        rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
+    }
+    resourceStoragePluginProviderService(ResourceStoragePluginProviderService,rundeckFramework) {
+        pluggableResourceStoragePluginProviderService = ref('pluggableResourceStoragePluginProviderService')
+    }
+
+    storageConverterPluginProviderService(StorageConverterPluginProviderService) {
+        rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
+    }
+
+    rundeckResourceTree(ResourceTreeFactory){
+        rundeckFramework=ref('rundeckFramework')
+        pluginRegistry=ref("rundeckPluginRegistry")
+        resourceStoragePluginProviderService=ref('resourceStoragePluginProviderService')
+        storageConverterPluginProviderService=ref('storageConverterPluginProviderService')
+        storageConfigPrefix='rundeck.storage.provider'
+        converterConfigPrefix='rundeck.storage.converter'
+        baseStorageType='file'
+        baseStorageConfig=['baseDir':'${framework.var.dir}/storage']
+        baseLoggerName='org.rundeck.storage.events'
+    }
     /**
      * Define groovy-based plugins as Spring beans, registered in a hash map
      */

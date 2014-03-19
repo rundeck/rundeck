@@ -4,10 +4,13 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
-import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import com.dtolabs.rundeck.server.plugins.ConfiguredPlugin
+import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import com.dtolabs.rundeck.server.plugins.PluginRegistry
+import com.dtolabs.rundeck.server.plugins.RenamedDescription
+import com.dtolabs.rundeck.server.plugins.ValidatedPlugin
 
 class PluginService {
 
@@ -29,10 +32,10 @@ class PluginService {
      * @param name
      * @return map containing [instance:(plugin instance), description: (map or Description), ]
      */
-    def Map getPluginDescriptor(String name, PluggableProviderService service) {
+    def DescribedPlugin getPluginDescriptor(String name, PluggableProviderService service) {
         def bean = rundeckPluginRegistry?.loadPluginDescriptorByName(name, service)
         if (bean != null) {
-            return (Map) bean
+            return bean
         }
         log.error("${service.name} not found: ${name}")
         return null
@@ -45,7 +48,7 @@ class PluginService {
      * @param service service
      * @return plugin, or null if configuration or plugin loading failed
      */
-    def <T> Map configurePlugin(String name, Map configuration, PluggableProviderService<T> service) {
+    def <T> ConfiguredPlugin<T> configurePlugin(String name, Map configuration, PluggableProviderService<T> service) {
         def validation = rundeckPluginRegistry?.validatePluginByName(name, service, configuration)
         if (validation != null && !validation.valid) {
             logValidationErrors(service.name, name, validation.report )
@@ -66,7 +69,9 @@ class PluginService {
      * @param service service
      * @return Map of [instance: plugin instance, configuration: Map of resolved configuration properties], or null
      */
-    def <T> Map configurePlugin(String name, Map configuration, String projectName, Framework framework, PluggableProviderService<T> service) {
+    def <T> ConfiguredPlugin<T> configurePlugin(String name, Map configuration, String projectName,
+                                                Framework framework,
+                              PluggableProviderService<T> service) {
         def validation = rundeckPluginRegistry?.validatePluginByName(name, service, framework, projectName, configuration)
         if (!validation.valid) {
             logValidationErrors(service.name, name, validation.report)
@@ -88,10 +93,12 @@ class PluginService {
      * @param defaultScope default plugin property scope
      * @return Map of [instance: plugin instance, configuration: Map of resolved configuration properties], or null
      */
-    def <T> Map configurePlugin(String name, PluggableProviderService<T> service, PropertyResolver resolver, PropertyScope defaultScope) {
+    def <T> ConfiguredPlugin<T> configurePlugin(String name, PluggableProviderService<T> service,
+    PropertyResolver resolver,
+                              PropertyScope defaultScope) {
         def validation = rundeckPluginRegistry?.validatePluginByName(name, service,
                 PropertyResolverFactory.createPrefixedResolver(resolver, name, service.name), defaultScope)
-        if(!validation){
+        if(null==validation){
             return null
         }
         if(!validation.valid) {
@@ -136,7 +143,8 @@ class PluginService {
      * @param defaultScope default plugin property scope
      * @return validation
      */
-    def Map validatePlugin(String name, PluggableProviderService service, PropertyResolver resolver, PropertyScope defaultScope) {
+    def ValidatedPlugin validatePlugin(String name, PluggableProviderService service, PropertyResolver resolver,
+                         PropertyScope defaultScope) {
         return rundeckPluginRegistry?.validatePluginByName(name, service,
                 PropertyResolverFactory.createPrefixedResolver(resolver, name, service.name), defaultScope)
     }
@@ -149,7 +157,7 @@ class PluginService {
      * @param ignoredScope ignored scope
      * @return validation
      */
-    def Map validatePlugin(String name, PluggableProviderService service, PropertyResolver resolver, PropertyScope defaultScope, PropertyScope ignoredScope) {
+    def ValidatedPlugin validatePlugin(String name, PluggableProviderService service, PropertyResolver resolver, PropertyScope defaultScope, PropertyScope ignoredScope) {
         return rundeckPluginRegistry?.validatePluginByName(name, service,
                 PropertyResolverFactory.createPrefixedResolver(resolver, name, service.name), defaultScope, ignoredScope)
     }
@@ -161,7 +169,7 @@ class PluginService {
      * @param config instance configuration data
      * @return validation
      */
-    def Map validatePluginConfig(String name, PluggableProviderService service, Map config) {
+    def ValidatedPlugin validatePluginConfig(String name, PluggableProviderService service, Map config) {
         return rundeckPluginRegistry?.validatePluginByName(name, service, config)
     }
 
@@ -170,11 +178,14 @@ class PluginService {
         //XX: avoid groovy bug where generic types referenced in closure can cause NPE: http://jira.codehaus.org/browse/GROOVY-5034
         String svcName=service.name
         //clean up name of any Groovy plugin without annotations that ends with the service name
-        plugins.each { key, Map plugin ->
+        plugins.each { key, DescribedPlugin plugin ->
             def desc = plugin.description
-            if (desc && desc instanceof Map) {
-                if (desc.name.endsWith(svcName)) {
-                    desc.name = desc.name.substring(0,desc.name.length()- svcName.length())
+            if(plugin.file && plugin.name.endsWith(svcName)){
+                def newname = plugin.name
+                newname=plugin.name.substring(0, plugin.name.length() - svcName.length())
+                plugin.name = newname
+                if (desc?.name?.endsWith(svcName)) {
+                    plugin.description = new RenamedDescription(delegate: desc, name: newname)
                 }
             }
         }

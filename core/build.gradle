@@ -12,8 +12,13 @@ apply plugin: 'signing'
 
 archivesBaseName = 'rundeck-core'
 defaultTasks 'clean','assemble'
+ext.rundeckToolsDependencies=''
 
 dependencies {
+    compile project(":rundeck-storage:rundeck-storage-api")
+    compile project(":rundeck-storage:rundeck-storage-data")
+    compile project(":rundeck-storage:rundeck-storage-filesys")
+    compile project(":rundeck-storage:rundeck-storage-conf")
     compile 'org.apache.ant:ant:1.7.1',
         'log4j:log4j:1.2.16',
         'commons-codec:commons-codec:1.5',
@@ -27,8 +32,8 @@ dependencies {
         'com.jcraft:jsch:0.1.50',
         'org.yaml:snakeyaml:1.9',
         'xerces:xercesImpl:2.6.2',
-        'xml-apis:xml-apis:2.0.2' 
-    
+        'xml-apis:xml-apis:2.0.2'
+
     compile ('jaxen:jaxen:1.1') {
         // Remove xerces apis as that should be provided by jdk 
         exclude group: 'xerces', module: 'xmlParserAPIs'
@@ -42,12 +47,22 @@ dependencies {
         'org.mockito:mockito-all:1.8.5'
 }
 
-def rundeckToolsDependencies = configurations.runtime.files.collect { "$it.name" }.join(" ")
 
+
+jar.doFirst {
+
+    rundeckToolsDependencies = configurations.runtime.files.collect { "$it.name" }.join(" ")
+
+    jar {
+        manifest {
+            attributes 'Rundeck-Tools-Dependencies': rundeckToolsDependencies
+        }
+    }
+}
 jar {
     manifest {
-        attributes 'Rundeck-Version': version, 
-                   'Rundeck-Tools-Dependencies': rundeckToolsDependencies
+        attributes 'Rundeck-Version': version,
+                   'Rundeck-Tools-Dependencies': project.rundeckToolsDependencies
     }
 }
 
@@ -218,7 +233,7 @@ def buildpom=pom {
                         archive{
                           manifestEntries{
                             'Rundeck-Version'(version)
-                            'Rundeck-Tools-Dependencies'(rundeckToolsDependencies)
+                            'Rundeck-Tools-Dependencies'(project.rundeckToolsDependencies)
                           }
                         }
                     }
