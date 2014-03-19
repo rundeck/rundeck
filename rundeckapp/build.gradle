@@ -47,59 +47,59 @@ def warFileLocation = "${project.projectDir}/target/${warFileName}"
  * Downloads Grails from the SpringSource archives
  */
 task downloadGrails {
-	File grailsArchive = file(grailsZipFileLocation);
-	outputs.file grailsArchive;
-	doLast {
-		if (grailsZipFileBasePathOverriden) {
-			logger.warn("Using existing Grails zip file: ${grailsZipFileLocation}");
-			if (!grailsArchive.isFile()) {
-				throw new InvalidUserDataException("Grails zip file does not exist: ${grailsZipFileLocation}");
-			}
-		} else {
-			logger.warn("Downloading ${grailsBaseName}...");
-			file("${grailsZipFileBasePath}").mkdirs();
+    File grailsArchive = file(grailsZipFileLocation);
+    outputs.file grailsArchive;
+    doLast {
+        if (grailsZipFileBasePathOverriden) {
+            logger.warn("Using existing Grails zip file: ${grailsZipFileLocation}");
+            if (!grailsArchive.isFile()) {
+                throw new InvalidUserDataException("Grails zip file does not exist: ${grailsZipFileLocation}");
+            }
+        } else {
+            logger.warn("Downloading ${grailsBaseName}...");
+            file("${grailsZipFileBasePath}").mkdirs();
             if (!grailsArchive.isFile()) {
                 ant.get(src: grailsDownloadUrl, dest: grailsZipFileLocation, verbose: true);
             }
-		}
-	}
+        }
+    }
 }
 
 /**
  * Expand the downloaded archive if it hasn't already been expanded
  */
 task extractGrails(dependsOn: downloadGrails) {
-	
-	logger.debug("grailsZipFileLocation: ${grailsZipFileLocation}")
-	inputs.file file(grailsZipFileLocation);
-	
-	logger.debug("grailsInstallLocation: ${grailsInstallLocation}")
-	outputs.dir file(grailsHome);
-	
-	doLast {
-		logger.info("Extracting ${grailsZipFile}...")
-		file(grailsInstallLocation).mkdirs();
-		copy {
-			from zipTree(grailsZipFileLocation);
-			into file(grailsInstallLocation);
-		}
-		// make sure that everything but the .bat files are set +x on linux / macs
-		if (System.getProperty('os.name').toLowerCase().indexOf('win') < 0) {
-			FileTree tree = fileTree("${grailsInstallLocation}/${grailsBaseName}/bin").exclude('**/*.bat');
-			tree.each { File file ->
-				logger.info('Setting +x permission on ' + file);
-				file.setExecutable(true);
-			}
-		}
-	}
+
+    logger.debug("grailsZipFileLocation: ${grailsZipFileLocation}")
+    inputs.file file(grailsZipFileLocation);
+
+    logger.debug("grailsInstallLocation: ${grailsInstallLocation}")
+    outputs.dir file(grailsHome);
+
+    doLast {
+        logger.info("Extracting ${grailsZipFile}...")
+        file(grailsInstallLocation).mkdirs();
+        copy {
+            from zipTree(grailsZipFileLocation);
+            into file(grailsInstallLocation);
+        }
+        // make sure that everything but the .bat files are set +x on linux / macs
+        if (System.getProperty('os.name').toLowerCase().indexOf('win') < 0) {
+            FileTree tree = fileTree("${grailsInstallLocation}/${grailsBaseName}/bin").exclude('**/*.bat');
+            tree.each { File file ->
+                logger.info('Setting +x permission on ' + file);
+                file.setExecutable(true);
+            }
+        }
+    }
 }
 
 /**
- * "core" needs to be built and installed into the local ~/.m2 repo before 
- * we attempt to do anything further with Grails. 
+ * "core" needs to be built and installed into the local ~/.m2 repo before
+ * we attempt to do anything further with Grails.
  */
 task installDependencies(dependsOn: [project(":core").install, project(":rundeck-launcher:rundeck-jetty-server").install]) << {
-	description = "Builds and installs dependencies on other subprojects"
+    description = "Builds and installs dependencies on other subprojects"
 }
 
 /**
@@ -108,32 +108,32 @@ task installDependencies(dependsOn: [project(":core").install, project(":rundeck
 task installJettyPlugin(type: Exec, dependsOn: [extractGrails]) {
 
     def jettyPluginVersion = '2.0.3'
-	def jettyPluginInstalled = "${System.properties['user.home']}/.grails/${grailsVersion}/projects/rundeckapp/plugins/jetty-${jettyPluginVersion}"
-	
-	outputs.dir file(jettyPluginInstalled)
-	
-	workingDir project.projectDir
-	environment 'GRAILS_HOME', grailsHome
-	commandLine grailsCommandLine
-	args "-Dmaven.central.url=${mavenCentralUrl}",
+    def jettyPluginInstalled = "${System.properties['user.home']}/.grails/${grailsVersion}/projects/rundeckapp/plugins/jetty-${jettyPluginVersion}"
+
+    outputs.dir file(jettyPluginInstalled)
+
+    workingDir project.projectDir
+    environment 'GRAILS_HOME', grailsHome
+    commandLine grailsCommandLine
+    args "-Dmaven.central.url=${mavenCentralUrl}",
             "${mavenCreds}",
             "-Dgrails.local.repo=${grailsLocalRepo}",
             "-DRUNDECK_VERSION=${version}",
-            'install-plugin', 
-            'jetty', 
+            'install-plugin',
+            'jetty',
             jettyPluginVersion
 }
 
 task cleanWar(type: Delete) {
-	delete file(warFileLocation), file("${project.projectDir}/target")
+    delete file(warFileLocation), file("${project.projectDir}/target")
 }
 
 task cleanGrails(type: Exec, dependsOn: [extractGrails]) {
     ignoreExitValue=true
-	workingDir project.projectDir
-	environment 'GRAILS_HOME', grailsHome
-	commandLine grailsCommandLine
-	args "-DRUNDECK_VERSION=${version}", 'clean'
+    workingDir project.projectDir
+    environment 'GRAILS_HOME', grailsHome
+    commandLine grailsCommandLine
+    args "-DRUNDECK_VERSION=${version}", 'clean'
 }
 
 task clean(overwrite: true, dependsOn: [cleanEclipse, cleanWar, cleanGrails]) {
@@ -144,10 +144,10 @@ task clean(overwrite: true, dependsOn: [cleanEclipse, cleanWar, cleanGrails]) {
  */
 task testGrails(type: Exec, overwrite: true, dependsOn: [installJettyPlugin, installDependencies,extractGrails]) {
 
-	workingDir project.projectDir
-	environment 'GRAILS_HOME', grailsHome
-	commandLine grailsCommandLine
-	args "-Dmaven.central.url=${mavenCentralUrl}",
+    workingDir project.projectDir
+    environment 'GRAILS_HOME', grailsHome
+    commandLine grailsCommandLine
+    args "-Dmaven.central.url=${mavenCentralUrl}",
             "${mavenCreds}",
             "-Dgrails.local.repo=${grailsLocalRepo}",
             "-DRUNDECK_VERSION=${version}",
@@ -176,12 +176,12 @@ task grailsCompile(type: Exec, overwrite: true, dependsOn: [extractGrails]) {
  * Builds the rundeck war file
  */
 task grailsWar(type: Exec, overwrite:true, dependsOn: [installJettyPlugin, installDependencies,extractGrails]) {
-	inputs.sourceDir file("${projectDir}/src")
-	outputs.file file(warFileLocation)
-	workingDir project.projectDir
-	environment 'GRAILS_HOME', grailsHome
-	commandLine grailsCommandLine
-	args "-Dmaven.central.url=${mavenCentralUrl}",
+    inputs.sourceDir file("${projectDir}/src")
+    outputs.file file(warFileLocation)
+    workingDir project.projectDir
+    environment 'GRAILS_HOME', grailsHome
+    commandLine grailsCommandLine
+    args "-Dmaven.central.url=${mavenCentralUrl}",
             "${mavenCreds}",
             "-Dgrails.local.repo=${grailsLocalRepo}",
             "-DRUNDECK_VERSION=${version}",
@@ -193,26 +193,26 @@ task grailsWar(type: Exec, overwrite:true, dependsOn: [installJettyPlugin, insta
 
 // add the war to default configuration for this project
 artifacts{
-	'default'(file(warFileLocation)){
+    'default'(file(warFileLocation)){
         name 'rundeck'
         type 'war'
         builtBy grailsWar
-	}
+    }
 }
 
 task build(overwrite: true, dependsOn: [test, grailsWar]) {
-	// noop build because this isn't actually a java project 
-	// besides the war task is handling building by issuing a "grails war" 
+    // noop build because this isn't actually a java project
+    // besides the war task is handling building by issuing a "grails war"
 }
 
 /**
- * Installs the war file into the ~/.m2 maven repo 
+ * Installs the war file into the ~/.m2 maven repo
  */
 task install(type: Exec, overwrite: true, dependsOn: grailsWar) {
-	inputs.file file(warFileLocation)
-	workingDir project.projectDir
-	commandLine grailsCommandLine
-	args "-Dmaven.central.url=${mavenCentralUrl}",
+    inputs.file file(warFileLocation)
+    workingDir project.projectDir
+    commandLine grailsCommandLine
+    args "-Dmaven.central.url=${mavenCentralUrl}",
             "${mavenCreds}",
             "-Dgrails.local.repo=${grailsLocalRepo}",
             'maven-install'
