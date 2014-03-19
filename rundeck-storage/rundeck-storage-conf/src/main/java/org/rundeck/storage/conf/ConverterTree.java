@@ -81,7 +81,8 @@ public class ConverterTree<T extends ContentMeta> extends DelegateTree<T> {
     @Override
     public Resource<T> createResource(Path path, T content) {
         if (MatcherUtil.matches(path, content, pathSelector, resourceSelector)) {
-            return super.createResource(path, filterCreateData(path, content));
+            Resource<T> created=super.createResource(path, filterCreateData(path, content));
+            return filterGetResource(path, created);
         }
         return super.createResource(path, content);
     }
@@ -89,7 +90,8 @@ public class ConverterTree<T extends ContentMeta> extends DelegateTree<T> {
     @Override
     public Resource<T> updateResource(Path path, T content) {
         if (MatcherUtil.matches(path, content, pathSelector, resourceSelector)) {
-            return super.updateResource(path, filterUpdateData(path, content));
+            Resource<T> updated = super.updateResource(path, filterUpdateData(path, content));
+            return filterGetResource(path, updated);
         }
         return super.updateResource(path, content);
     }

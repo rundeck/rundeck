@@ -13,7 +13,6 @@ import static org.rundeck.storage.data.DataUtil.dataWithText
  * @since 2014-02-21
  */
 class ConverterTreeSpecification extends Specification {
-    def mem = new MemoryTree()
     static class testConvert1 implements ContentConverter {
         boolean read=false
         boolean created=false
@@ -38,15 +37,18 @@ class ConverterTreeSpecification extends Specification {
     }
     def "create resource calls filterCreateData"(){
         def conv1 = new testConvert1()
-        def ct = new ConverterTree(mem,conv1,null,null)
+        def mem1 = new MemoryTree()
+        def ct = new ConverterTree(mem1,conv1,null,null)
         when:
         def res1=ct.createResource('test1',dataWithText('write1',[testMeta: 'test1']))
+        def res2=mem1.getResource('test1')
         then:
         conv1.created
         !conv1.updated
         !conv1.read
         !res1.directory
-        res1.contents.meta.testMeta=='filterCreateData'
+        res1.contents.meta.testMeta=='filterReadData'
+        res2.contents.meta.testMeta=='filterCreateData'
     }
 
     def "update resource calls filterUpdateData"() {
@@ -56,12 +58,14 @@ class ConverterTreeSpecification extends Specification {
         when:
         def res1 = mem1.createResource('test1', dataWithText('write1', [testMeta: 'test1']))
         def res2 = ct.updateResource('test1', dataWithText('write2', [testMeta: 'test2']))
+        def res3 = mem1.getResource('test1')
         then:
         !conv1.created
         conv1.updated
         !conv1.read
         !res2.directory
-        res2.contents.meta.testMeta == 'filterUpdateData'
+        res2.contents.meta.testMeta == 'filterReadData'
+        res3.contents.meta.testMeta == 'filterUpdateData'
     }
     def "read resource calls filterReadData"() {
         def conv1 = new testConvert1()
