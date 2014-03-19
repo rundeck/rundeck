@@ -87,6 +87,73 @@ class FrameworkService implements ApplicationContextAware {
         return rundeckFramework.getFrameworkProjectMgr().getFrameworkProject(project)
     }
     /**
+     * Create a new project
+     * @param project name
+     * @param properties config properties
+     * @return [project, [error list]]
+     */
+    def createFrameworkProject(String project, Properties properties){
+        def proj=null
+        def errors=[]
+        try {
+            proj = rundeckFramework.getFrameworkProjectMgr().createFrameworkProjectStrict(project, properties)
+        } catch (Error e) {
+            log.error(e.message)
+            errors << e.getMessage()
+        } catch (RuntimeException e) {
+            log.error(e.message)
+            errors << e.getMessage()
+        }
+        [proj,errors]
+    }
+    /**
+     * Update project properties by merging
+     * @param project name
+     * @param properties new properties to merge in
+     * @param removePrefixes set of string prefixes of properties to remove
+     * @return [success:boolean, error: String]
+     */
+    def updateFrameworkProjectConfig(String project,Properties properties, Set<String> removePrefixes){
+        try {
+            getFrameworkProject(project).mergeProjectProperties(properties, removePrefixes)
+        } catch (Error e) {
+            log.error(e.message)
+            log.debug(e.message,e)
+            return [success: false, error: e.message]
+        }
+        [success:true]
+    }
+    /**
+     * Update project properties by merging
+     * @param project name
+     * @param properties new properties to merge in
+     * @param removePrefixes set of string prefixes of properties to remove
+     * @return [success:boolean, error: String]
+     */
+    def setFrameworkProjectConfig(String project,Properties properties){
+        try {
+            getFrameworkProject(project).setProjectProperties(properties)
+        } catch (Error e) {
+            log.error(e.message)
+            log.debug(e.message,e)
+            return [success: false, error: e.message]
+        }
+        [success:true]
+    }
+    /**
+     * Update project properties by removing a set of keys
+     * @param project name
+     * @param toremove keys to remove
+     * @return [success:boolean, error: String]
+     */
+    def removeFrameworkProjectConfigProperties(String project,Set<String> toremove){
+        def projProps = loadProjectProperties(getFrameworkProject(project))
+        for (String s: toremove) {
+            projProps.remove(s)
+        }
+        return setFrameworkProjectConfig(project,projProps)
+    }
+    /**
      * Return a map of the project's readme and motd content
      * @param project
      * @param framework
@@ -341,6 +408,18 @@ class FrameworkService implements ApplicationContextAware {
         return !(decisions.find {!it.authorized})
     }
     /**
+     * return true if any of the actions are authorized for the resource in the application context
+     * @param framework
+     * @param resource
+     * @param actions
+     * @return
+     */
+    def boolean authorizeApplicationResourceAny(AuthContext authContext, Map resource, List actions) {
+        return actions.any {
+            authorizeApplicationResourceAll(authContext,resource,[it])
+        }
+    }
+    /**
      * return true if the action is authorized for the resource type in the application context
      * @param framework
      * @param resourceType
@@ -581,6 +660,25 @@ class FrameworkService implements ApplicationContextAware {
                     props.put(key, params[k])
                 }
             }
+        }
+        return props
+    }
+
+    /**
+     * Load direct project properties as a map
+     * @param pject the project
+     * @return loaded properties
+     */
+    def Map loadProjectProperties(FrameworkProject pject) {
+        Properties props = new Properties()
+        try {
+            final FileInputStream fileInputStream = new FileInputStream(pject.getPropertyFile());
+            try {
+                props.load(fileInputStream)
+            } finally {
+                fileInputStream.close()
+            }
+        } catch (IOException e) {
         }
         return props
     }

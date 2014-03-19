@@ -475,7 +475,7 @@ class ExecutionController extends ControllerBase{
             }
             withFormat {
                 xml {
-                    apiService.renderSuccessXml(response) {
+                    apiService.renderSuccessXml(request,response) {
                         output{
                             renderOutputClosure('xml', dataMap, [], request.api_version, delegate)
                         }
@@ -520,7 +520,7 @@ class ExecutionController extends ControllerBase{
             ]
             withFormat {
                 xml {
-                    apiService.renderSuccessXml(response) {
+                    apiService.renderSuccessXml(request,response) {
                         output {
                             renderOutputClosure('xml', dataMap, [], request.api_version, delegate)
                         }
@@ -606,7 +606,7 @@ class ExecutionController extends ControllerBase{
 
                 withFormat {
                     xml {
-                        apiService.renderSuccessXml(response) {
+                        apiService.renderSuccessXml(request,response) {
                             output {
                                 renderOutputClosure('xml', dataMap, [], request.api_version, delegate)
                             }
@@ -758,7 +758,7 @@ class ExecutionController extends ControllerBase{
         ]
         withFormat {
             xml {
-                apiService.renderSuccessXml(response) {
+                apiService.renderSuccessXml(request,response) {
                     output {
                         renderOutputClosure('xml', resultData, entry, request.api_version, delegate, stateoutput)
                     }
@@ -1051,9 +1051,11 @@ class ExecutionController extends ControllerBase{
         if(abortresult.failedreason){
             reportstate.reason= abortresult.failedreason
         }
-        apiService.renderSuccessXml(response) {
-            success {
-                message("Execution status: ${abortresult.statusStr ? abortresult.statusStr : abortresult.jobstate}")
+        apiService.renderSuccessXml(request,response) {
+            if (apiService.doWrapXmlResponse(request)) {
+                success {
+                    message("Execution status: ${abortresult.statusStr ? abortresult.statusStr : abortresult.jobstate}")
+                }
             }
             abort(reportstate) {
                 execution(id: params.id, status: abortresult.jobstate)

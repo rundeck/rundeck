@@ -32,6 +32,10 @@ class ApiServiceTests {
         mock.demand.setCharacterEncoding{String encoding->
             assertEquals("UTF-8", encoding)
         }
+        mock.demand.setHeader{String name, String value->
+            assertEquals("X-Rundeck-API-Version", name)
+            assertEquals(ApiRequestFilters.API_CURRENT_VERSION.toString(), value)
+        }
         def mockOut = mockFor(OutputStream)
         def output = []
         mockOut.demand.leftShift { String s ->
@@ -63,11 +67,21 @@ class ApiServiceTests {
     }
     void testRenderSuccessXmlCode(){
         def mock = mockFor(GrailsMockHttpServletResponse)
+        mock.demand.setHeader { String name, String value ->
+            assertEquals("X-Rundeck-API-XML-Response-Wrapper", name)
+            assertEquals("true", value)
+        }
         mock.demand.setContentType { String contentype ->
             assertEquals("text/xml", contentype)
         }
         mock.demand.setCharacterEncoding { String encoding ->
             assertEquals("UTF-8", encoding)
+        }
+        mock.demand.setHeader { String name, String value ->
+            assertTrue([(name):value] in [
+                    ["X-Rundeck-API-Version": ApiRequestFilters.API_CURRENT_VERSION.toString()],
+                    ["X-Rundeck-API-XML-Response-Wrapper": 'true'],
+            ])
         }
         def mockOut = mockFor(OutputStream)
         def output = []
@@ -94,11 +108,19 @@ class ApiServiceTests {
 
     void testRenderSuccessXmlResponse() {
         def mock = mockFor(GrailsMockHttpServletResponse)
+        mock.demand.setHeader { String name, String value ->
+        }
         mock.demand.setContentType { String contentype ->
             assertEquals("text/xml", contentype)
         }
         mock.demand.setCharacterEncoding { String encoding ->
             assertEquals("UTF-8", encoding)
+        }
+        mock.demand.setHeader { String name, String value ->
+            assertTrue([(name): value] in [
+                    ["X-Rundeck-API-Version": ApiRequestFilters.API_CURRENT_VERSION.toString()],
+                    ["X-Rundeck-API-XML-Response-Wrapper": 'true'],
+            ])
         }
         def mockOut = mockFor(OutputStream)
         def output = []

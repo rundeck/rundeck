@@ -680,12 +680,7 @@ class FrameworkController extends ControllerBase {
         } else if (!errors) {
             log.debug("create project, properties: ${projProps}");
             def proj
-            try {
-                proj = framework.getFrameworkProjectMgr().createFrameworkProject(project, projProps)
-            } catch (Error e) {
-                log.error(e.message)
-                errors << e.getMessage()
-            }
+            (proj, errors)=frameworkService.createFrameworkProject(project,projProps)
             if (!errors && proj) {
                 session.frameworkProjects = frameworkService.projects(authContext)
                 def result = userService.storeFilterPref(session.user, [project: proj.name])
@@ -895,11 +890,9 @@ class FrameworkController extends ControllerBase {
             removePrefixes<< FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX
 
             if(!error){
-                try {
-                    fproject.mergeProjectProperties(projProps,removePrefixes)
-                } catch (Error e) {
-                    log.error(e.message)
-                    error= e.getMessage()
+                def result = frameworkService.updateFrameworkProjectConfig(project,projProps,removePrefixes)
+                if(!result.success){
+                    error=result.error
                 }
             }
             if(!error){
@@ -1343,34 +1336,6 @@ class FrameworkController extends ControllerBase {
         }
         return apiService.renderSuccessXml(response, 'api.project.updateResources.succeeded', [params.project])
     }
-    /**
-     * API: /api/projects, version 1
-     */
-    def apiProjects={
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        def projlist=frameworkService.projects(authContext)
-        return apiService.renderSuccessXml(response){
-                delegate.'projects'(count:projlist.size()){
-                    projlist.each{ pject ->
-                        renderApiProject(pject,delegate)
-                    }
-                }
-        }
-    }
-    /**
-     * Render project info result using a builder
-     */
-    def renderApiProject={ pject, delegate ->
-        delegate.'project'(href: g.createLink(absolute: true, controller: 'framework', action: 'apiProject', params: [project: pject.name, api_version: ApiRequestFilters.API_CURRENT_VERSION])){
-            name(pject.name)
-            description(pject.hasProperty('project.description')?pject.getProperty('project.description'):'')
-            if(pject.hasProperty("project.resources.url")){
-                resources{
-                    providerURL(pject.getProperty("project.resources.url"))
-                }
-            }
-        }
-    }
 
     /**
      * Convert input node filter parameters into specific property names used by
@@ -1400,32 +1365,6 @@ class FrameworkController extends ControllerBase {
         return result
     }
 
-    /**
-     * API: /api/project/NAME, version 1
-     */
-    def apiProject={
-        Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if(!params.project){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: 'api.error.parameter.required', args: ['project']])
-        }
-        if (!frameworkService.authorizeApplicationResourceAll(authContext, [type:'project',name:params.project], ['read'])) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
-                    code: 'api.error.item.unauthorized', args: ['Read', 'Project', params.project]])
-        }
-        def exists=frameworkService.existsFrameworkProject(params.project)
-        if(!exists){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
-                    code: 'api.error.item.doesnotexist', args: ['project', params.project]])
-        }
-        def pject=frameworkService.getFrameworkProject(params.project)
-        return apiService.renderSuccessXml(response){
-            delegate.'projects'(count:1){
-                renderApiProject(pject,delegate)
-            }
-        }
-    }
 
     /**
      * API: /api/resource/$name, version 1

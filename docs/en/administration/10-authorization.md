@@ -90,7 +90,8 @@ for:
   project:
     - match:
         name: '.*'
-      allow: [read,admin] # allow view/admin of all projects
+      allow: [read,import,export,configure,delete] # allow full access of all projects or use 'admin'
+
 by:
   group: admin
 ~~~~~~~~~~
@@ -108,7 +109,7 @@ information.
 
 ### Specific Resources and Resource Types
 
-As described in the [aclpolicy-v10(5)](../manpages/man5/aclpolicy-v10.html) definition, access
+As described in the [aclpolicy-v10(5)](../man5/aclpolicy-v10.html) definition, access
 is granted or denied to specific "resources". Resources can take two forms:
 
 * A specific resource, with a type and properties
@@ -146,13 +147,18 @@ You define application scope rules in the aclpolicy, by declaring this context:
 These are the Application scope actions that can be allowed or denied via the
 aclpolicy:
 
-* Creating Projects ('create' action on a resource type with kind 'project')
-* Reading system information ('read' action on a resource type with kind 'project')
-* Administering user profiles ('admin' action on a resource type of kind 'user')
-* Reading specific projects ('read' action on a project with a specific name)
-* Administering specific projects ('admin' action on a project with a specific name
+* Creating Projects (`create` action on a resource type with kind 'project')
+* Reading system information (`read` action on a resource type with kind 'project')
+* Administering user profiles (`admin` action on a resource type of kind 'user')
+* Actions on specific projects by name
+    * Reading `read`
+    * Deleting `delete`
+    * Configuring `configure`
+    * Importing archives `import`
+    * Exporting archives `export`
+    * Full access `admin`
 
-The following table summarizes the generic and specific resources and the 
+The following table summarizes the generic and specific resources and the
 actions you can restrict in the application scope:
 
 Type       Resource Kind     Properties   Actions  Description
@@ -164,10 +170,14 @@ Type       Resource Kind     Properties   Actions  Description
 
 Table: Application scope generic type actions
 
-Type      Properties   Actions  Description
------     -----------  -------- ------------
-`project` "name"       `read`   View a project in the project list
-`project` "name"       `admin`  Modify project configuration
+Type      Properties   Actions     Description
+-----     -----------  --------    ------------
+`project` "name"       `read`      View a project in the project list
+`project` "name"       `configure` View and modify project configuration
+`project` "name"       `delete`    Delete project
+`project` "name"       `import`    Import archive contents to the project
+`project` "name"       `export`    Export the project as an archive
+`project` "name"       `admin`     Full access to project
 ----------------------------
 
 Table: Application scope specific resource actions
@@ -187,7 +197,7 @@ Note that for projects not matched by an aclpolicy, *no* actions will be granted
 to users.
 
 Also note that to hide projects completely from users, you would need to grant
-or deny the "read" access to the project in the [Application Scope](authorization.html#application-scope-resources-and-actions).
+or deny the "read" access to the project in the [Application Scope](#application-scope-resources-and-actions).
 
 These are the Application scope actions that can be allowed or denied via the
 aclpolicy:
@@ -232,13 +242,13 @@ Type      Properties                         Actions  Description
 "                                            `kill`   Kill a running job
 "                                            `killAs` Kill a running job as another user
 "                                            `create` Create the matching job
-`node`    "rundeck_server", "nodename", ...  `read`   View the node in the UI (see [Node resource properties](authorization.html#node-resource-properties))
+`node`    "rundeck_server", "nodename", ...  `read`   View the node in the UI (see [Node resource properties](#node-resource-properties))
 "                                            `run`    Run jobs/adhoc on the node
 ----------------------------
 
 Table: Project scope specific resource actions
 
-Note: see [Node resource properties](authorization.html#node-resource-properties) for more node resource properties for authorization.
+Note: see [Node resource properties](#node-resource-properties) for more node resource properties for authorization.
 
 Note: `runAs` and `killAs` actions only apply to certain API endpoints, and allow running jobs or adhoc executions or killing executions to be performed with a different username attached as the author of the action.  See [Rundeck API - Running a Job](../api/index.html#running-a-job).
 

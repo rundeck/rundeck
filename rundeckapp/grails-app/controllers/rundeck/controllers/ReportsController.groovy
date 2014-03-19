@@ -415,7 +415,7 @@ class ReportsController extends ControllerBase{
         def statusMap=[succeed:ExecutionService.EXECUTION_SUCCEEDED,
             cancel: ExecutionService.EXECUTION_ABORTED,
             fail: ExecutionService.EXECUTION_FAILED]
-        return apiService.renderSuccessXml(response){
+        return apiService.renderSuccessXml(request,response){
             delegate.'events'(count:model.reports.size(),total:model.total, max: model.max, offset: model.offset){
                 model.reports.each{  rpt->
                     def nodes=rpt.node
