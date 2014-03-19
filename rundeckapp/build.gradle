@@ -58,7 +58,9 @@ task downloadGrails {
 		} else {
 			logger.warn("Downloading ${grailsBaseName}...");
 			file("${grailsZipFileBasePath}").mkdirs();
-			ant.get(src: grailsDownloadUrl, dest: grailsZipFileLocation, verbose: true);
+            if (!grailsArchive.isFile()) {
+                ant.get(src: grailsDownloadUrl, dest: grailsZipFileLocation, verbose: true);
+            }
 		}
 	}
 }
