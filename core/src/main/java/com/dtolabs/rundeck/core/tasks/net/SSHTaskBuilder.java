@@ -262,6 +262,7 @@ public class SSHTaskBuilder {
                 /**
                  * Configure keybased authentication
                  */
+                //TODO: use private key data
                 final String sshKeypath = sshConnectionInfo.getPrivateKeyfilePath();
                 if(null == sshKeypath || "".equals(sshKeypath)){
                     throw new BuilderException("SSH Keyfile path was not set");

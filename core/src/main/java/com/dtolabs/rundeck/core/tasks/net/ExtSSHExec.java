@@ -532,6 +532,7 @@ public class ExtSSHExec extends SSHBase {
         if (null != getUserInfo().getKeyfile()) {
             jsch.addIdentity(getUserInfo().getKeyfile());
         }
+        //todo: jsch.addIdentity(String name, byte[]prvkey, byte[]pubkey, byte[] passphrase)
 
         if (!getUserInfo().getTrust() && knownHosts != null) {
             log("Using known hosts: " + knownHosts, Project.MSG_DEBUG);
