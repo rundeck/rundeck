@@ -20,7 +20,7 @@ The resulting file must be a valid yaml file.
 
 For more information about the exact resources and actions you need to
 authorize for the Rundeck application, see the 
-[Administration Guide - Authorization](../../administration/authorization.html#rundeck-resource-authorizations).
+[Administration Guide - Authorization](../administration/access-control-policy.html#rundeck-resource-authorizations).
 
 ## Authorizing a certain action on a resource
 
@@ -319,10 +319,7 @@ for:
   project:
     - match:
         name: '.*'
-      allow: [read,admin] # allow view/admin of all projects
+      allow: [read,admin,delete,configure,import,export] # allow view/admin of all projects
 by:
   group: admin
-~~~~~~~~ 
-
-The Rundeck source code and all documentation may be downloaded from
-<https://github.com/rundeck/rundeck/>.
+~~~~~~~~

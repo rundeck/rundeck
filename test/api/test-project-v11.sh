@@ -1,10 +1,11 @@
 #!/bin/bash
 
 #test result of /project/name metadata result
+#using API v11, no xml result wrapper
 
-# use api V10
-API_VERSION=10
-
+# use api V11
+API_VERSION=11
+API_XML_NO_WRAPPER=true
 
 DIR=$(cd `dirname $0` && pwd)
 source $DIR/include.sh
@@ -23,14 +24,13 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+API_XML_NO_WRAPPER=true sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/result/projects/@count" $DIR/curl.out)
-if [ "1" != "$itemcount" ] ; then
-    errorMsg "FAIL: expected result of 1"
-    exit 2
-fi
+#
+assert_xml_value $proj "/project/name" $DIR/curl.out
+assert_xml_value "$APIURL/project/$proj" "/project/@url" $DIR/curl.out
+
 
 echo "OK"
 

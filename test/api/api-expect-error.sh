@@ -23,12 +23,12 @@ shift
 code="${1:-400}"
 shift
 
+set -- $requrl
+
+source $SRC_DIR/include.sh
+
 # get listing
-if [ -n "$RDAUTH" ] ; then
-    curl -L -s -S -H "X-RunDeck-Auth-Token: $RDAUTH" -D $DIR/headers.out $CURL_REQ_OPTS ${requrl}?${params} > $DIR/curl.out
-else
-    curl -L -s -S -c $DIR/cookies -b $DIR/cookies -D $DIR/headers.out $CURL_REQ_OPTS ${requrl}?${params} > $DIR/curl.out
-fi
+docurl -D $DIR/headers.out $CURL_REQ_OPTS ${requrl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "FAIL: failed query request"
     exit 2

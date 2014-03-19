@@ -19,8 +19,14 @@
 </head>
 <body>
 
+<div class="row">
+<div class="col-sm-12">
+    <g:render template="/common/messages"/>
+</div>
+</div>
 <g:if test="${projCount>0}">
 <div class="row row-space">
+
     <div class="col-sm-4">
         <span class="h3 text-muted">
             ${projCount}
@@ -125,8 +131,11 @@
                 <div class="col-sm-6 col-md-4">
                     <g:link action="index" controller="menu" params="[project: project]" class="h3">
                         <i class="glyphicon glyphicon-tasks"></i>
-                        ${project}
-                    </g:link>
+                        ${project}</g:link>
+
+                    <g:if test="${data.description}">
+                        <span class="text-muted">${data.description.encodeAsHTML()}</span>
+                    </g:if>
                 </div>
                 %{--<div class="col-sm-6 col-md-2">--}%
                     %{--<a class="h4 ${data.jobCount > 0 ? '' : 'text-muted'}" href="${g.createLink(controller:"framework",action:"selectProject",params:[page: 'jobs',project:project])}">--}%
