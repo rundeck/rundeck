@@ -43,7 +43,7 @@ public class FileTree<T extends ContentMeta> extends StringToPathTree<T> impleme
         try {
             return loadResource(path);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to read resource: " + path + ": " + e.getMessage(), e);
+            throw StorageException.readException(path, "Failed to read resource: " + path + ": " + e.getMessage(), e);
         }
     }
 
@@ -52,12 +52,15 @@ public class FileTree<T extends ContentMeta> extends StringToPathTree<T> impleme
         try {
             return loadResource(path);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to read resource: " + path + ": " + e.getMessage(), e);
+            throw StorageException.readException(path, "Failed to read resource: " + path + ": " + e.getMessage(), e);
         }
     }
 
     private Resource<T> loadResource(Path path) throws IOException {
         File datafile = filepathMapper.contentFileForPath(path);
+        if(!datafile.exists()) {
+            throw StorageException.readException(path, "Path does not exist: " + path);
+        }
         boolean directory = datafile.isDirectory();
         if (!directory) {
             return new ContentMetaResource<T>(path, loader(datafile, filepathMapper.metadataFileFor(path)), directory);
@@ -137,7 +140,7 @@ public class FileTree<T extends ContentMeta> extends StringToPathTree<T> impleme
      */
     private Set<Resource<T>> filterResources(Path path, Predicate<Resource> test) {
         if (!hasDirectory(path)) {
-            throw new IllegalArgumentException("not a directory path: " + path);
+            throw StorageException.listException(path,"not a directory path: " + path);
         }
         File file = filepathMapper.directoryForPath(path);
         HashSet<Resource<T>> files = new HashSet<Resource<T>>();
@@ -150,7 +153,7 @@ public class FileTree<T extends ContentMeta> extends StringToPathTree<T> impleme
                 }
             }
         } catch (IOException e) {
-            throw new RuntimeException("Failed to list directory: " + path + ": " + e.getMessage(), e);
+            throw StorageException.listException(path,"Failed to list directory: " + path + ": " + e.getMessage(), e);
         }
         return files;
     }
@@ -158,7 +161,7 @@ public class FileTree<T extends ContentMeta> extends StringToPathTree<T> impleme
     @Override
     public boolean deleteResource(Path path) {
         if (!hasResource(path)) {
-            throw new IllegalArgumentException("Resource not found: " + path);
+            throw StorageException.deleteException(path,"Resource not found: " + path);
         }
         boolean content = false;
         boolean meta = false;
@@ -174,24 +177,25 @@ public class FileTree<T extends ContentMeta> extends StringToPathTree<T> impleme
     @Override
     public Resource<T> createResource(Path path, ContentMeta content) {
         if (hasResource(path)) {
-            throw new IllegalArgumentException("Resource already exists: " + path);
+            throw StorageException.createException(path,"Resource already exists: " + path);
         }
         try {
             return storeResource(path, content);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to create resource: " + path + ": " + e.getMessage(), e);
+            throw StorageException.createException(path, "Failed to create resource: " + path + ": " + e.getMessage(),
+                    e);
         }
     }
 
     @Override
     public Resource<T> updateResource(Path path, ContentMeta content) {
         if (!hasResource(path)) {
-            throw new IllegalArgumentException("Resource does not exist: " + path);
+            throw StorageException.updateException(path,"Resource does not exist: " + path);
         }
         try {
             return storeResource(path, content);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to update resource: " + path + ": " + e.getMessage(), e);
+            throw StorageException.updateException(path, "Failed to update resource: " + path + ": " + e.getMessage(), e);
         }
     }
 

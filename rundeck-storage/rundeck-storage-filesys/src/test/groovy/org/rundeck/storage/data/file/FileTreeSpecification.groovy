@@ -1,5 +1,7 @@
 package org.rundeck.storage.data.file
 
+import org.rundeck.storage.api.PathUtil
+import org.rundeck.storage.api.StorageException
 import org.rundeck.storage.data.DataUtil
 import spock.lang.Specification
 
@@ -17,6 +19,15 @@ class FileTreeSpecification extends Specification {
     }
     def cleanup(){
         testDir.delete()
+    }
+
+    def "notfound resource causes exception"() {
+        def dir = new File(testDir,"root1")
+        def ft = FileTreeUtil.forRoot(dir,DataUtil.contentFactory())
+        when:
+        ft.getResource(PathUtil.asPath('doesnotexist'))
+        then:
+        thrown(StorageException)
     }
     def "basic constructor creates dirs"() {
         def dir = new File(testDir,"root1")
