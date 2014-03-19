@@ -10,8 +10,6 @@ ext.rundeckToolsDependencies=''
 
 dependencies {
     compile project(":rundeck-storage:rundeck-storage-api")
-    compile project(":rundeck-storage:rundeck-storage-data")
-    compile project(":rundeck-storage:rundeck-storage-filesys")
     compile project(":rundeck-storage:rundeck-storage-conf")
     compile 'org.apache.ant:ant:1.7.1',
         'log4j:log4j:1.2.16',
