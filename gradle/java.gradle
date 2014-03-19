@@ -1,3 +1,4 @@
+import org.gradle.plugins.signing.Sign
 /**
  * Common build settings for java projects
  */
