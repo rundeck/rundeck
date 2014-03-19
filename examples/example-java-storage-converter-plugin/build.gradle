@@ -1,4 +1,4 @@
-version = '2.0.3-SNAPSHOT'
+version = '2.1.0-SNAPSHOT'
 defaultTasks 'clean','build'
 apply plugin: 'java'
 apply plugin: 'idea'
@@ -8,12 +8,14 @@ ext.rundeckPluginVersion= '1.1'
 
 repositories {
     mavenLocal()
+    maven{ //snapshot dependency
+        url='https://oss.sonatype.org/content/repositories/snapshots/'
+    }
     mavenCentral()
 }
 
 dependencies {
-    compile( [group: 'org.rundeck', name: 'rundeck-core', version: version,ext:'jar'])
-    compile( [group: 'org.rundeck', name: 'rundeck-storage-api', version: version,ext:'jar'])
+    compile( [group: 'org.rundeck', name: 'rundeck-core', version: version])
     compile( [group: 'commons-codec', name: 'commons-codec', version: '1.5',ext:'jar'])
     testCompile(
         //[group: 'junit', name: 'junit', version: '3.8.1',ext:'jar']
