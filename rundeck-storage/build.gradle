@@ -1,5 +1,4 @@
 subprojects {
-    apply from: "${rootDir}/gradle/java.gradle"
     apply plugin: "groovy"
 
     repositories {
