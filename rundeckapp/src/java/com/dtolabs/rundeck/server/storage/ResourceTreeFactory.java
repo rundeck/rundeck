@@ -10,6 +10,7 @@ import com.dtolabs.rundeck.server.plugins.ConfiguredPlugin;
 import com.dtolabs.rundeck.server.plugins.PluginRegistry;
 import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService;
 import com.dtolabs.rundeck.server.plugins.services.ResourceStoragePluginProviderService;
+import com.dtolabs.rundeck.server.plugins.storage.SSHKeyStorageLayer;
 import com.dtolabs.rundeck.server.plugins.storage.StorageLogger;
 import org.apache.log4j.Logger;
 import org.rundeck.storage.api.PathUtil;
@@ -131,7 +132,10 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
                 new StorageConverterPluginAdapter(
                         new StorageTimestamperConverter()
                 )
-        );
+        ).convert(
+                new StorageConverterPluginAdapter(
+                        new SSHKeyStorageLayer()
+                ), PathUtil.asPath("/ssh-key"));
     }
 
     /**
@@ -272,8 +276,7 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
 
         Map<String, String> config = subPropertyMap(pref1 + SEP + CONFIG + SEP, configProps);
         config = expandConfig(config);
-        logger.debug("Add Storage[" + index + "]:" + path + " " + pluginType + ", " +
-                "config: " + config);
+        logger.debug("Add Storage[" + index + "]:" + path + " " + pluginType + ", config: " + config);
         Tree<ResourceMeta> resourceMetaTree = loadPlugin(
                 pluginType,
                 config,
