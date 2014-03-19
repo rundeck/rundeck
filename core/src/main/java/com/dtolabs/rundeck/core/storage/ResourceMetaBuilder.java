@@ -35,9 +35,17 @@ public class ResourceMetaBuilder implements CanSetResourceMeta, HasResourceMeta 
         setMeta(ResourceUtil.RES_META_RUNDECK_CONTENT_TYPE, value);
     }
 
+    public String getContentType() {
+        return getResourceMeta().get(ResourceUtil.RES_META_RUNDECK_CONTENT_TYPE);
+    }
+
     @Override
     public void setContentLength(long length) {
         setMeta(ResourceUtil.RES_META_RUNDECK_CONTENT_LENGTH, Long.toString(length));
+    }
+
+    public long getContentLength() {
+        return Long.parseLong(getResourceMeta().get(ResourceUtil.RES_META_RUNDECK_CONTENT_LENGTH));
     }
 
     @Override
@@ -45,13 +53,29 @@ public class ResourceMetaBuilder implements CanSetResourceMeta, HasResourceMeta 
         setMeta(ResourceUtil.RES_META_RUNDECK_CONTENT_MODIFY_TIME, ResourceUtil.formatDate(time));
     }
 
+    public Date getModificationTime() {
+        String s = getResourceMeta().get(ResourceUtil.RES_META_RUNDECK_CONTENT_MODIFY_TIME);
+        if (null != s) {
+            return ResourceUtil.parseDate(s, null);
+        }
+        return null;
+    }
+
     @Override
     public void setCreationTime(Date time) {
         setMeta(ResourceUtil.RES_META_RUNDECK_CONTENT_CREATION_TIME, ResourceUtil.formatDate(time));
     }
 
+    public Date getCreationTime() {
+        String s = getResourceMeta().get(ResourceUtil.RES_META_RUNDECK_CONTENT_CREATION_TIME);
+        if (null != s) {
+            return ResourceUtil.parseDate(s, null);
+        }
+        return null;
+    }
+
     @Override
-    public Map<String,String> getResourceMeta() {
+    public Map<String, String> getResourceMeta() {
         return meta;
     }
 }
