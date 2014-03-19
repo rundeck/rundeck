@@ -24,6 +24,51 @@ class ApiController {
     /**
      * API endpoints
      */
+    /**
+     * Return true if grails configuration allows given feature, or '*' features
+     * @param name
+     * @return
+     */
+    private boolean featurePresent(def name){
+        def splat=grailsApplication.config.feature?.incubator?.getAt('*') in ['true',true]
+        return splat || (grailsApplication.config.feature?.incubator?.getAt(name) in ['true',true])
+    }
+    /**
+     * Set an incubator feature toggle on or off
+     * @param name
+     * @param enable
+     */
+    private void toggleFeature(def name, boolean enable){
+        grailsApplication.config.feature?.incubator?.putAt(name, enable)
+    }
+    /**
+     * Feature toggle api endpoint for development mode
+     */
+    def featureToggle={
+        def respond={
+            render(contentType: 'text/plain', text: featurePresent(params.featureName) ? 'true' : 'false')
+        }
+        if(params.featureName){
+            if(request.method=='GET'){
+                respond()
+            } else if (request.method=='PUT'){
+                toggleFeature(params.featureName, request.inputStream.text=='true')
+                respond()
+            }else if(request.method=='POST'){
+                toggleFeature(params.featureName, true)
+                respond()
+            }else if(request.method=='DELETE'){
+                toggleFeature(params.featureName, false)
+                respond()
+            }
+        }else{
+            render(contentType: 'text/plain'){
+                grailsApplication.config.feature?.incubator?.each{k,v->
+                    out<<"${k}:${v in [true,'true']}\n"
+                }
+            }
+        }
+    }
 
     /**
      * /api/1/system/info: display stats and info about the server

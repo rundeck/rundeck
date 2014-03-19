@@ -75,6 +75,8 @@ class UrlMappings {
                     DELETE: "apiDeleteResource"
             ]
         }
+        "/api/$api_version/incubator/feature/$featureName?"(controller: 'api',action: 'featureToggle')
+
 
         //catchall
         "/api/$api_version/$action?"(controller: 'api', action: 'invalid')
