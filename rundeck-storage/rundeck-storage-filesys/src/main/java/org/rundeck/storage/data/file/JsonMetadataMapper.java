@@ -31,7 +31,9 @@ public class JsonMetadataMapper implements MetadataMapper {
         HashMap<String, String> stringStringHashMap = new HashMap<String, String>();
         Map map=meta;
         for (Object o : map.keySet()) {
-            stringStringHashMap.put(o.toString(), map.get(o).toString());
+            if (null != o && null != map.get(o)) {
+                stringStringHashMap.put(o.toString(), map.get(o).toString());
+            }
         }
         objectMapper.writeValue(destination, stringStringHashMap);
     }
