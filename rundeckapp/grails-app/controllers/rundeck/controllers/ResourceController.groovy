@@ -2,7 +2,9 @@ package rundeck.controllers
 
 import org.apache.commons.fileupload.util.Streams
 import org.rundeck.storage.api.Resource
+import org.rundeck.storage.api.StorageException
 import rundeck.filters.ApiRequestFilters
+import rundeck.services.ApiService
 import rundeck.services.ResourceService
 
 import javax.servlet.http.HttpServletRequest
@@ -12,17 +14,25 @@ class ResourceController {
     public static final String RES_META_RUNDECK_CONTENT_TYPE = 'Rundeck-content-type'
     public static final String RES_META_RUNDECK_CONTENT_SIZE = 'Rundeck-content-size'
     public static final String RES_META_RUNDECK_CONTENT_MASK = 'Rundeck-content-mask'
+    public static final String RES_META_RUNDECK_SSHKEY_TYPE = 'Rundeck-ssh-key-type'
     public static final Map<String,String> RES_META_RUNDECK_OUTPUT = [
             (RES_META_RUNDECK_CONTENT_TYPE):"contentType",
             (RES_META_RUNDECK_CONTENT_SIZE):"contentLength",
+            (RES_META_RUNDECK_CONTENT_MASK): RES_META_RUNDECK_CONTENT_MASK,
+            (RES_META_RUNDECK_SSHKEY_TYPE): RES_META_RUNDECK_SSHKEY_TYPE
     ]
     ResourceService resourceService
+    ApiService apiService
+    static allowedMethods = [
+            sshKey: ['GET','POST','PUT','DELETE']
+    ]
 
     private def pathUrl(path){
-        return createLink(
-                absolute: true,
-                uri: "/api/${ApiRequestFilters.API_CURRENT_VERSION}/incubator/resource/$path"
-                )
+        def uriString = "/api/${ApiRequestFilters.API_CURRENT_VERSION}/incubator/storage/$path"
+        if ("${path}".startsWith('ssh-key/')) {
+            uriString = "/api/${ApiRequestFilters.API_CURRENT_VERSION}/storage/$path"
+        }
+        return createLink(absolute: true, uri: uriString)
     }
     private def jsonRenderResource(builder,Resource res, dirlist=[]){
         builder.with{
@@ -158,6 +168,27 @@ class ResourceController {
         }
     }
 
+    /**
+     * Handle resource requests to the /ssh-key path
+     * @return
+     */
+    def apiSshKey() {
+        params.resourcePath = "/ssh-key/${params.resourcePath}"
+        switch (request.method) {
+            case 'POST':
+                apiPostResource()
+                break
+            case 'PUT':
+                apiPutResource()
+                break
+            case 'GET':
+                apiGetResource()
+                break
+            case 'DELETE':
+                apiDeleteResource()
+                break
+        }
+    }
 
     def apiPostResource() {
         String resourcePath = params.resourcePath
