@@ -48,7 +48,7 @@ class ResourceController {
                     def meta=[:]
                     RES_META_RUNDECK_OUTPUT.each{k,v->
                         if(res.contents.meta[k]){
-                            meta[v]= res.contents.meta[k]
+                            meta[k]= res.contents.meta[k]
                         }
                     }
                     if(meta){
@@ -83,7 +83,7 @@ class ResourceController {
                     def bd = delegate
                     RES_META_RUNDECK_OUTPUT.each { k, v ->
                         if (res.contents.meta[k]) {
-                            bd."${v}"(res.contents.meta[k])
+                            bd."${k}"(res.contents.meta[k])
                         }
                     }
                 }
