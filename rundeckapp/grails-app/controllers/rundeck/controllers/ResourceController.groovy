@@ -202,20 +202,41 @@ class ResourceController {
         def map = [
                 (RES_META_RUNDECK_CONTENT_TYPE): request.contentType,
                 (RES_META_RUNDECK_CONTENT_SIZE): request.contentLength,
-        ]
-        def resource = resourceService.putResource(resourcePath, map, request.inputStream)
-        response.status=201
-        renderResourceFile(request,response,resource)
+        ] + (request.resourcePostMeta?:[:])
+        try{
+            def resource = resourceService.putResource(resourcePath, map, request.inputStream)
+            response.status=201
+            renderResourceFile(request,response,resource)
+        } catch (StorageException e) {
+            apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    message: e.message
+            ])
+        }
     }
 
 
     def apiDeleteResource() {
         String resourcePath = params.resourcePath
-        def deleted = resourceService.delResource(resourcePath)
-        if(deleted){
-            response.status=204
-        }else{
-            response.status=500
+        if(!resourceService.hasResource(resourcePath)) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.item.doesnotexist',
+                    args: ['Resource', resourcePath]
+            ])
+        }
+        try{
+            def deleted = resourceService.delResource(resourcePath)
+            if(deleted){
+                response.status=204
+            }else{
+                response.status=500
+            }
+        } catch (StorageException e) {
+            apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    message: e.message
+            ])
         }
     }
     def apiPutResource() {
@@ -225,10 +246,19 @@ class ResourceController {
             response.status = 404
             return renderError("resource not found: ${resourcePath}")
         }
-        def map = [(RES_META_RUNDECK_CONTENT_TYPE): request.contentType,
-                (RES_META_RUNDECK_CONTENT_SIZE): request.contentLength,]
-        def resource = resourceService.putResource(resourcePath, map, request.inputStream)
-        renderResourceFile(request,response,resource)
+        def map = [
+                (RES_META_RUNDECK_CONTENT_TYPE): request.contentType,
+                (RES_META_RUNDECK_CONTENT_SIZE): request.contentLength
+        ] + (request.resourcePostMeta ?: [:])
+        try {
+            def resource = resourceService.putResource(resourcePath, map, request.inputStream)
+            return renderResourceFile(request,response,resource)
+        } catch (StorageException e) {
+            apiService.renderErrorFormat(response,[
+                    status:HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    message:e.message
+            ])
+        }
     }
     def apiGetResource() {
         String resourcePath = params.resourcePath
@@ -238,12 +268,19 @@ class ResourceController {
             return renderError("resource not found: ${resourcePath}")
         }
         def resource = resourceService.getResource(resourcePath)
-        if (resource.directory) {
-            //list directory and render resources
-            def dirlist = resourceService.listDir(resourcePath)
-            return renderDirectory(request, response, resource,dirlist)
-        } else {
-            return renderResourceFile(request, response, resource)
+        try{
+            if (resource.directory) {
+                //list directory and render resources
+                def dirlist = resourceService.listDir(resourcePath)
+                return renderDirectory(request, response, resource,dirlist)
+            } else {
+                return renderResourceFile(request, response, resource)
+            }
+        } catch (StorageException e) {
+            apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    message: e.message
+            ])
         }
     }
 }
