@@ -2,6 +2,7 @@ import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.authorization.providers.SAREAuthorization
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.plugins.PluginManagerService
+import com.dtolabs.rundeck.core.storage.AuthRundeckResourceTree
 import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
 import com.dtolabs.rundeck.server.plugins.PluginCustomizer
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
@@ -52,7 +53,7 @@ beans={
      */
     rundeckFramework(Framework, rdeckBase){bean->
         bean.factoryMethod='getInstanceWithoutProjectsDir'
-        resourceTree=ref('rundeckResourceTree')
+        resourceTree=ref('authRundeckResourceTree')
     }
     def configDir = new File(Constants.getFrameworkConfigDir(rdeckBase))
     rundeckPolicyAuthorization(SAREAuthorization, configDir){
@@ -113,6 +114,7 @@ beans={
         baseStorageConfig=['baseDir':'${framework.var.dir}/storage']
         baseLoggerName='org.rundeck.storage.events'
     }
+    authRundeckResourceTree(AuthRundeckResourceTree,rundeckResourceTree)
     /**
      * Define groovy-based plugins as Spring beans, registered in a hash map
      */
