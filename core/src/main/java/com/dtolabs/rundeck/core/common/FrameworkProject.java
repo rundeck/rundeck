@@ -16,6 +16,8 @@
 
 package com.dtolabs.rundeck.core.common;
 
+import com.dtolabs.rundeck.core.authorization.Attribute;
+import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext;
 import com.dtolabs.rundeck.core.common.impl.URLFileUpdater;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
@@ -29,6 +31,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -51,6 +54,16 @@ public class FrameworkProject extends FrameworkResourceParent {
     public static final String FRAMEWORK_RESOURCES_ALLOWED_URL_PREFIX = "framework.resources.allowedURL.";
     public static final String RESOURCES_SOURCE_PROP_PREFIX = "resources.source";
     public static final String PROJECT_RESOURCES_MERGE_NODE_ATTRIBUTES = "project.resources.mergeNodeAttributes";
+
+    /**
+     * Creates an authorization environment for a project.
+     * @param project project name
+     * @return environment to evaluate authorization for a project
+     */
+    public static Set<Attribute> authorizationEnvironment(final String project) {
+        return Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "project"),
+                project));
+    }
     /**
      * Reference to deployments base directory
      */

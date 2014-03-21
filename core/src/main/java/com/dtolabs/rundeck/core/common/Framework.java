@@ -69,6 +69,16 @@ public class Framework extends FrameworkResourceParent {
     public static final String NODES_FILE_AUTOGEN_PROP = "framework.nodes.file.autogenerate";
     public static final String CENTRALDISPATCHER_CLS_DEFAULT = "com.dtolabs.client.services.RundeckAPICentralDispatcher";
 
+    /**
+     * Environmental attribute for the rundeck app
+     */
+    public static final Attribute RUNDECK_APP_CONTEXT = new Attribute(URI.create(EnvironmentalContext.URI_BASE +
+            "application"), "rundeck");
+    /**
+     * the rundeck app environment for authorization
+     */
+    public static final Set<Attribute> RUNDECK_APP_ENV = Collections.singleton(RUNDECK_APP_CONTEXT);
+
     static final String PROJECTMGR_NAME = "projectResourceMgr";
     public static final String FRAMEWORK_LIBEXT_DIR = "framework.libext.dir";
     public static final String FRAMEWORK_LIBEXT_CACHE_DIR = "framework.libext.cache.dir";
