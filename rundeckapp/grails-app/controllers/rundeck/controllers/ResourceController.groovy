@@ -214,6 +214,8 @@ class ResourceController {
             response.status=201
             renderResourceFile(request,response,resource)
         } catch (StorageException e) {
+            log.error("Error creating resource ${resourcePath}: ${e.message}")
+            log.debug("Error creating resource ${resourcePath}", e)
             apiService.renderErrorFormat(response, [
                     status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     message: e.message
@@ -240,6 +242,8 @@ class ResourceController {
                 response.status=500
             }
         } catch (StorageException e) {
+            log.error("Error deleting resource ${resourcePath}: ${e.message}")
+            log.debug("Error deleting resource ${resourcePath}", e)
             apiService.renderErrorFormat(response, [
                     status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     message: e.message
@@ -262,6 +266,8 @@ class ResourceController {
             def resource = resourceService.putResource(authContext,resourcePath, map, request.inputStream)
             return renderResourceFile(request,response,resource)
         } catch (StorageException e) {
+            log.error("Error putting resource ${resourcePath}: ${e.message}")
+            log.debug("Error putting resource ${resourcePath}", e)
             apiService.renderErrorFormat(response,[
                     status:HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     message:e.message
@@ -286,6 +292,8 @@ class ResourceController {
                 return renderResourceFile(request, response, resource)
             }
         } catch (StorageException e) {
+            log.error("Error reading resource ${resourcePath}: ${e.message}")
+            log.debug("Error reading resource ${resourcePath}",e)
             apiService.renderErrorFormat(response, [
                     status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     message: e.message
