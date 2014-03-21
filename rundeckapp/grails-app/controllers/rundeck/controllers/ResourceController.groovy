@@ -47,12 +47,13 @@ class ResourceController {
             }
             url = pathUrl(res.path)
             if (!res.directory) {
-                if (res.contents.meta) {
+                def meta1 = res.contents.meta
+                if (meta1) {
                     def bd = delegate
                     def meta=[:]
                     RES_META_RUNDECK_OUTPUT.each{k,v->
-                        if(res.contents.meta[k]){
-                            meta[k]= res.contents.meta[k]
+                        if(meta1[k]){
+                            meta[k]= meta1[k]
                         }
                     }
                     if(meta){
@@ -118,12 +119,14 @@ class ResourceController {
         }
     }
     private def renderResourceFile(HttpServletRequest request, HttpServletResponse response, Resource resource) {
-        def resContentType=resource.contents?.meta?.getAt(RES_META_RUNDECK_CONTENT_TYPE)
-        def cmask=resource.contents?.meta?.getAt(RES_META_RUNDECK_CONTENT_MASK)?.split(',') as Set
+        def contents = resource.contents
+        def meta = contents?.meta
+        def resContentType= meta?.getAt(RES_META_RUNDECK_CONTENT_TYPE)
+        def cmask=meta?.getAt(RES_META_RUNDECK_CONTENT_MASK)?.split(',') as Set
         //
         def maskContent=cmask?.contains('content')
 
-        def askedForContent= resContentType && request.getHeader('Accept').contains(resContentType)
+        def askedForContent= resContentType && request.getHeader('Accept')?.contains(resContentType)
         def anyContent= response.format == 'all'
 
         if (askedForContent && maskContent) {
@@ -131,10 +134,9 @@ class ResourceController {
             response.status = 403
             return renderError("unauthorized")
         }
-        if(!resource.directory && (askedForContent || anyContent) && !maskContent) {
+        if((askedForContent || anyContent) && !maskContent) {
             response.contentType=resContentType
-//            response.outputStream<<resource.contents?.meta?.toString()
-            Streams.copy(resource.contents.readContent(),response.outputStream,true)
+            Streams.copy(contents.readContent(),response.outputStream,true)
             return
         }
 
@@ -237,9 +239,12 @@ class ResourceController {
         try{
             def deleted = resourceService.delResource(authContext, resourcePath)
             if(deleted){
-                response.status=204
+                render(status: HttpServletResponse.SC_NO_CONTENT)
             }else{
-                response.status=500
+                apiService.renderErrorFormat(response, [
+                        status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                        message: "Resource was not deleted: ${resourcePath}"
+                ])
             }
         } catch (StorageException e) {
             log.error("Error deleting resource ${resourcePath}: ${e.message}")
