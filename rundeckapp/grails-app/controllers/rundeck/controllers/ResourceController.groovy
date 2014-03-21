@@ -33,7 +33,7 @@ class ResourceController {
 
     private def pathUrl(path){
         def uriString = "/api/${ApiRequestFilters.API_CURRENT_VERSION}/incubator/storage/$path"
-        if ("${path}".startsWith('ssh-key/')) {
+        if ("${path}".startsWith('ssh-key/') || path.toString() == 'ssh-key') {
             uriString = "/api/${ApiRequestFilters.API_CURRENT_VERSION}/storage/$path"
         }
         return createLink(absolute: true, uri: uriString)
