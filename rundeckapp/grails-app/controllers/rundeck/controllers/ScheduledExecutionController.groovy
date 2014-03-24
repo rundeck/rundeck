@@ -1068,7 +1068,7 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
         if (unauthorizedResponse(frameworkService.authorizeProjectExecutionAll(authContext, execution,
-                [AuthConstants.ACTION_READ], execution.project), AuthConstants.ACTION_READ, 'Execution',
+                [AuthConstants.ACTION_READ]), AuthConstants.ACTION_READ, 'Execution',
                 params.executionId)) {
             return
         }
