@@ -137,9 +137,10 @@ class ProjectControllerTest {
             getAuthContextForSubject(1..1){subj->
                 null
             }
+            authResourceForProject(1..1){ name->
+                assertEquals('test1',name)
+            }
             authorizeApplicationResourceAny(1..1){ AuthContext authContext, Map resource, Collection actions->
-                assertEquals('project',resource.type)
-                assertEquals('test1',resource.name)
                 assertTrue(AuthConstants.ACTION_READ in actions)
                 assertTrue(AuthConstants.ACTION_ADMIN in actions)
                 false
@@ -165,9 +166,10 @@ class ProjectControllerTest {
             getAuthContextForSubject(1..1){subj->
                 null
             }
+            authResourceForProject(1..1) { name ->
+                assertEquals('test1', name)
+            }
             authorizeApplicationResourceAny(1..1){ AuthContext authContext, Map resource, Collection actions->
-                assertEquals('project',resource.type)
-                assertEquals('test1',resource.name)
                 assertTrue(AuthConstants.ACTION_READ in actions)
                 assertTrue(AuthConstants.ACTION_ADMIN in actions)
                 true
@@ -198,10 +200,11 @@ class ProjectControllerTest {
             getAuthContextForSubject(1..1) { subj ->
                 null
             }
+            authResourceForProject(1..1) { name ->
+                assertEquals(projectName, name)
+            }
             def count = 0
             authorizeApplicationResourceAny(1..1) { AuthContext authContext, Map resource, Collection actions ->
-                assertEquals('project', resource.type)
-                assertEquals(projectName, resource.name)
                 count++
                 if (count == 1) {
                     assertTrue(AuthConstants.ACTION_READ in actions)
@@ -217,9 +220,10 @@ class ProjectControllerTest {
                 assertEquals(projectName, proj)
                 true
             }
+            authResourceForProject(1..1) { name ->
+                assertEquals(projectName, name)
+            }
             authorizeApplicationResourceAny(1..1) { AuthContext authContext, Map resource, Collection actions ->
-                assertEquals('project', resource.type)
-                assertEquals(projectName, resource.name)
                 count++
                 if (count == 1) {
                     assertTrue(AuthConstants.ACTION_READ in actions)
@@ -991,9 +995,10 @@ class ProjectControllerTest {
             getAuthContextForSubject{subj->
                 null
             }
+            authResourceForProject(1..1) { name ->
+                assertEquals("test1", name)
+            }
             authorizeApplicationResourceAny{ctx,resource,actions->
-                assertEquals("project",resource.type)
-                assertEquals("test1",resource.name)
                 assertTrue(AuthConstants.ACTION_DELETE in actions)
                 assertTrue(AuthConstants.ACTION_ADMIN in actions)
                 authorized
@@ -1019,9 +1024,10 @@ class ProjectControllerTest {
             getAuthContextForSubject{subj->
                 null
             }
+            authResourceForProject(1..1) { name ->
+                assertEquals("test1", name)
+            }
             authorizeApplicationResourceAny{ctx,resource,actions->
-                assertEquals("project",resource.type)
-                assertEquals("test1",resource.name)
                 assertTrue(action in actions)
                 assertTrue(AuthConstants.ACTION_ADMIN in actions)
                 authorized
@@ -1051,9 +1057,10 @@ class ProjectControllerTest {
             getAuthContextForSubject{subj->
                 null
             }
+            authResourceForProject(1..1) { name ->
+                assertEquals("test1", name)
+            }
             authorizeApplicationResourceAny{ctx,resource,actions->
-                assertEquals("project",resource.type)
-                assertEquals("test1",resource.name)
                 assertTrue(action in actions)
                 assertTrue(AuthConstants.ACTION_ADMIN in actions)
                 authorized
@@ -1090,9 +1097,10 @@ class ProjectControllerTest {
             getAuthContextForSubject{subj->
                 null
             }
+            authResourceForProject(1..1) { name ->
+                assertEquals("test1", name)
+            }
             authorizeApplicationResourceAny{ctx,resource,actions->
-                assertEquals("project",resource.type)
-                assertEquals("test1",resource.name)
                 assertTrue(action in actions)
                 assertTrue(AuthConstants.ACTION_ADMIN in actions)
                 authorized
@@ -1129,9 +1137,10 @@ class ProjectControllerTest {
             getAuthContextForSubject{subj->
                 null
             }
+            authResourceForProject(1..1) { name ->
+                assertEquals("test1", name)
+            }
             authorizeApplicationResourceAny{ctx,resource,actions->
-                assertEquals("project",resource.type)
-                assertEquals("test1",resource.name)
                 assertTrue(action in actions)
                 assertTrue(AuthConstants.ACTION_ADMIN in actions)
                 authorized
@@ -1160,9 +1169,10 @@ class ProjectControllerTest {
             getAuthContextForSubject{subj->
                 null
             }
+            authResourceForProject(1..1) { name ->
+                assertEquals("test1", name)
+            }
             authorizeApplicationResourceAny{ctx,resource,actions->
-                assertEquals("project",resource.type)
-                assertEquals("test1",resource.name)
                 assertTrue(action in actions)
                 assertTrue(AuthConstants.ACTION_ADMIN in actions)
                 authorized
