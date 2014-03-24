@@ -143,7 +143,7 @@ class ResourceControllerTests {
         controller.resourceService = mockWith(ResourceService) {
             hasResource { ctx,path -> false }
             hasPath { ctx,path -> false }
-            putResource{ctx,path,meta,stream->
+            createResource{ctx,path,meta,stream->
                 mRes2
             }
         }
@@ -167,7 +167,7 @@ class ResourceControllerTests {
         controller.resourceService = mockWith(ResourceService) {
             hasResource { ctx,path -> false }
             hasPath { ctx,path -> false }
-            putResource{ctx,path,meta,stream->
+            createResource{ctx,path,meta,stream->
                 throw StorageException.createException(PathUtil.asPath("abc/test2"),"failed")
             }
         }
@@ -202,7 +202,7 @@ class ResourceControllerTests {
                 ['Rundeck-content-type': 'test/data']), directory: false, path: PathUtil.asPath("abc/test2"))
         controller.resourceService = mockWith(ResourceService) {
             hasResource { ctx,path -> true }
-            putResource{ctx,path,meta,stream->
+            updateResource{ctx,path,meta,stream->
                 mRes2
             }
         }
@@ -225,7 +225,7 @@ class ResourceControllerTests {
                 ['Rundeck-content-type': 'test/data']), directory: false, path: PathUtil.asPath("abc/test2"))
         controller.resourceService = mockWith(ResourceService) {
             hasResource { ctx,path -> true }
-            putResource{ctx,path,meta,stream->
+            updateResource{ctx,path,meta,stream->
                 throw StorageException.createException(PathUtil.asPath("abc/test2"),"failed")
             }
         }
