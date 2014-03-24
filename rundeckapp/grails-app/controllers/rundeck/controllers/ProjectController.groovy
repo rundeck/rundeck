@@ -1,6 +1,7 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.server.authorization.AuthConstants
@@ -41,7 +42,8 @@ class ProjectController extends ControllerBase{
         }
 
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAny(authContext, [type: 'project', name: project],
+                frameworkService.authorizeApplicationResourceAny(authContext,
+                        frameworkService.authResourceForProject(project),
                         [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT]),
                 AuthConstants.ACTION_EXPORT, 'Project',project)) {
             return
@@ -80,7 +82,8 @@ class ProjectController extends ControllerBase{
         }
 
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAny(authContext, [type: 'project', name: project],
+                frameworkService.authorizeApplicationResourceAny(authContext,
+                        frameworkService.authResourceForProject(project),
                         [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT]),
                 AuthConstants.ACTION_IMPORT, 'Project', project)) {
             return
@@ -121,7 +124,8 @@ class ProjectController extends ControllerBase{
             return render(view: "/common/error")
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if (!frameworkService.authorizeApplicationResourceAny(authContext, [type: 'project', name: project],
+        if (!frameworkService.authorizeApplicationResourceAny(authContext,
+                frameworkService.authResourceForProject(project),
                 [AuthConstants.ACTION_ADMIN,AuthConstants.ACTION_DELETE])) {
             response.setStatus(403)
             request.error = g.message(code: 'api.error.item.unauthorized', args: [AuthConstants.ACTION_DELETE,
@@ -267,7 +271,8 @@ class ProjectController extends ControllerBase{
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])
         }
-        if (!frameworkService.authorizeApplicationResourceAny(authContext, [type: 'project', name: params.project],
+        if (!frameworkService.authorizeApplicationResourceAny(authContext,
+                frameworkService.authResourceForProject(params.project),
                 [AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN])) {
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Read', 'Project', params.project]])
@@ -277,8 +282,9 @@ class ProjectController extends ControllerBase{
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist', args: ['project', params.project]])
         }
-        def configAuth= frameworkService.authorizeApplicationResourceAny(authContext, [type: 'project',
-                name: params.project], [AuthConstants.ACTION_CONFIGURE,AuthConstants.ACTION_ADMIN])
+        def configAuth= frameworkService.authorizeApplicationResourceAny(authContext,
+                frameworkService.authResourceForProject(params.project),
+                [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN])
         def pject = frameworkService.getFrameworkProject(params.project)
         def ctrl=this
         withFormat{
@@ -417,7 +423,8 @@ class ProjectController extends ControllerBase{
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
         if (!frameworkService.authorizeApplicationResourceAny(authContext,
-                [type: 'project', name: project], [AuthConstants.ACTION_DELETE,AuthConstants.ACTION_ADMIN])) {
+                frameworkService.authResourceForProject(project),
+                [AuthConstants.ACTION_DELETE,AuthConstants.ACTION_ADMIN])) {
             return apiService.renderErrorFormat(response,
                     [
                             status: HttpServletResponse.SC_FORBIDDEN,
@@ -470,7 +477,8 @@ class ProjectController extends ControllerBase{
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
         if (!frameworkService.authorizeApplicationResourceAny(authContext,
-                [type: 'project', name: project], [action, AuthConstants.ACTION_ADMIN])) {
+                frameworkService.authResourceForProject(project),
+                [action, AuthConstants.ACTION_ADMIN])) {
             apiService.renderErrorFormat(response,
                     [
                             status: HttpServletResponse.SC_FORBIDDEN,

@@ -4,8 +4,7 @@ import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authorization.Attribute
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.authorization.Authorization
-import com.dtolabs.rundeck.core.authorization.Decision
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.SubjectAuthContext
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
 import com.dtolabs.rundeck.core.authorization.providers.SAREAuthorization
@@ -17,6 +16,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import com.dtolabs.rundeck.server.authorization.AuthConstants
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import rundeck.Execution
@@ -73,7 +73,7 @@ class FrameworkService implements ApplicationContextAware {
         def resources=[] as Set
         for (proj in rundeckFramework.frameworkProjectMgr.listFrameworkProjects()) {
             projMap[proj.name] = proj;
-            resources << [type: 'project', name: proj.name]
+            resources << authResourceForProject(proj.name)
         }
         def authed = authorizeApplicationResourceSet(authContext, resources, 'read')
         return new ArrayList(authed.collect{projMap[it.name]})
@@ -229,7 +229,15 @@ class FrameworkService implements ApplicationContextAware {
      * @return
      */
     def Map authResourceForJob(String name, String groupPath){
-        return [type:'job',name:name,group:groupPath?:'']
+        return AuthorizationUtil.resource(AuthConstants.TYPE_JOB,[name:name,group:groupPath?:''])
+    }
+    /**
+     * Return the resource definition for a project for use by authorization checks
+     * @param name the project name
+     * @return resource map for authorization check
+     */
+    def Map authResourceForProject(String name){
+        return AuthorizationUtil.resource(AuthConstants.TYPE_PROJECT, [name: name])
     }
 
     /**
@@ -306,7 +314,7 @@ class FrameworkService implements ApplicationContextAware {
         def ScheduledExecution se = exec.scheduledExecution
         return se ?
                authorizeProjectJobAll(authContext, se, actions, se.project)  :
-               authorizeProjectResourceAll(authContext, [type: 'adhoc'], actions, exec.project)
+               authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_ADHOC, actions, exec.project)
 
     }
     /**
@@ -326,7 +334,8 @@ class FrameworkService implements ApplicationContextAware {
                 if(se && null==semap[se.id]){
                     semap[se.id]=authorizeProjectJobAll(authContext, se, actions, se.project)
                 }else if(!se && null==adhocauth){
-                    adhocauth=authorizeProjectResourceAll(authContext, [type: 'adhoc'], actions, exec.project)
+                    adhocauth=authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_ADHOC, actions,
+                            exec.project)
                 }
                 if(se ? semap[se.id] : adhocauth){
                     results << exec
@@ -430,7 +439,7 @@ class FrameworkService implements ApplicationContextAware {
 
         def decision = metricService.withTimer(this.class.name,'authorizeApplicationResourceType') {
             authContext.evaluate(
-                    [type: 'resource', kind: resourceType],
+                    AuthorizationUtil.resourceType(resourceType),
                     action,
                     Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "application"), 'rundeck')))
         }
@@ -446,7 +455,7 @@ class FrameworkService implements ApplicationContextAware {
     def boolean authorizeApplicationResourceTypeAll(AuthContext authContext, String resourceType, Collection actions) {
         def Set decisions= metricService.withTimer(this.class.name,'authorizeApplicationResourceType') {
             authContext.evaluate(
-                    [[type: 'resource', kind: resourceType]] as Set,
+                    [AuthorizationUtil.resourceType(resourceType)] as Set,
                     actions as Set,
                     Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "application"), 'rundeck')))
         }

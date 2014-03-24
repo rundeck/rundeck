@@ -4,6 +4,7 @@ import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.app.api.ApiBulkJobDeleteRequest
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.common.Framework
 
 import com.dtolabs.rundeck.core.common.INodeEntry
@@ -729,7 +730,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
-        if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'job'],
+        if (!frameworkService.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_JOB,
                 [AuthConstants.ACTION_CREATE], jobset[0].project)) {
 
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
@@ -999,8 +1000,9 @@ class ScheduledExecutionController  extends ControllerBase{
     def copy = {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         //authorize
-        if(unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource',
-                kind: 'job'], [AuthConstants.ACTION_CREATE], params.project), AuthConstants.ACTION_CREATE,
+        if(unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext,
+                AuthConstants.RESOURCE_TYPE_JOB, [AuthConstants.ACTION_CREATE], params.project),
+                AuthConstants.ACTION_CREATE,
                 'New Job'
         )){
             return
@@ -1055,8 +1057,8 @@ class ScheduledExecutionController  extends ControllerBase{
 
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
-        if (unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource',
-                kind: 'job'], [AuthConstants.ACTION_CREATE],
+        if (unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext,
+                AuthConstants.RESOURCE_TYPE_JOB, [AuthConstants.ACTION_CREATE],
                 params.project), AuthConstants.ACTION_CREATE, 'New Job')) {
             return
         }
@@ -1103,8 +1105,8 @@ class ScheduledExecutionController  extends ControllerBase{
 
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         //authorize
-        if (unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource',
-                kind: 'job'], [AuthConstants.ACTION_CREATE],
+        if (unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext,
+                AuthConstants.RESOURCE_TYPE_JOB, [AuthConstants.ACTION_CREATE],
                 params.project),
                 AuthConstants.ACTION_CREATE, 'New Job')) {
             return
@@ -1204,8 +1206,8 @@ class ScheduledExecutionController  extends ControllerBase{
         def changeinfo = [user: session.user, change: 'create', method: 'saveAndExec']
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if (unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource',
-                kind: 'job'], [AuthConstants.ACTION_CREATE],
+        if (unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext,
+                AuthConstants.RESOURCE_TYPE_JOB, [AuthConstants.ACTION_CREATE],
                 params.project),
                 AuthConstants.ACTION_CREATE, 'New Job')) {
             return [success:false]
@@ -1359,7 +1361,8 @@ class ScheduledExecutionController  extends ControllerBase{
 
         if (params.asUser && apiService.requireVersion(request,response,ApiRequestFilters.V5)) {
             //authorize RunAs User
-            if (!frameworkService.authorizeProjectResource(authContext, [type: 'adhoc'], AuthConstants.ACTION_RUNAS, params.project)) {
+            if (!frameworkService.authorizeProjectResource(authContext, AuthConstants.RESOURCE_ADHOC,
+                    AuthConstants.ACTION_RUNAS, params.project)) {
 
                 def msg = g.message(code: "api.error.item.unauthorized", args: ['Run as User', 'Run', 'Adhoc'])
                 return [failed:true,error: 'unauthorized', message: msg]
@@ -2407,7 +2410,8 @@ class ScheduledExecutionController  extends ControllerBase{
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         //test valid project
 
-        if (!frameworkService.authorizeApplicationResource(authContext, [type: 'resource', kind: 'job'], AuthConstants.ACTION_ADMIN)) {
+        if (!frameworkService.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_JOB,
+                AuthConstants.ACTION_ADMIN)) {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Reschedule Jobs', 'Server', params.serverNodeUUID]])
         }

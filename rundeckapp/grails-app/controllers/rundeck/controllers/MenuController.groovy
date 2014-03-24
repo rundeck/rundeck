@@ -4,6 +4,7 @@ import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.core.execution.service.FileCopierService
@@ -323,7 +324,9 @@ class MenuController extends ControllerBase{
 
         long viewable=System.currentTimeMillis()
 
-        def authCreate = frameworkService.authorizeProjectResource(authContext, [type: 'resource', kind: 'job'], AuthConstants.ACTION_CREATE, query.projFilter)
+        def authCreate = frameworkService.authorizeProjectResource(authContext,
+                AuthConstants.RESOURCE_TYPE_JOB,
+                AuthConstants.ACTION_CREATE, query.projFilter)
         
 
         def Map jobauthorizations=[:]
@@ -464,7 +467,9 @@ class MenuController extends ControllerBase{
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAll(authContext, [type: 'project', name: params.project], [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_READ]),
+                frameworkService.authorizeApplicationResourceAll(authContext,
+                        frameworkService.authResourceForProject(params.project),
+                        [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_READ]),
                 AuthConstants.ACTION_ADMIN, 'Project', params.project)) {
             return
         }
@@ -523,7 +528,8 @@ class MenuController extends ControllerBase{
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResource(authContext, [type: 'resource', kind: 'system'], AuthConstants.ACTION_READ),
+                frameworkService.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_SYSTEM,
+                        AuthConstants.ACTION_READ),
                 AuthConstants.ACTION_READ, 'System configuration')) {
             return
         }
@@ -533,7 +539,7 @@ class MenuController extends ControllerBase{
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResource(authContext, [type: 'resource', kind: 'system'],
+                frameworkService.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_SYSTEM,
                         AuthConstants.ACTION_READ),
                 AuthConstants.ACTION_READ, 'System configuration')) {
             return
@@ -546,7 +552,7 @@ class MenuController extends ControllerBase{
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResource(authContext, [type: 'resource', kind: 'system'],
+                frameworkService.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_SYSTEM,
                         AuthConstants.ACTION_READ),
                 AuthConstants.ACTION_READ, 'System configuration')) {
             return
@@ -746,8 +752,11 @@ class MenuController extends ControllerBase{
             summary[project.name].readme=frameworkService.getFrameworkProjectReadmeContents(project.name)
             //authorization
             summary[project.name].auth = [
-                    jobCreate: frameworkService.authorizeProjectResource(authContext, [type: 'resource', kind: 'job'], 'create', project.name),
-                    admin: frameworkService.authorizeApplicationResource(authContext, [type:'project',name: project.name], 'admin'),
+                    jobCreate: frameworkService.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_JOB,
+                            AuthConstants.ACTION_CREATE, project.name),
+                    admin: frameworkService.authorizeApplicationResource(authContext,
+                            AuthorizationUtil.resource(AuthConstants.TYPE_NODE, [name: project.name]),
+                            AuthConstants.ACTION_ADMIN),
             ]
         }
         def projects = Execution.createCriteria().list {

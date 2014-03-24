@@ -2,6 +2,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import org.apache.commons.validator.EmailValidator
@@ -451,7 +452,8 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             ]
             return [error: err,success: false]
         }
-        if (!frameworkService.authorizeProjectResource (authContext, [type: 'resource', kind: 'job'], AuthConstants.ACTION_DELETE, scheduledExecution.project)
+        if (!frameworkService.authorizeProjectResource (authContext, AuthConstants.RESOURCE_TYPE_JOB,
+                AuthConstants.ACTION_DELETE, scheduledExecution.project)
             || !frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_DELETE], scheduledExecution.project)) {
             def err = [
                     message: lookupMessage('api.error.item.unauthorized', ['Delete', 'Job ID', scheduledExecution.extid] as Object[]),
@@ -487,7 +489,8 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         return frameworkService.authorizeProjectJobAll(authContext,se,[AuthConstants.ACTION_READ],se.project)
     }
     def userAuthorizedForAdhoc(request,ScheduledExecution se, AuthContext authContext){
-        return frameworkService.authorizeProjectResource(authContext,[type: 'adhoc'], AuthConstants.ACTION_RUN,se.project)
+        return frameworkService.authorizeProjectResource(authContext, AuthConstants.RESOURCE_ADHOC,
+                AuthConstants.ACTION_RUN,se.project)
     }
 
     def scheduleJob(ScheduledExecution se, String oldJobName, String oldGroupName) {
@@ -882,7 +885,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             } else if (option == "create" || !scheduledExecution) {
                 def errmsg
 
-                if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'job'],
+                if (!frameworkService.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_JOB,
                                                                   [AuthConstants.ACTION_CREATE], jobdata.project)) {
                     errmsg = "Unauthorized: Create Job"
                     errjobs << [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg]
