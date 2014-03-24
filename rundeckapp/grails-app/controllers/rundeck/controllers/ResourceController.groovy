@@ -212,7 +212,7 @@ class ResourceController {
                 (RES_META_RUNDECK_CONTENT_SIZE): Integer.toString(request.contentLength),
         ] + (request.resourcePostMeta?:[:])
         try{
-            def resource = resourceService.putResource(authContext,resourcePath, map, request.inputStream)
+            def resource = resourceService.createResource(authContext,resourcePath, map, request.inputStream)
             response.status=201
             renderResourceFile(request,response,resource)
         } catch (StorageException e) {
@@ -268,7 +268,7 @@ class ResourceController {
                 (RES_META_RUNDECK_CONTENT_SIZE): Integer.toString(request.contentLength),
         ] + (request.resourcePostMeta ?: [:])
         try {
-            def resource = resourceService.putResource(authContext,resourcePath, map, request.inputStream)
+            def resource = resourceService.updateResource(authContext,resourcePath, map, request.inputStream)
             return renderResourceFile(request,response,resource)
         } catch (StorageException e) {
             log.error("Error putting resource ${resourcePath}: ${e.message}")

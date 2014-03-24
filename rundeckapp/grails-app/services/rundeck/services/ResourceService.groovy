@@ -21,24 +21,12 @@ class ResourceService {
         authRundeckResourceTree.getPath(context, PathUtil.asPath(path))
     }
 
-    def putResource(AuthContext context, String path, Map<String, String> meta, String data) {
-        if (authRundeckResourceTree.hasResource(context, PathUtil.asPath(path))) {
-            authRundeckResourceTree.updateResource(context, PathUtil.asPath(path), DataUtil.withText(data, meta,
-                    ResourceUtil.factory()))
-        } else {
-            authRundeckResourceTree.createResource(context, PathUtil.asPath(path), DataUtil.withText(data, meta,
-                    ResourceUtil.factory()))
-        }
+    def updateResource(AuthContext context, String path, Map<String, String> meta, InputStream data) {
+        authRundeckResourceTree.updateResource(context, PathUtil.asPath(path), DataUtil.withStream(data, meta,
+                ResourceUtil.factory()))
     }
-
-    def putResource(AuthContext context, String path, Map<String, String> meta, InputStream data) {
-        if (authRundeckResourceTree.hasResource(context, PathUtil.asPath(path))) {
-            authRundeckResourceTree.updateResource(context, PathUtil.asPath(path), DataUtil.withStream(data, meta,
-                    ResourceUtil.factory()))
-        } else {
-            authRundeckResourceTree.createResource(context, PathUtil.asPath(path), DataUtil.withStream(data, meta,
-                    ResourceUtil.factory()))
-        }
+    def createResource(AuthContext context, String path, Map<String, String> meta, InputStream data) {
+        authRundeckResourceTree.createResource(context, PathUtil.asPath(path), DataUtil.withStream(data, meta, ResourceUtil.factory()))
     }
 
     def listDir(AuthContext context, String path) {
