@@ -2,6 +2,7 @@ package com.dtolabs.rundeck.core.storage;
 
 import com.dtolabs.rundeck.core.authorization.Attribute;
 import com.dtolabs.rundeck.core.authorization.AuthContext;
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil;
 import com.dtolabs.rundeck.core.authorization.Decision;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
@@ -22,6 +23,10 @@ public class AuthRundeckResourceTree implements AuthResourceTree {
     public static final String DELETE = "delete";
     public static final String CREATE = "create";
     public static final String UPDATE = "update";
+    public static final String STORAGE_PATH_AUTH_RES_TYPE = "storage";
+    public static final String PATH_RES_KEY = "path";
+    public static final String NAME_RES_KEY = "name";
+    public static final String PROJECT_PATH_COMPONENT = "project";
     private ResourceTree resourceTree;
 
     public AuthRundeckResourceTree(ResourceTree resourceTree) {
@@ -31,11 +36,11 @@ public class AuthRundeckResourceTree implements AuthResourceTree {
     /**
      * Evaluate access based on path
      *
-     * @param context
-     * @param path
-     * @param action
+     * @param context auth context
+     * @param path    path
+     * @param action  action
      *
-     * @return
+     * @return true if authorized
      */
     private boolean authorizedPath(AuthContext context, Path path, String action) {
         Decision evaluate = context.evaluate(
@@ -47,47 +52,42 @@ public class AuthRundeckResourceTree implements AuthResourceTree {
     }
 
     /**
-     * evaluate access based on content of a path
+     * Return authorization resource map for a path
      *
-     * @param auth
-     * @param path1
-     * @param action
+     * @param path path
      *
-     * @return
+     * @return map defining the authorization resource
      */
-    private boolean authorizedContent(AuthContext auth, Resource<ResourceMeta> path1, String action) {
-        Decision evaluate = auth.evaluate(
-                resourceForContent(path1),
-                action,
-                environmentForPath(path1.getPath())
-        );
-        return evaluate.isAuthorized();
-    }
-
-    private Map<String, String> resourceForContent(Resource<ResourceMeta> content) {
-        HashMap<String, String> authResource = new HashMap<String, String>();
-        authResource.put("type", "storageContent");
-        authResource.put("path", content.getPath().getPath());
-        authResource.put("name", content.getPath().getName());
-        if (null != content.getContents() && null != content.getContents().getMeta()) {
-            for (String s : content.getContents().getMeta().keySet()) {
-                authResource.put(s, content.getContents().getMeta().get(s));
-            }
-        }
-        return authResource;
-    }
-
     private Map<String, String> resourceForPath(Path path) {
+        return AuthorizationUtil.resource(STORAGE_PATH_AUTH_RES_TYPE, authResForPath(path));
+    }
+
+    /**
+     * Map containing path and name given a path
+     *
+     * @param path path
+     *
+     * @return map
+     */
+    private Map<String, String> authResForPath(Path path) {
         HashMap<String, String> authResource = new HashMap<String, String>();
-        authResource.put("type", "storagePath");
-        authResource.put("path", path.getPath());
-        authResource.put("name", path.getName());
+        authResource.put(PATH_RES_KEY, path.getPath());
+        authResource.put(NAME_RES_KEY, path.getName());
         return authResource;
     }
 
+    /**
+     * Generate the environment for a path, based on the convention that /project/name/* maps to a project called
+     * "name", and anything else is within the application environment.
+     *
+     * @param path path
+     *
+     * @return authorization environment: a project environment if the path matches /project/name/*, otherwise the
+     *         application environment
+     */
     Set<Attribute> environmentForPath(Path path) {
         String[] paths = path.getPath().split("/");
-        if (paths != null && paths.length > 2 && paths[0].equals("project")) {
+        if (paths != null && paths.length > 2 && paths[0].equals(PROJECT_PATH_COMPONENT)) {
             return FrameworkProject.authorizationEnvironment(paths[1]);
         } else {
             return Framework.RUNDECK_APP_ENV;
@@ -120,9 +120,6 @@ public class AuthRundeckResourceTree implements AuthResourceTree {
             return resource;
         }
 
-        if (!authorizedContent(auth, resource, READ)) {
-            throw StorageException.readException(path, "Unauthorized access");
-        }
         return resource;
     }
 
@@ -134,9 +131,6 @@ public class AuthRundeckResourceTree implements AuthResourceTree {
         }
 
         Resource<ResourceMeta> resource = resourceTree.getResource(path);
-        if (!authorizedContent(auth, resource, READ)) {
-            throw StorageException.readException(path, "Unauthorized access");
-        }
 
         return resource;
     }
@@ -154,8 +148,7 @@ public class AuthRundeckResourceTree implements AuthResourceTree {
             Set<Resource<ResourceMeta>> resources, String action) {
         HashSet<Resource<ResourceMeta>> resources1 = new HashSet<Resource<ResourceMeta>>();
         for (Resource<ResourceMeta> resource : resources) {
-            if (resource.isDirectory() && authorizedPath(auth, resource.getPath(), action)
-                    || !resource.isDirectory() && authorizedContent(auth, resource, action)) {
+            if (authorizedPath(auth, resource.getPath(), action)) {
                 resources1.add(resource);
             }
         }
