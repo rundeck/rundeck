@@ -2,6 +2,7 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.storage.ResourceMeta
+import com.dtolabs.rundeck.core.storage.StorageAuthorizationException
 import org.apache.commons.fileupload.util.Streams
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.api.StorageException
@@ -215,6 +216,13 @@ class ResourceController {
             def resource = resourceService.createResource(authContext,resourcePath, map, request.inputStream)
             response.status=201
             renderResourceFile(request,response,resource)
+        } catch (StorageAuthorizationException e) {
+            log.error("Unauthorized: resource ${resourcePath}: ${e.message}")
+            apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_FORBIDDEN,
+                    code: 'api.error.item.unauthorized',
+                    args: [e.event.toString(), 'Path', e.path.toString()]
+            ])
         } catch (StorageException e) {
             log.error("Error creating resource ${resourcePath}: ${e.message}")
             log.debug("Error creating resource ${resourcePath}", e)
@@ -246,6 +254,13 @@ class ResourceController {
                         message: "Resource was not deleted: ${resourcePath}"
                 ])
             }
+        } catch (StorageAuthorizationException e) {
+            log.error("Unauthorized: resource ${resourcePath}: ${e.message}")
+            apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_FORBIDDEN,
+                    code: 'api.error.item.unauthorized',
+                    args: [e.event.toString(), 'Path', e.path.toString()]
+            ])
         } catch (StorageException e) {
             log.error("Error deleting resource ${resourcePath}: ${e.message}")
             log.debug("Error deleting resource ${resourcePath}", e)
@@ -270,6 +285,13 @@ class ResourceController {
         try {
             def resource = resourceService.updateResource(authContext,resourcePath, map, request.inputStream)
             return renderResourceFile(request,response,resource)
+        } catch (StorageAuthorizationException e) {
+            log.error("Unauthorized: resource ${resourcePath}: ${e.message}")
+            apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_FORBIDDEN,
+                    code: 'api.error.item.unauthorized',
+                    args: [e.event.toString(), 'Path', e.path.toString()]
+            ])
         } catch (StorageException e) {
             log.error("Error putting resource ${resourcePath}: ${e.message}")
             log.debug("Error putting resource ${resourcePath}", e)
@@ -296,7 +318,14 @@ class ResourceController {
             } else {
                 return renderResourceFile(request, response, resource)
             }
-        } catch (StorageException e) {
+        } catch (StorageAuthorizationException e) {
+            log.error("Unauthorized: resource ${resourcePath}: ${e.message}")
+            apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_FORBIDDEN,
+                    code: 'api.error.item.unauthorized',
+                    args: [e.event.toString(), 'Path', e.path.toString()]
+            ])
+        }catch (StorageException e) {
             log.error("Error reading resource ${resourcePath}: ${e.message}")
             log.debug("Error reading resource ${resourcePath}",e)
             apiService.renderErrorFormat(response, [
