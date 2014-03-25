@@ -112,7 +112,7 @@ public class AuthRundeckResourceTree implements AuthResourceTree {
     @Override
     public Resource<ResourceMeta> getPath(AuthContext auth, Path path) {
         if (!authorizedPath(auth, path, READ)) {
-            throw StorageException.readException(path, "Unauthorized access");
+            throw new StorageAuthorizationException("Unauthorized access", StorageException.Event.READ, path);
         }
 
         Resource<ResourceMeta> resource = resourceTree.getPath(path);
@@ -127,7 +127,7 @@ public class AuthRundeckResourceTree implements AuthResourceTree {
     @Override
     public Resource<ResourceMeta> getResource(AuthContext auth, Path path) {
         if (!authorizedPath(auth, path, READ)) {
-            throw StorageException.readException(path, "Unauthorized access");
+            throw new StorageAuthorizationException("Unauthorized access", StorageException.Event.READ, path);
         }
 
         Resource<ResourceMeta> resource = resourceTree.getResource(path);
@@ -138,7 +138,7 @@ public class AuthRundeckResourceTree implements AuthResourceTree {
     @Override
     public Set<Resource<ResourceMeta>> listDirectoryResources(AuthContext auth, Path path) {
         if (!authorizedPath(auth, path, READ)) {
-            throw StorageException.listException(path, "Unauthorized access");
+            throw new StorageAuthorizationException("Unauthorized access", StorageException.Event.LIST, path);
         }
         Set<Resource<ResourceMeta>> resources = resourceTree.listDirectoryResources(path);
         return filteredResources(auth, resources, READ);
@@ -158,7 +158,7 @@ public class AuthRundeckResourceTree implements AuthResourceTree {
     @Override
     public Set<Resource<ResourceMeta>> listDirectory(AuthContext auth, Path path) {
         if (!authorizedPath(auth, path, READ)) {
-            throw StorageException.listException(path, "Unauthorized access");
+            throw new StorageAuthorizationException("Unauthorized access", StorageException.Event.LIST, path);
         }
         Set<Resource<ResourceMeta>> resources = resourceTree.listDirectory(path);
         return filteredResources(auth, resources, READ);
@@ -167,7 +167,7 @@ public class AuthRundeckResourceTree implements AuthResourceTree {
     @Override
     public Set<Resource<ResourceMeta>> listDirectorySubdirs(AuthContext auth, Path path) {
         if (!authorizedPath(auth, path, READ)) {
-            throw StorageException.listException(path, "Unauthorized access");
+            throw new StorageAuthorizationException("Unauthorized access", StorageException.Event.READ, path);
         }
         Set<Resource<ResourceMeta>> resources = resourceTree.listDirectorySubdirs(path);
         return filteredResources(auth, resources, READ);
@@ -176,7 +176,7 @@ public class AuthRundeckResourceTree implements AuthResourceTree {
     @Override
     public boolean deleteResource(AuthContext auth, Path path) {
         if (!authorizedPath(auth, path, DELETE)) {
-            throw StorageException.deleteException(path, "Unauthorized access");
+            throw new StorageAuthorizationException("Unauthorized access", StorageException.Event.DELETE, path);
         }
         return resourceTree.deleteResource(path);
     }
@@ -184,7 +184,7 @@ public class AuthRundeckResourceTree implements AuthResourceTree {
     @Override
     public Resource<ResourceMeta> createResource(AuthContext auth, Path path, ResourceMeta content) {
         if (!authorizedPath(auth, path, CREATE)) {
-            throw StorageException.createException(path, "Unauthorized access");
+            throw new StorageAuthorizationException("Unauthorized access", StorageException.Event.CREATE, path);
         }
         return resourceTree.createResource(path, content);
     }
@@ -192,7 +192,7 @@ public class AuthRundeckResourceTree implements AuthResourceTree {
     @Override
     public Resource<ResourceMeta> updateResource(AuthContext auth, Path path, ResourceMeta content) {
         if (!authorizedPath(auth, path, UPDATE)) {
-            throw StorageException.updateException(path, "Unauthorized access");
+            throw new StorageAuthorizationException("Unauthorized access", StorageException.Event.UPDATE, path);
         }
         return resourceTree.updateResource(path, content);
     }
