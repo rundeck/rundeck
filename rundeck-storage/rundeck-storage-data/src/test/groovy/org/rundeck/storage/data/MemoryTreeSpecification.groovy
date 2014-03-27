@@ -29,6 +29,14 @@ class MemoryTreeSpecification extends Specification {
         storage.getResource("/monkey").path.name == 'monkey'
     }
 
+    def "has root directory"() {
+        given: "basic storage"
+        def storage = new MemoryTree<ContentMeta>()
+        expect:
+        storage.hasDirectory("/")
+        storage.hasPath("/")
+    }
+
     def "has parent Directories after creating resource"() {
         given: "basic storage"
         def storage = new MemoryTree<ContentMeta>()
@@ -73,6 +81,20 @@ class MemoryTreeSpecification extends Specification {
         !storage.hasPath("/monkey")
     }
 
+    def "deleting root resource does not remove root dir"() {
+        given: "basic storage"
+        def storage = new MemoryTree<ContentMeta>()
+
+        when: "store a resource at root path"
+        storage.createResource("/ghi", dataWithText('blah'));
+
+        assert storage.hasDirectory("/")
+        assert storage.deleteResource("/ghi");
+
+        then: "root dir still exists"
+        storage.hasPath("/")
+        storage.hasDirectory("/")
+    }
     def "deleting resource removes empty parent directories"() {
         given: "basic storage"
         def storage = new MemoryTree<ContentMeta>()

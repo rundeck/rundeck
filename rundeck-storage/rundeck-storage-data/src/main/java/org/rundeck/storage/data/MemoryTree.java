@@ -70,7 +70,7 @@ public class MemoryTree<T extends ContentMeta> extends StringToPathTree<T> imple
     /**
      * Root
      */
-    DirRes<T> root = new DirRes<T>(PathUtil.asPath(""));
+    DirRes<T> root = new DirRes<T>(PathUtil.ROOT);
     Map<Path, DirRes<T>> index = new HashMap<Path, DirRes<T>>();
 
     public MemoryTree() {
@@ -147,7 +147,7 @@ public class MemoryTree<T extends ContentMeta> extends StringToPathTree<T> imple
             Resource<T> res = dirRes.res;
             removed = index.remove(res.getPath()) != null;
             Path parentPath = PathUtil.parentPath(res.getPath());
-            if (null != index.get(parentPath)) {
+            if (!PathUtil.isRoot(parentPath) && null != index.get(parentPath)) {
                 DirRes<T> parentRes = index.get(parentPath);
                 parentRes.dirList.remove(res.getPath());
                 //remove parent dir if empty
@@ -160,7 +160,7 @@ public class MemoryTree<T extends ContentMeta> extends StringToPathTree<T> imple
         while (null != dirRes && dirRes.dir && dirRes.dirList.size() < 1) {
             index.remove(dirRes.getPath());
             Path parentPath = PathUtil.parentPath(dirRes.getPath());
-            if (parentPath != null) {
+            if (parentPath != null && !PathUtil.isRoot(parentPath)) {
                 DirRes<T> parentRes = index.get(parentPath);
                 parentRes.dirList.remove(dirRes.getPath());
                 dirRes = parentRes;
