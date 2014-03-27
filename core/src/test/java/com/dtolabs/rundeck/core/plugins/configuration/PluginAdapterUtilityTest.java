@@ -478,7 +478,7 @@ public class PluginAdapterUtilityTest extends TestCase {
         assertFalse(test.testbool1);
         assertFalse(test.testbool2);
     }
-    
+
     public void testConfigurePropertiesInt() throws Exception {
         configuretest1 test = new configuretest1();
         HashMap<String, Object> configuration = new HashMap<String, Object>();
@@ -501,7 +501,7 @@ public class PluginAdapterUtilityTest extends TestCase {
         assertEquals(1, test.testint1);
         assertEquals(2, (int) test.testint2);
     }
-    
+
     public void testConfigurePropertiesLong() throws Exception {
         configuretest1 test = new configuretest1();
         HashMap<String, Object> configuration = new HashMap<String, Object>();
@@ -523,5 +523,80 @@ public class PluginAdapterUtilityTest extends TestCase {
         }
         assertEquals(1,test.testlong1);
         assertEquals(2,(long)test.testlong2);
+    }
+
+
+    /**
+     * Inheritance test for properties
+     */
+    @Plugin(name = "typeTest2", service = "x")
+    @PluginDescription(title = "Inherited Test",description = "my test description")
+    static class configuretest2 extends configuretest1 {
+        @PluginProperty String testString2;
+        @PluginProperty @SelectValues(values = {"a", "b", "c"}) String testSelect3;
+        @PluginProperty Boolean testbool3;
+        @PluginProperty int testint3;
+        @PluginProperty long testlong3;
+    }
+    /**
+     * Inherited properties
+     */
+    public void testPropertiesAnnotationsInherited() {
+        configuretest2 test1 = new configuretest2();
+        Description description = PluginAdapterUtility.buildDescription(test1, DescriptionBuilder.builder());
+        assertEquals("typeTest2",description.getName());
+        assertEquals("my test description",description.getDescription());
+        assertEquals("Inherited Test",description.getTitle());
+
+        HashMap<String, Property> map = mapOfProperties(description);
+
+        assertNotNull(map.get("testString"));
+        assertNotNull(map.get("testString2"));
+        assertNotNull(map.get("testSelect1"));
+        assertNotNull(map.get("testSelect2"));
+        assertNotNull(map.get("testSelect3"));
+        assertNotNull(map.get("testbool1"));
+        assertNotNull(map.get("testbool2"));
+        assertNotNull(map.get("testbool3"));
+        assertNotNull(map.get("testint1"));
+        assertNotNull(map.get("testint2"));
+        assertNotNull(map.get("testint3"));
+        assertNotNull(map.get("testlong1"));
+        assertNotNull(map.get("testlong2"));
+        assertNotNull(map.get("testlong3"));
+    }
+    public void testConfigurePropertiesInherited() throws Exception {
+        configuretest2 test = new configuretest2();
+        HashMap<String, Object> configuration = new HashMap<String, Object>();
+        //int values
+        configuration.put("testlong1", "1");
+        configuration.put("testlong2", "2");
+        configuration.put("testlong3", "3");
+        PluginAdapterUtility.configureProperties(new mapResolver(configuration), test);
+        assertEquals(1, test.testlong1);
+        assertEquals(2,(long)test.testlong2);
+        assertEquals(3,test.testlong3);
+    }
+    public void testConfigurePropertiesInheritedInvalid() throws Exception {
+        configuretest2 test = new configuretest2();
+        HashMap<String, Object> configuration = new HashMap<String, Object>();
+        //int values
+        //invalid values
+        configuration.put("testlong1", "asdf");
+        try {
+            PluginAdapterUtility.configureProperties(new mapResolver(configuration), test);
+            fail("shouldn't succeed");
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+        }
+        //invalid values
+        configuration.put("testlong1", "1");
+        configuration.put("testlong3", "asdf");
+        try {
+            PluginAdapterUtility.configureProperties(new mapResolver(configuration), test);
+            fail("shouldn't succeed");
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+        }
     }
 }

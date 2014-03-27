@@ -95,7 +95,7 @@ public class PluginAdapterUtility {
         }
 
         if (includeAnnotatedFieldProperties) {
-            for (final Field field : object.getClass().getDeclaredFields()) {
+            for (final Field field : collectFields(object)) {
                 final PluginProperty annotation = field.getAnnotation(PluginProperty.class);
                 if (null == annotation) {
                     continue;
@@ -112,7 +112,7 @@ public class PluginAdapterUtility {
     }
 
     private static Field fieldForPropertyName(final String name, final Object object) {
-        for (final Field field : object.getClass().getDeclaredFields()) {
+        for (final Field field : collectFields(object)) {
             final PluginProperty annotation = field.getAnnotation(PluginProperty.class);
             if (null == annotation) {
                 continue;
@@ -124,6 +124,17 @@ public class PluginAdapterUtility {
             }
         }
         return null;
+    }
+
+    private static Collection<Field> collectFields(final Object object){
+        ArrayList<Field> fields = new ArrayList<Field>();
+        Class<?> clazz = object.getClass();
+        do{
+          fields.addAll(Arrays.asList(clazz.getDeclaredFields()));
+          clazz = clazz.getSuperclass();
+        }
+        while(clazz != Object.class);
+        return fields;
     }
 
     private static Property.Type propertyTypeFromFieldType(final Class clazz) {
