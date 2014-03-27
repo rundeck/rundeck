@@ -15,17 +15,6 @@ import static org.rundeck.storage.api.PathUtil.asPath
  */
 class SubPathTreeSpecification extends Specification {
 
-    def "path check"() {
-        given:
-        def mem = new MemoryTree()
-        def sub = new SubPathTree(mem,"test/path",true)
-        expect:
-        sub.matchesPath(asPath("test/path"))
-        sub.matchesPath(asPath("test/path/asdf"))
-        sub.matchesPath(asPath("test/path/asdf/dxx"))
-        !sub.matchesPath(asPath("test/asdf"))
-        !sub.matchesPath(asPath("something/else"))
-    }
     def "createResource fullPath=true then path is the same in underlying storage"() {
         given:
         def mem = new MemoryTree()

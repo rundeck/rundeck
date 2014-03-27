@@ -5,6 +5,7 @@ import org.rundeck.storage.api.PathUtil;
 import org.rundeck.storage.impl.DelegateResource;
 import org.rundeck.storage.impl.DelegateTree;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -32,8 +33,8 @@ public class SubPathTree<T extends ContentMeta> extends DelegateTree<T> implemen
     }
 
     @Override
-    public boolean matchesPath(Path path) {
-        return path.equals(rootPath) || PathUtil.hasRoot(path, rootPath);
+    public Path getSubPath() {
+        return rootPath;
     }
 
     private Path translatePathInternal(Path extpath) {
@@ -69,7 +70,7 @@ public class SubPathTree<T extends ContentMeta> extends DelegateTree<T> implemen
 
     @Override
     public boolean hasPath(Path path) {
-        return super.hasPath(translatePathInternal(path));
+        return isLocalRoot(path) || super.hasPath(translatePathInternal(path));
     }
 
     @Override
@@ -79,7 +80,11 @@ public class SubPathTree<T extends ContentMeta> extends DelegateTree<T> implemen
 
     @Override
     public boolean hasDirectory(Path path) {
-        return super.hasDirectory(translatePathInternal(path));
+        return isLocalRoot(path) || super.hasDirectory(translatePathInternal(path));
+    }
+
+    private boolean isLocalRoot(Path path) {
+        return PathUtil.isRoot(PathUtil.removePrefix(rootPath.getPath(), path.getPath()));
     }
 
     @Override
@@ -94,16 +99,25 @@ public class SubPathTree<T extends ContentMeta> extends DelegateTree<T> implemen
 
     @Override
     public Set<Resource<T>> listDirectory(Path path) {
+        if(isLocalRoot(path) && !super.hasDirectory(translatePathInternal(path))) {
+            return Collections.<Resource<T>>emptySet();
+        }
         return translateAllExternal(super.listDirectory(translatePathInternal(path)));
     }
 
     @Override
     public Set<Resource<T>> listDirectorySubdirs(Path path) {
+        if (isLocalRoot(path) && !super.hasDirectory(translatePathInternal(path))) {
+            return Collections.<Resource<T>>emptySet();
+        }
         return translateAllExternal(super.listDirectorySubdirs(translatePathInternal(path)));
     }
 
     @Override
     public Set<Resource<T>> listDirectoryResources(Path path) {
+        if (isLocalRoot(path) && !super.hasDirectory(translatePathInternal(path))) {
+            return Collections.<Resource<T>>emptySet();
+        }
         return translateAllExternal(super.listDirectoryResources(translatePathInternal(path)));
     }
 

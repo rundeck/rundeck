@@ -2,7 +2,10 @@ package org.rundeck.storage.conf;
 
 import org.rundeck.storage.api.*;
 import org.rundeck.storage.impl.DelegateTree;
+import org.rundeck.storage.impl.ResourceBase;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -35,12 +38,31 @@ public class TreeStack<T extends ContentMeta> extends DelegateTree<T> {
 
     @Override
     public Set<Resource<T>> listDirectory(Path path) {
-        return getContentStorage(path).listDirectory(path);
+        //find substorage which are children of the given path
+        return merge(listDirectoryIfFound(path), listStackDirectory(path));
+    }
+
+    private Set<Resource<T>> listDirectoryIfFound(Path path) {
+        if(getContentStorage(path).hasDirectory(path)){
+            return getContentStorage(path).listDirectory(path);
+        }
+        return null;
+    }
+
+    private Set<Resource<T>> merge(Set<Resource<T>> matchedList, Set<Resource<T>> subList) {
+        HashSet<Resource<T>> merge = new HashSet<Resource<T>>();
+        if(null!=matchedList && matchedList.size()>0) {
+            merge.addAll(matchedList);
+        }
+        if(null!=subList && subList.size()>0) {
+            merge.addAll(subList);
+        }
+        return merge;
     }
 
     @Override
     public Set<Resource<T>> listDirectorySubdirs(Path path) {
-        return getContentStorage(path).listDirectorySubdirs(path);
+        return merge(listDirectoryIfFound(path), listStackDirectory(path));
     }
 
     @Override
@@ -63,10 +85,37 @@ public class TreeStack<T extends ContentMeta> extends DelegateTree<T> {
         return getContentStorage(path).hasPath(path);
     }
 
+   public static boolean matchesPath(Path path, SelectiveTree<?> tree) {
+        return path.equals(tree.getSubPath()) || PathUtil.hasRoot(path, tree.getSubPath());
+    }
+
+    public static boolean hasParentPath(Path path, SelectiveTree<?> tree) {
+        return path.equals(PathUtil.parentPath(tree.getSubPath()));
+    }
+
+
+    /**
+     * List all treeHandlers as directories which have the given path as a parent
+     * @param path path
+     * @return
+     */
+    private Set<Resource<T>> listStackDirectory(Path path) {
+        HashSet<Resource<T>> merge = new HashSet<Resource<T>>();
+        if (treeHandlerList.size() > 0) {
+            for (SelectiveTree<T> treeHandler : treeHandlerList) {
+                if (hasParentPath(path, treeHandler)) {
+                    Path subpath = PathUtil.appendPath(path, treeHandler.getSubPath().getName());
+                    merge.add(new ResourceBase<T>(subpath, null, true));
+                }
+            }
+        }
+        return merge;
+    }
+
     private Tree<T> getContentStorage(Path path) {
         if (treeHandlerList.size() > 0) {
             for (SelectiveTree<T> treeHandler : treeHandlerList) {
-                if (treeHandler.matchesPath(path)) {
+                if (matchesPath(path, treeHandler)) {
                     return treeHandler;
                 }
             }
