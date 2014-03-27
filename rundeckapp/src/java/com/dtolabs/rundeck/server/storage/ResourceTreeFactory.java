@@ -97,8 +97,8 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
     }
 
     private Tree<ResourceMeta> buildTree(Map configProps) {
-        //configure the tree
-        TreeBuilder<ResourceMeta> builder = baseConverter(baseStorage(TreeBuilder.<ResourceMeta>builder()));
+        //base layer of storage
+        TreeBuilder<ResourceMeta> builder = baseStorage(TreeBuilder.<ResourceMeta>builder());
 
         Map<String, String> config = stringStringMap(rundeckFramework.getPropertyLookup().getPropertiesMap());
         int storeIndex = 1;
@@ -110,6 +110,10 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
         if (1 == storeIndex) {
             logger.debug("No storage plugins configured with prefix " + getStorageConfigPrefix());
         }
+        //apply default converters on top of storage
+        builder = baseConverter(builder);
+
+        //add plugin converters
         int converterIndex = 1;
         while (configProps.containsKey(getConverterConfigPrefix() + SEP + converterIndex + SEP + TYPE)) {
             builder = configureConverterPlugin(builder, converterIndex, config);
@@ -128,6 +132,8 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
      * @return
      */
     private TreeBuilder<ResourceMeta> baseConverter(TreeBuilder<ResourceMeta> builder) {
+        logger.debug("Configuring base converter: StorageTimestamperConverter" );
+        logger.debug("Configuring base converter: SSHKeyStorageLayer" );
         return builder.convert(
                 new StorageConverterPluginAdapter(
                         new StorageTimestamperConverter()
@@ -160,7 +166,7 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
     private TreeBuilder<ResourceMeta> baseStorage(TreeBuilder<ResourceMeta> builder) {
         //set base using file storage, could be overridden
         Map<String, String> config1 = expandConfig(getBaseStorageConfig());
-        logger.debug("Configuring base storage provider: " + getBaseStorageType() + ", " +
+        logger.debug("Default base storage provider: " + getBaseStorageType() + ", " +
                 "config: " + config1);
 
         StoragePlugin base = loadPlugin(
@@ -276,15 +282,16 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
 
         Map<String, String> config = subPropertyMap(pref1 + SEP + CONFIG + SEP, configProps);
         config = expandConfig(config);
-        logger.debug("Add Storage[" + index + "]:" + path + " " + pluginType + ", config: " + config);
         Tree<ResourceMeta> resourceMetaTree = loadPlugin(
                 pluginType,
                 config,
                 resourceStoragePluginProviderService
         );
-        if (index == 1 && "/".equals(path.trim())) {
+        if (index == 1 && PathUtil.isRoot(path)) {
+            logger.debug("Change base Storage[" + index + "]:" + path + " " + pluginType + ", config: " + config);
             builder.base(resourceMetaTree);
         } else {
+            logger.debug("Subtree Storage[" + index + "]:" + path + " " + pluginType + ", config: " + config);
             builder.subTree(PathUtil.asPath(path.trim()), resourceMetaTree, !removePathPrefix);
         }
     }
