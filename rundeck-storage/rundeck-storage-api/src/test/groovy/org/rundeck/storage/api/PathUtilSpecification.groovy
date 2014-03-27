@@ -33,16 +33,17 @@ class PathUtilSpecification extends Specification {
         cleanPath("abc//xyz////zyd") == "abc/xyz/zyd"
     }
 
-    def "parentPath without parent returns null"() {
+    def "parentPath without parent returns blank"() {
         expect:
-        parentPathString("abc//") == null
-        parentPathString("abc") == null
+        parentPathString("abc//") == ""
+        parentPathString("abc") == ""
     }
 
     def "parentPath returns parent path"() {
         expect:
         parentPathString("abc//xyz") == "abc"
         parentPathString("abc//xyz/utiv") == "abc/xyz"
+        parentPathString("abc//") == ""
     }
 
     def "pathName returns last path component"() {

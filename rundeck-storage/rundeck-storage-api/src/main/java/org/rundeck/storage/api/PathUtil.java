@@ -13,6 +13,9 @@ import java.util.regex.PatternSyntaxException;
  * Utility methods for paths
  */
 public class PathUtil {
+
+    public static final Path ROOT = asPath("/");
+
     public static class PathImpl implements Path {
         String pathString;
         private String name;
@@ -91,6 +94,30 @@ public class PathUtil {
         return asPath(parentPathString(path.getPath()));
     }
 
+    /**
+     * Return true if the path is the root
+     *
+     * @param path
+     *
+     * @return
+     */
+    public static boolean isRoot(String path) {
+        return isRoot(asPath(path));
+    }
+    /**
+     * Return true if the path is the root
+     * @param path
+     * @return
+     */
+    public static boolean isRoot(Path path) {
+        return path.equals(ROOT);
+    }
+
+    /**
+     * Return the string representing the parent of the given path
+     * @param path path string
+     * @return parent path string
+     */
     public static String parentPathString(String path) {
         String[] split = cleanPath(path).split("/");
         if (split.length > 1) {
@@ -103,7 +130,7 @@ public class PathUtil {
             }
             return stringBuilder.toString();
         }
-        return null;
+        return "";
     }
 
     public static String cleanPath(String path) {
