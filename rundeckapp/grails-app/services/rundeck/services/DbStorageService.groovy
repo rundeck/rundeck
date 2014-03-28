@@ -253,6 +253,7 @@ class DbStorageService implements StoragePlugin{
         def id = storage?.id
         def retry = true
         Storage saved=null;
+        def data = content.getInputStream().bytes
         try{
             while(retry){
                 Storage.withNewSession {
@@ -265,7 +266,7 @@ class DbStorageService implements StoragePlugin{
 
                         storage.path = path.path
                         storage.storageMeta = content.meta
-                        storage.data = content.getInputStream().bytes
+                        storage.data = data
                         saved=storage.save(flush: true)
                         retry=false
                     } catch (OptimisticLockingFailureException e) {
