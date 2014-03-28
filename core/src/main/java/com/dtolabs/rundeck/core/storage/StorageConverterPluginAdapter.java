@@ -4,16 +4,21 @@ import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin;
 import org.rundeck.storage.api.HasInputStream;
 import org.rundeck.storage.api.Path;
 import org.rundeck.storage.api.PathUtil;
+import org.rundeck.storage.api.StorageException;
+import org.rundeck.storage.data.DataUtil;
 
 import java.util.HashMap;
 
 /**
- * Adapter for a {@link com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin} to use as a {@link StorageConverter}
+ * Adapter for a {@link com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin} to use as a {@link
+ * StorageConverter}
  */
 public class StorageConverterPluginAdapter implements StorageConverter {
     StorageConverterPlugin plugin;
+    String providerName;
 
-    public StorageConverterPluginAdapter(StorageConverterPlugin plugin) {
+    public StorageConverterPluginAdapter(String providerName,StorageConverterPlugin plugin) {
+        this.providerName=providerName;
         this.plugin = plugin;
     }
 
@@ -31,23 +36,29 @@ public class StorageConverterPluginAdapter implements StorageConverter {
     private ResourceMeta filter(Path path, ResourceMeta resourceMeta, Operation op) {
         ResourceMetaBuilder resourceMetaBuilder = ResourceUtil.create(new HashMap<String,
                 String>(resourceMeta.getMeta()));
-        HasInputStream wrappedStream = PathUtil.wrapStream(resourceMeta);
         final HasInputStream result;
         switch (op) {
             case READ:
-                result = plugin.readResource(path, resourceMetaBuilder, wrappedStream);
-                break;
             case UPDATE:
-                result = plugin.updateResource(path, resourceMetaBuilder, wrappedStream);
-                break;
             case CREATE:
-                result = plugin.createResource(path, resourceMetaBuilder, wrappedStream);
+                try {
+                    if (op == Operation.CREATE) {
+                        result = plugin.createResource(path, resourceMetaBuilder, resourceMeta);
+                    } else if (op == Operation.READ) {
+                        result = plugin.readResource(path, resourceMetaBuilder, resourceMeta);
+                    } else {
+                        result = plugin.updateResource(path, resourceMetaBuilder, resourceMeta);
+                    }
+                } catch (Throwable e) {
+                    throw new StorageException("Converter Plugin " + providerName + " threw exception during " + op +
+                            ": " + e.getMessage(), e, StorageException.Event.valueOf(op.toString()), path);
+                }
                 break;
             default:
                 throw new IllegalStateException();
         }
         //construct the new data
-        return ResourceUtil.withStream(null == result ? wrappedStream : result, resourceMetaBuilder.getResourceMeta());
+        return ResourceUtil.withStream(null == result ? resourceMeta : result, resourceMetaBuilder.getResourceMeta());
     }
 
     @Override

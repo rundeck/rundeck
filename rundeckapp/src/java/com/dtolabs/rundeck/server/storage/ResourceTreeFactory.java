@@ -135,11 +135,11 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
         logger.debug("Configuring base converter: StorageTimestamperConverter" );
         logger.debug("Configuring base converter: SSHKeyStorageLayer" );
         return builder.convert(
-                new StorageConverterPluginAdapter(
+                new StorageConverterPluginAdapter("builtin:timestamp",
                         new StorageTimestamperConverter()
                 )
         ).convert(
-                new StorageConverterPluginAdapter(
+                new StorageConverterPluginAdapter("builtin:ssh-storage",
                         new SSHKeyStorageLayer()
                 ), PathUtil.asPath("/ssh-key"));
     }
@@ -174,6 +174,9 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
                 config1,
                 resourceStoragePluginProviderService
         );
+        if(null==base) {
+            throw new IllegalArgumentException("Plugin could not be loaded: " + getBaseStorageType());
+        }
         return builder.base(base);
     }
 
@@ -239,7 +242,7 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
         );
         //convert tree under the subpath if specified, AND matching the selector if specified
         return builder.convert(
-                new StorageConverterPluginAdapter(converterPlugin),
+                new StorageConverterPluginAdapter(pluginType,converterPlugin),
                 null != path ? PathUtil.asPath(path.trim()) : null,
                 null != selector ? PathUtil.<ResourceMeta>resourceSelector(selector) : null
         );
@@ -288,7 +291,7 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
                 resourceStoragePluginProviderService
         );
         if (index == 1 && PathUtil.isRoot(path)) {
-            logger.debug("Change base Storage[" + index + "]:" + path + " " + pluginType + ", config: " + config);
+            logger.debug("New base Storage[" + index + "]:" + path + " " + pluginType + ", config: " + config);
             builder.base(resourceMetaTree);
         } else {
             logger.debug("Subtree Storage[" + index + "]:" + path + " " + pluginType + ", config: " + config);
