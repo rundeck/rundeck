@@ -51,8 +51,10 @@ class ResourceControllerTests {
             getMeta{->
                 ['Rundeck-content-type': 'test/data']
             }
-            readContent {->
-                new ByteArrayInputStream("data1".bytes)
+            writeContent {OutputStream out->
+                def bytes = "data1".bytes
+                out.write(bytes)
+                return (long)bytes.length
             }
         }
         def mRes = mockWith(Resource) {
