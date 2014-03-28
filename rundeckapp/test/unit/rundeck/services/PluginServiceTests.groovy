@@ -99,21 +99,21 @@ class PluginServiceTests extends GrailsUnitTestCase {
         <T> ConfiguredPlugin<T> configurePluginByName(String name, PluggableProviderService<T> service,
                                                      Map configuration) {
             cpbnMapCalled = true
-            return new ConfiguredPlugin<T>(instance:plugin,configuration: extraConfiguration)
+            return new ConfiguredPlugin<T>(plugin, extraConfiguration)
         }
 
         @Override
         <T> ConfiguredPlugin<T> configurePluginByName(String name, PluggableProviderService<T> service,
         Framework framework, String project, Map instanceConfiguration) {
             cpWithFrameworkCalled=true
-            return new ConfiguredPlugin<T>(instance: plugin, configuration: extraConfiguration)
+            return new ConfiguredPlugin<T>( plugin,  extraConfiguration)
         }
 
         @Override
         <T> ConfiguredPlugin<T> configurePluginByName(String name, PluggableProviderService<T> service,
         PropertyResolver resolver, PropertyScope defaultScope) {
             cpWithResolverCalled=true
-            return new ConfiguredPlugin<T>(instance: plugin, configuration: extraConfiguration)
+            return new ConfiguredPlugin<T>( plugin,  extraConfiguration)
         }
 
         @Override
@@ -222,7 +222,7 @@ class PluginServiceTests extends GrailsUnitTestCase {
         mockLogging(PluginService)
         def service = new PluginService()
         def TestRegistry testReg = new TestRegistry()
-        def test = new DescribedPlugin()
+        def test = new DescribedPlugin(null,null,null)
         testReg.pluginDescriptor= test
         service.rundeckPluginRegistry = testReg
         assertFalse(testReg.lpdbncalled)
@@ -370,7 +370,7 @@ class PluginServiceTests extends GrailsUnitTestCase {
         def service = new PluginService()
         def TestRegistry testReg = new TestRegistry()
         service.rundeckPluginRegistry = testReg
-        def test = ['a': new DescribedPlugin(name:'a'), 'b': new DescribedPlugin(name:'b')]
+        def test = ['a': new DescribedPlugin(null,null,'a'), 'b': new DescribedPlugin(null,null,'b')]
         testReg.pluginDescriptorMap= test
         assertFalse(testReg.listPluginDescriptorsCalled)
         def result = service.listPlugins(String,new testProvider("test service"))
@@ -383,8 +383,8 @@ class PluginServiceTests extends GrailsUnitTestCase {
         def service = new PluginService()
         def TestRegistry testReg = new TestRegistry()
         service.rundeckPluginRegistry = testReg
-        def test = ['a': new DescribedPlugin(name: 'alphaTestService',file: new File("alphaTestService.groovy")),
-                'b': new DescribedPlugin(name: 'bTestService',file: new File("bTestService.groovy"))]
+        def test = ['a': new DescribedPlugin(null,null, 'alphaTestService',new File("alphaTestService.groovy")),
+                'b': new DescribedPlugin(null,null, 'bTestService',new File("bTestService.groovy"))]
         testReg.pluginDescriptorMap= test
         assertFalse(testReg.listPluginDescriptorsCalled)
         def result = service.listPlugins(String,new testProvider("TestService"))

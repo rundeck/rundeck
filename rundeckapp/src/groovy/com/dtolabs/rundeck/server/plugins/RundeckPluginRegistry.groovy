@@ -88,7 +88,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
         if (description) {
             config = PluginAdapterUtility.configureProperties(resolver, description, plugin, defaultScope);
         }
-        new ConfiguredPlugin<T>(instance:plugin, configuration:config)
+        new ConfiguredPlugin<T>(plugin, config)
     }
 
     public <T> Map<String,Object> getPluginConfigurationByName(String name, PluggableProviderService<T> service,
@@ -202,8 +202,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
                 } else if (PluginAdapterUtility.canBuildDescription(bean)) {
                     desc = PluginAdapterUtility.buildDescription(bean, DescriptionBuilder.builder())
                 }
-                return new DescribedPlugin<T>(instance: bean, description: desc,name:name,
-                        file: new File(pluginDirectory, name + ".groovy"))
+                return new DescribedPlugin<T>(bean, desc, name, new File(pluginDirectory, name + ".groovy"))
             }
         } catch (NoSuchBeanDefinitionException e) {
             log.error("plugin Spring bean does not exist: ${name}")
@@ -211,7 +210,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
         //try loading via ServiceProviderLoader
         if (rundeckServerServiceProviderLoader && service) {
             //attempt to load directly
-            def instance
+            T instance
             try {
                 instance=service.providerOfType(name);
             } catch (ExecutionServiceException ignored) {
@@ -229,7 +228,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
             }
             if(null!=instance){
                 def d = service.listDescriptions().find { it.name == name }
-                return new DescribedPlugin<T>(instance: instance, description: d, name: name)
+                return new DescribedPlugin<T>( instance, d, name)
             }
         }
         null
@@ -275,7 +274,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
                     } else if (PluginAdapterUtility.canBuildDescription(bean)) {
                         desc = PluginAdapterUtility.buildDescription(bean, DescriptionBuilder.builder())
                     }
-                    list[k] = new DescribedPlugin(instance: bean, description: desc, name: k, file: file)
+                    list[k] = new DescribedPlugin(bean, desc, k, file)
                 } else {
                     log.debug("bean not right type: ${bean}, class: ${bean.class.name}, assignable: ${groovyPluginType.isAssignableFrom(bean.class)}")
                 }
@@ -300,12 +299,12 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
                 }
 
                 if (!list[ident.providerName]) {
-                    list[ident.providerName] = new DescribedPlugin<T>(instance: instance, name: ident.providerName)
+                    list[ident.providerName] = new DescribedPlugin<T>(instance, null, ident.providerName)
                 }
             }
             service.listDescriptions().each { Description d ->
                 if (!list[d.name]) {
-                    list[d.name] = new DescribedPlugin<T>(instance: null, name: d.name)
+                    list[d.name] = new DescribedPlugin<T>( null, null, d.name)
                 }
                 list[d.name].description = d
             }
