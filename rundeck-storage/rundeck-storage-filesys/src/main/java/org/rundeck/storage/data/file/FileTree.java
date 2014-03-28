@@ -1,7 +1,7 @@
 package org.rundeck.storage.data.file;
 
-import org.rundeck.storage.impl.StringToPathTree;
 import org.rundeck.storage.api.*;
+import org.rundeck.storage.data.DataUtil;
 
 import java.io.*;
 import java.util.HashSet;
@@ -10,12 +10,10 @@ import java.util.Set;
 /**
  * $INTERFACE is ... User: greg Date: 2/18/14 Time: 10:03 AM
  */
-public class FileTree<T extends ContentMeta> extends StringToPathTree<T> implements Tree<T> {
-    public static final int DEFAULT_WRITE_BUFFER_LENGTH = 50 * 1024;
+public class FileTree<T extends ContentMeta> extends LockingTree<T> implements Tree<T> {
     private ContentFactory<T> contentFactory;
     private FilepathMapper filepathMapper;
     private MetadataMapper metadataMapper;
-    private int writeBufferLength = DEFAULT_WRITE_BUFFER_LENGTH;
 
     public FileTree(ContentFactory<T> contentFactory, FilepathMapper filepathMapper, MetadataMapper metadataMapper) {
         this.contentFactory = contentFactory;
@@ -57,27 +55,32 @@ public class FileTree<T extends ContentMeta> extends StringToPathTree<T> impleme
     }
 
     private Resource<T> loadResource(Path path) throws IOException {
-        File datafile = filepathMapper.contentFileForPath(path);
-        if(!datafile.exists()) {
-            throw StorageException.readException(path, "Path does not exist: " + path);
-        }
-        boolean directory = datafile.isDirectory();
-        if (!directory) {
-            return new ContentMetaResource<T>(path, loader(datafile, filepathMapper.metadataFileFor(path)), directory);
-        } else {
-            return new ContentMetaResource<T>(path, null, directory);
+        synchronized (pathSynch(path)) {
+            File datafile = filepathMapper.contentFileForPath(path);
+            if (!datafile.exists()) {
+                throw StorageException.readException(path, "Path does not exist: " + path);
+            }
+            boolean directory = datafile.isDirectory();
+            if (!directory) {
+                return new ContentMetaResource<T>(path, loader(path, datafile, filepathMapper.metadataFileFor(path)),
+                        directory);
+            } else {
+                return new ContentMetaResource<T>(path, null, directory);
+            }
         }
     }
 
-    private T loader(File datafile, File metafile) throws IOException {
-        return contentFactory.create(PathUtil.lazyFileStream(datafile), metadataMapper.readMetadata(metafile));
+    private T loader(Path path, File datafile, File metafile) throws IOException {
+        return contentFactory.create(
+                synchStream(path, DataUtil.lazyFileStream(datafile)),
+                metadataMapper.readMetadata(metafile));
     }
 
     private Resource<T> storeResource(Path path, ContentMeta data) throws IOException {
         File datafile = filepathMapper.contentFileForPath(path);
         File metafile = filepathMapper.metadataFileFor(path);
-        int len = writeContent(datafile, metafile, data);
-        return new ContentMetaResource<T>(path, loader(datafile, metafile), false);
+        long len = writeContent(path, datafile, metafile, data);
+        return new ContentMetaResource<T>(path, loader(path, datafile, metafile), false);
     }
 
     @Override
@@ -93,14 +96,6 @@ public class FileTree<T extends ContentMeta> extends StringToPathTree<T> impleme
     @Override
     public Set<Resource<T>> listDirectorySubdirs(Path path) {
         return filterResources(path, IsDirResourcePredicate);
-    }
-
-    public int getWriteBufferLength() {
-        return writeBufferLength;
-    }
-
-    public void setWriteBufferLength(int writeBufferLength) {
-        this.writeBufferLength = writeBufferLength;
     }
 
     /**
@@ -140,7 +135,7 @@ public class FileTree<T extends ContentMeta> extends StringToPathTree<T> impleme
      */
     private Set<Resource<T>> filterResources(Path path, Predicate<Resource> test) {
         if (!hasDirectory(path)) {
-            throw StorageException.listException(path,"not a directory path: " + path);
+            throw StorageException.listException(path, "not a directory path: " + path);
         }
         File file = filepathMapper.directoryForPath(path);
         HashSet<Resource<T>> files = new HashSet<Resource<T>>();
@@ -153,76 +148,72 @@ public class FileTree<T extends ContentMeta> extends StringToPathTree<T> impleme
                 }
             }
         } catch (IOException e) {
-            throw StorageException.listException(path,"Failed to list directory: " + path + ": " + e.getMessage(), e);
+            throw StorageException.listException(path, "Failed to list directory: " + path + ": " + e.getMessage(), e);
         }
         return files;
     }
 
     @Override
     public boolean deleteResource(Path path) {
-        if (!hasResource(path)) {
-            throw StorageException.deleteException(path,"Resource not found: " + path);
-        }
         boolean content = false;
         boolean meta = false;
-        if (filepathMapper.contentFileForPath(path).exists()) {
-            content = filepathMapper.contentFileForPath(path).delete();
-        }
-        if (filepathMapper.metadataFileFor(path).exists()) {
-            meta = filepathMapper.metadataFileFor(path).delete();
+        synchronized (pathSynch(path)) {
+            if (!hasResource(path)) {
+                throw StorageException.deleteException(path, "Resource not found: " + path);
+            }
+            if (filepathMapper.contentFileForPath(path).exists()) {
+                content = filepathMapper.contentFileForPath(path).delete();
+            }
+            if (filepathMapper.metadataFileFor(path).exists()) {
+                meta = filepathMapper.metadataFileFor(path).delete();
+            }
         }
         return content && meta;
     }
 
     @Override
     public Resource<T> createResource(Path path, ContentMeta content) {
-        if (hasResource(path)) {
-            throw StorageException.createException(path,"Resource already exists: " + path);
-        }
-        try {
-            return storeResource(path, content);
-        } catch (IOException e) {
-            throw StorageException.createException(path, "Failed to create resource: " + path + ": " + e.getMessage(),
-                    e);
+        synchronized (pathSynch(path)) {
+            if (hasResource(path)) {
+                throw StorageException.createException(path, "Resource already exists: " + path);
+            }
+            try {
+                return storeResource(path, content);
+            } catch (IOException e) {
+                throw StorageException.createException(path, "Failed to create resource: " + path + ": " + e.getMessage(),
+                        e);
+            }
         }
     }
 
     @Override
     public Resource<T> updateResource(Path path, ContentMeta content) {
-        if (!hasResource(path)) {
-            throw StorageException.updateException(path,"Resource does not exist: " + path);
-        }
-        try {
-            return storeResource(path, content);
-        } catch (IOException e) {
-            throw StorageException.updateException(path, "Failed to update resource: " + path + ": " + e.getMessage(), e);
-        }
-    }
-
-    private int copyStream(InputStream stream, OutputStream out) throws IOException {
-        byte[] buf = new byte[getWriteBufferLength()];
-        int read = 0;
-        int write = 0;
-        do {
-            read = stream.read(buf);
-            if (read > 0) {
-                out.write(buf, 0, read);
-                write += read;
+        synchronized (pathSynch(path)) {
+            if (!hasResource(path)) {
+                throw StorageException.updateException(path, "Resource does not exist: " + path);
             }
-        } while (read >= 0);
-        return write;
+            try {
+                return storeResource(path, content);
+            } catch (IOException e) {
+                e.printStackTrace();
+                throw StorageException.updateException(path, "Failed to update resource: " + path + ": " + e.getMessage()
+                        , e);
+            }
+        }
     }
 
-    int writeContent(File datafile, File metafile, ContentMeta input) throws IOException {
-        metadataMapper.writeMetadata(input.getMeta(), metafile);
-        if (!datafile.getParentFile().exists()) {
-            datafile.getParentFile().mkdirs();
-        }
-        FileOutputStream out = new FileOutputStream(datafile);
-        try {
-            return copyStream(input.readContent(), out);
-        } finally {
-            out.close();
+    long writeContent(Path path, File datafile, File metafile, ContentMeta input) throws IOException {
+        synchronized (pathSynch(path)) {
+            metadataMapper.writeMetadata(input.getMeta(), metafile);
+            if (!datafile.getParentFile().exists()) {
+                datafile.getParentFile().mkdirs();
+            }
+            FileOutputStream out = new FileOutputStream(datafile);
+            try {
+                return input.writeContent(out);
+            } finally {
+                out.close();
+            }
         }
     }
 
