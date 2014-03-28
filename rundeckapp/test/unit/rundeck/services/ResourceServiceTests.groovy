@@ -67,7 +67,7 @@ class ResourceServiceTests {
             createResource{ctx,path,content->
                 assertEquals("abc/123",path.path)
                 assertNotNull(content.meta)
-                assertEquals('data',content.readContent().text)
+                assertEquals('data',content.getInputStream().text)
                 null
             }
         }
@@ -78,7 +78,7 @@ class ResourceServiceTests {
             updateResource{ctx,path,content->
                 assertEquals("abc/123",path.path)
                 assertNotNull(content.meta)
-                assertEquals('data', content.readContent().text)
+                assertEquals('data', content.getInputStream().text)
                 null
             }
         }
