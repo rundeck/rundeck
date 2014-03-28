@@ -5,6 +5,7 @@ import org.rundeck.storage.api.HasInputStream;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Map;
 
 /**
@@ -32,7 +33,17 @@ public class DataContent implements ContentMeta {
 
 
     @Override
-    public InputStream readContent() throws IOException {
+    public long writeContent(OutputStream out) throws IOException {
+        if (null != stream) {
+            return DataUtil.copyStream(stream, out);
+        } else if (null != lazyStream) {
+            return lazyStream.writeContent(out);
+        }
+        return -1;
+    }
+
+    @Override
+    public InputStream getInputStream() throws IOException {
         if (null != stream) {
             return stream;
         } else if (null != lazyStream) {
@@ -40,5 +51,4 @@ public class DataContent implements ContentMeta {
         }
         return null;
     }
-
 }

@@ -5,8 +5,7 @@ import org.rundeck.storage.api.ContentMeta;
 import org.rundeck.storage.api.HasInputStream;
 import org.rundeck.storage.api.PathUtil;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
+import java.io.*;
 import java.util.Map;
 
 /**
@@ -34,7 +33,7 @@ public class DataUtil {
      * @return
      */
     public static <T extends ContentMeta> T withText(String text, Map<String, String> meta, ContentFactory<T> factory) {
-        return factory.create(PathUtil.lazyStream(new ByteArrayInputStream(text.getBytes())), meta);
+        return factory.create(lazyStream(new ByteArrayInputStream(text.getBytes())), meta);
     }
 
     public static DataContent dataWithBytes(byte[] data) {
@@ -72,7 +71,7 @@ public class DataUtil {
      */
     public static <T extends ContentMeta> T withStream(InputStream source, Map<String, String> meta,
             ContentFactory<T> factory) {
-        return factory.create(PathUtil.lazyStream(source), meta);
+        return factory.create(lazyStream(source), meta);
     }
 
     private static class Factory implements ContentFactory<DataContent> {
@@ -83,11 +82,73 @@ public class DataUtil {
     }
 
     /**
+     * Lazy mechanism for stream loading
+     *
+     * @param data file
+     *
+     * @return
+     */
+    public static HasInputStream lazyStream(final InputStream data) {
+        return new HasInputStream() {
+            @Override
+            public InputStream getInputStream() throws IOException {
+                return data;
+            }
+
+            @Override
+            public long writeContent(OutputStream outputStream) throws IOException {
+                return copyStream(data, outputStream);
+            }
+        };
+    }
+
+
+    /**
      * Base factory for DataContent implementation
      *
      * @return
      */
     public static ContentFactory<DataContent> contentFactory() {
         return new Factory();
+    }
+
+    public static long copyStream(InputStream in, OutputStream out) throws IOException {
+        return copyStream(in, out, 10240);
+    }
+
+    public static long copyStream(InputStream in, OutputStream out, int bufsize) throws IOException {
+        final byte[] buffer = new byte[bufsize];
+        long tot = 0;
+        int c;
+        c = in.read(buffer);
+        while (c >= 0) {
+            if (c > 0) {
+                out.write(buffer, 0, c);
+                tot += c;
+            }
+            c = in.read(buffer);
+        }
+        return tot;
+    }
+
+    /**
+     * Lazy mechanism for stream loading
+     *
+     * @param data file
+     *
+     * @return
+     */
+    public static HasInputStream lazyFileStream(final File data) {
+        return new HasInputStream() {
+            @Override
+            public InputStream getInputStream() throws IOException {
+                return new FileInputStream(data);
+            }
+
+            @Override
+            public long writeContent(OutputStream outputStream) throws IOException {
+                return copyStream(getInputStream(), outputStream);
+            }
+        };
     }
 }
