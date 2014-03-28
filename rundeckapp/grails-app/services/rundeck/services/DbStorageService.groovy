@@ -6,13 +6,18 @@ import com.dtolabs.rundeck.core.storage.ResourceUtil
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin
+import org.apache.commons.fileupload.util.Streams
 import org.hibernate.Session
+import org.hibernate.StaleObjectStateException
 import org.rundeck.storage.api.HasInputStream
 import org.rundeck.storage.api.Path
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.api.StorageException
+import org.rundeck.storage.data.DataUtil
 import org.rundeck.storage.impl.ResourceBase
+import org.springframework.dao.OptimisticLockingFailureException
+import org.springframework.orm.hibernate3.HibernateOptimisticLockingFailureException
 import rundeck.Storage
 
 import java.util.regex.Pattern
@@ -23,6 +28,7 @@ import java.util.regex.Pattern
 @Plugin(name = 'db', service = ServiceNameConstants.ResourceStorage)
 @PluginDescription(title = 'DB Storage', description = 'Uses DB as storage layer.')
 class DbStorageService implements StoragePlugin{
+    static transactional = false
 
     protected static Resource<ResourceMeta> loadDir(Path path) {
         new ResourceBase(path, null, true)
@@ -38,6 +44,11 @@ class DbStorageService implements StoragePlugin{
             @Override
             InputStream getInputStream() throws IOException {
                 new ByteArrayInputStream(storage1.data)
+            }
+
+            @Override
+            long writeContent(OutputStream outputStream) throws IOException {
+                return outputStream.write(storage1.data)
             }
         }
     }
@@ -230,21 +241,46 @@ class DbStorageService implements StoragePlugin{
         if(findResource(path)){
             throw StorageException.createException(path,"Exists")
         }
-        def storage = new Storage()
-        saveStorage(storage,content, path)
+        def storage= saveStorage(null,content, path,'create')
 
         return loadResource(storage)
     }
 
-    protected void saveStorage(Storage storage, ResourceMeta content, Path path) {
-        storage.path = path.path
-        storage.storageMeta = content.meta
-        storage.data=content.readContent().bytes
-        try {
-            storage.save(flush: true)
+    protected Storage saveStorage(Storage storage, ResourceMeta content, Path path, String event) {
+        def id = storage?.id
+        def retry = true
+        Storage saved=null;
+        try{
+            while(retry){
+                Storage.withNewSession {
+                    try {
+                        if(id){
+                            storage=Storage.get(id)
+                        }else{
+                            storage = new Storage()
+                        }
+
+                        storage.path = path.path
+                        storage.storageMeta = content.meta
+                        storage.data = content.getInputStream().bytes
+                        saved=storage.save(flush: true)
+                        retry=false
+                    } catch (OptimisticLockingFailureException e) {
+                        if(!retry){
+                            throw new StorageException("Failed to save content at path ${path}: content was modified", e,
+                                    StorageException.Event.valueOf(event.toUpperCase()),
+                                    path)
+                        }else{
+                            log.warn("saveStorage optimistic locking failure for ${path}, retrying...")
+                            Thread.sleep(1000)
+                        }
+                    }
+                }
+            }
         } catch (Exception e) {
-            throw StorageException.createException(path, e.message, e)
+            throw new StorageException(e.class.name+': '+e.message, e, StorageException.Event.valueOf(event.toUpperCase()), path)
         }
+        return saved
     }
 
     @Override
@@ -258,7 +294,7 @@ class DbStorageService implements StoragePlugin{
         if (!storage) {
             throw StorageException.createException(path, "Not found")
         }
-        saveStorage(storage,content,path)
+        storage=saveStorage(storage,content,path,'update')
 
         return loadResource(storage)
     }

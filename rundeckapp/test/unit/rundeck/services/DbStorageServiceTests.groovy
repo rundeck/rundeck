@@ -79,7 +79,7 @@ class DbStorageServiceTests {
         assertFalse(res1.directory)
         assertEquals('abc',res1.path.path)
         assertEquals([abc: 'xyz1'],res1.contents.meta)
-        assertEquals('abc1',res1.contents.readContent().text)
+        assertEquals('abc1',res1.contents.getInputStream().text)
     }
     void testGetPath_exists2() {
         assertNotNull new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
@@ -90,7 +90,7 @@ class DbStorageServiceTests {
         assertFalse(res1.directory)
         assertEquals('xyz/abc',res1.path.path)
         assertEquals([abc: 'xyz2'],res1.contents.meta)
-        assertEquals('abc2',res1.contents.readContent().text)
+        assertEquals('abc2',res1.contents.getInputStream().text)
     }
     void testGetPath_dir() {
         assertNotNull new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
@@ -127,7 +127,7 @@ class DbStorageServiceTests {
         assertFalse(res1.directory)
         assertEquals('xyz/abc', res1.path.path)
         assertEquals([abc: 'xyz2'], res1.contents.meta)
-        assertEquals('abc2', res1.contents.readContent().text)
+        assertEquals('abc2', res1.contents.getInputStream().text)
     }
     void testGetResource_ok2() {
         assertNotNull new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
@@ -137,7 +137,7 @@ class DbStorageServiceTests {
         assertFalse(res1.directory)
         assertEquals('abc', res1.path.path)
         assertEquals([abc: 'xyz1'], res1.contents.meta)
-        assertEquals('abc1', res1.contents.readContent().text)
+        assertEquals('abc1', res1.contents.getInputStream().text)
     }
     void testCreateResource_exists() {
         assertNotNull new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
@@ -156,15 +156,18 @@ class DbStorageServiceTests {
         assertEquals('abc3',res1.path.path)
         assertEquals(false,res1.directory)
         assertEquals([abc:'xyz3'],res1.contents.meta)
-        assertEquals('abc',res1.contents.readContent().text)
+        assertEquals('abc',res1.contents.getInputStream().text)
 
-        def store1=Storage.findByDirAndName('','abc3')
-        assertNotNull(store1)
-        assertEquals('abc3',store1.path)
-        assertEquals('',store1.dir)
-        assertEquals('abc3',store1.name)
-        assertEquals([abc:'xyz3'],store1.storageMeta)
-        assertEquals('abc'.bytes,store1.data)
+        Storage.withNewSession {
+
+            def store1 = Storage.findByDirAndName('', 'abc3')
+            assertNotNull(store1)
+            assertEquals('', store1.dir)
+            assertEquals('abc3', store1.name)
+            assertEquals('abc3', store1.path)
+            assertEquals([abc: 'xyz3'], store1.storageMeta)
+            assertEquals('abc'.bytes, store1.data)
+        }
     }
 
     void testUpdateResource_notfound() {
@@ -186,16 +189,19 @@ class DbStorageServiceTests {
         assertEquals('abc', res1.path.path)
         assertEquals(false, res1.directory)
         assertEquals([abc: 'xyz3'], res1.contents.meta)
-        assertEquals('abc', res1.contents.readContent().text)
+        assertEquals('abc', res1.contents.getInputStream().text)
 
-        def store1 = Storage.findByDirAndName('', 'abc')
-        assertEquals(store1,Storage.get(storage1.id))
-        assertNotNull(store1)
-        assertEquals('abc', store1.path)
-        assertEquals('', store1.dir)
-        assertEquals('abc', store1.name)
-        assertEquals([abc: 'xyz3'], store1.storageMeta)
-        assertEquals('abc'.bytes, store1.data)
+        Storage.withNewSession {
+
+            def store1 = Storage.findByDirAndName('', 'abc')
+            assertEquals(store1, Storage.get(storage1.id))
+            assertNotNull(store1)
+            assertEquals('abc', store1.path)
+            assertEquals('', store1.dir)
+            assertEquals('abc', store1.name)
+            assertEquals([abc: 'xyz3'], store1.storageMeta)
+            assertEquals('abc'.bytes, store1.data)
+        }
     }
 
     void testDeleteResource_notfound() {
