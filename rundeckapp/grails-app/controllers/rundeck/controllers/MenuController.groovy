@@ -755,7 +755,7 @@ class MenuController extends ControllerBase{
                     jobCreate: frameworkService.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_JOB,
                             AuthConstants.ACTION_CREATE, project.name),
                     admin: frameworkService.authorizeApplicationResource(authContext,
-                            AuthorizationUtil.resource(AuthConstants.TYPE_NODE, [name: project.name]),
+                            AuthorizationUtil.resource(AuthConstants.TYPE_PROJECT, [name: project.name]),
                             AuthConstants.ACTION_ADMIN),
             ]
         }
