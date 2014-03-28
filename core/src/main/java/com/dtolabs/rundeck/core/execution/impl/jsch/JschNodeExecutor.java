@@ -487,7 +487,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             ResourceMeta contents = framework.getResourceTree().getResource(context.getAuthContext(),PathUtil.asPath
                     ("/ssh-key/" + privateKeyResourcePath))
                     .getContents();
-            return contents.readContent();
+            return contents.getInputStream();
         }
         public String getPrivateKeyResourcePath() {
             if (null != node.getAttributes().get(NODE_ATTR_SSH_KEY_RESOURCE)) {
