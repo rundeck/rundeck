@@ -14,7 +14,7 @@ class Storage {
     static constraints = {
         jsonData(nullable: true, blank: true)
         data(nullable: true)
-        name(nullable: false, blank: false)
+        name(nullable: false, blank: false, unique: 'dir')
         dir(nullable: false, blank: true)
     }
     static mapping= {
