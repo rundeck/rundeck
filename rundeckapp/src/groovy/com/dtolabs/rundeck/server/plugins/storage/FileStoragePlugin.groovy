@@ -21,16 +21,16 @@ class FileStoragePlugin extends DelegateTree<ResourceMeta> implements StoragePlu
     @PluginProperty(description = "Base directory", required = true)
     String baseDir
 
-    Tree<ResourceMeta> delegate
+    Tree<ResourceMeta> delegateTree
 
     public Tree<ResourceMeta> getDelegate() {
-        if (null == delegate) {
+        if (null == delegateTree) {
             if(null==baseDir) {
                 throw new IllegalArgumentException("baseDir is not set")
             }
             def file = new File(baseDir)
-            delegate = FileTreeUtil.forRoot(file,ResourceUtil.factory())
+            delegateTree = FileTreeUtil.forRoot(file,ResourceUtil.factory())
         }
-        return delegate;
+        return delegateTree;
     }
 }
