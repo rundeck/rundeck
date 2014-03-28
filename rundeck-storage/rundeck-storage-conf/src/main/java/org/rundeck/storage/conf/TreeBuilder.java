@@ -224,6 +224,8 @@ public class TreeBuilder<T extends ContentMeta> {
             result = treeStack.get(0);
         } else if (treeStack.size() > 0) {
             result = new TreeStack<T>(treeStack, base);
+        }else if(null==base) {
+            throw new IllegalArgumentException("base tree was not set");
         }
 
         return result;
