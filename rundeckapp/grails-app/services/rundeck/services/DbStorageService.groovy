@@ -48,7 +48,10 @@ class DbStorageService implements StoragePlugin{
 
             @Override
             long writeContent(OutputStream outputStream) throws IOException {
-                return outputStream.write(storage1.data)
+                def data = storage1.data
+                long len = (long) data.length
+                outputStream.write(data)
+                return len
             }
         }
     }
