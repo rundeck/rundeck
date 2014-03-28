@@ -5,11 +5,14 @@ import com.dtolabs.rundeck.core.storage.ResourceMetaBuilder;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin;
 import org.apache.commons.codec.binary.Base64InputStream;
+import org.apache.commons.codec.binary.Base64OutputStream;
 import org.rundeck.storage.api.HasInputStream;
 import org.rundeck.storage.api.Path;
+import org.rundeck.storage.data.DataUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  * Example converter plugin that converts all resource content into base64-encoded form and back. When encoding the
@@ -34,6 +37,17 @@ public class ExampleConverterPlugin implements StorageConverterPlugin {
             @Override
             public InputStream getInputStream() throws IOException {
                 return new Base64InputStream(hasResourceStream.getInputStream(), doEncode);
+            }
+
+            @Override
+            public long writeContent(OutputStream outputStream) throws IOException {
+                Base64OutputStream codec = new Base64OutputStream(outputStream, doEncode);
+                try {
+                    return hasResourceStream.writeContent(codec);
+                } finally {
+                    codec.flush();
+                    codec.close();
+                }
             }
         };
     }
