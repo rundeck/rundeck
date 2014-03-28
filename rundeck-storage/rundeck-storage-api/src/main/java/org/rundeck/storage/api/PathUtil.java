@@ -1,9 +1,6 @@
 package org.rundeck.storage.api;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -323,54 +320,6 @@ public class PathUtil {
     }
 
 
-    /**
-     * Lazy mechanism for stream loading
-     *
-     * @param data file
-     *
-     * @return
-     */
-    public static HasInputStream lazyFileStream(final File data) {
-        return new HasInputStream() {
-            @Override
-            public InputStream getInputStream() throws IOException {
-                return new FileInputStream(data);
-            }
-        };
-    }
-
-    /**
-     * Lazy mechanism for stream loading
-     *
-     * @param data file
-     *
-     * @return
-     */
-    public static HasInputStream lazyStream(final InputStream data) {
-        return new HasInputStream() {
-            @Override
-            public InputStream getInputStream() throws IOException {
-                return data;
-            }
-        };
-    }
-
-    /**
-     * Lazy mechanism for stream loading of existing content
-     *
-     * @param contentMeta
-     *
-     * @return
-     */
-    public static HasInputStream wrapStream(final ContentMeta contentMeta) {
-        return new HasInputStream() {
-            @Override
-            public InputStream getInputStream() throws IOException {
-                return contentMeta.readContent();
-            }
-        };
-
-    }
 
     /**
      * Return a {@link ResourceSelector} constructed using this selector syntax:<br/>

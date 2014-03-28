@@ -98,8 +98,13 @@ class PathUtilSpecification extends Specification {
         InputStream content
 
         @Override
-        InputStream readContent() throws IOException {
+        InputStream getInputStream() throws IOException {
             return content
+        }
+
+        @Override
+        long writeContent(OutputStream outputStream) throws IOException {
+            return outputStream.write(content.bytes)
         }
     }
 
