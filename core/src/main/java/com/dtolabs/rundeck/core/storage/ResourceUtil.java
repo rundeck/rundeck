@@ -1,6 +1,7 @@
 package com.dtolabs.rundeck.core.storage;
 
 
+import com.dtolabs.utils.Streams;
 import org.rundeck.storage.api.ContentFactory;
 import org.rundeck.storage.api.ContentMeta;
 import org.rundeck.storage.api.HasInputStream;
@@ -8,6 +9,7 @@ import org.rundeck.storage.api.Tree;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -82,17 +84,7 @@ public class ResourceUtil  {
         return mutableRundeckResourceMeta;
     }
 
-    /**
-     * Construct a resource with a stream of data
-     *
-     * @param stream stream
-     * @param meta   metadata
-     *
-     * @return new resource
-     */
-    public static ResourceMeta withStream(final InputStream stream, final HasResourceMeta meta) {
-        return withStream(stream, meta.getResourceMeta());
-    }
+
 
     /**
      * Construct a resource
@@ -103,33 +95,22 @@ public class ResourceUtil  {
      * @return
      */
     public static ResourceMeta withStream(final HasInputStream stream, final Map<String, String> meta) {
-        return new BaseResource(meta) {
-            @Override
-            public InputStream readContent() throws IOException {
-                return stream.getInputStream();
-            }
-        };
+        return new BaseStreamResource(meta,stream);
     }
     public static ResourceMeta withStream(final InputStream stream, final Map<String, String> meta) {
         return new BaseResource(meta) {
             @Override
-            public InputStream readContent() throws IOException {
+            public long writeContent(OutputStream out) throws IOException {
+                return Streams.copyStream(stream, out);
+            }
+
+            @Override
+            public InputStream getInputStream() throws IOException {
                 return stream;
             }
         };
     }
 
-    static ResourceMeta wrap(final ContentMeta contentMeta) {
-        if (contentMeta instanceof ResourceMeta) {
-            return (ResourceMeta) contentMeta;
-        }
-        return new BaseResource(contentMeta.getMeta()) {
-            @Override
-            public InputStream readContent() throws IOException {
-                return contentMeta.readContent();
-            }
-        };
-    }
 
     /**
      * Coerce a Tree of ResourceMeta into A ResourceTree
