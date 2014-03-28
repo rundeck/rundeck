@@ -43,8 +43,8 @@ public class Streams {
      *
      * @throws java.io.IOException if thrown by underlying io operations
      */
-    public static void copyStream(final InputStream in, final OutputStream out) throws IOException {
-        copyStreamCount(in, out);
+    public static long copyStream(final InputStream in, final OutputStream out) throws IOException {
+        return copyStreamCount(in, out);
     }
 
     /**
