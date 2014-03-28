@@ -3,7 +3,6 @@ package rundeck.controllers
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageAuthorizationException
-import org.apache.commons.fileupload.util.Streams
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.api.StorageException
 import rundeck.filters.ApiRequestFilters
@@ -137,7 +136,7 @@ class ResourceController {
         }
         if((askedForContent || anyContent) && !maskContent) {
             response.contentType=resContentType
-            Streams.copy(contents.readContent(),response.outputStream,true)
+            def len=contents.writeContent(response.outputStream)
             return
         }
 
