@@ -54,7 +54,8 @@ class UserController extends ControllerBase{
     }
     def list={
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if(unauthorizedResponse(frameworkService.authorizeApplicationResourceType(authContext, 'user', AuthConstants.ACTION_ADMIN),
+        if(unauthorizedResponse(frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER,
+                AuthConstants.ACTION_ADMIN),
                 AuthConstants.ACTION_ADMIN, 'User', 'accounts')) {
             return
         }
@@ -69,7 +70,8 @@ class UserController extends ControllerBase{
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if(unauthorizedResponse(params.login == session.user || frameworkService.authorizeApplicationResourceType
-                (authContext, 'user', AuthConstants.ACTION_ADMIN), AuthConstants.ACTION_ADMIN,'Users',params.login)){
+                (authContext, AuthConstants.TYPE_USER, AuthConstants.ACTION_ADMIN), AuthConstants.ACTION_ADMIN,'Users',
+                params.login)){
             return
         }
         def User u = User.findByLogin(params.login)
@@ -105,7 +107,8 @@ class UserController extends ControllerBase{
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
         if (unauthorizedResponse(params.login == session.user || frameworkService.authorizeApplicationResourceType
-                (authContext, 'user', AuthConstants.ACTION_ADMIN), AuthConstants.ACTION_ADMIN, 'Users', params.login)) {
+                (authContext, AuthConstants.TYPE_USER, AuthConstants.ACTION_ADMIN), AuthConstants.ACTION_ADMIN, 'Users',
+                params.login)) {
             return
         }
 
@@ -129,7 +132,7 @@ class UserController extends ControllerBase{
         //default to current user profile
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if(unauthorizedResponse(params.login == session.user || frameworkService.authorizeApplicationResourceType
-                (authContext, 'user',
+                (authContext, AuthConstants.TYPE_USER,
                 AuthConstants.ACTION_ADMIN), AuthConstants.ACTION_ADMIN,'User',params.login)){
             return
         }
@@ -162,7 +165,8 @@ class UserController extends ControllerBase{
         def login = params.login
         def result
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if (!frameworkService.authorizeApplicationResourceType(authContext, 'user', AuthConstants.ACTION_ADMIN)) {
+        if (!frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER,
+                AuthConstants.ACTION_ADMIN)) {
             def error = "Unauthorized: admin role required"
             log.error error
             result=[result: false, error: error] 
@@ -211,7 +215,7 @@ class UserController extends ControllerBase{
         def user
         def token
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if (!frameworkService.authorizeApplicationResourceType(authContext, 'user', AuthConstants.ACTION_ADMIN)) {
+        if (!frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER, AuthConstants.ACTION_ADMIN)) {
             def error = "Unauthorized: admin role required"
             log.error error
             result = [result: false, error: error]
@@ -244,7 +248,7 @@ class UserController extends ControllerBase{
         def login = params.login
         def result
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if (!frameworkService.authorizeApplicationResourceType(authContext, 'user', AuthConstants.ACTION_ADMIN)) {
+        if (!frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER, AuthConstants.ACTION_ADMIN)) {
             def error = "Unauthorized: admin role required"
             log.error error
             result=[result: false, error: error]
