@@ -85,7 +85,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     public static final String FWK_PROP_AUTH_FAIL_MSG_DEFAULT =
         "Authentication failure connecting to node: \"{0}\". Password incorrect.";
     public static final String NODE_ATTR_SSH_KEYPATH = "ssh-keypath";
-    public static final String NODE_ATTR_SSH_KEY_RESOURCE = "ssh-key-resource";
+    public static final String NODE_ATTR_SSH_KEY_RESOURCE = "ssh-key-storage-path";
 
     public static final String PROJ_PROP_PREFIX = "project.";
     public static final String FWK_PROP_PREFIX = "framework.";
