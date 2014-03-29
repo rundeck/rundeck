@@ -62,6 +62,15 @@ Endpoints:
         + PUT to import an archive to a project - [Project Archive Import](#project-archive-import)
     - `/api/11/storage/ssh-key/[PATH]`
         + GET, POST, PUT, DELETE: manage stored SSH keys - [SSH Key Storage](#ssh-key-storage)
+    - `/api/11/auth/tokens` 
+        + GET: List all auth tokens - [List Tokens](#list-tokens)
+        + POST: Generate a token for a user - [Create a Token](#create-a-token)
+    - `/api/11/auth/tokens/[user]` 
+        + GET: List auth tokens defined for a user - [List Tokens](#list-tokens)
+        + POST: Generate a token for a user - [Create a Token](#create-a-token)
+    - `/api/11/auth/token/[tokenID]`
+        + GET: get a token - [Get a token](#get-a-tokens)
+        + DELETE: delete a token - [Delete a Token](#delete-a-token)
 * Updated endpoints
     - `/api/11/project/[NAME]`
         + DELETE method can delete a project - [Project Deletion](#project-deletion)
@@ -312,6 +321,138 @@ When an API path declares its results as an "Item List" this is the format that 
 
 API Contents
 -----
+
+### Authentication Tokens ###
+
+Authentication tokens can be managed via the API itself.
+
+#### List Tokens ####
+
+List all tokens or all tokens for a specific user.
+
+Request:
+
+    GET /api/11/auth/tokens
+    GET /api/11/auth/tokens/[USER]
+
+Result: 
+
+`application/xml`:
+
+All users:
+
+~~~~ {.xml}
+<tokens count='3' allusers='true'>
+  <token id='DRUVEuCdENoPkUpDkcDcdd6PeKkPdurc' user='alice' />
+  <token id='VprOpDeDP3KcK2dp37p5DoD6o53cc82D' user='bob' />
+  <token id='EveKe1KSRORnUN28D09eERDN3OvO4S6N' user='frank' />
+</tokens>
+~~~~
+
+For a specific user:
+
+~~~~ {.xml}
+<tokens count='1' user='alice'>
+  <token id='DRUVEuCdENoPkUpDkcDcdd6PeKkPdurc' user='alice' />
+</tokens>
+~~~~
+
+`application/json`:
+
+~~~~ {.json}
+[
+  {
+    "user": "alice",
+    "id": "DRUVEuCdENoPkUpDkcDcdd6PeKkPdurc"
+  },
+  {
+    "user": "bob",
+    "id": "VprOpDeDP3KcK2dp37p5DoD6o53cc82D"
+  },
+  {
+    "user": "frank",
+    "id": "EveKe1KSRORnUN28D09eERDN3OvO4S6N"
+  }
+]
+~~~~
+
+#### Get a token ####
+
+Get a specified auth token.
+
+Request:
+
+    GET /api/11/token/[ID]
+
+Response:
+
+`application/xml`
+
+~~~~ {.xml}
+<token id='DuV0UoDUDkoR38Evd786cdRsed6uSNdP' user='alice' />
+~~~~
+
+`application/json`
+
+~~~~ {.json}
+{
+  "user": "alice",
+  "id": "DuV0UoDUDkoR38Evd786cdRsed6uSNdP"
+}
+~~~~
+
+#### Create a Token ####
+
+Create a new token for a specific user.
+
+Request:
+
+    POST /api/11/tokens
+    POST /api/11/tokens/[USER]
+
+The user specified must either be part of the URL, or be part of the request content. If used in the URL, then the request content is ignored and can be empty.
+
+`Content-type: application/xml`
+
+~~~~ {.xml}
+<user user="alice"/>
+~~~~
+
+`Content-type: application/json`
+
+~~~~ {.json}
+{ "user" : "alice" }
+~~~~
+
+Response:
+
+
+`application/xml`
+
+~~~~ {.xml}
+<token id='DuV0UoDUDkoR38Evd786cdRsed6uSNdP' user='alice' />
+~~~~
+
+`application/json`
+
+~~~~ {.json}
+{
+  "user": "alice",
+  "id": "DuV0UoDUDkoR38Evd786cdRsed6uSNdP"
+}
+~~~~
+
+#### Delete a token ####
+
+Delete a specified auth token.
+
+Request:
+
+    DELETE /api/11/token/[ID]
+
+Response:
+
+    204 No Content
 
 ### System Info ###
 
