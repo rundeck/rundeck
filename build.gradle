@@ -5,6 +5,7 @@
  * artifacts, however it allows us to set defaults for the subjects and provides 
  * Groovy syntax highlighting for gradle build files (like this one)
  **/
+ import org.gradle.plugins.signing.Sign
  buildscript {
     repositories {
         mavenCentral()
@@ -51,6 +52,13 @@ subprojects {
         ext.isDevBuild=true
     }
 }
+def exportedProjects= [
+        ":core",
+        ":rundeck-storage:rundeck-storage-api",
+        ":rundeck-storage:rundeck-storage-data",
+        ":rundeck-storage:rundeck-storage-filesys",
+        ":rundeck-storage:rundeck-storage-conf"
+]
 
 task wrapper(type: Wrapper) {
     gradleVersion = '1.10'
@@ -77,13 +85,7 @@ gradle.taskGraph.whenReady { taskGraph ->
 }
 
 //subproject libs that are uploaded to maven central
-[
-    ":core",
-    ":rundeck-storage:rundeck-storage-api",
-    ":rundeck-storage:rundeck-storage-data",
-    ":rundeck-storage:rundeck-storage-filesys",
-    ":rundeck-storage:rundeck-storage-conf"
-].each {
+exportedProjects.each {
     project(it) {
         apply from: "${rootDir}/gradle/java.gradle"
         apply plugin: 'signing'
@@ -174,4 +176,10 @@ gradle.taskGraph.whenReady { taskGraph ->
             }
         }
     }
+}
+
+task alljavadoc(type: Javadoc) {
+    source exportedProjects.collect { project(it).sourceSets.main.allJava }
+    classpath = files(exportedProjects.collect { project(it).sourceSets.main.compileClasspath })
+    destinationDir = file("${buildDir}/docs/javadoc")
 }
