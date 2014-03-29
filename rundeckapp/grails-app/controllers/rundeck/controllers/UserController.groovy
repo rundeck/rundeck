@@ -13,6 +13,7 @@ class UserController extends ControllerBase{
     UserService userService
     FrameworkService frameworkService
     def grailsApplication
+    def apiService
 
     def index = {
         redirect(action:"login")
@@ -155,12 +156,6 @@ class UserController extends ControllerBase{
         def model=profile(params)
         return model
     }
-//    private static SecureRandom srandom=new SecureRandom()
-
-    private String genRandomString() {
-//        return new BigInteger(130, srandom).toString(32)
-        return RandomStringUtils.random(32,"rundeckRUNDECK0123456789dvopsDVOPS")
-    }
     def generateApiToken={
         //check auth to edit profile
         //default to current user profile
@@ -178,19 +173,11 @@ class UserController extends ControllerBase{
                 log.error error
                 result=[result: false, error: error]
             }else{
-                String newtoken= genRandomString()
-                while(AuthToken.findByToken(newtoken) != null){
-                    newtoken = genRandomString()
-                }
-                AuthToken token = new AuthToken(token:newtoken, authRoles: 'api_token_group',user:u)
-
-                if(token.save()){
-                    log.debug("GENERATE TOKEN ${newtoken} for User ${login} with roles: ${token.authRoles}")
-                    result= [result: true, apitoken: newtoken]
-                }else{
-                    def msg= "Failed to save token for User ${login}"
-                    log.error(msg)
-                    result= [result: false,error:msg]
+                try{
+                    AuthToken token =apiService.generateAuthToken(u)
+                    result = [result: true, apitoken: token.token]
+                }catch (Exception e){
+                    result = [result: false, error: e.message]
                 }
             }
         }
