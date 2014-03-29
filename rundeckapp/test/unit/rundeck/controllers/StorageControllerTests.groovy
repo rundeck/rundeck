@@ -1,7 +1,7 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.core.storage.ResourceMeta
-import com.dtolabs.rundeck.core.storage.ResourceUtil
+import com.dtolabs.rundeck.core.storage.StorageUtil
 import grails.test.mixin.*
 import org.junit.*
 import org.rundeck.storage.api.ContentMeta
@@ -11,13 +11,13 @@ import org.rundeck.storage.api.Resource
 import org.rundeck.storage.api.StorageException
 import rundeck.services.ApiService
 import rundeck.services.FrameworkService
-import rundeck.services.ResourceService
+import rundeck.services.StorageService
 
 /**
  * See the API for {@link grails.test.mixin.web.ControllerUnitTestMixin} for usage instructions
  */
-@TestFor(ResourceController)
-class ResourceControllerTests {
+@TestFor(StorageController)
+class StorageControllerTests {
 /**
  * utility method to mock a class
  */
@@ -32,7 +32,7 @@ class ResourceControllerTests {
         controller.frameworkService=mockWith(FrameworkService){
             getAuthContextForSubject{subject-> null }
         }
-        controller.resourceService=mockWith(ResourceService){
+        controller.storageService=mockWith(StorageService){
             hasPath{ctx,path-> false }
         }
 
@@ -61,7 +61,7 @@ class ResourceControllerTests {
             isDirectory{-> false }
             getContents{-> mContent }
         }
-        controller.resourceService=mockWith(ResourceService){
+        controller.storageService=mockWith(StorageService){
             hasPath{ctx,path-> true }
             getResource{ctx,path-> mRes }
         }
@@ -84,13 +84,13 @@ class ResourceControllerTests {
             getAuthContextForSubject{subject-> null }
         }
 
-        def mRes1 = new TestRes(contents:ResourceUtil.withStream(new ByteArrayInputStream("data1".bytes),
+        def mRes1 = new TestRes(contents:StorageUtil.withStream(new ByteArrayInputStream("data1".bytes),
                 ['Rundeck-content-type': 'test/data']),directory:false,path:PathUtil.asPath("abc/test1"))
-        def mRes2 = new TestRes(contents: ResourceUtil.withStream(new ByteArrayInputStream("data2".bytes),
+        def mRes2 = new TestRes(contents: StorageUtil.withStream(new ByteArrayInputStream("data2".bytes),
                 ['Rundeck-content-type': 'test/data']), directory: false, path: PathUtil.asPath("abc/test2"))
         def mRes = new TestRes(directory: true, path: PathUtil.asPath("abc"))
 
-        controller.resourceService=mockWith(ResourceService){
+        controller.storageService=mockWith(StorageService){
             hasPath{ctx,path-> true }
             getResource{ctx,path-> mRes }
             listDir{ctx,path->
@@ -115,7 +115,7 @@ class ResourceControllerTests {
         controller.frameworkService = mockWith(FrameworkService) {
             getAuthContextForSubject { subject -> null }
         }
-        controller.resourceService = mockWith(ResourceService) {
+        controller.storageService = mockWith(StorageService) {
             hasResource { ctx,path -> true }
         }
         params.resourcePath = 'abc'
@@ -127,7 +127,7 @@ class ResourceControllerTests {
         controller.frameworkService = mockWith(FrameworkService) {
             getAuthContextForSubject { subject -> null }
         }
-        controller.resourceService = mockWith(ResourceService) {
+        controller.storageService = mockWith(StorageService) {
             hasResource { ctx,path -> false }
             hasPath { ctx,path -> true }
         }
@@ -140,9 +140,9 @@ class ResourceControllerTests {
         controller.frameworkService = mockWith(FrameworkService) {
             getAuthContextForSubject { subject -> null }
         }
-        def mRes2 = new TestRes(contents: ResourceUtil.withStream(new ByteArrayInputStream("data2".bytes),
+        def mRes2 = new TestRes(contents: StorageUtil.withStream(new ByteArrayInputStream("data2".bytes),
                 ['Rundeck-content-type': 'test/data']), directory: false, path: PathUtil.asPath("abc/test2"))
-        controller.resourceService = mockWith(ResourceService) {
+        controller.storageService = mockWith(StorageService) {
             hasResource { ctx,path -> false }
             hasPath { ctx,path -> false }
             createResource{ctx,path,meta,stream->
@@ -164,9 +164,9 @@ class ResourceControllerTests {
         controller.frameworkService = mockWith(FrameworkService) {
             getAuthContextForSubject { subject -> null }
         }
-        def mRes2 = new TestRes(contents: ResourceUtil.withStream(new ByteArrayInputStream("data2".bytes),
+        def mRes2 = new TestRes(contents: StorageUtil.withStream(new ByteArrayInputStream("data2".bytes),
                 ['Rundeck-content-type': 'test/data']), directory: false, path: PathUtil.asPath("abc/test2"))
-        controller.resourceService = mockWith(ResourceService) {
+        controller.storageService = mockWith(StorageService) {
             hasResource { ctx,path -> false }
             hasPath { ctx,path -> false }
             createResource{ctx,path,meta,stream->
@@ -188,7 +188,7 @@ class ResourceControllerTests {
         controller.frameworkService = mockWith(FrameworkService) {
             getAuthContextForSubject { subject -> null }
         }
-        controller.resourceService = mockWith(ResourceService) {
+        controller.storageService = mockWith(StorageService) {
             hasResource { ctx,path -> false }
         }
         params.resourcePath = 'abc'
@@ -200,9 +200,9 @@ class ResourceControllerTests {
         controller.frameworkService = mockWith(FrameworkService) {
             getAuthContextForSubject { subject -> null }
         }
-        def mRes2 = new TestRes(contents: ResourceUtil.withStream(new ByteArrayInputStream("data2".bytes),
+        def mRes2 = new TestRes(contents: StorageUtil.withStream(new ByteArrayInputStream("data2".bytes),
                 ['Rundeck-content-type': 'test/data']), directory: false, path: PathUtil.asPath("abc/test2"))
-        controller.resourceService = mockWith(ResourceService) {
+        controller.storageService = mockWith(StorageService) {
             hasResource { ctx,path -> true }
             updateResource{ctx,path,meta,stream->
                 mRes2
@@ -223,9 +223,9 @@ class ResourceControllerTests {
         controller.frameworkService = mockWith(FrameworkService) {
             getAuthContextForSubject { subject -> null }
         }
-        def mRes2 = new TestRes(contents: ResourceUtil.withStream(new ByteArrayInputStream("data2".bytes),
+        def mRes2 = new TestRes(contents: StorageUtil.withStream(new ByteArrayInputStream("data2".bytes),
                 ['Rundeck-content-type': 'test/data']), directory: false, path: PathUtil.asPath("abc/test2"))
-        controller.resourceService = mockWith(ResourceService) {
+        controller.storageService = mockWith(StorageService) {
             hasResource { ctx,path -> true }
             updateResource{ctx,path,meta,stream->
                 throw StorageException.createException(PathUtil.asPath("abc/test2"),"failed")
@@ -246,7 +246,7 @@ class ResourceControllerTests {
         controller.frameworkService = mockWith(FrameworkService) {
             getAuthContextForSubject { subject -> null }
         }
-        controller.resourceService = mockWith(ResourceService) {
+        controller.storageService = mockWith(StorageService) {
             hasResource { ctx, path -> false }
         }
         controller.apiService = mockWith(ApiService) {
@@ -264,7 +264,7 @@ class ResourceControllerTests {
         controller.frameworkService = mockWith(FrameworkService) {
             getAuthContextForSubject { subject -> null }
         }
-        controller.resourceService = mockWith(ResourceService) {
+        controller.storageService = mockWith(StorageService) {
             hasResource { ctx, path -> true }
             delResource { ctx, path -> true }
         }
@@ -277,7 +277,7 @@ class ResourceControllerTests {
         controller.frameworkService = mockWith(FrameworkService) {
             getAuthContextForSubject { subject -> null }
         }
-        controller.resourceService = mockWith(ResourceService) {
+        controller.storageService = mockWith(StorageService) {
             hasResource { ctx, path -> true }
             delResource { ctx, path -> false }
         }
@@ -295,7 +295,7 @@ class ResourceControllerTests {
         controller.frameworkService = mockWith(FrameworkService) {
             getAuthContextForSubject { subject -> null }
         }
-        controller.resourceService = mockWith(ResourceService) {
+        controller.storageService = mockWith(StorageService) {
             hasResource { ctx, path -> true }
             delResource { ctx, path ->
                 throw StorageException.deleteException(PathUtil.asPath("abc/test2"), "failed")

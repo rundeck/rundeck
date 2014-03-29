@@ -2,18 +2,18 @@ import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.authorization.providers.SAREAuthorization
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.plugins.PluginManagerService
-import com.dtolabs.rundeck.core.storage.AuthRundeckResourceTree
+import com.dtolabs.rundeck.core.storage.AuthRundeckStorageTree
 import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
 import com.dtolabs.rundeck.server.plugins.PluginCustomizer
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import com.dtolabs.rundeck.server.plugins.services.ExecutionFileStoragePluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.NotificationPluginProviderService
-import com.dtolabs.rundeck.server.plugins.services.PluggableResourceStoragePluginProviderService
-import com.dtolabs.rundeck.server.plugins.services.ResourceStoragePluginProviderService
+import com.dtolabs.rundeck.server.plugins.services.PluggableStoragePluginProviderService
+import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogReaderPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogWriterPluginProviderService
-import com.dtolabs.rundeck.server.storage.ResourceTreeFactory
+import com.dtolabs.rundeck.server.storage.StorageTreeFactory
 import groovy.io.FileType
 import org.springframework.core.task.SimpleAsyncTaskExecutor
 
@@ -53,7 +53,7 @@ beans={
      */
     rundeckFramework(Framework, rdeckBase){bean->
         bean.factoryMethod='getInstanceWithoutProjectsDir'
-        resourceTree=ref('authRundeckResourceTree')
+        storageTree=ref('authRundeckStorageTree')
     }
     def configDir = new File(Constants.getFrameworkConfigDir(rdeckBase))
     rundeckPolicyAuthorization(SAREAuthorization, configDir){
@@ -92,21 +92,21 @@ beans={
         concurrencyLimit= 2 + (application.config.rundeck?.execution?.logs?.fileStorage?.concurrencyLimit ?: 5)
     }
 
-    pluggableResourceStoragePluginProviderService(PluggableResourceStoragePluginProviderService) {
+    pluggableStoragePluginProviderService(PluggableStoragePluginProviderService) {
         rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
     }
-    resourceStoragePluginProviderService(ResourceStoragePluginProviderService,rundeckFramework) {
-        pluggableResourceStoragePluginProviderService = ref('pluggableResourceStoragePluginProviderService')
+    storagePluginProviderService(StoragePluginProviderService,rundeckFramework) {
+        pluggableStoragePluginProviderService = ref('pluggableStoragePluginProviderService')
     }
 
     storageConverterPluginProviderService(StorageConverterPluginProviderService) {
         rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
     }
 
-    rundeckResourceTree(ResourceTreeFactory){
+    rundeckStorageTree(StorageTreeFactory){
         rundeckFramework=ref('rundeckFramework')
         pluginRegistry=ref("rundeckPluginRegistry")
-        resourceStoragePluginProviderService=ref('resourceStoragePluginProviderService')
+        storagePluginProviderService=ref('storagePluginProviderService')
         storageConverterPluginProviderService=ref('storageConverterPluginProviderService')
         storageConfigPrefix='rundeck.storage.provider'
         converterConfigPrefix='rundeck.storage.converter'
@@ -114,7 +114,7 @@ beans={
         baseStorageConfig=['baseDir':'${framework.var.dir}/storage']
         baseLoggerName='org.rundeck.storage.events'
     }
-    authRundeckResourceTree(AuthRundeckResourceTree,rundeckResourceTree)
+    authRundeckStorageTree(AuthRundeckStorageTree, rundeckStorageTree)
     /**
      * Define groovy-based plugins as Spring beans, registered in a hash map
      */

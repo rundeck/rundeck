@@ -65,11 +65,11 @@ class UrlMappings {
         "/api/$api_version/run/url"(controller: 'scheduledExecution', action: 'apiRunScriptUrl')
         "/api/$api_version/system/info"(controller: 'api', action: 'apiSystemInfo')
 
-        "/api/$api_version/storage/ssh-key/$resourcePath**"(controller: 'resource', action: 'apiSshKey')
+        "/api/$api_version/storage/ssh-key/$resourcePath**"(controller: 'storage', action: 'apiSshKey')
 
         //incubator endpoints
         "/api/$api_version/incubator/jobs/takeoverSchedule"(controller: 'scheduledExecution', action: 'apiJobClusterTakeoverSchedule')
-        "/api/$api_version/incubator/storage/$resourcePath**"(controller: 'resource') {
+        "/api/$api_version/incubator/storage/$resourcePath**"(controller: 'storage') {
             action = [
                     GET: "apiGetResource",
                     PUT: "apiPutResource",

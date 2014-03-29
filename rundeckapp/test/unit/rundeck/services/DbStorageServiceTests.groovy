@@ -1,8 +1,7 @@
 package rundeck.services
 
-import com.dtolabs.rundeck.core.storage.ResourceUtil
+import com.dtolabs.rundeck.core.storage.StorageUtil
 import grails.test.mixin.*
-import org.junit.*
 import org.rundeck.storage.api.StorageException
 import rundeck.Storage
 
@@ -143,7 +142,7 @@ class DbStorageServiceTests {
         assertNotNull new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
         assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
         try {
-            def res1 = service.createResource('abc', ResourceUtil.withStream(bytes('abc'),[abc:'xyz3']))
+            def res1 = service.createResource('abc', StorageUtil.withStream(bytes('abc'),[abc:'xyz3']))
             fail("expected error")
         } catch (StorageException e) {
         }
@@ -151,7 +150,7 @@ class DbStorageServiceTests {
     void testCreateResource_ok() {
         assertNotNull new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
         assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
-        def res1 = service.createResource('abc3', ResourceUtil.withStream(bytes('abc'),[abc:'xyz3']))
+        def res1 = service.createResource('abc3', StorageUtil.withStream(bytes('abc'),[abc:'xyz3']))
         assertNotNull(res1)
         assertEquals('abc3',res1.path.path)
         assertEquals(false,res1.directory)
@@ -174,7 +173,7 @@ class DbStorageServiceTests {
         assertNotNull new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
         assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
         try {
-            def res1 = service.updateResource('abc2', ResourceUtil.withStream(bytes('abc'), [abc: 'xyz3']))
+            def res1 = service.updateResource('abc2', StorageUtil.withStream(bytes('abc'), [abc: 'xyz3']))
             fail("expected error")
         } catch (StorageException e) {
         }
@@ -184,7 +183,7 @@ class DbStorageServiceTests {
         def storage1 = new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
         assertNotNull storage1
         assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
-        def res1 = service.updateResource('abc', ResourceUtil.withStream(bytes('abc'), [abc: 'xyz3']))
+        def res1 = service.updateResource('abc', StorageUtil.withStream(bytes('abc'), [abc: 'xyz3']))
         assertNotNull(res1)
         assertEquals('abc', res1.path.path)
         assertEquals(false, res1.directory)

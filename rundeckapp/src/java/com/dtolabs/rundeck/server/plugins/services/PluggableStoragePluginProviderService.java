@@ -8,11 +8,11 @@ import com.dtolabs.rundeck.plugins.storage.StoragePlugin;
 /**
  * Pluggable service for StoragePlugin
  */
-public class PluggableResourceStoragePluginProviderService extends BasePluggableProviderService<StoragePlugin> {
-    public static final String SERVICE_NAME = ServiceNameConstants.ResourceStorage;
+public class PluggableStoragePluginProviderService extends BasePluggableProviderService<StoragePlugin> {
+    public static final String SERVICE_NAME = ServiceNameConstants.Storage;
     private ServiceProviderLoader rundeckServerServiceProviderLoader;
 
-    public PluggableResourceStoragePluginProviderService() {
+    public PluggableStoragePluginProviderService() {
         super(SERVICE_NAME, StoragePlugin.class);
     }
 

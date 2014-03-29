@@ -9,7 +9,7 @@ import com.dtolabs.rundeck.plugins.storage.StoragePlugin;
 import com.dtolabs.rundeck.server.plugins.ConfiguredPlugin;
 import com.dtolabs.rundeck.server.plugins.PluginRegistry;
 import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService;
-import com.dtolabs.rundeck.server.plugins.services.ResourceStoragePluginProviderService;
+import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService;
 import com.dtolabs.rundeck.server.plugins.storage.SSHKeyStorageLayer;
 import com.dtolabs.rundeck.server.plugins.storage.StorageLogger;
 import org.apache.log4j.Logger;
@@ -24,14 +24,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * ResourceTreeFactory constructs Rundeck's ResourceTree based on the configuration in the framework.properties
+ * StorageTreeFactory constructs Rundeck's StorageTree based on the configuration in the framework.properties
  *
  * @author greg
  * @since 2/19/14 3:24 PM
  */
-public class ResourceTreeFactory implements FactoryBean<ResourceTree>, InitializingBean {
+public class StorageTreeFactory implements FactoryBean<StorageTree>, InitializingBean {
     public static final String ORG_RUNDECK_STORAGE_EVENTS_LOGGER_NAME = "org.rundeck.storage.events";
-    static Logger logger = Logger.getLogger(ResourceTreeFactory.class);
+    static Logger logger = Logger.getLogger(StorageTreeFactory.class);
     public static final String TYPE = "type";
     public static final String PATH = "path";
     public static final String CONFIG = "config";
@@ -46,7 +46,7 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
     private String baseLoggerName=ORG_RUNDECK_STORAGE_EVENTS_LOGGER_NAME;
     private Map<String, String> baseStorageConfig = new HashMap<String, String>();
 
-    private ResourceStoragePluginProviderService resourceStoragePluginProviderService;
+    private StoragePluginProviderService storagePluginProviderService;
     private StorageConverterPluginProviderService storageConverterPluginProviderService;
 
     //injected
@@ -56,15 +56,15 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
 
 
     @Override
-    public ResourceTree getObject() throws Exception {
+    public StorageTree getObject() throws Exception {
         if (null == rundeckFramework) {
             throw new FactoryBeanNotInitializedException("'rundeckFramework' is required");
         }
         if (null == pluginRegistry) {
             throw new FactoryBeanNotInitializedException("'pluginRegistry' is required");
         }
-        if (null == resourceStoragePluginProviderService) {
-            throw new FactoryBeanNotInitializedException("'resourceStoragePluginProviderService' is required");
+        if (null == storagePluginProviderService) {
+            throw new FactoryBeanNotInitializedException("'storagePluginProviderService' is required");
         }
         if (null == storageConverterPluginProviderService) {
             throw new FactoryBeanNotInitializedException("'storageConverterPluginProviderService' is required");
@@ -78,12 +78,12 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
         if (null == baseStorageType) {
             throw new FactoryBeanNotInitializedException("'baseStorageType' is required");
         }
-        return ResourceUtil.asResourceTree(buildTree(rundeckFramework.getPropertyLookup().getPropertiesMap()));
+        return StorageUtil.asStorageTree(buildTree(rundeckFramework.getPropertyLookup().getPropertiesMap()));
     }
 
     @Override
     public Class<?> getObjectType() {
-        return ResourceTree.class;
+        return StorageTree.class;
     }
 
     @Override
@@ -172,7 +172,7 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
         StoragePlugin base = loadPlugin(
                 getBaseStorageType(),
                 config1,
-                resourceStoragePluginProviderService
+                storagePluginProviderService
         );
         if(null==base) {
             throw new IllegalArgumentException("Plugin could not be loaded: " + getBaseStorageType());
@@ -288,7 +288,7 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
         Tree<ResourceMeta> resourceMetaTree = loadPlugin(
                 pluginType,
                 config,
-                resourceStoragePluginProviderService
+                storagePluginProviderService
         );
         if (index == 1 && PathUtil.isRoot(path)) {
             logger.debug("New base Storage[" + index + "]:" + path + " " + pluginType + ", config: " + config);
@@ -363,13 +363,13 @@ public class ResourceTreeFactory implements FactoryBean<ResourceTree>, Initializ
         this.storageConverterPluginProviderService = storageConverterPluginProviderService;
     }
 
-    public ResourceStoragePluginProviderService getResourceStoragePluginProviderService() {
-        return resourceStoragePluginProviderService;
+    public StoragePluginProviderService getStoragePluginProviderService() {
+        return storagePluginProviderService;
     }
 
-    public void setResourceStoragePluginProviderService(ResourceStoragePluginProviderService
-            resourceStoragePluginProviderService) {
-        this.resourceStoragePluginProviderService = resourceStoragePluginProviderService;
+    public void setStoragePluginProviderService(StoragePluginProviderService
+            storagePluginProviderService) {
+        this.storagePluginProviderService = storagePluginProviderService;
     }
 
     public String getBaseStorageType() {

@@ -2,30 +2,25 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.core.storage.ResourceMeta
-import com.dtolabs.rundeck.core.storage.ResourceUtil
+import com.dtolabs.rundeck.core.storage.StorageUtil
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin
-import org.apache.commons.fileupload.util.Streams
-import org.hibernate.Session
-import org.hibernate.StaleObjectStateException
 import org.rundeck.storage.api.HasInputStream
 import org.rundeck.storage.api.Path
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.api.StorageException
-import org.rundeck.storage.data.DataUtil
 import org.rundeck.storage.impl.ResourceBase
 import org.springframework.dao.OptimisticLockingFailureException
-import org.springframework.orm.hibernate3.HibernateOptimisticLockingFailureException
 import rundeck.Storage
 
 import java.util.regex.Pattern
 
 /**
- * Implements StoragePlugin and provides DB storage for rundeck resources
+ * Implements StoragePlugin and provides DB storage for rundeck resources if configured to be used.
  */
-@Plugin(name = 'db', service = ServiceNameConstants.ResourceStorage)
+@Plugin(name = 'db', service = ServiceNameConstants.Storage)
 @PluginDescription(title = 'DB Storage', description = 'Uses DB as storage layer.')
 class DbStorageService implements StoragePlugin{
     static transactional = false
@@ -36,7 +31,7 @@ class DbStorageService implements StoragePlugin{
 
     protected static Resource<ResourceMeta> loadResource(Storage storage1) {
         new ResourceBase(PathUtil.asPath(storage1.path),
-                ResourceUtil.withStream(lazyData(storage1), storage1.storageMeta), false)
+                StorageUtil.withStream(lazyData(storage1), storage1.storageMeta), false)
     }
 
     protected static HasInputStream lazyData(Storage storage1) {

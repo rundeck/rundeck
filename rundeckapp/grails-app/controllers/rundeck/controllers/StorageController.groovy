@@ -8,12 +8,12 @@ import org.rundeck.storage.api.StorageException
 import rundeck.filters.ApiRequestFilters
 import rundeck.services.ApiService
 import rundeck.services.FrameworkService
-import rundeck.services.ResourceService
+import rundeck.services.StorageService
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
-class ResourceController {
+class StorageController {
     public static final String RES_META_RUNDECK_CONTENT_TYPE = 'Rundeck-content-type'
     public static final String RES_META_RUNDECK_CONTENT_SIZE = 'Rundeck-content-size'
     public static final String RES_META_RUNDECK_CONTENT_MASK = 'Rundeck-content-mask'
@@ -24,7 +24,7 @@ class ResourceController {
             (RES_META_RUNDECK_CONTENT_MASK): RES_META_RUNDECK_CONTENT_MASK,
             (RES_META_RUNDECK_SSHKEY_TYPE): RES_META_RUNDECK_SSHKEY_TYPE
     ]
-    ResourceService resourceService
+    StorageService storageService
     ApiService apiService
     FrameworkService frameworkService
     static allowedMethods = [
@@ -200,10 +200,10 @@ class ResourceController {
     def apiPostResource() {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         String resourcePath = params.resourcePath
-        if (resourceService.hasResource(authContext, resourcePath)) {
+        if (storageService.hasResource(authContext, resourcePath)) {
             response.status = 409
             return renderError("resource already exists: ${resourcePath}")
-        }else if(resourceService.hasPath(authContext, resourcePath)){
+        }else if(storageService.hasPath(authContext, resourcePath)){
             response.status = 409
             return renderError("directory already exists: ${resourcePath}")
         }
@@ -212,7 +212,7 @@ class ResourceController {
                 (RES_META_RUNDECK_CONTENT_SIZE): Integer.toString(request.contentLength),
         ] + (request.resourcePostMeta?:[:])
         try{
-            def resource = resourceService.createResource(authContext,resourcePath, map, request.inputStream)
+            def resource = storageService.createResource(authContext,resourcePath, map, request.inputStream)
             response.status=201
             renderResourceFile(request,response,resource)
         } catch (StorageAuthorizationException e) {
@@ -236,7 +236,7 @@ class ResourceController {
     def apiDeleteResource() {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         String resourcePath = params.resourcePath
-        if(!resourceService.hasResource(authContext, resourcePath)) {
+        if(!storageService.hasResource(authContext, resourcePath)) {
             return apiService.renderErrorFormat(response, [
                     status: HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist',
@@ -244,7 +244,7 @@ class ResourceController {
             ])
         }
         try{
-            def deleted = resourceService.delResource(authContext, resourcePath)
+            def deleted = storageService.delResource(authContext, resourcePath)
             if(deleted){
                 render(status: HttpServletResponse.SC_NO_CONTENT)
             }else{
@@ -272,7 +272,7 @@ class ResourceController {
     def apiPutResource() {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         String resourcePath = params.resourcePath
-        def found = resourceService.hasResource(authContext, resourcePath)
+        def found = storageService.hasResource(authContext, resourcePath)
         if (!found) {
             response.status = 404
             return renderError("resource not found: ${resourcePath}")
@@ -282,7 +282,7 @@ class ResourceController {
                 (RES_META_RUNDECK_CONTENT_SIZE): Integer.toString(request.contentLength),
         ] + (request.resourcePostMeta ?: [:])
         try {
-            def resource = resourceService.updateResource(authContext,resourcePath, map, request.inputStream)
+            def resource = storageService.updateResource(authContext,resourcePath, map, request.inputStream)
             return renderResourceFile(request,response,resource)
         } catch (StorageAuthorizationException e) {
             log.error("Unauthorized: resource ${resourcePath}: ${e.message}")
@@ -303,16 +303,16 @@ class ResourceController {
     def apiGetResource() {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         String resourcePath = params.resourcePath
-        def found = resourceService.hasPath(authContext, resourcePath)
+        def found = storageService.hasPath(authContext, resourcePath)
         if(!found){
             response.status=404
             return renderError("resource not found: ${resourcePath}")
         }
         try{
-            def resource = resourceService.getResource(authContext, resourcePath)
+            def resource = storageService.getResource(authContext, resourcePath)
             if (resource.directory) {
                 //list directory and render resources
-                def dirlist = resourceService.listDir(authContext, resourcePath)
+                def dirlist = storageService.listDir(authContext, resourcePath)
                 return renderDirectory(request, response, resource,dirlist)
             } else {
                 return renderResourceFile(request, response, resource)

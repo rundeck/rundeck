@@ -1,14 +1,13 @@
 package rundeck.services
 
-import com.dtolabs.rundeck.core.storage.AuthResourceTree
+import com.dtolabs.rundeck.core.storage.AuthStorageTree
 import grails.test.mixin.*
-import org.junit.*
 
 /**
  * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
  */
-@TestFor(ResourceService)
-class ResourceServiceTests {
+@TestFor(StorageService)
+class StorageServiceTests {
 /**
  * utility method to mock a class
  */
@@ -18,7 +17,7 @@ class ResourceServiceTests {
         return mock.createMock()
     }
     void testHasResource() {
-        service.authRundeckResourceTree=mockWith(AuthResourceTree){
+        service.authRundeckStorageTree=mockWith(AuthStorageTree){
             hasResource{ctx,path->
                 assertEquals("abc/123",path.path)
                 true
@@ -27,7 +26,7 @@ class ResourceServiceTests {
         assert (service.hasResource(null,'abc/123'))
     }
     void testHasPath() {
-        service.authRundeckResourceTree=mockWith(AuthResourceTree){
+        service.authRundeckStorageTree=mockWith(AuthStorageTree){
             hasPath{ctx,path->
                 assertEquals("abc/123",path.path)
                 true
@@ -36,7 +35,7 @@ class ResourceServiceTests {
         assert service.hasPath(null,'abc/123')
     }
     void testGetResource() {
-        service.authRundeckResourceTree=mockWith(AuthResourceTree){
+        service.authRundeckStorageTree=mockWith(AuthStorageTree){
             getPath{ctx,path->
                 assertEquals("abc/123",path.path)
                 null
@@ -45,7 +44,7 @@ class ResourceServiceTests {
         assertNull(service.getResource(null, 'abc/123'))
     }
     void testListDir() {
-        service.authRundeckResourceTree=mockWith(AuthResourceTree){
+        service.authRundeckStorageTree=mockWith(AuthStorageTree){
             listDirectory{ctx,path->
                 assertEquals("abc/123",path.path)
                 [] as Set
@@ -54,7 +53,7 @@ class ResourceServiceTests {
         assertEquals([] as Set,service.listDir(null, 'abc/123'))
     }
     void testDelResource() {
-        service.authRundeckResourceTree=mockWith(AuthResourceTree){
+        service.authRundeckStorageTree=mockWith(AuthStorageTree){
             deleteResource{ctx,path->
                 assertEquals("abc/123",path.path)
                 true
@@ -63,7 +62,7 @@ class ResourceServiceTests {
         assertEquals(true,service.delResource(null, 'abc/123'))
     }
     void testCreateResource() {
-        service.authRundeckResourceTree=mockWith(AuthResourceTree){
+        service.authRundeckStorageTree=mockWith(AuthStorageTree){
             createResource{ctx,path,content->
                 assertEquals("abc/123",path.path)
                 assertNotNull(content.meta)
@@ -74,7 +73,7 @@ class ResourceServiceTests {
         service.createResource(null, 'abc/123',[:],stream('data'))
     }
     void testUpdateResource() {
-        service.authRundeckResourceTree=mockWith(AuthResourceTree){
+        service.authRundeckStorageTree=mockWith(AuthStorageTree){
             updateResource{ctx,path,content->
                 assertEquals("abc/123",path.path)
                 assertNotNull(content.meta)

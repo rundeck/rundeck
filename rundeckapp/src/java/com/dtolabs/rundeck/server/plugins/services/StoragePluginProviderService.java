@@ -14,20 +14,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * ResourceStoragePluginProviderService is composed of the {@link BuiltinResourceStoragePluginProviderService} and
- * {@link PluggableResourceStoragePluginProviderService}
+ * StoragePluginProviderService is composed of the {@link BuiltinResourceStoragePluginProviderService} and
+ * {@link PluggableStoragePluginProviderService}
  *
  * @author greg
  * @since 2014-02-21
  */
-public class ResourceStoragePluginProviderService extends ChainedProviderService<StoragePlugin> implements
+public class StoragePluginProviderService extends ChainedProviderService<StoragePlugin> implements
         DescribableService, PluggableProviderService<StoragePlugin> {
-    public static final String SERVICE_NAME = ServiceNameConstants.ResourceStorage;
+    public static final String SERVICE_NAME = ServiceNameConstants.Storage;
 
     private List<ProviderService<StoragePlugin>> serviceList;
-    private PluggableResourceStoragePluginProviderService pluggableResourceStoragePluginProviderService;
+    private PluggableStoragePluginProviderService pluggableStoragePluginProviderService;
 
-    public ResourceStoragePluginProviderService(Framework framework) {
+    public StoragePluginProviderService(Framework framework) {
         serviceList = new ArrayList<ProviderService<StoragePlugin>>();
         serviceList.add(new BuiltinResourceStoragePluginProviderService(framework, SERVICE_NAME));
     }
@@ -50,29 +50,29 @@ public class ResourceStoragePluginProviderService extends ChainedProviderService
         return SERVICE_NAME;
     }
 
-    public PluggableResourceStoragePluginProviderService getPluggableResourceStoragePluginProviderService() {
-        return pluggableResourceStoragePluginProviderService;
+    public PluggableStoragePluginProviderService getPluggableStoragePluginProviderService() {
+        return pluggableStoragePluginProviderService;
     }
 
-    public void setPluggableResourceStoragePluginProviderService(PluggableResourceStoragePluginProviderService
-            pluggableResourceStoragePluginProviderService) {
-        this.pluggableResourceStoragePluginProviderService = pluggableResourceStoragePluginProviderService;
-        serviceList.add(this.pluggableResourceStoragePluginProviderService);
+    public void setPluggableStoragePluginProviderService(PluggableStoragePluginProviderService
+            pluggableStoragePluginProviderService) {
+        this.pluggableStoragePluginProviderService = pluggableStoragePluginProviderService;
+        serviceList.add(this.pluggableStoragePluginProviderService);
     }
 
     @Override
     public boolean isValidProviderClass(Class aClass) {
-        return getPluggableResourceStoragePluginProviderService().isValidProviderClass(aClass);
+        return getPluggableStoragePluginProviderService().isValidProviderClass(aClass);
     }
 
     @Override
     public StoragePlugin createProviderInstance(Class<StoragePlugin> resourceStoragePluginClass, String s) throws PluginException, ProviderCreationException {
-        return getPluggableResourceStoragePluginProviderService().createProviderInstance(resourceStoragePluginClass, s);
+        return getPluggableStoragePluginProviderService().createProviderInstance(resourceStoragePluginClass, s);
     }
 
     @Override
     public boolean isScriptPluggable() {
-        return getPluggableResourceStoragePluginProviderService().isScriptPluggable();
+        return getPluggableStoragePluginProviderService().isScriptPluggable();
     }
 
     @Override
