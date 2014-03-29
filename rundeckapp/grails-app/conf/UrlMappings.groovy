@@ -64,6 +64,8 @@ class UrlMappings {
         "/api/$api_version/run/script"(controller: 'scheduledExecution', action: 'apiRunScript')
         "/api/$api_version/run/url"(controller: 'scheduledExecution', action: 'apiRunScriptUrl')
         "/api/$api_version/system/info"(controller: 'api', action: 'apiSystemInfo')
+        "/api/$api_version/tokens/$user?"(controller: 'api', action: 'apiTokenList')
+        "/api/$api_version/token/$token"(controller: 'api', action: 'apiTokenManage')
 
         "/api/$api_version/storage/ssh-key/$resourcePath**"(controller: 'storage', action: 'apiSshKey')
 
