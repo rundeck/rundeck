@@ -42,8 +42,7 @@ import com.dtolabs.rundeck.core.resources.ResourceModelSourceException;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService;
-import com.dtolabs.rundeck.core.storage.AuthResourceTree;
-import com.dtolabs.rundeck.core.storage.ResourceTree;
+import com.dtolabs.rundeck.core.storage.AuthStorageTree;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import com.dtolabs.rundeck.core.utils.PropertyLookup;
 import org.apache.log4j.Logger;
@@ -92,7 +91,7 @@ public class Framework extends FrameworkResourceParent {
     private final IPropertyLookup lookup;
     private final File projectsBase;
     private FrameworkProjectMgr projectResourceMgr;
-    private AuthResourceTree resourceTree;
+    private AuthStorageTree resourceTree;
 
     final HashMap<String,FrameworkSupportService> services = new HashMap<String, FrameworkSupportService>();
     /**
@@ -644,11 +643,11 @@ public class Framework extends FrameworkResourceParent {
         return fwkNodeName.equals(node.getNodename());
     }
 
-    public AuthResourceTree getResourceTree() {
+    public AuthStorageTree getResourceTree() {
         return resourceTree;
     }
 
-    public void setResourceTree(AuthResourceTree resourceTree) {
+    public void setResourceTree(AuthStorageTree resourceTree) {
         this.resourceTree = resourceTree;
     }
 }

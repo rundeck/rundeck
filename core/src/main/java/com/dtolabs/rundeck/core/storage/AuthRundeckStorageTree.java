@@ -13,12 +13,12 @@ import org.rundeck.storage.api.StorageException;
 import java.util.*;
 
 /**
- * AuthRundeckResourceTree provides authorized access to a tree using an {@link AuthContext} for each request.
+ * AuthRundeckStorageTree provides authorized access to a tree using an {@link AuthContext} for each request.
  *
  * @author greg
  * @since 2014-03-20
  */
-public class AuthRundeckResourceTree implements AuthResourceTree {
+public class AuthRundeckStorageTree implements AuthStorageTree {
     public static final String READ = "read";
     public static final String DELETE = "delete";
     public static final String CREATE = "create";
@@ -27,10 +27,10 @@ public class AuthRundeckResourceTree implements AuthResourceTree {
     public static final String PATH_RES_KEY = "path";
     public static final String NAME_RES_KEY = "name";
     public static final String PROJECT_PATH_COMPONENT = "project";
-    private ResourceTree resourceTree;
+    private StorageTree storageTree;
 
-    public AuthRundeckResourceTree(ResourceTree resourceTree) {
-        this.resourceTree = resourceTree;
+    public AuthRundeckStorageTree(StorageTree storageTree) {
+        this.storageTree = storageTree;
     }
 
     /**
@@ -96,17 +96,17 @@ public class AuthRundeckResourceTree implements AuthResourceTree {
 
     @Override
     public boolean hasPath(AuthContext auth, Path path) {
-        return authorizedPath(auth, path, READ) && resourceTree.hasPath(path);
+        return authorizedPath(auth, path, READ) && storageTree.hasPath(path);
     }
 
     @Override
     public boolean hasResource(AuthContext auth, Path path) {
-        return authorizedPath(auth, path, READ) && resourceTree.hasPath(path);
+        return authorizedPath(auth, path, READ) && storageTree.hasPath(path);
     }
 
     @Override
     public boolean hasDirectory(AuthContext auth, Path path) {
-        return authorizedPath(auth, path, READ) && resourceTree.hasPath(path);
+        return authorizedPath(auth, path, READ) && storageTree.hasPath(path);
     }
 
     @Override
@@ -115,7 +115,7 @@ public class AuthRundeckResourceTree implements AuthResourceTree {
             throw new StorageAuthorizationException("Unauthorized access", StorageException.Event.READ, path);
         }
 
-        Resource<ResourceMeta> resource = resourceTree.getPath(path);
+        Resource<ResourceMeta> resource = storageTree.getPath(path);
         if (resource.isDirectory()) {
             return resource;
         }
@@ -130,7 +130,7 @@ public class AuthRundeckResourceTree implements AuthResourceTree {
             throw new StorageAuthorizationException("Unauthorized access", StorageException.Event.READ, path);
         }
 
-        Resource<ResourceMeta> resource = resourceTree.getResource(path);
+        Resource<ResourceMeta> resource = storageTree.getResource(path);
 
         return resource;
     }
@@ -140,7 +140,7 @@ public class AuthRundeckResourceTree implements AuthResourceTree {
         if (!authorizedPath(auth, path, READ)) {
             throw new StorageAuthorizationException("Unauthorized access", StorageException.Event.LIST, path);
         }
-        Set<Resource<ResourceMeta>> resources = resourceTree.listDirectoryResources(path);
+        Set<Resource<ResourceMeta>> resources = storageTree.listDirectoryResources(path);
         return filteredResources(auth, resources, READ);
     }
 
@@ -160,7 +160,7 @@ public class AuthRundeckResourceTree implements AuthResourceTree {
         if (!authorizedPath(auth, path, READ)) {
             throw new StorageAuthorizationException("Unauthorized access", StorageException.Event.LIST, path);
         }
-        Set<Resource<ResourceMeta>> resources = resourceTree.listDirectory(path);
+        Set<Resource<ResourceMeta>> resources = storageTree.listDirectory(path);
         return filteredResources(auth, resources, READ);
     }
 
@@ -169,7 +169,7 @@ public class AuthRundeckResourceTree implements AuthResourceTree {
         if (!authorizedPath(auth, path, READ)) {
             throw new StorageAuthorizationException("Unauthorized access", StorageException.Event.READ, path);
         }
-        Set<Resource<ResourceMeta>> resources = resourceTree.listDirectorySubdirs(path);
+        Set<Resource<ResourceMeta>> resources = storageTree.listDirectorySubdirs(path);
         return filteredResources(auth, resources, READ);
     }
 
@@ -178,7 +178,7 @@ public class AuthRundeckResourceTree implements AuthResourceTree {
         if (!authorizedPath(auth, path, DELETE)) {
             throw new StorageAuthorizationException("Unauthorized access", StorageException.Event.DELETE, path);
         }
-        return resourceTree.deleteResource(path);
+        return storageTree.deleteResource(path);
     }
 
     @Override
@@ -186,7 +186,7 @@ public class AuthRundeckResourceTree implements AuthResourceTree {
         if (!authorizedPath(auth, path, CREATE)) {
             throw new StorageAuthorizationException("Unauthorized access", StorageException.Event.CREATE, path);
         }
-        return resourceTree.createResource(path, content);
+        return storageTree.createResource(path, content);
     }
 
     @Override
@@ -194,6 +194,6 @@ public class AuthRundeckResourceTree implements AuthResourceTree {
         if (!authorizedPath(auth, path, UPDATE)) {
             throw new StorageAuthorizationException("Unauthorized access", StorageException.Event.UPDATE, path);
         }
-        return resourceTree.updateResource(path, content);
+        return storageTree.updateResource(path, content);
     }
 }

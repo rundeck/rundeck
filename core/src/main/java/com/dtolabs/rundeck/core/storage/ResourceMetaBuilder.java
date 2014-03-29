@@ -32,44 +32,44 @@ public class ResourceMetaBuilder implements CanSetResourceMeta, HasResourceMeta 
 
     @Override
     public void setContentType(String value) {
-        setMeta(ResourceUtil.RES_META_RUNDECK_CONTENT_TYPE, value);
+        setMeta(StorageUtil.RES_META_RUNDECK_CONTENT_TYPE, value);
     }
 
     public String getContentType() {
-        return getResourceMeta().get(ResourceUtil.RES_META_RUNDECK_CONTENT_TYPE);
+        return getResourceMeta().get(StorageUtil.RES_META_RUNDECK_CONTENT_TYPE);
     }
 
     @Override
     public void setContentLength(long length) {
-        setMeta(ResourceUtil.RES_META_RUNDECK_CONTENT_LENGTH, Long.toString(length));
+        setMeta(StorageUtil.RES_META_RUNDECK_CONTENT_LENGTH, Long.toString(length));
     }
 
     public long getContentLength() {
-        return Long.parseLong(getResourceMeta().get(ResourceUtil.RES_META_RUNDECK_CONTENT_LENGTH));
+        return Long.parseLong(getResourceMeta().get(StorageUtil.RES_META_RUNDECK_CONTENT_LENGTH));
     }
 
     @Override
     public void setModificationTime(Date time) {
-        setMeta(ResourceUtil.RES_META_RUNDECK_CONTENT_MODIFY_TIME, ResourceUtil.formatDate(time));
+        setMeta(StorageUtil.RES_META_RUNDECK_CONTENT_MODIFY_TIME, StorageUtil.formatDate(time));
     }
 
     public Date getModificationTime() {
-        String s = getResourceMeta().get(ResourceUtil.RES_META_RUNDECK_CONTENT_MODIFY_TIME);
+        String s = getResourceMeta().get(StorageUtil.RES_META_RUNDECK_CONTENT_MODIFY_TIME);
         if (null != s) {
-            return ResourceUtil.parseDate(s, null);
+            return StorageUtil.parseDate(s, null);
         }
         return null;
     }
 
     @Override
     public void setCreationTime(Date time) {
-        setMeta(ResourceUtil.RES_META_RUNDECK_CONTENT_CREATION_TIME, ResourceUtil.formatDate(time));
+        setMeta(StorageUtil.RES_META_RUNDECK_CONTENT_CREATION_TIME, StorageUtil.formatDate(time));
     }
 
     public Date getCreationTime() {
-        String s = getResourceMeta().get(ResourceUtil.RES_META_RUNDECK_CONTENT_CREATION_TIME);
+        String s = getResourceMeta().get(StorageUtil.RES_META_RUNDECK_CONTENT_CREATION_TIME);
         if (null != s) {
-            return ResourceUtil.parseDate(s, null);
+            return StorageUtil.parseDate(s, null);
         }
         return null;
     }

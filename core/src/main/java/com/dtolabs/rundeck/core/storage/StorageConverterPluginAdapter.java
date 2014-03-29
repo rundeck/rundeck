@@ -3,9 +3,7 @@ package com.dtolabs.rundeck.core.storage;
 import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin;
 import org.rundeck.storage.api.HasInputStream;
 import org.rundeck.storage.api.Path;
-import org.rundeck.storage.api.PathUtil;
 import org.rundeck.storage.api.StorageException;
-import org.rundeck.storage.data.DataUtil;
 
 import java.util.HashMap;
 
@@ -34,7 +32,7 @@ public class StorageConverterPluginAdapter implements StorageConverter {
      * @return new resource
      */
     private ResourceMeta filter(Path path, ResourceMeta resourceMeta, Operation op) {
-        ResourceMetaBuilder resourceMetaBuilder = ResourceUtil.create(new HashMap<String,
+        ResourceMetaBuilder resourceMetaBuilder = StorageUtil.create(new HashMap<String,
                 String>(resourceMeta.getMeta()));
         final HasInputStream result;
         switch (op) {
@@ -58,7 +56,7 @@ public class StorageConverterPluginAdapter implements StorageConverter {
                 throw new IllegalStateException();
         }
         //construct the new data
-        return ResourceUtil.withStream(null == result ? resourceMeta : result, resourceMetaBuilder.getResourceMeta());
+        return StorageUtil.withStream(null == result ? resourceMeta : result, resourceMetaBuilder.getResourceMeta());
     }
 
     @Override

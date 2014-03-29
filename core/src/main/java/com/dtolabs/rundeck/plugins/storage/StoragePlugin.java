@@ -1,9 +1,9 @@
 package com.dtolabs.rundeck.plugins.storage;
 
-import com.dtolabs.rundeck.core.storage.ResourceTree;
+import com.dtolabs.rundeck.core.storage.StorageTree;
 
 /**
  * Plugin to provide a storage backend.
  */
-public interface StoragePlugin extends ResourceTree {
+public interface StoragePlugin extends StorageTree {
 }

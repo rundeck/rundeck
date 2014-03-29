@@ -8,7 +8,7 @@ import org.rundeck.storage.api.Resource;
 import java.util.Set;
 
 /**
- * AuthResourceTree authenticated facade to {@link org.rundeck.storage.api.Tree}
+ * AuthTree authenticated facade to {@link org.rundeck.storage.api.Tree}
  *
  * @author greg
  * @since 2014-03-20

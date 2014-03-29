@@ -20,21 +20,21 @@ abstract class BaseResource implements ResourceMeta {
 
     @Override
     public String getContentType() {
-        return meta.get(ResourceUtil.RES_META_RUNDECK_CONTENT_TYPE);
+        return meta.get(StorageUtil.RES_META_RUNDECK_CONTENT_TYPE);
     }
 
     @Override
     public long getContentLength() {
-        return ResourceUtil.parseLong(meta.get(ResourceUtil.RES_META_RUNDECK_CONTENT_LENGTH), -1);
+        return StorageUtil.parseLong(meta.get(StorageUtil.RES_META_RUNDECK_CONTENT_LENGTH), -1);
     }
 
     @Override
     public Date getModificationTime() {
-        return ResourceUtil.parseDate(meta.get(ResourceUtil.RES_META_RUNDECK_CONTENT_MODIFY_TIME), null);
+        return StorageUtil.parseDate(meta.get(StorageUtil.RES_META_RUNDECK_CONTENT_MODIFY_TIME), null);
     }
 
     @Override
     public Date getCreationTime() {
-        return ResourceUtil.parseDate(meta.get(ResourceUtil.RES_META_RUNDECK_CONTENT_CREATION_TIME), null);
+        return StorageUtil.parseDate(meta.get(StorageUtil.RES_META_RUNDECK_CONTENT_CREATION_TIME), null);
     }
 }

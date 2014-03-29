@@ -20,13 +20,13 @@ import java.io.ByteArrayInputStream;
 import java.util.*;
 
 /**
- * AuthRundeckResourceTreeTest is ...
+ * AuthRundeckStorageTreeTest is ...
  *
  * @author greg
  * @since 2014-03-20
  */
 @RunWith(JUnit4.class)
-public class AuthRundeckResourceTreeTest {
+public class AuthRundeckStorageTreeTest {
 
 
     class testAuth implements AuthContext {
@@ -109,33 +109,33 @@ public class AuthRundeckResourceTreeTest {
 
     @Test
     public void testEnvironmentForPath_applevel() {
-        ResourceTree testTree = ResourceUtil.asResourceTree(new MemoryTree<ResourceMeta>());
-        AuthRundeckResourceTree authRundeckResourceTree = new AuthRundeckResourceTree(testTree);
+        StorageTree testTree = StorageUtil.asStorageTree(new MemoryTree<ResourceMeta>());
+        AuthRundeckStorageTree authRundeckStorageTree = new AuthRundeckStorageTree(testTree);
         Assert.assertEquals(Framework.RUNDECK_APP_ENV,
-                authRundeckResourceTree.environmentForPath(PathUtil.asPath("test1")));
+                authRundeckStorageTree.environmentForPath(PathUtil.asPath("test1")));
         Assert.assertEquals(Framework.RUNDECK_APP_ENV,
-                authRundeckResourceTree.environmentForPath(PathUtil.asPath("project")));
+                authRundeckStorageTree.environmentForPath(PathUtil.asPath("project")));
         Assert.assertEquals(Framework.RUNDECK_APP_ENV,
-                authRundeckResourceTree.environmentForPath(PathUtil.asPath("project/milkdud")));
+                authRundeckStorageTree.environmentForPath(PathUtil.asPath("project/milkdud")));
     }
 
     @Test
     public void testEnvironmentForPath_projectLevel() {
-        ResourceTree testTree = ResourceUtil.asResourceTree(new MemoryTree<ResourceMeta>());
-        AuthRundeckResourceTree authRundeckResourceTree = new AuthRundeckResourceTree(testTree);
+        StorageTree testTree = StorageUtil.asStorageTree(new MemoryTree<ResourceMeta>());
+        AuthRundeckStorageTree authRundeckStorageTree = new AuthRundeckStorageTree(testTree);
         Assert.assertEquals(FrameworkProject.authorizationEnvironment("milkdud"),
-                authRundeckResourceTree.environmentForPath(PathUtil.asPath("project/milkdud/tooth")));
+                authRundeckStorageTree.environmentForPath(PathUtil.asPath("project/milkdud/tooth")));
         Assert.assertEquals(FrameworkProject.authorizationEnvironment("milkdud"),
-                authRundeckResourceTree.environmentForPath(PathUtil.asPath("project/milkdud/tooth/something/blah")));
+                authRundeckStorageTree.environmentForPath(PathUtil.asPath("project/milkdud/tooth/something/blah")));
     }
     @Test
     public void testGetPathNoRead_app() {
-        ResourceTree testTree = ResourceUtil.asResourceTree(new MemoryTree<ResourceMeta>());
-        AuthRundeckResourceTree authRundeckResourceTree = new AuthRundeckResourceTree(testTree);
-        testAuth testAuth = new AuthRundeckResourceTreeTest.testAuth();
+        StorageTree testTree = StorageUtil.asStorageTree(new MemoryTree<ResourceMeta>());
+        AuthRundeckStorageTree authRundeckStorageTree = new AuthRundeckStorageTree(testTree);
+        testAuth testAuth = new AuthRundeckStorageTreeTest.testAuth();
         testAuth.evaluateSingle = decisions(false);
         try {
-            Resource<ResourceMeta> test1 = authRundeckResourceTree.getPath(testAuth, PathUtil.asPath("test1"));
+            Resource<ResourceMeta> test1 = authRundeckStorageTree.getPath(testAuth, PathUtil.asPath("test1"));
             Assert.fail("expected failure");
         } catch (StorageException e) {
 
@@ -146,18 +146,18 @@ public class AuthRundeckResourceTreeTest {
         Assert.assertTrue(testAuth.environment.contains(Framework.RUNDECK_APP_CONTEXT));
         Assert.assertNotNull(testAuth.resource);
         Assert.assertEquals(3, testAuth.resource.size());
-        Assert.assertEquals(AuthRundeckResourceTree.STORAGE_PATH_AUTH_RES_TYPE, testAuth.resource.get("type"));
+        Assert.assertEquals(AuthRundeckStorageTree.STORAGE_PATH_AUTH_RES_TYPE, testAuth.resource.get("type"));
         Assert.assertEquals("test1", testAuth.resource.get("path"));
         Assert.assertEquals("test1", testAuth.resource.get("name"));
     }
     @Test
     public void testGetPathNoRead_project() {
-        ResourceTree testTree = ResourceUtil.asResourceTree(new MemoryTree<ResourceMeta>());
-        AuthRundeckResourceTree authRundeckResourceTree = new AuthRundeckResourceTree(testTree);
-        testAuth testAuth = new AuthRundeckResourceTreeTest.testAuth();
+        StorageTree testTree = StorageUtil.asStorageTree(new MemoryTree<ResourceMeta>());
+        AuthRundeckStorageTree authRundeckStorageTree = new AuthRundeckStorageTree(testTree);
+        testAuth testAuth = new AuthRundeckStorageTreeTest.testAuth();
         testAuth.evaluateSingle = decisions(false);
         try {
-            Resource<ResourceMeta> test1 = authRundeckResourceTree.getPath(testAuth,
+            Resource<ResourceMeta> test1 = authRundeckStorageTree.getPath(testAuth,
                     PathUtil.asPath("project/milkdud/test1"));
             Assert.fail("expected failure");
         } catch (StorageException e) {
@@ -169,24 +169,24 @@ public class AuthRundeckResourceTreeTest {
         Assert.assertEquals(FrameworkProject.authorizationEnvironment("milkdud"), testAuth.environment);
         Assert.assertNotNull(testAuth.resource);
         Assert.assertEquals(3, testAuth.resource.size());
-        Assert.assertEquals(AuthRundeckResourceTree.STORAGE_PATH_AUTH_RES_TYPE, testAuth.resource.get("type"));
+        Assert.assertEquals(AuthRundeckStorageTree.STORAGE_PATH_AUTH_RES_TYPE, testAuth.resource.get("type"));
         Assert.assertEquals("project/milkdud/test1", testAuth.resource.get("path"));
         Assert.assertEquals("test1", testAuth.resource.get("name"));
     }
     @Test
     public void testGetPathReadDir() {
-        ResourceTree testTree = ResourceUtil.asResourceTree(new MemoryTree<ResourceMeta>());
+        StorageTree testTree = StorageUtil.asStorageTree(new MemoryTree<ResourceMeta>());
         Resource<ResourceMeta> resource = testTree.createResource(PathUtil.asPath("project/milkdud/test1/file1"),
-                ResourceUtil.withStream(
-                new ByteArrayInputStream("asdf".getBytes()),
-                new HashMap<String, String>()
-        ));
+                StorageUtil.withStream(
+                        new ByteArrayInputStream("asdf".getBytes()),
+                        new HashMap<String, String>()
+                ));
 
-        AuthRundeckResourceTree authRundeckResourceTree = new AuthRundeckResourceTree(testTree);
-        testAuth testAuth = new AuthRundeckResourceTreeTest.testAuth();
+        AuthRundeckStorageTree authRundeckStorageTree = new AuthRundeckStorageTree(testTree);
+        testAuth testAuth = new AuthRundeckStorageTreeTest.testAuth();
         testAuth.evaluateSingle = decisions(true);
 
-        Resource<ResourceMeta> test1 = authRundeckResourceTree.getPath(testAuth,
+        Resource<ResourceMeta> test1 = authRundeckStorageTree.getPath(testAuth,
                 PathUtil.asPath("project/milkdud/test1"));
         Assert.assertNotNull(test1);
         Assert.assertTrue(test1.isDirectory());
@@ -197,28 +197,28 @@ public class AuthRundeckResourceTreeTest {
         Assert.assertEquals(FrameworkProject.authorizationEnvironment("milkdud"), testAuth.environment);
         Assert.assertNotNull(testAuth.resource);
         Assert.assertEquals(3, testAuth.resource.size());
-        Assert.assertEquals(AuthRundeckResourceTree.STORAGE_PATH_AUTH_RES_TYPE, testAuth.resource.get("type"));
+        Assert.assertEquals(AuthRundeckStorageTree.STORAGE_PATH_AUTH_RES_TYPE, testAuth.resource.get("type"));
         Assert.assertEquals("project/milkdud/test1", testAuth.resource.get("path"));
         Assert.assertEquals("test1", testAuth.resource.get("name"));
     }
     @Test
     public void testGetPathReadContent_unauthorized() {
-        ResourceTree testTree = ResourceUtil.asResourceTree(new MemoryTree<ResourceMeta>());
+        StorageTree testTree = StorageUtil.asStorageTree(new MemoryTree<ResourceMeta>());
         Resource<ResourceMeta> resource = testTree.createResource(PathUtil.asPath("project/milkdud/test1/file1"),
-                ResourceUtil.withStream(
-                new ByteArrayInputStream("asdf".getBytes()),
-                new HashMap<String, String>(){{
-                    put("test1", "value1");
-                }}
-        ));
+                StorageUtil.withStream(
+                        new ByteArrayInputStream("asdf".getBytes()),
+                        new HashMap<String, String>() {{
+                            put("test1", "value1");
+                        }}
+                ));
 
-        AuthRundeckResourceTree authRundeckResourceTree = new AuthRundeckResourceTree(testTree);
-        testAuth testAuth = new AuthRundeckResourceTreeTest.testAuth();
+        AuthRundeckStorageTree authRundeckStorageTree = new AuthRundeckStorageTree(testTree);
+        testAuth testAuth = new AuthRundeckStorageTreeTest.testAuth();
         testAuth.evaluateSingle = decisions(false);
 
         Resource<ResourceMeta> test1 = null;
         try {
-            test1 = authRundeckResourceTree.getPath(testAuth, PathUtil.asPath("project/milkdud/test1/file1"));
+            test1 = authRundeckStorageTree.getPath(testAuth, PathUtil.asPath("project/milkdud/test1/file1"));
             Assert.fail("expected failure");
         } catch (StorageException e) {
 
@@ -230,27 +230,27 @@ public class AuthRundeckResourceTreeTest {
         Assert.assertEquals(FrameworkProject.authorizationEnvironment("milkdud"), testAuth.environment);
         Assert.assertNotNull(testAuth.resource);
         Assert.assertEquals(3, testAuth.resource.size());
-        Assert.assertEquals(AuthRundeckResourceTree.STORAGE_PATH_AUTH_RES_TYPE, testAuth.resource.get("type"));
+        Assert.assertEquals(AuthRundeckStorageTree.STORAGE_PATH_AUTH_RES_TYPE, testAuth.resource.get("type"));
         Assert.assertEquals("project/milkdud/test1/file1", testAuth.resource.get("path"));
         Assert.assertEquals("file1", testAuth.resource.get("name"));
     }
     @Test
     public void testGetPathReadContent_authorized() {
-        ResourceTree testTree = ResourceUtil.asResourceTree(new MemoryTree<ResourceMeta>());
+        StorageTree testTree = StorageUtil.asStorageTree(new MemoryTree<ResourceMeta>());
         Resource<ResourceMeta> resource = testTree.createResource(PathUtil.asPath("project/milkdud/test1/file1"),
-                ResourceUtil.withStream(
-                new ByteArrayInputStream("asdf".getBytes()),
-                new HashMap<String, String>(){{
-                    put("test1", "value1");
-                }}
-        ));
+                StorageUtil.withStream(
+                        new ByteArrayInputStream("asdf".getBytes()),
+                        new HashMap<String, String>() {{
+                            put("test1", "value1");
+                        }}
+                ));
 
-        AuthRundeckResourceTree authRundeckResourceTree = new AuthRundeckResourceTree(testTree);
-        testAuth testAuth = new AuthRundeckResourceTreeTest.testAuth();
+        AuthRundeckStorageTree authRundeckStorageTree = new AuthRundeckStorageTree(testTree);
+        testAuth testAuth = new AuthRundeckStorageTreeTest.testAuth();
         testAuth.evaluateSingle = decisions(true, true);
 
         Resource<ResourceMeta> test1 = null;
-        test1 = authRundeckResourceTree.getPath(testAuth, PathUtil.asPath("project/milkdud/test1/file1"));
+        test1 = authRundeckStorageTree.getPath(testAuth, PathUtil.asPath("project/milkdud/test1/file1"));
 
         Assert.assertNotNull(test1);
         Assert.assertFalse(test1.isDirectory());
@@ -261,7 +261,7 @@ public class AuthRundeckResourceTreeTest {
         Assert.assertEquals(FrameworkProject.authorizationEnvironment("milkdud"), testAuth.environment);
         Assert.assertNotNull(testAuth.resource);
         Assert.assertEquals(3, testAuth.resource.size());
-        Assert.assertEquals(AuthRundeckResourceTree.STORAGE_PATH_AUTH_RES_TYPE, testAuth.resource.get("type"));
+        Assert.assertEquals(AuthRundeckStorageTree.STORAGE_PATH_AUTH_RES_TYPE, testAuth.resource.get("type"));
         Assert.assertEquals("project/milkdud/test1/file1", testAuth.resource.get("path"));
         Assert.assertEquals("file1", testAuth.resource.get("name"));
     }

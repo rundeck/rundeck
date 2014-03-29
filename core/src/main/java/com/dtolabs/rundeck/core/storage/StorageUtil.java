@@ -3,7 +3,6 @@ package com.dtolabs.rundeck.core.storage;
 
 import com.dtolabs.utils.Streams;
 import org.rundeck.storage.api.ContentFactory;
-import org.rundeck.storage.api.ContentMeta;
 import org.rundeck.storage.api.HasInputStream;
 import org.rundeck.storage.api.Tree;
 
@@ -21,7 +20,7 @@ import java.util.TimeZone;
 /**
  * Provides utility methods for use by the storage layer, or implementing plugins.
  */
-public class ResourceUtil  {
+public class StorageUtil {
     /**
      * Metadata key for the content-type
      */
@@ -113,12 +112,12 @@ public class ResourceUtil  {
 
 
     /**
-     * Coerce a Tree of ResourceMeta into A ResourceTree
+     * Coerce a Tree of ResourceMeta into A StorageTree
      * @param impl the tree
-     * @return a ResourceTree
+     * @return a StorageTree
      */
-    public static ResourceTree asResourceTree(Tree<ResourceMeta> impl) {
-        return new ResourceTreeImpl(impl);
+    public static StorageTree asStorageTree(Tree<ResourceMeta> impl) {
+        return new StorageTreeImpl(impl);
     }
 
     static long parseLong(String s, long defval) {
