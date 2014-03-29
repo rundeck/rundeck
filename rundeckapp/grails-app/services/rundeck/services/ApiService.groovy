@@ -289,6 +289,22 @@ class ApiService {
         return respondOutput(response, JSON_CONTENT_TYPE, renderErrorJson(error, error.code))
     }
     /**
+     * Require all specified parameters in the request, send json/xml response based on accept header
+     * @param request
+     * @param response
+     * @param params list of parameters of which all must be present
+     * @return false if requirement is not met, response will already have been made
+     */
+    def requireParametersFormat(Map reqparams,HttpServletResponse response,List<String> params){
+        def notfound=params.find{!reqparams[it]}
+        if(notfound){
+            renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.parameter.required', args: [notfound]])
+            return false
+        }
+        return true
+    }
+    /**
      * Require all specified parameters in the request
      * @param request
      * @param response
@@ -321,10 +337,27 @@ class ApiService {
         return true
     }
     /**
+     * Require a value exists, or respond with NOT FOUND, and format response as xml/json based on accept header
+     * @param request
+     * @param response
+     * @param item
+     * @param args arguments to error message: {@literal '{0} does not exist: {1}'}
+     * @return false if requirement is not met, response will already have been made
+     */
+    def requireExistsFormat(HttpServletResponse response, Object item, List args) {
+        if (!item) {
+            renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.item.doesnotexist', args: args])
+            return false
+        }
+        return true
+    }
+    /**
      * Require a value exists, or respond with NOT FOUND
      * @param request
      * @param response
      * @param item
+     * @param args arguments to error message: {@literal '{0} does not exist: {1}'}
      * @return false if requirement is not met, response will already have been made
      */
     def requireExists(HttpServletResponse response, Object item, List args) {
