@@ -484,7 +484,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             if(null==privateKeyResourcePath){
                 return null;
             }
-            ResourceMeta contents = framework.getResourceTree().getResource(context.getAuthContext(),PathUtil.asPath
+            ResourceMeta contents = framework.getStorageTree().getResource(context.getAuthContext(),PathUtil.asPath
                     ("/ssh-key/" + privateKeyResourcePath))
                     .getContents();
             return contents.getInputStream();
