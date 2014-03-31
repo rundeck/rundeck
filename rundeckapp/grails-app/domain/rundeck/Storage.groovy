@@ -8,14 +8,29 @@ class Storage {
     String dir
     String name
     String jsonData
+    String pathSha
     byte[] data
     Date dateCreated
     Date lastUpdated
     static constraints = {
         jsonData(nullable: true, blank: true)
         data(nullable: true)
-        name(nullable: false, blank: false, unique: 'dir')
+        name(nullable: false, blank: false)
         dir(nullable: false, blank: true)
+        pathSha(nullable: false, blank: true,size: 40..40,unique: true)
+    }
+
+    private void setupSha() {
+        pathSha = getPath().encodeAsSHA1()
+    }
+    def beforeInsert() {
+        setupSha()
+    }
+    def beforeUpdate() {
+        setupSha()
+    }
+    def beforeValidate() {
+        setupSha()
     }
     static mapping= {
         data(type: 'binary', sqlType: "longblob")
