@@ -91,6 +91,8 @@ for:
     - match:
         name: '.*'
       allow: [read,import,export,configure,delete] # allow full access of all projects or use 'admin'
+  storage:
+    - allow: [read,create,update,delete] # allow access for /ssh-key/* storage content
 
 by:
   group: admin
@@ -150,6 +152,7 @@ aclpolicy:
 * Creating Projects (`create` action on a resource type with kind 'project')
 * Reading system information (`read` action on a resource type with kind 'project')
 * Administering user profiles (`admin` action on a resource type of kind 'user')
+* Accessing SSH Keys (`create`,`update`,`read`, or `delete` action on a specific path within the storage 'storage' type)
 * Actions on specific projects by name
     * Reading `read`
     * Deleting `delete`
@@ -170,14 +173,18 @@ Type       Resource Kind     Properties   Actions  Description
 
 Table: Application scope generic type actions
 
-Type      Properties   Actions     Description
------     -----------  --------    ------------
-`project` "name"       `read`      View a project in the project list
-`project` "name"       `configure` View and modify project configuration
-`project` "name"       `delete`    Delete project
-`project` "name"       `import`    Import archive contents to the project
-`project` "name"       `export`    Export the project as an archive
-`project` "name"       `admin`     Full access to project
+Type      Properties    Actions     Description
+-----     -----------   --------    ------------
+`project` "name"        `read`      View a project in the project list
+"         "             `configure` View and modify project configuration
+"         "             `delete`    Delete project
+"         "             `import`    Import archive contents to the project
+"         "             `export`    Export the project as an archive
+"         "             `admin`     Full access to project
+`storage` "path","name" `create`    Create files in the storage facility
+"          "            `update`    Modify files in the storage facility
+"          "            `read`      Read files and list directories in the storage facility
+"          "            `delete`    Delete files in the storage facility
 ----------------------------
 
 Table: Application scope specific resource actions

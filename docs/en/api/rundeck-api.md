@@ -60,6 +60,8 @@ Endpoints:
         + GET to retrieve archive of a project - [Project Archive Export](#project-archive-export)
     - `/api/11/project/[NAME]/import`
         + PUT to import an archive to a project - [Project Archive Import](#project-archive-import)
+    - `/api/11/storage/ssh-key/[PATH]`
+        + GET, POST, PUT, DELETE: manage stored SSH keys - [SSH Key Storage](#ssh-key-storage)
 * Updated endpoints
     - `/api/11/project/[NAME]`
         + DELETE method can delete a project - [Project Deletion](#project-deletion)
@@ -1602,6 +1604,215 @@ new execution by ID:
 ~~~~~~~~~~
 
 **Since API version 8**: The script interpreter and whether the arguments to the interpreter are quoted can be specified.
+
+### SSH Key Storage ###
+
+Upload and manage public and private SSH key files. For more information see the [Administration - SSH Key Storage](../administration/ssh-key-storage.html) document.
+
+Keys are stored via Rundeck's *Storage* facility.  This is a path-based interface to manage files.  The underlying storage may be on disk or in a database.
+
+The Storage facility manages "resources", which may be files or directories.  File resources can have metadata associated with them (such as MIME content type). 
+
+Note: Private SSH Keys can be uploaded but not retrieved directly with this API.  They can only be used internally by Rundeck.
+
+URL:
+    
+    /api/11/storage/ssh-key/[PATH]/[FILE]
+
+#### Upload SSH Keys ####
+
+Specify the type of key via the `Content-type` header:
+
+* `application/octet-stream` specifies a **private key**
+* `application/pgp-keys` specifies a **public key**
+
+Use `POST` to create a new file, or `PUT` to modify an existing file.
+
+~~~
+POST /api/11/storage/ssh-key/[PATH]/[FILE]
+Content-Type: [...]
+~~~
+
+~~~
+PUT /api/11/storage/ssh-key/[PATH]/[FILE]
+Content-Type: [...]
+~~~
+
+#### List SSH keys ####
+
+Lists resources at the specified PATH, provides a JSON or XML response based on the `Accept` request header.
+
+Each resource has a type of `file` or `directory`.
+
+`GET /api/11/storage/ssh-key/[PATH]/`
+
+Response:
+
+`application/xml`
+
+~~~~ {.xml}
+<resource path='ssh-key' type='directory'
+url='http://dignan.local:4440/api/11/storage/ssh-key'>
+  <contents count='3'>
+    <resource path='ssh-key/test1.pem' type='file'
+    url='http://dignan.local:4440/api/11/storage/ssh-key/test1.pem'
+    name='test1.pem'>
+      <resource-meta>
+        <Rundeck-content-type>
+        application/octet-stream</Rundeck-content-type>
+        <Rundeck-content-size>1679</Rundeck-content-size>
+        <Rundeck-content-mask>content</Rundeck-content-mask>
+        <Rundeck-ssh-key-type>private</Rundeck-ssh-key-type>
+      </resource-meta>
+    </resource>
+    <resource path='ssh-key/test1.pub' type='file'
+    url='http://dignan.local:4440/api/11/storage/ssh-key/test1.pub'
+    name='test1.pub'>
+      <resource-meta>
+        <Rundeck-content-type>
+        application/pgp-keys</Rundeck-content-type>
+        <Rundeck-content-size>393</Rundeck-content-size>
+        <Rundeck-ssh-key-type>public</Rundeck-ssh-key-type>
+      </resource-meta>
+    </resource>
+    <resource path='ssh-key/monkey1.pub' type='file'
+    url='http://dignan.local:4440/api/11/storage/ssh-key/monkey1.pub'
+    name='monkey1.pub'>
+      <resource-meta>
+        <Rundeck-content-type>
+        application/pgp-keys</Rundeck-content-type>
+        <Rundeck-content-size>640198</Rundeck-content-size>
+        <Rundeck-ssh-key-type>public</Rundeck-ssh-key-type>
+      </resource-meta>
+    </resource>
+    <resource path='ssh-key/subdir' type='directory'
+    url='http://dignan.local:4440/api/11/storage/ssh-key/subdir'>
+    </resource>
+  </contents>
+</resource>
+~~~~
+
+`application/json`
+
+~~~~ {.json}
+{
+  "resources": [
+    {
+      "meta": {
+        "Rundeck-ssh-key-type": "private",
+        "Rundeck-content-mask": "content",
+        "Rundeck-content-size": "1679",
+        "Rundeck-content-type": "application/octet-stream"
+      },
+      "url": "http://dignan.local:4440/api/11/storage/ssh-key/test1.pem",
+      "name": "test1.pem",
+      "type": "file",
+      "path": "ssh-key/test1.pem"
+    },
+    {
+      "url": "http://dignan.local:4440/api/11/storage/ssh-key/subdir",
+      "type": "directory",
+      "path": "ssh-key/subdir"
+    },
+    {
+      "meta": {
+        "Rundeck-ssh-key-type": "public",
+        "Rundeck-content-size": "640198",
+        "Rundeck-content-type": "application/pgp-keys"
+      },
+      "url": "http://dignan.local:4440/api/11/storage/ssh-key/monkey1.pub",
+      "name": "monkey1.pub",
+      "type": "file",
+      "path": "ssh-key/monkey1.pub"
+    },
+    {
+      "meta": {
+        "Rundeck-ssh-key-type": "public",
+        "Rundeck-content-size": "393",
+        "Rundeck-content-type": "application/pgp-keys"
+      },
+      "url": "http://dignan.local:4440/api/11/storage/ssh-key/test1.pub",
+      "name": "test1.pub",
+      "type": "file",
+      "path": "ssh-key/test1.pub"
+    }
+  ],
+  "url": "http://dignan.local:4440/api/11/storage/ssh-key",
+  "type": "directory",
+  "path": "ssh-key"
+}
+
+~~~~
+
+
+#### Get SSH Key Metadata ####
+
+Returns the metadata about the stored key file.
+
+Provides a JSON or XML response based on the `Accept` request header:
+
+~~~
+GET /api/11/storage/ssh-key/[PATH]/[FILE]
+~~~
+
+Response:
+
+`application/xml`
+
+~~~~ {.xml}
+<resource path='ssh-key/test1.pub' type='file'
+url='http://dignan.local:4440/api/11/storage/ssh-key/test1.pub'
+name='test1.pub'>
+  <resource-meta>
+    <Rundeck-content-type>
+    application/pgp-keys</Rundeck-content-type>
+    <Rundeck-content-size>393</Rundeck-content-size>
+    <Rundeck-ssh-key-type>public</Rundeck-ssh-key-type>
+  </resource-meta>
+</resource>
+~~~~
+
+`application/json`
+
+~~~~ {.json}
+{
+  "meta": {
+    "Rundeck-ssh-key-type": "public",
+    "Rundeck-content-size": "393",
+    "Rundeck-content-type": "application/pgp-keys"
+  },
+  "url": "http://dignan.local:4440/api/11/storage/ssh-key/test1.pub",
+  "name": "test1.pub",
+  "type": "file",
+  "path": "ssh-key/test1.pub"
+}
+~~~~
+
+#### GET SSH Key Contents ####
+
+Provides the **public key** content if the `Accept` request header matches `*/*` or `application/pgp-keys`:
+
+`GET /api/11/storage/ssh-key/[PATH]/[FILE]`
+
+**Retrieving private key file contents is not allowed.**
+
+A GET request for a private key file if the `Accept` request header matches `*/*` or `application/octet-stream` will result in a `403 Unauthorized` response.
+
+    GET /api/11/storage/ssh-key/[PATH]/[FILE]
+    Accept: application/octet-stream
+    ...
+
+Response:
+
+    403 Unauthorized
+    ...
+
+#### Delete SSH Keys ####
+
+Deletes the file if it exists and returns `204` response.
+
+`DELETE /api/11/storage/ssh-key/[PATH]/[FILE]`
+
 
 ### Listing Projects ###
 
