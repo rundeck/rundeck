@@ -19,7 +19,7 @@ public interface PluginRegistry {
      * @param configuration map of configuration data
      * @return Map of [instance: plugin instance, configuration: resolved configuration properties]
      */
-    Map configurePluginByName(String name, PluggableProviderService service, Map configuration);
+    public <T> ConfiguredPlugin<T> configurePluginByName(String name, PluggableProviderService<T> service, Map configuration);
     /**
      * Create and configure a plugin instance with the given bean or provider name, resolving properties via
      * the framework and specified project properties as well as instance configuration.
@@ -30,7 +30,8 @@ public interface PluginRegistry {
      * @param instanceConfiguration configuration or null
      * @return Map of [instance: plugin instance, configuration: resolved configuration properties]
      */
-    Map configurePluginByName(String name, PluggableProviderService service, Framework framework,
+    public <T> ConfiguredPlugin<T> configurePluginByName(String name, PluggableProviderService<T> service,
+                                                     Framework framework,
                                         String project, Map instanceConfiguration) ;
     /**
      * Create and configure a plugin instance with the given bean or provider name using a property resolver and a
@@ -41,7 +42,8 @@ public interface PluginRegistry {
      * @param defaultScope default scope to search for property values when undeclared
      * @return Map of [instance: plugin instance, configuration: resolved configuration properties]
      */
-    Map configurePluginByName(String name, PluggableProviderService service, PropertyResolver resolver, PropertyScope defaultScope) ;
+    public <T> ConfiguredPlugin<T> configurePluginByName(String name, PluggableProviderService<T> service,
+                                                         PropertyResolver resolver, PropertyScope defaultScope);
     /**
      * Return the mapped configuration properties for the plugin
      * @param name name of bean or provider
@@ -50,7 +52,8 @@ public interface PluginRegistry {
      * @param defaultScope default scope to search for property values when undeclared
      * @return Map of [instance: plugin instance, configuration: resolved configuration properties]
      */
-    Map getPluginConfigurationByName(String name, PluggableProviderService service, PropertyResolver resolver, PropertyScope defaultScope) ;
+    public <T> Map<String,Object> getPluginConfigurationByName(String name, PluggableProviderService<T> service,
+                                              PropertyResolver resolver, PropertyScope defaultScope) ;
     /**
      * Validate a provider for a service using a property resolver and a
      * default property scope
@@ -60,7 +63,7 @@ public interface PluginRegistry {
      * @param defaultScope default scope to search for property values when undeclared
      * @return Map containing valid:true/false, and report: {@link com.dtolabs.rundeck.core.plugins.configuration.Validator.Report}
      */
-    Map validatePluginByName(String name, PluggableProviderService service, PropertyResolver resolver, PropertyScope defaultScope) ;
+    ValidatedPlugin validatePluginByName(String name, PluggableProviderService service, PropertyResolver resolver, PropertyScope defaultScope) ;
     /**
      * Validate a provider for a service using a property resolver and a
      * default property scope, and an ignoredScope
@@ -70,7 +73,8 @@ public interface PluginRegistry {
      * @param defaultScope default scope to search for property values when undeclared
      * @return Map containing valid:true/false, and report: {@link com.dtolabs.rundeck.core.plugins.configuration.Validator.Report}
      */
-    Map validatePluginByName(String name, PluggableProviderService service, PropertyResolver resolver, PropertyScope defaultScope, PropertyScope ignoredScope) ;
+    ValidatedPlugin validatePluginByName(String name, PluggableProviderService service, PropertyResolver resolver,
+                           PropertyScope defaultScope, PropertyScope ignoredScope) ;
 
     /**
      *
@@ -82,7 +86,7 @@ public interface PluginRegistry {
      * @param instanceConfiguration config map
      * @return Map containing valid:true/false, and report: {@link com.dtolabs.rundeck.core.plugins.configuration.Validator.Report}
      */
-    Map validatePluginByName(String name, PluggableProviderService service, Framework framework,
+    ValidatedPlugin validatePluginByName(String name, PluggableProviderService service, Framework framework,
                                     String project, Map instanceConfiguration);
 
     /**
@@ -92,21 +96,21 @@ public interface PluginRegistry {
      * @param instanceConfiguration config map
      * @return Map containing valid:true/false, and report: {@link com.dtolabs.rundeck.core.plugins.configuration.Validator.Report}
      */
-    Map validatePluginByName(String name, PluggableProviderService service, Map instanceConfiguration);
+    ValidatedPlugin validatePluginByName(String name, PluggableProviderService service, Map instanceConfiguration);
     /**
      * Load a plugin instance with the given bean or provider name
      * @param name name of bean or provider
      * @param service provider service
      * @return
      */
-    Object loadPluginByName(String name, PluggableProviderService service) ;
+    public <T> T loadPluginByName(String name, PluggableProviderService<T> service) ;
     /**
      * Load a plugin instance with the given bean or provider name
      * @param name name of bean or provider
      * @param service provider service
      * @return map containing [instance:(plugin instance), description: (map or Description),
      */
-    Map loadPluginDescriptorByName(String name, PluggableProviderService service) ;
+    public <T> DescribedPlugin<T> loadPluginDescriptorByName(String name, PluggableProviderService<T> service) ;
 
     /**
      * List all plugin type definitions that are either ServiceProvider plugins of the given service name,
@@ -115,7 +119,7 @@ public interface PluginRegistry {
      * @param groovyPluginType
      * @return
      */
-    Map<String, Object> listPlugins(Class groovyPluginType, PluggableProviderService service);
+    public <T> Map<String, Object> listPlugins(Class groovyPluginType, PluggableProviderService<T> service);
     /**
      * List all plugin type definitions that are either ServiceProvider plugins of the given service name,
      * or are groovy plugins of the given type
@@ -123,5 +127,5 @@ public interface PluginRegistry {
      * @param groovyPluginType
      * @return
      */
-    Map<String, Object> listPluginDescriptors(Class groovyPluginType, PluggableProviderService service) ;
+    public <T> Map<String, DescribedPlugin<T>> listPluginDescriptors(Class groovyPluginType, PluggableProviderService<T> service) ;
 }

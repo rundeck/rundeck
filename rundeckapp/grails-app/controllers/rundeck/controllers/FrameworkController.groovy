@@ -1,6 +1,7 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 
@@ -146,8 +147,8 @@ class FrameworkController extends ControllerBase {
     def adhoc = { ExtNodeFilters query ->
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (unauthorizedResponse(
-                frameworkService.authorizeProjectResource(authContext, [type: 'adhoc'], AuthConstants.ACTION_RUN,
-                params.project),
+                frameworkService.authorizeProjectResource(authContext, AuthConstants.RESOURCE_ADHOC,
+                        AuthConstants.ACTION_RUN, params.project),
                 AuthConstants.ACTION_RUN, 'adhoc', 'commands')) {
             return
         }
@@ -247,8 +248,8 @@ class FrameworkController extends ControllerBase {
                 query:query]
         }
         if (unauthorizedResponse(
-                frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'node'], [AuthConstants.ACTION_READ],
-                        query.project),
+                frameworkService.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
+                        [AuthConstants.ACTION_READ], query.project),
                 AuthConstants.ACTION_READ, 'Project', 'nodes')) {
             return
         }
@@ -423,7 +424,7 @@ class FrameworkController extends ControllerBase {
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (unauthorizedResponse(
-                frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'node'],
+                frameworkService.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
                         [AuthConstants.ACTION_READ],
                         query.project),
                 AuthConstants.ACTION_READ, 'Project', 'nodes')) {
@@ -507,7 +508,8 @@ class FrameworkController extends ControllerBase {
         }
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if(!frameworkService.authorizeProjectResource(authContext,[type:'resource',kind:'node'], AuthConstants.ACTION_REFRESH,params.project)){
+        if(!frameworkService.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_NODE,
+                AuthConstants.ACTION_REFRESH,params.project)){
             def msg = "user: ${session.user} UNAUTHORIZED for performNodeReload"
             log.error(msg)
             return [success:false,message:msg,unauthorized:true]
@@ -680,12 +682,7 @@ class FrameworkController extends ControllerBase {
         } else if (!errors) {
             log.debug("create project, properties: ${projProps}");
             def proj
-            try {
-                proj = framework.getFrameworkProjectMgr().createFrameworkProject(project, projProps)
-            } catch (Error e) {
-                log.error(e.message)
-                errors << e.getMessage()
-            }
+            (proj, errors)=frameworkService.createFrameworkProject(project,projProps)
             if (!errors && proj) {
                 session.frameworkProjects = frameworkService.projects(authContext)
                 def result = userService.storeFilterPref(session.user, [project: proj.name])
@@ -809,7 +806,8 @@ class FrameworkController extends ControllerBase {
             return redirect(controller: 'menu', action: 'admin')
         }
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAll(authContext, [type: 'project', name: project], [AuthConstants.ACTION_ADMIN]),
+                frameworkService.authorizeApplicationResourceAll(authContext,
+                        frameworkService.authResourceForProject(project), [AuthConstants.ACTION_ADMIN]),
                 AuthConstants.ACTION_ADMIN, 'Project',project)) {
             return
         }
@@ -895,11 +893,9 @@ class FrameworkController extends ControllerBase {
             removePrefixes<< FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX
 
             if(!error){
-                try {
-                    fproject.mergeProjectProperties(projProps,removePrefixes)
-                } catch (Error e) {
-                    log.error(e.message)
-                    error= e.getMessage()
+                def result = frameworkService.updateFrameworkProjectConfig(project,projProps,removePrefixes)
+                if(!result.success){
+                    error=result.error
                 }
             }
             if(!error){
@@ -942,7 +938,8 @@ class FrameworkController extends ControllerBase {
         }
 
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAll(authContext, [type: 'project', name: project], [AuthConstants.ACTION_ADMIN]),
+                frameworkService.authorizeApplicationResourceAll(authContext,
+                        frameworkService.authResourceForProject(project), [AuthConstants.ACTION_ADMIN]),
                 AuthConstants.ACTION_ADMIN, 'Project', project)) {
             return
         }
@@ -1109,8 +1106,9 @@ class FrameworkController extends ControllerBase {
         if(notFoundResponse(frameworkService.existsFrameworkProject(project),'Project',project,true)){
             return
         }
-        if(unauthorizedResponse(frameworkService.authorizeApplicationResourceAll(authContext, [type: 'project',
-                name: project], [AuthConstants.ACTION_READ]), AuthConstants.ACTION_READ,'Project',project,true)){
+        if(unauthorizedResponse(frameworkService.authorizeApplicationResourceAll(authContext,
+                frameworkService.authResourceForProject(project), [AuthConstants.ACTION_READ]),
+                AuthConstants.ACTION_READ,'Project',project,true)){
             return
         }
         //look for readme.md in project directory
@@ -1143,8 +1141,9 @@ class FrameworkController extends ControllerBase {
         if (notFoundResponse(frameworkService.existsFrameworkProject(project), 'Project', project, true)) {
             return
         }
-        if (unauthorizedResponse(frameworkService.authorizeApplicationResourceAll(authContext, [type: 'project',
-                name: project], [AuthConstants.ACTION_READ]), AuthConstants.ACTION_READ, 'Project', project, true)) {
+        if (unauthorizedResponse(frameworkService.authorizeApplicationResourceAll(authContext,
+                frameworkService.authResourceForProject(project), [AuthConstants.ACTION_READ]),
+                AuthConstants.ACTION_READ, 'Project', project, true)) {
             return
         }
 
@@ -1162,7 +1161,8 @@ class FrameworkController extends ControllerBase {
         }
         //authorization
         def auth=[
-                jobCreate: frameworkService.authorizeProjectResource(authContext,[type:'resource',kind:'job'], 'create',project)
+                jobCreate: frameworkService.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_JOB,
+                        AuthConstants.ACTION_CREATE, project)
         ]
         def project1 = frameworkService.getFrameworkProject(project)
         //summary data
@@ -1276,7 +1276,8 @@ class FrameworkController extends ControllerBase {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist', args: ['project', params.project]])
         }
-        if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'node'], ['create','update'], params.project)) {
+        if (!frameworkService.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
+                [AuthConstants.ACTION_CREATE,AuthConstants.ACTION_UPDATE], params.project)) {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Update Nodes', 'Project', params.project]])
         }
@@ -1343,34 +1344,6 @@ class FrameworkController extends ControllerBase {
         }
         return apiService.renderSuccessXml(response, 'api.project.updateResources.succeeded', [params.project])
     }
-    /**
-     * API: /api/projects, version 1
-     */
-    def apiProjects={
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        def projlist=frameworkService.projects(authContext)
-        return apiService.renderSuccessXml(response){
-                delegate.'projects'(count:projlist.size()){
-                    projlist.each{ pject ->
-                        renderApiProject(pject,delegate)
-                    }
-                }
-        }
-    }
-    /**
-     * Render project info result using a builder
-     */
-    def renderApiProject={ pject, delegate ->
-        delegate.'project'(href: g.createLink(absolute: true, controller: 'framework', action: 'apiProject', params: [project: pject.name, api_version: ApiRequestFilters.API_CURRENT_VERSION])){
-            name(pject.name)
-            description(pject.hasProperty('project.description')?pject.getProperty('project.description'):'')
-            if(pject.hasProperty("project.resources.url")){
-                resources{
-                    providerURL(pject.getProperty("project.resources.url"))
-                }
-            }
-        }
-    }
 
     /**
      * Convert input node filter parameters into specific property names used by
@@ -1400,32 +1373,6 @@ class FrameworkController extends ControllerBase {
         return result
     }
 
-    /**
-     * API: /api/project/NAME, version 1
-     */
-    def apiProject={
-        Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if(!params.project){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: 'api.error.parameter.required', args: ['project']])
-        }
-        if (!frameworkService.authorizeApplicationResourceAll(authContext, [type:'project',name:params.project], ['read'])) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
-                    code: 'api.error.item.unauthorized', args: ['Read', 'Project', params.project]])
-        }
-        def exists=frameworkService.existsFrameworkProject(params.project)
-        if(!exists){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
-                    code: 'api.error.item.doesnotexist', args: ['project', params.project]])
-        }
-        def pject=frameworkService.getFrameworkProject(params.project)
-        return apiService.renderSuccessXml(response){
-            delegate.'projects'(count:1){
-                renderApiProject(pject,delegate)
-            }
-        }
-    }
 
     /**
      * API: /api/resource/$name, version 1
@@ -1446,7 +1393,8 @@ class FrameworkController extends ControllerBase {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist', args: ['project',params.project]])
         }
-        if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'node'], ['read'], params.project)) {
+        if (!frameworkService.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
+                [AuthConstants.ACTION_READ], params.project)) {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Read Nodes', 'Project', params.project]])
         }
@@ -1489,7 +1437,8 @@ class FrameworkController extends ControllerBase {
 
 
         }
-        if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'node'], ['read'], params.project)) {
+        if (!frameworkService.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
+                [AuthConstants.ACTION_READ], params.project)) {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Read Nodes', 'Project', params.project]])
 

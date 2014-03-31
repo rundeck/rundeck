@@ -116,6 +116,11 @@ Notification services (described in [Notification Plugin](notification-plugin.ht
 
 * `Notification` - performs an action after a Job state trigger. 
 
+Storage services:
+
+* `Storage` - backend for storing data: [Storage Plugin](storage-plugin.html)
+* `StorageConverter` - modifies stored content or metadata: [Storage Converter Plugin](storage-converter-plugin.html)
+
 
 ### Provider Classes
 

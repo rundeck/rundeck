@@ -26,14 +26,25 @@ package com.dtolabs.rundeck.core.tasks.net;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.plugins.PluginLogger;
+import com.dtolabs.utils.Streams;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
 import org.apache.commons.lang.StringUtils;
 import org.apache.tools.ant.Project;
-import org.apache.tools.ant.taskdefs.optional.ssh.SSHBase;
+import org.apache.tools.ant.taskdefs.optional.ssh.SSHUserInfo;
 import org.apache.tools.ant.taskdefs.optional.ssh.Scp;
 import org.apache.tools.ant.types.Environment;
+import org.rundeck.storage.api.StorageException;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * SSHTaskFactory constructs a ExtSSHExec task
@@ -42,11 +53,88 @@ import java.util.Map;
  * @version $Revision$
  */
 public class SSHTaskBuilder {
+    public static final String SSH_CONFIG_PREFIX = "ssh-config-";
+    private static Map<String, String> DEFAULT_SSH_CONFIG = Collections.unmodifiableMap(new HashMap<String, String>() {{
+        //use keyboard-interactive last
+        put("PreferredAuthentications", "publickey,password,keyboard-interactive");
+        put("MaxAuthTries", "1");
+    }});
+
+    public static Map<String, String> getDefaultSshConfig() {
+        return DEFAULT_SSH_CONFIG;
+    }
+
+    public static Map<String,String> sshConfigFromNode(INodeEntry node, Map<String,String> baseconfig) {
+        HashMap<String, String> config = new HashMap<String, String>();
+        if(null!=baseconfig) {
+            config.putAll(baseconfig);
+        }
+        for (String s : node.getAttributes().keySet()) {
+            if (s.startsWith(SSH_CONFIG_PREFIX)) {
+                String name = s.substring(SSH_CONFIG_PREFIX.length());
+                config.put(name, node.getAttributes().get(s));
+            }
+        }
+        return config;
+    }
+    /**
+     * Open Jsch session, applies private key configuration, timeout and custom ssh configuration
+     * @param base
+     * @return
+     * @throws JSchException
+     */
+    public static Session openSession(SSHBaseInterface base) throws JSchException {
+        JSch jsch = new JSch();
+        if (null != base.getUserInfo().getKeyfile()) {
+            jsch.addIdentity(base.getUserInfo().getKeyfile());
+        }
+
+        if (null != base.getSshKeyData()) {
+            try {
+                jsch.addIdentity("sshkey", SSHTaskBuilder.streamBytes(base.getSshKeyData()), null, null);
+            } catch (IOException e) {
+                throw new JSchException("Failed to ready private ssh key data");
+            }
+        }
+
+        if (!base.getUserInfo().getTrust() && base.getKnownhosts() != null) {
+            base.getPluginLogger().log(Project.MSG_DEBUG, "Using known hosts: " + base.getKnownhosts());
+            jsch.setKnownHosts(base.getKnownhosts());
+        }
+
+        Session session = jsch.getSession(base.getUserInfo().getName(), base.getHost(), base.getPort());
+        session.setTimeout((int) base.getTimeout());
+        if (base.getVerbose()) {
+            base.getPluginLogger().log(Project.MSG_INFO, "Set timeout to " + base.getTimeout());
+        }
+
+        session.setUserInfo(base.getUserInfo());
+        if (base.getVerbose()) {
+            base.getPluginLogger().log(Project.MSG_INFO, "Connecting to " + base.getHost() + ":" + base.getPort());
+        }
+        SSHTaskBuilder.configureSession(base.getSshConfig(), session);
+
+        session.connect();
+        return session;
+    }
+
+    public static void configureSession(Map<String, String> config, Session session) {
+        Properties newconf = new Properties();
+        newconf.putAll(config);
+        session.setConfig(newconf);
+    }
+
+    public static byte[] streamBytes(InputStream sshKeyData) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        Streams.copyStream(sshKeyData, out);
+        return out.toByteArray();
+    }
 
     /**
      * interface that mimics SSHBase methods called
      */
-    static interface SSHBaseInterface {
+    public static interface SSHBaseInterface {
+        SSHUserInfo getUserInfo();
 
         void setFailonerror(boolean b);
 
@@ -56,19 +144,45 @@ public class SSHTaskBuilder {
 
         void setVerbose(boolean b);
 
+        boolean getVerbose();
+
         void setHost(String s);
+
+        String getHost();
 
         void setPort(int portNum);
 
+        int getPort();
+
         void setUsername(String username);
 
+        public void setTimeout(long sshTimeout);
+
+        long getTimeout();
+
         void setKeyfile(String sshKeypath);
+
+        String getKeyfile();
+
+        void setSshKeyData(InputStream sshKeyData);
+
+        InputStream getSshKeyData();
 
         void setPassphrase(String s);
 
         void setPassword(String password);
 
         void setKnownhosts(String knownhosts);
+
+        String getKnownhosts();
+
+        void setSshConfig(Map<String, String> config);
+
+        Map<String, String> getSshConfig();
+
+        public PluginLogger getPluginLogger();
+
+        public void setPluginLogger(PluginLogger pluginLogger);
     }
 
     static interface SSHExecInterface extends SSHBaseInterface, DataContextUtils.EnvironmentConfigurable {
@@ -88,7 +202,7 @@ public class SSHTaskBuilder {
     }
 
     private static abstract class SSHBaseImpl implements SSHBaseInterface {
-        SSHBase instance;
+        SSHBaseInterface instance;
 
         public void setFailonerror(boolean b) {
             instance.setFailonerror(b);
@@ -115,12 +229,20 @@ public class SSHTaskBuilder {
         }
 
         public void setUsername(String username) {
-
             instance.setUsername(username);
+        }
+
+        public void setTimeout(long sshTimeout) {
+            instance.setTimeout(sshTimeout);
         }
 
         public void setKeyfile(String sshKeypath) {
             instance.setKeyfile(sshKeypath);
+        }
+
+        @Override
+        public void setSshKeyData(InputStream sshKeyData) {
+            instance.setSshKeyData(sshKeyData);
         }
 
         public void setPassphrase(String s) {
@@ -131,12 +253,72 @@ public class SSHTaskBuilder {
             instance.setPassword(password);
         }
 
-        private SSHBaseImpl(SSHBase instance) {
+        private SSHBaseImpl(SSHBaseInterface instance) {
             this.instance = instance;
         }
 
         public void setKnownhosts(String knownhosts) {
             instance.setKnownhosts(knownhosts);
+        }
+
+        @Override
+        public SSHUserInfo getUserInfo() {
+            return instance.getUserInfo();
+        }
+
+        @Override
+        public boolean getVerbose() {
+            return instance.getVerbose();
+        }
+
+        @Override
+        public String getHost() {
+            return instance.getHost();
+        }
+
+        @Override
+        public int getPort() {
+            return instance.getPort();
+        }
+
+        @Override
+        public long getTimeout() {
+            return instance.getTimeout();
+        }
+
+        @Override
+        public String getKeyfile() {
+            return instance.getKeyfile();
+        }
+
+        @Override
+        public InputStream getSshKeyData() {
+            return instance.getSshKeyData();
+        }
+
+        @Override
+        public String getKnownhosts() {
+            return instance.getKnownhosts();
+        }
+
+        @Override
+        public void setSshConfig(Map<String, String> config) {
+            instance.setSshConfig(config);
+        }
+
+        @Override
+        public Map<String, String> getSshConfig() {
+            return instance.getSshConfig();
+        }
+
+        @Override
+        public PluginLogger getPluginLogger() {
+            return instance.getPluginLogger();
+        }
+
+        @Override
+        public void setPluginLogger(PluginLogger pluginLogger) {
+            instance.setPluginLogger(pluginLogger);
         }
     }
 
@@ -152,9 +334,6 @@ public class SSHTaskBuilder {
             instance.setCommand(commandString);
         }
 
-        public void setTimeout(long sshTimeout) {
-            instance.setTimeout(sshTimeout);
-        }
 
         public void setOutputproperty(String s) {
             instance.setOutputproperty(s);
@@ -167,9 +346,9 @@ public class SSHTaskBuilder {
     }
 
     private static final class SCPImpl extends SSHBaseImpl implements SCPInterface {
-        Scp instance;
+        ExtScp instance;
 
-        private SCPImpl(Scp instance) {
+        private SCPImpl(ExtScp instance) {
             super(instance);
             this.instance = instance;
         }
@@ -181,6 +360,7 @@ public class SSHTaskBuilder {
         public void setRemoteTofile(String s) {
             instance.setRemoteTofile(s);
         }
+
     }
 
     /**
@@ -195,32 +375,32 @@ public class SSHTaskBuilder {
      * @return task
      */
     public static ExtSSHExec build(final INodeEntry nodeentry, final String[] args,
-                                   final Project project,
-                                   final Map<String, Map<String, String>> dataContext,
-                                   final SSHConnectionInfo sshConnectionInfo, final int loglevel, final PluginLogger logger) throws
-        BuilderException {
+            final Project project,
+            final Map<String, Map<String, String>> dataContext,
+            final SSHConnectionInfo sshConnectionInfo, final int loglevel, final PluginLogger logger) throws
+            BuilderException {
 
 
         final ExtSSHExec extSSHExec = new ExtSSHExec();
-        build(new SSHExecImpl(extSSHExec), nodeentry, args, project, dataContext, sshConnectionInfo,
-            loglevel);
-        extSSHExec.setLogger(logger);
+        build(extSSHExec, nodeentry, args, project, dataContext, sshConnectionInfo,
+                loglevel, logger);
+        extSSHExec.setPluginLogger(logger);
         extSSHExec.setAntLogLevel(loglevel);
         return extSSHExec;
 
     }
 
     static void build(final SSHExecInterface sshexecTask,
-                      final INodeEntry nodeentry,
-                      final String[] args, final Project project,
-                      final Map<String, Map<String, String>> dataContext,
-                      final SSHConnectionInfo sshConnectionInfo, final int loglevel) throws
-        BuilderException {
+            final INodeEntry nodeentry,
+            final String[] args, final Project project,
+            final Map<String, Map<String, String>> dataContext,
+            final SSHConnectionInfo sshConnectionInfo, final int loglevel, final PluginLogger logger) throws
+            BuilderException {
 
-        configureSSHBase(nodeentry, project, sshConnectionInfo, sshexecTask, loglevel);
+        configureSSHBase(nodeentry, project, sshConnectionInfo, sshexecTask, loglevel, logger);
 
         //nb: args are already quoted as necessary
-        final String commandString = StringUtils.join(args," ");
+        final String commandString = StringUtils.join(args, " ");
         sshexecTask.setCommand(commandString);
         sshexecTask.setTimeout(sshConnectionInfo.getSSHTimeout());
 
@@ -228,9 +408,9 @@ public class SSHTaskBuilder {
     }
 
     private static void configureSSHBase(final INodeEntry nodeentry, final Project project,
-                                         final SSHConnectionInfo sshConnectionInfo,
-                                         final SSHBaseInterface sshbase, final double loglevel) throws
-        BuilderException {
+            final SSHConnectionInfo sshConnectionInfo,
+            final SSHBaseInterface sshbase, final double loglevel, final PluginLogger logger) throws
+            BuilderException {
 
         sshbase.setFailonerror(true);
         sshbase.setTrust(true); // set this true to avoid  "reject HostKey" errors
@@ -254,7 +434,7 @@ public class SSHTaskBuilder {
         sshbase.setUsername(username);
 
         final AuthenticationType authenticationType = sshConnectionInfo.getAuthenticationType();
-        if(null==authenticationType) {
+        if (null == authenticationType) {
             throw new BuilderException("SSH authentication type undetermined");
         }
         switch (authenticationType) {
@@ -263,18 +443,36 @@ public class SSHTaskBuilder {
                  * Configure keybased authentication
                  */
                 final String sshKeypath = sshConnectionInfo.getPrivateKeyfilePath();
-                if(null == sshKeypath || "".equals(sshKeypath)){
-                    throw new BuilderException("SSH Keyfile path was not set");
+                final String sshKeyResource = sshConnectionInfo.getPrivateKeyResourcePath();
+                if (null != sshKeyResource) {
+                    try {
+                        InputStream privateKeyResourceData = sshConnectionInfo.getPrivateKeyResourceData();
+                        sshbase.setSshKeyData(privateKeyResourceData);
+                    } catch (StorageException e) {
+                        logger.log(Project.MSG_ERR,"Failed to read SSH Private key stored at path: ssh-key/" +
+                                sshKeyResource+": "+ e);
+                        throw new BuilderException("Failed to read SSH Private key stored at path: ssh-key/" +
+                                sshKeyResource,e);
+                    } catch (IOException e) {
+                        logger.log(Project.MSG_ERR, "Failed to read SSH Private key stored at path: ssh-key/" +
+                                sshKeyResource + ": " + e);
+                        throw new BuilderException("Failed to read SSH Private key stored at path: ssh-key/" +
+                                sshKeyResource,e);
+                    }
+                } else if (null != sshKeypath && !"".equals(sshKeypath)) {
+                    if (!new File(sshKeypath).exists()) {
+                        throw new BuilderException("SSH Keyfile does not exist: " + sshKeypath);
+                    }
+                    project.log("Using ssh keyfile: " + sshKeypath, Project.MSG_DEBUG);
+                    sshbase.setKeyfile(sshKeypath);
+                } else {
+                    throw new BuilderException("SSH Keyfile or storage path must be set to use privateKey " +
+                            "authentication");
                 }
-                if (!new File(sshKeypath).exists()) {
-                    throw new BuilderException("SSH Keyfile does not exist: " + sshKeypath);
-                }
-                project.log("Using ssh keyfile: " + sshKeypath, Project.MSG_DEBUG);
-                sshbase.setKeyfile(sshKeypath);
-                final String passphrase=sshConnectionInfo.getPrivateKeyPassphrase();
-                if(null!=passphrase){
+                final String passphrase = sshConnectionInfo.getPrivateKeyPassphrase();
+                if (null != passphrase) {
                     sshbase.setPassphrase(passphrase);
-                }else{
+                } else {
                     sshbase.setPassphrase(""); // set empty otherwise password will be required
                 }
                 break;
@@ -287,38 +485,40 @@ public class SSHTaskBuilder {
                 sshbase.setPassword(password);
                 break;
         }
+        sshbase.setSshConfig(SSHTaskBuilder.sshConfigFromNode(nodeentry, getDefaultSshConfig()));
     }
 
     public static Scp buildScp(final INodeEntry nodeentry, final Project project,
-                               final String remotepath, final File sourceFile,
-                               final SSHConnectionInfo sshConnectionInfo, final int loglevel) throws BuilderException {
+            final String remotepath, final File sourceFile,
+            final SSHConnectionInfo sshConnectionInfo, final int loglevel, final PluginLogger logger) throws
+            BuilderException {
 
 
-        final Scp scp = new Scp();
-        buildScp(new SCPImpl(scp), nodeentry, project, remotepath, sourceFile, sshConnectionInfo, loglevel);
+        final ExtScp scp = new ExtScp();
+        buildScp(scp, nodeentry, project, remotepath, sourceFile, sshConnectionInfo, loglevel, logger);
         return scp;
     }
 
     static void buildScp(final SCPInterface scp, final INodeEntry nodeentry,
-                         final Project project, final String remotepath, final File sourceFile,
-                         final SSHConnectionInfo sshConnectionInfo, final int loglevel) throws
-        BuilderException {
+            final Project project, final String remotepath, final File sourceFile,
+            final SSHConnectionInfo sshConnectionInfo, final int loglevel, final PluginLogger logger) throws
+            BuilderException {
 
-        if(null==sourceFile) {
+        if (null == sourceFile) {
             throw new BuilderException("sourceFile was not set");
         }
-        if(null==remotepath) {
+        if (null == remotepath) {
             throw new BuilderException("remotePath was not set");
         }
         final String username = sshConnectionInfo.getUsername();
-        if(null==username){
+        if (null == username) {
             throw new BuilderException("username was not set");
         }
-        
-        configureSSHBase(nodeentry, project, sshConnectionInfo, scp, loglevel);
+
+        configureSSHBase(nodeentry, project, sshConnectionInfo, scp, loglevel, logger);
 
         //Set the local and remote file paths
-        
+
         scp.setLocalFile(sourceFile.getAbsolutePath());
         final String sshUriPrefix = username + "@" + nodeentry.extractHostname() + ":";
         scp.setRemoteTofile(sshUriPrefix + remotepath);
@@ -355,6 +555,10 @@ public class SSHTaskBuilder {
 
         public String getPrivateKeyfilePath();
 
+        public String getPrivateKeyResourcePath();
+
+        public InputStream getPrivateKeyResourceData() throws IOException;
+
         /**
          * Return the private key passphrase if set, or null.
          */
@@ -365,6 +569,8 @@ public class SSHTaskBuilder {
         public int getSSHTimeout();
 
         public String getUsername();
+
+        public Map<String,String> getSshConfig();
     }
 
 }

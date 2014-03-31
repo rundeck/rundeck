@@ -23,5 +23,7 @@ for:
     - allow: '*' # allow create of projects
   project:
     - allow: '*' # allow view/admin of all projects
+  storage:
+    - allow: '*' # allow read/create/update/delete for all /ssh-key/* storage content
 by:
   group: admin

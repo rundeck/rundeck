@@ -4,16 +4,13 @@
 
 description = 'The Rundeck Core API project'
 
-import org.apache.tools.ant.filters.ReplaceTokens
-import org.gradle.plugins.signing.Sign
-
-apply from: "${rootDir}/gradle/java.gradle"
-apply plugin: 'signing'
-
 archivesBaseName = 'rundeck-core'
 defaultTasks 'clean','assemble'
+ext.rundeckToolsDependencies=''
 
 dependencies {
+    compile project(":rundeck-storage:rundeck-storage-api")
+    compile project(":rundeck-storage:rundeck-storage-conf")
     compile 'org.apache.ant:ant:1.7.1',
         'log4j:log4j:1.2.16',
         'commons-codec:commons-codec:1.5',
@@ -27,8 +24,8 @@ dependencies {
         'com.jcraft:jsch:0.1.50',
         'org.yaml:snakeyaml:1.9',
         'xerces:xercesImpl:2.6.2',
-        'xml-apis:xml-apis:2.0.2' 
-    
+        'xml-apis:xml-apis:2.0.2'
+
     compile ('jaxen:jaxen:1.1') {
         // Remove xerces apis as that should be provided by jdk 
         exclude group: 'xerces', module: 'xmlParserAPIs'
@@ -42,12 +39,23 @@ dependencies {
         'org.mockito:mockito-all:1.8.5'
 }
 
-def rundeckToolsDependencies = configurations.runtime.files.collect { "$it.name" }.join(" ")
+def genDeps={
+    ext.rundeckToolsDependencies = configurations.runtime.files.collect { "$it.name" }.join(" ")
+}
 
+
+jar.doFirst {
+    genDeps()
+    jar {
+        manifest {
+            attributes 'Rundeck-Tools-Dependencies': rundeckToolsDependencies
+        }
+    }
+}
 jar {
     manifest {
-        attributes 'Rundeck-Version': version, 
-                   'Rundeck-Tools-Dependencies': rundeckToolsDependencies
+        attributes 'Rundeck-Version': version,
+                   'Rundeck-Tools-Dependencies': project.rundeckToolsDependencies
     }
 }
 
@@ -82,19 +90,9 @@ assemble {
 // make sure that we've rebuilt and assembled before install
 install.dependsOn(build)
 
-//********* artifact signing *********
-if(isReleaseBuild && project.hasProperty("signing.keyId")) {
-    signing {
-        sign configurations.archives
-    }
-} else {
-    task signArchives {
-        // do nothing
-    }
-}
-
 //build a pom we reuse for both maven builds and release to sonatype
-def buildpom=pom {
+def buildpom={deps->
+    pom {
     project {
         artifactId archivesBaseName
         groupId project.group
@@ -218,7 +216,7 @@ def buildpom=pom {
                         archive{
                           manifestEntries{
                             'Rundeck-Version'(version)
-                            'Rundeck-Tools-Dependencies'(rundeckToolsDependencies)
+                            'Rundeck-Tools-Dependencies'(deps)
                           }
                         }
                     }
@@ -227,55 +225,12 @@ def buildpom=pom {
         }
     }
 }
+}
 
 task createPom << {
-    buildpom.writeTo("pom.xml")
+    buildpom(rundeckToolsDependencies).writeTo("pom.xml")
 }
 
-
-// prompt for PGP key passphrase if not set
-gradle.taskGraph.whenReady { taskGraph ->
-    if (taskGraph.allTasks.any { it instanceof Sign } && project.hasProperty("signing.keyId") && !project.hasProperty("signing.password") && !isDevBuild) {
-        // Use Java 6's console to read from the console (no good for a CI environment)
-        Console console = System.console()
-        console.printf "\n\nWe have to sign some things in this build.\n\nPlease enter your signing details.\n\n"
-
-        //def id = console.readLine("PGP Key Id: ")
-        //def file = console.readLine("PGP Secret Key Ring File (absolute path): ")
-        def password = console.readPassword("PGP Private Key Password: ")
-
-        //allprojects { ext."signing.keyId" = id }
-        //allprojects { ext."signing.secretKeyRingFile" = file }
-        allprojects { ext."signing.password" = password }
-
-        console.printf "\nThanks.\n\n"
-    }
-}
-
-uploadArchives {
-    if(isDevBuild){
-        repositories{
-            repositories.mavenDeployer {
-                configuration = configurations.archives
-                pom=buildpom
-            }
-        }
-    }else{
-        repositories.mavenDeployer {
-            if(isReleaseBuild){
-                beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-            }
- 
-            configuration = configurations.archives
-            if(project.hasProperty('sonatypeUsername') && project.hasProperty('sonatypePassword')){
-                repository(url: 'https://oss.sonatype.org/service/local/staging/deploy/maven2') {
-                    authentication(userName: sonatypeUsername, password: sonatypePassword)
-                }
-                snapshotRepository(url: 'https://oss.sonatype.org/content/repositories/snapshots/') {
-                    authentication(userName: sonatypeUsername, password: sonatypePassword)
-                }
-            }
-            pom=buildpom
-        }
-    }
+createPom.doFirst {
+    genDeps()
 }

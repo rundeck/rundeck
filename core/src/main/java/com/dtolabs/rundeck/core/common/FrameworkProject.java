@@ -16,6 +16,8 @@
 
 package com.dtolabs.rundeck.core.common;
 
+import com.dtolabs.rundeck.core.authorization.Attribute;
+import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext;
 import com.dtolabs.rundeck.core.common.impl.URLFileUpdater;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
@@ -29,6 +31,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -51,6 +54,16 @@ public class FrameworkProject extends FrameworkResourceParent {
     public static final String FRAMEWORK_RESOURCES_ALLOWED_URL_PREFIX = "framework.resources.allowedURL.";
     public static final String RESOURCES_SOURCE_PROP_PREFIX = "resources.source";
     public static final String PROJECT_RESOURCES_MERGE_NODE_ATTRIBUTES = "project.resources.mergeNodeAttributes";
+
+    /**
+     * Creates an authorization environment for a project.
+     * @param project project name
+     * @return environment to evaluate authorization for a project
+     */
+    public static Set<Attribute> authorizationEnvironment(final String project) {
+        return Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "project"),
+                project));
+    }
     /**
      * Reference to deployments base directory
      */
@@ -100,7 +113,7 @@ public class FrameworkProject extends FrameworkResourceParent {
 
         propertyFile = getProjectPropertyFile(getBaseDir());
         if ( !propertyFile.exists()) {
-            generateProjectPropertiesFile(false, properties);
+            generateProjectPropertiesFile(false, properties, true);
         }
         loadProperties();
 
@@ -794,16 +807,18 @@ public class FrameworkProject extends FrameworkResourceParent {
      * @param overwrite Overwrite existing properties file
      */
     protected void generateProjectPropertiesFile(final boolean overwrite) {
-        generateProjectPropertiesFile(overwrite, null);
+        generateProjectPropertiesFile(overwrite, null, false);
     }
 
     /**
      * Create project.properties file based on $RDECK_BASE/etc/project.properties
      *
+     * @param addDefaultProps
      * @param overwrite Overwrite existing properties file
      */
-    protected void generateProjectPropertiesFile(final boolean overwrite, final Properties properties) {
-        generateProjectPropertiesFile(overwrite, properties, false, null);
+    protected void generateProjectPropertiesFile(final boolean overwrite, final Properties properties, boolean
+            addDefaultProps) {
+        generateProjectPropertiesFile(overwrite, properties, false, null, addDefaultProps);
     }
 
     /**
@@ -813,9 +828,10 @@ public class FrameworkProject extends FrameworkResourceParent {
      * @param properties properties to use
      * @param merge if true, merge existing properties that are not replaced
      * @param removePrefixes set of property prefixes to remove from original
+     * @param addDefaultProps
      */
     protected void generateProjectPropertiesFile(final boolean overwrite, final Properties properties,
-                                                 final boolean merge, final Set<String> removePrefixes) {
+            final boolean merge, final Set<String> removePrefixes, boolean addDefaultProps) {
         final File destfile = getPropertyFile();
         if (destfile.exists() && !overwrite) {
             return;
@@ -824,25 +840,27 @@ public class FrameworkProject extends FrameworkResourceParent {
         newProps.setProperty("project.name", getName());
 
         //TODO: improve default configuration generation
-        if (null == properties || !properties.containsKey("resources.source.1.type") ) {
-            //add default file source
-            newProps.setProperty("resources.source.1.type", "file");
-            newProps.setProperty("resources.source.1.config.file", new File(getEtcDir(), "resources.xml").getAbsolutePath());
-            newProps.setProperty("resources.source.1.config.includeServerNode", "true");
-            newProps.setProperty("resources.source.1.config.generateFileAutomatically", "true");
-        }
-        if(null==properties || !properties.containsKey("service.NodeExecutor.default.provider")) {
-            newProps.setProperty("service.NodeExecutor.default.provider", "jsch-ssh");
-        }
-        if(null==properties || !properties.containsKey("service.FileCopier.default.provider")) {
-            newProps.setProperty("service.FileCopier.default.provider", "jsch-scp");
-        }
-        if (null == properties || !properties.containsKey("project.ssh-keypath")) {
-            newProps.setProperty("project.ssh-keypath", new File(System.getProperty("user.home"),
-                    ".ssh/id_rsa").getAbsolutePath());
-        }
-        if(null==properties || !properties.containsKey("project.ssh-authentication")) {
-            newProps.setProperty("project.ssh-authentication", "privateKey");
+        if(addDefaultProps){
+            if (null == properties || !properties.containsKey("resources.source.1.type") ) {
+                //add default file source
+                newProps.setProperty("resources.source.1.type", "file");
+                newProps.setProperty("resources.source.1.config.file", new File(getEtcDir(), "resources.xml").getAbsolutePath());
+                newProps.setProperty("resources.source.1.config.includeServerNode", "true");
+                newProps.setProperty("resources.source.1.config.generateFileAutomatically", "true");
+            }
+            if(null==properties || !properties.containsKey("service.NodeExecutor.default.provider")) {
+                newProps.setProperty("service.NodeExecutor.default.provider", "jsch-ssh");
+            }
+            if(null==properties || !properties.containsKey("service.FileCopier.default.provider")) {
+                newProps.setProperty("service.FileCopier.default.provider", "jsch-scp");
+            }
+            if (null == properties || !properties.containsKey("project.ssh-keypath")) {
+                newProps.setProperty("project.ssh-keypath", new File(System.getProperty("user.home"),
+                        ".ssh/id_rsa").getAbsolutePath());
+            }
+            if(null==properties || !properties.containsKey("project.ssh-authentication")) {
+                newProps.setProperty("project.ssh-authentication", "privateKey");
+            }
         }
         if(merge) {
             final Properties orig = new Properties();
@@ -865,10 +883,12 @@ public class FrameworkProject extends FrameworkResourceParent {
                 Map.Entry entry=(Map.Entry) o;
                 //determine if
                 final String key = (String) entry.getKey();
-                for (final String replacePrefix : removePrefixes) {
-                    if(key.startsWith(replacePrefix)){
-                        //skip this key
-                        continue entry;
+                if (null != removePrefixes) {
+                    for (final String replacePrefix : removePrefixes) {
+                        if (key.startsWith(replacePrefix)) {
+                            //skip this key
+                            continue entry;
+                        }
                     }
                 }
                 newProps.put(entry.getKey(), entry.getValue());
@@ -899,7 +919,14 @@ public class FrameworkProject extends FrameworkResourceParent {
      * @param removePrefixes prefixes of properties to remove from the file
      */
     public void mergeProjectProperties(final Properties properties, final Set<String> removePrefixes) {
-        generateProjectPropertiesFile(true, properties, true, removePrefixes);
+        generateProjectPropertiesFile(true, properties, true, removePrefixes, false);
+    }
+    /**
+     * Set the project properties file contents exactly
+     * @param properties new properties to use in the file
+     */
+    public void setProjectProperties(final Properties properties) {
+        generateProjectPropertiesFile(true, properties, false, null, false);
     }
 
     /**

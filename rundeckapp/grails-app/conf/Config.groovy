@@ -105,6 +105,17 @@ log4j={
     }
 }
 
+environments{
+    development{
+        feature.incubator.'*'=true
+    }
+    production{
+        //disable feature toggling
+        feature.incubator.feature = false
+        //enable takeover schedule feature
+        feature.incubator.jobs = true
+    }
+}
 
 rundeck.metrics.enabled=true
 rundeck.metrics.jmxEnabled=true

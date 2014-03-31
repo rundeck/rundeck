@@ -23,6 +23,8 @@
 */
 package com.dtolabs.rundeck.server.authorization;
 
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil;
+
 import java.util.*;
 
 /**
@@ -41,5 +43,25 @@ public class AuthConstants {
     public static final String ACTION_REFRESH = "refresh";
     public static final String ACTION_RUNAS = "runAs";
     public static final String ACTION_KILLAS = "killAs";
+    public static final String ACTION_CONFIGURE = "configure";
+    public static final String ACTION_IMPORT = "import";
+    public static final String ACTION_EXPORT = "export";
 
+    public static final String TYPE_SYSTEM = "system";
+    public static final String TYPE_NODE = "node";
+    public static final String TYPE_JOB = "job";
+    public static final String TYPE_ADHOC = "adhoc";
+    public static final String TYPE_PROJECT = "project";
+    public static final String TYPE_EVENT = "event";
+
+    private static Map<String, String> resType(String type) {
+        return Collections.unmodifiableMap(AuthorizationUtil.resourceType(type));
+    }
+
+    public static final Map<String, String> RESOURCE_TYPE_SYSTEM = resType(TYPE_SYSTEM);
+    public static final Map<String, String> RESOURCE_TYPE_NODE = resType(TYPE_NODE);
+    public static final Map<String, String> RESOURCE_TYPE_JOB = resType(TYPE_JOB);
+    public static final Map<String, String> RESOURCE_TYPE_EVENT = resType(TYPE_EVENT);
+    public static final Map<String, String> RESOURCE_ADHOC = Collections.unmodifiableMap(AuthorizationUtil
+            .resource(TYPE_ADHOC));
 }

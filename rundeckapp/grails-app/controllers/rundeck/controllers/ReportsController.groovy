@@ -2,6 +2,7 @@ package rundeck.controllers
 
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
@@ -33,8 +34,8 @@ class ReportsController extends ControllerBase{
         def usedFilter
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
-        if(unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource',
-                kind: 'event'], [AuthConstants.ACTION_READ],
+        if(unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext, AuthorizationUtil
+                .resourceType('event'), [AuthConstants.ACTION_READ],
                 params.project), AuthConstants.ACTION_READ,'Events in project',params.project)){
             return
         }
@@ -119,8 +120,8 @@ class ReportsController extends ControllerBase{
         def usedFilter
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
-        if (unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource',
-                kind: 'event'], [AuthConstants.ACTION_READ],
+        if (unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext, AuthorizationUtil
+                .resourceType('event'), [AuthConstants.ACTION_READ],
                 params.project), AuthConstants.ACTION_READ, 'Events for project', params.project)) {
             return
         }
@@ -219,8 +220,8 @@ class ReportsController extends ControllerBase{
     def eventsFragment={ ExecQuery query ->
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
-        if (unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource',
-                kind: 'event'], [AuthConstants.ACTION_READ],
+        if (unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext, AuthorizationUtil
+                .resourceType('event'), [AuthConstants.ACTION_READ],
                 params.project), AuthConstants.ACTION_READ, 'Events for project', params.project)) {
             return
         }
@@ -232,8 +233,8 @@ class ReportsController extends ControllerBase{
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
 
-        if (unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource',
-                kind: 'event'], [AuthConstants.ACTION_READ],
+        if (unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext, AuthorizationUtil
+                .resourceType('event'), [AuthConstants.ACTION_READ],
                 params.project), AuthConstants.ACTION_READ, 'Events for project', params.project)) {
             return
         }
@@ -272,8 +273,8 @@ class ReportsController extends ControllerBase{
     def jobsFragment={ ExecQuery query ->
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
-        if (unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource',
-                kind: 'event'], [AuthConstants.ACTION_READ],
+        if (unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext, AuthorizationUtil
+                .resourceType('event'), [AuthConstants.ACTION_READ],
                 params.project), AuthConstants.ACTION_READ, 'Events for project', params.project)) {
             return
         }
@@ -376,8 +377,8 @@ class ReportsController extends ControllerBase{
                     code: 'api.error.item.doesnotexist', args: ['project', params.project]])
 
         }
-        if (!frameworkService.authorizeProjectResourceAll(authContext, [type: 'resource', kind: 'event'], ['read'],
-            params.project)) {
+        if (!frameworkService.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_EVENT,
+                [AuthConstants.ACTION_READ], params.project)) {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Read Events', 'Project', params.project]])
         }
@@ -415,7 +416,7 @@ class ReportsController extends ControllerBase{
         def statusMap=[succeed:ExecutionService.EXECUTION_SUCCEEDED,
             cancel: ExecutionService.EXECUTION_ABORTED,
             fail: ExecutionService.EXECUTION_FAILED]
-        return apiService.renderSuccessXml(response){
+        return apiService.renderSuccessXml(request,response){
             delegate.'events'(count:model.reports.size(),total:model.total, max: model.max, offset: model.offset){
                 model.reports.each{  rpt->
                     def nodes=rpt.node

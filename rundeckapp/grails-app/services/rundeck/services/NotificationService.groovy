@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
+import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import com.dtolabs.rundeck.server.plugins.services.NotificationPluginProviderService
 import groovy.xml.MarkupBuilder
 import org.apache.commons.httpclient.Header
@@ -61,7 +62,7 @@ public class NotificationService implements ApplicationContextAware{
      * @param name
      * @return map containing [instance:(plugin instance), description: (map or Description), ]
      */
-    def Map getNotificationPluginDescriptor(String name) {
+    def DescribedPlugin getNotificationPluginDescriptor(String name) {
         return pluginService.getPluginDescriptor(name, notificationPluginProviderService)
     }
     def Map listNotificationPlugins(){

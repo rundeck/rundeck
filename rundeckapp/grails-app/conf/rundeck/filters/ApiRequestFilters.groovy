@@ -50,15 +50,16 @@ public class ApiRequestFilters {
     public static final int V8 = 8
     public static final int V9 = 9
     public static final int V10 = 10
+    public static final int V11 = 11
     public static final Map VersionMap = [:]
-    public static final List Versions = [V1, V2, V3, V4, V5, V6, V7, V8, V9, V10]
+    public static final List Versions = [V1, V2, V3, V4, V5, V6, V7, V8, V9, V10, V11]
     static {
         Versions.each { VersionMap[it.toString()] = it }
     }
     public static final Set VersionStrings = new HashSet(VersionMap.values())
 
     public final static int API_EARLIEST_VERSION = V1
-    public final static int API_CURRENT_VERSION = V10
+    public final static int API_CURRENT_VERSION = V11
     public final static int API_MIN_VERSION = API_EARLIEST_VERSION
     public final static int API_MAX_VERSION = API_CURRENT_VERSION
 
@@ -129,6 +130,30 @@ public class ApiRequestFilters {
             }
             after = {
                 logDetail(request, request['ApiRequestFilters.request.parameters.project']?:'', actionName, controllerName)
+            }
+        }
+
+        /**
+         * check incubator features via feature toggle
+         */
+        incubator(uri:'/api/**'){
+            before={
+                def path= request.forwardURI.split('/')
+                def feature = path.length > 4 && path[3] == 'incubator' ? path[4] : null
+                def featurePresent={
+                    def splat = grailsApplication.config.feature?.incubator?.getAt('*') in ['true', true]
+                    splat || (grailsApplication.config?.feature?.incubator?.getAt(it) in ['true', true])
+                }
+                if (feature && !(featurePresent(feature))) {
+                    apiService.renderErrorXml(response,
+                            [
+                                    status: HttpServletResponse.SC_NOT_FOUND,
+                                    code: 'api.error.invalid.request',
+                                    args: [request.forwardURI]
+                            ]
+                    )
+                    return false;
+                }
             }
         }
     }

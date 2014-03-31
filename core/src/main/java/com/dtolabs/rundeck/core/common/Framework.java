@@ -42,6 +42,7 @@ import com.dtolabs.rundeck.core.resources.ResourceModelSourceException;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService;
+import com.dtolabs.rundeck.core.storage.AuthStorageTree;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import com.dtolabs.rundeck.core.utils.PropertyLookup;
 import org.apache.log4j.Logger;
@@ -68,6 +69,16 @@ public class Framework extends FrameworkResourceParent {
     public static final String NODES_FILE_AUTOGEN_PROP = "framework.nodes.file.autogenerate";
     public static final String CENTRALDISPATCHER_CLS_DEFAULT = "com.dtolabs.client.services.RundeckAPICentralDispatcher";
 
+    /**
+     * Environmental attribute for the rundeck app
+     */
+    public static final Attribute RUNDECK_APP_CONTEXT = new Attribute(URI.create(EnvironmentalContext.URI_BASE +
+            "application"), "rundeck");
+    /**
+     * the rundeck app environment for authorization
+     */
+    public static final Set<Attribute> RUNDECK_APP_ENV = Collections.singleton(RUNDECK_APP_CONTEXT);
+
     static final String PROJECTMGR_NAME = "projectResourceMgr";
     public static final String FRAMEWORK_LIBEXT_DIR = "framework.libext.dir";
     public static final String FRAMEWORK_LIBEXT_CACHE_DIR = "framework.libext.cache.dir";
@@ -80,6 +91,7 @@ public class Framework extends FrameworkResourceParent {
     private final IPropertyLookup lookup;
     private final File projectsBase;
     private FrameworkProjectMgr projectResourceMgr;
+    private AuthStorageTree storageTree;
 
     final HashMap<String,FrameworkSupportService> services = new HashMap<String, FrameworkSupportService>();
     /**
@@ -629,5 +641,13 @@ public class Framework extends FrameworkResourceParent {
     public boolean isLocalNode(INodeDesc node) {
         final String fwkNodeName = getFrameworkNodeName();
         return fwkNodeName.equals(node.getNodename());
+    }
+
+    public AuthStorageTree getStorageTree() {
+        return storageTree;
+    }
+
+    public void setStorageTree(AuthStorageTree storageTree) {
+        this.storageTree = storageTree;
     }
 }

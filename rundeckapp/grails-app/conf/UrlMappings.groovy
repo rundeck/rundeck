@@ -32,7 +32,18 @@ class UrlMappings {
         "/api/$api_version/jobs/export"(controller: 'menu', action: 'apiJobsExport')
         "/api/$api_version/jobs/import"(controller: 'scheduledExecution', action: 'apiJobsImport')
         "/api/$api_version/jobs/delete"(controller: 'scheduledExecution', action: 'apiJobDeleteBulk')
-        "/api/$api_version/project/$project?"(controller: 'framework', action: 'apiProject')
+        "/api/$api_version/project/$project"(controller: 'project'){
+            action = [GET: 'apiProjectGet', DELETE:'apiProjectDelete']
+        }
+        "/api/$api_version/project/$project/config"(controller: 'project'){
+            action = [GET: 'apiProjectConfigGet', PUT: 'apiProjectConfigPut']
+        }
+        "/api/$api_version/project/$project/config/$keypath**"(controller: 'project'){
+            action = [GET: 'apiProjectConfigKeyGet', PUT: 'apiProjectConfigKeyPut',
+                    DELETE: 'apiProjectConfigKeyDelete']
+        }
+        "/api/$api_version/project/$project/export"(controller: 'project',action: 'apiProjectExport')
+        "/api/$api_version/project/$project/import"(controller: 'project',action: 'apiProjectImport')
         /** v2 */
         "/api/$api_version/project/$project/resources/refresh"(controller: 'framework', action: 'apiProjectResourcesRefresh')
         /** v2  */
@@ -41,7 +52,9 @@ class UrlMappings {
         }
         /** v2 */
         "/api/$api_version/project/$project/jobs"(controller: 'menu', action: 'apiJobsListv2')
-        "/api/$api_version/projects"(controller: 'framework', action: 'apiProjects')
+        "/api/$api_version/projects"(controller: 'project'){
+            action = [GET: 'apiProjectList', POST:'apiProjectCreate']
+        }
 //        "/api/renderError"(controller: 'api', action: 'renderError')
 //        "/api/error"(controller: 'api', action: 'error')
         "/api/$api_version/report/create"(controller: 'reports', action: 'apiReportCreate')
@@ -52,8 +65,21 @@ class UrlMappings {
         "/api/$api_version/run/url"(controller: 'scheduledExecution', action: 'apiRunScriptUrl')
         "/api/$api_version/system/info"(controller: 'api', action: 'apiSystemInfo')
 
+        "/api/$api_version/storage/ssh-key/$resourcePath**"(controller: 'storage', action: 'apiSshKey')
+
         //incubator endpoints
         "/api/$api_version/incubator/jobs/takeoverSchedule"(controller: 'scheduledExecution', action: 'apiJobClusterTakeoverSchedule')
+        "/api/$api_version/incubator/storage/$resourcePath**"(controller: 'storage') {
+            action = [
+                    GET: "apiGetResource",
+                    PUT: "apiPutResource",
+                    POST: "apiPostResource",
+                    DELETE: "apiDeleteResource"
+            ]
+        }
+
+        "/api/$api_version/incubator/feature/$featureName?"(controller: 'api',action: 'featureToggle')
+
 
         //catchall
         "/api/$api_version/$action?"(controller: 'api', action: 'invalid')
@@ -78,6 +104,7 @@ class UrlMappings {
         "/project/$project/export"(controller: 'project',action: 'export')
         "/project/$project/importArchive"(controller: 'project',action: 'importArchive')
         "/project/$project"(controller: 'menu',action: 'index')
+        "/project/$project/$action"(controller: 'project')
         "/job/show/$id"(controller: 'scheduledExecution',action: 'show')
         "/execution/show/$id"(controller: 'execution',action: 'show')
         "404"(view: '/404')

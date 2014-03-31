@@ -35,5 +35,9 @@ for:
     - match:
         name: '.*'
       allow: [read] # allow view of all projects
+  storage:
+    - match:
+        path: '/ssh-key/.*'
+      allow: [read] # allow usage of ssh keys for node execution
 by:
   group: api_token_group

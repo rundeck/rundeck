@@ -58,9 +58,9 @@ deb: app
 #doc build
 
 javadoc:
-	cd core; ./gradlew $(PROXY_DEFS) -Psnapshot -PbuildNum=$(RELEASE) javadoc
+	./gradlew $(PROXY_DEFS) -Psnapshot -PbuildNum=$(RELEASE) alljavadoc
 	mkdir -p docs/en/dist/html
-	cp -r core/build/docs/javadoc docs/en/dist/html/
+	cp -r build/docs/javadoc docs/en/dist/html/
 
 #clean various components
 

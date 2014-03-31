@@ -4,8 +4,7 @@ import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authorization.Attribute
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.authorization.Authorization
-import com.dtolabs.rundeck.core.authorization.Decision
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.SubjectAuthContext
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
 import com.dtolabs.rundeck.core.authorization.providers.SAREAuthorization
@@ -17,6 +16,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import com.dtolabs.rundeck.server.authorization.AuthConstants
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import rundeck.Execution
@@ -73,7 +73,7 @@ class FrameworkService implements ApplicationContextAware {
         def resources=[] as Set
         for (proj in rundeckFramework.frameworkProjectMgr.listFrameworkProjects()) {
             projMap[proj.name] = proj;
-            resources << [type: 'project', name: proj.name]
+            resources << authResourceForProject(proj.name)
         }
         def authed = authorizeApplicationResourceSet(authContext, resources, 'read')
         return new ArrayList(authed.collect{projMap[it.name]})
@@ -85,6 +85,73 @@ class FrameworkService implements ApplicationContextAware {
     
     def getFrameworkProject(String project) {
         return rundeckFramework.getFrameworkProjectMgr().getFrameworkProject(project)
+    }
+    /**
+     * Create a new project
+     * @param project name
+     * @param properties config properties
+     * @return [project, [error list]]
+     */
+    def createFrameworkProject(String project, Properties properties){
+        def proj=null
+        def errors=[]
+        try {
+            proj = rundeckFramework.getFrameworkProjectMgr().createFrameworkProjectStrict(project, properties)
+        } catch (Error e) {
+            log.error(e.message)
+            errors << e.getMessage()
+        } catch (RuntimeException e) {
+            log.error(e.message)
+            errors << e.getMessage()
+        }
+        [proj,errors]
+    }
+    /**
+     * Update project properties by merging
+     * @param project name
+     * @param properties new properties to merge in
+     * @param removePrefixes set of string prefixes of properties to remove
+     * @return [success:boolean, error: String]
+     */
+    def updateFrameworkProjectConfig(String project,Properties properties, Set<String> removePrefixes){
+        try {
+            getFrameworkProject(project).mergeProjectProperties(properties, removePrefixes)
+        } catch (Error e) {
+            log.error(e.message)
+            log.debug(e.message,e)
+            return [success: false, error: e.message]
+        }
+        [success:true]
+    }
+    /**
+     * Update project properties by merging
+     * @param project name
+     * @param properties new properties to merge in
+     * @param removePrefixes set of string prefixes of properties to remove
+     * @return [success:boolean, error: String]
+     */
+    def setFrameworkProjectConfig(String project,Properties properties){
+        try {
+            getFrameworkProject(project).setProjectProperties(properties)
+        } catch (Error e) {
+            log.error(e.message)
+            log.debug(e.message,e)
+            return [success: false, error: e.message]
+        }
+        [success:true]
+    }
+    /**
+     * Update project properties by removing a set of keys
+     * @param project name
+     * @param toremove keys to remove
+     * @return [success:boolean, error: String]
+     */
+    def removeFrameworkProjectConfigProperties(String project,Set<String> toremove){
+        def projProps = loadProjectProperties(getFrameworkProject(project))
+        for (String s: toremove) {
+            projProps.remove(s)
+        }
+        return setFrameworkProjectConfig(project,projProps)
     }
     /**
      * Return a map of the project's readme and motd content
@@ -162,7 +229,15 @@ class FrameworkService implements ApplicationContextAware {
      * @return
      */
     def Map authResourceForJob(String name, String groupPath){
-        return [type:'job',name:name,group:groupPath?:'']
+        return AuthorizationUtil.resource(AuthConstants.TYPE_JOB,[name:name,group:groupPath?:''])
+    }
+    /**
+     * Return the resource definition for a project for use by authorization checks
+     * @param name the project name
+     * @return resource map for authorization check
+     */
+    def Map authResourceForProject(String name){
+        return AuthorizationUtil.resource(AuthConstants.TYPE_PROJECT, [name: name])
     }
 
     /**
@@ -239,7 +314,7 @@ class FrameworkService implements ApplicationContextAware {
         def ScheduledExecution se = exec.scheduledExecution
         return se ?
                authorizeProjectJobAll(authContext, se, actions, se.project)  :
-               authorizeProjectResourceAll(authContext, [type: 'adhoc'], actions, exec.project)
+               authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_ADHOC, actions, exec.project)
 
     }
     /**
@@ -259,7 +334,8 @@ class FrameworkService implements ApplicationContextAware {
                 if(se && null==semap[se.id]){
                     semap[se.id]=authorizeProjectJobAll(authContext, se, actions, se.project)
                 }else if(!se && null==adhocauth){
-                    adhocauth=authorizeProjectResourceAll(authContext, [type: 'adhoc'], actions, exec.project)
+                    adhocauth=authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_ADHOC, actions,
+                            exec.project)
                 }
                 if(se ? semap[se.id] : adhocauth){
                     results << exec
@@ -341,6 +417,18 @@ class FrameworkService implements ApplicationContextAware {
         return !(decisions.find {!it.authorized})
     }
     /**
+     * return true if any of the actions are authorized for the resource in the application context
+     * @param framework
+     * @param resource
+     * @param actions
+     * @return
+     */
+    def boolean authorizeApplicationResourceAny(AuthContext authContext, Map resource, List actions) {
+        return actions.any {
+            authorizeApplicationResourceAll(authContext,resource,[it])
+        }
+    }
+    /**
      * return true if the action is authorized for the resource type in the application context
      * @param framework
      * @param resourceType
@@ -351,7 +439,7 @@ class FrameworkService implements ApplicationContextAware {
 
         def decision = metricService.withTimer(this.class.name,'authorizeApplicationResourceType') {
             authContext.evaluate(
-                    [type: 'resource', kind: resourceType],
+                    AuthorizationUtil.resourceType(resourceType),
                     action,
                     Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "application"), 'rundeck')))
         }
@@ -367,7 +455,7 @@ class FrameworkService implements ApplicationContextAware {
     def boolean authorizeApplicationResourceTypeAll(AuthContext authContext, String resourceType, Collection actions) {
         def Set decisions= metricService.withTimer(this.class.name,'authorizeApplicationResourceType') {
             authContext.evaluate(
-                    [[type: 'resource', kind: resourceType]] as Set,
+                    [AuthorizationUtil.resourceType(resourceType)] as Set,
                     actions as Set,
                     Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "application"), 'rundeck')))
         }
@@ -581,6 +669,25 @@ class FrameworkService implements ApplicationContextAware {
                     props.put(key, params[k])
                 }
             }
+        }
+        return props
+    }
+
+    /**
+     * Load direct project properties as a map
+     * @param pject the project
+     * @return loaded properties
+     */
+    def Map loadProjectProperties(FrameworkProject pject) {
+        Properties props = new Properties()
+        try {
+            final FileInputStream fileInputStream = new FileInputStream(pject.getPropertyFile());
+            try {
+                props.load(fileInputStream)
+            } finally {
+                fileInputStream.close()
+            }
+        } catch (IOException e) {
         }
         return props
     }

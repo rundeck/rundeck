@@ -1,7 +1,9 @@
 package rundeck.filters
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.server.authorization.AuthConstants
 
 /*
 * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
@@ -86,7 +88,8 @@ public class ProjectSelectFilters {
                         return false
                     }
                     if (selected
-                            && !frameworkService.authorizeApplicationResourceAll(authContext, [type: 'project', name: selected], ['read'])) {
+                            && !frameworkService.authorizeApplicationResourceAll(authContext,
+                            frameworkService.authResourceForProject(selected), [AuthConstants.ACTION_READ])) {
                         response.setStatus(403)
                         flash.error = "Unauthorized: " + selected
                         params.project = null

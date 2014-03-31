@@ -29,11 +29,11 @@ eclipse.project.name =  "${project.getParent().eclipse.project.name}:webapp"
 // Properties for downloading, installing and running Grails
 def grailsBaseName = "grails-${grailsVersion}"
 def grailsZipFile = "${grailsBaseName}.zip"
-def grailsZipFileDefaultBasePath = "${rootProject.buildDir}/tmp"
+def grailsZipFileDefaultBasePath = "${rootProject.projectDir}/local/tmp"
 def boolean grailsZipFileBasePathOverriden = hasProperty("grailsZipFileBasePath")
 def grailsZipFileBasePath = grailsZipFileBasePathOverriden ? grailsZipFileBasePath : grailsZipFileDefaultBasePath
 def grailsZipFileLocation = "${grailsZipFileBasePath}/${grailsZipFile}"
-def grailsInstallLocation = "${rootProject.buildDir}/local"
+def grailsInstallLocation = "${rootProject.projectDir}/local"
 def grailsLocalRepo = hasProperty("grailsLocalRepo") ? grailsLocalRepo : "grails-app/plugins"
 def grailsDownloadUrl = "http://dist.springframework.org.s3.amazonaws.com/release/GRAILS/grails-${grailsVersion}.zip"
 def grailsHome = "${grailsInstallLocation}/${grailsBaseName}"
@@ -94,11 +94,21 @@ task extractGrails(dependsOn: downloadGrails) {
     }
 }
 
+def projDeps = [
+        ":core",
+        ":rundeck-storage:rundeck-storage-api",
+        ":rundeck-storage:rundeck-storage-data",
+        ":rundeck-storage:rundeck-storage-filesys",
+        ":rundeck-storage:rundeck-storage-conf",
+        ":rundeck-launcher:rundeck-jetty-server"
+].collect{
+    project(it).install
+}
 /**
  * "core" needs to be built and installed into the local ~/.m2 repo before
  * we attempt to do anything further with Grails.
  */
-task installDependencies(dependsOn: [project(":core").install, project(":rundeck-launcher:rundeck-jetty-server").install]) << {
+task installDependencies(dependsOn: projDeps) << {
     description = "Builds and installs dependencies on other subprojects"
 }
 
@@ -109,7 +119,8 @@ task installJettyPlugin(type: Exec, dependsOn: [extractGrails]) {
 
     def jettyPluginVersion = '2.0.3'
     def jettyPluginInstalled = "${System.properties['user.home']}/.grails/${grailsVersion}/projects/rundeckapp/plugins/jetty-${jettyPluginVersion}"
-
+    
+    inputs.dir file(grailsHome)
     outputs.dir file(jettyPluginInstalled)
 
     workingDir project.projectDir
@@ -129,6 +140,7 @@ task cleanWar(type: Delete) {
 }
 
 task cleanGrails(type: Exec, dependsOn: [extractGrails]) {
+    inputs.dir file(grailsHome)
     ignoreExitValue=true
     workingDir project.projectDir
     environment 'GRAILS_HOME', grailsHome
@@ -143,7 +155,7 @@ task clean(overwrite: true, dependsOn: [cleanEclipse, cleanWar, cleanGrails]) {
  * Wrapper task for grails test-app
  */
 task testGrails(type: Exec, overwrite: true, dependsOn: [installJettyPlugin, installDependencies,extractGrails]) {
-
+    inputs.dir file(grailsHome)
     workingDir project.projectDir
     environment 'GRAILS_HOME', grailsHome
     commandLine grailsCommandLine
@@ -162,6 +174,7 @@ test.dependsOn testGrails
  * Run grails compile
  */
 task grailsCompile(type: Exec, overwrite: true, dependsOn: [extractGrails]) {
+    inputs.dir file(grailsHome)
     workingDir project.projectDir
     environment 'GRAILS_HOME', grailsHome
     commandLine grailsCommandLine
@@ -176,6 +189,7 @@ task grailsCompile(type: Exec, overwrite: true, dependsOn: [extractGrails]) {
  * Builds the rundeck war file
  */
 task grailsWar(type: Exec, overwrite:true, dependsOn: [installJettyPlugin, installDependencies,extractGrails]) {
+    inputs.dir file(grailsHome)
     inputs.sourceDir file("${projectDir}/src")
     outputs.file file(warFileLocation)
     workingDir project.projectDir
