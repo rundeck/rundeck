@@ -12,7 +12,7 @@ source $DIR/include.sh
 
 # now submit req
 runurl="${APIURL}/projects"
-test_proj="APIConfigTest"
+test_proj="APIConfigTest2"
 
 
 ##
