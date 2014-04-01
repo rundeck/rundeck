@@ -10,22 +10,25 @@ proj="test"
 # now submit req
 runurl="${APIURL}/run/script"
 
+#remove script.out if it exists
+
+OUTF=/tmp/script.out
+SCRIPTF=/tmp/script.tmp
+
 ####
 #  echo a script into a temp file
 ####
-cat <<END > $DIR/script.tmp
+cat <<END > $SCRIPTF
 #!/bin/bash
-echo \$1 > $DIR/script.out
+echo \$1 > $OUTF
 END
 
-#remove script.out if it exists
-
-[ -f $DIR/script.out ] && rm $DIR/script.out
+[ -f $OUTF ] && rm $OUTF
 
 echo "TEST: /api/run/script with scriptInterpreter and interpreterArgsQuoted=true"
 params="project=${proj}&scriptInterpreter=bash+-c&argString=%24%7Bnode.name%7D&interpreterArgsQuoted=true"
 # make api request
-docurl -F scriptFile=@$DIR/script.tmp ${runurl}?${params} > $DIR/curl.out
+docurl -F scriptFile=@$SCRIPTF ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "FAIL: failed query request"
     exit 2
@@ -43,26 +46,26 @@ fi
 rd-queue follow -q -e $execid || fail "Waiting for $execid to finish"
 sh $SRC_DIR/api-expect-exec-success.sh $execid || exit 2
 
-if [ ! -f $DIR/script.out ] ; then
+if [ ! -f $OUTF ] ; then
     errorMsg "FAIL: Expected script to execute and create script.out file"
     exit 2
 fi
 
-output=$(cat $DIR/script.out)
+output=$(cat $OUTF)
 
 if [ -z "$output" ] ; then
-    errorMsg "FAIL: Expected script output to have node name in $DIR/script.out"
+    errorMsg "FAIL: Expected script output to have node name in $OUTF"
     exit 2
 fi
 
-cat $DIR/script.out
-rm $DIR/script.out
+cat $OUTF
+rm $OUTF
 
 
 echo "TEST: /api/run/script with scriptInterpreter and interpreterArgsQuoted=false"
 params="project=${proj}&scriptInterpreter=bash+-c&argString=%24%7Bnode.name%7D&interpreterArgsQuoted=false"
 # make api request
-docurl -F scriptFile=@$DIR/script.tmp ${runurl}?${params} > $DIR/curl.out
+docurl -F scriptFile=@$SCRIPTF ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "FAIL: failed query request"
     exit 2
@@ -80,15 +83,15 @@ fi
 rd-queue follow -q -e $execid || fail "Waiting for $execid to finish"
 sh $SRC_DIR/api-expect-exec-success.sh $execid || exit 2
 
-if [ ! -f $DIR/script.out ] ; then
+if [ ! -f $OUTF ] ; then
     errorMsg "FAIL: Expected script to execute and create script.out file"
     exit 2
 fi
 
-output=$(cat $DIR/script.out)
+output=$(cat $OUTF)
 
 if [ ! -z "$output" ] ; then
-    errorMsg "FAIL: Expected script output to be empty in $DIR/script.out"
+    errorMsg "FAIL: Expected script output to be empty in $OUTF"
     exit 2
 fi
 
@@ -97,4 +100,4 @@ fi
 echo "OK"
 
 rm $DIR/curl.out
-rm $DIR/script.tmp
+rm $SCRIPTF

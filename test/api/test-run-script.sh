@@ -31,22 +31,24 @@ fi
 sh $SRC_DIR/api-test-error.sh $DIR/curl.out "Input script file was empty" && echo "OK" || exit 2
 rm $DIR/test.tmp
 
+OUTF=/tmp/script.out
+SCRIPTF=/tmp/script.tmp
 ####
 #  echo a script into a temp file
 ####
-cat <<END > $DIR/script.tmp
+cat <<END > $SCRIPTF
 #!/bin/bash
 echo hello
-echo @node.name@ > $DIR/script.out
+echo @node.name@ > $OUTF
 END
 
 #remove script.out if it exists
 
-[ -f $DIR/script.out ] && rm $DIR/script.out
+[ -f $OUTF ] && rm $OUTF
 
 echo "TEST: /api/run/script should succeed and return execution id"
 # make api request
-docurl -F scriptFile=@$DIR/script.tmp ${runurl}?${params} > $DIR/curl.out
+docurl -F scriptFile=@$SCRIPTF ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "FAIL: failed query request"
     exit 2
@@ -64,16 +66,16 @@ fi
 rd-queue follow -q -e $execid || fail "Waiting for $execid to finish"
 sh $SRC_DIR/api-expect-exec-success.sh $execid || exit 2
 
-if [ ! -f $DIR/script.out ] ; then
+if [ ! -f $OUTF ] ; then
     errorMsg "FAIL: Expected script to execute and create script.out file"
     exit 2
 else
-    cat $DIR/script.out
-    rm $DIR/script.out
+    cat $OUTF
+    rm $OUTF
 fi
 
 
 echo "OK"
 
 rm $DIR/curl.out
-rm $DIR/script.tmp
+rm $SCRIPTF

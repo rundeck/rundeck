@@ -92,7 +92,7 @@ END
 
   if [ "1" != "$succount" -o "" == "$jobid" ] ; then
       errorMsg  "Upload was not successful."
-      exit 
+      exit 2
   fi
   echo $jobid
 }
@@ -153,10 +153,14 @@ waitexecstatus(){
 
 echo "TEST: workflow error handler: keepgoing=true, handler succeeds"
 
-testoutputfile=$DIR/testWorkflowEHOutput1.out
+testoutputfile=/tmp/testWorkflowEHOutput1.out
 
 jobid=$( createjob "recovery handler1" "true" "false" "echo handler executed successfully >> $testoutputfile" \
   "echo final workflow step >> $testoutputfile")
+
+if [ 0 != $? ] ; then
+  fail "Failed to create job"
+fi
 
 execid=$( runjob $jobid )
 
@@ -184,7 +188,7 @@ fi
 
 echo "OK"
 
-rm $testoutputfile
+rm $testoutputfile || cat /dev/null > $testoutputfile
 rm $DIR/curl.out
 
 
@@ -194,7 +198,7 @@ rm $DIR/curl.out
 
 echo "TEST: workflow error handler: keepgoing=true, handler fails"
 
-testoutputfile=$DIR/testWorkflowEHOutput2.out
+testoutputfile=/tmp/testWorkflowEHOutput2.out
 
 jobid=$( createjob "recovery handler1" "true" "false" "echo handler executed successfully >> $testoutputfile ; false " \
   "echo final workflow step >> $testoutputfile")
@@ -225,7 +229,7 @@ fi
 
 echo "OK"
 
-rm $testoutputfile
+rm $testoutputfile || cat /dev/null > $testoutputfile
 rm $DIR/curl.out
 
 
@@ -236,7 +240,7 @@ rm $DIR/curl.out
 
 echo "TEST: workflow error handler: keepgoing=false, handler fails"
 
-testoutputfile=$DIR/testWorkflowEHOutput3.out
+testoutputfile=/tmp/testWorkflowEHOutput3.out
 
 jobid=$( createjob "recovery handler1" "false" "false" "echo handler executed successfully >> $testoutputfile ; false " \
   "echo final workflow step >> $testoutputfile")
@@ -267,7 +271,7 @@ fi
 
 echo "OK"
 
-rm $testoutputfile
+rm $testoutputfile || cat /dev/null > $testoutputfile
 rm $DIR/curl.out
 
 ###
@@ -276,7 +280,7 @@ rm $DIR/curl.out
 
 echo "TEST: workflow error handler: keepgoing=false, handler succeeds, keepgoingOnSuccess=false"
 
-testoutputfile=$DIR/testWorkflowEHOutput3.out
+testoutputfile=/tmp/testWorkflowEHOutput3.out
 
 jobid=$( createjob "recovery handler1" "false" "false" "echo handler executed successfully >> $testoutputfile " \
   "echo final workflow step >> $testoutputfile")
@@ -307,7 +311,7 @@ fi
 
 echo "OK"
 
-rm $testoutputfile
+rm $testoutputfile || cat /dev/null > $testoutputfile
 rm $DIR/curl.out
 ###
 # TEST: execution of job with keepgoing=false, errorhandler step succeeds (keepgoingOnSuccess=true)
@@ -315,7 +319,7 @@ rm $DIR/curl.out
 
 echo "TEST: workflow error handler: keepgoing=false, handler succeeds, keepgoingOnSuccess=true"
 
-testoutputfile=$DIR/testWorkflowEHOutput3.out
+testoutputfile=/tmp/testWorkflowEHOutput3.out
 
 jobid=$( createjob "recovery handler1" "false" "true" "echo handler executed successfully >> $testoutputfile " \
   "echo final workflow step >> $testoutputfile")
@@ -346,5 +350,5 @@ fi
 
 echo "OK"
 
-rm $testoutputfile
+rm $testoutputfile || cat /dev/null > $testoutputfile
 rm $DIR/curl.out
