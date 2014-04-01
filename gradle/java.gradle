@@ -20,16 +20,16 @@ if (project.hasProperty('environment') && environment == 'build') {
 }
 
 repositories {
-	mavenLocal()
-	maven {
-		url mavenCentralUrl
-		if (project.hasProperty('mavenUser') && project.hasProperty('mavenPassword')) {
-			credentials {
-				username mavenUser
-				password mavenPassword
-			}
-		}
-	}
+    mavenLocal()
+    maven {
+        url mavenCentralUrl
+        if (project.hasProperty('mavenUser') && project.hasProperty('mavenPassword')) {
+            credentials {
+                username mavenUser
+                password mavenPassword
+            }
+        }
+    }
 }
 
 sourceCompatibility = 1.6
@@ -41,25 +41,25 @@ eclipse.project.name = "${project.getParent().eclipse.project.name}:${name}"
 
 // produce a jar file for our test classes
 task testJar(type: Jar) {
-	classifier = 'tests'
-	from sourceSets.test.java
+    classifier = 'tests'
+    from sourceSets.test.java
 }
 
 // produce a jar file for our source files
 task sourceJar(type: Jar) {
-	classifier = 'sources'
-	from sourceSets.main.java
+    classifier = 'sources'
+    from sourceSets.main.java
 }
 
 // produce a jar file for our javadoc
 task javadocJar(type: Jar, dependsOn: javadoc) {
-	classifier = 'javadoc'
-	from javadoc.destinationDir
+    classifier = 'javadoc'
+    from javadoc.destinationDir
 }
 
 // add all of the artifacts above to our archives list
 artifacts {
-	archives testJar
-	archives sourceJar
-	archives javadocJar
+    archives testJar
+    archives sourceJar
+    archives javadocJar
 }
