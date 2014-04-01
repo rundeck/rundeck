@@ -72,7 +72,6 @@ fi
 /var/lib/rundeck/bootstrap/libpam4j-1.5.jar
 /var/lib/rundeck/bootstrap/rundeck-jetty-server-%{_vname}.jar
 /var/lib/rundeck/bootstrap/servlet-api-2.5.jar
-/var/lib/rundeck/bootstrap/log4j-1.2.16.jar
 /var/lib/rundeck/bootstrap/not-yet-commons-ssl-0.3.11.jar
 
 # CLI Lib Support
@@ -94,6 +93,9 @@ fi
 /var/lib/rundeck/cli/jsch-0.1.50.jar
 /var/lib/rundeck/cli/log4j-1.2.16.jar
 /var/lib/rundeck/cli/rundeck-core-%{_vname}.jar
+/var/lib/rundeck/cli/rundeck-storage-api-%{_vname}.jar
+/var/lib/rundeck/cli/rundeck-storage-conf-%{_vname}.jar
+/var/lib/rundeck/cli/rundeck-storage-data-%{_vname}.jar
 /var/lib/rundeck/cli/snakeyaml-1.9.jar
 /var/lib/rundeck/cli/xercesImpl-2.6.2.jar
 /var/lib/rundeck/cli/xom-1.0.jar
