@@ -99,8 +99,8 @@ assert_http_status(){
 ##
 assert_xml_value(){
     value=$($XMLSTARLET sel -T -t -v "$2" $3)
-    if [ $? != 0 ] ; then
-        errorMsg "xmlstarlet failed: $!"
+    if [ $? != 0 -a -n "$1" ] ; then
+        errorMsg "xmlstarlet failed: $!: $value, for $1 $2 $3"
         exit 2
     fi
     if [ "$1" != "$value" ] ; then
