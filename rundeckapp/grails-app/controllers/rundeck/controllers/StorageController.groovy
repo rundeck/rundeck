@@ -137,6 +137,7 @@ class StorageController {
         if((askedForContent || anyContent) && !maskContent) {
             response.contentType=resContentType
             def len=contents.writeContent(response.outputStream)
+            response.outputStream.close()
             return
         }
 
