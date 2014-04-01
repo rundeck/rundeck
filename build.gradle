@@ -22,12 +22,20 @@ apply plugin: 'idea'
 
 eclipse.project.name = 'rundeck'
 
+ext.exportedProjects = [
+        ":core",
+        ":rundeck-storage:rundeck-storage-api",
+        ":rundeck-storage:rundeck-storage-data",
+        ":rundeck-storage:rundeck-storage-filesys",
+        ":rundeck-storage:rundeck-storage-conf"
+]
 /**
  * Defaults for all projects
  */
 subprojects {
     // set the eclipse project naming convention to rundeck:<path>:<projectName>
     // so it matches the logical hierarchy more closely
+    apply from: "${rootDir}/gradle/java.gradle"
     apply plugin: 'eclipse'
     eclipse.project.name = "${project.getParent().eclipse.project.name}:${name}"
     
@@ -52,13 +60,6 @@ subprojects {
         ext.isDevBuild=true
     }
 }
-def exportedProjects= [
-        ":core",
-        ":rundeck-storage:rundeck-storage-api",
-        ":rundeck-storage:rundeck-storage-data",
-        ":rundeck-storage:rundeck-storage-filesys",
-        ":rundeck-storage:rundeck-storage-conf"
-]
 
 task wrapper(type: Wrapper) {
     gradleVersion = '1.10'
@@ -87,7 +88,6 @@ gradle.taskGraph.whenReady { taskGraph ->
 //subproject libs that are uploaded to maven central
 exportedProjects.each {
     project(it) {
-        apply from: "${rootDir}/gradle/java.gradle"
         apply plugin: 'signing'
 
         //********* artifact signing *********

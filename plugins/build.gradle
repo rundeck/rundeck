@@ -8,8 +8,7 @@ eclipse.project.name =  "${project.getParent().eclipse.project.name}:plugins";
 ext.rundeckPluginVersion= '1.1'
 subprojects{
 
-    apply from: "${rootDir}/gradle/java.gradle"
-    
+
     defaultTasks 'clean','build'
     archivesBaseName = "rundeck-$project.name"
 
