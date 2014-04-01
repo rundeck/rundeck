@@ -9,13 +9,14 @@ apply plugin: 'idea';
 
 // add static analysis support when running on build servers (-Penvironment=build)
 if (project.hasProperty('environment') && environment == 'build') {
+    if(project in rootProject.exportedProjects.collect{project(it)}){
+        apply from: rootDir.path + '/gradle/cobertura.gradle'
+        apply plugin: 'findbugs'
 
-	apply from: rootDir.path + '/gradle/cobertura.gradle'
-	apply plugin: 'findbugs'
-	
-	findbugs {
-		ignoreFailures = true
-	}
+        findbugs {
+            ignoreFailures = true
+        }
+    }
 }
 
 repositories {
