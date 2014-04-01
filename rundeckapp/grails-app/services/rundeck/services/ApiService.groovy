@@ -1,9 +1,12 @@
 package rundeck.services
 
 import groovy.xml.MarkupBuilder
+import org.apache.commons.lang.RandomStringUtils
 import org.codehaus.groovy.grails.web.converters.exceptions.ConverterException
+import rundeck.AuthToken
 import rundeck.Execution
 import rundeck.ScheduledExecution
+import rundeck.User
 import rundeck.filters.ApiRequestFilters
 
 import javax.servlet.http.HttpServletRequest
@@ -19,6 +22,28 @@ class ApiService {
     def messageSource
     def grailsLinkGenerator
 
+    private String genRandomString() {
+        return RandomStringUtils.random(32, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+    }
+    /**
+     * Generate a new unique auth token for the user and return it
+     * @param u
+     * @return
+     */
+    AuthToken generateAuthToken(User u){
+        String newtoken = genRandomString()
+        while (AuthToken.findByToken(newtoken) != null) {
+            newtoken = genRandomString()
+        }
+        AuthToken token = new AuthToken(token: newtoken, authRoles: 'api_token_group', user: u)
+
+        if (token.save()) {
+            log.debug("GENERATE TOKEN ${newtoken} for User ${u.login} with roles: ${token.authRoles}")
+            return token
+        } else {
+            throw new Exception("Failed to save token for User ${u.login}")
+        }
+    }
     def respondOutput(HttpServletResponse response, String contentType, String output) {
         response.setContentType(contentType)
         response.setCharacterEncoding('UTF-8')
@@ -289,6 +314,22 @@ class ApiService {
         return respondOutput(response, JSON_CONTENT_TYPE, renderErrorJson(error, error.code))
     }
     /**
+     * Require all specified parameters in the request, send json/xml response based on accept header
+     * @param request
+     * @param response
+     * @param params list of parameters of which all must be present
+     * @return false if requirement is not met, response will already have been made
+     */
+    def requireParametersFormat(Map reqparams,HttpServletResponse response,List<String> params){
+        def notfound=params.find{!reqparams[it]}
+        if(notfound){
+            renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.parameter.required', args: [notfound]])
+            return false
+        }
+        return true
+    }
+    /**
      * Require all specified parameters in the request
      * @param request
      * @param response
@@ -321,10 +362,27 @@ class ApiService {
         return true
     }
     /**
+     * Require a value exists, or respond with NOT FOUND, and format response as xml/json based on accept header
+     * @param request
+     * @param response
+     * @param item
+     * @param args arguments to error message: {@literal '{0} does not exist: {1}'}
+     * @return false if requirement is not met, response will already have been made
+     */
+    def requireExistsFormat(HttpServletResponse response, Object item, List args) {
+        if (!item) {
+            renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.item.doesnotexist', args: args])
+            return false
+        }
+        return true
+    }
+    /**
      * Require a value exists, or respond with NOT FOUND
      * @param request
      * @param response
      * @param item
+     * @param args arguments to error message: {@literal '{0} does not exist: {1}'}
      * @return false if requirement is not met, response will already have been made
      */
     def requireExists(HttpServletResponse response, Object item, List args) {

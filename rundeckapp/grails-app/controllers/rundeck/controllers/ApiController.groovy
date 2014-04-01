@@ -1,6 +1,8 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import rundeck.AuthToken
+import rundeck.User
 
 import javax.servlet.http.HttpServletResponse
 import java.lang.management.ManagementFactory
@@ -11,11 +13,12 @@ import rundeck.filters.ApiRequestFilters
 /**
  * Contains utility actions for API access and responses
  */
-class ApiController {
+class ApiController extends ControllerBase{
     def defaultAction = "invalid"
     def quartzScheduler
     def frameworkService
     def apiService
+    def userService
 
     def invalid = {
         return apiService.renderErrorXml(response,[code:'api.error.invalid.request',args:[request.forwardURI],status:HttpServletResponse.SC_NOT_FOUND])
@@ -67,6 +70,146 @@ class ApiController {
                     out<<"${k}:${v in [true,'true']}\n"
                 }
             }
+        }
+    }
+    private renderToken(AuthToken oldtoken){
+        withFormat {
+            xml {
+                apiService.renderSuccessXml(request, response) {
+                    delegate.token(id: oldtoken.token, user: oldtoken.user.login)
+                }
+            }
+            json {
+                render(contentType: 'application/json') {
+                    delegate.id = oldtoken.token
+                    delegate.user = oldtoken.user.login
+                }
+
+            }
+        }
+    }
+    /*
+     * /api/11/tokens/$user?
+     */
+    def apiTokenList() {
+
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if(!frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER,
+                AuthConstants.ACTION_ADMIN)){
+            return apiService.renderErrorFormat(response,[
+                    status:HttpServletResponse.SC_FORBIDDEN,
+                    code:'api.error.item.unauthorized',
+                    args:[AuthConstants.ACTION_ADMIN,'Rundeck','User account']
+            ])
+        }
+        if(request.method=='POST'){
+            //parse input json or xml
+            def tokenuser=params.user
+            if (!params.user) {
+                def errormsg="Format was not valid."
+                def parsed=apiService.parseJsonXmlWith(request,response,[
+                        json:{data->
+                            tokenuser=data.user
+                            if(!tokenuser) {
+                                errormsg += " json: expected 'user' property"
+                            }
+                        },
+                        xml:{xml->
+                            tokenuser=xml.'@user'.text()
+                            if (!tokenuser) {
+                                errormsg += " xml: expected 'user' attribute"
+                            }
+                        }
+                ])
+                if(!parsed){
+                    return
+                }
+                if (!tokenuser) {
+                    return apiService.renderErrorFormat(response, [
+                            status: HttpServletResponse.SC_BAD_REQUEST,
+                            code: 'api.error.invalid.request',
+                            args: [errormsg]
+                    ])
+                }
+            }
+
+            //create token for a user
+            def User u = userService.findOrCreateUser(tokenuser)
+            def token = apiService.generateAuthToken(u)
+            response.status=HttpServletResponse.SC_CREATED
+            return renderToken(token)
+        }
+        def tokenlist
+        if (params.user) {
+            def user = User.findByLogin(params.user)
+            tokenlist = user ? AuthToken.findAllByUser(user) : []
+        } else {
+            tokenlist = AuthToken.list()
+        }
+
+        withFormat {
+            xml {
+                apiService.renderSuccessXml(request, response) {
+                    def attrs=[count: tokenlist.size()]
+                    if(params.user){
+                        attrs.user=params.user
+                    }else{
+                        attrs.allusers='true'
+                    }
+                    tokens(attrs) {
+                        tokenlist.each { AuthToken token ->
+                            delegate.token(id: token.token, user: token.user.login)
+                        }
+                    }
+                }
+            }
+            json {
+                render(contentType: 'application/json') {
+                    array {
+                        tokenlist.each { AuthToken token ->
+                            delegate.element(id: token.token, user: token.user.login)
+                        }
+                    }
+                }
+
+            }
+        }
+    }
+    /**
+     * /api/11/token/$token
+     */
+    def apiTokenManage() {
+
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if (!frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER,
+                AuthConstants.ACTION_ADMIN)) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_FORBIDDEN,
+                    code: 'api.error.item.unauthorized',
+                    args: [AuthConstants.ACTION_ADMIN, 'Rundeck', 'User account']
+            ])
+        }
+        if(!apiService.requireParametersFormat(params,response,['token'])){
+            return
+        }
+
+        AuthToken oldtoken = AuthToken.findByToken(params.token)
+        if (!apiService.requireExistsFormat(response,oldtoken,['Token',params.token])) {
+            return
+        }
+
+        switch (request.method){
+            case 'GET':
+                return renderToken(oldtoken)
+                break;
+            case 'DELETE':
+                def findtoken=params.token
+                def login=oldtoken.user.login
+                def oldAuthRoles = oldtoken.authRoles
+                oldtoken.delete(flush: true)
+                log.info("EXPIRE TOKEN ${findtoken} for User ${login} with roles: ${oldAuthRoles}")
+                return render(status: HttpServletResponse.SC_NO_CONTENT)
+                break;
         }
     }
 
