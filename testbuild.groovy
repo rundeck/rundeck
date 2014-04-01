@@ -40,17 +40,37 @@ def launcherJarFile = "rundeck-launcher/launcher/${target}/rundeck-launcher-${ve
 
 //manifest describing expected build results
 def manifest=[
+    "rundeck-storage/rundeck-storage-api/${target}/rundeck-storage-api-${version}.jar":[:],
+    "rundeck-storage/rundeck-storage-api/${target}/rundeck-storage-api-${version}-sources.jar":[:],
+    "rundeck-storage/rundeck-storage-api/${target}/rundeck-storage-api-${version}-javadoc.jar":[:],
+    "rundeck-storage/rundeck-storage-conf/${target}/rundeck-storage-conf-${version}.jar":[:],
+    "rundeck-storage/rundeck-storage-conf/${target}/rundeck-storage-conf-${version}-sources.jar":[:],
+    "rundeck-storage/rundeck-storage-conf/${target}/rundeck-storage-conf-${version}-javadoc.jar":[:],
+    "rundeck-storage/rundeck-storage-data/${target}/rundeck-storage-data-${version}.jar":[:],
+    "rundeck-storage/rundeck-storage-data/${target}/rundeck-storage-data-${version}-sources.jar":[:],
+    "rundeck-storage/rundeck-storage-data/${target}/rundeck-storage-data-${version}-javadoc.jar":[:],
+    "rundeck-storage/rundeck-storage-filesys/${target}/rundeck-storage-filesys-${version}.jar":[:],
+    "rundeck-storage/rundeck-storage-filesys/${target}/rundeck-storage-filesys-${version}-sources.jar":[:],
+    "rundeck-storage/rundeck-storage-filesys/${target}/rundeck-storage-filesys-${version}-javadoc.jar":[:],
     (coreJarFile):[:],
     "core/${target}/rundeck-core-${version}-sources.jar":[:],
     "core/${target}/rundeck-core-${version}-javadoc.jar":[:],
     (warFile):[:],
     "rundeck-launcher/rundeck-jetty-server/${target}/rundeck-jetty-server-${version}.jar":[:],
-    (launcherJarFile):[
+    (launcherJarFile): [
         "com/dtolabs/rundeck/#+",// require 1+ files in dir
         "pkgs/webapp/WEB-INF/classes/#+",
         "pkgs/webapp/WEB-INF/lib/rundeck-core-${version}.jar",
+        "pkgs/webapp/WEB-INF/lib/rundeck-storage-api-${version}.jar",
+        "pkgs/webapp/WEB-INF/lib/rundeck-storage-conf-${version}.jar",
+        "pkgs/webapp/WEB-INF/lib/rundeck-storage-data-${version}.jar",
+        "pkgs/webapp/WEB-INF/lib/rundeck-storage-filesys-${version}.jar",
         // ##file : require checksum verify to top level
         "pkgs/webapp/WEB-INF/lib/rundeck-core-${version}.jar##core/${target}/rundeck-core-${version}.jar",
+        "pkgs/webapp/WEB-INF/lib/rundeck-storage-api-${version}.jar##rundeck-storage/rundeck-storage-api/${target}/rundeck-storage-api-${version}.jar",
+        "pkgs/webapp/WEB-INF/lib/rundeck-storage-conf-${version}.jar##rundeck-storage/rundeck-storage-conf/${target}/rundeck-storage-conf-${version}.jar",
+        "pkgs/webapp/WEB-INF/lib/rundeck-storage-data-${version}.jar##rundeck-storage/rundeck-storage-data/${target}/rundeck-storage-data-${version}.jar",
+        "pkgs/webapp/WEB-INF/lib/rundeck-storage-filesys-${version}.jar##rundeck-storage/rundeck-storage-filesys/${target}/rundeck-storage-filesys-${version}.jar",
         "libext/rundeck-script-plugin-${version}.jar",
         "libext/rundeck-script-plugin-${version}.jar##plugins/script-plugin/${target}/rundeck-script-plugin-${version}.jar",
         "libext/rundeck-stub-plugin-${version}.jar",
