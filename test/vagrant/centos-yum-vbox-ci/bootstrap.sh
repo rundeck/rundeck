@@ -41,7 +41,7 @@ yum check-update
 # Install the JRE
 
 #yum -y install java-1.6.0
-yum -y install java-1.7.0-openjdk
+yum -y install java-1.7.0-openjdk jq
 
 # Install Rundeck core
 
