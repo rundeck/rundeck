@@ -469,6 +469,33 @@ class UtilityTagLib{
 		}
 		out << sw.toString().encodeAsHTML()
     }
+    def autoLink={ attrs,body->
+        def outx=body()
+        def xparams = params.project?[params:[project:params.project]]:[:]
+        def linkopts=[
+                execution:[
+                        pattern: /\{\{(Execution\s+(\d+))\}\}/ ,
+                        linkParams:[action:'show',controller:'execution']
+                ],
+                job:[
+                        pattern: /\{\{(Job\s+([0-9a-h]{8}-[0-9a-h]{4}-[0-9a-h]{4}-[0-9a-h]{4}-[0-9a-h]{12}))\}\}/ ,
+                        linkParams:[action:'show',controller:'scheduledExecution']
+                ]
+        ]
+        linkopts.each{k,opts->
+            outx=outx.replaceAll(opts.pattern){
+                if(opts.linkParams){
+                    def lparams= [:]+opts.linkParams
+                    lparams.id=it[2]
+                    return g.link(lparams + xparams,it[1])
+                }else{
+
+                    return it[0]
+                }
+            }
+        }
+        out << outx
+    }
 
     /**
      * Conditionally renders the body content if a servletContext attribute has a specified value.
