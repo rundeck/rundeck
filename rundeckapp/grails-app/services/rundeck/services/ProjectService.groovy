@@ -569,26 +569,53 @@ class ProjectService {
                 ExecReport.findAllByCtxProject(project.name).each { e ->
                     e.delete(flush: true)
                 }
-                //delete all executions
+                def files=[]
+                def execs=[]
                 Execution.findAllByProject(project.name).each{ e->
-                    //delete related log files
+                    //aggregate all files to delete
+                    execs<<e
                     [LoggingService.LOG_FILE_FILETYPE,WorkflowService.STATE_FILE_FILETYPE].each{ ftype->
                         def file = logFileStorageService.getFileForExecutionFiletype(e, ftype, true)
-                        if (null!=file && file.exists() && !FileUtils.deleteQuietly(file)) {
-                            log.warn("Failed to delete file while deleting project ${project.name}: ${file.absolutePath}")
+                        if (null != file && file.exists()) {
+                            files << file
                         }
                     }
-                    e.delete(flush: true)
                 }
-                //delete all jobs
+                log.error("files from ${execs.size()} executions will be deleted")
+                //delete all jobs with their executions
                 ScheduledExecution.findAllByProject(project.name).each{ se->
-                    se.delete(flush: true)
+                    def sedresult=scheduledExecutionService.deleteScheduledExecution(se)
+                    if(!sedresult.success){
+                        throw new Exception(sedresult.error)
+                    }
                 }
+                //delete all remaining executions
+                def other=0
+                Execution.findAllByProject(project.name).each { e ->
+                    //delete related log files
+                    if (e.dateCompleted == null && e.dateStarted != null) {
+                        //incomplete execution
+                        throw new Exception("Cannot delete {{Execution ${e.id}}} while it is currently running")
+                    }
+                    e.delete(flush: true)
+                    other++
+                }
+                log.error("${other} other executions deleted")
+                //delete all files
+                def deletedfiles=0
+                files.each{file->
+                    if (null != file && file.exists() && !FileUtils.deleteQuietly(file)) {
+                        log.warn("Failed to delete file while deleting project ${project.name}: ${file.absolutePath}")
+                    }else{
+                        deletedfiles++
+                    }
+                }
+                log.error("${deletedfiles} files removed")
                 result = [success: true]
             } catch (Exception e) {
                 status.setRollbackOnly()
                 log.error("Failed to delete project ${project.name}", e)
-                result = [error: "Failed to delete project ${project.name}: ${e}", success: false]
+                result = [error: "Failed to delete project ${project.name}: ${e.message}", success: false]
             }
         }
         //if success, delete framework dir
