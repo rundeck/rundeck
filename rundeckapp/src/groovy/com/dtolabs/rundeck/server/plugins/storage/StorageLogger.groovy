@@ -2,6 +2,7 @@ package com.dtolabs.rundeck.server.plugins.storage
 
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import org.apache.log4j.Logger
+import org.apache.log4j.MDC
 import org.rundeck.storage.api.Path
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.conf.BaseListener
@@ -17,32 +18,47 @@ class StorageLogger extends BaseListener<ResourceMeta> {
     StorageLogger(Logger logger) {
         this.logger = logger
     }
-    StorageLogger(String loggerName){
-        this.logger=Logger.getLogger(loggerName)
+
+    StorageLogger(String loggerName) {
+        this.logger = Logger.getLogger(loggerName)
     }
 
     @Override
     void didGetResource(Path path, Resource<ResourceMeta> resource) {
-        logger.info("get:${path}:"+resource.contents.meta)
+        log(path, "get", false, resource.contents.meta, null)
+    }
+
+    protected void log(Path path, String action, boolean dir, Map<String, String> meta, String status) {
+        MDC.put("path", path.toString())
+        MDC.put("action", action)
+        def metastring = null!=meta?meta.toString():"-"
+        MDC.put("metadata", metastring)
+        def type = dir ? "directory" : "file"
+        MDC.put("type", type)
+        def statusString = null != status ? status : "-"
+        MDC.put("status", statusString)
+        logger.info(action + ":[${type}]:${path}:" + (dir ? "" : metastring) + ": " + statusString)
+        MDC.clear()
     }
 
     @Override
     void didGetPath(Path path, Resource<ResourceMeta> resource) {
-        logger.info("get:${path}: " + (resource.contents!=null? resource.contents.meta:"(dir)"))
+        log(path, "get", resource.contents == null, null, null)
+
     }
 
     @Override
     void didDeleteResource(Path path, boolean success) {
-        logger.info("delete:${path}: " + success)
+        log(path, "delete", false, null, success ? "success" : "failed")
     }
 
     @Override
     void didCreateResource(Path path, ResourceMeta content, Resource<ResourceMeta> contents) {
-        logger.info("create:${path}: " + content.meta)
+        log(path, "create", false, content.meta, null)
     }
 
     @Override
     void didUpdateResource(Path path, ResourceMeta content, Resource<ResourceMeta> contents) {
-        logger.info("update:${path}: " + content.meta)
+        log(path, "update", false, content.meta, null)
     }
 }
