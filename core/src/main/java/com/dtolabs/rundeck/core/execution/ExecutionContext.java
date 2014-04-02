@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.common.NodesSelector;
+import com.dtolabs.rundeck.core.storage.StorageTree;
 
 import java.io.File;
 import java.util.Map;
@@ -54,6 +55,10 @@ public interface ExecutionContext {
      * Get the authorization context
      */
     public AuthContext getAuthContext();
+    /**
+     * Get the storage service
+     */
+    public StorageTree getStorageTree();
 
     /**
      * username

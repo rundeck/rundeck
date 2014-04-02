@@ -91,7 +91,6 @@ public class Framework extends FrameworkResourceParent {
     private final IPropertyLookup lookup;
     private final File projectsBase;
     private FrameworkProjectMgr projectResourceMgr;
-    private AuthStorageTree storageTree;
 
     final HashMap<String,FrameworkSupportService> services = new HashMap<String, FrameworkSupportService>();
     /**
@@ -643,11 +642,4 @@ public class Framework extends FrameworkResourceParent {
         return fwkNodeName.equals(node.getNodename());
     }
 
-    public AuthStorageTree getStorageTree() {
-        return storageTree;
-    }
-
-    public void setStorageTree(AuthStorageTree storageTree) {
-        this.storageTree = storageTree;
-    }
 }

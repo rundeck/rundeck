@@ -1,6 +1,7 @@
 package com.dtolabs.rundeck.core.storage;
 
 
+import com.dtolabs.rundeck.core.authorization.AuthContext;
 import com.dtolabs.utils.Streams;
 import org.rundeck.storage.api.ContentFactory;
 import org.rundeck.storage.api.HasInputStream;
@@ -138,5 +139,15 @@ public class StorageUtil {
 
     public static String formatDate(Date time) {
         return w3cDateFormat.get().format(time);
+    }
+
+    /**
+     * Create a StorageTree using authorization context and authorizing tree
+     * @param context auth context
+     * @param authStorage authorizing storage tree
+     * @return StorageTree for the authorization context
+     */
+    public static StorageTree authorizedStorageTree(AuthContext context, AuthStorageTree authStorage) {
+        return ContextStorageTree.with(context, authStorage);
     }
 }
