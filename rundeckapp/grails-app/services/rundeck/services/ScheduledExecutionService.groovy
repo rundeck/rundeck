@@ -410,7 +410,8 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             }
 
             if (found) {
-                errmsg = 'Cannot delete Job "' + scheduledExecution.jobName + '" [' + scheduledExecution.extid + ']: it is currently being executed (execution [' + found.id + '])'
+                errmsg = 'Cannot delete {{Job ' + scheduledExecution.extid + '}} "' + scheduledExecution.jobName  +
+                        '" it is currently being executed: {{Execution ' + found.id + '}}'
                 return [success:false,error:errmsg]
             }
             //unlink any Execution records
