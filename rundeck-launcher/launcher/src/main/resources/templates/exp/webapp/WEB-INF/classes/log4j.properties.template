@@ -24,6 +24,10 @@ log4j.additivity.org.rundeck.api.requests=false
 log4j.logger.org.rundeck.web.requests=INFO,access
 log4j.additivity.org.rundeck.web.requests=false
 
+# Enable Storage logging
+log4j.logger.org.rundeck.storage.events=INFO,storage
+log4j.additivity.org.rundeck.storage.events=false
+
 # Enable this logger to log Hibernate output
 # handy to see its database interaction activity
 #log4j.logger.org.hibernate=debug,stdout
@@ -86,6 +90,17 @@ log4j.appender.options.file=${rundeck.log.dir}/rundeck.options.log
 log4j.appender.options.append=true
 log4j.appender.options.layout=org.apache.log4j.PatternLayout
 log4j.appender.options.layout.ConversionPattern=${logger.options.format}
+
+#
+# storage log
+#
+# Logs events for Rundeck storage layer
+#
+log4j.appender.storage=org.apache.log4j.DailyRollingFileAppender
+log4j.appender.storage.file=${rundeck.log.dir}/rundeck.storage.log
+log4j.appender.storage.append=true
+log4j.appender.storage.layout=org.apache.log4j.PatternLayout
+log4j.appender.storage.layout.ConversionPattern=${logger.storage.format}
 
 #
 # job changes log
