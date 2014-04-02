@@ -53,7 +53,6 @@ beans={
      */
     rundeckFramework(Framework, rdeckBase){bean->
         bean.factoryMethod='getInstanceWithoutProjectsDir'
-        storageTree=ref('authRundeckStorageTree')
     }
     def configDir = new File(Constants.getFrameworkConfigDir(rdeckBase))
     rundeckPolicyAuthorization(SAREAuthorization, configDir){

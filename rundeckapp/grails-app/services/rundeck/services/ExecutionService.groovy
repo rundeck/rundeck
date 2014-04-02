@@ -6,6 +6,7 @@ import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.app.internal.workflow.MultiWorkflowExecutionListener
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.INodeEntry
+import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem
@@ -64,6 +65,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def ReportService reportService
     def LoggingService loggingService
     def WorkflowService workflowService
+    def StorageService storageService
 
     def ThreadBoundOutputStream sysThreadBoundOut
     def ThreadBoundOutputStream sysThreadBoundErr
@@ -892,8 +894,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         //create execution context
-        def builder = com.dtolabs.rundeck.core.execution.ExecutionContextImpl.builder(origContext)
+        def builder = ExecutionContextImpl.builder(origContext)
             .frameworkProject(execMap.project)
+            .storageTree(storageService.storageTreeWithContext(authContext))
             .user(userName)
             .nodeSelector(nodeselector)
             .nodes(nodeSet)
@@ -1839,7 +1842,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             if(null!=nodeSet && null!=nodeselector){
                 //override the node set from the filter
-                newContext = com.dtolabs.rundeck.core.execution.ExecutionContextImpl.builder(newContext)
+                newContext = ExecutionContextImpl.builder(newContext)
                         .nodes(nodeSet)
                         .nodeSelector(nodeselector)
                         .build()

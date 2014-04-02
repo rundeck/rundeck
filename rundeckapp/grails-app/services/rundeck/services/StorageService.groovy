@@ -2,6 +2,8 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.storage.AuthStorageTree
+import com.dtolabs.rundeck.core.storage.ContextStorageTree
+import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.core.storage.StorageUtil
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.data.DataUtil
@@ -38,5 +40,13 @@ class StorageService {
 
     def delResource(AuthContext context, String path) {
         authRundeckStorageTree.deleteResource(context, PathUtil.asPath(path))
+    }
+    /**
+     * Return a tree using the authorization context
+     * @param ctx auth context
+     * @return StorageTree
+     */
+    def StorageTree storageTreeWithContext(AuthContext ctx) {
+        return StorageUtil.authorizedStorageTree(ctx, authRundeckStorageTree)
     }
 }
