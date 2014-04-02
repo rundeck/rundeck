@@ -110,6 +110,7 @@ public class StorageTreeFactory implements FactoryBean<StorageTree>, Initializin
         if (1 == storeIndex) {
             logger.debug("No storage plugins configured with prefix " + getStorageConfigPrefix());
         }
+        builder = addLogger(builder);
         //apply default converters on top of storage
         builder = baseConverter(builder);
 
@@ -122,7 +123,6 @@ public class StorageTreeFactory implements FactoryBean<StorageTree>, Initializin
         if (1 == converterIndex) {
             logger.debug("No converter plugins configured with prefix " + getConverterConfigPrefix());
         }
-        builder = addFinal(builder);
         return builder.build();
     }
 
@@ -151,7 +151,7 @@ public class StorageTreeFactory implements FactoryBean<StorageTree>, Initializin
      *
      * @return
      */
-    private TreeBuilder<ResourceMeta> addFinal(TreeBuilder<ResourceMeta> builder) {
+    private TreeBuilder<ResourceMeta> addLogger(TreeBuilder<ResourceMeta> builder) {
         logger.debug("Add log4j logger for storage with name: " + getBaseLoggerName());
         return builder.listen(new StorageLogger(getBaseLoggerName()));
     }
