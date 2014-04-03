@@ -553,7 +553,9 @@ public class TestSSHTaskBuilder extends TestCase {
     public void testBuildSSHConfigSimple() throws Exception {
         final testState state = new testState();
         final testSSHExecInterface test = new testSSHExecInterface();
-        state.node.setAttribute("ssh-config-abc", "123");
+        state.sshConnectionInfo.sshConfig=new HashMap<String, String>(){{
+            put("abc", "123");
+        }};
 
         runBuildSSH(state, test, testLogger);
 
@@ -566,7 +568,9 @@ public class TestSSHTaskBuilder extends TestCase {
     public void testBuildSSHConfigOverrideDefaults() throws Exception {
         final testState state = new testState();
         final testSSHExecInterface test = new testSSHExecInterface();
-        state.node.setAttribute("ssh-config-MaxAuthTries", "2");
+        state.sshConnectionInfo.sshConfig = new HashMap<String, String>() {{
+            put("MaxAuthTries", "2");
+        }};
 
         runBuildSSH(state, test, testLogger);
 
@@ -578,7 +582,10 @@ public class TestSSHTaskBuilder extends TestCase {
     public void testBuildSSHConfigOverrideDefaultsPreferredAuthentications() throws Exception {
         final testState state = new testState();
         final testSSHExecInterface test = new testSSHExecInterface();
-        state.node.setAttribute("ssh-config-PreferredAuthentications", "publickey,password");
+        state.sshConnectionInfo.sshConfig = new HashMap<String, String>() {{
+            put("PreferredAuthentications", "publickey,password");
+        }};
+
 
         runBuildSSH(state, test, testLogger);
 

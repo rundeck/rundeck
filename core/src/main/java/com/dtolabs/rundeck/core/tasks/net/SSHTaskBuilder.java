@@ -23,8 +23,11 @@
 */
 package com.dtolabs.rundeck.core.tasks.net;
 
+import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import com.dtolabs.rundeck.plugins.PluginLogger;
 import com.dtolabs.utils.Streams;
 import com.jcraft.jsch.JSch;
@@ -53,7 +56,6 @@ import java.util.Properties;
  * @version $Revision$
  */
 public class SSHTaskBuilder {
-    public static final String SSH_CONFIG_PREFIX = "ssh-config-";
     private static Map<String, String> DEFAULT_SSH_CONFIG = Collections.unmodifiableMap(new HashMap<String, String>() {{
         //use keyboard-interactive last
         put("PreferredAuthentications", "publickey,password,keyboard-interactive");
@@ -64,19 +66,6 @@ public class SSHTaskBuilder {
         return DEFAULT_SSH_CONFIG;
     }
 
-    public static Map<String,String> sshConfigFromNode(INodeEntry node, Map<String,String> baseconfig) {
-        HashMap<String, String> config = new HashMap<String, String>();
-        if(null!=baseconfig) {
-            config.putAll(baseconfig);
-        }
-        for (String s : node.getAttributes().keySet()) {
-            if (s.startsWith(SSH_CONFIG_PREFIX)) {
-                String name = s.substring(SSH_CONFIG_PREFIX.length());
-                config.put(name, node.getAttributes().get(s));
-            }
-        }
-        return config;
-    }
     /**
      * Open Jsch session, applies private key configuration, timeout and custom ssh configuration
      * @param base
@@ -485,7 +474,12 @@ public class SSHTaskBuilder {
                 sshbase.setPassword(password);
                 break;
         }
-        sshbase.setSshConfig(SSHTaskBuilder.sshConfigFromNode(nodeentry, getDefaultSshConfig()));
+        Map<String, String> sshConfig = sshConnectionInfo.getSshConfig();
+        Map<String, String> baseConfig = new HashMap<String, String>(getDefaultSshConfig());
+        if(null!=sshConfig) {
+            baseConfig.putAll(sshConfig);
+        }
+        sshbase.setSshConfig(baseConfig);
     }
 
     public static Scp buildScp(final INodeEntry nodeentry, final Project project,

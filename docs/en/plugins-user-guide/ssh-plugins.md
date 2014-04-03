@@ -76,6 +76,19 @@ If the `username` node attribute is not set, then the static value provided via 
 2. **Project level**: `project.ssh.user` property in `project.properties` file for the project.
 3. **Rundeck level**: `framework.ssh.user` property in `framework.properties` file for the Rundeck installation.
 
+### Specifying SSH Config options
+
+Default config options:
+
+* `PreferredAuthentications: publickey,password,keyboard-interactive`
+* `MaxAuthTries: 1`
+
+SSH config options can be specified by setting the following properties:
+
+1. **Node level**: `ssh-config-KEY` attribute on the Node. Applies only to the target node.
+2. **Project level**: `project.ssh-config-KEY` property in `project.properties`.  Applies to any project node by default.
+3. **Rundeck level**: `framework.ssh-config-KEY` property in `framework.properties`. Applies to all projects by default.
+
 ### SSH private keys on disk
 
 The default authentication mechanism is public/private key using a **private key file** stored locally on disk.

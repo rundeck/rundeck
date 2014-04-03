@@ -48,6 +48,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil;
 import com.dtolabs.rundeck.core.storage.ResourceMeta;
 import com.dtolabs.rundeck.core.tasks.net.ExtSSHExec;
 import com.dtolabs.rundeck.core.tasks.net.SSHTaskBuilder;
+import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import com.jcraft.jsch.JSchException;
 import org.apache.commons.lang.exception.ExceptionUtils;
@@ -136,6 +137,9 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     public static final boolean DEFAULT_SUDO_SUCCESS_ON_PROMPT_THRESHOLD = true;
     public static final String PROJECT_SSH_USER = PROJ_PROP_PREFIX + "ssh.user";
 
+    public static final String SSH_CONFIG_PREFIX = "ssh-config-";
+    public static final String FWK_SSH_CONFIG_PREFIX = FWK_PROP_PREFIX + SSH_CONFIG_PREFIX;
+    public static final String PROJ_SSH_CONFIG_PREFIX = PROJ_PROP_PREFIX + SSH_CONFIG_PREFIX;
     private Framework framework;
 
     public JschNodeExecutor(final Framework framework) {
@@ -144,7 +148,6 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
 
     public static final String CONFIG_KEYPATH = "keypath";
     public static final String CONFIG_AUTHENTICATION = "authentication";
-    static final List<Property> properties = new ArrayList<Property>();
 
     static final Description DESC ;
     static {
@@ -587,9 +590,60 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             return user;
         }
 
+        public static Map<String, String> sshConfigFromFramework(Framework framework) {
+            HashMap<String, String> config = new HashMap<String, String>();
+            IPropertyLookup propertyLookup = framework.getPropertyLookup();
+            for (Object o : propertyLookup.getPropertiesMap().keySet()) {
+                String key = (String) o;
+
+                if (key.startsWith(FWK_SSH_CONFIG_PREFIX)) {
+                    String name = key.substring(FWK_SSH_CONFIG_PREFIX.length());
+                    config.put(name, propertyLookup.getProperty(key));
+                }
+            }
+            return config;
+        }
+
+        public static Map<String, String> sshConfigFromProject(FrameworkProject frameworkProject) {
+            HashMap<String, String> config = new HashMap<String, String>();
+            for (Object o : frameworkProject.getProperties().keySet()) {
+                String key = (String) o;
+
+                if (key.startsWith(PROJ_SSH_CONFIG_PREFIX)) {
+                    String name = key.substring(PROJ_SSH_CONFIG_PREFIX.length());
+                    config.put(name, frameworkProject.getProperty(key));
+                }
+            }
+            return config;
+        }
+
+        public static Map<String, String> sshConfigFromNode(INodeEntry node) {
+            HashMap<String, String> config = new HashMap<String, String>();
+            for (String s : node.getAttributes().keySet()) {
+                if (s.startsWith(SSH_CONFIG_PREFIX)) {
+                    String name = s.substring(SSH_CONFIG_PREFIX.length());
+                    config.put(name, node.getAttributes().get(s));
+                }
+            }
+            return config;
+        }
+
         @Override
         public Map<String, String> getSshConfig() {
-            return SSHTaskBuilder.sshConfigFromNode(node,SSHTaskBuilder.getDefaultSshConfig());
+            Map<String, String> config = new HashMap<String, String>();
+            Map<String, String> fwkConfig = sshConfigFromFramework(framework);
+            Map<String, String> projConfig = sshConfigFromProject(frameworkProject);
+            Map<String, String> nodeConfig = sshConfigFromNode(node);
+            if(null!=fwkConfig){
+                config.putAll(fwkConfig);
+            }
+            if(null!=projConfig){
+                config.putAll(projConfig);
+            }
+            if(null!=nodeConfig){
+                config.putAll(nodeConfig);
+            }
+            return config;
         }
     }
 
