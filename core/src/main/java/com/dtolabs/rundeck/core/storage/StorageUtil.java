@@ -147,7 +147,7 @@ public class StorageUtil {
      * @param authStorage authorizing storage tree
      * @return StorageTree for the authorization context
      */
-    public static StorageTree authorizedStorageTree(AuthContext context, AuthStorageTree authStorage) {
-        return ContextStorageTree.with(context, authStorage);
+    public static <S> StorageTree resolvedTree(S context, ExtTree<S, ResourceMeta> authStorage) {
+        return ResolvedExtTree.with(context, authStorage);
     }
 }
