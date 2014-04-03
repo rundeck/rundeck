@@ -76,19 +76,39 @@ If the `username` node attribute is not set, then the static value provided via 
 2. **Project level**: `project.ssh.user` property in `project.properties` file for the project.
 3. **Rundeck level**: `framework.ssh.user` property in `framework.properties` file for the Rundeck installation.
 
-### SSH private keys
+### SSH private keys on disk
 
-The default authentication mechanism is public/private key.
+The default authentication mechanism is public/private key using a **private key file** stored locally on disk.
 
-The built-in SSH connector allows the private key to be specified in several different ways.  You can configure it per-node, per-project, or per-Rundeck instance.
+The built-in SSH connector allows the private key file to be specified in several different ways.  You can configure it per-node, per-project, or per-Rundeck instance.
 
-When connecting to the remote node, Rundeck will look for a property/attribute specifying the location of the private key file, in this order, with the first match having precedence:
+When connecting to the remote node, Rundeck will look for a property/attribute specifying the location of the **private key file**, in this order, with the first match having precedence:
 
 1. **Node level**: `ssh-keypath` attribute on the Node. Applies only to the target node.
 2. **Project level**: `project.ssh-keypath` property in `project.properties`.  Applies to any project node by default.
 3. **Rundeck level**: `framework.ssh-keypath` property in `framework.properties`. Applies to all projects by default.
 
 If you private key is encrypted with a passphrase, then you can use a "Secure Option" to prompt the user to enter the passphrase when executing on the Node.  See below.
+
+### SSH private key storage
+
+An alternate method allows you to use a private key file you have uploaded via the Rundeck [SSH Key Storage API](../administration/ssh-key-storage.html).  The storage facility can be configured to store the keys on disk, or in the database, and can use plugins to provide encryption of the data.
+
+When uploaded, private keys are identified by a *path* which locates them in the storage facility.  The *path* looks similar to a unix filesystem path.
+
+All SSH Keys are stored under the `ssh-key/` top-level path.
+
+You can configure the built-in SSH connector to load the private key file from the storage facility.  You can configure it per-node, per-project, or per-Rundeck instance.
+
+When connecting to the remote node, Rundeck will look for a property/attribute specifying the location of the **private key storage path**, in this order, with the first match having precedence:
+
+1. **Node level**: `ssh-key-storage-path` attribute on the Node. Applies only to the target node.
+2. **Project level**: `project.ssh-key-storage-path` property in `project.properties`.  Applies to any project node by default.
+3. **Rundeck level**: `framework.ssh-key-storage-path` property in `framework.properties`. Applies to all projects by default.
+
+If you private key is encrypted with a passphrase, then you can use a "Secure Option" to prompt the user to enter the passphrase when executing on the Node.  See below.
+
+**Note:** If both `ssh-key-storage-path` and `ssh-keypath` resolve to a value, then the `ssh-key-storage-path` will be used.
 
 ### SSH Private Key Passphrase
 
