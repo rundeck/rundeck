@@ -6,8 +6,8 @@ subprojects {
     }
 
     dependencies {
-        testCompile "org.codehaus.groovy:groovy-all:1.8.9"
-        testCompile "org.spockframework:spock-core:0.6-groovy-1.8"
+        testCompile "org.codehaus.groovy:groovy-all:2.0.8"
+        testCompile "org.spockframework:spock-core:0.7-groovy-2.0"
     }
 
 //    group = 'org.rundeck.storage'
