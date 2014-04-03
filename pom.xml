@@ -10,6 +10,7 @@
     <url>http://rundeck.org</url>
 
     <modules>
+        <module>rundeck-storage</module>
         <module>core</module>
         <module>plugins</module>
         <module>rundeckapp</module>
