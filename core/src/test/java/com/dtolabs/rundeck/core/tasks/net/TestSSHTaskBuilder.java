@@ -30,7 +30,10 @@ import junit.framework.TestCase;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.taskdefs.optional.ssh.SSHUserInfo;
 import org.apache.tools.ant.types.Environment;
+import org.rundeck.storage.api.PathUtil;
+import org.rundeck.storage.api.StorageException;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -97,7 +100,7 @@ public class TestSSHTaskBuilder extends TestCase {
 
         @Override
         public void setSshKeyData(InputStream sshKeyData) {
-            throw new UnsupportedOperationException("TODO: unimplemented");//TODO
+            this.sshKeyData=sshKeyData;
         }
 
 
@@ -218,6 +221,8 @@ public class TestSSHTaskBuilder extends TestCase {
         String username;
         String privateKeyPassphrase;
         InputStream privateKeyResourceData;
+        IOException privateKeyResourceDataIOException;
+        StorageException privateKeyResourceDataStorageException;
         Map<String,String> sshConfig;
 
         public SSHTaskBuilder.AuthenticationType getAuthenticationType() {
@@ -248,7 +253,13 @@ public class TestSSHTaskBuilder extends TestCase {
             return privateKeyResourcePath;
         }
 
-        public InputStream getPrivateKeyResourceData() throws IOException{
+        public InputStream getPrivateKeyResourceData() throws IOException {
+            if (null != privateKeyResourceDataIOException) {
+                throw privateKeyResourceDataIOException;
+            }
+            if (null != privateKeyResourceDataStorageException) {
+                throw privateKeyResourceDataStorageException;
+            }
             return privateKeyResourceData;
         }
 
@@ -447,6 +458,70 @@ public class TestSSHTaskBuilder extends TestCase {
             fail("Shouldn't succeed");
         } catch (SSHTaskBuilder.BuilderException e) {
             assertEquals("username was not set", e.getMessage());
+        }
+
+    }
+
+    public void testBuildSSHKeyResource() throws Exception {
+        final testState state = new testState();
+        final testSSHExecInterface test = new testSSHExecInterface();
+
+        state.sshConnectionInfo.authenticationType = SSHTaskBuilder.AuthenticationType.privateKey;
+        state.sshConnectionInfo.privateKeyResourcePath = "/ssh-key/key1.pem";
+        state.sshConnectionInfo.privateKeyResourceData = new ByteArrayInputStream("data".getBytes());
+        state.sshConnectionInfo.username = "usernameValue";
+
+        runBuildSSH(state, test, testLogger);
+
+        assertEquals(CLIUtils.generateArgline(null, state.strings), test.command);
+        assertEquals("hostname", test.getHost());
+        assertEquals(0, test.getPort());
+        assertNotNull(test.getSshKeyData());
+        assertEquals(null, test.getKeyfile());
+        assertEquals("", test.passphrase);
+        assertEquals(null, test.password);
+        assertEquals(0, test.timeout);
+        assertEquals("usernameValue", test.username);
+        assertEquals(false, test.getVerbose());
+
+        //never changes
+        assertInvariable(state, test);
+    }
+    public void testBuildSSHKeyResource_ioexception() throws Exception {
+        final testState state = new testState();
+        final testSSHExecInterface test = new testSSHExecInterface();
+
+        state.sshConnectionInfo.authenticationType = SSHTaskBuilder.AuthenticationType.privateKey;
+        state.sshConnectionInfo.privateKeyResourcePath = "/ssh-key/key1.pem";
+        state.sshConnectionInfo.privateKeyResourceData = new ByteArrayInputStream("data".getBytes());
+        state.sshConnectionInfo.privateKeyResourceDataIOException = new IOException("blah");
+        state.sshConnectionInfo.username = "usernameValue";
+
+        try {
+            runBuildSSH(state, test, testLogger);
+            fail("expected exception");
+        } catch (SSHTaskBuilder.BuilderException e) {
+            assertEquals(IOException.class, e.getCause().getClass());
+        }
+
+    }
+
+    public void testBuildSSHKeyResource_storageexception() throws Exception {
+        final testState state = new testState();
+        final testSSHExecInterface test = new testSSHExecInterface();
+
+        state.sshConnectionInfo.authenticationType = SSHTaskBuilder.AuthenticationType.privateKey;
+        state.sshConnectionInfo.privateKeyResourcePath = "/ssh-key/key1.pem";
+        state.sshConnectionInfo.privateKeyResourceData = new ByteArrayInputStream("data".getBytes());
+        state.sshConnectionInfo.privateKeyResourceDataStorageException = new StorageException("blah",
+                StorageException.Event.READ, PathUtil.asPath("ssh-key/key1.pem"));
+        state.sshConnectionInfo.username = "usernameValue";
+
+        try {
+            runBuildSSH(state, test, testLogger);
+            fail("expected exception");
+        } catch (SSHTaskBuilder.BuilderException e) {
+            assertEquals(StorageException.class, e.getCause().getClass());
         }
 
     }
