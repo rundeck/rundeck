@@ -5,23 +5,32 @@ import org.rundeck.storage.api.PathUtil
 
 
 class Storage {
+    String namespace
     String dir
     String name
+    /**
+     * json encoded metadata
+     */
     String jsonData
+    /**
+     * Unique sha1 of namespace+dir+name to prevent duplicate
+     */
     String pathSha
     byte[] data
     Date dateCreated
     Date lastUpdated
     static constraints = {
+        namespace(nullable: true, blank: true, size: 0..255)
         jsonData(nullable: true, blank: true)
         data(nullable: true)
         name(nullable: false, blank: false)
-        dir(nullable: false, blank: true)
-        pathSha(nullable: false, blank: true,size: 40..40,unique: true)
+        dir(nullable: true, blank: true)
+        pathSha(nullable: false, blank: false, size: 40..40, unique: true)
     }
 
     private void setupSha() {
-        pathSha = getPath().encodeAsSHA1()
+        dir = dir ?: ''
+        pathSha = ((namespace ?: '') + ':' + getPath()).encodeAsSHA1()
     }
     def beforeInsert() {
         setupSha()
@@ -38,7 +47,7 @@ class Storage {
         dir(type: 'text')
         jsonData(type: 'text')
     }
-    //ignore fake property 'configuration' and do not store it
+    //ignore fake property 'storageMeta' and 'path' and do not store it
     static transients = ['storageMeta','path']
 
     public String getPath() {

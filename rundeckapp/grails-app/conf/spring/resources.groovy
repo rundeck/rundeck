@@ -13,6 +13,7 @@ import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogReaderPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogWriterPluginProviderService
+import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
 import com.dtolabs.rundeck.server.storage.StorageTreeFactory
 import groovy.io.FileType
 import org.springframework.core.task.SimpleAsyncTaskExecutor
@@ -131,7 +132,8 @@ beans={
             pluginRegistry[beanName]=beanName
         }
     }
-    pluginRegistry['db']='dbStorageService'
+    dbStoragePluginFactory(DbStoragePluginFactory)
+    pluginRegistry['db']='dbStoragePluginFactory'
     /**
      * Registry bean contains both kinds of plugin
      */

@@ -6,6 +6,7 @@ import com.dtolabs.rundeck.core.storage.StorageUtil
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin
+import com.dtolabs.rundeck.server.storage.NamespacedStorage
 import org.rundeck.storage.api.HasInputStream
 import org.rundeck.storage.api.Path
 import org.rundeck.storage.api.PathUtil
@@ -20,9 +21,7 @@ import java.util.regex.Pattern
 /**
  * Implements StoragePlugin and provides DB storage for rundeck resources if configured to be used.
  */
-@Plugin(name = 'db', service = ServiceNameConstants.Storage)
-@PluginDescription(title = 'DB Storage', description = 'Uses DB as storage layer.')
-class DbStorageService implements StoragePlugin{
+class DbStorageService implements NamespacedStorage{
     static transactional = false
 
     protected static Resource<ResourceMeta> loadDir(Path path) {
@@ -55,7 +54,7 @@ class DbStorageService implements StoragePlugin{
         [parent?parent.path:'',path1.name]
     }
     @Override
-    boolean hasPath(Path path) {
+    boolean hasPath(String ns,Path path) {
         def dir,name
         (dir,name)=splitPath(path)
         if(path.path==''){
@@ -63,6 +62,11 @@ class DbStorageService implements StoragePlugin{
         }
         def c = Storage.createCriteria()
         c.get {
+            if (ns) {
+                eq('namespace', ns)
+            } else {
+                isNull('namespace')
+            }
             or {
                 and{
                     eq('name', name)
@@ -80,22 +84,22 @@ class DbStorageService implements StoragePlugin{
     }
 
     @Override
-    boolean hasPath(String path) {
-        return hasPath(PathUtil.asPath(path))
+    boolean hasPath(String ns,String path) {
+        return hasPath(ns,PathUtil.asPath(path))
     }
 
     @Override
-    boolean hasResource(Path path) {
-        findResource(path) !=null
+    boolean hasResource(String ns,Path path) {
+        findResource(ns,path) !=null
     }
 
     @Override
-    boolean hasResource(String path) {
-        return hasResource(PathUtil.asPath(path))
+    boolean hasResource(String ns,String path) {
+        return hasResource(ns,PathUtil.asPath(path))
     }
 
     @Override
-    boolean hasDirectory(Path path) {
+    boolean hasDirectory(String ns,Path path) {
         def dir, name
         (dir, name) = splitPath(path)
         if (path.path == '') {
@@ -103,6 +107,11 @@ class DbStorageService implements StoragePlugin{
         }
         def c = Storage.createCriteria()
         c.get {
+            if (ns) {
+                eq('namespace', ns)
+            } else {
+                isNull('namespace')
+            }
             or {
                 eq('dir', path.path)
                 like('dir', path.path + '/%')
@@ -114,18 +123,18 @@ class DbStorageService implements StoragePlugin{
     }
 
     @Override
-    boolean hasDirectory(String path) {
-        return hasDirectory(PathUtil.asPath(path))
+    boolean hasDirectory(String ns,String path) {
+        return hasDirectory(ns,PathUtil.asPath(path))
     }
 
     @Override
-    Resource<ResourceMeta> getPath(Path path) {
-        Storage found = findResource(path)
+    Resource<ResourceMeta> getPath(String ns,Path path) {
+        Storage found = findResource(ns,path)
         if(found){
             return loadResource(found)
         }else{
             //find dir
-           if(hasDirectory(path)){
+           if(hasDirectory(ns,path)){
                 return loadDir(path)
             }
         }
@@ -133,47 +142,52 @@ class DbStorageService implements StoragePlugin{
     }
 
     @Override
-    Resource<ResourceMeta> getPath(String path) {
-        return getPath(PathUtil.asPath(path))
+    Resource<ResourceMeta> getPath(String ns,String path) {
+        return getPath(ns,PathUtil.asPath(path))
     }
 
     @Override
-    Resource<ResourceMeta> getResource(Path path) {
-        Storage found = findResource(path)
+    Resource<ResourceMeta> getResource(String ns,Path path) {
+        Storage found = findResource(ns,path)
         if (!found) {
             throw StorageException.readException(path,"Not found")
         }
         return loadResource(found)
     }
 
-    protected Storage findResource(Path path) {
+    protected Storage findResource(String ns, Path path) {
         def dir, name
         (dir, name) = splitPath(path)
-        def found = Storage.findByDirAndName(dir, name)
+        def found = Storage.findByNamespaceAndDirAndName(ns?:null,dir, name)
         found
     }
 
     @Override
-    Resource<ResourceMeta> getResource(String path) {
-        return getResource(PathUtil.asPath(path))
+    Resource<ResourceMeta> getResource(String ns,String path) {
+        return getResource(ns,PathUtil.asPath(path))
     }
 
     @Override
-    Set<Resource<ResourceMeta>> listDirectoryResources(Path path) {
-        Storage.findAllByDir(path.path,[sort:'name',order:'desc']).collect{ loadResource(it) }
+    Set<Resource<ResourceMeta>> listDirectoryResources(String ns,Path path) {
+        Storage.findAllByNamespaceAndDir(ns ?: null,path.path,[sort:'name',order:'desc']).collect{ loadResource(it) }
     }
 
     @Override
-    Set<Resource<ResourceMeta>> listDirectoryResources(String path) {
-        return listDirectoryResources(PathUtil.asPath(path))
+    Set<Resource<ResourceMeta>> listDirectoryResources(String ns,String path) {
+        return listDirectoryResources(ns,PathUtil.asPath(path))
     }
 
     @Override
-    Set<Resource<ResourceMeta>> listDirectory(Path path) {
+    Set<Resource<ResourceMeta>> listDirectory(String ns,Path path) {
         def foundset=new HashSet<String>()
         def c = Storage.createCriteria()
         def pathkey= path.path ? (path.path + '/') : ''
         c.list {
+            if(ns){
+                eq('namespace',ns)
+            }else{
+                isNull('namespace')
+            }
             or {
                 eq('dir', path.path)
                 like('dir', pathkey+'%')
@@ -192,16 +206,21 @@ class DbStorageService implements StoragePlugin{
     }
 
     @Override
-    Set<Resource<ResourceMeta>> listDirectory(String path) {
-        return listDirectory(PathUtil.asPath(path))
+    Set<Resource<ResourceMeta>> listDirectory(String ns,String path) {
+        return listDirectory(ns,PathUtil.asPath(path))
     }
 
     @Override
-    Set<Resource<ResourceMeta>> listDirectorySubdirs(Path path) {
+    Set<Resource<ResourceMeta>> listDirectorySubdirs(String ns,Path path) {
         def foundset = new HashSet<String>()
         def c = Storage.createCriteria()
         def pathkey = path.path ? (path.path + '/') : ''
         c.list {
+            if (ns) {
+                eq('namespace', ns)
+            } else {
+                isNull('namespace')
+            }
             like('dir', pathkey + '%')
             order("name", "desc")
         }.collect {
@@ -215,13 +234,13 @@ class DbStorageService implements StoragePlugin{
     }
 
     @Override
-    Set<Resource<ResourceMeta>> listDirectorySubdirs(String path) {
-        return listDirectorySubdirs(PathUtil.asPath(path))
+    Set<Resource<ResourceMeta>> listDirectorySubdirs(String ns,String path) {
+        return listDirectorySubdirs(ns,PathUtil.asPath(path))
     }
 
     @Override
-    boolean deleteResource(Path path) {
-        Storage storage1 = findResource(path)
+    boolean deleteResource(String ns,Path path) {
+        Storage storage1 = findResource(ns,path)
         if (!storage1) {
             throw StorageException.deleteException(path, "Not found")
         }
@@ -230,49 +249,64 @@ class DbStorageService implements StoragePlugin{
     }
 
     @Override
-    boolean deleteResource(String path) {
-        return deleteResource(PathUtil.asPath(path))
+    boolean deleteResource(String ns,String path) {
+        return deleteResource(ns,PathUtil.asPath(path))
     }
 
     @Override
-    Resource<ResourceMeta> createResource(Path path, ResourceMeta content) {
-        if(findResource(path)){
+    Resource<ResourceMeta> createResource(String ns,Path path, ResourceMeta content) {
+        if(findResource(ns,path)){
             throw StorageException.createException(path,"Exists")
         }
-        def storage= saveStorage(null,content, path,'create')
+        def storage= saveStorage(null,content, ns,path,'create')
 
         return loadResource(storage)
     }
 
-    protected Storage saveStorage(Storage storage, ResourceMeta content, Path path, String event) {
+    protected Storage saveStorage(Storage storage, ResourceMeta content,String namespace, Path path, String event) {
         def id = storage?.id
         def retry = true
         Storage saved=null;
         def data = content.getInputStream().bytes
-        try{
-            while(retry){
-                Storage.withNewSession {
-                    try {
-                        if(id){
-                            storage=Storage.get(id)
-                        }else{
-                            storage = new Storage()
-                        }
+        def saveStorage={
+            try {
+                if (id) {
+                    storage = Storage.get(id)
+                } else {
+                    storage = new Storage()
+                }
 
-                        storage.path = path.path
-                        storage.storageMeta = content.meta
-                        storage.data = data
-                        saved=storage.save(flush: true)
-                        retry=false
-                    } catch (OptimisticLockingFailureException e) {
-                        if(!retry){
-                            throw new StorageException("Failed to save content at path ${path}: content was modified", e,
-                                    StorageException.Event.valueOf(event.toUpperCase()),
-                                    path)
-                        }else{
-                            log.warn("saveStorage optimistic locking failure for ${path}, retrying...")
-                            Thread.sleep(1000)
-                        }
+                storage.namespace = namespace ? namespace : null
+                storage.path = path.path
+                storage.storageMeta = content.meta
+                storage.data = data
+                saved = storage.save(flush: true)
+                if (!saved) {
+                    throw new StorageException("Failed to save content at path ${path}: validation error: " +
+                            storage.errors.allErrors.collect { it.toString() }.join("; "),
+                            StorageException.Event.valueOf(event.toUpperCase()),
+                            path)
+                }
+
+                retry = false
+                return true;
+            } catch (OptimisticLockingFailureException e) {
+                if (!retry) {
+                    throw new StorageException("Failed to save content at path ${path}: content was modified", e,
+                            StorageException.Event.valueOf(event.toUpperCase()),
+                            path)
+                } else {
+                    log.warn("saveStorage optimistic locking failure for ${path}, retrying...")
+                    Thread.sleep(1000)
+                }
+            }
+            return false;
+        }
+        try{
+            if(!saveStorage()){
+                while(retry){
+                    Storage.withNewSession {session->
+                        saveStorage()
                     }
                 }
             }
@@ -283,23 +317,23 @@ class DbStorageService implements StoragePlugin{
     }
 
     @Override
-    Resource<ResourceMeta> createResource(String path, ResourceMeta content) {
-        return createResource(PathUtil.asPath(path), content)
+    Resource<ResourceMeta> createResource(String ns,String path, ResourceMeta content) {
+        return createResource(ns,PathUtil.asPath(path), content)
     }
 
     @Override
-    Resource<ResourceMeta> updateResource(Path path, ResourceMeta content) {
-        def storage = findResource(path)
+    Resource<ResourceMeta> updateResource(String ns,Path path, ResourceMeta content) {
+        def storage = findResource(ns,path)
         if (!storage) {
             throw StorageException.createException(path, "Not found")
         }
-        storage=saveStorage(storage,content,path,'update')
+        storage=saveStorage(storage,content,ns,path,'update')
 
         return loadResource(storage)
     }
 
     @Override
-    Resource<ResourceMeta> updateResource(String path, ResourceMeta content) {
-        return updateResource(PathUtil.asPath(path), content)
+    Resource<ResourceMeta> updateResource(String ns,String path, ResourceMeta content) {
+        return updateResource(ns,PathUtil.asPath(path), content)
     }
 }
