@@ -148,6 +148,26 @@ class DbStorageServiceTests {
         } catch (StorageException e) {
         }
     }
+    void testGetResource_ns_dne() {
+        assertNotNull new Storage(namespace: 'other', data: 'abc1'.bytes, name: 'abc', dir: '',
+                storageMeta: [abc: 'xyz1']).save(true)
+        assertNotNull new Storage(namespace: 'other',data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
+        try {
+            def path = service.getResource(null,'abc')
+            fail("expected exception")
+        } catch (StorageException e) {
+        }
+    }
+    void testGetResource_ns_dne2() {
+        assertNotNull new Storage( data: 'abc1'.bytes, name: 'abc', dir: '',
+                storageMeta: [abc: 'xyz1']).save(true)
+        assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
+        try {
+            def path = service.getResource('other','abc')
+            fail("expected exception")
+        } catch (StorageException e) {
+        }
+    }
     void testGetResource_isdirectory() {
         assertNotNull new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
         assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
@@ -167,10 +187,31 @@ class DbStorageServiceTests {
         assertEquals([abc: 'xyz2'], res1.contents.meta)
         assertEquals('abc2', res1.contents.getInputStream().text)
     }
+    void testGetResource_ns_ok() {
+        assertNotNull new Storage(namespace: 'other', data: 'abc1'.bytes, name: 'abc', dir: '',
+                storageMeta: [abc: 'xyz1']).save(true)
+        assertNotNull new Storage(namespace: 'other',data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
+        def res1 = service.getResource('other','xyz/abc')
+        assertNotNull(res1)
+        assertFalse(res1.directory)
+        assertEquals('xyz/abc', res1.path.path)
+        assertEquals([abc: 'xyz2'], res1.contents.meta)
+        assertEquals('abc2', res1.contents.getInputStream().text)
+    }
     void testGetResource_ok2() {
         assertNotNull new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
         assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
         def res1 = service.getResource(null,'abc')
+        assertNotNull(res1)
+        assertFalse(res1.directory)
+        assertEquals('abc', res1.path.path)
+        assertEquals([abc: 'xyz1'], res1.contents.meta)
+        assertEquals('abc1', res1.contents.getInputStream().text)
+    }
+    void testGetResource_ok_blankns() {
+        assertNotNull new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
+        assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
+        def res1 = service.getResource('','abc')
         assertNotNull(res1)
         assertFalse(res1.directory)
         assertEquals('abc', res1.path.path)
