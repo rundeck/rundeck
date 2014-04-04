@@ -31,7 +31,7 @@ class DbStoragePlugin extends DelegateTree<ResourceMeta> implements StoragePlugi
             if (null == namespacedStorage) {
                 throw new IllegalArgumentException("namespacedStorage is not set")
             }
-            delegateTree = StorageUtil.resolvedTree(namespace,namespacedStorage)
+            delegateTree = StorageUtil.resolvedTree(namespace?:null,namespacedStorage)
         }
         return delegateTree;
     }
