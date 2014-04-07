@@ -38,6 +38,6 @@ for:
   storage:
     - match:
         path: '/ssh-key/.*'
-      allow: [read] # allow usage of ssh keys for node execution
+      allow: '*' # allow all access to manage ssh keys
 by:
   group: api_token_group
