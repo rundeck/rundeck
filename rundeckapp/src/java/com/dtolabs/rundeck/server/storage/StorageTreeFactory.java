@@ -31,6 +31,7 @@ import java.util.Map;
  */
 public class StorageTreeFactory implements FactoryBean<StorageTree>, InitializingBean {
     public static final String ORG_RUNDECK_STORAGE_EVENTS_LOGGER_NAME = "org.rundeck.storage.events";
+    public static final String LOGGER_NAME = "loggerName";
     static Logger logger = Logger.getLogger(StorageTreeFactory.class);
     public static final String TYPE = "type";
     public static final String PATH = "path";
@@ -43,8 +44,9 @@ public class StorageTreeFactory implements FactoryBean<StorageTree>, Initializin
     private String storageConfigPrefix;
     private String converterConfigPrefix;
     private String baseStorageType;
-    private String baseLoggerName=ORG_RUNDECK_STORAGE_EVENTS_LOGGER_NAME;
+    private String loggerName =ORG_RUNDECK_STORAGE_EVENTS_LOGGER_NAME;
     private Map<String, String> baseStorageConfig = new HashMap<String, String>();
+    private Map<String, String> configuration = new HashMap<String, String>();
 
     private StoragePluginProviderService storagePluginProviderService;
     private StorageConverterPluginProviderService storageConverterPluginProviderService;
@@ -78,7 +80,7 @@ public class StorageTreeFactory implements FactoryBean<StorageTree>, Initializin
         if (null == baseStorageType) {
             throw new FactoryBeanNotInitializedException("'baseStorageType' is required");
         }
-        return StorageUtil.asStorageTree(buildTree(rundeckFramework.getPropertyLookup().getPropertiesMap()));
+        return StorageUtil.asStorageTree(buildTree(configuration));
     }
 
     @Override
@@ -96,27 +98,29 @@ public class StorageTreeFactory implements FactoryBean<StorageTree>, Initializin
 
     }
 
-    private Tree<ResourceMeta> buildTree(Map configProps) {
+    private Tree<ResourceMeta> buildTree(Map<String,String> config) {
+        if(null==config) {
+            config = new HashMap<String, String>();
+        }
         //base layer of storage
         TreeBuilder<ResourceMeta> builder = baseStorage(TreeBuilder.<ResourceMeta>builder());
 
-        Map<String, String> config = stringStringMap(rundeckFramework.getPropertyLookup().getPropertiesMap());
         int storeIndex = 1;
 
-        while (configProps.containsKey(getStorageConfigPrefix() + SEP + storeIndex + SEP + TYPE)) {
+        while (config.containsKey(getStorageConfigPrefix() + SEP + storeIndex + SEP + TYPE)) {
             configureStoragePlugin(builder, storeIndex, config);
             storeIndex++;
         }
         if (1 == storeIndex) {
             logger.debug("No storage plugins configured with prefix " + getStorageConfigPrefix());
         }
-        builder = addLogger(builder);
+        builder = addLogger(builder,config);
         //apply default converters on top of storage
         builder = baseConverter(builder);
 
         //add plugin converters
         int converterIndex = 1;
-        while (configProps.containsKey(getConverterConfigPrefix() + SEP + converterIndex + SEP + TYPE)) {
+        while (config.containsKey(getConverterConfigPrefix() + SEP + converterIndex + SEP + TYPE)) {
             builder = configureConverterPlugin(builder, converterIndex, config);
             converterIndex++;
         }
@@ -151,9 +155,16 @@ public class StorageTreeFactory implements FactoryBean<StorageTree>, Initializin
      *
      * @return
      */
-    private TreeBuilder<ResourceMeta> addLogger(TreeBuilder<ResourceMeta> builder) {
-        logger.debug("Add log4j logger for storage with name: " + getBaseLoggerName());
-        return builder.listen(new StorageLogger(getBaseLoggerName()));
+    private TreeBuilder<ResourceMeta> addLogger(TreeBuilder<ResourceMeta> builder, Map<String,String> config) {
+        String loggerName= getLoggerName();
+        if (null != config.get(LOGGER_NAME)) {
+            loggerName = config.get(LOGGER_NAME);
+        }
+        if (null == loggerName) {
+            loggerName = ORG_RUNDECK_STORAGE_EVENTS_LOGGER_NAME;
+        }
+        logger.debug("Add log4j logger for storage with name: " + loggerName);
+        return builder.listen(new StorageLogger(loggerName));
     }
 
     /**
@@ -388,11 +399,19 @@ public class StorageTreeFactory implements FactoryBean<StorageTree>, Initializin
         this.baseStorageConfig = baseStorageConfig;
     }
 
-    public String getBaseLoggerName() {
-        return baseLoggerName;
+    public String getLoggerName() {
+        return loggerName;
     }
 
-    public void setBaseLoggerName(String baseLoggerName) {
-        this.baseLoggerName = baseLoggerName;
+    public void setLoggerName(String loggerName) {
+        this.loggerName = loggerName;
+    }
+
+    public Map<String, String> getConfiguration() {
+        return configuration;
+    }
+
+    public void setConfiguration(Map<String, String> configuration) {
+        this.configuration = configuration;
     }
 }

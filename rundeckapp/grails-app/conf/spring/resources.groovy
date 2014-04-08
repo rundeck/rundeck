@@ -108,11 +108,12 @@ beans={
         pluginRegistry=ref("rundeckPluginRegistry")
         storagePluginProviderService=ref('storagePluginProviderService')
         storageConverterPluginProviderService=ref('storageConverterPluginProviderService')
-        storageConfigPrefix='rundeck.storage.provider'
-        converterConfigPrefix='rundeck.storage.converter'
+        configuration = application.config.rundeck?.storage?.flatten()
+        storageConfigPrefix='provider'
+        converterConfigPrefix='converter'
         baseStorageType='file'
         baseStorageConfig=['baseDir':'${framework.var.dir}/storage']
-        baseLoggerName='org.rundeck.storage.events'
+        loggerName='org.rundeck.storage.events'
     }
     authRundeckStorageTree(AuthRundeckStorageTree, rundeckStorageTree)
     /**

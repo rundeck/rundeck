@@ -172,6 +172,16 @@ The primary Rundeck webapp configuration file. Defines default
 loglevel, datasource configuration, and
 [GUI customization](gui-customization.html).
 
+#### SSH Key Storage settings
+
+The [SSH Key storage](ssh-key-storage.html) mechanism is configured within this file, see:
+
+* [Configuring Storage Plugins][] 
+* [Configuring Storage Converter Plugins][]
+
+[Configuring Storage Plugins]: ssh-key-storage.html#configuring-storage-plugins
+[Configuring Storage Converter Plugins]: ssh-key-storage.html#configuring-storage-converter-plugins
+
 #### Notification email settings
 
 The URL and From: address used in email notifications are managed via the settings located in the rundeck-config.properties file.

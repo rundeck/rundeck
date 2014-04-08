@@ -92,11 +92,11 @@ Rundeck provides these built-in implementations:
 * `file` - stores files locally on the filesystem (default)
 * `db` - stores file data as BLOBs in the database
 
-### Configuring the Storage Plugins
+### Configuring Storage Plugins
 
 By default, the `file` implementation is used, and files are stored at the `${framework.var.dir}/storage` path.
 
-To configure a different Storage Plugin, modify your `framework.properties` file:
+To configure a different Storage Plugin, modify your `rundeck-config.properties` file:
 
 To use the `db` storage:
 
@@ -125,9 +125,9 @@ The Storage Converter Plugin handles reading and writing the content for any mat
 
 Converter plugins do not have to manage storing the data, that will be handled by the Storage backend.
 
-### Configuring the Storage Converter Plugin
+### Configuring Storage Converter Plugins
 
-Add an entry in your `framework.properties` file declaring the converter plugin which will handle content in the `/ssh-key` subpath of the storage container.
+Add an entry in your `rundeck-config.properties` file declaring the converter plugin which will handle content in the `/ssh-key` subpath of the storage container.
 
 ~~~~
 rundeck.storage.converter.1.type=my-encryption-plugin
