@@ -271,7 +271,13 @@ public class ScriptFileCopier implements DestinationFileCopier, Describable {
         final HashMap<String, String> scptexec = new HashMap<String, String>(){{
             //set filename of source file
             put("filename", srcFile.getName());
+            put("file", srcFile.getAbsolutePath());
+            //add file, dir, destination to the file-copy data
         }};
+        if (null != workingdir) {
+            //set up the data context to include the working dir
+            scptexec.put("dir", workingdir.getAbsolutePath());
+        }
 
         newDataContext = DataContextUtils.addContext("file-copy", scptexec, nodeContext);
 
@@ -284,7 +290,9 @@ public class ScriptFileCopier implements DestinationFileCopier, Describable {
                 copiedFilepath = node.getAttributes().get(REMOTE_FILEPATH_ATTRIBUTE);
             }
             if (null != copiedFilepath) {
-                if (!copiedFilepath.contains("${file-copy.filename}") && !copiedFilepath.endsWith("/")) {
+                if (!(copiedFilepath.contains("${file-copy.filename}")
+                        || copiedFilepath.contains("${file-copy.file}"))
+                        && !copiedFilepath.endsWith("/")) {
                     copiedFilepath += "/";
                 }
                 copiedFilepath = DataContextUtils.replaceDataReferences(copiedFilepath, newDataContext);
@@ -299,12 +307,6 @@ public class ScriptFileCopier implements DestinationFileCopier, Describable {
             copiedFilepath += srcFile.getName();
         }
 
-        //add file, dir, destination to the file-copy data
-        scptexec.put("file", srcFile.getAbsolutePath());
-        if (null != workingdir) {
-            //set up the data context to include the working dir
-            scptexec.put("dir", workingdir.getAbsolutePath());
-        }
         scptexec.put("destination", null != copiedFilepath ? copiedFilepath : "");
 
         newDataContext = DataContextUtils.addContext("file-copy", scptexec, nodeContext);
