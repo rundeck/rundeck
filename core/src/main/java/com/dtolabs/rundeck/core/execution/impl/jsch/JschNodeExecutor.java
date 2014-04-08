@@ -55,6 +55,7 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.log4j.Logger;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
+import org.rundeck.storage.api.Path;
 import org.rundeck.storage.api.PathUtil;
 
 import java.io.IOException;
@@ -147,9 +148,25 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     }
 
     public static final String CONFIG_KEYPATH = "keypath";
+    public static final String CONFIG_KEYSTORE_PATH = "keystoragepath";
     public static final String CONFIG_AUTHENTICATION = "authentication";
 
     static final Description DESC ;
+
+    static final Property SSH_KEY_FILE_PROP = PropertyUtil.string(CONFIG_KEYPATH, "SSH Key File path",
+            "File Path to the SSH Key to use",
+            false, null);
+
+    static final Property SSH_KEY_STORAGE_PROP = PropertyUtil.string(CONFIG_KEYSTORE_PATH,
+            "SSH Key Storage Path",
+            "Path to the SSH Key to use within Rundeck Storage. E.g. \"ssh-key/path/key1.pem\"",
+            false, null);
+
+    public static final Property SSH_AUTH_TYPE_PROP = PropertyUtil.select(CONFIG_AUTHENTICATION, "SSH Authentication",
+            "Type of SSH Authentication to use",
+            true, SSHTaskBuilder.AuthenticationType.privateKey.toString(), Arrays.asList(SSHTaskBuilder
+            .AuthenticationType.values()), null, null);
+
     static {
         DescriptionBuilder builder = DescriptionBuilder.builder();
         builder.name(SERVICE_PROVIDER_TYPE)
@@ -157,16 +174,14 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
                 .description("Executes a command on a remote node via SSH.")
                 ;
 
-        builder.property(PropertyUtil.string(CONFIG_KEYPATH, "SSH Keypath",
-                "Path to the SSH Key to use",
-                true, null));
-        builder.property(PropertyUtil.select(CONFIG_AUTHENTICATION, "SSH Authentication",
-                "Type of SSH Authentication to use",
-                true, SSHTaskBuilder.AuthenticationType.privateKey.toString(), Arrays.asList(SSHTaskBuilder
-                .AuthenticationType.values()), null, null));
+        builder.property(SSH_KEY_FILE_PROP);
+        builder.property(SSH_KEY_STORAGE_PROP);
+        builder.property(SSH_AUTH_TYPE_PROP);
 
         builder.mapping(CONFIG_KEYPATH, PROJ_PROP_SSH_KEYPATH);
         builder.frameworkMapping(CONFIG_KEYPATH, FWK_PROP_SSH_KEYPATH);
+        builder.mapping(CONFIG_KEYSTORE_PATH, PROJ_PROP_SSH_KEY_RESOURCE);
+        builder.frameworkMapping(CONFIG_KEYSTORE_PATH, FWK_PROP_SSH_KEY_RESOURCE);
         builder.mapping(CONFIG_AUTHENTICATION, PROJ_PROP_SSH_AUTHENTICATION);
         builder.frameworkMapping(CONFIG_AUTHENTICATION, FWK_PROP_SSH_AUTHENTICATION);
 
@@ -476,19 +491,20 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
                 return frameworkProject.getProperty(PROJ_PROP_SSH_KEYPATH);
             } else if (framework.hasProperty(FWK_PROP_SSH_KEYPATH)) {
                 return framework.getProperty(FWK_PROP_SSH_KEYPATH);
-            } else {
+            } else if(framework.hasProperty(Constants.SSH_KEYPATH_PROP)){
                 //return default framework level
                 return framework.getProperty(Constants.SSH_KEYPATH_PROP);
             }
+            return null;
         }
 
         public InputStream getPrivateKeyResourceData() throws IOException{
             String privateKeyResourcePath = getPrivateKeyResourcePath();
-            if(null==privateKeyResourcePath){
+            if (null == privateKeyResourcePath) {
                 return null;
             }
-            ResourceMeta contents = context.getStorageTree().getResource(PathUtil.asPath
-                    ("/ssh-key/" + privateKeyResourcePath))
+            Path path = PathUtil.asPath(privateKeyResourcePath);
+            ResourceMeta contents = context.getStorageTree().getResource(path)
                     .getContents();
             return contents.getInputStream();
         }

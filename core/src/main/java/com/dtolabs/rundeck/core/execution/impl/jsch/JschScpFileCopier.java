@@ -62,15 +62,13 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier, Des
         .name(SERVICE_PROVIDER_TYPE)
         .title("SCP")
         .description("Copies a script file to a remote node via SCP.")
-        .property(PropertyUtil.string(JschNodeExecutor.CONFIG_KEYPATH, "SSH Keypath",
-                "Path to the SSH Key to use",
-                true, null))
-        .property(PropertyUtil.select(JschNodeExecutor.CONFIG_AUTHENTICATION, "SSH Authentication",
-                "Type of SSH Authentication to use",
-                true, SSHTaskBuilder.AuthenticationType.privateKey.toString(), Arrays.asList(SSHTaskBuilder
-                .AuthenticationType.values()), null, null))
+        .property(JschNodeExecutor.SSH_KEY_FILE_PROP)
+        .property(JschNodeExecutor.SSH_KEY_STORAGE_PROP)
+        .property(JschNodeExecutor.SSH_AUTH_TYPE_PROP)
         .mapping(JschNodeExecutor.CONFIG_KEYPATH, JschNodeExecutor.PROJ_PROP_SSH_KEYPATH)
         .mapping(JschNodeExecutor.CONFIG_AUTHENTICATION, JschNodeExecutor.PROJ_PROP_SSH_AUTHENTICATION)
+        .mapping(JschNodeExecutor.CONFIG_KEYSTORE_PATH, JschNodeExecutor.PROJ_PROP_SSH_KEY_RESOURCE)
+        .frameworkMapping(JschNodeExecutor.CONFIG_KEYSTORE_PATH, JschNodeExecutor.FWK_PROP_SSH_KEY_RESOURCE)
         .frameworkMapping(JschNodeExecutor.CONFIG_KEYPATH, JschNodeExecutor.FWK_PROP_SSH_KEYPATH)
         .frameworkMapping(JschNodeExecutor.CONFIG_AUTHENTICATION, JschNodeExecutor.FWK_PROP_SSH_AUTHENTICATION)
         .build();

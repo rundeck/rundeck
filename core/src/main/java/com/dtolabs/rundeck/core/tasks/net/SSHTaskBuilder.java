@@ -38,6 +38,7 @@ import org.apache.tools.ant.Project;
 import org.apache.tools.ant.taskdefs.optional.ssh.SSHUserInfo;
 import org.apache.tools.ant.taskdefs.optional.ssh.Scp;
 import org.apache.tools.ant.types.Environment;
+import org.rundeck.storage.api.PathUtil;
 import org.rundeck.storage.api.StorageException;
 
 import java.io.ByteArrayOutputStream;
@@ -434,18 +435,22 @@ public class SSHTaskBuilder {
                 final String sshKeypath = sshConnectionInfo.getPrivateKeyfilePath();
                 final String sshKeyResource = sshConnectionInfo.getPrivateKeyResourcePath();
                 if (null != sshKeyResource) {
+                    if (!PathUtil.asPath(sshKeyResource).getPath().startsWith("ssh-key/")) {
+                        throw new BuilderException("SSH Private key path is expected to start with \"ssh-key/\": " +
+                                sshKeyResource);
+                    }
                     try {
                         InputStream privateKeyResourceData = sshConnectionInfo.getPrivateKeyResourceData();
                         sshbase.setSshKeyData(privateKeyResourceData);
                     } catch (StorageException e) {
-                        logger.log(Project.MSG_ERR,"Failed to read SSH Private key stored at path: ssh-key/" +
+                        logger.log(Project.MSG_ERR,"Failed to read SSH Private key stored at path: " +
                                 sshKeyResource+": "+ e);
-                        throw new BuilderException("Failed to read SSH Private key stored at path: ssh-key/" +
+                        throw new BuilderException("Failed to read SSH Private key stored at path: " +
                                 sshKeyResource,e);
                     } catch (IOException e) {
-                        logger.log(Project.MSG_ERR, "Failed to read SSH Private key stored at path: ssh-key/" +
+                        logger.log(Project.MSG_ERR, "Failed to read SSH Private key stored at path: " +
                                 sshKeyResource + ": " + e);
-                        throw new BuilderException("Failed to read SSH Private key stored at path: ssh-key/" +
+                        throw new BuilderException("Failed to read SSH Private key stored at path: " +
                                 sshKeyResource,e);
                     }
                 } else if (null != sshKeypath && !"".equals(sshKeypath)) {
