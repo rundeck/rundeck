@@ -288,6 +288,22 @@ function _applyAce(e,height){
     editor.setReadOnly(true);
 }
 /**
+ * Return true if the event is a keycode for a control key
+ * @param e
+ * @returns {boolean}
+ */
+function controlkeycode(e) {
+    var keycodes = [
+        Event.KEY_BACKSPACE , Event.KEY_DELETE , Event.KEY_TAB , Event.KEY_RETURN , Event.KEY_ESC , Event.KEY_PAGEDOWN ,
+        Event.KEY_PAGEUP , Event.KEY_END , Event.KEY_HOME , Event.KEY_INSERT , Event.KEY_LEFT , Event.KEY_RIGHT ,
+        Event.KEY_DOWN , Event.KEY_UP
+    ];
+    if (e.keyCode && keycodes.indexOf(e.keyCode)>=0) {
+        return true;
+    }
+    return false;
+}
+/**
  * keypress handler which allows only chars matching the input regular expression
  * @param regex string to match allowed chars
  * @param e event
