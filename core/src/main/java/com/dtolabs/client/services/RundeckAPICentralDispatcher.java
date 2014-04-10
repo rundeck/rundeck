@@ -447,6 +447,10 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
                 String url = node1.selectSingleNode("@href").getStringValue();
                 url = makeAbsoluteURL(url);
                 detail.setId(stringNodeValue(node1, "@id", null));
+                try {
+                    detail.setStatus(ExecutionState.valueOf(stringNodeValue(node1, "@status", null)));
+                } catch (IllegalArgumentException e) {
+                }
                 detail.setUrl(url);
                 detail.setUser(stringNodeValue(node1, "user", null));
                 detail.setAbortedBy(stringNodeValue(node1, "abortedBy", null));
