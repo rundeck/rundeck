@@ -42,6 +42,8 @@ import java.util.Collection;
  * @version $Revision$
  */
 public class QueueTool extends BaseTool implements CLIToolLogger {
+    static final long WAIT_BASE_DELAY = Long.getLong(QueueTool.class.getName() + ".WAIT_BASE_DELAY", 1000L);
+    static final long WAIT_MAX_DELAY = Long.getLong(QueueTool.class.getName() + ".WAIT_MAX_DELAY", 5000L);
     /**
      * log4j
      */
@@ -487,22 +489,43 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
         if (mode != ConsoleExecutionFollowReceiver.Mode.output) {
             out.println();
         }
-        if(null!=result.getState()){
-            String message = "[" + execid + "] execution status: " + result.getState();
-            switch (result.getState()){
+        ExecutionState state = result.getState();
+        if (null != state) {
+            if (state == ExecutionState.running) {
+                state = awaitExecutionCompletion(framework, execid);
+            }
+            if (mode != ConsoleExecutionFollowReceiver.Mode.quiet) {
+                logger.warn("[" + execid + "] execution status: " + state);
+            }
+            switch (state) {
                 case failed:
                 case aborted:
-                    if (mode != ConsoleExecutionFollowReceiver.Mode.quiet) {
-                        logger.warn(message);
-                    }
                     return false;
-                default:
-                    if (mode != ConsoleExecutionFollowReceiver.Mode.quiet) {
-                        logger.verbose(message);
-                    }
             }
         }
         return true;
+    }
+
+    private static ExecutionState awaitExecutionCompletion(Framework framework,String execid) throws CentralDispatcherException {
+        ExecutionState state = executionStatus(framework, execid);
+        long delay= WAIT_BASE_DELAY;
+        while (state == ExecutionState.running) {
+            try {
+                Thread.sleep(delay);
+            } catch (InterruptedException e) {
+                return state;
+            }
+            if (delay < WAIT_MAX_DELAY) {
+                delay += WAIT_BASE_DELAY;
+            }
+            state = executionStatus(framework, execid);
+        }
+        return state;
+    }
+
+    private static ExecutionState executionStatus(Framework framework, String execid) throws CentralDispatcherException {
+        ExecutionDetail execution = framework.getCentralDispatcherMgr().getExecution(execid);
+        return execution.getStatus();
     }
 
 
