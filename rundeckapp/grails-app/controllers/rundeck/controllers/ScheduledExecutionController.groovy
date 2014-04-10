@@ -1689,6 +1689,9 @@ class ScheduledExecutionController  extends ControllerBase{
             Execution e = Execution.get(params.retryExecId)
             if(e){
                 model.selectedoptsmap=FrameworkService.parseOptsFromString(e.argString)
+                if (e.filter != scheduledExecution.filter) {
+                    model.selectedNodes = (e.failedNodeList ? (e.failedNodeList + ',' + '') : '') + e.succeededNodeList
+                }
             }
         }else if(params.argString){
             model.selectedoptsmap = FrameworkService.parseOptsFromString(params.argString)
