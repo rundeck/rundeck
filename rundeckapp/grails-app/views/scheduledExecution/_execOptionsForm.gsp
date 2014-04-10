@@ -39,27 +39,29 @@
             </div>
         </g:elseif>
         <g:elseif test="${nodes}">
-            <g:set var="selectedNodes" value="${failedNodes? failedNodes.split(','):[]}"/>
+            <g:set var="selectedNodes"
+                   value="${failedNodes? failedNodes.split(','):selectedNodes? selectedNodes.split(','):null}"/>
             <div class="container">
             <div class="row">
                 <div class="col-sm-12 checkbox">
                 <input name="extra._replaceNodeFilters" value="true" type="checkbox"
                         data-toggle="collapse"
                         data-target="#nodeSelect"
-                    ${failedNodes?'checked':''}
+                    ${selectedNodes?'checked':''}
                               id="doReplaceFilters"/> <label for="doReplaceFilters">Change the Target Nodes
-                (${nodes.size()})</label>
+                (<span class="nodeselectcount">${selectedNodes?selectedNodes.size():nodes.size()}</span>)</label>
                 </div>
+
             </div>
             </div>
-            <div class=" matchednodes embed jobmatchednodes group_section collapse ${failedNodes ? 'in' : ''}" id="nodeSelect">
+            <div class=" matchednodes embed jobmatchednodes group_section collapse ${selectedNodes ? 'in' : ''}" id="nodeSelect">
                 <%--
                  split node names into groups, in several patterns
                   .*\D(\d+)
                   (\d+)\D.*
                 --%>
                 <g:if test="${namegroups}">
-                    <div class=" group_select_control" style="display:none">
+                    <div class=" group_select_control" style="${wdgt.styleVisible(if: selectedNodes)}">
                         Select:
                         <span class="textbtn textbtn-default textbtn-on-hover selectall">All</span>
                         <span class="textbtn textbtn-default textbtn-on-hover selectnone">None</span>
@@ -72,7 +74,7 @@
                         <div class="panel panel-default">
                       <div class="panel-heading">
                           <g:set var="expkey" value="${g.rkey()}"/>
-                            <g:expander key="${expkey}" open="${failedNodes?'true':'false'}">
+                            <g:expander key="${expkey}" open="${selectedNodes?'true':'false'}">
                                 <g:if test="${group!='other'}">
                                     <span class="prompt">
                                     ${namegroups[group][0].encodeAsHTML()}</span>
@@ -87,7 +89,7 @@
                                 (${namegroups[group].size()})
                             </g:expander>
                         </div>
-                        <div id="${expkey}" style="${wdgt.styleVisible(if:failedNodes)}" class="group_section panel-body">
+                        <div id="${expkey}" style="${wdgt.styleVisible(if: selectedNodes)}" class="group_section panel-body">
                                 <g:if test="${namegroups.size()>1}">
                                 <div class="group_select_control" style="display:none">
                                     Select:
@@ -108,9 +110,9 @@
                                                    type="checkbox"
                                                    name="extra.nodeIncludeName"
                                                    value="${node.nodename}"
-                                                   ${failedNodes ? '':'disabled' }
+                                                   ${selectedNodes ? '':'disabled' }
                                                    data-tag="${node.tags?.join(' ').encodeAsHTML()}"
-                                                    ${selectedNodes.contains(node.nodename)?'checked':''}
+                                                    ${(null== selectedNodes||selectedNodes.contains(node.nodename))?'checked':''}
                                                    />${node.nodename.encodeAsHTML()}</label>
 
                                         </div>
@@ -139,34 +141,56 @@
                 </g:else>
             </div>
             <g:javascript>
-                $$('div.jobmatchednodes span.textbtn.selectall').each(function(e) {
-                    Event.observe(e, 'click', function(evt) {
-                        $(e).up('.group_section').select('input').each(function(el) {
+                var updateSelectCount = function (evt) {
+                    var count = 0;
+                    $$('.node_ident input[type=checkbox]').each(function (e2) {
+                        if (e2.checked) {
+                            count++;
+                        }
+                    });
+                    $$('.nodeselectcount').each(function (e2) {
+                        $(e2).innerHTML = count + '';
+                        $(e2).removeClassName('text-info');
+                        $(e2).removeClassName('text-danger');
+                        $(e2).addClassName(count>0?'text-info':'text-danger');
+                    });
+                };
+                $$('.node_ident input[type=checkbox]').each(function (e) {
+                    Event.observe(e, 'change', function (evt) {
+                      Event.fire($('nodeSelect'), 'nodeset:change');
+                    });
+                });
+                Event.observe($('nodeSelect'), 'nodeset:change', updateSelectCount);
+                $$('div.jobmatchednodes span.textbtn.selectall').each(function (e) {
+                    Event.observe(e, 'click', function (evt) {
+                        $(e).up('.group_section').select('input').each(function (el) {
                             if (el.type == 'checkbox') {
                                 el.checked = true;
                             }
                         });
-                        $(e).up('.group_section').select('span.textbtn.obs_tag_group').each(function(e) {
+                        $(e).up('.group_section').select('span.textbtn.obs_tag_group').each(function (e) {
                             $(e).setAttribute('data-tagselected', 'true');
                             $(e).addClassName('active');
                         });
+                        Event.fire($('nodeSelect'), 'nodeset:change');
                     });
                 });
-                $$('div.jobmatchednodes span.textbtn.selectnone').each(function(e) {
-                    Event.observe(e, 'click', function(evt) {
-                        $(e).up('.group_section').select('input').each(function(el) {
+                $$('div.jobmatchednodes span.textbtn.selectnone').each(function (e) {
+                    Event.observe(e, 'click', function (evt) {
+                        $(e).up('.group_section').select('input').each(function (el) {
                             if (el.type == 'checkbox') {
                                 el.checked = false;
                             }
                         });
-                        $(e).up('.group_section').select('span.textbtn.obs_tag_group').each(function(e) {
+                        $(e).up('.group_section').select('span.textbtn.obs_tag_group').each(function (e) {
                             $(e).setAttribute('data-tagselected', 'false');
                             $(e).removeClassName('active');
                         });
+                        Event.fire($('nodeSelect'), 'nodeset:change');
                     });
                 });
-                $$('div.jobmatchednodes span.textbtn.obs_tag_group').each(function(e) {
-                    Event.observe(e, 'click', function(evt) {
+                $$('div.jobmatchednodes span.textbtn.obs_tag_group').each(function (e) {
+                    Event.observe(e, 'click', function (evt) {
                         var ischecked = e.getAttribute('data-tagselected') != 'false';
                         e.setAttribute('data-tagselected', ischecked ? 'false' : 'true');
                         if (!ischecked) {
@@ -174,14 +198,12 @@
                         } else {
                             $(e).removeClassName('active');
                         }
-                        $(e).up('.group_section').select('input[data-tag~="' + e.getAttribute('data-tag') + '"]').each(function(
-                        el) {
+                        $(e).up('.group_section').select('input[data-tag~="' + e.getAttribute('data-tag') + '"]').each(function (el) {
                             if (el.type == 'checkbox') {
                                 el.checked = !ischecked;
                             }
                         });
-                        $(e).up('.group_section').select('span.textbtn.obs_tag_group[data-tag="' + e.getAttribute('data-tag') + '"]').each(function(
-                        el) {
+                        $(e).up('.group_section').select('span.textbtn.obs_tag_group[data-tag="' + e.getAttribute('data-tag') + '"]').each(function (el) {
                             el.setAttribute('data-tagselected', ischecked ? 'false' : 'true');
                             if (!ischecked) {
                                 $(el).addClassName('active');
@@ -189,6 +211,7 @@
                                 $(el).removeClassName('active');
                             }
                         });
+                        Event.fire($('nodeSelect'), 'nodeset:change');
                     });
                 });
 
@@ -205,12 +228,18 @@
                             }
                         }
                     });
-
+                    Event.fire($('nodeSelect'), 'nodeset:change');
+                    if(!e.checked){
+                        $$('.nodeselectcount').each(function (e2) {
+                            $(e2).removeClassName('text-info');
+                            $(e2).removeClassName('text-danger');
+                        });
+                    }
                 });
 
 
                 /** reset focus on click, so that IE triggers onchange event*/
-                Event.observe($('doReplaceFilters'),'click',function (evt) {
+                Event.observe($('doReplaceFilters'), 'click', function (evt) {
                     this.blur();
                     this.focus();
                 });
