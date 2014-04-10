@@ -79,12 +79,14 @@
         </td>
             <g:if test="${rpt?.jcJobId}">
         <td class="eventargs">
+            <div class="argstring-scrollable">
             <g:if test="${execution && execution.argString}">
                 <g:render template="/execution/execArgString" model="[argString: execution.argString]"/>
             </g:if>
             <g:if test="${params.debug}">
                 ${rpt.toMap()}
             </g:if>
+            </div>
         </td>
             </g:if>
 
