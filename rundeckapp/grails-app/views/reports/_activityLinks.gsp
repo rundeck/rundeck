@@ -98,6 +98,7 @@
                 </g:if>
             </td>
             <td class="eventargs" >
+                <div class="argstring-scrollable">
                 <span data-bind="if: execution().jobArguments">
                     <span data-bind="foreachprop: execution().jobArguments">
                         <span data-bind="text: key"></span>:
@@ -107,6 +108,7 @@
                 <!-- ko if: !execution().jobArguments -->
                 <span data-bind="text: execution().argString"></span>
                 <!-- /ko -->
+                </div>
             </td>
             <td style="white-space:nowrap" class="right date">
                 <span data-bind="if: dateCompleted()">

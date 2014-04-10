@@ -261,9 +261,11 @@
                                 </g:if>
                                 <g:if test="${execution.argString}">
                                     <div class="row">
-                                        <div class="col-sm-12">
+                                        <div class="col-sm-12" >
+                                            <div class="argstring-scrollable">
                                             <span class="text-muted">Options:</span>
                                             <g:render template="/execution/execArgString" model="[argString:execution.argString]"/>
+                                            </div>
                                         </div>
                                     </div>
                                 </g:if>
