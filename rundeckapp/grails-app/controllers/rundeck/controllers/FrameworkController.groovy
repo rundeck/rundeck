@@ -806,7 +806,7 @@ class FrameworkController extends ControllerBase {
         }
         if (params.cancel == 'Cancel') {
             //cancel modification
-            return redirect(controller: 'menu', action: 'admin')
+            return redirect(controller: 'menu', action: 'admin', params: [project: project])
         }
         if (unauthorizedResponse(
                 frameworkService.authorizeApplicationResourceAll(authContext, [type: 'project', name: project], [AuthConstants.ACTION_ADMIN]),
