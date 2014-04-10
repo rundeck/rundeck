@@ -1681,13 +1681,13 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         if(params.retryFailedExecId){
             Execution e = Execution.get(params.retryFailedExecId)
-            if(e){
-                model.failedNodes=e.failedNodeList
+            if (e && e.scheduledExecution?.id == scheduledExecution.id) {
+                model.failedNodes = e.failedNodeList
             }
         }
         if(params.retryExecId){
             Execution e = Execution.get(params.retryExecId)
-            if(e){
+            if(e && e.scheduledExecution?.id == scheduledExecution.id){
                 model.selectedoptsmap=FrameworkService.parseOptsFromString(e.argString)
                 if (e.filter != scheduledExecution.filter) {
                     model.selectedNodes = (e.failedNodeList ? (e.failedNodeList + ',' + '') : '') + e.succeededNodeList
