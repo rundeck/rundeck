@@ -138,3 +138,27 @@ clients (web browsers or e.g. curl).
 Export pem cacert for use by e.g. curl: 
 
     keytool -export -keystore etc/keystore -rfc -alias rundeck > rundeck.server.pem
+
+## Using an SSL Terminated Proxy
+
+You can tell Jetty to honor
+`X-Forwarded-Proto`,  `X-Forwarded-Host`,
+`X-Forwarded-Server` and `X-Forwarded-For` headers
+by adding the following JVM property:
+
+* `rundeck.jetty.connector.forwarded` set to "true" to enable proxy forwarded support.
+
+E.g. modify the `RDECK_JVM` variable
+in the file `/etc/rundeck/profile`
+and add:
+
+    -Drundeck.jetty.connector.forwarded=true
+
+This will enable Jetty to respond correctly
+when a forwarded request is first received.
+
+**Note:** You will still need to modify the `grails.serverURL` value
+in [rundeck-config.properties][]
+to let Rundeck know how to properly generate absolute URLs.
+
+[rundeck-config.properties]: configuration-file-reference.html#rundeck-config.properties
