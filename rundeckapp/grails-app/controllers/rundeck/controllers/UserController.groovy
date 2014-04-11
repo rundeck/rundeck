@@ -24,15 +24,12 @@ class UserController extends ControllerBase{
     }
     def logout = {
         session.invalidate()
-        if (params.refLink && grailsApplication.config.grails.serverURL
-                && params.refLink.startsWith(grailsApplication.config.grails.serverURL)
-                && !params.refLink.contains("noProjectAccess")) {
-            return redirect(url: params.refLink)
-        } else {
-            return redirect(controller: 'menu', action: 'index')
-        }
+        return redirect(action: 'loggedout')
     }
-    
+    def loggedout(){
+
+    }
+
     def login = {
         if (session.user) {
             redirect(controller:'menu', action:'index')
