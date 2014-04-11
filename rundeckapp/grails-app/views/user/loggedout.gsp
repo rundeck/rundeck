@@ -1,0 +1,51 @@
+<%--
+  Created by IntelliJ IDEA.
+  User: greg
+  Date: 3/12/14
+  Time: 11:36 AM
+  To change this template use File | Settings | File Templates.
+--%>
+
+<%@ page contentType="text/html;charset=UTF-8" %>
+<html>
+<head><title><g:message code="main.app.name"/> - Logged Out</title>
+    <meta name="layout" content="base"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="SHORTCUT" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
+    <link rel="favicon" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
+    <link rel="shortcut icon" href="${g.resource(dir: 'images', file: 'favicon.ico')}"/>
+    <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
+    <asset:stylesheet href="rundeck.css"/>
+    <asset:stylesheet href="non_responsive.css"/>
+    <!--[if lt IE 9]>
+    <g:javascript library="respond.min"/>
+    <![endif]-->
+    <asset:javascript src="jquery.js"/>
+    <asset:javascript src="bootstrap.js"/>
+    <asset:javascript src="prototype.min.js"/>
+</head>
+
+<body>
+<div class="container">
+
+    <div class="row row-space">
+        <div class="col-sm-8 col-sm-offset-2">
+            <div class="jumbotron">
+                <p><g:message code="you.are.now.logged.out"/></p>
+
+            </div>
+
+            <p>
+                <g:link controller="user" action="login"
+                        class="btn btn-link">
+                    <i class="glyphicon glyphicon-arrow-left"></i>
+                    <g:message code="login.again" />
+                </g:link>
+            </p>
+
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

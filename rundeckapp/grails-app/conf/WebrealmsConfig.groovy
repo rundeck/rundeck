@@ -27,6 +27,8 @@ webrealms{
     securityconstraint{
         Login.urlpattern='/user/login'
         LoginError.urlpattern='/user/error'
+        Logout.urlpattern='/user/logout'
+        Loggedout.urlpattern='/user/loggedout'
         Images.urlpattern='/images/*'
         CSS.urlpattern='/css/*'
         JS.urlpattern='/js/*'
