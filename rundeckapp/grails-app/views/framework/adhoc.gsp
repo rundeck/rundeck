@@ -150,7 +150,7 @@
                 smallIconUrl: "${resource(dir: 'images', file: 'icon-small')}",
                 iconUrl: "${resource(dir: 'images', file: 'icon-small')}",
                 lastlines: ${params.lastlines ? params.lastlines : defaultLastLines},
-                maxLastLines: ${maxLastLines},
+                maxLastLines: ${params.maxlines ? params.maxlines : maxLastLines},
                  showFinalLine: {value: false, changed: false},
                  colStep:{value:false},
                 tailmode: true,

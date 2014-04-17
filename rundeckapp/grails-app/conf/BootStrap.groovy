@@ -206,10 +206,7 @@ class BootStrap {
          def maxLastLines = grailsApplication.config.rundeck.gui.execution.tail.lines.max
          maxLastLines = maxLastLines instanceof String ? maxLastLines.toInteger() : maxLastLines
          if(!maxLastLines || !(maxLastLines instanceof Integer) || maxLastLines < 1){
-             if(maxLastLines){
-                log.warn("Invalid value for rundeck.gui.execution.tail.lines.max: Not a positive Integer ${maxLastLines}")
-             }
-             grailsApplication.config.rundeck.gui.execution.tail.lines.max = 100
+             grailsApplication.config.rundeck.gui.execution.tail.lines.max = 500
          }
 
          //set up some metrics collection for the Quartz scheduler
