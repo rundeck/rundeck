@@ -72,7 +72,7 @@ because you will use them later when specifying node filtering
 options.
 
 Each Project has a configuration file called 
-[project.properties](../administration/project.properties.html),
+[project.properties](../administration/configuration-file-reference.html#project.properties),
 located at this path:
 
 * rpm/deb: /var/rundeck/projects/_project_/etc/project.properties
@@ -85,12 +85,12 @@ storing resource model data:
 
 In addition, multiple pluggable "Resource Model Sources" can be configured for a project
 to retrieve additional Resource Model content from other sources. 
-See [Resource Model Sources](plugins.html#resource-model-sources).
+See [Resource Model Sources](managing-node-sources.html#resource-model-source).
 
 You can configure Rundeck to retrieve and store resource model data
 from any source, so long as it can produce one of the Rundeck resource model
 document formats. (See 
-[Resource Model Document formats](rundeck-basics.html#resource-model-document-formats).) 
+[Resource Model Document formats](../plugins-user-guide/resource-model-source-plugins.html#resource-model-document-formats).) 
 
 Here's the XML document stored for the "examples" project that corresponds
 to the output printed by the `dispatch -v` shown earlier:
@@ -147,8 +147,7 @@ your host infrastructure infrequently changes.
 
 Check the Rundeck web site for URL resource model sources. If you are
 interested in creating your own, see the
-[Resource model source](../administration/node-resource-sources.html#resource-model-source) section in the
-[Integration with External Data Providers](#integration-with-external-data-providers) chapter.
+[Resource model source](managing-node-sources.html#resource-model-source) chapter.
 
 ### Resource Model Document formats
 

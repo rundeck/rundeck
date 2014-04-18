@@ -4,7 +4,7 @@
 
 Rundeck has three basic ways of defining authentication.
 
-1. [PropertyFileLoginModule](PropertyFileLoginModule) 
+1. [PropertyFileLoginModule](#PropertyFileLoginModule) 
 2. [LDAP](#ldap)
 3. [PAM](#pam)
 
@@ -487,7 +487,7 @@ It then looks the username up in the Properties file, and applies any roles for 
 
 Configuration properties:
 
-* `file` - path to a Java Property formatted file in the format defined under [realm.properties](#realm.properties)
+* `file` - path to a Java Property formatted file in the format defined under [realm.properties](#PropertyFileLoginModule)
 
 Note that since the user password is not used for authentication, you can have a dummy value in the password field of the file, but *some value is required* in that position.
 
@@ -498,7 +498,7 @@ Example properties file with dummy passwords and roles:
 
 #### JettyAuthPropertyFileLoginModule
 
-This module provides authentication in the same way as the [realm.properties](#realm.properties) mechanism, but does not use any of the role names found in the file.  It can be combined with `JettyRolePropertyFileLoginModule` by using `storePass=true`.
+This module provides authentication in the same way as the [realm.properties](#PropertyFileLoginModule) mechanism, but does not use any of the role names found in the file.  It can be combined with `JettyRolePropertyFileLoginModule` by using `storePass=true`.
 
 Configuration properties:
 

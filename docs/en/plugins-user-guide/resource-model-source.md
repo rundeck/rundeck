@@ -38,7 +38,7 @@ Name                          Value                           Notes
 
 Table: Configuration properties for `file` Resource Model Source provider
 
-The value of `format` must be one of the supported Resource Model Document Formats. The built-in formats are: `resourcexml` or `resourceyaml`, but any format provided by a [Resource Format Plugin] can be specified as well.
+The value of `format` must be one of the supported Resource Model Document Formats. The built-in formats are: `resourcexml` or `resourceyaml`, but any format provided by a [Resource Format Plugin](#resource-model-document-formats) can be specified as well.
 
 *Example:*
 
@@ -121,12 +121,15 @@ format specified must be available.
     resources.source.2.args=-project example
     resources.source.2.format=resourceyaml
 
-## Resource Format services
+## Resource Model Document Formats
 
-Resource Format services (Generators and Parsers) typically come in matched 
+Resource Model Document Formats are defined by plugins that provide 
+Generators and Parsers, typically in matched 
 pairs, with both a parser and generator for the same format name.
 
-Rundeck includes these Built-in plugins in the core installation:
+### Resource Format Plugins
+
+Rundeck includes two built-in plugins in the core installation:
 
 `resourcexml`
 

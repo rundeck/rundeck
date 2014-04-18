@@ -149,7 +149,7 @@ The sequence has these required entries:
 
 `strategy`
 
-:    "node-first" or "step-first".  Determines the strategy for executing the sequence across a set of nodes.  See the [Rundeck User Manual](manual/job-workflows.html#workflow-control-settings) for more info.
+:    "node-first" or "step-first".  Determines the strategy for executing the sequence across a set of nodes.  See the [Rundeck User Manual](../manual/jobs.html#workflow-control-settings) for more info.
 
 `commands`
 
@@ -463,7 +463,7 @@ or as Name-value list:
 ] 
 ~~~~~~~~
 
-* See the [Jobs Guide](manual/jobs.html#remote-option-values) for more info.
+* See the [Jobs Guide](../manual/jobs.html#remote-option-values) for more info.
 
 ### Schedule
 
@@ -674,7 +674,7 @@ Example:
             a: b
 ~~~~~~~~ 
 
-* For more information about the Webhook mechanism used, see the chapter [Integration - Webhooks](manual/jobs.html#webhooks).
+* For more information about the Webhook mechanism used, see the chapter [Integration - Webhooks](../manual/jobs.html#webhooks).
 
 #### plugin
 

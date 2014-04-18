@@ -137,16 +137,16 @@ Currently "script-based" plugins (shell scripts, that is) are not supported.
 See the source directory `examples/example-groovy-notification-plugins` for
 examples of Notification plugins written in Groovy.
 
-* On github: [example-groovy-notification-plugins](https://github.com/dtolabs/rundeck/tree/development/examples/example-groovy-notification-plugins) 
+* On github: [example-groovy-notification-plugins](https://github.com/rundeck/rundeck/tree/development/examples/example-groovy-notification-plugins) 
 
 See the source directory `examples/example-java-notification-plugin` for
 Java examples.
 
-* On github: [example-java-notification-plugin](https://github.com/dtolabs/rundeck/tree/development/examples/example-java-notification-plugin) 
+* On github: [example-java-notification-plugin](https://github.com/rundeck/rundeck/tree/development/examples/example-java-notification-plugin) 
 
 ## Java Plugin Type
 
-Java-based plugins can be developed just as any other Rundeck plugin, as described in the chapter [Plugin Development - Java Plugin Development](#java-plugin-development).
+Java-based plugins can be developed just as any other Rundeck plugin, as described in the chapter [Plugin Development - Java Plugin Development](plugin-development.html#java-plugin-development).
 
 These plugin classes should implement the interface
 [NotificationPlugin](../javadoc/com/dtolabs/rundeck/plugins/notification/NotificationPlugin.html):

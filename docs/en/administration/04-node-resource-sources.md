@@ -129,7 +129,7 @@ the viewvc URL, obtaining the latest revision.
 
 For Rundeck, we would like to have a way of querying the EC2 service to see what EC2 Instances are available for use as Rundeck Nodes.
 
-Amazon has a well-defined API for communication with their services, which would allow us to pull out the EC2 data, and generate XML if we wanted to. We could write a script that produces that data and use that script on a server to produce data via a URL, or we could use that script with the [script resource model source plugin](../manual/plugins.html#script-resource-model-source-configuration) to generate it. This would give us complete control of the output, but does require extra work.
+Amazon has a well-defined API for communication with their services, which would allow us to pull out the EC2 data, and generate XML if we wanted to. We could write a script that produces that data and use that script on a server to produce data via a URL, or we could use that script with the [script resource model source plugin](../plugins-user-guide/resource-model-source-plugins.html#script-resource-model-source-configuration) to generate it. This would give us complete control of the output, but does require extra work.
 
 However, there is already a plugin to do this for you: the [Rundeck EC2 Nodes Plugin](https://github.com/gschueler/rundeck-ec2-nodes-plugin).
 
@@ -153,7 +153,7 @@ Minimal configuration details for the plugin includes your AWS access credential
 *Secret Key*
 :    Specify your AWS Secret Key
 
-Read about the other configuration details in the [readme](https://github.com/gschueler/rundeck-ec2-nodes-plugin/blob/master/Readme.md) for the rundeck-ec2-nodes-plugin.
+Read about the other configuration details in the [readme](https://github.com/rundeck-plugins/rundeck-ec2-nodes-plugin/blob/master/Readme.md) for the rundeck-ec2-nodes-plugin.
 
 Finally, within Rundeck, you can Refresh the Nodes from within the Run tab.  You should see a Node entry for each EC2 Instance that is available.
 
@@ -161,22 +161,22 @@ You can manage the set of Nodes that gets returned from the plugin by organizing
 
 The EC2 plugin will automatically add tags for the nodes based on an EC2 Instance Tag named "Rundeck-Tags", as well as the Instance's state.  You can also add "Mapping parameters" to the EC2 Plugin configuration to add additional tags.
 
-You can add filters to the EC2 Plugin configuration under the "Filter Params" configuration area, with the sytanx of: `filter=value;filter2=value2`. The available filter names are listed in [AWS API - DescribeInstances](http://docs.amazonwebservices.com/AWSEC2/latest/APIReference/ApiReference-query-DescribeInstances.html).
+You can add filters to the EC2 Plugin configuration under the "Filter Params" configuration area, with the sytanx of: `filter=value;filter2=value2`. The available filter names are listed in [AWS API - DescribeInstances](http://docs.aws.amazon.com/AWSEC2/latest/APIReference/ApiReference-query-DescribeInstances.html).
 
-You can also configure your EC2 Plugin manually or automatically by creating or modifying the [project.properties](configuration#project.properties) file, and defining a [Resource Model Source] provider, like this:
+You can also configure your EC2 Plugin manually or automatically by creating or modifying the [project.properties] file, and defining a [Resource Model Source] provider, like this:
 
     resources.source.1.type=aws-ec2
     resources.source.1.config.accessKey=...
     resources.source.1.config.privateKey=...
     resources.source.1.config.filter=...
 
-More configuration is available for the [rundeck-ec2-nodes-plugin project](https://github.com/gschueler/rundeck-ec2-nodes-plugin).
+More configuration is available for the [rundeck-ec2-nodes-plugin project](https://github.com/rundeck-plugins/rundeck-ec2-nodes-plugin).
 
 #### Third party URL resource model sources
 
 URL Resource model sources can be developed by third parties to integrate Rundeck with their tools. 
 
-Check the list on our wiki: [https://github.com/dtolabs/rundeck/wiki/Resource-model-providers](https://github.com/dtolabs/rundeck/wiki/Resource-model-providers).
+Check the list on our wiki: [https://github.com/rundeck/rundeck/wiki/Resource-model-providers](https://github.com/rundeck/rundeck/wiki/Resource-model-providers).
 
 ## Resource Editor
 
@@ -189,11 +189,11 @@ about the hosts deployed in their networks. These tools have
 interfaces to not just view but also modify the data about these
 hosts. Though there is no widely used common standard adopted by users
 of these tools, it is possible to map the data to meet the needs of
-[Rundeck resource models](#resource-model-provider). 
+[Rundeck resource models](#resource-model-source). 
 
 ### Definition ###
 
-The [Rundeck resource model document format](../manpages/man5/resource-v13.html) and the [resource-yaml-v13](../manpages/man5/resource-yaml-v13.html) format provide two attributes that help connect the dots between the
+The [Rundeck resource model document format](../man5/resource-v13.html) and the [resource-yaml-v13](../man5/resource-yaml-v13.html) format provide two attributes that help connect the dots between the
 Rundeck UI and the editing interface provided by the external data
 management tool. They can use `editUrl` or `remoteUrl` attributes to specify the remote URL.  The URLs can embed properties about the node to expand prior to being loaded, which allows you to e.g. submit query parameters using the node name.
 
@@ -201,7 +201,7 @@ management tool. They can use `editUrl` or `remoteUrl` attributes to specify the
 
 :    Specifies a URL to a remote site which will allow editing of the Node.  When specified, the Node resource will display an "Edit" link in the Rundeck GUI and clicking it will open a new browser page for the URL.
 
-[`remoteUrl`](node-resource-sources.html#using-remoteurl)
+[`remoteUrl`](#using-remoteurl)
 
 :    Specifies a URL for a remote site which will be loaded in an iframe within a Rundeck page.  Clicking the "Edit" link for the Node will load content from the site within the current Rundeck page, allow you to perform your edit at the remote site, and has optional JavaScript hooks to report the state of the editing process back to the Rundeck page for a more streamlined user interface. 
 
@@ -367,5 +367,5 @@ To complete the round-trip of editing a Node and then showing the results back i
 [CMDB]: http://en.wikipedia.org/wiki/Configuration_management_database
 [AJAX]: http://en.wikipedia.org/wiki/Ajax_(programming)
 
-[project.properties]: (configuration-file-reference.html#project.properties)
-[Tutorial]: (../tutorials/index.html)
+[project.properties]: configuration-file-reference.html#project.properties
+[Tutorial]: ../tutorials/index.html

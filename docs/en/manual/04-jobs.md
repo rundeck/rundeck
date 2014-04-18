@@ -53,7 +53,7 @@ corresponding to the group structure your jobs define.
 
 Beyond organizing jobs, groups assist in defining access control
 policy, covered in the
-[Administrator guide](../administration/role-based-access-control.html).
+[Administrator guide - Access Control Policy](../administration/access-control-policy.html).
 
 ## Job UUIDs
 
@@ -169,17 +169,17 @@ proceeding with the execution.
 
 When you are ready, press "Run Job Now". The job will enter
 the execution queue and you can track its execution in the 
-[Now running](rundeck-basics.html#now-running) section.
+Activity section of the page, or by going to the [Activity](activity.html) page.
 
 ### Following Running Jobs
 
 Once you have started running a Job, you can follow the Job's output
 in the Execution Follow page. 
    
-On the Jobs page, look in the "Now running" section
+On the Jobs page, look in the "Running" tab in the Activity section of the page
 and click the progress bar.
   
-If you pressed the "run" button from the Job's detail page, your
+If you pressed the "run" button from the Job's detail page, or you selected to "Follow execution" when you ran the job, your
 browser will already have been directed to the Execution Follow page.
  
 ## Creating Jobs
@@ -308,7 +308,7 @@ expression.
 
 ![Scheduled job crontab form](../figures/fig0307.png)
 
-Use the crontab syntax referenced here: [CronExpression].
+Use the crontab syntax referenced here: [Quartz Scheduler crontrigger].
 
 After the Job has been updated to include a schedule, a clock icon
 will be displayed when the Job is listed:
@@ -328,7 +328,7 @@ If you want to receive notifications, click Yes under "Send Notification?".
 You can enable notifications for either Start, Success or Failure events 
 and choose the notifier, using a builtin like mail, or webhook.
 Alternatively, you can use a
-[notification plugin](../plugins-user-guide/notifications.html) 
+[notification plugin](../plugins-user-guide/notification-plugins.html) 
 like HipChat (shown above), Jira, Jabber, IRC, PagerDuty, or script your own.  
 
 Click the checkbox next to the type of notification to enable.
@@ -483,7 +483,7 @@ When prompted "Really kill this job?" Click the "Yes" button.
 
 The Job will terminate with a "Killed" completion status.
 
-See also: [rd-queue](../manpages/man1/rd-queue.html).
+See also: [rd-queue](../man1/rd-queue.html).
 
 ## Deleting Jobs
 
@@ -996,7 +996,7 @@ then the  embedded references will evaluate to "" (empty string) when loading
 the URL.
 
 If an option has dependencies on other options and the remote values [JSON 
-data](#json-data) is empty (empty list or empty object), then the option shown in
+data](#json-format) is empty (empty list or empty object), then the option shown in
 the GUI will indicate that the user should select values for the necessary
 options.  This allows Option model providers to indicate that some or all of the
 dependent option values are necessary for the current option before showing the
@@ -1188,7 +1188,7 @@ Steps in a workflow can be either *Node Steps* or *Workflow Steps*.
 
 You can create or install third-party plugins which provide new Steps for your workflows.
 
-* See the chapter on [Plugins](plugins.html).
+* See the chapter on [Plugins](../plugins-user-guide/index.html).
 
 ### Command step
 
@@ -1470,7 +1470,7 @@ Additional Error-handler context variables:
 * `result.resultCode`: Exit code from an execution (if available)
 * `result.failedNodes`: Comma-separated list of node names that failed for a `NodeDispatchFailure`
 
-Option context variables are referred to as `option.NAME` (more about [Job Options](job-options.html) in the next chapter.)
+Option context variables are referred to as `option.NAME` (more about [Job Options](jobs.html#job-options).)
 
 ### Context Variable Usage
 
@@ -1511,4 +1511,4 @@ Context variables can be used in a few ways in a Job step, with slightly differe
 [job-xml]: ../man5/job-xml.html
 [job-yaml]: ../man5/job-yaml.html
 
-[CronExpression]: http://www.quartz-scheduler.org/docs/api/1.8.1/org/quartz/CronExpression.html
+[Quartz Scheduler crontrigger]: http://www.quartz-scheduler.org/documentation/quartz-1.x/tutorials/crontrigger

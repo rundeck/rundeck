@@ -20,7 +20,7 @@ of serialized data is a filename or a MIME type.
 ### ResourceFormatParser
 
 For Parsers, your provider class must implement the interface 
-[ResourceFormatParser](javadoc/com/dtolabs/rundeck/core/resources/format/ResourceFormatParser.html):
+[ResourceFormatParser](../javadoc/com/dtolabs/rundeck/core/resources/format/ResourceFormatParser.html):
 
 ~~~~~ {.java}
 public interface ResourceFormatParser {

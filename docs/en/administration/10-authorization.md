@@ -108,7 +108,7 @@ information.
 
 ### Specific Resources and Resource Types
 
-As described in the [aclpolicy-v10(5)](../manpages/man5/aclpolicy-v10.html) definition, access
+As described in the [aclpolicy-v10(5)](../man5/aclpolicy-v10.html) definition, access
 is granted or denied to specific "resources". Resources can take two forms:
 
 * A specific resource, with a type and properties
@@ -187,7 +187,7 @@ Note that for projects not matched by an aclpolicy, *no* actions will be granted
 to users.
 
 Also note that to hide projects completely from users, you would need to grant
-or deny the "read" access to the project in the [Application Scope](authorization.html#application-scope-resources-and-actions).
+or deny the "read" access to the project in the [Application Scope](#application-scope-resources-and-actions).
 
 These are the Application scope actions that can be allowed or denied via the
 aclpolicy:
@@ -232,13 +232,13 @@ Type      Properties                         Actions  Description
 "                                            `kill`   Kill a running job
 "                                            `killAs` Kill a running job as another user
 "                                            `create` Create the matching job
-`node`    "rundeck_server", "nodename", ...  `read`   View the node in the UI (see [Node resource properties](authorization.html#node-resource-properties))
+`node`    "rundeck_server", "nodename", ...  `read`   View the node in the UI (see [Node resource properties](#node-resource-properties))
 "                                            `run`    Run jobs/adhoc on the node
 ----------------------------
 
 Table: Project scope specific resource actions
 
-Note: see [Node resource properties](authorization.html#node-resource-properties) for more node resource properties for authorization.
+Note: see [Node resource properties](#node-resource-properties) for more node resource properties for authorization.
 
 Note: `runAs` and `killAs` actions only apply to certain API endpoints, and allow running jobs or adhoc executions or killing executions to be performed with a different username attached as the author of the action.  See [Rundeck API - Running a Job](../api/index.html#running-a-job).
 

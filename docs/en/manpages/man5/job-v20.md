@@ -361,6 +361,16 @@ day
 
 :    day of the month: * - all; 1-31 specific days
 
+### year
+
+The [schedule](#schedule) year to run the job
+
+*Attributes*
+
+year
+
+:    year: * - all; specific year
+
 ## context 
      
 The [job](#job) context.
@@ -492,6 +502,7 @@ or as Name-value list:
   {name:"A Label", value:"a value"}
 ] 
 ~~~~~~~~ 
+
 ## dispatch 
 
      
@@ -508,11 +519,11 @@ general information.
 
 :    keep going flag
 
-[rankAttribute](#rankAttribute)
+[rankAttribute](#rankattribute)
 
 :    Name of the Node attribute to use for ordering the sequence of nodes (default is "nodename")
 
-[rankOrder](#rankOrder)
+[rankOrder](#rankorder)
 
 :    Order direction for node ranking. Either "ascending" or "descending" (default "ascending")
 
@@ -894,7 +905,7 @@ nodeStep
 
 Optional "arg" element can be embedded:
 
-[arg](#arg)
+##### arg
 
 :    option arguments to the script or job
 
@@ -1107,7 +1118,7 @@ urls
 <webhook urls="http://server/callback?id=${execution.id}&status=${execution.status}&trigger=${notification.trigger}"/>
 ~~~~~~~~ 
 
-* For more information about the Webhook mechanism used, see the chapter [Integration - Webhooks](manual/jobs.html#webhooks).
+* For more information about the Webhook mechanism used, see the chapter [Integration - Webhooks](../manual/jobs.html#webhooks).
 
 ### plugin
 

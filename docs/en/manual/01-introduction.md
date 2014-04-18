@@ -23,13 +23,13 @@ building, scheduling, logging, and integration with external sources for node an
 option data.
 
 Already itching to install it? Jump ahead to
-[Installing Rundeck](getting-started.html#installing-rundeck).
+[Installing Rundeck](getting-started.html#download-and-installation).
 
 
 ### Who makes Rundeck?
 
 Rundeck is developed on GitHub as a project called
-[rundeck](https://github.com/dtolabs/rundeck)
+[rundeck](https://github.com/rundeck/rundeck)
 by [SimplifyOps](http://simplifyops.com) and the Rundeck community.
 All new users are welcomed to participate in the project and contribute.
 Please vote on feature ideas on the [Rundeck Trello Board](https://trello.com/b/sn3g9nOr/rundeck-development).

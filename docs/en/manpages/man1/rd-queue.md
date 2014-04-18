@@ -120,5 +120,3 @@ This action allows you to specify the Execution ID of a currently running execut
 
 [`dispatch`](dispatch.html), [`run`](run.html).
 
-The Rundeck source code and all documentation may be downloaded from
-<https://github.com/dtolabs/rundeck/>.

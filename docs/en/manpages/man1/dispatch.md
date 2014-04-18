@@ -461,5 +461,5 @@ occurs.
    
 # SEE ALSO
 
-* [`rd-filtering-options`](rd-options.html), [`rd-queue`](rd-queue.html).
+* [`rd-queue`](rd-queue.html).
 * [User Guide - Node Filters](../manual/node-filters.html)

@@ -45,7 +45,7 @@ location of the data directory depends on the installation method:
 
 ## Recovery
 
-(1) Stop the server. See: [startup and shutdown](#startup-and-shtudown). (Rundeck recovery should only be done with the server down.)
+(1) Stop the server. See: [startup and shutdown](startup-and-shtudown.html). (Rundeck recovery should only be done with the server down.)
 
     ~~~~~~ {.bash}
     rundeckd stop

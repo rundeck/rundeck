@@ -111,7 +111,7 @@ command/script via the appropriate services.
     
 Annotate your class with `@Plugin` and use the service name `RemoteScriptNodeStep`
 
-Implement the interface [RemoteScriptNodeStepPlugin](javadoc/com/dtolabs/rundeck/plugins/step/RemoteScriptNodeStepPlugin.html):
+Implement the interface [RemoteScriptNodeStepPlugin](../javadoc/com/dtolabs/rundeck/plugins/step/RemoteScriptNodeStepPlugin.html):
 
 ~~~~ {.java}
 /**
@@ -190,7 +190,7 @@ public interface PluginStepContext {
 See the source directory `examples/example-java-step-plugin` for
 examples of all three provider types.
 
-* On github: [example-java-step-plugin](https://github.com/dtolabs/rundeck/tree/development/examples/example-java-step-plugin) 
+* On github: [example-java-step-plugin](https://github.com/rundeck/rundeck/tree/development/examples/example-java-step-plugin) 
 
 ## Script Plugin Type
 
@@ -207,7 +207,7 @@ Use the service name for the plugin type:
 * `WorkflowNodeStep`
 * `RemoteScriptNodeStep`
 
-For configuration properties, see the [ResourceModelSourceScript Plugin](resource-model-source-plugin.html#configurable-resource-model-source-script-plugin).
+For configuration properties, see the [Resource Model Source Plugin - Plugin Properties](resource-model-source-plugin.html#plugin-properties-1).
 
 To define [property scopes](plugin-annotations.html#property-scopes), 
 add a `scope` entry in the map for a configuration property:

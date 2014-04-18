@@ -69,7 +69,7 @@ Changes introduced by API Version number:
     * `/api/8/jobs/import` -  [Importing Jobs](#importing-jobs)
         * Added an optional parameter `project` which will override any project defined in the Job definition contexts.  If used, the job definitions do not need a `project` value in them.
 * Removed endpoints
-    * `/api/1/report/create` - [Creating History Event Reports](#creating-history-event-reports)
+    * `/api/1/report/create`
       * Removed due to History no longer supporting arbitrary event reports.
 
 **Version 7**:
@@ -153,7 +153,7 @@ Authentication
 Authentication can be done in two different ways, either with Token based authentication,
 or with a username and password.
 
-Note that in either case, **it is recommended that you enable SSL Support for the Rundeck server** so that communication is encrypted at all times. For more information about using SSL, see [Administration - Configuring Rundeck for SSL](../administration/ssl.html).
+Note that in either case, **it is recommended that you enable SSL Support for the Rundeck server** so that communication is encrypted at all times. For more information about using SSL, see [Administration - Configuring Rundeck for SSL](../administration/configuring-ssl.html).
 
 ### Token Authentication
 
@@ -163,7 +163,7 @@ request to the Rundeck API.
 To obtain an API Token, you must first log in to the Rundeck GUI using a user account
 that has "admin" credentials. Click on your username in the header of the page, and you will be shown your User Profile page.  From this page you can manage your API Tokens.  Click "Generate API Token" to create a new one.  The unique string that is shown is the API Token.
 
-Alternately you can define tokens in static file, by setting the `rundeck.tokens.file` in [framework.properties](../administration/configuration.html#framework.properties).
+Alternately you can define tokens in static file, by setting the `rundeck.tokens.file` in [framework.properties](../administration/configuration-file-reference.html#framework.properties).
 
 You must include one of the following with every HTTP request to the API:
 
@@ -535,9 +535,9 @@ The following parameters can also be used to narrow down the result set.
 
 Result:
 
-If you specify `format=xml`, then the output will be in [jobs-v20(5)](jobs-v20.html) format.
+If you specify `format=xml`, then the output will be in [job-xml](../man5/job-xml.html) format.
 
-If you specify `format=yaml`, then the output will be in [jobs-v20-yaml(5)](jobs-v20-yaml.html) format.
+If you specify `format=yaml`, then the output will be in [job-yaml](../man5/job-yaml.html) format.
 
 If an error occurs, then the output will be in XML format, using the common `result` element described in the [Response Format](#response-format) section.
 
@@ -610,9 +610,9 @@ Optional parameters:
 
 Result:
 
-If you specify `format=xml`, then the output will be in [jobs-v20(5)](jobs-v20.html) format.
+If you specify `format=xml`, then the output will be in [job-xml](../man5/job-xml.html) format.
 
-If you specify `format=yaml`, then the output will be in [jobs-v20-yaml(5)](jobs-v20-yaml.html) format.
+If you specify `format=yaml`, then the output will be in [job-yaml](../man5/job-yaml.html) format.
 
 If an error occurs, then the output will be in XML format, using the common `result` element described in the [Response Format](#response-format) section.
 
@@ -1617,7 +1617,7 @@ Method: POST, GET
 POSTing to this URL will set the resources for the project to the content of the request.
 
 Expected POST Content: For API version 2: either `text/xml` or `text/yaml` Content-Type containing the 
-Resource Model definition in [resources-v10(5)](resources-v10.html) or [resources-v10-yaml(5)](resources-v10-yaml.html) formats as the request body. (Note: any MIME type ending with '/yaml' or '/x-yaml' or '/xml' will be accepted).
+Resource Model definition in [resource-xml](../man5/resource-xml.html) or [resource-yaml](../man5/resource-yaml.html) formats as the request body. (Note: any MIME type ending with '/yaml' or '/x-yaml' or '/xml' will be accepted).
 
 **Since API version 3**: You can also POST data using a content type supported by a Resource Format Parser plugin.  This requires using API version `3`.
 
@@ -1654,7 +1654,7 @@ Optional GET Parameters:
 *  Query 
 parameters can also be used. This is an alternate interface to [Listing Resources](#listing-resources).
 
-GET Result: Depending on the `format` parameter, a value of "xml" will return [resources-v10(5)](resources-v10.html) and "yaml" will return [resources-v10-yaml(5)](resources-v10-yaml.html) formatted results.
+GET Result: Depending on the `format` parameter, a value of "xml" will return [resource-xml](../man5/resource-xml.html) and "yaml" will return [resource-yaml](../man5/resource-yaml.html) formatted results.
 
 Example GET request:
 
@@ -1802,7 +1802,7 @@ Optional Parameters:
 
 **Note:** If no query parameters are included, the result set will include all Node resources for the project.
 
-Result: Depending on the `format` parameter, a value of "xml" will return [resources-v10(5)](resources-v10.html) and "yaml" will return [resources-v10-yaml(5)](resources-v10-yaml.html) formatted results.  Any other supported format value will return content in the specified format.
+Result: Depending on the `format` parameter, a value of "xml" will return [resource-xml](../man5/resource-xml.html) and "yaml" will return [resource-yaml](../man5/resource-yaml.html) formatted results.  Any other supported format value will return content in the specified format.
 
 #### Using Node Filters
 
@@ -1859,7 +1859,7 @@ Optional Parameters:
 
 * `format` : Result format.  One of "xml" or "yaml". Default is "xml".
 
-Result: Depending on the `format` parameter, a value of "xml" will return [resources-v10(5)](resources-v10.html) and "yaml" will return [resources-v10-yaml(5)](resources-v10-yaml.html) formatted results.
+Result: Depending on the `format` parameter, a value of "xml" will return [resource-xml](../man5/resource-xml.html) and "yaml" will return [resource-yaml](../man5/resource-yaml.html) formatted results.
 
 The result will contain a single item for the specified resource.
 

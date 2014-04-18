@@ -75,6 +75,3 @@ rd-defaults.properties but these can be overridden using
 # SEE ALSO
 
 [`rd-project`](rd-project.html).
-
-The Rundeck source code and all documentation may be downloaded from
-<https://github.com/dtolabs/rundeck/>.

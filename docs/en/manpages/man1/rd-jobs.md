@@ -198,5 +198,3 @@ If no `-p/--project` option is specified, and only one project exists, the singl
 
 [`run`](run.html).
 
-The Rundeck source code and all documentation may be downloaded from
-<https://github.com/dtolabs/rundeck/>.

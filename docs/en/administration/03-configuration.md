@@ -49,7 +49,7 @@ document.
 
 This file governs the access for the "admin" group and role. 
 
-See [role based access control](role-based-access-control.html) for information about setting up policy files for other user groups.
+See [role based access control](access-control-policy.html) for information about setting up policy files for other user groups.
 
 ### framework.properties
 
@@ -150,16 +150,15 @@ Additional sources increment the source number. You can reference the project na
 
 [JAAS] configuration for the Rundeck server. The listing below
 shows the file content for a normal RPM installation. One can see it
-specifies the use of the [PropertyFileLoginModule]:
+specifies the use of the PropertyFileLoginModule:
 
     RDpropertyfilelogin {
-      org.mortbay.jetty.plus.jaas.spi.PropertyFileLoginModule required
+      org.eclipse.jetty.plus.jaas.spi.PropertyFileLoginModule required
       debug="true"
       file="/etc/rundeck/realm.properties";
     };
 
 [JAAS]: http://docs.codehaus.org/display/JETTY/JAAS
-[PropertyFileLoginModule]: http://jetty.codehaus.org/jetty/jetty-6/apidocs/org/mortbay/jetty/plus/jaas/spi/PropertyFileLoginModule.html
 
 ### realm.properties
 

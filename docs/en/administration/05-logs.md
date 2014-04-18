@@ -25,5 +25,5 @@ Different facilities log to their own files:
 * `rundeck.log`: General Rundeck application messages
 * `service.log`: Standard input and output generated during runtime
 
-See the [#log4j.properties](configuration.html#log4j.properties) section for information 
+See the [#log4j.properties](configuration-file-reference.html#log4j.properties) section for information 
 about customizing log message formats and location.
