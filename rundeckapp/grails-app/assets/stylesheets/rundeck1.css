@@ -1754,9 +1754,10 @@ div.nodesummary span.type {
 */
 
 .matchednodes.embed .node_entry {
+    display: inline-block;
     white-space: nowrap;
-    padding: 1px 2px;
-    margin: 2px;
+    padding: 1px;
+    margin: 1px 2px;
     border: 1px solid #aaa;
     border-radius: 3px;
     -moz-border-radius: 3px;
