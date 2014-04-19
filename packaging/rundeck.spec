@@ -14,6 +14,8 @@ RunDeck, is no ordinary wooden deck. You can build a bon fire on this deck.
 Rundeck provides a single console for dispatching commands across many resources.
 
 %changelog
+* Sat Apr 19 2014 Diomidis Spinellis <dds@aueb.gr> 2.0-4
+	- Correct .ssh permissions #743
 * Sun Dec 2 2013 Alex Honor <alexhonor@yahoo.com> 2.0-0
 	- Remove java dependency. #601
 * Sun Jan 6 2013 Jordi Llonch <llonchj@gmail.com> 1.4-0
@@ -48,7 +50,7 @@ fi
 
 %attr(6775, rundeck, rundeck) %dir /var/log/rundeck
 %dir /var/lib/rundeck
-%dir /var/lib/rundeck/.ssh
+%attr(0700, rundeck, rundeck) %dir /var/lib/rundeck/.ssh
 %dir /var/lib/rundeck/logs
 %dir /var/lib/rundeck/data
 %dir /var/lib/rundeck/work
