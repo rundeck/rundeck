@@ -49,7 +49,7 @@ fi
 %dir /etc/rundeck
 
 %attr(6775, rundeck, rundeck) %dir /var/log/rundeck
-%dir /var/lib/rundeck
+%attr(0755, rundeck, rundeck) %dir /var/lib/rundeck
 %attr(0700, rundeck, rundeck) %dir /var/lib/rundeck/.ssh
 %dir /var/lib/rundeck/logs
 %dir /var/lib/rundeck/data
