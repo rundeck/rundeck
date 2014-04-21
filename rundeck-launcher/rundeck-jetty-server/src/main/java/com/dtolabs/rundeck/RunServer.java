@@ -34,6 +34,7 @@ import java.util.Properties;
 public class RunServer {
 
     public static final String SERVER_HTTP_HOST = "server.http.host";
+    public static final String RUNDECK_JETTY_CONNECTOR_FORWARDED = "rundeck.jetty.connector.forwarded";
     int port = Integer.getInteger("server.http.port", 4440);
     int httpsPort = Integer.getInteger("server.https.port", 4443);
     File basedir;
@@ -134,6 +135,7 @@ public class RunServer {
         final SelectChannelConnector connector = new SelectChannelConnector();
         connector.setPort(port);
         connector.setHost(System.getProperty(SERVER_HTTP_HOST, null));
+        connector.setForwarded(Boolean.getBoolean(RUNDECK_JETTY_CONNECTOR_FORWARDED));
         server.addConnector(connector);
     }
 
@@ -142,6 +144,7 @@ public class RunServer {
         final SslSelectChannelConnector connector = new SslSelectChannelConnector();
         connector.setPort(httpsPort);
         connector.setMaxIdleTime(30000);
+        connector.setForwarded(Boolean.getBoolean(RUNDECK_JETTY_CONNECTOR_FORWARDED));
         SslContextFactory cf = connector.getSslContextFactory();
         cf.setKeyStorePath(keystore);
         cf.setKeyStorePassword(keystorePassword);

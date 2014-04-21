@@ -31,7 +31,7 @@ The script is located here: `/etc/init.d/rundeckd`
 When using the RPM, by default rundeck will use _java_ found in your path.  Various RPM based 
 distributions provide ways of managing which version of java is found.  CentOS uses 
 `/usr/sbin/alternatives` and the processing of setting alternatives can be found here: 
-[http://wiki.centos.org/HowTos/JavaOnCentOS](http://wiki.centos.org/HowTos/JavaOnCentO).
+[http://wiki.centos.org/HowTos/JavaOnCentOS](http://wiki.centos.org/HowTos/JavaOnCentOS).
 
 If you have installed a JDK or JRE in a unique directory and do not want to alter the global system
 configuration, then simply setting JAVA_HOME before running any command will use the version of java

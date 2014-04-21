@@ -65,15 +65,15 @@ for:
   adhoc:
     - allow: [read,run,runAs,kill,killAs] # allow running/killing adhoc jobs
   job: 
-    - allow: [read,update,delete,run,runAs,kill,killAs] # allow read/write/delete/run/kill of all jobs
+    - allow: [create,read,update,delete,run,runAs,kill,killAs] # allow create/read/write/delete/run/kill of all jobs
   node:
-    - allow: [read,run] # allow read/run for all nodes
+    - allow: [read,run] # allow read/run for nodes
 by:
   group: admin
 
 ---
 
-description: Admin level access control. Pretty much allows anything.
+description: Admin Application level access control, applies to creating/deleting projects, admin of user profiles, viewing projects and reading system information.
 context:
   application: 'rundeck'
 for:

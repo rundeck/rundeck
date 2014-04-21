@@ -112,7 +112,7 @@ In addition, TCP port 22 (by default) needs to be open on the clients for SSH.
 Clients should be set up to allow the Rundeck server user to connect to
 the clients using SSH via public-key authentication. It should not
 prompt for a password. See
-[Configure remote machine for SSH](ssh.html#configuring-remote-machine-for-ssh)
+[Configure remote machine for SSH](../plugins-user-guide/ssh-plugins.html#configuring-remote-machine-for-ssh)
 in the Administration chapter.
 
 There are various ways for installing SSH on Windows; we recommend
@@ -122,13 +122,16 @@ There are various ways for installing SSH on Windows; we recommend
     
 ### Installing from Source
 
-Checkout the sources from [GitHub](https://github.com/dtolabs/rundeck)
+Checkout the sources from [GitHub](https://github.com/rundeck/rundeck)
 
 You can build either the launcher jar (self-running archive), or a RPM.
 
-    make
+    ./gradlew build
 
-Creates the rundeck-launcher.jar
+Creates artifacts:
+
+* `rundeckapp/target/rundeck-X.Y.war`
+* `rundeck-launcher/launcher/build/libs/rundeck-launcher-X.Y.jar`
 
 Build the RPM:
 
@@ -267,7 +270,7 @@ to the `java` command:
 * `rundeck.config.name` Name of a custom rundeck config file, located in the server's config dir.
 * `rundeck.ssl.config` Path to the SSL config properties file to enable SSL. If not set, SSL is not enabled.
 
-For more information about using SSL, see [Configuring Rundeck for SSL](ssl.html).
+For more information about using SSL, see [Configuring Rundeck for SSL](configuring-ssl.html).
 
 ## First-Time Setup
 
@@ -276,7 +279,7 @@ For more information about using SSL, see [Configuring Rundeck for SSL](ssl.html
 Rundeck supports a number of user directory configurations. By
 default, the installation uses a file based directory, but connectivity to
 LDAP is also available. 
-See [Administration - Authentication](../administration/authentication.html).
+See [Administration - Authentication](../administration/authenticating-users.html).
 
 The Rundeck installation process will have defined a set of temporary
 logins useful during the getting started phase.

@@ -68,7 +68,7 @@ var FollowControl = Class.create({
     refresh:false,
     truncateToTail:false,
     lastlines:20,
-    maxLastLines: 100,
+    maxLastLines: 500,
     iconUrl:'/images/icon',
     smallIconUrl:'/images/icon-small',
     appLinks: null,
@@ -862,7 +862,7 @@ var FollowControl = Class.create({
             new Ajax.Request(url, {
                 parameters: idstr + "&offset=" + offset
                     + ((this.tailmode && this.lastlines && this.truncateToTail && offset==0) ? "&lastlines=" + this.lastlines : "")
-                    + "&maxlines="+this.lastlines
+                    + "&maxlines="+this.maxLastLines
                     + this.extraParams ,
                 onSuccess: function(transport) {
                     obj.appendCmdOutput(transport.responseText);

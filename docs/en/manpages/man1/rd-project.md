@@ -72,5 +72,3 @@ Create a new project and specify the "project.ssh-keypath" value as well as a pa
 
 [`rd-setup`](rd-setup.html).
 
-The Rundeck source code and all documentation may be downloaded from
-<https://github.com/dtolabs/rundeck/>.

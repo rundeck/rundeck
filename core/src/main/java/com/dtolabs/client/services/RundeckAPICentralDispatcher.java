@@ -804,6 +804,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
                 params.put("offset", offset.toString());
                 params.put("lastmod", rlastmod.toString());
             }
+            params.put("maxlines", "500");
 
             logger.debug("request" + rundeckApiExecOutputJobPath + " params: " + params);
             //2. send request via ServerService

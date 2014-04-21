@@ -128,3 +128,5 @@ rundeck.execution.finalize.retryMax=10
 rundeck.execution.finalize.retryDelay=5000
 rundeck.execution.stats.retryMax=3
 rundeck.execution.stats.retryDelay=5000
+rundeck.gui.execution.tail.lines.default = 20
+rundeck.gui.execution.tail.lines.max = 500

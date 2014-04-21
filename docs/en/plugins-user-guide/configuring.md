@@ -177,7 +177,7 @@ to make use of the provider.  The specific Provider Name is used as the
 "format name" when you want to use the parser or generator.
 
 For example, to enable a particular Resource Format parser to be used by a File
-Resource Model Source (see [File Resource Model Source Configuration](plugins.html#file-resource-model-source-configuration)), you should specify
+Resource Model Source (see [File Resource Model Source Configuration](resource-model-source-plugins.html#file-resource-model-source-configuration)), you should specify
 the Provider Name for the parser as the format for the source:
 
     resources.source.1.format=myformat
@@ -199,14 +199,14 @@ currently available triggers:
 * `onsuccess` - the Job succeeded
 * `onfailure` - the Job failed
 
-When you define the Job in the GUI or via [XML](../manpages/man5/job-v20.html#notification) or
-[Yaml](../manpages/man5/job-yaml-v12.html#notification), you can add any of the available Notification plugin types to happen for
+When you define the Job in the GUI or via [XML](../man5/job-v20.html#notification) or
+[Yaml](../man5/job-yaml-v12.html#notification), you can add any of the available Notification plugin types to happen for
 any of the possible triggers.  Each Notification plugin type may have unique
 configuration properties that you can specify. Each combination of trigger and
  Notification type has a unique configuration.
 
 When defining configuration values for a plugin, you can usually substitute
-any "Job context variables" that are listed under [Context Variables](job-workflows.html#context-variables). (Note: Some configuration properties of a plugin may not support this feature.)
+any "Job context variables" that are listed under [User Guide - Jobs - Context Variables](../manual/jobs.html#context-variables). (Note: Some configuration properties of a plugin may not support this feature.)
 
 In addition, you can also use these variables:
 

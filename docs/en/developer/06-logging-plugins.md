@@ -84,9 +84,9 @@ Your plugin class should implement the appropriate Java interface as described i
 * [StreamingLogReader](#streaminglogreader)
 * [ExecutionFileStorage](#executionfilestorage)
 
-To define configuration properties for your plugin, you use the same mechanisms as for Workflow Steps, described under the chapter [Workflow Step Plugin Development - Plugin Descriptions](workflow-step-plugin-development.html#plugin-descriptions).
+To define configuration properties for your plugin, you use the same mechanisms as for Workflow Steps, described under the chapter [Plugin Annotations - Plugin Descriptions](plugin-annotations.html#plugin-description).
 
-The simplest way to do this is to use [Description Annotations](workflow-step-plugin-development.html#description-annotations). 
+The simplest way to do this is to use [Plugin Annotations - Plugin Properties](plugin-annotations.html#plugin-properties). 
 
 ### Groovy plugin type
 
@@ -106,18 +106,18 @@ rundeckPlugin(StreamingLogWriterPlugin){
 See the source directory `examples/example-groovy-log-plugins` for
 examples of all three provider types written in Groovy.
 
-* On github: [example-groovy-log-plugins](https://github.com/dtolabs/rundeck/tree/development/examples/example-groovy-log-plugins) 
+* On github: [example-groovy-log-plugins](https://github.com/rundeck/rundeck/tree/development/examples/example-groovy-log-plugins) 
 
 See the source directory `examples/example-java-logging-plugins` for
 Java examples.
 
-* On github: [example-java-logging-plugins](https://github.com/dtolabs/rundeck/tree/development/examples/example-java-logging-plugins) 
+* On github: [example-java-logging-plugins](https://github.com/rundeck/rundeck/tree/development/examples/example-java-logging-plugins) 
 
 ## Execution Context Data
 
 All three plugin types are given a Map of Execution "context data".  This is a dataset with information about the Execution that produced the log events.
 
-This data map is the same as the "Job context variables" available when you execute a job or adhoc script, as described in the chapter [Job Workflows - Context Variables](../manual/job-workflows.html#context-variables).
+This data map is the same as the "Job context variables" available when you execute a job or adhoc script, as described in the chapter [Job Workflows - Context Variables](../manual/jobs.html#context-variables).
 
 Note that the Map keys will not start with `job.`, simply use the variable name, such as `execid`.
 

@@ -47,7 +47,7 @@ For node-specific add an attribute named `script-exec` to the node.
 
 :   Specifies the system command to run
 
-See [Defining the script-exec command](plugins.html#defining-the-script-exec-command) for
+See [Defining the script-exec command](#defining-the-script-exec-command) for
 what to specify for this property.
 
 #### Configuring the working directory
@@ -166,7 +166,7 @@ For node-specific add these attributes to the node.
 
 :   Specifies the system command to run
 
-See [Defining the script-copy command](plugins.html#defining-the-script-copy-command) for
+See [Defining the script-copy command](#defining-the-script-copy-command) for
 what to specify for this property.
 
 #### Configuring the working directory
@@ -215,7 +215,7 @@ For node-specific add an attribute named `script-copy-remote-filepath` to the no
 
 :   Specifies the full path of the copied file.
 
-See [Defining the script-copy filepath](plugins.html#defining-the-script-copy-filepath) for
+See [Defining the script-copy filepath](#defining-the-script-copy-filepath) for
 what to specify for this property.
 
 #### Defining the script-copy command
@@ -277,7 +277,7 @@ This property is used when copying a *script file* to the remote node, as the lo
 The value of this property or attribute should be the complete filepath on
 the target node where copied script files are to be placed.
 
-You can do this in *two* ways, either as a configuration property as described here, or via output from your script, as described under [Requirements of script-copy command](plugins.html#requirements-of-script-copy-command).
+You can do this in *two* ways, either as a configuration property as described here, or via output from your script, as described under [Requirements of script-copy command](#requirements-of-script-copy-command).
 
 You can use *Data context properties* as you can in normal Rundeck command
 execution, such as `${node.name}` or `${job.name}`.
@@ -452,7 +452,7 @@ The `stub-plugin` includes these providers:
 * `stub` for the NodeExecutor service
 * `stub` for the FileCopier service
 
-(Refer to [Using Providers](plugins.html#using-providers) to enable them.)
+(Refer to [Configuring - Node Execution](configuring.html#node-execution) to enable them.)
 
 This plugin does not actually perform any remote file copy or command execution,
 instead it simply echoes the command that was supposed to be executed, and

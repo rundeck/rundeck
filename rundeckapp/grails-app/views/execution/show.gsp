@@ -53,7 +53,7 @@
             smallIconUrl: "${resource(dir: 'images', file: 'icon-small')}",
             extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>&markdown=${params.markdown}",
             lastlines: ${params.lastlines ? params.lastlines : defaultLastLines},
-            maxLastLines: ${maxLastLines},
+            maxLastLines: ${params.maxlines ? params.maxlines : maxLastLines},
             collapseCtx: {value:${null == execution?.dateCompleted },changed:false},
             showFinalLine: {value:false,changed:false},
             tailmode: ${followmode == 'tail'},

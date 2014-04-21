@@ -8,7 +8,7 @@ Your system restricts the number of open file handles per process
 but these limitations can be adjusted.
 
 If your installation attempts to exceed the limit, you will see an error
-like the one shown below in your [service.log](logs.html) file.
+like the one shown below in your [service.log](logging.html) file.
 
     Too many open files 
 
@@ -54,8 +54,8 @@ In a new shell, run the ulimit command to set the new level:
 ulimit -n 65535
 ~~~~~ 
 
-The ulimit setting can be set in the [rundeckd](#rundeckd) 
-startup script, or [profile](configuration.html#profile).
+The ulimit setting can be set in the [rundeckd](startup-and-shutdown.html#launcher) 
+startup script, or [profile](configuration-file-reference.html#profile).
 
 Restart Rundeck.
 
@@ -72,7 +72,7 @@ Heap size is governed by the following startup parameters:
 ``-Xms<initial heap size>`` and ``-Xmx<maximum heap size>``
 
 
-You can increase these by updating the Rundeck [profile](configuration.html#profile). 
+You can increase these by updating the Rundeck [profile](configuration-file-reference.html#profile). 
 To see the current values, grep the ``profile`` for 
 the Xmx and Xms patterns:
 
@@ -128,7 +128,7 @@ To change the maximum threadCount modify this file and alter the line:
 Set the threadCount value to the max number of threads you want to run concurrently.
 
 Please refer to the Quartz site for detailed information:
-[Configuration - Thread Pool](http://www.quartz-scheduler.org/docs/1.x/configuration/ConfigThreadPool.html)
+[Configuration - Thread Pool](http://www.quartz-scheduler.org/documentation/quartz-1.x/configuration/ConfigThreadPool)
 
 ### JMX instrumentation
 
@@ -143,7 +143,7 @@ _Note_: For more background information on JMX, see
 "[Java theory and practice: Instrumenting applications with JMX.](http://www.ibm.com/developerworks/library/j-jtp09196/)". 
 
 Enable local JMX monitoring by adding the ``com.sun.management.jmxremote``
-flag to the startup parameters in the [profile](configuration.html#profile).
+flag to the startup parameters in the [profile](configuration-file-reference.html#profile).
 
 ~~~~~ {.bash}
 export RDECK_JVM="$RDECK_JVM -Dcom.sun.management.jmxremote"

@@ -46,7 +46,7 @@ To edit an item in the list click the "Edit" button.  To delete an item in the l
 
 Each type of Resource Model Source will have different configuration settings of its own. The built-in Resource Model Source providers are shown below.
 
-You can install more sources as plugins, see [Resource Model Source Plugins](../plugins-user-guide/plugins.html#resource-model-source-plugins).
+You can install more sources as plugins, see [Resource Model Source Plugins](../plugins-user-guide/resource-model-source-plugins.html#resource-model-source-plugins).
 
 #### File Resource Model Source
 
@@ -54,16 +54,16 @@ This is the File Resource Model Source configuration form:
 
 ![File Resource Model Source](../figures/fig0707.png)
 
-See [File Resource Model Source Configuration](../plugins-user-guide/plugins.html#file-resource-model-source-configuration) for more configuration information.
+See [File Resource Model Source Configuration](../plugins-user-guide/resource-model-source-plugins.html#file-resource-model-source-configuration) for more configuration information.
 
 #### Directory Resource Model Source
 
 Allows a directory to be scanned for resource document files. All files
-with an extension supported by one of the [Resource Model Document Formats](../manual/rundeck-basics.html#resource-model-document-formats) are included.
+with an extension supported by one of the [Resource Model Document Formats](../plugins-user-guide/resource-model-source-plugins.html#resource-model-document-formats) are included.
 
 ![Directory Resource Model Source](../figures/fig0709.png)
 
-See [Directory Resource Model Source Configuration](../plugins-user-guide/plugins.html#directory-resource-model-source-configuration) for more configuration information.
+See [Directory Resource Model Source Configuration](../plugins-user-guide/resource-model-source-plugins.html#directory-resource-model-source-configuration) for more configuration information.
 
 #### Script Resource Model Source
 
@@ -72,7 +72,7 @@ definitions.
 
 ![Script Resource Model Source](../figures/fig0710.png)
 
-See [Script Resource Model Source Configuration](../plugins-user-guide/plugins.html#script-resource-model-source-configuration) for more configuration information.
+See [Script Resource Model Source Configuration](../plugins-user-guide/resource-model-source-plugins.html#script-resource-model-source-configuration) for more configuration information.
 
 #### URL Resource Model Source
 
@@ -81,7 +81,7 @@ resource definitions.
 
 ![URL Resource Model Source](../figures/fig0711.png)
 
-See [URL Resource Model Source Configuration](../plugins-user-guide/plugins.html#url-resource-model-source-configuration) for more configuration information.
+See [URL Resource Model Source Configuration](../plugins-user-guide/resource-model-source-plugins.html#url-resource-model-source-configuration) for more configuration information.
 
 ### Default Node Executor Configuration
 
@@ -93,7 +93,7 @@ Select the Default Node Executor you wish to use for all remote Nodes for the pr
 
 ![Default Node Executor Choice](../figures/fig0712.png)
 
-You can install more types of Node Executors as plugins, see [Node Execution Plugins](../plugins-user-guide/plugins.html#node-execution-plugins).
+You can install more types of Node Executors as plugins, see [Node Execution Plugins](../plugins-user-guide/resource-model-source-plugins.html#node-execution-plugins).
 
 ### Default File Copier Configuration
 
@@ -106,7 +106,7 @@ Select the Default File Copier you wish to use for all remote Nodes for the proj
 
 ![Default File Copier Choice](../figures/fig0713.png)
 
-You can install more types of File Copiers as plugins, see [Node Execution Plugins](../plugins-user-guide/plugins.html#node-execution-plugins).
+You can install more types of File Copiers as plugins, see [Node Execution Plugins](../plugins-user-guide/resource-model-source-plugins.html#node-execution-plugins).
 
 ## System Configuration
 

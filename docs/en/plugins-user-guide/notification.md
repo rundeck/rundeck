@@ -11,4 +11,4 @@ see the [Job Notifications](../manual/jobs.html#job-notifications).
 ## Develop your own
 
 To learn how to develop your own notification plugin
-see [Notification Plugin Development](developer/notification-plugin-development.html).
+see [Notification Plugin Development](../developer/notification-plugin-development.html).

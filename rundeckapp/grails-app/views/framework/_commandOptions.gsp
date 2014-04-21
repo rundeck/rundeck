@@ -21,7 +21,9 @@ used by _editOptions.gsp template
             <g:set var="optRequired" value="${optionSelect.required}"/>
             <g:set var="optDescription" value="${optionSelect.description}"/>
             <g:set var="fieldName" value="${usePrefix+'option.'+optName}"/>
-            <g:set var="optionHasValue" value="${!selectedoptsmap && optionSelect.defaultValue || selectedoptsmap && selectedoptsmap[optName]}"/>
+            <g:set var="optionHasValue" value="${!selectedoptsmap && optionSelect.defaultValue || selectedoptsmap &&
+                    selectedoptsmap[optName] || !optionSelect.defaultValue && optRequired && optionSelect.enforced &&
+                    optionSelect.values }"/>
             <g:set var="hasError" value="${jobexecOptionErrors?jobexecOptionErrors[optName]:null}"/>
             <g:set var="fieldNamekey" value="${rkey+'_'+optName+'_label'}"/>
             <g:set var="fieldhiddenid" value="${rkey+'_'+optName+'_h'}"/>

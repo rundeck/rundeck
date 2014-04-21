@@ -117,4 +117,4 @@ by:
 
 
 [aclpolicy]: ../man5/aclpolicy.html
-[Access control policy]: ../administration/role-based-access-control.html
+[Access control policy]: ../administration/access-control-policy.html

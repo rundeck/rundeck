@@ -10,7 +10,7 @@ local node.
 ## Java Plugin Type
 
 Your provider class must implement the interface
-[NodeExecutor](javadoc/com/dtolabs/rundeck/core/execution/service/NodeExecutor.html):
+[NodeExecutor](../javadoc/com/dtolabs/rundeck/core/execution/service/NodeExecutor.html):
 
 ~~~~~ {.java}
 public interface NodeExecutor {

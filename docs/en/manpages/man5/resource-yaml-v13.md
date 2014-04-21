@@ -92,7 +92,7 @@ Optional Entries:
 
 :    Specify any custom attributes about node using a string value.
 
-* For more information about using the `editUrl`/`remoteUrl` see the [Rundeck User Manual](administration/node-resource-sources.html#resource-editor).
+* For more information about using the `editUrl`/`remoteUrl` see the [Rundeck User Manual](../administration/managing-node-sources.html#resource-editor).
 
 ## Examples
 
