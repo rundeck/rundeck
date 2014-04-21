@@ -391,6 +391,8 @@ public class ExtSSHExec extends SSHBase implements SSHTaskBuilder.SSHExecInterfa
             /* execute the command */
             channel = (ChannelExec) session.openChannel("exec");
             channel.setCommand(cmd);
+            // Enable AgentForwarding
+            channel.setAgentForwarding(true);
             channel.setOutputStream(tee);
             channel.setExtOutputStream(new KeepAliveOutputStream(System.err), true);
             if (istream != null) {
