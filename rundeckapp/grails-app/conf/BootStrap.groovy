@@ -1,6 +1,7 @@
 import com.codahale.metrics.MetricRegistry
 import com.dtolabs.launcher.Setup
 import com.dtolabs.rundeck.core.Constants
+import com.dtolabs.rundeck.core.VersionConstants
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.util.quartz.MetricsSchedulerListener
 import grails.util.Environment
@@ -25,7 +26,7 @@ class BootStrap {
     MetricRegistry metricRegistry
 
      def init = { servletContext ->
-
+         log.info("Starting Rundeck ${VersionConstants.VERSION_IDENT}...")
          filterInterceptor.handlers.sort { FilterToHandlerAdapter handler1,
                                            FilterToHandlerAdapter handler2 ->
              FilterConfig filter1 = handler1.filterConfig

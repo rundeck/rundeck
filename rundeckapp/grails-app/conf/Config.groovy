@@ -88,6 +88,7 @@ log4j={
 
     warn 'org.mortbay.log'
     warn 'grails.app.filters.AuthorizationFilters'
+    info 'grails.app.conf'
 //    info 'com.dtolabs.rundeck.core.authorization.providers.SAREAuthorization'
 
     appenders {
