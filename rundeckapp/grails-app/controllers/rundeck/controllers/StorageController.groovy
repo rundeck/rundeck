@@ -28,7 +28,7 @@ class StorageController {
     ApiService apiService
     FrameworkService frameworkService
     static allowedMethods = [
-            sshKey: ['GET','POST','PUT','DELETE']
+            apiKeys: ['GET','POST','PUT','DELETE']
     ]
 
     private def pathUrl(path){
@@ -181,7 +181,7 @@ class StorageController {
      * @return
      */
     def apiKeys() {
-        params.resourcePath = "/keys/${params.resourcePath}"
+        params.resourcePath = "/keys/${params.resourcePath?:''}"
         switch (request.method) {
             case 'POST':
                 apiPostResource()

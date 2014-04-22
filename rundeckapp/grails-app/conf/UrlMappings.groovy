@@ -68,6 +68,7 @@ class UrlMappings {
         "/api/$api_version/token/$token"(controller: 'api', action: 'apiTokenManage')
 
         "/api/$api_version/storage/keys/$resourcePath**"(controller: 'storage', action: 'apiKeys')
+        "/api/$api_version/storage/keys"(controller: 'storage', action: 'apiKeys')
 
         //incubator endpoints
         "/api/$api_version/incubator/jobs/takeoverSchedule"(controller: 'scheduledExecution', action: 'apiJobClusterTakeoverSchedule')
