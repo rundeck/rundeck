@@ -1,3 +1,4 @@
+% Configuring
 
 ## Configuring Plugins for Use
 
@@ -263,7 +264,7 @@ that can be used to tune the behavior of the plugins:
     * Grace time to allow after an execution finishes. Clients will see a "pending" message within this period after an execution finishes, even if the storage plugin is unable to find the log file. After this time period, they will see a "not found" message if the plugin is unable to find the log file.
     * default value: `120` (seconds)
 
-### Logging Plugin Configuration
+#### Logging Plugin Configuration
 
 Logging plugins can define configuration properties, which can be set in the `framework.properties` (system-wide) or `project.properties` (project-wide).  Project-level properties override system-level properties.
 
@@ -278,3 +279,64 @@ The `TYPE` is one of:
 * `StreamingLogReader`, `StreamingLogWriter`, or `ExecutionFileStorage`
 
 `PROVIDER` is the provider name of the plugin.
+
+### Storage Plugins
+
+Storage plugins are configured in the `rundeck-config.properties` file.
+
+By default, the `file` implementation is used, and files are stored at the `${framework.var.dir}/storage` path.
+
+To configure a different Storage Plugin, modify your `rundeck-config.properties` file:
+
+To use the `db` storage:
+
+    rundeck.storage.provider.1.type=db
+    rundeck.storage.provider.1.path=/
+
+To use the `file` storage:
+
+    rundeck.storage.provider.1.type=file
+    rundeck.storage.provider.1.path=/
+    rundeck.storage.provider.1.config.baseDir=${framework.var.dir}/storage
+
+Each Storage Plugin defines its own configuration properties, so if you are using a third-party plugin refer to its documentation. You can set the configuration properties via `rundeck.storage.provider.#.config.PROPERTY`.
+
+For the builtin `file` implementation, these are the configuration properties:
+
+* `baseDir` - Local filepath to store files and metadata. Default is `${framework.var.dir}/storage`
+
+The `db` implementation has no configuration properties.
+
+### Storage Converter Plugins
+
+Storage Converter plugins are configured in the `rundeck-config.properties` file.
+
+Add an entry in your `rundeck-config.properties` file declaring the converter plugin which will handle content in the `/keys` subpath of the storage container.
+
+~~~~
+rundeck.storage.converter.1.type=my-encryption-plugin
+rundeck.storage.converter.1.path=/keys
+rundeck.storage.converter.1.config.foo=my config value
+~~~~
+
+* `type` - specifies the plugin provider name
+* `path` - specifies the storage path the converter will apply to
+* `resourceSelector` - specifies a metadata selector to choose which resources to apply the converter to
+* `config.PROP` - specifies a plugin configuration property
+
+The `resourceSelector` allows applying the converter to only resources which have the matching metadata.  The format for the value is:
+
+    key OP value [; key OP value]*
+
+Available metadata keys:
+
+* `Rundeck-content-type`: the Content type of the stored file
+* `Rundeck-key-type`: a value of `public` or `private` for Keys.
+
+`OP` can be `=` for exact match, or `=~` for regular expression match.
+
+For example, this will apply only to private key files:
+
+    rundeck.storage.converter.1.resourceSelector = Rundeck-key-type=private
+
+If a value for `resourceSelector` is not specified, the converter plugin will apply to all files in the matching path.
