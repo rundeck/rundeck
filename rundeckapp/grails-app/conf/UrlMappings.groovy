@@ -67,7 +67,7 @@ class UrlMappings {
         "/api/$api_version/tokens/$user?"(controller: 'api', action: 'apiTokenList')
         "/api/$api_version/token/$token"(controller: 'api', action: 'apiTokenManage')
 
-        "/api/$api_version/storage/ssh-key/$resourcePath**"(controller: 'storage', action: 'apiSshKey')
+        "/api/$api_version/storage/keys/$resourcePath**"(controller: 'storage', action: 'apiKeys')
 
         //incubator endpoints
         "/api/$api_version/incubator/jobs/takeoverSchedule"(controller: 'scheduledExecution', action: 'apiJobClusterTakeoverSchedule')

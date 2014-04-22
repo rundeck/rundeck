@@ -17,12 +17,12 @@ class StorageController {
     public static final String RES_META_RUNDECK_CONTENT_TYPE = 'Rundeck-content-type'
     public static final String RES_META_RUNDECK_CONTENT_SIZE = 'Rundeck-content-size'
     public static final String RES_META_RUNDECK_CONTENT_MASK = 'Rundeck-content-mask'
-    public static final String RES_META_RUNDECK_SSHKEY_TYPE = 'Rundeck-ssh-key-type'
+    public static final String RES_META_RUNDECK_KEY_TYPE = 'Rundeck-key-type'
     public static final Map<String,String> RES_META_RUNDECK_OUTPUT = [
             (RES_META_RUNDECK_CONTENT_TYPE):"contentType",
             (RES_META_RUNDECK_CONTENT_SIZE):"contentLength",
             (RES_META_RUNDECK_CONTENT_MASK): RES_META_RUNDECK_CONTENT_MASK,
-            (RES_META_RUNDECK_SSHKEY_TYPE): RES_META_RUNDECK_SSHKEY_TYPE
+            (RES_META_RUNDECK_KEY_TYPE): RES_META_RUNDECK_KEY_TYPE
     ]
     StorageService storageService
     ApiService apiService
@@ -33,7 +33,7 @@ class StorageController {
 
     private def pathUrl(path){
         def uriString = "/api/${ApiRequestFilters.API_CURRENT_VERSION}/incubator/storage/$path"
-        if ("${path}".startsWith('ssh-key/') || path.toString() == 'ssh-key') {
+        if ("${path}".startsWith('keys/') || path.toString() == 'keys') {
             uriString = "/api/${ApiRequestFilters.API_CURRENT_VERSION}/storage/$path"
         }
         return createLink(absolute: true, uri: uriString)
@@ -180,8 +180,8 @@ class StorageController {
      * Handle resource requests to the /ssh-key path
      * @return
      */
-    def apiSshKey() {
-        params.resourcePath = "/ssh-key/${params.resourcePath}"
+    def apiKeys() {
+        params.resourcePath = "/keys/${params.resourcePath}"
         switch (request.method) {
             case 'POST':
                 apiPostResource()

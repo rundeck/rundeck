@@ -10,7 +10,7 @@ import com.dtolabs.rundeck.server.plugins.ConfiguredPlugin;
 import com.dtolabs.rundeck.server.plugins.PluginRegistry;
 import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService;
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService;
-import com.dtolabs.rundeck.server.plugins.storage.SSHKeyStorageLayer;
+import com.dtolabs.rundeck.server.plugins.storage.KeyStorageLayer;
 import com.dtolabs.rundeck.server.plugins.storage.StorageLogger;
 import org.apache.log4j.Logger;
 import org.rundeck.storage.api.PathUtil;
@@ -137,15 +137,15 @@ public class StorageTreeFactory implements FactoryBean<StorageTree>, Initializin
      */
     private TreeBuilder<ResourceMeta> baseConverter(TreeBuilder<ResourceMeta> builder) {
         logger.debug("Configuring base converter: StorageTimestamperConverter" );
-        logger.debug("Configuring base converter: SSHKeyStorageLayer" );
+        logger.debug("Configuring base converter: KeyStorageLayer" );
         return builder.convert(
                 new StorageConverterPluginAdapter("builtin:timestamp",
                         new StorageTimestamperConverter()
                 )
         ).convert(
                 new StorageConverterPluginAdapter("builtin:ssh-storage",
-                        new SSHKeyStorageLayer()
-                ), PathUtil.asPath("/ssh-key"));
+                        new KeyStorageLayer()
+                ), PathUtil.asPath("/keys"));
     }
 
     /**
