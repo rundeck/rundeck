@@ -37,7 +37,7 @@ for:
       allow: [read] # allow view of all projects
   storage:
     - match:
-        path: 'keys/.*'
+        path: '(keys|keys/.*)'
       allow: '*' # allow all access to manage ssh keys
 by:
   group: api_token_group
