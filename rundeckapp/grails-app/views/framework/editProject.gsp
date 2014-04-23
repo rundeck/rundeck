@@ -31,9 +31,12 @@
 
     <g:javascript library="prototype/effects"/>
     <g:javascript library="resourceModelConfig"/>
+    <asset:javascript src="storageBrowseKO.js"/>
     <g:javascript>
 
     var configControl;
+    var storageBrowse;
+    var storageBrowseTarget;
     function init(){
         configControl=new ResourceModelConfigControl('${prefixKey.encodeAsJavaScript()}');
         configControl.pageInit();
@@ -42,8 +45,37 @@
                 elem.observe('keypress',noenter);
             }
         });
+
+        jQuery('#createform').on('click','.obs-select-storage-path',function(evt) {
+            evt.preventDefault();
+            var rootPath=jQuery(this).data('storage-root');
+            if(!rootPath.startsWith("keys/")){
+                rootPath="keys";
+            }
+            storageBrowseTarget=jQuery(this).data('field');
+            console.log("load for "+ rootPath );
+            console.log("load target "+storageBrowseTarget);
+            if(storageBrowse==null){
+                storageBrowse = new StorageBrowser(appLinks.storageKeysApi,rootPath);
+                ko.applyBindings(storageBrowse);
+                jQuery('#storagebrowse').on('hide.bs.modal',function(){
+                    if(storageBrowse && storageBrowse.selectedPath()){
+                        jQuery(storageBrowseTarget).val(storageBrowse.selectedPath());
+                        storageBrowse.selectedPath(null);
+                    }
+                });
+            }
+            storageBrowse.rootPath(rootPath);
+            storageBrowse.fileFilter(jQuery(this).data('storage-filter'));
+            if(jQuery(storageBrowseTarget).val()){
+                storageBrowse.selectedPath(jQuery(storageBrowseTarget).val());
+                storageBrowse.path(storageBrowse.parentDirString(jQuery(storageBrowseTarget).val()));
+            }else{
+                storageBrowse.initialLoad();
+            }
+        });
     }
-    Event.observe(window, 'load', init);
+    jQuery(init);
     </g:javascript>
 </head>
 
@@ -88,6 +120,32 @@
             </div>
         </div>
         </g:form>
+    </div>
+
+    <div class="modal" id="storagebrowse" tabindex="-1" role="dialog" aria-labelledby="storagebrowsetitle"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="storagebrowsetitle">Select a Storage File</h4>
+                </div>
+
+                <div class="modal-body" style="max-height: 500px; overflow-y: scroll">
+                    <g:render template="storageBrowser"/>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-default" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-sm btn-success"
+                        data-bind="css: selectedPath()?'active':'disabled' "
+                        data-dismiss="modal"
+                    >
+                        Choose Selected File
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
 </g:if>

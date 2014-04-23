@@ -41,15 +41,13 @@ import com.dtolabs.rundeck.core.execution.utils.ResponderTask;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureReason;
-import com.dtolabs.rundeck.core.plugins.configuration.Describable;
-import com.dtolabs.rundeck.core.plugins.configuration.Description;
-import com.dtolabs.rundeck.core.plugins.configuration.Property;
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil;
+import com.dtolabs.rundeck.core.plugins.configuration.*;
 import com.dtolabs.rundeck.core.storage.ResourceMeta;
 import com.dtolabs.rundeck.core.tasks.net.ExtSSHExec;
 import com.dtolabs.rundeck.core.tasks.net.SSHTaskBuilder;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
+import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
 import com.jcraft.jsch.JSchException;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.log4j.Logger;
@@ -157,10 +155,16 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             "File Path to the SSH Key to use",
             false, null);
 
-    static final Property SSH_KEY_STORAGE_PROP = PropertyUtil.string(CONFIG_KEYSTORE_PATH,
-            "SSH Key Storage Path",
-            "Path to the SSH Key to use within Rundeck Storage. E.g. \"ssh-key/path/key1.pem\"",
-            false, null);
+    static final Property SSH_KEY_STORAGE_PROP = PropertyBuilder.builder()
+            .string(CONFIG_KEYSTORE_PATH)
+            .required(false)
+            .title("SSH Key Storage Path")
+            .description("Path to the SSH Key to use within Rundeck Storage. E.g. \"keys/path/key1.pem\"")
+            .renderingOption(StringRenderingConstants.SELECTION_ACCESSOR_KEY,
+                    StringRenderingConstants.SelectionAccessor.STORAGE_PATH)
+            .renderingOption(StringRenderingConstants.STORAGE_PATH_ROOT_KEY, "keys")
+            .renderingOption(StringRenderingConstants.STORAGE_FILE_META_FILTER_KEY, "Rundeck-key-type=private")
+            .build();
 
     public static final Property SSH_AUTH_TYPE_PROP = PropertyUtil.select(CONFIG_AUTHENTICATION, "SSH Authentication",
             "Type of SSH Authentication to use",
