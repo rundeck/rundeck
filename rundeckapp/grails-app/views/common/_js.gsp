@@ -1,3 +1,4 @@
+<%@ page import="rundeck.filters.ApiRequestFilters" %>
 <script type="text/javascript">
     <g:set var="currentProject" value="${params.project?:request.project}"/>
     <g:set var="projParams" value="${currentProject?[project:currentProject]:[:]}"/>
@@ -52,7 +53,8 @@
         editOptsRedo: '${createLink(controller:"editOpts",action:"redo",params:projParams)}',
         editOptsRevert: '${createLink(controller:"editOpts",action:"revert",params:projParams)}',
         menuJobsPicker: '${createLink(controller:"menu",action:"jobsPicker",params:projParams)}',
-        scheduledExecutionGroupTreeFragment: '${createLink(controller:"scheduledExecution",action:"groupTreeFragment",params:projParams)}'
+        scheduledExecutionGroupTreeFragment: '${createLink(controller:"scheduledExecution",action:"groupTreeFragment",params:projParams)}',
+        storageKeysApi: '${createLink(uri:"/api/${ApiRequestFilters.API_CURRENT_VERSION}/storage/")}'
     } ;
     //compatibility with WB javascript:
     var AppImages = {

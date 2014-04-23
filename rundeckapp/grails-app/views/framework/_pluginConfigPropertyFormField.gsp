@@ -27,6 +27,8 @@
 <g:set var="valueColType" value="col-sm-10"/>
 <g:set var="valueColTypeSplitA" value="col-sm-5"/>
 <g:set var="valueColTypeSplitB" value="col-sm-5"/>
+<g:set var="valueColTypeSplit80" value="col-sm-8"/>
+<g:set var="valueColTypeSplit20" value="col-sm-2"/>
 <g:set var="offsetColType" value="col-sm-10 col-sm-offset-2"/>
 <g:set var="formControlType" value="form-control input-sm"/>
 <g:set var="hasError" value="${error ? 'has-error' : ''}"/>
@@ -40,8 +42,6 @@
     <div class="${labelColType} form-control-static ${error?'has-error':''}  ${prop.required ? 'required' : ''}">
         ${prop.title ? prop.title.encodeAsHTML() : prop.name.encodeAsHTML()}:
     </div>
-    <div class="${valueColType}"  style="overflow-x:auto">
-
 </g:if>
 <g:elseif test="${prop.type.toString()=='Boolean'}">
     <g:set var="fieldid" value="${g.rkey()}"/>
@@ -55,6 +55,7 @@
                             id="${fieldid}"/>
             </label>
         </div>
+    </div>
 </g:elseif>
 <g:elseif test="${prop.type.toString()=='Select' || prop.type.toString()=='FreeSelect'}">
     <g:set var="fieldid" value="${g.rkey()}"/>
@@ -75,28 +76,30 @@
             class="${formControlType}"
         />
         </div>
-        <div class="${offsetColType}">
     </g:if>
     <g:elseif test="${prop.required}">
         <div class="${valueColType}">
         <g:select name="${fieldname}" from="${prop.selectValues}" id="${fieldid}"
                   value="${values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue}"
                   class="${formControlType}"/>
+        </div>
     </g:elseif>
     <g:else>
         <div class="${valueColType}">
         <g:select name="${fieldname}" from="${prop.selectValues}" id="${fieldid}" noSelection="['':'-none selected-']"
                   value="${values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue}"
                   class="${formControlType}"/>
+        </div>
     </g:else>
 </g:elseif>
 <g:else>
     <g:set var="fieldid" value="${g.rkey()}"/>
+    <g:set var="hasStorageSelector" value="${prop.renderingOptions?.(StringRenderingConstants.SELECTION_ACCESSOR_KEY) == StringRenderingConstants.SelectionAccessor.STORAGE_PATH}"/>
     <label class="${labelColType}  ${prop.required?'required':''}"
            for="${fieldid.encodeAsHTML()}" >${prop.title ? prop.title.encodeAsHTML() : prop.name.encodeAsHTML()}</label>
-    <div class="${valueColType}">
+    <div class="${hasStorageSelector? valueColTypeSplit80: valueColType}">
     <g:hiddenField name="${origfieldname}" value="${values&&values[prop.name]?values[prop.name]:''}"/>
-    <g:if test="${prop.renderingOptions?.('displayType') == StringRenderingConstants.DisplayType.MULTI_LINE}">
+    <g:if test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) == StringRenderingConstants.DisplayType.MULTI_LINE}">
         <g:textArea name="${fieldname}" value="${values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue}"
                  id="${fieldid}" rows="10" cols="100" class="${formControlType}"/>
     </g:if>
@@ -104,7 +107,23 @@
         <g:textField name="${fieldname}" value="${values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue}"
                  id="${fieldid}" size="100" class="${formControlType}"/>
     </g:else>
+    </div>
+    <g:if test="${hasStorageSelector}">
+        <div class="${valueColTypeSplit20}">
+        %{-- selector for accessible storage --}%
+        <g:set var="storageRoot" value="${prop.renderingOptions?.(StringRenderingConstants.STORAGE_PATH_ROOT_KEY)?:'/'}"/>
+        <g:set var="storageFilter" value="${prop.renderingOptions?.(StringRenderingConstants.STORAGE_FILE_META_FILTER_KEY)?:''}"/>
+        <button class="btn btn-sm btn-default obs-select-storage-path"
+                data-toggle="modal"
+                href="#storagebrowse"
+                data-storage-root="${storageRoot}"
+                data-storage-filter="${storageFilter}"
+                data-field="#${fieldid}"
+        >Select... <i class="glyphicon glyphicon-folder-open"></i></button>
+        </div>
+    </g:if>
 </g:else>
+<div class="${offsetColType}">
     <div class="help-block">${prop.description?.encodeAsHTML()}</div>
     <g:if test="${error}">
         <div class="text-warning">${error.encodeAsHTML()}</div>
