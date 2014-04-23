@@ -23,10 +23,16 @@ package com.dtolabs.rundeck.core.plugins.configuration;
  */
 public class StringRenderingConstants {
     
+    public static final String SELECTION_ACCESSOR_KEY = "selectionAccessor";
+    public static final String STORAGE_PATH_ROOT_KEY = "storage-path-root";
+    public static final String STORAGE_FILE_META_FILTER_KEY = "storage-file-meta-filter";
     public static final String DISPLAY_TYPE_KEY = "displayType";
-    
+
     public enum DisplayType {
         SINGLE_LINE,
         MULTI_LINE
+    }
+    public enum SelectionAccessor{
+        STORAGE_PATH,
     }
 }
