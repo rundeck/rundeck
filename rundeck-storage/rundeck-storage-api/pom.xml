@@ -2,15 +2,14 @@
 <project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <artifactId>oss-parent</artifactId>
+    <groupId>org.sonatype.oss</groupId>
+    <version>7</version>
+  </parent>
   <groupId>org.rundeck</groupId>
   <artifactId>rundeck-storage-api</artifactId>
-  <version>2.1.0-SNAPSHOT</version>
-  <parent>
-    <groupId>org.rundeck</groupId>
-    <artifactId>rundeck-storage</artifactId>
-    <version>2.1.0-SNAPSHOT</version>
-  </parent>
-
+  <version>2.1.0</version>
   <name>Rundeck library rundeck-storage-api</name>
   <description>Rundeck</description>
   <url>http://rundeck.org</url>

@@ -2,15 +2,14 @@
 <project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <artifactId>oss-parent</artifactId>
+    <groupId>org.sonatype.oss</groupId>
+    <version>7</version>
+  </parent>
   <groupId>org.rundeck</groupId>
   <artifactId>rundeck-storage-data</artifactId>
-  <version>2.1.0-SNAPSHOT</version>
-  <parent>
-    <groupId>org.rundeck</groupId>
-    <artifactId>rundeck-storage</artifactId>
-    <version>2.1.0-SNAPSHOT</version>
-  </parent>
-
+  <version>2.1.0</version>
   <name>Rundeck library rundeck-storage-data</name>
   <description>Rundeck</description>
   <url>http://rundeck.org</url>
@@ -35,23 +34,23 @@
     <url>https://github.com/rundeck/rundeck</url>
   </scm>
   <dependencies>
-      <dependency>
-          <groupId>org.spockframework</groupId>
-          <artifactId>spock-core</artifactId>
-          <version>0.7-groovy-2.0</version>
-          <scope>test</scope>
-      </dependency>
+    <dependency>
+      <groupId>org.spockframework</groupId>
+      <artifactId>spock-core</artifactId>
+      <version>0.7-groovy-2.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.codehaus.groovy</groupId>
+      <artifactId>groovy-all</artifactId>
+      <version>2.0.8</version>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.rundeck</groupId>
       <artifactId>rundeck-storage-api</artifactId>
-      <version>2.1.0-SNAPSHOT</version>
+      <version>2.1.0</version>
       <scope>compile</scope>
     </dependency>
-      <dependency>
-          <groupId>org.codehaus.groovy</groupId>
-          <artifactId>groovy-all</artifactId>
-          <version>2.0.8</version>
-          <scope>test</scope>
-      </dependency>
   </dependencies>
 </project>
