@@ -107,7 +107,9 @@ tools like umask, Java home and classpath, and SSL options.
 ### project.properties
 
 Rundeck project configuration file. One of these is
-generated at project setup time. 
+generated at project setup time. Each project has a directory within the Rundeck projects directory, and the config file is within the `etc` subdirectory:
+
+    $RDECK_BASE/projects/[PROJECT-NAME]/etc/project.properties
 
 Property                                  Description
 ----------                                -------------

@@ -14,6 +14,10 @@ promote changes between environments.
 A new installation will not contain any projects so Rundeck will present
 you with a dialog to create one. 
 
+## Configuration file
+
+The configuration for each project is defined in a file called [project.properties](configuration-file-reference.html#project.properties).
+
 ## Project Setup 
 
 A project can be set up either from the graphical console or using the
