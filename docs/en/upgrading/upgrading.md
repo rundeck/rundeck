@@ -2,6 +2,54 @@
 % Greg Schueler
 % January 30, 2014
 
+## Upgrading to Rundeck 2.1
+
+### Database schema
+
+If you are upgrading from 2.0.x, be sure to perform backups prior to upgrading.
+This release adds a new DB table 
+but does not alter the schema of other tables.
+
+### ACL policy additions
+
+Project access via API has been improved, and new authorizations are now required for project access.  See [Adminstration - Access Control Policy](../administration/access-control-policy.html#application-scope-resources-and-actions).
+
+* project access adds `configure`,`delete`,`import`,`export` actions
+* `admin` access still allows all actions
+
+Example allowing explicit actions:
+
+    context:
+      application: 'rundeck'
+    for:
+      resource:
+        - equals:
+            kind: 'project'
+          allow: [create] # allow creating new projects
+      project:
+        - equals:
+            name: 'myproject'
+          allow: [read,configure,delete,import,export,admin] # access to 'myproject'
+    by:
+      group: admin
+
+The storage facility for uploading public/private keys requires authorization to use. The default `admin.aclpolicy` and `apitoken.aclpolicy` provide this access, but if you have custom policies you may want to allow access to these actions.
+
+* `storage` can allow `create`,`update`,`read`, or `delete`
+* you can match on `path` or `name` to narrow the access
+
+The default apitoken aclpolicy file allows this access:
+
+    context:
+      application: 'rundeck'
+    for:
+      storage:
+        - match:
+            path: '(keys|keys/.*)'
+          allow: '*' # allow all access to manage stored keys
+    by:
+      group: api_token_group
+
 ## Upgrading to Rundeck 2.0 from 1.6.x
 
 Rundeck 2.0 has some under-the-hood changes, so please follow this guide when upgrading from Rundeck 1.6.x.
