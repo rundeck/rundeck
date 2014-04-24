@@ -8,3 +8,7 @@ If you are new to Rundeck, start with the **[User Guide](manual/index.html)**.
 More information about Rundeck at: [rundeck.org](http://rundeck.org).
 
 (Other languages: [Japanese](jp/index.html).)
+
+## Release Notes
+
+* [Version ${VERSION}](history/version-${VERSION}.html)

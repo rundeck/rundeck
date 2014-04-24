@@ -38,11 +38,7 @@ clean: $(DIRS)
 	done ;
 	rm -rf dist
 
-notes: en/history/toc.conf en/RELEASE.md
-
-en/RELEASE.md: ../RELEASE.md
-	cp $< $@
-	perl  -i -p -e "s#http://rundeck.org/docs/##" $@
+notes: en/history/toc.conf
 
 en/history/version-$(RVERSION).md: ../RELEASE.md
 	( $(ECHO) "% Version $(RVERSION)" ; \
@@ -52,6 +48,7 @@ en/history/version-$(RVERSION).md: ../RELEASE.md
 	cat $< >>$@
 
 	perl  -i -p -e "s#http://rundeck.org/docs/#../#" $@
+	perl  -i -p -e "s#http://rundeck.org/$(RVERSION)/#../#" $@
 
 en/history/toc.conf: en/history/version-$(RVERSION).md
 	$(ECHO) "1:version-$(RVERSION).md:Version $(RVERSION) ($(shell date "+%Y-%m-%d"))" > $@.new
