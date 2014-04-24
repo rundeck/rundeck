@@ -38,6 +38,6 @@ for:
   storage:
     - match:
         path: '(keys|keys/.*)'
-      allow: '*' # allow all access to manage ssh keys
+      allow: '*' # allow all access to manage stored keys
 by:
   group: api_token_group
