@@ -1,3 +1,7 @@
+% Version 2.1.0
+% greg
+% 04/23/2014
+
 Release 2.1.0
 =============
 
@@ -7,17 +11,17 @@ This release enhances the Rundeck API and provides a facility for storing Key fi
 
 * Project management improvements: 
     - Project Delete action in the Configuration page
-    - [Project create/config/delete APIs](http://rundeck.org/2.1.0/api/index.html#changes)
-- [Key storage facility](http://rundeck.org/2.1.0/administration/key-storage.html):
-    + [Upload public or private keys via API](http://rundeck.org/2.1.0/api/index.html#changes)
+    - [Project create/config/delete APIs](../api/index.html#changes)
+- [Key storage facility](../administration/key-storage.html):
+    + [Upload public or private keys via API](../api/index.html#changes)
     + store the key file data on disk or in the DB
     + Use private keys for SSH
     + Note: no encryption is performed by default, but you can use plugins to encrypt the data
 
 *Upgrade notes:* 
 
-1. If you are upgrading from 2.0.1 or earlier, see the notes about schema changes in the previous release notes: [2.0.2 Release Notes](http://rundeck.org/2.1.0/history/version-2.0.2.html).
-2. See the [Upgrading Guide](http://rundeck.org/2.1.0/upgrading/index.html)
+1. If you are upgrading from 2.0.1 or earlier, see the notes about schema changes in the previous release notes: [2.0.2 Release Notes](../history/version-2.0.2.html).
+2. See the [Upgrading Guide](../upgrading/index.html)
 
 ## Contributors
 
