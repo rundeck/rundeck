@@ -9,6 +9,7 @@
 
     <g:javascript library="prototype/effects"/>
     <g:javascript library="resourceModelConfig"/>
+    <asset:javascript src="storageBrowseKO.js"/>
     <g:javascript>
 
     var configControl;
@@ -20,8 +21,19 @@
                 elem.observe('keypress',noenter);
             }
         });
+
+        jQuery('#storagebrowse').find('.obs-storagebrowse-select').on('click',function(evt){
+            if(jQuery(evt.delegateTarget).hasClass('active')){
+                var storageBrowse = jQuery('#storagebrowse').data('storageBrowser');
+                var storageBrowseTarget = storageBrowse.fieldTarget();
+                if(storageBrowse && storageBrowse.selectedPath()){
+                    jQuery(storageBrowseTarget).val(storageBrowse.selectedPath());
+                    storageBrowse.selectedPath(null);
+                }
+            }
+        });
     }
-    Event.observe(window, 'load', init);
+    jQuery(init);
     </g:javascript>
     <style type="text/css">
     #configs li {
@@ -55,6 +67,8 @@
         </g:form>
     </div>
     </div>
+
+    <g:render template="storageBrowseModalKO"/>
 
 </g:if>
 <g:else>

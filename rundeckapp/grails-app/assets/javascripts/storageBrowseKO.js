@@ -21,6 +21,7 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
     self.path = ko.observable('');
     self.selectedPath=ko.observable();
     self.fileFilter=ko.observable();
+    self.fieldTarget=ko.observable();
     self.resources = ko.observableArray([]);
     self.files = ko.computed(function () {
         return ko.utils.arrayFilter(self.resources(), function (res) {
@@ -124,4 +125,21 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
             }
         });
     });
+
+    self.browse=function(rootPath, filter, selectedPath){
+        if(rootPath){
+            self.rootPath(rootPath);
+        }
+        if (filter) {
+            self.fileFilter(filter);
+        }else{
+            self.fileFilter(null);
+        }
+        if (selectedPath) {
+            self.selectedPath(selectedPath);
+            self.path(self.parentDirString(selectedPath));
+        } else {
+            self.initialLoad();
+        }
+    }
 }
