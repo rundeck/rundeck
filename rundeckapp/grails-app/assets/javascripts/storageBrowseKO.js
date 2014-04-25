@@ -17,6 +17,7 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
     self.baseUrl = baseUrl;
     self.fileSelect=fileSelect;
     self.rootPath = ko.observable(rootPath);
+    self.errorMsg = ko.observable();
     self.path = ko.observable('');
     self.selectedPath=ko.observable();
     self.fileFilter=ko.observable();
@@ -115,10 +116,11 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
             url: self.baseUrl + val,
             data: {},
             success: function (data, status, jqXHR) {
+                self.errorMsg(null);
                 ko.mapping.fromJS(data, mapping, self);
             },
             error: function (jqXHR, textStatus, errorThrown) {
-                console.log("error: " + jqXHR + ", " + textStatus + ", " + errorThrown);
+                self.errorMsg(textStatus + ": "+ errorThrown);
             }
         });
     });

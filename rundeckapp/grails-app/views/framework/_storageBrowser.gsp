@@ -1,4 +1,7 @@
 
+    <div class="alert alert-warning" data-bind="visible: errorMsg()">
+        <span data-bind="text: errorMsg"></span>
+    </div>
     <div class="text-info">
         Path: <input type="text" data-bind="value: path"></inpu>
     </div>
