@@ -817,58 +817,6 @@ class ExecutionController extends ControllerBase{
     }
 
     /**
-     * Render execution list into a map data structure
-     */
-    protected List<Map> exportExecutionData(List<Execution> execlist){
-        def executions= execlist.collect { Execution e ->
-            e = Execution.get(e.id)
-            def emap =[
-                id: e.id,
-                href: g.createLink(controller: 'execution', action: 'follow', id: e.id, absolute: true,
-                        params: [project: e.project]),
-                status: executionService.getExecutionState(e),
-                user:e.user,
-                dateStarted: e.dateStarted,
-                'dateStartedUnixtime': e.dateStarted.time,
-                'dateStartedW3c':g.w3cDateValue(date: e.dateStarted),
-                description:executionService.summarizeJob(e.scheduledExecution, e),
-                argstring:e.argString,
-                project: e.project,
-                failedNodeListString:  e.failedNodeList,
-                failedNodeList:  e.failedNodeList?.split(",") as List,
-                succeededNodeListString:  e.succeededNodeList,
-                succeededNodeList:  e.succeededNodeList?.split(",") as List,
-                loglevel : ExecutionService.textLogLevels[e.loglevel] ?: e.loglevel
-            ]
-            if (null != e.dateCompleted) {
-                emap.dateEnded= e.dateCompleted
-                emap['dateEndedUnixtime']= e.dateCompleted.time
-                emap['dateEndedW3c']=g.w3cDateValue(date: e.dateCompleted)
-            }
-            if (e.cancelled) {
-                emap['abortedby']=e.abortedby
-            }
-            if (e.scheduledExecution) {
-                emap.job = [
-                    id: e.scheduledExecution.extid,
-                    href: g.createLink(controller: 'scheduledExecution', action: 'show',
-                            id: e.scheduledExecution.extid, absolute: true,
-                            params: [project: e.project]),
-                    name: e.scheduledExecution.jobName,
-                    group: e.scheduledExecution.groupPath ?: '',
-                    project: e.scheduledExecution.project,
-                    description: e.scheduledExecution.description
-                ]
-                if (e.scheduledExecution.totalTime >= 0 && e.scheduledExecution.execCount > 0) {
-                    def long avg = Math.floor(e.scheduledExecution.totalTime / e.scheduledExecution.execCount)
-                    emap.job.averageDuration = avg
-                }
-            }
-            emap
-        }
-        executions
-    }
-    /**
      * API: /api/execution/{id} , version 1
      */
     def apiExecution={
