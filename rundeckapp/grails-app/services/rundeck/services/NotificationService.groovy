@@ -5,6 +5,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
 import com.dtolabs.rundeck.server.plugins.DescribedPlugin
+import com.dtolabs.rundeck.server.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.server.plugins.services.NotificationPluginProviderService
 import groovy.xml.MarkupBuilder
 import org.apache.commons.httpclient.Header
@@ -37,7 +38,7 @@ import rundeck.controllers.ExecutionController
 */
 /*
  * NotificationService.java
- * 
+ *
  * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * Created: May 17, 2010 6:03:16 PM
  * $Id$
@@ -53,7 +54,7 @@ public class NotificationService implements ApplicationContextAware{
     def NotificationPluginProviderService notificationPluginProviderService
     def FrameworkService frameworkService
 
-    def Map validatePluginConfig(String project, String name, Map config) {
+    def ValidatedPlugin validatePluginConfig(String project, String name, Map config) {
         return pluginService.validatePlugin(name, notificationPluginProviderService,
                 frameworkService.getFrameworkPropertyResolver(project, config), PropertyScope.Instance, PropertyScope.Project)
     }
