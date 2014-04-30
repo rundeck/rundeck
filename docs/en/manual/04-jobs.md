@@ -346,6 +346,10 @@ When the Job starts, all "start" notifications will be triggered.
 
 When the Job finishes executing, all "success" notifications will be triggered if the Job is successful.  Otherwise, all "failure" notifications will be triggered if the Job fails or is cancelled.
 
+To configure a custom email template, see the [Administration - Configuration File Reference - Custom Email Templates][] chapter.
+
+[Administration - Configuration File Reference - Custom Email Templates]: ../administration/configuration-file-reference.html#custom-email-templates
+
 ### Webhooks
 
 Rundeck Jobs can be configured to POST data to a webhook URL when they succeed or fail.
