@@ -197,6 +197,37 @@ Here's an example:
     grails.serverURL=https://node.fully.qualified.domain.name:4443
     grails.mail.default.from=deployer@domain.com
 
+#### Custom Email Templates
+
+You can define these properties to customize the email notifications. Each property can be defined for a specific Trigger, or for the general case.  Available triggers are: `success`,`failure`, and `start`:
+
+    # trigger-specific templating
+    rundeck.mail.[trigger].template.subject=[custom subject line]
+    rundeck.mail.[trigger].template.file=[path to template file]
+    rundeck.mail.[trigger].template.attachLog=true/false (if true, attach the output log to the message)
+    rundeck.mail.[trigger].template.log.formatted=true/false (if true, prefix log lines with context information)
+
+    # apply to any triggers not specified
+    rundeck.mail.template.subject=[Default subject line]
+    rundeck.mail.template.file=[path to template file]
+    rundeck.mail.template.attachLog=true/false (if true, attach the output log to the message)
+    rundeck.mail.template.log.formatted=true/false (if true, prefix log lines with context information)
+
+If a template filepath ends with `.md` or `.markdown`, then it will be interpreted as a Markdown formatted template.  Otherwise it is expected that the template file contains HTML.
+
+The Subject line, filepath, and file contents can all contain embedded property references of the form `${group.key}`.  The available properties are mostly the same as those available for Notification Plugins, including the `execution.*` and `job.*` values.  See [Plugin Development - Notification Plugin - Execution Data][].
+
+[Plugin Development - Notification Plugin - Execution Data]: ../developer/notification-plugin.html#execution-data
+
+The "Context Variables" values used within the execution are available just as they are in the execution, so options would be available as `${option.name}`.
+
+In addition these properties are defined:
+
+* `rundeck.href`: URL to the Rundeck server
+* `notification.trigger`: Trigger name
+* `notification.eventStatus`: A string indicating the combination of execution status, and notification trigger, suitable for an email subject line, such as "KILLED", "FAILURE", "STARTING", "SUCCESS".
+* `execution.projectHref`: URL to the Project within Rundeck.
+
 #### Execution finalize retry settings
 
 If a sporadic DB connection failure happens when an execution finishes, Rundeck may fail to update the state of the execution in the database, causing the execution to appear is if it is still "running". 

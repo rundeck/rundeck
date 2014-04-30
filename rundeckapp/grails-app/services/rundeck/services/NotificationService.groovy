@@ -1,6 +1,8 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
+import com.dtolabs.rundeck.core.logging.LogEvent
+import com.dtolabs.rundeck.core.logging.LogUtil
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
@@ -20,6 +22,9 @@ import rundeck.Notification
 import rundeck.ScheduledExecution
 import rundeck.User
 import rundeck.controllers.ExecutionController
+import rundeck.services.logging.ExecutionLogState
+
+import java.text.SimpleDateFormat
 
 /*
 * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
@@ -46,6 +51,7 @@ import rundeck.controllers.ExecutionController
 
 public class NotificationService implements ApplicationContextAware{
     boolean transactional = false
+    def grailsLinkGenerator
 
     ApplicationContext applicationContext
     def grailsApplication
@@ -53,6 +59,7 @@ public class NotificationService implements ApplicationContextAware{
     def pluginService
     def NotificationPluginProviderService notificationPluginProviderService
     def FrameworkService frameworkService
+    def LoggingService loggingService
 
     def ValidatedPlugin validatePluginConfig(String project, String name, Map config) {
         return pluginService.validatePlugin(name, notificationPluginProviderService,
@@ -80,6 +87,50 @@ public class NotificationService implements ApplicationContextAware{
         }
         return false
     }
+    /**
+     * Replace template variables in the text.
+     * @param templateText
+     * @param context data context
+     * @return replaced text
+     */
+    def String renderTemplate(String templateText, Map context){
+        return DataContextUtils.replaceDataReferences(templateText,context,null,false,false)
+    }
+    /**
+     * write log output to a temp file, optionally formatted.
+     * @param e
+     * @param isFormatted
+     * @return
+     */
+    def File copyExecOutputToTempFile(Execution e, boolean isFormatted){
+        def reader = loggingService.getLogReader(e)
+        if (reader.state == ExecutionLogState.NOT_FOUND||reader.state == ExecutionLogState.ERROR||reader.state !=
+                ExecutionLogState.AVAILABLE) {
+            return null
+        }
+        SimpleDateFormat logFormater = new SimpleDateFormat("HH:mm:ss", Locale.US);
+        logFormater.timeZone = TimeZone.getTimeZone("GMT")
+        def iterator = reader.reader
+        iterator.openStream(0)
+        def lineSep = System.getProperty("line.separator")
+        File temp = File.createTempFile("output-${e.id}",".txt")
+        temp.deleteOnExit()
+        temp.withWriter {Writer w->
+            iterator.findAll { it.eventType == LogUtil.EVENT_TYPE_LOG }.each { LogEvent msgbuf ->
+                w << (isFormatted ? "${logFormater.format(msgbuf.datetime)} [${msgbuf.metadata?.user}@${msgbuf.metadata?.node} ${msgbuf.metadata?.stepctx ?: '_'}][${msgbuf.loglevel}] ${msgbuf.message}" : msgbuf.message)
+                w << lineSep
+            }
+        }
+        iterator.close()
+        return temp
+    }
+    private static Map<String,String> toStringStringMap(Map input){
+        def map = new HashMap<String, String>()
+        for (Object o : input.keySet()) {
+            map.put(o.toString(),input.get(o)? input.get(o).toString():'')
+        }
+        return map;
+    }
     def boolean triggerJobNotification(String trigger,ScheduledExecution source, Map content){
         def didsend = false
         if(source.notifications && source.notifications.find{it.eventTrigger=='on'+trigger}){
@@ -97,26 +148,89 @@ public class NotificationService implements ApplicationContextAware{
                             (ExecutionService.EXECUTION_RUNNING):'STARTING',
                             (ExecutionService.EXECUTION_SUCCEEDED):'SUCCESS',
                     ]
-                    def status= statMsg[state]?:state
-                    def subjectmsg="${status} [${exec.project}] ${source.groupPath?source.groupPath+'/':''}${source.jobName}${exec.argString?' '+exec.argString:''}"
 
-                    //data context for property refs in email
-                    def userData = ['user.name': exec.user]
-                    //add execution.user.email context data
-                    //search for user profile
-                    def user = User.findByLogin(exec.user)
-                    if(user&& user.email){
-                        userData['user.email']=user.email
+                    //prep execution data
+                    def appUrl = grailsLinkGenerator.link(action: 'home', controller: 'menu',absolute: true)
+                    def projUrl = grailsLinkGenerator.link(action: 'index', controller: 'menu', params: [project:  exec.project], absolute: true)
+
+                    def execMap = generateExecutionData(exec, content)
+                    def jobMap=exportJobdata(source)
+                    Map context = generateContextData(exec, content)
+                    def contextMap=[:]
+
+                    execMap.projectHref = projUrl
+
+                    contextMap['job'] = toStringStringMap(jobMap)
+                    contextMap['execution']=toStringStringMap(execMap)
+                    contextMap['rundeck']=['href': appUrl]
+
+                    context = DataContextUtils.merge(context, contextMap)
+                    context = DataContextUtils.addContext("notification", [trigger: trigger, eventStatus: statMsg[state]], context)
+
+                    //set up templates
+                    def subjecttmpl='${notification.eventStatus} [${exec.project}] ${job.group}/${job.name} ${exec' +
+                            '.argstring}'
+                    if(grailsApplication.config.rundeck.mail."${trigger}"?.template?.subject){
+                        subjecttmpl= grailsApplication.config.rundeck.mail."${trigger}".template.subject.toString()
+                    }else if (grailsApplication.config.rundeck.mail.template.subject) {
+                        subjecttmpl=grailsApplication.config.rundeck.mail.template.subject.toString()
                     }
+                    def subjectmsg = renderTemplate(subjecttmpl, context)
 
-                    def mailctx=DataContextUtils.addContext("job", userData,null)
-
+                    def htmlemail=null
+                    def templatePaths=[]
+                    if (grailsApplication.config.rundeck.mail."${trigger}".template.body) {
+                        htmlemail = renderTemplate(grailsApplication.config.rundeck.mail."${trigger}".template.body.toString(), context)
+                    }else if (grailsApplication.config.rundeck.mail.template.body) {
+                        htmlemail = renderTemplate(grailsApplication.config.rundeck.mail.template.body.toString(), context)
+                    }
+                    if(grailsApplication.config.rundeck.mail."${trigger}".template.file){
+                        templatePaths << grailsApplication.config.rundeck.mail."${trigger}".template.file.toString()
+                    }
+                    if(grailsApplication.config.rundeck.mail.template.file){
+                        templatePaths << grailsApplication.config.rundeck.mail.template.file.toString()
+                    }
+                    for (String templatePath : templatePaths) {
+                        if (templatePath.indexOf('${') >= 0) {
+                            templatePath = renderTemplate(templatePath, context)
+                        }
+                        def template = new File(templatePath)
+                        if (template.isFile()) {
+                            if (template.name.endsWith('.md') || template.name.endsWith('.markdown')) {
+                                htmlemail = renderTemplate(template.text, context).decodeMarkdown()
+                            } else {
+                                htmlemail = renderTemplate(template.text, context)
+                            }
+                            break
+                        }
+                    }
+                    if(templatePaths && !htmlemail ){
+                        log.error("Notification templates searched but not found: " + templatePaths+ ", " +
+                                "using default");
+                    }
+                    def attachlog=false
+                    if(grailsApplication.config.rundeck.mail."${trigger}".template.attachLog in [true,'true']){
+                        attachlog=true
+                    }else if (grailsApplication.config.rundeck.mail.template.attachLog in [true, 'true']){
+                        attachlog=true
+                    }
+                    def isFormatted =false
+                    if( grailsApplication.config.rundeck.mail."${trigger}".template.log.formatted in [true,'true']){
+                        isFormatted=true
+                    }else if( grailsApplication.config.rundeck.mail.template.log.formatted in [true,'true']){
+                        isFormatted = true
+                    }
+                    File outputfile
+                    if(attachlog){
+                        //copy data to temp file
+                        outputfile=copyExecOutputToTempFile(exec,isFormatted)
+                    }
                     destarr.each{String recipient->
                         //try to expand property references
                         String sendTo=recipient
                         if(sendTo.indexOf('${')>=0){
                             try {
-                                sendTo=DataContextUtils.replaceDataReferences(recipient, mailctx,null,true)
+                                sendTo=DataContextUtils.replaceDataReferences(recipient, context ,null,true)
                             } catch (DataContextUtils.UnresolvedDataReferenceException e) {
                                 log.error("Cannot send notification email: "+e.message +
                                         ", context: user: "+ exec.user+", job: "+source.generateFullName());
@@ -125,11 +239,19 @@ public class NotificationService implements ApplicationContextAware{
                         }
                         try{
                             mailService.sendMail{
+                              multipart (attachlog && outputfile!=null)
                               to sendTo
                               subject subjectmsg
-                              body( view:"/execution/mailNotification/status", model: [execution: exec,
-                                      scheduledExecution:source, msgtitle:subjectmsg,execstate: state,
-                                      nodestatus:content.nodestatus])
+                                if(htmlemail){
+                                    html(htmlemail)
+                                }else{
+                                    body(view: "/execution/mailNotification/status", model: [execution: exec,
+                                            scheduledExecution: source, msgtitle: subjectmsg, execstate: state,
+                                            nodestatus: content.nodestatus])
+                                }
+                                if(attachlog && outputfile != null){
+                                    attachBytes "${source.jobName}-${exec.id}.txt", "text/plain", outputfile.getText("UTF-8").bytes
+                                }
                             }
                             didsend = true
                         }catch(Throwable t){
@@ -137,6 +259,9 @@ public class NotificationService implements ApplicationContextAware{
                             if (log.traceEnabled) {
                                 log.trace("Error sending notification email to ${sendTo} for Execution ${exec.id}: " + t.getMessage(), t)
                             }
+                        }
+                        if(null!= outputfile){
+                            outputfile.delete()
                         }
                     }
                 }else if(n.type=='url'){    //sending notification of a status trigger for the Job
@@ -180,33 +305,10 @@ public class NotificationService implements ApplicationContextAware{
                     didsend=!webhookfailure
                 }else if (n.type) {
                     def Execution exec = content.execution
-                    //prep execution data
-                    def Map execMap=RequestHelper.doWithMockRequest {
-                        new ExecutionController().exportExecutionData([exec])[0]
-                    }
-                    //TBD: nodestatus will migrate to execution data
-                    if(content['nodestatus']){
-                        execMap['nodestatus'] = content['nodestatus']
-                    }
-                    //data context for property refs in email
-                    def userData = [:]
-                    //add user context data
-                    def user = User.findByLogin(exec.user)
-                    if (user && user.email) {
-                        userData['user.email'] = user.email
-                    }
-                    if (user && user.firstName) {
-                        userData['user.firstName'] = user.firstName
-                    }
-                    if (user && user.lastName) {
-                        userData['user.lastName'] = user.lastName
-                    }
-                    //pass data context
-                    def dcontext= content['context']?.dataContext?:[:]
-                    def mailcontext=DataContextUtils.addContext("job",userData,null)
-                    def context = DataContextUtils.merge(dcontext, mailcontext)
-                    execMap.context=context
-
+                    def execMap = generateExecutionData(exec,content)
+                    def jobMap = exportJobdata(source)
+                    execMap.job=jobMap
+                    Map context=generateContextData(exec,content)
                     Map config= n.configuration
                     if (context && config) {
                         config = DataContextUtils.replaceDataReferences(config, context)
@@ -216,7 +318,7 @@ public class NotificationService implements ApplicationContextAware{
                     log.error("Unsupported notification type: " + n.type);
                 }
                 }catch(Throwable t){
-                    log.error("Error sending notification: ${n}: ${t.class}: "+t.message);
+                    log.error("Error sending notification: ${n}: ${t.class}: "+t.message,t);
                     if (log.traceEnabled) {
                         log.trace("Notification failed",t)
                     }
@@ -225,6 +327,104 @@ public class NotificationService implements ApplicationContextAware{
         }
 
         return didsend
+    }
+    /**
+     * Creates a datacontext map from the execution's original context, and user profile data.
+     * @param exec
+     * @param content
+     * @return
+     */
+    private Map generateContextData(Execution exec,Map content){
+
+        //data context for property refs in email
+        def userData = [:]
+        //add user context data
+        def user = User.findByLogin(exec.user)
+        if (user && user.email) {
+            userData['user.email'] = user.email
+        }
+        if (user && user.firstName) {
+            userData['user.firstName'] = user.firstName
+        }
+        if (user && user.lastName) {
+            userData['user.lastName'] = user.lastName
+        }
+        //pass data context
+        def dcontext = content['context']?.dataContext ?: [:]
+        def mailcontext = DataContextUtils.addContext("job", userData, null)
+        def context = DataContextUtils.merge(dcontext, mailcontext)
+        context
+    }
+    /**
+     * Create execution data map
+     * @param exec
+     * @param content
+     * @return
+     */
+    private Map generateExecutionData(Execution exec,Map content){
+
+        //prep execution data
+        def execMap=exportExecutionData(exec)
+        //TBD: nodestatus will migrate to execution data
+        if (content['nodestatus']) {
+            execMap['nodestatus'] = content['nodestatus']
+        }
+        execMap
+    }
+    /**
+     * renders a java date as the W3C format used by dc:date in RSS feed
+     */
+    private String w3cDateValue (Date date){
+        SimpleDateFormat dateFormater = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
+        dateFormater.setTimeZone(TimeZone.getTimeZone("GMT"));
+        return dateFormater.format(date);
+    }
+
+    protected Map exportExecutionData(Execution e) {
+        e = Execution.get(e.id)
+        def emap = [
+            id: e.id,
+            href: grailsLinkGenerator.link(controller: 'execution', action: 'follow', id: e.id, absolute: true,
+                    params: [project: e.project]),
+            status: ExecutionService.getExecutionState(e),
+            user: e.user,
+            dateStarted: e.dateStarted,
+            'dateStartedUnixtime': e.dateStarted.time,
+            'dateStartedW3c': w3cDateValue( e.dateStarted),
+            description: e.scheduledExecution.description?:'',
+            argstring: e.argString,
+            project: e.project,
+            failedNodeListString: e.failedNodeList,
+            failedNodeList: e.failedNodeList?.split(",") as List,
+            succeededNodeListString: e.succeededNodeList,
+            succeededNodeList: e.succeededNodeList?.split(",") as List,
+            loglevel: ExecutionService.textLogLevels[e.loglevel] ?: e.loglevel
+        ]
+        if (null != e.dateCompleted) {
+            emap.dateEnded = e.dateCompleted
+            emap['dateEndedUnixtime'] = e.dateCompleted.time
+            emap['dateEndedW3c'] = w3cDateValue(e.dateCompleted)
+        }
+        emap['abortedby'] = e.cancelled?e.abortedby:null
+        emap
+    }
+
+    protected Map exportJobdata(ScheduledExecution scheduledExecution) {
+        def job = [
+                id: scheduledExecution.extid,
+                href: grailsLinkGenerator.link(controller: 'scheduledExecution', action: 'show',
+                        id: scheduledExecution.extid, absolute: true,
+                        params: [project: scheduledExecution.project]),
+                name: scheduledExecution.jobName,
+                group: scheduledExecution.groupPath ?: '',
+                project: scheduledExecution.project,
+                description: scheduledExecution.description
+        ]
+        if (scheduledExecution.totalTime >= 0 && scheduledExecution.execCount > 0) {
+            def long avg = Math.floor(scheduledExecution.totalTime / scheduledExecution.execCount)
+            job.averageDuration = avg
+        }
+        job
     }
 
     /**
