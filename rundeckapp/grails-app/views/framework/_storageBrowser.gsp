@@ -3,7 +3,11 @@
         <span data-bind="text: errorMsg"></span>
     </div>
     <div class="text-info">
-        Path: <input type="text" data-bind="value: path"></inpu>
+        Path: <input type="text" data-bind="value: path"/>
+        <span data-bind="if: loading()" class="text-info">
+            <g:img file="icon-tiny-disclosure-waiting.gif"/>
+            Loading...
+        </span>
     </div>
     <div data-bind="if: upPath()">
         <button type="button" class="btn btn-sm btn-default" data-bind="click: function(){$root.loadDir(upPath())}" >

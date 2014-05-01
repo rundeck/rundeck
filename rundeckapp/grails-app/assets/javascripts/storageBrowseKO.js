@@ -23,6 +23,7 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
     self.fileFilter=ko.observable();
     self.fieldTarget=ko.observable();
     self.resources = ko.observableArray([]);
+    self.loading=ko.observable(false);
     self.files = ko.computed(function () {
         return ko.utils.arrayFilter(self.resources(), function (res) {
             return res.type() == 'file';
@@ -112,15 +113,18 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
                 }
             }
         };
+        self.loading(true);
         jQuery.ajax({
             dataType: "json",
             url: self.baseUrl + val,
             data: {},
             success: function (data, status, jqXHR) {
+                self.loading(false);
                 self.errorMsg(null);
                 ko.mapping.fromJS(data, mapping, self);
             },
             error: function (jqXHR, textStatus, errorThrown) {
+                self.loading(false);
                 self.errorMsg(textStatus + ": "+ errorThrown);
             }
         });
