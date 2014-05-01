@@ -253,10 +253,6 @@ class JobsXMLCodec {
                             throw new JobXMLException("${trigger} plugin had blank or missing 'type' attribute")
                         }
                     }
-                    if(map.notification[trigger].email){
-                        map.notification[trigger].recipients=map.notification[trigger].email.remove('recipients')
-                        map.notification[trigger].remove('email')
-                    }
                     if(map.notification[trigger].webhook){
                         map.notification[trigger].urls = map.notification[trigger].webhook.remove('urls')
                         map.notification[trigger].remove('webhook')
@@ -462,8 +458,12 @@ class JobsXMLCodec {
             }
             map.notification.keySet().findAll { it.startsWith('on') }.each{trigger->
                 if(map.notification[trigger]){
-                    if(map.notification[trigger]?.recipients){
-                        map.notification[trigger].email=BuilderUtil.toAttrMap('recipients',map.notification[trigger].remove('recipients'))
+                    if(map.notification[trigger]?.email){
+                        def mail= map.notification[trigger].remove('email')
+                        map.notification[trigger].email=[:]
+                        mail.each{k,v->
+                            BuilderUtil.addAttribute(map.notification[trigger].email,k,v)
+                        }
                     }
                     if(map.notification[trigger]?.urls){
                         map.notification[trigger].webhook=BuilderUtil.toAttrMap('urls',map.notification[trigger].remove('urls'))

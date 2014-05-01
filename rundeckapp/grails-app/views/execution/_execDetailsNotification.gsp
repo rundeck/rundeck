@@ -6,7 +6,7 @@
           title="URLs: ${notification.content.encodeAsHTML()}">${notification.content.encodeAsHTML()}</span>
 </g:if>
 <g:elseif test="${notification.type == 'email'}">
-    <g:message code="notification.email.display" args="[notification.content.encodeAsHTML()]" />
+    <g:message code="notification.email.display" args="[notification.mailConfiguration().recipients.encodeAsHTML()]" />
 </g:elseif>
 <g:else>
 %{--plugin display--}%

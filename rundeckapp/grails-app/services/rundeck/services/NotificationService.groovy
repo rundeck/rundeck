@@ -140,7 +140,9 @@ public class NotificationService implements ApplicationContextAware{
                 if(n.type=='email'){
                     //sending notification of a status trigger for the Job
                     def Execution exec = content.execution
-                    def destarr=n.content.split(",") as List
+                    def mailConfig = n.mailConfiguration()
+                    def destarr=mailConfig.recipients?.split(",") as List
+                    def configSubject=mailConfig.subject
                     final state = ExecutionService.getExecutionState(exec)
                     def statMsg=[
                             (ExecutionService.EXECUTION_ABORTED):'KILLED',
@@ -174,6 +176,9 @@ public class NotificationService implements ApplicationContextAware{
                         subjecttmpl= grailsApplication.config.rundeck.mail."${trigger}".template.subject.toString()
                     }else if (grailsApplication.config.rundeck.mail.template.subject) {
                         subjecttmpl=grailsApplication.config.rundeck.mail.template.subject.toString()
+                    }
+                    if(configSubject){
+                        subjecttmpl= configSubject
                     }
                     def subjectmsg = renderTemplate(subjecttmpl, context)
 

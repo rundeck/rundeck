@@ -20,7 +20,7 @@
                     <label class="sr-only">to</label>
                     <g:textField
                             name="${triggerEmailRecipientsName}"
-                            value="${params[triggerEmailRecipientsName] ?: defEmail?.content}"
+                            value="${params[triggerEmailRecipientsName] ?: defEmail?.mailConfiguration()?.recipients}"
                             class="form-control input-sm"
                             size="60"
                             placeholder="user@dns.tld"
@@ -30,6 +30,25 @@
 
                 <div class="help-block">
                     <g:message code="notification.email.description"/>
+                </div>
+                <div class="form-group ${hasErrors(bean: scheduledExecution, field: triggerEmailSubjectName
+                    , 'has-error')} ">
+                    <label class="sr-only">subject:</label>
+                    <g:textField
+                            name="${triggerEmailSubjectName}"
+                            value="${params[triggerEmailSubjectName] ?: defEmail?.mailConfiguration()?.subject}"
+                            class="form-control input-sm"
+                            size="60"
+                            placeholder="Subject"
+                    />
+
+                </div>
+
+                <div class="help-block">
+                    <g:message code="notification.email.subject.description"/>
+                    <a class="" href="${g.message(code:'notification.email.subject.helpLink')}">
+                        <i class="glyphicon glyphicon-info-sign"></i>
+                    </a>
                 </div>
             </span>
 

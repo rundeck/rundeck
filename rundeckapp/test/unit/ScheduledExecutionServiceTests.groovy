@@ -50,44 +50,94 @@ public class ScheduledExecutionServiceTests {
     }
     public void testParseParamNotificationsSuccess() {
         assertParseParamNotifications(
-                [[eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE, content: 'c@example.com,d@example.com']],
+                [[eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME,
+                        type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
+                        configuration:[recipients: 'c@example.com,d@example.com']]],
                 [(ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL): 'true', 
                         (ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS): 'c@example.com,d@example.com']
+        )
+    }
+    public void testParseParamNotificationsSuccess_subject() {
+        assertParseParamNotifications(
+                [[eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME,
+                        type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
+                        configuration:[recipients: 'c@example.com,d@example.com',
+                                subject:'blah'
+                        ]]],
+                [(ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL): 'true',
+                        (ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS): 'c@example.com,d@example.com',
+                        (ScheduledExecutionController.NOTIFY_SUCCESS_SUBJECT): 'blah']
         )
     }
 
     public void testParseParamNotificationsSuccessUrl() {
         assertParseParamNotifications(
-                [[eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE, content: 'http://blah.com']],
+                [[eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME,
+                        type: ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE,
+                        content: 'http://blah.com']],
                 [(ScheduledExecutionController.NOTIFY_ONSUCCESS_URL): 'true',
                         (ScheduledExecutionController.NOTIFY_SUCCESS_URL): 'http://blah.com']
         )
     }
     public void testParseParamNotificationsFailure() {
         assertParseParamNotifications(
-                [[eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE, content: 'c@example.com,d@example.com']],
+                [[eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME,
+                        type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
+                        configuration: [recipients:'c@example.com,d@example.com']]],
                 [(ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL): 'true',
                         (ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS): 'c@example.com,d@example.com']
+        )
+    }
+    public void testParseParamNotificationsFailure_subject() {
+        assertParseParamNotifications(
+                [[eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME,
+                        type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
+                        configuration: [recipients: 'c@example.com,d@example.com', subject:
+                                'elf']]],
+                [(ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL): 'true',
+                        (ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS): 'c@example.com,d@example.com',
+                        (ScheduledExecutionController.NOTIFY_FAILURE_SUBJECT): 'elf']
         )
     }
 
     public void testParseParamNotificationsFailureUrl() {
         assertParseParamNotifications(
-                [[eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE, content: 'http://blah.com']],
-                [(ScheduledExecutionController.NOTIFY_ONFAILURE_URL): 'true', (ScheduledExecutionController.NOTIFY_FAILURE_URL): 'http://blah.com']
+                [[eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME,
+                        type: ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE,
+                        content: 'http://blah.com']],
+                [(ScheduledExecutionController.NOTIFY_ONFAILURE_URL): 'true',
+                        (ScheduledExecutionController.NOTIFY_FAILURE_URL): 'http://blah.com']
         )
     }
     public void testParseParamNotificationsStart() {
         assertParseParamNotifications(
-                [[eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE, content: 'c@example.com,d@example.com']],
-                [(ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL): 'true', (ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS): 'c@example.com,d@example.com']
+                [[eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME,
+                        type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
+                        configuration: [recipients: 'c@example.com,d@example.com']]],
+                [(ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL): 'true',
+                        (ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS): 'c@example.com,d@example.com']
+        )
+    }
+    public void testParseParamNotificationsStart_subject() {
+        assertParseParamNotifications(
+                [[eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME,
+                        type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
+                        configuration: [recipients: 'c@example.com,d@example.com',
+                                subject: 'rango'
+                        ]]],
+                [(ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL): 'true',
+                        (ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS): 'c@example.com,d@example.com',
+                        (ScheduledExecutionController.NOTIFY_FAILURE_SUBJECT): 'rango']
         )
     }
 
     public void testParseParamNotificationsStartUrl() {
         assertParseParamNotifications(
-                [[eventTrigger: ScheduledExecutionController.ONSTART_TRIGGER_NAME, type: ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE, content: 'http://blah.com']],
-                [(ScheduledExecutionController.NOTIFY_ONSTART_URL): 'true', (ScheduledExecutionController.NOTIFY_START_URL): 'http://blah.com']
+                [[eventTrigger: ScheduledExecutionController.ONSTART_TRIGGER_NAME,
+                        type: ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE,
+                        content: 'http://blah.com']],
+                [(ScheduledExecutionController.NOTIFY_ONSTART_URL): 'true',
+                        (ScheduledExecutionController.NOTIFY_START_URL): 'http://blah.com']
         )
     }
     public void testParseParamNotificationsSuccessPluginEnabled() {
@@ -205,36 +255,7 @@ public class ScheduledExecutionServiceTests {
                 ]
         )
     }
-    public void testParseNotificationsFromParamsSuccess() {
-        def params = [
-                (ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL): 'true', (ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS): 'c@example.com,d@example.com',
-        ]
-        ScheduledExecutionService.parseNotificationsFromParams(params)
-        assertNotNull(params.notifications)
-        assertEquals([
-            [eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE, content: 'c@example.com,d@example.com'],
-        ],params.notifications)
-    }
-    public void testParseNotificationsFromParamsFailure() {
-        def params = [
-                (ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL): 'true', (ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS): 'monkey@example.com',
-        ]
-        ScheduledExecutionService.parseNotificationsFromParams(params)
-        assertNotNull(params.notifications)
-        assertEquals([
-                [eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE, content: 'monkey@example.com'],
-        ],params.notifications)
-    }
-    public void testParseNotificationsFromParamsStart() {
-        def params = [
-                (ScheduledExecutionController.NOTIFY_ONSTART_EMAIL): 'true', (ScheduledExecutionController.NOTIFY_START_RECIPIENTS): 'monkey@example.com',
-        ]
-        ScheduledExecutionService.parseNotificationsFromParams(params)
-        assertNotNull(params.notifications)
-        assertEquals([
-                [eventTrigger: ScheduledExecutionController.ONSTART_TRIGGER_NAME, type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE, content: 'monkey@example.com'],
-        ],params.notifications)
-    }
+
     public void testGetGroups(){
         def schedlist=[new ScheduledExecution(jobName:'test1',groupPath:'group1'),new ScheduledExecution(jobName:'test2',groupPath:null)]
 

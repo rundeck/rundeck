@@ -76,12 +76,28 @@ public class Notification {
             content = null
         }
     }
+    /**
+     * Return the configuration map for a mail notification
+     *
+     * @return
+     */
+    public Map mailConfiguration(){
+        if (content.startsWith('{') && content.endsWith('}')) {
+            //parse as json
+            return getConfiguration()
+        }
+        return [recipients: content]
+    }
 
     public static Notification fromMap(String key, Map data){
         Notification n = new Notification(eventTrigger:key)
-        if(data.recipients){
+        if(data.email || data.recipients){
             n.type='email'
-            n.content=data.recipients
+            def map=[recipients: data.recipients?:data.email.recipients]
+            if(data.email && data.email.subject){
+                map['subject']= data.email.subject
+            }
+            n.configuration=map
         }else if(data.urls){
             n.type='url'
             n.content=data.urls
@@ -99,7 +115,7 @@ public class Notification {
     }
     public Map toMap(){
         if(type=='email'){
-            return [recipients:content]
+            return ['email':mailConfiguration()]
         }else if(type=='url'){
             return [urls:content]
         }else if(type){

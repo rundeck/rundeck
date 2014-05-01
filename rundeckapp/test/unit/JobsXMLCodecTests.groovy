@@ -2904,7 +2904,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
             final def onsuccess = jobs[0].notifications.find{'onsuccess'==it.eventTrigger}
         assertNotNull "missing notifications onsuccess", onsuccess
             assertNotNull "missing notifications onsuccess email", onsuccess.content
-            assertEquals "incorrect email content", "a@example.com,b@example.com", onsuccess.content
+            assertEquals "incorrect email content", "a@example.com,b@example.com", onsuccess.mailConfiguration().recipients
         //onfailure notification
         def xml2 = """<joblist>
   <job>
@@ -2937,7 +2937,8 @@ class JobsXMLCodecTests extends GroovyTestCase {
         final def onfailure = jobs[0].notifications.find{'onfailure'==it.eventTrigger}
             assertNotNull "missing notifications onfailure", onfailure
             assertNotNull "missing notifications onfailure email", onfailure.content
-            assertEquals "incorrect email content", "c@example.com,d@example.com", onfailure.content
+            assertEquals "incorrect email content", "c@example.com,d@example.com", onfailure.mailConfiguration()
+                    .recipients
         //onfailure and onsuccess notification
         def xml3 = """<joblist>
   <job>
@@ -2955,11 +2956,14 @@ class JobsXMLCodecTests extends GroovyTestCase {
     </dispatch>
     <notification>
         <onsuccess>
-            <email recipients="z@example.com,x@example.com"/>
+            <email recipients="z@example.com,x@example.com" subject="success1"/>
         </onsuccess>
         <onfailure>
-            <email recipients="c@example.com,d@example.com"/>
+            <email recipients="c@example.com,d@example.com" subject="fail1"/>
         </onfailure>
+        <onstart>
+            <email recipients="h@example.com,j@example.com" subject="start1"/>
+        </onstart>
     </notification>
   </job>
 </joblist>
@@ -2969,15 +2973,26 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertNotNull jobs
             assertEquals "incorrect size", 1, jobs.size()
             assertNotNull "missing notifications", jobs[0].notifications
-            assertEquals "incorrect notifications size", 2,jobs[0].notifications.size()
+            assertEquals "incorrect notifications size", 3,jobs[0].notifications.size()
         onfailure = jobs[0].notifications.find{'onfailure'==it.eventTrigger}
             assertNotNull "missing notifications onfailure", onfailure
             assertNotNull "missing notifications onfailure email", onfailure.content
-            assertEquals "incorrect email content", "c@example.com,d@example.com", onfailure.content
-             onsuccess = jobs[0].notifications.find{'onsuccess'==it.eventTrigger}
+            assertEquals "incorrect email content", "c@example.com,d@example.com", onfailure.mailConfiguration()
+                    .recipients
+        assertEquals "incorrect email content", "fail1", onfailure.mailConfiguration().subject
+        onsuccess = jobs[0].notifications.find{'onsuccess'==it.eventTrigger}
         assertNotNull "missing notifications onsuccess", onsuccess
             assertNotNull "missing notifications onsuccess email", onsuccess.content
-            assertEquals "incorrect email content", "z@example.com,x@example.com", onsuccess.content
+            assertEquals "incorrect email content", "z@example.com,x@example.com", onsuccess.mailConfiguration()
+                    .recipients
+            assertEquals "incorrect email content", "success1", onsuccess.mailConfiguration()
+                    .subject
+             def onstart = jobs[0].notifications.find{'onstart'==it.eventTrigger}
+        assertNotNull "missing notifications onstart", onstart
+            assertNotNull "missing notifications onstart email", onstart.content
+            assertEquals "incorrect email content onstart", "h@example.com,j@example.com", onstart.mailConfiguration()
+                    .recipients
+            assertEquals "incorrect email content onstart", "start1", onstart.mailConfiguration().subject
     }
 
     void testDecodeNotificationPlugin() {
