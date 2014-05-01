@@ -499,7 +499,9 @@ Or use a structure of explicit components. All of these are optional, but likely
 
 `dayofmonth`
 
-:    day of month value. (mutually exclusive with `weekday`)
+    `day`
+
+    :    day of month value. (mutually exclusive with `weekday`) Numerical values start with 1.
 
 `weekday`
 
