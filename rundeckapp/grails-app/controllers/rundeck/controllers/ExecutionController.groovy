@@ -114,6 +114,7 @@ class ExecutionController extends ControllerBase{
 ////            state= workflowService.previewWorkflowStateForExecution(e)
 //        }
         return [scheduledExecution: e.scheduledExecution?:null,execution:e, filesize:filesize,
+                nextExecution: e.scheduledExecution?.scheduled ? scheduledExecutionService.nextExecutionTime(e.scheduledExecution) : null,
                 enext: enext, eprev: eprev,stepPluginDescriptions: pluginDescs, ]
     }
     def ajaxExecState={
