@@ -210,14 +210,16 @@ public class NotificationService implements ApplicationContextAware{
                         }
                     }
                     if(templatePaths && !htmlemail ){
-                        log.error("Notification templates searched but not found: " + templatePaths+ ", " +
+                        log.warn("Notification templates searched but not found: " + templatePaths+ ", " +
                                 "using default");
                     }
                     def attachlog=false
-                    if(grailsApplication.config.rundeck.mail."${trigger}".template.attachLog in [true,'true']){
-                        attachlog=true
-                    }else if (grailsApplication.config.rundeck.mail.template.attachLog in [true, 'true']){
-                        attachlog=true
+                    if(trigger != 'start' ){
+                        if (grailsApplication.config.rundeck.mail."${trigger}".template.attachLog in [true, 'true']) {
+                            attachlog = true
+                        } else if (grailsApplication.config.rundeck.mail.template.attachLog in [true, 'true']) {
+                            attachlog = true
+                        }
                     }
                     def isFormatted =false
                     if( grailsApplication.config.rundeck.mail."${trigger}".template.log.formatted in [true,'true']){
