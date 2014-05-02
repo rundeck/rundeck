@@ -2,21 +2,27 @@
     <div class="alert alert-warning" data-bind="visible: errorMsg()">
         <span data-bind="text: errorMsg"></span>
     </div>
-    <div class="text-info">
-        Path: <input type="text" data-bind="value: path"/>
-        <span data-bind="if: loading()" class="text-info">
-            <g:img file="icon-tiny-disclosure-waiting.gif"/>
-            Loading...
-        </span>
+    <div class="row text-info form-inline">
+        <div class="form-group col-sm-12" data-bind="css: invalid()?'has-error':'' ">
+            <input type="text" class="form-control"
+                   data-bind="value: inputPath, valueUpdate: 'input', attr: {disabled: loading() }, executeOnEnter: browseToInputPath"
+                   placeholder="Enter a path"/>
+        </div>
     </div>
-    <div data-bind="if: upPath()">
+    <div class="row row-space">
+        <div class="col-sm-12">
+    <div data-bind="if: upPath() && !invalid()">
         <button type="button" class="btn btn-sm btn-default" data-bind="click: function(){$root.loadDir(upPath())}" >
             <i class="glyphicon glyphicon-folder-open"></i>
             <i class="glyphicon glyphicon-arrow-up"></i>
             <span data-bind="text: $root.dirName(upPath())"></span>
         </button>
     </div>
-    <table class="table table-hover table-condensed">
+    <div class="loading-area text-info " data-bind="visible: loading()"
+         style="width: 100%; height: 200px; padding: 50px; background-color: #eee;">
+        <i class="glyphicon glyphicon-time"></i> Loading...
+    </div>
+    <table class="table table-hover table-condensed" data-bind="if: !invalid() && !loading()">
         <tbody data-bind="foreach: filteredFiles()">
         <tr data-bind="click: $root.selectFile, css: $root.selectedPath()==path() ? 'success' : '' ">
             <td >
@@ -51,3 +57,5 @@
         </tr>
         </tbody>
     </table>
+        </div>
+    </div>

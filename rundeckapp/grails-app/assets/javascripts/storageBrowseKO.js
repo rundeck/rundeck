@@ -1,5 +1,6 @@
 //= require knockout.min
 //= require knockout-mapping
+//= require knockout-onenter
 
 
 function StorageResource(browser, path, data) {
@@ -19,11 +20,13 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
     self.rootPath = ko.observable(rootPath);
     self.errorMsg = ko.observable();
     self.path = ko.observable('');
+    self.inputPath = ko.observable('');
     self.selectedPath=ko.observable();
     self.fileFilter=ko.observable();
     self.fieldTarget=ko.observable();
     self.resources = ko.observableArray([]);
     self.loading=ko.observable(false);
+    self.invalid=ko.observable(false);
     self.files = ko.computed(function () {
         return ko.utils.arrayFilter(self.resources(), function (res) {
             return res.type() == 'file';
@@ -102,6 +105,9 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
             self.selectedPath(res.path());
         }
     }
+    self.browseToInputPath = function(){
+        self.path(self.inputPath());
+    }
     self.path.subscribe(function (val) {
         if(val==''){
             return;
@@ -114,18 +120,33 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
             }
         };
         self.loading(true);
+        self.inputPath(val);
         jQuery.ajax({
             dataType: "json",
             url: self.baseUrl + val,
             data: {},
             success: function (data, status, jqXHR) {
                 self.loading(false);
+                if (data.type == 'file') {
+                    //select the path and load the parent dir
+                    self.selectedPath(val);
+                    self.inputPath(self.parentDirString(val))
+                    self.browseToInputPath();
+                    return;
+                }
                 self.errorMsg(null);
+                self.invalid(false);
                 ko.mapping.fromJS(data, mapping, self);
             },
             error: function (jqXHR, textStatus, errorThrown) {
                 self.loading(false);
-                self.errorMsg(textStatus + ": "+ errorThrown);
+                if(jqXHR.status==404){
+                    self.invalid(true);
+
+                    self.errorMsg("Path not found: "+val);
+                }else{
+                    self.errorMsg(textStatus + ": " + errorThrown);
+                }
             }
         });
     });
@@ -145,5 +166,5 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
         } else {
             self.initialLoad();
         }
-    }
+    };
 }
