@@ -1,3 +1,7 @@
+% Version 2.1.1
+% greg
+% 05/01/2014
+
 Release 2.1.1
 =============
 
@@ -5,7 +9,7 @@ Date: 2014-05-01
 
 Bugfix release, with a small feature enhancement.
 
-* [Custom Email Templates](http://rundeck.org/2.1.1/administration/configuration-file-reference.html#custom-email-templates):
+* [Custom Email Templates](../administration/configuration-file-reference.html#custom-email-templates):
 
 *Upgrade notes:* 
 
