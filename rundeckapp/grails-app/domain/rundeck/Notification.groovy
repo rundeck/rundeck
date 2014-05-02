@@ -1,5 +1,6 @@
 package rundeck
 
+import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.ObjectMapper
 
 /*
@@ -60,7 +61,11 @@ public class Notification {
         //de-serialize the json
         if (null != content) {
             final ObjectMapper mapper = new ObjectMapper()
-            return mapper.readValue(content, Map.class)
+            try{
+                return mapper.readValue(content, Map.class)
+            }catch (JsonParseException e){
+                return null
+            }
         } else {
             return null
         }
