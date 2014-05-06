@@ -1171,6 +1171,9 @@ class ExecutionController extends ControllerBase{
      * @return
      */
     def apiExecutionDelete (){
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V12)) {
+            return
+        }
         def Execution e = Execution.get(params.id)
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'])
@@ -1210,6 +1213,9 @@ class ExecutionController extends ControllerBase{
      * @return
      */
     def apiExecutionDeleteBulk() {
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V12)) {
+            return
+        }
         log.debug("executionController: apiExecutionDeleteBulk : params: " + params)
         def ids=[]
         if(request.format in ['json','xml']){
