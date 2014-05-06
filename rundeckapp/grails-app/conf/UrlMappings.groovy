@@ -23,6 +23,7 @@ class UrlMappings {
         "/api/$api_version/execution/$id/output/step/$stepctx**?"(controller: 'execution', action: 'apiExecutionOutput')
 
         "/api/$api_version/executions/running"(controller: 'menu', action: 'apiExecutionsRunning')
+        "/api/$api_version/executions/delete"(controller: 'execution', action: 'apiExecutionDeleteBulk')
         "/api/$api_version/executions"(controller: 'execution', action: 'apiExecutionsQuery')
         "/api/$api_version/history"(controller: 'reports', action: 'apiHistory')
         "/api/$api_version/job/$id"(controller: 'scheduledExecution') {

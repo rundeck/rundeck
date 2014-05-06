@@ -9,6 +9,7 @@ import com.dtolabs.rundeck.core.logging.ReverseSeekingStreamingLogReader
 import com.dtolabs.rundeck.core.logging.StreamingLogReader
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import org.codehaus.groovy.grails.web.json.JSONArray
 import rundeck.Execution
 import rundeck.PluginStep
 import rundeck.ScheduledExecution
@@ -42,6 +43,7 @@ class ExecutionController extends ControllerBase{
     static allowedMethods = [
             delete:['POST','DELETE'],
             apiExecutionDelete: ['DELETE'],
+            apiExecutionDeleteBulk: ['POST'],
     ]
 
     def index ={
@@ -1201,6 +1203,87 @@ class ExecutionController extends ControllerBase{
                     ])
         }
         return render(status: HttpServletResponse.SC_NO_CONTENT)
+    }
+
+    /**
+     * Delete bulk
+     * @return
+     */
+    def apiExecutionDeleteBulk() {
+        log.debug("executionController: apiExecutionDeleteBulk : params: " + params)
+        def ids=[]
+        if(request.format in ['json','xml']){
+            def errormsg = "Format was not valid."
+            def parsed =apiService.parseJsonXmlWith(request,response,[
+                    json: { data ->
+                        if(data instanceof List) {
+                            ids = data
+                        }else{
+                            ids = data.ids
+                        }
+                        if (!ids) {
+                            errormsg += " json: expected list of strings, or object with 'ids' property"
+                        }
+                    },
+                    xml: { xml ->
+                        def executions= xml.execution
+                        ids = executions?executions.collect{it.'@id'.text()}:null
+                        if (!ids) {
+                            errormsg += " xml: expected 'executions/execution/@id' attributes"
+                        }
+                    }
+            ])
+            if(!parsed){
+                return
+            }
+            if(!ids){
+                return apiService.renderErrorFormat(response, [
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code: 'api.error.invalid.request',
+                        args: [errormsg]
+                ])
+            }
+        }else if (!apiService.requireParameters(params, response, ['ids'])) {
+            return
+        }else{
+            //params
+            ids = params.ids
+            if (ids instanceof String) {
+                ids = params.ids.split(',') as List
+            }
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        def result=executionService.deleteBulkExecutionIds([ids].flatten(), authContext)
+        def respFormat=apiService.extractResponseFormat(request,response,['xml','json'])
+        switch (respFormat){
+            case 'xml':
+                return apiService.renderSuccessXml(request,response){
+                    deleteExecutions(requestCount:ids.size(),allsuccessful:result.successTotal==ids.size()){
+                        successful(count: result.successTotal)
+                        if(!result.success){
+                            failed(count: result.failures.size()){
+                                result.failures.each{failure->
+                                    delegate.'execution'(id:failure.id,message:failure.message)
+                                }
+                            }
+                        }
+                    }
+                }
+                break;
+            case 'json':
+            default:
+                return render(contentType: 'application/json'){
+                    requestCount=ids.size()
+                    allsuccessful= result.successTotal == ids.size()
+                    successCount=result.successTotal
+                    failedCount=result.failures? result.failures.size() : 0
+                    if(result.failures){
+                        failures=result.failures.collect{[message: it.message, id: it.id ]}
+                    }
+                }
+                break
+        }
     }
 
     /**
