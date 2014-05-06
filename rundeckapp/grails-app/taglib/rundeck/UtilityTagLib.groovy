@@ -713,4 +713,18 @@ class UtilityTagLib{
         parts << (count == 1 ? g.message(code: attrs.verb, default: attrs.verb).encodeAsHTML() : g.message(code: attrs.verb + '.plural', default: attrs.verbPlural).encodeAsHTML())
         out << (new MessageFormat(g.message(code: code, default: '{0} {1} {2}'))).format(parts as Object[], new StringBuffer(), null).toString()
     }
+
+    def helpTooltip={attrs,body->
+        def code=attrs.code
+        def css=attrs.css ?: 'input-group-addon text-info'
+        def glyph=attrs.glyphicon?:'question-sign'
+        def placement=attrs.placement?:'bottom'
+        out<<'<span ' +
+                ' class="has_tooltip '+ (css?.encodeAsHTML())+'" ' +
+                ' data-placement="'+(placement.encodeAsHTML())+'" ' +
+                ' data-container="body" ' +
+                ' title="'+g.message(code: code).encodeAsHTML()+ '">\n' +
+                ' <i class="glyphicon glyphicon-'+(glyph?.encodeAsHTML())+'"></i>\n' +
+                '</span>'
+    }
 }

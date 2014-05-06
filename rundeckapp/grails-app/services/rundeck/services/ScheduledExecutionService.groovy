@@ -975,6 +975,9 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             if(params[ScheduledExecutionController.NOTIFY_SUCCESS_SUBJECT]){
                 config.subject= params[ScheduledExecutionController.NOTIFY_SUCCESS_SUBJECT]
             }
+            if (params[ScheduledExecutionController.NOTIFY_SUCCESS_ATTACH]!=null) {
+                config.attachLog = params[ScheduledExecutionController.NOTIFY_SUCCESS_ATTACH] in ['true',true]
+            }
             nots << [eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME,
                     type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
                     configuration: config
@@ -991,6 +994,9 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             ]
             if (params[ScheduledExecutionController.NOTIFY_FAILURE_SUBJECT]) {
                 config.subject = params[ScheduledExecutionController.NOTIFY_FAILURE_SUBJECT]
+            }
+            if (params[ScheduledExecutionController.NOTIFY_FAILURE_ATTACH]!=null) {
+                config.attachLog = params[ScheduledExecutionController.NOTIFY_FAILURE_ATTACH] in ['true', true]
             }
             nots << [eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME,
                     type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
@@ -1424,7 +1430,8 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                 (ScheduledExecutionController.ONSTART_TRIGGER_NAME):
                         ScheduledExecutionController.NOTIFY_START_RECIPIENTS
         ]
-        def arr = (notif.configuration?.recipients?: notif.content)?.split(",")
+        def conf = notif.configuration
+        def arr = (conf?.recipients?: notif.content)?.split(",")
         arr?.each { email ->
             if(email && email.indexOf('${')>=0){
                 //don't reject embedded prop refs
@@ -1443,10 +1450,10 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         }
         def addrs = arr.findAll { it.trim() }.join(",")
         def configuration=[:]
-        if(notif.content){
-            configuration.recipients=addrs
+        if(conf){
+            configuration = conf + [recipients: addrs]
         }else{
-            configuration=notif.configuration+[recipients: addrs]
+            configuration.recipients = addrs
         }
         def n = Notification.fromMap(trigger, [email: configuration])
         [failed: false, notification: n]

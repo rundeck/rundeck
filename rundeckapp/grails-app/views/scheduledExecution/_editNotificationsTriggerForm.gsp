@@ -7,50 +7,77 @@
     <div class="control-label text-form-label col-sm-2">
         <g:message code="notification.event.${trigger}"/>
     </div>
-    <div class="col-sm-10">
-        <div class="form-inline">
-            <div class="form-group  ${hasErrors(bean: scheduledExecution, field: triggerEmailRecipientsName, 'has-error')} ">
+    <div class="col-sm-10 ">
+        <div class="row row-space form-inline">
+            <div class="form-group  col-sm-12 ${hasErrors(bean: scheduledExecution, field: triggerEmailRecipientsName,
+                    'has-error')} ">
                 <g:checkBox name="${triggerEmailCheckboxName}" value="true" checked="${isEmail}"/>
                 <label for="${triggerEmailCheckboxName}">
                     <g:message code="notification.email.label" />
                 </label>
             </div>
-            <span id="notifholder${tkey}" style="${wdgt.styleVisible(if: isEmail)}">
-                <div class="form-group ${hasErrors(bean: scheduledExecution, field: triggerEmailRecipientsName, 'has-error')} ">
-                    <label class="sr-only">to</label>
+
+            <div id="notifholder${tkey}" style="${wdgt.styleVisible(if: isEmail)}">
+            <div  class="well well-sm well-nobg">
+                <div class="form-group col-sm-5 ${hasErrors(bean: scheduledExecution, field:
+                        triggerEmailRecipientsName,
+                        'has-error')} ">
+                    <div class="input-group  input-group-sm">
+                    <label class="input-group-addon"><g:message code="to" /></label>
                     <g:textField
                             name="${triggerEmailRecipientsName}"
                             value="${params[triggerEmailRecipientsName] ?: defEmail?.mailConfiguration()?.recipients}"
-                            class="form-control input-sm"
+                            class="form-control"
                             size="60"
                             placeholder="user@dns.tld"
                     />
+                        <g:helpTooltip code="notification.email.description"
+                                       css="input-group-addon text-info"/>
+                    </div>
 
                 </div>
 
-                <div class="help-block">
-                    <g:message code="notification.email.description"/>
-                </div>
-                <div class="form-group ${hasErrors(bean: scheduledExecution, field: triggerEmailSubjectName
-                    , 'has-error')} ">
-                    <label class="sr-only">subject:</label>
-                    <g:textField
-                            name="${triggerEmailSubjectName}"
-                            value="${params[triggerEmailSubjectName] ?: defEmail?.mailConfiguration()?.subject}"
-                            class="form-control input-sm"
-                            size="60"
-                            placeholder="Subject"
-                    />
+                <div class="form-group col-sm-5 ${hasErrors(bean: scheduledExecution, field: triggerEmailSubjectName
+                        , 'has-error')} ">
+                    <div class="input-group input-group-sm">
+                    <label class=" input-group-addon" for="${triggerEmailSubjectName}"><g:message code="subject" />
+                    </label>
+                        <g:textField
+                                name="${triggerEmailSubjectName}"
+                                value="${params[triggerEmailSubjectName] ?: defEmail?.mailConfiguration()?.subject}"
+                                class="form-control "
+                                size="60"
+                                placeholder="Subject"/>
+                        <g:helpTooltip code="notification.email.subject.description" css="input-group-addon text-info"/>
+                        <span class=" input-group-addon">
+                            <a  href="${g.message(code: 'notification.email.subject.helpLink')}" title="Help docs"
+                                target="_blank">
+                                <i class="glyphicon glyphicon-circle-arrow-right"></i>
+                            </a>
+                        </span>
+                    </div>
 
                 </div>
 
-                <div class="help-block">
-                    <g:message code="notification.email.subject.description"/>
-                    <a class="" href="${g.message(code:'notification.email.subject.helpLink')}">
-                        <i class="glyphicon glyphicon-info-sign"></i>
-                    </a>
-                </div>
-            </span>
+                <g:if test="${triggerEmailAttachName}">
+                    <div class="form-group col-sm-2 ${hasErrors(bean: scheduledExecution, field:
+                            triggerEmailAttachName,
+                            'has-error')} ">
+                        <g:set var="attachTrue" value="${params[triggerEmailAttachName] == 'true' ||
+                            defEmail?.mailConfiguration()?.attachLog in ['true', true]}"/>
+                        <label class="${attachTrue ? 'active' : ''}">
+                            <g:checkBox
+                                    name="${triggerEmailAttachName}"
+                                    value="true"
+                                    checked="${attachTrue}"
+                            />
+                            <g:message code="attach.output.log" />
+                        </label>
+
+                    </div>
+                </g:if>
+
+        </div>
 
             <g:hasErrors bean="${scheduledExecution}" field="${triggerEmailRecipientsName }">
                 <div class="text-warning">
@@ -60,9 +87,10 @@
             <wdgt:eventHandler for="${triggerEmailCheckboxName}" state="checked" target="notifholder${tkey}" visible="true"
             />
         </div>
+        </div>
 
-        <div class="form-inline">
-            <div class="form-group ${hasErrors(bean: scheduledExecution, field: triggerUrlFieldName, 'has-error')}">
+        <div class="row row-space form-inline">
+            <div class="form-group col-sm-12 ${hasErrors(bean: scheduledExecution, field: triggerUrlFieldName, 'has-error')}">
                 <g:checkBox name="${triggerUrlCheckboxName}" value="true" checked="${isUrl}"/>
                 <label for="${triggerUrlCheckboxName}">
                     <g:message code="notification.webhook.label" />

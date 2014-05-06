@@ -143,6 +143,7 @@ public class NotificationService implements ApplicationContextAware{
                     def mailConfig = n.mailConfiguration()
                     def destarr=mailConfig.recipients?.split(",") as List
                     def configSubject=mailConfig.subject
+                    def configAttachLog=mailConfig.attachLog
                     final state = ExecutionService.getExecutionState(exec)
                     def statMsg=[
                             (ExecutionService.EXECUTION_ABORTED):'KILLED',
@@ -214,12 +215,8 @@ public class NotificationService implements ApplicationContextAware{
                                 "using default");
                     }
                     def attachlog=false
-                    if(trigger != 'start' ){
-                        if (grailsApplication.config.rundeck.mail."${trigger}".template.attachLog in [true, 'true']) {
-                            attachlog = true
-                        } else if (grailsApplication.config.rundeck.mail.template.attachLog in [true, 'true']) {
-                            attachlog = true
-                        }
+                    if (trigger != 'start' && configAttachLog in ['true',true]) {
+                        attachlog = true
                     }
                     def isFormatted =false
                     if( grailsApplication.config.rundeck.mail."${trigger}".template.log.formatted in [true,'true']){
