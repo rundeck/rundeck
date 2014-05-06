@@ -39,6 +39,10 @@ class ExecutionController extends ControllerBase{
     ApiService apiService
     WorkflowService workflowService
 
+    static allowedMethods = [
+            delete:['POST','DELETE'],
+            apiExecutionDelete: ['DELETE'],
+    ]
 
     def index ={
         redirect(controller:'menu',action:'index')
@@ -117,6 +121,36 @@ class ExecutionController extends ControllerBase{
                 nextExecution: e.scheduledExecution?.scheduled ? scheduledExecutionService.nextExecutionTime(e.scheduledExecution) : null,
                 enext: enext, eprev: eprev,stepPluginDescriptions: pluginDescs, ]
     }
+    def delete = {
+        def Execution e = Execution.get(params.id)
+        if (notFoundResponse(e, 'Execution ID', params.id)) {
+            return
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        if (unauthorizedResponse(frameworkService.authorizeProjectExecutionAll(authContext, e,
+                [AuthConstants.ACTION_DELETE]), AuthConstants.ACTION_DELETE, 'Execution', params.id)) {
+            return
+        }
+        params.project = e.project
+        def jobid=e.scheduledExecution?.extid
+        def result=executionService.deleteExecution(e,authContext)
+        if(!result.success){
+            flash.error=result.error
+            return redirect(controller: 'execution', action: 'show', id: params.id, params: [project: params.project])
+        }else{
+            flash.message="Deleted execution ID: ${params.id}"
+        }
+        if(jobid){
+            return redirect(controller: 'scheduledExecution',action: 'show',id:jobid,
+                    params:[project:params.project])
+        }else{
+            return redirect(controller: 'scheduledExecution', action: 'show', id: jobid,
+                    params: [project: params.project])
+        }
+
+    }
+
     def ajaxExecState={
         def Execution e = Execution.get(params.id)
         if (!e) {
@@ -1111,6 +1145,44 @@ class ExecutionController extends ControllerBase{
                 execution(id: params.id, status: abortresult.jobstate)
             }
         }
+    }
+    /**
+     * DELETE /api/12/execution/[ID]
+     * @return
+     */
+    def apiExecutionDelete (){
+        def Execution e = Execution.get(params.id)
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'])
+        if (!e) {
+            return apiService.renderErrorFormat(response,
+                    [
+                            status: HttpServletResponse.SC_NOT_FOUND,
+                            code: "api.error.item.doesnotexist",
+                            args: ['Execution ID', params.id],
+                            format: respFormat
+                    ])
+        } else if (!frameworkService.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_DELETE])) {
+            return apiService.renderErrorFormat(response,
+                    [
+                            status: HttpServletResponse.SC_FORBIDDEN,
+                            code: "api.error.item.unauthorized",
+                            args: [AuthConstants.ACTION_DELETE, "Execution", params.id],
+                            format: respFormat
+                    ])
+        }
+        def result = executionService.deleteExecution(e, authContext)
+        if(!result.success){
+            log.error("Failed to delete execution: ${result.message}")
+            return apiService.renderErrorFormat(response,
+                    [
+                            status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                            code: "api.error.exec.delete.failed",
+                            args: [params.id, result.message],
+                            format: respFormat
+                    ])
+        }
+        return render(status: HttpServletResponse.SC_NO_CONTENT)
     }
 
     /**

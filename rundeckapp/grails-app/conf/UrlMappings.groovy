@@ -9,7 +9,9 @@ class UrlMappings {
         /*******
         * API url paths, v1
         */
-        "/api/$api_version/execution/$id"(controller: 'execution', action: 'apiExecution')
+        "/api/$api_version/execution/$id"(controller: 'execution'){
+            action=[GET:'apiExecution',DELETE: 'apiExecutionDelete']
+        }
         "/api/$api_version/execution/$id/state"(controller: 'execution', action: 'apiExecutionState')
         "/api/$api_version/execution/$id/abort"(controller: 'execution', action: 'apiExecutionAbort')
         /** v5 */

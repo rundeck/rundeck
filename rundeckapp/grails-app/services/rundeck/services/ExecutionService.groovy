@@ -34,6 +34,7 @@ import com.dtolabs.rundeck.execution.ExecutionItemFactory
 import com.dtolabs.rundeck.execution.JobExecutionItem
 import com.dtolabs.rundeck.execution.JobReferenceFailureReason
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
 import org.hibernate.StaleObjectStateException
@@ -75,6 +76,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def metricService
     def apiService
     def grailsLinkGenerator
+    def logFileStorageService
 
     /**
      * Render execution document for api response
@@ -990,6 +992,58 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             failedreason =  'Job is not running'
         }
         return [abortstate:abortstate,jobstate:jobstate,statusStr:statusStr, failedreason: failedreason]
+    }
+
+    /**
+     * Delete an execution and associated log files
+     * @param e execution
+     * @param user
+     * @param authContext
+     * @return
+     */
+    Map deleteExecution(Execution e, AuthContext authContext){
+        if (!frameworkService.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_DELETE])) {
+            return [success: false, error: 'unauthorized', message: "Unauthorized: Delete execution ${e.id}"]
+        }
+
+        Map result
+        try {
+            if (e.dateCompleted == null && e.dateStarted != null) {
+                throw new Exception("The execution is currently running")
+            }
+                //delete all reports
+            ExecReport.findAllByJcExecId(e.id.toString()).each { rpt ->
+                rpt.delete(flush: true)
+            }
+            def files = []
+            def execs = []
+            //aggregate all files to delete
+            execs << e
+            [LoggingService.LOG_FILE_FILETYPE, WorkflowService.STATE_FILE_FILETYPE].each { ftype ->
+                def file = logFileStorageService.getFileForExecutionFiletype(e, ftype, true)
+                if (null != file && file.exists()) {
+                    files << file
+                }
+            }
+            log.debug("${files.size()} files from execution will be deleted")
+            //delete execution
+            e.delete(flush: true)
+            //delete all files
+            def deletedfiles = 0
+            files.each { file ->
+                if (null != file && file.exists() && !FileUtils.deleteQuietly(file)) {
+                    log.warn("Failed to delete file while deleting project ${project.name}: ${file.absolutePath}")
+                } else {
+                    deletedfiles++
+                }
+            }
+            log.debug("${deletedfiles} files removed")
+            result = [success: true]
+        } catch (Exception ex) {
+            log.error("Failed to delete execution ${e.id}", ex)
+            result = [error: "Failed to delete execution {{Execution ${e.id}}}: ${ex.message}", success: false]
+        }
+        return result
     }
 
     /**
