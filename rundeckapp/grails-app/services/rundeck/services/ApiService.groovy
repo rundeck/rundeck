@@ -403,7 +403,7 @@ class ApiService {
      */
     def requireVersion(request, HttpServletResponse response, int min, int max = 0){
         if (request.api_version < min) {
-            renderErrorXml(response,[
+            renderErrorFormat(response,[
                     status:HttpServletResponse.SC_BAD_REQUEST,
                     code:'api.error.api-version.unsupported',
                     args: [request.api_version, request.forwardURI, "Minimum supported version: " + min]
@@ -411,7 +411,7 @@ class ApiService {
             return false
         }
         if (max > 0 && request.api_version > max) {
-            renderErrorXml(response, [
+            renderErrorFormat(response, [
                     status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.api-version.unsupported',
                     args: [request.api_version, request.forwardURI, "Maximum supported version: " + max]
