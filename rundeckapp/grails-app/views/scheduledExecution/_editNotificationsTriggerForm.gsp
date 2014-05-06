@@ -138,16 +138,22 @@
             <g:set var="pluginDescription" value="${plugin.description}"/>
             <g:set var="validation" value="${notificationValidation?.get(trigger)?.get(pluginName)?.report}"/>
             <g:set var="checkboxFieldName" value="notifyPlugin.${trigger}.enabled.${pluginName.encodeAsHTML()}"/>
-            <div>
+
+            <div class="row row-space">
+                <div class="col-sm-12">
+
                 <g:hiddenField name="notifyPlugin.${trigger}.type" value="${pluginName}"/>
-                <span>
+                <div>
                     <g:checkBox name="${checkboxFieldName}" value="true"
                                 checked="${definedNotif ? true : false}"/>
                     <label for="${checkboxFieldName}">${pluginDescription['title'] ?: pluginDescription['name'] ?: pluginName}</label>
                     <g:if test="${pluginDescription['description']}">
                         <span class="text-muted">${pluginDescription['description']?.encodeAsHTML()}</span>
                     </g:if>
-                </span>
+                </div>
+
+
+
                 <div id="notifholderPlugin${pkey}" style="${wdgt.styleVisible(if: definedNotif ? true : false)}"
                       class="notificationplugin panel panel-default">
                     <div class="panel-body">
@@ -169,12 +175,16 @@
                                             ]}"/>
                                 </g:if>
                             </g:each>
+                            <g:if test="${!pluginDescription?.properties}">
+                                <span class="text-muted">No configuration properties for ${pluginDescription['title'] ?: pluginDescription['name'] ?: pluginName}</span>
+                            </g:if>
                         </div>
                     </g:if>
                     </div>
                 </div>
                 <wdgt:eventHandler for="${checkboxFieldName}" state="checked"
                                    target="notifholderPlugin${pkey}" visible="true"/>
+            </div>
             </div>
         </g:each>
     </div>
