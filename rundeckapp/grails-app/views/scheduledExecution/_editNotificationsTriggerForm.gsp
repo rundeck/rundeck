@@ -96,36 +96,46 @@
                     <g:message code="notification.webhook.label" />
                 </label>
             </div>
-            <span id="notifholder_url_${tkey}" style="${wdgt.styleVisible(if: isUrl)}">
-                <div class="form-group  ${hasErrors(bean: scheduledExecution, field: triggerUrlFieldName, 'has-error')}">
-                    <label class="sr-only"><g:message code="notification.webhook.field.title" /></label>
-                    <g:set var="notifurlcontent"
-                               value="${params[triggerUrlFieldName] ?: defUrl?.content}"/>
-                    <g:if test="${notifurlcontent && notifurlcontent.size() > 30}">
-                        <textarea name="${triggerUrlFieldName}"
-                                  style="vertical-align:top;"
-                                  placeholder="http://"
-                                  rows="6"
-                                  cols="40"
-                                  class="form-control input-sm">${notifurlcontent?.encodeAsHTML()}</textarea>
-                    </g:if>
-                    <g:else>
-                        <g:textField name="${triggerUrlFieldName}"
-                                     value="${notifurlcontent?.encodeAsHTML()}"
-                                     class="form-control input-sm"
-                                     size="60"
-                                     placeholder="http://"
-                        />
-                    </g:else>
-                </div>
+            <div id="notifholder_url_${tkey}" style="${wdgt.styleVisible(if: isUrl)}">
+                <div class="well well-sm well-nobg">
+                    <div class="form-group col-sm-5 ${hasErrors(bean: scheduledExecution, field: triggerUrlFieldName, 'has-error')} ">
+                        <div class="input-group  input-group-sm">
+                            <label class="input-group-addon"><g:message code="notification.webhook.field.title"/></label>
 
-                <div class="help-block"><g:message code="notification.webhook.field.description" /></div>
+                            <g:set var="notifurlcontent"
+                                   value="${params[triggerUrlFieldName] ?: defUrl?.content}"/>
+                            <g:if test="${notifurlcontent && notifurlcontent.size() > 30}">
+                                <textarea name="${triggerUrlFieldName}"
+                                          style="vertical-align:top;"
+                                          placeholder="http://"
+                                          rows="6"
+                                          cols="40"
+                                          class="form-control ">${notifurlcontent?.encodeAsHTML()}</textarea>
+                            </g:if>
+                            <g:else>
+                                <g:textField name="${triggerUrlFieldName}"
+                                             value="${notifurlcontent?.encodeAsHTML()}"
+                                             class="form-control "
+                                             size="60"
+                                             placeholder="http://"/>
+                            </g:else>
+
+                            <g:helpTooltip code="notification.webhook.field.description"
+                                           css="input-group-addon text-info"/>
+                        </div>
+
+                    </div>
+
+
+
                 <g:hasErrors bean="${scheduledExecution}" field="${triggerUrlFieldName}">
                     <div class="text-warning">
                         <g:renderErrors bean="${scheduledExecution}" as="list" field="${triggerUrlFieldName}"/>
                     </div>
                 </g:hasErrors>
-            </span>
+
+                </div>
+            </div>
             <wdgt:eventHandler for="${triggerUrlCheckboxName}" state="checked" target="notifholder_url_${tkey}" visible="true"/>
         </div>
         <g:each in="${notificationPlugins?.keySet()}" var="pluginName">
