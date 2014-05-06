@@ -1005,8 +1005,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def failures=[]
         def failed=false
         def count=0;
-        for (String id : ids) {
-            def result=deleteExecution(Execution.get(id), authContext)
+        for (Object id : ids) {
+            def exec = Execution.get(id)
+            def result
+            if(exec){
+                result=deleteExecution(exec, authContext)
+                result.id=id
+            }else{
+                result=[success:false,message:'Execution Not found: '+id,id:id]
+            }
             if(!result.success){
                 failed=true
                 failures<<result
