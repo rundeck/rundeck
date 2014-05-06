@@ -145,8 +145,7 @@ class ExecutionController extends ControllerBase{
             return redirect(controller: 'scheduledExecution',action: 'show',id:jobid,
                     params:[project:params.project])
         }else{
-            return redirect(controller: 'scheduledExecution', action: 'show', id: jobid,
-                    params: [project: params.project])
+            return redirect(controller: 'reports', action: 'index', params: [project: params.project])
         }
 
     }
