@@ -1001,6 +1001,28 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param authContext
      * @return
      */
+    Map deleteBulkExecutionIds(Collection ids, AuthContext authContext) {
+        def failures=[]
+        def failed=false
+        def count=0;
+        for (String id : ids) {
+            def result=deleteExecution(Execution.get(id), authContext)
+            if(!result.success){
+                failed=true
+                failures<<result
+            }else{
+                count++;
+            }
+        }
+        return [success:!failed, failures:failures, successTotal:count]
+    }
+    /**
+     * Delete an execution and associated log files
+     * @param e execution
+     * @param user
+     * @param authContext
+     * @return
+     */
     Map deleteExecution(Execution e, AuthContext authContext){
         if (!frameworkService.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_DELETE])) {
             return [success: false, error: 'unauthorized', message: "Unauthorized: Delete execution ${e.id}"]

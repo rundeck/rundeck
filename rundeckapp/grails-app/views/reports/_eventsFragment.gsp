@@ -76,6 +76,8 @@
 
                 <div class="jobsReport clear">
                     <g:if test="${reports}">
+                        <g:form action="bulkDelete" controller="execution" method="POST" name="bulkDeleteForm">
+                            <g:hiddenField name="project" value="${params.project}"/>
                         <table class=" table table-hover table-condensed events-table" style="width:100%">
                         <g:if test="${includeNowRunning}">
                             <tbody id="nowrunning"></tbody>
@@ -84,6 +86,30 @@
                             <g:render template="baseReport" model="['reports':reports,options:params.compact?[tags:false, summary: false]:[summary:true],hiliteSince:params.hiliteSince]"/>
                         </tbody>
                         </table>
+                            <div class="obs_bulk_edit_enable" style="display: none">
+                                <span class="textbtn textbtn-default act_bulk_edit_toggleall  ">
+                                    Toggle all
+                                </span>
+                                <span class="textbtn textbtn-default act_bulk_edit_selectall  ">
+                                    Select all
+                                </span>
+                                <span class="textbtn textbtn-default act_bulk_edit_deselectall  ">
+                                    Select none
+                                </span>
+                            </div>
+                            <div>
+                                <span class="textbtn textbtn-default act_bulk_edit_disable obs_bulk_edit_enable "
+                                      style="display: none">
+                                    <i class="glyphicon glyphicon-remove-circle"></i>
+                                    Cancel bulk delete
+                                </span>
+                                <span class="btn btn-xs btn-warning act_bulk_edit_enable obs_bulk_edit_disable">
+                                    Bulk delete
+                                </span>
+                                <input type="submit" class="btn btn-danger obs_bulk_edit_enable " style="display: none"
+                                       value="Delete selected"/>
+                            </div>
+                        </g:form>
 
                             <g:if test="${total && max && total.toInteger() > max.toInteger()}">
                                 <span class="info note">Showing ${reports.size()} of <span class="_obs_histtotal">${total}</span></span>

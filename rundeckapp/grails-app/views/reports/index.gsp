@@ -225,8 +225,50 @@
                 $('eventsCountBadge').hide();
             }
         }
+        function bulkEditEnable(){
+            jQuery('.obs_bulk_edit_enable').show().addClass('bulk_edit_enabled');
+            jQuery('.obs_bulk_edit_disable').hide();
+        }
+        function bulkEditDisable(){
+            jQuery('.obs_bulk_edit_enable').hide().removeClass('bulk_edit_enabled');
+            jQuery('.obs_bulk_edit_disable').show();
+        }
+        function bulkEditSelectAll(){
+            jQuery('input.bulk_edit').each(function(ndx,el){
+                el.checked=true;
+            });
+        }
+        function bulkEditDeselectAll(){
+            jQuery('input.bulk_edit').each(function(ndx,el){
+                el.checked=false;
+            });
+        }
+        function bulkEditToggleAll(){
+            jQuery('input.bulk_edit').each(function(ndx,el){
+                el.checked=!el.checked;
+            });
+        }
+        function init(){
+            _pageInit();
+            jQuery('.autoclick').on('click','.autoclickable',function(evt){
+                var ac=jQuery(this).parent('.autoclick')[0];
+                //if bulk edit
+                if(jQuery(ac).find('.bulk_edit_enabled').length>0){
+                    var dc=jQuery(ac).find('input._defaultInput')[0]
+                    dc.checked=!dc.checked;
+                }else{
+                    var dc=jQuery(ac).find('a._defaultAction')[0]
+                    dc.click();
+                }
+            });
+            jQuery('.act_bulk_edit_enable').click(bulkEditEnable);
+            jQuery('.act_bulk_edit_disable').click(bulkEditDisable);
+            jQuery('.act_bulk_edit_selectall').click(bulkEditSelectAll);
+            jQuery('.act_bulk_edit_deselectall').click(bulkEditDeselectAll);
+            jQuery('.act_bulk_edit_toggleall').click(bulkEditToggleAll);
+        }
         
-        Event.observe(window, 'load', _pageInit);
+        jQuery(init);
     </g:javascript>
     <style type="text/css">
     table.dashboxes td.dashbox {
@@ -274,6 +316,7 @@
 
 <div class="pageBody">
     <g:render template="/common/messages"/>
+
 
     <div id="evtsholder" class="eventspage">
     <g:render template="eventsFragment" model="${[paginateParams:paginateParams,params:params,includeBadge:true,includeAutoRefresh:true,reports:reports,filterName:filterName, filtersOpen: true, includeNowRunning:true]}"/>

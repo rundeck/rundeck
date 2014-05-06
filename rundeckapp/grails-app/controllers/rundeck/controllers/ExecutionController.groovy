@@ -150,6 +150,25 @@ class ExecutionController extends ControllerBase{
 
     }
 
+    def bulkDelete(){
+        def ids
+        if(params.bulk_edit){
+            ids=[params.bulk_edit].flatten()
+        }else if(params.ids){
+            ids = [params.ids].flatten()
+        }else{
+            flash.error="Some IDS are required for bulk delete"
+            return redirect(action: 'index',controller: 'reports',params: [project:params.project])
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        log.error("Bulk delete ids: "+ids)
+        def result=executionService.deleteBulkExecutionIds(ids,authContext)
+        if(!result.success){
+            flash.error=result.failures*.message.join(", ")
+        }
+        flash.message="${result.successTotal} Executions deleted"
+        return redirect(action: 'index', controller: 'reports', params: [project: params.project])
+    }
     def ajaxExecState={
         def Execution e = Execution.get(params.id)
         if (!e) {
