@@ -37,6 +37,15 @@ If the version number is not included or if the requested version number is unsu
 
 Changes introduced by API Version number:
 
+**Version 12**:
+
+* New action
+    - `DELETE /api/12/execution/[ID]` 
+        - [Delete an execution](#delete-an-execution)
+* New endpoints
+    - `POST /api/12/executions/delete` 
+        - [Bulk delete executions](#bulk-delete-executions)
+
 **Version 11**:
 
 **Update**: The URL path for Token access was corrected.
@@ -51,7 +60,7 @@ In this version, all new and updated endpoints support XML or JSON request and r
 
 [Response Format]: #response-format
 
-Endpoints:
+**Version 11**:
     
 * New endpoints
     - `/api/11/project/[NAME]/config` 
@@ -987,11 +996,106 @@ The `job` section contains `options` if an `argstring` value is set (**API v10 a
 
 Get the status for an execution by ID.
 
-URL:
+Request:
 
-    /api/1/execution/[ID]
+    GET /api/1/execution/[ID]
 
 Result: an Item List of `executions` with a single item. See [Listing Running Executions](#listing-running-executions).
+
+### Delete an Execution
+
+Delete an execution by ID.
+
+Request:
+
+    DELETE /api/12/execution/[ID]
+
+Result: `204 No Content`
+
+### Bulk Delete Executions
+
+Delete a set of Executions by their IDs.
+
+Request:
+
+    POST /api/12/executions/delete
+
+The IDs can be specified in two ways:
+
+1. Using a URL parameter `ids`, as a comma separated list, with no body content
+
+        POST /api/12/executions/delete?ids=1,2,17
+        Content-Length: 0
+
+2. Using a request body of either XML or JSON data.
+
+If using a request body, the formats are specified below:
+
+**Content-Type: application/json**
+
+    {"ids": [ 1, 2, 17 ] }
+
+*OR* more simply:
+
+    [ 1, 2, 17 ]
+
+**Content-Type: application/xml**
+
+    <executions>
+        <execution id="1"/>
+        <execution id="2"/>
+        <execution id="17"/>
+    </executions>
+
+Response:
+
+The response format will be either `xml` or `json`, depending on the `Accept` header.
+
+**Content-Type: application/json**
+
+```{.json}
+{
+  "failures": [
+    {
+      "id": "82",
+      "message": "Not found: 82"
+    },
+    {
+      "id": "83",
+      "message": "Not found: 83"
+    },
+    {
+      "id": "84",
+      "message": "Not found: 84"
+    }
+  ],
+  "failedCount": 3,
+  "successCount": 2,
+  "allsuccessful": false,
+  "requestCount": 5
+}
+```
+The JSON fields will be:
+
+* `failures`: a list of objects indicating the `id` and `message` for the failed deletion attempt
+* `failedCount`: number of deletion attempts that failed
+* `successCount`: number of deletion attempts that succeeded
+* `allsuccessful`: true if all deletions were successful
+* `requestCount`: number of requested execution deletions
+
+**Content-Type: application/xml**
+
+```{.xml}
+<deleteExecutions requestCount='4' allsuccessful='false'>
+  <successful count='0' />
+  <failed count='4'>
+    <execution id='131' message='Unauthorized: Delete execution 131' />
+    <execution id='109' message='Not found: 109' />
+    <execution id='81' message='Not found: 81' />
+    <execution id='74' message='Not found: 74' />
+  </failed>
+</deleteExecutions>
+```
 
 ### Execution Query
 
