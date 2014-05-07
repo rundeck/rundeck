@@ -512,7 +512,8 @@ function paginate(elem,offset,total,max,options){
         //variables
         maxsteps:10,
         insertion:'bottom',
-        behavior:null
+        behavior:null,
+        ulCss:'pagination pagination-sm'
     };
     if(options){
         Object.extend(opts,options);
@@ -526,8 +527,7 @@ function paginate(elem,offset,total,max,options){
     }
     var curpage = Math.floor(offset/max) + 1;
     var page=new Element('ul');
-    page.addClassName('pagination');
-    page.addClassName('pagination-sm');
+    page.addClassName(opts.ulCss);
 
     //generate paginate links
     var firststep=1
