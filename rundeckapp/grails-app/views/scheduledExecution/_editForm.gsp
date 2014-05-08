@@ -64,7 +64,7 @@
 
                         <a data-toggle="modal"
                            href="#jobdelete"
-                                class="textbtn textbtn-danger pull-right"
+                                class="btn btn-danger btn-link pull-right"
                               title="Delete ${g.message(code: 'domain.ScheduledExecution.title')}">
                             <b class="glyphicon glyphicon-remove-circle"></b>
                             Delete this Job
