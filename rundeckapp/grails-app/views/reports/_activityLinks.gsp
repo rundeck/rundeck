@@ -1,3 +1,4 @@
+<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 %{--
   Copyright 2013 SimplifyOps Inc, <http://simplifyops.com>
 
@@ -220,11 +221,17 @@
                     <g:message code="cancel.bulk.delete"/>
                 </span>
             </div>
+
+        <g:set var="projAdminAuth" value="${auth.resourceAllowedTest(
+                context: 'application', type: 'project', name: params.project, action: AuthConstants.ACTION_ADMIN)}"/>
+        <g:set var="deleteExecAuth" value="${auth.resourceAllowedTest(context: 'application', type: 'project', name:
+                params.project, action: AuthConstants.ACTION_DELETE_EXECUTION) || projAdminAuth}"/>
+        <g:if test="${deleteExecAuth}">
             <button class="btn btn-xs btn-warning"
                     data-bind="click: $root.toggleBulkEdit, visible: !$root.bulkEditMode()">
                 <g:message code="bulk.delete"/>
             </button>
-
+        </g:if>
 
             %{--confirm bulk delete modal--}%
             <div class="modal" id="bulkexecdelete" tabindex="-1" role="dialog"

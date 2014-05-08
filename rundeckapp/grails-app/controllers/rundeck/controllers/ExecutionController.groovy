@@ -130,8 +130,10 @@ class ExecutionController extends ControllerBase{
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
-        if (unauthorizedResponse(frameworkService.authorizeProjectExecutionAll(authContext, e,
-                [AuthConstants.ACTION_DELETE]), AuthConstants.ACTION_DELETE, 'Execution', params.id)) {
+        if (unauthorizedResponse(frameworkService.authorizeApplicationResourceAny(authContext,
+                frameworkService.authResourceForProject(e.project),
+                [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN]),
+                AuthConstants.ACTION_DELETE_EXECUTION,'Project',e.project)) {
             return
         }
         params.project = e.project
@@ -1185,12 +1187,19 @@ class ExecutionController extends ControllerBase{
                             args: ['Execution ID', params.id],
                             format: respFormat
                     ])
-        } else if (!frameworkService.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_DELETE])) {
+        }
+        if (
+                !frameworkService.authorizeApplicationResourceAny(
+                        authContext,
+                        frameworkService.authResourceForProject(e.project),
+                        [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN]
+                )
+        ) {
             return apiService.renderErrorFormat(response,
                     [
                             status: HttpServletResponse.SC_FORBIDDEN,
                             code: "api.error.item.unauthorized",
-                            args: [AuthConstants.ACTION_DELETE, "Execution", params.id],
+                            args: [AuthConstants.ACTION_DELETE_EXECUTION, "Project", e.project],
                             format: respFormat
                     ])
         }

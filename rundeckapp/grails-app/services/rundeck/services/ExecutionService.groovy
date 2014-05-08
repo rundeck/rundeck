@@ -1031,8 +1031,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @return
      */
     Map deleteExecution(Execution e, AuthContext authContext){
-        if (!frameworkService.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_DELETE])) {
-            return [success: false, error: 'unauthorized', message: "Unauthorized: Delete execution ${e.id}"]
+        if (!frameworkService.authorizeApplicationResourceAny(authContext,
+                frameworkService.authResourceForProject(e.project),
+                [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN])) {
+            return [success: false, error: 'unauthorized', message: "Unauthorized: Delete execution in project ${e.project}"]
         }
 
         Map result

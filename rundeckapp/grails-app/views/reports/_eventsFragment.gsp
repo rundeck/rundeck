@@ -1,4 +1,4 @@
-<%@ page import="rundeck.User" %>
+<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants; rundeck.User" %>
 <g:set var="rkey" value="${g.rkey()}" />
 
 <g:if test="${session.user && User.findByLogin(session.user)?.reportfilters}">
@@ -120,9 +120,16 @@
                                     <g:message code="cancel.bulk.delete"/>
                                 </span>
                             </span>
+                            <g:set var="projAdminAuth" value="${auth.resourceAllowedTest(
+                                    context: 'application', type: 'project', name: params.project, action: AuthConstants.ACTION_ADMIN)}"/>
+                            <g:set var="deleteExecAuth"
+                                   value="${auth.resourceAllowedTest(context: 'application', type: 'project', name:
+                                           params.project, action: AuthConstants.ACTION_DELETE_EXECUTION) || projAdminAuth}"/>
+                            <g:if test="${deleteExecAuth}">
                             <span class="btn btn-xs btn-warning act_bulk_edit_enable obs_bulk_edit_disable">
                                 <g:message code="bulk.delete"/>
                             </span>
+                                </g:if>
                             </div>
 
                         %{--confirm bulk delete modal--}%
