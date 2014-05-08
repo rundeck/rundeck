@@ -112,15 +112,17 @@
     <g:set var="helpLinkUrl" value="${g.helpLinkUrl()}"/>
     <g:if test="${session?.user && request.subject}">
         <li class="headright">
-            <g:set var="adminauth" value="${false}"/>
+            <g:set var="projConfigAuth" value="${false}"/>
             <g:if test="${params.project ?: request.project}">
-            <g:set var="adminauth" value="${auth.resourceAllowedTest(type:'project',name: (params.project ?: request.project),action:[AuthConstants.ACTION_ADMIN,AuthConstants.ACTION_READ],context:'application')}"/>
+            <g:set var="projConfigAuth" value="${auth.resourceAllowedTest(type:'project',name: (params.project ?: request.project),
+                    action: [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT,
+                            AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_DELETE],any:true,context:'application')}"/>
             <g:ifPageProperty name='meta.tabpage'>
                 <g:ifPageProperty name='meta.tabpage' equals='configure'>
                     <g:set var="cfgselected" value="active"/>
                 </g:ifPageProperty>
             </g:ifPageProperty>
-            <g:if test="${adminauth}">
+            <g:if test="${projConfigAuth}">
             <li class="${cfgselected ?: ''}">
                 <g:link controller="menu" action="admin" title="${g.message(code:'gui.menu.Admin')}"
                         params="[project: params.project?:request.project]">
