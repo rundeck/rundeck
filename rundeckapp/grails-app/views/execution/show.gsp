@@ -9,7 +9,7 @@
     <g:set var="followmode" value="${params.mode in ['browse','tail','node']?params.mode:'tail'}"/>
     <g:set var="execState" value="${execution.dateCompleted == null ? 'RUNNING' : execution.status == 'true' ? 'SUCCEEDED' : execution.cancelled ? 'ABORTED' : 'FAILED'}"/>
       <g:set var="authKeys" value="${[AuthConstants.ACTION_KILL,
-              AuthConstants.ACTION_READ,AuthConstants.ACTION_CREATE,AuthConstants.ACTION_RUN,AuthConstants.ACTION_DELETE]}"/>
+              AuthConstants.ACTION_READ,AuthConstants.ACTION_CREATE,AuthConstants.ACTION_RUN]}"/>
       <g:set var="authChecks" value="${[:]}"/>
       <g:each in="${authKeys}" var="actionName">
       <g:if test="${execution.scheduledExecution}">
@@ -383,6 +383,7 @@
                                 <g:else>
                                 %{--job--}%
                                 <div class="pull-right">
+
                                     <g:if test="${!groupOnly && auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_UPDATE)}">
                                         <g:link controller="scheduledExecution" title="Edit Job" action="edit"
                                                        id="${scheduledExecution.extid}"
@@ -446,6 +447,56 @@
                                         </div>
 
                                     </g:if>
+
+
+                                %{--delete execution--}%
+                                    <g:set var="projAdminAuth" value="${auth.resourceAllowedTest(
+                                            context: 'application', type: 'project', name: params.project, action: AuthConstants.ACTION_ADMIN)}"/>
+                                    <g:set var="deleteExecAuth"
+                                           value="${auth.resourceAllowedTest(context: 'application', type: 'project', name:
+                                                   params.project, action: AuthConstants.ACTION_DELETE_EXECUTION) || projAdminAuth}"/>
+                                    <g:if test="${deleteExecAuth}">
+                                        <div class="spacing">
+                                            <a href="#execdelete" class="btn-link btn-xs btn btn-danger "
+                                               data-toggle="modal">
+                                                <b class="glyphicon glyphicon-remove-circle"></b>
+                                                Delete this Execution
+                                            </a>
+                                        </div>
+                                        <div class="modal" id="execdelete" tabindex="-1" role="dialog"
+                                             aria-labelledby="deleteexectitle" aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <button type="button" class="close" data-dismiss="modal"
+                                                                aria-hidden="true">&times;</button>
+                                                        <h4 class="modal-title" id="deleteexectitle">Delete <g:message
+                                                                code="domain.Execution.title" default="Execution"/></h4>
+                                                    </div>
+
+                                                    <div class="modal-body">
+
+                                                        <p class=" ">Really delete this <g:message
+                                                                code="domain.Execution.title" default="Execution"/>?</p>
+                                                    </div>
+
+                                                    <div class="modal-footer">
+                                                        <g:form controller="execution" action="delete" method="post">
+                                                            <g:hiddenField name="id" value="${execution.id}"/>
+                                                            <button type="submit" class="btn btn-default btn-sm "
+                                                                    data-dismiss="modal">
+                                                                Cancel
+                                                            </button>
+                                                            <input type="submit" value="Delete"
+                                                                   class="btn btn-danger btn-sm"/>
+                                                        </g:form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </g:if>
+                                %{--end delete execution--}%
+
                                 </div>
                                 </g:else>
                                 <div class="affixed-shown pull-right">
@@ -454,46 +505,6 @@
                                         <i class="glyphicon glyphicon-arrow-up"></i>
                                     </a>
                                 </div>
-                                <g:if test="${authChecks[AuthConstants.ACTION_DELETE]}">
-                                    <div class="pull-right">
-                                    <a href="#execdelete" class="textbtn textbtn-danger" data-toggle="modal">
-                                        <b class="glyphicon glyphicon-remove-circle"></b>
-                                        Delete this Execution
-                                    </a>
-                                    </div>
-
-                                    <div class="modal" id="execdelete" tabindex="-1" role="dialog"
-                                         aria-labelledby="deleteexectitle" aria-hidden="true">
-                                        <div class="modal-dialog">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <button type="button" class="close" data-dismiss="modal"
-                                                            aria-hidden="true">&times;</button>
-                                                    <h4 class="modal-title" id="deleteexectitle">Delete <g:message
-                                                            code="domain.Execution.title" default="Execution"/></h4>
-                                                </div>
-
-                                                <div class="modal-body">
-
-                                                    <p class=" ">Really delete this <g:message
-                                                            code="domain.Execution.title" default="Execution"/>?</p>
-                                                </div>
-
-                                                <div class="modal-footer">
-                                                    <g:form controller="execution" action="delete" method="post">
-                                                        <g:hiddenField name="id" value="${execution.id}"/>
-                                                        <button type="submit" class="btn btn-default btn-sm "
-                                                                data-dismiss="modal">
-                                                            Cancel
-                                                        </button>
-                                                        <input type="submit" value="Delete"
-                                                               class="btn btn-danger btn-sm"/>
-                                                    </g:form>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </g:if>
                             </div>
 
             </div>
