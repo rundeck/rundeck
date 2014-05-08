@@ -5,6 +5,8 @@ import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 
+import javax.servlet.http.HttpServletResponse
+
 /*
 * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
 *
@@ -88,10 +90,13 @@ public class ProjectSelectFilters {
                         return false
                     }
                     if (selected
-                            && !frameworkService.authorizeApplicationResourceAll(authContext,
-                            frameworkService.authResourceForProject(selected), [AuthConstants.ACTION_READ])) {
-                        response.setStatus(403)
-                        flash.error = "Unauthorized: " + selected
+                            && !frameworkService.authorizeApplicationResourceAny(authContext,
+                            frameworkService.authResourceForProject(selected), [AuthConstants.ACTION_READ,
+                            AuthConstants.ACTION_ADMIN])) {
+                        response.setStatus(HttpServletResponse.SC_FORBIDDEN)
+                        request.errorCode = 'request.error.unauthorized.message'
+                        request.errorArgs = ['view', 'Project', selected]
+                        request.titleCode = 'request.error.unauthorized.title'
                         params.project = null
                         render(view: '/common/error')
                         AA_TimerFilters.afterRequest(request, response, session)
