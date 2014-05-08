@@ -222,14 +222,13 @@
         <tr>
             <td class="displabel">Notification:</td>
             <g:set var="bytrigger" value="${execdata.notifications.groupBy{ it.eventTrigger }}"/>
-            <td>
-            <table>
-            <tr>
+            <td class="container">
             <g:each var="trigger" in="${bytrigger.keySet().sort()}" status="k">
-                <td>
-                    <span class=""><g:message code="notification.event.${trigger}"/>:</span>
+                <div class="row">
+                    <div class="col-sm-12" >
+                        <span class=""><g:message code="notification.event.${trigger}"/>:</span>
                 <g:if test="${bytrigger[trigger].size()>1}">
-                <ul>
+                <ul class="overflowx">
                 <g:each var="notify" in="${bytrigger[trigger].sort{a,b->a.type.toLowerCase()<=>b.type.toLowerCase()}}" status="i">
                     <li>
                         <g:render template="/execution/execDetailsNotification" model="${[notification: notify]}"/>
@@ -238,12 +237,13 @@
                 </ul>
                 </g:if>
                 <g:else>
+                    <div class="overflowx" >
                     <g:render template="/execution/execDetailsNotification" model="${[notification: bytrigger[trigger][0]]}"/>
+                    </div>
                 </g:else>
-                </td>
+                </div>
+                </div>
             </g:each>
-            </tr>
-            </table>
         </td>
     </tr>
     </g:if>
