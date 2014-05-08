@@ -156,6 +156,7 @@ class AuthTagLib {
      */
     def resourceAllowedTest = {attrs, body ->
         boolean has = (null == attrs.has || attrs.has == "true")
+        boolean anyCheck = ((null != attrs.any) && (attrs.any in [true,"true"]))
         boolean auth = false
         if (!attrs.action) {
             throw new Exception("action attribute required: " + attrs.action + ": " + attrs.name)
@@ -163,7 +164,7 @@ class AuthTagLib {
 
         def action = attrs.action
 
-        def Set tests = []
+        def List tests = []
         if (action instanceof String) {
             tests.add(action)
         } else if (action instanceof Collection) {
@@ -183,6 +184,7 @@ class AuthTagLib {
         tagattrs.remove('action')
         tagattrs.remove('has')
         tagattrs.remove('context')
+        tagattrs.remove('any')
         def attributes = attrs.attributes ?: tagattrs
         if (attributes) {
             resource.putAll(attributes)
@@ -190,10 +192,13 @@ class AuthTagLib {
         def Set resources = [resource]
 
         def authContext = frameworkService.getAuthContextForSubject(request.subject)
-        def decisions= authContext.evaluate(resources, tests, env)
+
+        if(anyCheck){
+            return tests.any { authContext.evaluate(resources, [it] as Set, env).any{has==it.authorized} }
+        }
+        def decisions = authContext.evaluate(resources, tests as Set, env)
         //return true if all decsisions are (has==true) or are not (has!=true) authorized
         return !(decisions.find{has^it.authorized})
-
     }
     /**
      * return true if user authorization matches the assertion.  Attributes:
