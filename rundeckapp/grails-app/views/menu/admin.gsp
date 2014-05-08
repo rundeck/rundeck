@@ -53,26 +53,38 @@
         Project: ${(params.project ?: request.project).encodeAsHTML()}
 
     </span>
+<g:set var="authAdmin" value="${auth.resourceAllowedTest(action: AuthConstants.ACTION_ADMIN, type: "project",
+        name: (params.project ?: request.project), context: "application")}"/>
+<g:set var="authDelete"
+       value="${authAdmin || auth.resourceAllowedTest(action: AuthConstants.ACTION_DELETE, type: "project",
+               name: (params.project ?: request.project), context: "application")}"/>
+<g:set var="authExport"
+       value="${authAdmin || auth.resourceAllowedTest(action: AuthConstants.ACTION_EXPORT, type: "project",
+               name: (params.project ?: request.project), context: "application")}"/>
+<g:set var="authImport"
+       value="${authAdmin || auth.resourceAllowedTest(action: AuthConstants.ACTION_IMPORT, type: "project",
+               name: (params.project ?: request.project), context: "application")}"/>
+<g:set var="authConfigure"
+       value="${authAdmin || auth.resourceAllowedTest(action: AuthConstants.ACTION_CONFIGURE, type: "project",
+               name: (params.project ?: request.project), context: "application")}"/>
 <div class="row row-space">
 <div class="col-sm-12">
     <ul class="nav nav-tabs">
-        <li class="active">
+        <li class="${authConfigure ? 'active' : 'disabled'}">
             <a href="#configure"
-                data-toggle="tab"
+               data-toggle="${authConfigure ? 'tab' : ''}" title="${authConfigure ? '' : 'Unauthorized'}"
                 >Configuration</a>
         </li>
-        <li>
+        <li class="${!authExport ? 'disabled' : ''}">
             <a href="#export"
-               data-toggle="tab"
+               data-toggle="${authExport ? 'tab' : ''}" title="${authExport ? '' : 'Unauthorized'}"
                 >Export Archive</a>
         </li>
-        <li>
+        <li class="${!authImport ? 'disabled' : ''}">
             <a href="#import"
-               data-toggle="tab"
+               data-toggle="${authImport ? 'tab' : ''}" title="${authImport ? '' : 'Unauthorized'}"
                 >Import Archive</a>
         </li>
-        <g:set var="authDelete" value="${auth.resourceAllowedTest(action:AuthConstants.ACTION_DELETE, type : "project" , name :
-        (params.project ?: request.project),context:"application")}"/>
         <li class="${!authDelete?'disabled':''}">
             <a href="#delete" data-toggle="${authDelete?'tab':''}" title="${authDelete?'':'Unauthorized'}">
                 <g:message code="delete.project" />
@@ -83,12 +95,12 @@
 <div class="tab-content">
 <div class="tab-pane active" id="configure">
 <ul class="list-group list-group-tab-content">
+         <g:if test="${authConfigure}">
         <g:link controller="framework" action="editProject" params="[project: params.project ?: request.project]"
                 class="textbtn textbtn-info list-group-item  textbtn-on-hover">
             <i class="glyphicon glyphicon-edit"></i>
             <g:message code="gui.menu.ProjectEdit" default="edit configuration"/>
         </g:link>
-
 
         <li class="list-group-item">
             <h4 class="list-group-item-heading">
@@ -173,9 +185,20 @@
                 </div>
             </g:if>
         </li>
+
+         </g:if>
+        <g:else>
+            <li class="list-group-item">
+                <p class="text-muted">
+                    Configuration not available.
+                </p>
+            </li>
+        </g:else>
     </ul>
+
 </div>
 
+<g:if test="${authExport}">
 <div class="tab-pane" id="export">
     <div class="panel panel-default panel-tab-content">
         <div class="panel-heading">
@@ -195,8 +218,8 @@
 
 
 </div>
-<auth:resourceAllowed action="${AuthConstants.ACTION_DELETE}"
-                      type="project" name="${(params.project ?: request.project)}" context="application">
+</g:if>
+<g:if test="${authDelete}">
 <div class="tab-pane" id="delete">
     <div class="panel panel-default panel-tab-content">
         <div class="panel-heading">
@@ -253,8 +276,9 @@
 
 
 </div>
-</auth:resourceAllowed>
+</g:if>
 
+<g:if test="${authImport}">
 <div class="tab-pane" id="import">
     <g:form controller="project" action="importArchive" params="[project:params.project ?: request.project]"
             enctype="multipart/form-data" class="form">
@@ -334,6 +358,7 @@
     </div>
     </g:form>
 </div>
+</g:if>
 </div>
 </div>
 </div>
