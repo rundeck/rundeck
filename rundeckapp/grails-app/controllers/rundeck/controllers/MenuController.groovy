@@ -467,9 +467,10 @@ class MenuController extends ControllerBase{
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAll(authContext,
+                frameworkService.authorizeApplicationResourceAny(authContext,
                         frameworkService.authResourceForProject(params.project),
-                        [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_READ]),
+                        [AuthConstants.ACTION_CONFIGURE,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT,
+                                AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_DELETE]),
                 AuthConstants.ACTION_ADMIN, 'Project', params.project)) {
             return
         }
@@ -754,9 +755,10 @@ class MenuController extends ControllerBase{
             summary[project.name].auth = [
                     jobCreate: frameworkService.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_JOB,
                             AuthConstants.ACTION_CREATE, project.name),
-                    admin: frameworkService.authorizeApplicationResource(authContext,
+                    admin: frameworkService.authorizeApplicationResourceAny(authContext,
                             AuthorizationUtil.resource(AuthConstants.TYPE_PROJECT, [name: project.name]),
-                            AuthConstants.ACTION_ADMIN),
+                            [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT,
+                                    AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_DELETE]),
             ]
         }
         def projects = Execution.createCriteria().list {
