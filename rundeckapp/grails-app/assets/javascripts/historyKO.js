@@ -204,6 +204,21 @@ function History(ajaxHistoryLink,ajaxNowRunningLink,ajaxBulkDeleteLink) {
             self.bulkEditPrevious(index);
         }
     };
+    self.bulkEditToggleAll=function(){
+        ko.utils.arrayForEach(self.reports(),function(e){
+            e.bulkEditSelected(!e.bulkEditSelected());
+        });
+    };
+    self.bulkEditSelectAll=function(){
+        ko.utils.arrayForEach(self.reports(),function(e){
+            e.bulkEditSelected(true);
+        });
+    };
+    self.bulkEditDeselectAll=function(){
+        ko.utils.arrayForEach(self.reports(),function(e){
+            e.bulkEditSelected(false);
+        });
+    };
 
     //bulk delete invoked
     self.doBulkDelete=function(modal,resultmodal){

@@ -195,24 +195,36 @@
         </a>
 
         %{--bulk edit controls--}%
-        <div class="pull-right">
+        <div class="pull-right clearfix">
+
+            <div data-bind="visible: $root.bulkEditMode()" class="history_bulk_edit">
+                <span class="textbtn textbtn-default act_bulk_edit_toggleall  " data-bind="click: bulkEditToggleAll">
+                    <g:message code="toggle.all"/>
+                </span>
+                <span class="textbtn textbtn-default act_bulk_edit_selectall  " data-bind="click: bulkEditSelectAll">
+                    <g:message code="select.all"/>
+                </span>
+                <span class="textbtn textbtn-default act_bulk_edit_deselectall  " data-bind="click: bulkEditDeselectAll">
+                    <g:message code="select.none"/>
+                </span>
+
+                <span class="btn btn-xs btn-danger"
+                      data-bind=" visible: $root.bulkEditMode(), attr: { disabled: bulkEditIds().length<1 }"
+                      data-toggle="modal"
+                      data-target="#bulkexecdelete">
+                    <g:message code="delete.selected.executions"/>
+                </span>
+                <span class="textbtn textbtn-default"
+                      data-bind="click: $root.toggleBulkEdit, visible: $root.bulkEditMode()">
+                    <i class="glyphicon glyphicon-remove"></i>
+                    <g:message code="cancel.bulk.delete"/>
+                </span>
+            </div>
             <button class="btn btn-xs btn-warning"
                     data-bind="click: $root.toggleBulkEdit, visible: !$root.bulkEditMode()">
-                Bulk Delete
+                <g:message code="bulk.delete"/>
             </button>
-            <span class="btn btn-sm btn-danger"
-                    data-bind=" visible: $root.bulkEditMode(), attr: { disabled: bulkEditIds().length<1 }"
-                data-toggle="modal"
-                data-target="#bulkexecdelete"
-            >
-                <i class="glyphicon glyphicon-remove-circle"></i>
-                Delete Selected Executions
-            </span>
-            <span class="textbtn textbtn-default"
-                    data-bind="click: $root.toggleBulkEdit, visible: $root.bulkEditMode()">
-                <i class="glyphicon glyphicon-remove"></i>
-                Cancel Bulk Delete
-            </span>
+
 
             %{--confirm bulk delete modal--}%
             <div class="modal" id="bulkexecdelete" tabindex="-1" role="dialog"
@@ -235,10 +247,10 @@
 
                         <div class="modal-footer">
 
-                                <button type="submit" class="btn btn-default btn-sm " data-dismiss="modal">
+                                <button type="submit" class="btn btn-default  " data-dismiss="modal">
                                     Cancel
                                 </button>
-                                <button class="btn btn-danger btn-sm"
+                                <button class="btn btn-danger "
                                         data-bind="click: function(){$root.doBulkDelete('#bulkexecdelete','#bulkexecdeleteresult');}" >
                                     Delete Selected
                                 </button>
@@ -299,7 +311,7 @@
 
                         <div class="modal-footer">
 
-                                <button type="submit" class="btn btn-default btn-sm " data-dismiss="modal">
+                                <button type="submit" class="btn btn-default  " data-dismiss="modal">
                                     Close
                                 </button>
                         </div>

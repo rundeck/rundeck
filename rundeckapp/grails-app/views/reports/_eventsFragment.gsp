@@ -86,30 +86,6 @@
                             <g:render template="baseReport" model="['reports':reports,options:params.compact?[tags:false, summary: false]:[summary:true],hiliteSince:params.hiliteSince]"/>
                         </tbody>
                         </table>
-                            <div class="obs_bulk_edit_enable" style="display: none">
-                                <span class="textbtn textbtn-default act_bulk_edit_toggleall  ">
-                                    Toggle all
-                                </span>
-                                <span class="textbtn textbtn-default act_bulk_edit_selectall  ">
-                                    Select all
-                                </span>
-                                <span class="textbtn textbtn-default act_bulk_edit_deselectall  ">
-                                    Select none
-                                </span>
-                            </div>
-                            <div>
-                                <span class="textbtn textbtn-default act_bulk_edit_disable obs_bulk_edit_enable "
-                                      style="display: none">
-                                    <i class="glyphicon glyphicon-remove-circle"></i>
-                                    Cancel bulk delete
-                                </span>
-                                <span class="btn btn-xs btn-warning act_bulk_edit_enable obs_bulk_edit_disable">
-                                    Bulk delete
-                                </span>
-                                <input type="submit" class="btn btn-danger obs_bulk_edit_enable " style="display: none"
-                                       value="Delete selected"/>
-                            </div>
-                        </g:form>
 
                             <g:if test="${total && max && total.toInteger() > max.toInteger()}">
                                 <span class="info note">Showing ${reports.size()} of <span class="_obs_histtotal">${total}</span></span>
@@ -118,8 +94,69 @@
                                 </g:if>
                             </g:if>
                             <g:if test="${!params.compact}">
-                                <div class="paginate"><g:paginate controller="reports" action="index" total="${total}" max="${max}" params="${paginateParams}"/></div>
+                                <span class="paginate"><g:paginate controller="reports" action="index" class=" pagination-sm pagination-embed"
+                                                                    total="${total}" max="${max}" params="${paginateParams}"/></span>
                             </g:if>
+                            <div class="pull-right">
+                            <span class="obs_bulk_edit_enable " style="display: none">
+                                <span class="textbtn textbtn-default act_bulk_edit_toggleall  ">
+                                    <g:message code="toggle.all"/>
+                                </span>
+                                <span class="textbtn textbtn-default act_bulk_edit_selectall  ">
+                                    <g:message code="select.all"/>
+                                </span>
+                                <span class="textbtn textbtn-default act_bulk_edit_deselectall  ">
+                                    <g:message code="select.none"/>
+                                </span>
+
+                                <span class="btn btn-xs btn-danger obs_bulk_edit_enable"
+                                      data-toggle="modal"
+                                      data-target="#bulkexecdelete">
+                                    <g:message code="delete.selected.executions"/>
+                                </span>
+                                <span class="textbtn textbtn-default act_bulk_edit_disable obs_bulk_edit_enable "
+                                      style="display: none">
+                                    <i class="glyphicon glyphicon-remove-circle"></i>
+                                    <g:message code="cancel.bulk.delete"/>
+                                </span>
+                            </span>
+                            <span class="btn btn-xs btn-warning act_bulk_edit_enable obs_bulk_edit_disable">
+                                <g:message code="bulk.delete"/>
+                            </span>
+                            </div>
+
+                        %{--confirm bulk delete modal--}%
+                            <div class="modal" id="bulkexecdelete" tabindex="-1" role="dialog"
+                                 aria-labelledby="bulkexecdeletetitle" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <button type="button" class="close" data-dismiss="modal"
+                                                    aria-hidden="true">&times;</button>
+                                            <h4 class="modal-title" id="bulkexecdeletetitle">Bulk Delete <g:message
+                                                    code="domain.Execution.title.plural" default="Executions"/></h4>
+                                        </div>
+
+                                        <div class="modal-body">
+
+                                            <p>Really delete all selected
+                                                <g:message code="domain.Execution.title.plural" default="Executions"/>?
+                                            </p>
+                                        </div>
+
+                                        <div class="modal-footer">
+
+                                            <button type="submit" class="btn btn-default  " data-dismiss="modal">
+                                                Cancel
+                                            </button>
+                                            <input type="submit"
+                                                            class="btn  btn-danger obs_bulk_edit_enable "
+                                                            value="${g.message(code: 'delete.selected.executions')}"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </g:form>
                     </g:if>
                 </div>
 
