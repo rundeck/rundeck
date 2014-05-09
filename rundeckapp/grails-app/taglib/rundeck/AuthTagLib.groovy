@@ -100,45 +100,9 @@ class AuthTagLib {
         if (!attrs.action) {
             throw new Exception("action attribute required: " + attrs.action + ": " + attrs.name)
         }
+        def check=resourceAllowedTest(attrs,body)
 
-        def action = attrs.action
-        def isset=false
-        if(action instanceof Collection){
-            action = action as Set
-            isset=true
-        }
-
-        boolean has = (!attrs.has || attrs.has == "true")
-
-        def env
-        if ('application'==attrs.context){
-            env=Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"application"), 'rundeck'))
-        }else if(attrs.project){
-            env=Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), attrs.project))
-        }
-        def resource = [type: attrs.type?:'resource']
-        def tagattrs=[:]
-        tagattrs.putAll(attrs)
-        tagattrs.remove('type')
-        tagattrs.remove('action')
-        tagattrs.remove('has')
-        tagattrs.remove('context')
-        def attributes = attrs.attributes?:tagattrs
-        if(attributes){
-            resource.putAll(attributes)
-        }
-
-        def authContext = frameworkService.getAuthContextForSubject(request.subject)
-        def authorized
-        if(isset){
-            def decisions = authContext.evaluate([resource] as Set, action, env)
-            authorized = !(decisions.find{!it.authorized})
-        } else{
-            def Decision decision = authContext.evaluate(resource, action, env)
-            authorized=decision.authorized
-        }
-
-        if (!(has ^ authorized)) {
+        if (check) {
             out << body()
         } else if (attrs.altText) {
             out << attrs.altText
