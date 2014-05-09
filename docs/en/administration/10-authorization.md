@@ -159,6 +159,7 @@ aclpolicy:
     * Configuring `configure`
     * Importing archives `import`
     * Exporting archives `export`
+    * Deleting executions `delete_execution`
     * Full access `admin`
 
 The following table summarizes the generic and specific resources and the
@@ -173,18 +174,19 @@ Type       Resource Kind     Properties   Actions  Description
 
 Table: Application scope generic type actions
 
-Type      Properties    Actions     Description
------     -----------   --------    ------------
-`project` "name"        `read`      View a project in the project list
-"         "             `configure` View and modify project configuration
-"         "             `delete`    Delete project
-"         "             `import`    Import archive contents to the project
-"         "             `export`    Export the project as an archive
-"         "             `admin`     Full access to project
-`storage` "path","name" `create`    Create files in the storage facility
-"          "            `update`    Modify files in the storage facility
-"          "            `read`      Read files and list directories in the storage facility
-"          "            `delete`    Delete files in the storage facility
+Type      Properties    Actions                Description
+-----     -----------   --------               ------------
+`project` "name"        `read`                 View a project in the project list
+"         "             `configure`            View and modify project configuration
+"         "             `delete`               Delete project
+"         "             `import`               Import archive contents to the project
+"         "             `export`               Export the project as an archive
+"         "             `delete_execution`     Delete executions
+"         "             `admin`                Full access to project
+`storage` "path","name" `create`               Create files in the storage facility
+"          "            `update`               Modify files in the storage facility
+"          "            `read`                 Read files and list directories in the storage facility
+"          "            `delete`               Delete files in the storage facility
 ----------------------------
 
 Table: Application scope specific resource actions

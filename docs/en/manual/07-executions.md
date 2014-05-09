@@ -204,6 +204,12 @@ To execute the job again press the "Run Again..." button.
 
 Note, the current definition is executed not the one stored in the execution. 
 
+### Deleting
+
+If you have access, you can delete the execution by clicking "Delete this Execution" and confirming.
+
+![Delete this execution](../figures/fig08-delete-execution.png)
+
 ## Related Command Line Tools
 
 [rd-queue]
