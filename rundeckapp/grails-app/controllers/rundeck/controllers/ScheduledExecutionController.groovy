@@ -749,13 +749,13 @@ class ScheduledExecutionController  extends ControllerBase{
         def errjobs = loadresults.errjobs
         def skipjobs = loadresults.skipjobs
 
-        if(jobs){
-            response.addHeader('Location',apiService.apiHrefForJob(jobs[0]))
-            return apiService.renderSuccessXmlWrap(HttpServletResponse.SC_CREATED,request,response){
+        if (jobs) {
+            response.addHeader('Location', apiService.apiHrefForJob(jobs[0]))
+            return apiService.renderSuccessXml(HttpServletResponse.SC_CREATED, false, request, response) {
                 renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
             }
-        }else{
-            return apiService.renderErrorXml(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response) {
+        } else {
+            return apiService.renderSuccessXml(HttpServletResponse.SC_BAD_REQUEST, false, request, response) {
                 renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
             }
         }
