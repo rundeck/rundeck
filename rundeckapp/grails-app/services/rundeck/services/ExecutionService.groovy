@@ -584,8 +584,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             } else if (v instanceof String) {
                 mdcprops.put(k, v ? v : "-")
             } else {
-                final string = v.toString()
-                mdcprops.put(k, string ? string : "-")
+                mdcprops.put(k, v ? v.toString() : "-")
             }
         }
         mdcprops.put('state', state)
