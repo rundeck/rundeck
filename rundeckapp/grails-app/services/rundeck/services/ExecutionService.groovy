@@ -93,6 +93,47 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }, paging)
     }
 
+    /**
+     * Render xml or json response data for the result of a call to {@link #deleteBulkExecutionIds(java.util.Collection, com.dtolabs.rundeck.core.authorization.AuthContext)}
+     *
+     * @param request
+     * @param response
+     * @param result
+     * @return
+     */
+    def renderBulkExecutionDeleteResult(request, response, result) {
+        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'])
+        def total = result.successTotal + result.failures.size()
+        switch (respFormat) {
+            case 'json':
+                return apiService.renderSuccessJson(response) {
+                    requestCount = total
+                    allsuccessful = result.successTotal == total
+                    successCount = result.successTotal
+                    failedCount = result.failures ? result.failures.size() : 0
+                    if (result.failures) {
+                        failures = result.failures.collect { [message: it.message, id: it.id] }
+                    }
+                }
+                break
+            case 'xml':
+            default:
+                return apiService.renderSuccessXml(request, response) {
+                    deleteExecutions(requestCount: total, allsuccessful: result.successTotal == total) {
+                        successful(count: result.successTotal)
+                        if (!result.success) {
+                            failed(count: result.failures.size()) {
+                                result.failures.each { failure ->
+                                    delegate.'execution'(id: failure.id, message: failure.message)
+                                }
+                            }
+                        }
+                    }
+                }
+                break;
+        }
+    }
+
     public String getFollowURLForExecution(Execution e) {
         grailsLinkGenerator.link(controller: 'execution', action: 'follow', id: e.id, absolute: true)
     }
@@ -995,11 +1036,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     /**
-     * Delete an execution and associated log files
+     * Delete an execution and associated log files, return a map of results
      * @param e execution
      * @param user
      * @param authContext
-     * @return
+     * @return [success:true/false, failures:[ [success:false, message: String, id: id],... ], successTotal:Integer]
      */
     Map deleteBulkExecutionIds(Collection ids, AuthContext authContext) {
         def failures=[]
@@ -1008,11 +1049,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         for (Object id : ids) {
             def exec = Execution.get(id)
             def result
-            if(exec){
-                result=deleteExecution(exec, authContext)
-                result.id=id
-            }else{
-                result=[success:false,message:'Execution Not found: '+id,id:id]
+            if (!exec) {
+                result = [success: false, message: 'Execution Not found: ' + id, id: id]
+            } else {
+                result = deleteExecution(exec, authContext)
+                result.id = id
             }
             if(!result.success){
                 failed=true

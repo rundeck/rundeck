@@ -650,7 +650,8 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         def jobid=params.id
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        def result = scheduledExecutionService.deleteScheduledExecutionById(jobid, authContext, session.user, 'delete')
+        def result = scheduledExecutionService.deleteScheduledExecutionById(jobid, authContext,
+                params.deleteExecutions=='true', session.user, 'delete')
         if (!result.success) {
             return renderErrorView(result.error.message)
         } else {
@@ -681,7 +682,8 @@ class ScheduledExecutionController  extends ControllerBase{
         def successful = []
         def deleteerrs = []
         ids.sort().each {jobid ->
-            def result = scheduledExecutionService.deleteScheduledExecutionById(jobid, authContext, session.user, 'deleteBulk')
+            def result = scheduledExecutionService.deleteScheduledExecutionById(jobid, authContext,
+                    params.deleteExecutions == 'true', session.user, 'deleteBulk')
             if (result.errorCode) {
                 deleteerrs << [id: jobid, errorCode: result.errorCode, message: g.message(code: result.errorCode, args: ['Job ID', jobid])]
             }else if (result.error) {
@@ -869,7 +871,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def successful = []
         def deleteerrs=[]
         ids.sort().each{jobid->
-            def result = scheduledExecutionService.deleteScheduledExecutionById(jobid,authContext,session.user, 'apiJobDeleteBulk')
+            def result = scheduledExecutionService.deleteScheduledExecutionById(jobid,authContext, false, session.user, 'apiJobDeleteBulk')
             if (result.errorCode) {
                 deleteerrs << [id:jobid,errorCode:result.errorCode,message: g.message(code: result.errorCode, args: ['Job ID', jobid])]
             }else if (result.error) {
@@ -2156,7 +2158,8 @@ class ScheduledExecutionController  extends ControllerBase{
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Delete', 'Job ID', params.id]])
         }
-        def result = scheduledExecutionService.deleteScheduledExecutionById(params.id, authContext, session.user, 'apiJobDelete')
+        def result = scheduledExecutionService.deleteScheduledExecutionById(params.id, authContext,
+                false, session.user, 'apiJobDelete')
         if (!result.success) {
             if (result.error?.errorCode == 'notfound') {
                 apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND, code: 'api.error.item.doesnotexist',
@@ -2178,6 +2181,30 @@ class ScheduledExecutionController  extends ControllerBase{
         }
     }
 
+    /**
+     * API: DELETE /job/{id}/executions, version 12
+     * delete all executions for a job
+     */
+    def apiJobExecutionsDelete(){
+        log.debug("ScheduledExecutionController: /api/job DELETE : params: " + params)
+        if (!apiService.requireParameters(params, response, ['id'])) {
+            return
+        }
+        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
+        if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
+            return
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if (!frameworkService.authorizeApplicationResourceAny(authContext,
+                frameworkService.authResourceForProject(scheduledExecution.project),
+                [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN])) {
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
+                    code: 'api.error.item.unauthorized', args: ['Delete Execution', 'Project',
+                    scheduledExecution.project]])
+        }
+        def result = scheduledExecutionService.deleteJobExecutions(scheduledExecution, authContext)
+        executionService.renderBulkExecutionDeleteResult(request,response,result)
+    }
     /**
      * API: run simple exec: /api/run/command, version 1
      */

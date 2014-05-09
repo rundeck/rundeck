@@ -1270,36 +1270,9 @@ class ExecutionController extends ControllerBase{
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
         def result=executionService.deleteBulkExecutionIds([ids].flatten(), authContext)
-        def respFormat=apiService.extractResponseFormat(request,response,['xml','json'])
-        switch (respFormat){
-            case 'xml':
-                return apiService.renderSuccessXml(request,response){
-                    deleteExecutions(requestCount:ids.size(),allsuccessful:result.successTotal==ids.size()){
-                        successful(count: result.successTotal)
-                        if(!result.success){
-                            failed(count: result.failures.size()){
-                                result.failures.each{failure->
-                                    delegate.'execution'(id:failure.id,message:failure.message)
-                                }
-                            }
-                        }
-                    }
-                }
-                break;
-            case 'json':
-            default:
-                return render(contentType: 'application/json'){
-                    requestCount=ids.size()
-                    allsuccessful= result.successTotal == ids.size()
-                    successCount=result.successTotal
-                    failedCount=result.failures? result.failures.size() : 0
-                    if(result.failures){
-                        failures=result.failures.collect{[message: it.message, id: it.id ]}
-                    }
-                }
-                break
-        }
+        executionService.renderBulkExecutionDeleteResult(request,response,result)
     }
+
 
     /**
      * API: /api/executions query interface, version 5

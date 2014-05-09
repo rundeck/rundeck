@@ -1,5 +1,8 @@
 package rundeck.services
 
+import grails.converters.JSON
+import grails.util.GrailsWebUtil
+import grails.web.JSONBuilder
 import groovy.xml.MarkupBuilder
 import org.apache.commons.lang.RandomStringUtils
 import org.codehaus.groovy.grails.web.converters.exceptions.ConverterException
@@ -163,6 +166,17 @@ class ApiService {
                 recall()
             }
         }
+    }
+    /**
+     * Render JSON to the response, using a builder with the closure
+     * @param response
+     * @param recall
+     */
+    def renderSuccessJson(HttpServletResponse response,Closure recall){
+        response.contentType=GrailsWebUtil.getContentType(JSON_CONTENT_TYPE, null)
+        JSONBuilder builder = new JSONBuilder();
+        JSON json = builder.build(recall);
+        json.render(response);
     }
 
     /**
@@ -387,7 +401,7 @@ class ApiService {
      */
     def requireExists(HttpServletResponse response, Object item, List args) {
         if (!item) {
-            renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
+            renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist', args: args])
             return false
         }
