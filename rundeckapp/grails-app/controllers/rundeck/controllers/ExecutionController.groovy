@@ -165,7 +165,6 @@ class ExecutionController extends ControllerBase{
             return redirect(action: 'index',controller: 'reports',params: [project:params.project])
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        log.error("Bulk delete ids: "+ids)
         def result=executionService.deleteBulkExecutionIds(ids,authContext,session.user)
         if(!result.success){
             flash.error=result.failures*.message.join(", ")
