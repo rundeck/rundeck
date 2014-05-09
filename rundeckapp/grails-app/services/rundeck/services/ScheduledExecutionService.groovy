@@ -2,16 +2,13 @@ package rundeck.services
 
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import org.apache.commons.validator.EmailValidator
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
-import org.codehaus.groovy.grails.commons.GrailsApplication
 import org.hibernate.StaleObjectStateException
 import org.quartz.*
-import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.MessageSource
@@ -402,26 +399,26 @@ class ScheduledExecutionService implements ApplicationContextAware{
         return list;
     }
     /**
-     * Delete all executions for a job. Return a map with results, as {@link ExecutionService#deleteBulkExecutionIds(java.util.Collection, com.dtolabs.rundeck.core.authorization.AuthContext)}
+     * Delete all executions for a job. Return a map with results, as {@link ExecutionService#deleteBulkExecutionIds(java.util.Collection, com.dtolabs.rundeck.core.authorization.AuthContext, java.lang.String)}
      * @param scheduledExecution
-     * @param authContext
+     * @param authContext @param var
      */
-    def deleteJobExecutions(ScheduledExecution scheduledExecution, AuthContext authContext){
+    def deleteJobExecutions(ScheduledExecution scheduledExecution, AuthContext authContext, def username){
         Execution.withTransaction {
             //unlink any Execution records
             def executions = Execution.findAllByScheduledExecution(scheduledExecution)
-            def results=executionService.deleteBulkExecutionIds(executions*.id, authContext)
+            def results=executionService.deleteBulkExecutionIds(executions*.id, authContext, username)
             return results
         }
     }
 
     /**
      * Immediately delete a ScheduledExecution
-     * @param scheduledExecution
+     * @param username @param scheduledExecution
      * @return
      */
     def deleteScheduledExecution(ScheduledExecution scheduledExecution, boolean deleteExecutions=false,
-                                 AuthContext authContext=null){
+                                 AuthContext authContext=null, String username){
         scheduledExecution = ScheduledExecution.get(scheduledExecution.id)
         def jobname = scheduledExecution.generateJobScheduledName()
         def groupname = scheduledExecution.generateJobGroupName()
@@ -445,7 +442,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
             //unlink any Execution records
             def result = Execution.findAllByScheduledExecution(scheduledExecution)
             if(deleteExecutions){
-                executionService.deleteBulkExecutionIds(result*.id,authContext)
+                executionService.deleteBulkExecutionIds(result*.id,authContext, username)
             }else{
 
                 result.each { Execution exec ->
@@ -501,7 +498,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
         def changeinfo = [user: user, method: callingAction, change: 'delete']
         def jobdata = scheduledExecution.properties
         def jobtitle = "[" + scheduledExecution.extid + "] " + scheduledExecution.generateFullName()
-        def result = deleteScheduledExecution(scheduledExecution,deleteExecutions,authContext)
+        def result = deleteScheduledExecution(scheduledExecution, deleteExecutions, authContext, user)
         if (!result.success) {
             return [success:false,error:  [message: result.error, job: scheduledExecution, errorCode: 'failed', id: scheduledExecution.extid]]
         } else {

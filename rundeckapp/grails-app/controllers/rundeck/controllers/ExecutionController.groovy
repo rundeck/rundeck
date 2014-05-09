@@ -138,7 +138,7 @@ class ExecutionController extends ControllerBase{
         }
         params.project = e.project
         def jobid=e.scheduledExecution?.extid
-        def result=executionService.deleteExecution(e,authContext)
+        def result=executionService.deleteExecution(e,authContext,session.user)
         if(!result.success){
             flash.error=result.error
             return redirect(controller: 'execution', action: 'show', id: params.id, params: [project: params.project])
@@ -166,7 +166,7 @@ class ExecutionController extends ControllerBase{
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         log.error("Bulk delete ids: "+ids)
-        def result=executionService.deleteBulkExecutionIds(ids,authContext)
+        def result=executionService.deleteBulkExecutionIds(ids,authContext,session.user)
         if(!result.success){
             flash.error=result.failures*.message.join(", ")
         }
@@ -1203,7 +1203,7 @@ class ExecutionController extends ControllerBase{
                             format: respFormat
                     ])
         }
-        def result = executionService.deleteExecution(e, authContext)
+        def result = executionService.deleteExecution(e, authContext,session.user)
         if(!result.success){
             log.error("Failed to delete execution: ${result.message}")
             return apiService.renderErrorFormat(response,
@@ -1269,7 +1269,7 @@ class ExecutionController extends ControllerBase{
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
-        def result=executionService.deleteBulkExecutionIds([ids].flatten(), authContext)
+        def result=executionService.deleteBulkExecutionIds([ids].flatten(), authContext, session.user)
         executionService.renderBulkExecutionDeleteResult(request,response,result)
     }
 

@@ -18,7 +18,6 @@ import rundeck.controllers.JobXMLException
 
 import java.text.ParseException
 import java.text.SimpleDateFormat
-import java.util.jar.Attributes
 import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
 import java.util.zip.ZipInputStream
@@ -557,7 +556,7 @@ class ProjectService {
      * @param framework frameowkr
      * @return map [success:true/false, error: (String errorMessage)]
      */
-    def deleteProject(FrameworkProject project, Framework framework){
+    def deleteProject(FrameworkProject project, Framework framework, AuthContext authContext, String username){
         def result = [success: false]
         BaseReport.withTransaction { TransactionStatus status ->
 
@@ -570,36 +569,18 @@ class ProjectService {
                     e.delete(flush: true)
                 }
                 def files=[]
-                def execs=[]
-                Execution.findAllByProject(project.name).each{ e->
-                    //aggregate all files to delete
-                    execs<<e
-                    [LoggingService.LOG_FILE_FILETYPE,WorkflowService.STATE_FILE_FILETYPE].each{ ftype->
-                        def file = logFileStorageService.getFileForExecutionFiletype(e, ftype, true)
-                        if (null != file && file.exists()) {
-                            files << file
-                        }
-                    }
-                }
-                log.error("files from ${execs.size()} executions will be deleted")
                 //delete all jobs with their executions
                 ScheduledExecution.findAllByProject(project.name).each{ se->
-                    def sedresult=scheduledExecutionService.deleteScheduledExecution(se)
+                    def sedresult=scheduledExecutionService.deleteScheduledExecution(se, true, authContext,username)
                     if(!sedresult.success){
                         throw new Exception(sedresult.error)
                     }
                 }
                 //delete all remaining executions
-                def other=0
-                Execution.findAllByProject(project.name).each { e ->
-                    //delete related log files
-                    if (e.dateCompleted == null && e.dateStarted != null) {
-                        //incomplete execution
-                        throw new Exception("Cannot delete {{Execution ${e.id}}} while it is currently running")
-                    }
-                    e.delete(flush: true)
-                    other++
-                }
+                def allexecs= Execution.findAllByProject(project.name)
+                def other=allexecs.size()
+                executionService.deleteBulkExecutionIds(allexecs*.id, authContext, username)
+
                 log.error("${other} other executions deleted")
                 //delete all files
                 def deletedfiles=0

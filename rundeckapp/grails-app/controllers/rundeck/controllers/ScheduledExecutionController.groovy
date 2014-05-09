@@ -4,7 +4,6 @@ import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.app.api.ApiBulkJobDeleteRequest
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.common.Framework
 
 import com.dtolabs.rundeck.core.common.INodeEntry
@@ -2202,7 +2201,7 @@ class ScheduledExecutionController  extends ControllerBase{
                     code: 'api.error.item.unauthorized', args: ['Delete Execution', 'Project',
                     scheduledExecution.project]])
         }
-        def result = scheduledExecutionService.deleteJobExecutions(scheduledExecution, authContext)
+        def result = scheduledExecutionService.deleteJobExecutions(scheduledExecution, authContext, session.user)
         executionService.renderBulkExecutionDeleteResult(request,response,result)
     }
     /**
