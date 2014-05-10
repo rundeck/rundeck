@@ -153,9 +153,9 @@ class ExecutionServiceImpl implements ExecutionService {
         } catch (NodeStepException e) {
             result = new NodeStepResultImpl(e, e.getFailureReason(), e.getMessage(), node);
             throw e;
-        }catch (RuntimeException t) {
+        }catch (Throwable t) {
             result = new NodeStepResultImpl(t, StepFailureReason.Unknown, t.getMessage(), node);
-            throw t;
+            throw new NodeStepException(t, StepFailureReason.Unknown, node.getNodename());
         } finally {
             if (null != getWorkflowListener(context)) {
                 getWorkflowListener(context).finishExecuteNodeStep(result, context, item, node);

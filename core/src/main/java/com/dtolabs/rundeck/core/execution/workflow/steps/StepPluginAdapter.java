@@ -24,6 +24,7 @@
 */
 package com.dtolabs.rundeck.core.execution.workflow.steps;
 
+import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ConfiguredStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
@@ -35,6 +36,8 @@ import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.dtolabs.rundeck.plugins.step.StepPlugin;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.*;
 
 
@@ -93,7 +96,12 @@ class StepPluginAdapter implements StepExecutor, Describable {
                 plugin, PropertyScope.InstanceOnly);
         try {
             plugin.executeStep(stepContext, config);
-        } catch (RuntimeException e) {
+        } catch (Throwable e) {
+            final StringWriter stringWriter = new StringWriter();
+            e.printStackTrace(new PrintWriter(stringWriter));
+            executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL,
+                    "Failed executing step plugin [" + providerName + "]: "
+                            + stringWriter.toString());
             return new StepExecutionResultImpl(e, StepFailureReason.PluginFailed, e.getMessage());
         }
         return new StepExecutionResultImpl();

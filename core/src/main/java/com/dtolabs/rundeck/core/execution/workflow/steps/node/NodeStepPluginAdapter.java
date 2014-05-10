@@ -24,8 +24,11 @@
 */
 package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Map;
 
+import com.dtolabs.rundeck.core.Constants;
 import org.apache.log4j.Logger;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
@@ -101,16 +104,21 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable {
         final Map<String, Object> config = PluginAdapterUtility.configureProperties(resolver, getDescription(), plugin, PropertyScope.InstanceOnly);
         try {
             plugin.executeNodeStep(pluginContext, config, node);
-        } catch (RuntimeException e) {
-            log.error("Uncaught runtime exception executing node step.", e);
-            return new NodeStepResultImpl(e,
-                                          StepFailureReason.PluginFailed,
-                                          e.getMessage(),
-                                          node);
-        } catch (NodeStepException e){
+        } catch (NodeStepException e) {
             log.error("Error executing node step.", e);
             return new NodeStepResultImpl(e,
-                                          e.getFailureReason(),
+                    e.getFailureReason(),
+                    e.getMessage(),
+                    node);
+        } catch (Throwable e) {
+            log.error("Uncaught throwable executing node step.", e);
+            final StringWriter stringWriter = new StringWriter();
+            e.printStackTrace(new PrintWriter(stringWriter));
+            context.getExecutionListener().log(Constants.DEBUG_LEVEL,
+                    "Failed executing node plugin ["+providerName+"] on node " + node.getNodename() + ": "
+                            + stringWriter.toString());
+            return new NodeStepResultImpl(e,
+                                          StepFailureReason.PluginFailed,
                                           e.getMessage(),
                                           node);
         }

@@ -130,14 +130,14 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
     }
 
     private Map<String, Object> resultMetadata(StepExecutionResult result) {
-        if(null!=result && result.isSuccess()){
+        if (null != result && result.isSuccess()) {
             return null;
         }
         HashMap<String, Object> map = new HashMap<String, Object>();
-        if(null!=result.getFailureData()) {
+        if (null != result && null != result.getFailureData()) {
             map.putAll(result.getFailureData());
         }
-        map.put("failureReason", result.getFailureReason().toString());
+        map.put("failureReason", null != result ? result.getFailureReason().toString() : "Unknown");
         return map;
     }
 
