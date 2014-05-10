@@ -49,27 +49,34 @@ public class WorkflowEventLoggerListener implements WorkflowExecutionListener{
         logger.event(STEP_HANDLER, null, null);
     }
 
-    private static Map resultMap(StepExecutionResult result){
-        if(result.isSuccess()){
+    private static Map resultMap(StepExecutionResult result) {
+        if (null != result && result.isSuccess()) {
             return null;
         }
         HashMap hashMap = new HashMap();
-        if (null != result.getFailureData()) {
+        if (null != result && null != result.getFailureData()) {
             hashMap.putAll(result.getFailureData());
         }
-        hashMap.put("failureReason", result.getFailureReason().toString());
-        hashMap.put("executionState", result.isSuccess() ? ExecutionState.SUCCEEDED.toString() : ExecutionState
-                .FAILED.toString());
+        hashMap.put("failureReason", null != result ? result.getFailureReason().toString() : "Unknown");
+        hashMap.put("executionState", null != result && result.isSuccess() ? ExecutionState.SUCCEEDED.toString() :
+                ExecutionState.FAILED.toString());
         return hashMap;
     }
     @Override
     public void finishWorkflowItem(int step, StepExecutionItem item, StepExecutionResult result) {
-        logger.event(STEP_FINISH, null!=result.getFailureMessage()?result.getFailureMessage():null, resultMap(result));
+        logger.event(STEP_FINISH,
+                null != result && null != result.getFailureMessage()
+                        ? result.getFailureMessage()
+                        : null,
+                resultMap(result));
     }
 
     @Override
     public void finishWorkflowItemErrorHandler(int step, StepExecutionItem item, StepExecutionResult result) {
-        logger.event(HANDLER_FINISH, null != result.getFailureMessage() ? result.getFailureMessage() : null, resultMap(result));
+        logger.event(HANDLER_FINISH,
+                null != result && null != result.getFailureMessage()
+                ? result.getFailureMessage()
+                : null, resultMap(result));
     }
 
     @Override
@@ -88,7 +95,8 @@ public class WorkflowEventLoggerListener implements WorkflowExecutionListener{
 
     @Override
     public void finishExecuteNodeStep(NodeStepResult result, ExecutionContext context, StepExecutionItem item, INodeEntry node) {
-        logger.event(NODE_FINISH, null != result.getFailureMessage() ? result.getFailureMessage() : null,
+        logger.event(NODE_FINISH, null != result && null != result.getFailureMessage() ? result.getFailureMessage() :
+                null,
                 resultMap(result));
     }
 }

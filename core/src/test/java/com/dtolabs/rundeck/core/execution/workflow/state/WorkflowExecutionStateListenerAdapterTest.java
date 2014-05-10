@@ -124,6 +124,25 @@ public class WorkflowExecutionStateListenerAdapterTest extends TestCase {
         assertWorkflowStateEvent(o2, ExecutionState.SUCCEEDED);
     }
 
+    public void testFinishExecuteNodeStepNullResult() {
+        HashMap<String, INodeEntry> nodes = new HashMap<String, INodeEntry>();
+        NodeEntryImpl node1 = new NodeEntryImpl("test1");
+        nodes.put("test1", node1);
+        test.beginWorkflowExecution(ExecutionContextImpl.builder().nodes(new NodeSetImpl(nodes)).build(), null);
+
+        test.beginWorkflowItem(1, testitem);
+        test.beginExecuteNodeStep(null, null, node1);
+        testReason reason1 = new testReason("Unknown");
+        //simulate exception thrown with null result
+        test.finishExecuteNodeStep(null, null, null, node1);
+
+        assertEquals(4, testListener1.events.size());
+        assertWorkflowStateEvent((Object[]) testListener1.events.get(0), ExecutionState.RUNNING, "test1");
+        assertStepStateEvent((Object[]) testListener1.events.get(1), ExecutionState.RUNNING, null, 1);
+        assertStepStateEvent((Object[]) testListener1.events.get(2), ExecutionState.RUNNING, "test1", 1);
+        assertStepStateEvent((Object[]) testListener1.events.get(3), ExecutionState.FAILED, "test1", null,
+                reason1.map(), 1);
+    }
     public void testEventsBeginWorkflowItem() {
         HashMap<String, INodeEntry> nodes = new HashMap<String, INodeEntry>();
         nodes.put("test1", new NodeEntryImpl("test1"));
