@@ -23,6 +23,9 @@ class ApiServiceTests {
     }
     void testRequireVersionInvalid() {
         def mock = mockFor(GrailsMockHttpServletResponse)
+        mock.demand.getFormat {->
+            'xml'
+        }
         mock.demand.setStatus { int status ->
             assertEquals(400, status)
         }

@@ -308,11 +308,10 @@ class ApiService {
             }
             response.outputStream<< renderErrorText(err)
         }]
-        def respFormat = error.format && resp[error.format] ?
-            error.format :
-            response.format && resp[response.format] ?
-                response.format :
-                'xml'
+        def eformat = error.format
+        def rformat = response.format
+        def respFormat = eformat && resp[eformat] ? eformat :
+            rformat && resp[rformat] ? rformat : 'xml'
         return resp[respFormat](response,error)
     }
     def renderErrorXml(HttpServletResponse response, Map error){
