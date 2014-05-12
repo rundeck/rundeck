@@ -215,7 +215,11 @@ public class ResourceXMLParser {
         //load all element attributes as properties
         for (final Object o : node1.attributes()) {
             final Attribute attr = (Attribute) o;
-            ent.properties.setProperty(attr.getName(), attr.getStringValue());
+            if (attr.getNamespace() != null) {
+                ent.properties.setProperty(attr.getQualifiedName(), attr.getStringValue());
+            } else {
+                ent.properties.setProperty(attr.getName(), attr.getStringValue());
+            }
         }
     }
 

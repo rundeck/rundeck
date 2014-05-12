@@ -35,6 +35,7 @@ public class TestResourceXMLParser extends TestCase {
     File dnefile1;
     File testfile1;
     File testfile2;
+    File testfile3;
     File invalidfile1;
     File invalidfile2;
 
@@ -50,6 +51,7 @@ public class TestResourceXMLParser extends TestCase {
         dnefile1 = new File("test-does-not-exist.xml");
         testfile1 = new File("src/test/resources/com/dtolabs/shared/resources/test-resources1.xml");
         testfile2 = new File("src/test/resources/com/dtolabs/shared/resources/test-resources2.xml");
+        testfile3 = new File("src/test/resources/com/dtolabs/shared/resources/test-resources3.xml");
         invalidfile1 = new File("src/test/resources/com/dtolabs/shared/resources/test-resources-invalid1.xml");
         invalidfile2 = new File("src/test/resources/com/dtolabs/shared/resources/test-resources-invalid2.xml");
     }
@@ -165,5 +167,37 @@ public class TestResourceXMLParser extends TestCase {
         }
 
 
+    }
+
+    /**
+     * Node attributes using xml namespaces
+     * @throws Exception
+     */
+    public void testParseXMLNs() throws Exception {
+        ResourceXMLParser resourceXMLParser = new ResourceXMLParser(testfile3);
+        final ArrayList<ResourceXMLParser.Entity> items = new ArrayList<ResourceXMLParser.Entity>();
+        final boolean[] resourceParsedCalled = new boolean[]{false};
+        final boolean[] resourcesParsed = new boolean[]{false};
+        resourceXMLParser.setReceiver(new ResourceXMLReceiver() {
+            public boolean resourceParsed(ResourceXMLParser.Entity entity) {
+                items.add(entity);
+                resourceParsedCalled[0] = true;
+                return true;
+            }
+
+            public void resourcesParsed(ResourceXMLParser.EntitySet entities) {
+                resourcesParsed[0] = true;
+            }
+        });
+        resourceXMLParser.parse();
+        assertTrue(resourceParsedCalled[0]);
+        assertTrue(resourcesParsed[0]);
+        assertEquals("Wrong size", 1, items.size());
+        final ResourceXMLParser.Entity entity = items.get(0);
+        assertEquals("wrong node type", "node", entity.getResourceType());
+        assertEquals("wrong name", "node1", entity.getName());
+        assertEquals("wrong value", "testvalue", entity.getProperty("testattribute"));
+        assertEquals("wrong value", "test value2", entity.getProperty("test:attribute2"));
+        assertEquals("wrong value", "test value3", entity.getProperty("test:attribute3"));
     }
 }
