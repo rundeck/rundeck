@@ -374,7 +374,7 @@ public class SSHTaskBuilder {
         final ExtSSHExec extSSHExec = new ExtSSHExec();
         build(extSSHExec, nodeentry, args, project, dataContext, sshConnectionInfo,
                 loglevel, logger);
-        extSSHExec.setPluginLogger(logger);
+
         extSSHExec.setAntLogLevel(loglevel);
         return extSSHExec;
 
@@ -485,6 +485,7 @@ public class SSHTaskBuilder {
             baseConfig.putAll(sshConfig);
         }
         sshbase.setSshConfig(baseConfig);
+        sshbase.setPluginLogger(logger);
     }
 
     public static Scp buildScp(final INodeEntry nodeentry, final Project project,
