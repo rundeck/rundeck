@@ -211,7 +211,7 @@
 <g:else>
     <div>
         <div class="info note">Step Description</div>
-        <input id="description" type="text" name="description" value="${item?.description}" size="100"/>
+        <input id="description" type="text" name="description" value="${item?.description?.encodeAsHTML()}" size="100"/>
     </div>
 </g:else>
 
