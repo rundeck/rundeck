@@ -253,8 +253,10 @@
             nodeFilter.filterAll(filterAll);
             nodeFilter.filterName(filterName);
             nodeFilter.filter(filterString);
+            nodeFilter.loading(true);
             _updateMatchedNodes(data, elem, '${params.project?:request.project}', false, {view: view, expanddetail: true,
                 inlinepaging: false, maxShown: 20, requireRunAuth:true}, function (xht) {
+                nodeFilter.loading(false);
             });
         }
 
@@ -459,12 +461,18 @@
                                     No nodes selected. Match nodes by selecting or entering a filter.
                                 </span>
                             </div>
-                            <div data-bind="visible: allcount()>0" class="well well-sm inline">
+                            <div data-bind="visible: allcount()>0 || loading()" class="well well-sm inline">
+                                <span data-bind="if: loading()" class="text-info">
+                                    <i class="glyphicon glyphicon-time"></i>
+                                    <g:message code="loading.matched.nodes" />
+                                </span>
+                                <span data-bind="if: !loading()">
                                 <span data-bind="text: allcount()">0</span>
                                 <span data-bind="text: nodesTitle">Nodes</span> Matched.
                                 <a class="textbtn textbtn-default pull-right" data-bind="click: nodesPageView">
                                     View in Nodes Page &raquo;
                                 </a>
+                                </span>
                             </div>
                             <span id="${ukey}nodeForm">
                             </span>
