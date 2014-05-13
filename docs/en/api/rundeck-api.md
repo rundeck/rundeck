@@ -39,6 +39,8 @@ Changes introduced by API Version number:
 
 **Version 11**:
 
+**Update**: The URL path for Token access was corrected.
+
 In this version, all new and updated endpoints support XML or JSON request and response content where appropriate.
 
 **Modified XML Response format**:
@@ -62,13 +64,13 @@ Endpoints:
         + PUT to import an archive to a project - [Project Archive Import](#project-archive-import)
     - `/api/11/storage/keys/[PATH]`
         + GET, POST, PUT, DELETE: manage stored keys - [Key Storage](#key-storage)
-    - `/api/11/auth/tokens` 
+    - `/api/11/tokens`
         + GET: List all auth tokens - [List Tokens](#list-tokens)
         + POST: Generate a token for a user - [Create a Token](#create-a-token)
-    - `/api/11/auth/tokens/[user]` 
+    - `/api/11/tokens/[user]`
         + GET: List auth tokens defined for a user - [List Tokens](#list-tokens)
         + POST: Generate a token for a user - [Create a Token](#create-a-token)
-    - `/api/11/auth/token/[tokenID]`
+    - `/api/11/token/[tokenID]`
         + GET: get a token - [Get a token](#get-a-tokens)
         + DELETE: delete a token - [Delete a Token](#delete-a-token)
 * Updated endpoints
@@ -332,8 +334,8 @@ List all tokens or all tokens for a specific user.
 
 Request:
 
-    GET /api/11/auth/tokens
-    GET /api/11/auth/tokens/[USER]
+    GET /api/11/tokens
+    GET /api/11/tokens/[USER]
 
 Result: 
 
