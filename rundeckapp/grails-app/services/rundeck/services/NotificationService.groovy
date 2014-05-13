@@ -307,8 +307,9 @@ public class NotificationService implements ApplicationContextAware{
                     def Execution exec = content.execution
                     def execMap = generateExecutionData(exec,content)
                     def jobMap = exportJobdata(source)
-                    execMap.job=jobMap
                     Map context=generateContextData(exec,content)
+                    execMap.job=jobMap
+                    execMap.context=context
                     Map config= n.configuration
                     if (context && config) {
                         config = DataContextUtils.replaceDataReferences(config, context)
