@@ -43,11 +43,6 @@
                                     class="cformAllowSave cformAllowSaveOnly btn btn-primary" />
                 </g:if>
 
-                <g:if test="${auth.resourceAllowedTest( kind:'job', action:[AuthConstants.ACTION_CREATE],project: params.project ?: request.project)}">
-                    <g:actionSubmit action="saveAndExec" value="Create And Run"
-                                    class="cformAllowSave cformAllowRun btn btn-primary"/>
-                </g:if>
-
                 <g:if test="${auth.resourceAllowedTest( has:false, kind:'job', action:[AuthConstants.ACTION_CREATE],project: params.project ?: request.project)}">
                     <span class="error message cformAllowRunAndForget cformAllowRun">Not authorized to Save Jobs</span>
                 </g:if>
