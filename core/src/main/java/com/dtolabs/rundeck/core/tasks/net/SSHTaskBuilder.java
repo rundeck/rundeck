@@ -439,6 +439,7 @@ public class SSHTaskBuilder {
                         throw new BuilderException("SSH Private key path is expected to start with \"keys/\": " +
                                 sshKeyResource);
                     }
+                    logger.log(Project.MSG_DEBUG, "Using ssh key storage path: " + sshKeyResource);
                     try {
                         InputStream privateKeyResourceData = sshConnectionInfo.getPrivateKeyResourceData();
                         sshbase.setSshKeyData(privateKeyResourceData);
@@ -457,7 +458,7 @@ public class SSHTaskBuilder {
                     if (!new File(sshKeypath).exists()) {
                         throw new BuilderException("SSH Keyfile does not exist: " + sshKeypath);
                     }
-                    project.log("Using ssh keyfile: " + sshKeypath, Project.MSG_DEBUG);
+                    logger.log(Project.MSG_DEBUG,"Using ssh keyfile: " + sshKeypath);
                     sshbase.setKeyfile(sshKeypath);
                 } else {
                     throw new BuilderException("SSH Keyfile or storage path must be set to use privateKey " +
