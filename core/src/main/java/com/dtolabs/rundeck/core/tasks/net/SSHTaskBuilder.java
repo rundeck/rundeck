@@ -435,8 +435,8 @@ public class SSHTaskBuilder {
                 final String sshKeypath = sshConnectionInfo.getPrivateKeyfilePath();
                 final String sshKeyResource = sshConnectionInfo.getPrivateKeyResourcePath();
                 if (null != sshKeyResource) {
-                    if (!PathUtil.asPath(sshKeyResource).getPath().startsWith("ssh-key/")) {
-                        throw new BuilderException("SSH Private key path is expected to start with \"ssh-key/\": " +
+                    if (!PathUtil.asPath(sshKeyResource).getPath().startsWith("keys/")) {
+                        throw new BuilderException("SSH Private key path is expected to start with \"keys/\": " +
                                 sshKeyResource);
                     }
                     try {

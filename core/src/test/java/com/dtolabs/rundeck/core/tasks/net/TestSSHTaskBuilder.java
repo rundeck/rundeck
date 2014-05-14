@@ -467,7 +467,7 @@ public class TestSSHTaskBuilder extends TestCase {
         final testSSHExecInterface test = new testSSHExecInterface();
 
         state.sshConnectionInfo.authenticationType = SSHTaskBuilder.AuthenticationType.privateKey;
-        state.sshConnectionInfo.privateKeyResourcePath = "/ssh-key/key1.pem";
+        state.sshConnectionInfo.privateKeyResourcePath = "/keys/key1.pem";
         state.sshConnectionInfo.privateKeyResourceData = new ByteArrayInputStream("data".getBytes());
         state.sshConnectionInfo.username = "usernameValue";
 
@@ -492,7 +492,7 @@ public class TestSSHTaskBuilder extends TestCase {
         final testSSHExecInterface test = new testSSHExecInterface();
 
         state.sshConnectionInfo.authenticationType = SSHTaskBuilder.AuthenticationType.privateKey;
-        state.sshConnectionInfo.privateKeyResourcePath = "/ssh-key/key1.pem";
+        state.sshConnectionInfo.privateKeyResourcePath = "/keys/key1.pem";
         state.sshConnectionInfo.privateKeyResourceData = new ByteArrayInputStream("data".getBytes());
         state.sshConnectionInfo.privateKeyResourceDataIOException = new IOException("blah");
         state.sshConnectionInfo.username = "usernameValue";
@@ -511,10 +511,10 @@ public class TestSSHTaskBuilder extends TestCase {
         final testSSHExecInterface test = new testSSHExecInterface();
 
         state.sshConnectionInfo.authenticationType = SSHTaskBuilder.AuthenticationType.privateKey;
-        state.sshConnectionInfo.privateKeyResourcePath = "/ssh-key/key1.pem";
+        state.sshConnectionInfo.privateKeyResourcePath = "/keys/key1.pem";
         state.sshConnectionInfo.privateKeyResourceData = new ByteArrayInputStream("data".getBytes());
         state.sshConnectionInfo.privateKeyResourceDataStorageException = new StorageException("blah",
-                StorageException.Event.READ, PathUtil.asPath("ssh-key/key1.pem"));
+                StorageException.Event.READ, PathUtil.asPath("keys/key1.pem"));
         state.sshConnectionInfo.username = "usernameValue";
 
         try {
