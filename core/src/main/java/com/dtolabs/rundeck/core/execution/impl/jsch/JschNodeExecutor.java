@@ -487,19 +487,22 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         }
 
         public String getPrivateKeyfilePath() {
-            if (null != node.getAttributes().get(NODE_ATTR_SSH_KEYPATH)) {
-                return node.getAttributes().get(NODE_ATTR_SSH_KEYPATH);
-            }
-
-            if (frameworkProject.hasProperty(PROJ_PROP_SSH_KEYPATH)) {
-                return frameworkProject.getProperty(PROJ_PROP_SSH_KEYPATH);
+            String path = null;
+            if (null != nonBlank(node.getAttributes().get(NODE_ATTR_SSH_KEYPATH))) {
+                path = node.getAttributes().get(NODE_ATTR_SSH_KEYPATH);
+            } else if (frameworkProject.hasProperty(PROJ_PROP_SSH_KEYPATH)) {
+                path = frameworkProject.getProperty(PROJ_PROP_SSH_KEYPATH);
             } else if (framework.hasProperty(FWK_PROP_SSH_KEYPATH)) {
-                return framework.getProperty(FWK_PROP_SSH_KEYPATH);
-            } else if(framework.hasProperty(Constants.SSH_KEYPATH_PROP)){
+                path = framework.getProperty(FWK_PROP_SSH_KEYPATH);
+            } else if (framework.hasProperty(Constants.SSH_KEYPATH_PROP)) {
                 //return default framework level
-                return framework.getProperty(Constants.SSH_KEYPATH_PROP);
+                path = framework.getProperty(Constants.SSH_KEYPATH_PROP);
             }
-            return null;
+            //expand properties in path
+            if (path != null && path.contains("${")) {
+                path = DataContextUtils.replaceDataReferences(path, context.getDataContext());
+            }
+            return path;
         }
 
         public InputStream getPrivateKeyResourceData() throws IOException{
@@ -512,20 +515,24 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
                     .getContents();
             return contents.getInputStream();
         }
-        public String getPrivateKeyResourcePath() {
-            if (null != node.getAttributes().get(NODE_ATTR_SSH_KEY_RESOURCE)) {
-                return node.getAttributes().get(NODE_ATTR_SSH_KEY_RESOURCE);
-            }
 
-            if (frameworkProject.hasProperty(PROJ_PROP_SSH_KEY_RESOURCE)) {
-                return frameworkProject.getProperty(PROJ_PROP_SSH_KEY_RESOURCE);
+        public String getPrivateKeyResourcePath() {
+            String path = null;
+            if (null != nonBlank(node.getAttributes().get(NODE_ATTR_SSH_KEY_RESOURCE))) {
+                path = node.getAttributes().get(NODE_ATTR_SSH_KEY_RESOURCE);
+            } else if (frameworkProject.hasProperty(PROJ_PROP_SSH_KEY_RESOURCE)) {
+                path = frameworkProject.getProperty(PROJ_PROP_SSH_KEY_RESOURCE);
             } else if (framework.hasProperty(FWK_PROP_SSH_KEY_RESOURCE)) {
-                return framework.getProperty(FWK_PROP_SSH_KEY_RESOURCE);
-            } else if(framework.hasProperty(Constants.SSH_KEYRESOURCE_PROP)) {
+                path = framework.getProperty(FWK_PROP_SSH_KEY_RESOURCE);
+            } else if (framework.hasProperty(Constants.SSH_KEYRESOURCE_PROP)) {
                 //return default framework level
-                return framework.getProperty(Constants.SSH_KEYRESOURCE_PROP);
+                path = framework.getProperty(Constants.SSH_KEYRESOURCE_PROP);
             }
-            return null;
+            //expand properties in path
+            if (path != null && path.contains("${")) {
+                path = DataContextUtils.replaceDataReferences(path, context.getDataContext());
+            }
+            return path;
         }
 
         public String getPrivateKeyPassphrase() {
