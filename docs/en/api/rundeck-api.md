@@ -2226,6 +2226,7 @@ Response will indicate whether the imported contents had any errors:
 **All imported jobs successful:**
 
 `application/xml`
+
 ~~~ {.xml}
 <import status="successful">
 </import>
@@ -2240,6 +2241,7 @@ Response will indicate whether the imported contents had any errors:
 **Some imported jobs failed:**
 
 `application/xml`
+
 ~~~ {.xml}
 <import status="failed">
     <errors count="[#]">
