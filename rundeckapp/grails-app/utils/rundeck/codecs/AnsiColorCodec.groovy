@@ -26,7 +26,7 @@ class AnsiColorCodec {
             36: 'fg-cyan',
             37: 'fg-white',
             39: 'fg-default',
-            
+
             60: 'fg-light-black',
             61: 'fg-light-red',
             62: 'fg-light-green',
@@ -72,17 +72,18 @@ class AnsiColorCodec {
                 return match[0]
             } else {
                 //ctx
-                return cols.collect {
-                    if (it == 0) {
-                        //reset
-                        def x = ctx
-                        ctx = []
-                        return x.collect { '</span>' }.join('')
-                    } else {
+                def outstr=(''+(ctx? ctx.collect { '</span>' }.join(''):''))
+                ctx=[]
+                def vals = cols.collect {
+                    if(it){
                         ctx << it
-                        '<span class="ansicolor ' + (ansicolors[it] ?: ansimode[it]?: 'unknown-' + it) + '">'
+                        return (ansicolors[it] ?: ansimode[it] ?: '')
+                    }else{
+                        null
                     }
-                }.join('')
+                }.findAll{it}.join(' ')
+
+                return outstr+(vals? '<span class="ansicolor ' + vals + '">' :'')
             }
         } + (ctx.collect { '</span>' }.join(''))
     }
