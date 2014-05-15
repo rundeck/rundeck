@@ -298,8 +298,15 @@ class ExecutionController extends ControllerBase{
         iterator.openStream(0)
         def lineSep=System.getProperty("line.separator")
         iterator.findAll{it.eventType==LogUtil.EVENT_TYPE_LOG}.each{ LogEvent msgbuf ->
-                response.outputStream << (isFormatted?"${logFormater.format(msgbuf.datetime)} [${msgbuf.metadata?.user}@${msgbuf.metadata?.node} ${msgbuf.metadata?.stepctx?:'_'}][${msgbuf.loglevel}] ${msgbuf.message}" : msgbuf.message)
-                response.outputStream<<lineSep
+            def message = msgbuf.message
+            if (params.stripansi != 'false' && message.contains('\033[')) {
+                try {
+                    message=message.decodeAnsiColorStrip()
+                } catch (Exception exc) {
+                }
+            }
+            response.outputStream << (isFormatted?"${logFormater.format(msgbuf.datetime)} [${msgbuf.metadata?.user}@${msgbuf.metadata?.node} ${msgbuf.metadata?.stepctx?:'_'}][${msgbuf.loglevel}] ${message}" : message)
+            response.outputStream<<lineSep
         }
         iterator.close()
     }
@@ -709,6 +716,18 @@ class ExecutionController extends ControllerBase{
             lastmodl = reqlastmod
         }
 
+//        if("true" == servletContext.getAttribute("output.ansicolor.enabled") || params.ansicolor=='true'){
+            entry.each {
+                if (it.mesg.contains('\033[')) {
+                    try {
+                        it.loghtml = it.mesg.decodeAnsiColor()
+                        it.mesg = it.mesg.decodeAnsiColorStrip()
+                    } catch (Exception exc) {
+                        log.error("Markdown error: " + exc.getMessage(), exc)
+                    }
+                }
+            }
+//        }
         if("true" == servletContext.getAttribute("output.markdown.enabled") && !params.disableMarkdown){
             entry.each{
                 if(it.mesg){

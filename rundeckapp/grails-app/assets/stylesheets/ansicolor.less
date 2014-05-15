@@ -1,0 +1,128 @@
+@ansi-fg-black: black;
+@ansi-fg-green: green;
+@ansi-fg-red: red;
+@ansi-fg-yellow: yellow;
+@ansi-fg-blue: blue;
+@ansi-fg-magenta: magenta;
+@ansi-fg-cyan: cyan;
+@ansi-fg-white: white;
+
+@ansi-fg-light-black: lighten(black, 40%);
+@ansi-fg-light-green: lighten(green, 40%);
+@ansi-fg-light-red: lighten(red, 40%);
+@ansi-fg-light-yellow: lighten(yellow, 40%);
+@ansi-fg-light-blue: lighten(blue, 40%);
+@ansi-fg-light-magenta: lighten(magenta, 40%);
+@ansi-fg-light-cyan: lighten(cyan, 40%);
+@ansi-fg-light-white: white;
+
+@ansi-bg-black: lighten(black,20%);
+@ansi-bg-green: lighten(green,20%);
+@ansi-bg-red: lighten(red,20%);
+@ansi-bg-yellow: lighten(yellow,20%);
+@ansi-bg-blue: lighten(blue,20%);
+@ansi-bg-magenta: lighten(magenta,20%);
+@ansi-bg-cyan: lighten(cyan,20%);
+@ansi-bg-white: white;
+@ansi-bg-default: clear;
+
+.ansicolor{
+  &.fg-black{
+    color:@ansi-fg-black;
+  }
+  &.fg-green{
+    color:@ansi-fg-green;
+  }
+  &.fg-red{
+    color:@ansi-fg-red;
+  }
+  &.fg-yellow{
+    color:@ansi-fg-yellow;
+  }
+  &.fg-blue{
+    color:@ansi-fg-blue;
+  }
+  &.fg-magenta{
+    color:@ansi-fg-magenta;
+  }
+  &.fg-cyan{
+    color:@ansi-fg-cyan;
+  }
+  &.fg-white{
+    color:@ansi-fg-white;
+  }
+  &.fg-default{
+  }
+
+  &.fg-light-black{
+    color:@ansi-fg-light-black;
+  }
+  &.fg-light-green{
+    color:@ansi-fg-light-green;
+  }
+  &.fg-light-red{
+    color:@ansi-fg-light-red;
+  }
+  &.fg-light-yellow{
+    color:@ansi-fg-light-yellow;
+  }
+  &.fg-light-blue{
+    color:@ansi-fg-light-blue;
+  }
+  &.fg-light-magenta{
+    color:@ansi-fg-light-magenta;
+  }
+  &.fg-light-cyan{
+    color:@ansi-fg-light-cyan;
+  }
+  &.fg-light-white{
+    color:@ansi-fg-light-white;
+  }
+
+  &.bg-black{
+    background-color:@ansi-bg-black;
+  }
+  &.bg-green{
+    background-color:@ansi-bg-green;
+  }
+  &.bg-red{
+    background-color:@ansi-bg-red;
+  }
+  &.bg-yellow{
+    background-color:@ansi-bg-yellow;
+  }
+  &.bg-blue{
+    background-color:@ansi-bg-blue;
+  }
+  &.bg-magenta{
+    background-color:@ansi-bg-magenta;
+  }
+  &.bg-cyan{
+    background-color:@ansi-bg-cyan;
+  }
+  &.bg-white{
+    background-color:@ansi-bg-white;
+  }
+  &.bg-default{
+    background-color:@ansi-bg-default;
+  }
+  //modes
+
+  &.mode-underline{
+    text-decoration: underline;
+  }
+  &.mode-bold{
+    font-weight: bold;
+  }
+  &.mode-blink{
+    text-decoration: underline;
+    text-decoration-style: wavy;
+    text-decoration-color: darkmagenta;
+  }
+  &.mode-reverse{
+
+  }
+  &.mode-nondisplayed{
+    visibility: hidden;
+  }
+}

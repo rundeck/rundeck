@@ -30,6 +30,7 @@
       <g:javascript src="workflow.js"/>
       <g:javascript src="executionState.js"/>
       <asset:javascript src="executionState_HistoryKO.js"/>
+
       <g:javascript library="prototype/effects"/>
       <g:javascript>
 
@@ -51,7 +52,7 @@
             appLinks:appLinks,
             iconUrl: "${resource(dir: 'images', file: 'icon-small')}",
             smallIconUrl: "${resource(dir: 'images', file: 'icon-small')}",
-            extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>&markdown=${params.markdown}",
+            extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>&markdown=${params.markdown}&ansicolor=${params.ansicolor}",
             lastlines: ${params.lastlines ? params.lastlines : defaultLastLines},
             maxLastLines: ${params.maxlines ? params.maxlines : maxLastLines},
             collapseCtx: {value:${null == execution?.dateCompleted },changed:false},
