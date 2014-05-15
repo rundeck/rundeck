@@ -114,15 +114,30 @@
   &.mode-bold{
     font-weight: bold;
   }
-  &.mode-blink{
-    text-decoration: underline;
-    text-decoration-style: wavy;
-    text-decoration-color: darkmagenta;
+  @-webkit-keyframes ansi-blink {
+    0% {
+      opacity: 0.5
+    }
+    50% {
+      opacity: 0.5
+    }
+    50.01% {
+      opacity: 1
+    }
+    100% {
+      opacity: 1
+    }
   }
+
+  &.mode-blink {
+    -webkit-animation: ansi-blink 0.7s infinite linear alternate;
+    -webkit-font-smoothing: antialiased;
+  }
+
   &.mode-reverse{
 
   }
   &.mode-nondisplayed{
-    visibility: hidden;
+    color: lighten(black,50%);
   }
 }
