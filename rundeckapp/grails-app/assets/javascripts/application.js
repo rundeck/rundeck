@@ -680,6 +680,7 @@ function _toggleAnsiColor(e){
 }
 function _initAnsiToggle(){
     jQuery('.ansi-color-toggle').on('change',_toggleAnsiColor);
+    jQuery('.nodes_run_content').on('change','.ansi-color-toggle',_toggleAnsiColor);
 }
 
 (function(){
