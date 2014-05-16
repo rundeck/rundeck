@@ -167,9 +167,17 @@
                      id="viewoptionscomplete">
                     <span>
                         <g:link class="textbtn" style="padding:5px;"
-                                title="View raw text output"
+                                title="View text output (strip ansi codes)"
                                 controller="execution" action="downloadOutput" id="${execution.id}"
                                 params="[view: 'inline', formatted: false, project: execution.project]">
+                            Text</g:link>
+                    </span>
+                    <span>
+                        <g:link class="textbtn" style="padding:5px;"
+                                title="View raw output"
+                                controller="execution" action="downloadOutput" id="${execution.id}"
+                                params="[view: 'inline', formatted: false, project: execution.project,
+                                        stripansi:false]">
                             Raw</g:link>
                     </span>
 
