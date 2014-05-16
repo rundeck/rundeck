@@ -48,7 +48,7 @@ class AnsiColorCodec {
     ]
     def decode = { str ->
         def ctx = []
-        str.replaceAll('\033\\[((\\d{1,2})?(;\\d{1,2})*)([mGHfABCDRsuhl])') { match ->
+        str.encodeAsHTML().replaceAll('\033\\[((\\d{1,2})?(;\\d{1,2})*)([mGHfABCDRsuhl])') { match ->
             def cols = []
             def invalid = false
             if (match.size() > 0) {
