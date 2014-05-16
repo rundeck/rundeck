@@ -524,7 +524,7 @@
                     <g:render template="wfstateSummaryDisplay" bean="${workflowState}" var="workflowState"/>
                 </div>
                 <div class="tab-pane" id="state">
-                    <div class="flowstate" id="nodeflowstate">
+                    <div class="flowstate ansicolor ansicolor-on" id="nodeflowstate">
                        <g:render template="wfstateNodeModelDisplay" bean="${workflowState}" var="workflowState"/>
                     </div>
                 </div>
