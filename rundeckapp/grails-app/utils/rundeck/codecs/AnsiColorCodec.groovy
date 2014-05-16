@@ -116,7 +116,7 @@ class AnsiColorCodec {
             }
             sb << str.encodeAsHTMLElement()
         }
-
+        sb << ('' + (ctx ? ctx.collect { '</span>' }.join('') : ''))
         sb.toString()
     }
 }
