@@ -1,5 +1,7 @@
 package rundeck.codecs
 
+import java.util.regex.Pattern
+
 /**
  * AnsiColorCodec replaces ansi escapes with html spans
  * @author Greg Schueler <greg@simplifyops.com>
@@ -46,44 +48,75 @@ class AnsiColorCodec {
             47: 'bg-white',
             49: 'bg-default',
     ]
-    def decode = { str ->
+    def decode = { string ->
         def ctx = []
-        str.encodeAsHTML().replaceAll('\033\\[((\\d{1,2})?(;\\d{1,2})*)([mGHfABCDRsuhl])') { match ->
-            def cols = []
-            def invalid = false
-            if (match.size() > 0) {
-                if(match.size()>3 && match[4]!='m'){
-                    return ''
-                }
-                if (!match[1]) {
-                    cols << 0
-                } else {
-                    def strs = match[1].split(";")
+        def sb = new StringBuilder()
+        def vals = string.split('\033[\\[%]')
+        boolean coded = false
+        vals.each { str ->
+            if (str == '') {
+                coded = true
+                return
+            }
+            if (!coded) {
+                sb << str.encodeAsHTMLElement()
+                coded = true
+                return
+            }
 
-                    try {
-                        strs.findAll { it != null }.each {
-                            if (it != null) {
-                                cols << Integer.parseInt(it)
-                            }
+            sb << ('' + (ctx ? ctx.collect { '</span>' }.join('') : ''))
+            ctx = []
+
+            def matcher = Pattern.compile('(?s)^(((\\d{1,2})?(;\\d{1,2})*)%?([mGHfABCDRsuhl])).*$').matcher(str)
+            if (matcher.matches()) {
+                def len = matcher.group(1).length()
+                def cols = []
+                def invalid = false
+                if (matcher.groupCount() > 1) {
+                    if (matcher.groupCount() > 4 && matcher.group(5) == 'G' && matcher.group(3)) {
+                        //column shift position
+                        def val=Integer.parseInt(matcher.group(3))
+                        def shift = val-sb.length()
+                        if (shift > 0) {
+                            sb << ' ' * shift
                         }
-                    } catch (NumberFormatException e) {
-                        return match[0]
+                    }else if (matcher.groupCount() > 4 && matcher.group(5) != 'm') {
+                        sb << ''
+                    }
+                    if (!matcher.group(2)) {
+                        cols << 0
+                    } else {
+                        def strs = matcher.group(2).split(";")
+
+                        try {
+                            strs.findAll { it != null }.each {
+                                if (it != null) {
+                                    cols << Integer.parseInt(it)
+                                }
+                            }
+                        } catch (NumberFormatException e) {
+                            sb << matcher.group(1).encodeAsHTMLElement()
+                        }
                     }
                 }
-            }
-            if (!cols) {
-                return match[0]
-            } else {
-                //ctx
-                def outstr=(''+(ctx? ctx.collect { '</span>' }.join(''):''))
-                ctx=[]
-                def vals = cols.findAll{it && (ansicolors[it] || ansimode[it])}.collect {
-                    ctx << it
-                    'ansi-'+(ansicolors[it] ?: ansimode[it])
-                }.join(' ')
+                if (!cols) {
+                    sb << matcher.group(1).encodeAsHTMLElement()
+                } else {
+                    //ctx
+                    def rvals = cols.findAll { it && (ansicolors[it] || ansimode[it]) }.collect {
+                        'ansi-' + (ansicolors[it] ?: ansimode[it])
+                    }.join(' ')
+                    if (rvals) {
+                        ctx << rvals
+                    }
 
-                return outstr+(vals? '<span class="' + vals + '">' :'')
+                    sb << (rvals ? '<span class="' + rvals + '">' : '')
+                }
+                str = str.substring(len).encodeAsHTMLElement()
             }
-        } + (ctx.collect { '</span>' }.join(''))
+            sb << str.encodeAsHTMLElement()
+        }
+
+        sb.toString()
     }
 }
