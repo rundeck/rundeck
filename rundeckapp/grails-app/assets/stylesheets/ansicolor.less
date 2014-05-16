@@ -26,92 +26,92 @@
 @ansi-bg-white: white;
 @ansi-bg-default: clear;
 
-.ansicolor{
-  &.fg-black{
+.ansicolor-on{
+  .ansi-fg-black{
     color:@ansi-fg-black;
   }
-  &.fg-green{
+  .ansi-fg-green{
     color:@ansi-fg-green;
   }
-  &.fg-red{
+  .ansi-fg-red{
     color:@ansi-fg-red;
   }
-  &.fg-yellow{
+  .ansi-fg-yellow{
     color:@ansi-fg-yellow;
   }
-  &.fg-blue{
+  .ansi-fg-blue{
     color:@ansi-fg-blue;
   }
-  &.fg-magenta{
+  .ansi-fg-magenta{
     color:@ansi-fg-magenta;
   }
-  &.fg-cyan{
+  .ansi-fg-cyan{
     color:@ansi-fg-cyan;
   }
-  &.fg-white{
+  .ansi-fg-white{
     color:@ansi-fg-white;
   }
-  &.fg-default{
+  .ansi-fg-default{
   }
 
-  &.fg-light-black{
+  .ansi-fg-light-black{
     color:@ansi-fg-light-black;
   }
-  &.fg-light-green{
+  .ansi-fg-light-green{
     color:@ansi-fg-light-green;
   }
-  &.fg-light-red{
+  .ansi-fg-light-red{
     color:@ansi-fg-light-red;
   }
-  &.fg-light-yellow{
+  .ansi-fg-light-yellow{
     color:@ansi-fg-light-yellow;
   }
-  &.fg-light-blue{
+  .ansi-fg-light-blue{
     color:@ansi-fg-light-blue;
   }
-  &.fg-light-magenta{
+  .ansi-fg-light-magenta{
     color:@ansi-fg-light-magenta;
   }
-  &.fg-light-cyan{
+  .ansi-fg-light-cyan{
     color:@ansi-fg-light-cyan;
   }
-  &.fg-light-white{
+  .ansi-fg-light-white{
     color:@ansi-fg-light-white;
   }
 
-  &.bg-black{
+  .ansi-bg-black{
     background-color:@ansi-bg-black;
   }
-  &.bg-green{
+  .ansi-bg-green{
     background-color:@ansi-bg-green;
   }
-  &.bg-red{
+  .ansi-bg-red{
     background-color:@ansi-bg-red;
   }
-  &.bg-yellow{
+  .ansi-bg-yellow{
     background-color:@ansi-bg-yellow;
   }
-  &.bg-blue{
+  .ansi-bg-blue{
     background-color:@ansi-bg-blue;
   }
-  &.bg-magenta{
+  .ansi-bg-magenta{
     background-color:@ansi-bg-magenta;
   }
-  &.bg-cyan{
+  .ansi-bg-cyan{
     background-color:@ansi-bg-cyan;
   }
-  &.bg-white{
+  .ansi-bg-white{
     background-color:@ansi-bg-white;
   }
-  &.bg-default{
+  .ansi-bg-default{
     background-color:@ansi-bg-default;
   }
   //modes
 
-  &.mode-underline{
+  .ansi-mode-underline{
     text-decoration: underline;
   }
-  &.mode-bold{
+  .ansi-mode-bold{
     font-weight: bold;
   }
   @-webkit-keyframes ansi-blink {
@@ -129,15 +129,15 @@
     }
   }
 
-  &.mode-blink {
+  .ansi-mode-blink {
     -webkit-animation: ansi-blink 0.7s infinite linear alternate;
     -webkit-font-smoothing: antialiased;
   }
 
-  &.mode-reverse{
+  .ansi-mode-reverse{
 
   }
-  &.mode-nondisplayed{
+  .ansi-mode-nondisplayed{
     color: lighten(black,50%);
   }
 }

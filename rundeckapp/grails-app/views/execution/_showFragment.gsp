@@ -153,6 +153,12 @@
                     <input type="checkbox" ${followmode == 'node' ? 'checked' : ''}/>
                     <g:message code="execution.show.mode.Compact.title" default="Compact"/>
                 </label>
+
+                <label class="ansi-color-toggle">
+                    <input type="checkbox" checked/>
+                    <g:message code="execution.show.mode.ansicolor.title" default="Ansi Color"/>
+                </label>
+
                 </div>
         </div>
         <div class="col-sm-4">
@@ -194,7 +200,7 @@
     </div>
 </div>
 
-<div id="commandPerform" class="commandcontent" style="display:none;  "></div>
+<div id="commandPerform" class="commandcontent ansicolor ansicolor-on" style="display:none;  "></div>
 
 <div id="log"></div>
 </div>

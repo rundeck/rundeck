@@ -77,16 +77,12 @@ class AnsiColorCodec {
                 //ctx
                 def outstr=(''+(ctx? ctx.collect { '</span>' }.join(''):''))
                 ctx=[]
-                def vals = cols.collect {
-                    if(it){
-                        ctx << it
-                        return (ansicolors[it] ?: ansimode[it] ?: '')
-                    }else{
-                        null
-                    }
-                }.findAll{it}.join(' ')
+                def vals = cols.findAll{it && (ansicolors[it] || ansimode[it])}.collect {
+                    ctx << it
+                    'ansi-'+(ansicolors[it] ?: ansimode[it])
+                }.join(' ')
 
-                return outstr+(vals? '<span class="ansicolor ' + vals + '">' :'')
+                return outstr+(vals? '<span class="' + vals + '">' :'')
             }
         } + (ctx.collect { '</span>' }.join(''))
     }
