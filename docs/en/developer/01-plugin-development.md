@@ -229,7 +229,7 @@ These Services support Script Plugins:
 * [NodeExecutor](node-executor-plugin.html#script-plugin-type)
 * [FileCopier](file-copier-plugin.html#script-plugin-type)
 * [ResourceModelSource](resource-model-source-plugin.html#script-plugin-type)
-* [WorkflowNodeStep](workflow-step-plugin.html#script-plugin-type)
+* [WorkflowNodeStep](workflow-step-plugin.html#script-plugin-type) and RemoteScriptNodeStep
 
 >Note, the ResourceFormatParser and ResourceFormatGenerator services *do not* support the Script Plugin type.
 
@@ -304,6 +304,8 @@ Required provider entries:
     * `NodeExecutor`
     * `FileCopier`
     * `ResourceModelSource`
+    * `WorkflowNodeStep`
+    * `RemoteScriptNodeStep`
 * `plugin-type` - must be "script" currently.
 * `script-file` - must be the name of a file relative to the `contents` directory
 
