@@ -39,7 +39,7 @@ RDECK_JVM="$RDECK_JVM -Xmx1024m -Xms256m -server"
 # 
 #export RDECK_JVM="$RDECK_JVM -Drundeck.ssl.config=/etc/rundeck/ssl/ssl.properties -Dserver.https.port=4443"
 
-export RDECK_SSL_OPTS="-Djavax.net.ssl.trustStore=$RDECK_BASE/ssl/truststore -Djavax.net.ssl.trustStoreType=jks -Djava.protocol.handler.pkgs=com.sun.net.ssl.internal.www.protocol"
+export RDECK_SSL_OPTS="-Djavax.net.ssl.trustStore=/etc/rundeck/ssl/truststore -Djavax.net.ssl.trustStoreType=jks -Djava.protocol.handler.pkgs=com.sun.net.ssl.internal.www.protocol"
 
 if test -t 0 -a -z "$RUNDECK_CLI_TERSE"
 then
