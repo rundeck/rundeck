@@ -419,14 +419,6 @@ Refer to: http://download.oracle.com/javase/1.5.0/docs/tooldocs/solaris/keytool.
 
 Finally, in your `ldap-activedirectory.conf` be sure to change the *providerUrl* to be `ldaps://ad-server`.  Including the port is optional as the default is 636.
 
-#### Redundant Connection Options
-
-*providerUrl* can take multiple, space delimited, urls.  For example: 
-
-     providerUrl=ldaps://ad1 ldaps://ad2  
-
-Use this to provide connection redundancy if a particular host is unavailable.
-
 ### PAM
 
 Rundeck includes a [PAM](https://en.wikipedia.org/wiki/Pluggable_authentication_module) JAAS login module, which uses [libpam4j](https://github.com/kohsuke/libpam4j) to authenticate.
