@@ -36,8 +36,7 @@
             </div>
 
             <p>
-                <g:link controller="user" action="login"
-                        class="btn btn-link">
+                <g:link controller="menu" action="home" class="btn btn-link">
                     <i class="glyphicon glyphicon-arrow-left"></i>
                     <g:message code="login.again" />
                 </g:link>
