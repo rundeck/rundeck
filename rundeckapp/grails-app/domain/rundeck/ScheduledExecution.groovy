@@ -218,6 +218,7 @@ class ScheduledExecution extends ExecutionContext {
             if(data.schedule.crontab){
                     //
                 se.crontabString = data.schedule.crontab
+                se.parseCrontabString(data.schedule.crontab)
             }else{
                 if(data.schedule.time && data.schedule.time instanceof Map){
                     if(null!=data.schedule.time.seconds){

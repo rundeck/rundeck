@@ -324,6 +324,114 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
 
     }
 
+    void testDecodeCrontabString() {
+            def ymlstr1 = """
+- loglevel: INFO
+  name: one
+  description: Task one.
+  sequence:
+    keepgoing: false
+    strategy: node-first
+    commands:
+    - exec: echo foo
+        one
+  options: {}
+  schedule:
+    crontab: '13 23 5 9 3 ?'
+"""
+        def list = JobsYAMLCodec.decode(ymlstr1)
+        assertNotNull list
+        assertEquals(1, list.size())
+        def obj = list[0]
+        assertTrue(obj instanceof ScheduledExecution)
+        ScheduledExecution se = (ScheduledExecution) list[0]
+        //schedule
+        assertTrue "wrong scheduled", se.scheduled
+        assertEquals "13 23 5 9 3 ?", se.crontabString
+        assertEquals "wrong seconds", "13", se.seconds
+        assertEquals "wrong minute", "23", se.minute
+        assertEquals "wrong minute", "5", se.hour
+        assertEquals "wrong minute", "9", se.dayOfMonth
+        assertEquals "wrong minute", "3", se.month
+        assertEquals "wrong minute", "?", se.dayOfWeek
+        assertEquals "wrong minute", "*", se.year
+
+    }
+    void testDecodeCrontabString2(){
+            def ymlstr1 = """
+- loglevel: INFO
+  name: one
+  description: Task one.
+  sequence:
+    keepgoing: false
+    strategy: node-first
+    commands:
+    - exec: echo foo
+        one
+  options: {}
+  schedule:
+      crontab: '0 30 */6 ? Jan Mon *'
+"""
+        def list = JobsYAMLCodec.decode(ymlstr1)
+        assertNotNull list
+        assertEquals(1, list.size())
+        def obj = list[0]
+        assertTrue(obj instanceof ScheduledExecution)
+        ScheduledExecution se = (ScheduledExecution) list[0]
+        //schedule
+        assertTrue "wrong scheduled", se.scheduled
+        assertEquals "wrong crontabString", "0 30 */6 ? Jan Mon *", se.crontabString
+        assertEquals "wrong seconds", "0", se.seconds
+        assertEquals "wrong minute", "30", se.minute
+        assertEquals "wrong minute", "*/6", se.hour
+        assertEquals "wrong minute", "?", se.dayOfMonth
+        assertEquals "wrong minute", "Jan", se.month
+        assertEquals "wrong minute", "Mon", se.dayOfWeek
+        assertEquals "wrong minute", "*", se.year
+
+    }
+
+    void testDecodeSchedule(){
+            def ymlstr1 = """
+- schedule:
+    time:
+      hour: '5'
+      minute: '23'
+      seconds: '13'
+    month: '3'
+    year: '*/2'
+    dayofmonth:
+      day: '9'
+  loglevel: INFO
+  sequence:
+    keepgoing: false
+    strategy: node-first
+    commands:
+    - exec: echo foo one
+  description: Task one.
+  name: one
+
+"""
+        def list = JobsYAMLCodec.decode(ymlstr1)
+        assertNotNull list
+        assertEquals(1, list.size())
+        def obj = list[0]
+        assertTrue(obj instanceof ScheduledExecution)
+        ScheduledExecution se = (ScheduledExecution) list[0]
+        //schedule
+        assertTrue "wrong scheduled", se.scheduled
+        assertNull "should be null crontabString", se.crontabString
+        assertEquals "wrong seconds", "13", se.seconds
+        assertEquals "wrong minute", "23", se.minute
+        assertEquals "wrong minute", "5", se.hour
+        assertEquals "wrong minute", "9", se.dayOfMonth
+        assertEquals "wrong minute", "3", se.month
+        assertEquals "wrong minute", "?", se.dayOfWeek
+        assertEquals "wrong minute", "*/2", se.year
+
+    }
+
+
     void testDecodeBasic() {
         if(true){
         def ymlstr1 = """- id: null
