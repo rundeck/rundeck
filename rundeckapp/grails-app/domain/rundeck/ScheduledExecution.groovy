@@ -460,7 +460,7 @@ class ScheduledExecution extends ExecutionContext {
     def populateTimeDateFields(Map params) {
         def months ;
         def daysOfWeek;
-        def daysOfMonth=params.dayOfMonth?params.dayOfMonth:'?'
+        def daysOfMonth=params.dayOfMonth?:'?'
 
         if(params.crontabString && 'true'==params.useCrontabString){
             //parse the crontabString
