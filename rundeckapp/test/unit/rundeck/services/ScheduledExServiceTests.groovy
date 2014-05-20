@@ -602,6 +602,58 @@ class ScheduledExServiceTests {
 
     }
 
+    public void testDoValidateScheduled() {
+        def testService = new ScheduledExecutionService()
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.existsFrameworkProject { project, framework ->
+            assertEquals 'testProject', project
+            return true
+        }
+        fwkControl.demand.isClusterModeEnabled {->
+            return false
+        }
+        testService.frameworkService = fwkControl.createMock()
+
+        def job = new ScheduledExecution(
+                jobName: 'monkey1',
+                project: 'testProject',
+                description: 'blah',
+                scheduled: true,
+                seconds: '13',
+                minute: '23',
+                hour: '5',
+                dayOfMonth: '9',
+                month: '3',
+                dayOfWeek: '?',
+                year: '*/2',
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'asdf')]),
+        )
+        def params = new HashMap(job.properties)
+        params.crontabString=job.generateCrontabExression()
+        params.useCrontabString='true'
+        def results = testService._dovalidate(params, 'test', 'test', null)
+
+        assertFalse(results.scheduledExecution.errors.allErrors.collect{it.toString()}.join('; '),results.failed)
+        assertNotNull(results.scheduledExecution)
+        assertTrue(results.scheduledExecution instanceof ScheduledExecution)
+        final ScheduledExecution execution = results.scheduledExecution
+        assertNotNull(execution)
+        assertNotNull(execution.errors)
+        assertFalse(execution.errors.getFieldError('crontabString').toString(),execution.errors.hasFieldErrors
+                ('crontabString'))
+        assertFalse(execution.errors.hasErrors())
+        assertTrue(execution.scheduled)
+        assertEquals('13', execution.seconds)
+        assertEquals('23', execution.minute)
+        assertEquals('5', execution.hour)
+        assertEquals('9', execution.dayOfMonth)
+        assertEquals('3', execution.month)
+        assertEquals('?', execution.dayOfWeek)
+        assertEquals('*/2', execution.year)
+
+    }
+
     public void testDoValidateAdhoc() {
         def testService = new ScheduledExecutionService()
 

@@ -1814,7 +1814,17 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             }
         }
 
-        def result = _dovalidate(params instanceof ScheduledExecution ? params.properties : params, user,roleList,framework)
+        def map
+        if(params instanceof ScheduledExecution){
+            map=new HashMap(params.properties)
+            if(params.scheduled){
+                map.crontabString=params.generateCrontabExression()
+                map.useCrontabString='true'
+            }
+        } else{
+            map=params
+        }
+        def result = _dovalidate(map, user,roleList,framework)
         def scheduledExecution = result.scheduledExecution
         failed = result.failed
         //try to save workflow
