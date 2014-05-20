@@ -10,7 +10,7 @@ class UtilityTagLib{
     def static  daysofweekkey = [Calendar.SUNDAY,Calendar.MONDAY,Calendar.TUESDAY,Calendar.WEDNESDAY,Calendar.THURSDAY,Calendar.FRIDAY,Calendar.SATURDAY];
     def public static daysofweekord = ScheduledExecution.daysofweeklist;
     def public static monthsofyearord = ScheduledExecution.monthsofyearlist;
-	static returnObjectForTags = ['rkey','w3cDateValue','sortGroupKeys','helpLinkUrl','parseOptsFromString']
+	static returnObjectForTags = ['rkey','w3cDateValue','sortGroupKeys','helpLinkUrl','parseOptsFromString','relativeDateString']
 
     private static Random rand=new java.util.Random()
     /**
@@ -174,6 +174,10 @@ class UtilityTagLib{
     }
 
     def relativeDate = { attrs, body ->
+        out<<relativeDateString(attrs,body)
+    }
+
+    def relativeDateString = { attrs, body ->
         if(attrs.atDate){
             def Date date = attrs.atDate
             def Date nowdate = new Date()
@@ -197,7 +201,7 @@ class UtilityTagLib{
             }else{
                 val << new SimpleDateFormat("M/d ha").format(date)
             }
-            out << val
+            return val.toString()
         }else if(attrs.elapsed || attrs.start && attrs.end){
             def Date date = attrs.elapsed
             def Date enddate = new Date()
@@ -244,21 +248,22 @@ class UtilityTagLib{
                     val << "${h}h"
                 }
             }
+            def StringBuffer val2 = new StringBuffer()
 
             if(diff > 0 && !attrs.end){
-                out << "in "
+                val2 << "in "
             }
-            out << "<span class=\"${diff > 0 ? (attrs.untilClass?attrs.untilClass:'until') : (attrs.agoClass?attrs.agoClass:'ago')}\" >"
-            out << val.toString()
-            out << "</span>"
+            val2 << "<span class=\"${diff > 0 ? (attrs.untilClass?attrs.untilClass:'until') : (attrs.agoClass?attrs.agoClass : 'ago')}\" >"
+            val2 << val.toString()
+            val2 << "</span>"
             if(diff < 0 && !attrs.end){
-                out << " ago"
+                val2 << " ago"
             }
+            return val2.toString()
         } else {
             //do nothing.
-            out << "?"
+            return "?"
         }
-
     }
 
     def recentDescription = { attrs, body ->
