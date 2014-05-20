@@ -61,9 +61,19 @@
             return '';
         }
         var duration = moment.duration(ms);
+        var y = 0;
+        if (duration.asYears() >= 1) {
+            y = Math.floor(duration.asYears());
+            duration = duration.subtract(y, 'years');
+        }
+        var d = 0 ;
+        if(duration.asDays()>=1.0){
+            d = Math.floor(duration.asDays());
+            duration = duration.subtract(d,'days');
+        }
         var m = duration.minutes();
         var s = duration.seconds();
-        return duration.hours() + '.' + (m < 10 ? '0' + m : m) + ':' + (s < 10 ? '0' + s : s);
+        return (y>0?y+'y ':'') + (d>0?d+'d ':'') + duration.hours() + '.' + (m < 10 ? '0' + m : m) + ':' + (s < 10 ? '0' + s : s);
     },
     formatDurationHumanize : function (ms) {
         if (ms < 0) {
