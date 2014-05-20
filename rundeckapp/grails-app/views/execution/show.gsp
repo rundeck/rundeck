@@ -4,7 +4,8 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="tabpage" content="events"/>
     <meta name="layout" content="base" />
-    <title><g:message code="main.app.name"/> - <g:if test="${null==execution?.dateCompleted}">Now Running - </g:if><g:if test="${scheduledExecution}">${scheduledExecution?.jobName.encodeAsHTML()} :  </g:if><g:else><g:message code="execution.type.adhoc.title" /></g:else> Execution at <g:relativeDate atDate="${execution.dateStarted}" /> by ${execution.user}</title>
+    <title><g:message code="main.app.name"/> - <g:if test="${null==execution?.dateCompleted}"><g:message
+            code="now.running" /> - </g:if><g:if test="${scheduledExecution}">${scheduledExecution?.jobName.encodeAsHTML()} :  </g:if><g:else><g:message code="execution.type.adhoc.title" /></g:else> <g:message code="execution.at.time.by.user" args="[g.relativeDateString(atDate:execution.dateStarted),execution.user]"/></title>
     <g:set var="followmode" value="${params.mode in ['browse','tail','node']?params.mode:'tail'}"/>
     <g:set var="execState" value="${execution.dateCompleted == null ? 'RUNNING' : execution.status == 'true' ? 'SUCCEEDED' : execution.cancelled ? 'ABORTED' : 'FAILED'}"/>
       <g:set var="authKeys" value="${[AuthConstants.ACTION_KILL, AuthConstants.ACTION_READ,AuthConstants.ACTION_CREATE,AuthConstants.ACTION_RUN]}"/>
@@ -342,7 +343,7 @@
                                     >
                                         <button class="btn btn-default btn-sm dropdown-toggle force-last-child" data-target="#"
                                                 data-toggle="dropdown">
-                                            Run Again
+                                            <g:message code="execution.action.runAgain" />
                                             <i class="caret"></i>
                                         </button>
                                         <ul class="dropdown-menu pull-right" role="menu">
@@ -386,7 +387,7 @@
                                                        params="[project:scheduledExecution.project]"
                                                        class="btn btn-info btn-sm">
                                             <i class="glyphicon glyphicon-edit"></i>
-                                            edit Job
+                                            <g:message code="edit.job" />
                                         </g:link>
                                     </g:if>
                                     <g:if test="${authChecks[AuthConstants.ACTION_RUN]}">
@@ -411,7 +412,7 @@
                                             <button class="btn btn-default btn-sm dropdown-toggle"
                                                     data-target="#"
                                                     data-toggle="dropdown">
-                                                Run Again
+                                                <g:message code="execution.action.runAgain" />
                                                 <i class="caret"></i>
                                             </button>
                                             <ul class="dropdown-menu pull-right" role="menu">
@@ -461,7 +462,7 @@
 
             <div class="row row-space" data-bind="if: !completed()">
                 <div class="col-sm-2 text-right">
-                    Elapsed Time:
+                    <g:message code="elapsed.time" />
                 </div>
 
                 <div class="col-sm-6">
@@ -496,20 +497,20 @@
                             <a href="#summary" data-toggle="tab">Summary</a>
                         </li>
                         <li id="tab_link_flow">
-                            <a href="#state" data-toggle="tab" data-bind="text: completed()?'Report':'Monitor' ">
+                            <a href="#state" data-toggle="tab" data-bind="text: completed()?'${g.message(code: "report")}':'${g.message(code: "monitor")}' ">
                                 <g:if test="${execution.dateCompleted==null}">
-                                    Monitor
+                                    <g:message code="monitor" />
                                 </g:if>
                                 <g:else>
-                                    Report
+                                    <g:message code="report" />
                                 </g:else>
                             </a>
                         </li>
                         <li id="tab_link_output">
-                            <a href="#output" data-toggle="tab">Log Output</a>
+                            <a href="#output" data-toggle="tab"><g:message code="execution.show.mode.Log.title" /></a>
                         </li>
                         <li>
-                            <a href="#schedExDetails${scheduledExecution?.id}" data-toggle="tab">Definition</a>
+                            <a href="#schedExDetails${scheduledExecution?.id}" data-toggle="tab"><g:message code="definition" /></a>
                         </li>
                     </ul>
                 </div>
