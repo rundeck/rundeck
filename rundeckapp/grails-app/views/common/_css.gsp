@@ -144,8 +144,14 @@
         vertical-align: middle;
     }
 
-    .rdicon.icon-small.shell,.rdicon.icon-small.command,.rdicon.icon-small.script,.rdicon.icon-small.scriptfile{
+    .rdicon.icon-small.shell,.rdicon.icon-small.command{
         background-image: url("${resource(dir:'images',file:'icon-small-shell.png')}");
+    }
+    .rdicon.icon-small.script{
+        background-image: url("${resource(dir:'images',file:'icon-small-script.png')}");
+    }
+    .rdicon.icon-small.scriptfile{
+        background-image: url("${resource(dir:'images',file:'icon-small-scriptfile.png')}");
     }
     .rdicon.icon-small.node{
         height: 10px;
@@ -154,11 +160,23 @@
     .rdicon.icon-small.node.node-runnable{
         background-image: url("${resource(dir:'images',file:'icon-small-Node-run.png')}");
     }
-    .rdicon.icon-med.shell,.rdicon.icon-med.command,.rdicon.icon-med.script,.rdicon.icon-med.scriptfile{
+    .rdicon.icon-med.shell,.rdicon.icon-med.command{
           background-image: url("${resource(dir:'images',file:'icon-med-shell.png')}");
     }
-    .rdicon.icon.shell, .rdicon.icon.command, .rdicon.icon.script, .rdicon.icon.scriptfile{
+    .rdicon.icon.shell, .rdicon.icon.command{
           background-image: url("${resource(dir:'images',file:'icon-shell.png')}");
+    }
+    .rdicon.icon-med.script{
+          background-image: url("${resource(dir:'images',file:'icon-med-script.png')}");
+    }
+    .rdicon.icon.script{
+          background-image: url("${resource(dir:'images',file:'icon-script.png')}");
+    }
+    .rdicon.icon-med.scriptfile{
+          background-image: url("${resource(dir:'images',file:'icon-med-scriptfile.png')}");
+    }
+    .rdicon.icon.scriptfile{
+          background-image: url("${resource(dir:'images',file:'icon-scriptfile.png')}");
     }
     .rdicon.app-logo, .nodedetail.server .nodedesc, .node_entry.server .nodedesc{
           background-image: url("${resource(dir: 'images', file: appLogo)}");
@@ -184,14 +202,34 @@
             .rdicon.icon-med {
                 background-size: 24px 24px;
             }
-            .rdicon.icon-small.shell, .rdicon.icon-small.command, .rdicon.icon-small.script, .rdicon.icon-small.scriptfile {
+            .rdicon.icon-small.shell, .rdicon.icon-small.command {
                 background-image: url("${resource(dir:'images',file:'icon-small-shell@2x.png')}");
             }
-            .rdicon.icon.shell, .rdicon.icon.command, .rdicon.icon.script, .rdicon.icon.scriptfile {
+            .rdicon.icon.shell, .rdicon.icon.command{
                 background-image: url("${resource(dir:'images',file:'icon-shell@2x.png')}");
             }
-            .rdicon.icon-med.shell, .rdicon.icon-med.command, .rdicon.icon-med.script, .rdicon.icon-med.scriptfile {
+            .rdicon.icon-med.shell, .rdicon.icon-med.command {
                 background-image: url("${resource(dir:'images',file:'icon-med-shell@2x.png')}");
+            }
+
+            .rdicon.icon-small.script{
+                background-image: url("${resource(dir:'images',file:'icon-small-script@2x.png')}");
+            }
+            .rdicon.icon.script{
+                background-image: url("${resource(dir:'images',file:'icon-script@2x.png')}");
+            }
+            .rdicon.icon-med.script{
+                background-image: url("${resource(dir:'images',file:'icon-med-script@2x.png')}");
+            }
+
+            .rdicon.icon-small.scriptfile{
+                background-image: url("${resource(dir:'images',file:'icon-small-scriptfile@2x.png')}");
+            }
+            .rdicon.icon.scriptfile{
+                background-image: url("${resource(dir:'images',file:'icon-scriptfile@2x.png')}");
+            }
+            .rdicon.icon-med.scriptfile{
+                background-image: url("${resource(dir:'images',file:'icon-med-scriptfile@2x.png')}");
             }
 
              .rdicon.icon-small.node {

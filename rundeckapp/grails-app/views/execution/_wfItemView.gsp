@@ -73,7 +73,7 @@
             <g:else>
                 <g:if test="${!noimgs}">
                     <g:set var="iname" value="${icon?:'icon-small'}"/>
-                    <i class="rdicon shell ${iname}"></i>
+                    <i class="rdicon ${item.adhocRemoteString?'shell':item.adhocLocalString?'script':'scriptfile'} ${iname}"></i>
                 </g:if>
                 <g:if test="${item.description}">
                     ${item.description.encodeAsHTML()}
@@ -82,7 +82,7 @@
                     <span class="argString"><g:truncate max="150" showtitle="true">${item.adhocRemoteString.encodeAsHTML()}</g:truncate></span>
                 </g:if>
                 <g:elseif test="${item.adhocLocalString}">
-                    <g:render template="/execution/scriptDetailDisplay" model="${[rkey: g.rkey(),script:item.adhocLocalString,label: 'Script: ',edit:edit]}"/>
+                    <g:render template="/execution/scriptDetailDisplay" model="${[rkey: g.rkey(),script:item.adhocLocalString,label: '',edit:edit]}"/>
                 </g:elseif>
                 <g:elseif test="${item.adhocFilepath}">
                     <g:if test="${item.scriptInterpreter}">
