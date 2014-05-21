@@ -1030,7 +1030,6 @@ Properties available for Job context:
 * `group`: Group of the Job
 * `description`: Job description
 * `project`: Project name
-* `argString`: Default argument string for a job
 * `user.name`: User executing the job
 * `rundeck.nodename`: Name of the Rundeck server node
 * `rundeck.serverUUID`: UUID of the Rundeck server node (cluster mode)

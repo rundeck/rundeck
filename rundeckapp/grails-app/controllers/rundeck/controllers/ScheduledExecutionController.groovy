@@ -436,8 +436,6 @@ class ScheduledExecutionController  extends ControllerBase{
         group:'groupPath',
         description:'description',
         project:'project',
-        argString:'argString',
-        adhoc:'adhocExecution'
     ]
     /**
      * Map of descriptive property name to Option domain class property names

@@ -96,11 +96,6 @@ class ScheduledExecutionControllerTests  {
         assertEquals 'AProject', controller.expandUrl(option, '${job.project}', se)
     }
 
-    public void testExpandUrlJobArgs() {
-        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
-        assertEquals '-a+b+-c+d', controller.expandUrl(option, '${job.argString}', se)
-    }
-
     public void testExpandUrlJobProp_nonexistent() {
         def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
         assertEquals '${job.noexist}', controller.expandUrl(option, '${job.noexist}', se)
