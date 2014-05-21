@@ -45,6 +45,14 @@ import rundeck.services.ScheduledExecutionService
 @TestFor(ScheduledExecutionController)
 @Mock([ScheduledExecution,Option,Workflow,CommandExec,Execution])
 class ScheduledExecutionControllerTests  {
+    /**
+     * utility method to mock a class
+     */
+    private <T> T mockWith(Class<T> clazz, Closure clos) {
+        def mock = mockFor(clazz)
+        mock.demand.with(clos)
+        return mock.createMock()
+    }
     public void setUp(){
 
 //        loadCodec(org.codehaus.groovy.grails.plugins.codecs.URLCodec)
@@ -63,28 +71,86 @@ class ScheduledExecutionControllerTests  {
         }
     }
 
-    public void testExpandUrl() {
-        ScheduledExecution se = new ScheduledExecution(jobName: 'blue', groupPath:'some/where',description:'a job',project:'AProject',argString:'-a b -c d')
+    public void testExpandUrlOptionName() {
+        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
+        assertEquals 'test1', controller.expandUrl(option, '${option.name}', se)
+    }
+
+    public void testExpandUrlJobName() {
+        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
+        assertEquals 'blue', controller.expandUrl(option, '${job.name}', se)
+    }
+
+    public void testExpandUrlJobGroup() {
+        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
+        assertEquals 'some%2Fwhere', controller.expandUrl(option, '${job.group}', se)
+    }
+
+    public void testExpandUrlJobDesc() {
+        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
+        assertEquals 'a+job', controller.expandUrl(option, '${job.description}', se)
+    }
+
+    public void testExpandUrlJobProject() {
+        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
+        assertEquals 'AProject', controller.expandUrl(option, '${job.project}', se)
+    }
+
+    public void testExpandUrlJobArgs() {
+        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
+        assertEquals '-a+b+-c+d', controller.expandUrl(option, '${job.argString}', se)
+    }
+
+    public void testExpandUrlJobProp_nonexistent() {
+        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
+        assertEquals '${job.noexist}', controller.expandUrl(option, '${job.noexist}', se)
+    }
+
+    public void testExpandUrlJobMultipleValues() {
+        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
+        assertEquals 'http://test/action?name=blue&option=test1&project=AProject',
+            controller.expandUrl(option, 'http://test/action?name=${job.name}&option=${option.name}&project=${job.project}', se)
+
+    }
+
+    public void testExpandUrlJobUsernameAnonymous() {
+        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
+        assertEquals 'anonymous', controller.expandUrl(option, '${job.user.name}', se)
+    }
+
+    public void testExpandUrlJobUsername() {
+        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
+        controller.session.user='bob'
+        assertEquals 'bob', controller.expandUrl(option, '${job.user.name}', se)
+    }
+
+    public void testExpandUrlJobRundeckNodename() {
+        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
+        assertEquals 'server1', controller.expandUrl(option, '${job.rundeck.nodename}', se)
+    }
+
+    public void testExpandUrlJobRundeckServerUUID() {
+        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
+        assertEquals 'xyz', controller.expandUrl(option, '${job.rundeck.serverUUID}', se)
+    }
+
+    protected List setupExpandUrlJob(def controller) {
+        ScheduledExecution se = new ScheduledExecution(jobName: 'blue', groupPath: 'some/where',
+                description: 'a job', project: 'AProject', argString: '-a b -c d')
 
         final Option option = new Option(name: 'test1', enforced: false)
         se.addToOptions(option)
         se.save()
         assertNotNull(option.properties)
-        System.err.println("properties: ${option.properties}");
-
-        ScheduledExecutionController ctrl = new ScheduledExecutionController()
-        assertEquals 'test1', ctrl.expandUrl(option, '${option.name}', se)
-        assertEquals 'blue', ctrl.expandUrl(option, '${job.name}', se)
-        assertEquals 'some%2Fwhere', ctrl.expandUrl(option, '${job.group}', se)
-        assertEquals 'a+job', ctrl.expandUrl(option, '${job.description}', se)
-        assertEquals 'AProject', ctrl.expandUrl(option, '${job.project}', se)
-        assertEquals '-a+b+-c+d', ctrl.expandUrl(option, '${job.argString}', se)
-        assertEquals '${job.noexist}', ctrl.expandUrl(option, '${job.noexist}', se)
-        assertEquals 'http://test/action?name=blue&option=test1&project=AProject',
-            ctrl.expandUrl(option, 'http://test/action?name=${job.name}&option=${option.name}&project=${job.project}', se)
-        assertEquals 'anonymous', ctrl.expandUrl(option, '${job.user.name}', se)
-        ctrl.session.user='bob'
-        assertEquals 'bob', ctrl.expandUrl(option, '${job.user.name}', se)
+        controller.frameworkService = mockWith(FrameworkService) {
+            getFrameworkNodeName(1..1) {->
+                'server1'
+            }
+            getServerUUID(1..12) {->
+                'xyz'
+            }
+        }
+        [option, se]
     }
 
     public void testSaveBasic() {

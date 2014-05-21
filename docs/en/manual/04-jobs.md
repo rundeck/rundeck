@@ -1031,6 +1031,9 @@ Properties available for Job context:
 * `description`: Job description
 * `project`: Project name
 * `argString`: Default argument string for a job
+* `user.name`: User executing the job
+* `rundeck.nodename`: Name of the Rundeck server node
+* `rundeck.serverUUID`: UUID of the Rundeck server node (cluster mode)
 
 To include Option information in the URL, specify a variable of the
 form ${option._property_}:

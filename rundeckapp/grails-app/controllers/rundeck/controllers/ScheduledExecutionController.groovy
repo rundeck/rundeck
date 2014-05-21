@@ -454,13 +454,18 @@ class ScheduledExecutionController  extends ControllerBase{
      */
     protected String expandUrl(Option opt, String url, ScheduledExecution scheduledExecution,selectedoptsmap=[:]) {
         def invalid = []
+        def extraJobProps=[
+            'user.name': (session?.user?: "anonymous"),
+            'rundeck.nodename':frameworkService.getFrameworkNodeName(),
+            'rundeck.serverUUID':frameworkService.serverUUID
+        ]
         String srcUrl = url.replaceAll(/(\$\{(job|option)\.([^}]+?(\.value)?)\})/,
             {Object[] group ->
                 if(group[2]=='job' && jobprops[group[3]] && scheduledExecution.properties.containsKey(jobprops[group[3]])) {
                     scheduledExecution.properties.get(jobprops[group[3]]).toString().encodeAsURL()
-                }else if(group[2]=='job' && group[3]=='user.name' ) {
-                    def amlSessUser = (session?.user) ? session.user : "anonymous"
-                    amlSessUser.toString().encodeAsURL()
+                }else if(group[2]=='job' && extraJobProps[group[3]] ) {
+                    def value = extraJobProps[group[3]]
+                    value.toString().encodeAsURL()
                 }else if(group[2]=='option' && optprops[group[3]] && opt.properties.containsKey(optprops[group[3]])) {
                     opt.properties.get(optprops[group[3]]).toString().encodeAsURL()
                 }else if(group[2]=='option' && group[4]=='.value' ) {
