@@ -34,13 +34,13 @@
                     <a class="list-group-item textbtn  add_node_step_type" href="#"
                               data-node-step-type="script"
                               >
-                        <i class="rdicon icon-small shell"></i>
+                        <i class="rdicon icon-small script"></i>
                             Script <span class="text-info">- Execute an inline script</span>
                     </a>
                     <a class="list-group-item textbtn  add_node_step_type" href="#"
                               data-node-step-type="scriptfile"
                               >
-                        <i class="rdicon icon-small shell"></i>
+                        <i class="rdicon icon-small scriptfile"></i>
                             Script file or URL
                             <span class="text-info">- Execute a local script file or a script from a URL</span>
                     </a>

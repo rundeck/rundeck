@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="512"
+   height="512"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.48.2 r9819"
+   sodipodi:docname="script-icon.svg">
+  <defs
+     id="defs4">
+    <linearGradient
+       id="linearGradient3798">
+      <stop
+         style="stop-color:#ffffff;stop-opacity:0.8174603;"
+         offset="0"
+         id="stop3800" />
+      <stop
+         style="stop-color:#ffffff;stop-opacity:0;"
+         offset="1"
+         id="stop3802" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient3755">
+      <stop
+         style="stop-color:#2d2d2d;stop-opacity:1;"
+         offset="0"
+         id="stop3757" />
+      <stop
+         style="stop-color:#a2a2a2;stop-opacity:1;"
+         offset="1"
+         id="stop3759" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3798"
+       id="linearGradient3811"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.99159664,0,0,0.99159664,3.1932772,3.7533435)"
+       x1="208.89827"
+       y1="91.158096"
+       x2="315.79175"
+       y2="409.50238" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1"
+     inkscape:cx="232.29464"
+     inkscape:cy="280.00412"
+     inkscape:document-units="px"
+     inkscape:current-layer="g2999"
+     showgrid="false"
+     inkscape:window-width="861"
+     inkscape:window-height="704"
+     inkscape:window-x="4"
+     inkscape:window-y="0"
+     inkscape:window-maximized="0"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0.00893259,-540.36631)" />
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="Layer"
+     transform="translate(0.00893259,-540.36631)">
+    <g
+       id="g2999"
+       transform="matrix(0.73563218,0,0,0.73563218,-20.077898,473.99849)"
+       inkscape:export-filename="/Users/greg/devel/rundeck/rundeckapp/web-app/images/icon-small-script@2x.png"
+       inkscape:export-xdpi="5.6199999"
+       inkscape:export-ydpi="5.6199999">
+      <rect
+         rx="128.64169"
+         inkscape:export-ydpi="5.6199999"
+         inkscape:export-xdpi="5.6199999"
+         inkscape:export-filename="/Users/greg/devel/rundeck/rundeckapp/web-app/images/icon-small-script@2x.png"
+         ry="128.64169"
+         y="98.21315"
+         x="35.293392"
+         height="680"
+         width="680"
+         id="rect2985"
+         style="color:#000000;fill:#7c7c7c;fill-opacity:1;fill-rule:evenodd;stroke:#7c7c7c;stroke-width:16;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate" />
+      <g
+         id="g3800"
+         transform="matrix(0.89711421,0,0,0.89711421,59.627462,45.504135)">
+        <flowRoot
+           xml:space="preserve"
+           id="flowRoot3783"
+           style="font-size:2.657722px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:none;font-family:Courier New;-inkscape-font-specification:Courier New Bold"
+           transform="matrix(313.12265,0,0,313.12265,-42935.096,-77313.342)"><flowRegion
+             id="flowRegion3785"><rect
+               id="rect3787"
+               width="548.57141"
+               height="434.28571"
+               x="137.14285"
+               y="246.6479"
+               style="font-size:2.657722px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;font-family:Courier New;-inkscape-font-specification:Courier New Bold" /></flowRegion><flowPara
+             style="font-style:normal;font-weight:normal;fill:#ffffff;fill-opacity:1;-inkscape-font-specification:Courier New"
+             id="flowPara3789">#</flowPara></flowRoot>        <flowRoot
+           transform="matrix(313.12265,0,0,313.12265,-42630.493,-77313.342)"
+           style="font-size:2.657722px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:none;font-family:Courier New;-inkscape-font-specification:Courier New Bold"
+           id="flowRoot3774"
+           xml:space="preserve"><flowRegion
+             id="flowRegion3776"><rect
+               style="font-size:2.657722px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;font-family:Courier New;-inkscape-font-specification:Courier New Bold"
+               y="246.6479"
+               x="137.14285"
+               height="434.28571"
+               width="548.57141"
+               id="rect3778" /></flowRegion><flowPara
+             id="flowPara3780"
+             style="font-style:normal;font-weight:normal;fill:#ffffff;fill-opacity:1;-inkscape-font-specification:Courier New">!</flowPara></flowRoot>      </g>
+    </g>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer3"
+     inkscape:label="Layer#1"
+     style="display:inline"
+     transform="translate(0.00893259,-540.36631)" />
+</svg>
