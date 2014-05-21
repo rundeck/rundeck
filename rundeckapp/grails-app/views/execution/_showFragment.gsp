@@ -153,6 +153,12 @@
                     <input type="checkbox" ${followmode == 'node' ? 'checked' : ''}/>
                     <g:message code="execution.show.mode.Compact.title" default="Compact"/>
                 </label>
+
+                <label class="ansi-color-toggle">
+                    <input type="checkbox" checked/>
+                    <g:message code="execution.show.mode.ansicolor.title" default="Ansi Color"/>
+                </label>
+
                 </div>
         </div>
         <div class="col-sm-4">
@@ -161,10 +167,18 @@
                      id="viewoptionscomplete">
                     <span>
                         <g:link class="textbtn" style="padding:5px;"
-                                title="View raw text output"
+                                title="View text output"
                                 controller="execution" action="downloadOutput" id="${execution.id}"
-                                params="[view: 'inline', formatted: false, project: execution.project]">
-                            Raw</g:link>
+                                params="[view: 'inline', formatted: false, project: execution.project,
+                                        stripansi:true]">
+                            Text</g:link>
+                    </span>
+                    <span>
+                        <g:link class="textbtn" style="padding:5px;"
+                                title="View colorized output"
+                                controller="execution" action="renderOutput" id="${execution.id}"
+                                params="[project: execution.project, ansicolor:'on',loglevels:'on']">
+                            HTML</g:link>
                     </span>
 
                     <span class="sepL">
@@ -194,7 +208,7 @@
     </div>
 </div>
 
-<div id="commandPerform" class="commandcontent" style="display:none;  "></div>
+<div id="commandPerform" class="commandcontent ansicolor ansicolor-on" style="display:none;  "></div>
 
 <div id="log"></div>
 </div>

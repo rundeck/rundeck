@@ -297,11 +297,100 @@ class ExecutionController extends ControllerBase{
         def iterator = reader.reader
         iterator.openStream(0)
         def lineSep=System.getProperty("line.separator")
-        iterator.findAll{it.eventType==LogUtil.EVENT_TYPE_LOG}.each{ LogEvent msgbuf ->
-                response.outputStream << (isFormatted?"${logFormater.format(msgbuf.datetime)} [${msgbuf.metadata?.user}@${msgbuf.metadata?.node} ${msgbuf.metadata?.stepctx?:'_'}][${msgbuf.loglevel}] ${msgbuf.message}" : msgbuf.message)
-                response.outputStream<<lineSep
+        iterator.each { LogEvent msgbuf ->
+            if (msgbuf.eventType != LogUtil.EVENT_TYPE_LOG) {
+                return
+            }
+            def message = msgbuf.message
+            if (params.stripansi != 'false' && message.contains('\033[')) {
+                try {
+                    message=message.decodeAnsiColorStrip()
+                } catch (Exception exc) {
+                }
+            }
+            response.outputStream << (isFormatted?"${logFormater.format(msgbuf.datetime)} [${msgbuf.metadata?.user}@${msgbuf.metadata?.node} ${msgbuf.metadata?.stepctx?:'_'}][${msgbuf.loglevel}] ${message}" : message)
+            response.outputStream<<lineSep
         }
         iterator.close()
+    }
+    def renderOutput = {
+        Execution e = Execution.get(Long.parseLong(params.id))
+        if(!e){
+            log.error("Execution with id "+params.id+" not found")
+            flash.error="No Execution found for id: " + params.id
+            flash.message="No Execution found for id: " + params.id
+            return
+        }
+
+        def jobcomplete = e.dateCompleted!=null
+        def reader = loggingService.getLogReader(e)
+        if (reader.state==ExecutionLogState.NOT_FOUND) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND)
+            log.error("Output file not found")
+            return
+        }else if (reader.state == ExecutionLogState.ERROR) {
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR)
+            def msg= g.message(code: reader.errorCode, args: reader.errorData)
+            log.error("Output file reader error: ${msg}")
+            response.outputStream << msg
+            return
+        }else if (reader.state != ExecutionLogState.AVAILABLE) {
+            //TODO: handle other states
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND)
+            log.error("Output file not available")
+            return
+        }
+        SimpleDateFormat dateFormater = new SimpleDateFormat("yyyyMMdd-HHmmss",Locale.US);
+        def dateStamp= dateFormater.format(e.dateStarted);
+
+        SimpleDateFormat logFormater = new SimpleDateFormat("HH:mm:ss", Locale.US);
+        logFormater.timeZone= TimeZone.getTimeZone("GMT")
+        def iterator = reader.reader
+        iterator.openStream(0)
+        def lineSep=System.getProperty("line.separator")
+        response.outputStream<<"""<html>
+<head>
+<title></title>
+<link rel="stylesheet" href="${g.assetPath(src:'rundeck.css')}"  />
+<link rel="stylesheet" href="${g.assetPath(src:'ansicolor.css')}"  />
+</head>
+<body>
+<div class="container">
+<div class="row">
+<div class="col-sm-12">
+<div class="ansicolor ansicolor-${(params.ansicolor in ['false','off'])?'off':'on'}" >"""
+
+        def csslevel=!(params.loglevels in ['off','false'])
+        iterator.each{ LogEvent msgbuf ->
+            if(msgbuf.eventType != LogUtil.EVENT_TYPE_LOG){
+                return
+            }
+            def message = msgbuf.message
+            def msghtml=message
+            if (message.contains('\033[')) {
+                try {
+                    msghtml = message.decodeAnsiColor()
+                } catch (Exception exc) {
+                    log.error("Ansi decode error: " + exc.getMessage(), exc)
+                }
+            }
+            def css="log_line" + (csslevel?" level_${msgbuf.loglevel.toString().toLowerCase()}":'')
+
+            response.outputStream << "<div class=\"$css\" >"
+            response.outputStream << msghtml
+            response.outputStream << '</div>'
+
+            response.outputStream<<lineSep
+        }
+        iterator.close()
+
+        response.outputStream << '''</div>
+</div>
+</div>
+</div>
+</body>
+</html>
+'''
     }
     /**
      * API: /api/execution/{id}/output, version 5
@@ -709,6 +798,18 @@ class ExecutionController extends ControllerBase{
             lastmodl = reqlastmod
         }
 
+//        if("true" == servletContext.getAttribute("output.ansicolor.enabled") || params.ansicolor=='true'){
+            entry.each {
+                if (it.mesg.contains('\033[')) {
+                    try {
+                        it.loghtml = it.mesg.decodeAnsiColor()
+                        it.mesg = it.mesg.decodeAnsiColorStrip()
+                    } catch (Exception exc) {
+                        log.error("Markdown error: " + exc.getMessage(), exc)
+                    }
+                }
+            }
+//        }
         if("true" == servletContext.getAttribute("output.markdown.enabled") && !params.disableMarkdown){
             entry.each{
                 if(it.mesg){

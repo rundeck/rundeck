@@ -965,7 +965,7 @@ section{
       font-family: monospace;
     }
     td.data.datahtml {
-      font-family: verdana, arial, helvetica, sans-serif;
+//      font-family: verdana, arial, helvetica, sans-serif;
       a {
         text-decoration: underline;
         color: blue;
@@ -1068,6 +1068,17 @@ section{
 
     &.collapse_stepnum td.stepnum {
       display: none;
+    }
+  }
+  .log_line{
+    white-space: pre;
+    font-family: "Lucida Console", courier, monospace;
+    color: black;
+    &.level_verbose, &.level_debug {
+      color: @brand-light;
+    }
+    &.level_warn, &.level_error {
+      color: #800;
     }
   }
 

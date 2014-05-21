@@ -669,6 +669,19 @@ function _initCollapseExpander(){
             .addClass('glyphicon-chevron-right');
     });
 }
+function _toggleAnsiColor(e){
+    var test = jQuery(this).find('input')[0].checked;
+    var ansicolor = jQuery('.ansicolor');
+    if (!test) {
+        ansicolor.removeClass('ansicolor-on');
+    } else {
+        ansicolor.addClass('ansicolor-on');
+    }
+}
+function _initAnsiToggle(){
+    jQuery('.ansi-color-toggle').on('change',_toggleAnsiColor);
+    jQuery('.nodes_run_content').on('change','.ansi-color-toggle',_toggleAnsiColor);
+}
 
 (function(){
     if(typeof(jQuery)=='function'){
@@ -679,6 +692,7 @@ function _initCollapseExpander(){
             _initAffix();
             _initIEPlaceholder();
             _initCollapseExpander();
+            _initAnsiToggle();
         });
     }
 })();
