@@ -1070,6 +1070,17 @@ section{
       display: none;
     }
   }
+  .log_line{
+    white-space: pre;
+    font-family: "Lucida Console", courier, monospace;
+    color: black;
+    &.level_verbose, &.level_debug {
+      color: @brand-light;
+    }
+    &.level_warn, &.level_error {
+      color: #800;
+    }
+  }
 
   .stepident, .stepnum {
 //    color: @brand-light;

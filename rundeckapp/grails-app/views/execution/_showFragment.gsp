@@ -167,18 +167,18 @@
                      id="viewoptionscomplete">
                     <span>
                         <g:link class="textbtn" style="padding:5px;"
-                                title="View text output (strip ansi codes)"
+                                title="View text output"
                                 controller="execution" action="downloadOutput" id="${execution.id}"
-                                params="[view: 'inline', formatted: false, project: execution.project]">
+                                params="[view: 'inline', formatted: false, project: execution.project,
+                                        stripansi:true]">
                             Text</g:link>
                     </span>
                     <span>
                         <g:link class="textbtn" style="padding:5px;"
-                                title="View raw output"
-                                controller="execution" action="downloadOutput" id="${execution.id}"
-                                params="[view: 'inline', formatted: false, project: execution.project,
-                                        stripansi:false]">
-                            Raw</g:link>
+                                title="View colorized output"
+                                controller="execution" action="renderOutput" id="${execution.id}"
+                                params="[project: execution.project, ansicolor:'on',loglevels:'on']">
+                            HTML</g:link>
                     </span>
 
                     <span class="sepL">
