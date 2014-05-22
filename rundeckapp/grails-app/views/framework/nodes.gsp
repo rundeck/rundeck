@@ -17,7 +17,7 @@
 
         //method called by _nodeFilterInputs
         function _matchNodes(){
-            expandResultNodes()
+            expandResultNodes();
         }
         function _submitNodeFilters(){
             _matchNodes();
