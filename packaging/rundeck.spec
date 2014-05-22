@@ -61,6 +61,7 @@ fi
 # Rundeck VAR directory.
 %dir /var/lib/rundeck/var
 %dir /var/lib/rundeck/var/tmp
+%dir /var/lib/rundeck/var/tmp/pluginJars
 
 # The Rundeck WebApp.  The Exploded War Goes Here.
 %dir /var/lib/rundeck/exp
