@@ -98,31 +98,37 @@
             </div>
             <div id="notifholder_url_${tkey}" style="${wdgt.styleVisible(if: isUrl)}">
                 <div class="well well-sm well-nobg">
-                    <div class="form-group col-sm-5 ${hasErrors(bean: scheduledExecution, field: triggerUrlFieldName, 'has-error')} ">
-                        <div class="input-group  input-group-sm">
-                            <label class="input-group-addon"><g:message code="notification.webhook.field.title"/></label>
+                    <div class="form-group col-sm-10 ${hasErrors(bean: scheduledExecution, field: triggerUrlFieldName,
+                            'has-error')} ">
 
                             <g:set var="notifurlcontent"
                                    value="${params[triggerUrlFieldName] ?: defUrl?.content}"/>
-                            <g:if test="${notifurlcontent && notifurlcontent.size() > 30}">
+                            <g:if test="${notifurlcontent && notifurlcontent.size() > 100}">
                                 <textarea name="${triggerUrlFieldName}"
                                           style="vertical-align:top;"
                                           placeholder="http://"
                                           rows="6"
                                           cols="40"
                                           class="form-control ">${notifurlcontent?.encodeAsHTML()}</textarea>
+
+                                <span class=" text-muted">
+                                    <g:message code="notification.webhook.field.description"/>
+                                </span>
                             </g:if>
-                            <g:else>
+                        <g:else>
+                                <div class="input-group  input-group-sm">
+                                        <label class="input-group-addon"><g:message
+                                        code="notification.webhook.field.title"/></label>
                                 <g:textField name="${triggerUrlFieldName}"
                                              value="${notifurlcontent?.encodeAsHTML()}"
                                              class="form-control "
                                              size="60"
                                              placeholder="http://"/>
+                                <g:helpTooltip code="notification.webhook.field.description"
+                                               css="input-group-addon text-info"/>
+                                </div>
                             </g:else>
 
-                            <g:helpTooltip code="notification.webhook.field.description"
-                                           css="input-group-addon text-info"/>
-                        </div>
 
                     </div>
 
