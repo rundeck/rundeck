@@ -77,16 +77,16 @@
 <g:if test="${knockoutBinding}">
 
 <div data-bind="visible: selected()"  class="panel panel-default panel-tab-content" style="display: none;">
-    <table class=" table table-hover table-condensed events-table"
+    <table class=" table table-hover table-condensed events-table events-table-embed"
            style="width:100%; display: none"
            data-bind="visible: results().length > 0">
         <tbody ></tbody>
         <tbody data-bind=" foreach: results ">
         <tr class="link activity_row"
-            data-bind="css: { 'succeed': status()=='succeed', 'fail': status()=='fail', 'highlight': $root.highlightExecutionId()==executionId() } "
+            data-bind="css: { 'succeed': status()=='succeed', 'fail': status()=='fail', 'highlight': $root.highlightExecutionId()==executionId(), job: jobId(), adhoc: !jobId() } "
             onclick="$(this).down('a._defaultAction').click();"
             >
-            <td style="width:12px;" class="eventicon">
+            <td class="eventicon">
                 <i class="exec-status icon"
                    data-bind="css: { 'succeed': status()=='succeed', 'fail': status()=='fail', 'warn': status()=='cancel', 'running': status()=='running' } "
                 ></i>
@@ -110,7 +110,7 @@
                 <!-- /ko -->
                 </div>
             </td>
-            <td style="white-space:nowrap" class="right date">
+            <td class="right date">
                 <span data-bind="if: dateCompleted()">
                     <span class="timeabs" data-bind="text: endTimeFormat('${g.message(code:'jobslist.date.format.ko')}')">
 

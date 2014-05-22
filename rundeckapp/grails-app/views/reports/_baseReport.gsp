@@ -34,7 +34,7 @@
             <g:set var="status" value="${execution.status == 'true' ? 'succeeded' : null == execution.dateCompleted ? 'running' : execution.cancelled ? 'killed' : 'failed'}"/>
         </g:if>
         <tr class="link  ${it?.status != 'succeed' ? 'fail' : ''}  ${!it.dateCompleted ? 'nowrunning' : ''} ${sincetime && it.dateCompleted.time>sincetime?'newitem':''}  " onclick="$(this).down('a._defaultAction').click();">
-            <td style="width:12px;" class="eventicon">
+            <td class="eventicon">
                 <i class="exec-status icon ${!execution.dateCompleted ? 'running' : execution.status == 'true' ? 'succeed' : execution.cancelled ? 'warn' : 'fail'}"></i>
             </td>
             <g:set var="vals" value="${['?','?','?']}"/>
@@ -109,7 +109,7 @@
             </td>
 
             <g:unless test="${hideNodes}">
-            <td style="white-space:nowrap;text-align:right;" class="${vals[1] != '0' ? 'fail' : 'ok'}  nodecount ">
+            <td class="${vals[1] != '0' ? 'fail' : 'ok'}  nodecount ">
                 <g:if test="${vals[1] != '0'}">
                     ${vals[1]} ${options.summary ? '' : 'node'} failed
                 </g:if>
