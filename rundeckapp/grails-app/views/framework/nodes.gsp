@@ -91,8 +91,10 @@
             nodeFilter.filterAll(filterAll);
             nodeFilter.filterName(filterName);
             nodeFilter.filter(filterString);
+            nodeFilter.loading(true);
             _updateMatchedNodes(data,elem,'${params.project?:request.project}',false,{view:view,expanddetail:true,inlinepaging:true,
                 page:page,max:pagingMax},function(xht){
+                nodeFilter.loading(false);
             });
         }
         function _loadNextNodesPageTable(max,total,tbl,elem){
@@ -265,7 +267,7 @@
 </div>
     <div class="row row-space">
         <div class="col-sm-12">
-            <span class="h4">
+            <span class="h4" data-bind="if: !loading()">
                 <g:if test="${summaryOnly}">
                     <span data-bind="text: allcount">${total}</span>
                     <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span>
@@ -274,6 +276,10 @@
                     <span data-bind="text: allcount">${total}</span>
                     <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span> matching filter
                 </g:else>
+            </span>
+            <span data-bind="if: loading()"  class="text-info">
+                <i class="glyphicon glyphicon-time"></i>
+                <g:message code="loading.matched.nodes"/>
             </span>
             <g:if test="${tagsummary}">
                 <g:render template="tagsummary"

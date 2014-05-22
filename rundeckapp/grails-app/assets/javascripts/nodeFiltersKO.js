@@ -25,6 +25,7 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     self.filter = ko.observable(data.filter);
     self.total = ko.observable(0);
     self.allcount = ko.observable(0);
+    self.loading=ko.observable(false);
     self.nodesTitle = ko.computed(function () {
         return self.allcount() == 1 ?
             data.nodesTitleSingular || 'Node' :
