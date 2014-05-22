@@ -79,6 +79,7 @@
             nodespage = page;
             var view = page == 0 ? 'table' : 'tableContent';
             var data = filterName? {filterName: filterName} : {filter: filterString};
+            data.nodeExcludePrecedence='true';
             if(filterName){
                 jQuery('a[data-node-filter-name=\''+filterName+'\']').addClass('active');
                 jQuery('.hiddenNodeFilter').val(filterString);

@@ -231,11 +231,11 @@
             params.localNodeOnly='true';
         }
 
-        if(typeof(data.nodeExcludePrecedence) == 'string' && data.nodeExcludePrecedence==="true"
-            || typeof(data.nodeExcludePrecedence)=='boolean' && data.nodeExcludePrecedence){
-            params.nodeExcludePrecedence="true";
-        }else{
+        if(typeof(data.nodeExcludePrecedence) == 'string' && data.nodeExcludePrecedence==="false"
+            || typeof(data.nodeExcludePrecedence)=='boolean' && !data.nodeExcludePrecedence){
             params.nodeExcludePrecedence="false";
+        }else{
+            params.nodeExcludePrecedence="true";
         }
 //        $(elem).loading();
         new Ajax.Updater(elem,appLinks.frameworkNodesFragment,{parameters:params,evalScripts:true,
