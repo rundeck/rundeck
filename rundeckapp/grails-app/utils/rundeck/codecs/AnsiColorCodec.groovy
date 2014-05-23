@@ -148,10 +148,7 @@ class AnsiColorCodec {
                         cols=ncols
                     }
                     //ctx
-                    def rvals = cols.findAll { it && (ansicolors[it] || ansimode[it] || it instanceof String) }
-                    .collect {
-                        'ansi-' + (ansicolors[it] ?: ansimode[it] ?: it)
-                    }.join(' ')
+                    def rvals = cols.collect { 'ansi-' + (ansicolors[it] ?: ansimode[it] ?: it) }.join(' ')
                     if (rvals) {
                         ctx << rvals
                     }
