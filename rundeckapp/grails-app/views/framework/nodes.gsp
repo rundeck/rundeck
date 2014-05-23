@@ -42,7 +42,7 @@
         }
 
         var nodespage=0;
-        var pagingMax=20;
+        var pagingMax=${params.max?params.max.encodeAsJavaScript():20};
         /**
         * Expand paging results
         * @param page
