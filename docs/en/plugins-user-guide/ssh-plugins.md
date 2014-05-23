@@ -103,6 +103,10 @@ When connecting to the remote node, Rundeck will look for a property/attribute s
 
 If you private key is encrypted with a passphrase, then you can use a "Secure Option" to prompt the user to enter the passphrase when executing on the Node.  See below.
 
+You can embed context property references within the keypath such as `${job.project}`. See [Context Variables][].
+
+[Context Variables]: ../manual/jobs.html#context-variables
+
 ### SSH private key storage
 
 An alternate method allows you to use a private key file you have uploaded via the Rundeck [SSH Key Storage API](../administration/ssh-key-storage.html).  The storage facility can be configured to store the keys on disk, or in the database, and can use plugins to provide encryption of the data.
@@ -122,6 +126,10 @@ When connecting to the remote node, Rundeck will look for a property/attribute s
 If you private key is encrypted with a passphrase, then you can use a "Secure Option" to prompt the user to enter the passphrase when executing on the Node.  See below.
 
 **Note:** If both `ssh-key-storage-path` and `ssh-keypath` resolve to a value, then the `ssh-key-storage-path` will be used.
+
+You can embed context property references within the key storage path such as `${job.project}`. See [Context Variables][].
+
+[Context Variables]: ../manual/jobs.html#context-variables
 
 ### SSH Private Key Passphrase
 
