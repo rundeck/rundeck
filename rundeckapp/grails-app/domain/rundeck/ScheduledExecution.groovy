@@ -302,7 +302,7 @@ class ScheduledExecution extends ExecutionContext {
             data.notification.keySet().findAll{it.startsWith('on')}.each{ name->
                 if(data.notification[name]){
                         //support for built-in notification types
-                    ['urls','recipients'].each{ subkey->
+                    ['urls','email'].each{ subkey->
                         if(data.notification[name][subkey]){
                             nots << Notification.fromMap(name, [(subkey):data.notification[name][subkey]])
                         }

@@ -204,13 +204,11 @@ You can define these properties to customize the email notifications. Each prope
     # trigger-specific templating
     rundeck.mail.[trigger].template.subject=[custom subject line]
     rundeck.mail.[trigger].template.file=[path to template file]
-    rundeck.mail.[trigger].template.attachLog=true/false (if true, attach the output log to the message)
     rundeck.mail.[trigger].template.log.formatted=true/false (if true, prefix log lines with context information)
 
     # apply to any triggers not specified
     rundeck.mail.template.subject=[Default subject line]
     rundeck.mail.template.file=[path to template file]
-    rundeck.mail.template.attachLog=true/false (if true, attach the output log to the message)
     rundeck.mail.template.log.formatted=true/false (if true, prefix log lines with context information)
 
 If a template filepath ends with `.md` or `.markdown`, then it will be interpreted as a Markdown formatted template.  Otherwise it is expected that the template file contains HTML.

@@ -1040,8 +1040,8 @@ class ScheduledExServiceTests {
 
     public void testDoValidateNotifications() {
 
-        def sec = new ScheduledExecutionService()
-        if (true) {//test job with notifications
+        def sec = service
+        //test job with notifications
             def fwkControl = mockFor(FrameworkService, true)
             fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
             fwkControl.demand.existsFrameworkProject { project, framework ->
@@ -1097,9 +1097,12 @@ class ScheduledExServiceTests {
             def Notification n = not1
             assertEquals ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, n.eventTrigger
             assertEquals "email", n.type
-            assertEquals "c@example.com,d@example.com", n.content
+            assertEquals "c@example.com,d@example.com", n.mailConfiguration().recipients
         }
-        if (true) {//test job with notifications
+
+    public void testDoValidateNotifications_2() {
+
+        def sec = service//test job with notifications
             def fwkControl = mockFor(FrameworkService, true)
             fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
             fwkControl.demand.existsFrameworkProject { project, framework ->
@@ -1156,13 +1159,16 @@ class ScheduledExServiceTests {
             def Notification n = nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME]
             assertEquals ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, n.eventTrigger
             assertEquals "email", n.type
-            assertEquals "c@example.com,d@example.com", n.content
+            assertEquals "c@example.com,d@example.com", n.mailConfiguration().recipients
             def Notification n2 = nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME]
             assertEquals ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, n2.eventTrigger
             assertEquals "email", n2.type
-            assertEquals "monkey@example.com", n2.content
+            assertEquals "monkey@example.com", n2.mailConfiguration().recipients
         }
-        if (true) {//test job with notifications, using form input fields for params
+
+    public void testDoValidateNotifications_formfields() {
+
+        def sec = service//test job with notifications, using form input fields for params
             def fwkControl = mockFor(FrameworkService, true)
             fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
             fwkControl.demand.existsFrameworkProject { project, framework ->
@@ -1224,14 +1230,16 @@ class ScheduledExServiceTests {
             def Notification n = nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME]
             assertEquals ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, n.eventTrigger
             assertEquals "email", n.type
-            assertEquals "c@example.com,d@example.com", n.content
+            assertEquals "c@example.com,d@example.com", n.mailConfiguration().recipients
             def Notification n2 = nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME]
             assertEquals ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, n2.eventTrigger
             assertEquals "email", n2.type
-            assertEquals "monkey@example.com", n2.content
+            assertEquals "monkey@example.com", n2.mailConfiguration().recipients
         }
 
-        if (true) {//test job with notifications, invalid email addresses
+    public void testDoValidateNotifications_invalidemail3() {
+
+        def sec = service//test job with notifications, invalid email addresses
             def fwkControl = mockFor(FrameworkService, true)
             fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
             fwkControl.demand.existsFrameworkProject { project, framework ->
@@ -1265,7 +1273,10 @@ class ScheduledExServiceTests {
             assertTrue(execution.errors.hasFieldErrors(ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS))
             assertFalse(execution.errors.hasFieldErrors(ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS))
         }
-        if (true) {//test job with notifications, invalid email addresses
+
+    public void testDoValidateNotifications_invalidemail2() {
+
+        def sec = service//test job with notifications, invalid email addresses
             def fwkControl = mockFor(FrameworkService, true)
             fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
             fwkControl.demand.existsFrameworkProject { project, framework ->
@@ -1299,7 +1310,10 @@ class ScheduledExServiceTests {
             assertTrue(execution.errors.hasFieldErrors(ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS))
             assertFalse(execution.errors.hasFieldErrors(ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS))
         }
-        if (true) {//test job with notifications, invalid email addresses using map based notifications definition
+
+    public void testDoValidateNotifications_invalidemail() {
+
+        def sec = service//test job with notifications, invalid email addresses using map based notifications definition
             def fwkControl = mockFor(FrameworkService, true)
             fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
             fwkControl.demand.existsFrameworkProject { project, framework ->
@@ -1333,7 +1347,10 @@ class ScheduledExServiceTests {
             assertTrue(execution.errors.hasFieldErrors(ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS))
             assertTrue(execution.errors.hasFieldErrors(ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS))
         }
-        if (true) {//test job with notifications, invalid urls
+
+    public void testDoValidateNotifications_invalidurls() {
+
+        def sec = service//test job with notifications, invalid urls
             def fwkControl = mockFor(FrameworkService, true)
             fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
             fwkControl.demand.existsFrameworkProject { project, framework ->
@@ -1366,7 +1383,6 @@ class ScheduledExServiceTests {
             assertTrue(execution.errors.hasErrors())
             assertTrue(execution.errors.hasFieldErrors(ScheduledExecutionController.NOTIFY_FAILURE_URL))
             assertTrue(execution.errors.hasFieldErrors(ScheduledExecutionController.NOTIFY_SUCCESS_URL))
-        }
     }
 
     public void testInvalidNotificationsEmailsAllowEmbeddedProps() {
@@ -1414,13 +1430,13 @@ class ScheduledExServiceTests {
         def Notification n0 = not0
         assertEquals ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, n0.eventTrigger
         assertEquals "email", n0.type
-        assertEquals '${job.user.name}@something.org', n0.content
+        assertEquals '${job.user.name}@something.org', n0.mailConfiguration().recipients
         final def not1 = notifications[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME][0]
         assertTrue(not1 instanceof Notification)
         def Notification n1 = not1
         assertEquals ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, n1.eventTrigger
         assertEquals "email", n1.type
-        assertEquals '${job.user.email}', n1.content
+        assertEquals '${job.user.email}', n1.mailConfiguration().recipients
     }
 
     public void testDoValidateOptionsBasic() {
@@ -3670,7 +3686,7 @@ class ScheduledExServiceTests {
         def Notification n2 = nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME]
         assertEquals ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, n2.eventTrigger
         assertEquals "email", n2.type
-        assertEquals "spaghetti@nowhere.com", n2.content
+        assertEquals "spaghetti@nowhere.com", n2.mailConfiguration().recipients
     }
 
     public void testDoUpdateNotificationsShouldUpdateOnSuccess() {
@@ -3692,7 +3708,7 @@ class ScheduledExServiceTests {
             def Notification n2 = nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME]
             assertEquals ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, n2.eventTrigger
             assertEquals "email", n2.type
-            assertEquals "spaghetti@nowhere.com", n2.content
+            assertEquals "spaghetti@nowhere.com", n2.mailConfiguration().recipients
         }
     }
 
@@ -3714,7 +3730,7 @@ class ScheduledExServiceTests {
             def Notification n2 = nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME]
             assertEquals ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, n2.eventTrigger
             assertEquals "email", n2.type
-            assertEquals "milk@store.com", n2.content
+            assertEquals "milk@store.com", n2.mailConfiguration().recipients
         }
     }
 
@@ -3736,7 +3752,7 @@ class ScheduledExServiceTests {
             def Notification n2 = nmap[ScheduledExecutionController.ONSTART_TRIGGER_NAME]
             assertEquals ScheduledExecutionController.ONSTART_TRIGGER_NAME, n2.eventTrigger
             assertEquals "email", n2.type
-            assertEquals "avbdf@zzdf.com", n2.content
+            assertEquals "avbdf@zzdf.com", n2.mailConfiguration().recipients
         }
     }
 
@@ -4126,11 +4142,11 @@ class ScheduledExServiceTests {
             def Notification n = nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME]
             assertEquals ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, n.eventTrigger
             assertEquals "email", n.type
-            assertEquals "spaghetti@nowhere.com", n.content
+            assertEquals "spaghetti@nowhere.com", n.mailConfiguration().recipients
             def Notification n2 = nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME]
             assertEquals ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, n2.eventTrigger
             assertEquals "email", n2.type
-            assertEquals "milk@store.com", n2.content
+            assertEquals "milk@store.com", n2.mailConfiguration().recipients
         }
 
         if (true) {//test update job  notifications, using form input parameters
@@ -4212,11 +4228,11 @@ class ScheduledExServiceTests {
             def Notification n = nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME]
             assertEquals ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, n.eventTrigger
             assertEquals "email", n.type
-            assertEquals "spaghetti@nowhere.com", n.content
+            assertEquals "spaghetti@nowhere.com", n.mailConfiguration().recipients
             def Notification n2 = nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME]
             assertEquals ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, n2.eventTrigger
             assertEquals "email", n2.type
-            assertEquals "milk@store.com", n2.content
+            assertEquals "milk@store.com", n2.mailConfiguration().recipients
         }
         if (true) {//test update job  notifications, using form input parameters, invalid email addresses
             def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: true, adhocRemoteString: 'test command',)
@@ -4290,11 +4306,11 @@ class ScheduledExServiceTests {
             def Notification n = nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME]
             assertEquals ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, n.eventTrigger
             assertEquals "email", n.type
-            assertEquals "c@example.com,d@example.com", n.content
+            assertEquals "c@example.com,d@example.com", n.mailConfiguration().recipients
             def Notification n2 = nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME]
             assertEquals ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, n2.eventTrigger
             assertEquals "email", n2.type
-            assertEquals "monkey@example.com", n2.content
+            assertEquals "monkey@example.com", n2.mailConfiguration().recipients
         }
     }
 
@@ -4375,11 +4391,11 @@ class ScheduledExServiceTests {
             def Notification n = nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME]
             assertEquals ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, n.eventTrigger
             assertEquals "email", n.type
-            assertEquals "spaghetti@nowhere.com", n.content
+            assertEquals "spaghetti@nowhere.com", n.mailConfiguration().recipients
             def Notification n2 = nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME]
             assertEquals ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, n2.eventTrigger
             assertEquals "email", n2.type
-            assertEquals "milk@store.com", n2.content
+            assertEquals "milk@store.com", n2.mailConfiguration().recipients
         }
     }
 
@@ -4453,11 +4469,11 @@ class ScheduledExServiceTests {
             def Notification n = nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME]
             assertEquals ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, n.eventTrigger
             assertEquals "email", n.type
-            assertEquals "c@example.com,d@example.com", n.content
+            assertEquals "c@example.com,d@example.com", n.mailConfiguration().recipients
             def Notification n2 = nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME]
             assertEquals ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, n2.eventTrigger
             assertEquals "email", n2.type
-            assertEquals "monkey@example.com", n2.content
+            assertEquals "monkey@example.com", n2.mailConfiguration().recipients
         }
     }
 

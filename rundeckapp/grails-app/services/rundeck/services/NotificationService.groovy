@@ -117,7 +117,11 @@ public class NotificationService implements ApplicationContextAware{
         temp.deleteOnExit()
         temp.withWriter {Writer w->
             iterator.findAll { it.eventType == LogUtil.EVENT_TYPE_LOG }.each { LogEvent msgbuf ->
-                w << (isFormatted ? "${logFormater.format(msgbuf.datetime)} [${msgbuf.metadata?.user}@${msgbuf.metadata?.node} ${msgbuf.metadata?.stepctx ?: '_'}][${msgbuf.loglevel}] ${msgbuf.message}" : msgbuf.message)
+                def message = msgbuf.message
+                if(message.contains("\033")){
+                    message=message.decodeAnsiColorStrip()
+                }
+                w << (isFormatted ? "${logFormater.format(msgbuf.datetime)} [${msgbuf.metadata?.user}@${msgbuf.metadata?.node} ${msgbuf.metadata?.stepctx ?: '_'}][${msgbuf.loglevel}] ${message}" : message)
                 w << lineSep
             }
         }
@@ -140,7 +144,10 @@ public class NotificationService implements ApplicationContextAware{
                 if(n.type=='email'){
                     //sending notification of a status trigger for the Job
                     def Execution exec = content.execution
-                    def destarr=n.content.split(",") as List
+                    def mailConfig = n.mailConfiguration()
+                    def destarr=mailConfig.recipients?.split(",") as List
+                    def configSubject=mailConfig.subject
+                    def configAttachLog=mailConfig.attachLog
                     final state = ExecutionService.getExecutionState(exec)
                     def statMsg=[
                             (ExecutionService.EXECUTION_ABORTED):'KILLED',
@@ -175,6 +182,9 @@ public class NotificationService implements ApplicationContextAware{
                     }else if (grailsApplication.config.rundeck.mail.template.subject) {
                         subjecttmpl=grailsApplication.config.rundeck.mail.template.subject.toString()
                     }
+                    if(configSubject){
+                        subjecttmpl= configSubject
+                    }
                     def subjectmsg = renderTemplate(subjecttmpl, context)
 
                     def htmlemail=null
@@ -205,14 +215,12 @@ public class NotificationService implements ApplicationContextAware{
                         }
                     }
                     if(templatePaths && !htmlemail ){
-                        log.error("Notification templates searched but not found: " + templatePaths+ ", " +
+                        log.warn("Notification templates searched but not found: " + templatePaths+ ", " +
                                 "using default");
                     }
                     def attachlog=false
-                    if(grailsApplication.config.rundeck.mail."${trigger}".template.attachLog in [true,'true']){
-                        attachlog=true
-                    }else if (grailsApplication.config.rundeck.mail.template.attachLog in [true, 'true']){
-                        attachlog=true
+                    if (trigger != 'start' && configAttachLog in ['true',true]) {
+                        attachlog = true
                     }
                     def isFormatted =false
                     if( grailsApplication.config.rundeck.mail."${trigger}".template.log.formatted in [true,'true']){

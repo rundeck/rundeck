@@ -1,5 +1,6 @@
 package rundeck
 
+import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.ObjectMapper
 
 /*
@@ -60,7 +61,11 @@ public class Notification {
         //de-serialize the json
         if (null != content) {
             final ObjectMapper mapper = new ObjectMapper()
-            return mapper.readValue(content, Map.class)
+            try{
+                return mapper.readValue(content, Map.class)
+            }catch (JsonParseException e){
+                return null
+            }
         } else {
             return null
         }
@@ -76,12 +81,31 @@ public class Notification {
             content = null
         }
     }
+    /**
+     * Return the configuration map for a mail notification
+     *
+     * @return
+     */
+    public Map mailConfiguration(){
+        if (content.startsWith('{') && content.endsWith('}')) {
+            //parse as json
+            return getConfiguration()
+        }
+        return [recipients: content]
+    }
 
     public static Notification fromMap(String key, Map data){
         Notification n = new Notification(eventTrigger:key)
-        if(data.recipients){
+        if(data.email || data.recipients){
             n.type='email'
-            n.content=data.recipients
+            def map=[recipients: data.recipients?:data.email.recipients]
+            if(data.email && data.email.subject){
+                map['subject']= data.email.subject
+            }
+            if(data.email && data.email.attachLog){
+                map['attachLog']= data.email.attachLog in ['true',true]
+            }
+            n.configuration=map
         }else if(data.urls){
             n.type='url'
             n.content=data.urls
@@ -99,7 +123,7 @@ public class Notification {
     }
     public Map toMap(){
         if(type=='email'){
-            return [recipients:content]
+            return ['email':mailConfiguration()]
         }else if(type=='url'){
             return [urls:content]
         }else if(type){
