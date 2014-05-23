@@ -333,7 +333,7 @@ function fireWhenReady(elem,func){
 function _genUrl(url,params){
     var urlparams = [];
     for (var e in params) {
-        urlparams.push(e + "=" + params[e]);
+        urlparams.push(encodeURIComponent(e) + "=" + encodeURIComponent(params[e]));
     }
     return url + (url.indexOf('?') > 0 ? '&' : '?') + urlparams.join("&");
 }
