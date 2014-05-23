@@ -117,7 +117,11 @@ public class NotificationService implements ApplicationContextAware{
         temp.deleteOnExit()
         temp.withWriter {Writer w->
             iterator.findAll { it.eventType == LogUtil.EVENT_TYPE_LOG }.each { LogEvent msgbuf ->
-                w << (isFormatted ? "${logFormater.format(msgbuf.datetime)} [${msgbuf.metadata?.user}@${msgbuf.metadata?.node} ${msgbuf.metadata?.stepctx ?: '_'}][${msgbuf.loglevel}] ${msgbuf.message}" : msgbuf.message)
+                def message = msgbuf.message
+                if(message.contains("\033")){
+                    message=message.decodeAnsiColorStrip()
+                }
+                w << (isFormatted ? "${logFormater.format(msgbuf.datetime)} [${msgbuf.metadata?.user}@${msgbuf.metadata?.node} ${msgbuf.metadata?.stepctx ?: '_'}][${msgbuf.loglevel}] ${message}" : message)
                 w << lineSep
             }
         }
