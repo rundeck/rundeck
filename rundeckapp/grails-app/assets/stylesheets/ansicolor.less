@@ -25,6 +25,36 @@
 @ansi-bg-cyan: lighten(cyan,30%);
 @ansi-bg-white: white;
 @ansi-bg-default: clear;
+.ansigray(@counter) when (@counter >= 0) {
+  .ansigray((@counter - 1)); // next iteration
+  .ansi-fg-gray-@{counter}{
+    color: #fff - ((#fff/24) * (24 - @counter) ); // code for each iteration
+  }
+  .ansi-bg-gray-@{counter}{
+    background-color: #fff - ((#fff/24) * (24 - @counter)); // code for each iteration
+  }
+}
+
+.ansirgb(@r,@g,@b) {
+  .ansi-fg-rgb-@{r}-@{g}-@{b} {
+    color: rgb(@r*(255/5),@g*(255/5),@b*(255/5));
+  }
+  .ansi-bg-rgb-@{r}-@{g}-@{b} {
+    background-color: rgb(@r*(255/5),@g*(255/5),@b*(255/5));
+  }
+}
+.ansirgbgeng(@counter,@bval,@rval) when (@counter >=0) {
+  .ansirgbgeng((@counter - 1 ),@bval,@rval);
+  .ansirgb(@rval,@counter,@bval);
+}
+.ansirgbgenb(@counter,@val) when (@counter >=0) {
+  .ansirgbgenb((@counter - 1 ),@val);
+  .ansirgbgeng(5,@counter,@val);
+}
+.ansirgbgen(@counter) when (@counter >=0) {
+  .ansirgbgen((@counter - 1 ));
+  .ansirgbgenb(5,@counter);
+}
 
 .ansicolor-on{
   .ansi-fg-black{
@@ -53,6 +83,8 @@
   }
   .ansi-fg-default{
   }
+  .ansigray(24);
+  .ansirgbgen(5);
 
   .ansi-fg-light-black{
     color:@ansi-fg-light-black;
@@ -135,7 +167,7 @@
   }
 
   .ansi-mode-reverse{
-
+    font-style: italic;
   }
   .ansi-mode-nondisplayed{
     color: lighten(black,50%);

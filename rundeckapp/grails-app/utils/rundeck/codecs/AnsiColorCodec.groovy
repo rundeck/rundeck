@@ -51,7 +51,7 @@ class AnsiColorCodec {
     def decode = { string ->
         def ctx = []
         def sb = new StringBuilder()
-        def vals = string.split('\033[\\[%]')
+        def vals = string.split('\033[\\[%\\(]')
         boolean coded = false
         vals.each { str ->
             if (str == '') {
@@ -67,7 +67,7 @@ class AnsiColorCodec {
             sb << ('' + (ctx ? ctx.collect { '</span>' }.join('') : ''))
             ctx = []
 
-            def matcher = Pattern.compile('(?s)^(((\\d{1,2})?(;\\d{1,2})*)%?([mGHfABCDRsuhl])).*$').matcher(str)
+            def matcher = Pattern.compile('(?s)^(((\\d{1,2})?(;\\d{1,3})*)%?([mGHfABCDRsuhl])).*$').matcher(str)
             if (matcher.matches()) {
                 def len = matcher.group(1).length()
                 def cols = []
@@ -86,12 +86,12 @@ class AnsiColorCodec {
                     if (!matcher.group(2)) {
                         cols << 0
                     } else {
-                        def strs = matcher.group(2).split(";")
+                        def strs = matcher.group(2).split("\\s*;\\s*")
 
                         try {
                             strs.findAll { it != null }.each {
                                 if (it != null) {
-                                    cols << Integer.parseInt(it)
+                                    cols << Integer.parseInt(it.trim())
                                 }
                             }
                         } catch (NumberFormatException e) {
@@ -102,9 +102,39 @@ class AnsiColorCodec {
                 if (!cols) {
                     sb << matcher.group(1).encodeAsHTMLElement()
                 } else {
+                    //256 col ansi
+                    def ncols=[]
+                    while(cols.size()>=3 && (cols[0]==38 || cols[0] == 48 ) && cols[1]==5){
+                        // https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
+                        def isfg=cols[0]==38
+                        def fg=isfg?'fg':'bg'
+                        if (cols[2] < 8) {
+                            ncols << (cols[2] + (isfg ? 30 : 40))//0x00-0x07 equiv 30-37
+                        } else if (cols[2] < 15 && isfg) {
+                            ncols << (cols[2] - 8 + 90)//0x08-0x0F equiv 90-97
+                            //bg equiv?
+                        } else if (cols[2] >= 0x10 && cols[2] <= 0xe7) {
+                            //0x10-0xe7:  6*6*6=216 colors: 16 + 36*r + 6*g + b (0≤r,g,b≤5)
+                            // or in english, r,g,b can be 0-5. encoded value is = 36*r + 6*g + b + 16
+                            def val = (int) cols[2] - 0x10
+                            def b = val % 6
+                            val = (int) (val - b) / 6
+                            def g = val % 6
+                            val = (int) (val - b) / 6
+                            def r = val % 6
+                            ncols << "${fg}-rgb-${r}-${g}-${b}"
+                        } else if (cols[2] >= 0xe8 && cols[2] <= 0xff) {
+                            ncols << "${fg}-gray-${(cols[2] - 0xe8)}"
+                        }
+                        cols = cols.subList(3, cols.size())
+                    }
+                    if(ncols){
+                        cols=ncols
+                    }
                     //ctx
-                    def rvals = cols.findAll { it && (ansicolors[it] || ansimode[it]) }.collect {
-                        'ansi-' + (ansicolors[it] ?: ansimode[it])
+                    def rvals = cols.findAll { it && (ansicolors[it] || ansimode[it] || it instanceof String) }
+                    .collect {
+                        'ansi-' + (ansicolors[it] ?: ansimode[it] ?: it)
                     }.join(' ')
                     if (rvals) {
                         ctx << rvals
