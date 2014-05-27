@@ -21,6 +21,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
@@ -214,6 +215,12 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
     protected DirContext _rootContext;
 
     protected boolean _reportStatistics;
+    
+    /**
+     * List of supplemental roles provided in config file that get added to
+     * all users. 
+     */
+    private List<String> _supplementalRoles;
 
     protected static final ConcurrentHashMap<String, CachedUserInfo> USERINFOCACHE = 
         new ConcurrentHashMap<String, CachedUserInfo>();
@@ -410,6 +417,13 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
                 }
             }
         }
+
+        if (null != _supplementalRoles) {
+            for (String supplementalRole : _supplementalRoles) {
+                roleList.add(supplementalRole);
+            }
+        }
+
         if (roleList.size() < 1) {
             LOG.warn("JettyCachingLdapLoginModule: User '" + username + "' has no role membership; role query configuration may be incorrect");
         }else{
@@ -634,6 +648,12 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         
         _reportStatistics = Boolean.parseBoolean(String.valueOf(getOption(options, "reportStatistics", Boolean
                 .toString(_reportStatistics))));
+
+        Object supplementalRoles = options.get("supplementalRoles");
+        if (null != supplementalRoles) {
+            this._supplementalRoles = new ArrayList<String>();
+            this._supplementalRoles.addAll(Arrays.asList(supplementalRoles.toString().split(", +")));
+        }
 
         String cacheDurationSetting = (String) options.get("cacheDurationMillis");
         if (cacheDurationSetting != null) {
