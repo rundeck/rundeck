@@ -652,7 +652,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         Object supplementalRoles = options.get("supplementalRoles");
         if (null != supplementalRoles) {
             this._supplementalRoles = new ArrayList<String>();
-            this._supplementalRoles.addAll(Arrays.asList(supplementalRoles.toString().split(", +")));
+            this._supplementalRoles.addAll(Arrays.asList(supplementalRoles.toString().split(", *")));
         }
 
         String cacheDurationSetting = (String) options.get("cacheDurationMillis");
