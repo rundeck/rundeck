@@ -1,4 +1,4 @@
-<%@ page import="rundeck.User" %>
+<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants; rundeck.User" %>
 <g:set var="rkey" value="${g.rkey()}" />
 
 <g:if test="${session.user && User.findByLogin(session.user)?.reportfilters}">
@@ -76,6 +76,8 @@
 
                 <div class="jobsReport clear">
                     <g:if test="${reports}">
+                        <g:form action="bulkDelete" controller="execution" method="POST" name="bulkDeleteForm">
+                            <g:hiddenField name="project" value="${params.project}"/>
                         <table class=" table table-hover table-condensed events-table" style="width:100%">
                         <g:if test="${includeNowRunning}">
                             <tbody id="nowrunning"></tbody>
@@ -92,8 +94,76 @@
                                 </g:if>
                             </g:if>
                             <g:if test="${!params.compact}">
-                                <div class="paginate"><g:paginate controller="reports" action="index" total="${total}" max="${max}" params="${paginateParams}"/></div>
+                                <span class="paginate"><g:paginate controller="reports" action="index" class=" pagination-sm pagination-embed"
+                                                                    total="${total}" max="${max}" params="${paginateParams}"/></span>
                             </g:if>
+                            <div class="pull-right">
+                            <span class="obs_bulk_edit_enable " style="display: none">
+                                <span class="textbtn textbtn-default act_bulk_edit_toggleall  ">
+                                    <g:message code="toggle.all"/>
+                                </span>
+                                <span class="textbtn textbtn-default act_bulk_edit_selectall  ">
+                                    <g:message code="select.all"/>
+                                </span>
+                                <span class="textbtn textbtn-default act_bulk_edit_deselectall  ">
+                                    <g:message code="select.none"/>
+                                </span>
+
+                                <span class="btn btn-xs btn-danger obs_bulk_edit_enable"
+                                      data-toggle="modal"
+                                      data-target="#bulkexecdelete">
+                                    <g:message code="delete.selected.executions"/>
+                                </span>
+                                <span class="textbtn textbtn-default act_bulk_edit_disable obs_bulk_edit_enable "
+                                      style="display: none">
+                                    <i class="glyphicon glyphicon-remove-circle"></i>
+                                    <g:message code="cancel.bulk.delete"/>
+                                </span>
+                            </span>
+                            <g:set var="projAdminAuth" value="${auth.resourceAllowedTest(
+                                    context: 'application', type: 'project', name: params.project, action: AuthConstants.ACTION_ADMIN)}"/>
+                            <g:set var="deleteExecAuth"
+                                   value="${auth.resourceAllowedTest(context: 'application', type: 'project', name:
+                                           params.project, action: AuthConstants.ACTION_DELETE_EXECUTION) || projAdminAuth}"/>
+                            <g:if test="${deleteExecAuth}">
+                            <span class="btn btn-xs btn-warning act_bulk_edit_enable obs_bulk_edit_disable">
+                                <g:message code="bulk.delete"/>
+                            </span>
+                                </g:if>
+                            </div>
+
+                        %{--confirm bulk delete modal--}%
+                            <div class="modal" id="bulkexecdelete" tabindex="-1" role="dialog"
+                                 aria-labelledby="bulkexecdeletetitle" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <button type="button" class="close" data-dismiss="modal"
+                                                    aria-hidden="true">&times;</button>
+                                            <h4 class="modal-title" id="bulkexecdeletetitle">Bulk Delete <g:message
+                                                    code="domain.Execution.title.plural" default="Executions"/></h4>
+                                        </div>
+
+                                        <div class="modal-body">
+
+                                            <p>Really delete all selected
+                                                <g:message code="domain.Execution.title.plural" default="Executions"/>?
+                                            </p>
+                                        </div>
+
+                                        <div class="modal-footer">
+
+                                            <button type="submit" class="btn btn-default  " data-dismiss="modal">
+                                                Cancel
+                                            </button>
+                                            <input type="submit"
+                                                            class="btn  btn-danger obs_bulk_edit_enable "
+                                                            value="${g.message(code: 'delete.selected.executions')}"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </g:form>
                     </g:if>
                 </div>
 

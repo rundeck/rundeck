@@ -497,6 +497,8 @@ In the Job edit page, click the red "X" icon for to delete the Job.
 
 Click "Yes" when it says "Really delete this Job?"
 
+If you have access, you can choose to delete all executions for the job as well.
+
 ## Updating and copying Jobs
 
 All of the data you set when creating a job can be modified (except UUID). To edit a

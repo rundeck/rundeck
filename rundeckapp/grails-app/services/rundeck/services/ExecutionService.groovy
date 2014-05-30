@@ -34,6 +34,7 @@ import com.dtolabs.rundeck.execution.ExecutionItemFactory
 import com.dtolabs.rundeck.execution.JobExecutionItem
 import com.dtolabs.rundeck.execution.JobReferenceFailureReason
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
 import org.hibernate.StaleObjectStateException
@@ -75,6 +76,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def metricService
     def apiService
     def grailsLinkGenerator
+    def logFileStorageService
 
     /**
      * Render execution document for api response
@@ -89,6 +91,47 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         summary: summarizeJob(e.scheduledExecution, e)
                 ]
             }, paging)
+    }
+
+    /**
+     * Render xml or json response data for the result of a call to {@link #deleteBulkExecutionIds(java.util.Collection, com.dtolabs.rundeck.core.authorization.AuthContext, java.lang.String)}
+     *
+     * @param request
+     * @param response
+     * @param result
+     * @return
+     */
+    def renderBulkExecutionDeleteResult(request, response, result) {
+        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'])
+        def total = result.successTotal + result.failures.size()
+        switch (respFormat) {
+            case 'json':
+                return apiService.renderSuccessJson(response) {
+                    requestCount = total
+                    allsuccessful = result.successTotal == total
+                    successCount = result.successTotal
+                    failedCount = result.failures ? result.failures.size() : 0
+                    if (result.failures) {
+                        failures = result.failures.collect { [message: it.message, id: it.id] }
+                    }
+                }
+                break
+            case 'xml':
+            default:
+                return apiService.renderSuccessXml(request, response) {
+                    deleteExecutions(requestCount: total, allsuccessful: result.successTotal == total) {
+                        successful(count: result.successTotal)
+                        if (!result.success) {
+                            failed(count: result.failures.size()) {
+                                result.failures.each { failure ->
+                                    delegate.'execution'(id: failure.id, message: failure.message)
+                                }
+                            }
+                        }
+                    }
+                }
+                break;
+        }
     }
 
     public String getFollowURLForExecution(Execution e) {
@@ -512,48 +555,58 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     /**
      * Log details about execution start and finish to a log4j listener named org.rundeck.execution.status
      * @param e
-     * @return
+     * @param event @return @param user
      */
-    def logExecutionLog4j(Execution e) {
+    def logExecutionLog4j(Execution e, String event, String user) {
+        def (Map mdcprops, String message) = createExecutionLogMDCdata(e)
+        mdcprops.event= event
+        mdcprops.eventUser= user
+        logExecutionLog4jState(mdcprops, event+" ("+ user+"): "+ message)
+    }
+
+    protected void logExecutionLog4jState(Map mdcprops, String message) {
+        mdcprops.each MDC.&put
+        executionStatusLogger.info(message)
+        mdcprops.keySet().each(MDC.&remove)
+    }
+
+    protected List createExecutionLogMDCdata(Execution e) {
         def state = getExecutionState(e)
         def execprops = ['user', 'id', 'abortedby', 'dateStarted', 'dateCompleted', 'project']
         def jobProps = ['uuid', 'jobName', 'groupPath']
-        def rmprops=[]
+        Map mdcprops=[:]
         execprops.each { k ->
             def v = e[k]
             if (v instanceof Date) {
                 //TODO: reformat date
-                MDC.put(k, v.toString())
-                MDC.put("${k}Time", v.time.toString())
-                rmprops << "${k}Time"
+                mdcprops.put(k, v.toString())
+                mdcprops.put("${k}Time", v.time.toString())
             } else if (v instanceof String) {
-                MDC.put(k, v ? v : "-")
+                mdcprops.put(k, v ? v : "-")
             } else {
-                final string = v.toString()
-                MDC.put(k, string ? string : "-")
+                mdcprops.put(k, v ? v.toString() : "-")
             }
-            rmprops<<k
         }
-        MDC.put('state',state)
+        mdcprops.put('state', state)
         final jobstring = ''
-        if(e.scheduledExecution){
+        if (e.scheduledExecution) {
             jobProps.each { k ->
                 final var = e.scheduledExecution[k]
-                MDC.put(k, var ? var : '-')
-                rmprops << k
+                mdcprops.put(k, var ? var : '-')
             }
-            jobstring= " job: "+ e.scheduledExecution.extid+" " + (e.scheduledExecution.groupPath ?: '') + "/" + e.scheduledExecution.jobName
-        }else{
+            jobstring = " job: " + e.scheduledExecution.extid + " " + (e.scheduledExecution.groupPath ?: '') + "/" +
+                    e.scheduledExecution.jobName
+        } else {
             def adhocCommand = e.workflow.commands[0].adhocRemoteString
-            if(adhocCommand){
-                MDC.put("command",adhocCommand)
-                rmprops << "command"
-                jobstring+=" command: "+ adhocCommand
+            if (adhocCommand) {
+                mdcprops.put("command", adhocCommand)
+                jobstring += " command: " + adhocCommand
+            }
+            jobProps.each{k->
+                mdcprops[k]='-'
             }
         }
-
-        executionStatusLogger.info(state+" id: "+e.id +" project: "+ e.project  + " user: "+e.user + jobstring)
-        rmprops.each(MDC.&remove)
+        [mdcprops, "id: " + e.id +" state: " + state +  " project: " + e.project + " user: " + e.user + jobstring]
     }
 
     public logExecution(uri,project,user,issuccess,execId,Date startDate=null, jobExecId=null, jobName=null, jobSummary=null,iscancelled=false, nodesummary=null, abortedby=null){
@@ -681,7 +734,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             final nis = NodeStepExecutionService.getInstanceForFramework(framework);
             nis.registerInstance(JobExecutionItem.STEP_EXECUTION_TYPE, this)
 
-            logExecutionLog4j(execution)
+            logExecutionLog4j(execution, "start", execution.user)
             if (scheduledExecution) {
                 //send onstart notification
                 def result = notificationService.triggerJobNotification('start', scheduledExecution.id,
@@ -990,6 +1043,90 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             failedreason =  'Job is not running'
         }
         return [abortstate:abortstate,jobstate:jobstate,statusStr:statusStr, failedreason: failedreason]
+    }
+
+    /**
+     * Delete an execution and associated log files, return a map of results
+     * @param e execution
+     * @param user
+     * @param authContext
+     * @return [success:true/false, failures:[ [success:false, message: String, id: id],... ], successTotal:Integer]
+     */
+    Map deleteBulkExecutionIds(Collection ids, AuthContext authContext, String username) {
+        def failures=[]
+        def failed=false
+        def count=0;
+        for (Object id : ids) {
+            def exec = Execution.get(id)
+            def result
+            if (!exec) {
+                result = [success: false, message: 'Execution Not found: ' + id, id: id]
+            } else {
+                result = deleteExecution(exec, authContext, username)
+                result.id = id
+            }
+            if(!result.success){
+                failed=true
+                failures<<result
+            }else{
+                count++;
+            }
+        }
+        return [success:!failed, failures:failures, successTotal:count]
+    }
+    /**
+     * Delete an execution and associated log files
+     * @param e execution
+     * @param user
+     * @param authContext
+     * @return
+     */
+    Map deleteExecution(Execution e, AuthContext authContext, String username){
+        if (!frameworkService.authorizeApplicationResourceAny(authContext,
+                frameworkService.authResourceForProject(e.project),
+                [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN])) {
+            return [success: false, error: 'unauthorized', message: "Unauthorized: Delete execution in project ${e.project}"]
+        }
+
+        Map result
+        try {
+            if (e.dateCompleted == null && e.dateStarted != null) {
+                throw new Exception("The execution is currently running")
+            }
+                //delete all reports
+            ExecReport.findAllByJcExecId(e.id.toString()).each { rpt ->
+                rpt.delete(flush: true)
+            }
+            def files = []
+            def execs = []
+            //aggregate all files to delete
+            execs << e
+            [LoggingService.LOG_FILE_FILETYPE, WorkflowService.STATE_FILE_FILETYPE].each { ftype ->
+                def file = logFileStorageService.getFileForExecutionFiletype(e, ftype, true)
+                if (null != file && file.exists()) {
+                    files << file
+                }
+            }
+            log.debug("${files.size()} files from execution will be deleted")
+            logExecutionLog4j(e, "delete", username)
+            //delete execution
+            e.delete(flush: true)
+            //delete all files
+            def deletedfiles = 0
+            files.each { file ->
+                if (null != file && file.exists() && !FileUtils.deleteQuietly(file)) {
+                    log.warn("Failed to delete file while deleting project ${project.name}: ${file.absolutePath}")
+                } else {
+                    deletedfiles++
+                }
+            }
+            log.debug("${deletedfiles} files removed")
+            result = [success: true]
+        } catch (Exception ex) {
+            log.error("Failed to delete execution ${e.id}", ex)
+            result = [error: "Failed to delete execution {{Execution ${e.id}}}: ${ex.message}", success: false]
+        }
+        return result
     }
 
     /**
@@ -1487,7 +1624,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             logExecution(null, execution.project, execution.user, "true" == execution.status, exId,
                 execution.dateStarted, jobid, jobname, summary, props.cancelled,
                 node, execution.abortedby)
-            logExecutionLog4j(execution)
+            logExecutionLog4j(execution, "finish", execution.user)
 
             def context = execmap?.thread?.context
             notificationService.triggerJobNotification(props.status == 'true' ? 'success' : 'failure', schedId, [execution: execution,nodestatus:[succeeded:sucCount,failed:failedCount,total:totalCount],context:context])

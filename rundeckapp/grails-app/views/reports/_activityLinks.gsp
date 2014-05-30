@@ -1,3 +1,4 @@
+<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 %{--
   Copyright 2013 SimplifyOps Inc, <http://simplifyops.com>
 
@@ -82,22 +83,24 @@
            data-bind="visible: results().length > 0">
         <tbody ></tbody>
         <tbody data-bind=" foreach: results ">
-        <tr class="link activity_row"
-            data-bind="css: { 'succeed': status()=='succeed', 'fail': status()=='fail', 'highlight': $root.highlightExecutionId()==executionId(), job: jobId(), adhoc: !jobId() } "
-            onclick="$(this).down('a._defaultAction').click();"
-            >
-            <td class="eventicon">
+        <tr class="link activity_row autoclick"
+            data-bind="css: { 'succeed': status()=='succeed', 'fail': status()=='fail', 'highlight': $root.highlightExecutionId()==executionId(), job: jobId(), adhoc: !jobId() } ">
+            <td class="eventicon" data-bind="visible: $root.bulkEditMode()">
+                <input type="checkbox" name="bulk_edit" data-bind="value: executionId(), checked: bulkEditSelected()"
+                       class="_defaultInput"/>
+            </td>
+            <td class="eventicon autoclickable">
                 <i class="exec-status icon"
                    data-bind="css: { 'succeed': status()=='succeed', 'fail': status()=='fail', 'warn': status()=='cancel', 'running': status()=='running' } "
                 ></i>
             </td>
-            <td class="eventtitle" data-bind="css: { job: jobId(), adhoc: !jobId() }">
+            <td class="eventtitle autoclickable" data-bind="css: { job: jobId(), adhoc: !jobId() }">
                 <a href="#" data-bind="text: '#'+executionId(), attr: { href: executionHref() }" class="_defaultAction"></a>
                 <g:if test="${showTitle}">
                     <span data-bind="text: jobId()?jobName():executionString()"></span>
                 </g:if>
             </td>
-            <td class="eventargs" >
+            <td class="eventargs autoclickable" >
                 <div class="argstring-scrollable">
                 <span data-bind="if: execution().jobArguments">
                     <span data-bind="foreachprop: execution().jobArguments">
@@ -110,7 +113,7 @@
                 <!-- /ko -->
                 </div>
             </td>
-            <td class="right date">
+            <td class="right date autoclickable">
                 <span data-bind="if: dateCompleted()">
                     <span class="timeabs" data-bind="text: endTimeFormat('${g.message(code:'jobslist.date.format.ko')}')">
 
@@ -145,7 +148,7 @@
                 </span>
             </td>
 
-            <td class="  user text-right" style="white-space: nowrap;">
+            <td class="  user text-right autoclickable" style="white-space: nowrap;">
                 <em>by</em>
                 <span data-bind="text: user"></span>
             </td>
@@ -192,6 +195,137 @@
             <i class="glyphicon glyphicon-search"></i>
         </a>
 
+        %{--bulk edit controls--}%
+        <div class="pull-right clearfix">
+
+            <div data-bind="visible: $root.bulkEditMode()" class="history_bulk_edit">
+                <span class="textbtn textbtn-default act_bulk_edit_toggleall  " data-bind="click: bulkEditToggleAll">
+                    <g:message code="toggle.all"/>
+                </span>
+                <span class="textbtn textbtn-default act_bulk_edit_selectall  " data-bind="click: bulkEditSelectAll">
+                    <g:message code="select.all"/>
+                </span>
+                <span class="textbtn textbtn-default act_bulk_edit_deselectall  " data-bind="click: bulkEditDeselectAll">
+                    <g:message code="select.none"/>
+                </span>
+
+                <span class="btn btn-xs btn-danger"
+                      data-bind=" visible: $root.bulkEditMode(), attr: { disabled: bulkEditIds().length<1 }"
+                      data-toggle="modal"
+                      data-target="#bulkexecdelete">
+                    <g:message code="delete.selected.executions"/>
+                </span>
+                <span class="textbtn textbtn-default"
+                      data-bind="click: $root.toggleBulkEdit, visible: $root.bulkEditMode()">
+                    <i class="glyphicon glyphicon-remove"></i>
+                    <g:message code="cancel.bulk.delete"/>
+                </span>
+            </div>
+
+        <g:set var="projAdminAuth" value="${auth.resourceAllowedTest(
+                context: 'application', type: 'project', name: params.project, action: AuthConstants.ACTION_ADMIN)}"/>
+        <g:set var="deleteExecAuth" value="${auth.resourceAllowedTest(context: 'application', type: 'project', name:
+                params.project, action: AuthConstants.ACTION_DELETE_EXECUTION) || projAdminAuth}"/>
+        <g:if test="${deleteExecAuth}">
+            <button class="btn btn-xs btn-warning"
+                    data-bind="click: $root.toggleBulkEdit, visible: !$root.bulkEditMode()">
+                <g:message code="bulk.delete"/>
+            </button>
+        </g:if>
+
+            %{--confirm bulk delete modal--}%
+            <div class="modal" id="bulkexecdelete" tabindex="-1" role="dialog"
+                 aria-labelledby="bulkexecdeletetitle" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal"
+                                    aria-hidden="true">&times;</button>
+                            <h4 class="modal-title" id="bulkexecdeletetitle">Bulk Delete <g:message
+                                    code="domain.Execution.title.plural" default="Executions"/></h4>
+                        </div>
+
+                        <div class="modal-body">
+
+                            <p>Really delete <strong data-bind="text: $root.bulkEditIds().length"></strong>
+                                <g:message code="domain.Execution.title.plural" default="Executions"/>?
+                            </p>
+                        </div>
+
+                        <div class="modal-footer">
+
+                                <button type="submit" class="btn btn-default  " data-dismiss="modal">
+                                    Cancel
+                                </button>
+                                <button class="btn btn-danger "
+                                        data-bind="click: function(){$root.doBulkDelete('#bulkexecdelete','#bulkexecdeleteresult');}" >
+                                    Delete Selected
+                                </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            %{--bulk delete failure result modal--}%
+            <div class="modal" id="bulkexecdeleteresult" tabindex="-1" role="dialog"
+                 aria-labelledby="bulkexecdeleteresult-title" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal"
+                                    aria-hidden="true">&times;</button>
+                            <h4 class="modal-title" id="bulkexecdeleteresult-title">Bulk Delete <g:message
+                                    code="domain.Execution.title.plural" default="Executions"/>: Results</h4>
+                        </div>
+
+                        <div class="modal-body" data-bind="visible: bulkEditProgress()">
+                            <em>
+                                <i class="glyphicon glyphicon-time text-info"></i>
+                                Requesting bulk delete, please wait.
+                            </em>
+                        </div>
+                        <div class="modal-body" data-bind="visible: !bulkEditProgress()">
+
+                            <p
+                                    data-bind="if: bulkEditResults() && bulkEditResults().requestCount && bulkEditResults().requestCount > 0"
+                               class="text-info">
+                                <strong data-bind="text: bulkEditResults().requestCount"></strong> Executions were
+                            attempted.
+                            </p>
+                            <p data-bind="if: bulkEditResults() && bulkEditResults().successCount && bulkEditResults().successCount > 0"
+                               class="text-success">
+                                <strong data-bind="text: bulkEditResults().successCount"></strong> Executions were
+                            successfully deleted.
+                            </p>
+                            <p data-bind="if: bulkEditResults() && bulkEditResults().failedCount && bulkEditResults().failedCount > 0"
+                                    class="text-warning">
+                                <strong data-bind="text: bulkEditResults().failedCount"></strong>  Executions could
+                            not be deleted:
+                            </p>
+                            <div
+                                    data-bind="if: bulkEditResults() && bulkEditResults().failures && bulkEditResults().failures.length>0">
+                                <ul data-bind="foreach: bulkEditResults().failures">
+                                    <li data-bind="text: message"></li>
+                                </ul>
+                            </div>
+
+                            <div
+                                    data-bind="if: bulkEditResults() && bulkEditResults().error">
+                                  <p class="text-danger" data-bind="text: bulkEditResults().error"></p>
+                            </div>
+
+                        </div>
+
+                        <div class="modal-footer">
+
+                                <button type="submit" class="btn btn-default  " data-dismiss="modal">
+                                    Close
+                                </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 

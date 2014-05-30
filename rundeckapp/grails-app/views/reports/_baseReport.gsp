@@ -33,8 +33,11 @@
             <g:set var="execution" value="${Execution.get(it.jcExecId)}"/>
             <g:set var="status" value="${execution.status == 'true' ? 'succeeded' : null == execution.dateCompleted ? 'running' : execution.cancelled ? 'killed' : 'failed'}"/>
         </g:if>
-        <tr class="link  ${it?.status != 'succeed' ? 'fail' : ''}  ${!it.dateCompleted ? 'nowrunning' : ''} ${sincetime && it.dateCompleted.time>sincetime?'newitem':''}  " onclick="$(this).down('a._defaultAction').click();">
-            <td class="eventicon">
+        <tr class="link autoclick ${it?.status != 'succeed' ? 'fail' : ''}  ${!it.dateCompleted ? 'nowrunning' : ''} ${sincetime && it.dateCompleted.time>sincetime?'newitem':''}  " >
+            <td style="display: none" class="eventicon obs_bulk_edit_enable">
+                <input type="checkbox" value="${rpt.jcExecId}" name="bulk_edit" class="_defaultInput bulk_edit"/>
+            </td>
+            <td class="eventicon autoclickable">
                 <i class="exec-status icon ${!execution.dateCompleted ? 'running' : execution.status == 'true' ? 'succeed' : execution.cancelled ? 'warn' : 'fail'}"></i>
             </td>
             <g:set var="vals" value="${['?','?','?']}"/>
@@ -48,7 +51,7 @@
             </g:if>
 
 
-        <td class="eventtitle ${rpt?.jcJobId ? 'job' : 'adhoc'}" colspan="${rpt?.jcJobId?1:2}">
+        <td class="eventtitle ${rpt?.jcJobId ? 'job' : 'adhoc'} autoclickable" colspan="${rpt?.jcJobId?1:2}">
             <g:link controller="execution" action="show" id="${rpt.jcExecId}" class="_defaultAction"
                 params="[project:execution?execution.project:rpt.ctxProject?:params.project]"
                     title="View execution output" absolute="${absoluteLinks}">#${rpt.jcExecId}</g:link>
@@ -78,7 +81,7 @@
             </g:else>
         </td>
             <g:if test="${rpt?.jcJobId}">
-        <td class="eventargs">
+        <td class="eventargs autoclickable">
             <div class="argstring-scrollable">
             <g:if test="${execution && execution.argString}">
                 <g:render template="/execution/execArgString" model="[argString: execution.argString]"/>
@@ -90,7 +93,7 @@
         </td>
             </g:if>
 
-            <td style="white-space:nowrap" class="right  date">
+            <td style="white-space:nowrap" class="right  date autoclickable">
                 <g:if test="${it.dateCompleted}">
                     %{--<g:relativeDate elapsed="${it?.dateCompleted}" agoClass="timeago"/>--}%
                     <g:unless test="${hideDate}">
@@ -103,13 +106,13 @@
                 </g:if>
             </td>
 
-            <td class="  user" style="white-space: nowrap">
+            <td class="  user autoclickable" style="white-space: nowrap">
                 <em>by</em>
                 <g:username user="${it?.author}"/>
             </td>
 
             <g:unless test="${hideNodes}">
-            <td class="${vals[1] != '0' ? 'fail' : 'ok'}  nodecount ">
+            <td class="${vals[1] != '0' ? 'fail' : 'ok'}  nodecount autoclickable ">
                 <g:if test="${vals[1] != '0'}">
                     ${vals[1]} ${options.summary ? '' : 'node'} failed
                 </g:if>

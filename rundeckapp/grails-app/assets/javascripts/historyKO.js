@@ -32,6 +32,8 @@ function Report(data) {
     self.title = ko.observable();
     self.jobAverageDuration = ko.observable(0);
     self.duration = ko.observable(0);
+    //true if checked for bulk edit
+    self.bulkEditSelected=ko.observable(false);
 
     self.durationSimple = ko.computed(function () {
         return MomentUtil.formatDurationSimple(self.duration());
@@ -96,10 +98,11 @@ function Report(data) {
     });
     ko.mapping.fromJS(data, {}, self);
 }
-function History(ajaxHistoryLink,ajaxNowRunningLink) {
+function History(ajaxHistoryLink,ajaxNowRunningLink,ajaxBulkDeleteLink) {
     var self = this;
     self.ajaxHistoryLink = ajaxHistoryLink;
     self.ajaxNowRunningLink = ajaxNowRunningLink;
+    self.ajaxBulkDeleteLink = ajaxBulkDeleteLink? ajaxBulkDeleteLink: typeof(appLinks)=='object'? appLinks.apiExecutionsBulkDelete:null;
     self.reports = ko.observableArray([]);
     self.nowrunning = ko.observableArray([]);
     self.showReports=ko.observable(false);
@@ -112,6 +115,11 @@ function History(ajaxHistoryLink,ajaxNowRunningLink) {
     self.params = ko.observable();
     self.reloadInterval=ko.observable(0);
     self.highlightExecutionId=ko.observable();
+    //bulk edit mode
+    self.bulkEditMode=ko.observable(false);
+    self.bulkEditPrevious=ko.observable(-1);
+    self.bulkEditResults=ko.observable();
+    self.bulkEditProgress=ko.observable(false);
     self.results=ko.computed(function(){
        if(self.showReports()){
            return self.reports()
@@ -146,6 +154,16 @@ function History(ajaxHistoryLink,ajaxNowRunningLink) {
 
         return pages;
     });
+    //array of selected ids for bulk edit
+    self.bulkEditIds=ko.computed(function(){
+       var ids=[];
+        ko.utils.arrayForEach(self.reports(),function(el){
+           if(el.bulkEditSelected()){
+               ids.push(el.executionId());
+           }
+        });
+        return ids;
+    });
     self.visitPage=function(page){
         loadHistoryLink(self,self.ajaxHistoryLink,page.url);
     };
@@ -155,6 +173,85 @@ function History(ajaxHistoryLink,ajaxNowRunningLink) {
             loadHistoryLink(self, self.ajaxNowRunningLink, this.getAttribute('href'), jQuery(this).data('auto-refresh'));
         });
     };
+
+    self.toggleBulkEdit=function(){
+        self.bulkEditMode(!self.bulkEditMode());
+    };
+
+    //report was clicked
+    self.rowClicked=function(report, multiselect){
+        if (!self.bulkEditMode()) {
+            document.location=report.executionHref();
+        } else {
+            //select default input checkbox
+            //if shift key held down
+            var index = ko.utils.arrayIndexOf(self.reports(), report);
+            if(multiselect && self.bulkEditPrevious()>=0){
+                var prevVal = self.bulkEditPrevious();
+                var a = prevVal < index ? prevVal : index;
+                var b = prevVal < index ? index : prevVal;
+                var c;
+                var prevSel=report.bulkEditSelected();
+
+                //traverse reports
+                for(c=b;c>=a && c>=0;c--){
+                    var x=self.reports()[c];
+                    x.bulkEditSelected(!prevSel);
+                }
+            }else{
+                report.bulkEditSelected(!report.bulkEditSelected());
+            }
+            self.bulkEditPrevious(index);
+        }
+    };
+    self.bulkEditToggleAll=function(){
+        ko.utils.arrayForEach(self.reports(),function(e){
+            e.bulkEditSelected(!e.bulkEditSelected());
+        });
+    };
+    self.bulkEditSelectAll=function(){
+        ko.utils.arrayForEach(self.reports(),function(e){
+            e.bulkEditSelected(true);
+        });
+    };
+    self.bulkEditDeselectAll=function(){
+        ko.utils.arrayForEach(self.reports(),function(e){
+            e.bulkEditSelected(false);
+        });
+    };
+
+    //bulk delete invoked
+    self.doBulkDelete=function(modal,resultmodal){
+        jQuery(modal).modal('hide');
+        self.bulkEditProgress(true);
+        jQuery.ajax({
+            url: self.ajaxBulkDeleteLink,
+            type:'post',
+            data: JSON.stringify({"ids": self.bulkEditIds()}),
+            contentType: 'application/json',
+            dataType:'json',
+            success:function(data,status,xhr){
+                self.bulkEditProgress(false);
+                self.bulkEditResults(data);
+                if(data.allsuccessful){
+                    self.bulkEditMode(false);
+                }else{
+                    jQuery(resultmodal).modal('show');
+                }
+                self.reloadData();
+            },
+            error:function(xhr,status,err){
+                self.bulkEditProgress(false);
+                self.bulkEditResults({error:"Request did not succeed: "+status+": "+err});
+                jQuery(resultmodal).modal('show');
+            }
+        });
+    };
+
+    //load dataset again
+    self.reloadData=function(){
+        loadHistoryLink(self,self.ajaxHistoryLink,self.href());
+    }
 }
 
 var binding = {
@@ -214,6 +311,18 @@ function setupActivityLinks(id, history) {
             history.showReports(false);
 
             loadHistoryLink(history, history.ajaxNowRunningLink, me.getAttribute('href'), jQuery(this).data('auto-refresh'));
+        }
+    });
+
+    //click handler for rows, and prevent shift-click selection in bulk edit mode
+    jQuery('#'+id).on('click', '.autoclick .autoclickable',function (e) {
+        e.preventDefault();
+        history.rowClicked(ko.dataFor(this), e.shiftKey);
+        return false;
+    }).on('mousedown', '.autoclick .autoclickable', function (e) {
+        if (history.bulkEditMode()) {
+            //prevent text selection for shift click
+            e.preventDefault();
         }
     });
 }

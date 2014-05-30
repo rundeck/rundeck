@@ -16,6 +16,10 @@ log4j.additivity.com.dtolabs.rundeck.remoteservice.http.options=false
 log4j.logger.com.dtolabs.rundeck.data.jobs.changes=INFO, jobchanges
 log4j.additivity.com.dtolabs.rundeck.data.jobs.changes=false
 
+# Enable Execution event logging
+log4j.logger.org.rundeck.execution.status=INFO, execevents
+log4j.additivity.org.rundeck.execution.status=false
+
 # Enable API request logging
 log4j.logger.org.rundeck.api.requests=INFO,apirequests
 log4j.additivity.org.rundeck.api.requests=false
@@ -112,6 +116,17 @@ log4j.appender.jobchanges.file=${rundeck.log.dir}/rundeck.jobs.log
 log4j.appender.jobchanges.append=true
 log4j.appender.jobchanges.layout=org.apache.log4j.PatternLayout
 log4j.appender.jobchanges.layout.ConversionPattern=${logger.jobchanges.format}
+
+#
+# executions log
+#
+# Logs all execution events (start,finish,delete)
+#
+log4j.appender.execevents=org.apache.log4j.DailyRollingFileAppender
+log4j.appender.execevents.file=${rundeck.log.dir}/rundeck.executions.log
+log4j.appender.execevents.append=true
+log4j.appender.execevents.layout=org.apache.log4j.PatternLayout
+log4j.appender.execevents.layout.ConversionPattern=${logger.execevents.format}
 
 #
 # api request log

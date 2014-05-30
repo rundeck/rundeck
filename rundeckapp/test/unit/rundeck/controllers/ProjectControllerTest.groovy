@@ -76,14 +76,15 @@ class ProjectControllerTest {
 
         response.format='json'
         controller.apiProjectList()
+        def base='http://localhost:8080/api/'+ApiRequestFilters.API_CURRENT_VERSION
         assert response.status == HttpServletResponse.SC_OK
         assert response.json.size()==2
         assert response.json[0].name=='testproject'
         assert response.json[0].description==''
-        assert response.json[0].url=='http://localhost:8080/api/11/project/testproject'
+        assert response.json[0].url==base+'/project/testproject'
         assert response.json[1].name=='testproject2'
         assert response.json[1].description==''
-        assert response.json[1].url=='http://localhost:8080/api/11/project/testproject2'
+        assert response.json[1].url==base+'/project/testproject2'
     }
     @Test
     void apiProjectList_unacceptableReceivesXml(){
@@ -975,7 +976,7 @@ class ProjectControllerTest {
 
     def mockProjectServiceForProjectDelete(boolean success, String errorMessage) {
         mockWith(ProjectService) {
-            deleteProject { proj, fwk ->
+            deleteProject { proj, fwk,authctx,user ->
                 return [success: success, error: errorMessage]
             }
         }

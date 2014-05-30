@@ -1,6 +1,3 @@
-<g:if test="${flash.message}">
-    <div class="message">${flash.message}</div>
-</g:if>
 <g:hasErrors bean="${scheduledExecution}">
     <div class="errors">
         <g:renderErrors bean="${scheduledExecution}" as="list"/>

@@ -134,7 +134,7 @@ class ProjectController extends ControllerBase{
         }
         def project1 = frameworkService.getFrameworkProject(project)
 
-        def result = projectService.deleteProject(project1, framework)
+        def result = projectService.deleteProject(project1, framework,authContext,session.user)
         if (!result.success) {
             log.error("Failed to delete project: ${result.error}")
             flash.error = result.error
@@ -434,7 +434,7 @@ class ProjectController extends ControllerBase{
         }
         def project1 = frameworkService.getFrameworkProject(project)
 
-        def result = projectService.deleteProject(project1, framework)
+        def result = projectService.deleteProject(project1, framework, authContext, session.user)
         if (!result.success) {
             return apiService.renderErrorFormat(response,
                     [

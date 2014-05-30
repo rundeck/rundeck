@@ -60,3 +60,17 @@ If configured, an RSS icon provides a link to an RSS view of the events that mat
 the current filtering criteria.
 
 ![RSS link](../figures/fig0214.png)
+
+### Bulk Delete Executions
+
+If you have access, you can click the "Bulk Delete" button to enable bulk-edit mode.  
+
+![Activity page bulk delete](../figures/fig08-activity-bulk-delete.png)
+
+Select the Executions you want to delete by clicking on them.  You can also click on the "Toggle all", "Select All" or "Select None" links to change the selection.  
+
+![Activity page bulk edit mode](../figures/fig08-activity-bulk-edit-mode.png)
+
+Click the "Delete Selected Executions", and confirm to delete the executions.
+
+![Activity page bulk delete confirm](../figures/fig08-activity-bulk-delete-confirm.png)

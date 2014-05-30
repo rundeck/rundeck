@@ -1,5 +1,8 @@
 package rundeck.services
 
+import grails.converters.JSON
+import grails.util.GrailsWebUtil
+import grails.web.JSONBuilder
 import groovy.xml.MarkupBuilder
 import org.apache.commons.lang.RandomStringUtils
 import org.codehaus.groovy.grails.web.converters.exceptions.ConverterException
@@ -164,6 +167,17 @@ class ApiService {
             }
         }
     }
+    /**
+     * Render JSON to the response, using a builder with the closure
+     * @param response
+     * @param recall
+     */
+    def renderSuccessJson(HttpServletResponse response,Closure recall){
+        response.contentType=GrailsWebUtil.getContentType(JSON_CONTENT_TYPE, null)
+        JSONBuilder builder = new JSONBuilder();
+        JSON json = builder.build(recall);
+        json.render(response);
+    }
 
     /**
      * Return the final portion of the request URI with the stripped extension restored
@@ -294,11 +308,10 @@ class ApiService {
             }
             response.outputStream<< renderErrorText(err)
         }]
-        def respFormat = error.format && resp[error.format] ?
-            error.format :
-            response.format && resp[response.format] ?
-                response.format :
-                'xml'
+        def eformat = error.format
+        def rformat = response.format
+        def respFormat = eformat && resp[eformat] ? eformat :
+            rformat && resp[rformat] ? rformat : 'xml'
         return resp[respFormat](response,error)
     }
     def renderErrorXml(HttpServletResponse response, Map error){
@@ -387,7 +400,7 @@ class ApiService {
      */
     def requireExists(HttpServletResponse response, Object item, List args) {
         if (!item) {
-            renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
+            renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist', args: args])
             return false
         }
@@ -403,7 +416,7 @@ class ApiService {
      */
     def requireVersion(request, HttpServletResponse response, int min, int max = 0){
         if (request.api_version < min) {
-            renderErrorXml(response,[
+            renderErrorFormat(response,[
                     status:HttpServletResponse.SC_BAD_REQUEST,
                     code:'api.error.api-version.unsupported',
                     args: [request.api_version, request.forwardURI, "Minimum supported version: " + min]
@@ -411,7 +424,7 @@ class ApiService {
             return false
         }
         if (max > 0 && request.api_version > max) {
-            renderErrorXml(response, [
+            renderErrorFormat(response, [
                     status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.api-version.unsupported',
                     args: [request.api_version, request.forwardURI, "Maximum supported version: " + max]

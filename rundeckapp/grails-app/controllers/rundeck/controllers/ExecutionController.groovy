@@ -9,6 +9,7 @@ import com.dtolabs.rundeck.core.logging.ReverseSeekingStreamingLogReader
 import com.dtolabs.rundeck.core.logging.StreamingLogReader
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import org.codehaus.groovy.grails.web.json.JSONArray
 import rundeck.Execution
 import rundeck.PluginStep
 import rundeck.ScheduledExecution
@@ -39,6 +40,11 @@ class ExecutionController extends ControllerBase{
     ApiService apiService
     WorkflowService workflowService
 
+    static allowedMethods = [
+            delete:['POST','DELETE'],
+            apiExecutionDelete: ['DELETE'],
+            apiExecutionDeleteBulk: ['POST'],
+    ]
 
     def index ={
         redirect(controller:'menu',action:'index')
@@ -116,6 +122,55 @@ class ExecutionController extends ControllerBase{
         return [scheduledExecution: e.scheduledExecution?:null,execution:e, filesize:filesize,
                 nextExecution: e.scheduledExecution?.scheduled ? scheduledExecutionService.nextExecutionTime(e.scheduledExecution) : null,
                 enext: enext, eprev: eprev,stepPluginDescriptions: pluginDescs, ]
+    }
+    def delete = {
+        def Execution e = Execution.get(params.id)
+        if (notFoundResponse(e, 'Execution ID', params.id)) {
+            return
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        if (unauthorizedResponse(frameworkService.authorizeApplicationResourceAny(authContext,
+                frameworkService.authResourceForProject(e.project),
+                [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN]),
+                AuthConstants.ACTION_DELETE_EXECUTION,'Project',e.project)) {
+            return
+        }
+        params.project = e.project
+        def jobid=e.scheduledExecution?.extid
+        def result=executionService.deleteExecution(e,authContext,session.user)
+        if(!result.success){
+            flash.error=result.error
+            return redirect(controller: 'execution', action: 'show', id: params.id, params: [project: params.project])
+        }else{
+            flash.message="Deleted execution ID: ${params.id}"
+        }
+        if(jobid){
+            return redirect(controller: 'scheduledExecution',action: 'show',id:jobid,
+                    params:[project:params.project])
+        }else{
+            return redirect(controller: 'reports', action: 'index', params: [project: params.project])
+        }
+
+    }
+
+    def bulkDelete(){
+        def ids
+        if(params.bulk_edit){
+            ids=[params.bulk_edit].flatten()
+        }else if(params.ids){
+            ids = [params.ids].flatten()
+        }else{
+            flash.error="Some IDS are required for bulk delete"
+            return redirect(action: 'index',controller: 'reports',params: [project:params.project])
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        def result=executionService.deleteBulkExecutionIds(ids,authContext,session.user)
+        if(!result.success){
+            flash.error=result.failures*.message.join(", ")
+        }
+        flash.message="${result.successTotal} Executions deleted"
+        return redirect(action: 'index', controller: 'reports', params: [project: params.project])
     }
     def ajaxExecState={
         def Execution e = Execution.get(params.id)
@@ -1112,6 +1167,111 @@ class ExecutionController extends ControllerBase{
             }
         }
     }
+    /**
+     * DELETE /api/12/execution/[ID]
+     * @return
+     */
+    def apiExecutionDelete (){
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V12)) {
+            return
+        }
+        def Execution e = Execution.get(params.id)
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'])
+        if (!e) {
+            return apiService.renderErrorFormat(response,
+                    [
+                            status: HttpServletResponse.SC_NOT_FOUND,
+                            code: "api.error.item.doesnotexist",
+                            args: ['Execution ID', params.id],
+                            format: respFormat
+                    ])
+        }
+        if (
+                !frameworkService.authorizeApplicationResourceAny(
+                        authContext,
+                        frameworkService.authResourceForProject(e.project),
+                        [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN]
+                )
+        ) {
+            return apiService.renderErrorFormat(response,
+                    [
+                            status: HttpServletResponse.SC_FORBIDDEN,
+                            code: "api.error.item.unauthorized",
+                            args: [AuthConstants.ACTION_DELETE_EXECUTION, "Project", e.project],
+                            format: respFormat
+                    ])
+        }
+        def result = executionService.deleteExecution(e, authContext,session.user)
+        if(!result.success){
+            log.error("Failed to delete execution: ${result.message}")
+            return apiService.renderErrorFormat(response,
+                    [
+                            status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                            code: "api.error.exec.delete.failed",
+                            args: [params.id, result.message],
+                            format: respFormat
+                    ])
+        }
+        return render(status: HttpServletResponse.SC_NO_CONTENT)
+    }
+
+    /**
+     * Delete bulk
+     * @return
+     */
+    def apiExecutionDeleteBulk() {
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V12)) {
+            return
+        }
+        log.debug("executionController: apiExecutionDeleteBulk : params: " + params)
+        def ids=[]
+        if(request.format in ['json','xml']){
+            def errormsg = "Format was not valid."
+            def parsed =apiService.parseJsonXmlWith(request,response,[
+                    json: { data ->
+                        if(data instanceof List) {
+                            ids = data
+                        }else{
+                            ids = data.ids
+                        }
+                        if (!ids) {
+                            errormsg += " json: expected list of strings, or object with 'ids' property"
+                        }
+                    },
+                    xml: { xml ->
+                        def executions= xml.execution
+                        ids = executions?executions.collect{it.'@id'.text()}:null
+                        if (!ids) {
+                            errormsg += " xml: expected 'executions/execution/@id' attributes"
+                        }
+                    }
+            ])
+            if(!parsed){
+                return
+            }
+            if(!ids){
+                return apiService.renderErrorFormat(response, [
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code: 'api.error.invalid.request',
+                        args: [errormsg]
+                ])
+            }
+        }else if (!apiService.requireParameters(params, response, ['ids'])) {
+            return
+        }else{
+            //params
+            ids = params.ids
+            if (ids instanceof String) {
+                ids = params.ids.split(',') as List
+            }
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        def result=executionService.deleteBulkExecutionIds([ids].flatten(), authContext, session.user)
+        executionService.renderBulkExecutionDeleteResult(request,response,result)
+    }
+
 
     /**
      * API: /api/executions query interface, version 5

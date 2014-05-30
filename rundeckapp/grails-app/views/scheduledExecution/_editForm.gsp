@@ -11,23 +11,33 @@
                         <h4 class="modal-title" id="deletejobtitle">Delete <g:message code="domain.ScheduledExecution.title"/></h4>
                     </div>
 
+                    <g:form controller="scheduledExecution" action="delete" method="post" class="form form-horizontal">
                     <div class="modal-body">
                         <g:render template="/scheduledExecution/showHead"
                                   model="${[scheduledExecution: scheduledExecution, runPage: true]}"/>
                         <p class=" ">Really delete this <g:message
                                 code="domain.ScheduledExecution.title"/>?</p>
+                        <auth:resourceAllowed type="project" name="${scheduledExecution.project}"
+                                                context="application"
+                                              action="${[AuthConstants.ACTION_DELETE_EXECUTION,AuthConstants.ACTION_ADMIN]}"
+                                              any="true">
+
+                            <label>
+                                <input type="checkbox" name="deleteExecutions" value="true"/>
+                                Delete all executions of this Job
+                            </label>
+                        </auth:resourceAllowed>
                     </div>
 
                     <div class="modal-footer">
-                        <g:form controller="scheduledExecution" action="delete" method="post">
                             <g:hiddenField name="id" value="${scheduledExecution.extid}"/>
                             <button type="submit" class="btn btn-default btn-sm "
                                     data-dismiss="modal">
                                 Cancel
                             </button>
                             <input type="submit" value="Delete" class="btn btn-danger btn-sm"/>
-                        </g:form>
                     </div>
+                    </g:form>
                 </div>
             </div>
         </div>
@@ -64,7 +74,7 @@
 
                         <a data-toggle="modal"
                            href="#jobdelete"
-                                class="textbtn textbtn-danger pull-right"
+                                class="btn btn-danger btn-link pull-right"
                               title="Delete ${g.message(code: 'domain.ScheduledExecution.title')}">
                             <b class="glyphicon glyphicon-remove-circle"></b>
                             Delete this Job

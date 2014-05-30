@@ -16,8 +16,8 @@ use is indicated by the URL used, e.g.:
     /api/1/projects
 
 This means you must use at least the API version indicated to access the
-endpoint, unless otherwise noted. Some features or functionality for the 
-endpoint may only be supported in later versions. 
+endpoint, unless otherwise noted. Some features or functionality for the
+endpoint may only be supported in later versions.
 
 The API Version Number is required to be included in all API calls within the URL.
 
@@ -37,6 +37,20 @@ If the version number is not included or if the requested version number is unsu
 
 Changes introduced by API Version number:
 
+**Version 12**:
+
+* New endpoints
+    - `POST /api/12/executions/delete`
+        - [Bulk delete executions](#bulk-delete-executions)
+* Updated endpoints
+    - `DELETE /api/12/execution/[ID]`
+        - [Delete an execution](#delete-an-execution)
+    - `DELETE /api/12/job/[ID]/executions`
+        - [Delete all executions for a job](#delete-all-executions-for-a-job)
+    - `POST /api/12/job/[ID]/executions`
+        - [Run a Job](#running-a-job)
+
+
 **Version 11**:
 
 **Update**: The URL path for Token access was corrected.
@@ -51,10 +65,10 @@ In this version, all new and updated endpoints support XML or JSON request and r
 
 [Response Format]: #response-format
 
-Endpoints:
-    
+**Version 11**:
+
 * New endpoints
-    - `/api/11/project/[NAME]/config` 
+    - `/api/11/project/[NAME]/config`
         - PUT and GET for [Project Configuration](#project-configuration)
     - `/api/11/project/[NAME]/config/[KEY]`
         + PUT, GET, DELETE for [Project Configuration Keys](#project-configuration-keys)
@@ -97,16 +111,16 @@ Endpoints:
 
 **Version 9**:
 
-* Updated endpoints 
+* Updated endpoints
     * `/api/9/executions/running` - [Listing Running Executions](#listing-running-executions)
         * Allow `project=*` to list running executions across all projects
         * Result data now includes `project` attribute for each `<execution>`.
     * `/api/9/jobs/import` - [Importing Jobs](#importing-jobs)
         * Add `uuidOption` parameter to allow removing imported UUIDs to avoid creation conflicts.
-        
+
 **Version 8**:
 
-* Updated endpoints 
+* Updated endpoints
     * `/api/8/run/script` and `/api/8/run/url` -  [Running Adhoc Scripts](#running-adhoc-scripts) and [Running Adhoc Script URLs](#running-adhoc-script-urls)
         * Added two optional parameters for `scriptInterpreter` and `interpreterArgsQuoted`
     * `/api/8/jobs/import` -  [Importing Jobs](#importing-jobs)
@@ -123,7 +137,7 @@ Endpoints:
 
 **Version 6**:
 
-* Updated endpoints 
+* Updated endpoints
     * `/api/6/execution/[ID]/output` - [Execution Output](#execution-output)
         * XML format has changed for API v6: entry log content is now specified as a `log` attribute value
         * The old XML format will still be used for queries using `/api/5`
@@ -149,7 +163,7 @@ Added in Rundeck 1.4.6, 1.5.1:
     * `/api/5/execution/[ID]/output` - [Execution Output](#execution-output)
 * New endpoint
     * `/api/5/executions` - [Execution Query](#execution-query)
-* Updated endpoints 
+* Updated endpoints
     * `/api/1/history` - [Listing History](#listing-history)
         * new filter parameters added for including or excluding reports for exact job group/name values: `jobListFilter` and `excludeJobListFilter`
 
@@ -160,7 +174,7 @@ Added in Rundeck 1.4.6, 1.5.1:
 
 **Version 3**:
 
-* Updated endpoints 
+* Updated endpoints
     * `/api/1/resources` - [Listing Resources](#listing-resources)
         * `format` parameter can now use any supported Resource Format Parser format name.
     * `/api/2/project/[NAME]/resources` - [Updating and Listing Resources for a Project](#updating-and-listing-resources-for-a-project)
@@ -222,7 +236,7 @@ OR
 
 * HTTP URL Parameter `authtoken` set to the API Token string
 
-With that in place, you can make calls to the API as described in the rest of this 
+With that in place, you can make calls to the API as described in the rest of this
 document, and you don't need to maintain any cookies between requests.
 
 Examples:
@@ -247,7 +261,7 @@ This means that you must submit authentication parameters (username, password) t
 The Session Cookie must be sent with all calls to the API to maintain the authenticated connection.
 
 To submit authentication, submit a `POST` request to the URL:
-    
+
     $RUNDECK_SERVER_URL/j_security_check
 
 With these parameters:
@@ -275,13 +289,13 @@ For version 10 and earlier API requests, XML responses will have this document s
         <message><!-- error message text --></message>
         <!-- ... multiple message elements -->
     </error>
-    
+
     <!-- optional success element if declared for the endpoint -->
     <success>
         <message><!-- success message --></message>
     </success>
-    
-    <!-- 
+
+    <!--
         Specific API results..
     -->
 </result>
@@ -292,7 +306,7 @@ If an error occurred, then the `error` attribute of the `<result>` element will 
 Some `<error>` responses will include a `code` attribute giving a specific type
 of error code, in addition to the message.
 
-The `apiversion` attribute will be set to the latest version of the API 
+The `apiversion` attribute will be set to the latest version of the API
 supported by the server.
 
 ### Error codes ###
@@ -337,7 +351,7 @@ Request:
     GET /api/11/tokens
     GET /api/11/tokens/[USER]
 
-Result: 
+Result:
 
 `application/xml`:
 
@@ -673,7 +687,7 @@ Result:  An Item List of `jobs`. Each `job` is of the form:
     <project>Project Name</project>
     <description>...</description>
 </job>
-~~~~~~~~~~ 
+~~~~~~~~~~
 
 Note: If neither `groupPath` nor `groupPathExact` are specified, then the default `groupPath` value of "*" will be used (matching jobs in all groups).  `groupPathExact` cannot be combined with `groupPath`.  You can set either one to "-" to match only the top-level jobs which are not within a group.
 
@@ -682,8 +696,9 @@ Note: If neither `groupPath` nor `groupPathExact` are specified, then the defaul
 Run a job specified by ID.
 
 URL:
-    
-    /api/1/job/[ID]/run
+
+    GET /api/1/job/[ID]/run
+    POST /api/12/job/[ID]/executions
 
 Optional parameters:
 
@@ -738,7 +753,7 @@ Expected Content-Type: `application/x-www-form-urlencoded` (**since 1.3**) or `m
 
 Required Content:
 
-* `xmlBatch`: Either a `x-www-form-urlencoded` request parameter containing the input content (**since 1.3**), or a `multipart/form-data` multipart MIME request part containing the content. 
+* `xmlBatch`: Either a `x-www-form-urlencoded` request parameter containing the input content (**since 1.3**), or a `multipart/form-data` multipart MIME request part containing the content.
 
 Optional parameters:
 
@@ -751,7 +766,7 @@ Optional parameters:
 
 Result:
 
-A set of status results.  Each imported job definition will be either "succeeded", "failed" or "skipped".  These status sections contain a `count` attribute declaring how many jobs they contain.  Within each one there will be 0 or more `job` elements. 
+A set of status results.  Each imported job definition will be either "succeeded", "failed" or "skipped".  These status sections contain a `count` attribute declaring how many jobs they contain.  Within each one there will be 0 or more `job` elements.
 
 ~~~~~~~~~~ {.xml}
     <succeeded count="x">
@@ -763,7 +778,7 @@ A set of status results.  Each imported job definition will be either "succeeded
     <skipped count="x">
         <!-- job elements -->
     </skipped>
-~~~~~~~~~~ 
+~~~~~~~~~~
 
 Each Job element will be of the form:
 
@@ -775,7 +790,7 @@ Each Job element will be of the form:
     <group>job group</group>
     <project>job project</project>
     <!--if within the failed section, then an error section will be included -->
-    <error>Error message</error> 
+    <error>Error message</error>
 </job>
 ~~~~~~~~~~~~~~
 
@@ -899,6 +914,17 @@ Optional Query Parameters:
 
 Result: an Item List of `executions`.  See [Listing Running Executions](#listing-running-executions).
 
+
+### Delete all Executions for a Job
+
+Delete all executions for a Job.
+
+Request:
+
+    DELETE /api/12/job/[ID]/executions
+
+Result: The same format as [Bulk Delete Executions](#bulk-delete-executions).
+
 ### Listing Running Executions
 
 List the currently running executions for a project
@@ -917,7 +943,7 @@ Result: An Item List of `executions`.  Each `execution` of the form:
 <execution id="[ID]" href="[url]" status="[status]" project="[project]">
     <user>[user]</user>
     <date-started unixtime="[unixtime]">[datetime]</date-started>
-    
+
     <!-- optional job context if the execution is associated with a job -->
     <job id="jobID" averageDuration="[milliseconds]">
         <name>..</name>
@@ -928,18 +954,18 @@ Result: An Item List of `executions`.  Each `execution` of the form:
             <option name="optname" value="optvalue"/>...
         </options>
     </job>
-    
+
     <!-- description of the execution -->
     <description>...</description>
 
     <!-- argString (arguments) of the execution -->
     <argstring>...</argstring>
-           
+
     <!-- The following elements included only if the execution has ended -->
 
     <!-- the completion time of the execution -->
-    <date-ended unixtime="[unixtime]">[datetime]</date-ended> 
-    
+    <date-ended unixtime="[unixtime]">[datetime]</date-ended>
+
     <!-- if the execution was aborted, the username who aborted it: -->
     <abortedby>[username]</abortedby>
 
@@ -954,7 +980,7 @@ Result: An Item List of `executions`.  Each `execution` of the form:
         <node name="node3"/>
         <node name="node4"/>
     </failedNodes>
-    
+
 </execution>
 ~~~~~~~~~~
 
@@ -987,11 +1013,107 @@ The `job` section contains `options` if an `argstring` value is set (**API v10 a
 
 Get the status for an execution by ID.
 
-URL:
+Request:
 
-    /api/1/execution/[ID]
+    GET /api/1/execution/[ID]
 
 Result: an Item List of `executions` with a single item. See [Listing Running Executions](#listing-running-executions).
+
+### Delete an Execution
+
+Delete an execution by ID.
+
+Request:
+
+    DELETE /api/12/execution/[ID]
+
+Result: `204 No Content`
+
+*Authorization requirement*:
+
+* Requires the `delete_execution` action allowed for a `project` in the `application` context. See: [Administration - Access Control Policy - Application Scope Resources and Actions](../administration/access-control-policy.html#application-scope-resources-and-actions)
+
+### Bulk Delete Executions
+
+Delete a set of Executions by their IDs.
+
+Request:
+
+    POST /api/12/executions/delete
+
+The IDs can be specified in two ways:
+
+1. Using a URL parameter `ids`, as a comma separated list, with no body content
+
+        POST /api/12/executions/delete?ids=1,2,17
+        Content-Length: 0
+
+2. Using a request body of either XML or JSON data.
+
+If using a request body, the formats are specified below:
+
+**Content-Type: application/json**
+
+    {"ids": [ 1, 2, 17 ] }
+
+*OR* more simply:
+
+    [ 1, 2, 17 ]
+
+**Content-Type: application/xml**
+
+    <executions>
+        <execution id="1"/>
+        <execution id="2"/>
+        <execution id="17"/>
+    </executions>
+
+Response:
+
+The response format will be either `xml` or `json`, depending on the `Accept` header.
+
+**Content-Type: application/json**
+
+    {
+      "failures": [
+        {
+          "id": "82",
+          "message": "Not found: 82"
+        },
+        {
+          "id": "83",
+          "message": "Not found: 83"
+        },
+        {
+          "id": "84",
+          "message": "Not found: 84"
+        }
+      ],
+      "failedCount": 3,
+      "successCount": 2,
+      "allsuccessful": false,
+      "requestCount": 5
+    }
+
+The JSON fields will be:
+
+* `failures`: a list of objects indicating the `id` and `message` for the failed deletion attempt
+* `failedCount`: number of deletion attempts that failed
+* `successCount`: number of deletion attempts that succeeded
+* `allsuccessful`: true if all deletions were successful
+* `requestCount`: number of requested execution deletions
+
+**Content-Type: application/xml**
+
+    <deleteExecutions requestCount='4' allsuccessful='false'>
+      <successful count='0' />
+      <failed count='4'>
+        <execution id='131' message='Unauthorized: Delete execution 131' />
+        <execution id='109' message='Not found: 109' />
+        <execution id='81' message='Not found: 81' />
+        <execution id='74' message='Not found: 74' />
+      </failed>
+    </deleteExecutions>
 
 ### Execution Query
 
@@ -1149,7 +1271,7 @@ In XML:
   </steps>
 </node>
 <!-- more node elements -->
-~~~~~~~~~~ 
+~~~~~~~~~~
 
 In JSON: an object where each key is a node name, and the value is an array of State indicators.  A state indicator is an object with two keys, `stepctx` and `executionState`
 
@@ -1166,7 +1288,7 @@ In JSON: an object where each key is a node name, and the value is an array of S
       }
     ]
 }
-~~~~~~~~~~ 
+~~~~~~~~~~
 
 **Step State List**
 
@@ -1190,7 +1312,7 @@ A list of Step State information.  Each step is identified by its number in the 
 A sequence of state details for a set of Nodes for the containing step. Each entry will contain:
 
 * `name` the node name
-* state information for the Node 
+* state information for the Node
     - `startTime` execution start time
     - `endTime` execution end time if complete
     - `updateTime` last update time
@@ -1206,7 +1328,7 @@ In XML:
       <executionState>SUCCEEDED</executionState>
     </nodeState>
     <!-- more nodeState elements -->
-~~~~~~~~~~ 
+~~~~~~~~~~
 
 In JSON: an object with node names as keys.  Values are objects containing the state information entries.
 
@@ -1219,7 +1341,7 @@ In JSON: an object with node names as keys.  Values are objects containing the s
               "startTime": "2014-01-13T20:38:25Z"
             }
           }
-~~~~~~~~~~ 
+~~~~~~~~~~
 
 **Full XML Example**
 
@@ -1412,7 +1534,7 @@ Within the `<result>` element:
         }
       ]
     }
-~~~~~~~~~~ 
+~~~~~~~~~~
 
 **Timestamp format:**
 
@@ -1504,13 +1626,13 @@ When using a URL format, use one of these values for the format:
 * `xml`
 * `text`
 
-To use a URL parameter, add a `?format=` parameter to your request. 
+To use a URL parameter, add a `?format=` parameter to your request.
 
 E.g.:
 
     GET /api/5/execution/3/output?format=json
 
-To use a URL extension, add a ".[format]" to the end of the URL, but prior to any URL parameters. 
+To use a URL extension, add a ".[format]" to the end of the URL, but prior to any URL parameters.
 
 E.g.:
 
@@ -1632,7 +1754,7 @@ Result:  The result will contain a `success/message` element will contain a desc
     <abort status="[abort-state]">
         <execution id="[id]" status="[status]"/>
     </abort>
-~~~~~~~~~~ 
+~~~~~~~~~~
 
 The `[abort-state]` will be one of: "pending", "failed", or "aborted".
 
@@ -1754,12 +1876,12 @@ Upload and manage public and private key files. For more information see the [Ad
 
 Keys are stored via Rundeck's *Storage* facility.  This is a path-based interface to manage files.  The underlying storage may be on disk or in a database.
 
-The Storage facility manages "resources", which may be files or directories.  File resources can have metadata associated with them (such as MIME content type). 
+The Storage facility manages "resources", which may be files or directories.  File resources can have metadata associated with them (such as MIME content type).
 
 Note: Private Keys can be uploaded but not retrieved directly with this API.  They can only be used internally by Rundeck.
 
 URL:
-    
+
     /api/11/storage/keys/[PATH]/[FILE]
 
 #### Upload Keys ####
@@ -2024,7 +2146,7 @@ Result:  An Item List of `projects` with one `project`.  XML or JSON is determin
     <description>...</description>
     <!-- additional items -->
 </project>
-~~~~~~~~~~ 
+~~~~~~~~~~
 
 If the project defines a Resource Model Provider URL, then the additional items are:
 
@@ -2046,7 +2168,7 @@ Updated in version 11:
     <description>...</description>
     <!-- additional items -->
 </project>
-~~~~~~~~~~ 
+~~~~~~~~~~
 
 `Content-Type: application/json` *since version 11*
 ~~~~~~~~~~ {.json}
@@ -2084,7 +2206,7 @@ Retrieve or modify the project configuration data.  Requires `configure` authori
 
 #### GET Project Configuration ####
 
-`GET /api/11/project/[NAME]/config` 
+`GET /api/11/project/[NAME]/config`
 
 Response, based on `Accept` header:
 
@@ -2234,7 +2356,7 @@ Response will indicate whether the imported contents had any errors:
 
 `application/json`
 
-~~~ {.json}        
+~~~ {.json}
 {"import_status":"successful"}
 ~~~
 
@@ -2253,7 +2375,7 @@ Response will indicate whether the imported contents had any errors:
 
 `application/json`
 
-~~~ {.json}        
+~~~ {.json}
 {
     "import_status":"failed",
     "errors": [
@@ -2278,7 +2400,7 @@ Method: POST, GET
 
 POSTing to this URL will set the resources for the project to the content of the request.
 
-Expected POST Content: For API version 2: either `text/xml` or `text/yaml` Content-Type containing the 
+Expected POST Content: For API version 2: either `text/xml` or `text/yaml` Content-Type containing the
 Resource Model definition in [resource-xml](../man5/resource-xml.html) or [resource-yaml](../man5/resource-yaml.html) formats as the request body. (Note: any MIME type ending with '/yaml' or '/x-yaml' or '/xml' will be accepted).
 
 **Since API version 3**: You can also POST data using a content type supported by a Resource Format Parser plugin.  This requires using API version `3`.
@@ -2289,11 +2411,11 @@ Example POST request:
 
     POST /api/2/project/test/resources
     Content-Type: text/yaml
-    
+
     node1:
       hostname: node1
       username: bob
-    
+
     node2:
       hostname: node2
       username: bob
@@ -2301,7 +2423,7 @@ Example POST request:
 Result:
 
     200 OK
-    
+
     <result success="true">
         <success>
             <message>Resources were successfully updated for project test</message>
@@ -2313,7 +2435,7 @@ Result:
 Optional GET Parameters:
 
 * `format` : Result format.  One of "xml" or "yaml". Default is "xml".
-*  Query 
+*  Query
 parameters can also be used. This is an alternate interface to [Listing Resources](#listing-resources).
 
 GET Result: Depending on the `format` parameter, a value of "xml" will return [resource-xml](../man5/resource-xml.html) and "yaml" will return [resource-yaml](../man5/resource-yaml.html) formatted results.
@@ -2326,7 +2448,7 @@ Response:
 
     200 OK
     Content-Type: text/xml
-    
+
     <project>
         <node name="node1" hostname="node1" username="bob" />
         <node name="node2" hostname="node2" username="bob" />
@@ -2348,7 +2470,7 @@ Optional Parameters:
 
 `providerURL`
 
-:   Specify the Resource Model Provider URL to refresh the resources from.  If 
+:   Specify the Resource Model Provider URL to refresh the resources from.  If
     not specified then the configured provider URL in the `project.properties`
     file will be used.
 
@@ -2428,7 +2550,7 @@ Result:  an Item List of `events`.  Each `event` has this form:
   <!-- if associated with a Job, include the Job ID: -->
   <job id="[jobid]"/>
 </event>
-~~~~~~~~~~ 
+~~~~~~~~~~
 
 The `events` element will also have `max`, `offset`, and `total` attributes, to indicate the state of paged results.  E.G:
 
@@ -2499,10 +2621,10 @@ The difference between these results is apparent when you have resources which a
 
 Using set logic, if "A" is the set of all resources, "X" is the set of all resources matching the exclusion filters, and "I" is the set of all resources matching the inclusion filters, then:
 
-* when `exclude-precedence=true` then the result is: 
+* when `exclude-precedence=true` then the result is:
     * $( A - X ) \cap I$
     * which is also $I - X$
-* when `exclude-precedence=false` then the result is: 
+* when `exclude-precedence=false` then the result is:
     * $( A - X ) \cup I$
 
 ### Getting Resource Info
@@ -2551,7 +2673,7 @@ One of the following:
 
         { server: { uuid: "[UUID]" } }
 
-Result: 
+Result:
 
 If request was XML, then Standard API response containing the following additional elements:
 
@@ -2589,7 +2711,7 @@ Example XML Response:
     </jobs>
   </takeoverSchedule>
 </result>
-~~~~~~~~~~ 
+~~~~~~~~~~
 
 If request was JSON, then the following JSON:
 
@@ -2623,5 +2745,4 @@ If request was JSON, then the following JSON:
       "apiversion": 7,
       "success": true
     }
-~~~~~~~~~~ 
-
+~~~~~~~~~~

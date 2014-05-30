@@ -9,7 +9,9 @@ class UrlMappings {
         /*******
         * API url paths, v1
         */
-        "/api/$api_version/execution/$id"(controller: 'execution', action: 'apiExecution')
+        "/api/$api_version/execution/$id"(controller: 'execution'){
+            action=[GET:'apiExecution',DELETE: 'apiExecutionDelete']
+        }
         "/api/$api_version/execution/$id/state"(controller: 'execution', action: 'apiExecutionState')
         "/api/$api_version/execution/$id/abort"(controller: 'execution', action: 'apiExecutionAbort')
         /** v5 */
@@ -21,13 +23,16 @@ class UrlMappings {
         "/api/$api_version/execution/$id/output/step/$stepctx**?"(controller: 'execution', action: 'apiExecutionOutput')
 
         "/api/$api_version/executions/running"(controller: 'menu', action: 'apiExecutionsRunning')
+        "/api/$api_version/executions/delete"(controller: 'execution', action: 'apiExecutionDeleteBulk')
         "/api/$api_version/executions"(controller: 'execution', action: 'apiExecutionsQuery')
         "/api/$api_version/history"(controller: 'reports', action: 'apiHistory')
         "/api/$api_version/job/$id"(controller: 'scheduledExecution') {
             action = [GET: 'apiJobExport', DELETE: 'apiJobDelete', PUT: 'apiJobUpdateSingle', POST: 'apiJobCreateSingle']
         }
         "/api/$api_version/job/$id/run"(controller: 'scheduledExecution', action: 'apiJobRun')
-        "/api/$api_version/job/$id/executions"(controller: 'scheduledExecution', action: 'apiJobExecutions')
+        "/api/$api_version/job/$id/executions"(controller: 'scheduledExecution') {
+            action = [GET: 'apiJobExecutions', DELETE: 'apiJobExecutionsDelete', POST: 'apiJobRun']
+        }
         "/api/$api_version/jobs"(controller: 'menu', action: 'apiJobsList')
         "/api/$api_version/jobs/export"(controller: 'menu', action: 'apiJobsExport')
         "/api/$api_version/jobs/import"(controller: 'scheduledExecution', action: 'apiJobsImport')
