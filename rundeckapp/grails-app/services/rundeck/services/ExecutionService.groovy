@@ -1306,7 +1306,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             return [success:false,error: exc.code?:'failed', message: msg, options:extra.option]
         }
     }
-    Execution int_createExecution(ScheduledExecution se,framework,user,extra){
+    Execution int_createExecution(ScheduledExecution se,user,extra){
         def props = [:]
 
         se = ScheduledExecution.get(se.id)
@@ -1380,10 +1380,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 if (found) {
                     throw new ExecutionServiceException('Job "' + se.jobName + '" [' + se.extid + '] is currently being executed (execution [' + found.id + '])','conflict')
                 }
-                return int_createExecution(se,framework,user,extra)
+                return int_createExecution(se,user,extra)
             }
         }else{
-            return int_createExecution(se,framework,user,extra)
+            return int_createExecution(se,user,extra)
         }
     }
 
