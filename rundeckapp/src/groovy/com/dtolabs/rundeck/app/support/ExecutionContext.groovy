@@ -10,11 +10,13 @@ abstract class ExecutionContext extends BaseNodeFilters{
     String user
     String loglevel="WARN"
     String serverNodeUUID
+    String timeout
 
     static mapping = {
         user column: "rduser"
         argString type:'text'
         serverNodeUUID type:'text'
+        timeout type:'text'
     }
     Boolean nodeKeepgoing=false
     Boolean doNodedispatch=false

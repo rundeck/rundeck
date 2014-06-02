@@ -84,6 +84,7 @@ class ScheduledExecution extends ExecutionContext {
                 return false
             }
         })
+        timeout(maxSize: 256, blank: true, nullable: true,)
         crontabString(bindable: true,nullable: true)
     }
 

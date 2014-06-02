@@ -58,6 +58,7 @@ class Execution extends ExecutionContext {
                 return false
             }
         })
+        timeout(maxSize: 256, blank: true, nullable: true,)
     }
 
     static mapping = {
@@ -135,6 +136,9 @@ class Execution extends ExecutionContext {
         map.cancelled=cancelled
         map.argString= argString
         map.loglevel= loglevel
+        if(timeout) {
+            map.timeout = timeout
+        }
         map.id= this.id
         map.doNodedispatch= this.doNodedispatch
         if(doNodedispatch){
@@ -170,6 +174,7 @@ class Execution extends ExecutionContext {
         exec.argString = data.argString
         exec.loglevel = data.loglevel
         exec.doNodedispatch = data.doNodedispatch
+        exec.timeout = data.timeout
         if (data.nodefilters) {
             exec.nodeThreadcount = XmlParserUtil.stringToInt(data.nodefilters.dispatch?.threadcount,1)
             if (data.nodefilters.dispatch?.containsKey('keepgoing')) {
