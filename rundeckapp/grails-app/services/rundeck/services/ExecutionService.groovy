@@ -1296,8 +1296,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def extraMap = selectSecureOptionInput(scheduledExecution, extra)
             def extraParamsExposed = selectSecureOptionInput(scheduledExecution, extra, true)
             def timeout=0
-            if(e.timeout){
-                timeout=evaluateTimeoutDuration(e.timeout)
+            if(e.timeout) {
+                HashMap optparams = removeSecureOptionEntries(scheduledExecution, parseJobOptionInput(extra,
+                        scheduledExecution))
+                def timeoutstr=e.timeout
+                if (optparams) {
+                    timeoutstr = DataContextUtils.replaceDataReferences(timeoutstr, DataContextUtils.addContext("option", optparams, null))
+                }
+                timeout = evaluateTimeoutDuration(timeoutstr)
             }
             def eid = scheduledExecutionService.scheduleTempJob(scheduledExecution, params.user, subject, e, timeout,
                     extraMap, extraParamsExposed) ;
@@ -1401,13 +1407,25 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @return
      */
     private HashMap validateJobInputOptions(Map props, ScheduledExecution scheduledExec) {
+        HashMap optparams = parseJobOptionInput(props, scheduledExec)
+        validateOptionValues(scheduledExec, optparams)
+        return optparams
+    }
+
+    /**
+     * Parse input "option.NAME" values, or a single "argString" value. Add default missing defaults for required
+     * options. return a key value map for option name and value.
+     * @param props
+     * @param scheduledExec
+     * @return
+     */
+    protected HashMap parseJobOptionInput(Map props, ScheduledExecution scheduledExec) {
         def optparams = filterOptParams(props)
         if (!optparams && props.argString) {
             optparams = FrameworkService.parseOptsFromString(props.argString)
         }
         optparams = addOptionDefaults(scheduledExec, optparams)
-        validateOptionValues(scheduledExec, optparams)
-        return optparams
+        optparams
     }
 
     /**
