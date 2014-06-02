@@ -632,7 +632,7 @@ class ScheduledExecutionControllerTests  {
                     workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
                     )
             assertNotNull exec.save()
-            eServiceControl.demand.createExecutionAndPrep {params, framework, user ->
+            eServiceControl.demand.createExecutionAndPrep {params, user ->
                 return exec
             }
         controller.executionService = eServiceControl.createMock()
@@ -710,7 +710,7 @@ class ScheduledExecutionControllerTests  {
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
                 )
         assertNotNull exec.save()
-        eServiceControl.demand.createExecutionAndPrep {params, framework, user ->
+        eServiceControl.demand.createExecutionAndPrep {params, user ->
             return exec
         }
         controller.executionService = eServiceControl.createMock()
@@ -782,7 +782,7 @@ class ScheduledExecutionControllerTests  {
                     workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
                     )
             assertNotNull exec.save()
-            eServiceControl.demand.createExecutionAndPrep {params, framework, user ->
+            eServiceControl.demand.createExecutionAndPrep { params, user ->
                 return exec
             }
             sec.executionService = eServiceControl.createMock()
@@ -1004,7 +1004,7 @@ class ScheduledExecutionControllerTests  {
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
         assertNotNull exec.save()
-        eServiceControl.demand.createExecutionAndPrep(1..1) { params, framework, user ->
+        eServiceControl.demand.createExecutionAndPrep { params, user ->
             assert 'testuser' == user
             exec
         }
@@ -1084,7 +1084,7 @@ class ScheduledExecutionControllerTests  {
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
         assertNotNull exec.save()
-        eServiceControl.demand.createExecutionAndPrep(1..1){ params, framework, user->
+        eServiceControl.demand.createExecutionAndPrep { params, user ->
             assert 'anonymous' == user
             exec
         }
@@ -1171,7 +1171,7 @@ class ScheduledExecutionControllerTests  {
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
         assertNotNull exec.save()
-        eServiceControl.demand.createExecutionAndPrep(1..1) { params, framework, user ->
+        eServiceControl.demand.createExecutionAndPrep { params, user ->
             assert 'anotheruser' == user
             exec
         }

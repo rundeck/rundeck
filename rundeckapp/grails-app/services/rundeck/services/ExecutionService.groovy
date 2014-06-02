@@ -1182,7 +1182,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
 
-   def Execution createExecution(Map params, Framework framework) {
+   def Execution createExecution(Map params) {
         def Execution execution
         if (params.project && params.workflow) {
             execution = new Execution(project:params.project,
@@ -1215,13 +1215,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     /**
      * creates an execution with the parameters, and evaluates dynamic buildstamp
      */
-    def Execution createExecutionAndPrep(Map params, Framework framework, String user) throws ExecutionServiceException{
+    def Execution createExecutionAndPrep(Map params, String user) throws ExecutionServiceException{
         def props =[:]
         props.putAll(params)
         if(!props.user){
             props.user=user
         }
-        def Execution execution = createExecution(props, framework)
+        def Execution execution = createExecution(props)
         execution.dateStarted = new Date()
 
         if(execution.argString =~ /\$\{DATE:(.*)\}/){
@@ -1310,7 +1310,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         //create duplicate workflow
         props.workflow = workflow
 
-        Execution execution = createExecution(props, framework)
+        Execution execution = createExecution(props)
         execution.dateStarted = new Date()
 
         if (execution.argString =~ /\$\{DATE:(.*)\}/) {
