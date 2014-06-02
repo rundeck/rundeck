@@ -98,7 +98,9 @@ class ExecutionJob implements InterruptableJob {
         def result
         try {
             if(!_interrupted){
-                result=executeCommand(initMap.executionService, initMap.executionUtilService,initMap.execution,initMap.framework,initMap.authContext,initMap.scheduledExecution, initMap.extraParams, initMap.extraParamsExposed)
+                result=executeCommand(initMap.executionService, initMap.executionUtilService,initMap.execution,
+                        initMap.framework,initMap.authContext,initMap.scheduledExecution, initMap.timeout?:0,
+                        initMap.extraParams, initMap.extraParamsExposed)
                 success=result.success
             }
         }catch(Throwable t){
@@ -161,6 +163,7 @@ class ExecutionJob implements InterruptableJob {
             }
             initMap.scheduledExecutionId=initMap.scheduledExecution.id
         }
+        initMap.timeout = jobDataMap.get('timeout')
         initMap.executionService = fetchExecutionService(jobDataMap)
         initMap.executionUtilService = fetchExecutionUtilService(jobDataMap)
         initMap.frameworkService = fetchFrameworkService(jobDataMap)
@@ -249,7 +252,7 @@ class ExecutionJob implements InterruptableJob {
 
     def executeCommand(ExecutionService executionService, ExecutionUtilService executionUtilService,
                        Execution execution, Framework framework, AuthContext authContext,
-                       ScheduledExecution scheduledExecution = null, Map extraParams = null,
+                       ScheduledExecution scheduledExecution = null, long timeout, Map extraParams = null,
                        Map extraParamsExposed = null) {
 
         def success = false
@@ -266,13 +269,18 @@ class ExecutionJob implements InterruptableJob {
             //failed to start
             return [success: false]
         }
-
+        def timeoutms=1000*timeout
+        long startTime=System.currentTimeMillis()
         int killcount = 0;
         while (execmap.thread.isAlive()) {
             try {
                 execmap.thread.join(1000)
             } catch (InterruptedException e) {
                 //do nada
+            }
+            if (timeoutms > 0 && (System.currentTimeMillis() - startTime) > timeoutms) {
+//                log.error("Job reached timeout duration: "+timeout+" seconds")
+                interrupt()
             }
             if (_interrupted) {
                 if (killcount < 100) {

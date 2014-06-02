@@ -592,11 +592,13 @@ class ScheduledExecutionService implements ApplicationContextAware{
     /**
      * Schedule a stored job to execute immediately, include a set of params in the data map
      */
-    def long scheduleTempJob(ScheduledExecution se, String user, Subject subject, Execution e, Map extra=null, Map extraParamsExposed =null) {
+    def long scheduleTempJob(ScheduledExecution se, String user, Subject subject, Execution e,
+                             long timeout, Map extra=null, Map extraParamsExposed = null) {
 
         def jobDetail = createJobDetail(se, "TEMP:" + user + ":" + se.id + ":" + e.id, user + ":run:" + se.id)
         jobDetail.getJobDataMap().put("userSubject", subject)
         jobDetail.getJobDataMap().put("executionId", e.id.toString())
+        jobDetail.getJobDataMap().put("timeout", timeout)
         if(extra){
             jobDetail.getJobDataMap().put("extraParams", extra)
         }
