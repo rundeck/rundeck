@@ -134,6 +134,9 @@ class ScheduledExecution extends ExecutionContext {
         map.description=description
         map.loglevel=loglevel
         map.project=project
+        if(timeout){
+            map.timeout=timeout
+        }
 
         if(options){
             map.options=[:]
@@ -202,6 +205,7 @@ class ScheduledExecution extends ExecutionContext {
         if (data.uuid) {
             se.uuid = data.uuid
         }
+        se.timeout = data.timeout?data.timeout.toString():null
         if(data.options){
             TreeSet options=new TreeSet()
             data.options.keySet().each{optname->
