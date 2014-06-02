@@ -124,6 +124,35 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
             assertEquals "not scheduled.time", "2011", doc[0].schedule.year
 
     }
+    void testEncodeTimeout() {
+        def Yaml yaml = new Yaml()
+        ScheduledExecution se = new ScheduledExecution([
+            jobName: 'test job 1',
+            description: 'test descrip',
+            loglevel: 'INFO',
+            project: 'test1',
+            timeout: '120m',
+            workflow: new Workflow([keepgoing: false, threadcount: 1, commands: [new CommandExec([adhocRemoteString: 'test script',description: 'test1']),
+                new CommandExec([adhocLocalString: "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'\n", description: 'test2']),
+            ]]),
+            nodeThreadcount: 1,
+            nodeKeepgoing: true,
+            doNodedispatch: true,
+            nodeInclude: "testhost1",
+            nodeExcludeName: "x1",
+        ])
+        def jobs1 = [se]
+        def  ymlstr = JobsYAMLCodec.encode(jobs1)
+        assertNotNull ymlstr
+        assertTrue ymlstr instanceof String
+
+
+        def doc = yaml.load(ymlstr)
+        assertNotNull doc
+        assertEquals "wrong number of jobs", 1, doc.size()
+        assertEquals "wrong name", "test job 1", doc[0].name
+        assertEquals "wrong timeout value", "120m", doc[0].timeout
+    }
     void testEncodeNotificationPlugin() {
         def Yaml yaml = new Yaml()
         ScheduledExecution se = new ScheduledExecution([
@@ -804,6 +833,66 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
 
     }
 
+    void testDecodeTimeout() {
+            def ymlstr1 = """- id: null
+  project: test1
+  loglevel: INFO
+  sequence:
+    keepgoing: false
+    strategy: node-first
+    commands:
+    - exec: test script
+      description: test1
+    - script: A Monkey returns
+      description: test2
+    - type: plugin1
+      nodeStep: false
+      description: test3
+    - type: plugin2
+      nodeStep: true
+      description: test4
+  description: ''
+  name: test job 1
+  timeout: '7h'
+  group: my group
+  nodefilters:
+    dispatch:
+      threadcount: 1
+      keepgoing: true
+      excludePrecedence: true
+    include:
+      hostname: testhost1
+    exclude:
+      name: x1
+  schedule:
+    time:
+      seconds: 9
+      hour: 8
+      minute: 5
+    month: 11
+    weekday:
+      day: 0
+    year: 2011
+  options:
+    opt1:
+      enforced: true
+      required: true
+      description: an opt
+      value: xyz
+      values:
+      - a
+      - b
+"""
+            def list = JobsYAMLCodec.decode(ymlstr1)
+            assertNotNull list
+            assertEquals(1, list.size())
+            def obj = list[0]
+            assertTrue(obj instanceof ScheduledExecution)
+            ScheduledExecution se = (ScheduledExecution) list[0]
+            assertEquals "wrong name", "test job 1", se.jobName
+            assertEquals "wrong timeout", "7h", se.timeout
+
+    }
     void testDecodeBasicWithoutProject() {
             def ymlstr1 = """- id: null
   loglevel: INFO

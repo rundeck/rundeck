@@ -414,6 +414,35 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertNotNull jobs
             assertNull "incorrect groupPath",jobs[0].groupPath
     }
+    public void testDecodeTimeout(){
+        /** basic job */
+        def jobs = JobsXMLCodec.decode("""<joblist>
+  <job>
+    <id>8</id>
+    <name>punch2</name>
+    <timeout>20m</timeout>
+    <description>dig it potato</description>
+    <loglevel>WARN</loglevel>
+    <group>simple</group>
+    <context>
+      <project>zig</project>
+      <options>
+        <option name='clip' value='true' />
+      </options>
+    </context>
+    <sequence><command><exec>test</exec></command></sequence>
+    <dispatch>
+      <threadcount>2</threadcount>
+      <keepgoing>true</keepgoing>
+    </dispatch>
+  </job>
+</joblist>
+""")
+        assertNotNull jobs
+        assertEquals "incorrect size", 1, jobs.size()
+        assertEquals "incorrect jobName", "punch2", jobs[0].jobName
+        assertEquals "incorrect jobName", "20m", jobs[0].timeout
+    }
     public void testDecodeBasic2(){
 
         def xml = """<joblist>
@@ -3411,6 +3440,34 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect dispatch keepgoing",'true',doc.job[0].dispatch[0].keepgoing[0].text()
 
 
+    }
+
+    void testEncodeTimeout(){
+         def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName:'test job 1',
+                        description:'test descrip',
+                        loglevel: 'INFO',
+                        project:'test1',
+                        timeout:'2h',
+                        workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+                        options:[new Option([name:'delay',defaultValue:'12']), new Option([name:'monkey',defaultValue:'cheese']), new Option([name:'particle',defaultValue:'true'])] as TreeSet,
+                        nodeThreadcount:1,
+                        nodeKeepgoing:true,
+                        doNodedispatch:true
+                )
+        ]
+        def  xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "wrong root node name",'joblist',doc.name()
+        assertEquals "wrong number of jobs",1,doc.job.size()
+        assertEquals "wrong number of timeout elements",1,doc.job.timeout.size()
+        assertEquals "wrong timeout value","2h",doc.job[0].timeout[0].text()
     }
     void testEncodeScriptInterpreter(){
          def XmlSlurper parser = new XmlSlurper()
