@@ -1196,6 +1196,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                     nodeRankAttribute:params.nodeRankAttribute,
                                     workflow:params.workflow,
                                     argString:params.argString,
+                                    timeout:params.timeout?params.timeout:null,
                                     serverNodeUUID: frameworkService.getServerUUID()
             )
 
