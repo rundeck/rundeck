@@ -1255,6 +1255,31 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         return execution
     }
+    /**
+     * Return the timeout duration in seconds for a timeout string
+     * @param timeout
+     * @param opts
+     * @return
+     */
+    public long evaluateTimeoutDuration(String timeout){
+        long timeoutval=0
+        def exts=[s:1,m:60,h:60*60,d:24*60*60]
+        def matcher= (timeout =~ /(\d+)(.)?/)
+        matcher.each {m->
+            int val
+            try{
+                val=Integer.parseInt(m[1])
+            }catch (NumberFormatException e){
+                return
+            }
+            if(m[2] && exts[m[2]]){
+                timeoutval+=(val*exts[m[2]])
+            }else if(!m[2]){
+                timeoutval += val
+            }
+        }
+        timeoutval
+    }
 
 
     public Map executeScheduledExecution(ScheduledExecution scheduledExecution, Framework framework, AuthContext authContext, Subject subject, params) {
