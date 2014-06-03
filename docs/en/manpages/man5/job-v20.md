@@ -247,6 +247,36 @@ Boolean value: 'true/false'.  If 'true', then the job can be run multiple times 
 </job>
 ~~~~~~~~ 
 
+## timeout
+
+Timeout string indicating the maximum allowed runtime for a job. After this time expires, the job will be aborted.
+
+The format is:
+
+* `123` a simple number, indicating seconds
+* `[number][unit]` where "number" is a valid decimal number, and "unit" is one of:
+    * `s` - seconds
+    * `m` - minutes
+    * `h` - hours
+    * `d` - days
+* Any sequence of `[number][unit]` pairs.  The total time will be the added value of all the units.  Any other text in the string is ignored, so the pairs can be separated by spaces or other descriptive text.
+
+These are all valid values:
+
+* `1d 6h` - 1 day and 6 hours
+* `120m` - 120 minutes
+* `${option.timeout}` reference to a job option value
+
+
+~~~~~~~~ {.xml }
+<job>
+    <name>who</name>
+    <description>who is logged in?</description>
+    <group>/sysadm/users</group>
+    <timeout>1d 6h</timeout>
+</job>
+~~~~~~~~ 
+
 ## schedule
      
 <code>schedule</code> is a sub-element of [job](#job) and specifies
