@@ -58,7 +58,7 @@ we'll setup a new user named "jsmith", with a password of "mypass":
 
 ~~~~~~ {.bash }
 $ cd $RDECK_BASE
-$ java -cp server/lib/jetty-6.1.21.jar:server/lib/jetty-util-6.1.21.jar org.mortbay.jetty.security.Password jsmith mypass
+$ java -cp server/lib/jetty-all-7.6.0.v20120127.jar org.eclipse.jetty.util.security.Password jsmith mypass
 ~~~~~~
 
 ~~~~~~
