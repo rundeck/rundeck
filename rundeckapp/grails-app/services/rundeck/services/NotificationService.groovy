@@ -154,6 +154,7 @@ public class NotificationService implements ApplicationContextAware{
                             (ExecutionService.EXECUTION_FAILED):'FAILURE',
                             (ExecutionService.EXECUTION_RUNNING):'STARTING',
                             (ExecutionService.EXECUTION_SUCCEEDED):'SUCCESS',
+                            (ExecutionService.EXECUTION_TIMEDOUT):'TIMEDOUT',
                     ]
 
                     //prep execution data

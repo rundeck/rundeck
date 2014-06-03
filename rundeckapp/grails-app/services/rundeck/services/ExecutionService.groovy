@@ -609,7 +609,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         [mdcprops, "id: " + e.id +" state: " + state +  " project: " + e.project + " user: " + e.user + jobstring]
     }
 
-    public logExecution(uri,project,user,issuccess,execId,Date startDate=null, jobExecId=null, jobName=null, jobSummary=null,iscancelled=false, nodesummary=null, abortedby=null){
+    public logExecution(uri,project,user,issuccess,execId,Date startDate=null, jobExecId=null, jobName=null,
+                        jobSummary=null,iscancelled=false,istimedout=false, nodesummary=null, abortedby=null){
 
         def reportMap=[:]
         def internalLog = org.apache.log4j.Logger.getLogger("ExecutionService")
@@ -644,10 +645,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         reportMap.author=user
         reportMap.title= jobSummary?jobSummary:"RunDeck Job Execution"
-        reportMap.status= issuccess ? "succeed":iscancelled?"cancel":"fail"
+        reportMap.status= issuccess ? "succeed":iscancelled?"cancel": istimedout?"timeout":"fail"
         reportMap.node= null!=nodesummary?nodesummary: frameworkService.getFrameworkNodeName()
 
-        reportMap.message=(issuccess?'Job completed successfully':iscancelled?('Job killed by: '+(abortedby?:user)):'Job failed')
+        reportMap.message=(issuccess?'Job completed successfully':iscancelled?('Job killed by: '+(abortedby?:user)):
+            istimedout?'Job timed out':'Job failed')
         reportMap.dateCompleted=new Date()
         def result=reportService.reportExecutionResult(reportMap)
         if(result.error){
@@ -811,13 +813,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     public static String EXECUTION_SUCCEEDED = "succeeded"
     public static String EXECUTION_FAILED = "failed"
     public static String EXECUTION_ABORTED = "aborted"
+    public static String EXECUTION_TIMEDOUT = "timedout"
 
     public static String ABORT_PENDING = "pending"
     public static String ABORT_ABORTED = "aborted"
     public static String ABORT_FAILED = "failed"
 
     public static String getExecutionState(Execution e) {
-        return null == e.dateCompleted ? EXECUTION_RUNNING : "true" == e.status ? EXECUTION_SUCCEEDED : e.cancelled ? EXECUTION_ABORTED : EXECUTION_FAILED
+        return null == e.dateCompleted ? EXECUTION_RUNNING : "true" == e.status ? EXECUTION_SUCCEEDED : e.cancelled ?
+            EXECUTION_ABORTED : e.timedOut ? EXECUTION_TIMEDOUT : EXECUTION_FAILED
     }
 
     public StepExecutionItem itemForWFCmdItem(final WorkflowStep step,final StepExecutionItem handler=null) throws FileNotFoundException {
@@ -1671,7 +1675,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 totalCount=matched.size()
             }
             logExecution(null, execution.project, execution.user, "true" == execution.status, exId,
-                execution.dateStarted, jobid, jobname, summary, props.cancelled,
+                execution.dateStarted, jobid, jobname, summary, props.cancelled,props.timedOut,
                 node, execution.abortedby)
             logExecutionLog4j(execution, "finish", execution.user)
 

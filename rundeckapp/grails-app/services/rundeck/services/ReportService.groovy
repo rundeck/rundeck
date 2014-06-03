@@ -41,7 +41,7 @@ class ReportService  {
         if(!fields.message){
             fields.message="[no message]"
         }
-        fields.actionType=fields.status in ['succeed','fail','cancel'] ? fields.status : 'fail'
+        fields.actionType=fields.status in ['succeed','fail','cancel','timeout'] ? fields.status : 'fail'
         def rep = new ExecReport(fields)
 
         //TODO: authorize event creation?
