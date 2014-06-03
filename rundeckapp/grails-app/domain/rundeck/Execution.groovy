@@ -18,6 +18,7 @@ class Execution extends ExecutionContext {
     String succeededNodeList
     String abortedby
     boolean cancelled
+    Boolean timedOut=false
     Workflow workflow
 
     static constraints = {
@@ -59,6 +60,7 @@ class Execution extends ExecutionContext {
             }
         })
         timeout(maxSize: 256, blank: true, nullable: true,)
+        timedOut(nullable: true)
     }
 
     static mapping = {
@@ -134,6 +136,9 @@ class Execution extends ExecutionContext {
         map.succeededNodeList = succeededNodeList
         map.abortedby=abortedby
         map.cancelled=cancelled
+        if(timedOut){
+            map.timedOut=timedOut
+        }
         map.argString= argString
         map.loglevel= loglevel
         if(timeout) {
@@ -171,6 +176,7 @@ class Execution extends ExecutionContext {
         exec.succeededNodeList = data.succeededNodeList
         exec.abortedby = data.abortedby
         exec.cancelled = XmlParserUtil.stringToBool(data.cancelled,false)
+        exec.timedOut = XmlParserUtil.stringToBool(data.timedOut,false)
         exec.argString = data.argString
         exec.loglevel = data.loglevel
         exec.doNodedispatch = data.doNodedispatch
