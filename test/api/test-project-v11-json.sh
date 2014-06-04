@@ -23,7 +23,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 assert_json_value "$proj" .name $DIR/curl.out
-assert_json_value "$APIURL/project/$proj" .url $DIR/curl.out
+assert_json_value "$CUR_APIURL/project/$proj" .url $DIR/curl.out
 
 
 echo "OK"

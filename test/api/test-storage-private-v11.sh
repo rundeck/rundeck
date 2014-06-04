@@ -20,6 +20,7 @@ fake data
 END
 
 runurl="${APIURL}/storage/keys/key1.private"
+testurl="${CUR_APIURL}/storage/keys/key1.private"
 
 # post
 docurl -X POST -D $DIR/headers.out --data-binary @$DIR/key1_private.post -H Accept:application/xml \
@@ -52,7 +53,7 @@ API_XML_NO_WRAPPER=true sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 assert_xml_value "keys/key1.private" "/resource/@path" $DIR/curl.out
 assert_xml_value "file" "/resource/@type" $DIR/curl.out
 assert_xml_value "key1.private" "/resource/@name" $DIR/curl.out
-assert_xml_value "$runurl" "/resource/@url" $DIR/curl.out
+assert_xml_value "$testurl" "/resource/@url" $DIR/curl.out
 assert_xml_value "application/octet-stream" "/resource/resource-meta/Rundeck-content-type" $DIR/curl.out
 assert_xml_value "10" "/resource/resource-meta/Rundeck-content-size" $DIR/curl.out
 assert_xml_value "content" "/resource/resource-meta/Rundeck-content-mask" $DIR/curl.out
@@ -74,7 +75,7 @@ assert_http_status 200 $DIR/headers.out
 assert_json_value "keys/key1.private" ".path" $DIR/curl.out
 assert_json_value "file" ".type" $DIR/curl.out
 assert_json_value "key1.private" ".name" $DIR/curl.out
-assert_json_value "$runurl" ".url" $DIR/curl.out
+assert_json_value "$testurl" ".url" $DIR/curl.out
 assert_json_value "application/octet-stream" .meta['"Rundeck-content-type"'] $DIR/curl.out
 assert_json_value "10" ".meta[\"Rundeck-content-size\"]" $DIR/curl.out
 assert_json_value "content" ".meta[\"Rundeck-content-mask\"]" $DIR/curl.out
@@ -115,7 +116,7 @@ API_XML_NO_WRAPPER=true sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 assert_xml_value "keys" "/resource/@path" $DIR/curl.out
 assert_xml_value "directory" "/resource/@type" $DIR/curl.out
-assert_xml_value "${APIURL}/storage/keys" "/resource/@url" $DIR/curl.out
+assert_xml_value "${CUR_APIURL}/storage/keys" "/resource/@url" $DIR/curl.out
 assert_xml_value "1" "/resource/contents/@count" $DIR/curl.out
 
 assert_xml_value "keys/key1.private" "/resource/contents/resource[1]/@path" $DIR/curl.out

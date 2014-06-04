@@ -29,7 +29,7 @@ API_XML_NO_WRAPPER=true sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 #Check projects list
 #
 assert_xml_value $proj "/project/name" $DIR/curl.out
-assert_xml_value "$APIURL/project/$proj" "/project/@url" $DIR/curl.out
+assert_xml_value "$CUR_APIURL/project/$proj" "/project/@url" $DIR/curl.out
 
 
 echo "OK"

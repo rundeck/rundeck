@@ -77,6 +77,7 @@ fi
 shift
 
 APIURL="${RDURL}/api/${API_VERSION}"
+CUR_APIURL="${RDURL}/api/${API_CURRENT_VERSION}"
 
 ##
 # utilities for testing http responses
