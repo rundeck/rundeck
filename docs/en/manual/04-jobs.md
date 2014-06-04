@@ -792,7 +792,7 @@ then
 fi
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~        
 
-> Note, The replacement token syntax is only supported in script files (ie, not command steps).
+> Note, The replacement token syntax is only supported in inline script steps (ie, not script file or command steps).
 
 ## Escaped values
 
