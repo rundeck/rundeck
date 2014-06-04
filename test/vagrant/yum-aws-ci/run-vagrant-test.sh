@@ -13,7 +13,7 @@ xit=$?
 sleep 30
 # loop over the provision call until either it works or we've given up (10sec sleep, 12 tries = ~ 2-3 minutes)
 count=0
-max=10
+max=1
 while :
 do
     vagrant provision
