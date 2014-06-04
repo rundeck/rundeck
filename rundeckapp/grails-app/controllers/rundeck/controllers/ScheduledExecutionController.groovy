@@ -1403,7 +1403,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def ScheduledExecution scheduledExecution=result.scheduledExecution
         def failed=result.failed
         if(!failed){
-            return _transientExecute(scheduledExecution,params,framework,authContext, request.subject)
+            return _transientExecute(scheduledExecution,params,authContext, request.subject)
         }else{
             return [success:false,failed:true,invalid:true,message:'Job configuration was incorrect.',scheduledExecution:scheduledExecution,params:params]
         }
@@ -1443,7 +1443,7 @@ class ScheduledExecutionController  extends ControllerBase{
     * Execute a transient ScheduledExecution and return execution data: [execution:Execution,id:Long]
      * if there is an error, return [error:'type',message:errormesg,...]
      */
-    private Map _transientExecute(ScheduledExecution scheduledExecution, Map params, Framework framework, AuthContext authContext, Subject subject){
+    private Map _transientExecute(ScheduledExecution scheduledExecution, Map params, AuthContext authContext, Subject subject){
         def object
         def isauth = scheduledExecutionService.userAuthorizedForAdhoc(params.request,scheduledExecution,authContext)
         if (!isauth){
@@ -1457,7 +1457,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
         def Execution e
         try {
-            e = executionService.createExecutionAndPrep(params, framework, params.user)
+            e = executionService.createExecutionAndPrep(params, params.user)
         } catch (ExecutionServiceException exc) {
             return [success:false,error:'failed',message:exc.getMessage()]
         }

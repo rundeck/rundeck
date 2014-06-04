@@ -240,6 +240,19 @@ You can make a job allow "Multiple Executions" by toggling the value to Yes in t
 
 ![Multiple executions](../figures/fig0324.png)
 
+
+### Timeout
+
+You can set a maximum runtime for a job.  If the runtime exceeds this value, the job will be halted (as if a user had killed it.)
+
+![Job Timeout field](../figures/jobs-timeout-field.png)
+
+The value for the timeout can be:
+
+* A number of seconds, such as `240`
+* A string indicating numbers and units, such as "1d 12h 30m 24s". Each number must have a unit letter next to it.  The total timeout duration will be the sum of the values.  Available units are "d" (days) "h" (hours) "m" (minutes) and "s" (seconds, default if unspecified.)
+* An embedded property reference such as `${option.timeout}`.  This allows a Job Option to be used to change the timeout for the job.
+
 ### Node dispatching and filtering
 
 When you create a job you can choose between either running the job only locally (on the Rundeck server), or dispatching it to multiple nodes (including the Rundeck server if you want).

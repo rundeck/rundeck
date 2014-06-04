@@ -833,6 +833,22 @@ function getCurSEID(){
             </span>
         </div>
     </div>
+    %{--Job timeout--}%
+    <div class="form-group">
+        <div class="${labelColSize} control-label text-form-label">
+            <g:message code="scheduledExecution.property.timeout.label" default="Timeout"/>
+        </div>
+
+        <div class="${fieldColHalfSize}">
+
+            <input type='text' name="timeout" value="${scheduledExecution?.timeout?.encodeAsHTML()}"
+                   id="schedJobTimeout" maxlength="256" class="form-control"/>
+
+            <span class="help-block">
+                <g:message code="scheduledExecution.property.timeout.description"/>
+            </span>
+        </div>
+    </div>
 
 
     %{--uuid--}%

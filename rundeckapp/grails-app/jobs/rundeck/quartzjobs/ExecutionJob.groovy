@@ -41,7 +41,8 @@ class ExecutionJob implements InterruptableJob {
      * millisecond delay between retries to finalize execution state
      */
     long finalizeRetryDelay = DEFAULT_FINALIZE_RETRY_DELAY
-    def boolean _interrupted
+    def boolean wasInterrupted
+    def boolean wasTimeout
     def grailsApplication
     static triggers = {
         /** define no triggers here */
@@ -97,15 +98,19 @@ class ExecutionJob implements InterruptableJob {
         }
         def result
         try {
-            if(!_interrupted){
-                result=executeCommand(initMap.executionService, initMap.executionUtilService,initMap.execution,initMap.framework,initMap.authContext,initMap.scheduledExecution, initMap.extraParams, initMap.extraParamsExposed)
+            if(!wasInterrupted){
+                result=executeCommand(initMap.executionService, initMap.executionUtilService,initMap.execution,
+                        initMap.framework,initMap.authContext,initMap.scheduledExecution, initMap.timeout?:0,
+                        initMap.extraParams, initMap.extraParamsExposed)
                 success=result.success
             }
         }catch(Throwable t){
             log.error("Failed execution ${initMap.execution.id} : ${t.message?t.message:'no message'}",t)
         }
         saveState(initMap.executionService, initMap.execution ? initMap.execution : (Execution) null, success,
-            _interrupted, initMap.isTemp, initMap.scheduledExecutionId ? initMap.scheduledExecutionId : -1L,result?.execmap)
+            wasInterrupted, wasTimeout,initMap.timeout, initMap.isTemp,
+                initMap.scheduledExecutionId ? initMap.scheduledExecutionId: -1L,
+                result?.execmap)
     }
 
     /**
@@ -139,7 +144,7 @@ class ExecutionJob implements InterruptableJob {
     }
 
     public void interrupt(){
-        _interrupted=true;
+        wasInterrupted=true;
     }
 
     def initialize(JobExecutionContext context, def jobDataMap) {
@@ -161,6 +166,7 @@ class ExecutionJob implements InterruptableJob {
             }
             initMap.scheduledExecutionId=initMap.scheduledExecution.id
         }
+        initMap.timeout = jobDataMap.get('timeout')
         initMap.executionService = fetchExecutionService(jobDataMap)
         initMap.executionUtilService = fetchExecutionUtilService(jobDataMap)
         initMap.frameworkService = fetchFrameworkService(jobDataMap)
@@ -249,7 +255,7 @@ class ExecutionJob implements InterruptableJob {
 
     def executeCommand(ExecutionService executionService, ExecutionUtilService executionUtilService,
                        Execution execution, Framework framework, AuthContext authContext,
-                       ScheduledExecution scheduledExecution = null, Map extraParams = null,
+                       ScheduledExecution scheduledExecution = null, long timeout, Map extraParams = null,
                        Map extraParamsExposed = null) {
 
         def success = false
@@ -266,23 +272,34 @@ class ExecutionJob implements InterruptableJob {
             //failed to start
             return [success: false]
         }
-
+        def timeoutms=1000*timeout
+        def shouldCheckTimeout = timeoutms > 0
+        long startTime=System.currentTimeMillis()
         int killcount = 0;
-        while (execmap.thread.isAlive()) {
+        def killLimit = 100
+        def ServiceThreadBase thread = execmap.thread
+        while (thread.isAlive()) {
             try {
-                execmap.thread.join(1000)
+                thread.join(1000)
             } catch (InterruptedException e) {
                 //do nada
             }
-            if (_interrupted) {
-                if (killcount < 100) {
-                    execmap.thread.abort()
+            if (!wasInterrupted && !wasTimeout
+                    && shouldCheckTimeout
+                    && (System.currentTimeMillis() - startTime) > timeoutms) {
+                wasTimeout=true
+                interrupt()
+            }
+            if (wasInterrupted) {
+                if (killcount < killLimit) {
+                    //send wave after wave
+                    thread.abort()
                     Thread.yield();
                     killcount++;
                 } else {
-                    execmap.thread.stop()
+                    //reached pre-set kill limit, so shut down
+                    thread.stop()
                 }
-
             }
         }
 
@@ -297,8 +314,9 @@ class ExecutionJob implements InterruptableJob {
             throw new RuntimeException("Execution ${execution.id} failed: " + exc.getMessage(), exc)
         }
 
-        log.debug("ExecutionJob: execution successful? " + success + ", interrupted? " + _interrupted)
-        def ServiceThreadBase thread = execmap.thread
+        log.debug("ExecutionJob: execution successful? " + success + ", interrupted? " + wasInterrupted+", " +
+                "timeout? "+wasTimeout)
+
         return [success: thread.isSuccessful(), execmap: execmap]
 
     }
@@ -323,7 +341,7 @@ class ExecutionJob implements InterruptableJob {
                     log.error(identity + " retry was interrupted, failing")
                     break
                 }
-                if(_interrupted){
+                if(wasInterrupted){
                     log.error(identity + " retry was interrupted, failing")
                     break
                 }
@@ -347,16 +365,20 @@ class ExecutionJob implements InterruptableJob {
     }
 
     def saveState(ExecutionService executionService,Execution execution, boolean success, boolean _interrupted,
+            boolean timedOut,
+            long timeoutDuration,
                   boolean isTemp, long scheduledExecutionId=-1, Map execmap) {
         Map<String,Object> failedNodes=extractFailedNodes(execmap)
         Set<String> succeededNodes=extractSucceededNodes(execmap)
 
         //save Execution state
         def dateCompleted = new Date()
-        def resultMap= [
+        def resultMap = [
                 status: String.valueOf(success),
                 dateCompleted: dateCompleted,
-                cancelled: _interrupted,
+                cancelled: _interrupted && !timedOut,
+                timedOut: timedOut,
+//                timeoutDuration:timeoutDuration,
                 failedNodes: failedNodes?.keySet(),
                 failedNodesMap: failedNodes,
                 succeededNodes: succeededNodes,

@@ -33,7 +33,14 @@ class ExecReport extends BaseReport{
             'abortedByUser'
     ]
     def Map toMap(){
-        this.properties.subMap(exportProps)
+        def map = this.properties.subMap(exportProps)
+        if (map.status == 'timeout') {
+            map.status = 'timedout'
+        }
+        if (map.actionType == 'timeout') {
+            map.actionType = 'timedout'
+        }
+        map
     }
 
     static buildFromMap(ExecReport obj, Map map) {
@@ -46,12 +53,14 @@ class ExecReport extends BaseReport{
      */
     static ExecReport fromExec(Execution exec){
         def failedCount = exec.failedNodeList ?exec.failedNodeList.split(',').size():0
-        def successCount=exec.failedNodeList?0:1;
-        def totalCount = exec.failedNodeList ? failedCount : 1;
+        def successCount=exec.succeededNodeList? exec.succeededNodeList.split(','):0;
+        def totalCount = failedCount+successCount;
         def adhocScript = (null == exec.scheduledExecution) ? exec.workflow.commands[0].adhocRemoteString : null
         def summary = "[${exec.workflow.commands.size()} steps]"
         def issuccess = exec.status == 'true'
         def iscancelled = exec.cancelled
+        def istimedout = exec.timedOut
+        def status = issuccess ? "succeed" : iscancelled ? "cancel" : istimedout ? "timedout" : "fail"
         return fromMap([
                 jcExecId:exec.id,
                 jcJobId: exec.scheduledExecution?.id,
@@ -60,14 +69,14 @@ class ExecReport extends BaseReport{
                 abortedByUser: iscancelled? exec.abortedby ?: exec.user:null,
                 node:"${failedCount}/${successCount}/${totalCount}",
                 title: adhocScript?adhocScript:summary,
-                status: issuccess ? "succeed" : iscancelled ? "cancel" : "fail",
+                status: status,
                 ctxProject: exec.project,
                 reportId: exec.scheduledExecution?( exec.scheduledExecution.groupPath ? exec.scheduledExecution.generateFullName() : exec.scheduledExecution.jobName): 'adhoc',
                 author: exec.user,
                 message: (issuccess ? 'Job completed successfully' : iscancelled ? ('Job killed by: ' + (exec.abortedby ?: exec.user)) : 'Job failed'),
                 dateStarted: exec.dateStarted,
                 dateCompleted: exec.dateCompleted,
-                actionType: issuccess ? "succeed" : iscancelled ? "cancel" : "fail"
+                actionType: status
         ])
     }
     static ExecReport fromMap(Map map) {

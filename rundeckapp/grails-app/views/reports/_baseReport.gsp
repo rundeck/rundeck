@@ -38,7 +38,8 @@
                 <input type="checkbox" value="${rpt.jcExecId}" name="bulk_edit" class="_defaultInput bulk_edit"/>
             </td>
             <td class="eventicon autoclickable">
-                <i class="exec-status icon ${!execution.dateCompleted ? 'running' : execution.status == 'true' ? 'succeed' : execution.cancelled ? 'warn' : 'fail'}"></i>
+                <i class="exec-status icon ${!execution.dateCompleted ? 'running' : execution.status == 'true' ?
+                    'succeed' : execution.cancelled ? 'aborted' :execution.timedOut ? 'timedout' : 'fail'}"></i>
             </td>
             <g:set var="vals" value="${['?','?','?']}"/>
             <g:if test="${it instanceof ExecReport}">

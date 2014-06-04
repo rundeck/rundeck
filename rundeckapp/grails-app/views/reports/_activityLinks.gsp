@@ -91,7 +91,7 @@
             </td>
             <td class="eventicon autoclickable">
                 <i class="exec-status icon"
-                   data-bind="css: { 'succeed': status()=='succeed', 'fail': status()=='fail', 'warn': status()=='cancel', 'running': status()=='running' } "
+                   data-bind="css: { 'succeed': status()=='succeed', 'fail': status()=='fail', 'aborted': status()=='cancel', 'running': status()=='running', 'timedout': status()=='timedout' } "
                 ></i>
             </td>
             <td class="eventtitle autoclickable" data-bind="css: { job: jobId(), adhoc: !jobId() }">

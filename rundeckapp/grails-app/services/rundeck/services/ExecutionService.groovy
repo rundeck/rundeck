@@ -609,7 +609,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         [mdcprops, "id: " + e.id +" state: " + state +  " project: " + e.project + " user: " + e.user + jobstring]
     }
 
-    public logExecution(uri,project,user,issuccess,execId,Date startDate=null, jobExecId=null, jobName=null, jobSummary=null,iscancelled=false, nodesummary=null, abortedby=null){
+    public logExecution(uri,project,user,issuccess,execId,Date startDate=null, jobExecId=null, jobName=null,
+                        jobSummary=null,iscancelled=false,istimedout=false, nodesummary=null, abortedby=null){
 
         def reportMap=[:]
         def internalLog = org.apache.log4j.Logger.getLogger("ExecutionService")
@@ -644,10 +645,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         reportMap.author=user
         reportMap.title= jobSummary?jobSummary:"RunDeck Job Execution"
-        reportMap.status= issuccess ? "succeed":iscancelled?"cancel":"fail"
+        reportMap.status= issuccess ? "succeed":iscancelled?"cancel": istimedout?"timeout":"fail"
         reportMap.node= null!=nodesummary?nodesummary: frameworkService.getFrameworkNodeName()
 
-        reportMap.message=(issuccess?'Job completed successfully':iscancelled?('Job killed by: '+(abortedby?:user)):'Job failed')
+        reportMap.message=(issuccess?'Job completed successfully':iscancelled?('Job killed by: '+(abortedby?:user)):
+            istimedout?'Job timed out':'Job failed')
         reportMap.dateCompleted=new Date()
         def result=reportService.reportExecutionResult(reportMap)
         if(result.error){
@@ -811,13 +813,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     public static String EXECUTION_SUCCEEDED = "succeeded"
     public static String EXECUTION_FAILED = "failed"
     public static String EXECUTION_ABORTED = "aborted"
+    public static String EXECUTION_TIMEDOUT = "timedout"
 
     public static String ABORT_PENDING = "pending"
     public static String ABORT_ABORTED = "aborted"
     public static String ABORT_FAILED = "failed"
 
     public static String getExecutionState(Execution e) {
-        return null == e.dateCompleted ? EXECUTION_RUNNING : "true" == e.status ? EXECUTION_SUCCEEDED : e.cancelled ? EXECUTION_ABORTED : EXECUTION_FAILED
+        return null == e.dateCompleted ? EXECUTION_RUNNING : "true" == e.status ? EXECUTION_SUCCEEDED : e.cancelled ?
+            EXECUTION_ABORTED : e.timedOut ? EXECUTION_TIMEDOUT : EXECUTION_FAILED
     }
 
     public StepExecutionItem itemForWFCmdItem(final WorkflowStep step,final StepExecutionItem handler=null) throws FileNotFoundException {
@@ -1182,7 +1186,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
 
-   def Execution createExecution(Map params, Framework framework) {
+   def Execution createExecution(Map params) {
         def Execution execution
         if (params.project && params.workflow) {
             execution = new Execution(project:params.project,
@@ -1196,6 +1200,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                     nodeRankAttribute:params.nodeRankAttribute,
                                     workflow:params.workflow,
                                     argString:params.argString,
+                                    timeout:params.timeout?params.timeout:null,
                                     serverNodeUUID: frameworkService.getServerUUID()
             )
 
@@ -1215,13 +1220,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     /**
      * creates an execution with the parameters, and evaluates dynamic buildstamp
      */
-    def Execution createExecutionAndPrep(Map params, Framework framework, String user) throws ExecutionServiceException{
+    def Execution createExecutionAndPrep(Map params, String user) throws ExecutionServiceException{
         def props =[:]
         props.putAll(params)
         if(!props.user){
             props.user=user
         }
-        def Execution execution = createExecution(props, framework)
+        def Execution execution = createExecution(props)
         execution.dateStarted = new Date()
 
         if(execution.argString =~ /\$\{DATE:(.*)\}/){
@@ -1254,6 +1259,31 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         return execution
     }
+    /**
+     * Return the timeout duration in seconds for a timeout string
+     * @param timeout
+     * @param opts
+     * @return
+     */
+    public long evaluateTimeoutDuration(String timeout){
+        long timeoutval=0
+        def exts=[s:1,m:60,h:60*60,d:24*60*60]
+        def matcher= (timeout =~ /(\d+)(.)?/)
+        matcher.each {m->
+            int val
+            try{
+                val=Integer.parseInt(m[1])
+            }catch (NumberFormatException e){
+                return
+            }
+            if(m[2] && exts[m[2]]){
+                timeoutval+=(val*exts[m[2]])
+            }else if(!m[2]){
+                timeoutval += val
+            }
+        }
+        timeoutval
+    }
 
 
     public Map executeScheduledExecution(ScheduledExecution scheduledExecution, Framework framework, AuthContext authContext, Subject subject, params) {
@@ -1269,7 +1299,18 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def Execution e = createExecution(scheduledExecution, framework, params.user, extra)
             def extraMap = selectSecureOptionInput(scheduledExecution, extra)
             def extraParamsExposed = selectSecureOptionInput(scheduledExecution, extra, true)
-            def eid = scheduledExecutionService.scheduleTempJob(scheduledExecution, params.user, subject, e, extraMap, extraParamsExposed) ;
+            def timeout=0
+            if(e.timeout) {
+                HashMap optparams = removeSecureOptionEntries(scheduledExecution, parseJobOptionInput(extra,
+                        scheduledExecution))
+                def timeoutstr=e.timeout
+                if (optparams) {
+                    timeoutstr = DataContextUtils.replaceDataReferences(timeoutstr, DataContextUtils.addContext("option", optparams, null))
+                }
+                timeout = evaluateTimeoutDuration(timeoutstr)
+            }
+            def eid = scheduledExecutionService.scheduleTempJob(scheduledExecution, params.user, subject, e, timeout,
+                    extraMap, extraParamsExposed) ;
 
             return [success:true,executionId: eid, name: scheduledExecution.jobName, execution: e]
         } catch (ExecutionServiceValidationException exc) {
@@ -1280,7 +1321,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             return [success:false,error: exc.code?:'failed', message: msg, options:extra.option]
         }
     }
-    Execution int_createExecution(ScheduledExecution se,framework,user,extra){
+    Execution int_createExecution(ScheduledExecution se,user,extra){
         def props = [:]
 
         se = ScheduledExecution.get(se.id)
@@ -1310,7 +1351,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         //create duplicate workflow
         props.workflow = workflow
 
-        Execution execution = createExecution(props, framework)
+        Execution execution = createExecution(props)
         execution.dateStarted = new Date()
 
         if (execution.argString =~ /\$\{DATE:(.*)\}/) {
@@ -1354,10 +1395,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 if (found) {
                     throw new ExecutionServiceException('Job "' + se.jobName + '" [' + se.extid + '] is currently being executed (execution [' + found.id + '])','conflict')
                 }
-                return int_createExecution(se,framework,user,extra)
+                return int_createExecution(se,user,extra)
             }
         }else{
-            return int_createExecution(se,framework,user,extra)
+            return int_createExecution(se,user,extra)
         }
     }
 
@@ -1370,13 +1411,25 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @return
      */
     private HashMap validateJobInputOptions(Map props, ScheduledExecution scheduledExec) {
+        HashMap optparams = parseJobOptionInput(props, scheduledExec)
+        validateOptionValues(scheduledExec, optparams)
+        return optparams
+    }
+
+    /**
+     * Parse input "option.NAME" values, or a single "argString" value. Add default missing defaults for required
+     * options. return a key value map for option name and value.
+     * @param props
+     * @param scheduledExec
+     * @return
+     */
+    protected HashMap parseJobOptionInput(Map props, ScheduledExecution scheduledExec) {
         def optparams = filterOptParams(props)
         if (!optparams && props.argString) {
             optparams = FrameworkService.parseOptsFromString(props.argString)
         }
         optparams = addOptionDefaults(scheduledExec, optparams)
-        validateOptionValues(scheduledExec, optparams)
-        return optparams
+        optparams
     }
 
     /**
@@ -1622,7 +1675,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 totalCount=matched.size()
             }
             logExecution(null, execution.project, execution.user, "true" == execution.status, exId,
-                execution.dateStarted, jobid, jobname, summary, props.cancelled,
+                execution.dateStarted, jobid, jobname, summary, props.cancelled,props.timedOut,
                 node, execution.abortedby)
             logExecutionLog4j(execution, "finish", execution.user)
 

@@ -64,6 +64,14 @@ Each Job definition requires these values:
     * `WARN`
     * `ERROR`
 
+`timeout`
+
+:    a maximum runtime before the job will be stopped.
+
+    * `120` - indicates 120 seconds
+    * `6h 30m` indicates 6 hours and 30 minutes
+    * `${option.timeout}` reference to a job option value
+
 [`sequence`](#sequence)
 
 :    The workflow sequence definition

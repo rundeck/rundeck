@@ -149,8 +149,11 @@
   }
   .execstate{
 
-    &[data-execstate=NODE_MIXED], &[data-execstate=ABORTED] {
+    &[data-execstate=NODE_MIXED], &[data-execstate=TIMEDOUT] {
       color: orange;
+    }
+    &[data-execstate=ABORTED]{
+      color: @gray;
     }
     &[data-execstate=SUCCEEDED] {
       color: @gray-dark;
@@ -221,6 +224,9 @@
 
       &[data-execstate=ABORTED]:after {
         content: 'Killed';
+      }
+      &[data-execstate=TIMEDOUT]:after {
+        content: 'Timed Out';
       }
 
       &[data-execstate=WAITING]:after {
@@ -731,12 +737,20 @@ section{
         .glyphicon-ok-circle();
       }
     }
-    &.warn, &[data-execstate=ABORTED] {
+    &.aborted, &[data-execstate=ABORTED] {
+      color: @gray-light;
+
+      &.icon {
+        .glyphicon();
+        .glyphicon-remove-circle();
+      }
+    }
+    &.timedout, &[data-execstate=TIMEDOUT] {
       color: @brand-warning;
 
       &.icon {
         .glyphicon();
-        .glyphicon-minus-sign();
+        .glyphicon-time();
       }
     }
   }

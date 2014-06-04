@@ -247,6 +247,16 @@
         </td>
     </tr>
     </g:if>
+    <g:if test="${execdata.timeout}">
+        <tr>
+            <td>
+                <g:message code="scheduledExecution.property.timeout.label" />
+            </td>
+            <td>
+                <span title="Timeout duration">${execdata.timeout.encodeAsHTML()}</span>
+            </td>
+        </tr>
+    </g:if>
     <g:if test="${execdata instanceof rundeck.ScheduledExecution}">
         <tr>
             <td>

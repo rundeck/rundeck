@@ -28,8 +28,8 @@ class BaseReport {
         maprefUri(nullable:true)
         ctxName(nullable:true)
         ctxType(nullable:true)
-        status(nullable:false,inList:['succeed','fail','cancel'])
-        actionType(nullable:false,inList:['create','update','delete','succeed','fail','cancel'])
+        status(nullable:false, maxSize: 256)
+        actionType(nullable:false, maxSize: 256)
     }
     public static final ArrayList<String> exportProps = [
             'node',
@@ -46,11 +46,23 @@ class BaseReport {
     ]
 
     def Map toMap(){
-        this.properties.subMap(exportProps)
+        def map=this.properties.subMap(exportProps)
+        if(map.status=='timeout'){
+            map.status='timedout'
+        }
+        if(map.actionType=='timeout'){
+            map.actionType='timedout'
+        }
+        map
     }
 
     static buildFromMap(BaseReport obj, Map data) {
-        data.each {k, v ->
+        data.each { k, v ->
+            if ((k == 'status' || k == 'actionType') && v == 'timedout') {
+                //XXX: use 'timeout' internally for timedout status, due to previous varchar(7) length limitations on
+                // the field :-Σ
+                v='timeout'
+            }
             obj[k] = v
         }
     }
