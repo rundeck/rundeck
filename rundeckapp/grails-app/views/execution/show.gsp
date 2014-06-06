@@ -207,9 +207,15 @@
                         <span class="jobInfo" id="jobInfo_${execution.id}">
                             <span class="h3">
                                 <g:render template="/scheduledExecution/showExecutionLink"
-                                     model="[scheduledExecution: scheduledExecution, noimgs:true, execution: execution, followparams: [mode: followmode, lastlines: params.lastlines]]"/>
-                            </span>
+                                     model="[scheduledExecution: scheduledExecution, noimgs:true, execution: execution, followparams: [mode: followmode, lastlines: params.lastlines]]"/></span>
                         </span>
+
+                <g:if test="${execution.wasRetry}">
+                    <div class="text-muted">
+                        <i class="glyphicon glyphicon-repeat"></i>
+                        Retry #${execution.retryAttempt}
+                    </div>
+                </g:if>
                         <g:if test="${eprev || enext}">
                             <div class="affixed-hidden">
 
