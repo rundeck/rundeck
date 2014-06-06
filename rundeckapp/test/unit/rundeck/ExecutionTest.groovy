@@ -1,6 +1,8 @@
 package rundeck
 
 import grails.test.GrailsUnitTestCase
+import grails.test.mixin.TestFor
+import junit.framework.Assert
 
 /**
  * $INTERFACE is ...
@@ -8,22 +10,20 @@ import grails.test.GrailsUnitTestCase
  * Date: 5/14/13
  * Time: 11:25 AM
  */
-class ExecutionTest extends GrailsUnitTestCase {
+@TestFor(Execution)
+class ExecutionTest {
     void testValidateBasic() {
-        mockDomain(Execution)
         Execution se = createBasicExecution()
         def validate = se.validate()
         assertTrue("Invalid: "+se.errors.allErrors*.toString().join(","), validate)
     }
     void testValidateServerNodeUUID() {
-        mockDomain(Execution)
         Execution se = createBasicExecution()
         se.serverNodeUUID=UUID.randomUUID().toString()
         def validate = se.validate()
         assertTrue("Invalid: "+se.errors.allErrors*.toString().join(","), validate)
     }
     void testInvalidServerNodeUUID() {
-        mockDomain(Execution)
         Execution se = createBasicExecution()
         se.serverNodeUUID="not valid"
         def validate = se.validate()
@@ -375,5 +375,65 @@ class ExecutionTest extends GrailsUnitTestCase {
         assertNotNull(exec)
         assertNull(exec.nodeIncludeName)
         assertEquals('name: test1', exec.filter)
+    }
+    void testFromMapRetry(){
+        def exec1 = new Execution(project:'test1',user:'user1',
+                workflow: new Workflow(
+                        commands: [
+                                new CommandExec(adhocRemoteString: "exec")
+                        ]
+                )
+        )
+        exec1.validate()
+        assertNotNull(exec1.errors.allErrors.collect{ it.toString() }.join(" "), exec1.save())
+        def exec = Execution.fromMap([
+                retry: '123',
+                retryAttempt: 12,
+                retryExecutionId: exec1.id,
+                status: 'true',
+                dateStarted: new Date(),
+                dateCompleted: new Date(),
+                doNodedispatch: true,
+                project:'test1',
+                user:'user1',
+                workflow:[
+                        keepgoing:true,
+                        commands:[
+                                [
+                                        exec:"blah"
+                                ]
+                        ]
+                ]
+        ], null)
+        assertNotNull(exec)
+        assertEquals('123',exec.retry)
+        assertEquals(12,exec.retryAttempt)
+        assertEquals(exec1,exec.retryExecution)
+    }
+    void testToMapRetry(){
+        def exec1 = new Execution(project: 'test1', user: 'user1',
+                workflow: new Workflow(
+                        commands: [
+                                new CommandExec(adhocRemoteString: "exec")
+                        ]
+                )
+        )
+        assertNotNull(exec1.save())
+        def exec2 = new Execution(project: 'test1', user: 'user1',
+                workflow: new Workflow(
+                        commands: [
+                                new CommandExec(adhocRemoteString: "exec")
+                        ]
+                )
+        )
+        exec2.retry='123'
+        exec2.retryAttempt=12
+        exec2.retryExecution=exec1
+        assertNotNull(exec2.save())
+        def map = exec2.toMap()
+        assertNotNull(map)
+        assertEquals('123',map.retry)
+        assertEquals(12, map.retryAttempt)
+        assertEquals(exec1.id, map.retryExecutionId)
     }
 }

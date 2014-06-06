@@ -28,6 +28,14 @@ class ScheduledExecutionTest  {
         assertNotNull(jobMap.options)
         assertEquals(4, jobMap.options.size())
     }
+    void testToMapRetry() {
+        ScheduledExecution se = createBasicScheduledExecution()
+        se.retry='${option.retry}'
+        def jobMap = se.toMap()
+        assertNotNull(jobMap)
+        assertNotNull(jobMap.retry)
+        assertEquals('${option.retry}',jobMap.retry)
+    }
 
     void testFromMapScheduleCrontabString() {
         ScheduledExecution se = ScheduledExecution.fromMap(
@@ -40,6 +48,18 @@ class ScheduledExecutionTest  {
         )
         assertNotNull(se)
         assertEquals('* * * * ? *', se.crontabString)
+    }
+
+    void testFromMapRetry() {
+        ScheduledExecution se = ScheduledExecution.fromMap(
+                [
+                        jobName: 'abc',
+                        retry: '${option.retry}'
+                ]
+        )
+        assertNotNull(se)
+        assertNotNull(se.retry)
+        assertEquals('${option.retry}', se.retry)
     }
     void testFromMapSchedule() {
         ScheduledExecution se = ScheduledExecution.fromMap(
