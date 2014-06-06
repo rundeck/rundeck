@@ -1127,6 +1127,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             log.debug("${files.size()} files from execution will be deleted")
             logExecutionLog4j(e, "delete", username)
             //delete execution
+            //find an execution that this is a retry for
+            Execution.findAllByRetryExecution(e).each{e2->
+                e2.retryExecution=null
+            }
             e.delete(flush: true)
             //delete all files
             def deletedfiles = 0
