@@ -7,7 +7,7 @@ class ScheduledExecution extends ExecutionContext {
     Long id
     SortedSet options
     static hasMany = [executions:Execution,options:Option,notifications:Notification]
-
+    
     String groupPath
     String userRoleList
     String jobName
@@ -38,6 +38,7 @@ class ScheduledExecution extends ExecutionContext {
     String notifyFailureUrl
     String notifyStartUrl
     Boolean multipleExecutions = false
+    Orchestrator orchestrator
     static transients = ['adhocExecutionType','notifySuccessRecipients','notifyFailureRecipients','notifyStartRecipients', 'notifySuccessUrl', 'notifyFailureUrl', 'notifyStartUrl','crontabString']
 
     static constraints = {
@@ -83,6 +84,7 @@ class ScheduledExecution extends ExecutionContext {
         year(nullable:true, matches: /^[0-9*\/,-]*$/)
         description(nullable:true)
         uuid(unique: true, nullable:true, blank:false, matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
+        orchestrator(nullable:true)
         multipleExecutions(nullable: true)
         serverNodeUUID(size: 36..36, blank: true, nullable: true, validator: { val, obj ->
             if (null == val) return true;
@@ -117,6 +119,7 @@ class ScheduledExecution extends ExecutionContext {
         argString type: 'text'
         description type: 'text'
         groupPath type: 'string'
+        orchestrator type: 'text'
         options lazy: false
         timeout(type: 'text')
         retry(type: 'text')
@@ -147,6 +150,9 @@ class ScheduledExecution extends ExecutionContext {
         }
         if(retry){
             map.retry=retry
+        }
+        if(orchestrator){
+            map.orchestrator=orchestrator.toMap();
         }
 
         if(options){
@@ -211,6 +217,9 @@ class ScheduledExecution extends ExecutionContext {
         se.jobName=data.name
         se.groupPath=data['group']?data['group']:null
         se.description=data.description
+        if(data.orchestrator){
+            se.orchestrator=Orchestrator.fromMap(data.orchestrator);
+        }
         se.loglevel=data.loglevel?data.loglevel:'INFO'
         se.project=data.project
         if (data.uuid) {

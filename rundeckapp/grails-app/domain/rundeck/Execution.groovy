@@ -22,6 +22,7 @@ class Execution extends ExecutionContext {
     Integer retryAttempt=0
     Boolean willRetry=false
     Execution retryExecution
+    Orchestrator orchestrator;
 
     static constraints = {
         project(matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX, validator:{val,Execution obj->
@@ -57,6 +58,7 @@ class Execution extends ExecutionContext {
         nodeThreadcount(nullable:true)
         nodeRankOrderAscending(nullable: true)
         nodeRankAttribute(nullable: true)
+        orchestrator(nullable: true);
         failedNodeList(nullable:true, blank:true)
         succeededNodeList(nullable:true, blank:true)
         abortedby(nullable:true, blank:true)
@@ -185,6 +187,9 @@ class Execution extends ExecutionContext {
         map.project= this.project
         map.user= this.user
         map.workflow=this.workflow.toMap()
+		if(this.orchestrator){
+			map.orchestrator=this.orchestrator.toMap();
+		}
         map
     }
     static Execution fromMap(Map data, ScheduledExecution job=null){
@@ -259,6 +264,9 @@ class Execution extends ExecutionContext {
         exec.project = data.project
         exec.user = data.user
         exec.workflow = Workflow.fromMap(data.workflow)
+        if(data.orchestrator){
+            exec.orchestrator = Orchestrator.fromMap(data.orchestrator)
+        }
         exec
     }
 }

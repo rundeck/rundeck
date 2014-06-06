@@ -31,6 +31,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionS
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
 import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcher;
 import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcherService;
+import com.dtolabs.rundeck.core.execution.orchestrator.OrchestratorService;
 import com.dtolabs.rundeck.core.execution.service.*;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionService;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionService;
@@ -326,7 +327,11 @@ public class Framework extends FrameworkResourceParent {
     public ResourceFormatGeneratorService getResourceFormatGeneratorService() {
         return ResourceFormatGeneratorService.getInstanceForFramework(this);
     }
-
+    
+    public OrchestratorService getOrchestratorService() {
+        return OrchestratorService.getInstanceForFramework(this);
+    }
+    
     public ServiceProviderLoader getPluginManager(){
         if(null!=getService(PluginManagerService.SERVICE_NAME)) {
             return PluginManagerService.getInstanceForFramework(this);

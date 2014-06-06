@@ -738,6 +738,7 @@ class MenuController extends ControllerBase{
 //                framework.getResourceModelSourceService(),
             framework.getResourceFormatParserService(),
             framework.getResourceFormatGeneratorService(),
+            framework.getOrchestratorService(),
         ].collectEntries{
             [it.name, it.listDescriptions().sort {a,b->a.name<=>b.name}]
         }
