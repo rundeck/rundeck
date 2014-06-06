@@ -594,7 +594,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
      */
     def long scheduleTempJob(ScheduledExecution se, String user, Subject subject, AuthContext authContext,
                              Execution e, long timeout, Map secureOpts =null,
-                             Map secureOptsExposed =null, boolean isRetry=false, int retryAttempt = 0) {
+                             Map secureOptsExposed =null, int retryAttempt = 0) {
 
         def jobDetail = createJobDetail(se, "TEMP:" + user + ":" + se.id + ":" + e.id, user + ":run:" + se.id)
         jobDetail.getJobDataMap().put("user", user)
@@ -608,7 +608,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
         if(secureOptsExposed){
             jobDetail.getJobDataMap().put("secureOptsExposed", secureOptsExposed)
         }
-        if(isRetry){
+        if(retryAttempt){
             jobDetail.getJobDataMap().put("retryAttempt",retryAttempt)
         }else{
             jobDetail.getJobDataMap().put("retryAttempt", 0)

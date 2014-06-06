@@ -675,7 +675,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         jobcontext.project = execution.project
         jobcontext.loglevel = textLogLevels[execution.loglevel] ?: execution.loglevel
         jobcontext.retryAttempt=Integer.toString(execution.retryAttempt)
-        jobcontext.wasRetry=Boolean.toString(execution.wasRetry)
+        jobcontext.wasRetry=Boolean.toString(execution.retryAttempt?true:false)
         jobcontext
     }
 
@@ -1205,9 +1205,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                     nodeRankAttribute:params.nodeRankAttribute,
                                     workflow:params.workflow,
                                     argString:params.argString,
-                                    timeout:params.timeout?params.timeout:null,
+                                    timeout:params.timeout?:null,
                                     retryAttempt:params.retryAttempt?:0,
-                                    wasRetry: params.wasRetry?true:false,
+                                    retry:params.retry?:null,
                                     serverNodeUUID: frameworkService.getServerUUID()
             )
 
@@ -1327,8 +1327,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             return [success: false, error: 'unauthorized', message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
         }
         input.retryAttempt = attempt
-        input.wasRetry = attempt > 0
-
         try {
 
             def Execution e = createExecution(scheduledExecution, user, input)
@@ -1343,7 +1341,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
             def eid = scheduledExecutionService.scheduleTempJob(scheduledExecution, user, subject, authContext, e,
                     timeout,
-                    secureOpts, secureOptsExposed, e.wasRetry?true:false,e.retryAttempt)
+                    secureOpts, secureOptsExposed,e.retryAttempt)
             return [success: true, executionId: eid, name: scheduledExecution.jobName, execution: e]
         } catch (ExecutionServiceValidationException exc) {
             return [success: false, error: 'invalid', message: exc.getMessage(), options: exc.getOptions(), errors: exc.getErrors()]
@@ -1678,12 +1676,22 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if (!props.cancelled && props.status!='true' && scheduledExecution && retryContext) {
             //determine retry necessity
             int count = retryContext?.retryAttempt ?: 0
-            int maxRetries = 1//TODO: scheduledExecution.retryCount
+            int maxRetries = scheduledExecution.retry?Integer.parseInt(scheduledExecution.retry):0
             if (maxRetries > count) {
-                needsRetry = true
+                execution.willRetry=true
+                def input = [
+                        argString: execution.argString,
+                        loglevel: execution.loglevel,
+                        filter: execution.filter //TODO: failed nodes?
+                ]
+                def result = retryExecuteJob(scheduledExecution, retryContext.authContext,
+                        retryContext.userSubject, retryContext.user, input, retryContext.secureOpts,
+                        retryContext.secureOptsExposed, count + 1)
+                if(result.success){
+                    execution.retryExecution=result.execution
+                }
             }
         }
-        execution.willRetry=needsRetry
         def boolean execSaved=false
         if (execution.save(flush:true)) {
             log.debug("saved execution status. id: ${execution.id}")
@@ -1724,17 +1732,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             def context = execmap?.thread?.context
             notificationService.triggerJobNotification(props.status == 'true' ? 'success' : 'failure', schedId, [execution: execution,nodestatus:[succeeded:sucCount,failed:failedCount,total:totalCount],context:context])
-        }
-        if(needsRetry){
-                int count = retryContext?.retryAttempt ?: 0
-                def input = [
-                        argString: execution.argString,
-                        loglevel: execution.loglevel,
-                        filter: execution.filter //TODO: failed nodes?
-                ]
-                retryExecuteJob(scheduledExecution, retryContext.authContext,
-                        retryContext.userSubject, retryContext.user, input, retryContext.secureOpts,
-                        retryContext.secureOptsExposed,count+1)
         }
     }
     public String summarizeJob(ScheduledExecution job=null,Execution exec){
