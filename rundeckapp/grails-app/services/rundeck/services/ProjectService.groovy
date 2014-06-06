@@ -168,7 +168,8 @@ class ProjectService {
      * @param xmlfile input file
      * @param jobIdMap map of UUID/ScheduledExecution IDs to new UUIDs for reassigning execution to jobs
      * @param skipJobIds list of UUID/job id to skip execution import
-     * @return map data: 'executions' list of Executions that were parsed, 'execidmap' map of new Executions to the input IDs from the XML
+     * @return map data: 'executions' list of Executions that were parsed, 'execidmap' map of new Executions to the
+     * input IDs from the XML, 'retryidmap' map of new Executions to old the 'retry' execution ID
      * @throws ProjectServiceException if an error occurs
      */
     def loadExecutions(xmlinput,Map jobIdMap=null, skipJobIds = []) throws ProjectServiceException {
@@ -185,6 +186,7 @@ class ProjectService {
 
         def execlist=[]
         def execidmap=[:]
+        def retryidmap=[:]
         def ecount=0
         doc.execution.each{ enode->
             def object = XmlParserUtil.toObject(enode,false)
@@ -209,9 +211,13 @@ class ProjectService {
                     object.cancelled=true
                     object.abortedby='system'
                 }
+                def retryExecId= XmlParserUtil.stringToInt(object.remove('retryExecutionId'),0)
                 try {
                     def newexec = Execution.fromMap(object, se)
                     execidmap[newexec]=object.id
+                    if(retryExecId){
+                        retryidmap[newexec]=retryExecId
+                    }
                     execlist << newexec
                 } catch (Throwable e) {
                     throw new ProjectServiceException("Unable to create Execution($ecount): " + e.getMessage(), e)
@@ -221,7 +227,7 @@ class ProjectService {
                 throw new ProjectServiceException("Unexpected data type for Execution($ecount) in file (${xmlfile}): " + object.class.name)
             }
         }
-        [executions:execlist,execidmap:execidmap]
+        [executions:execlist,execidmap:execidmap, retryidmap: retryidmap]
     }
 
     private Node parseXml(xmlinput) {
@@ -495,12 +501,15 @@ class ProjectService {
     private Map importExecutionsToProject(ArrayList execxml, Map<String, File> execout, projectName, Framework framework, jobIdMap, skipJobIds=[]) {
         // map from old execution ID to new ID
         def execidmap = [:]
+        def oldidtoexec = [:]
+        def retryexecs= [:]
         def loadexecresults = []
         //load executions, and move/rewrite outputfile names
         execxml.each { File exml ->
             def results = loadExecutions(exml, jobIdMap,skipJobIds)
             def execlist = results.executions
             def oldids = results.execidmap
+            retryexecs.putAll(results.retryidmap)
             execlist.each { Execution e ->
                 e.project = projectName
                 if (e.workflow && !e.workflow.save()) {
@@ -514,6 +523,7 @@ class ProjectService {
                 loadexecresults << e
                 if (oldids[e]) {
                     execidmap[oldids[e]] = e.id
+                    oldidtoexec[oldids[e]]=e
                 }
                 //check outputfile exists in mapping
                 if (e.outputfilepath && execout[e.outputfilepath]) {
@@ -543,6 +553,21 @@ class ProjectService {
                     } catch (IOException exc) {
                         log.error("Failed to move temp state file to destination: ${newfile.absolutePath} (old id ${oldids[e]})", exc)
                     }
+                }
+            }
+        }
+        //reassign retry execution links
+        loadexecresults.each { Execution e ->
+            if (retryexecs[e]) {
+                Execution retryExec = oldidtoexec[retryexecs[e]]
+                if (retryExec) {
+                    e.retryExecution = retryExec
+                    if (!e.save()) {
+                        log.error("Unable to update execution retry link: ${e.errors} (file ${exml})")
+                        return
+                    }
+                }else{
+                    log.error("Failed to link retry for ${e.id} to ${retryexecs[e]}")
                 }
             }
         }
