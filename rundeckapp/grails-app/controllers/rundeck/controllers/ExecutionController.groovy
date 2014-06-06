@@ -146,11 +146,9 @@ class ExecutionController extends ControllerBase{
             flash.message="Deleted execution ID: ${params.id}"
         }
         if(jobid){
-            return redirect(controller: 'scheduledExecution',action: 'show',id:jobid,
-                    params:[project:params.project])
-        }else{
-            return redirect(controller: 'reports', action: 'index', params: [project: params.project])
+            flash.message = "Deleted execution ID: ${params.id} of job {{Job ${jobid}}}"
         }
+        return redirect(controller: 'reports', action: 'index', params: [project: params.project])
 
     }
 
