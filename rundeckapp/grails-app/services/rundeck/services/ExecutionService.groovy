@@ -546,7 +546,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def cleanupRunningJobs(String serverUUID=null) {
         def found = Execution.findAllByDateCompletedAndServerNodeUUID(null, serverUUID)
         found.each { Execution e ->
-            saveExecutionState(e.scheduledExecution?.id, e.id, [status: String.valueOf(false), dateCompleted: new Date(), cancelled: true], null)
+            saveExecutionState(e.scheduledExecution?.id, e.id, [status: String.valueOf(false),
+                    dateCompleted: new Date(), cancelled: true], null,null)
             log.error("Stale Execution cleaned up: [${e.id}]")
             metricService.markMeter(this.class.name,'executionCleanupMeter')
         }
@@ -610,7 +611,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     public logExecution(uri,project,user,issuccess,execId,Date startDate=null, jobExecId=null, jobName=null,
-                        jobSummary=null,iscancelled=false,istimedout=false, nodesummary=null, abortedby=null){
+                        jobSummary=null,iscancelled=false,istimedout=false,willretry=false, nodesummary=null,
+                        abortedby=null){
 
         def reportMap=[:]
         def internalLog = org.apache.log4j.Logger.getLogger("ExecutionService")
@@ -645,11 +647,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         reportMap.author=user
         reportMap.title= jobSummary?jobSummary:"RunDeck Job Execution"
-        reportMap.status= issuccess ? "succeed":iscancelled?"cancel": istimedout?"timeout":"fail"
+        reportMap.status= issuccess ? "succeed":iscancelled?"cancel": willretry?'retry':istimedout?"timeout":"fail"
         reportMap.node= null!=nodesummary?nodesummary: frameworkService.getFrameworkNodeName()
 
         reportMap.message=(issuccess?'Job completed successfully':iscancelled?('Job killed by: '+(abortedby?:user)):
-            istimedout?'Job timed out':'Job failed')
+            willretry?'Job Failed (will retry)':istimedout?'Job timed out':'Job failed')
         reportMap.dateCompleted=new Date()
         def result=reportService.reportExecutionResult(reportMap)
         if(result.error){
@@ -672,6 +674,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         jobcontext['user.name'] = execution.user
         jobcontext.project = execution.project
         jobcontext.loglevel = textLogLevels[execution.loglevel] ?: execution.loglevel
+        jobcontext.retryAttempt=Integer.toString(execution.retryAttempt)
+        jobcontext.wasRetry=Boolean.toString(execution.wasRetry)
         jobcontext
     }
 
@@ -691,7 +695,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     def Map executeAsyncBegin(Framework framework, AuthContext authContext, Execution execution,
                               ScheduledExecution scheduledExecution=null, Map extraParams = null,
-                              Map extraParamsExposed = null){
+                              Map extraParamsExposed = null, int retryAttempt=0){
         //TODO: method can be transactional readonly
         metricService.markMeter(this.class.name,'executionStartMeter')
         execution.refresh()
@@ -814,6 +818,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     public static String EXECUTION_FAILED = "failed"
     public static String EXECUTION_ABORTED = "aborted"
     public static String EXECUTION_TIMEDOUT = "timedout"
+    public static String EXECUTION_FAILED_WITH_RETRY = "failed-with-retry"
 
     public static String ABORT_PENDING = "pending"
     public static String ABORT_ABORTED = "aborted"
@@ -821,7 +826,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     public static String getExecutionState(Execution e) {
         return null == e.dateCompleted ? EXECUTION_RUNNING : "true" == e.status ? EXECUTION_SUCCEEDED : e.cancelled ?
-            EXECUTION_ABORTED : e.timedOut ? EXECUTION_TIMEDOUT : EXECUTION_FAILED
+            EXECUTION_ABORTED : e.willRetry ? EXECUTION_FAILED_WITH_RETRY:  e.timedOut ? EXECUTION_TIMEDOUT  : EXECUTION_FAILED
     }
 
     public StepExecutionItem itemForWFCmdItem(final WorkflowStep step,final StepExecutionItem handler=null) throws FileNotFoundException {
@@ -1201,6 +1206,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                     workflow:params.workflow,
                                     argString:params.argString,
                                     timeout:params.timeout?params.timeout:null,
+                                    retryAttempt:params.retryAttempt?:0,
+                                    wasRetry: params.wasRetry?true:false,
                                     serverNodeUUID: frameworkService.getServerUUID()
             )
 
@@ -1285,40 +1292,65 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         timeoutval
     }
 
-
-    public Map executeScheduledExecution(ScheduledExecution scheduledExecution, Framework framework, AuthContext authContext, Subject subject, params) {
+    /**
+     * Run a job,
+     * @param scheduledExecution
+     * @param framework
+     * @param authContext
+     * @param subject
+     * @param user
+     * @param input
+     * @return
+     */
+    public Map executeJob(ScheduledExecution scheduledExecution, AuthContext authContext, Subject subject, String user,
+                          Map input) {
+        def secureOpts = selectSecureOptionInput(scheduledExecution, input)
+        def secureOptsExposed = selectSecureOptionInput(scheduledExecution, input, true)
+       return retryExecuteJob(scheduledExecution,authContext,subject,user,input,secureOpts,secureOptsExposed,0)
+    }
+    /**
+     * retry a job execution
+     * @param scheduledExecution
+     * @param authContext
+     * @param subject
+     * @param user
+     * @param input
+     * @param secureOpts
+     * @param secureOptsExposed
+     * @param attempt
+     * @return
+     */
+    public Map retryExecuteJob(ScheduledExecution scheduledExecution, AuthContext authContext, Subject subject,
+                               String user, Map input, Map secureOpts=[:], Map secureOptsExposed = [:], int attempt) {
         if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
-            scheduledExecution.project)) {
-//            unauthorized("Execute Job ${scheduledExecution.extid}")
+                scheduledExecution.project)) {
             return [success: false, error: 'unauthorized', message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
         }
-
-        def extra = params.extra
+        input.retryAttempt = attempt
+        input.wasRetry = attempt > 0
 
         try {
-            def Execution e = createExecution(scheduledExecution, framework, params.user, extra)
-            def extraMap = selectSecureOptionInput(scheduledExecution, extra)
-            def extraParamsExposed = selectSecureOptionInput(scheduledExecution, extra, true)
-            def timeout=0
-            if(e.timeout) {
-                HashMap optparams = removeSecureOptionEntries(scheduledExecution, parseJobOptionInput(extra,
-                        scheduledExecution))
-                def timeoutstr=e.timeout
+
+            def Execution e = createExecution(scheduledExecution, user, input)
+            def timeout = 0
+            if (e.timeout) {
+                HashMap optparams = removeSecureOptionEntries(scheduledExecution, parseJobOptionInput(input, scheduledExecution))
+                def timeoutstr = e.timeout
                 if (optparams) {
                     timeoutstr = DataContextUtils.replaceDataReferences(timeoutstr, DataContextUtils.addContext("option", optparams, null))
                 }
                 timeout = evaluateTimeoutDuration(timeoutstr)
             }
-            def eid = scheduledExecutionService.scheduleTempJob(scheduledExecution, params.user, subject, e, timeout,
-                    extraMap, extraParamsExposed) ;
-
-            return [success:true,executionId: eid, name: scheduledExecution.jobName, execution: e]
+            def eid = scheduledExecutionService.scheduleTempJob(scheduledExecution, user, subject, authContext, e,
+                    timeout,
+                    secureOpts, secureOptsExposed, e.wasRetry?true:false,e.retryAttempt)
+            return [success: true, executionId: eid, name: scheduledExecution.jobName, execution: e]
         } catch (ExecutionServiceValidationException exc) {
-            return [success:false,error: 'invalid', message: exc.getMessage(), options: exc.getOptions(), errors: exc.getErrors()]
+            return [success: false, error: 'invalid', message: exc.getMessage(), options: exc.getOptions(), errors: exc.getErrors()]
         } catch (ExecutionServiceException exc) {
             def msg = exc.getMessage()
             log.error("exception: " + exc)
-            return [success:false,error: exc.code?:'failed', message: msg, options:extra.option]
+            return [success: false, error: exc.code ?: 'failed', message: msg, options: input.option]
         }
     }
     Execution int_createExecution(ScheduledExecution se,user,extra){
@@ -1381,7 +1413,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         return execution
     }
-    def Execution createExecution(ScheduledExecution se, Framework framework, String user, Map extra = [:]) throws ExecutionServiceException {
+    def Execution createExecution(ScheduledExecution se, String user, Map extra = [:]) throws ExecutionServiceException {
         if (!se.multipleExecutions) {
             synchronized (this) {
                 //find any currently running executions for this job, and if so, throw exception
@@ -1627,7 +1659,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return optparams
     }
 
-    def saveExecutionState( schedId, exId, Map props, Map execmap=null){
+    def saveExecutionState( schedId, exId, Map props, Map execmap, Map retryContext){
         def ScheduledExecution scheduledExecution
         def Execution execution = Execution.get(exId)
         execution.properties=props
@@ -1637,6 +1669,21 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if (props.succeededNodes) {
             execution.succeededNodeList = props.succeededNodes.join(",")
         }
+
+        if (schedId) {
+            scheduledExecution = ScheduledExecution.get(schedId)
+        }
+
+        boolean needsRetry=false
+        if (!props.cancelled && props.status!='true' && scheduledExecution && retryContext) {
+            //determine retry necessity
+            int count = retryContext?.retryAttempt ?: 0
+            int maxRetries = 1//TODO: scheduledExecution.retryCount
+            if (maxRetries > count) {
+                needsRetry = true
+            }
+        }
+        execution.willRetry=needsRetry
         def boolean execSaved=false
         if (execution.save(flush:true)) {
             log.debug("saved execution status. id: ${execution.id}")
@@ -1646,10 +1693,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             execution.errors.allErrors.each { log.warn(it.defaultMessage) }
             log.error("failed to save execution status")
         }
-        if (schedId) {
-            scheduledExecution = ScheduledExecution.get(schedId)
-        }
-
         def jobname="adhoc"
         def jobid=null
         def summary= summarizeJob(scheduledExecution, execution)
@@ -1675,12 +1718,23 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 totalCount=matched.size()
             }
             logExecution(null, execution.project, execution.user, "true" == execution.status, exId,
-                execution.dateStarted, jobid, jobname, summary, props.cancelled,props.timedOut,
+                execution.dateStarted, jobid, jobname, summary, props.cancelled, props.timedOut, execution.willRetry,
                 node, execution.abortedby)
             logExecutionLog4j(execution, "finish", execution.user)
 
             def context = execmap?.thread?.context
             notificationService.triggerJobNotification(props.status == 'true' ? 'success' : 'failure', schedId, [execution: execution,nodestatus:[succeeded:sucCount,failed:failedCount,total:totalCount],context:context])
+        }
+        if(needsRetry){
+                int count = retryContext?.retryAttempt ?: 0
+                def input = [
+                        argString: execution.argString,
+                        loglevel: execution.loglevel,
+                        filter: execution.filter //TODO: failed nodes?
+                ]
+                retryExecuteJob(scheduledExecution, retryContext.authContext,
+                        retryContext.userSubject, retryContext.user, input, retryContext.secureOpts,
+                        retryContext.secureOptsExposed,count+1)
         }
     }
     public String summarizeJob(ScheduledExecution job=null,Execution exec){

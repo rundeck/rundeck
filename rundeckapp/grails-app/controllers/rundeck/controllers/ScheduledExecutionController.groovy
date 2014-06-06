@@ -1785,9 +1785,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
     }
     private Map runJob () {
-        Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        params["user"] = (session?.user) ? session.user : "anonymous"
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
         if (!scheduledExecution) {
 //            response.setStatus (404)
@@ -1800,11 +1798,12 @@ class ScheduledExecutionController  extends ControllerBase{
         if(params.extra?.debug=='true'){
             params.extra.loglevel='DEBUG'
         }
-        def result = executionService.executeScheduledExecution(scheduledExecution,framework, authContext, request.subject,params)
+        def inputOpts=params.extra
+        def result = executionService.executeJob(scheduledExecution, authContext, request.subject,session.user,
+                inputOpts)
 
         if (result.error){
             result.failed=true
-
             return result
         }else{
             log.debug("ExecutionController: immediate execution scheduled")
@@ -1992,7 +1991,6 @@ class ScheduledExecutionController  extends ControllerBase{
         if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
             return
         }
-        Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
         if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
@@ -2000,8 +1998,7 @@ class ScheduledExecutionController  extends ControllerBase{
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Run', 'Job ID', params.id]])
         }
-        def inparams = [extra: [:]]
-        inparams["user"] = (session?.user) ? session.user : "anonymous"
+        def username=session.user
         if(params.asUser && apiService.requireVersion(request,response,ApiRequestFilters.V5)){
             //authorize RunAs User
             if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUNAS],
@@ -2009,29 +2006,30 @@ class ScheduledExecutionController  extends ControllerBase{
                 return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                         code: 'api.error.item.unauthorized', args: ['Run as User', 'Job ID', params.id]])
             }
-            inparams['user']= params.asUser
+            username= params.asUser
         }
+        def inputOpts = [user:username]
 
         if (params.argString) {
-            inparams.extra["argString"] = params.argString
+            inputOpts["argString"] = params.argString
         }
         if (params.loglevel) {
-            inparams.extra["loglevel"] = params.loglevel
+            inputOpts["loglevel"] = params.loglevel
         }
         //convert api parameters to node filter parameters
         def filters = FrameworkController.extractApiNodeFilterParams(params)
         if (filters) {
-            inparams.extra['_replaceNodeFilters']='true'
-            inparams.extra['doNodedispatch']=true
+            inputOpts['_replaceNodeFilters']='true'
+            inputOpts['doNodedispatch']=true
             filters.each {k, v ->
-                inparams.extra[k] = v
+                inputOpts[k] = v
             }
-            if(null==inparams.extra['nodeExcludePrecedence']){
-                inparams.extra['nodeExcludePrecedence'] = true
+            if(null== inputOpts['nodeExcludePrecedence']){
+                inputOpts['nodeExcludePrecedence'] = true
             }
         }
 
-        def result = executionService.executeScheduledExecution(scheduledExecution, framework, authContext, request.subject, inparams)
+        def result = executionService.executeJob(scheduledExecution, authContext, request.subject, username, inputOpts)
         if(!result.success){
             if(result.error=='unauthorized'){
                 return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,

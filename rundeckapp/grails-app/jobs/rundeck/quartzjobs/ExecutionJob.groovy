@@ -99,17 +99,27 @@ class ExecutionJob implements InterruptableJob {
         def result
         try {
             if(!wasInterrupted){
-                result=executeCommand(initMap.executionService, initMap.executionUtilService,initMap.execution,
-                        initMap.framework,initMap.authContext,initMap.scheduledExecution, initMap.timeout?:0,
-                        initMap.extraParams, initMap.extraParamsExposed)
+                ExecutionService executionService = initMap.executionService
+                ExecutionUtilService service = initMap.executionUtilService
+                Execution execution = initMap.execution
+                Framework framework = initMap.framework
+                AuthContext context1 = initMap.authContext
+                ScheduledExecution job = initMap.scheduledExecution
+                def timeout = initMap.timeout
+                Map secureOpts = initMap.secureOpts
+                Map secureOptsExposed = initMap.secureOptsExposed
+                int retryAttempt = context.jobDetail.jobDataMap.get("retryAttempt")?:0
+                result=executeCommand(executionService, service, execution,
+                        framework, context1, job, timeout ?: 0,
+                        secureOpts, secureOptsExposed, retryAttempt)
                 success=result.success
             }
         }catch(Throwable t){
             log.error("Failed execution ${initMap.execution.id} : ${t.message?t.message:'no message'}",t)
         }
-        saveState(initMap.executionService, initMap.execution ? initMap.execution : (Execution) null, success,
-            wasInterrupted, wasTimeout,initMap.timeout, initMap.isTemp,
-                initMap.scheduledExecutionId ? initMap.scheduledExecutionId: -1L,
+        saveState(context,initMap.executionService, initMap.execution ? initMap.execution : (Execution) null, success,
+            wasInterrupted, wasTimeout, initMap.timeout, initMap.isTemp,
+                initMap.scheduledExecutionId ? initMap.scheduledExecutionId : -1L,
                 result?.execmap)
     }
 
@@ -195,8 +205,8 @@ class ExecutionJob implements InterruptableJob {
             }
         }else if(jobDataMap.get("executionId")){
                 initMap.executionId=jobDataMap.get("executionId")
-                initMap.extraParams=jobDataMap.get("extraParams")
-                initMap.extraParamsExposed=jobDataMap.get("extraParamsExposed")
+                initMap.secureOpts=jobDataMap.get("secureOpts")
+                initMap.secureOptsExposed=jobDataMap.get("secureOptsExposed")
                 initMap.execution = Execution.get(initMap.executionId)
                 //NOTE: Oracle/hibernate bug workaround: if session has not flushed we may have to wait until Execution.get
                 //can return the right entity
@@ -247,22 +257,22 @@ class ExecutionJob implements InterruptableJob {
             initMap.framework = frameworkService.rundeckFramework
             def rolelist = initMap.scheduledExecution.userRoles
             initMap.authContext = frameworkService.getAuthContextForUserAndRoles(initMap.scheduledExecution.user, rolelist)
-            initMap.extraParamsExposed = initMap.executionService.selectSecureOptionInput(initMap.scheduledExecution,[:],true)
-            initMap.execution = initMap.executionService.createExecution(initMap.scheduledExecution, initMap.framework,initMap.scheduledExecution.user)
+            initMap.secureOptsExposed = initMap.executionService.selectSecureOptionInput(initMap.scheduledExecution,[:],true)
+            initMap.execution = initMap.executionService.createExecution(initMap.scheduledExecution,initMap.scheduledExecution.user)
         }
         return initMap
     }
 
     def executeCommand(ExecutionService executionService, ExecutionUtilService executionUtilService,
                        Execution execution, Framework framework, AuthContext authContext,
-                       ScheduledExecution scheduledExecution = null, long timeout, Map extraParams = null,
-                       Map extraParamsExposed = null) {
+                       ScheduledExecution scheduledExecution , long timeout, Map secureOpts ,
+                       Map secureOptsExposed , int retryAttempt=0) {
 
         def success = false
         def Map execmap
         try {
             execmap = executionService.executeAsyncBegin(framework, authContext, execution, scheduledExecution,
-                    extraParams, extraParamsExposed)
+                    secureOpts, secureOptsExposed)
 
         } catch (Exception e) {
             log.error("Execution ${execution.id} failed to start: " + e.getMessage(), e)
@@ -364,9 +374,10 @@ class ExecutionJob implements InterruptableJob {
         return [complete,caught]
     }
 
-    def saveState(ExecutionService executionService,Execution execution, boolean success, boolean _interrupted,
-            boolean timedOut,
-            long timeoutDuration,
+    def saveState(JobExecutionContext context, ExecutionService executionService,Execution execution, boolean success,
+                  boolean _interrupted,
+                  boolean timedOut,
+                  long timeoutDuration,
                   boolean isTemp, long scheduledExecutionId=-1, Map execmap) {
         Map<String,Object> failedNodes=extractFailedNodes(execmap)
         Set<String> succeededNodes=extractSucceededNodes(execmap)
@@ -385,10 +396,20 @@ class ExecutionJob implements InterruptableJob {
         ]
         def saveStateComplete=false
         def saveStateException=null
+        Map retryContext=[
+            user: context.jobDetail.jobDataMap.get("user"),
+            userSubject: context.jobDetail.jobDataMap.get("userSubject"),
+            authContext: context.jobDetail.jobDataMap.get("authContext"),
+            secureOpts: context.jobDetail.jobDataMap.get("secureOpts"),
+            secureOptsExposed: context.jobDetail.jobDataMap.get("secureOptsExposed"),
+            retryAttempt: context.jobDetail.jobDataMap.get("retryAttempt"),
+            timeout: context.jobDetail.jobDataMap.get("timeout"),
+        ]
         //attempt to save execution state, with retry, in case DB connection fails
         (saveStateComplete, saveStateException) = withRetry(finalizeRetryMax, finalizeRetryDelay,
                 "Execution ${execution.id} save result status:") {
-            executionService.saveExecutionState(scheduledExecutionId > 0 ? scheduledExecutionId : null, execution.id, resultMap, execmap)
+            executionService.saveExecutionState(scheduledExecutionId > 0 ? scheduledExecutionId : null, execution.id,
+                    resultMap, execmap, retryContext)
         }
         if (!saveStateComplete) {
             log.error("ExecutionJob: Failed to save execution state for ${execution.id}, after retrying ${finalizeRetryMax} times: ${saveStateException}")

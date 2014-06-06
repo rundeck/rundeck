@@ -20,6 +20,9 @@ class Execution extends ExecutionContext {
     boolean cancelled
     Boolean timedOut=false
     Workflow workflow
+    Integer retryAttempt=0
+    Boolean wasRetry=false
+    Boolean willRetry=false
 
     static constraints = {
         workflow(nullable:true)
@@ -61,6 +64,9 @@ class Execution extends ExecutionContext {
         })
         timeout(maxSize: 256, blank: true, nullable: true,)
         timedOut(nullable: true)
+        retryAttempt(nullable: true)
+        wasRetry(nullable: true)
+        willRetry(nullable: true)
     }
 
     static mapping = {
@@ -146,6 +152,9 @@ class Execution extends ExecutionContext {
         }
         map.id= this.id
         map.doNodedispatch= this.doNodedispatch
+        if(this.wasRetry){
+            map.retryAttempt=retryAttempt
+        }
         if(doNodedispatch){
             map.nodefilters = [dispatch: [threadcount: nodeThreadcount?:1, keepgoing: nodeKeepgoing, excludePrecedence: nodeExcludePrecedence]]
             if (nodeRankAttribute) {
@@ -181,6 +190,10 @@ class Execution extends ExecutionContext {
         exec.loglevel = data.loglevel
         exec.doNodedispatch = data.doNodedispatch
         exec.timeout = data.timeout
+        if(data.retryAttempt){
+            exec.wasRetry=true
+            exec.retryAttempt= XmlParserUtil.stringToInt(data.retryAttempt, 0)
+        }
         if (data.nodefilters) {
             exec.nodeThreadcount = XmlParserUtil.stringToInt(data.nodefilters.dispatch?.threadcount,1)
             if (data.nodefilters.dispatch?.containsKey('keepgoing')) {
