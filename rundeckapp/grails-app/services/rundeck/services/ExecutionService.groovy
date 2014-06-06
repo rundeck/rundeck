@@ -84,12 +84,20 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     public def respondExecutionsXml(HttpServletResponse response, List<Execution> executions, paging = [:]) {
         return apiService.respondExecutionsXml(response,executions.collect { Execution e ->
-                [
+                def data=[
                         execution: e,
                         href: getFollowURLForExecution(e),
                         status: getExecutionState(e),
                         summary: summarizeJob(e.scheduledExecution, e)
                 ]
+                if(e.retryExecution){
+                    data.retryExecution=[
+                            id:e.retryExecution.id,
+                            href: getFollowURLForExecution(e.retryExecution),
+                            status: getExecutionState(e.retryExecution),
+                    ]
+                }
+                data
             }, paging)
     }
 
