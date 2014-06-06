@@ -160,6 +160,9 @@ class Execution extends ExecutionContext {
         if(this.retryExecution){
             map.retryExecutionId=retryExecution.id
         }
+        if(this.willRetry){
+            map.willRetry=true
+        }
         if(doNodedispatch){
             map.nodefilters = [dispatch: [threadcount: nodeThreadcount?:1, keepgoing: nodeKeepgoing, excludePrecedence: nodeExcludePrecedence]]
             if (nodeRankAttribute) {
@@ -203,6 +206,9 @@ class Execution extends ExecutionContext {
         }
         if(data.retryExecutionId){
             exec.retryExecution=Execution.get(data.retryExecutionId)
+        }
+        if(data.willRetry){
+            exec.willRetry=XmlParserUtil.stringToBool(data.willRetry,false)
         }
         if (data.nodefilters) {
             exec.nodeThreadcount = XmlParserUtil.stringToInt(data.nodefilters.dispatch?.threadcount,1)

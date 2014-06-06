@@ -388,6 +388,7 @@ class ExecutionTest {
         assertNotNull(exec1.errors.allErrors.collect{ it.toString() }.join(" "), exec1.save())
         def exec = Execution.fromMap([
                 retry: '123',
+                willRetry: 'true',
                 retryAttempt: 12,
                 retryExecutionId: exec1.id,
                 status: 'true',
@@ -409,6 +410,7 @@ class ExecutionTest {
         assertEquals('123',exec.retry)
         assertEquals(12,exec.retryAttempt)
         assertEquals(exec1,exec.retryExecution)
+        assertEquals(true,exec.willRetry)
     }
     void testToMapRetry(){
         def exec1 = new Execution(project: 'test1', user: 'user1',
@@ -429,11 +431,13 @@ class ExecutionTest {
         exec2.retry='123'
         exec2.retryAttempt=12
         exec2.retryExecution=exec1
+        exec2.willRetry=true
         assertNotNull(exec2.save())
         def map = exec2.toMap()
         assertNotNull(map)
         assertEquals('123',map.retry)
         assertEquals(12, map.retryAttempt)
         assertEquals(exec1.id, map.retryExecutionId)
+        assertEquals(true, map.willRetry)
     }
 }
