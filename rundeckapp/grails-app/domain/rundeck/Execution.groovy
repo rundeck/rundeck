@@ -1,7 +1,5 @@
 package rundeck
-import com.dtolabs.rundeck.app.support.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.ExecutionContext
-import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.util.XmlParserUtil
 
 /**
