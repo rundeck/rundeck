@@ -32,13 +32,9 @@ by <g:username user="${execution.user}"/>
 %{--<g:render template="/scheduledExecution/execStatusText" model="${[execution: execution]}"/>--}%
 
 <div data-bind="visible: retryExecutionId()">
-    <span data-bind="text: 'RUNNING'==retryExecutionState()?'Retrying':'Retried' "></span>:
+    Retry attempt #<span data-bind="text: retryExecutionAttempt()"></span>  (of <span
+        data-bind="text: retry()"></span>):
     <a data-bind="attr: { 'href': retryExecutionUrl() }">
-        <i class="exec-status icon " data-bind="attr: { 'data-execstate': retryExecutionState() }">
-        </i>
         <span data-bind="text: '#'+retryExecutionId()"></span>
-        <span class=" execstate execstatedisplay  overall "
-              data-bind="attr: { 'data-execstate': retryExecutionState() } ">
-        </span>
     </a>
 </div>

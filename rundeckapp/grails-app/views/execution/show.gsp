@@ -114,6 +114,8 @@
                     retryExecutionId:data.retryExecutionId,
                     retryExecutionUrl:data.retryExecutionUrl,
                     retryExecutionState:data.retryExecutionState,
+                    retryExecutionAttempt:data.retryExecutionAttempt,
+                    retry:data.retry,
                     completed:data.completed,
                     execDuration:data.execDuration,
                     jobAverageDuration:data.jobAverageDuration,
@@ -127,6 +129,8 @@
                     retryExecutionId:data.retryExecutionId,
                     retryExecutionUrl:data.retryExecutionUrl,
                     retryExecutionState:data.retryExecutionState,
+                    retryExecutionAttempt:data.retryExecutionAttempt,
+                    retry:data.retry,
                     completed:data.completed,
                     execDuration:data.execDuration,
                     jobAverageDuration:data.jobAverageDuration,
@@ -219,7 +223,7 @@
                 <g:if test="${execution.retryAttempt}">
                     <div class="text-muted">
                         <i class="glyphicon glyphicon-repeat"></i>
-                        Retry #${execution.retryAttempt}
+                        Retry #${execution.retryAttempt}  (of ${execution.retry})
                     </div>
                 </g:if>
                         <g:if test="${eprev || enext}">
