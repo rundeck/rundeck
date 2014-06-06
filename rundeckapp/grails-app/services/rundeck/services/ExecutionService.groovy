@@ -1340,12 +1340,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def Execution e = createExecution(scheduledExecution, user, input)
             def timeout = 0
             if (e.timeout) {
-                HashMap optparams = removeSecureOptionEntries(scheduledExecution, parseJobOptionInput(input, scheduledExecution))
-                def timeoutstr = e.timeout
-                if (optparams) {
-                    timeoutstr = DataContextUtils.replaceDataReferences(timeoutstr, DataContextUtils.addContext("option", optparams, null))
-                }
-                timeout = evaluateTimeoutDuration(timeoutstr)
+                timeout = evaluateTimeoutDuration(e.timeout)
             }
             def eid = scheduledExecutionService.scheduleTempJob(scheduledExecution, user, subject, authContext, e,
                     timeout,
@@ -1384,6 +1379,18 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         optparams = removeSecureOptionEntries(se, optparams)
 
         props.argString = generateJobArgline(se, optparams)
+        if (props.retry?.contains('${')) {
+            //replace data references
+            if (optparams) {
+                props.retry = DataContextUtils.replaceDataReferences(props.retry, DataContextUtils.addContext("option", optparams, null))
+            }
+        }
+        if (props.timeout?.contains('${')) {
+            //replace data references
+            if (optparams) {
+                props.timeout = DataContextUtils.replaceDataReferences(props.timeout, DataContextUtils.addContext("option", optparams, null))
+            }
+        }
 
         Workflow workflow = new Workflow(se.workflow)
         //create duplicate workflow
@@ -1680,11 +1687,18 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             scheduledExecution = ScheduledExecution.get(schedId)
         }
 
-        boolean needsRetry=false
         if (!props.cancelled && props.status!='true' && scheduledExecution && retryContext) {
             //determine retry necessity
             int count = retryContext?.retryAttempt ?: 0
-            int maxRetries = scheduledExecution.retry?Integer.parseInt(scheduledExecution.retry):0
+            def retryStr = execution.retry
+            int maxRetries = 0
+            if(retryStr){
+                try{
+                    maxRetries=Integer.parseInt(retryStr)
+                }catch (NumberFormatException e){
+                    log.error("Retry string for job was not resolvable: ${retryStr}")
+                }
+            }
             if (maxRetries > count) {
                 execution.willRetry=true
                 def input = [
