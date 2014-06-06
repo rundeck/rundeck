@@ -21,8 +21,8 @@ class Execution extends ExecutionContext {
     Boolean timedOut=false
     Workflow workflow
     Integer retryAttempt=0
-    Boolean wasRetry=false
     Boolean willRetry=false
+    Execution retryExecution
 
     static constraints = {
         workflow(nullable:true)
@@ -63,9 +63,10 @@ class Execution extends ExecutionContext {
             }
         })
         timeout(maxSize: 256, blank: true, nullable: true,)
+        retry(maxSize: 256, blank: true, nullable: true,)
         timedOut(nullable: true)
         retryAttempt(nullable: true)
-        wasRetry(nullable: true)
+        retryExecution(nullable: true)
         willRetry(nullable: true)
     }
 
@@ -152,8 +153,14 @@ class Execution extends ExecutionContext {
         }
         map.id= this.id
         map.doNodedispatch= this.doNodedispatch
-        if(this.wasRetry){
+        if(this.retryAttempt){
             map.retryAttempt=retryAttempt
+        }
+        if(this.retry){
+            map.retry=this.retry
+        }
+        if(this.retryExecution){
+            map.retryExecutionId=retryExecution.id
         }
         if(doNodedispatch){
             map.nodefilters = [dispatch: [threadcount: nodeThreadcount?:1, keepgoing: nodeKeepgoing, excludePrecedence: nodeExcludePrecedence]]
@@ -191,8 +198,13 @@ class Execution extends ExecutionContext {
         exec.doNodedispatch = data.doNodedispatch
         exec.timeout = data.timeout
         if(data.retryAttempt){
-            exec.wasRetry=true
             exec.retryAttempt= XmlParserUtil.stringToInt(data.retryAttempt, 0)
+        }
+        if(data.retry){
+            exec.retry=data.retry
+        }
+        if(data.retryExecutionId){
+            exec.retryExecution=Execution.get(data.retryExecutionId)
         }
         if (data.nodefilters) {
             exec.nodeThreadcount = XmlParserUtil.stringToInt(data.nodefilters.dispatch?.threadcount,1)
