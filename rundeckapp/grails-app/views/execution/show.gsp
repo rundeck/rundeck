@@ -111,6 +111,9 @@
                 }
                 ko.mapping.fromJS({
                     executionState:data.executionState,
+                    retryExecutionId:data.retryExecutionId,
+                    retryExecutionUrl:data.retryExecutionUrl,
+                    retryExecutionState:data.retryExecutionState,
                     completed:data.completed,
                     execDuration:data.execDuration,
                     jobAverageDuration:data.jobAverageDuration,
@@ -121,6 +124,9 @@
             updateState:function(data){
                 ko.mapping.fromJS({
                     executionState:data.executionState,
+                    retryExecutionId:data.retryExecutionId,
+                    retryExecutionUrl:data.retryExecutionUrl,
+                    retryExecutionState:data.retryExecutionState,
                     completed:data.completed,
                     execDuration:data.execDuration,
                     jobAverageDuration:data.jobAverageDuration,
@@ -210,7 +216,7 @@
                                      model="[scheduledExecution: scheduledExecution, noimgs:true, execution: execution, followparams: [mode: followmode, lastlines: params.lastlines]]"/></span>
                         </span>
 
-                <g:if test="${execution.wasRetry}">
+                <g:if test="${execution.retryAttempt}">
                     <div class="text-muted">
                         <i class="glyphicon glyphicon-repeat"></i>
                         Retry #${execution.retryAttempt}

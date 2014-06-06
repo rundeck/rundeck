@@ -205,7 +205,14 @@ class ExecutionController extends ControllerBase{
             jobAverageDuration: jobAverage,
             startTime:StateMapping.encodeDate(e.dateStarted),
             endTime: StateMapping.encodeDate(e.dateCompleted),
+            retryAttempt: e.retryAttempt
         ]
+        if(e.retryExecution){
+            data['retryExecutionId']=e.retryExecution.id
+            data['retryExecutionUrl']=createLink(controller: 'execution',action: 'show',id: e.retryExecution.id,
+                    params:[project:e.project])
+            data['retryExecutionState']=ExecutionService.getExecutionState(e.retryExecution).toUpperCase()
+        }
         def loader = workflowService.requestState(e)
         if (loader.state == ExecutionLogState.AVAILABLE) {
             data.state = loader.workflowState
