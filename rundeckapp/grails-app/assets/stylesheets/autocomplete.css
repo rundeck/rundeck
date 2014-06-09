@@ -1,0 +1,15 @@
+span.ui-helper-hidden-accessible {
+	display: none;
+}
+
+ul.ui-autocomplete {
+	background-color: whitesmoke;
+}
+
+ui-state-focus, .ui-state-active {
+	background-color: lightblue;
+}
+
+li.ui-menu-item {
+	list-style: none;
+}
