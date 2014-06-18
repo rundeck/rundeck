@@ -10,6 +10,40 @@ Rundeck has three basic ways of defining authentication.
 
 By default a new installation uses the realm.properties method.
 
+### Security Role
+
+There is a "required role" which any user you wish to allow access to Rundeck must belong to. By default that role name is user (As of Rundeck 2.0 and earlier). The required role name must be manually changed if you want a different required role.
+
+To modify the required role name, edit the web.xml file:
+
+* RPM/debian install path: /var/lib/rundeck/exp/webapp/WEB-INF/web.xml
+* Jar/launcher: After running once or executing `--installonly`, modify the path $RDECK_BASE/server/exp/webapp/WEB-INF/web.xml
+  * after modifying the file you must run the launcher jar with --skipinstall to avoid overwriting the file with the original value
+
+Modify the section shown below and replace user with your own required role name:
+
+~~~~~~ {.xml }
+<security-role>
+    <role-name>user</role-name>
+</security-role>
+~~~~~~
+
+Here's an example that changes the required role to one called "myADgroup" (the hypothetical group name from Active Directory):
+
+~~~~~~ {.diff .numberLines }
+--- /var/lib/rundeck/exp/webapp/WEB-INF/web.xml 
++++ /var/lib/rundeck/exp/webapp/WEB-INF/web.xml.new
+@@ -9,7 +9,7 @@
+                <param-value>rundeck-production-2.1.2</param-value>
+        </context-param>
+        <security-role>
+-               <role-name>user</role-name>
++               <role-name>myADgroup</role-name>
+        </security-role>
+        <security-constraint>
+                <web-resource-collection>
+~~~~~~
+
 ### PropertyFileLoginModule
 
 These instructions explain how to manage user credentials for 
