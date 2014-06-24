@@ -1,15 +1,13 @@
 
-## Script plugins
+## Custom command and script execution with the script-plugin
 
-Rundeck comes with two pre-installed plugins that may be useful, and also serve
-as examples of plugin development and usage.
+Rundeck comes with a  pre-installed plugin called `script-plugin` that includes two providers that may be useful to customize how to execute commands and script files on remote nodes.
 
 The `script-plugin` includes these providers:
 
 * `script-exec` for the NodeExecutor service
 * `script-copy` for the FileCopier service
 
-(Refer to [Using plugins](plugins.html#using-providers) to enable them.)
 
 This plugin provides the ability to specify an external script or command
 to perform a remote or local execution of a Rundeck command, and remote or local file copies.
