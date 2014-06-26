@@ -28,7 +28,7 @@ import com.dtolabs.rundeck.core.execution.workflow.state.StepStateChange
  * Time: 4:25 PM
  */
 class LogMutableWorkflowState extends DelegateMutableWorkflowState {
-    def List<Map> stateChanges = []
+    def List<Map> stateChanges = Collections.<Map>synchronizedList([])
 
     LogMutableWorkflowState(MutableWorkflowState delegate) {
         super(delegate)

@@ -413,7 +413,7 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         }
         if(!(fromState in allowed[toState])){
 //            System.err.println("Cannot change from " + fromState + " to " + toState)
-            throw new IllegalStateException("Cannot change from " + fromState + " to " + toState)
+//            throw new IllegalStateException("Cannot change from " + fromState + " to " + toState)
         }
 
         toState
