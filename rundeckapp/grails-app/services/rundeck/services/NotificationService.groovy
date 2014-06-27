@@ -268,9 +268,10 @@ public class NotificationService implements ApplicationContextAware{
                                 log.trace("Error sending notification email to ${sendTo} for Execution ${exec.id}: " + t.getMessage(), t)
                             }
                         }
-                        if(null!= outputfile){
-                            outputfile.delete()
-                        }
+                    }
+
+                    if (null != outputfile) {
+                        outputfile.delete()
                     }
                 }else if(n.type=='url'){    //sending notification of a status trigger for the Job
                     def Execution exec = content.execution
