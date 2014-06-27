@@ -1715,7 +1715,11 @@ class ScheduledExecutionController  extends ControllerBase{
         def depopts=[:]
         //map of option name to list of option names it depends on
         def optdeps=[:]
+        boolean explicitOrdering=false
         scheduledExecution.options.each { Option opt->
+            if(opt.sortIndex!=null){
+                explicitOrdering=true
+            }
             if(opt.realValuesUrl){
                 (opt.realValuesUrl=~/\$\{option\.([^.}\s]+?)\.value\}/ ).each{match,oname->
                     if(oname==opt.name){
@@ -1738,12 +1742,18 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         model.dependentoptions=depopts
         model.optiondependencies=optdeps
+
+        //Option sort order will use sortIndex if set
+        model.optionordering = scheduledExecution.options*.name
+
         //topo sort the dependencies
         def toporesult = toposort(scheduledExecution.options*.name, depopts, optdeps)
-        model.optionordering= toporesult.result
-        if(scheduledExecution.options && !toporesult.result){
+        if (scheduledExecution.options && !toporesult.result) {
             log.warn("Cyclic dependency for options for job ${scheduledExecution.extid}: (${toporesult.cycle})")
-            model.optionsDependenciesCyclic=true
+            model.optionsDependenciesCyclic = true
+        }
+        if (!explicitOrdering && toporesult.result) {
+            model.optionordering = toporesult.result
         }
 
         return model
