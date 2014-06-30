@@ -74,8 +74,8 @@ case "$1" in
     setperm rundeck rundeck 0750 /var/lib/rundeck/cli
     setperm rundeck rundeck 0750 /var/lib/rundeck/exp
     setperm rundeck rundeck 0750 /var/lib/rundeck/libext
-    find /etc/rundeck -maxdepth 2 -type f -print0 | xargs -0 chown rundeck:rundeck
-    find /etc/rundeck -maxdepth 2 -type f -print0 | xargs -0 chmod 0640
+    find /etc/rundeck/ -maxdepth 2 -type f -print0 | xargs -0 chown rundeck:rundeck
+    find /etc/rundeck/ -maxdepth 2 -type f -print0 | xargs -0 chmod 0640
 
     # 6. set correct owner/permissions for service.log if it already exists
     [ -f /var/log/rundeck/service.log ] && setperm rundeck adm 0664 /var/log/rundeck/service.log
