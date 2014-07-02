@@ -86,6 +86,7 @@ public class StepContextWorkflowExecutionListenerTest extends TestCase {
         test1.beginContext();
         test1.beginStepContext(1);
         test1.beginNodeContext("abc");
+        assertContext("abc", 1);
 
         test1.beginContext();
         assertContext(null, 1);
@@ -98,6 +99,9 @@ public class StepContextWorkflowExecutionListenerTest extends TestCase {
         assertContext(null, 1);
 
         test1.finishContext();
+        assertContext("abc", 1);
+
+        test1.finishNodeContext();
         assertContext(null, 1);
 
         test1.finishStepContext();

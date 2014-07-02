@@ -30,8 +30,12 @@ function RDNodeStep(data, node, flow){
     self.flow= flow;
     self.stepctx=data.stepctx;
     self.type=ko.observable();
+    self.parameters=ko.observable();
     self.followingOutput=ko.observable(false);
     self.outputLineCount=ko.observable(-1);
+    self.parameterizedStep = function () {
+        return self.stepctx.indexOf('@')>=0;
+    };
     self.type=ko.computed(function(){
         return flow.workflow.contextType(self.stepctx);
     });
@@ -340,7 +344,7 @@ function NodeFlowViewModel(workflow,outputUrl){
         var stepctx=nodestep.stepctx;
         var sel = '.wfnodeoutput[data-node=' + node + ']';
         if (stepctx) {
-            sel += '[data-stepctx=' + stepctx + ']';
+            sel += '[data-stepctx=\'' + stepctx + '\']';
         } else {
             sel += '[data-stepctx=]';
         }
@@ -426,22 +430,22 @@ function NodeFlowViewModel(workflow,outputUrl){
         return count == 1 ? singular : null != plural ? plural : (singular + 's');
     };
     self.stepStateForCtx=function (model, stepctx) {
-            var a, b;
-            var s = stepctx.indexOf("/");
-            if (s > 0) {
-                a = stepctx.substr(0, s);
-                b = stepctx.substr(s + 1);
-            } else {
-                a = stepctx;
-                b = null;
-            }
-            var ndx = parseInt(a) - 1;
-            var step = model.steps[ndx];
-            if (b && step.workflow) {
-                return self.stepStateForCtx(step.workflow, b);
-            } else {
-                return step;
-            }
+        if(typeof(stepctx)=='string'){
+            stepctx = RDWorkflow.parseContextId(stepctx);
+        }
+        var stepid = stepctx[0];
+
+        var ndx = RDWorkflow.workflowIndexForContextId(stepid);
+        var params = RDWorkflow.paramsForContextId(stepid);
+        var step = model.steps[ndx];
+        if(params && step.parameterStates && step.parameterStates[params]){
+            step = step.parameterStates[params];
+        }
+        if (stepctx.length>1 && step.workflow) {
+            return self.stepStateForCtx(step.workflow, stepctx.slice(1));
+        } else {
+            return step;
+        }
     };
     self.countPendingSteps = function (workflowData) {
         var pending = 0;

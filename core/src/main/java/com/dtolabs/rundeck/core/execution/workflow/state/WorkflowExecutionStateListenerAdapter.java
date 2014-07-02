@@ -11,6 +11,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
+import com.dtolabs.rundeck.core.utils.Pair;
 
 import java.util.*;
 
@@ -57,8 +58,18 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
     }
 
     public void beginWorkflowExecution(StepExecutionContext executionContext, WorkflowExecutionItem item) {
+        StepContextId currentStep = stepContext.getCurrentStep();
+        INodeEntry currentNode = stepContext.getCurrentNode();
+        if(null!= currentNode && null != currentStep) {
+            //if already node context, begin a parameterized sub workflow
+            //change step context to include node name parameter for the step id
+            HashMap<String, String> params = new HashMap<String, String>();
+            params.put("node", currentNode.getNodename());
+            stepContext.beginStepContext(StateUtils.stepContextId(currentStep.getStep(),
+                    !currentStep.getAspect().isMain(),params));
+        }
         stepContext.beginContext();
-        List<StepContextId> currentContext = stepContext.getCurrentContext();
+        List<Pair<StepContextId, INodeEntry>> currentContext = stepContext.getCurrentContextPairs();
         List<String> names = getNodeNames(executionContext);
         if(null==currentContext ){
             notifyAllWorkflowState(ExecutionState.RUNNING, new Date(), names);
@@ -80,7 +91,7 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
 
     public void finishWorkflowExecution(WorkflowExecutionResult result, StepExecutionContext executionContext,
             WorkflowExecutionItem item) {
-        List<StepContextId> currentContext = stepContext.getCurrentContext();
+        List<Pair<StepContextId, INodeEntry>> currentContext = stepContext.getCurrentContextPairs();
         if (null == currentContext || currentContext.size() < 1) {
             notifyAllWorkflowState(
                     null != result && result.isSuccess() ? ExecutionState.SUCCEEDED : ExecutionState.FAILED,
@@ -170,6 +181,7 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
     }
 
     public void beginExecuteNodeStep(ExecutionContext context, NodeStepExecutionItem item, INodeEntry node) {
+        //if node step item is not state transitionable, ignore it
         stepContext.beginNodeContext(node);
         StepIdentifier identifier = createIdentifier();
         notifyAllStepState(identifier,
@@ -191,6 +203,7 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
 
     public void finishExecuteNodeStep(NodeStepResult result, ExecutionContext context, StepExecutionItem item,
             INodeEntry node) {
+        //if node step item is not state transitionable, ignore it
         notifyAllStepState(createIdentifier(), createStepStateChange(result), new Date());
         stepContext.finishNodeContext();
     }

@@ -51,8 +51,14 @@ public class StateUtils {
     }
 
     public static class CtxItem extends PairImpl<Integer, Boolean> implements StepContextId {
+        Map<String,String> params;
+        public CtxItem(Integer first, Boolean second, Map<String,String> params) {
+            this(first, second);
+            this.params = params;
+        }
         public CtxItem(Integer first, Boolean second) {
             super(first, second);
+            params=null;
         }
 
         public int getStep() {
@@ -60,10 +66,16 @@ public class StateUtils {
         }
 
         @Override
+        public Map<String, String> getParams() {
+            return params;
+        }
+
+        @Override
         public StepAspect getAspect() {
             return getSecond() ? StepAspect.ErrorHandler : StepAspect.Main;
         }
 
+        @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
@@ -72,6 +84,7 @@ public class StateUtils {
 
             if (getStep() != that.getStep()) return false;
             if (!getAspect().equals(that.getAspect())) return false;
+            if (params != null ? !params.equals(that.params) : that.params != null) return false;
 
             return true;
         }
@@ -81,6 +94,7 @@ public class StateUtils {
             int result = super.hashCode();
             result = 31 * result + getStep();
             result = 31 * result + getAspect().hashCode();
+            result = 31 * result + (params != null ? params.hashCode() : 0);
             return result;
         }
 
@@ -94,13 +108,144 @@ public class StateUtils {
             }
             return this.getAspect().compareTo(o.getAspect());
         }
+
         public String toString() {
-            return getStep() + (getSecond() ? "e" : "");
+            return getStep() + (getSecond() ? "e" : "") + parameterString(this);
         }
+    }
+
+    public static String parameterString(StepContextId contextId) {
+        return null != contextId.getParams() ? "@" + parameterString(contextId.getParams()) : "";
+    }
+    public static String parameterString(Map<String, String> params) {
+        TreeSet<String> stringStringTreeSet = new TreeSet<String>(params.keySet());
+        StringBuilder sb = new StringBuilder();
+        for (String s : stringStringTreeSet) {
+            if (sb.length() > 0) {
+                sb.append(",");
+            }
+            sb.append(s).append("=").append(params.get(s));
+        }
+        return sb.toString();
+    }
+    public static String stepIdentifierToString(StepIdentifier ident) {
+        StringBuilder sb = new StringBuilder();
+        for (StepContextId stepContextId : ident.getContext()) {
+            if(sb.length()>0) {
+                sb.append("/");
+            }
+            sb.append(stepContextId.toString());
+        }
+        return sb.toString();
+    }
+    public static StepIdentifier stepIdentifierFromString(String input) {
+        if(null==input){
+            return null;
+        }
+        List<StepContextId> ids = new ArrayList<StepContextId>();
+        for (String s : input.split("/")) {
+            ids.add(stepContextIdFromString(s));
+        }
+        return stepIdentifier(ids);
+    }
+
+    public static StepContextId stepContextIdFromString(String s) {
+        String[] split = s.split("@");
+        boolean errHandler=false;
+        int stepnum=-1;
+        Map<String,String> params=null;
+        if(split.length>0) {
+            String t = split[0];
+            if (t.matches("^\\d+e?$")) {
+                if (t.endsWith("e")) {
+                    errHandler = true;
+                    t = t.substring(0, t.length() - 1);
+                }
+                stepnum = Integer.parseInt(t);
+            }
+        }
+        if (stepnum <= 0) {
+            throw new IllegalArgumentException("not a valid step context id: " + s);
+        }
+        if(split.length>1) {
+            String t = split[1];
+            params = parseParameterString(t);
+        }
+        return StateUtils.stepContextId(stepnum, errHandler, params);
+    }
+
+    public static Map<String, String> parseParameterString(String t) {
+        Map<String, String> params;
+        params = new HashMap<String, String>();
+        for (String s1 : t.split(",")) {
+            String[] split1 = s1.split("=", 2);
+            if (split1.length == 2 && !"".equals(split1[0])) {
+                params.put(split1[0], split1[1]);
+            }
+        }
+        return params;
+    }
+
+    /**
+     * Return true if the identifier represents a subcontext context of the parent identifier,
+     * optionally allowing sub steps
+     * @param parent parent identifier
+     * @param child child identifier
+     * @param substep if true, allow the child identifier to be longer than the parent,
+     *                otherwise require exact same length
+     * @return
+     */
+    public static boolean isMatchedIdentifier(String parent, String child, boolean substep) {
+        return isMatchedIdentifier(stepIdentifierFromString(parent), stepIdentifierFromString(child), substep);
+    }
+
+    /**
+     * Return true if the identifier is a subcontext of the parent identifier, optionally allowing sub steps
+     * @param parent parent identifier
+     * @param child child identifier
+     * @param substep if true, allow the child identifier to be longer than the parent,
+     *                otherwise require exact same length
+     * @return
+     */
+    public static boolean isMatchedIdentifier(StepIdentifier parent, StepIdentifier child, boolean substep) {
+        if (parent.getContext().size() > child.getContext().size()) {
+            return false;
+        }
+        if(!substep && parent.getContext().size()!=child.getContext().size()){
+            return false;
+        }
+        for (int i = 0; i < parent.getContext().size(); i++) {
+            StepContextId generalContextId = parent.getContext().get(i);
+            StepContextId specificContextId = child.getContext().get(i);
+            if (!isContainedStep(generalContextId, specificContextId)) {
+                return false;
+            }
+        }
+        return true;
+    }
+    public static boolean isContainedStep(StepContextId general, StepContextId specific){
+        if(general.getStep()!=specific.getStep()){
+            return false;
+        }
+        if (general.getAspect() != StepAspect.Main && specific.getAspect() == StepAspect.Main) {
+            return false;
+        }
+        if (null != general.getParams() && null == specific.getParams()) {
+            return false;
+        }
+        if (null != general.getParams() && null != specific.getParams() && !general.getParams().equals(specific
+                .getParams())) {
+            return false;
+        }
+        return true;
     }
 
     public static StepContextId stepContextId(int step, boolean errorhandler) {
         return new CtxItem(step, errorhandler);
+    }
+
+    public static StepContextId stepContextId(int step, boolean errorhandler, Map<String, String> params) {
+        return new CtxItem(step, errorhandler,params);
     }
 
     public static StepIdentifier stepIdentifier(List<StepContextId> context) {

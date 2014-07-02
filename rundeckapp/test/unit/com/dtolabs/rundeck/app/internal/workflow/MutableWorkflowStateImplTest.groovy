@@ -479,24 +479,24 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
 
     }
 
-//    public void testUpdateWorkflowInvalid() {
-//        MutableWorkflowStateImpl mutableWorkflowState = new MutableWorkflowStateImpl(null, 2);
-//        def date = new Date(123)
-//        def newdate = new Date()
-//
-//        mutableWorkflowState.updateWorkflowState(ExecutionState.RUNNING, date, ['a', 'b'] )
-//        mutableWorkflowState.updateWorkflowState(ExecutionState.SUCCEEDED, newdate, null)
-//        try {
-//            mutableWorkflowState.updateWorkflowState(ExecutionState.RUNNING, newdate, null)
-//            fail("shouldn't update state")
-//        } catch (IllegalStateException e) {
-//            assertNotNull(e)
-//        }
-//
-//        assertEquals(ExecutionState.SUCCEEDED, mutableWorkflowState.executionState)
-//        assertEquals(newdate, mutableWorkflowState.updateTime)
-//        assertEquals(['a', 'b'] , mutableWorkflowState.nodeSet)
-//    }
+    public void testUpdateWorkflowInvalid() {
+        MutableWorkflowStateImpl mutableWorkflowState = new MutableWorkflowStateImpl(null, 2);
+        def date = new Date(123)
+        def newdate = new Date()
+
+        mutableWorkflowState.updateWorkflowState(ExecutionState.RUNNING, date, ['a', 'b'] )
+        mutableWorkflowState.updateWorkflowState(ExecutionState.SUCCEEDED, newdate, null)
+        try {
+            mutableWorkflowState.updateWorkflowState(ExecutionState.RUNNING, newdate, null)
+            fail("shouldn't update state")
+        } catch (IllegalStateException e) {
+            assertNotNull(e)
+        }
+
+        assertEquals(ExecutionState.SUCCEEDED, mutableWorkflowState.executionState)
+        assertEquals(newdate, mutableWorkflowState.updateTime)
+        assertEquals(['a', 'b'] , mutableWorkflowState.nodeSet)
+    }
 
     public void testBasicSubworkflow() {
         def mutableStep1 = new MutableWorkflowStepStateImpl(stepIdentifier(1))
@@ -1038,52 +1038,52 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
         assertEquals(ExecutionState.FAILED, MutableWorkflowStateImpl.updateState(ExecutionState.RUNNING, ExecutionState.FAILED))
         assertEquals(ExecutionState.ABORTED, MutableWorkflowStateImpl.updateState(ExecutionState.RUNNING, ExecutionState.ABORTED))
     }
-//    public void testUpdateStateInvalid() {
-//        try {
-//            MutableWorkflowStateImpl.updateState(ExecutionState.RUNNING, ExecutionState.WAITING)
-//            fail("Should not succeed")
-//        } catch (IllegalStateException e) {
-//        }
-//        try {
-//            MutableWorkflowStateImpl.updateState(ExecutionState.SUCCEEDED, ExecutionState.RUNNING)
-//            fail("Should not succeed")
-//        } catch (IllegalStateException e) {
-//        }
-//        try {
-//            MutableWorkflowStateImpl.updateState(ExecutionState.FAILED, ExecutionState.RUNNING)
-//            fail("Should not succeed")
-//        } catch (IllegalStateException e) {
-//        }
-//        try {
-//            MutableWorkflowStateImpl.updateState(ExecutionState.ABORTED, ExecutionState.RUNNING)
-//            fail("Should not succeed")
-//        } catch (IllegalStateException e) {
-//        }
-//        try {
-//            MutableWorkflowStateImpl.updateState(ExecutionState.ABORTED, ExecutionState.WAITING)
-//            fail("Should not succeed")
-//        } catch (IllegalStateException e) {
-//        }
-//        try {
-//            MutableWorkflowStateImpl.updateState(ExecutionState.SUCCEEDED, null)
-//            fail("Should not succeed")
-//        } catch (IllegalStateException e) {
-//        }
-//        try {
-//            MutableWorkflowStateImpl.updateState(ExecutionState.ABORTED, null)
-//            fail("Should not succeed")
-//        } catch (IllegalStateException e) {
-//        }
-//        try {
-//            MutableWorkflowStateImpl.updateState(ExecutionState.FAILED, null)
-//            fail("Should not succeed")
-//        } catch (IllegalStateException e) {
-//        }
-//        try {
-//            MutableWorkflowStateImpl.updateState(ExecutionState.RUNNING, null)
-//            fail("Should not succeed")
-//        } catch (IllegalStateException e) {
-//        }
-//
-//    }
+    public void testUpdateStateInvalid() {
+        try {
+            MutableWorkflowStateImpl.updateState(ExecutionState.RUNNING, ExecutionState.WAITING)
+            fail("Should not succeed")
+        } catch (IllegalStateException e) {
+        }
+        try {
+            MutableWorkflowStateImpl.updateState(ExecutionState.SUCCEEDED, ExecutionState.RUNNING)
+            fail("Should not succeed")
+        } catch (IllegalStateException e) {
+        }
+        try {
+            MutableWorkflowStateImpl.updateState(ExecutionState.FAILED, ExecutionState.RUNNING)
+            fail("Should not succeed")
+        } catch (IllegalStateException e) {
+        }
+        try {
+            MutableWorkflowStateImpl.updateState(ExecutionState.ABORTED, ExecutionState.RUNNING)
+            fail("Should not succeed")
+        } catch (IllegalStateException e) {
+        }
+        try {
+            MutableWorkflowStateImpl.updateState(ExecutionState.ABORTED, ExecutionState.WAITING)
+            fail("Should not succeed")
+        } catch (IllegalStateException e) {
+        }
+        try {
+            MutableWorkflowStateImpl.updateState(ExecutionState.SUCCEEDED, null)
+            fail("Should not succeed")
+        } catch (IllegalStateException e) {
+        }
+        try {
+            MutableWorkflowStateImpl.updateState(ExecutionState.ABORTED, null)
+            fail("Should not succeed")
+        } catch (IllegalStateException e) {
+        }
+        try {
+            MutableWorkflowStateImpl.updateState(ExecutionState.FAILED, null)
+            fail("Should not succeed")
+        } catch (IllegalStateException e) {
+        }
+        try {
+            MutableWorkflowStateImpl.updateState(ExecutionState.RUNNING, null)
+            fail("Should not succeed")
+        } catch (IllegalStateException e) {
+        }
+
+    }
 }

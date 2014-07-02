@@ -3,6 +3,8 @@ package rundeck.controllers
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.execution.workflow.state.StateUtils
+import com.dtolabs.rundeck.core.execution.workflow.state.StepIdentifier
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogUtil
 import com.dtolabs.rundeck.core.logging.ReverseSeekingStreamingLogReader
@@ -581,7 +583,7 @@ class ExecutionController extends ControllerBase{
         if(e && !frameworkService.authorizeProjectExecutionAll(authContext,e,[AuthConstants.ACTION_READ])){
             return apiError('api.error.item.unauthorized', [AuthConstants.ACTION_READ, "Execution", params.id], HttpServletResponse.SC_FORBIDDEN);
         }
-        if (params.stepctx && !(params.stepctx ==~ /^(\d+e?\/?)+$/)) {
+        if (params.stepctx && !(params.stepctx ==~ /^(\d+e?(@.+?)?\/?)+$/)) {
             return apiError("api.error.parameter.invalid",[params.stepctx,'stepctx',"Invalid stepctx filter"],HttpServletResponse.SC_BAD_REQUEST)
         }
 
@@ -804,7 +806,8 @@ class ExecutionController extends ControllerBase{
         }
         def stateoutput = params.stateOutput in [true,'true']
         def stateonly = params.stateOnly in [true,'true']
-
+        boolean paramStepCtxIdentAllowSub = params.stepctx? params.stepctx.endsWith('/'):false
+        StepIdentifier paramStepCtxIdent = params.stepctx?StateUtils.stepIdentifierFromString(params.stepctx):null
         def filter={ LogEvent data ->
             if (!stateoutput && data.eventType != LogUtil.EVENT_TYPE_LOG) {
                 return false
@@ -815,18 +818,11 @@ class ExecutionController extends ControllerBase{
             if(params.nodename && data.metadata.node != params.nodename){
                 return false
             }
-            if(params.stepctx && params.stepctx==~/^(\d+e?\/?)+$/){
-                if(params.stepctx.endsWith("/")){
-                    def pref= params.stepctx[0..-2]
-                    if(data.metadata.stepctx?.startsWith(params.stepctx)
-                            || data.metadata.stepctx == pref
-                            || data.metadata.stepctx == pref + 'e'){
-                        return data
-                    }else{
-                        return false
-                    }
-                }else if(!params.stepctx.endsWith("/") && !(data.metadata.stepctx == params.stepctx
-                        || (data.metadata.stepctx) == params.stepctx + 'e')){
+            if(paramStepCtxIdent){
+                def evtIdent= StateUtils.stepIdentifierFromString(data.metadata.stepctx)
+                if(evtIdent!=null && StateUtils.isMatchedIdentifier(paramStepCtxIdent,evtIdent, paramStepCtxIdentAllowSub)){
+                    return data
+                }else{
                     return false
                 }
             }
