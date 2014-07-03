@@ -273,21 +273,6 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
     }
 
     /**
-     * If all node step targets are completed, finalize the step state
-     * @param currentStep
-     * @param timestamp
-     * @return
-     */
-    private finishNodeStepIfNodesFinished(MutableWorkflowStepState currentStep,Date timestamp){
-        boolean finished = currentStep.nodeStepTargets.every { node -> currentStep.nodeStateMap[node]?.executionState?.isCompletedState() }
-        if (finished) {
-            boolean aborted = currentStep.nodeStateMap.values()*.executionState.any { it == ExecutionState.ABORTED }
-            boolean failed = currentStep.nodeStateMap.values()*.executionState.any { it == ExecutionState.FAILED }
-            def overall = aborted ? ExecutionState.ABORTED : failed ? ExecutionState.FAILED : ExecutionState.SUCCEEDED
-            finalizeNodeStep(overall, currentStep,timestamp)
-        }
-    }
-    /**
      * Finalize the execution state of a Node step, based on the collective state of all target nodes
      * @param overall
      * @param currentStep
@@ -295,12 +280,23 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
      * @return
      */
     private finalizeNodeStep(ExecutionState overall, MutableWorkflowStepState currentStep,Date timestamp){
-        def nodeTargets = currentStep.nodeStep?(currentStep.nodeStepTargets?:this.nodeSet):[serverNode]
-        def substates= currentStep.nodeStateMap?.values()*.executionState
+        def nodeTargets = new HashSet<String>()
+        if(currentStep.nodeStep){
+            if(currentStep.nodeStepTargets){
+                nodeTargets.addAll(currentStep.nodeStepTargets)
+            }
+            nodeTargets.addAll(nodeSet)
+            if(currentStep.mutableNodeStateMap){
+                nodeTargets.addAll(currentStep.mutableNodeStateMap.keySet())
+            }
+        }else{
+            nodeTargets<<serverNode
+        }
+        def substates= nodeTargets.collect{ currentStep.nodeStateMap?.get(it)?.executionState?:null}
 
         ExecutionState result = summarizedSubStateResult(substates, overall)
 //        if(currentStep.nodeStep && currentStep.hasSubWorkflow()){
-            //ignore finalize for embeded workflow in node step
+        //ignore finalize for embeded workflow in node step
 //            return
 //        }
         if(currentStep.nodeStep || currentStep.hasSubWorkflow()){
@@ -323,6 +319,21 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
                 state.executionState = updateState(state.executionState, ExecutionState.ABORTED)
                 state.endTime=timestamp
             }
+        }
+    }
+    /**
+     * If all node step targets are completed, finalize the step state
+     * @param currentStep
+     * @param timestamp
+     * @return
+     */
+    private finishNodeStepIfNodesFinished(MutableWorkflowStepState currentStep,Date timestamp){
+        boolean finished = currentStep.nodeStepTargets.every { node -> currentStep.nodeStateMap[node]?.executionState?.isCompletedState() }
+        if (finished) {
+            boolean aborted = currentStep.nodeStateMap.values()*.executionState.any { it == ExecutionState.ABORTED }
+            boolean failed = currentStep.nodeStateMap.values()*.executionState.any { it == ExecutionState.FAILED }
+            def overall = aborted ? ExecutionState.ABORTED : failed ? ExecutionState.FAILED : ExecutionState.SUCCEEDED
+            resolveStepCompleted(overall, timestamp, currentStep)
         }
     }
     private finalizeParameterizedStep(ExecutionState overall, MutableWorkflowStepState currentStep,Date timestamp){
@@ -348,7 +359,7 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
 
     protected ExecutionState summarizedSubStateResult(Collection<? extends ExecutionState> execStates,
                                                       ExecutionState overall) {
-        boolean finished = execStates.every { it.isCompletedState() }
+        boolean finished = execStates.every { it!=null && it.isCompletedState() }
         boolean aborted = execStates.any { it == ExecutionState.ABORTED }
         boolean abortedAll = execStates.every { it == ExecutionState.ABORTED }
         boolean failed = execStates.any { it == ExecutionState.FAILED }
@@ -494,7 +505,7 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
                 }
             }
         }
-        if(executionState.isCompletedState()){
+        if(executionState.isCompletedState() && !quellFinalState){
             cleanupSteps(executionState, timestamp)
             this.endTime=timestamp
         }
@@ -508,7 +519,7 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
     private void cleanupSteps(ExecutionState executionState, Date timestamp) {
         mutableStepStates.each { i, step ->
             if (!step.stepState.executionState.isCompletedState()) {
-                resolveStepCompleted(executionState, timestamp, i + 1, step)
+                resolveStepCompleted(executionState, timestamp, step)
             }
         }
     }
@@ -527,11 +538,11 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
      * @param i
      * @param mutableWorkflowStepState
      */
-    def resolveStepCompleted(ExecutionState executionState, Date date, int i, MutableWorkflowStepState mutableWorkflowStepState) {
+    def resolveStepCompleted(ExecutionState executionState, Date date,  MutableWorkflowStepState mutableWorkflowStepState) {
         boolean finalized=false
         if(mutableWorkflowStepState.parameterizedStateMap){
             mutableWorkflowStepState.mutableParameterizedStateMap.values().each{MutableWorkflowStepState paramstep->
-                resolveStepCompleted(executionState,date,i,paramstep)
+                resolveStepCompleted(executionState,date,paramstep)
             }
             finalizeParameterizedStep(executionState,mutableWorkflowStepState,date)
             finalized=true
