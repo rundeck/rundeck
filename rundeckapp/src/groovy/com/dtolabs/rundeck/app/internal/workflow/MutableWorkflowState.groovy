@@ -22,6 +22,14 @@ public interface MutableWorkflowState extends WorkflowState {
      */
     void updateStateForStep(StepIdentifier identifier, int index,StepStateChange stepStateChange, Date timestamp);
     /**
+     * Touch the state for a step, ensuring intermediate steps are touched as well,
+     * updating the timestamp and transitioning from Waiting to Running if necessary
+     * @param identifier
+     * @param index
+     * @param timestamp
+     */
+    void touchStateForStep(StepIdentifier identifier, int index, StepStateChange stepStateChange,Date timestamp);
+    /**
      * Update the state for this workflow
      * @param executionState
      * @param timestamp

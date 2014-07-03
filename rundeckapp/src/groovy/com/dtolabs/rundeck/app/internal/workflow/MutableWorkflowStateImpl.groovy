@@ -93,13 +93,32 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
     }
 
     @Override
+    synchronized void touchStateForStep(StepIdentifier identifier, int index, StepStateChange stepStateChange,
+                                         Date timestamp) {
+        touchWFState(timestamp)
+
+        MutableWorkflowStepState currentStep = locateStepWithContext(identifier, index, mutableStepStates)
+        transitionIfWaiting(currentStep.mutableStepState)
+        if (identifier.context.size() - index > 1) {
+            descendTouchStateForStep(currentStep, identifier, index, stepStateChange,timestamp)
+            if(currentStep.ownerStepState){
+                transitionIfWaiting(currentStep.ownerStepState.mutableStepState)
+                descendTouchStateForStep(currentStep.ownerStepState, identifier, index, stepStateChange,timestamp)
+            }
+        }else if (stepStateChange.nodeState && currentStep.nodeStep) {
+            MutableStepState toUpdate = getOrCreateMutableNodeStepState(currentStep, stepStateChange.nodeName, identifier)
+            transitionIfWaiting(toUpdate)
+        }
+    }
+
+        @Override
     void updateStateForStep(StepIdentifier identifier,StepStateChange stepStateChange, Date timestamp) {
         updateStateForStep(identifier,0,stepStateChange,timestamp)
     }
     @Override
     synchronized void updateStateForStep(StepIdentifier identifier, int index,StepStateChange stepStateChange,
                                      Date timestamp) {
-        touchWFState(timestamp)
+        touchStateForStep(identifier,index,stepStateChange,timestamp)
 
         MutableWorkflowStepState currentStep = locateStepWithContext(identifier, index, mutableStepStates)
         if (identifier.context.size() - index > 1) {
@@ -143,6 +162,9 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
             }
         }
         transitionIfWaiting(currentStep.mutableStepState)
+        if (currentStep.ownerStepState) {
+            transitionIfWaiting(currentStep.ownerStepState.mutableStepState)
+        }
 
         //update state
         toUpdateComplete*.errorMessage = stepStateChange.stepState.errorMessage
@@ -262,7 +284,6 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
      * @param timestamp
      */
     private void descendUpdateStateForStep(MutableWorkflowStepState currentStep, StepIdentifier identifier, int index,StepStateChange stepStateChange, Date timestamp) {
-        transitionIfWaiting(currentStep.mutableStepState)
         //recurse to the workflow list to find the right index
 
         MutableWorkflowState subflow = currentStep.hasSubWorkflow() ?
@@ -270,6 +291,24 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
             currentStep.createMutableSubWorkflowState(null, 0)
         //recursively update subworkflow state for the step in the subcontext
         subflow.updateStateForStep(identifier, index + 1, stepStateChange, timestamp);
+    }
+/**
+     * Descend into a sub workflow to update state
+     * @param currentStep
+     * @param identifier
+     * @param stepStateChange
+     * @param timestamp
+     */
+    private void descendTouchStateForStep(MutableWorkflowStepState currentStep, StepIdentifier identifier, int index,
+                                          StepStateChange stepStateChange,
+                                       Date timestamp) {
+        //recurse to the workflow list to find the right index
+
+        MutableWorkflowState subflow = currentStep.hasSubWorkflow() ?
+            currentStep.mutableSubWorkflowState :
+            currentStep.createMutableSubWorkflowState(null, 0)
+        //recursively update subworkflow state for the step in the subcontext
+        subflow.touchStateForStep(identifier, index + 1,stepStateChange, timestamp);
     }
 
     /**
@@ -622,7 +661,7 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
                 break
             case ExecutionState.RUNNING:
             case ExecutionState.RUNNING_HANDLER:
-                newstate = ExecutionState.ABORTED
+               // newstate = ExecutionState.ABORTED
                 break
         }
         mutableWorkflowStepState.mutableStepState.executionState = updateState(curstate, newstate)
@@ -642,6 +681,9 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
                 nextStep.createMutableSubWorkflowState(null, 0)
 
             transitionIfWaiting(nextStep.mutableStepState)
+            if (nextStep.ownerStepState) {
+                transitionIfWaiting(nextStep.ownerStepState.mutableStepState)
+            }
             //more steps to descend
             nextWorkflow.updateSubWorkflowState(identifier, index + 1, nextStep.nodeStep, executionState, timestamp, nodeNames, parent ?: this);
         } else {
