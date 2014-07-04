@@ -11,7 +11,7 @@
 . /etc/rundeck/profile
 
 prog="rundeckd"
-rundeckd="${JAVA_HOME:-/usr}/bin/java ${RDECK_JVM} -cp ${BOOTSTRAP_CP} com.dtolabs.rundeck.RunServer /var/lib/rundeck 4440"
+rundeckd="${JAVA_HOME:-/usr}/bin/java ${RDECK_JVM} -cp ${BOOTSTRAP_CP} com.dtolabs.rundeck.RunServer /var/lib/rundeck ${RDECK_HTTP_PORT}"
 RETVAL=0
 PID_FILE=/var/run/${prog}.pid
 servicelog=/var/log/rundeck/service.log

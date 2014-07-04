@@ -4,8 +4,11 @@ export RDECK_BASE
 JAVA_CMD=java
 RUNDECK_TEMPDIR=/tmp/rundeck
 
+RDECK_HTTP_PORT=4440
+RDECK_HTTPS_PORT=4443
+
 #
-# If JAVA_HOME is set, then add it to home and set JAVA_CMD to use the version specified in that 
+# If JAVA_HOME is set, then add it to home and set JAVA_CMD to use the version specified in that
 # path.  JAVA_HOME can be set in the rundeck profile.  Or set in this file.
 #JAVA_HOME=<path/to/JDK or JRE/install>
 
@@ -36,8 +39,8 @@ export RDECK_JVM="-Djava.security.auth.login.config=/etc/rundeck/jaas-loginmodul
 RDECK_JVM="$RDECK_JVM -Xmx1024m -Xms256m -server"
 #
 # SSL Configuration - Uncomment the following to enable.  Check SSL.properties for details.
-# 
-#export RDECK_JVM="$RDECK_JVM -Drundeck.ssl.config=/etc/rundeck/ssl/ssl.properties -Dserver.https.port=4443"
+#
+#export RDECK_JVM="$RDECK_JVM -Drundeck.ssl.config=/etc/rundeck/ssl/ssl.properties -Dserver.https.port=${RDECK_HTTPS_PORT}"
 
 export RDECK_SSL_OPTS="-Djavax.net.ssl.trustStore=/etc/rundeck/ssl/truststore -Djavax.net.ssl.trustStoreType=jks -Djava.protocol.handler.pkgs=com.sun.net.ssl.internal.www.protocol"
 
