@@ -394,6 +394,19 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
                 state.mutableStepState.endTime=timestamp
             }
         }
+        if(currentStep.nodeStep) {
+            for (String node : currentStep.mutableNodeStateMap.keySet()) {
+                MutableStepState nodeStepState = currentStep.mutableNodeStateMap.get(node)
+                def nodeParamState = currentStep.parameterizedStateMap.get("node=${node}".toString())
+                if(nodeParamState){
+                    nodeStepState.executionState= nodeParamState.stepState.executionState
+                    nodeStepState.endTime= nodeParamState.stepState.endTime
+                    nodeStepState.updateTime= nodeParamState.stepState.updateTime
+                    nodeStepState.errorMessage= nodeParamState.stepState.errorMessage
+                    nodeStepState.metadata= nodeParamState.stepState.metadata
+                }
+            }
+        }
     }
 
     protected ExecutionState summarizedSubStateResult(Collection<? extends ExecutionState> execStates,
@@ -499,7 +512,7 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
 //            System.err.println("Cannot change state to ${toState}")
             throw new IllegalStateException("Cannot change state to ${toState}")
         }
-        if(!(fromState in allowed[toState])){
+        if(!(fromState in allowed[toState]) /*|| toState==ExecutionState.ABORTED*/){
 //            System.err.println("Cannot change from " + fromState + " to " + toState)
             throw new IllegalStateException("Cannot change from " + fromState + " to " + toState)
         }
@@ -610,7 +623,7 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         //resolve the sub workflow
         def states=[] as List<MutableWorkflowStepState>
         if(mutableWorkflowStepState.parameterizedStateMap){
-            states = mutableWorkflowStepState.mutableParameterizedStateMap.values()
+            states.addAll(mutableWorkflowStepState.mutableParameterizedStateMap.values())
         }else{
             states=[mutableWorkflowStepState]
         }
@@ -640,6 +653,15 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
                 mutableWorkflowStepState.mutableSubWorkflowState.updateStateForStep(eachstep.stepIdentifier,0,
                         StateUtils.stepStateChange(StateUtils.stepState(summaryState)), updateTime)
             }
+            mutableWorkflowStepState.mutableSubWorkflowState.updateSubWorkflowState(
+                    mutableWorkflowStepState.stepIdentifier,
+                    mutableWorkflowStepState.stepIdentifier.context.size(),
+                    false,
+                    executionState,
+                    updateTime,
+                    null,
+                    this
+            )
         }
 
     }

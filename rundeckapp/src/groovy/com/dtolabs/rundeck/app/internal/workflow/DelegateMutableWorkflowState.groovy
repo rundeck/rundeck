@@ -53,6 +53,11 @@ class DelegateMutableWorkflowState implements MutableWorkflowState {
     }
 
     @Override
+    void touchStateForStep(StepIdentifier identifier, int index, StepStateChange stepStateChange, Date timestamp) {
+        delegate.touchStateForStep(identifier, index, stepStateChange, timestamp)
+    }
+
+    @Override
     Map<String, ? extends MutableWorkflowNodeState> getMutableNodeStates() {
         return delegate.getMutableNodeStates()
     }
