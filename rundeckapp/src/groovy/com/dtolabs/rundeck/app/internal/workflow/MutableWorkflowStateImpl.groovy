@@ -367,7 +367,8 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
      * @return
      */
     private finishNodeStepIfNodesFinished(MutableWorkflowStepState currentStep,Date timestamp){
-        boolean finished = currentStep.nodeStepTargets.every { node -> currentStep.nodeStateMap[node]?.executionState?.isCompletedState() }
+        def nodes = currentStep.nodeStepTargets?:currentStep.mutableNodeStateMap?currentStep.mutableNodeStateMap.keySet() : [serverNode]
+        boolean finished = nodes.every { node -> currentStep.nodeStateMap[node]?.executionState?.isCompletedState() }
         if (finished) {
             boolean aborted = currentStep.nodeStateMap.values()*.executionState.any { it == ExecutionState.ABORTED }
             boolean failed = currentStep.nodeStateMap.values()*.executionState.any { it == ExecutionState.FAILED }
@@ -375,6 +376,12 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
             resolveStepCompleted(overall, timestamp, currentStep)
         }
     }
+    /**
+     * for each parameterized context,
+     * @param overall
+     * @param currentStep
+     * @param timestamp
+     */
     private finalizeParameterizedStep(ExecutionState overall, MutableWorkflowStepState currentStep,Date timestamp){
         def substates= currentStep.parameterizedStateMap.values()*.stepState*.executionState
 
@@ -512,7 +519,7 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
 //            System.err.println("Cannot change state to ${toState}")
             throw new IllegalStateException("Cannot change state to ${toState}")
         }
-        if(!(fromState in allowed[toState]) /*|| toState==ExecutionState.ABORTED*/){
+        if(!(fromState in allowed[toState])/* || toState==ExecutionState.ABORTED*/){
 //            System.err.println("Cannot change from " + fromState + " to " + toState)
             throw new IllegalStateException("Cannot change from " + fromState + " to " + toState)
         }
