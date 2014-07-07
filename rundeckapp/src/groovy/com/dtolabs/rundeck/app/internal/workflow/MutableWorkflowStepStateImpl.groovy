@@ -1,9 +1,11 @@
 package com.dtolabs.rundeck.app.internal.workflow
 
 import com.dtolabs.rundeck.core.execution.workflow.state.ExecutionState
+import com.dtolabs.rundeck.core.execution.workflow.state.StateUtils
 import com.dtolabs.rundeck.core.execution.workflow.state.StepIdentifier
 import com.dtolabs.rundeck.core.execution.workflow.state.StepState
 import com.dtolabs.rundeck.core.execution.workflow.state.WorkflowState
+import com.dtolabs.rundeck.core.execution.workflow.state.WorkflowStepState
 
 /**
  * $INTERFACE is ...
@@ -14,8 +16,10 @@ import com.dtolabs.rundeck.core.execution.workflow.state.WorkflowState
 class MutableWorkflowStepStateImpl implements MutableWorkflowStepState {
     MutableStepState mutableStepState
     MutableWorkflowState mutableSubWorkflowState
+    MutableWorkflowStepState ownerStepState
     StepIdentifier stepIdentifier;
     Map<String, MutableStepState> mutableNodeStateMap;
+    Map<String, MutableWorkflowStepState> parameterizedStepStates;
     List<String> nodeStepTargets;
     boolean nodeStep;
 
@@ -26,6 +30,7 @@ class MutableWorkflowStepStateImpl implements MutableWorkflowStepState {
         this.stepIdentifier = stepIdentifier
         this.mutableStepState=new MutableStepStateImpl()
         this.mutableNodeStateMap = new HashMap<String, MutableStepState>()
+        this.parameterizedStepStates = new HashMap<String, MutableWorkflowStepState>()
         this.mutableSubWorkflowState=subflow
         this.nodeStep=false
     }
@@ -64,6 +69,28 @@ class MutableWorkflowStepStateImpl implements MutableWorkflowStepState {
     @Override
     MutableWorkflowState createMutableSubWorkflowState(Set<String> nodeSet,int count) {
         mutableSubWorkflowState = new MutableWorkflowStateImpl(nodeSet, count)
+    }
+
+    @Override
+    MutableWorkflowStepState getParameterizedStepState(StepIdentifier ident,Map<String, String> params) {
+        def string = StateUtils.parameterString(params)
+        if(null==parameterizedStepStates[string]){
+            MutableWorkflowStepStateImpl newState = new MutableWorkflowStepStateImpl(ident,
+                    new MutableWorkflowStateImpl(mutableSubWorkflowState.nodeSet, mutableSubWorkflowState.stepCount))
+            newState.ownerStepState=this
+            parameterizedStepStates[string]= newState
+        }
+        return parameterizedStepStates[string]
+    }
+
+    @Override
+    Map<String, ? extends WorkflowStepState> getParameterizedStateMap() {
+        return parameterizedStepStates
+    }
+
+    @Override
+    Map<String, MutableWorkflowStepState> getMutableParameterizedStateMap() {
+        return parameterizedStepStates
     }
 
     @Override

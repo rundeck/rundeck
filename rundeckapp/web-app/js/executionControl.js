@@ -993,20 +993,6 @@ var FollowControl = Class.create({
         this.lastrow = data;
         return tr;
     },
-    parseContextId: function (context) {
-        if (context == null) {
-            return null;
-        }
-        //split context into project,type,object
-        var t = context.split('/');
-        var i = 0;
-        var vals = new Array();
-        for (i = 0; i < t.length; i++) {
-            var x = t[i];
-            vals.push(x);
-        }
-        return vals;
-    },
     escapeHtml: function escapeHtml(unsafe) {
         return unsafe
             .replace(/&/g, "&amp;")
@@ -1015,31 +1001,7 @@ var FollowControl = Class.create({
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
     },
-    renderContextStepNumber: function(data){
-        var ctx = this.parseContextId(data['stepctx']);
-        var string='';
-        if (ctx && ctx[0]) {
-             string+= ctx[0];
-            if (ctx.length > 1) {
-//                string += "/" + ctx.slice(1).join("/")
-            }
-            string+=". "
-        }else{
-            string=data['stepctx'];
-        }
-        if(typeof(workflow)!='undefined'){
-            try{
-                var i = parseInt(ctx[0]);
-                var desc=workflow[i-1].description;
-                if(typeof(desc)!='undefined' && desc){
-                    string=desc;
-                }
-            }catch(e){
 
-            }
-        }
-        return string;
-    },
 
     createNewNodeTbody: function(data, tbl, ctxid) {
         //create new Table body
@@ -1204,7 +1166,7 @@ var FollowControl = Class.create({
 
         if (data['stepctx'] && this.workflow) {
             var contextstr = this.workflow.renderContextString(data['stepctx']);
-            var stepnum = this.renderContextStepNumber(data);
+            var stepnum = this.workflow.renderContextStepNumber(data['stepctx']);
             cell.innerHTML += "<span class='stepnum' title='" + this.escapeHtml(contextstr) + "'>" + this.escapeHtml(contextstr) + "</span>";
             cell.innerHTML += "<span class='stepident'>" + this.escapeHtml(contextstr) + "</span>";
         } else {
@@ -1328,7 +1290,7 @@ var FollowControl = Class.create({
 //                tdctx.addClassName('repeat');
         }else if(data['stepctx'] && this.workflow){
 
-            var cmdtext= this.renderContextStepNumber(data) + " " + this.workflow.renderContextString(data['stepctx']);
+            var cmdtext= this.workflow.renderContextStepNumber(data['stepctx']) + " " + this.workflow.renderContextString(data['stepctx']);
             var icon= new Element('i');
             icon.addClassName('rdicon icon-small '+ this.workflow.contextType(data['stepctx']))
             tdctx.appendChild(icon);

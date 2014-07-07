@@ -26,10 +26,13 @@ package com.dtolabs.rundeck.core.execution.workflow;
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.*;
+import com.dtolabs.rundeck.core.execution.workflow.state.StateUtils;
+import com.dtolabs.rundeck.core.execution.workflow.state.StepContextId;
+import com.dtolabs.rundeck.core.execution.workflow.state.StepIdentifier;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
-import org.apache.commons.lang.StringUtils;
+import com.dtolabs.rundeck.core.utils.Pair;
 
 import java.util.*;
 
@@ -43,8 +46,8 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
     /**
      * Uses a thread local context stack, inherited by sub threads.
      */
-    private StepContextWorkflowExecutionListener<INodeEntry, WFStepContext> stepContext = new
-            StepContextWorkflowExecutionListener<INodeEntry, WFStepContext>();
+    private StepContextWorkflowExecutionListener<INodeEntry, StepContextId> stepContext = new
+            StepContextWorkflowExecutionListener<INodeEntry, StepContextId>();
 
     private WorkflowExecutionListenerImpl delegate;
 
@@ -91,7 +94,7 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
             return delegate.getLoggingContext();
         }
         INodeEntry currentNode = stepContext.getCurrentNode();
-        List<WFStepContext> currentContext = stepContext.getCurrentContext();
+        List<Pair<StepContextId,INodeEntry>> currentContext = stepContext.getCurrentContextPairs();
         if (null != currentContext || null!=currentNode) {
             final HashMap<String, String> loggingContext = new HashMap<String, String>();
             if (null != currentNode) {
@@ -99,13 +102,11 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
                 loggingContext.put("user", currentNode.extractUserName());
             }
             if (null != currentContext) {
-//                loggingContext.put("command", generateContextString(currentContext));
-
-                WFStepContext last = currentContext.get(currentContext.size() - 1);
+                StepContextId last = currentContext.get(currentContext.size() - 1).getFirst();
                 if (last.getStep() > -1) {
                     loggingContext.put("step", Integer.toString(last.getStep()));
                 }
-                loggingContext.put("stepctx", generateContextId(currentContext));
+                loggingContext.put("stepctx", StateUtils.stepIdentifierToString(generateIdentifier(currentContext)));
             }
             return loggingContext;
         } else {
@@ -113,42 +114,29 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
         }
     }
 
-    private String generateContextString(final List<WFStepContext> stack) {
-        if (null != delegate) {
-            return delegate.generateContextString(stack);
-        }
-        final String[] strings = new String[stack.size()];
+
+    /**
+     * Convert stack of context data into a StepIdentifier
+     * @param stack
+     * @return
+     */
+    private StepIdentifier generateIdentifier(List<Pair<StepContextId, INodeEntry>> stack) {
+        List<StepContextId> ctxs = new ArrayList<StepContextId>();
         int i=0;
-        for (final WFStepContext context : stack) {
-            strings[i++] = makePrefix(context);
+        for (Pair<StepContextId, INodeEntry> pair : stack) {
+            Map<String, String> params = null;
+            if (null != pair.getSecond() && i < stack.size() - 1) {
+                //include node as a parameter to the context only when it is an intermediate step,
+                // i.e. a parent in the sequence
+                params = new HashMap<String, String>();
+                params.put("node", pair.getSecond().getNodename());
+            }
+            ctxs.add(StateUtils.stepContextId(pair.getFirst().getStep(), !pair.getFirst().getAspect().isMain(),
+                    params));
+            i++;
         }
-        return StringUtils.join(strings, ":");
+        return StateUtils.stepIdentifier(ctxs);
     }
-    private String generateContextId(final List<WFStepContext> stack) {
-        if (null != delegate) {
-            return delegate.generateContextString(stack);
-        }
-        final String[] strings = new String[stack.size()];
-        int i=0;
-        for (final WFStepContext context : stack) {
-            strings[i++] = Integer.toString(context.getStep()) + (context.isErrorHandler() ? "e" : "");
-        }
-        return StringUtils.join(strings, "/");
-    }
-
-    private String makePrefix(WFStepContext wfStepInfo) {
-        if (null != delegate) {
-            return delegate.makePrefix(wfStepInfo);
-        }
-
-        String type = wfStepInfo.getStepItem().getType();
-        if (wfStepInfo.getStepItem() instanceof NodeStepExecutionItem) {
-            NodeStepExecutionItem ns = (NodeStepExecutionItem) wfStepInfo.getStepItem();
-            type += "-" + ns.getNodeStepType();
-        }
-        return wfStepInfo.getStep() + "-" + type;
-    }
-
 
     public void beginWorkflowExecution(final StepExecutionContext executionContext, final WorkflowExecutionItem item) {
         if (null != delegate) {
@@ -157,7 +145,7 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
         }
         stepContext.beginContext();
         log(Constants.DEBUG_LEVEL,
-                "[workflow] Begin execution: " + item.getType() + " context: " + stepContext.getCurrentContext()
+                "[workflow] Begin execution: " + item.getType() + " context: " + stepContext.getCurrentContextPairs()
         );
     }
 
@@ -179,7 +167,7 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
             delegate.beginWorkflowItem(step, item);
             return;
         }
-        stepContext.beginStepContext(new WFStepContext(item, step));
+        stepContext.beginStepContext(StateUtils.stepContextId(step,false));
         log(Constants.DEBUG_LEVEL,
             "[workflow] Begin step: " + step + "," + item.getType()
         );
@@ -191,7 +179,7 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
             delegate.beginWorkflowItemErrorHandler(step, item);
             return;
         }
-        stepContext.beginStepContext(new WFStepContext(item, step,true));
+        stepContext.beginStepContext(StateUtils.stepContextId(step, true));
         log(Constants.DEBUG_LEVEL,
                 "[workflow] Begin error handler: " + step + "," + item.getType()
         );

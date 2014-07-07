@@ -121,8 +121,10 @@
     %{--step specific info for node--}%
     <div  data-bind="visible: expanded" >
         <div data-bind="foreach: steps">
+            <div data-bind="if: !$data.parameterizedStep()">
             <div class="wfnodesteps" data-bind="attr: { 'data-node': node.name }">
-            <div class=" wfnodestep" data-bind="css: { open: followingOutput() }, attr: { 'data-node': node.name, 'data-stepctx': stepctx }">
+            <div class=" wfnodestep"
+                 data-bind="css: { open: followingOutput() }, attr: { 'data-node': node.name, 'data-stepctx': $data.stepctx }">
                 <div class="row action" data-bind="click: $root.toggleOutputForNodeStep ">
                     <div class="col-sm-3 " >
                         <div class="stepident  action col-inset"
@@ -177,6 +179,7 @@
                         </div>
                     </div>
                 </div>
+            </div>
             </div>
             </div>
         </div>

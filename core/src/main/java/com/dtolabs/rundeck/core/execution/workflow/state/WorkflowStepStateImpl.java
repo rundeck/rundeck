@@ -12,6 +12,7 @@ public class WorkflowStepStateImpl implements WorkflowStepState {
     private StepIdentifier stepIdentifier;
     private StepState stepState;
     private Map<String, StepState> nodeStateMap;
+    private Map<String, WorkflowStepState> parameterStateMap;
     private boolean subWorkflow;
     private WorkflowState subWorkflowState;
     private List<String> nodeStepTargets;
@@ -72,5 +73,10 @@ public class WorkflowStepStateImpl implements WorkflowStepState {
 
     public void setNodeStep(boolean nodeStep) {
         this.nodeStep = nodeStep;
+    }
+
+    @Override
+    public Map<String, ? extends WorkflowStepState> getParameterizedStateMap() {
+        return parameterStateMap;
     }
 }

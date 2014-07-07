@@ -31,6 +31,13 @@ public interface WorkflowStepState {
      */
     public Map<String, ? extends StepState> getNodeStateMap();
 
+    /**
+     * Return a map of parameter strings to representative WorkflowStepStates
+     *
+     * @return
+     */
+    Map<String, ? extends WorkflowStepState> getParameterizedStateMap();
+
 
     /**
      * Return true if the step contains a sub workflow

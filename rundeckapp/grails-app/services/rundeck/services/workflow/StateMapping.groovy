@@ -76,6 +76,21 @@ class StateMapping {
             }
             map += [nodeStates: nmap]
         }
+        if (null != state.getParameterizedStateMap()) {
+            def map1 = state.getParameterizedStateMap()
+            def sub1=[:]
+            map1.each{k,v->
+                sub1[k]= mapOf(v, parent, nodestates, allNodes)
+            }
+            map+=[
+                    parameterStates:sub1
+            ]
+        }
+        if(state.stepIdentifier.context[0].params){
+            map+=[
+                    parameters: state.stepIdentifier.context[0].params
+            ]
+        }
         map + [
                 id: stepIdentifierToString(state.stepIdentifier),
                 stepctx: stepIdentifierToString(ident),
@@ -89,9 +104,7 @@ class StateMapping {
 
 
     def String stepIdentifierToString(StepIdentifier ident) {
-        ident.context.collect {
-            it.step + (it.aspect == StepAspect.ErrorHandler ? 'e' : '')
-        }.join("/")
+        StateUtils.stepIdentifierToString(ident)
     }
 
 
@@ -168,10 +181,7 @@ class StateMapping {
     }
 
     def StepIdentifier stepIdentifierFromString(String string) {
-        StateUtils.stepIdentifier(
-                string.split(/\//).collect { s ->
-                    StateUtils.stepContextId(Integer.parseInt(s.replaceAll(/e$/, '')), s.endsWith('e'))
-                })
+        StateUtils.stepIdentifierFromString(string)
     }
 
 }
