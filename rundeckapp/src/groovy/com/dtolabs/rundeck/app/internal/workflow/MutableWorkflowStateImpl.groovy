@@ -334,10 +334,7 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         def substates= nodeTargets.collect{ currentStep.nodeStateMap?.get(it)?.executionState?:null}
 
         ExecutionState result = summarizedSubStateResult(substates, overall)
-//        if(currentStep.nodeStep && currentStep.hasSubWorkflow()){
-        //ignore finalize for embeded workflow in node step
-//            return
-//        }
+
         if(currentStep.nodeStep || currentStep.hasSubWorkflow()){
             currentStep.mutableStepState.executionState = result
         }else{
@@ -519,7 +516,7 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
 //            System.err.println("Cannot change state to ${toState}")
             throw new IllegalStateException("Cannot change state to ${toState}")
         }
-        if(!(fromState in allowed[toState])/* || toState==ExecutionState.ABORTED*/){
+        if(!(fromState in allowed[toState])){
 //            System.err.println("Cannot change from " + fromState + " to " + toState)
             throw new IllegalStateException("Cannot change from " + fromState + " to " + toState)
         }

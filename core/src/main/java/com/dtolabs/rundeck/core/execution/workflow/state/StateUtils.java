@@ -114,9 +114,20 @@ public class StateUtils {
         }
     }
 
+    /**
+     * Generate string for a context id's parameter section, if present
+     * @param contextId
+     * @return parameter string, or blank string
+     */
     public static String parameterString(StepContextId contextId) {
         return null != contextId.getParams() ? "@" + parameterString(contextId.getParams()) : "";
     }
+
+    /**
+     * Generate the parameter string for a map of parameters
+     * @param params
+     * @return
+     */
     public static String parameterString(Map<String, String> params) {
         TreeSet<String> stringStringTreeSet = new TreeSet<String>(params.keySet());
         StringBuilder sb = new StringBuilder();
@@ -128,6 +139,12 @@ public class StateUtils {
         }
         return sb.toString();
     }
+
+    /**
+     * Generate a string representing the step identifier
+     * @param ident
+     * @return
+     */
     public static String stepIdentifierToString(StepIdentifier ident) {
         StringBuilder sb = new StringBuilder();
         for (StepContextId stepContextId : ident.getContext()) {
@@ -138,6 +155,12 @@ public class StateUtils {
         }
         return sb.toString();
     }
+
+    /**
+     * Parse a step identifier from a string
+     * @param input
+     * @return
+     */
     public static StepIdentifier stepIdentifierFromString(String input) {
         if(null==input){
             return null;
@@ -149,6 +172,11 @@ public class StateUtils {
         return stepIdentifier(ids);
     }
 
+    /**
+     * Generate a step context id from a string
+     * @param s
+     * @return
+     */
     public static StepContextId stepContextIdFromString(String s) {
         String[] split = s.split("@");
         boolean errHandler=false;
@@ -174,6 +202,11 @@ public class StateUtils {
         return StateUtils.stepContextId(stepnum, errHandler, params);
     }
 
+    /**
+     * Parse a paramter string to a parameter map
+     * @param t
+     * @return
+     */
     public static Map<String, String> parseParameterString(String t) {
         Map<String, String> params;
         params = new HashMap<String, String>();

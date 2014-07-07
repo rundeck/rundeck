@@ -17,7 +17,7 @@
 package com.dtolabs.rundeck.core.utils;
 
 /**
- * NullablePairImpl is ...
+ * Pair implementation allowing null values
  *
  * @author Greg Schueler <greg@simplifyops.com>
  * @since 2014-06-26

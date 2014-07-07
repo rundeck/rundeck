@@ -33,7 +33,6 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.utils.Pair;
-import org.apache.commons.lang.StringUtils;
 
 import java.util.*;
 
@@ -107,7 +106,7 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
                 if (last.getStep() > -1) {
                     loggingContext.put("step", Integer.toString(last.getStep()));
                 }
-                loggingContext.put("stepctx", generateContextId(currentContext));
+                loggingContext.put("stepctx", StateUtils.stepIdentifierToString(generateIdentifier(currentContext)));
             }
             return loggingContext;
         } else {
@@ -116,11 +115,11 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
     }
 
 
-    private String generateContextId(final List<Pair<StepContextId, INodeEntry>> stack) {
-        StepIdentifier ident = generateIdentifier(stack);
-        return StateUtils.stepIdentifierToString(ident);
-    }
-
+    /**
+     * Convert stack of context data into a StepIdentifier
+     * @param stack
+     * @return
+     */
     private StepIdentifier generateIdentifier(List<Pair<StepContextId, INodeEntry>> stack) {
         List<StepContextId> ctxs = new ArrayList<StepContextId>();
         int i=0;
