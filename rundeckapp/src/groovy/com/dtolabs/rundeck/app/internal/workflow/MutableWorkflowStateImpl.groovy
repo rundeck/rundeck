@@ -667,7 +667,13 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
                     this
             )
         }
-
+        if(!mutableWorkflowStepState.nodeStep && !mutableWorkflowStepState.parameterizedStateMap){
+            //finalize this step based on the subworkflow steps
+            def substates = mutableWorkflowStepState.subWorkflowState.stepStates*.stepState*.executionState
+            mutableWorkflowStepState.mutableStepState.executionState = summarizedSubStateResult(substates,
+                    executionState)
+            mutableWorkflowStepState.mutableStepState.endTime = date
+        }
     }
 
     /**
@@ -679,18 +685,15 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
     private void finalizeStepExecutionState(MutableWorkflowStepState mutableWorkflowStepState,
                                             ExecutionState executionState, Date date) {
         def curstate = mutableWorkflowStepState.mutableStepState.executionState
-        def newstate = executionState
-        switch (curstate) {
-            case null:
-            case ExecutionState.WAITING:
+        if(null== curstate || !curstate.completedState){
+            def newstate = executionState
+            if ( curstate in [null,ExecutionState.WAITING]) {
                 newstate = ExecutionState.NOT_STARTED
-                break
-            case ExecutionState.RUNNING:
-            case ExecutionState.RUNNING_HANDLER:
-               // newstate = ExecutionState.ABORTED
-                break
+            } else if (curstate in [ExecutionState.RUNNING, ExecutionState.RUNNING_HANDLER]) {
+                newstate = ExecutionState.ABORTED
+            }
+            mutableWorkflowStepState.mutableStepState.executionState = updateState(curstate, newstate)
         }
-        mutableWorkflowStepState.mutableStepState.executionState = updateState(curstate, newstate)
         mutableWorkflowStepState.mutableStepState.endTime = date
     }
 

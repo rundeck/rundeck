@@ -307,10 +307,12 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
      */
     public void testUpdateWorkflowSubStepPrepare() {
         def (MutableWorkflowStateImpl mutableWorkflowState, Date date) = prepareSubWorkflow()
-        assertSubworkflowState(mutableWorkflowState, date, ExecutionState.RUNNING, ExecutionState.WAITING, ExecutionState.RUNNING)
+        assertSubworkflowState(mutableWorkflowState, date, ExecutionState.RUNNING, ExecutionState.RUNNING, ExecutionState.WAITING, ExecutionState.RUNNING)
     }
 
-    private void assertSubworkflowState(MutableWorkflowStateImpl mutableWorkflowState, Date date, ExecutionState runningState, ExecutionState waitingState, ExecutionState nodeSubState) {
+    private void assertSubworkflowState(MutableWorkflowStateImpl mutableWorkflowState, Date date,
+                                        ExecutionState subworkflowState, ExecutionState runningState,
+                                        ExecutionState waitingState, ExecutionState nodeSubState) {
         assertEquals(runningState, mutableWorkflowState.getExecutionState());
         assertEquals(['a'], mutableWorkflowState.getNodeSet());
         assertEquals(['a'], mutableWorkflowState.getMutableNodeSet());
@@ -322,7 +324,7 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
             assertStepId(1, step1.stepIdentifier)
             assertEquals(true, step1.hasSubWorkflow())
             assertEquals(false, step1.isNodeStep())
-            assertEquals(runningState, step1.stepState.executionState)
+            assertEquals(subworkflowState, step1.stepState.executionState)
             assertEquals(null, step1.stepState.errorMessage)
             assertEquals(null, step1.stepState.metadata)
             assertEquals([:], step1.nodeStateMap)
@@ -372,7 +374,8 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
         def (MutableWorkflowStateImpl mutableWorkflowState, Date date) = prepareSubWorkflow()
         Date endDate= date+1
         mutableWorkflowState.updateWorkflowState(ExecutionState.ABORTED, endDate, null)
-        assertSubworkflowState(mutableWorkflowState, endDate, ExecutionState.ABORTED, ExecutionState.NOT_STARTED, ExecutionState.NODE_MIXED)
+        assertSubworkflowState(mutableWorkflowState, endDate, ExecutionState.NODE_MIXED, ExecutionState.ABORTED, ExecutionState.NOT_STARTED,
+                ExecutionState.NODE_MIXED)
 
     }
 
