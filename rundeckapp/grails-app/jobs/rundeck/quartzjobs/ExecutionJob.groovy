@@ -108,7 +108,7 @@ class ExecutionJob implements InterruptableJob {
             log.error("Failed execution ${initMap.execution.id} : ${t.message?t.message:'no message'}",t)
         }
         saveState(initMap.executionService, initMap.execution ? initMap.execution : (Execution) null, success,
-            wasInterrupted, wasTimeout,initMap.timeout, initMap.isTemp,
+            wasInterrupted, wasTimeout, initMap.isTemp,
                 initMap.scheduledExecutionId ? initMap.scheduledExecutionId: -1L,
                 result?.execmap)
     }
@@ -366,7 +366,6 @@ class ExecutionJob implements InterruptableJob {
 
     def saveState(ExecutionService executionService,Execution execution, boolean success, boolean _interrupted,
             boolean timedOut,
-            long timeoutDuration,
                   boolean isTemp, long scheduledExecutionId=-1, Map execmap) {
         Map<String,Object> failedNodes=extractFailedNodes(execmap)
         Set<String> succeededNodes=extractSucceededNodes(execmap)
@@ -378,7 +377,6 @@ class ExecutionJob implements InterruptableJob {
                 dateCompleted: dateCompleted,
                 cancelled: _interrupted && !timedOut,
                 timedOut: timedOut,
-//                timeoutDuration:timeoutDuration,
                 failedNodes: failedNodes?.keySet(),
                 failedNodesMap: failedNodes,
                 succeededNodes: succeededNodes,
