@@ -372,7 +372,7 @@ class ExecutionJobTest  {
         }
 
         def es = mockes.createMock()
-        job.saveState(es,execution,true,false,false,0,true,-1,execMap)
+        job.saveState(es,execution,true,false,false,true,-1,execMap)
     }
 
     @Test
@@ -408,7 +408,7 @@ class ExecutionJobTest  {
         }
 
         def es = mockes.createMock()
-        def result=job.saveState(es,execution,true,false, false, 0,false, scheduledExecution.id,execMap)
+        def result=job.saveState(es,execution,true,false, false, false, scheduledExecution.id,execMap)
         Assert.assertTrue(x)
     }
 
@@ -448,7 +448,7 @@ class ExecutionJobTest  {
 
         def es = mockes.createMock()
         job.statsRetryMax=2
-        def result=job.saveState(es,execution,true,false, false, 0,false, scheduledExecution.id,execMap)
+        def result=job.saveState(es,execution,true,false, false,false, scheduledExecution.id,execMap)
         Assert.assertFalse(saveStatsComplete)
     }
     @Test
@@ -487,7 +487,7 @@ class ExecutionJobTest  {
 
         def es = mockes.createMock()
         job.statsRetryMax=4
-        def result=job.saveState(es,execution,true,false, false, 0,false, scheduledExecution.id,execMap)
+        def result=job.saveState(es,execution,true,false, false,false, scheduledExecution.id,execMap)
         Assert.assertTrue(saveStatsComplete)
     }
 
@@ -520,7 +520,7 @@ class ExecutionJobTest  {
         def es = mockes.createMock()
 
         job.finalizeRetryMax=2
-        def result=job.saveState(es,execution,true,false, false, 0,true,-1,execMap)
+        def result=job.saveState(es,execution,true,false, false,true,-1,execMap)
         Assert.assertEquals(false,result)
     }
 
