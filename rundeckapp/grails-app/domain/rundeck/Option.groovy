@@ -48,6 +48,7 @@ public class Option implements Comparable{
      * supercedes valuesUrl and allows longer values. 
      */
     URL valuesUrlLong
+    URL autocompleteUrl
     String regex
     String valuesList
     Boolean multivalued
@@ -67,6 +68,7 @@ public class Option implements Comparable{
         values(nullable:true)
         valuesUrl(nullable:true)
         valuesUrlLong(nullable:true)
+        autocompleteUrl(nullable:true)
         regex(nullable:true)
         scheduledExecution(nullable:true)
         delimiter(nullable:true)
@@ -79,6 +81,7 @@ public class Option implements Comparable{
     static mapping = {
         table "rdoption"
         valuesUrlLong length:3000
+        autocompleteUrl length:4096
         values type: 'text', lazy: false
         description type: 'text'
         defaultValue type: 'text'
@@ -107,6 +110,9 @@ public class Option implements Comparable{
         if(getRealValuesUrl()){
             map.valuesUrl=getRealValuesUrl().toExternalForm()
         }
+        if(autocompleteUrl){
+            map.autocompleteUrl=autocompleteUrl
+	    }
         if(regex){
             map.regex=regex
         }
@@ -142,6 +148,9 @@ public class Option implements Comparable{
         }
         if(data.valuesUrl){
             opt.realValuesUrl=new URL(data.valuesUrl)
+        }
+        if(data.autocompleteUrl){
+            opt.autocompleteUrl=new URL(data.autocompleteUrl)
         }
         if(null!=data.regex){
             opt.regex=data.regex
@@ -235,7 +244,7 @@ public class Option implements Comparable{
      */
     public Option createClone(){
         Option opt = new Option()
-        ['name','description','defaultValue','sortIndex','enforced','required','values','valuesList','valuesUrl','valuesUrlLong','regex','multivalued','delimiter','secureInput','secureExposed'].each{k->
+        ['name','description','defaultValue','sortIndex','enforced','required','values','valuesList','valuesUrl','valuesUrlLong','autocompleteUrl','regex','multivalued','delimiter','secureInput','secureExposed'].each{k->
             opt[k]=this[k]
         }
         if(!opt.valuesList && values){
@@ -254,6 +263,7 @@ public class Option implements Comparable{
         ", required=" + required +
         ", values=" + values +
         ", valuesUrl=" + getRealValuesUrl() +
+        ", autocompleteUrl=" + autocompleteUrl +
         ", regex='" + regex + '\'' +
         ", multivalued='" + multivalued + '\'' +
         ", secureInput='" + secureInput + '\'' +

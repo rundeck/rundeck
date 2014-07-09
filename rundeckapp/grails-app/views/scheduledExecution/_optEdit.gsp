@@ -231,6 +231,17 @@
                 <span class="warn note"><g:message code="form.option.multivalued.secure-conflict.message"/></span>
             </div>
         </div>
+        <div>
+            <span class="prompt"><g:message code="Option.autocomplete.label" /></span>
+            <div class="presentation">
+                <div>
+                    <span class="info note"><g:message code="Option.autocomplete.description" /></span>
+                </div>
+                <div>
+                    <input type="url" class="right" name="autocompleteUrl" value="${option?.autocompleteUrl?.encodeAsHTML() }" size="60" placeholder="Remote URL" id="vaurl_${rkey}"/>
+                </div>
+            </div>
+        </div>
         <div id="preview_${rkey}" style="${wdgt.styleVisible(if:option?.name)}">
             <span class="prompt">Usage</span>
             <div class="presentation opt_sec_nexp_disabled" style="${wdgt.styleVisible(unless: option?.secureInput && !option?.secureExposed)}">

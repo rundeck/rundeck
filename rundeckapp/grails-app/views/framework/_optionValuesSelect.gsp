@@ -52,6 +52,22 @@
                 value="${selectedvalue?selectedvalue:selectedoptsmap && null!=selectedoptsmap[optName]?selectedoptsmap[optName]:optionSelect.defaultValue?optionSelect.defaultValue:''}"
                 maxlength="256" size="40"
                 id="${fieldwatchid}"/>
+		        <g:if test="${optionSelect.autocompleteUrl}">
+		            <div id="div_${fieldwatchid}"/>
+		                <script>
+		                	jQuery.ui.autocomplete(
+						{ 	source:"<%="${optionSelect.autocompleteUrl}"%>",
+							minLength:2,
+							appendTo:$("div_${fieldwatchid}")
+						},$("<%="${fieldwatchid}" %>"))
+	        			._renderItem = function( ul, item ) {
+				                return jQuery( "<li>" )
+                	        		.append( jQuery( "<a>" ).html( item.label ) )
+                        			.appendTo( ul );
+        				}
+					
+		                </script>
+		        </g:if>
         </g:else>
             <%-- event handler: when text field is empty, show required option value warning icon if it exists--%>
             <wdgt:eventHandler for="${fieldwatchid}" state="empty" visible="true" targetSelector="${'#'+optName.encodeAsHTML()+'_state span.reqwarning'}" frequency="1"  inline='true'/>
