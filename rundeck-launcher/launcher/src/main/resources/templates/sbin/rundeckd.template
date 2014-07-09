@@ -41,7 +41,7 @@ RDECK_PORT=`awk '/framework.server.port/ {print $3}' $RDECK_BASE/etc/framework.p
 SSL_OPTS=
 proto=$(awk '/framework.server.url = / {split($3, a, ":"); print a[1]}' $RDECK_BASE/etc/framework.properties)
 [ "${proto:-http}" == "https" ] && {
-   SSL_OPTS="-Drundeck.ssl.config=$RDECK_BASE/server/config/ssl.properties"
+   SSL_OPTS="-Drundeck.ssl.config=$RDECK_BASE/server/config/ssl.properties -Dserver.https.port=${RDECK_PORT:=4443}"
 }
 
 prog="rundeckd"
