@@ -31,23 +31,17 @@ import java.text.SimpleDateFormat
  */
 class LegacyLogEntryLineIteratorTest extends GroovyTestCase {
     File testfile1
-    File testfile2
     Date startDate
     List<Date> dates
     List<Long> lengths
-    List<Long> lengths2
     SimpleDateFormat w3cDateFormat
-    SimpleDateFormat fallbackFormat
     @Override
     protected void setUp() throws Exception {
         super.setUp()
         testfile1 = File.createTempFile("LogEntryLineIteratorTest1", ".log")
         testfile1.deleteOnExit()
-        testfile2 = File.createTempFile("LogEntryLineIteratorTest2", ".log")
-        testfile2.deleteOnExit()
 
-        long nowtime = System.currentTimeMillis()
-        nowtime = nowtime -  (nowtime%1000)//reduce granularity to seconds
+        long nowtime = 1404864029000L
         startDate = new Date(nowtime - 120000 /*120 sec ago*/)
         dates = [
                 new Date(nowtime - (90000) /*90 sec ago*/),
@@ -57,8 +51,6 @@ class LegacyLogEntryLineIteratorTest extends GroovyTestCase {
         ]
         w3cDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
         w3cDateFormat.timeZone=TimeZone.getTimeZone("GMT")
-        fallbackFormat = new SimpleDateFormat("HH:mm:ss", Locale.US);
-        fallbackFormat.timeZone = TimeZone.getTimeZone("GMT")
         def lines=[
                 "^^^${w3cDateFormat.format(dates[0])}|ERROR|user1|||nodea|ctx1|This is a test^^^\n",
                 "^^^${w3cDateFormat.format(dates[1])}|WARN|user2|||nodeb|ctx2|This is a test2^^^\n",
@@ -72,17 +64,7 @@ class LegacyLogEntryLineIteratorTest extends GroovyTestCase {
         //running sum of line lengths == list of offsets from start
         lengths=linelens.inject([0]){List s,v-> s<< s[-1]+v }
         testfile1.withWriter {w-> lines.each { w << it } }
-        def lines2 = [
-                "^^^${fallbackFormat.format(dates[0])}|ERROR|user1|||nodea|ctx1|This is a test^^^\n",
-                "^^^${fallbackFormat.format(dates[1])}|WARN|user2|||nodeb|ctx2|This is a test2^^^\n",
-                "^^^${fallbackFormat.format(dates[2])}|NORMAL|user3|||nodec|ctx3|This is a test3^^^\n",
-                "^^^END^^^\n"
-        ]
-        def linelens2 = (lines2*.toString().bytes.length)
         //running sum of line lengths == list of offsets from start
-        lengths2 = linelens2.inject([0]) { List s, v -> s << s[-1] + v }
-        testfile2.text=''
-        testfile2.withWriter { w -> lines2.each { w << it } }
     }
 
     public testFromStart() {
@@ -104,25 +86,6 @@ class LegacyLogEntryLineIteratorTest extends GroovyTestCase {
         LogEvent entry4 = iterator.next()
         assertEntry(entry4, dates[3], LogLevel.NORMAL, [user: 'user3', node: 'nodec', context: 'ctx3'], "This is a test4\nand some more text\nand even more")
         assertEquals(lengths[4], iterator.offset)
-
-        assertFalse(iterator.hasNext())
-    }
-    public testFromStartDate2() {
-        def iterator = new LegacyLogEventLineIterator(new FSFileLineIterator(new FileInputStream(testfile2), "UTF-8"))
-        iterator.referenceDate= startDate
-        assertTrue(iterator.hasNext())
-        assertEquals(lengths2[0], iterator.offset)
-        LogEvent entry = iterator.next()
-        assertEntry(entry, dates[0], LogLevel.ERROR, [user: 'user1', node: 'nodea', context: 'ctx1'], "This is a test")
-        assertEquals(lengths2[1], iterator.offset)
-
-        LogEvent entry2 = iterator.next()
-        assertEntry(entry2, dates[1], LogLevel.WARN, [user: 'user2', node: 'nodeb', context: 'ctx2'], "This is a test2")
-        assertEquals(lengths2[2], iterator.offset)
-
-        LogEvent entry3 = iterator.next()
-        assertEntry(entry3, dates[2], LogLevel.NORMAL, [user: 'user3', node: 'nodec', context: 'ctx3'], "This is a test3")
-        assertEquals(lengths2[3], iterator.offset)
 
         assertFalse(iterator.hasNext())
     }
