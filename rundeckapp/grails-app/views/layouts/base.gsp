@@ -16,12 +16,10 @@
     <asset:stylesheet href="rundeck.css"/>
     <asset:stylesheet href="ansicolor.css"/>
     <asset:stylesheet href="non_responsive.css"/>
-    <asset:stylesheet href="autocomplete.css"/>
     <!--[if lt IE 9]>
     <g:javascript library="respond.min"/>
     <![endif]-->
     <asset:javascript src="jquery.js"/>
-    <asset:javascript src="jquery-ui.js"/>
     <asset:javascript src="bootstrap.js"/>
     <asset:javascript src="prototype.min.js"/>
     <asset:javascript src="application.js"/>
