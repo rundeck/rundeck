@@ -4,6 +4,7 @@ import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.Timer
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.execution.ServiceThreadBase
+import org.quartz.JobDataMap
 import org.quartz.JobExecutionContext
 import com.dtolabs.rundeck.core.common.Framework
 import org.quartz.InterruptableJob
@@ -117,7 +118,7 @@ class ExecutionJob implements InterruptableJob {
         }catch(Throwable t){
             log.error("Failed execution ${initMap.execution.id} : ${t.message?t.message:'no message'}",t)
         }
-        saveState(context,initMap.executionService, initMap.execution ? initMap.execution : (Execution) null, success,
+        saveState(context.jobDetail.jobDataMap,initMap.executionService, initMap.execution ? initMap.execution : (Execution) null, success,
             wasInterrupted, wasTimeout, initMap.isTemp,
                 initMap.scheduledExecutionId ? initMap.scheduledExecutionId : -1L,
                 result?.execmap)
@@ -374,7 +375,7 @@ class ExecutionJob implements InterruptableJob {
         return [complete,caught]
     }
 
-    def saveState(JobExecutionContext context, ExecutionService executionService,Execution execution, boolean success,
+    def saveState(def jobDataMap, ExecutionService executionService,Execution execution, boolean success,
                   boolean _interrupted,
                   boolean timedOut,
                   boolean isTemp, long scheduledExecutionId=-1, Map execmap) {
@@ -395,13 +396,13 @@ class ExecutionJob implements InterruptableJob {
         def saveStateComplete=false
         def saveStateException=null
         Map retryContext=[
-            user: context.jobDetail.jobDataMap.get("user"),
-            userSubject: context.jobDetail.jobDataMap.get("userSubject"),
-            authContext: context.jobDetail.jobDataMap.get("authContext"),
-            secureOpts: context.jobDetail.jobDataMap.get("secureOpts"),
-            secureOptsExposed: context.jobDetail.jobDataMap.get("secureOptsExposed"),
-            retryAttempt: context.jobDetail.jobDataMap.get("retryAttempt"),
-            timeout: context.jobDetail.jobDataMap.get("timeout"),
+            user: jobDataMap?.get("user"),
+            userSubject: jobDataMap?.get("userSubject"),
+            authContext: jobDataMap?.get("authContext"),
+            secureOpts: jobDataMap?.get("secureOpts"),
+            secureOptsExposed: jobDataMap?.get("secureOptsExposed"),
+            retryAttempt: jobDataMap?.get("retryAttempt"),
+            timeout: jobDataMap?.get("timeout"),
         ]
         //attempt to save execution state, with retry, in case DB connection fails
         (saveStateComplete, saveStateException) = withRetry(finalizeRetryMax, finalizeRetryDelay,
