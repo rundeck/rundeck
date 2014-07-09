@@ -30,3 +30,11 @@ started
 </span>
 by <g:username user="${execution.user}"/>
 %{--<g:render template="/scheduledExecution/execStatusText" model="${[execution: execution]}"/>--}%
+
+<div data-bind="visible: retryExecutionId()">
+    Retry attempt #<span data-bind="text: retryExecutionAttempt()"></span>  (of <span
+        data-bind="text: retry()"></span>):
+    <a data-bind="attr: { 'href': retryExecutionUrl() }">
+        <span data-bind="text: '#'+retryExecutionId()"></span>
+    </a>
+</div>

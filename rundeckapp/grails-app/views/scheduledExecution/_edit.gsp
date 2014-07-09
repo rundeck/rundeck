@@ -849,6 +849,22 @@ function getCurSEID(){
             </span>
         </div>
     </div>
+    %{--Job retry--}%
+    <div class="form-group">
+        <div class="${labelColSize} control-label text-form-label">
+            <g:message code="scheduledExecution.property.retry.label" default="Retry"/>
+        </div>
+
+        <div class="${fieldColHalfSize}">
+
+            <input type='text' name="retry" value="${scheduledExecution?.retry?.encodeAsHTML()}"
+                   id="schedJobRetry" maxlength="256" class="form-control"/>
+
+            <span class="help-block">
+                <g:message code="scheduledExecution.property.retry.description"/>
+            </span>
+        </div>
+    </div>
 
 
     %{--uuid--}%

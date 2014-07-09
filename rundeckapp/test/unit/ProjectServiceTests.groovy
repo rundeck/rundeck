@@ -40,12 +40,14 @@ import rundeck.services.WorkflowService
 @TestFor(ProjectService)
 @Mock([ScheduledExecution, Option, Workflow, CommandExec, Execution,BaseReport, ExecReport])
 class ProjectServiceTests  {
-    static String EXEC_XML_TEST1_START = '''<executions>
+    static String EXECS_START='<executions>'
+    static String EXECS_END= '</executions>'
+    static String EXEC_XML_TEST1_DEF_START= '''
   <execution id='1'>
     <dateStarted>1970-01-01T00:00:00Z</dateStarted>
     <dateCompleted>1970-01-01T01:00:00Z</dateCompleted>
     <status>true</status>'''
-    static String EXEC_XML_TEST1_REST = '''
+    static String EXEC_XML_TEST1_DEF_END= '''
     <failedNodeList />
     <succeededNodeList />
     <abortedby />
@@ -70,7 +72,10 @@ class ProjectServiceTests  {
       </command>
     </workflow>
   </execution>
-</executions>'''
+'''
+
+    static String EXEC_XML_TEST1_START = EXECS_START+EXEC_XML_TEST1_DEF_START
+    static String EXEC_XML_TEST1_REST = EXEC_XML_TEST1_DEF_END+EXECS_END
     static String EXEC_XML_TEST1 = EXEC_XML_TEST1_START+ '''
     <outputfilepath />''' + EXEC_XML_TEST1_REST
 
@@ -392,6 +397,43 @@ class ProjectServiceTests  {
         assertNotNull e.workflow.commands
         assertEquals 1,e.workflow.commands.size()
         assertPropertiesEquals( [adhocRemoteString: 'exec command'],e.workflow.commands[0])
+    }
+    def testloadExecutionsRetryExecId(){
+        def remapExecId='12'
+        def idMap=[:]
+
+
+        def semock = mockFor(ScheduledExecutionService)
+        semock.demand.getByIDorUUID(1..1){id->
+            assertEquals(newJobId,id)
+            se
+        }
+
+        ProjectService svc = new ProjectService()
+        svc.scheduledExecutionService=semock.createMock()
+
+        def result = svc.loadExecutions(
+                EXECS_START
+                    + EXEC_XML_TEST1_DEF_START
+                    + '''<retryExecutionId>12</retryExecutionId> <outputfilepath />'''
+                    + EXEC_XML_TEST1_DEF_END
+                    + '''
+  <execution id='12'>
+    <dateStarted>1970-01-01T00:00:00Z</dateStarted>
+    <dateCompleted>1970-01-01T01:00:00Z</dateCompleted>
+    <status>true</status>'''
+                    + ''' <outputfilepath />'''
+                    + EXEC_XML_TEST1_DEF_END
+                + EXECS_END
+                ,idMap)
+        assertNotNull result
+        assertNotNull result.executions
+        assertNotNull result.execidmap
+        assertNotNull result.retryidmap
+        assertEquals 1,result.retryidmap.size()
+        assertEquals 12,result.retryidmap.values().first()
+        assertEquals 2,result.executions.size()
+
     }
     def assertPropertiesEquals(Map data, Object obj){
         data.each{k,v->

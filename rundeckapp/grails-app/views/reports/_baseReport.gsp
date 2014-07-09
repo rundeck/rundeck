@@ -39,7 +39,7 @@
             </td>
             <td class="eventicon autoclickable">
                 <i class="exec-status icon ${!execution.dateCompleted ? 'running' : execution.status == 'true' ?
-                    'succeed' : execution.cancelled ? 'aborted' :execution.timedOut ? 'timedout' : 'fail'}"></i>
+                    'succeed' : execution.cancelled ? 'aborted' :execution.willRetry ? 'failedretry' :execution.timedOut ? 'timedout' : 'fail'}"></i>
             </td>
             <g:set var="vals" value="${['?','?','?']}"/>
             <g:if test="${it instanceof ExecReport}">

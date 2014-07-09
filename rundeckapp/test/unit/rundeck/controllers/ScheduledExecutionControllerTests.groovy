@@ -1,4 +1,7 @@
 package rundeck.controllers
+
+import com.dtolabs.rundeck.core.authorization.AuthContext
+
 /*
  * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
  *
@@ -841,8 +844,8 @@ class ScheduledExecutionControllerTests  {
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
         assertNotNull exec.save()
-        eServiceControl.demand.executeScheduledExecution { scheduledExecution, framework, authctx, subject, inparams ->
-            assert 'anonymous' == inparams.user
+        eServiceControl.demand.executeJob { scheduledExecution, authctx, subject, user, inparams ->
+            assert 'anonymous' == user
             return [executionId: exec.id, name: scheduledExecution.jobName, execution: exec,success:true]
         }
         eServiceControl.demand.respondExecutionsXml { response, List<Execution> execs ->
@@ -871,7 +874,7 @@ class ScheduledExecutionControllerTests  {
         ExecutionController.metaClass.renderApiExecutionListResultXML={List execs->
             assert 1==execs.size()
         }
-
+        session.user='anonymous'
         sec.apiJobRun()
     }
     public void testApiRunJob_AsUser() {
@@ -920,8 +923,10 @@ class ScheduledExecutionControllerTests  {
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
         assertNotNull exec.save()
-        eServiceControl.demand.executeScheduledExecution { scheduledExecution, framework, authctx, subject, inparams ->
-            assert userName == inparams.user
+        eServiceControl.demand.executeJob { ScheduledExecution scheduledExecution, AuthContext authContext,
+                                            Subject subject, String user,
+                                            Map input ->
+            assert userName == user
             return [executionId: exec.id, name: scheduledExecution.jobName, execution: exec,success:true]
 
         }

@@ -579,6 +579,14 @@ class ApiService {
                             }
                         }
                     }
+                    if(e.retryAttempt){
+                        retry(attempt:e.retryAttempt)
+                    }
+                    if(execdata.retryExecution){
+                        retriedExecution{
+                            execution(execdata.retryExecution)
+                        }
+                    }
                 }
             }
         }

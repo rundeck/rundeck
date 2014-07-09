@@ -149,7 +149,7 @@
   }
   .execstate{
 
-    &[data-execstate=NODE_MIXED], &[data-execstate=TIMEDOUT] {
+    &[data-execstate=NODE_MIXED], &[data-execstate=TIMEDOUT], &[data-execstate=FAILED-WITH-RETRY] {
       color: orange;
     }
     &[data-execstate=ABORTED]{
@@ -199,6 +199,10 @@
         .glyphicon();
         .glyphicon-remove-circle();
       }
+      &[data-execstate='FAILED-WITH-RETRY'] {
+        .glyphicon();
+        .glyphicon-repeat();
+      }
     }
   }
   .execstate.execstatedisplay{
@@ -219,6 +223,10 @@
       }
 
       &[data-execstate=FAILED]:after {
+        content: 'Failed';
+      }
+
+      &[data-execstate=FAILED-WITH-RETRY]:after {
         content: 'Failed';
       }
 
@@ -751,6 +759,14 @@ section{
       &.icon {
         .glyphicon();
         .glyphicon-time();
+      }
+    }
+    &.failedretry, &[data-execstate=FAILED-WITH-RETRY] {
+      color: @brand-warning;
+
+      &.icon {
+        .glyphicon();
+        .glyphicon-repeat();
       }
     }
   }

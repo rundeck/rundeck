@@ -111,6 +111,11 @@
                 }
                 ko.mapping.fromJS({
                     executionState:data.executionState,
+                    retryExecutionId:data.retryExecutionId,
+                    retryExecutionUrl:data.retryExecutionUrl,
+                    retryExecutionState:data.retryExecutionState,
+                    retryExecutionAttempt:data.retryExecutionAttempt,
+                    retry:data.retry,
                     completed:data.completed,
                     execDuration:data.execDuration,
                     jobAverageDuration:data.jobAverageDuration,
@@ -121,6 +126,11 @@
             updateState:function(data){
                 ko.mapping.fromJS({
                     executionState:data.executionState,
+                    retryExecutionId:data.retryExecutionId,
+                    retryExecutionUrl:data.retryExecutionUrl,
+                    retryExecutionState:data.retryExecutionState,
+                    retryExecutionAttempt:data.retryExecutionAttempt,
+                    retry:data.retry,
                     completed:data.completed,
                     execDuration:data.execDuration,
                     jobAverageDuration:data.jobAverageDuration,
@@ -207,9 +217,15 @@
                         <span class="jobInfo" id="jobInfo_${execution.id}">
                             <span class="h3">
                                 <g:render template="/scheduledExecution/showExecutionLink"
-                                     model="[scheduledExecution: scheduledExecution, noimgs:true, execution: execution, followparams: [mode: followmode, lastlines: params.lastlines]]"/>
-                            </span>
+                                     model="[scheduledExecution: scheduledExecution, noimgs:true, execution: execution, followparams: [mode: followmode, lastlines: params.lastlines]]"/></span>
                         </span>
+
+                <g:if test="${execution.retryAttempt}">
+                    <div class="text-muted">
+                        <i class="glyphicon glyphicon-repeat"></i>
+                        Retry #${execution.retryAttempt}  (of ${execution.retry})
+                    </div>
+                </g:if>
                         <g:if test="${eprev || enext}">
                             <div class="affixed-hidden">
 

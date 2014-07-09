@@ -85,6 +85,7 @@ class ScheduledExecution extends ExecutionContext {
             }
         })
         timeout(maxSize: 256, blank: true, nullable: true,)
+        retry(maxSize: 256, blank: true, nullable: true,)
         crontabString(bindable: true,nullable: true)
     }
 
@@ -136,6 +137,9 @@ class ScheduledExecution extends ExecutionContext {
         map.project=project
         if(timeout){
             map.timeout=timeout
+        }
+        if(retry){
+            map.retry=retry
         }
 
         if(options){
@@ -206,6 +210,7 @@ class ScheduledExecution extends ExecutionContext {
             se.uuid = data.uuid
         }
         se.timeout = data.timeout?data.timeout.toString():null
+        se.retry = data.retry?data.retry.toString():null
         if(data.options){
             TreeSet options=new TreeSet()
             data.options.keySet().each{optname->

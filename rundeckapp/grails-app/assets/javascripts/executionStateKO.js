@@ -224,6 +224,11 @@ function NodeFlowViewModel(workflow,outputUrl){
     self.followOutputUrl= outputUrl;
     self.completed=ko.observable();
     self.executionState=ko.observable();
+    self.retryExecutionId=ko.observable();
+    self.retryExecutionState=ko.observable();
+    self.retryExecutionUrl=ko.observable();
+    self.retryExecutionAttempt=ko.observable();
+    self.retry=ko.observable();
     self.execDuration=ko.observable();
     self.jobAverageDuration=ko.observable();
     self.startTime=ko.observable();

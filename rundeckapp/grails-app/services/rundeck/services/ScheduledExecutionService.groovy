@@ -592,18 +592,26 @@ class ScheduledExecutionService implements ApplicationContextAware{
     /**
      * Schedule a stored job to execute immediately, include a set of params in the data map
      */
-    def long scheduleTempJob(ScheduledExecution se, String user, Subject subject, Execution e,
-                             long timeout, Map extra=null, Map extraParamsExposed = null) {
+    def long scheduleTempJob(ScheduledExecution se, String user, Subject subject, AuthContext authContext,
+                             Execution e, long timeout, Map secureOpts =null,
+                             Map secureOptsExposed =null, int retryAttempt = 0) {
 
         def jobDetail = createJobDetail(se, "TEMP:" + user + ":" + se.id + ":" + e.id, user + ":run:" + se.id)
+        jobDetail.getJobDataMap().put("user", user)
         jobDetail.getJobDataMap().put("userSubject", subject)
+        jobDetail.getJobDataMap().put("authContext", authContext)
         jobDetail.getJobDataMap().put("executionId", e.id.toString())
         jobDetail.getJobDataMap().put("timeout", timeout)
-        if(extra){
-            jobDetail.getJobDataMap().put("extraParams", extra)
+        if(secureOpts){
+            jobDetail.getJobDataMap().put("secureOpts", secureOpts)
         }
-        if(extraParamsExposed){
-            jobDetail.getJobDataMap().put("extraParamsExposed", extraParamsExposed)
+        if(secureOptsExposed){
+            jobDetail.getJobDataMap().put("secureOptsExposed", secureOptsExposed)
+        }
+        if(retryAttempt){
+            jobDetail.getJobDataMap().put("retryAttempt",retryAttempt)
+        }else{
+            jobDetail.getJobDataMap().put("retryAttempt", 0)
         }
 
         def Trigger trigger = TriggerUtils.makeImmediateTrigger(0, 0)
