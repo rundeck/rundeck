@@ -11,6 +11,7 @@ abstract class ExecutionContext extends BaseNodeFilters{
     String loglevel="WARN"
     String serverNodeUUID
     String timeout
+    String retry
 
     static mapping = {
         user column: "rduser"

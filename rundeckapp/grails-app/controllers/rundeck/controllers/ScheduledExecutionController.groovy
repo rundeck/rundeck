@@ -1253,94 +1253,7 @@ class ScheduledExecutionController  extends ControllerBase{
                     notificationValidation: params['notificationValidation']])
         }
     }
-    /**
-     * Action to upload jobs.xml and execute it immediately.
-     */
-    def uploadAndExecute = {
-        log.debug("ScheduledExecutionController: upload " + params)
-        def fileformat = params.fileformat ?: 'xml'
-        def parseresult
-        if (request instanceof MultipartHttpServletRequest) {
-            def file = request.getFile("xmlBatch")
-            if (!file || file.empty) {
-                flash.message = "No file was uploaded."
-                return
-            }
-            parseresult = scheduledExecutionService.parseUploadedFile(file.getInputStream(), fileformat)
-        } else if (params.xmlBatch) {
-            String fileContent = params.xmlBatch
-            parseresult = scheduledExecutionService.parseUploadedFile(fileContent, fileformat)
-        } else {
-            return
-        }
-        def jobset
-        if (parseresult.errorCode) {
-            parseresult.error = message(code: parseresult.errorCode, args: parseresult.args)
-        }
-        if (parseresult.error) {
-            flash.error = parseresult.error
-            if (params.xmlreq) {
-                return xmlerror()
-            } else {
-                render(view: 'upload')
-                return
-            }
-        }
-        jobset = parseresult.jobset
-        def changeinfo = [user: session.user, method: 'upload']
-        def Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
-        def loadresults = scheduledExecutionService.loadJobs(jobset, params.dupeOption, session.user, roleList, changeinfo, framework,authContext)
 
-        def jobs = loadresults.jobs
-        def jobsi = loadresults.jobsi
-        def msgs = loadresults.msgs
-        def errjobs = loadresults.errjobs
-        def skipjobs = loadresults.skipjobs
-
-        def reserrors = []
-        def ressuccess=[]
-
-        if(!errjobs){
-            //run the jobs and forward to nowrunning
-            jobsi.each{ Map map->
-                def ScheduledExecution scheduledExecution=map.scheduledExecution
-                def entrynum=map.entrynum
-                def properties=[:]
-                properties.putAll(scheduledExecution.properties)
-                properties.user=params.user
-                properties.request = request
-                def execresults = executionService.executeScheduledExecution(scheduledExecution,framework,authContext,request.subject,[user:request.remoteUser])
-    //            System.err.println("transient execute result: ${execresults}");
-                execresults.entrynum=entrynum
-                if(execresults.error || !execresults.success){
-                    reserrors<<execresults
-                } else {
-                    ressuccess<<execresults
-                }
-            }
-        }
-
-        if (!params.xmlreq) {
-
-            render(view: 'upload',model:[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, execerrors:reserrors,execsuccess:ressuccess,
-                nextExecutions: scheduledExecutionService.nextExecutionTimes(jobs.grep { it.scheduled }),
-                messages: msgs,
-                didupload: true])
-        } else {
-            //TODO: update commander's jobs upload task to submit XML content directly instead of via uploaded file, and use proper
-            //TODO: grails content negotiation
-            response.setHeader(Constants.X_RUNDECK_RESULT_HEADER, "Jobs Uploaded. Succeeded: ${jobs.size()}, Failed: ${errjobs.size()}, Skipped: ${skipjobs.size()}")
-            render(contentType: "text/xml") {
-                result(error: false) {
-                    renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
-                }
-            }
-        }
-
-    }
-    
     /**
      * execute the job defined via input parameters, but do not store it.
      */
@@ -1882,9 +1795,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
     }
     private Map runJob () {
-        Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        params["user"] = (session?.user) ? session.user : "anonymous"
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
         if (!scheduledExecution) {
 //            response.setStatus (404)
@@ -1897,11 +1808,12 @@ class ScheduledExecutionController  extends ControllerBase{
         if(params.extra?.debug=='true'){
             params.extra.loglevel='DEBUG'
         }
-        def result = executionService.executeScheduledExecution(scheduledExecution,framework, authContext, request.subject,params)
+        def inputOpts=params.extra
+        def result = executionService.executeJob(scheduledExecution, authContext, request.subject,session.user,
+                inputOpts)
 
         if (result.error){
             result.failed=true
-
             return result
         }else{
             log.debug("ExecutionController: immediate execution scheduled")
@@ -2089,7 +2001,6 @@ class ScheduledExecutionController  extends ControllerBase{
         if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
             return
         }
-        Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
         if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
@@ -2097,8 +2008,7 @@ class ScheduledExecutionController  extends ControllerBase{
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Run', 'Job ID', params.id]])
         }
-        def inparams = [extra: [:]]
-        inparams["user"] = (session?.user) ? session.user : "anonymous"
+        def username=session.user
         if(params.asUser && apiService.requireVersion(request,response,ApiRequestFilters.V5)){
             //authorize RunAs User
             if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUNAS],
@@ -2106,29 +2016,30 @@ class ScheduledExecutionController  extends ControllerBase{
                 return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                         code: 'api.error.item.unauthorized', args: ['Run as User', 'Job ID', params.id]])
             }
-            inparams['user']= params.asUser
+            username= params.asUser
         }
+        def inputOpts = [user:username]
 
         if (params.argString) {
-            inparams.extra["argString"] = params.argString
+            inputOpts["argString"] = params.argString
         }
         if (params.loglevel) {
-            inparams.extra["loglevel"] = params.loglevel
+            inputOpts["loglevel"] = params.loglevel
         }
         //convert api parameters to node filter parameters
         def filters = FrameworkController.extractApiNodeFilterParams(params)
         if (filters) {
-            inparams.extra['_replaceNodeFilters']='true'
-            inparams.extra['doNodedispatch']=true
+            inputOpts['_replaceNodeFilters']='true'
+            inputOpts['doNodedispatch']=true
             filters.each {k, v ->
-                inparams.extra[k] = v
+                inputOpts[k] = v
             }
-            if(null==inparams.extra['nodeExcludePrecedence']){
-                inparams.extra['nodeExcludePrecedence'] = true
+            if(null== inputOpts['nodeExcludePrecedence']){
+                inputOpts['nodeExcludePrecedence'] = true
             }
         }
 
-        def result = executionService.executeScheduledExecution(scheduledExecution, framework, authContext, request.subject, inparams)
+        def result = executionService.executeJob(scheduledExecution, authContext, request.subject, username, inputOpts)
         if(!result.success){
             if(result.error=='unauthorized'){
                 return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,

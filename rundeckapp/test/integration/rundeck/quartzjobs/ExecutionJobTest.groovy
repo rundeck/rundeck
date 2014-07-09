@@ -96,10 +96,9 @@ class ExecutionJobTest  {
         mockes.demand.selectSecureOptionInput(1..1){ ScheduledExecution scheduledExecution, Map params, Boolean exposed = false->
             [test:'input']
         }
-        mockes.demand.createExecution(1..1){ ScheduledExecution se1, String framework, String user->
+        mockes.demand.createExecution(1..1){ ScheduledExecution se1, String user->
             Assert.assertEquals(se,se1)
             Assert.assertEquals(se.user,user)
-            Assert.assertEquals('fakeFramework',framework)
             'fakeExecution'
         }
         mockfs.demand.getRundeckFramework(1..1){->
@@ -120,7 +119,7 @@ class ExecutionJobTest  {
         Assert.assertEquals(es,result.executionService)
         Assert.assertEquals(eus,result.executionUtilService)
         Assert.assertEquals("/test/rdeck/base",result.adbase)
-        Assert.assertEquals([test:'input'],result.extraParamsExposed)
+        Assert.assertEquals([test:'input'],result.secureOptsExposed)
         Assert.assertEquals("fakeFramework",result.framework)
         Assert.assertEquals("fakeExecution",result.execution)
 
@@ -142,7 +141,7 @@ class ExecutionJobTest  {
         ExecutionService es = mockes.createMock()
         ExecutionUtilService eus = mockeus.createMock()
 
-        def result = job.executeCommand(es, eus, execution, null, null,null,0)
+        def result = job.executeCommand(es, eus, execution, null, null,null,0,[:],[:])
         Assert.assertEquals(false,result.success)
     }
 
@@ -172,7 +171,7 @@ class ExecutionJobTest  {
         ExecutionService es = mockes.createMock()
         ExecutionUtilService eus = mockeus.createMock()
 
-        def result=job.executeCommand(es,eus,execution,null, null, null, 0)
+        def result=job.executeCommand(es,eus,execution,null, null, null, 0, [:], [:])
         Assert.assertEquals(true,result.success)
         Assert.assertEquals(testExecmap,result.execmap)
     }
@@ -210,7 +209,7 @@ class ExecutionJobTest  {
         ExecutionService es = mockes.createMock()
         ExecutionUtilService eus = mockeus.createMock()
 
-        def result = job.executeCommand(es, eus, execution, null, null, null, 0)
+        def result = job.executeCommand(es, eus, execution, null, null, null, 0, [:], [:])
         Assert.assertEquals(false, result.success)
         Assert.assertEquals(testExecmap, result.execmap)
 
@@ -243,7 +242,7 @@ class ExecutionJobTest  {
         job.finalizeRetryDelay=10
         job.finalizeRetryMax=3
         try {
-            def result = job.executeCommand(es, eus, execution, null, null, null, 0)
+            def result = job.executeCommand(es, eus, execution, null, null, null, 0, [:], [:])
             Assert.fail("should throw exception")
         } catch (RuntimeException e) {
             Assert.assertTrue(e.message,e.message.contains("failed"))
@@ -282,7 +281,7 @@ class ExecutionJobTest  {
         ExecutionUtilService eus = mockeus.createMock()
         job.finalizeRetryDelay=10
         job.finalizeRetryMax=4
-        def result = job.executeCommand(es, eus, execution, null, null, null, 0)
+        def result = job.executeCommand(es, eus, execution, null, null, null, 0, [:], [:])
         Assert.assertEquals(false, result.success)
         Assert.assertEquals(testExecmap, result.execmap)
     }
@@ -363,7 +362,9 @@ class ExecutionJobTest  {
                 failedNodes: null,
         ]
 
-        mockes.demand.saveExecutionState(1..1){ schedId, exId, Map props, Map execmap = null->
+        boolean saveStateCalled=false
+        mockes.demand.saveExecutionState(1..1){ schedId, exId, Map props, Map execmap, Map retryContext->
+            saveStateCalled=true
             Assert.assertNull(schedId)
             Assert.assertEquals(execution.id,exId)
             expectresult.each {k,v->
@@ -372,7 +373,8 @@ class ExecutionJobTest  {
         }
 
         def es = mockes.createMock()
-        job.saveState(es,execution,true,false,false,true,-1,execMap)
+        job.saveState(null,es,execution,true,false,false,true,-1,execMap)
+        Assert.assertEquals(true,saveStateCalled)
     }
 
     @Test
@@ -392,7 +394,9 @@ class ExecutionJobTest  {
                 failedNodes: null,
         ]
 
-        mockes.demand.saveExecutionState(1..1){ schedId, exId, Map props, Map execmap = null->
+        boolean saveStateCalled = false
+        mockes.demand.saveExecutionState(1..1){ schedId, exId, Map props, Map execmap, Map retryContext->
+            saveStateCalled = true
             Assert.assertEquals(scheduledExecution.id,schedId)
             Assert.assertEquals(execution.id,exId)
             expectresult.each {k,v->
@@ -408,8 +412,9 @@ class ExecutionJobTest  {
         }
 
         def es = mockes.createMock()
-        def result=job.saveState(es,execution,true,false, false, false, scheduledExecution.id,execMap)
+        def result=job.saveState(null,es,execution,true,false, false, false, scheduledExecution.id,execMap)
         Assert.assertTrue(x)
+        Assert.assertEquals(true, saveStateCalled)
     }
 
     @Test
@@ -429,7 +434,9 @@ class ExecutionJobTest  {
                 failedNodes: null,
         ]
 
-        mockes.demand.saveExecutionState(1..1){ schedId, exId, Map props, Map execmap = null->
+        boolean saveStateCalled = false
+        mockes.demand.saveExecutionState(1..1){ schedId, exId, Map props, Map execmap, Map retryContext->
+            saveStateCalled = true
             Assert.assertEquals(scheduledExecution.id,schedId)
             Assert.assertEquals(execution.id,exId)
             expectresult.each {k,v->
@@ -448,8 +455,9 @@ class ExecutionJobTest  {
 
         def es = mockes.createMock()
         job.statsRetryMax=2
-        def result=job.saveState(es,execution,true,false, false,false, scheduledExecution.id,execMap)
+        def result=job.saveState(null,es,execution,true,false, false,false, scheduledExecution.id,execMap)
         Assert.assertFalse(saveStatsComplete)
+        Assert.assertEquals(true, saveStateCalled)
     }
     @Test
     void testSaveStateWithJobStatsFailureRetrySucceed(){
@@ -468,7 +476,9 @@ class ExecutionJobTest  {
                 failedNodes: null,
         ]
 
-        mockes.demand.saveExecutionState(1..1){ schedId, exId, Map props, Map execmap = null->
+        boolean saveStateCalled = false
+        mockes.demand.saveExecutionState(1..1){ schedId, exId, Map props, Map execmap, Map retryContext->
+            saveStateCalled = true
             Assert.assertEquals(scheduledExecution.id,schedId)
             Assert.assertEquals(execution.id,exId)
             expectresult.each {k,v->
@@ -487,8 +497,9 @@ class ExecutionJobTest  {
 
         def es = mockes.createMock()
         job.statsRetryMax=4
-        def result=job.saveState(es,execution,true,false, false,false, scheduledExecution.id,execMap)
+        def result=job.saveState(null,es,execution,true,false, false,false, scheduledExecution.id,execMap)
         Assert.assertTrue(saveStatsComplete)
+        Assert.assertEquals(true, saveStateCalled)
     }
 
     @Test
@@ -508,7 +519,9 @@ class ExecutionJobTest  {
         ]
         def fail3times=throwXTimes(3)
 
-        mockes.demand.saveExecutionState(2..2){ schedId, exId, Map props, Map execmap = null->
+        boolean saveStateCalled = false
+        mockes.demand.saveExecutionState(2..2){ schedId, exId, Map props, Map execmap, Map retryContext->
+            saveStateCalled = true
             Assert.assertNull(schedId)
             Assert.assertEquals(execution.id,exId)
             expectresult.each {k,v->
@@ -520,7 +533,7 @@ class ExecutionJobTest  {
         def es = mockes.createMock()
 
         job.finalizeRetryMax=2
-        def result=job.saveState(es,execution,true,false, false,true,-1,execMap)
+        def result=job.saveState(null,es,execution,true,false, false,true,-1,execMap)
         Assert.assertEquals(false,result)
     }
 

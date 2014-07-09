@@ -60,7 +60,8 @@ class ExecReport extends BaseReport{
         def issuccess = exec.status == 'true'
         def iscancelled = exec.cancelled
         def istimedout = exec.timedOut
-        def status = issuccess ? "succeed" : iscancelled ? "cancel" : istimedout ? "timedout" : "fail"
+        def status = issuccess ? "succeed" : iscancelled ? "cancel" : exec.willRetry ? "retry" : istimedout ?
+            "timedout" : "fail"
         return fromMap([
                 jcExecId:exec.id,
                 jcJobId: exec.scheduledExecution?.id,

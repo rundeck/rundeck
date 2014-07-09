@@ -61,7 +61,7 @@ class ExecutionServiceTests  {
         FrameworkService fsvc = new FrameworkService()
         svc.frameworkService = fsvc
         try{
-            svc.createExecution(se,null,"user1")
+            svc.createExecution(se,"user1")
             fail("should fail")
         }catch(ExecutionServiceException ex){
             assertTrue(ex.message.contains('is currently being executed'))
@@ -96,7 +96,7 @@ class ExecutionServiceTests  {
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = new FrameworkService()
         svc.frameworkService = fsvc
-        def execution=svc.createExecution(se,null,"user1")
+        def execution=svc.createExecution(se,"user1")
         assertNotNull(execution)
     }
     void testCreateExecutionSimple(){
@@ -116,7 +116,7 @@ class ExecutionServiceTests  {
         FrameworkService fsvc = new FrameworkService()
         svc.frameworkService=fsvc
 
-        Execution e2=svc.createExecution(se,null,"user1")
+        Execution e2=svc.createExecution(se,"user1")
 
         assertNotNull(e2)
         assertEquals('-a b -c d', e2.argString)
@@ -146,7 +146,7 @@ class ExecutionServiceTests  {
         FrameworkService fsvc = new FrameworkService()
         svc.frameworkService=fsvc
 
-        Execution e2=svc.createExecution(se,null,"user1",[('_replaceNodeFilters'):"true",filter:'name: monkey'])
+        Execution e2=svc.createExecution(se,"user1",[('_replaceNodeFilters'):"true",filter:'name: monkey'])
 
         assertNotNull(e2)
         assertEquals('name: monkey', e2.filter)
@@ -177,7 +177,7 @@ class ExecutionServiceTests  {
         FrameworkService fsvc = new FrameworkService()
         svc.frameworkService=fsvc
 
-        Execution e2=svc.createExecution(se,null,"user1",[('_replaceNodeFilters'):"true",nodeIncludeName: 'monkey'])
+        Execution e2=svc.createExecution(se,"user1",[('_replaceNodeFilters'):"true",nodeIncludeName: 'monkey'])
 
         assertNotNull(e2)
         assertEquals('name: monkey', e2.filter)
@@ -208,7 +208,7 @@ class ExecutionServiceTests  {
         FrameworkService fsvc = new FrameworkService()
         svc.frameworkService=fsvc
 
-        Execution e2=svc.createExecution(se,null,"user1",[('_replaceNodeFilters'):"true",nodeIncludeName: ['monkey','banana']])
+        Execution e2=svc.createExecution(se,"user1",[('_replaceNodeFilters'):"true",nodeIncludeName: ['monkey','banana']])
 
         assertNotNull(e2)
         assertEquals('name: monkey,banana', e2.filter)
@@ -283,7 +283,7 @@ class ExecutionServiceTests  {
         FrameworkService fsvc = new FrameworkService()
         svc.frameworkService=fsvc
 
-        Execution e=svc.createExecution(se,null,"user1")
+        Execution e=svc.createExecution(se,"user1")
 
         assertNotNull(e)
         assertEquals('-a b -c d',e.argString)
@@ -303,7 +303,7 @@ class ExecutionServiceTests  {
         svc.frameworkService=fsvc
 
             assertNull(se.executions)
-            Execution e=svc.createExecution(se,null,"user1",[argString:'-test1 asdf -test2 val2b -test4 asdf4'])
+            Execution e=svc.createExecution(se,"user1",[argString:'-test1 asdf -test2 val2b -test4 asdf4'])
 
             assertNotNull(e)
             assertEquals("secure option value should not be stored",'-test1 asdf -test2 val2b -test3 val3',e.argString)
@@ -322,7 +322,7 @@ class ExecutionServiceTests  {
         FrameworkService fsvc = new FrameworkService()
         svc.frameworkService = fsvc
         assertNull(se.executions)
-        Execution e=svc.createExecution(se,null,"user1",[argString:'-test2 val2b -test4 asdf4'])
+        Execution e=svc.createExecution(se,"user1",[argString:'-test2 val2b -test4 asdf4'])
 
         assertNotNull(e)
         assertEquals("default value should be used",'-test1 val1 -test2 val2b -test3 val3',e.argString)
@@ -341,7 +341,7 @@ class ExecutionServiceTests  {
         FrameworkService fsvc = new FrameworkService()
         svc.frameworkService = fsvc
         assertNull(se.executions)
-        Execution e=svc.createExecution(se,null,"user1",[argString:'-test2 val2b -test3 monkey3'])
+        Execution e=svc.createExecution(se,"user1",[argString:'-test2 val2b -test3 monkey3'])
 
         assertNotNull(e)
         assertEquals('-test1 val1 -test2 val2b -test3 monkey3',e.argString)
@@ -361,7 +361,7 @@ class ExecutionServiceTests  {
         svc.frameworkService = fsvc
             //enforced value failure on test2
             try {
-                Execution e = svc.createExecution(se, null, "user1", [argString: '-test2 val2D -test3 monkey4'])
+                Execution e = svc.createExecution(se, "user1", [argString: '-test2 val2D -test3 monkey4'])
                 fail("shouldn't succeed")
             } catch (ExecutionServiceException e) {
                 assertTrue(e.message.contains("was not in the allowed values"))
@@ -376,7 +376,7 @@ class ExecutionServiceTests  {
         svc.frameworkService = fsvc
             //regex failure on test3
             try {
-                Execution e = svc.createExecution(se, null, "user1", [argString: '-test2 val2b -test3 monkey4'])
+                Execution e = svc.createExecution(se, "user1", [argString: '-test2 val2b -test3 monkey4'])
                 fail("shouldn't succeed")
             } catch (ExecutionServiceException e) {
                 assertTrue(e.message.contains("doesn't match regular expression"))
