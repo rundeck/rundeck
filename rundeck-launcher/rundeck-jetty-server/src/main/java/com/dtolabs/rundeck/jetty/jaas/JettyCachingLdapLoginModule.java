@@ -20,12 +20,10 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
@@ -51,9 +49,9 @@ import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.security.Credential;
 
 /**
- * 
+ *
  * A LdapLoginModule for use with JAAS setups
- * 
+ *
  * The jvm should be started with the following parameter: <br>
  * <br>
  * <code>
@@ -62,7 +60,7 @@ import org.eclipse.jetty.util.security.Credential;
  * <br>
  * and an example of the ldap-loginModule.conf would be: <br>
  * <br>
- * 
+ *
  * <pre>
  * ldaploginmodule {
  *    com.dtolabs.rundeck.jetty.jaas.JettyCachingLdapLoginModule required
@@ -87,10 +85,11 @@ import org.eclipse.jetty.util.security.Credential;
  *    roleObjectClass="groupOfUniqueNames"
  *    rolePrefix="rundeck"
  *    cacheDurationMillis="500"
- *    reportStatistics="true";
+ *    reportStatistics="true"
+ *    nestedGroups="false";
  *    };
  * </pre>
- * 
+ *
  * @author Jesse McConnell <jesse@codehaus.org>
  * @author Frederic Nizery <frederic.nizery@alcatel-lucent.fr>
  * @author Trygve Laugstol <trygvis@codehaus.org>
@@ -99,11 +98,15 @@ import org.eclipse.jetty.util.security.Credential;
 public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
     private static final Logger LOG = Log.getLogger(JettyCachingLdapLoginModule.class);
+
+    private static final Pattern rolePattern = Pattern.compile("^cn=([^,]+)");
+
+    protected final String _roleMemberFilter = "member=*";
     /**
      * Provider URL
      */
     protected String _providerUrl;
-    
+
     /**
      * Role prefix to remove from ldap group name.
      */
@@ -215,18 +218,22 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
     protected boolean _reportStatistics;
 
-    protected static final ConcurrentHashMap<String, CachedUserInfo> USERINFOCACHE = 
+    protected boolean _nestedGroups;
+
+    protected static final ConcurrentHashMap<String, CachedUserInfo> USERINFOCACHE =
         new ConcurrentHashMap<String, CachedUserInfo>();
-    
+
     /**
      * The number of cache hits for UserInfo objects.
      */
     protected static long userInfoCacheHits;
-    
+
     /**
      * The number of login attempts for this particular module.
      */
     protected static long loginAttempts;
+    private static ConcurrentHashMap<String, List<String>> roleMemberOfMap;
+    private static long roleMemberOfMapExpires = 0;
 
     /**
      * get the available information about the user
@@ -235,14 +242,14 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
      * binding ldap authentication scenario
      * <p/>
      * roles are also an optional concept if required
-     * 
+     *
      * @param username
      * @return
      * @throws Exception
      */
     @SuppressWarnings("unchecked")
     public UserInfo getUserInfo(String username) throws Exception {
-        
+
         String pwdCredential = getUserCredentials(username);
 
         if (pwdCredential == null) {
@@ -289,7 +296,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
      * attempts to get the users credentials from the users context
      * <p/>
      * NOTE: this is not an user authenticated operation
-     * 
+     *
      * @param username
      * @return
      * @throws LoginException
@@ -344,7 +351,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
      * attempts to get the users roles from the root context
      * <p/>
      * NOTE: this is not an user authenticated operation
-     * 
+     *
      * @param dirContext
      * @param username
      * @return
@@ -361,7 +368,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
     @SuppressWarnings("unchecked")
     private List getUserRolesByDn(DirContext dirContext, String userDn, String username) throws LoginException,
             NamingException {
-        ArrayList roleList = new ArrayList();
+        List<String> roleList = new ArrayList<String>();
 
         if (dirContext == null || _roleBaseDn == null || (_roleMemberAttribute == null
                                                           && _roleUsernameMemberAttribute == null)
@@ -376,6 +383,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
         String filter = "(&(objectClass={0})({1}={2}))";
         final NamingEnumeration results;
+
         if(null!=_roleUsernameMemberAttribute){
             Object[] filterArguments = { _roleObjectClass, _roleUsernameMemberAttribute, username };
             results = dirContext.search(_roleBaseDn, filter, filterArguments, ctls);
@@ -406,7 +414,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
                     String role = (String) roles.next();
                     roleList.add(role.replace(_rolePrefix, ""));
                 } else {
-                    roleList.add(roles.next());
+                    roleList.add((String) roles.next());
                 }
             }
         }
@@ -416,7 +424,115 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
             LOG.debug("JettyCachingLdapLoginModule: User '" + username + "' has roles: " + roleList);
         }
 
+        if(_nestedGroups) {
+            roleList = getNestedRoles(dirContext, roleList);
+        }
+
         return roleList;
+    }
+
+    private List<String> getNestedRoles(DirContext dirContext, List<String> roleList) {
+
+        HashMap<String, List<String>> roleMemberOfMap = new HashMap<String, List<String>>();
+        roleMemberOfMap.putAll(getRoleMemberOfMap(dirContext));
+
+        List<String> mergedList = mergeRoles(roleList, roleMemberOfMap);
+
+        return mergedList;
+    }
+
+    private List<String> mergeRoles(List<String> roles, HashMap<String, List<String>> roleMemberOfMap) {
+        List<String> newRoles = new ArrayList<String>();
+        List<String> mergedRoles = new ArrayList<String>();
+        mergedRoles.addAll(roles);
+
+        for(String role : roles) {
+            if(roleMemberOfMap.containsKey(role)) {
+                for(String newRole : roleMemberOfMap.get(role)) {
+                    if (!roles.contains(newRole)) {
+                        newRoles.add(newRole);
+                    }
+                }
+                roleMemberOfMap.remove(role);
+            }
+
+        }
+        if(!newRoles.isEmpty()) {
+            mergedRoles.addAll(mergeRoles(newRoles, roleMemberOfMap));
+        }
+        return mergedRoles;
+    }
+
+    private ConcurrentHashMap<String, List<String>> getRoleMemberOfMap(DirContext dirContext) {
+        if (_cacheDuration == 0 || System.currentTimeMillis() > roleMemberOfMapExpires) { // only worry about caching if there is a cacheDuration set.
+            roleMemberOfMap = buildRoleMemberOfMap(dirContext);
+            roleMemberOfMapExpires = System.currentTimeMillis() + _cacheDuration;
+        }
+
+        return roleMemberOfMap;
+    }
+
+    private ConcurrentHashMap<String, List<String>> buildRoleMemberOfMap(DirContext dirContext) {
+        Object[] filterArguments = { _roleObjectClass };
+        SearchControls ctls = new SearchControls();
+        ctls.setDerefLinkFlag(true);
+        ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+
+        ConcurrentHashMap<String, List<String>> roleMemberOfMap = new ConcurrentHashMap<String, List<String>>();
+
+        try {
+            NamingEnumeration<SearchResult> results = dirContext.search(_roleBaseDn, _roleMemberFilter, ctls);
+            while (results.hasMoreElements()) {
+                SearchResult result = results.nextElement();
+                Attributes attributes = result.getAttributes();
+
+                if (attributes == null) {
+                    continue;
+                }
+
+                Attribute roleAttribute = attributes.get(_roleNameAttribute);
+                Attribute memberAttribute = attributes.get(_roleMemberAttribute);
+
+                if (roleAttribute == null || memberAttribute == null) {
+                    continue;
+                }
+
+                NamingEnumeration role = roleAttribute.getAll();
+                NamingEnumeration members = memberAttribute.getAll();
+
+                if(!role.hasMore() || !members.hasMore()) {
+                    continue;
+                }
+
+                String roleName = (String) role.next();
+                if (_rolePrefix != null && !"".equalsIgnoreCase(_rolePrefix)) {
+                    roleName = roleName.replace(_rolePrefix, "");
+                }
+
+                while(members.hasMore()) {
+                    String member = (String) members.next();
+                    Matcher roleMatcher = rolePattern.matcher(member);
+                    if(!roleMatcher.find()) {
+                        continue;
+                    }
+                    String roleMember = roleMatcher.group(1);
+                    List<String> memberOf;
+                    if(roleMemberOfMap.containsKey(roleMember)) {
+                        memberOf = roleMemberOfMap.get(roleMember);
+                    } else {
+                        memberOf = new ArrayList<String>();
+                    }
+
+                    memberOf.add(roleName);
+
+                    roleMemberOfMap.put(roleMember, memberOf);
+                }
+
+            }
+        } catch (NamingException e) {
+            e.printStackTrace();
+        }
+        return roleMemberOfMap;
     }
 
     /**
@@ -427,7 +543,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
      * forcing the binding check then we try a binding authentication check,
      * otherwise if we have the users encoded password then we can try
      * authentication via that mechanic
-     * 
+     *
      * @return
      * @throws LoginException
      */
@@ -449,14 +565,14 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
             }
 
             loginAttempts++;
-            
+
             if(_reportStatistics)
             {
                 DecimalFormat percentHit = new DecimalFormat("#.##");
-                LOG.info("Login attempts: " + loginAttempts + ", Hits: " + userInfoCacheHits + 
+                LOG.info("Login attempts: " + loginAttempts + ", Hits: " + userInfoCacheHits +
                         ", Ratio: " + percentHit.format((double)userInfoCacheHits / loginAttempts * 100f) + "%.");
             }
-            
+
             if (_forceBindingLogin) {
                 return bindingLogin(webUserName, webCredential);
             }
@@ -493,7 +609,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
     /**
      * password supplied authentication check
-     * 
+     *
      * @param webCredential
      * @return
      * @throws LoginException
@@ -508,7 +624,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
      * the user branch of the DIT (ldap tree) has an ACI (acces control
      * instruction) that allow the access to any user or at least for the user
      * that logs in.
-     * 
+     *
      * @param username
      * @param password
      * @return
@@ -524,7 +640,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
                 if (System.currentTimeMillis() < cached.expires) {
                     LOG.debug("Cache Hit for " + username + ".");
                     userInfoCacheHits++;
-                    
+
                     setCurrentUser(new JAASUserInfo(cached.userInfo));
                     setAuthenticated(true);
                     return true;
@@ -536,7 +652,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
                 LOG.debug("Cache Miss for " + username + ".");
             }
         }
-        
+
         SearchResult searchResult = findUser(username);
 
         String userDn = searchResult.getNameInNamespace();
@@ -599,7 +715,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
         _hostname = (String) options.get("hostname");
         if(options.containsKey("port")) {
-            _port = Integer.parseInt((String) options.get("port"));   
+            _port = Integer.parseInt((String) options.get("port"));
         }
         _providerUrl = (String) options.get("providerUrl");
         _contextFactory = (String) options.get("contextFactory");
@@ -613,6 +729,10 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
         if (options.containsKey("forceBindingLogin")) {
             _forceBindingLogin = Boolean.parseBoolean((String) options.get("forceBindingLogin"));
+        }
+
+        if (options.containsKey("nestedGroups")) {
+            _nestedGroups = Boolean.parseBoolean((String) options.get("nestedGroups"));
         }
 
         if (options.containsKey("forceBindingLoginUseRootContextForRoles")) {
@@ -631,7 +751,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
                 .toString(_debug))));
 
         _rolePrefix = (String) options.get("rolePrefix");
-        
+
         _reportStatistics = Boolean.parseBoolean(String.valueOf(getOption(options, "reportStatistics", Boolean
                 .toString(_reportStatistics))));
 
@@ -685,7 +805,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
     /**
      * get the context for connection
-     * 
+     *
      * @return
      */
     @SuppressWarnings("unchecked")
@@ -701,13 +821,13 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
                 url = "ldap://" + _hostname + "/";
                 if (_port != 0) {
                     url += ":" + _port + "/";
-                } 
-            
+                }
+
                 LOG.warn("Using hostname and port.  Use providerUrl instead: " + url);
             }
         }
         env.put(Context.PROVIDER_URL, url);
-        
+
         if (_authenticationMethod != null) {
             env.put(Context.SECURITY_AUTHENTICATION, _authenticationMethod);
         }
@@ -719,7 +839,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         if (_bindPassword != null) {
             env.put(Context.SECURITY_CREDENTIALS, _bindPassword);
         }
-        
+
         // Set the SSLContextFactory to implementation that validates cert subject
         if (url != null && url.startsWith("ldaps")) {
             try {
