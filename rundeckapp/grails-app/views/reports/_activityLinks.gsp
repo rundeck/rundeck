@@ -86,7 +86,7 @@
         <tr class="link activity_row autoclick"
             data-bind="css: { 'succeed': status()=='succeed', 'fail': status()=='fail', 'highlight': $root.highlightExecutionId()==executionId(), job: jobId(), adhoc: !jobId() } ">
             <td class="eventicon" data-bind="visible: $root.bulkEditMode()">
-                <input type="checkbox" name="bulk_edit" data-bind="value: executionId(), checked: bulkEditSelected()"
+                <input type="checkbox" name="bulk_edit" data-bind="value: executionId(), checked: bulkEditSelected"
                        class="_defaultInput"/>
             </td>
             <td class="eventicon autoclickable" data-bind="attr: { 'title': status() } ">
