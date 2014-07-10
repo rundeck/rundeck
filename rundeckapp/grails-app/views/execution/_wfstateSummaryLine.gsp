@@ -29,12 +29,12 @@ started
     </span>
 </span>
 by <g:username user="${execution.user}"/>
-%{--<g:render template="/scheduledExecution/execStatusText" model="${[execution: execution]}"/>--}%
 
-<div data-bind="visible: retryExecutionId()">
-    Retry attempt #<span data-bind="text: retryExecutionAttempt()"></span>  (of <span
-        data-bind="text: retry()"></span>):
+<div data-bind="visible: retryExecutionId()" class="">
+    <span class="execstate h4" data-execstate="RETRY"><g:message code="retried" /></span> <g:message code="as.execution" />
     <a data-bind="attr: { 'href': retryExecutionUrl() }">
         <span data-bind="text: '#'+retryExecutionId()"></span>
     </a>
+
+    <span class="text-muted"><g:message code="execution.retry.attempt.x.of.max.ko" args="${['text: retryExecutionAttempt()','text: retry()']}"/></span>
 </div>

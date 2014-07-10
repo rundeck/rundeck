@@ -149,6 +149,9 @@
   }
   .execstate{
 
+    &[data-execstate=RETRY] {
+      color: @brand-info;
+    }
     &[data-execstate=NODE_MIXED], &[data-execstate=TIMEDOUT], &[data-execstate=FAILED-WITH-RETRY] {
       color: orange;
     }
