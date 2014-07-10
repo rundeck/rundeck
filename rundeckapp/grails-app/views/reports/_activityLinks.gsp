@@ -200,9 +200,6 @@
         <div class="pull-right clearfix">
 
             <div data-bind="visible: $root.bulkEditMode()" class="history_bulk_edit">
-                <span class="textbtn textbtn-default act_bulk_edit_toggleall  " data-bind="click: bulkEditToggleAll">
-                    <g:message code="toggle.all"/>
-                </span>
                 <span class="textbtn textbtn-default act_bulk_edit_selectall  " data-bind="click: bulkEditSelectAll">
                     <g:message code="select.all"/>
                 </span>

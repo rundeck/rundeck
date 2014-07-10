@@ -99,9 +99,6 @@
                             </g:if>
                             <div class="pull-right">
                             <span class="obs_bulk_edit_enable " style="display: none">
-                                <span class="textbtn textbtn-default act_bulk_edit_toggleall  ">
-                                    <g:message code="toggle.all"/>
-                                </span>
                                 <span class="textbtn textbtn-default act_bulk_edit_selectall  ">
                                     <g:message code="select.all"/>
                                 </span>
