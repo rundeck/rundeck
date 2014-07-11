@@ -1,3 +1,7 @@
+% Version 2.2.0
+% greg
+% 07/11/2014
+
 Release 2.2.0
 =============
 
@@ -12,7 +16,7 @@ New features:
 Some bug fixes are included, as well as some pull requests to enhance the LDAP login module:
 
 * Support nested LDAP group membership (see [Added support for nested groups in JettyCachingLdapLoginModule.](https://github.com/rundeck/rundeck/pull/829))
-* Support a "supplementalRoles" setting, which can help avoid the `!role` issue. See [Login Module Configuration](http://rundeck.org/2.2.0/administration/authenticating-users.html#login-module-configuration).
+* Support a "supplementalRoles" setting, which can help avoid the `!role` issue. See [Login Module Configuration](../administration/authenticating-users.html#login-module-configuration).
 
 *Upgrade notes:* 
 
