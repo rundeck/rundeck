@@ -10,7 +10,7 @@ class UtilityTagLib{
     def static  daysofweekkey = [Calendar.SUNDAY,Calendar.MONDAY,Calendar.TUESDAY,Calendar.WEDNESDAY,Calendar.THURSDAY,Calendar.FRIDAY,Calendar.SATURDAY];
     def public static daysofweekord = ScheduledExecution.daysofweeklist;
     def public static monthsofyearord = ScheduledExecution.monthsofyearlist;
-	static returnObjectForTags = ['rkey','w3cDateValue','sortGroupKeys','helpLinkUrl','parseOptsFromString','relativeDateString']
+	static returnObjectForTags = ['rkey','w3cDateValue','sortGroupKeys','helpLinkUrl','helpLinkParams','parseOptsFromString','relativeDateString']
 
     private static Random rand=new java.util.Random()
     /**
@@ -648,7 +648,12 @@ class UtilityTagLib{
             }
         }
     }
-
+    def helpLinkParams={attrs,body->
+        def medium = "${grailsApplication.metadata['app.version']} ${System.getProperty('os.name')} java ${System.getProperty('java.version')}"
+        def campaign = attrs.campaign?:'helplink'
+        def helpParams = [utm_source: 'rundeckapp', utm_medium: medium, utm_campaign: campaign, utm_content: (controllerName + '/' + actionName)]
+        return helpParams.collect { k, v -> k + '=' + v }.join('&')
+    }
     def helpLinkUrl={attrs,body->
         def path=''
         def fragment=''
@@ -663,13 +668,14 @@ class UtilityTagLib{
                 fragment='#'+split[1]
             }
         }
-        def helpBase='http://rundeck.org/' + grailsApplication.metadata['app.version']
+        def rdversion = grailsApplication.metadata['app.version']
+        def helpBase='http://rundeck.org/' +( rdversion?.contains('SNAPSHOT')?'docs':rdversion)
         def helpUrl
         if(grailsApplication.config.rundeck?.gui?.helpLink){
             helpBase= grailsApplication.config.rundeck?.gui?.helpLink
             helpUrl=helpBase + path + fragment
         }else{
-            def helpParams = [utm_source: 'rundeckapp', utm_medium: 'app', utm_campaign: 'helplink', utm_content: (controllerName + '/' + actionName)].collect { k, v -> k + '=' + v }.join('&')
+            def helpParams = helpLinkParams(attrs,body)
             helpUrl= helpBase + path + '?' + helpParams + fragment
         }
         helpUrl

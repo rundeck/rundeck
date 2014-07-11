@@ -31,14 +31,11 @@
     </div>
     </div>
     <div class="col-sm-2">
-
-            <g:set var="pluginParams"
-                   value="${[utm_source: 'rundeckapp', utm_medium: 'app', utm_campaign: 'getpluginlink'].collect { k, v -> k + '=' + v }.join('&')}"/>
-
+            <g:set var="pluginParams" value="${g.helpLinkParams(campaign: 'getpluginlink')}"/>
             <g:set var="pluginUrl" value="http://rundeck.org/plugins/?${pluginParams}"/>
             <g:set var="pluginLinkUrl"
                    value="${grailsApplication.config?.rundeck?.gui?.pluginLink ?: pluginUrl}"/>
-            <a href="${pluginLinkUrl}" class="btn btn-success ">
+            <a href="${pluginLinkUrl.encodeAsHTML()}" class="btn btn-success ">
                 <g:message code="gui.admin.GetPlugins" default="Get Plugins"/>
                 <i class="glyphicon glyphicon-arrow-right"></i>
             </a>
