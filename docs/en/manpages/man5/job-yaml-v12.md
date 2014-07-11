@@ -40,19 +40,11 @@ Each Job definition requires these values:
 
 `name`
 
-:    the job name
-
-`uuid`
-
-:    Unique UUID
+:    the job name (required)
 
 `description`
 
 :    the job description (can be blank)
-
-`project`
-
-:    the Project name (optional)
 
 `loglevel`
 
@@ -64,14 +56,6 @@ Each Job definition requires these values:
     * `WARN`
     * `ERROR`
 
-`timeout`
-
-:    a maximum runtime before the job will be stopped.
-
-    * `120` - indicates 120 seconds
-    * `6h 30m` indicates 6 hours and 30 minutes
-    * `${option.timeout}` reference to a job option value
-
 [`sequence`](#sequence)
 
 :    The workflow sequence definition
@@ -79,14 +63,23 @@ Each Job definition requires these values:
 A minimal job definition example:
 
 ~~~~~~~~ {.yaml}
-name: job name
-description: ''
-loglevel: INFO
-sequence: 
-  - exec: a command
+- name: job name
+  description: ''
+  loglevel: INFO
+  sequence: 
+    commands:
+      - exec: a command
 ~~~~~~~~ 
 
 In addition, these optional entries can be present:
+
+`project`
+
+:    the Project name
+
+`uuid`
+
+:    Unique UUID
 
 `group`
 
@@ -96,6 +89,14 @@ In addition, these optional entries can be present:
 
 :    'true/false': if true, the job can have more than one execution at once.
 
+`timeout`
+
+:    a maximum runtime before the job will be stopped.
+
+    * `120` - indicates 120 seconds
+    * `6h 30m` indicates 6 hours and 30 minutes
+    * `${option.timeout}` reference to a job option value
+    
 [`options`](#options)
 
 :    Set of Options for the Job
