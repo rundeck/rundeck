@@ -92,7 +92,8 @@ class Execution extends ExecutionContext {
         nodeIncludeOsVersion(type: 'text')
         nodeExcludeOsVersion(type: 'text')
         filter(type: 'text')
-
+        timeout( type: 'text')
+        retry( type: 'text')
     }
 
 

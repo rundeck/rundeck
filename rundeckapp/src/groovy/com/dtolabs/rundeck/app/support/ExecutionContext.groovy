@@ -18,6 +18,7 @@ abstract class ExecutionContext extends BaseNodeFilters{
         argString type:'text'
         serverNodeUUID type:'text'
         timeout type:'text'
+        retry type:'text'
     }
     Boolean nodeKeepgoing=false
     Boolean doNodedispatch=false

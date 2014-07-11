@@ -113,6 +113,8 @@ class ScheduledExecution extends ExecutionContext {
         jobName type: 'text'
         groupPath type: 'text'
         options lazy: false
+        timeout(type: 'text')
+        retry(type: 'text')
     }
 
 
