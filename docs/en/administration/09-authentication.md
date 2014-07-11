@@ -211,6 +211,7 @@ ldap {
       roleMemberAttribute="memberUid"
       roleObjectClass="posixGroup"
       cacheDurationMillis="300000"
+      supplementalRoles="user"
       reportStatistics="true";
 };
 ~~~~
@@ -279,6 +280,9 @@ The `JettyCachingLdapLoginModule` has these configuration properties:
 
 `reportStatistics`
 :    "true/false" - if true, output cache statistics to the log.
+
+`supplementalRoles`
+:    Comma-separated list of role names. All of the given role names will be automatically added to authenticated users.  You can use this to provide a "default" role or roles for all users.
 
 #### Active Directory
 
