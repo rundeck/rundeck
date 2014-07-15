@@ -219,18 +219,6 @@ task build(overwrite: true, dependsOn: [test, grailsWar]) {
     // besides the war task is handling building by issuing a "grails war"
 }
 
-/**
- * Installs the war file into the ~/.m2 maven repo
- */
-task install(type: Exec, overwrite: true, dependsOn: grailsWar) {
-    inputs.file file(warFileLocation)
-    workingDir project.projectDir
-    commandLine grailsCommandLine
-    args "-Dmaven.central.url=${mavenCentralUrl}",
-            "${mavenCreds}",
-            "-Dgrails.local.repo=${grailsLocalRepo}",
-            'maven-install'
-}
 
 //********* artifact signing *********
 if(isReleaseBuild && project.hasProperty("signing.keyId")) {
