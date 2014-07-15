@@ -46,8 +46,10 @@
             <g:set var="loginmsg" value="${grailsApplication.config.rundeck?.gui?.login?.welcome ?: g.message(code: 'gui.login.welcome', default: '')}"/>
             <g:if test="${loginmsg}">
             <div class="row">
-                <span class="login welcome">
-                   ${loginmsg}
+                <span class="col-sm-12">
+                    <h3 class="text-muted">
+                        ${loginmsg.encodeAsHTML()}
+                    </h3>
                 </span>
             </div>
             </g:if>
