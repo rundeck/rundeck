@@ -651,7 +651,8 @@ class UtilityTagLib{
     def helpLinkParams={attrs,body->
         def medium = "${grailsApplication.metadata['app.version']} ${System.getProperty('os.name')} java ${System.getProperty('java.version')}"
         def campaign = attrs.campaign?:'helplink'
-        def helpParams = [utm_source: 'rundeckapp', utm_medium: medium, utm_campaign: campaign, utm_content: (controllerName + '/' + actionName)]
+        def sourceName = g.message(code:'main.app.id',default: 'rundeckapp')
+        def helpParams = [utm_source: sourceName, utm_medium: medium, utm_campaign: campaign, utm_content: (controllerName + '/' + actionName)]
         return helpParams.collect { k, v -> k + '=' + v }.join('&')
     }
     def helpLinkUrl={attrs,body->
