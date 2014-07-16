@@ -8,8 +8,15 @@ these properties in the [rundeck-config.properties](configuration-file-reference
 ----------------------                      ----------------------------------   ----------------
 `rundeck.gui.title`                         Title shown in app header            Test App
 
+`rundeck.gui.brand.html`                    HTML used in place of title          `Test <b>App</b>`
+
 `rundeck.gui.logo`                          Logo icon path relative to           test-logo.png
                                             webapps/rundeck/images dir           
+
+`rundeck.gui.logoHires`                     (High Res/retina) Logo icon path     test-logo@2x.png
+                                            relative to webapps/rundeck/images
+                                            dir. Should be 2x the specified
+                                            logo-height and logo-width
 
 `rundeck.gui.logo-width`                    Icon width for proper display (32px  32px
                                             is best)                             
