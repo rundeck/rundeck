@@ -15,9 +15,11 @@
     <a href="${grailsApplication.config.rundeck.gui.titleLink ? grailsApplication.config.rundeck.gui.titleLink : g.resource(dir: '/')}"
        title="Home" class="navbar-brand">
         <g:set var="appTitle"
-               value="${grailsApplication.config.rundeck.gui.title ? grailsApplication.config.rundeck.gui.title : g.message(code: 'main.app.name')}"/>
+               value="${grailsApplication.config.rundeck?.gui?.title ?: g.message(code: 'main.app.name',default:'Rundeck')}"/>
+        <g:set var="brandHtml"
+               value="${grailsApplication.config.rundeck?.gui?.brand?.html ?: g.message(code: 'main.app.brand.html',default:'')}"/>
         <i class="rdicon app-logo"></i>
-        ${appTitle}
+        ${brandHtml?:appTitle?.encodeAsHTML()}
     </a>
     </div>
 
