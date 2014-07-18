@@ -288,8 +288,8 @@ public class ExpandRunServer {
         
             expandTemplates(configuration, serverdir, rewrite);
             setScriptFilesExecutable(new File(serverdir, "sbin"));
-            extractLauncherContents(new File(basedir, "docs"), "docs", "docs/");
-            extractLauncherContents(new File(basedir, "libext"), "libext", "libext/");
+//            extractLauncherContents(new File(basedir, "docs"), "docs", "docs/");
+//            extractLauncherContents(new File(basedir, "libext"), "libext", "libext/");
         }else{
             DEBUG("--" + FLAG_SKIPINSTALL + ": Not extracting.");
         }
