@@ -2,12 +2,15 @@
  * The Rundeck CopyFile plugin build file
  */
 
-description 'This plugin provides the ability to mock the execution of a job'
+ext.pluginClassNames = 'com.dtolabs.rundeck.plugin.copyfile.CopyFileNodeStepPlugin'
+ext.pluginName = 'Copy File Step'
+ext.pluginDescription = 'Copy a file to a destination on a remote node.'
 
-ext.pluginClassNames='com.dtolabs.rundeck.plugin.copyfile.CopyFileNodeStepPlugin'
 jar {
     manifest {
         attributes 'Rundeck-Plugin-Classnames': pluginClassNames
+        attributes 'Rundeck-Plugin-Name': pluginName
+        attributes 'Rundeck-Plugin-Description': pluginDescription
     }
 }
 
