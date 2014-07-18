@@ -17,6 +17,10 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginLoader
+import com.dtolabs.rundeck.server.plugins.loader.PluginManifest
+import com.dtolabs.rundeck.server.plugins.loader.PluginManifestSource
+import org.codehaus.groovy.grails.commons.GrailsApplication
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import rundeck.Execution
@@ -45,6 +49,65 @@ class FrameworkService implements ApplicationContextAware {
         return rundeckFramework.baseDir.absolutePath;
     }
 
+    /**
+     * Install all the embedded plugins, will not overwrite existing plugin files with the same name
+     * @param grailsApplication
+     * @return
+     */
+    def extractEmbeddedPlugins(GrailsApplication grailsApplication){
+        def loader = new ApplicationContextPluginLoader(grailsApplication.mainContext, '/WEB-INF/rundeck/plugins/')
+        def result=[success:true,logs:[]]
+        def pluginsDir = getRundeckFramework().getLibextDir()
+        def pluginList
+        try {
+            pluginList = loader.listManifests()
+        } catch (IOException e) {
+            log.error("Could not load plugins: ${e}",e)
+            result.message = "Could not load plugins: ${e}"
+            result.success = false
+            return result
+        }
+
+        pluginList.each { PluginManifest pluginmf ->
+            try{
+                if(installPlugin(pluginsDir, loader, pluginmf, false)){
+                    result.logs << "Extracted bundled plugin ${pluginmf.fileName}"
+                }else{
+                    result.logs << "Skipped existing plugin: ${pluginmf.fileName}"
+                }
+            } catch (Exception e) {
+                log.error("Failed extracting bundled plugin ${pluginmf}", e)
+                result.logs << "Failed extracting bundled plugin ${pluginmf}: ${e}"
+            }
+        }
+        return result
+    }
+
+    /**
+     * Install a plugin from a source
+     * @param pluginsDir destination directory
+     * @param loader source
+     * @param pluginmf plugin to install
+     * @param overwrite true to overwrite existing file
+     * @return true if the plugin file was written, false otherwise
+     * @throws IOException
+     */
+    public boolean installPlugin(File pluginsDir, PluginManifestSource loader, PluginManifest pluginmf,
+                                 boolean overwrite) throws IOException {
+        File destFile = new File(pluginsDir, pluginmf.fileName)
+        if (!overwrite && destFile.exists()) {
+            return false
+        }
+        def pload = loader.getLoaderForPlugin(pluginmf)
+        if (!pload) {
+            throw new Exception("Failed to load plugin: ${pluginmf}")
+        }
+        destFile.withOutputStream { os ->
+            pload.loadPlugin(os)
+        }
+
+        return true
+    }
 
     // Initailize the Framework
     def initialize() {
