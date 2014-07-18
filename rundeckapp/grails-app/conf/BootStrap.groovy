@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.VersionConstants
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.util.quartz.MetricsSchedulerListener
+import com.dtolabs.utils.Streams
 import grails.util.Environment
 import org.codehaus.groovy.grails.plugins.web.filters.FilterConfig
 import org.codehaus.groovy.grails.plugins.web.filters.FilterToHandlerAdapter
@@ -11,6 +12,8 @@ import org.grails.plugins.metricsweb.CallableGauge
 import org.quartz.Scheduler
 import org.springframework.web.context.WebApplicationContext
 import org.springframework.web.context.support.WebApplicationContextUtils
+
+import javax.servlet.ServletContext
 
 class BootStrap {
 
@@ -25,7 +28,7 @@ class BootStrap {
     Scheduler quartzScheduler
     MetricRegistry metricRegistry
 
-     def init = { servletContext ->
+     def init = { ServletContext servletContext ->
          log.info("Starting Rundeck ${VersionConstants.VERSION_IDENT}...")
          filterInterceptor.handlers.sort { FilterToHandlerAdapter handler1,
                                            FilterToHandlerAdapter handler2 ->
@@ -46,6 +49,8 @@ class BootStrap {
              rdeckBase=grailsApplication.config.rdeck.base
              log.info("using rdeck.base config property: ${rdeckBase}");
          }
+         def serverLibextDir = grailsApplication.config.rundeck?.server?.plugins?.dir ?: "${rdeckBase}/libext"
+         File pluginsDir = new File(serverLibextDir)
          def clusterMode = false
          def serverNodeUUID = null
          if (Environment.getCurrent()!=Environment.TEST) {
@@ -61,7 +66,9 @@ class BootStrap {
              //see if initialization system property is set
              def configDir = Constants.getFrameworkConfigDir(rdeckBase)
              File fprops = new File(configDir, "framework.properties")
+             boolean isFirstRun=false
              if (!fprops.exists()) {
+                 isFirstRun=true
                  log.info("Performing rundeck first-run initialization...")
                  //setup the base dir
                  Setup setup = new Setup()
@@ -153,6 +160,19 @@ class BootStrap {
                  }
              }
 
+             if(isFirstRun){
+                def result=frameworkService.extractEmbeddedPlugins(grailsApplication)
+                if(!result.success){
+                    log.error("Failed extracting embedded plugins: "+result.message)
+                    result?.logs?.each {
+                        log.error(it)
+                    }
+                }else{
+                    result?.logs?.each {
+                        log.debug(it)
+                    }
+                }
+             }
          }
 
          //initialize manually to avoid circular reference problem with spring
