@@ -17,10 +17,39 @@
 package com.dtolabs.rundeck.server.plugins.loader
 
 /**
- * PluginLoader is ...
+ * PluginFileManifest describes a plugin file
  * @author Greg Schueler <greg@simplifyops.com>
  * @since 2014-07-18
  */
-public interface PluginLoader {
-    void loadPlugin(OutputStream stream) throws IOException
+interface PluginFileManifest {
+    /**
+     * Descriptive name
+     * @return
+     */
+    String getName()
+    /**
+     * Textual description
+     * @return
+     */
+    String getDescription()
+    /**
+     * Filename when stored
+     * @return
+     */
+    String getFileName()
+    /**
+     * Source url
+     * @return
+     */
+    String getUrl()
+    /**
+     * Author
+     * @return
+     */
+    String getAuthor()
+    /**
+     * Version string
+     * @return
+     */
+    String getVersion()
 }

@@ -19,11 +19,11 @@ package com.dtolabs.rundeck.server.plugins.loader
 import org.springframework.context.ApplicationContext
 
 /**
- * ApplicationContextPluginLoader is ...
+ * ApplicationContextPluginFileSource reads a list of plugin files embedded in the application resources
  * @author Greg Schueler <greg@simplifyops.com>
  * @since 2014-07-18
  */
-class ApplicationContextPluginLoader implements PluginManifestSource{
+class ApplicationContextPluginFileSource implements PluginFileSource{
     public static final String PLUGIN_FILE_LIST = 'pluginFileList'
     public static final String MANIFEST_PROPERTIES_FILE = 'manifest.properties'
     public static final String FILE_PREFIX = 'pluginFile.'
@@ -31,7 +31,7 @@ class ApplicationContextPluginLoader implements PluginManifestSource{
     String basePath
     Properties pluginsProperties
 
-    ApplicationContextPluginLoader(ApplicationContext applicationContext, String basePath) {
+    ApplicationContextPluginFileSource(ApplicationContext applicationContext, String basePath) {
         this.applicationContext = applicationContext
         this.basePath = basePath
     }
@@ -51,8 +51,8 @@ class ApplicationContextPluginLoader implements PluginManifestSource{
         return pluginsProperties;
     }
     @Override
-    List<PluginManifest> listManifests() {
-        def result = new ArrayList<PluginManifest>()
+    List<PluginFileManifest> listManifests() {
+        def result = new ArrayList<PluginFileManifest>()
         def list = getPluginsList()
         def pluginListStr = list.getProperty(PLUGIN_FILE_LIST)
         if (pluginListStr) {
@@ -64,18 +64,17 @@ class ApplicationContextPluginLoader implements PluginManifestSource{
         return result
     }
 
-    PluginManifest loadManifestForFile(Properties properties, String pluginFileName) {
+    PluginFileManifest loadManifestForFile(Properties properties, String pluginFileName) {
         return new PropertiesManifest(FILE_PREFIX + pluginFileName + '.', properties)
     }
 
 
     @Override
-    PluginLoader getLoaderForPlugin(PluginManifest manifest) {
+    PluginFileContents getContentsForPlugin(PluginFileManifest manifest) {
         def pluginRes = applicationContext.getResource(basePath + manifest.fileName)
-        if (pluginRes.exists()) {
-            return new ResourceLoader(pluginRes)
-        } else {
+        if (!pluginRes.exists()) {
             return null
         }
+        return new ResourceFileContents(pluginRes)
     }
 }

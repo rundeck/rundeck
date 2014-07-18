@@ -17,9 +17,10 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.server.authorization.AuthConstants
-import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginLoader
-import com.dtolabs.rundeck.server.plugins.loader.PluginManifest
-import com.dtolabs.rundeck.server.plugins.loader.PluginManifestSource
+import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
+import com.dtolabs.rundeck.server.plugins.loader.PluginFileManifest
+import com.dtolabs.rundeck.server.plugins.loader.PluginFileSource
+import com.dtolabs.utils.Streams
 import org.codehaus.groovy.grails.commons.GrailsApplication
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
@@ -55,7 +56,7 @@ class FrameworkService implements ApplicationContextAware {
      * @return
      */
     def extractEmbeddedPlugins(GrailsApplication grailsApplication){
-        def loader = new ApplicationContextPluginLoader(grailsApplication.mainContext, '/WEB-INF/rundeck/plugins/')
+        def loader = new ApplicationContextPluginFileSource(grailsApplication.mainContext, '/WEB-INF/rundeck/plugins/')
         def result=[success:true,logs:[]]
         def pluginsDir = getRundeckFramework().getLibextDir()
         def pluginList
@@ -68,7 +69,7 @@ class FrameworkService implements ApplicationContextAware {
             return result
         }
 
-        pluginList.each { PluginManifest pluginmf ->
+        pluginList.each { PluginFileManifest pluginmf ->
             try{
                 if(installPlugin(pluginsDir, loader, pluginmf, false)){
                     result.logs << "Extracted bundled plugin ${pluginmf.fileName}"
@@ -92,18 +93,18 @@ class FrameworkService implements ApplicationContextAware {
      * @return true if the plugin file was written, false otherwise
      * @throws IOException
      */
-    public boolean installPlugin(File pluginsDir, PluginManifestSource loader, PluginManifest pluginmf,
+    public boolean installPlugin(File pluginsDir, PluginFileSource loader, PluginFileManifest pluginmf,
                                  boolean overwrite) throws IOException {
         File destFile = new File(pluginsDir, pluginmf.fileName)
         if (!overwrite && destFile.exists()) {
             return false
         }
-        def pload = loader.getLoaderForPlugin(pluginmf)
+        def pload = loader.getContentsForPlugin(pluginmf)
         if (!pload) {
             throw new Exception("Failed to load plugin: ${pluginmf}")
         }
         destFile.withOutputStream { os ->
-            pload.loadPlugin(os)
+            Streams.copyStream(pload.contents,os)
         }
 
         return true

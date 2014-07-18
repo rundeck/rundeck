@@ -16,24 +16,16 @@
 
 package com.dtolabs.rundeck.server.plugins.loader
 
-import com.dtolabs.utils.Streams
-import org.springframework.core.io.Resource
-
 /**
- * ResourceLoader is ...
+ * PluginFileContents provides an input stream to get the file contents
  * @author Greg Schueler <greg@simplifyops.com>
  * @since 2014-07-18
  */
-class ResourceLoader implements PluginLoader{
-    Resource pluginRes
-
-    ResourceLoader(Resource pluginRes) {
-        this.pluginRes = pluginRes
-    }
-
-    @Override
-    void loadPlugin(OutputStream stream) throws IOException{
-        def instream = pluginRes.getInputStream()
-        Streams.copyStream(instream, stream)
-    }
+public interface PluginFileContents {
+    /**
+     * Return the input stream to load the contents
+     * @return
+     * @throws IOException
+     */
+    InputStream getContents() throws IOException
 }

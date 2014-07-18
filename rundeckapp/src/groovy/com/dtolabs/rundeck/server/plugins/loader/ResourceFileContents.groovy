@@ -16,12 +16,23 @@
 
 package com.dtolabs.rundeck.server.plugins.loader
 
+import org.springframework.core.io.Resource
+
 /**
- * PluginManifestSource is ...
+ * ResourceFileContents loads a plugin from a resource
  * @author Greg Schueler <greg@simplifyops.com>
  * @since 2014-07-18
  */
-public interface PluginManifestSource {
-    List<PluginManifest> listManifests()
-    PluginLoader getLoaderForPlugin(PluginManifest manifest)
+class ResourceFileContents implements PluginFileContents {
+    Resource pluginRes
+
+    ResourceFileContents(Resource pluginRes) {
+        this.pluginRes = pluginRes
+    }
+
+    @Override
+    InputStream getContents() throws IOException {
+        return pluginRes.getInputStream()
+    }
+
 }

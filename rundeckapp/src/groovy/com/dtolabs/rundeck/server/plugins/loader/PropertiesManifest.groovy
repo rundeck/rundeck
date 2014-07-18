@@ -21,7 +21,7 @@ package com.dtolabs.rundeck.server.plugins.loader
  * @author Greg Schueler <greg@simplifyops.com>
  * @since 2014-07-18
  */
-class PropertiesManifest implements PluginManifest{
+class PropertiesManifest implements PluginFileManifest{
     public static final String PLUGIN_NAME_PROPERTY = 'plugin.name'
     public static final String PLUGIN_DESCRIPTION_PROPERTY = 'plugin.description'
     public static final String PLUGIN_FILENAME_PROPERTY = 'plugin.filename'

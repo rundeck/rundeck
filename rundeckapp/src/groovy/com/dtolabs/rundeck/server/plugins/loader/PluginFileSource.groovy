@@ -17,15 +17,20 @@
 package com.dtolabs.rundeck.server.plugins.loader
 
 /**
- * PluginManifest is ...
+ * PluginFileSource provides plugin file manifests and can retrieve the plugin file contents
  * @author Greg Schueler <greg@simplifyops.com>
  * @since 2014-07-18
  */
-interface PluginManifest {
-    String getName()
-    String getDescription()
-    String getFileName()
-    String getUrl()
-    String getAuthor()
-    String getVersion()
+public interface PluginFileSource {
+    /**
+     * List manifests
+     * @return
+     */
+    List<PluginFileManifest> listManifests()
+    /**
+     * Return a {@link PluginFileContents} for the given manifest, or null if it is not available
+     * @param manifest
+     * @return
+     */
+    PluginFileContents getContentsForPlugin(PluginFileManifest manifest)
 }
