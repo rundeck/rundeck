@@ -64,7 +64,7 @@ dependencies {
 task copyPluginLibs(dependsOn: configurations.pluginFiles)<< {
     File libextDir = new File(additionalFileLocation, "WEB-INF/rundeck/plugins")
     File manifestFile = new File(additionalFileLocation, "WEB-INF/rundeck/plugins/manifest.properties")
-    Properties manifestProps = new Properties()
+
     def filelist=[]
     libextDir.mkdirs()
     configurations.pluginFiles.files.each { pluginFile ->
@@ -83,15 +83,21 @@ task copyPluginLibs(dependsOn: configurations.pluginFiles)<< {
             }
         }
         def f= pluginFile.name
+        Properties fileProps = new Properties()
+        fileProps[  'plugin.name']= pluginProps['Rundeck-Plugin-Name']?:f
+        fileProps[  'plugin.description']= pluginProps['Rundeck-Plugin-Description'] ?:'Rundeck bundled plugin'
+        fileProps[  'plugin.author']= pluginProps['Rundeck-Plugin-Author'] ?:'SimplifyOps, Inc.'
+        fileProps[  'plugin.version']= pluginProps['Rundeck-Plugin-File-Version'] ?:version
+        fileProps[  'plugin.url']= pluginProps['Rundeck-Plugin-URL'] ?:'http://rundeck.org'
+        fileProps[  'plugin.date']= pluginProps['Rundeck-Plugin-BuildDate'] ?:(new Date().toString())
+        fileProps[  'plugin.filename']= f
 
-        manifestProps[ 'pluginFile.' + f + '.plugin.name']= pluginProps['Rundeck-Plugin-Name']?:f
-        manifestProps[ 'pluginFile.' + f + '.plugin.description']= pluginProps['Rundeck-Plugin-Description'] ?:'Rundeck bundled plugin'
-        manifestProps[ 'pluginFile.' + f + '.plugin.author']= pluginProps['Rundeck-Plugin-Author'] ?:'SimplifyOps, Inc.'
-        manifestProps[ 'pluginFile.' + f + '.plugin.version']= pluginProps['Rundeck-Plugin-File-Version'] ?:version
-        manifestProps[ 'pluginFile.' + f + '.plugin.url']= pluginProps['Rundeck-Plugin-URL'] ?:'http://rundeck.org'
-        manifestProps[ 'pluginFile.' + f + '.plugin.date']= pluginProps['Rundeck-Plugin-BuildDate'] ?:(new Date().toString())
-        manifestProps[ 'pluginFile.' + f + '.plugin.filename']= f
+        //write properties file
+        new File(libextDir,pluginFile.name+'.properties').withOutputStream {
+            fileProps.store(it,"generated manifest")
+        }
     }
+    Properties manifestProps = new Properties()
     manifestProps['pluginFileList'] = (filelist.join(','))
     manifestFile.withWriter { w ->
         manifestProps.store(w,"generated manifest")
