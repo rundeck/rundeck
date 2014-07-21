@@ -36,9 +36,9 @@ class ApplicationContextPluginFileSource implements PluginFileSource{
         this.basePath = basePath
     }
 
-    private Properties loadProperties() throws IOException{
+    private Properties loadProperties(String filePath) throws IOException{
         Properties pluginsProperties = new Properties()
-        def manifestProps= applicationContext.getResource(basePath+MANIFEST_PROPERTIES_FILE)
+        def manifestProps= applicationContext.getResource(filePath)
         if(manifestProps.exists()){
             pluginsProperties.load(manifestProps.getInputStream())
         }
@@ -46,7 +46,7 @@ class ApplicationContextPluginFileSource implements PluginFileSource{
     }
     private Properties getPluginsList() throws IOException{
         if(null==pluginsProperties){
-            pluginsProperties = loadProperties()
+            pluginsProperties = loadProperties(basePath + MANIFEST_PROPERTIES_FILE)
         }
         return pluginsProperties;
     }
@@ -58,16 +58,19 @@ class ApplicationContextPluginFileSource implements PluginFileSource{
         if (pluginListStr) {
             def split = pluginListStr.split(/, */)
             split?.each { pluginFileName ->
-                result.add(loadManifestForFile(list,pluginFileName))
+                def pluginResProps = applicationContext.getResource(basePath + pluginFileName+".properties")
+                Properties props=list
+                String prefix= FILE_PREFIX + pluginFileName + '.'
+                if(pluginResProps.exists()) {
+                    //load properties
+                    props = loadProperties(basePath + pluginFileName + ".properties")
+                    prefix=null
+                }
+                result.add(new PropertiesManifest(prefix, props))
             }
         }
         return result
     }
-
-    PluginFileManifest loadManifestForFile(Properties properties, String pluginFileName) {
-        return new PropertiesManifest(FILE_PREFIX + pluginFileName + '.', properties)
-    }
-
 
     @Override
     PluginFileContents getContentsForPlugin(PluginFileManifest manifest) {
