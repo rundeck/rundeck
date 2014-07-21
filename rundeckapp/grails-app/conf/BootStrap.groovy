@@ -160,19 +160,17 @@ class BootStrap {
                  }
              }
 
-             if(isFirstRun){
-                def result=frameworkService.extractEmbeddedPlugins(grailsApplication)
-                if(!result.success){
-                    log.error("Failed extracting embedded plugins: "+result.message)
-                    result?.logs?.each {
-                        log.error(it)
-                    }
-                }else{
-                    result?.logs?.each {
-                        log.debug(it)
-                    }
+            def result=frameworkService.extractEmbeddedPlugins(grailsApplication)
+            if(!result.success){
+                log.error("Failed extracting embedded plugins: "+result.message)
+                result?.logs?.each {
+                    log.error(it)
                 }
-             }
+            }else{
+                result?.logs?.each {
+                    log.debug(it)
+                }
+            }
          }
 
          //initialize manually to avoid circular reference problem with spring
