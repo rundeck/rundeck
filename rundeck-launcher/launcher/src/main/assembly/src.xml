@@ -35,12 +35,6 @@
             </includes>
         </dependencySet>
         <dependencySet>
-            <outputDirectory>/libext</outputDirectory>
-            <includes>
-                <include>org.rundeck:rundeck-*-plugin</include>
-            </includes>
-        </dependencySet>
-        <dependencySet>
             <outputDirectory>/pkgs/webapp</outputDirectory>
             <unpack>true</unpack>
             <includes>

@@ -2,12 +2,15 @@
  * The Rundeck stub plugin build file
  */
 
-description 'This plugin provides the ability to mock the execution of a job'
+ext.pluginClassNames = 'com.dtolabs.rundeck.plugin.stub.StubFileCopier,com.dtolabs.rundeck.plugin.stub.StubNodeExecutor'
+ext.pluginName = 'Stub Execution'
+ext.pluginDescription = 'Mock execution of commands and scripts'
 
-ext.pluginClassNames='com.dtolabs.rundeck.plugin.stub.StubFileCopier,com.dtolabs.rundeck.plugin.stub.StubNodeExecutor'
 jar {
     manifest {
         attributes 'Rundeck-Plugin-Classnames': pluginClassNames
+        attributes 'Rundeck-Plugin-Name': pluginName
+        attributes 'Rundeck-Plugin-Description': pluginDescription
     }
 }
 

@@ -6,6 +6,8 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 import org.gradle.plugins.signing.Sign
 
+import java.util.jar.JarInputStream
+
 /**
  * The Rundeck webapp build file
  * 
@@ -42,7 +44,65 @@ def mavenCredsDefined = hasProperty("mavenUser") && hasProperty("mavenPassword")
 def mavenCreds = mavenCredsDefined ? "-Dmaven.user=${mavenUser} -Dmaven.password=${mavenPassword} -Dmaven.realm=${mavenRealm} -Dmaven.host=${mavenHost}" : ""
 def warFileName = "rundeck-${version}.war"
 def warFileLocation = "${project.projectDir}/target/${warFileName}"
+def additionalFileLocation = "${project.projectDir}/target/war-contents"
 
+configurations{
+    pluginFiles {
+        transitive = false
+
+    }
+    pluginFiles.extendsFrom(runtime)
+}
+
+dependencies {
+    pluginFiles project(':plugins:script-plugin'),
+            project(':plugins:stub-plugin'),
+            project(':plugins:localexec-plugin'),
+            project(':plugins:copyfile-plugin')
+}
+
+task copyPluginLibs(dependsOn: configurations.pluginFiles)<< {
+    File libextDir = new File(additionalFileLocation, "WEB-INF/rundeck/plugins")
+    File manifestFile = new File(additionalFileLocation, "WEB-INF/rundeck/plugins/manifest.properties")
+
+    def filelist=[]
+    libextDir.mkdirs()
+    configurations.pluginFiles.files.each { pluginFile ->
+        copy {
+            from pluginFile
+            into libextDir
+        }
+        filelist << pluginFile.name
+        //load jar manifest
+        def pluginProps = [:]
+
+        pluginFile.withInputStream {
+            def jarmf=new JarInputStream(it).manifest
+            jarmf.getMainAttributes().findAll{it.key.toString().startsWith('Rundeck-Plugin')}.each{k,v->
+                pluginProps[k.toString()]=v
+            }
+        }
+        def f= pluginFile.name
+        Properties fileProps = new Properties()
+        fileProps[  'plugin.name']= pluginProps['Rundeck-Plugin-Name']?:f
+        fileProps[  'plugin.description']= pluginProps['Rundeck-Plugin-Description'] ?:'Rundeck bundled plugin'
+        fileProps[  'plugin.author']= pluginProps['Rundeck-Plugin-Author'] ?:'SimplifyOps, Inc.'
+        fileProps[  'plugin.version']= pluginProps['Rundeck-Plugin-File-Version'] ?:version
+        fileProps[  'plugin.url']= pluginProps['Rundeck-Plugin-URL'] ?:'http://rundeck.org'
+        fileProps[  'plugin.date']= pluginProps['Rundeck-Plugin-BuildDate'] ?:(new Date().toString())
+        fileProps[  'plugin.filename']= f
+
+        //write properties file
+        new File(libextDir,pluginFile.name+'.properties').withOutputStream {
+            fileProps.store(it,"generated manifest")
+        }
+    }
+    Properties manifestProps = new Properties()
+    manifestProps['pluginFileList'] = (filelist.join(','))
+    manifestFile.withWriter { w ->
+        manifestProps.store(w,"generated manifest")
+    }
+}
 /**
  * Downloads Grails from the SpringSource archives
  */
@@ -188,7 +248,7 @@ task grailsCompile(type: Exec, overwrite: true, dependsOn: [extractGrails]) {
 /**
  * Builds the rundeck war file
  */
-task grailsWar(type: Exec, overwrite:true, dependsOn: [installJettyPlugin, installDependencies,extractGrails]) {
+task grailsWar(type: Exec, overwrite:true, dependsOn: [installJettyPlugin, installDependencies,extractGrails, copyPluginLibs]) {
     inputs.dir file(grailsHome)
     inputs.sourceDir file("${projectDir}/src")
     outputs.file file(warFileLocation)
@@ -198,6 +258,7 @@ task grailsWar(type: Exec, overwrite:true, dependsOn: [installJettyPlugin, insta
     args "-Dmaven.central.url=${mavenCentralUrl}",
             "${mavenCreds}",
             "-Dgrails.local.repo=${grailsLocalRepo}",
+            "-Drundeck.war.additional=${additionalFileLocation}",
             "-DRUNDECK_VERSION=${version}",
             'prod',
             'war',

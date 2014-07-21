@@ -2,12 +2,15 @@
  * The Rundeck script plugin build file
  */
 
-description 'This plugin provides the ability to delegate execution to an external script'
+ext.pluginClassNames = 'com.dtolabs.rundeck.plugin.script.ScriptFileCopier,com.dtolabs.rundeck.plugin.script.ScriptNodeExecutor'
+ext.pluginName = 'Script Execution'
+ext.pluginDescription = 'Delegate command and script execution to another external script'
 
-ext.pluginClassNames='com.dtolabs.rundeck.plugin.script.ScriptFileCopier,com.dtolabs.rundeck.plugin.script.ScriptNodeExecutor'
 jar {
     manifest {
         attributes 'Rundeck-Plugin-Classnames': pluginClassNames
+        attributes 'Rundeck-Plugin-Name': pluginName
+        attributes 'Rundeck-Plugin-Description': pluginDescription
     }
 }
 

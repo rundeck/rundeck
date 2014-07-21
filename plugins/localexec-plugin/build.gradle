@@ -1,7 +1,13 @@
-ext.pluginClassNames='com.dtolabs.rundeck.plugin.localexec.LocalExecNodeStepPlugin'
+
+ext.pluginClassNames = 'com.dtolabs.rundeck.plugin.localexec.LocalExecNodeStepPlugin'
+ext.pluginName = 'Local Command Step'
+ext.pluginDescription = 'Run a command locally on the server'
+
 jar {
     manifest {
         attributes 'Rundeck-Plugin-Classnames': pluginClassNames
+        attributes 'Rundeck-Plugin-Name': pluginName
+        attributes 'Rundeck-Plugin-Description': pluginDescription
     }
 }
 

@@ -23,9 +23,6 @@ eclipse.project.name = "${rootProject.eclipse.project.name}:launcher:app";
 configurations{
     warBundle
     jettyServerLib
-    pluginFiles{
-        transitive = false
-    }
 }
 
 dependencies {
@@ -34,10 +31,6 @@ dependencies {
 	
     warBundle project(':rundeckapp')
 	
-    pluginFiles project(':plugins:script-plugin'),
-        project(':plugins:stub-plugin'),
-        project(':plugins:localexec-plugin'),
-        project(':plugins:copyfile-plugin')
 
     jettyServerLib(project(path:":rundeck-launcher:rundeck-jetty-server", configuration:'runtime')) {
         exclude module:'commons-cli'
@@ -84,17 +77,6 @@ task copyJettyServerLib(dependsOn: setupLauncherContent) << {
     }
 }
 
-task copyPluginLibs(dependsOn: setupLauncherContent) << {
-    File libextDir=new File(launcherContentsDir,"libext")
-    libextDir.mkdirs()
-    configurations.pluginFiles.files.each{ pluginFile->
-        copy{
-            from pluginFile
-            into libextDir
-        }
-    }
-}
-
 jar {
     from launcherContentsDir
     from sourceSets.main.output
@@ -103,7 +85,7 @@ jar {
         attributes 'Rundeck-Version': version, 'Main-Class':"${launcherMainClass}", "Rundeck-Start-Class":"${launcherStartClass}", "Rundeck-Jetty-Libs":"${launcherJettyLibs}", "Rundeck-Jetty-Lib-Path":"${launcherJettyLibPath}"
     }
 }
-jar.dependsOn(expandCli, expandWar, copyJettyServerLib, copyPluginLibs)
+jar.dependsOn(expandCli, expandWar, copyJettyServerLib)
 
 apply plugin: 'maven'
 task createPom << {
@@ -186,14 +168,6 @@ task createPom << {
                         artifactId 'rundeck' //override gradle project name
                         version dep.version
                         type 'war'
-                    }
-                }
-                (configurations.pluginFiles.dependencies).each{ dep ->
-                    dependency{
-                        groupId dep.group
-                        artifactId "rundeck-${dep.name}" //override gradle project name
-                        version dep.version
-                        type 'jar'
                     }
                 }
 //                (configurations.jettyServerLib.dependencies).each{ dep ->

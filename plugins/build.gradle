@@ -20,7 +20,10 @@ subprojects{
         manifest {
             attributes 'Rundeck-Plugin-Version': rundeckPluginVersion, 
                        'Rundeck-Plugin-Archive': 'true', 
-                       'Rundeck-Plugin-File-Version': version
+                       'Rundeck-Plugin-File-Version': version,
+                       'Rundeck-Plugin-Author': 'SimplifyOps, Inc.',
+                       'Rundeck-Plugin-URL': 'http://rundeck.org',
+                       'Rundeck-Plugin-BuildDate': new Date().toString()
         }
     }
 }

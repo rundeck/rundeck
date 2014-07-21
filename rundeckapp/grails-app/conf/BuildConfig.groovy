@@ -117,4 +117,9 @@ grails.war.resources = { stagingDir, args ->
     delete(file: "${stagingDir}/WEB-INF/lib/jetty-all-7.6.0.v20120127.jar")
     delete(file: "${stagingDir}/WEB-INF/lib/rundeck-jetty-server-${rundeckVersion}.jar")
     delete(file: "${stagingDir}/WEB-INF/lib/servlet-api-2.5.jar")
+    if(System.getProperty('rundeck.war.additional')!=null){
+        copy(todir: stagingDir ){
+            fileset(dir: System.getProperty('rundeck.war.additional'))
+        }
+    }
 }
