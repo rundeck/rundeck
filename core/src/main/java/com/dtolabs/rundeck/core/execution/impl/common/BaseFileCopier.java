@@ -136,14 +136,17 @@ public class BaseFileCopier {
      * @return a path to destination dir for the node
      */
     public static String getRemoteDirForNode(final INodeEntry node) {
-        if (null != node.getAttributes() && null != node.getAttributes().get(FILE_COPY_DESTINATION_DIR)) {
-            String s = node.getAttributes().get(FILE_COPY_DESTINATION_DIR);
-            return s.endsWith("/") ? s : s + "/";
-        }
+        String pathSeparator = "/";
         String remotedir = "/tmp/";
         if (null != node.getOsFamily() && "windows".equalsIgnoreCase(node.getOsFamily().trim())) {
-            remotedir = "C:/WINDOWS/TEMP/";
+            pathSeparator = "\\";
+            remotedir = "C:\\WINDOWS\\TEMP\\";
         }
+        if (null != node.getAttributes() && null != node.getAttributes().get(FILE_COPY_DESTINATION_DIR)) {
+            String s = node.getAttributes().get(FILE_COPY_DESTINATION_DIR);
+            return s.endsWith(pathSeparator) ? s : s + pathSeparator;
+        }
+
         return remotedir;
     }
 
