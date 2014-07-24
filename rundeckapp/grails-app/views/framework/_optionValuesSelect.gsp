@@ -70,6 +70,10 @@
     
         <g:set var="labelsSet" value="${values && values instanceof Map?values.keySet():values?values:optionSelect.values?optionSelect.values:[]}"/>
         <g:set var="valuesMap" value="${values && values instanceof Map?values:null}"/>
+         %{-- set of all of the values that will be pre-shown in the multivalue list --}%
+         <g:set var="labelsSetValues" value="${labelsSet?.collect {
+                it instanceof Map ? it.value : it
+            }}"/>
 
         <g:if test="${labelsSet && 1==labelsSet.size() && optionSelect.enforced}">
             <g:set var="selentry" value="${labelsSet.iterator().next()}"/>
@@ -110,7 +114,11 @@
                                 selectedoptsmap[optName]= selectedoptsmap[optName].split(Pattern.quote(optionSelect.delimiter)) as List
                                 }%
                         </g:if>
-                        <g:set var="newvals" value="${selectedoptsmap ? optionSelect.values?selectedoptsmap[optName].findAll { !optionSelect.values.contains(it) } : selectedoptsmap[optName] : null}"/>
+                        %{--
+                        Determine any new values (via selectedoptsmap) that should be added
+                        to the multivalue list, and preselected
+                         --}%
+                        <g:set var="newvals" value="${selectedoptsmap ? labelsSetValues?selectedoptsmap[optName].findAll {  !labelsSetValues.contains(it) } : selectedoptsmap[optName] : null}"/>
                         <g:if test="${newvals}">
                             <g:javascript>
                                 fireWhenReady('${rkey.encodeAsJavaScript()}varinput', function(){
