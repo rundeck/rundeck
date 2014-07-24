@@ -97,6 +97,17 @@ log4j={
                 console name: "access", layout: pattern(conversionPattern: "[%d{ISO8601}] \"%X{method} %X{uri}\" %X{duration} %X{remoteHost} %X{secure} %X{remoteUser} %X{authToken} %X{project} [%X{contentType}] (%X{userAgent})%n")
             }
         }
+        if (System.properties['rundeck.grails.stacktrace.enabled']=='true'
+                && System.properties['rundeck.grails.stacktrace.dir']) {
+            String logDir = System.properties['rundeck.grails.stacktrace.dir']
+            rollingFile name: 'stacktrace',
+                    maximumFileSize: 10 * 1024 * 1024,
+                    file: "$logDir/stacktrace.log",
+                    layout: pattern(conversionPattern: '%d [%t] %-5p %c{2} %x - %m%n'),
+                    maxBackupIndex: 10
+        } else {
+            null name: 'stacktrace'
+        }
     }
     environments {
         development {
