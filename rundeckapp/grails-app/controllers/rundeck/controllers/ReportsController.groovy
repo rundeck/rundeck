@@ -246,7 +246,7 @@ class ReportsController extends ControllerBase{
                 map.executionId= map.remove('jcExecId')
                 try {
                     map.execution = Execution.get(Long.parseLong(map.executionId)).toMap()
-                    map.executionHref = createLink(controller: 'execution', action: 'show', absolute: true, id: map.executionId, params: [project: params.project])
+                    map.executionHref = createLink(controller: 'execution', action: 'show', absolute: false, id: map.executionId, params: [project: params.project])
                 } catch (Exception e) {
 
                 }
