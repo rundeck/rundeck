@@ -106,7 +106,7 @@ log4j={
                     layout: pattern(conversionPattern: '%d [%t] %-5p %c{2} %x - %m%n'),
                     maxBackupIndex: 10
         } else {
-            null name: 'stacktrace'
+            delegate.'null'( name: 'stacktrace')
         }
     }
     environments {
