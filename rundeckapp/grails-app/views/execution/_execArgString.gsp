@@ -17,7 +17,7 @@
 <g:set var="parsed" value="${g.parseOptsFromString(args: argString)}"/>
 <g:if test="${parsed}">
     <g:each in="${parsed}" var="entry">
-        ${entry.key.encodeAsHTML()}:
+        <span class="optkey">${entry.key.encodeAsHTML()}</span>:
         <g:if test="${entry.value}"><span class="optvalue">${entry.value?.encodeAsHTML()}</span></g:if>
     </g:each>
 </g:if>

@@ -1,6 +1,6 @@
 <%@ page import="com.dtolabs.rundeck.app.support.ExecutionContext; com.dtolabs.rundeck.server.authorization.AuthConstants; com.dtolabs.rundeck.core.plugins.configuration.Description; rundeck.ScheduledExecution" %>
 <g:set var="rkey" value="${g.rkey()}"/>
-<div class="row" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
+<div class="row" >
 <div class="col-sm-4 pull-right">
 <div class=" pull-right btn-group-vertical">
 <g:if test="${showEdit && execdata != null && execdata.id && execdata instanceof ScheduledExecution && auth.jobAllowedTest(job: execdata, action: AuthConstants.ACTION_UPDATE)}">

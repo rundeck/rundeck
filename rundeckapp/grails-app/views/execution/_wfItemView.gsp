@@ -26,29 +26,38 @@
             <g:set var="pluginitem" value="${item.instanceOf(PluginStep)}"/>
             <span class="${edit?'autohilite autoedit':''} wfitem ${jobitem?'jobtype':'exectype'}" title="${edit?'Click to edit':''}">
             <g:if test="${jobitem}">
-                <g:if test="${item.description}">
-                    <i class="glyphicon glyphicon-book"></i>
-                    ${item.description.encodeAsHTML()}
-                </g:if>
+
+                %{--Display job icon and name--}%
                 <g:set var="foundjob" value="${edit?null:ScheduledExecution.findScheduledExecution(item.jobGroup?item.jobGroup:null,item.jobName,project)}"/>
                 <g:if test="${foundjob}">
                 <g:link controller="scheduledExecution" action="show" id="${foundjob.extid}">
-                    <g:if test="${!noimgs && !item.description}">
+                    <g:if test="${!noimgs }">
                         <i class="glyphicon glyphicon-book"></i>
                     </g:if>
                     ${item.jobGroup?item.jobGroup.encodeAsHTML()+'/':''}${item.jobName.encodeAsHTML()}</g:link>
                 </g:if>
                 <g:else>
-                    <g:if test="${!noimgs && !item.description}">
+                    <g:if test="${!noimgs }">
                         <i class="glyphicon glyphicon-book"></i>
                     </g:if>
                     ${item.jobGroup?item.jobGroup.encodeAsHTML()+'/':''}${item.jobName.encodeAsHTML()}
                 </g:else>
-                <g:if test="${item.argString}">
-                   <span class="argString" title="${item.argString.encodeAsHTML()}">
-                       <g:render template="/execution/execArgString" model="[argString: item.argString]"/>
-                   </span>
+
+                %{--display step description--}%
+                <g:if test="${item.description}">
+                    <div class="text-info">
+                        ${item.description.encodeAsHTML()}
+                    </div>
                 </g:if>
+
+                %{--display argstring--}%
+                <g:if test="${item.argString}">
+                   <div class="argString" title="${item.argString.encodeAsHTML()}">
+                       <g:render template="/execution/execArgString" model="[argString: item.argString]"/>
+                   </div>
+                </g:if>
+
+                %{--display if it is a node step--}%
                 <g:if test="${item.nodeStep}">
                     <g:if test="${!noimgs && item.nodeStep}"><g:img file="icon-small-Node.png" width="16px"
                                                                     height="16px"/></g:if>
@@ -75,15 +84,17 @@
                     <g:set var="iname" value="${icon?:'icon-small'}"/>
                     <i class="rdicon ${item.adhocRemoteString?'shell':item.adhocLocalString?'script':'scriptfile'} ${iname}"></i>
                 </g:if>
-                <g:if test="${item.description}">
-                    ${item.description.encodeAsHTML()}
-                </g:if>
                 <g:if test="${item.adhocRemoteString}">
                     <span class="argString"><g:truncate max="150" showtitle="true">${item.adhocRemoteString.encodeAsHTML()}</g:truncate></span>
                 </g:if>
                 <g:elseif test="${item.adhocLocalString}">
                     <g:render template="/execution/scriptDetailDisplay" model="${[rkey: g.rkey(),script:item.adhocLocalString,label: '',edit:edit]}"/>
                 </g:elseif>
+                <g:if test="${item.description}">
+                    <div class="text-info">
+                        ${item.description.encodeAsHTML()}
+                    </div>
+                </g:if>
                 <g:elseif test="${item.adhocFilepath}">
                     <g:if test="${item.scriptInterpreter}">
                         <span class="argString">${item.scriptInterpreter.encodeAsHTML()}</span>
@@ -111,7 +122,7 @@
                     </g:if>
                 </g:if>
                 <g:if test="${item.argString}">
-                   <span class="argString"><g:truncate max="150"  showtitle="true">${item.argString.encodeAsHTML()}</g:truncate></span>
+                   <div class="argString"><g:truncate max="150"  showtitle="true">${item.argString.encodeAsHTML()}</g:truncate></div>
                 </g:if>
                 <g:if test="${item.interpreterArgsQuoted}">
                     &quot;

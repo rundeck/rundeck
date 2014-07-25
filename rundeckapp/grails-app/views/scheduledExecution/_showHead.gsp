@@ -31,10 +31,6 @@
             </span>
         </g:elseif>
 
-        <span class="h4 jobInfoSection">
-            <span class="text-muted">${scheduledExecution?.description?.encodeAsHTML()}</span>
-        </span>
-
         <span class="h4  jobGroup ">
             <g:if test="${scheduledExecution.groupPath}">
                 <g:link controller="menu" action="jobs"
@@ -47,5 +43,9 @@
                 </g:link>
             </g:if>
         </span>
+    <div class="h4 jobInfoSection">
+        <span class="text-muted">${scheduledExecution?.description?.encodeAsHTML()}</span>
+    </div>
+
 </div>
 </div>
