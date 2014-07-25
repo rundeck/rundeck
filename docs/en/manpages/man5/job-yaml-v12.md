@@ -97,6 +97,13 @@ In addition, these optional entries can be present:
     * `6h 30m` indicates 6 hours and 30 minutes
     * `${option.timeout}` reference to a job option value
     
+`retry`
+
+:    Number of times to retry the job if it fails or times out. Allowed values:
+
+    * An integer number indicating the maximum retries
+    * `${option.retry}` reference to a job option value
+    
 [`options`](#options)
 
 :    Set of Options for the Job

@@ -277,6 +277,24 @@ These are all valid values:
 </job>
 ~~~~~~~~ 
 
+## retry
+
+Retry count indicating the maximum number of times to retry the job if it fails or times out. 
+
+Allowed values:
+
+*  An integer number, indicating maximum number of retries
+* `${option.retry}` reference to a job option value
+
+
+~~~~~~~~ {.xml }
+<job>
+    <name>iffy job</name>
+    <description>Job which might need to be retried</description>
+    <retry>${option.retry}</retry>
+</job>
+~~~~~~~~ 
+
 ## schedule
      
 <code>schedule</code> is a sub-element of [job](#job) and specifies

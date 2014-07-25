@@ -253,6 +253,25 @@ The value for the timeout can be:
 * A string indicating numbers and units, such as "1d 12h 30m 24s". Each number must have a unit letter next to it.  The total timeout duration will be the sum of the values.  Available units are "d" (days) "h" (hours) "m" (minutes) and "s" (seconds, default if unspecified.)
 * An embedded property reference such as `${option.timeout}`.  This allows a Job Option to be used to change the timeout for the job.
 
+### Retry
+
+You can set a maximum number of retries for a job. 
+If a job fails or times out, 
+it will be executed again up to the specified number of times
+until it succeeds. (Note: Retry only affects the job if is invoked directly, not if it is used as a Job Reference.)
+
+![Job Retry field](../figures/jobs-retry-field.png)
+
+
+The value for the timeout can be:
+
+* A specific integer number
+* An embedded property reference such as `${option.retryMax}`.  This allows a Job Option to be used to change the retry count for the job.
+
+Each execution will be started with context variables 
+indicating the current retry attempt and whether it was a retry.  
+See [Context Variables](#context-variables).
+
 ### Node dispatching and filtering
 
 When you create a job you can choose between either running the job only locally (on the Rundeck server), or dispatching it to multiple nodes (including the Rundeck server if you want).
@@ -1457,6 +1476,8 @@ Job context variables:
 * `job.project`: Project name
 * `job.loglevel`: Logging level, one of: 'ERROR','WARN','INFO','VERBOSE','DEBUG'
 * `job.user.email`: Executing user's email address set in [User profile](user.html).
+* `job.retryAttempt`: A number indicating the attempt, if this execution is a [retry](#retry).
+* `job.wasRetry`: `true` if this execution is a retry, otherwise `false`. See: [retry](#retry).
 
 Node context variables:
 
