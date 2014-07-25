@@ -24,12 +24,14 @@
 package com.dtolabs.rundeck.core.authorization.providers;
 
 import org.apache.log4j.Logger;
+import org.yaml.snakeyaml.parser.ParserException;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -98,7 +100,9 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
     private PolicyCollection createEntry(final File file) throws PoliciesParseException {
         try {
             return new YamlPolicyCollection(file);
-        } catch (Exception e1) {
+        } catch (ParserException e1) {
+            throw new PoliciesParseException("YAML syntax error: " + e1.toString(), e1);
+        }catch (Exception e1) {
             throw new PoliciesParseException(e1);
         }
     }
@@ -141,6 +145,7 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
         return new cacheIterator(null!=files?Arrays.asList(files).iterator(): new ArrayList<File>().iterator());
     }
 
+    private Map<File, Long> cooldownset = Collections.synchronizedMap(new HashMap<File, Long>());
     /**
      * Iterator over the PoliciesDocuments for the cache's files.  It skips
      * files that cannot be loaded.
@@ -159,12 +164,21 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
         private void loadNextDocument() {
             while (hasNextFile() && null == nextDocument) {
                 File nextFile2 = getNextFile();
+                Long aLong = cooldownset.get(nextFile2);
+                if (null != aLong && nextFile2.lastModified() == aLong.longValue()) {
+                    logger.debug("Skip parsing of: " + nextFile2 + ". Reason: parse error cooldown until modified");
+                    continue;
+                } else if (null != aLong) {
+                    //clear
+                    cooldownset.remove(nextFile2);
+                }
                 try {
                     nextDocument = getDocument(nextFile2);
                 } catch (PoliciesParseException e) {
-                    // TODO: Better Error messaging.  Or put nextFile2 in a cool off collection.
-                    logger.warn("Unable to parse aclpolicy: " + nextFile2 + ". Reason " + e.getMessage(), e);
-                    e.printStackTrace();
+                    logger.error("ERROR unable to parse aclpolicy: " + nextFile2 + ". Reason: " + e.getMessage());
+                    logger.debug("ERROR unable to parse aclpolicy: " + nextFile2 + ". Reason: " + e.getMessage(), e);
+                    cache.remove(nextFile2);
+                    cooldownset.put(nextFile2, nextFile2.lastModified());
                 }
             }
         }

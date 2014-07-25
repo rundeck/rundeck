@@ -39,7 +39,13 @@ public class YamlPolicyCollection implements PolicyCollection {
             for (Object yamlDoc : yaml.loadAll(stream)) {
                 final Object yamlDoc1 = yamlDoc;
                 if (yamlDoc1 instanceof Map) {
-                    all.add(new YamlPolicy((Map) yamlDoc1, file, index));
+                    try {
+                        YamlPolicy yamlPolicy = new YamlPolicy((Map) yamlDoc1, file, index);
+                        all.add(yamlPolicy);
+                    } catch (YamlPolicy.AclPolicySyntaxException e) {
+                        logger.error("ERROR parsing a policy in file: " + file + "["+ index+"]. Reason: " + e.getMessage());
+                        logger.debug("ERROR parsing a policy in file: " + file + "["+ index+"]. Reason: " + e.getMessage(), e);
+                    }
                 }
                 index++;
             }

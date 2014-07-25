@@ -62,23 +62,26 @@ public class TestYamlPolicy extends TestCase {
     /**
      * Test evaluation of top level policy definition
      */
-    public void testYamlAclContext(){
+    public void testYamlAclContext_description_required(){
 
-        //test "decision" is required
-        {
+        //test "description" is required
             final Map map = new HashMap();
             final YamlPolicy.TypeContextFactory typeContextFactory = null;
-            final YamlPolicy.YamlAclContext yamlAclContext = new YamlPolicy.YamlAclContext(map, typeContextFactory
-            );
-            final ContextDecision includes = yamlAclContext.includes(null, null);
-            assertFalse(includes.granted());
-            assertEquals(Explanation.Code.REJECTED_NO_DESCRIPTION_PROVIDED, includes.getCode());
+        final YamlPolicy.YamlAclContext yamlAclContext;
+        try {
+            yamlAclContext = new YamlPolicy.YamlAclContext(map, typeContextFactory);
+            fail("Expected syntax exception");
+        } catch (YamlPolicy.AclPolicySyntaxException e) {
 
         }
+    }
+
+    public void testYamlAclContext_type_required() {
         {
             //test resource requires "type"
             final Map map = new HashMap();
             map.put("description", "test1");
+            map.put("for", new HashMap());
             final YamlPolicy.TypeContextFactory typeContextFactory = null;
             final YamlPolicy.YamlAclContext yamlAclContext = new YamlPolicy.YamlAclContext(map, typeContextFactory
             );
@@ -88,51 +91,48 @@ public class TestYamlPolicy extends TestCase {
             assertFalse(includes.granted());
             assertEquals(Explanation.Code.REJECTED_NO_RESOURCE_TYPE, includes.getCode());
         }
-        {
-            //for: must be map
-            final Map map = new HashMap();
-            map.put("description", "test1");
-            map.put("for", "test1");
-            final YamlPolicy.TypeContextFactory typeContextFactory = null;
-            final YamlPolicy.YamlAclContext yamlAclContext = new YamlPolicy.YamlAclContext(map, typeContextFactory
-            );
-            final HashMap<String, String> resmap = new HashMap<String, String>();
-            resmap.put("type", "bob");
+    }
 
-            final ContextDecision includes = yamlAclContext.includes(resmap, null);
-            assertFalse(includes.granted());
-            assertEquals(Explanation.Code.REJECTED_INVALID_FOR_SECTION, includes.getCode());
+    public void testYamlAclContext_for_contents() {
+        //for: must be map
+        final Map map = new HashMap();
+        map.put("description", "test1");
+        map.put("for", "test1");
+        final YamlPolicy.TypeContextFactory typeContextFactory = null;
+        final YamlPolicy.YamlAclContext yamlAclContext;
+        try {
+            yamlAclContext = new YamlPolicy.YamlAclContext(map, typeContextFactory);
+            fail("Expected syntax error");
+        } catch (YamlPolicy.AclPolicySyntaxException e) {
         }
-        {
-            //for: must be map
-            final Map map = new HashMap();
-            map.put("description", "test1");
-            map.put("for", new ArrayList());
-            final YamlPolicy.TypeContextFactory typeContextFactory = null;
-            final YamlPolicy.YamlAclContext yamlAclContext = new YamlPolicy.YamlAclContext(map, typeContextFactory
-            );
-            final HashMap<String, String> resmap = new HashMap<String, String>();
-            resmap.put("type", "bob");
+    }
 
-            final ContextDecision includes = yamlAclContext.includes(resmap, null);
-            assertFalse(includes.granted());
-            assertEquals(Explanation.Code.REJECTED_INVALID_FOR_SECTION, includes.getCode());
+    public void testYamlAclContext_for_must_be_map() {
+        //for: must be map
+        final Map map = new HashMap();
+        map.put("description", "test1");
+        map.put("for", new ArrayList());
+        final YamlPolicy.TypeContextFactory typeContextFactory = null;
+        try {
+            final YamlPolicy.YamlAclContext yamlAclContext = new YamlPolicy.YamlAclContext(map, typeContextFactory);
+            fail("Expected syntax error");
+        } catch (YamlPolicy.AclPolicySyntaxException e) {
         }
-        {
-            //for: may be null
-            final Map map = new HashMap();
-            map.put("description", "test1");
+    }
+    public void testYamlAclContext_for_must_exist() {
+        //for: must not be null
+        final Map map = new HashMap();
+        map.put("description", "test1");
 //            map.put("for", new ArrayList());
-            final YamlPolicy.TypeContextFactory typeContextFactory = null;
-            final YamlPolicy.YamlAclContext yamlAclContext = new YamlPolicy.YamlAclContext(map, typeContextFactory
-            );
-            final HashMap<String, String> resmap = new HashMap<String, String>();
-            resmap.put("type", "bob");
-
-            final ContextDecision includes = yamlAclContext.includes(resmap, null);
-            assertFalse(includes.granted());
-            assertEquals(Explanation.Code.REJECTED_NO_RULES_DECLARED, includes.getCode());
+        final YamlPolicy.TypeContextFactory typeContextFactory = null;
+        try {
+            final YamlPolicy.YamlAclContext yamlAclContext = new YamlPolicy.YamlAclContext(map, typeContextFactory);
+            fail("Expected syntax error");
+        } catch (YamlPolicy.AclPolicySyntaxException e) {
         }
+    }
+
+    public void testYamlAclContext() {
         {
             //for: may be empty
             final Map map = new HashMap();

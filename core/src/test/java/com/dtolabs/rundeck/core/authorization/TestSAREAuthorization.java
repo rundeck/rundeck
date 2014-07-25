@@ -182,7 +182,7 @@ public class TestSAREAuthorization extends TestCase {
         
         decision = authorization.evaluate(resource, subject, "none", environment);
         assertEquals("Decision for authoraztion for action: none is not REJECTED_NO_RULES_DEFINED.",
-                Code.REJECTED_NO_RULES_DECLARED, decision.explain().getCode());
+                Code.REJECTED_NO_SUBJECT_OR_ENV_FOUND, decision.explain().getCode());
         assertFalse("Action granted authorization.", decision.isAuthorized());
         
     }

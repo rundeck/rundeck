@@ -757,7 +757,22 @@ final class YamlPolicy implements Policy {
             return CollectionUtils.isSubCollection(items, input);
         }
     }
+    static class AclPolicySyntaxException extends RuntimeException{
+        AclPolicySyntaxException() {
+        }
 
+        AclPolicySyntaxException(String s) {
+            super("ACLPOLICY FORMAT ERROR: "+s);
+        }
+
+        AclPolicySyntaxException(String s, Throwable throwable) {
+            super("ACLPOLICY FORMAT ERROR: " +s, throwable);
+        }
+
+        AclPolicySyntaxException(Throwable throwable) {
+            super(throwable);
+        }
+    }
     /**
      * Returns decision for a resource and action, based on the "type" of the resource, and the rules defined in the
      * for: type: section of the policy def.
@@ -775,40 +790,43 @@ final class YamlPolicy implements Policy {
             initialize();
         }
 
-        private ContextDecision invalid;
-
         private void initialize() {
             final List<ContextEvaluation> evaluations = new ArrayList<ContextEvaluation>();
 
             //require description
             final Object descriptionValue = policyDef.get("description");
             if (descriptionValue == null || !(descriptionValue instanceof String)) {
-                evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED_NO_DESCRIPTION_PROVIDED,
-                        "Policy is missing a description."));
-                invalid = new ContextDecision(Explanation.Code.REJECTED_NO_DESCRIPTION_PROVIDED, false, evaluations);
-                return;
+                throw new AclPolicySyntaxException("Policy is missing a description. Context: " + policyDef.get
+                        (CONTEXT_SECTION) + ", by: " + policyDef.get("by"));
             }
             description = (String) descriptionValue;
 
             final Object forMap = policyDef.get(FOR_SECTION);
 
             //require for section is a map
-            if (null != forMap && !(forMap instanceof Map)) {
-                evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED_INVALID_FOR_SECTION,
-                        "'" + FOR_SECTION + "' was not declared"));
-                invalid = new ContextDecision(Explanation.Code.REJECTED_INVALID_FOR_SECTION, false, evaluations);
-                return;
+            if (null == forMap) {
+                throw new AclPolicySyntaxException("Required '" + FOR_SECTION + ":' section was not present. context:" +
+                        " " + policyDef.get(CONTEXT_SECTION) + ", by: " + policyDef.get("by"));
+            }
+            if (!(forMap instanceof Map)) {
+                throw new AclPolicySyntaxException("Expected '" + FOR_SECTION + ":' section to contain a map, " +
+                        "but was [" + (forMap.getClass().getName()) + "]. context: " + policyDef.get(CONTEXT_SECTION)
+                        + ", by: " + policyDef.get("by"));
             }
 
             forsection = (Map) forMap;
 
-            if (null != forsection) {
-                for (Object key : forsection.keySet()) {
-                    if (key instanceof String) {
-                        String type = (String) key;
-                        Object typeSection = forsection.get(key);
-                        typeContexts.putIfAbsent(type, createTypeContext((List) typeSection));
+            for (Object key : forsection.keySet()) {
+                if (key instanceof String) {
+                    String type = (String) key;
+                    Object typeSection = forsection.get(key);
+                    if(!(typeSection instanceof List)) {
+                        throw new AclPolicySyntaxException("Expected '" + FOR_SECTION + ": " + key + ":' section to " +
+                                "contain a sequence, but was [" + (forMap.getClass().getName()) + "]. context: " +
+                                policyDef.get(CONTEXT_SECTION) + ", " +
+                                "by: " + policyDef.get("by"));
                     }
+                    typeContexts.putIfAbsent(type, createTypeContext((List) typeSection));
                 }
             }
         }
@@ -834,9 +852,6 @@ final class YamlPolicy implements Policy {
 
         @SuppressWarnings("rawtypes")
         public ContextDecision includes(final Map<String, String> resourceMap, final String action) {
-            if (null != invalid) {
-                return invalid;
-            }
             //require the resource to have a "type" value
             final String type = resourceMap.get(TYPE_PROPERTY);
             if (null == type) {
