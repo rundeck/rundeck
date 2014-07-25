@@ -243,7 +243,7 @@ You can make a job allow "Multiple Executions" by toggling the value to Yes in t
 
 ### Timeout
 
-You can set a maximum runtime for a job.  If the runtime exceeds this value, the job will be halted (as if a user had killed it.)
+You can set a maximum runtime for a job.  If the runtime exceeds this value, the job will be halted (as if a user had killed it.) (Note: Timeout only affects the job if is invoked directly, not if it is used as a Job Reference.)
 
 ![Job Timeout field](../figures/jobs-timeout-field.png)
 
