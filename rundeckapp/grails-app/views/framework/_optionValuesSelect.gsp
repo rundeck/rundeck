@@ -92,6 +92,7 @@
 
             <g:if test="${optionSelect.multivalued}">
                 <!-- use checkboxes -->
+                <g:set var="defaultMultiValues" value="${optionSelect.listDefaultMultiValues()}"/>
                 <div class="optionmultiarea " id="${fieldwatchid.encodeAsHTML()}">
                     <g:if test="${!optionSelect.enforced}">
                         <%-- variable input text fields --%>
@@ -141,7 +142,7 @@
                         <div class="">
                         <div class="optionvaluemulti ">
                             <label>
-                                <input type="checkbox" name="${realFieldName.encodeAsHTML()}" value="${entry.value.encodeAsHTML()}" ${selectedvalue && entry.value == selectedvalue || entry.value == optionSelect.defaultValue || selectedoptsmap && entry.value in selectedoptsmap[optName] ? 'checked' : ''} />
+                                <input type="checkbox" name="${realFieldName.encodeAsHTML()}" value="${entry.value.encodeAsHTML()}" ${selectedvalue && entry.value == selectedvalue || (defaultMultiValues? entry.value in defaultMultiValues : entry.value == optionSelect.defaultValue) || selectedoptsmap && entry.value in selectedoptsmap[optName] ? 'checked' : ''} />
                                 ${entry.name.encodeAsHTML()}
                             </label>
                         </div>

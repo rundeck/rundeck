@@ -1,4 +1,7 @@
 package rundeck
+
+import java.util.regex.Pattern
+
 /*
  * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
  *
@@ -212,6 +215,17 @@ public class Option implements Comparable{
             values=x
             valuesList=null
         }
+    }
+
+    /**
+     *
+     * @return
+     */
+    List listDefaultMultiValues(){
+        if(multivalued && defaultValue && delimiter){
+            return defaultValue.split(Pattern.quote(delimiter)) as List
+        }
+        []
     }
 
     /**

@@ -1710,7 +1710,7 @@ class ScheduledExServiceTests {
     public void testDoValidateOptionsValidationMultivalued() {
 
         def sec = new ScheduledExecutionService()
-        if (true) {//invalid multi option, no delimiter
+        //invalid multi option, no delimiter
             def fwkControl = mockFor(FrameworkService, true)
             fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
             fwkControl.demand.existsFrameworkProject { project, framework ->
@@ -1754,8 +1754,139 @@ class ScheduledExServiceTests {
             final Option rejopt = rejset.iterator().next()
             assertTrue(rejopt.errors.hasErrors())
             assertTrue(rejopt.errors.hasFieldErrors('delimiter'))
-        }
 
+    }
+    /**
+     * Multivalued option with default values list and enforced:
+     * the default values list should allow a delimiter separated list of valid values
+     */
+    public void testDoValidateOptions_MultivaluedEnforcedMultipleDefaults_valid() {
+
+        def sec = new ScheduledExecutionService()
+
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.existsFrameworkProject { project, framework ->
+            assertEquals 'testProject', project
+            return true
+        }
+        fwkControl.demand.getCommand { project, type, command, framework ->
+            assertEquals 'testProject', project
+            assertEquals 'aType', type
+            assertEquals 'aCommand', command
+            return null
+        }
+        sec.frameworkService = fwkControl.createMock()
+
+        def ms = mockFor(MessageSource)
+        ms.demand.getMessage { key, data, locale -> 'message' }
+        ms.demand.getMessage { error, locale -> 'message' }
+        sec.messageSource = ms.createMock()
+
+        def optDef = [
+                name: 'opt3',
+                defaultValue: 'val1,val3',
+                enforced: true,
+                multivalued: true,
+                delimiter: ',',
+                values: ['val1', 'val2', 'val3']
+        ]
+
+        def params = [jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: false,
+                workflow: [threadcount: 1, keepgoing: true, "commands[0]":
+                        [adhocExecution: true, adhocRemoteString: 'a remote string']
+                ],
+                options: ["options[0]": optDef]
+        ]
+        def results = sec._dovalidate(params, 'test', 'test', null)
+        if (results.scheduledExecution.errors.hasErrors()) {
+            results.scheduledExecution.errors.allErrors.each {
+                System.err.println(it);
+            }
+        }
+        if(results.scheduledExecution.options?.any{it.hasErrors()}){
+            results.scheduledExecution.options*.errors?.allErrors?.each {
+                System.err.println(it);
+            }
+        }
+        assertFalse results.failed
+        assertNotNull(results.scheduledExecution)
+        assertTrue(results.scheduledExecution instanceof ScheduledExecution)
+        final ScheduledExecution execution = results.scheduledExecution
+        assertNotNull(execution)
+        final def org.springframework.validation.Errors errors = execution.errors
+        assertNotNull(errors)
+        assertFalse(errors.hasErrors())
+        assertFalse(errors.hasFieldErrors('options'))
+    }
+    /**
+     * multivalued option, default values, enforced values.
+     * the default value should be rejected if not all values in it are in the allowed values
+     */
+    public void testDoValidateOptions_MultivaluedEnforcedMultipleDefaults_invalid() {
+
+        def sec = new ScheduledExecutionService()
+
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.existsFrameworkProject { project, framework ->
+            assertEquals 'testProject', project
+            return true
+        }
+        fwkControl.demand.getCommand { project, type, command, framework ->
+            assertEquals 'testProject', project
+            assertEquals 'aType', type
+            assertEquals 'aCommand', command
+            return null
+        }
+        sec.frameworkService = fwkControl.createMock()
+
+        def ms = mockFor(MessageSource)
+        ms.demand.getMessage { key, data, locale -> 'message' }
+        ms.demand.getMessage { error, locale -> 'message' }
+        sec.messageSource = ms.createMock()
+
+        def optDef = [
+                name: 'opt3',
+                defaultValue: 'val1,val3,val4', //val4 not in allowed values
+                enforced: true,
+                multivalued: true,
+                delimiter: ',',
+                values: ['val1', 'val2', 'val3']
+        ]
+
+        def params = [jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: false,
+                workflow: [threadcount: 1, keepgoing: true, "commands[0]":
+                        [adhocExecution: true, adhocRemoteString: 'a remote string']
+                ],
+                options: ["options[0]": optDef]
+        ]
+        def results = sec._dovalidate(params, 'test', 'test', null)
+        if (results.scheduledExecution.errors.hasErrors()) {
+            results.scheduledExecution.errors.allErrors.each {
+                System.err.println(it);
+            }
+        }
+        if (results.scheduledExecution.options?.any { it.hasErrors() }) {
+            results.scheduledExecution.options*.errors?.allErrors?.each {
+                System.err.println(it);
+            }
+        }
+        assertTrue results.failed
+        assertNotNull(results.scheduledExecution)
+        assertTrue(results.scheduledExecution instanceof ScheduledExecution)
+        final ScheduledExecution execution = results.scheduledExecution
+        assertNotNull(execution)
+        final def org.springframework.validation.Errors errors = execution.errors
+        assertNotNull(errors)
+        assertTrue(errors.hasErrors())
+        assertTrue(errors.hasFieldErrors('options'))
+        final Object rejset = errors.getFieldError('options').getRejectedValue()
+        assertNotNull(rejset)
+        assertLength(1, rejset as Object[])
+        final Option rejopt = rejset.iterator().next()
+        assertTrue(rejopt.errors.hasErrors())
+        assertTrue(rejopt.errors.hasFieldErrors('defaultValue'))
     }
 
     public void testDoValidateOptionsInvalidSecureMultivalued() {

@@ -289,8 +289,14 @@ class EditOptsController {
         def result = [:]
         if (opt.enforced && (opt.values || opt.valuesList) && opt.defaultValue) {
             opt.convertValuesList()
-            if (!opt.values.contains(opt.defaultValue)) {
+            if(!opt.multivalued && !opt.values.contains(opt.defaultValue)) {
                 opt.errors.rejectValue('defaultValue', 'option.defaultValue.notallowed.message')
+            }else if(opt.multivalued && opt.delimiter){
+                //validate each default value
+                def found = opt.defaultValue.split(Pattern.quote(opt.delimiter)).find{ !opt.values.contains(it) }
+                if(found){
+                    opt.errors.rejectValue('defaultValue', 'option.defaultValue.multivalued.notallowed.message',[found] as Object[],"{0} invalid value")
+                }
             }
         }
         if (opt.enforced && (!opt.values && !opt.valuesList && !opt.realValuesUrl)) {
