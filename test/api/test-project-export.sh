@@ -18,6 +18,9 @@ runurl="${APIURL}/projects"
 ##
 
 test_proj="APIExportTest"
+if [ -d $RDECK_PROJECTS/$test_proj ] ; then
+  rm -rf $RDECK_PROJECTS/$test_proj
+fi
 
 cat > $DIR/proj_create.post <<END
 <project>
@@ -95,9 +98,10 @@ if [ ! -f $DIR/test_archive.zip ] ; then
     errorMsg "ERROR: output file does not exist"
     exit 2
 fi
-file $DIR/test_archive.zip | egrep -q 'Zip archive data'
+file $DIR/test_archive.zip | egrep -q 'archive data'
 if [ $? != 0 ] ; then
-    errorMsg "Expected Zip archive data file contents"
+    file $DIR/test_archive.zip 1>&2
+    errorMsg "Expected 'archive data' file contents"
     exit 2
 fi
 
