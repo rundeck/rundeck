@@ -24,6 +24,7 @@ for i in $(ls ./unauthorized-test*.sh)  ; do
         cat $DIR/${tname}.output >> $DIR/testall.output
     else
         echo "${i}: OK"
+        rm $DIR/${tname}.output
     fi
 done
 
@@ -41,11 +42,12 @@ for i in $(ls ./test-*.sh) ; do
         cat $DIR/${tname}.output >> $DIR/testall.output
     else
         echo "${i}: OK"
+        rm $DIR/${tname}.output
     fi
 done
 
 if [ $myexit -ne 0 ] ; then
-    cat $DIR/testall.output
+    cat $DIR/*.output
 fi
 
 exit $myexit

@@ -15,7 +15,7 @@ Vagrant.configure("2") do |config|
   config.vm.provision :shell, :path => "bootstrap.sh", :args => repo_url
   config.vm.provision :shell, :path => "prepare-tests.sh"
   config.vm.provision :shell,
-    :inline => "su - rundeck -c 'sh /test_scripts/api-test.sh'"
+    :inline => "su - rundeck -c 'sh /test_scripts/api-test.sh' ; cat /rundeck_api_test/api/testall.output"
 
 
   config.vm.provider :aws do |aws, override|
