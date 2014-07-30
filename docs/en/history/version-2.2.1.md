@@ -1,3 +1,7 @@
+% Version 2.2.1
+% greg
+% 07/30/2014
+
 Release 2.2.1
 =============
 
@@ -7,7 +11,7 @@ Bugfix release.
 
 *Upgrade notes:* 
 
-See the [Upgrading Guide](http://rundeck.org/2.2.1/upgrading/index.html).
+See the [Upgrading Guide](../upgrading/index.html).
 
 ## Contributors
 
