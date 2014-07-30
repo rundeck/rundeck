@@ -681,26 +681,28 @@ public class TestNodeSet extends TestCase {
             exc.setDominant(false);
             exc.setHostname("testnode2");
             inc.setHostname("test.*");
-            assertFalse(set.shouldExclude(nodeimp2));
+            assertTrue(set.shouldExclude(nodeimp2));
             assertFalse(set.shouldExclude(nodeimp1));
 
             exc.setHostname("test1.local");
             inc.setHostname("test.*");
             assertFalse(set.shouldExclude(nodeimp2));
-            assertFalse(set.shouldExclude(nodeimp1));
+            assertTrue(set.shouldExclude(nodeimp1));
 
             //exclude is not dominant, so testnode2 will not be excluded
             exc.setHostname("test.*");
             inc.setHostname("testnode2");
-            assertFalse(set.shouldExclude(nodeimp2));
+            assertTrue(set.shouldExclude(nodeimp2));
             assertTrue(set.shouldExclude(nodeimp1));
 
             exc.setHostname("test.*");
             inc.setHostname("test1.local");
             assertTrue(set.shouldExclude(nodeimp2));
-            assertFalse(set.shouldExclude(nodeimp1));
+            assertTrue(set.shouldExclude(nodeimp1));
         }
-        {
+    }
+
+    public void testShouldExclude2() throws Exception {
             //test resource name
             set = new NodeSet();
             NodeSet.SetSelector inc = set.createInclude();
@@ -759,344 +761,27 @@ public class TestNodeSet extends TestCase {
             inc.setDominant(true);
             exc.setName("testnode2");
             inc.setName("test.*");
-            assertFalse(set.shouldExclude(nodeimp2));
+            assertTrue(set.shouldExclude(nodeimp2));
             assertFalse(set.shouldExclude(nodeimp1));
 
             exc.setName("testnode1");
             inc.setName("test.*");
             assertFalse(set.shouldExclude(nodeimp2));
-            assertFalse(set.shouldExclude(nodeimp1));
+            assertTrue(set.shouldExclude(nodeimp1));
 
             //exclude is not dominant, so testnode2 will not be excluded
             exc.setName("test.*");
             inc.setName("testnode2");
-            assertFalse(set.shouldExclude(nodeimp2));
+            assertTrue(set.shouldExclude(nodeimp2));
             assertTrue(set.shouldExclude(nodeimp1));
 
             exc.setName("test.*");
             inc.setName("testnode1");
             assertTrue(set.shouldExclude(nodeimp2));
-            assertFalse(set.shouldExclude(nodeimp1));
+            assertTrue(set.shouldExclude(nodeimp1));
         }
-        {
-            //test OS architecture
-            set = new NodeSet();
-            NodeSet.SetSelector inc = set.createInclude();
-            NodeSet.SetSelector exc = set.createExclude();
-            inc.setOsarch("x86");
-            assertFalse(set.shouldExclude(nodeimp1));
-            assertTrue(set.shouldExclude(nodeimp2));
-            inc.setOsarch(null);
-            exc.setOsarch("x86");
-            assertFalse(set.shouldExclude(nodeimp2));
-            assertTrue(set.shouldExclude(nodeimp1));
-            inc.setOsarch(null);
-            exc.setOsarch("x386");
-            assertFalse(set.shouldExclude(nodeimp1));
-            assertTrue(set.shouldExclude(nodeimp2));
 
-            inc.setOsarch("x386");
-            exc.setOsarch("x86");
-            assertFalse(set.shouldExclude(nodeimp2));
-            assertTrue(set.shouldExclude(nodeimp1));
-
-            inc.setOsarch("x386,x86");
-            exc.setOsarch(null);
-            assertFalse(set.shouldExclude(nodeimp2));
-            assertFalse(set.shouldExclude(nodeimp1));
-
-            exc.setOsarch("x386,x86");
-            inc.setOsarch(null);
-            assertTrue(set.shouldExclude(nodeimp2));
-            assertTrue(set.shouldExclude(nodeimp1));
-
-            //exclude is dominant by default, so when both match the node will not be included
-            exc.setOsarch("x386");
-            inc.setOsarch("x.*86");
-            assertTrue(set.shouldExclude(nodeimp2));
-            assertFalse(set.shouldExclude(nodeimp1));
-
-            exc.setOsarch("x86");
-            inc.setOsarch("x.*86");
-            assertFalse(set.shouldExclude(nodeimp2));
-            assertTrue(set.shouldExclude(nodeimp1));
-
-            //include is not dominant, so x386 will be excluded
-            exc.setOsarch("x.*86");
-            inc.setOsarch("x386");
-            assertTrue(set.shouldExclude(nodeimp2));
-            assertTrue(set.shouldExclude(nodeimp1));
-
-            exc.setOsarch("x.*86");
-            inc.setOsarch("x86");
-            assertTrue(set.shouldExclude(nodeimp2));
-            assertTrue(set.shouldExclude(nodeimp1));
-
-            //include is dominant, so when both match the node will be included
-            exc.setDominant(false);
-            inc.setDominant(true);
-            exc.setOsarch("x386");
-            inc.setOsarch("x.*86");
-            assertFalse(set.shouldExclude(nodeimp2));
-            assertFalse(set.shouldExclude(nodeimp1));
-
-            exc.setOsarch("x86");
-            inc.setOsarch("x.*86");
-            assertFalse(set.shouldExclude(nodeimp2));
-            assertFalse(set.shouldExclude(nodeimp1));
-
-            //exclude is not dominant, so x386 will not be excluded
-            exc.setOsarch("x.*86");
-            inc.setOsarch("x386");
-            assertFalse(set.shouldExclude(nodeimp2));
-            assertTrue(set.shouldExclude(nodeimp1));
-
-            exc.setOsarch("x.*86");
-            inc.setOsarch("x86");
-            assertTrue(set.shouldExclude(nodeimp2));
-            assertFalse(set.shouldExclude(nodeimp1));
-        }
-        {
-            //test OS architecture
-            set = new NodeSet();
-            NodeSet.SetSelector inc = set.createInclude();
-            NodeSet.SetSelector exc = set.createExclude();
-            inc.setOsfamily("windows");
-            assertFalse(set.shouldExclude(nodeimp1));
-            assertTrue(set.shouldExclude(nodeimp2));
-            inc.setOsfamily(null);
-            exc.setOsfamily("windows");
-            assertFalse(set.shouldExclude(nodeimp2));
-            assertTrue(set.shouldExclude(nodeimp1));
-            inc.setOsfamily(null);
-            exc.setOsfamily("unix");
-            assertFalse(set.shouldExclude(nodeimp1));
-            assertTrue(set.shouldExclude(nodeimp2));
-
-            inc.setOsfamily("unix");
-            exc.setOsfamily("windows");
-            assertFalse(set.shouldExclude(nodeimp2));
-            assertTrue(set.shouldExclude(nodeimp1));
-
-            inc.setOsfamily("unix,windows");
-            exc.setOsfamily(null);
-            assertFalse(set.shouldExclude(nodeimp2));
-            assertFalse(set.shouldExclude(nodeimp1));
-
-            exc.setOsfamily("unix,windows");
-            inc.setOsfamily(null);
-            assertTrue(set.shouldExclude(nodeimp2));
-            assertTrue(set.shouldExclude(nodeimp1));
-
-            //exclude is dominant, so when both match the node will not be included
-            exc.setOsfamily("unix");
-            inc.setOsfamily(".*");
-            assertTrue(set.shouldExclude(nodeimp2));
-            assertFalse(set.shouldExclude(nodeimp1));
-
-            exc.setOsfamily("windows");
-            inc.setOsfamily(".*");
-            assertFalse(set.shouldExclude(nodeimp2));
-            assertTrue(set.shouldExclude(nodeimp1));
-
-            //include is not dominant, so unix will be excluded
-            exc.setOsfamily(".*");
-            inc.setOsfamily("unix");
-            assertTrue(set.shouldExclude(nodeimp2));
-            assertTrue(set.shouldExclude(nodeimp1));
-
-            exc.setOsfamily(".*");
-            inc.setOsfamily("windows");
-            assertTrue(set.shouldExclude(nodeimp2));
-            assertTrue(set.shouldExclude(nodeimp1));
-
-            //include is dominant, so when both match the node will be included
-            exc.setDominant(false);
-            inc.setDominant(true);
-            exc.setOsfamily("unix");
-            inc.setOsfamily(".*");
-            assertFalse(set.shouldExclude(nodeimp2));
-            assertFalse(set.shouldExclude(nodeimp1));
-
-            exc.setOsfamily("windows");
-            inc.setOsfamily(".*");
-            assertFalse(set.shouldExclude(nodeimp2));
-            assertFalse(set.shouldExclude(nodeimp1));
-
-            //exclude is not dominant, so unix will not be excluded
-            exc.setOsfamily(".*");
-            inc.setOsfamily("unix");
-            assertFalse(set.shouldExclude(nodeimp2));
-            assertTrue(set.shouldExclude(nodeimp1));
-
-            exc.setOsfamily(".*");
-            inc.setOsfamily("windows");
-            assertTrue(set.shouldExclude(nodeimp2));
-            assertFalse(set.shouldExclude(nodeimp1));
-        }
-        {
-            //test OS architecture
-            set = new NodeSet();
-            NodeSet.SetSelector inc = set.createInclude();
-            NodeSet.SetSelector exc = set.createExclude();
-            inc.setOsname("Windows.*");
-            assertFalse(set.shouldExclude(nodeimp1));
-            assertTrue(set.shouldExclude(nodeimp2));
-            inc.setOsname(null);
-            exc.setOsname("Windows.*");
-            assertFalse(set.shouldExclude(nodeimp2));
-            assertTrue(set.shouldExclude(nodeimp1));
-            inc.setOsname(null);
-            exc.setOsname("Mac.*");
-            assertFalse(set.shouldExclude(nodeimp1));
-            assertTrue(set.shouldExclude(nodeimp2));
-
-            inc.setOsname("Mac.*");
-            exc.setOsname("Windows.*");
-            assertFalse(set.shouldExclude(nodeimp2));
-            assertTrue(set.shouldExclude(nodeimp1));
-
-            inc.setOsname(".*");
-            exc.setOsname(null);
-            assertEquals("Windows NT", nodeimp1.getOsName());
-            assertEquals("Mac OS X", nodeimp2.getOsName());
-            assertTrue(set.getInclude().matches(nodeimp1));
-            assertTrue(set.getInclude().matches(nodeimp2));
-            assertFalse(set.getExclude().matches(nodeimp1));
-            assertFalse(set.getExclude().matches(nodeimp2));
-            assertFalse(set.shouldExclude(nodeimp2));
-            assertFalse(set.shouldExclude(nodeimp1));
-
-            exc.setOsname(".*");
-            inc.setOsname(null);
-            assertTrue(set.shouldExclude(nodeimp2));
-            assertTrue(set.shouldExclude(nodeimp1));
-
-            //exclude is dominant, so when both match the node will not be included
-            exc.setOsname("Mac.*");
-            inc.setOsname(".*");
-            assertTrue(set.shouldExclude(nodeimp2));
-            assertFalse(set.shouldExclude(nodeimp1));
-
-            exc.setOsname("Windows.*");
-            inc.setOsname(".*");
-            assertFalse(set.shouldExclude(nodeimp2));
-            assertTrue(set.shouldExclude(nodeimp1));
-
-            //include is not dominant, so Mac.* will be excluded
-            exc.setOsname(".*");
-            inc.setOsname("Mac.*");
-            assertTrue(set.shouldExclude(nodeimp2));
-            assertTrue(set.shouldExclude(nodeimp1));
-
-            exc.setOsname(".*");
-            inc.setOsname("Windows.*");
-            assertTrue(set.shouldExclude(nodeimp2));
-            assertTrue(set.shouldExclude(nodeimp1));
-
-            //include is dominant, so when both match the node will be included
-            exc.setDominant(false);
-            inc.setDominant(true);
-            exc.setOsname("Mac.*");
-            inc.setOsname(".*");
-            assertFalse(set.shouldExclude(nodeimp2));
-            assertFalse(set.shouldExclude(nodeimp1));
-
-            exc.setOsname("Windows.*");
-            inc.setOsname(".*");
-            assertFalse(set.shouldExclude(nodeimp2));
-            assertFalse(set.shouldExclude(nodeimp1));
-
-            //exclude is not dominant, so Mac.* will not be excluded
-            exc.setOsname(".*");
-            inc.setOsname("Mac.*");
-            assertFalse(set.shouldExclude(nodeimp2));
-            assertTrue(set.shouldExclude(nodeimp1));
-
-            exc.setOsname(".*");
-            inc.setOsname("Windows.*");
-            assertTrue(set.shouldExclude(nodeimp2));
-            assertFalse(set.shouldExclude(nodeimp1));
-        }
-        {
-            //test OS version
-            set = new NodeSet();
-            NodeSet.SetSelector inc = set.createInclude();
-            NodeSet.SetSelector exc = set.createExclude();
-            inc.setOsversion("5.1");
-            assertFalse(set.shouldExclude(nodeimp1));
-            assertTrue(set.shouldExclude(nodeimp2));
-            inc.setOsversion(null);
-            exc.setOsversion("5.1");
-            assertFalse(set.shouldExclude(nodeimp2));
-            assertTrue(set.shouldExclude(nodeimp1));
-            inc.setOsversion(null);
-            exc.setOsversion("10.5.1");
-            assertFalse(set.shouldExclude(nodeimp1));
-            assertTrue(set.shouldExclude(nodeimp2));
-
-            inc.setOsversion("10.5.1");
-            exc.setOsversion("5.1");
-            assertFalse(set.shouldExclude(nodeimp2));
-            assertTrue(set.shouldExclude(nodeimp1));
-
-            inc.setOsversion(".*");
-            exc.setOsversion(null);
-            assertFalse(set.shouldExclude(nodeimp2));
-            assertFalse(set.shouldExclude(nodeimp1));
-
-            exc.setOsversion(".*");
-            inc.setOsversion(null);
-            assertTrue(set.shouldExclude(nodeimp2));
-            assertTrue(set.shouldExclude(nodeimp1));
-
-            //exclude is dominant, so when both match the node will not be included
-            exc.setOsversion("10.5.1");
-            inc.setOsversion(".*");
-            assertTrue(set.shouldExclude(nodeimp2));
-            assertFalse(set.shouldExclude(nodeimp1));
-
-            exc.setOsversion("5.1");
-            inc.setOsversion(".*");
-            assertFalse(set.shouldExclude(nodeimp2));
-            assertTrue(set.shouldExclude(nodeimp1));
-
-            //include is not dominant, so 10.5.1 will be excluded
-            exc.setOsversion(".*");
-            inc.setOsversion("10.5.1");
-            assertTrue(set.shouldExclude(nodeimp2));
-            assertTrue(set.shouldExclude(nodeimp1));
-
-            exc.setOsversion(".*");
-            inc.setOsversion("5.1");
-            assertTrue(set.shouldExclude(nodeimp2));
-            assertTrue(set.shouldExclude(nodeimp1));
-
-            //include is dominant, so when both match the node will be included
-            exc.setDominant(false);
-            inc.setDominant(true);
-            exc.setOsversion("10.5.1");
-            inc.setOsversion(".*");
-            assertFalse(set.shouldExclude(nodeimp2));
-            assertFalse(set.shouldExclude(nodeimp1));
-
-            exc.setOsversion("5.1");
-            inc.setOsversion(".*");
-            assertFalse(set.shouldExclude(nodeimp2));
-            assertFalse(set.shouldExclude(nodeimp1));
-
-            //exclude is not dominant, so 10.5.1 will not be excluded
-            exc.setOsversion(".*");
-            inc.setOsversion("10.5.1");
-            assertFalse(set.shouldExclude(nodeimp2));
-            assertTrue(set.shouldExclude(nodeimp1));
-
-            exc.setOsversion(".*");
-            inc.setOsversion("5.1");
-            assertTrue(set.shouldExclude(nodeimp2));
-            assertFalse(set.shouldExclude(nodeimp1));
-        }
-        {
+    public void testShouldExcludeTags() throws Exception {
             //test tags
             set = new NodeSet();
             NodeSet.SetSelector inc = set.createInclude();
@@ -1155,26 +840,27 @@ public class TestNodeSet extends TestCase {
             inc.setDominant(true);
             exc.setTags("priority2");
             inc.setTags("devenv");
-            assertFalse(set.shouldExclude(nodeimp2));
+            assertTrue(set.shouldExclude(nodeimp2));
             assertFalse(set.shouldExclude(nodeimp1));
 
             exc.setTags("priority1");
             inc.setTags("devenv");
             assertFalse(set.shouldExclude(nodeimp2));
-            assertFalse(set.shouldExclude(nodeimp1));
+            assertTrue(set.shouldExclude(nodeimp1));
 
             //exclude is not dominant, so priority2 will not be excluded
             exc.setTags("devenv");
             inc.setTags("priority2");
-            assertFalse(set.shouldExclude(nodeimp2));
+            assertTrue(set.shouldExclude(nodeimp2));
             assertTrue(set.shouldExclude(nodeimp1));
 
             exc.setTags("devenv");
             inc.setTags("priority1");
             assertTrue(set.shouldExclude(nodeimp2));
-            assertFalse(set.shouldExclude(nodeimp1));
+            assertTrue(set.shouldExclude(nodeimp1));
         }
-        {
+
+    public void testShouldExclude9() throws Exception {
             //test attribute sets
             set = new NodeSet();
             NodeSet.SetSelector inc = set.createInclude();
@@ -1222,8 +908,6 @@ public class TestNodeSet extends TestCase {
             assertTrue(set.shouldExclude(nodeimp1));
             assertTrue(set.shouldExclude(nodeimp2));
             assertFalse(set.shouldExclude(nodeimp3));
-
-        }
     }
 
     public void testShouldExcludeMulti() throws Exception {
