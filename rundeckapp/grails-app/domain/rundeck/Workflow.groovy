@@ -59,7 +59,7 @@ public class Workflow {
                 final handler=createItem(cmd.errorHandler)
                 item.errorHandler=handler
             }
-            addToCommands(item)
+            commands.add(item)
         }
     }
     public Workflow createClone(){
@@ -75,7 +75,7 @@ public class Workflow {
                 final handler = createItem(cmd.errorHandler)
                 item.errorHandler = handler
             }
-            newwf.addToCommands(item)
+            newwf.commands.add(item)
         }
         return newwf
     }
