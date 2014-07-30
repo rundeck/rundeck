@@ -268,7 +268,8 @@
                 //apply new filter
                 _matchNodes();
             });
-            jQuery('#nodesContent').on('click','.nodefilterlink',function (evt) {
+
+            jQuery('body').on('click', '.nodefilterlink', function (evt) {
                 evt.preventDefault();
                 selectNodeFilterLink(this);
             });

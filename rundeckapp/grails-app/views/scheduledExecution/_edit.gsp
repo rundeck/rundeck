@@ -149,11 +149,7 @@ function getCurSEID(){
                 }
                 return true;
             },false);
-            jQuery('.nodefilters .dropdown-menu').on('click', '.nodefilterlink', function (evt) {
-                evt.preventDefault();
-                selectNodeFilterLink(this);
-            });
-            jQuery('#matchednodes').on('click', '.nodefilterlink', function (evt) {
+            jQuery('body').on('click', '.nodefilterlink', function (evt) {
                 evt.preventDefault();
                 selectNodeFilterLink(this);
             });

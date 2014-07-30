@@ -161,7 +161,7 @@
                         nodesTitlePlural:"${g.message(code:'Node.plural',default:'Nodes')}"
                     }));
             ko.applyBindings(nodeFilter);
-            jQuery('#nodesContent').on('click', '.nodefilterlink', function (evt) {
+            jQuery('body').on('click', '.nodefilterlink', function (evt) {
                 evt.preventDefault();
                 selectNodeFilterLink(this);
             });
