@@ -3,12 +3,13 @@ env: MAVEN_OPTS="-Xmx512m -XX:MaxPermSize=192m" GRADLE_OPTS="-Xmx512m -XX:MaxPer
 jdk:
   - openjdk7
   - openjdk6
-
+before_script:
+  - rm -rf core/build
+  - rm -rf rundeckapp/build
 # whitelist
 branches:
   only:
     - development
-    - rundeck2
 
 notifications:
   irc:
