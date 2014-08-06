@@ -265,7 +265,7 @@ var RemoteOptionControl = Class.create({
             var elem = $(this.options[name][0]);
             if(!elem.down('div.emptyMessage')){
                 //wrap elem contents and hide it
-                elem.innerHTML = "<div style='display:none' class='fieldcontent'>"+elem.innerHTML+"</div>";
+                wrapContentsHtml(elem,"<div style='display:none' class='fieldcontent'>","</div>");
                 //insert note
                 var note = new Element('div',{'class':'info note emptyMessage'});
                 note.appendChild(document.createTextNode('No values to choose from. '));
