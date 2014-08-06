@@ -248,9 +248,9 @@
         });
         </g:javascript>
     </g:if>
-    <g:expander key="${rkey}_error_detail" classnames="textbtn-warning">${enc(html:err.message)}</g:expander>
+    <g:expander key="${rkey}_error_detail" classnames="textbtn-warning _error_detail">${enc(html:err.message)}</g:expander>
 
-    <div class="alert alert-warning" style="display:none" id="${rkey}_error_detail">
+    <div class="alert alert-warning _error_detail" style="display:none" id="${rkey}_error_detail">
         <g:if test="${err.exception}">
             <div>Exception: ${enc(html:err.exception.message)}</div>
         </g:if>

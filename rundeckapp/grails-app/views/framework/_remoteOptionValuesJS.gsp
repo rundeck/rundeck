@@ -37,12 +37,12 @@
             }
             btn.addClassName('action');
             btn.addClassName('textbtn');
-            if($(elem).innerHTML.indexOf("_error_detail")<0){
-                icn.removeClassName('error');
-                icn.addClassName('ok');
-            }else{
+            if($(elem).down("._error_detail")) {
                 icn.removeClassName('ok');
                 icn.addClassName('error');
+            } else {
+                icn.removeClassName('error');
+                icn.addClassName('ok');
             }
 
             btn.setAttribute('title','Click to reload the remote option values for: '+optName);
