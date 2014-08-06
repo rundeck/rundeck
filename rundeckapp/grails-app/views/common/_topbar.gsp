@@ -132,12 +132,22 @@
                 </g:link>
             </li>
                 <!-- --></g:if><!--
-        --></g:if><!--
+        --></g:if><g:elseif
+            test="${auth.resourceAllowedTest(type: 'resource', kind: 'system',
+                    action: [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN], any: true, context: 'application')}">
+
+        <li class="${cfgselected ?: ''}">
+        %{--Generic config page no project selected--}%
+            <g:link controller="menu" action="systemConfig" title="${g.message(code: 'gui.menu.Admin')}">
+                <i class="glyphicon glyphicon-cog"></i>
+            </g:link>
+        </li>
+    </g:elseif><!--
             -->
         <li class="dropdown">
             <g:link controller="user" action="profile" class="dropdown-toggle" data-toggle="dropdown" data-target="#" id="userLabel"
                     role="button">
-                ${session.user.encodeAsHTML()} <span class="caret"></span>
+                ${g.html(value:session.user)} <span class="caret"></span>
             </g:link>
             <ul class="dropdown-menu" role="menu" aria-labelledby="userLabel">
                 <li><g:link controller="user" action="profile">
