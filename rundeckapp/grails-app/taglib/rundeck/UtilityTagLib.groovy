@@ -10,7 +10,7 @@ class UtilityTagLib{
     def static  daysofweekkey = [Calendar.SUNDAY,Calendar.MONDAY,Calendar.TUESDAY,Calendar.WEDNESDAY,Calendar.THURSDAY,Calendar.FRIDAY,Calendar.SATURDAY];
     def public static daysofweekord = ScheduledExecution.daysofweeklist;
     def public static monthsofyearord = ScheduledExecution.monthsofyearlist;
-	static returnObjectForTags = ['rkey','w3cDateValue','sortGroupKeys','helpLinkUrl','helpLinkParams','parseOptsFromString','relativeDateString']
+	static returnObjectForTags = ['rkey','w3cDateValue','sortGroupKeys','helpLinkUrl','helpLinkParams','parseOptsFromString','relativeDateString','enc']
 
     private static Random rand=new java.util.Random()
     /**
@@ -447,7 +447,7 @@ class UtilityTagLib{
         }
         if(text){
             if(attrs.showtitle=='true' && text!=otext){
-                out<<'<span title="'+otext+'" class="truncatedtext">'
+                out<<'<span title="'+otext.encodeAsHTML()+'" class="truncatedtext">'
             }
             out<<text
 
@@ -739,15 +739,25 @@ class UtilityTagLib{
                 ' <i class="glyphicon glyphicon-'+(glyph?.encodeAsHTML())+'"></i>\n' +
                 '</span>'
     }
+    /**
+     * Encode a string, can be specified via attribute, or HTML encode the body if no attributes are specified.
+     * @attr html HTML encode the string
+     * @attr js javascript encode the string
+     * @attr json json encode the string
+     * @attr url url encode the string
+     * @attr code HTML encode a message from the given code
+     */
     def enc={attrs,body->
         if(attrs.html){
-            out << attrs.html.encodeAsHTML()
+            out << attrs.html.toString().encodeAsHTML()
         }else if(attrs.js){
-            out << attrs.js.encodeAsJavaScript()
-        }else if(attrs.json){
+            out << attrs.js.toString().encodeAsJavaScript()
+        }else if(attrs.json!=null){
             out << attrs.json.encodeAsJSON()
         }else if(attrs.url){
-            out << attrs.url.encodeAsURL()
+            out << attrs.url.toString().encodeAsURL()
+        }else if(attrs.code){
+            out << g.message(code:attrs.code).encodeAsHTML()
         }else{
             out <<body().encodeAsHTML()
         }
