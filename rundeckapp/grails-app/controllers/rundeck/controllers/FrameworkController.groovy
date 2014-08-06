@@ -492,7 +492,7 @@ class FrameworkController extends ControllerBase {
                 if(!didsucceed){
                     flash.error=result.message?:'Failed reloading nodes: unknown reason'
                 }
-                redirect(action:'nodes')
+                redirect(action:'nodes',params:[project:params.project])
             }
         }
     }
