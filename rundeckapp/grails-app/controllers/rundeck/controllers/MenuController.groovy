@@ -466,6 +466,9 @@ class MenuController extends ControllerBase{
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
+        if (!params.project) {
+            return renderErrorView('Project parameter is required')
+        }
         if (unauthorizedResponse(
                 frameworkService.authorizeApplicationResourceAny(authContext,
                         frameworkService.authResourceForProject(params.project),
@@ -473,9 +476,6 @@ class MenuController extends ControllerBase{
                                 AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_DELETE]),
                 AuthConstants.ACTION_ADMIN, 'Project', params.project)) {
             return
-        }
-        if (!params.project){
-            return renderErrorView('Project parameter is required')
         }
 
             def project= params.project
