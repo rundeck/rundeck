@@ -2,6 +2,7 @@ package rundeck.controllers
 
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.app.support.BuilderUtil
+import com.dtolabs.rundeck.app.support.ExecutionViewParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.execution.workflow.state.StateUtils
 import com.dtolabs.rundeck.core.execution.workflow.state.StepIdentifier
@@ -58,7 +59,12 @@ class ExecutionController extends ControllerBase{
         return render(view:'showFragment',model:show())
     }
 
-    def show ={
+    public def show (ExecutionViewParams viewparams){
+        if (viewparams.hasErrors()) {
+            flash.errors=viewparams.errors
+            render(view: '/common/error')
+            return
+        }
         def Execution e = Execution.get(params.id)
         if(notFoundResponse(e,'Execution ID',params.id)){
             return
