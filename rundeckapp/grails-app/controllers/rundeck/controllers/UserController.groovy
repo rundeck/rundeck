@@ -99,32 +99,40 @@ class UserController extends ControllerBase{
         def model=[user: u,newRegistration:true]
         return model
     }
-    def store={
-
+    public def store(User user){
+        if(user.hasErrors()){
+            flash.errors=user.errors
+            return render(view: 'edit', model: [user: user])
+        }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
-        if (unauthorizedResponse(params.login == session.user || frameworkService.authorizeApplicationResourceType
+        if (unauthorizedResponse(user.login == session.user || frameworkService.authorizeApplicationResourceType
                 (authContext, AuthConstants.TYPE_USER, AuthConstants.ACTION_ADMIN), AuthConstants.ACTION_ADMIN, 'Users',
-                params.login)) {
+                user.login)) {
             return
         }
 
-        def User u = User.findByLogin(params.login)
+        def User u = User.findByLogin(user.login)
         if(u){
-            return renderErrorView("User alread exists: ${params.login}")
+            return renderErrorView("User alread exists: ${user.login}")
         }
-        u = new User(params.subMap(['login','firstName','lastName','email']))
+        u = new User(user.properties.subMap(['login','firstName','lastName','email']))
 
         if(!u.save(flush:true)){
             def errmsg= u.errors.allErrors.collect { g.message(error:it) }.join("\n")
             flash.error="Error updating user: ${errmsg}"
             flash.message = "Error updating user: ${errmsg}"
+            flash.errors = user.errors
             return render(view:'edit',model:[user:u])
         }
-        flash.message="User profile updated: ${params.login}"
-        return redirect(action:'profile',params:[login:params.login])
+        flash.message="User profile updated: ${user.login}"
+        return redirect(action:'profile',params:[login: user.login])
     }
-    def update={
+    public def update (User user) {
+        if (user.hasErrors()) {
+            flash.errors = user.errors
+            return render(view: 'edit', model: [user: user])
+        }
         //check auth to view profile
         //default to current user profile
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
@@ -156,7 +164,18 @@ class UserController extends ControllerBase{
         def model=profile(params)
         return model
     }
-    def generateApiToken={
+    def generateApiToken(User user) {
+        if (user.hasErrors()) {
+            request.errors = user.errors
+            withFormat {
+                html {
+                    return render(view: 'profile', model: [user: user])
+                }
+                json {
+                    render([error: 'Invalid input'] as JSON)
+                }
+            }
+        }
         //check auth to edit profile
         //default to current user profile
         def login = params.login
@@ -241,8 +260,20 @@ class UserController extends ControllerBase{
 
     }
 
-    def clearApiToken={
-        def login = params.login
+    def clearApiToken(User user) {
+        if (user.hasErrors()) {
+            request.errors = user.errors
+            withFormat {
+                html{
+                    return render(view: 'profile', model: [user: user])
+                }
+                json{
+                    render([error: 'Invalid input'] as JSON)
+                }
+            }
+
+        }
+        def login = user.login
         def result
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (!frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER, AuthConstants.ACTION_ADMIN)) {
