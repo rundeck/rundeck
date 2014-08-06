@@ -739,4 +739,26 @@ class UtilityTagLib{
                 ' <i class="glyphicon glyphicon-'+(glyph?.encodeAsHTML())+'"></i>\n' +
                 '</span>'
     }
+    def html={attrs,body->
+        if(attrs.value){
+            out << attrs.value.encodeAsHTML()
+        }else{
+            out <<body().encodeAsHTML()
+        }
+    }
+    def js={attrs,body->
+        if (attrs.value) {
+            out << attrs.value.encodeAsJavaScript()
+        }
+    }
+    def json={attrs,body->
+        if (attrs.value) {
+            out << attrs.value.encodeAsJSON()
+        }
+    }
+    def url={attrs,body->
+        if(attrs.value){
+            out << attrs.value.encodeAsURL()
+        }
+    }
 }
