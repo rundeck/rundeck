@@ -70,7 +70,7 @@
         </div>
         <g:if test="${flash.error}">
             <div class="panel-footer panel-danger">
-                ${flash.error}
+                ${enc(html:flash.error)}
             </div>
         </g:if>
     </div>

@@ -53,7 +53,8 @@
                     //remove element
                     Effect.DropOut(elem);
                 }else{
-                    $(elem).up('.userapitoken').down('.gentokenerror').innerHTML="Error: "+error;
+                    $(elem).up('.userapitoken').down('.gentokenerror').innerHTML="Error: ";
+                    $(elem).up('.userapitoken').down('.gentokenerror').appendChild(document.createTextNode(error));
                     $(elem).up('.userapitoken').down('.gentokenerror').show();
                 }
             }
@@ -86,7 +87,7 @@
 
 <div class="row">
     <div class="col-sm-10">
-        <h3>User: ${user.login}
+        <h3>User: ${enc(html:user.login)}
         </h3>
     </div>
     <div class="col-sm-2">

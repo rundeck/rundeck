@@ -26,14 +26,14 @@
     </td>
     <td>
         <span class="userlogin" >
-            ${user.login}
+            ${enc(html:user.login)}
         </span>
         <span class="username" >
-            ${user.firstName} ${user.lastName}
+            ${enc(html:user.firstName)} ${enc(html:user.lastName)}
         </span>
         <span class="useremail">
             <g:if test="${user.email}">
-                &lt;${user.email}&gt;
+                &lt;${enc(html:user.email)}&gt;
             </g:if>
         </span>
 

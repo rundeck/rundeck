@@ -40,7 +40,7 @@
         <g:textField name="login" value="${user.login}" class="form-control"/>
     </g:if>
     <g:elseif test="user.login">
-        <p class="form-control-static">${user.login}</p>
+        <p class="form-control-static">${enc(html:user.login)}</p>
         <g:hiddenField name="login" value="${user.login}"/>
     </g:elseif>
 </div>
