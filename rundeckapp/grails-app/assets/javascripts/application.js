@@ -2,6 +2,26 @@
 //= require_self
 //= require menus
 
+// methods for modifying inner html or text content
+
+function clearHtml(elem){
+    $(elem).innerHTML = '';
+}
+function setHtml(elem,html){
+    clearHtml(elem);
+    appendHtml(elem,html);
+}
+function appendHtml(elem,html){
+    $(elem).innerHTML+=html;
+}
+
+function setText(elem,text){
+    clearHtml(elem);
+    appendText(elem,text);
+}
+function appendText(elem,text){
+    $(elem).appendChild(document.createTextNode(text));
+}
 
 function toggleDisclosure(id,iconid,closeUrl,openUrl){
     $(id).toggle();
