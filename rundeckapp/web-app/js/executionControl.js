@@ -993,15 +993,6 @@ var FollowControl = Class.create({
         this.lastrow = data;
         return tr;
     },
-    escapeHtml: function escapeHtml(unsafe) {
-        return unsafe
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    },
-
 
     createNewNodeTbody: function(data, tbl, ctxid) {
         //create new Table body

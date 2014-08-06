@@ -83,7 +83,6 @@
             selectedOutputStatusId:'selectedoutputview',
             reloadInterval:1500
          });
-         var stepState= new StepFlow(flowState,'flowstate');
 
          var nodeflowvm=new NodeFlowViewModel(workflow,"${g.createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id)}.json");
          function followOutput(){
@@ -101,7 +100,6 @@
             jQuery('#'+id+' a').tab('show');
          }
         function init() {
-//            flowState.addUpdater(stepState);
             flowState.addUpdater({
             updateError:function(error,data){
                 nodeflowvm.stateLoaded(false);
