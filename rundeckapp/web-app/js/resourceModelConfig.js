@@ -67,7 +67,7 @@ var ResourceModelConfigControl = Class.create({
                 Event.stop(e);
                 self.editConfig(top, type, prefix, index);
             });
-            button.innerHTML = "Edit";
+            setText(button,"Edit");
             button.addClassName('btn-info');
         }
 
@@ -76,7 +76,7 @@ var ResourceModelConfigControl = Class.create({
             Event.stop(e);
             self.cancelConfig(top);
         });
-        cancelbutton.innerHTML = "Delete";
+        setText(cancelbutton,"Delete");
         cancelbutton.addClassName('btn-danger');
 
         buttons.appendChild(cancelbutton);
@@ -90,7 +90,7 @@ var ResourceModelConfigControl = Class.create({
             Event.stop(e);
             self.checkConfig(top, type, prefix, index);
         });
-        button.innerHTML = "Save";
+        setText(button,"Save");
         button.addClassName("needsSave");
         button.addClassName('btn-primary');
 
@@ -99,7 +99,7 @@ var ResourceModelConfigControl = Class.create({
             Event.stop(e);
             self.cancelConfig(top, type, prefix, index);
         });
-        cancelbutton.innerHTML = "Cancel";
+        setText(cancelbutton,"Cancel");
 
         buttons.appendChild(cancelbutton);
         buttons.appendChild(button);
@@ -116,7 +116,7 @@ var ResourceModelConfigControl = Class.create({
 error: function(req) {
     var data = req.responseJSON;
     if($('errors')){
-        $('errors').innerHTML=req;
+        setText($('errors'),req);
         $('errors').show();
     }
 },

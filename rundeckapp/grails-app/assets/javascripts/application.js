@@ -53,13 +53,16 @@ function updatecancel(data,elem,id){
     }
     if(data['cancelled']){
         if($(elem)){
-            $(elem).innerHTML='<span class="fail">Killed</span>';
+            setHtml(elem,'<span class="fail">Killed</span>');
         }
         if($('exec-'+id+'-spinner')){
-            $('exec-'+id+'-spinner').innerHTML='<img src="'+appLinks.iconTinyWarn+'" alt=""/>';
+            clearHtml($('exec-'+id+'-spinner'));
+            var img=new Element('img');
+            img.src= appLinks.iconTinyWarn;
+            $('exec-'+id+'-spinner').appendChild(img);
         }
         if($('exec-'+id+'-dateCompleted')){
-            $('exec-'+id+'-dateCompleted').innerHTML='';
+            clearHtml($('exec-'+id+'-dateCompleted'));
             if($('exec-'+id+'-dateCompleted').onclick){
                 $(elem).onclick=$('exec-'+id+'-dateCompleted').onclick;
             }
@@ -67,17 +70,24 @@ function updatecancel(data,elem,id){
 
     }else if(data['status']!='success'){
         if($(elem)){
-            $(elem).innerHTML='<span class="fail">'+(data['error']?data['error']:'Failed to Kill job.')+'</span>';
+            var sp = new Element('span');
+            sp.addClassName('fail');
+            setText(sp, (data['error'] ? data['error'] : 'Failed to Kill job.'));
+            clearHtml(elem);
+            $(elem).appendChild(sp);
         }
     }else if(data['status']=='success'){
         if($(elem)){
-            $(elem).innerHTML='Job Completed.';
+            setText(elem,'Job Completed.');
         }
         if($('exec-'+id+'-spinner')){
-            $('exec-'+id+'-spinner').innerHTML='<img src="'+appLinks.iconTinyOk+'" alt=""/>';
+            clearHtml('exec-' + id + '-spinner');
+            var img = new Element('img');
+            img.src = appLinks.iconTinyOk;
+            $('exec-' + id + '-spinner').appendChild(img);
         }
         if($('exec-'+id+'-dateCompleted')){
-            $('exec-'+id+'-dateCompleted').innerHTML='';
+            clearHtml('exec-' + id + '-dateCompleted');
             if($('exec-'+id+'-dateCompleted').onclick){
                 $(elem).onclick=$('exec-'+id+'-dateCompleted').onclick;
             }
@@ -87,7 +97,11 @@ function updatecancel(data,elem,id){
 
 function canceljob(id,elem){
     if($(elem)){
-        $(elem).innerHTML='<img src="'+appLinks.iconSpinner+'" alt="Spinner"/> Killing Job ...';
+        clearHtml(elem);
+        var img = new Element('img');
+        img.src = appLinks.iconSpinner;
+        $(elem).appendChild(img);
+        appendText(elem,' Killing Job ...');
     }
     new Ajax.Request(appLinks.executionCancelExecution, {
         parameters: "id="+id,
@@ -370,7 +384,7 @@ function _genUrl(url,params){
 function _pageLink(url,params,text,css,behavior){
     var a=new Element('a');
     a.href=_genUrl(url,params)
-    a.innerHTML=text;
+    setText(a,text);
     a.addClassName(css);
 
         Event.observe(a, 'click', function (evt) {
@@ -558,7 +572,7 @@ function paginate(elem,offset,total,max,options){
         a= _pageLink(opts.baseUrl, {offset: (offset - max), max: max}, opts['paginate.prev'], opts['prevClass'], opts.prevBehavior);
     }else{
         a=new Element('span');
-        a.innerHTML=opts['paginate.prev'];
+        setText(a,opts['paginate.prev']);
         li.addClassName('disabled');
     }
     li.appendChild(a);
@@ -580,7 +594,7 @@ function paginate(elem,offset,total,max,options){
         a = _pageLink(opts.baseUrl, {offset: (offset + max), max: max}, opts['paginate.next'], opts['nextClass'], opts.nextBehavior);
     } else {
         a = new Element('span');
-        a.innerHTML = opts['paginate.next'];
+        setText(a,opts['paginate.next']);
         li.addClassName('disabled');
     }
     li.appendChild(a);
@@ -591,7 +605,7 @@ function paginate(elem,offset,total,max,options){
 
     var insert= {};
     insert[opts.insertion]=page;
-    e.innerHTML='';
+    clearHtml(e);
     e.insert(insert);
 }
 

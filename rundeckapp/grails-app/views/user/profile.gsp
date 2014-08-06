@@ -32,7 +32,7 @@
                 if( !error && json.result){
                     addTokenRow(elem,login,json.apitoken);
                 }else{
-                    $(elem).down('.gentokenerror').innerHTML="Error: "+error;
+                    setText($(elem).down('.gentokenerror'),"Error: "+error);
                     $(elem).down('.gentokenerror').show();
                 }
             }
@@ -53,8 +53,7 @@
                     //remove element
                     Effect.DropOut(elem);
                 }else{
-                    $(elem).up('.userapitoken').down('.gentokenerror').innerHTML="Error: ";
-                    $(elem).up('.userapitoken').down('.gentokenerror').appendChild(document.createTextNode(error));
+                    setText($(elem).up('.userapitoken').down('.gentokenerror'),"Error: "+error);
                     $(elem).up('.userapitoken').down('.gentokenerror').show();
                 }
             }

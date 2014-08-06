@@ -8,11 +8,11 @@
         //<!--
         function _pageUpdateNowRunning(count, perc) {
             document.title = "Now Running (" + count + ")";
-            $('nrlocal').innerHTML = '' + count;
+            setText($('nrlocal'), '' + count);
         }
         function showError(message) {
             if ($('loaderror')) {
-                $("loaderror").innerHTML += message;
+                appendText($("loaderror"),message);
                 $("loaderror").show();
             }
         }

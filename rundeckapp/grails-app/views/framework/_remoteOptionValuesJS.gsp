@@ -55,7 +55,7 @@
                 }
             }
             if(!$(reloader)){
-                btn.innerHTML='reload';
+                setText(btn,'reload');
                 $(btn).insert({bottom:icn});
                 $(elem).insert({bottom:btn});
             }

@@ -70,9 +70,9 @@
     var updateNowRunning = function(count) {
         var nrtitle = "Now Running (" + count + ")";
         if ($('nowrunninglink')) {
-            $('nowrunninglink').innerHTML = nrtitle;
+            setText($('nowrunninglink'),nrtitle);
         }
-        $$('.nowrunningcount').each(function(e){e.innerHTML = "("+count+")";});
+        $$('.nowrunningcount').each(function(e){setText(e,"("+count+")");});
         if(typeof(_pageUpdateNowRunning)==="function"){
             _pageUpdateNowRunning(count);
         }
@@ -87,9 +87,23 @@
             var td = new Element('td');
             tr.appendChild(td);
             element.appendChild(tr);
-            td.innerHTML='<span class="loading"><img src="'+appLinks.iconSpinner+'" alt="Loading"/> '+text+'</span>';
+
+            var sp = new Element('span');
+            sp.addClassName('loading');
+            var img = new Element('img');
+            img.src = appLinks.iconSpinner;
+            $(sp).appendChild(img);
+            appendText(sp, ' ' + text);
+            td.appendChild(sp);
         }else{
-            element.innerHTML='<span class="loading"><img src="'+appLinks.iconSpinner+'" alt="Loading"/> '+text+'</span>';
+            var sp = new Element('span');
+            sp.addClassName('loading');
+            var img = new Element('img');
+            img.src = appLinks.iconSpinner;
+            $(sp).appendChild(img);
+            appendText(sp, ' ' + text);
+            clearHtml(element);
+            element.appendChild(sp);
         }
         return element;
     };

@@ -38,7 +38,13 @@ var StepFlow=Class.create({
         });
         this.flow.withMatch(root, '.stepident[data-stepctx=' + stepctx + ']', function (elem) {
             var type = this.workflow.contextType(stepctx);
-            $(elem).innerHTML = '<i class="rdicon icon-small ' + type + '"></i> ' + this.workflow.renderContextString(stepctx);
+            var sp = new Element('i');
+            sp.addClassName('rdicon');
+            sp.addClassName('icon-small');
+            sp.addClassName(type);
+            clearHtml($(elem));
+            $(elem).appendChild(sp);
+            appendText($(elem), this.workflow.renderContextString(stepctx));
         });
         var me = this;
         this.flow.withMatch(root, '.stepaction[data-stepctx=' + stepctx + ']', function (elem) {
@@ -49,7 +55,7 @@ var StepFlow=Class.create({
         });
         if (step.errorMessage) {
             this.flow.withMatch(root, '.errmsg.step[data-stepctx=' + stepctx + ']', function (elem) {
-                $(elem).innerHTML = step.errorMessage;
+                setText($(elem),step.errorMessage);
                 $(elem).show();
             });
         }
@@ -74,7 +80,7 @@ var StepFlow=Class.create({
         return div;
     },
     setNodeState: function (stepctx, node, nstate, elem) {
-        $(elem).innerHTML = node;
+        setText($(elem), node);
         $(elem).setAttribute('data-execstate', nstate.executionState);
         if ($(elem).getAttribute('data-bound') != 'true') {
             this.flow.bindNodeOutput($(elem).parentNode, this.targetElement + '_output', stepctx, node);
@@ -96,7 +102,7 @@ var StepFlow=Class.create({
 
         if (nstate.errorMessage) {
             this.flow.withMatch(root, '.errmsg.isnode[data-stepctx=' + stepctx + '][data-node=' + node + ']', function (elem) {
-                $(elem).innerHTML = nstate.errorMessage;
+                setText($(elem), nstate.errorMessage);
                 $(elem).show();
             });
         }
@@ -245,7 +251,7 @@ var FlowState = Class.create({
                     $(clone).show();
                 }
             }else{
-                $(e).innerHTML = stringval;
+                setText($(e), stringval);
             }
         }
 
@@ -436,7 +442,8 @@ var FlowState = Class.create({
     },
     logWarn: function (text) {
         if ($(this.targetElement + '_log')) {
-            $(this.targetElement + '_log').innerHTML += "<br>" + text;
+            appendHtml($(this.targetElement + '_log'),"<br>");
+            appendText($(this.targetElement + '_log'), text);
         }
     },
     showError: function(text){
@@ -470,7 +477,7 @@ var FlowState = Class.create({
         if(!data.error){
             this.model = json;
             if($(this.targetElement + '_json')){
-                $(this.targetElement + '_json').innerHTML = Object.toJSON(this.model);
+                setText($(this.targetElement + '_json'), Object.toJSON(this.model));
             }
             this.updateState(this.model);
         }else{

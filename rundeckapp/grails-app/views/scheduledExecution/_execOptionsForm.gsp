@@ -149,7 +149,7 @@
                         }
                     });
                     $$('.nodeselectcount').each(function (e2) {
-                        $(e2).innerHTML = count + '';
+                        setText($(e2), count + '');
                         $(e2).removeClassName('text-info');
                         $(e2).removeClassName('text-danger');
                         $(e2).addClassName(count>0?'text-info':'text-danger');

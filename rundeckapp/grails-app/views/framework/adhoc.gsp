@@ -30,7 +30,7 @@
     <g:set var="maxLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.max}"/>
     <script type="text/javascript">
         function showError(message) {
-            $("error").innerHTML += message;
+            appendText($("error"),message);
             $("error").show();
         }
 

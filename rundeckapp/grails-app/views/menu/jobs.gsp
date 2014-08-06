@@ -16,7 +16,7 @@
         /** knockout binding for activity */
         var pageActivity;
         function showError(message){
-             $('error').innerHTML+=message;
+             appendText($('error'),message);
              $("error").show();
         }
         var _jobExecUnloadHandlers=new Array();
@@ -32,7 +32,7 @@
             }
             new Effect.BlindDown('indexMain', {duration: 0.2});
             new Effect.BlindUp('execDiv', {duration: 0.2, afterFinish:function(e){
-                $('execDivContent').innerHTML = '';
+                clearHtml('execDivContent');
             }});
             $('busy').hide();
         }
@@ -272,7 +272,7 @@
                     }
                 },
                 onFailure: function(trans){
-                    bcontent.innerHTML='';
+                    clearHtml(bcontent);
                     viewdom.hide();
                 }
             });

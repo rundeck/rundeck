@@ -16,7 +16,7 @@
         function _pageUpdateNowRunning(count, perc) {
             document.title = "Now Running (" + count + ")";
             if($('nrlocal')){
-                $('nrlocal').innerHTML = '' + count;
+                setText($('nrlocal', '' + count);
             }
             if(pagefirstload){
                 pagefirstload=false;
@@ -27,7 +27,7 @@
         }
         function showError(message) {
             if ($('loaderror')) {
-                $("loaderror").innerHTML += message;
+                appendText($("loaderror"),message);
                 $("loaderror").show();
             }
         }
@@ -128,7 +128,7 @@
         function _updateBoxInfo(name, data) {
             if(name==='events' && data.total){
                 $$('._obs_histtotal').each(function(e){
-                    $(e).innerHTML=data.total;
+                    setText($(e),data.total);
                 });
             }
             if(name=='events' && data.checkUpdatedUrl ){
@@ -220,7 +220,7 @@
 
         function _updateEventsCount(count){
             if(count>0){
-                $('eventsCountContent').innerHTML=count+" new";
+                setText($('eventsCountContent'),count+" new");
                 $('eventsCountBadge').show();
             }else{
                 $('eventsCountBadge').hide();

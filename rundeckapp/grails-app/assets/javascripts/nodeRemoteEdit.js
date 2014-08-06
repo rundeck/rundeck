@@ -32,7 +32,7 @@ function doRemoteEdit(name, project, url) {
     _remoteEditClear();
 
     projectname = project;
-    $('editNodeIdent').innerHTML = name;
+    setText('editNodeIdent',name);
 
     //create iframe for url
     var ifm = document.createElement('iframe');
@@ -81,10 +81,9 @@ function _remoteEditClear() {
     _clearTarget();
 
     shouldrefresh = false;
-
-    $('editNodeIdent').innerHTML = '';
+    clearHtml('editNodeIdent');
     var errhold = $('remoteEditError');
-    errhold.innerHTML = "";
+    clearHtml(errhold);
     errhold.hide();
 }
 
@@ -114,7 +113,7 @@ function _remoteEditHide() {
  * Clear iframe holder
  */
 function _clearTarget() {
-    $('remoteEditTarget').innerHTML = "";
+    clearHtml('remoteEditTarget');
     $('remoteEditTarget').hide();
 
 }
@@ -170,10 +169,10 @@ function _remoteEditDidSave() {
 function _rdeckNodeEditFinished(changed) {
 
     if (changed) {
-        $('remoteEditResultText').innerHTML = "Node changes were saved successfully.";
+        setText($('remoteEditResultText'), "Node changes were saved successfully.");
         _remoteEditDidSave();
     } else {
-        $('remoteEditResultText').innerHTML = "Node changes were not saved.";
+        setText($('remoteEditResultText'), "Node changes were not saved.");
     }
     _remoteEditStop();
     _clearTarget();
@@ -192,7 +191,7 @@ function _rdeckNodeEditError(origin, msg) {
     _clearTarget();
 
     var errhold = $('remoteEditError');
-    errhold.innerHTML = (origin ? origin + " reported an error: " : "") + msg;
+    setText(errhold, (origin ? origin + " reported an error: " : "") + msg);
     errhold.show();
 }
 

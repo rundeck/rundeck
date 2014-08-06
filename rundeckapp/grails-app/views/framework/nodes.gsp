@@ -11,7 +11,7 @@
     <asset:javascript src="nodeRemoteEdit.js"/>
     <script type="text/javascript">
         function showError(message) {
-            $("error").innerHTML += message;
+            appendText($("error"),message);
             $("error").show();
         }
 
@@ -116,7 +116,7 @@
                 $(elem).hide();
             }else{
                 //update moreCount
-                $('moreCount').innerHTML=total-loadCount;
+                setText($('moreCount'),total-loadCount);
                 if(total-loadCount<max){
                     $('nextPageButton').hide();
                 }
