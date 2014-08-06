@@ -227,7 +227,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def User user = User.findByLogin(session.user)
         //list executions using query params and pagination params
 
-        def executions=Execution.findAllByScheduledExecution(scheduledExecution,[offset: params.offset?params.offset:0, max: params.max?params.max:10, sort:'dateStarted', order:'desc'])
+        def executions=Execution.findAllByScheduledExecution(scheduledExecution,[offset: params.int('offset')?:0, max: params.int('max')?:10, sort:'dateStarted', order:'desc'])
 
         def total = Execution.countByScheduledExecution(scheduledExecution)
 
@@ -242,8 +242,8 @@ class ScheduledExecutionController  extends ControllerBase{
                 nextExecution: scheduledExecutionService.nextExecutionTime(scheduledExecution),
                 remoteClusterNodeUUID: remoteClusterNodeUUID,
                 notificationPlugins: notificationService.listNotificationPlugins(),
-                max: params.max ? params.max : 10,
-                offset: params.offset ? params.offset : 0] + _prepareExecute(scheduledExecution, framework,authContext)
+                max: params.int('max') ?: 10,
+                offset: params.int('offset') ?: 0] + _prepareExecute(scheduledExecution, framework,authContext)
         withFormat{
             html{
                 dataMap
