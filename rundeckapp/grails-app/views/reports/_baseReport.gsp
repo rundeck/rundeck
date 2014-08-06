@@ -60,7 +60,7 @@
                 <g:if test="${rpt?.jcJobId}">
                     <g:set var="foundJob" value="${ScheduledExecution.getByIdOrUUID(it.jcJobId)}"/>
                     <g:if test="${foundJob}">
-                        <g:html>${foundJob.groupPath ? foundJob.groupPath+'/':''}${foundJob.jobName}</g:html>
+                        <g:enc>${foundJob.groupPath ? foundJob.groupPath+'/':''}${foundJob.jobName}</g:enc>
                     </g:if>
                     <g:else>
                         <span class="warning note">(<g:message
@@ -69,7 +69,7 @@
 
                 </g:if>
                 <g:else>
-                    <g:html>${rpt.title}</g:html>
+                    <g:enc>${rpt.title}</g:enc>
                 </g:else>
             </g:if>
             <g:else>
@@ -88,7 +88,7 @@
                 <g:render template="/execution/execArgString" model="[argString: execution.argString]"/>
             </g:if>
             <g:if test="${params.debug}">
-                ${g.html(value:rpt.toMap())}
+                ${g.enc(html:rpt.toMap())}
             </g:if>
             </div>
         </td>

@@ -34,25 +34,25 @@
 </div>
 <div class="pageBody">
     <div class="errorMessage">
-        <b>${g.html(value:exception.message)}</b>
+        <b>${g.enc(html:exception.message)}</b>
     </div>
     <g:expander key="internalerror">Error Details</g:expander>
     <div style="display:none" id="internalerror">
         <div class="message">
-            <div><b>Request:</b> ${g.html(value:null != controllerName && null != actionName ? createLink(controller: controllerName, action: actionName, params: params) : request.getRequestURL())}</div>
-            <strong>Message:</strong> ${g.html(value:exception.message)} <br/>
-            <strong>Caused by:</strong> ${g.html(value:exception.cause?.message)} <br/>
-            <strong>Class:</strong> ${g.html(value:exception.className)} <br/>
-            <strong>At Line:</strong> [${g.html(value:exception.lineNumber)}] <br/>
+            <div><b>Request:</b> ${g.enc(html:null != controllerName && null != actionName ? createLink(controller: controllerName, action: actionName, params: params) : request.getRequestURL())}</div>
+            <strong>Message:</strong> ${g.enc(html:exception.message)} <br/>
+            <strong>Caused by:</strong> ${g.enc(html:exception.cause?.message)} <br/>
+            <strong>Class:</strong> ${g.enc(html:exception.className)} <br/>
+            <strong>At Line:</strong> [${g.enc(html:exception.lineNumber)}] <br/>
             <strong>Code Snippet:</strong><br/>
             <div class="snippet">
                 <g:each var="cs" in="${exception.codeSnippet}">
-                    ${g.html(value:cs)}<br/>
+                    ${g.enc(html:cs)}<br/>
                 </g:each>
             </div>
         </div>
         <h3>Stack Trace</h3>
-        <pre>${g.html(value:exception.stackTraceText)}</pre>
+        <pre>${g.enc(html:exception.stackTraceText)}</pre>
     </div>
 </div>
 </body>
