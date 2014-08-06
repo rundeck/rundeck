@@ -21,7 +21,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="adhoc"/>
-    <title><g:message code="gui.menu.Nodes"/> - ${(params.project ?: request.project).encodeAsHTML()}</title>
+    <title><g:message code="gui.menu.Nodes"/> - ${g.html(value:params.project ?: request.project)}</title>
     <g:javascript library="executionControl"/>
     <g:javascript library="yellowfade"/>
     <g:javascript library="pagehistory"/>
@@ -146,11 +146,11 @@
                  viewoptionsCompleteId: 'viewoptionscomplete',
                  cmdOutputErrorId: 'cmdoutputerror',
                  outfileSizeId: 'outfilesize',
-                extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>",
+                extraParams:"<%="true" == params.boolean('disableMarkdown')? '&disableMarkdown=true' : ''%>",
                 smallIconUrl: "${resource(dir: 'images', file: 'icon-small')}",
                 iconUrl: "${resource(dir: 'images', file: 'icon-small')}",
-                lastlines: ${params.lastlines ? params.lastlines : defaultLastLines},
-                maxLastLines: ${params.maxlines ? params.maxlines : maxLastLines},
+                lastlines: ${g.js(value:params.int('lastlines')?: defaultLastLines)},
+                maxLastLines: ${g.js(value:params.int('maxlines')?: maxLastLines)},
                  showFinalLine: {value: false, changed: false},
                  colStep:{value:false},
                 tailmode: true,
@@ -254,7 +254,7 @@
             nodeFilter.filterName(filterName);
             nodeFilter.filter(filterString);
             nodeFilter.loading(true);
-            _updateMatchedNodes(data, elem, '${params.project?:request.project}', false, {view: view, expanddetail: true,
+            _updateMatchedNodes(data, elem, '${g.js(value:params.project?:request.project)}', false, {view: view, expanddetail: true,
                 inlinepaging: false, maxShown: 20, requireRunAuth:true}, function (xht) {
                 nodeFilter.loading(false);
             });
@@ -295,12 +295,12 @@
             ko.applyBindings(history, document.getElementById('activity_section'));
             setupActivityLinks('activity_section', history);
             //if empty query, automatically load first activity_link
-            if("${emptyQuery}"=='true'){
+            if("${g.js(value:emptyQuery)}"=='true'){
                 history.activateNowRunningTab();
             }
 
             //setup node filters knockout bindings
-            var filterParams =${[filterName:params.filterName,filter:query?.filter,filterAll:params.showall in ['true',true]].encodeAsJSON()};
+            var filterParams =${g.json(value:[filterName:params.filterName,filter:query?.filter,filterAll:params.showall in ['true',true]])};
             nodeFilter = new NodeFilters(
                     appLinks.frameworkAdhoc,
                     appLinks.scheduledExecutionCreate,

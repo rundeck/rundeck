@@ -55,9 +55,10 @@
             appLinks:appLinks,
             iconUrl: "${resource(dir: 'images', file: 'icon-small')}",
             smallIconUrl: "${resource(dir: 'images', file: 'icon-small')}",
-            extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>&markdown=${params.markdown}&ansicolor=${params.ansicolor}",
-            lastlines: ${params.lastlines ? params.lastlines : defaultLastLines},
-            maxLastLines: ${params.maxlines ? params.maxlines : maxLastLines},
+
+            extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>&markdown=${g.url(value: params.markdown)}&ansicolor=${g.url(value: params.ansicolor)}",
+            lastlines: ${params.int('lastlines') ?: defaultLastLines},
+            maxLastLines: ${params.int('maxlines') ?: maxLastLines},
             collapseCtx: {value:${null == execution?.dateCompleted },changed:false},
             showFinalLine: {value:false,changed:false},
             tailmode: ${followmode == 'tail'},

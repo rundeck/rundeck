@@ -5,7 +5,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="nodes"/>
-    <title><g:message code="gui.menu.Nodes"/> - ${(params.project ?: request.project).encodeAsHTML()}</title>
+    <title><g:message code="gui.menu.Nodes"/> - ${g.html(value:params.project ?: request.project)}</title>
     <g:javascript library="yellowfade"/>
     <asset:javascript src="nodeFiltersKO.js"/>
     <asset:javascript src="nodeRemoteEdit.js"/>
@@ -42,7 +42,7 @@
         }
 
         var nodespage=0;
-        var pagingMax=${params.max?params.max.encodeAsJavaScript():20};
+        var pagingMax=${g.js(value:params.int('max')?:20)};
         /**
         * Expand paging results
         * @param page
@@ -92,7 +92,7 @@
             nodeFilter.filterName(filterName);
             nodeFilter.filter(filterString);
             nodeFilter.loading(true);
-            _updateMatchedNodes(data,elem,'${params.project?:request.project}',false,{view:view,expanddetail:true,inlinepaging:true,
+            _updateMatchedNodes(data,elem,'${g.js(value:params.project?:request.project)}',false,{view:view,expanddetail:true,inlinepaging:true,
                 page:page,max:pagingMax},function(xht){
                 nodeFilter.loading(false);
             });
@@ -151,7 +151,7 @@
          * START page init
          */
         function init() {
-            var filterParams =${[filterName:params.filterName,filter:query?.filter,filterAll:params.showall in ['true',true]].encodeAsJSON()};
+            var filterParams =${g.json(value:[filterName:params.filterName,filter:query?.filter,filterAll:params.showall in ['true',true]])};
             nodeFilter = new NodeFilters(
                     appLinks.frameworkAdhoc,
                     appLinks.scheduledExecutionCreate,

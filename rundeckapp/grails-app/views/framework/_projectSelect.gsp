@@ -2,7 +2,7 @@
 <g:set var="selectParams" value="${selectParams?:[:]}"/>
     <a data-toggle="dropdown" href="#">
         <i class="glyphicon glyphicon-tasks"></i>
-        ${project?:params.project?:request.project}
+        ${g.html(value:project?:params.project?:request.project)}
         <i class="caret"></i>
     </a>
     <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
@@ -23,7 +23,7 @@
             <li>
                 <g:link controller="menu" action="index" params="${selectParams + [project: project]}" >
                     <i class="glyphicon glyphicon-tasks"></i>
-                    ${project.encodeAsHTML()}
+                    ${g.html(value:project)}
                 </g:link>
             </li>
         </g:each>

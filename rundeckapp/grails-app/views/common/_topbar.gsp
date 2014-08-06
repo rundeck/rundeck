@@ -45,7 +45,7 @@
         <g:else>
             <li id="projectSelect" class="dropdown">
                 <span class="action textbtn button" onclick="loadProjectSelect();"
-                      title="Select project...">${params.project ?: request.project?: 'Select project&hellip;'}
+                      title="Select project...">${g.html(value: params.project ?: request.project ?: 'Select project&hellip;')}
                 </span>
             </li>
         </g:else>
