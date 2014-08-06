@@ -1194,7 +1194,7 @@ class FrameworkController extends ControllerBase {
             projects = frameworkService.projects(authContext)
             session.frameworkProjects=projects
         }
-        [projects:projects,project:params.project]
+        [projects:projects,project:params.project] + (params.page?[selectParams:[page:params.page]]:[:])
     }
     /**
      * Select project via parameter, and redirect to default page for the project
