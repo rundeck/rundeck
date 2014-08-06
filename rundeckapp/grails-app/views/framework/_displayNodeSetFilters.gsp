@@ -25,7 +25,7 @@ Display values of a NodeSet
         <span class="querykey ${clusion.toLowerCase()}"><g:message
                 code="BaseNodeFilters.title.${qparam.name}" default="${qparam.name}"/></span>:
         <span class="queryvalue text ${clusion.toLowerCase()} ${value.contains(varStr)?'variable':''}">
-            <g:truncate max="50" title="${value.toString().encodeAsHTML()}">${value.toString().encodeAsHTML()}</g:truncate></span>
+            <g:truncate max="50" title="${enc(html: value)}">${enc(html: value)}</g:truncate></span>
     </g:if>
 </g:each>
 </g:each>

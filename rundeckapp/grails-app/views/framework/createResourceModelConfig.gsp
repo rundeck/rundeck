@@ -27,8 +27,8 @@
 <g:if test="${description}">
     <div class="row">
     <div class="col-sm-12">
-    <div class="h4 text-info">${description.title.encodeAsHTML()}
-        <small class="text-muted">${description.description.encodeAsHTML()}</small>
+    <div class="h4 text-info">${enc(html:description.title)}
+        <small class="text-muted">${enc(html:description.description)}</small>
     </div>
 
     </div>
@@ -60,9 +60,9 @@
         <span>Properties:</span>
         <ul>
         <g:each var="prop" in="${values}">
-        <li>${prop.name.encodeAsHTML()}: ${prop.value.encodeAsHTML()} </li>
-            <input type="hidden" name="${(prefix + 'config.' + prop.name).encodeAsHTML()}"
-                   value="${prop.value?.encodeAsHTML()}"/>
+        <li>${enc(html:prop.name)}: ${enc(html:prop.value)} </li>
+            <input type="hidden" name="${enc(html:prefix + 'config.' + prop.name)}"
+                   value="${enc(html:prop.value)}"/>
         </g:each>
         </ul>
         </div>

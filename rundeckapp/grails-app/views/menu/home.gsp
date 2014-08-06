@@ -67,7 +67,7 @@
                         </span>
                         <g:plural code="user" count="${userCount}" textOnly="${true}"/>:
                         <g:each in="${userSummary}" var="user" status="i">
-                            ${user.encodeAsHTML()}<g:if test="${i < userSummary.size() - 1}">,</g:if>
+                            ${enc(html:user)}<g:if test="${i < userSummary.size() - 1}">,</g:if>
                         </g:each>
                     </g:if>
                 </div>
@@ -134,7 +134,7 @@
                         ${project}</g:link>
 
                     <g:if test="${data.description}">
-                        <span class="text-muted">${data.description.encodeAsHTML()}</span>
+                        <span class="text-muted">${enc(html:data.description)}</span>
                     </g:if>
                 </div>
                 %{--<div class="col-sm-6 col-md-2">--}%
@@ -167,7 +167,7 @@
                             <g:plural code="user" count="${data.userCount}" textOnly="${true}"/>:
 
                             <g:each in="${data.userSummary}" var="user" status="i">
-                                ${user.encodeAsHTML()}<g:if test="${i < data.userSummary.size() - 1}">,</g:if>
+                                ${enc(html:user)}<g:if test="${i < data.userSummary.size() - 1}">,</g:if>
                             </g:each>
                         </g:if>
                     </div>
@@ -237,7 +237,7 @@
                                 ${data.readme.motdHTML}
                             </g:if>
                             <g:elseif test="${data.readme.motd}">
-                                ${data.readme.motd.encodeAsHTML()}
+                                ${enc(html:data.readme.motd)}
                             </g:elseif>
                         </div>
                     </g:if>
@@ -246,7 +246,7 @@
                             ${data.readme.readmeHTML}
                         </g:if>
                         <g:elseif test="${data.readme.readme}">
-                            ${data.readme.readme.encodeAsHTML()}
+                            ${enc(html:data.readme.readme)}
                         </g:elseif>
 
                     </g:if>

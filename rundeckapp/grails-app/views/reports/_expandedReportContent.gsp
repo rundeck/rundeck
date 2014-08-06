@@ -51,7 +51,7 @@
                 </g:if>
                 <g:else>
                     <span class="title">
-                        ${(it.reportId?it.reportId:it.title).encodeAsHTML()}
+                        ${enc(html:it.reportId?:it.title)}
                     <g:message code="status.label.${it.status}"/></span>
 
                     <g:if test="${it.dateCompleted}">
@@ -67,7 +67,7 @@
                         <g:else >
                             <g:set var="jobtitle" value="${it.title}"/>
                         </g:else>
-                        ${jobtitle.encodeAsHTML()}
+                        ${enc(html:jobtitle)}
 
                     </span>
                     </div>
@@ -102,14 +102,6 @@
                 </g:if>
 
 
-               %{--<g:if test="${it.message}">--}%
-               %{--<span class="title">Message:</span>--}%
-                   %{--<div class="rptmsgx">--}%
-                   %{--<div class="rptmessage msgtext">--}%
-                    %{--${it.message.encodeAsHTML()}--}%
-                   %{--</div>--}%
-                   %{--</div>--}%
-               %{--</g:if>--}%
 
                </div>
                </div>

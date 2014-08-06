@@ -77,10 +77,10 @@
                             <g:expander key="${expkey}" open="${selectedNodes?'true':'false'}">
                                 <g:if test="${group!='other'}">
                                     <span class="prompt">
-                                    ${namegroups[group][0].encodeAsHTML()}</span>
+                                    ${enc(html:namegroups[group][0])}</span>
                                     to
                                     <span class="prompt">
-                                ${namegroups[group][-1].encodeAsHTML()}
+                                ${enc(html:namegroups[group][-1])}
                                     </span>
                                 </g:if>
                                 <g:else>
@@ -111,9 +111,9 @@
                                                    name="extra.nodeIncludeName"
                                                    value="${node.nodename}"
                                                    ${selectedNodes ? '':'disabled' }
-                                                   data-tag="${node.tags?.join(' ').encodeAsHTML()}"
+                                                   data-tag="${enc(html:node.tags?.join(' '))}"
                                                     ${(null== selectedNodes||selectedNodes.contains(node.nodename))?'checked':''}
-                                                   />${node.nodename.encodeAsHTML()}</label>
+                                                   />${enc(html:node.nodename)}</label>
 
                                         </div>
                                     </g:each>
@@ -133,8 +133,8 @@
                                        name="extra.nodeIncludeName"
                                        value="${node.nodename}"
                                        disabled="true"
-                                       data-tag="${node.tags?.join(' ').encodeAsHTML()}"
-                                       checked="true"/>${node.nodename.encodeAsHTML()}</label>
+                                       data-tag="${enc(html:node.tags?.join(' '))}"
+                                       checked="true"/>${enc(html:node.nodename)}</label>
 
                         </div>
                     </g:each>

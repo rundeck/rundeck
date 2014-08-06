@@ -50,11 +50,11 @@
                     <g:if test="${notifurlcontent && notifurlcontent.size() > 30}">
                         <textarea name="${notifyUrl}"
                                   style="vertical-align:top;"
-                                  rows="6" cols="40">${notifurlcontent?.encodeAsHTML()}</textarea>
+                                  rows="6" cols="40">${enc(html:notifurlcontent)}</textarea>
                     </g:if>
                     <g:else>
                         <g:textField name="${notifyUrl}" cols="70" rows="3"
-                                     value="${notifurlcontent?.encodeAsHTML()}" size="60"/>
+                                     value="${enc(html:notifurlcontent)}" size="60"/>
                     </g:else>
                 </label>
 
@@ -76,7 +76,7 @@
                    value="${params.notifyPlugin?.get(trigger)?.get(pluginName)?.config ?: definedNotif?.configuration}"/>
             <g:set var="pluginDescription" value="${plugin.description}"/>
             <g:set var="validation" value="${notificationValidation?.get('on'+trigger)?.get(pluginName)?.report}"/>
-            <g:set var="checkboxFieldName" value="notifyPlugin.${trigger}.enabled.${pluginName.encodeAsHTML()}"/>
+            <g:set var="checkboxFieldName" value="notifyPlugin.${trigger}.enabled.${enc(html:pluginName)}"/>
             <div>
                 <g:hiddenField name="notifyPlugin.${trigger}.type" value="${pluginName}"/>
                 <span>
@@ -84,12 +84,12 @@
                                 checked="${definedNotif ? true : false}"/>
                     <label for="${checkboxFieldName}">${pluginDescription['title'] ?: pluginDescription['name'] ?: pluginName}</label>
                     <g:if test="${pluginDescription['description']}">
-                        <span class="info note">${pluginDescription['description']?.encodeAsHTML()}</span>
+                        <span class="info note">${enc(html:pluginDescription['description'])}</span>
                     </g:if>
                 </span>
                 <span id="notifholderPlugin${pkey}" style="${wdgt.styleVisible(if: definedNotif ? true : false)}"
                       class="notificationplugin">
-                    <g:set var="prefix" value="${('notifyPlugin.'+trigger+'.' + pluginName + '.config.').encodeAsHTML()}"/>
+                    <g:set var="prefix" value="${enc(html:'notifyPlugin.'+trigger+'.' + pluginName + '.config.')}"/>
                     <g:if test="${pluginDescription instanceof Description}">
                         <table class="simpleForm">
                             <g:each in="${pluginDescription?.properties}" var="prop">

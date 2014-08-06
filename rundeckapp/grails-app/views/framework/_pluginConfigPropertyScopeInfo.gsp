@@ -7,12 +7,12 @@
        <div>configure project:
         <code>
             <g:if test="${mapping && mapping[prop.name]}">
-                ${mapping[prop.name].encodeAsHTML()}=${(prop.defaultValue?:'value').encodeAsHTML()}
+                ${enc(html:mapping[prop.name])}=${enc(html:prop.defaultValue?:'value')}
             </g:if>
             <g:else>
             <g:pluginPropertyProjectScopeKey provider="${pluginName}"
                                              service="${serviceName}"
-                                             property="${prop.name}"/>=${(prop.defaultValue ?: 'value').encodeAsHTML()}
+                                             property="${prop.name}"/>=${enc(html:prop.defaultValue ?: 'value')}
              </g:else>
         </code></div>
     </g:if>
@@ -22,24 +22,24 @@
 
         <code>
             <g:if test="${frameworkMapping && frameworkMapping[prop.name]}">
-                ${frameworkMapping[prop.name].encodeAsHTML()}=${(prop.defaultValue ?: 'value').encodeAsHTML()}
+                ${enc(html:frameworkMapping[prop.name])}=${enc(html:prop.defaultValue ?: 'value')}
             </g:if>
             <g:else>
                 <g:pluginPropertyFrameworkScopeKey provider="${pluginName}"
                                                    service="${serviceName}"
-                                                   property="${prop.name}"/>=${(prop.defaultValue ?: 'value').encodeAsHTML()}
+                                                   property="${prop.name}"/>=${enc(html:prop.defaultValue ?: 'value')}
             </g:else>
         </code>
             </div>
     </g:if>
     <div class="text-info">
         <g:if test="${prop.defaultValue}">
-            Default value: <code>${prop.defaultValue.encodeAsHTML()}</code>
+            Default value: <code>${enc(html:prop.defaultValue)}</code>
         </g:if>
         <g:if test="${prop.selectValues}">
             Allowed values:
             <g:each in="${prop.selectValues}">
-                <code>${it.encodeAsHTML()}</code>,
+                <code>${enc(html:it)}</code>,
             </g:each>
         </g:if>
     </div>

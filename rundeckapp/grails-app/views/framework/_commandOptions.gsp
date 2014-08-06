@@ -31,7 +31,7 @@ used by _editOptions.gsp template
             <div class="form-group ${hasError ? 'has-warning' : ''} ${hasRemote?'remote':''}" >
               <label class="remoteoptionfield col-sm-2 control-label" for="${fieldhiddenid}" id="${fieldNamekey}">
                   <span style="display:none;" class="remotestatus"></span>
-                  ${optName.encodeAsHTML()}
+                  ${enc(html:optName)}
                   <g:if test="${Environment.current == Environment.DEVELOPMENT && grailsApplication.config.rundeck?.debug}">
                       (${optiondependencies ? optiondependencies[optName] : '-'})(${dependentoptions ? dependentoptions[optName] : '-'})
                   </g:if>
@@ -52,7 +52,7 @@ used by _editOptions.gsp template
                             <span class="loading"></span>
                         </span>
                         <g:if test="${Environment.current == Environment.DEVELOPMENT && grailsApplication.config.rundeck?.debug}">
-                        <a onclick="_remoteOptionControl('_commandOptions').loadRemoteOptionValues('${optName.encodeAsJavaScript()}');return false;" href="#">${optName.encodeAsHTML()} reload</a>
+                        <a onclick="_remoteOptionControl('_commandOptions').loadRemoteOptionValues('${enc(js:optName)}');return false;" href="#">${enc(html:optName)} reload</a>
                         </g:if>
                         </div>
                     </g:if>
@@ -63,7 +63,7 @@ used by _editOptions.gsp template
                         </div>
                     </g:else>
                 <div class="col-sm-1">
-                    <span id="${optName.encodeAsHTML()+'_state'}">
+                    <span id="${enc(html:optName)+'_state'}">
                         <g:if test="${ optRequired }">
                             <span class="reqwarning has_tooltip"
                                     title="${hasError?.contains('required')?hasError:g.message(code:'option.value.required')}"
@@ -76,11 +76,11 @@ used by _editOptions.gsp template
                 </div>
 
                 <div class="col-sm-10 col-sm-offset-2">
-                    <span class="help-block">${optDescription?.encodeAsHTML()}</span>
+                    <span class="help-block">${enc(html:optDescription)}</span>
                 </div>
                 <g:if test="${hasError}">
                     <div class="col-sm-10 col-sm-offset-2">
-                        <p class="text-warning">${hasError.encodeAsHTML()}</p>
+                        <p class="text-warning">${enc(html:hasError)}</p>
                     </div>
                 </g:if>
             </div>
@@ -104,37 +104,37 @@ used by _editOptions.gsp template
             <g:set var="optionDepsMet"
                    value="${!optiondependencies[optName] || selectedoptsmap && optiondependencies[optName].every {selectedoptsmap[it]}}"/>
             <g:if test="${optiondependencies[optName]}">
-                remoteOptions.addOptionDependencies("${optName.encodeAsJavaScript()}", ${optiondependencies[optName] as JSON});
+                remoteOptions.addOptionDependencies("${enc(js:optName)}", ${optiondependencies[optName] as JSON});
             </g:if>
             <g:if test="${dependentoptions[optName]}">
                 <%-- If option has dependents, register them to refresh when this option value changes --%>
-                remoteOptions.addOptionDeps("${optName.encodeAsJavaScript()}", ${dependentoptions[optName] as JSON});
+                remoteOptions.addOptionDeps("${enc(js:optName)}", ${dependentoptions[optName] as JSON});
 
 
                 <g:if test="${optionSelect.enforced || selectedoptsmap && selectedoptsmap[optName]}">
                 <%-- Will be a drop down list, so trigger change automatically. --%>
-                    remoteOptions.setOptionAutoReload("${optName.encodeAsJavaScript()}",true);
+                    remoteOptions.setOptionAutoReload("${enc(js:optName)}",true);
                 </g:if>
             </g:if>
             <g:if test="${optionSelect.realValuesUrl != null}">
                 <%-- If option has a remote URL, register data used for ajax reload --%>
-                remoteOptions.addOption("${optName.encodeAsJavaScript()}","${holder.encodeAsJavaScript()}",'${scheduledExecutionId.encodeAsJavaScript()}','${optName.encodeAsJavaScript()}','${usePrefix.encodeAsJavaScript()}','${selectedoptsmap ? selectedoptsmap[optName]?.encodeAsJavaScript() : ''}','${fieldNamekey.encodeAsJavaScript()}',true);
+                remoteOptions.addOption("${enc(js:optName)}","${enc(js:holder)}",'${enc(js:scheduledExecutionId)}','${enc(js:optName)}','${enc(js:usePrefix)}','${selectedoptsmap ? enc(js:selectedoptsmap[optName]) : ''}','${enc(js:fieldNamekey)}',true);
 
                 <g:if test="${!optiondependencies[optName] || optionsDependenciesCyclic}">
-                    remoteOptions.loadonstart["${optName.encodeAsJavaScript()}"]=true;
+                    remoteOptions.loadonstart["${enc(js:optName)}"]=true;
                 </g:if>
                 <g:else>
-                    remoteOptions.setOptionAutoReload("${optName.encodeAsJavaScript()}",true);
+                    remoteOptions.setOptionAutoReload("${enc(js:optName)}",true);
                 </g:else>
                 <g:if test="${optionSelect.multivalued}">
-                    remoteOptions.setFieldMultiId('${optName.encodeAsJavaScript()}','${fieldhiddenid.encodeAsJavaScript()}');
+                    remoteOptions.setFieldMultiId('${enc(js:optName)}','${enc(js:fieldhiddenid)}');
                 </g:if>
                 <g:else>
-                    remoteOptions.setFieldId('${optName.encodeAsJavaScript()}','${fieldhiddenid.encodeAsJavaScript()}');
+                    remoteOptions.setFieldId('${enc(js:optName)}','${enc(js:fieldhiddenid)}');
                 </g:else>
             </g:if>
             <g:else>
-                    remoteOptions.addLocalOption("${optName.encodeAsJavaScript()}");
+                    remoteOptions.addLocalOption("${enc(js:optName)}");
             </g:else>
         </g:each>
         <%-- register observers for field value changes --%>
@@ -196,7 +196,7 @@ used by _editOptions.gsp template
 </g:if>
 <g:elseif test="${!authorized}">
     <div class="info note">Not authorized to execute chosen job.</div>
-    <g:if test="${selectedargstring}"><div>Old value: ${selectedargstring.encodeAsHTML()}</div></g:if>
+    <g:if test="${selectedargstring}"><div>Old value: ${enc(html:selectedargstring)}</div></g:if>
 </g:elseif>
 <g:else>
     <div class="form-group">

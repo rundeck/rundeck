@@ -19,7 +19,7 @@
         <g:set var="brandHtml"
                value="${grailsApplication.config.rundeck?.gui?.brand?.html ?: g.message(code: 'main.app.brand.html',default:'')}"/>
         <i class="rdicon app-logo"></i>
-        ${brandHtml?:appTitle?.encodeAsHTML()}
+        ${brandHtml ?: g.enc(html:appTitle)}
     </a>
     </div>
 
@@ -164,14 +164,14 @@
             </ul>
         </li>
         <li>
-            <a href="${helpLinkUrl.encodeAsHTML()}" class="help ">
+            <a href="${g.enc(html:helpLinkUrl)}" class="help ">
                 help <b class="glyphicon glyphicon-question-sign"></b>
             </a>
         </li>
     </g:if>
     <g:else>
         <li >
-            <a href="${helpLinkUrl.encodeAsHTML()}" class="help ">
+            <a href="${g.enc(html:helpLinkUrl)}" class="help ">
                 help <b class="glyphicon glyphicon-question-sign"></b>
             </a>
         </li>

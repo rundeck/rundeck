@@ -7,10 +7,10 @@
                     id="${scheduledExecution.extid}"
                     params="[project:scheduledExecution.project]"
                     class="primary" absolute="${absolute ? 'true' :'false'}"
-                title="${scheduledExecution?.description.encodeAsHTML()}"
+                title="${g.enc(html:scheduledExecution?.description)}"
             >
                 <i class="glyphicon glyphicon-book"></i>
-                ${scheduledExecution?.jobName.encodeAsHTML()}
+                ${g.enc(html:scheduledExecution?.jobName)}
             </g:link>
 
             </g:if>
@@ -24,7 +24,7 @@
                             absolute="${absolute ? 'true' : 'false'}"
                             >
                         <g:if test="${!noimgs}"><b class="glyphicon glyphicon-folder-close"></b></g:if>
-                        ${scheduledExecution.groupPath.encodeAsHTML()}
+                        ${g.enc(html:scheduledExecution.groupPath)}
                     </g:link>
                 </span>
             </span>

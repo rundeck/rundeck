@@ -16,7 +16,7 @@
                 $("loaderror").show();
             }
         }
-        var bfilters=${boxfilters.encodeAsJSON()};
+        var bfilters=${enc(json:boxfilters)};
         var links = {
             nowrunning:'${createLink(controller:"menu",action:"nowrunningFragment")}',
             %{--jobs:'${createLink(controller:"reports",action:"jobsFragment")}',--}%

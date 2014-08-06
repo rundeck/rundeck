@@ -1,7 +1,7 @@
-<div id="${key.encodeAsHTML()}_tooltip" style="display:none;" class="detailpopup node_entry ${islocal?'server':''} tooltipcontent" >
+<div id="${enc(html:key)}_tooltip" style="display:none;" class="detailpopup node_entry ${islocal?'server':''} tooltipcontent" >
     <span >
         <i class="rdicon node ${runnable ? 'node-runnable' : ''} icon-small"></i>
-        ${node.nodename.encodeAsHTML()}
+        ${enc(html:node.nodename)}
     </span>
     <tmpl:nodeFilterLink key="name" value="${node.nodename}"
                          linkicon="glyphicon glyphicon-circle-arrow-right"/>

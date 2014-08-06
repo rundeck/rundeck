@@ -49,7 +49,7 @@
                         <g:link title="View execution output" controller="execution" action="show" id="${execution.id}"
                                 params="[project: execution.project]"
                                 class="_defaultAction">#${execution.id}</g:link>
-                        ${scheduledExecution.groupPath ? scheduledExecution.groupPath + '/' : ''}${scheduledExecution.jobName.encodeAsHTML()}
+                        ${enc(html:(scheduledExecution.groupPath ? scheduledExecution.groupPath + '/' : '') + scheduledExecution.jobName)}
                     </td>
 
                     <td class="eventargs">
@@ -64,7 +64,7 @@
                             params="[project:execution.project]"
                                 class="_defaultAction">#${execution.id}</g:link>
 
-                        ${execution.workflow.commands[0].adhocRemoteString.encodeAsHTML()}
+                        ${enc(html:execution.workflow.commands[0].adhocRemoteString)}
                     </td>
                     <td class="eventargs">
                     </td>

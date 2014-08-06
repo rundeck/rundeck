@@ -6,7 +6,7 @@
     <g:ifServletContextAttribute attribute="RSS_ENABLED" value="true">
     <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="${createLink(controller:"feed",action:"index",params:paginateParams?paginateParams:[:])}"/>
     </g:ifServletContextAttribute>
-    <title><g:message code="gui.menu.Events"/> - ${(params.project ?: request.project).encodeAsHTML()}</title>
+    <title><g:message code="gui.menu.Events"/> - ${enc(html:params.project ?: request.project)}</title>
     <g:javascript library="yellowfade"/>
     <g:javascript library="pagehistory"/>
     <g:javascript>
@@ -32,11 +32,11 @@
             }
         }
 
-        var bfilters=${filterPref.encodeAsJSON()};
+        var bfilters=${enc(json:filterPref)};
         <g:set var="pageparams" value="${[offset:params.offset,max:params.max]}"/>
         <g:set var="eventsparams" value="${paginateParams}"/>
-        var eventsparams=${eventsparams.encodeAsJSON()};
-        var pageparams=${pageparams.encodeAsJSON()};
+        var eventsparams=${enc(json:eventsparams)};
+        var pageparams=${enc(json:pageparams)};
         var autoLoad=${params.refresh == 'true' ? true : false};
         var links = {
             events:'${createLink(controller: "reports", action: "eventsFragment", params: [project: params.project])}',
@@ -109,7 +109,7 @@
         var lastRunExec = 0;
         var lastRunTime = 0;
         var checkUpdatedUrl='';
-        var pageTitle="${g.message(code: 'gui.menu.Events').encodeAsJavaScript()} - ${(params.project ?: request.project).encodeAsJavaScript()}";
+        var pageTitle="${enc(js:g.message(code: 'gui.menu.Events'))} - ${enc(js:params.project ?: request.project)}";
         var firstLoad=true;
         var firstparams=Object.extend({refresh:${params.refresh == 'true' ? true : false}},eventsparams);
         window.onpopstate = function(event) {

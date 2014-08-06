@@ -25,7 +25,7 @@
 %{--<g:set var="origfieldname" value="${}"/>--}%
 <g:if test="${outofscope}">
     <td class="${error?'fieldError':''}  ${prop.required ? 'required' : ''}">
-        ${prop.title ? prop.title.encodeAsHTML() : prop.name.encodeAsHTML()}:
+        ${prop.title ? enc(html:prop.title) : enc(html:prop.name)}:
     </td>
     <td>
 
@@ -37,12 +37,12 @@
     <g:checkBox name="${fieldname}" value="true" checked="${values&&values[prop.name]?values[prop.name]=='true':prop.defaultValue=='true'}" id="${fieldid}"/>
     </td>
     <td>
-    <label class="${error ? 'fieldError' : ''}" for="${fieldid.encodeAsHTML()}">${prop.title? prop.title.encodeAsHTML(): prop.name.encodeAsHTML()}</label>
+    <label class="${error ? 'fieldError' : ''}" for="${enc(html:fieldid)}">${prop.title? enc(html:prop.title): enc(html:prop.name)}</label>
 </g:elseif>
 <g:elseif test="${prop.type.toString()=='Select' || prop.type.toString()=='FreeSelect'}">
     <g:set var="fieldid" value="${g.rkey()}"/>
     <td>
-        <label class="${error ? 'fieldError' : ''}  ${prop.required ? 'required' : ''}" for="${fieldid.encodeAsHTML()}">${prop.title ? prop.title.encodeAsHTML() : prop.name.encodeAsHTML()}</label>:
+        <label class="${error ? 'fieldError' : ''}  ${prop.required ? 'required' : ''}" for="${enc(html:fieldid)}">${prop.title ? enc(html:prop.title) : enc(html:prop.name)}</label>:
     </td>
     <td>
     <g:hiddenField name="${origfieldname}" value="${values&&values[prop.name]?values[prop.name]:''}"/>
@@ -69,7 +69,7 @@
 <g:else>
     <g:set var="fieldid" value="${g.rkey()}"/>
     <td>
-    <label class="${error ? 'fieldError' : ''} ${prop.required?'required':''}" for="${fieldid.encodeAsHTML()}" >${prop.title ? prop.title.encodeAsHTML() : prop.name.encodeAsHTML()}</label>:
+    <label class="${error ? 'fieldError' : ''} ${prop.required?'required':''}" for="${enc(html:fieldid)}" >${prop.title ? enc(html:prop.title) : enc(html:prop.name)}</label>:
     </td>
     <td>
     <g:hiddenField name="${origfieldname}" value="${values&&values[prop.name]?values[prop.name]:''}"/>
@@ -82,9 +82,9 @@
                  id="${fieldid}" size="100"/>
     </g:else>
 </g:else>
-    <div class="info note">${prop.description?.encodeAsHTML()}</div>
+    <div class="info note">${enc(html:prop.description)}</div>
     <g:if test="${error}">
-        <span class="warn note">${error.encodeAsHTML()}</span>
+        <span class="warn note">${enc(html:error)}</span>
     </g:if>
     <g:if test="${outofscope}">
         <g:set var="scopeinfo" value="${g.rkey()}"/>

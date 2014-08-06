@@ -36,7 +36,7 @@
 
     var configControl;
     function init(){
-        configControl=new ResourceModelConfigControl('${prefixKey.encodeAsJavaScript()}');
+        configControl=new ResourceModelConfigControl('${enc(js:prefixKey)}');
         configControl.pageInit();
         $$('input').each(function(elem){
             if(elem.type=='text'){
@@ -68,12 +68,12 @@
     <div class="col-sm-12">
     <div class="alert alert-warning" style="${wdgt.styleVisible(if: (flash.error || request.error || request.errors))}"
          id="editerror">
-        ${flash.error?.encodeAsHTML()}${request.error?.encodeAsHTML()}
+        ${enc(html:flash.error)}${enc(html:request.error)}
         <g:if test="${request.errors}">
             <ul>
                 <g:each in="${request.errors}" var="err">
                     <g:if test="${err}">
-                        <li>${err.encodeAsHTML()}</li>
+                        <li>${enc(html:err)}</li>
                     </g:if>
                 </g:each>
             </ul>
@@ -88,7 +88,7 @@
                 <div class="panel-heading">
                         <span class="h3">
                             <g:message code="domain.Project.edit.message"
-                                       default="Configure Project"/>: ${(params.project ?: request.project).encodeAsHTML()}
+                                       default="Configure Project"/>: ${enc(html:params.project ?: request.project)}
                     </span>
                 </div>
                 <g:render template="editProjectForm" model="${[editOnly:true,project: params.project ?: request.project]}"/>

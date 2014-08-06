@@ -45,7 +45,7 @@
     </div>
     <div  >
         <div class="text-muted">Enter the commandline arguments for the Job:</div>
-        <input type='text' name="argString" value="${item?.argString?.encodeAsHTML()}" size="100" id="jobArgStringField"/>
+        <input type='text' name="argString" value="${g.enc(html:item?.argString)}" size="100" id="jobArgStringField"/>
     </div>
     <div style="margin-top:5px;">
         <span class="btn btn-sm btn-default" onclick="loadJobChooser(this,'jobChooser');" id="jobChooseBtn"
@@ -98,25 +98,25 @@
     <g:if test="${isAdhocLocal}">
         <div id="localScriptDiv" class="${hasErrors(bean:item,field:'adhocExecution','fieldError')}">
             <div class="text-muted"><g:message code="Workflow.Step.adhocLocalString.description" />:</div>
-            <textarea rows="10" cols="60" name="adhocLocalString" id="adhocLocalStringField" class="code apply_ace" autofocus>${item?.adhocLocalString?.encodeAsHTML()}</textarea>
+            <textarea rows="10" cols="60" name="adhocLocalString" id="adhocLocalStringField" class="code apply_ace" autofocus>${g.enc(html:item?.adhocLocalString)}</textarea>
         </div>
     </g:if>
     <g:elseif test="${isAdhocFileExecution}">
     <div id="filepathDiv" >
         <div class="text-muted"><g:message code="Workflow.Step.adhocFilepath.description" />:</div>
-        <input type='text' name="adhocFilepath" value="${item?.adhocFilepath?.encodeAsHTML()}" size="100" id="adhocFilepathField" autofocus/>
+        <input type='text' name="adhocFilepath" value="${g.enc(html:item?.adhocFilepath)}" size="100" id="adhocFilepathField" autofocus/>
     </div>
     </g:elseif>
     <g:elseif test="${isAdhocRemote}">
     <div id="remoteScriptDiv"  class="${hasErrors(bean:item,field:'adhocExecution','fieldError')}">
         <div class="text-muted"><g:message code="Workflow.Step.adhocRemoteString.description" />:</div>
-        <input type='text' name="adhocRemoteString" value="${item?.adhocRemoteString?.encodeAsHTML()}" size="100" id="adhocRemoteStringField" autofocus/>
+        <input type='text' name="adhocRemoteString" value="${g.enc(html:item?.adhocRemoteString)}" size="100" id="adhocRemoteStringField" autofocus/>
     </div>
     </g:elseif>
     <g:if test="${!isAdhocRemote||isAdhocFileExecution}">
     <div id="adhocScriptArgs" >
         <div class="text-muted"><g:message code="Workflow.Step.argString.description" />:</div>
-        <input type='text' name="argString" value="${item?.argString?.encodeAsHTML()}" size="100" id="argStringField"/>
+        <input type='text' name="argString" value="${g.enc(html:item?.argString)}" size="100" id="argStringField"/>
     </div>
     </g:if>
     <g:if test="${!isAdhocRemote}">
@@ -125,7 +125,7 @@
             <div class="text-muted"><g:message code="Workflow.Step.scriptInterpreter.description"/>:</div>
             <input type='text' name="scriptInterpreter"
                    placeholder="${g.message(code: 'Workflow.Step.scriptInterpreter.prompt')}"
-                   value="${item?.scriptInterpreter?.encodeAsHTML()}" size="100"
+                   value="${g.enc(html:item?.scriptInterpreter)}" size="100"
                    id="scriptInterpreterField" autofocus/>
             <div>
                 <label>
@@ -164,10 +164,10 @@
 
         <div id='interpreterArgsQuotedHelp${rkey}_preview' class="presentation">
             <code>$
-                <span id='interpreterPreview'>${item?.scriptInterpreter?.encodeAsHTML()}</span>
+                <span id='interpreterPreview'>${g.enc(html:item?.scriptInterpreter)}</span>
                 <span class="interpreterquotepreview"
                       style="${wdgt.styleVisible(if: item?.interpreterArgsQuoted)}">&quot;</span
-                ><em>scriptfile</em> <span id='interpreterArgsPreview'>${item?.argString?.encodeAsHTML()}</span
+                ><em>scriptfile</em> <span id='interpreterArgsPreview'>${g.enc(html:item?.argString)}</span
                     ><span class="interpreterquotepreview" style="${wdgt.styleVisible(if: item?.interpreterArgsQuoted)}">&quot;</span>
             </code>
         </div>
@@ -177,8 +177,8 @@
 <g:elseif test="${( newitemtype || item && item.instanceOf(PluginStep) ) && newitemDescription}">
     <div>
         <div>
-            <span class="prompt">${newitemDescription.title?.encodeAsHTML()}</span>
-            <span class="text-muted">${newitemDescription.description?.encodeAsHTML()}</span>
+            <span class="prompt">${g.enc(html:newitemDescription.title)}</span>
+            <span class="text-muted">${g.enc(html:newitemDescription.description)}</span>
         </div>
         <g:hiddenField name="pluginItem" value="true"/>
         <g:hiddenField name="newitemnodestep" value="${item?!!item.nodeStep:newitemnodestep=='true'}"/>
@@ -211,7 +211,7 @@
 <g:else>
     <div>
         <div class="info note">Step Description</div>
-        <input id="description" type="text" name="description" value="${item?.description?.encodeAsHTML()}" size="100"/>
+        <input id="description" type="text" name="description" value="${g.enc(html:item?.description)}" size="100"/>
     </div>
 </g:else>
 

@@ -109,7 +109,7 @@
                                           placeholder="http://"
                                           rows="6"
                                           cols="40"
-                                          class="form-control ">${notifurlcontent?.encodeAsHTML()}</textarea>
+                                          class="form-control ">${enc(html:notifurlcontent)}</textarea>
 
                                 <span class=" text-muted">
                                     <g:message code="notification.webhook.field.description"/>
@@ -120,7 +120,7 @@
                                         <label class="input-group-addon"><g:message
                                         code="notification.webhook.field.title"/></label>
                                 <g:textField name="${triggerUrlFieldName}"
-                                             value="${notifurlcontent?.encodeAsHTML()}"
+                                             value="${enc(html:notifurlcontent)}"
                                              class="form-control "
                                              size="60"
                                              placeholder="http://"/>
@@ -153,7 +153,7 @@
                    value="${params.notifyPlugin?.get(trigger)?.get(pluginName)?.config ?: definedNotif?.configuration}"/>
             <g:set var="pluginDescription" value="${plugin.description}"/>
             <g:set var="validation" value="${notificationValidation?.get(trigger)?.get(pluginName)?.report}"/>
-            <g:set var="checkboxFieldName" value="notifyPlugin.${trigger}.enabled.${pluginName.encodeAsHTML()}"/>
+            <g:set var="checkboxFieldName" value="notifyPlugin.${trigger}.enabled.${enc(html:pluginName)}"/>
 
             <div class="row row-space">
                 <div class="col-sm-12">
@@ -164,7 +164,7 @@
                                 checked="${definedNotif ? true : false}"/>
                     <label for="${checkboxFieldName}">${pluginDescription['title'] ?: pluginDescription['name'] ?: pluginName}</label>
                     <g:if test="${pluginDescription['description']}">
-                        <span class="text-muted">${pluginDescription['description']?.encodeAsHTML()}</span>
+                        <span class="text-muted">${enc(html:pluginDescription['description'])}</span>
                     </g:if>
                 </div>
 
@@ -173,7 +173,7 @@
                 <div id="notifholderPlugin${pkey}" style="${wdgt.styleVisible(if: definedNotif ? true : false)}"
                       class="notificationplugin panel panel-default">
                     <div class="panel-body">
-                    <g:set var="prefix" value="${('notifyPlugin.'+trigger+'.' + pluginName + '.config.').encodeAsHTML()}"/>
+                    <g:set var="prefix" value="${enc(html:'notifyPlugin.'+trigger+'.' + pluginName + '.config.')}"/>
                     <g:if test="${pluginDescription instanceof Description}">
                         <div class="form-horizontal">
                             <g:each in="${pluginDescription?.properties}" var="prop">

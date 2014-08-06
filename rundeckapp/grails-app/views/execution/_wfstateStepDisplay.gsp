@@ -43,7 +43,7 @@
                       data-stepctx="${myctx}"
                       style="${wdgt.styleVisible(if: wfstep.stepState.errorMessage)}">
                     <g:if test="${wfstep.stepState.errorMessage}">
-                    %{--${wfstep.stepState.errorMessage.encodeAsHTML()}--}%
+                    %{--${enc(html:wfstep.stepState.errorMessage)}--}%
                     </g:if>
                 </span>
             </div>
@@ -57,18 +57,18 @@
                                value="${wfstep.nodeStateMap[nodename]?.executionState ?: ExecutionState.WAITING}"/>
                         <div class="nodeinfo">
                             <span class="execstate isnode"
-                                  data-node="${nodename.encodeAsHTML()}"
+                                  data-node="${g.enc(html:nodename)}"
                                   data-stepctx="${myctx}"
                                   data-execstate="${execState}">
                                 ${nodename}
 
                             </span>
                             <span class="errmsg isnode"
-                                  data-node="${nodename.encodeAsHTML()}"
+                                  data-node="${g.enc(html:nodename)}"
                                   data-stepctx="${myctx}"
                                   style="${wdgt.styleVisible(if: wfstep.nodeStateMap[nodename]?.errorMessage)}">
                                 <g:if test="${wfstep.nodeStateMap[nodename]?.errorMessage}">
-                                %{--${wfstep.nodeStateMap[nodename].errorMessage.encodeAsHTML()}--}%
+                                %{--${enc(html:wfstep.nodeStateMap[nodename].errorMessage)}--}%
                                 </g:if>
                             </span>
                         </div>

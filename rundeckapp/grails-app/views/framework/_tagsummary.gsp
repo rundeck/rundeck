@@ -44,10 +44,10 @@
                                       />
                         </g:if>
                         <g:elseif test="${action}">
-                            <span class="${action.classnames}" onclick="${action.onclick}" data-tag="${tag.encodeAsHTML()}" title="Filter by tag: ${tag}">${tag.encodeAsHTML()}:${tagsummary[tag]}</span>
+                            <span class="${action.classnames}" onclick="${action.onclick}" data-tag="${enc(html:tag)}" title="Filter by tag: ${tag}">${enc(html:tag)}:${tagsummary[tag]}</span>
                         </g:elseif>
                         <g:else>
-                            ${tag.encodeAsHTML()}:${tagsummary[tag]}
+                            ${enc(html:tag)}:${tagsummary[tag]}
                         </g:else>
                         </span>
                 </g:if>
@@ -68,11 +68,11 @@
                             </g:if>
                             <g:elseif test="${action}">
                                 <span class=" ${action.classnames}" onclick="${action.onclick}"
-                                      data-tag="${tag.encodeAsHTML()}"
-                                      title="Filter by tag: ${tag}">${tag.encodeAsHTML()}:${tagsummary[tag]}</span>
+                                      data-tag="${enc(html:tag)}"
+                                      title="Filter by tag: ${tag}">${enc(html:tag)}:${tagsummary[tag]}</span>
                             </g:elseif>
                             <g:else>
-                                ${tag.encodeAsHTML()}
+                                ${enc(html:tag)}
                                 (${tagsummary[tag]})
                             </g:else></span>
                     </g:each>

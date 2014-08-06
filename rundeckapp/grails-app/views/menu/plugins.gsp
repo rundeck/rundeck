@@ -35,7 +35,7 @@
             <g:set var="pluginUrl" value="http://rundeck.org/plugins/?${pluginParams}"/>
             <g:set var="pluginLinkUrl"
                    value="${grailsApplication.config?.rundeck?.gui?.pluginLink ?: pluginUrl}"/>
-            <a href="${pluginLinkUrl.encodeAsHTML()}" class="btn btn-success ">
+            <a href="${enc(html:pluginLinkUrl)}" class="btn btn-success ">
                 <g:message code="gui.admin.GetPlugins" default="Get Plugins"/>
                 <i class="glyphicon glyphicon-arrow-right"></i>
             </a>
@@ -87,10 +87,10 @@
                     <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion${ukey}" href="#${ukeyx}">
                         <i class="glyphicon glyphicon-chevron-down"></i>
                     <i class="rdicon icon-small plugin"></i>
-                    ${(pluginTitle?:pluginName).encodeAsHTML()}</a>
+                    ${enc(html:pluginTitle?:pluginName)}</a>
 
                     <g:if test="${pluginDesc}">
-                        <span class="text-muted">${pluginDesc.encodeAsHTML()}</span>
+                        <span class="text-muted">${enc(html:pluginDesc)}</span>
                     </g:if>
                     <g:if test="${bundledPlugins&& bundledPlugins[serviceName] && bundledPlugins[serviceName].contains(pluginName)}">
                         <span class="label label-default pull-right">bundled</span>

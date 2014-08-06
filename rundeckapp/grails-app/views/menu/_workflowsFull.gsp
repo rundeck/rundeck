@@ -38,7 +38,7 @@
             <div class="alert alert-dismissable alert-info">
                 <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
                 <div>
-                    ${flash.message.encodeAsHTML()}
+                    ${enc(html:flash.message)}
                 </div>
             </div>
         </g:if>
@@ -46,7 +46,7 @@
             <div class="alert alert-dismissable alert-warning">
                 <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
                 <div>
-                    ${flash.error.encodeAsHTML()}
+                    ${enc(html:flash.error)}
                 </div>
             </div>
         </g:if>
@@ -167,13 +167,13 @@
                                     <span class="querykey"><g:message code="jobquery.title.${qparam}"/></span>:
 
                                     <g:if test="${paginateParams[qparam] instanceof java.util.Date}">
-                                        <span class="queryvalue date" title="${paginateParams[qparam].toString().encodeAsHTML()}">
+                                        <span class="queryvalue date" title="${enc(html:paginateParams[qparam].toString())}">
                                             <g:relativeDate atDate="${paginateParams[qparam]}"/>
                                         </span>
                                     </g:if>
                                     <g:else>
                                         <span class="queryvalue text">
-                                            ${g.message(code:'jobquery.title.'+qparam+'.label.'+paginateParams[qparam].toString(),default:paginateParams[qparam].toString().encodeAsHTML())}
+                                            ${g.message(code:'jobquery.title.'+qparam+'.label.'+paginateParams[qparam].toString(),default:enc(html:paginateParams[qparam].toString()))}
                                         </span>
                                     </g:else>
 
@@ -212,7 +212,7 @@
                     <span class="popout message note" style="background:white">
                         ${flash.savedJobMessage?flash.savedJobMessage:'Saved changes to Job'}:
                         <g:link controller="scheduledExecution" action="show" id="${flash.savedJob.id}"
-                                params="[project: params.project ?: request.project]">${flash.savedJob.generateFullName().encodeAsHTML()}</g:link>
+                                params="[project: params.project ?: request.project]">${enc(html:flash.savedJob.generateFullName())}</g:link>
                     </span>
                     </div>
                     <g:javascript>

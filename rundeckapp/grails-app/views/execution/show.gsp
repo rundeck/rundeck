@@ -5,7 +5,7 @@
     <meta name="tabpage" content="events"/>
     <meta name="layout" content="base" />
     <title><g:message code="main.app.name"/> - <g:if test="${null==execution?.dateCompleted}"><g:message
-            code="now.running" /> - </g:if><g:if test="${scheduledExecution}">${scheduledExecution?.jobName.encodeAsHTML()} :  </g:if><g:else><g:message code="execution.type.adhoc.title" /></g:else> <g:message code="execution.at.time.by.user" args="[g.relativeDateString(atDate:execution.dateStarted),execution.user]"/></title>
+            code="now.running" /> - </g:if><g:if test="${scheduledExecution}">${g.enc(html:scheduledExecution?.jobName)} :  </g:if><g:else><g:message code="execution.type.adhoc.title" /></g:else> <g:message code="execution.at.time.by.user" args="[g.relativeDateString(atDate:execution.dateStarted),execution.user]"/></title>
     <g:set var="followmode" value="${params.mode in ['browse','tail','node']?params.mode:'tail'}"/>
     <g:set var="execState" value="${execution.dateCompleted == null ? 'RUNNING' : execution.status == 'true' ?
         'SUCCEEDED' : execution.cancelled ? 'ABORTED' : execution.timedOut ? 'TIMEDOUT' : 'FAILED'}"/>
@@ -37,10 +37,10 @@
       <g:javascript library="prototype/effects"/>
       <g:javascript>
 
-        var workflowData=${execution.workflow.commands*.toMap().encodeAsJSON()};
+        var workflowData=${enc(json:execution.workflow.commands*.toMap())};
         var workflow = new RDWorkflow(workflowData,{
-            nodeSteppluginDescriptions:${stepPluginDescriptions.node.collectEntries { [(it.key): [title: it.value.title]] }.encodeAsJSON()},
-            wfSteppluginDescriptions:${stepPluginDescriptions.workflow.collectEntries { [(it.key): [title: it.value.title]] }.encodeAsJSON()}
+            nodeSteppluginDescriptions:${enc(json:(stepPluginDescriptions.node.collectEntries { [(it.key): [title: it.value.title]] }))},
+            wfSteppluginDescriptions:${enc(json:(stepPluginDescriptions.workflow.collectEntries { [(it.key): [title: it.value.title]] }))}
         });
 
         var followControl = new FollowControl('${execution?.id}','outputappendform',{
@@ -143,8 +143,8 @@
             }});
             ko.mapping.fromJS({
                 completed:${execution.dateCompleted!=null},
-                startTime:'${execution.dateStarted.encodeAsJavaScript()}',
-                endTime:'${execution.dateCompleted?.encodeAsJavaScript()}',
+                startTime:'${enc(js:execution.dateStarted)}',
+                endTime:'${enc(js:execution.dateCompleted)}',
                 executionState:'${execState}'
             },{},nodeflowvm);
             ko.applyBindings(nodeflowvm,jQuery('#execution_main')[0]);

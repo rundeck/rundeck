@@ -26,9 +26,9 @@
     <div class="row">
     <div class="col-sm-12">
         <div class=" text-info">
-            <g:if test="${!hideTitle}">${description.title.encodeAsHTML()}</g:if>
+            <g:if test="${!hideTitle}">${enc(html:description.title)}</g:if>
             <g:if test="${!hideDescription}">
-                <small class="text-muted">${description.description?.encodeAsHTML()}</small>
+                <small class="text-muted">${enc(html:description.description)}</small>
             </g:if>
         </div>
     </div>
@@ -64,9 +64,9 @@
             <g:expander key="${rkey}_inv">Properties</g:expander>
             <ul id="${rkey}_inv" style="display:none">
                 <g:each var="prop" in="${values}">
-                    <li>${prop?.key.encodeAsHTML()}: ${prop?.value.encodeAsHTML()}</li>
-                    <input type="hidden" name="${(prefix + 'config.' + prop?.key).encodeAsHTML()}"
-                           value="${prop?.value?.encodeAsHTML()}"/>
+                    <li>${enc(html:prop?.key)}: ${enc(html:prop?.value)}</li>
+                    <input type="hidden" name="${enc(html: prefix + 'config.' + prop?.key)}"
+                           value="${enc(html: prop?.value)}"/>
                 </g:each>
             </ul>
         </g:elseif>

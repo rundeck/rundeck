@@ -23,11 +23,11 @@
 <g:javascript library="prototype/scriptaculous"/>
 <g:javascript library="prototype/effects"/>
 <g:javascript library="prototype/dragdrop"/>
-<g:set var="project" value="${scheduledExecution?.project ?: params.project?:request.project?: projects?.size() == 1 ? projects[0].name.encodeAsJavaScript() : ''}"/>
+<g:set var="project" value="${scheduledExecution?.project ?: params.project?:request.project?: projects?.size() == 1 ? projects[0].name : ''}"/>
 <script type="text/javascript">
 //<!CDATA[
-        var selFrameworkProject='${project.encodeAsJavaScript()}';
-        var selArgs='${scheduledExecution?.argString?.encodeAsJavaScript()}';
+        var selFrameworkProject='${enc(js:project)}';
+        var selArgs='${enc(js:scheduledExecution?.argString)}';
         var isWorkflow=${isWorkflow};
 var curSEID ='${editSchedExecId?editSchedExecId:""}';
 function getCurSEID(){
@@ -363,7 +363,7 @@ function getCurSEID(){
         </label>
         <div class="${fieldColHalfSize}">
             <g:textField name="jobName"
-                         value="${scheduledExecution?.jobName.encodeAsHTML()}"
+                         value="${enc(html:scheduledExecution?.jobName)}"
                          id="schedJobName"
                          class="form-control"
             />
@@ -387,7 +387,7 @@ function getCurSEID(){
                       <i class="glyphicon glyphicon-warning-sign"></i>
                     </span>
                 </g:hasErrors>
-                <input type='text' name="groupPath" value="${scheduledExecution?.groupPath?.encodeAsHTML()}"
+                <input type='text' name="groupPath" value="${enc(html:scheduledExecution?.groupPath)}"
                        id="schedJobGroup"
                     class="form-control"
                     placeholder="${g.message(code:'scheduledExecution.groupPath.description')}"
@@ -557,7 +557,7 @@ function getCurSEID(){
             </div>
 
         </g:hasErrors>
-        <g:set var="filtvalue" value="${scheduledExecution.asFilter().encodeAsHTML()}"/>
+        <g:set var="filtvalue" value="${enc(html:scheduledExecution.asFilter())}"/>
 
                 <span class="input-group nodefilters">
                     <g:if test="${session.user && User.findByLogin(session.user)?.nodefilters}">
@@ -639,7 +639,7 @@ function getCurSEID(){
                 <div class="row">
                 <div class="col-sm-4">
                 <input type='text' name="nodeThreadcount"
-                       value="${scheduledExecution?.nodeThreadcount?.encodeAsHTML()}" id="schedJobnodeThreadcount"
+                       value="${enc(html:scheduledExecution?.nodeThreadcount)}" id="schedJobnodeThreadcount"
                        size="3"
                        class="form-control input-sm"/>
                 </div>
@@ -666,7 +666,7 @@ function getCurSEID(){
                 <div class="row">
                     <div class="col-sm-4">
                 <input type='text' name="nodeRankAttribute"
-                       value="${scheduledExecution?.nodeRankAttribute?.encodeAsHTML()}" id="schedJobnodeRankAttribute"
+                       value="${enc(html:scheduledExecution?.nodeRankAttribute)}" id="schedJobnodeRankAttribute"
                        class="form-control input-sm"/>
                     </div>
                 </div>
@@ -837,7 +837,7 @@ function getCurSEID(){
 
         <div class="${fieldColHalfSize}">
 
-            <input type='text' name="timeout" value="${scheduledExecution?.timeout?.encodeAsHTML()}"
+            <input type='text' name="timeout" value="${enc(html:scheduledExecution?.timeout)}"
                    id="schedJobTimeout" maxlength="256" class="form-control"/>
 
             <span class="help-block">
@@ -853,7 +853,7 @@ function getCurSEID(){
 
         <div class="${fieldColHalfSize}">
 
-            <input type='text' name="retry" value="${scheduledExecution?.retry?.encodeAsHTML()}"
+            <input type='text' name="retry" value="${enc(html:scheduledExecution?.retry)}"
                    id="schedJobRetry" maxlength="256" class="form-control"/>
 
             <span class="help-block">
@@ -872,11 +872,11 @@ function getCurSEID(){
         <div class="${fieldColSize}">
             <g:if test="${editSchedExecId && scheduledExecution?.uuid}">
                 <p class="form-control-static text-muted" title="UUID for this Job">
-                    ${scheduledExecution?.uuid?.encodeAsHTML()}
+                    ${enc(html:scheduledExecution?.uuid)}
                 </p>
             </g:if>
             <g:else>
-                <input type='text' name="uuid" value="${scheduledExecution?.uuid?.encodeAsHTML()}"
+                <input type='text' name="uuid" value="${enc(html:scheduledExecution?.uuid)}"
                        id="schedJobUuid" size="36" class="form-control"/>
                 <g:hasErrors bean="${scheduledExecution}" field="uuid">
                     <i class="glyphicon glyphicon-warning-sign" id="schedJobUuidErr"></i>

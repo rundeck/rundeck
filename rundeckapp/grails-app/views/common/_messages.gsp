@@ -4,7 +4,7 @@
             <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
         </g:unless>
         <g:if test="${flash.message || request.message}">
-            <g:autoLink>${flash.message?.encodeAsHTML()}${request.message?.encodeAsHTML()}</g:autoLink>
+            <g:autoLink>${g.enc(html:flash.message)}${g.enc(html:request.message)}</g:autoLink>
         </g:if>
     </div>
 </g:if>
@@ -14,8 +14,8 @@
             <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
         </g:unless>
         <g:if test="${flash.error || request.error || flash.errorCode || request.errorCode}">
-            <g:autoLink>${flash.error?.encodeAsHTML()}${request.error && request.error instanceof String ?
-                request.error.encodeAsHTML() : ''}</g:autoLink>
+            <g:autoLink>${g.enc(html:flash.error)}${request.error && request.error instanceof String ?
+                g.enc(html:request.error) : ''}</g:autoLink>
             <g:if test="${flash.errorCode ?: request.errorCode}">
                 <g:message code="${flash.errorCode ?: request.errorCode}"
                            args="${flash.errorArgs ?: request.errorArgs}"/>
@@ -29,7 +29,7 @@
             <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
         </g:unless>
         <g:if test="${flash.warn || request.warn}">
-            <g:autoLink>${flash.warn?.encodeAsHTML()}${request.warn?.encodeAsHTML()}</g:autoLink>
+            <g:autoLink>${g.enc(html:flash.warn)}${g.enc(html:request.warn)}</g:autoLink>
         </g:if>
     </div>
 </g:if>

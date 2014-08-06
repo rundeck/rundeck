@@ -194,7 +194,7 @@
             <g:hiddenField name="offset" value="${offset}"/>
             <g:hiddenField name="formInput" value="true"/>
             <g:set var="filtvalue"
-                   value="${query?.('filter')?.encodeAsHTML()}"/>
+                   value="${enc(html:query?.('filter'))}"/>
 
             <div class="form-group">
                 <span class="input-group" >
@@ -229,7 +229,7 @@
         <div class="well well-sm inline ">
             <div data-bind="visible: filterName()">
 
-                Selected Filter:  <strong data-bind="text: filterName()">${filterName.encodeAsHTML()}</strong>
+                Selected Filter:  <strong data-bind="text: filterName()">${enc(html:filterName)}</strong>
                         <span data-bind="visible: filterName()">
                             <a href="#"
                                 class="textbtn textbtn-danger"

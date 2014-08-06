@@ -9,7 +9,7 @@
     <span class="querykey"><g:message code="jobquery.title.${qparam}"/></span>:
 
     <g:if test="${displayParams[qparam] instanceof java.util.Date}">
-        <span class="queryvalue date" title="${displayParams[qparam].toString().encodeAsHTML()}">
+        <span class="queryvalue date" title="${enc(html:displayParams[qparam])}">
             <g:relativeDate atDate="${displayParams[qparam]}"/>
         </span>
     </g:if>

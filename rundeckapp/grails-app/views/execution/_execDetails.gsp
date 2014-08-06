@@ -152,7 +152,7 @@
                     </g:if>
                     <g:else>
                     <g:javascript>
-                        _g_nodeFilterData['${rkey}']=${jsdata.encodeAsJSON()};
+                        _g_nodeFilterData['${rkey}']=${g.enc(json:jsdata)};
                     </g:javascript>
                     <span class="action textbtn  textbtn query " title="Display matching nodes" onclick="_updateMatchedNodes(_g_nodeFilterData['${rkey}'],'matchednodes_${rkey}','${execdata?.project}',false,{requireRunAuth:true});">
                         <g:render template="/framework/displayNodeFilters" model="${[displayParams:execdata]}"/>
@@ -186,7 +186,7 @@
                                var="isAscending"/>
 
                         <g:message code="sort.nodes.by"  />
-                        <strong>${execdata?.nodeRankAttribute ? execdata?.nodeRankAttribute?.encodeAsHTML() : 'name'}</strong>
+                        <strong>${execdata?.nodeRankAttribute ? g.enc(html:execdata?.nodeRankAttribute) : 'name'}</strong>
                         in
                         <strong>
                             <g:message code="${isAscending ? 'ascending' : 'descending'}"/>
@@ -253,7 +253,7 @@
                 <g:message code="scheduledExecution.property.timeout.label" />
             </td>
             <td>
-                <span title="Timeout duration">${execdata.timeout.encodeAsHTML()}</span>
+                <span title="Timeout duration">${g.enc(html:execdata.timeout)}</span>
             </td>
         </tr>
     </g:if>
@@ -263,7 +263,7 @@
                 <span class="jobuuid desc">UUID:</span>
             </td>
             <td>
-                <span class="jobuuid desc" title="UUID for this job">${scheduledExecution.uuid.encodeAsHTML()}</span>
+                <span class="jobuuid desc" title="UUID for this job">${g.enc(html:scheduledExecution.uuid)}</span>
             </td>
         </tr>
         <tr>

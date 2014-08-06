@@ -48,7 +48,7 @@
             <div class="row">
                 <span class="col-sm-12">
                     <h3 class="text-muted">
-                        ${loginmsg.encodeAsHTML()}
+                        ${enc(html:loginmsg)}
                     </h3>
                 </span>
             </div>

@@ -29,9 +29,9 @@
                             <tr class=" expandComponentHolder expanded" id="jobrow_${scheduledExecution.id}">
                                <td class="jobname">
                                    <div style="overflow:hidden; text-overflow: ellipsis; height:16px;">
-                                       <span class="action textbtn" title="Choose this job" onclick="${jobsjscallback}('${scheduledExecution.jobName}','${scheduledExecution.groupPath}');">${scheduledExecution.jobName.encodeAsHTML()}</span>
+                                       <span class="action textbtn" title="Choose this job" onclick="${jobsjscallback}('${scheduledExecution.jobName}','${scheduledExecution.groupPath}');">${enc(html:scheduledExecution.jobName)}</span>
 
-                                       <span class="jobdesc" title="${scheduledExecution.description?.encodeAsHTML()}">${scheduledExecution.description?.encodeAsHTML()}</span>
+                                       <span class="jobdesc" title="${enc(html:scheduledExecution.description)}">${enc(html:scheduledExecution.description)}</span>
                                    </div>
                                </td>
                             </tr>
@@ -69,7 +69,7 @@
                                         <g:if test="${showIcon}">
                                             <i class="glyphicon glyphicon-book"></i>
                                         </g:if>
-                                        ${scheduledExecution.jobName.encodeAsHTML()}
+                                        ${enc(html:scheduledExecution.jobName)}
                                     </g:link>
 
                                 <g:if test="${jobauthorizations && jobauthorizations[AuthConstants.ACTION_UPDATE]?.contains(scheduledExecution.id.toString())}">
@@ -82,7 +82,7 @@
                                         edit</g:link>
                                 </g:if>
 
-                                <span class="text-muted" title="${scheduledExecution.description?.encodeAsHTML()}">${scheduledExecution.description?.encodeAsHTML()}</span>
+                                <span class="text-muted" title="${enc(html:scheduledExecution.description)}">${enc(html:scheduledExecution.description)}</span>
 
                             </td>
                             <td class="scheduletime">

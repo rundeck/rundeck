@@ -51,7 +51,7 @@
         </g:if>
         <g:if test="${isErrorHandler}">
             <g:if test="${item.keepgoingOnSuccess}">
-                <span class=" succeed" title="${g.message(code:'Workflow.stepErrorHandler.keepgoingOnSuccess.description').encodeAsHTML()}"><g:message code="Workflow.stepErrorHandler.label.keep.going.on.success" /></span>
+                <span class=" succeed" title="${g.enc(code:'Workflow.stepErrorHandler.keepgoingOnSuccess.description')}"><g:message code="Workflow.stepErrorHandler.label.keep.going.on.success" /></span>
             </g:if>
         </g:if>
     </span>

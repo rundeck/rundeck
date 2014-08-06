@@ -54,7 +54,7 @@
 </g:if>
 <g:if test="${filterName}">
     <div class="filterdef saved clear">
-        <span class="prompt">${filterName.encodeAsHTML()}</span>
+        <span class="prompt">${g.enc(html:filterName)}</span>
         <span class="textbtn textbtn-danger pull-right" onclick="['${rkey}fdel','${rkey}fdelbtn'].each(Element.toggle);" id="${rkey}fdelbtn" title="Click to delete this saved filter">
             <b class="glyphicon glyphicon-remove"></b>
             delete&hellip;

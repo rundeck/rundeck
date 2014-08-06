@@ -54,13 +54,13 @@
                 id="${fieldwatchid}"/>
         </g:else>
             <%-- event handler: when text field is empty, show required option value warning icon if it exists--%>
-            <wdgt:eventHandler for="${fieldwatchid}" state="empty" visible="true" targetSelector="${'#'+optName.encodeAsHTML()+'_state span.reqwarning'}" frequency="1"  inline='true'/>
+            <wdgt:eventHandler for="${fieldwatchid}" state="empty" visible="true" targetSelector="${'#'+enc(html:optName)+'_state span.reqwarning'}" frequency="1"  inline='true'/>
         </div>
     </g:if>
     <g:elseif test="${optionSelect.enforced && err}">
         <div class=" col-sm-${textcolsize}">
         <span class="info note"><g:message code="Execution.option.enforced.values.could.not.be.loaded" /></span>
-        <input type="hidden" name="${realFieldName.encodeAsHTML()}" id="${fieldwatchid.encodeAsHTML()}" value=""/>
+        <input type="hidden" name="${enc(html:realFieldName)}" id="${enc(html:fieldwatchid)}" value=""/>
         </div>
     </g:elseif>
     <%-- The Dropdown list --%>
@@ -86,14 +86,14 @@
                 <g:set var="selvalue" value="${valuesMap?valuesMap[sellabel]:sellabel}"/>
             </g:else>
             <g:hiddenField name="${realFieldName}" value="${selvalue}" id="${fieldwatchid}"/>
-            <p class="form-control-static"><span class="singlelabel">${sellabel.encodeAsHTML()}</span></p>
+            <p class="form-control-static"><span class="singlelabel">${enc(html:sellabel)}</span></p>
         </g:if>
         <g:else>
 
             <g:if test="${optionSelect.multivalued}">
                 <!-- use checkboxes -->
                 <g:set var="defaultMultiValues" value="${optionSelect.listDefaultMultiValues()}"/>
-                <div class="optionmultiarea " id="${fieldwatchid.encodeAsHTML()}">
+                <div class="optionmultiarea " id="${enc(html:fieldwatchid)}">
                     <g:if test="${!optionSelect.enforced}">
                         <%-- variable input text fields --%>
                         <div class="container">
@@ -106,7 +106,7 @@
                         </div>
                         </div>
                         <div class="">
-                        <div id="${rkey.encodeAsHTML()}varinput" class="">
+                        <div id="${enc(html:rkey)}varinput" class="">
 
                         </div>
                         </div>
@@ -122,9 +122,9 @@
                         <g:set var="newvals" value="${selectedoptsmap ? labelsSetValues?selectedoptsmap[optName].findAll {  !labelsSetValues.contains(it) } : selectedoptsmap[optName] : null}"/>
                         <g:if test="${newvals}">
                             <g:javascript>
-                                fireWhenReady('${rkey.encodeAsJavaScript()}varinput', function(){
+                                fireWhenReady('${enc(js:rkey)}varinput', function(){
                                 <g:each in="${newvals}" var="nvalue">
-                                    ExecutionOptions.addMultivarValue('${optName.encodeAsJavaScript()}','${rkey.encodeAsJavaScript()}varinput','${nvalue.encodeAsJavaScript()}');
+                                    ExecutionOptions.addMultivarValue('${enc(js:optName)}','${enc(js:rkey)}varinput','${enc(js:nvalue)}');
                                 </g:each>
                                 }
                                 );
@@ -132,7 +132,7 @@
                         </g:if>
                         <g:if test="${!labelsSet && !newvals}">
                             <g:javascript>
-                                fireWhenReady('${rkey}varinput', function(){ ExecutionOptions.addMultivarValue('${optName.encodeAsJavaScript()}','${rkey}varinput'); } );
+                                fireWhenReady('${rkey}varinput', function(){ ExecutionOptions.addMultivarValue('${enc(js:optName)}','${rkey}varinput'); } );
                             </g:javascript>
                         </g:if>
                     </g:if>
@@ -142,8 +142,8 @@
                         <div class="">
                         <div class="optionvaluemulti ">
                             <label>
-                                <input type="checkbox" name="${realFieldName.encodeAsHTML()}" value="${entry.value.encodeAsHTML()}" ${selectedvalue && entry.value == selectedvalue || (defaultMultiValues? entry.value in defaultMultiValues : entry.value == optionSelect.defaultValue) || selectedoptsmap && entry.value in selectedoptsmap[optName] ? 'checked' : ''} />
-                                ${entry.name.encodeAsHTML()}
+                                <input type="checkbox" name="${enc(html:realFieldName)}" value="${enc(html:entry.value)}" ${selectedvalue && entry.value == selectedvalue || (defaultMultiValues? entry.value in defaultMultiValues : entry.value == optionSelect.defaultValue) || selectedoptsmap && entry.value in selectedoptsmap[optName] ? 'checked' : ''} />
+                                ${enc(html:entry.name)}
                             </label>
                         </div>
                         </div>
@@ -152,14 +152,14 @@
                     </g:each>
                 </div>
                 <g:javascript>
-                    fireWhenReady('${fieldwatchid.encodeAsJavaScript()}', function(){
-                            $$('#${fieldwatchid.encodeAsJavaScript()} input[type="checkbox"]').each(function(e){
-                                Event.observe(e,'change',ExecutionOptions.multiVarCheckboxChangeWarningHandler.curry('${optName.encodeAsJavaScript()}'));
+                    fireWhenReady('${enc(js:fieldwatchid)}', function(){
+                            $$('#${enc(js:fieldwatchid)} input[type="checkbox"]').each(function(e){
+                                Event.observe(e,'change',ExecutionOptions.multiVarCheckboxChangeWarningHandler.curry('${enc(js:optName)}'));
                             });
-                            $$('#${fieldwatchid.encodeAsJavaScript()} .obs_addvar').each(function(e){
+                            $$('#${enc(js:fieldwatchid)} .obs_addvar').each(function(e){
                                 Event.observe(e,'click', function(evt){
                                     var roc=_remoteOptionControl('_commandOptions');
-                                    ExecutionOptions.addMultivarValue('${optName.encodeAsJavaScript()}','${rkey.encodeAsJavaScript()}varinput',null,roc.observeMultiCheckbox.bind(roc));
+                                    ExecutionOptions.addMultivarValue('${enc(js:optName)}','${enc(js:rkey)}varinput',null,roc.observeMultiCheckbox.bind(roc));
                                 });
                             });
                         }
@@ -168,15 +168,15 @@
             </g:if>
             <g:else>
                 <g:set var="usesTextField" value="${!optionSelect.enforced || err}"/>
-                <select class="optionvalues  form-control" id="${!usesTextField? fieldwatchid.encodeAsHTML(): (rkey + '_sel').encodeAsHTML()}"
-                    ${!usesTextField ? 'name="' + realFieldName.encodeAsHTML() + '"' : ''}>
+                <select class="optionvalues  form-control" id="${!usesTextField? enc(html:fieldwatchid): enc(html:rkey + '_sel')}"
+                    ${!usesTextField ? 'name="' + enc(html:realFieldName) + '"' : ''}>
                     <g:if test="${!optionSelect.enforced && !optionSelect.multivalued}">
                         <option value="">-choose-</option>
                     </g:if>
 
                     <g:each in="${labelsSet}" var="sellabel">
                         <g:set var="entry" value="${sellabel instanceof Map?sellabel:[name:sellabel,value:sellabel]}"/>
-                        <option value="${entry.value.encodeAsHTML()}" ${selectedvalue && entry.value == selectedvalue || entry.value == optionSelect.defaultValue || selectedoptsmap && entry.value == selectedoptsmap[optName] ? 'selected' : ''}>${entry.name.encodeAsHTML()}</option>
+                        <option value="${enc(html:entry.value)}" ${selectedvalue && entry.value == selectedvalue || entry.value == optionSelect.defaultValue || selectedoptsmap && entry.value == selectedoptsmap[optName] ? 'selected' : ''}>${enc(html:entry.name)}</option>
                     </g:each>
                 </select>
                 <g:if test="${usesTextField}">
@@ -189,8 +189,8 @@
         </g:else>
         <g:if test="${optionSelect.enforced}">
             <g:javascript>
-            fireWhenReady('${optName.encodeAsJavaScript()}_state',
-            function(){ $$('${'#' + optName.encodeAsJavaScript()+'_state span.reqwarning'}').each(function(e){$(e).hide();}); }
+            fireWhenReady('${enc(js:optName)}_state',
+            function(){ $$('${'#' + enc(js:optName)+'_state span.reqwarning'}').each(function(e){$(e).hide();}); }
             );
 
             </g:javascript>
@@ -199,25 +199,25 @@
     </g:if>
     <g:if test="${hasDefaulter}">
         <span class="textbtn textbtn-default"
-              id="${optName.encodeAsJavaScript()}_setdefault"
-              title="Click to use default value: ${optionSelect.defaultValue.encodeAsHTML()}"
+              id="${enc(js:optName)}_setdefault"
+              title="Click to use default value: ${enc(html:optionSelect.defaultValue)}"
             style="${wdgt.styleVisible(if: selectedoptsmap && selectedoptsmap[optName]!=optionSelect.defaultValue)}"
         >
-            default: <g:truncate max="50">${optionSelect.defaultValue.encodeAsHTML()}</g:truncate>
+            default: <g:truncate max="50">${enc(html:optionSelect.defaultValue)}</g:truncate>
         </span>
         <g:javascript>
-            fireWhenReady('${optName.encodeAsJavaScript()}_setdefault',
-            function(){ $$('${'#' + optName.encodeAsJavaScript() + '_setdefault'}').each(function(e){
+            fireWhenReady('${enc(js:optName)}_setdefault',
+            function(){ $$('${'#' + enc(js:optName) + '_setdefault'}').each(function(e){
                 Event.observe(e,'click',function(evt){
-                    $('${fieldwatchid}').setValue('${optionSelect.defaultValue.encodeAsJavaScript()}');
+                    $('${fieldwatchid}').setValue('${enc(js:optionSelect.defaultValue)}');
                 });
             }); }
             );
             <wdgt:eventHandlerJS
                     for="${fieldwatchid}"
-                    notequals="${optionSelect.defaultValue.encodeAsJavaScript()}"
+                    notequals="${enc(js:optionSelect.defaultValue)}"
                     visible="true"
-                    target="${optName.encodeAsHTML() + '_setdefault'}"
+                    target="${enc(html:optName) + '_setdefault'}"
                     frequency="1"
                     inline='true'/>
         </g:javascript>
@@ -226,10 +226,10 @@
     <g:javascript>
         fireWhenReady('_commandOptions', function(){
             <g:if test="${optionSelect.multivalued}">
-            _remoteOptionControl('_commandOptions').setFieldMultiId('${optName.encodeAsJavaScript()}','${fieldwatchid.encodeAsJavaScript()}');
+            _remoteOptionControl('_commandOptions').setFieldMultiId('${enc(js:optName)}','${enc(js:fieldwatchid)}');
             </g:if>
             <g:else>
-            _remoteOptionControl('_commandOptions').setFieldId('${optName.encodeAsJavaScript()}','${fieldwatchid.encodeAsJavaScript()}');
+            _remoteOptionControl('_commandOptions').setFieldId('${enc(js:optName)}','${enc(js:fieldwatchid)}');
             </g:else>
         });
     </g:javascript>
@@ -244,23 +244,23 @@
     <g:if test="${err.code=='empty'}">
        <g:javascript>
         fireWhenReady('_commandOptions', function(){
-            _remoteOptionControl('_commandOptions').setFieldRemoteEmpty('${optName.encodeAsJavaScript()}');
+            _remoteOptionControl('_commandOptions').setFieldRemoteEmpty('${enc(js:optName)}');
         });
         </g:javascript>
     </g:if>
-    <g:expander key="${rkey}_error_detail" classnames="textbtn-warning">${err.message.encodeAsHTML()}</g:expander>
+    <g:expander key="${rkey}_error_detail" classnames="textbtn-warning">${enc(html:err.message)}</g:expander>
 
     <div class="alert alert-warning" style="display:none" id="${rkey}_error_detail">
         <g:if test="${err.exception}">
-            <div>Exception: ${err.exception.message.encodeAsHTML()}</div>
+            <div>Exception: ${enc(html:err.exception.message)}</div>
         </g:if>
         <g:if test="${srcUrl}">
-            <div>URL: ${srcUrl.encodeAsHTML()}</div>
+            <div>URL: ${enc(html:srcUrl)}</div>
         </g:if>
     </div>
     </div>
     </div>
 </g:if>
 <g:elseif test="${values}">
-    %{--<g:img file="icon-tiny-ok.png" title="Remote option values loaded from URL: ${srcUrl.encodeAsHTML()}"/>--}%
+    %{--<g:img file="icon-tiny-ok.png" title="Remote option values loaded from URL: ${enc(html:srcUrl)}"/>--}%
 </g:elseif>

@@ -28,7 +28,7 @@
     <label class="control-label col-sm-2"
            for="schedJobNodeInclude${key}">${NODE_FILTER_MAP[key] ? NODE_FILTER_MAP[key] : key}:</label>
     <g:set var="filtvalue"
-           value="${query?.('node' + type + key)?.encodeAsHTML()}"/>
+           value="${enc(html: query?.('node' + type + key))}"/>
 
     <div class="${predefinedDefaults ? 'col-sm-4' : 'col-sm-6'} nfilteritem">
         <input type='text' name="node${type}${key}" class="filterIncludeText form-control input-sm"

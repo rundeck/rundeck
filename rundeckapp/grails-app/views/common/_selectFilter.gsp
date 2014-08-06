@@ -30,8 +30,8 @@
                 class="${isActive ? 'active' : ''} textbtn textbtn-primary nodefilterlink "
             data-node-filter-name="${filter.name}"
             data-node-filter="${filter.asFilter()}"
-                title="Apply filter: ${filter.name.encodeAsHTML()}">
-            ${filter.name.encodeAsHTML()}</g:link>
+                title="Apply filter: ${g.enc(html:filter.name)}">
+            ${g.enc(html:filter.name)}</g:link>
         </li>
     </g:each>
 </g:if>
@@ -46,8 +46,8 @@
             data-node-filter-name="${filter.name}"
             data-node-filter="${filter.asFilter()}"
             data-placement="bottom"
-                title="Apply filter: ${filter.name.encodeAsHTML()}">
-            ${filter.name.encodeAsHTML()}</g:link>
+                title="Apply filter: ${g.enc(html:filter.name)}">
+            ${g.enc(html:filter.name)}</g:link>
     </g:each>
     </span>
 </g:elseif>

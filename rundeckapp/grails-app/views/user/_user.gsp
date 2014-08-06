@@ -79,7 +79,7 @@
                     </div>
 
                     <g:javascript>
-                    fireWhenReady('${rkeytok}',function(){addBehavior('${rkeytok}',"${user.login.encodeAsJavaScript()}");});
+                    fireWhenReady('${rkeytok}',function(){addBehavior('${rkeytok}',"${enc(js:user.login)}");});
                     fireWhenReady('${rkeytok}',function(){highlightNew('${rkeytok}');});
                     </g:javascript>
                 </td>
