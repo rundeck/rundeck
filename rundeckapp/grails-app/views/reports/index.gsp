@@ -16,7 +16,7 @@
         function _pageUpdateNowRunning(count, perc) {
             document.title = "Now Running (" + count + ")";
             if($('nrlocal')){
-                setText($('nrlocal', '' + count);
+                setText($('nrlocal'), '' + count);
             }
             if(pagefirstload){
                 pagefirstload=false;
