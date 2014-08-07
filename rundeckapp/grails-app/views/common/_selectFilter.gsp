@@ -28,9 +28,9 @@
         <li>
         <g:link action="nodes" controller="framework" params="[filterName: filter.name, project: project ?: params.project]"
                 class="${isActive ? 'active' : ''} textbtn textbtn-primary nodefilterlink "
-            data-node-filter-name="${filter.name}"
-            data-node-filter="${filter.asFilter()}"
-                title="Apply filter: ${g.enc(html:filter.name)}">
+            data-node-filter-name="${enc(attr:filter.name)}"
+            data-node-filter="${enc(attr:filter.asFilter())}"
+                title="Apply filter: ${enc(attr:filter.name)}">
             ${g.enc(html:filter.name)}</g:link>
         </li>
     </g:each>
@@ -43,10 +43,10 @@
         <g:set var="isActive" value="${filter.name == filterName}"/>
         <g:link action="nodes" controller="framework" params="[filterName: filter.name,project:project?:params.project]"
                 class="${isActive ? 'active' : ''} textbtn textbtn-primary has_tooltip nodefilterlink "
-            data-node-filter-name="${filter.name}"
-            data-node-filter="${filter.asFilter()}"
+            data-node-filter-name="${enc(attr:filter.name)}"
+            data-node-filter="${enc(attr:filter.asFilter())}"
             data-placement="bottom"
-                title="Apply filter: ${g.enc(html:filter.name)}">
+                title="Apply filter: ${g.enc(attr:filter.name)}">
             ${g.enc(html:filter.name)}</g:link>
     </g:each>
     </span>

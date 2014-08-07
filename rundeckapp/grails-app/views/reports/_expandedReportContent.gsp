@@ -15,7 +15,7 @@
 <g:if test="${!colspan}">
     <g:set var="colspan" value="${1}"/>
 </g:if>
-<tr class=" subsection" id="${subkey}_${it.id}" style="display:none">
+<tr class=" subsection" id="${enc(attr:subkey+'_'+it.id)}" style="display:none">
            <td colspan="${colspan}">
                <div class="left">
                    <div class="right">

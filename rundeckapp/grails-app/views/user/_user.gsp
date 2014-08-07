@@ -50,7 +50,7 @@
         </g:if>
         <g:if test="${session.user==user.login && (auth.resourceAllowedTest(kind:'user',action:[AuthConstants.ACTION_ADMIN],context:'application'))}">
             <g:set var="rkeytok" value="${g.rkey()}"/>
-            <tr id="${rkeytok}" class="userapitoken">
+            <tr id="${enc(attr:rkeytok)}" class="userapitoken">
                 <td>API Tokens:</td>
                 <td>
                     <g:set var="tokens" value="${rundeck.AuthToken.findAllByUser(user)}"/>

@@ -33,7 +33,7 @@
     <g:set var="filterset" value="${User.findByLogin(session.user)?.jobfilters}"/>
 </g:if>
 
-<div id="${rkey}wffilterform">
+<div id="${enc(attr:rkey)}wffilterform">
         <g:if test="${flash.message}">
             <div class="alert alert-dismissable alert-info">
                 <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
@@ -60,7 +60,7 @@
     <table cellspacing="0" cellpadding="0" width="100%">
         <tr>
 
-            <td style="text-align:left;vertical-align:top;width:200px; ${wdgt.styleVisible(if:filtersOpen)}" id="${rkey}filter" class="wffilter" >
+            <td style="text-align:left;vertical-align:top;width:200px; ${wdgt.styleVisible(if:filtersOpen)}" id="${enc(attr:rkey)}filter" class="wffilter" >
 
             <g:form action="jobs" params="[project:params.project]" method="get" class="form">
                 <g:if test="${params.compact}">
@@ -79,25 +79,25 @@
                             <g:hiddenField name="offset" value="${offset}"/>
                             <g:if test="${params.idlist}">
                                 <div class="form-group">
-                                    <label for="${rkey}idlist"><g:message code="jobquery.title.idlist"/></label>:
+                                    <label for="${enc(attr:rkey)}idlist"><g:message code="jobquery.title.idlist"/></label>:
                                     <g:textField name="idlist" id="${rkey}idlist" value="${params.idlist}"
                                                  class="form-control" />
                                 </div>
                             </g:if>
                             <div class="form-group">
-                                <label for="${rkey}jobFilter"><g:message code="jobquery.title.jobFilter"/></label>:
+                                <label for="${enc(attr:rkey)}jobFilter"><g:message code="jobquery.title.jobFilter"/></label>:
                                 <g:textField name="jobFilter" id="${rkey}jobFilter" value="${params.jobFilter}"
                                              class="form-control" />
                             </div>
 
                             <div class="form-group">
-                                <label for="${rkey}groupPath"><g:message code="jobquery.title.groupPath"/></label>:
+                                <label for="${enc(attr:rkey)}groupPath"><g:message code="jobquery.title.groupPath"/></label>:
                                 <g:textField name="groupPath" id="${rkey}groupPath" value="${params.groupPath}"
                                              class="form-control"/>
                             </div>
 
                             <div class="form-group">
-                                <label for="${rkey}descFilter"><g:message code="jobquery.title.descFilter"/></label>:
+                                <label for="${enc(attr:rkey)}descFilter"><g:message code="jobquery.title.descFilter"/></label>:
                                 <g:textField name="descFilter" id="${rkey}descFilter" value="${params.descFilter}"
                                              class="form-control"/>
                             </div>
@@ -111,7 +111,7 @@
             </g:form>
 
             </td>
-            <td style="text-align:left;vertical-align:top;" id="${rkey}wfcontent" class="wfcontent">
+            <td style="text-align:left;vertical-align:top;" id="${enc(attr:rkey)}wfcontent" class="wfcontent">
 
                 <div class="jobscontent head">
     <g:if test="${!params.compact}">
@@ -167,7 +167,7 @@
                                     <span class="querykey"><g:message code="jobquery.title.${qparam}"/></span>:
 
                                     <g:if test="${paginateParams[qparam] instanceof java.util.Date}">
-                                        <span class="queryvalue date" title="${enc(html:paginateParams[qparam].toString())}">
+                                        <span class="queryvalue date" title="${enc(attr:paginateParams[qparam].toString())}">
                                             <g:relativeDate atDate="${paginateParams[qparam]}"/>
                                         </span>
                                     </g:if>
@@ -187,7 +187,7 @@
                     <span class="h4"><g:message code="domain.ScheduledExecution.title"/>s (${totalauthorized})</span>
                     </g:if>
 
-                    <span class="textbtn textbtn-default obs_filtertoggle"  id="${rkey}filter-toggle">
+                    <span class="textbtn textbtn-default obs_filtertoggle"  id="${enc(attr:rkey)}filter-toggle">
                         Filter
                         <b class="glyphicon glyphicon-chevron-${wasfiltered?'down':'right'}"></b>
                     </span>

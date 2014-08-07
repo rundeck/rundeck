@@ -30,14 +30,14 @@
         <g:if test="${filtersInc[qparam]}">
             <span class="querykey include">${enc(html:qparam)}</span>:
             <span class="queryvalue text include ${filtersInc[qparam].contains(varStr) ? 'variable' : ''}">
-                <g:truncate max="50" title="${enc(html: filtersInc[qparam])}">${enc(html:filtersInc[qparam])}</g:truncate></span>
+                <g:truncate max="50">${enc(html:filtersInc[qparam])}</g:truncate></span>
         </g:if>
     </g:each>
     <g:each in="${filtersExc.keySet().sort()}" var="qparam">
         <g:if test="${filtersExc[qparam]}">
             <span class="querykey exclude">${enc(html:qparam)}</span>:
             <span class="queryvalue text exclude ${filtersExc[qparam].contains(varStr) ? 'variable' : ''}">
-                <g:truncate max="50" title="${enc(html: filtersExc[qparam])}">${enc(html: filtersExc[qparam])}</g:truncate></span>
+                <g:truncate max="50">${enc(html: filtersExc[qparam])}</g:truncate></span>
         </g:if>
     </g:each>
 </g:if>
@@ -46,7 +46,7 @@
     <g:if test="${displayParams[qparam]}">
     <span class="querykey ${qparam=~/Exclude/?'exclude':'include'}"><g:message code="BaseNodeFilters.title.${qparam}"/></span>:
     <span class="queryvalue text ${qparam=~/Exclude/?'exclude':'include'} ${displayParams[qparam].contains(varStr) ? 'variable' : ''}">
-        <g:truncate max="50" title="${enc(html: displayParams[qparam])}"><g:message code="${'BaseNodeFilters.title.'+qparam+'.'+displayParams[qparam]}" default="${enc(html: displayParams[qparam])}"/></g:truncate></span>
+        <g:truncate max="50"><g:message code="${'BaseNodeFilters.title.'+qparam+'.'+displayParams[qparam]}" default="${enc(html: displayParams[qparam])}"/></g:truncate></span>
     </g:if>
 </g:each>
 </g:else>

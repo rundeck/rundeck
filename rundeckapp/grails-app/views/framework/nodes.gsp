@@ -190,13 +190,12 @@
     <g:set var="wasfiltered" value="${ paginateParams?.keySet().grep(~/(?!proj).*Filter|groupPath|project$/)||(query && !query.nodeFilterIsEmpty() && !summaryOnly)}"/>
     <g:set var="filtersOpen" value="${summaryOnly || showFilter||params.createFilters||params.editFilters||params.saveFilter || filterErrors?true:false}"/>
 
-    <div id="${ukey}filter">
+    <div id="${enc(attr:ukey)}filter">
         <g:form action="nodes" controller="framework" class="form form-inline" name="searchForm">
             <g:hiddenField name="max" value="${max}"/>
             <g:hiddenField name="offset" value="${offset}"/>
             <g:hiddenField name="formInput" value="true"/>
-            <g:set var="filtvalue"
-                   value="${enc(html:query?.('filter'))}"/>
+            <g:set var="filtvalue" value="${query?.('filter')}"/>
 
             <div class="form-group">
                 <span class="input-group" >
@@ -302,7 +301,7 @@
                            data-placement="left"
                         >
                             <i class="glyphicon glyphicon-play"></i>
-                            Run a command on <span data-bind="text: allcount">${total}</span>
+                            Run a command on <span data-bind="text: allcount">${enc(html:total)}</span>
                             <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span> …
                         </a>
                     </li>

@@ -12,7 +12,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
         </button>
-    <a href="${grailsApplication.config.rundeck.gui.titleLink ? grailsApplication.config.rundeck.gui.titleLink : g.resource(dir: '/')}"
+    <a href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.resource(dir: '/')}"
        title="Home" class="navbar-brand">
         <g:set var="appTitle"
                value="${grailsApplication.config.rundeck?.gui?.title ?: g.message(code: 'main.app.name',default:'Rundeck')}"/>
@@ -164,14 +164,14 @@
             </ul>
         </li>
         <li>
-            <a href="${g.enc(html:helpLinkUrl)}" class="help ">
+            <a href="${enc(attr:helpLinkUrl)}" class="help ">
                 help <b class="glyphicon glyphicon-question-sign"></b>
             </a>
         </li>
     </g:if>
     <g:else>
         <li >
-            <a href="${g.enc(html:helpLinkUrl)}" class="help ">
+            <a href="${enc(attr:helpLinkUrl)}" class="help ">
                 help <b class="glyphicon glyphicon-question-sign"></b>
             </a>
         </li>

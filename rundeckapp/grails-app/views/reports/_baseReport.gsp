@@ -34,9 +34,11 @@
             <g:set var="status" value="${execution.status == 'true' ? 'succeeded' : null == execution.dateCompleted ? 'running' : execution.cancelled ? 'killed' : 'failed'}"/>
         </g:if>
         <tr class="link autoclick ${it?.status != 'succeed' ? 'fail' : ''}  ${!it.dateCompleted ? 'nowrunning' : ''} ${sincetime && it.dateCompleted.time>sincetime?'newitem':''}  " >
+            <g:if test="${!hideEdit}">
             <td style="display: none" class="eventicon obs_bulk_edit_enable">
-                <input type="checkbox" value="${rpt.jcExecId}" name="bulk_edit" class="_defaultInput bulk_edit"/>
+                <input type="checkbox" value="${enc(attr:rpt.jcExecId)}" name="bulk_edit" class="_defaultInput bulk_edit"/>
             </td>
+            </g:if>
             <td class="eventicon autoclickable">
                 <i class="exec-status icon ${!execution.dateCompleted ? 'running' : execution.status == 'true' ?
                     'succeed' : execution.cancelled ? 'aborted' :execution.willRetry ? 'failedretry' :execution.timedOut ? 'timedout' : 'fail'}"></i>

@@ -31,15 +31,15 @@
            value="${enc(html: query?.('node' + type + key))}"/>
 
     <div class="${predefinedDefaults ? 'col-sm-4' : 'col-sm-6'} nfilteritem">
-        <input type='text' name="node${type}${key}" class="filterIncludeText form-control input-sm"
-               value="${filtvalue}" id="schedJobNodeInclude${key}" onchange="_matchNodes();"/>
+        <input type='text' name="node${enc(attr:type+key)}" class="filterIncludeText form-control input-sm"
+               value="${enc(attr:filtvalue)}" id="schedJobNodeInclude${enc(attr:key)}" onchange="_matchNodes();"/>
     </div>
     <g:if test="${predefinedDefaults}">
         <div class="col-sm-2">
             <g:select from="${predefinedDefaults.split(',').sort()}"
                       onchange="setFilter('${key}',true,this.value);_matchNodesKeyPress();"
                       class="form-control col-sm-2 input-sm"
-                      name="_${key}defaults"/>
+                      name="_${enc(attr:key)}defaults"/>
         </div>
     </g:if>
 

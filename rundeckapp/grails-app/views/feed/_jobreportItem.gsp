@@ -1,4 +1,4 @@
-<g:render template="/reports/baseReport" model="${[reports: [report], absoluteLinks:true, hideDate:true, hideShowLink:true, options:[summary:true]]}"/>
+<g:render template="/reports/baseReport" model="${[reports: [report], absoluteLinks:true, hideDate:true, hideShowLink:true, hideEdit:true, options:[summary:true]]}"/>
 <style>
 table td, table th {
     padding: 2px;

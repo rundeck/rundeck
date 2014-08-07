@@ -37,12 +37,12 @@
     <g:checkBox name="${fieldname}" value="true" checked="${values&&values[prop.name]?values[prop.name]=='true':prop.defaultValue=='true'}" id="${fieldid}"/>
     </td>
     <td>
-    <label class="${error ? 'fieldError' : ''}" for="${enc(html:fieldid)}">${prop.title? enc(html:prop.title): enc(html:prop.name)}</label>
+    <label class="${error ? 'fieldError' : ''}" for="${enc(attr:fieldid)}">${enc(html:prop.title?:prop.name)}</label>
 </g:elseif>
 <g:elseif test="${prop.type.toString()=='Select' || prop.type.toString()=='FreeSelect'}">
     <g:set var="fieldid" value="${g.rkey()}"/>
     <td>
-        <label class="${error ? 'fieldError' : ''}  ${prop.required ? 'required' : ''}" for="${enc(html:fieldid)}">${prop.title ? enc(html:prop.title) : enc(html:prop.name)}</label>:
+        <label class="${error ? 'fieldError' : ''}  ${prop.required ? 'required' : ''}" for="${enc(attr:fieldid)}">${enc(html:prop.title?:prop.name)}</label>:
     </td>
     <td>
     <g:hiddenField name="${origfieldname}" value="${values&&values[prop.name]?values[prop.name]:''}"/>
@@ -69,7 +69,7 @@
 <g:else>
     <g:set var="fieldid" value="${g.rkey()}"/>
     <td>
-    <label class="${error ? 'fieldError' : ''} ${prop.required?'required':''}" for="${enc(html:fieldid)}" >${prop.title ? enc(html:prop.title) : enc(html:prop.name)}</label>:
+    <label class="${error ? 'fieldError' : ''} ${prop.required?'required':''}" for="${enc(attr:fieldid)}" >${enc(html:prop.title?:prop.name)}</label>:
     </td>
     <td>
     <g:hiddenField name="${origfieldname}" value="${values&&values[prop.name]?values[prop.name]:''}"/>
@@ -89,7 +89,7 @@
     <g:if test="${outofscope}">
         <g:set var="scopeinfo" value="${g.rkey()}"/>
         <g:expander key="${scopeinfo}">Admin configuration info</g:expander>
-        <div class="info note" id="${scopeinfo}" style="display: none;">
+        <div class="info note" id="${enc(attr:scopeinfo)}" style="display: none;">
             This configuration property must be set
         <g:if test="${prop.scope.isProjectLevel()}">
             in the project.properties file:

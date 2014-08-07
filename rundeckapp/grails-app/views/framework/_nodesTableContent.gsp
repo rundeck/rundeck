@@ -44,17 +44,17 @@
             <g:set var="runnable" value="${null == nodeauthrun || nodeauthrun[node.nodename]}"/>
 
             <tr class="${i%2==1?'alternateRow':''} node_entry ${nodedata.islocal?'server':''} hover-action-holder">
-                <td class="nodeident" title="${enc(html:node.description)}" >
+                <td class="nodeident" title="${enc(attr:node.description)}" >
                     <g:if test="${expanddetail||params.expanddetail}">
                         <g:expander key="${ukey+'node_detail_'+i}" imgfirst="true">
-                        <span class="node_ident" id="${ukey}_${node.nodename}_key">
+                        <span class="node_ident" id="${g.enc(attr:ukey)}_${g.enc(attr:node.nodename)}_key">
                             <i class="rdicon node ${runnable?'node-runnable':''} icon-small"></i>
                             ${enc(html:resName)}
                         </span>
                         </g:expander>
                     </g:if>
                     <g:else>
-                        <span class="node_ident" id="${ukey}_${node.nodename}_key">
+                        <span class="node_ident" id="${g.enc(attr:ukey)}_${g.enc(attr:node.nodename)}_key">
                             <i class="rdicon node ${runnable ? 'node-runnable' : ''} icon-small"></i>
                             ${enc(html:resName)}
                         </span>
@@ -127,7 +127,7 @@
                             nodecontextdata.project=nodedata.project.name
                         %>
                         <g:set var="editUrl" value="${DataContextUtils.replaceDataReferences(node.attributes?.editUrl,[node:nodecontextdata])}" />
-                        <a href="${enc(html:editUrl)}" target="_blank" title="Opens a link to edit this node at a remote site.">Edit</a>
+                        <a href="${enc(attr:editUrl)}" target="_blank" title="Opens a link to edit this node at a remote site.">Edit</a>
                     </g:elseif>
 
                 </td>
@@ -137,7 +137,7 @@
                 %{--<g:link  controller="reports" action="index" params="${[nodeFilter:node.nodename]}" title="View History for Node ${node.nodename}">--}%
                     <!--&raquo; history-->
                 %{--</g:link>--}%
-                <tr id="${ukey}node_detail_${i}" class="detail_content nodedetail ${nodedata.islocal ? 'server' : ''}" style="display:none">
+                <tr id="${enc(attr:ukey+'node_detail_'+i)}" class="detail_content nodedetail ${nodedata.islocal ? 'server' : ''}" style="display:none">
                     <td colspan="${(4+cols.size())}">
                         <g:render template="nodeDetailsSimple" model="[runnable:runnable, useNamespace:true, linkAttrs: true, node:node,key:ukey+'_'+node.nodename+'_key',projects:nodedata.projects,exclude: cols?null:['username','hostname']]"/>
                     </td>

@@ -27,12 +27,12 @@
 
     <span class="textbtn textbtn-success floatr obs_hide_filtermgr"
           style="${wdgt.styleVisible(unless: params.saveFilter)}"
-          onclick=" $$('.obs_hide_filtermgr').each(Element.toggle); " id="${rkey}fsavebtn"
+          onclick=" $$('.obs_hide_filtermgr').each(Element.toggle); " id="${enc(attr:rkey)}fsavebtn"
           title="Click to save this filter with a name">
         save this filter&hellip;
     </span>
 
-    <div id="${rkey}fsave" style="${params.saveFilter ? '' : 'display:none;'} "
+    <div id="${enc(attr:rkey)}fsave" style="${params.saveFilter ? '' : 'display:none;'} "
          class=" panel-body clear obs_hide_filtermgr">
             <div class="row">
                 <div class="col-sm-12">
@@ -84,7 +84,7 @@
                 <i class="glyphicon glyphicon-remove"></i>
             </span>
 
-            <div id="${rkey}fdel" style="display:none">
+            <div id="${enc(attr:rkey)}fdel" style="display:none">
                 <g:hiddenField name="delFilterName" value="${filterName}"/>
                 <span class="confirmMessage">Are you sure you want to delete this filter?</span>
                 <input type="button" onclick="['${rkey}fdel', '${rkey}fdelbtn'].each(Element.toggle);

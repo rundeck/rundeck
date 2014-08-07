@@ -40,7 +40,7 @@
 
 <g:set var="useCrontabString" value="${scheduledExecution?.crontabString?true:scheduledExecution?.shouldUseCrontabString()?true:false}"/>
 
-<input type="hidden" name="dayOfMonth" value="${scheduledExecution?.dayOfMonth}"/>
+<input type="hidden" name="dayOfMonth" value="${enc(attr:scheduledExecution?.dayOfMonth)}"/>
 <g:hiddenField name="useCrontabString" value="${useCrontabString}" id="useCrontabString"/>
 <ul class="nav nav-tabs crontab-edit">
     <li class="${!useCrontabString ? 'active' : ''}">

@@ -17,7 +17,7 @@
 %{--Include in a knockout template to bind a message to a help tooltip--}%
 
 <i class="glyphicon-question-sign glyphicon"
-      title="${messageText ? g.enc(html:messageText) : g.enc(html:g.message(code: messageCode))}"
+      title="${enc(attr: messageText ? messageText:g.message(code: messageCode))}"
       data-container="body"
       data-bind="event: { mouseover: jQuery($element).tooltip()  } ">
 </i>

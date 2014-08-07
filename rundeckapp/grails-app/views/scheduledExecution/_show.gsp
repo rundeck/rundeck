@@ -38,7 +38,7 @@
                     </a>
                 </li>
             </g:else>
-            <li class="${runAccess ? '' : 'active'}"><a href="#schedExDetails${scheduledExecution?.id}"
+            <li class="${runAccess ? '' : 'active'}"><a href="#schedExDetails${enc(attr:scheduledExecution?.id)}"
                                                         data-toggle="tab"><g:message code="definition"/></a></li>
         </ul>
 

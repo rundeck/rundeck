@@ -25,7 +25,7 @@
 
 <span id="opt_${rkey}" class="optview">
     <span class="optdetail ${edit?'autohilite autoedit':''}" ${edit?'title="Click to edit"':''} ${edit?'':''}>
-        <span class=" ${option?.required ? 'required' : ''}" title="${enc(html:option?.description)}${option?.required ? ' (Required)' : ''}">${enc(html:option.name)}</span>
+        <span class=" ${option?.required ? 'required' : ''}" title="${enc(attr:option?.description)}${option?.required ? ' (Required)' : ''}">${enc(html:option.name)}</span>
         <span class=""><g:truncate max="20" showtitle="true">${option.secureInput && option.defaultValue?'****':enc(html:option.defaultValue)}</g:truncate>${option.multivalued?'(+)':''}</span>
         <span class="desc">${enc(html:option.description)}</span>
     </span>
@@ -41,7 +41,7 @@
     </g:if>
     <g:elseif test="${option.realValuesUrl}">
         <span class="valuesSet">
-        <span class="valuesUrl" title="Values loaded from Remote URL: ${enc(html:option.realValuesUrl)}">URL</span>
+        <span class="valuesUrl" title="Values loaded from Remote URL: ${enc(attr:option.realValuesUrl)}">URL</span>
         </span>
     </g:elseif>
 

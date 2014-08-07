@@ -45,7 +45,7 @@
        data-placement="bottom"
        data-trigger="manual"
        data-container="body"
-       value="${filtvalue}" id="schedJobNodeFilter"/>
+       value="${enc(attr:filtvalue)}" id="schedJobNodeFilter"/>
 
 
 <span class="input-group-btn">

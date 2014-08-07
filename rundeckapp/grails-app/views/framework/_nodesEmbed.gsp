@@ -23,7 +23,7 @@
             <g:set var="resHost" value="${node.hostname}"/>
             <g:set var="runnable" value="${null == nodeauthrun || nodeauthrun[node.nodename]}"/>
             <span class="${i%2==1?'alternateRow':''} node_entry ${nodedata.islocal?'server':''} node_ident obs_clicktip action textbtn"
-                  id="${nkey}_key" data-node="${enc(html:node.nodename)}" data-key="${nkey}">
+                  id="${enc(attr:nkey)}_key" data-node="${enc(attr:node.nodename)}" data-key="${enc(attr:nkey)}">
                 <i class="rdicon node ${runnable ? 'node-runnable' : ''} icon-small"></i>
                 ${enc(html:node.nodename)}
             </span>

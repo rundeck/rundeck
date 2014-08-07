@@ -35,7 +35,7 @@
             <g:set var="pluginUrl" value="http://rundeck.org/plugins/?${pluginParams}"/>
             <g:set var="pluginLinkUrl"
                    value="${grailsApplication.config?.rundeck?.gui?.pluginLink ?: pluginUrl}"/>
-            <a href="${enc(html:pluginLinkUrl)}" class="btn btn-success ">
+            <a href="${enc(attr:pluginLinkUrl)}" class="btn btn-success ">
                 <g:message code="gui.admin.GetPlugins" default="Get Plugins"/>
                 <i class="glyphicon glyphicon-arrow-right"></i>
             </a>
@@ -71,9 +71,9 @@
                 </h4>
             </div>
 
-            <div id="${ukey}" class="panel-collapse collapse">
+            <div id="${enc(attr:ukey)}" class="panel-collapse collapse">
                 <div class="panel-body">
-                <div class="panel-group" id="accordion${ukey}">
+                <div class="panel-group" id="accordion${enc(attr:ukey)}">
         <g:each in="${pluginDescList}" var="${pluginDescription}">
             <g:set var="pluginName" value="${pluginDescription.name}"/>
             <g:set var="pluginTitle" value="${pluginDescription.title}"/>
@@ -101,7 +101,7 @@
                 </h4>
             </div>
 
-            <div id="${ukeyx}" class="panel-collapse collapse">
+            <div id="${enc(attr:ukeyx)}" class="panel-collapse collapse">
                 <div class="panel-body">
                     <g:each in="${pluginDescription?.properties}" var="prop">
                         <g:set var="outofscope"

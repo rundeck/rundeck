@@ -7,7 +7,7 @@
                     id="${scheduledExecution.extid}"
                     params="[project:scheduledExecution.project]"
                     class="primary" absolute="${absolute ? 'true' :'false'}"
-                title="${g.enc(html:scheduledExecution?.description)}"
+                title="${scheduledExecution?.description}"
             >
                 <i class="glyphicon glyphicon-book"></i>
                 ${g.enc(html:scheduledExecution?.jobName)}

@@ -66,7 +66,7 @@
     <g:if test="${execution}">
         <li>
             <g:link controller="reports" action="index" class="activity_link"
-                    title="Executions by ${enc(html:execution.user)}"
+                    title="Executions by ${enc(attr:execution.user)}"
                     params="${linkParams+[ userFilter: execution.user]}">
                 <i class="glyphicon glyphicon-user"></i>
                 by <g:username user="${execution.user}"/>

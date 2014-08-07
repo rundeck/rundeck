@@ -44,7 +44,7 @@
     %>
 </g:if>
 <g:set var="jobAuths" value="${ jobauthorizations }"/>
-        <span class="group " id="${ukey}jobDisplayButtons${scheduledExecution.id}">
+        <span class="group " id="${enc(attr:ukey)}jobDisplayButtons${enc(attr:scheduledExecution.id)}">
             <g:if test="${!small }">
 
                 <g:if test="${!execPage}">

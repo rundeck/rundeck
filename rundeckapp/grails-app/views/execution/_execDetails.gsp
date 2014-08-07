@@ -64,15 +64,15 @@
                 <g:if test="${nextExecution}">
                 <g:if test="${remoteClusterNodeUUID}">
                     <i class="glyphicon glyphicon-time"></i>
-                      <span title="${remoteClusterNodeUUID}"><g:message code="expecting.another.cluster.server.to.run"/></span>
+                      <span title="${enc(attr:remoteClusterNodeUUID)}"><g:message code="expecting.another.cluster.server.to.run"/></span>
                       <g:relativeDate elapsed="${nextExecution}" untilClass="desc"/>
-                      at <span class="desc">${nextExecution}</span>
+                      at <span class="desc">${enc(html:nextExecution)}</span>
                 </g:if>
                 <g:else>
                     <i class="glyphicon glyphicon-time"></i>
                         Next execution
                         <g:relativeDate elapsed="${nextExecution}" untilClass="timeuntil"/>
-                        at <span class="timeabs">${nextExecution}</span>
+                        at <span class="timeabs">${enc(html:nextExecution)}</span>
                 </g:else>
 
                 </g:if>

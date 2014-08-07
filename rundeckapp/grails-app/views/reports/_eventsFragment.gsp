@@ -6,7 +6,7 @@
 </g:if>
 <g:set var="isCompact" value="${params.compact?true:false}"/>
     
-<div id="${rkey}evtsForm">
+<div id="${enc(attr:rkey)}evtsForm">
     <g:if test="${params.createFilters}">
         <span class="note help">
             Enter filter parameters below and click "save this filter" to set a name and save it.
@@ -15,7 +15,7 @@
     <g:set var="wasfiltered" value="${paginateParams}"/>
     <div class="queryTable">
         <g:if test="${!params.nofilters}">
-        <div id="${rkey}filter" >
+        <div id="${enc(attr:rkey)}filter" >
             <g:form action="index" class="form-inline" role="form" params="${[project: params.project ?: request.project]}">
                 <g:if test="${params.compact}">
                     <g:hiddenField name="compact" value="${params.compact}"/>
@@ -43,7 +43,7 @@
         </div>
         </g:if>
     </div>
-            <div id="${rkey}evtscontent">
+            <div id="${enc(attr:rkey)}evtscontent">
                 <g:if test="${!params.nofilters}">
                 <div class="queryresultsinfo">
                         <g:if test="${!params.compact}">

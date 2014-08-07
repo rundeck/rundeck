@@ -44,9 +44,9 @@
             </ul>
         </g:if>
         <g:else>
-            <ul class="wfhandleritem" style="display: none" wfitemNum="${i}">
+            <ul class="wfhandleritem" style="display: none" wfitemNum="${enc(attr:i)}">
 
-                <li id="wfli_eh_${i}"></li>
+                <li id="wfli_eh_${enc(attr:i)}"></li>
 
             </ul>
         </g:else>

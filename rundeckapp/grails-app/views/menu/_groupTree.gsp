@@ -89,11 +89,11 @@
             <g:expander open="${groupopen?'true':'false'}" jsfunc="${jsfunc}" imgfirst="true" style="padding-left:4px;" classnames="jobgroupexpand textbtn-secondary">
                 <span class="foldertoggle">&nbsp;</span>
                 <g:if test="${jobsjscallback}">
-                    ${displaygroup}
+                    ${enc(html:displaygroup)}
                 </g:if>
             </g:expander>
             <g:if test="${!jobsjscallback}">
-            <a class=" groupname secondary" href="${createLink(controller: 'menu', action: 'jobs', params: [project:params.project,groupPath: prefix ? prefix + '/' + group.key : group.key])}">${displaygroup}</a>
+            <a class=" groupname secondary" href="${createLink(controller: 'menu', action: 'jobs', params: [project:params.project,groupPath: prefix ? prefix + '/' + group.key : group.key])}">${enc(html:displaygroup)}</a>
             </g:if>
         </g:else>
         </div>

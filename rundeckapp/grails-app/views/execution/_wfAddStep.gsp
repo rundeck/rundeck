@@ -54,11 +54,11 @@
                     </div>
                     <g:each in="${nodeStepDescriptions}" var="typedesc">
 
-                        <a  class="list-group-item textbtn  add_node_step_type" data-node-step-type="${g.enc(html:typedesc.name)}"
+                        <a  class="list-group-item textbtn  add_node_step_type" data-node-step-type="${enc(attr:typedesc.name)}"
                             href="#">
                             <i class="rdicon icon-small plugin"></i>
-                            ${g.enc(html:typedesc.title)}
-                            <span class="text-info">- ${g.enc(html:typedesc.description)}</span>
+                            ${enc(html:typedesc.title)}
+                            <span class="text-info">- ${enc(html:typedesc.description)}</span>
                         </a>
                     </g:each>
                 </g:if>
@@ -81,7 +81,7 @@
                         <g:plural for="${stepDescriptions}" code="workflow.step.plugin" />
                     </div>
                     <g:each in="${stepDescriptions}" var="typedesc">
-                        <a class="list-group-item textbtn  add_step_type" data-step-type="${g.enc(html:typedesc.name)}" href="#">
+                        <a class="list-group-item textbtn  add_step_type" data-step-type="${g.enc(attr:typedesc.name)}" href="#">
                             <i class="rdicon icon-small plugin"></i>
                             ${g.enc(html:typedesc.title)}
                             <span class="text-info">- ${g.enc(html:typedesc.description)}</span>

@@ -138,7 +138,7 @@
                     <wdgt:eventHandler state="checked" for="${nkey+'_input'}">
                         <wdgt:action visible="true" target="${nkey+'_det'}"/>
                     </wdgt:eventHandler>
-                    <div class="well well-sm nexecDetails" id="${nkey + '_det'}"
+                    <div class="well well-sm nexecDetails" id="${enc(attr:nkey) + '_det'}"
                          style="${wdgt.styleVisible(if: defaultNodeExec == description.name)}">
                         <div class="form-horizontal " >
                         <g:each in="${description.properties}" var="prop">
@@ -182,7 +182,7 @@
                 <wdgt:eventHandler state="checked" for="${nkey+'_input'}">
                     <wdgt:action visible="true" target="${nkey+'_det'}"/>
                 </wdgt:eventHandler>
-                <div class="well well-sm fcopyDetails" id="${nkey + '_det'}"
+                <div class="well well-sm fcopyDetails" id="${enc(attr:nkey) + '_det'}"
                        style="${wdgt.styleVisible(if: defaultFileCopy == description.name)}">
                 <div class="form-horizontal " >
                     <g:each in="${description.properties}" var="prop">

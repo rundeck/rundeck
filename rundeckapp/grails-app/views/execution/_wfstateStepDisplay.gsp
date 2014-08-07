@@ -23,16 +23,16 @@
 <g:else>
 <g:set var="nodestep" value="${wfstep.nodeStep}"/>
 <g:set var="myctx" value="${subCtx ? subCtx + '/' : ''}${i + 1}"/>
-<div id="wfstep_${i + 1}" class="row wfstepstate" data-stepctx="${myctx}">
+<div id="wfstep_${enc(attr:i + 1)}" class="row wfstepstate" data-stepctx="${enc(attr:myctx)}">
     <div class="col-sm-4">
-        <span class="stepaction" data-stepctx="${myctx}">
+        <span class="stepaction" data-stepctx="${enc(attr:myctx)}">
         <span class="execstate step"
-              data-stepctx="${myctx}"
-              data-execstate="${wfstep.stepState.executionState}">
+              data-stepctx="${enc(attr:myctx)}"
+              data-execstate="${enc(attr:wfstep.stepState.executionState)}">
 
         </span>
-        <span class="stepctx">${subCtx ? subCtx + '/' : ''}${i + 1}. </span>
-        <span class=" stepident" data-stepctx="${myctx}"></span>
+        <span class="stepctx">${subCtx ? enc(html:subCtx) + '/' : ''}${i + 1}. </span>
+        <span class=" stepident" data-stepctx="${enc(attr:myctx)}"></span>
         </span>
     </div>
 
@@ -40,7 +40,7 @@
         <div class="row">
             <div class="col-sm-12">
                 <span class="errmsg step"
-                      data-stepctx="${myctx}"
+                      data-stepctx="${enc(attr:myctx)}"
                       style="${wdgt.styleVisible(if: wfstep.stepState.errorMessage)}">
                     <g:if test="${wfstep.stepState.errorMessage}">
                     %{--${enc(html:wfstep.stepState.errorMessage)}--}%
@@ -57,15 +57,15 @@
                                value="${wfstep.nodeStateMap[nodename]?.executionState ?: ExecutionState.WAITING}"/>
                         <div class="nodeinfo">
                             <span class="execstate isnode"
-                                  data-node="${g.enc(html:nodename)}"
-                                  data-stepctx="${myctx}"
-                                  data-execstate="${execState}">
+                                  data-node="${enc(attr:nodename)}"
+                                  data-stepctx="${enc(attr:myctx)}"
+                                  data-execstate="${enc(attr:execState)}">
                                 ${nodename}
 
                             </span>
                             <span class="errmsg isnode"
-                                  data-node="${g.enc(html:nodename)}"
-                                  data-stepctx="${myctx}"
+                                  data-node="${enc(attr:nodename)}"
+                                  data-stepctx="${enc(attr:myctx)}"
                                   style="${wdgt.styleVisible(if: wfstep.nodeStateMap[nodename]?.errorMessage)}">
                                 <g:if test="${wfstep.nodeStateMap[nodename]?.errorMessage}">
                                 %{--${enc(html:wfstep.nodeStateMap[nodename].errorMessage)}--}%

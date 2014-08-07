@@ -29,7 +29,8 @@
                             <tr class=" expandComponentHolder expanded" id="jobrow_${scheduledExecution.id}">
                                <td class="jobname">
                                    <div style="overflow:hidden; text-overflow: ellipsis; height:16px;">
-                                       <span class="action textbtn" title="Choose this job" onclick="jobChosen('${enc(js:scheduledExecution.jobName)}','${enc(js:scheduledExecution.groupPath)}');">${enc(html:scheduledExecution.jobName)}</span>
+                                       <g:set var="jstext" value="jobChosen('${enc(js: scheduledExecution.jobName)}','${enc(js: scheduledExecution.groupPath)}')"/>
+                                       <span class="action textbtn" title="Choose this job" onclick="${enc(attr:jstext)}">${enc(html:scheduledExecution.jobName)}</span>
 
                                        <span class="jobdesc" title="${enc(html:scheduledExecution.description)}">${enc(html:scheduledExecution.description)}</span>
                                    </div>
@@ -41,7 +42,7 @@
                             <td class="jobname">
                                     <span class="jobbulkeditfield" style="display: none">
                                     <g:if test="${jobauthorizations && jobauthorizations[AuthConstants.ACTION_DELETE]?.contains(scheduledExecution.id.toString())}">
-                                        <input type="checkbox" name="ids" value="${scheduledExecution.extid}"/>
+                                        <input type="checkbox" name="ids" value="${enc(attr:scheduledExecution.extid)}"/>
                                     </g:if>
                                     <g:else>
                                         <span class="info note" style="width:12px;margin: 3px;"
@@ -82,7 +83,7 @@
                                         edit</g:link>
                                 </g:if>
 
-                                <span class="text-muted" title="${enc(html:scheduledExecution.description)}">${enc(html:scheduledExecution.description)}</span>
+                                <span class="text-muted" title="${enc(attr:scheduledExecution.description)}">${enc(html:scheduledExecution.description)}</span>
 
                             </td>
                             <td class="scheduletime">

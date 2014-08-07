@@ -21,7 +21,7 @@
  --%>
 
 <%@ page contentType="text/html;charset=UTF-8" %>
-<div title="${enc(html:prop.description)}">${prop.title ? enc(html:prop.title) : enc(html:prop.name)}:</div>
+<div title="${enc(attr:prop.description)}">${prop.title ? enc(html:prop.title) : enc(html:prop.name)}:</div>
 <div>
 <g:if test="${prop.type.toString()=='Boolean'}">
     <g:if test="${values[prop.name]=='true'}">

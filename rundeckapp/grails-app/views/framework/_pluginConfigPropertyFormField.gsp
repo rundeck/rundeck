@@ -49,7 +49,7 @@
         <g:hiddenField name="${origfieldname}" value="${values && values[prop.name] ? values[prop.name] : ''}"/>
         <div class="checkbox">
             <label
-                   for="${enc(html:fieldid)}">${prop.title ? enc(html:prop.title) : enc(html:prop.name)}
+                   for="${enc(attr:fieldid)}">${prop.title ? enc(html:prop.title) : enc(html:prop.name)}
                 <g:checkBox name="${fieldname}" value="true"
                             checked="${values&&values[prop.name]?values[prop.name]=='true':prop.defaultValue=='true'}"
                             id="${fieldid}"/>
@@ -60,7 +60,7 @@
 <g:elseif test="${prop.type.toString()=='Select' || prop.type.toString()=='FreeSelect'}">
     <g:set var="fieldid" value="${g.rkey()}"/>
     <label class="${labelColType}   ${prop.required ? 'required' : ''}"
-           for="${enc(html:fieldid)}">${prop.title ? enc(html:prop.title) : enc(html:prop.name)}</label>
+           for="${enc(attr:fieldid)}">${prop.title ? enc(html:prop.title) : enc(html:prop.name)}</label>
 
     <g:hiddenField name="${origfieldname}" value="${values&&values[prop.name]?values[prop.name]:''}"/>
     <g:if test="${prop.type.toString()=='FreeSelect'}">
@@ -96,7 +96,7 @@
     <g:set var="fieldid" value="${g.rkey()}"/>
     <g:set var="hasStorageSelector" value="${prop.renderingOptions?.(StringRenderingConstants.SELECTION_ACCESSOR_KEY) == StringRenderingConstants.SelectionAccessor.STORAGE_PATH}"/>
     <label class="${labelColType}  ${prop.required?'required':''}"
-           for="${enc(html:fieldid)}" >${prop.title ? enc(html:prop.title) : enc(html:prop.name)}</label>
+           for="${enc(attr:fieldid)}" >${prop.title ? enc(html:prop.title) : enc(html:prop.name)}</label>
     <div class="${hasStorageSelector? valueColTypeSplit80: valueColType}">
     <g:hiddenField name="${origfieldname}" value="${values&&values[prop.name]?values[prop.name]:''}"/>
     <g:if test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) == StringRenderingConstants.DisplayType.MULTI_LINE}">
@@ -116,9 +116,9 @@
         <button class="btn btn-sm btn-default obs-select-storage-path"
                 data-toggle="modal"
                 href="#storagebrowse"
-                data-storage-root="${storageRoot}"
-                data-storage-filter="${storageFilter}"
-                data-field="#${fieldid}"
+                data-storage-root="${g.enc(attr:storageRoot)}"
+                data-storage-filter="${g.enc(attr:storageFilter)}"
+                data-field="#${g.enc(attr:fieldid)}"
         >Select... <i class="glyphicon glyphicon-folder-open"></i></button>
         </div>
     </g:if>

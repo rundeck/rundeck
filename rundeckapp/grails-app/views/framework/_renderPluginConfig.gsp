@@ -44,7 +44,7 @@
     <div class="col-sm-12 form-horizontal">
     <g:if test="${values}">
 
-        <span id="${rkey}_summary">
+        <span id="${enc(attr:rkey)}_summary">
             <g:if test="${description}">
                 <g:each in="${description.properties}" var="prop">
                     <g:render template="/framework/pluginConfigPropertySummaryValue"
@@ -53,7 +53,7 @@
             </g:if>
         </span>
         <g:if test="${description}">
-            <div  id="${rkey}" style="display:none;">
+            <div  id="${enc(attr:rkey)}" style="display:none;">
                 <g:each in="${description.properties}" var="prop">
                         <g:render template="/framework/pluginConfigPropertyValue"
                                   model="${[prop:prop,prefix:prefix,values:values,includeFormFields:includeFormFields]}"/>
@@ -62,11 +62,11 @@
         </g:if>
         <g:elseif test="${includeFormFields}">
             <g:expander key="${rkey}_inv">Properties</g:expander>
-            <ul id="${rkey}_inv" style="display:none">
+            <ul id="${enc(attr:rkey)}_inv" style="display:none">
                 <g:each var="prop" in="${values}">
                     <li>${enc(html:prop?.key)}: ${enc(html:prop?.value)}</li>
-                    <input type="hidden" name="${enc(html: prefix + 'config.' + prop?.key)}"
-                           value="${enc(html: prop?.value)}"/>
+                    <input type="hidden" name="${enc(attr: prefix + 'config.' + prop?.key)}"
+                           value="${enc(attr: prop?.value)}"/>
                 </g:each>
             </ul>
         </g:elseif>

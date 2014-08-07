@@ -89,7 +89,7 @@
                                 (${namegroups[group].size()})
                             </g:expander>
                         </div>
-                        <div id="${expkey}" style="${wdgt.styleVisible(if: selectedNodes)}" class="group_section panel-body">
+                        <div id="${enc(attr:expkey)}" style="${wdgt.styleVisible(if: selectedNodes)}" class="group_section panel-body">
                                 <g:if test="${namegroups.size()>1}">
                                 <div class="group_select_control" style="display:none">
                                     Select:
@@ -103,15 +103,15 @@
                                     <g:each var="node" in="${nodemap.subMap(namegroups[group]).values()}" status="index">
                                         <g:set var="nkey" value="${g.rkey()}"/>
                                         <div>
-                                            <label for="${nkey}"
+                                            <label for="${enc(attr:nkey)}"
                                                    class=" ${localNodeName && localNodeName == node.nodename ? 'server' : ''} node_ident  checkbox-inline"
-                                                   id="${nkey}_key">
-                                            <input id="${nkey}"
+                                                   id="${enc(attr:nkey)}_key">
+                                            <input id="${enc(attr:nkey)}"
                                                    type="checkbox"
                                                    name="extra.nodeIncludeName"
-                                                   value="${node.nodename}"
+                                                   value="${enc(attr:node.nodename)}"
                                                    ${selectedNodes ? '':'disabled' }
-                                                   data-tag="${enc(html:node.tags?.join(' '))}"
+                                                   data-tag="${enc(attr:node.tags?.join(' '))}"
                                                     ${(null== selectedNodes||selectedNodes.contains(node.nodename))?'checked':''}
                                                    />${enc(html:node.nodename)}</label>
 
@@ -125,15 +125,15 @@
                     <g:each var="node" in="${nodes}" status="index">
                         <g:set var="nkey" value="${g.rkey()}"/>
                         <div>
-                            <label for="${nkey}"
+                            <label for="${enc(attr:nkey)}"
                                    class=" ${localNodeName && localNodeName == node.nodename ? 'server' : ''} node_ident  checkbox-inline"
-                                   id="${nkey}_key">
-                                <input id="${nkey}"
+                                   id="${enc(attr:nkey)}_key">
+                                <input id="${enc(attr:nkey)}"
                                        type="checkbox"
                                        name="extra.nodeIncludeName"
-                                       value="${node.nodename}"
+                                       value="${enc(attr:node.nodename)}"
                                        disabled="true"
-                                       data-tag="${enc(html:node.tags?.join(' '))}"
+                                       data-tag="${enc(attr:node.tags?.join(' '))}"
                                        checked="true"/>${enc(html:node.nodename)}</label>
 
                         </div>

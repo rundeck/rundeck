@@ -54,13 +54,13 @@
                 id="${fieldwatchid}"/>
         </g:else>
             <%-- event handler: when text field is empty, show required option value warning icon if it exists--%>
-            <wdgt:eventHandler for="${fieldwatchid}" state="empty" visible="true" targetSelector="${'#'+enc(html:optName)+'_state span.reqwarning'}" frequency="1"  inline='true'/>
+            <wdgt:eventHandler for="${fieldwatchid}" state="empty" visible="true" targetSelector="${'#'+ optName+'_state span.reqwarning'}" frequency="1"  inline='true'/>
         </div>
     </g:if>
     <g:elseif test="${optionSelect.enforced && err}">
         <div class=" col-sm-${textcolsize}">
         <span class="info note"><g:message code="Execution.option.enforced.values.could.not.be.loaded" /></span>
-        <input type="hidden" name="${enc(html:realFieldName)}" id="${enc(html:fieldwatchid)}" value=""/>
+        <input type="hidden" name="${enc(attr:realFieldName)}" id="${enc(attr:fieldwatchid)}" value=""/>
         </div>
     </g:elseif>
     <%-- The Dropdown list --%>
@@ -93,7 +93,7 @@
             <g:if test="${optionSelect.multivalued}">
                 <!-- use checkboxes -->
                 <g:set var="defaultMultiValues" value="${optionSelect.listDefaultMultiValues()}"/>
-                <div class="optionmultiarea " id="${enc(html:fieldwatchid)}">
+                <div class="optionmultiarea " id="${enc(attr:fieldwatchid)}">
                     <g:if test="${!optionSelect.enforced}">
                         <%-- variable input text fields --%>
                         <div class="container">
@@ -106,7 +106,7 @@
                         </div>
                         </div>
                         <div class="">
-                        <div id="${enc(html:rkey)}varinput" class="">
+                        <div id="${enc(attr:rkey)}varinput" class="">
 
                         </div>
                         </div>
@@ -142,7 +142,7 @@
                         <div class="">
                         <div class="optionvaluemulti ">
                             <label>
-                                <input type="checkbox" name="${enc(html:realFieldName)}" value="${enc(html:entry.value)}" ${selectedvalue && entry.value == selectedvalue || (defaultMultiValues? entry.value in defaultMultiValues : entry.value == optionSelect.defaultValue) || selectedoptsmap && entry.value in selectedoptsmap[optName] ? 'checked' : ''} />
+                                <input type="checkbox" name="${enc(attr:realFieldName)}" value="${enc(attr:entry.value)}" ${selectedvalue && entry.value == selectedvalue || (defaultMultiValues? entry.value in defaultMultiValues : entry.value == optionSelect.defaultValue) || selectedoptsmap && entry.value in selectedoptsmap[optName] ? 'checked' : ''} />
                                 ${enc(html:entry.name)}
                             </label>
                         </div>
@@ -168,15 +168,15 @@
             </g:if>
             <g:else>
                 <g:set var="usesTextField" value="${!optionSelect.enforced || err}"/>
-                <select class="optionvalues  form-control" id="${!usesTextField? enc(html:fieldwatchid): enc(html:rkey + '_sel')}"
-                    ${!usesTextField ? 'name="' + enc(html:realFieldName) + '"' : ''}>
+                <select class="optionvalues  form-control" id="${!usesTextField? enc(attr:fieldwatchid): enc(attr:rkey + '_sel')}"
+                    ${!usesTextField ? 'name="' + enc(attr:realFieldName) + '"' : ''}>
                     <g:if test="${!optionSelect.enforced && !optionSelect.multivalued}">
                         <option value="">-choose-</option>
                     </g:if>
 
                     <g:each in="${labelsSet}" var="sellabel">
                         <g:set var="entry" value="${sellabel instanceof Map?sellabel:[name:sellabel,value:sellabel]}"/>
-                        <option value="${enc(html:entry.value)}" ${selectedvalue && entry.value == selectedvalue || entry.value == optionSelect.defaultValue || selectedoptsmap && entry.value == selectedoptsmap[optName] ? 'selected' : ''}>${enc(html:entry.name)}</option>
+                        <option value="${enc(attr:entry.value)}" ${selectedvalue && entry.value == selectedvalue || entry.value == optionSelect.defaultValue || selectedoptsmap && entry.value == selectedoptsmap[optName] ? 'selected' : ''}>${enc(html:entry.name)}</option>
                     </g:each>
                 </select>
                 <g:if test="${usesTextField}">
@@ -199,8 +199,8 @@
     </g:if>
     <g:if test="${hasDefaulter}">
         <span class="textbtn textbtn-default"
-              id="${enc(js:optName)}_setdefault"
-              title="Click to use default value: ${enc(html:optionSelect.defaultValue)}"
+              id="${enc(attr:optName)}_setdefault"
+              title="Click to use default value: ${enc(attr:optionSelect.defaultValue)}"
             style="${wdgt.styleVisible(if: selectedoptsmap && selectedoptsmap[optName]!=optionSelect.defaultValue)}"
         >
             default: <g:truncate max="50">${enc(html:optionSelect.defaultValue)}</g:truncate>
@@ -215,9 +215,9 @@
             );
             <wdgt:eventHandlerJS
                     for="${fieldwatchid}"
-                    notequals="${enc(js:optionSelect.defaultValue)}"
+                    notequals="${optionSelect.defaultValue}"
                     visible="true"
-                    target="${enc(html:optName) + '_setdefault'}"
+                    target="${optName + '_setdefault'}"
                     frequency="1"
                     inline='true'/>
         </g:javascript>
@@ -250,7 +250,7 @@
     </g:if>
     <g:expander key="${rkey}_error_detail" classnames="textbtn-warning _error_detail">${enc(html:err.message)}</g:expander>
 
-    <div class="alert alert-warning _error_detail" style="display:none" id="${rkey}_error_detail">
+    <div class="alert alert-warning _error_detail" style="display:none" id="${g.enc(attr:rkey)}_error_detail">
         <g:if test="${err.exception}">
             <div>Exception: ${enc(html:err.exception.message)}</div>
         </g:if>
@@ -262,5 +262,5 @@
     </div>
 </g:if>
 <g:elseif test="${values}">
-    %{--<g:img file="icon-tiny-ok.png" title="Remote option values loaded from URL: ${enc(html:srcUrl)}"/>--}%
+    %{--<g:img file="icon-tiny-ok.png" title="Remote option values loaded from URL: ${enc(attr:srcUrl)}"/>--}%
 </g:elseif>

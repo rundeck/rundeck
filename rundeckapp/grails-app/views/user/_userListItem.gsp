@@ -47,7 +47,7 @@
         </g:if>
     </td>
 </tr>
-<tr class="${index!=null && (index%2)==1?'alternateRow':''}" id="udetail_${user.login}" style="display:none">
+<tr class="${index!=null && (index%2)==1?'alternateRow':''}" id="udetail_${enc(attr:user.login)}" style="display:none">
     <td></td>
     <td >
         <tmpl:user user="${user}" expandAccess="${true}"/>

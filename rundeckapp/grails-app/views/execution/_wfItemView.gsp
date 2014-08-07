@@ -52,7 +52,7 @@
 
                 %{--display argstring--}%
                 <g:if test="${item.argString}">
-                   <div class="argString" title="${g.enc(html:item.argString)}">
+                   <div class="argString" title="${enc(attr:item.argString)}">
                        <g:render template="/execution/execArgString" model="[argString: item.argString]"/>
                    </div>
                 </g:if>
@@ -61,7 +61,7 @@
                 <g:if test="${item.nodeStep}">
                     <g:if test="${!noimgs && item.nodeStep}"><g:img file="icon-small-Node.png" width="16px"
                                                                     height="16px"/></g:if>
-                    <span class="info note" title="${g.enc(code:'JobExec.nodeStep.true.description')}">
+                    <span class="info note" title="${enc(code:'JobExec.nodeStep.true.description')}">
                         <g:message code="JobExec.nodeStep.true.label" />
                     </span>
                 </g:if>

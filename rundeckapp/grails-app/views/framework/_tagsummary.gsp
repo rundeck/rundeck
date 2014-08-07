@@ -44,7 +44,7 @@
                                       />
                         </g:if>
                         <g:elseif test="${action}">
-                            <span class="${action.classnames}" onclick="${action.onclick}" data-tag="${enc(html:tag)}" title="Filter by tag: ${tag}">${enc(html:tag)}:${tagsummary[tag]}</span>
+                            <span class="${g.enc(attr:action.classnames)}" onclick="${g.enc(attr:action.onclick)}" data-tag="${enc(attr:tag)}" title="Filter by tag: ${g.enc(attr:tag)}">${enc(html:tag)}:${tagsummary[tag]}</span>
                         </g:elseif>
                         <g:else>
                             ${enc(html:tag)}:${tagsummary[tag]}
@@ -57,9 +57,9 @@
             </g:each>
             <g:if test="${singletag}">
                 <span class="btn btn-sm btn-default receiver" title="See all tags"
-                      onclick="Element.show('${urkey}singletags');
+                      onclick="Element.show('${g.enc(attr:urkey)}singletags');
                 Element.hide(this);">Show All&hellip;</span>
-                <span style="display:none" id="${urkey}singletags">
+                <span style="display:none" id="${g.enc(attr:urkey)}singletags">
                     <g:each var="tag" in="${singletag}">
                         <span class="summary">
                             <g:if test="${link}">
@@ -67,9 +67,9 @@
                                           model="[key: 'tags', value: tag, linktext: tag + ' (' + tagsummary[tag]+')', css: 'tag textbtn']"/>
                             </g:if>
                             <g:elseif test="${action}">
-                                <span class=" ${action.classnames}" onclick="${action.onclick}"
-                                      data-tag="${enc(html:tag)}"
-                                      title="Filter by tag: ${tag}">${enc(html:tag)}:${tagsummary[tag]}</span>
+                                <span class=" ${g.enc(attr:action.classnames)}" onclick="${g.enc(attr:action.onclick)}"
+                                      data-tag="${enc(attr:tag)}"
+                                      title="Filter by tag: ${g.enc(attr:tag)}">${enc(html:tag)}:${tagsummary[tag]}</span>
                             </g:elseif>
                             <g:else>
                                 ${enc(html:tag)}

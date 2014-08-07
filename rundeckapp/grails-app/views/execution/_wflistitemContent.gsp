@@ -22,8 +22,8 @@
     $Id$
 
 
- --%><div id="wfivis_${i}" style="${wdgt.styleVisible(unless:i==highlight)}">
-    <div class="pflowitem wfctrlholder"><span class="pflow item " id="wfitem_${i}" >
+ --%><div id="wfivis_${enc(attr:i)}" style="${wdgt.styleVisible(unless:i==highlight)}">
+    <div class="pflowitem wfctrlholder"><span class="pflow item " id="wfitem_${enc(attr:i)}" >
         <g:if test="${isErrorHandler}">
             <span class="info note"><g:message code="Workflow.stepErrorHandler.label.on.error" /></span>
         </g:if>
@@ -51,7 +51,7 @@
         </g:if>
         <g:if test="${isErrorHandler}">
             <g:if test="${item.keepgoingOnSuccess}">
-                <span class=" succeed" title="${g.enc(code:'Workflow.stepErrorHandler.keepgoingOnSuccess.description')}"><g:message code="Workflow.stepErrorHandler.label.keep.going.on.success" /></span>
+                <span class=" succeed" title="${enc(code:'Workflow.stepErrorHandler.keepgoingOnSuccess.description')}"><g:message code="Workflow.stepErrorHandler.label.keep.going.on.success" /></span>
             </g:if>
         </g:if>
     </span>

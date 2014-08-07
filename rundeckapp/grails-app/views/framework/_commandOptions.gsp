@@ -29,7 +29,7 @@ used by _editOptions.gsp template
             <g:set var="fieldhiddenid" value="${rkey+'_'+optName+'_h'}"/>
             <g:set var="hasRemote" value="${optionSelect.realValuesUrl != null}"/>
             <div class="form-group ${hasError ? 'has-warning' : ''} ${hasRemote?'remote':''}" >
-              <label class="remoteoptionfield col-sm-2 control-label" for="${fieldhiddenid}" id="${fieldNamekey}">
+              <label class="remoteoptionfield col-sm-2 control-label" for="${enc(attr:fieldhiddenid)}" id="${enc(attr:fieldNamekey)}">
                   <span style="display:none;" class="remotestatus"></span>
                   ${enc(html:optName)}
                   <g:if test="${Environment.current == Environment.DEVELOPMENT && grailsApplication.config.rundeck?.debug}">
@@ -42,7 +42,7 @@ used by _editOptions.gsp template
                     <g:if test="${optionSelect.realValuesUrl !=null}">
                         <div class=" col-sm-9">
                         <g:set var="holder" value="${rkey+'_'+optName+'_hold'}"/>
-                        <span id="${holder}" >
+                        <span id="${enc(attr:holder)}" >
                             <g:if test="${!optionDepsMet}">
                                 <span class="info note">
                                     <g:message code="option.remote.dependency.emptyresult"/>
@@ -63,10 +63,10 @@ used by _editOptions.gsp template
                         </div>
                     </g:else>
                 <div class="col-sm-1">
-                    <span id="${enc(html:optName)+'_state'}">
+                    <span id="${enc(attr:optName)+'_state'}">
                         <g:if test="${ optRequired }">
                             <span class="reqwarning has_tooltip"
-                                    title="${hasError?.contains('required')?hasError:g.message(code:'option.value.required')}"
+                                    title="${hasError?.contains('required')? enc(attr:hasError):g.message(code:'option.value.required')}"
                                     data-toggle="tooltip"
                                   style="${wdgt.styleVisible(unless:optionHasValue)}">
                                 <i class="glyphicon glyphicon-warning-sign"></i>

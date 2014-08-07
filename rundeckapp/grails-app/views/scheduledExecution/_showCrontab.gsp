@@ -4,11 +4,11 @@
     <g:set var="crontab" value="${scheduledExecution?.timeAndDateAsBooleanMap()}"/>
     <div class="floatl ">
         <div class="checklist">
-            at <span class="cronselected" style="display:inline;">${scheduledExecution?.hour}
+            at <span class="cronselected" style="display:inline;">${enc(html:scheduledExecution?.hour)}
     :
-    ${scheduledExecution?.minute?.size()<2 ? "0"+scheduledExecution?.minute : scheduledExecution?.minute}
+    ${enc(html:scheduledExecution?.minute?.size()<2 ? "0"+scheduledExecution?.minute : scheduledExecution?.minute)}
             <g:if test="${scheduledExecution?.seconds !='0'}">
-                : ${scheduledExecution?.seconds?.size()<2 ? "0"+scheduledExecution?.seconds : scheduledExecution?.seconds}
+                : ${enc(html:scheduledExecution?.seconds?.size()<2 ? "0"+scheduledExecution?.seconds : scheduledExecution?.seconds)}
             </g:if>
     </span>
         </div>

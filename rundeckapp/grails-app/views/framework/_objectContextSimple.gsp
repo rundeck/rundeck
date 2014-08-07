@@ -5,10 +5,10 @@
     <g:set var="resDesc" value=""/>
     <span class="objIdent">
         <img src="${resource(dir:'images',file:'icon-small-'+resBase+'Object.png')}"
-             alt="${resBase}"  width="16px" height="16px"/>&nbsp;${resName} [${resType}]
+             alt="${enc(attr:resBase)}"  width="16px" height="16px"/>&nbsp;${enc(html:resName)} [${enc(html:resType)}]
     </span>
     <span  class="objdesc">
-        ${resDesc}
+        <g.enc>${resDesc}</g.enc>
     </span>
     <span>
         <g:link controller="reports" action="index" params="${[objFilter:resName,typeFilter:resType]}" title="Events for ${resName}[${resType}]">

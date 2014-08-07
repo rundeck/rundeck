@@ -22,13 +22,13 @@
     $Id$
  --%>
 <g:set var="ukey" value="${g.rkey()}"/>
-<div id="optvis_${enc(html:option.name)}" >
+<div id="optvis_${enc(attr:option.name)}" >
     <div class="optitem optctrlholder">
-        <span class="opt item " id="opt_${enc(html:option.name)}" >
+        <span class="opt item " id="opt_${enc(attr:option.name)}" >
             <g:render template="/scheduledExecution/optView" model="${[option:option,edit:edit]}"/>
         </span>
 
-        <div id="optdel_${ukey}" class="panel panel-danger collapse">
+        <div id="optdel_${enc(attr:ukey)}" class="panel panel-danger collapse">
             <div class="panel-heading">
                 Delete this option
             </div>
@@ -47,10 +47,10 @@
         </div>
 
     <g:if test="${edit}">
-        <span class="optctrl opteditcontrols controls " id="optctrls_${enc(html:option.name)}">
+        <span class="optctrl opteditcontrols controls " id="optctrls_${enc(attr:option.name)}">
             <span class="textbtn textbtn-danger "
                   data-toggle="collapse"
-                  data-target="#optdel_${enc(html:ukey)}"
+                  data-target="#optdel_${enc(attr:ukey)}"
                   title="Delete this option.">
                 <i class="glyphicon glyphicon-remove"></i></span>
             <span class="textbtn textbtn-info" onclick="_optedit('${enc(js:option.name)}',$(this).up('li.optEntry'));"

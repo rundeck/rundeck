@@ -70,7 +70,7 @@
                                         in="${dataset[dataname].keySet().sort().grep{!it.endsWith('.unit') && !it.endsWith('.info')}}"
                                         var="valuename">
                                         <tr>
-                                            <td title="${dataset[dataname][valuename + '.info'] ? enc(html:dataset[dataname][valuename + '.info']) : ''}">${enc(html:valuename)}</td>
+                                            <td title="${enc(attr:dataset[dataname][valuename + '.info'] ?: '')}">${enc(html:valuename)}</td>
                                             <td>
 
                                                 <g:if test="${dataset[dataname][valuename+'.unit']=='ratio'}">

@@ -3,7 +3,7 @@
 <g:if test="${notification.type == 'url'}">
     <g:expander key="webhook${ukey}"><g:message code="notification.webhook.label" /> </g:expander>
     <span class="webhooklink note" id="webhook${ukey}" style="display:none;"
-          title="URLs: ${g.enc(html:notification.content)}">${g.enc(html:notification.content)}</span>
+          title="URLs: ${g.enc(attr:notification.content)}">${g.enc(html:notification.content)}</span>
 </g:if>
 <g:elseif test="${notification.type == 'email'}">
     <g:message code="notification.email.display" args="[g.enc(html:notification.mailConfiguration().recipients)]" />

@@ -9,7 +9,7 @@
     <span class="querykey"><g:message code="jobquery.title.${qparam}"/></span>:
 
     <g:if test="${displayParams[qparam] instanceof java.util.Date}">
-        <span class="queryvalue date" title="${enc(html:displayParams[qparam])}">
+        <span class="queryvalue date" title="${enc(attr:displayParams[qparam])}">
             <g:relativeDate atDate="${displayParams[qparam]}"/>
         </span>
     </g:if>
@@ -18,14 +18,9 @@
             <g:recentDescription value="${displayParams[qparam]}"/>
         </span>
     </g:elseif>
-    <g:elseif test="${qparam=='maprefUriFilter'}">
-        <span class="queryvalue text" title="${displayParams[qparam]}">
-            &lt;&hellip;${displayParams[qparam].lastIndexOf("#")>=0?displayParams[qparam].substring(displayParams[qparam].lastIndexOf("#")):''}&gt;
-        </span>
-    </g:elseif>
     <g:else>
         <span class="queryvalue text">
-            ${displayParams[qparam]}
+            ${enc(html:displayParams[qparam])}
         </span>
     </g:else>
 

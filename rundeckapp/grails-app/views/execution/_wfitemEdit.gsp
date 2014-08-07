@@ -37,15 +37,15 @@
 <g:if test="${'job'==newitemtype || item instanceof JobExec || (item instanceof java.util.Map && item?.jobName)}">
     <div >
        <div class="text-muted">Job Name</div>
-       <input id="jobNameField" type="text" name="jobName" value="${item?.jobName}" size="100" autofocus/>
+       <input id="jobNameField" type="text" name="jobName" value="${enc(attr:item?.jobName)}" size="100" autofocus/>
     </div>
     <div >
         <div class="text-muted">Job Group</div>
-        <input id="jobGroupField"  type="text" name="jobGroup" value="${item?.jobGroup}" size="100"/>
+        <input id="jobGroupField"  type="text" name="jobGroup" value="${enc(attr:item?.jobGroup)}" size="100"/>
     </div>
     <div  >
         <div class="text-muted">Enter the commandline arguments for the Job:</div>
-        <input type='text' name="argString" value="${g.enc(html:item?.argString)}" size="100" id="jobArgStringField"/>
+        <input type='text' name="argString" value="${enc(attr:item?.argString)}" size="100" id="jobArgStringField"/>
     </div>
     <div style="margin-top:5px;">
         <span class="btn btn-sm btn-default" onclick="loadJobChooser(this,'jobChooser');" id="jobChooseBtn"
@@ -104,28 +104,28 @@
     <g:elseif test="${isAdhocFileExecution}">
     <div id="filepathDiv" >
         <div class="text-muted"><g:message code="Workflow.Step.adhocFilepath.description" />:</div>
-        <input type='text' name="adhocFilepath" value="${g.enc(html:item?.adhocFilepath)}" size="100" id="adhocFilepathField" autofocus/>
+        <input type='text' name="adhocFilepath" value="${enc(attr:item?.adhocFilepath)}" size="100" id="adhocFilepathField" autofocus/>
     </div>
     </g:elseif>
     <g:elseif test="${isAdhocRemote}">
     <div id="remoteScriptDiv"  class="${hasErrors(bean:item,field:'adhocExecution','fieldError')}">
         <div class="text-muted"><g:message code="Workflow.Step.adhocRemoteString.description" />:</div>
-        <input type='text' name="adhocRemoteString" value="${g.enc(html:item?.adhocRemoteString)}" size="100" id="adhocRemoteStringField" autofocus/>
+        <input type='text' name="adhocRemoteString" value="${enc(attr:item?.adhocRemoteString)}" size="100" id="adhocRemoteStringField" autofocus/>
     </div>
     </g:elseif>
     <g:if test="${!isAdhocRemote||isAdhocFileExecution}">
     <div id="adhocScriptArgs" >
         <div class="text-muted"><g:message code="Workflow.Step.argString.description" />:</div>
-        <input type='text' name="argString" value="${g.enc(html:item?.argString)}" size="100" id="argStringField"/>
+        <input type='text' name="argString" value="${enc(attr:item?.argString)}" size="100" id="argStringField"/>
     </div>
     </g:if>
     <g:if test="${!isAdhocRemote}">
         <g:expander key="scriptInterpreter${rkey}" open="${item?.scriptInterpreter?'true':'false'}">Advanced </g:expander>
-        <div id="scriptInterpreter${rkey}" style="${wdgt.styleVisible(if: item?.scriptInterpreter)}" class="presentation">
+        <div id="scriptInterpreter${enc(attr:rkey)}" style="${wdgt.styleVisible(if: item?.scriptInterpreter)}" class="presentation">
             <div class="text-muted"><g:message code="Workflow.Step.scriptInterpreter.description"/>:</div>
             <input type='text' name="scriptInterpreter"
-                   placeholder="${g.message(code: 'Workflow.Step.scriptInterpreter.prompt')}"
-                   value="${g.enc(html:item?.scriptInterpreter)}" size="100"
+                   placeholder="${enc(attr:g.message(code: 'Workflow.Step.scriptInterpreter.prompt'))}"
+                   value="${enc(attr:item?.scriptInterpreter)}" size="100"
                    id="scriptInterpreterField" autofocus/>
             <div>
                 <label>
@@ -211,7 +211,7 @@
 <g:else>
     <div>
         <div class="info note">Step Description</div>
-        <input id="description" type="text" name="description" value="${g.enc(html:item?.description)}" size="100"/>
+        <input id="description" type="text" name="description" value="${enc(attr:item?.description)}" size="100"/>
     </div>
 </g:else>
 

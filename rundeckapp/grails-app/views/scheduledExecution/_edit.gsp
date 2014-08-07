@@ -345,12 +345,12 @@ function getCurSEID(){
 </style>
 
 <g:if test="${scheduledExecution && scheduledExecution.id}">
-    <input type="hidden" name="id" value="${scheduledExecution.extid}"/>
+    <input type="hidden" name="id" value="${enc(attr:scheduledExecution.extid)}"/>
 </g:if>
 
 
 <div class="alert alert-danger" style="display: none" id="editerror">
-    
+
 </div>
 
     <div class="list-group-item"  >
@@ -363,7 +363,7 @@ function getCurSEID(){
         </label>
         <div class="${fieldColHalfSize}">
             <g:textField name="jobName"
-                         value="${enc(html:scheduledExecution?.jobName)}"
+                         value="${scheduledExecution?.jobName}"
                          id="schedJobName"
                          class="form-control"
             />
@@ -387,7 +387,7 @@ function getCurSEID(){
                       <i class="glyphicon glyphicon-warning-sign"></i>
                     </span>
                 </g:hasErrors>
-                <input type='text' name="groupPath" value="${enc(html:scheduledExecution?.groupPath)}"
+                <input type='text' name="groupPath" value="${enc(attr:scheduledExecution?.groupPath)}"
                        id="schedJobGroup"
                     class="form-control"
                     placeholder="${g.message(code:'scheduledExecution.groupPath.description')}"
@@ -465,7 +465,7 @@ function getCurSEID(){
                         <g:render template="/execution/execArgString" model="[argString: scheduledExecution.argString]"/>
                     </g:if>
                     <g:hiddenField name="_sessionopts" value="true"/>
-                
+
                 </div>
             </div>
         </div>
@@ -557,7 +557,7 @@ function getCurSEID(){
             </div>
 
         </g:hasErrors>
-        <g:set var="filtvalue" value="${enc(html:scheduledExecution.asFilter())}"/>
+        <g:set var="filtvalue" value="${scheduledExecution.asFilter()}"/>
 
                 <span class="input-group nodefilters">
                     <g:if test="${session.user && User.findByLogin(session.user)?.nodefilters}">
@@ -573,7 +573,7 @@ function getCurSEID(){
             </div>
         </div>
 
-        
+
     </div>
 
 
@@ -639,7 +639,7 @@ function getCurSEID(){
                 <div class="row">
                 <div class="col-sm-4">
                 <input type='text' name="nodeThreadcount"
-                       value="${enc(html:scheduledExecution?.nodeThreadcount)}" id="schedJobnodeThreadcount"
+                       value="${enc(attr:scheduledExecution?.nodeThreadcount)}" id="schedJobnodeThreadcount"
                        size="3"
                        class="form-control input-sm"/>
                 </div>
@@ -666,7 +666,7 @@ function getCurSEID(){
                 <div class="row">
                     <div class="col-sm-4">
                 <input type='text' name="nodeRankAttribute"
-                       value="${enc(html:scheduledExecution?.nodeRankAttribute)}" id="schedJobnodeRankAttribute"
+                       value="${enc(attr:scheduledExecution?.nodeRankAttribute)}" id="schedJobnodeRankAttribute"
                        class="form-control input-sm"/>
                     </div>
                 </div>
@@ -837,7 +837,7 @@ function getCurSEID(){
 
         <div class="${fieldColHalfSize}">
 
-            <input type='text' name="timeout" value="${enc(html:scheduledExecution?.timeout)}"
+            <input type='text' name="timeout" value="${enc(attr:scheduledExecution?.timeout)}"
                    id="schedJobTimeout" maxlength="256" class="form-control"/>
 
             <span class="help-block">
@@ -853,7 +853,7 @@ function getCurSEID(){
 
         <div class="${fieldColHalfSize}">
 
-            <input type='text' name="retry" value="${enc(html:scheduledExecution?.retry)}"
+            <input type='text' name="retry" value="${enc(attr:scheduledExecution?.retry)}"
                    id="schedJobRetry" maxlength="256" class="form-control"/>
 
             <span class="help-block">
@@ -876,7 +876,7 @@ function getCurSEID(){
                 </p>
             </g:if>
             <g:else>
-                <input type='text' name="uuid" value="${enc(html:scheduledExecution?.uuid)}"
+                <input type='text' name="uuid" value="${enc(attr:scheduledExecution?.uuid)}"
                        id="schedJobUuid" size="36" class="form-control"/>
                 <g:hasErrors bean="${scheduledExecution}" field="uuid">
                     <i class="glyphicon glyphicon-warning-sign" id="schedJobUuidErr"></i>

@@ -2,7 +2,7 @@
 <g:unless test="${outofscopeShown}">
     <g:expander key="${scopeinfo}">Admin configuration info</g:expander>
 </g:unless>
-<div class="" id="${scopeinfo}" style="${wdgt.styleVisible(if: outofscopeShown)}">
+<div class="" id="${enc(attr:scopeinfo)}" style="${wdgt.styleVisible(if: outofscopeShown)}">
     <g:if test="${propScope?.isProjectLevel()}">
        <div>configure project:
         <code>

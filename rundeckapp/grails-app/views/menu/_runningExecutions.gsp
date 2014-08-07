@@ -26,8 +26,8 @@
 
             <g:set var="execLink" value="${createLink(controller:'execution',action:'show', id:execution.id)}"/>
 
-            <tr class=" ${j % 2 == 1 ? 'alternateRow' : ''}  ${!execution.dateCompleted ? 'nowrunning' : ''} execution ${execstatus} link"
-                id="${upref}exec-${execution.id}-row" onclick="document.location='${execLink}';">
+            <tr class=" ${j % 2 == 1 ? 'alternateRow' : ''}  ${!execution.dateCompleted ? 'nowrunning' : ''} execution ${enc(attr:execstatus)} link"
+                id="${enc(attr:upref)}exec-${enc(attr:execution.id)}-row" onclick="document.location='${execLink}';">
                 <g:set var="fileName" value="job"/>
                 %{--<g:if test="${execution}">--}%
                 %{--<g:set var="fileName"--}%

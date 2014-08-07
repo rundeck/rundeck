@@ -1,4 +1,4 @@
-<div id="${enc(html:key)}_tooltip" style="display:none;" class="detailpopup node_entry ${islocal?'server':''} tooltipcontent" >
+<div id="${enc(attr:key)}_tooltip" style="display:none;" class="detailpopup node_entry ${islocal?'server':''} tooltipcontent" >
     <span >
         <i class="rdicon node ${runnable ? 'node-runnable' : ''} icon-small"></i>
         ${enc(html:node.nodename)}

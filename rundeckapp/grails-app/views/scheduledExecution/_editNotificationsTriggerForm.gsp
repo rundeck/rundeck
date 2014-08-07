@@ -12,7 +12,7 @@
             <div class="form-group  col-sm-12 ${hasErrors(bean: scheduledExecution, field: triggerEmailRecipientsName,
                     'has-error')} ">
                 <g:checkBox name="${triggerEmailCheckboxName}" value="true" checked="${isEmail}"/>
-                <label for="${triggerEmailCheckboxName}">
+                <label for="${enc(attr:triggerEmailCheckboxName)}">
                     <g:message code="notification.email.label" />
                 </label>
             </div>
@@ -40,7 +40,7 @@
                 <div class="form-group col-sm-5 ${hasErrors(bean: scheduledExecution, field: triggerEmailSubjectName
                         , 'has-error')} ">
                     <div class="input-group input-group-sm">
-                    <label class=" input-group-addon" for="${triggerEmailSubjectName}"><g:message code="subject" />
+                    <label class=" input-group-addon" for="${enc(attr:triggerEmailSubjectName)}"><g:message code="subject" />
                     </label>
                         <g:textField
                                 name="${triggerEmailSubjectName}"
@@ -92,7 +92,7 @@
         <div class="row row-space form-inline">
             <div class="form-group col-sm-12 ${hasErrors(bean: scheduledExecution, field: triggerUrlFieldName, 'has-error')}">
                 <g:checkBox name="${triggerUrlCheckboxName}" value="true" checked="${isUrl}"/>
-                <label for="${triggerUrlCheckboxName}">
+                <label for="${enc(attr:triggerUrlCheckboxName)}">
                     <g:message code="notification.webhook.label" />
                 </label>
             </div>
@@ -104,7 +104,7 @@
                             <g:set var="notifurlcontent"
                                    value="${params[triggerUrlFieldName] ?: defUrl?.content}"/>
                             <g:if test="${notifurlcontent && notifurlcontent.size() > 100}">
-                                <textarea name="${triggerUrlFieldName}"
+                                <textarea name="${enc(attr:triggerUrlFieldName)}"
                                           style="vertical-align:top;"
                                           placeholder="http://"
                                           rows="6"
@@ -119,7 +119,7 @@
                                 <div class="input-group  input-group-sm">
                                         <label class="input-group-addon"><g:message
                                         code="notification.webhook.field.title"/></label>
-                                <g:textField name="${triggerUrlFieldName}"
+                                <g:textField name="${enc(attr:triggerUrlFieldName)}"
                                              value="${enc(html:notifurlcontent)}"
                                              class="form-control "
                                              size="60"
@@ -153,7 +153,7 @@
                    value="${params.notifyPlugin?.get(trigger)?.get(pluginName)?.config ?: definedNotif?.configuration}"/>
             <g:set var="pluginDescription" value="${plugin.description}"/>
             <g:set var="validation" value="${notificationValidation?.get(trigger)?.get(pluginName)?.report}"/>
-            <g:set var="checkboxFieldName" value="notifyPlugin.${trigger}.enabled.${enc(html:pluginName)}"/>
+            <g:set var="checkboxFieldName" value="notifyPlugin.${trigger}.enabled.${pluginName}"/>
 
             <div class="row row-space">
                 <div class="col-sm-12">
@@ -162,7 +162,7 @@
                 <div>
                     <g:checkBox name="${checkboxFieldName}" value="true"
                                 checked="${definedNotif ? true : false}"/>
-                    <label for="${checkboxFieldName}">${pluginDescription['title'] ?: pluginDescription['name'] ?: pluginName}</label>
+                    <label for="${enc(attr:checkboxFieldName)}">${enc(html:pluginDescription['title'] ?: pluginDescription['name'] ?: pluginName)}</label>
                     <g:if test="${pluginDescription['description']}">
                         <span class="text-muted">${enc(html:pluginDescription['description'])}</span>
                     </g:if>
@@ -170,7 +170,7 @@
 
 
 
-                <div id="notifholderPlugin${pkey}" style="${wdgt.styleVisible(if: definedNotif ? true : false)}"
+                <div id="notifholderPlugin${enc(attr:pkey)}" style="${wdgt.styleVisible(if: definedNotif ? true : false)}"
                       class="notificationplugin panel panel-default">
                     <div class="panel-body">
                     <g:set var="prefix" value="${enc(html:'notifyPlugin.'+trigger+'.' + pluginName + '.config.')}"/>
@@ -192,7 +192,7 @@
                                 </g:if>
                             </g:each>
                             <g:if test="${!pluginDescription?.properties}">
-                                <span class="text-muted">No configuration properties for ${pluginDescription['title'] ?: pluginDescription['name'] ?: pluginName}</span>
+                                <span class="text-muted">No configuration properties for ${enc(html:pluginDescription['title'] ?: pluginDescription['name'] ?: pluginName)}</span>
                             </g:if>
                         </div>
                     </g:if>

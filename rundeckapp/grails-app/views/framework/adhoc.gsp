@@ -430,8 +430,7 @@
                         <g:hiddenField name="max" value="${max}"/>
                         <g:hiddenField name="offset" value="${offset}"/>
                         <g:hiddenField name="formInput" value="true"/>
-                        <g:set var="filtvalue"
-                               value="${enc(html: query?.('filter'))}"/>
+                        <g:set var="filtvalue" value="${query?.('filter')}"/>
 
                             <div class="form-group">
                                 <label class="col-sm-2 text-right form-control-static" for="schedJobNodeFilter">Nodes:</label>
@@ -476,7 +475,7 @@
                                 </a>
                                 </span>
                             </div>
-                            <span id="${ukey}nodeForm">
+                            <span id="${enc(attr:ukey)}nodeForm">
                             </span>
                         </div>
                     </div>

@@ -61,8 +61,8 @@
         <ul>
         <g:each var="prop" in="${values}">
         <li>${enc(html:prop.name)}: ${enc(html:prop.value)} </li>
-            <input type="hidden" name="${enc(html:prefix + 'config.' + prop.name)}"
-                   value="${enc(html:prop.value)}"/>
+            <input type="hidden" name="${enc(attr:prefix + 'config.' + prop.name)}"
+                   value="${enc(attr:prop.value)}"/>
         </g:each>
         </ul>
         </div>
