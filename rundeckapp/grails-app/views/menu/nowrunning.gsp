@@ -16,7 +16,7 @@
                 $("loaderror").show();
             }
         }
-        var bfilters=${enc(json:boxfilters)};
+        var bfilters=loadJsonData('boxfiltersJSON');
         var links = {
             nowrunning:'${createLink(controller:"menu",action:"nowrunningFragment")}',
             %{--jobs:'${createLink(controller:"reports",action:"jobsFragment")}',--}%
@@ -54,6 +54,7 @@
         Event.observe(window, 'load', _pageInit);
         //-->
     </script>
+    <g:embedJSON id="boxfiltersJSON" data="${boxfilters}"/>
     <style type="text/css">
     table.dashboxes td.dashbox {
         width: auto;

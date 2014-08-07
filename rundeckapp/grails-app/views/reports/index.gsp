@@ -32,11 +32,10 @@
             }
         }
 
-        var bfilters=${enc(json:filterPref)};
         <g:set var="pageparams" value="${[offset:params.offset,max:params.max]}"/>
         <g:set var="eventsparams" value="${paginateParams}"/>
-        var eventsparams=${enc(json:eventsparams)};
-        var pageparams=${enc(json:pageparams)};
+        var eventsparams;
+        var pageparams;
         var autoLoad=${params.refresh == 'true' ? true : false};
         var links = {
             events:'${createLink(controller: "reports", action: "eventsFragment", params: [project: params.project])}',
@@ -71,6 +70,8 @@
             });
         }
         function _pageInit() {
+            eventsparams=loadJsonData('eventsparamsJSON');
+            pageparams=loadJsonData('pageparamsJSON')
             try{
                 if(pageparams && pageparams.offset){
                     Object.extend(eventsparams,pageparams);
@@ -271,6 +272,8 @@
         
         jQuery(init);
     </g:javascript>
+    <g:embedJSON id="eventsparamsJSON" data="${eventsparams}"/>
+    <g:embedJSON id="pageparamsJSON" data="${pageparams}"/>
     <style type="text/css">
     table.dashboxes td.dashbox {
         width: auto;

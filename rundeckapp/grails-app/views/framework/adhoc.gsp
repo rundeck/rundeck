@@ -300,14 +300,14 @@
             }
 
             //setup node filters knockout bindings
-            var filterParams =${g.enc(json:[filterName:params.filterName,filter:query?.filter,filterAll:params.showall in ['true',true]])};
+            var filterParams =loadJsonData('filterParamsJSON');
             nodeFilter = new NodeFilters(
                     appLinks.frameworkAdhoc,
                     appLinks.scheduledExecutionCreate,
                     appLinks.frameworkNodes,
                     Object.extend(filterParams, {
-                        nodesTitleSingular: "${g.message(code:'Node',default:'Node')}",
-                        nodesTitlePlural: "${g.message(code:'Node.plural',default:'Nodes')}"
+                        nodesTitleSingular: "${enc(js:g.message(code:'Node',default:'Node'))}",
+                        nodesTitlePlural: "${enc(js:g.message(code:'Node.plural',default:'Nodes'))}"
                     }));
             ko.applyBindings(nodeFilter,document.getElementById('tabsarea'));
             jQuery('#searchForm').submit(_matchNodes);
@@ -316,6 +316,7 @@
         jQuery(document).ready(init);
 
     </script>
+    <g:embedJSON id="filterParamsJSON" data="${[filterName: params.filterName, filter: query?.filter, filterAll: params.showall in ['true', true]]}"/>
     <style type="text/css">
         #runerror{
             margin:5px 0;

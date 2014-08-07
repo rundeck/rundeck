@@ -16,7 +16,7 @@
     <div class="queryTable">
         <g:if test="${!params.nofilters}">
         <div id="${rkey}filter" >
-            <g:form action="index" class="form-inline" role="form">
+            <g:form action="index" class="form-inline" role="form" params="${[project: params.project ?: request.project]}">
                 <g:if test="${params.compact}">
                     <g:hiddenField name="compact" value="${params.compact}"/>
                 </g:if>

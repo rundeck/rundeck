@@ -151,7 +151,7 @@
          * START page init
          */
         function init() {
-            var filterParams =${g.enc(json:[filterName:params.filterName,filter:query?.filter,filterAll:params.showall in ['true',true]])};
+            var filterParams =loadJsonData('filterParamsJSON');
             nodeFilter = new NodeFilters(
                     appLinks.frameworkAdhoc,
                     appLinks.scheduledExecutionCreate,
@@ -172,6 +172,8 @@
 
     </script>
 
+    <g:embedJSON id="filterParamsJSON"
+                 data="${[filterName: params.filterName, filter: query?.filter, filterAll: params.showall in ['true', true]]}"/>
 </head>
 <body>
 

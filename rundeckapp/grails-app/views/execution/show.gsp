@@ -35,15 +35,36 @@
       <asset:javascript src="executionState_HistoryKO.js"/>
 
       <g:javascript library="prototype/effects"/>
+      <g:embedJSON id="workflowDataJSON" data="${execution.workflow.commands*.toMap()}"/>
+      <g:embedJSON id="nodeStepPluginsJSON" data="${stepPluginDescriptions.node.collectEntries { [(it.key): [title: it.value.title]] }}"/>
+      <g:embedJSON id="wfStepPluginsJSON" data="${stepPluginDescriptions.workflow.collectEntries { [(it.key): [title: it.value.title]] }}"/>
       <g:javascript>
+        var workflow=null;
+        var followControl=null;
+        var flowState=null;
+        var nodeflowvm=null;
+        function followOutput(){
+            followControl.beginFollowingOutput('${execution?.id}');
+        }
+        function followState(){
+            try{
+                flowState.beginFollowing();
+            }catch(e){
+                nodeflowvm.errorMessage('Could not load flow state: '+e);
+                nodeflowvm.stateLoaded(false);
+            }
+        }
+        function showTab(id){
+            jQuery('#'+id+' a').tab('show');
+        }
+        function init() {
+            var workflowData=loadJsonData('workflowDataJSON');
+            workflow = new RDWorkflow(workflowData,{
+                nodeSteppluginDescriptions:loadJsonData('nodeStepPluginsJSON'),
+                wfSteppluginDescriptions:loadJsonData('wfStepPluginsJSON')
+              });
 
-        var workflowData=${enc(json:execution.workflow.commands*.toMap())};
-        var workflow = new RDWorkflow(workflowData,{
-            nodeSteppluginDescriptions:${enc(json:(stepPluginDescriptions.node.collectEntries { [(it.key): [title: it.value.title]] }))},
-            wfSteppluginDescriptions:${enc(json:(stepPluginDescriptions.workflow.collectEntries { [(it.key): [title: it.value.title]] }))}
-        });
-
-        var followControl = new FollowControl('${execution?.id}','outputappendform',{
+          followControl = new FollowControl('${execution?.id}','outputappendform',{
             parentElement:'commandPerform',
             fileloadId:'fileload',
             fileloadPctId:'fileloadpercent',
@@ -59,7 +80,7 @@
             extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>&markdown=${g.enc(url: params.markdown)}&ansicolor=${g.enc(url: params.ansicolor)}",
             lastlines: ${params.int('lastlines') ?: defaultLastLines},
             maxLastLines: ${params.int('maxlines') ?: maxLastLines},
-            collapseCtx: {value:${null == execution?.dateCompleted },changed:false},
+            collapseCtx: {value:${null == execution?.dateCompleted},changed:false},
             showFinalLine: {value:false,changed:false},
             tailmode: ${followmode == 'tail'},
             browsemode: ${followmode == 'browse'},
@@ -67,39 +88,23 @@
             execData: {},
             groupOutput:{value:${followmode == 'browse'}},
             updatepagetitle:${null == execution?.dateCompleted},
-            <g:if test="${authChecks[AuthConstants.ACTION_KILL]}">
-            killjobhtml: '<span class="btn btn-danger btn-sm textbtn" onclick="followControl.docancel();">Kill <g:message code="domain.ScheduledExecution.title"/> <i class="glyphicon glyphicon-remove"></i></span>',
-            </g:if>
-            <g:if test="${!authChecks[AuthConstants.ACTION_KILL]}">
-            killjobhtml: "",
-            </g:if>
-            totalDuration : 0 + ${scheduledExecution?.totalTime ? scheduledExecution.totalTime : -1},
+          <g:if test="${authChecks[AuthConstants.ACTION_KILL]}">
+              killjobhtml: '<span class="btn btn-danger btn-sm textbtn" onclick="followControl.docancel();">Kill <g:message code="domain.ScheduledExecution.title"/> <i class="glyphicon glyphicon-remove"></i></span>',
+          </g:if>
+          <g:if test="${!authChecks[AuthConstants.ACTION_KILL]}">
+              killjobhtml: "",
+          </g:if>
+          totalDuration : 0 + ${scheduledExecution?.totalTime ? scheduledExecution.totalTime : -1},
             totalCount: 0 + ${scheduledExecution?.execCount ? scheduledExecution.execCount : -1}
-        });
-        var flowState = new FlowState('${execution?.id}','flowstate',{
+          });
+          nodeflowvm=new NodeFlowViewModel(workflow,"${g.createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id)}.json");
+          flowState = new FlowState('${execution?.id}','flowstate',{
             workflow:workflow,
             loadUrl: "${g.createLink(controller: 'execution', action: 'ajaxExecState', id: execution.id)}",
             outputUrl:"${g.createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id)}.json",
             selectedOutputStatusId:'selectedoutputview',
             reloadInterval:1500
          });
-
-         var nodeflowvm=new NodeFlowViewModel(workflow,"${g.createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id)}.json");
-         function followOutput(){
-            followControl.beginFollowingOutput('${execution?.id}');
-         }
-         function followState(){
-            try{
-                flowState.beginFollowing();
-            }catch(e){
-                nodeflowvm.errorMessage('Could not load flow state: '+e);
-                nodeflowvm.stateLoaded(false);
-            }
-         }
-         function showTab(id){
-            jQuery('#'+id+' a').tab('show');
-         }
-        function init() {
             flowState.addUpdater({
             updateError:function(error,data){
                 nodeflowvm.stateLoaded(false);
@@ -178,6 +183,10 @@
                 ko.applyBindings(activity, document.getElementById('activity_section'));
                 setupActivityLinks('activity_section', activity);
            }
+            $$('.apply_ace').each(function (t) {
+                _applyAce(t);
+            })
+            followControl.bindActions('outputappendform');
         });
       </g:javascript>
       <style type="text/css">
@@ -640,16 +649,6 @@
     </g:if>
 
   <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
-    <g:javascript>
-      fireWhenReady('executionShowPage', function (z) {
-          $$('.apply_ace').each(function (t) {
-              _applyAce(t);
-          })
-      });
-        fireWhenReady('outputappendform',function(z){
-            followControl.bindActions('outputappendform');
-        });
-    </g:javascript>
 
   </body>
 </html>

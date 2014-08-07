@@ -151,10 +151,16 @@
                         </span>
                     </g:if>
                     <g:else>
+                    <g:embedJSON id="nodeFilterData" data="${jsdata}"/>
                     <g:javascript>
-                        _g_nodeFilterData['${rkey}']=${g.enc(json:jsdata)};
+                        jQuery(function(){
+                            jQuery('#nodeFilterUpdate').click(function(e){
+                                var nfilter=loadJsonData('nodeFilterData');
+                                _updateMatchedNodes(nfilter,'matchednodes_${ enc(js: rkey) }','${enc(js:execdata?.project)}',false,{requireRunAuth:true});
+                            });
+                        });
                     </g:javascript>
-                    <span class="action textbtn  textbtn query " title="Display matching nodes" onclick="_updateMatchedNodes(_g_nodeFilterData['${rkey}'],'matchednodes_${rkey}','${execdata?.project}',false,{requireRunAuth:true});">
+                    <span class="action textbtn  textbtn query " title="Display matching nodes" id="nodeFilterUpdate">
                         <g:render template="/framework/displayNodeFilters" model="${[displayParams:execdata]}"/>
                     </span>
                     </g:else>
@@ -208,10 +214,15 @@
             <td>Node:</td>
             <td class="matchednodes embed" id="matchednodes_${rkey}">
                 <span class="text-muted"><g:message code="execute.on.the.server.node" /></span>
-                <span class="btn btn-sm btn-default receiver"  title="Display matching nodes" onclick="_updateMatchedNodes({},'matchednodes_${rkey}','${execdata?.project}', true, {requireRunAuth:true})">Server Node</span>
+                <span class="btn btn-sm btn-default receiver"  title="Display matching nodes" id="serverNodeUpdate">Server Node</span>
             </td>
         </tr>
         </tbody>
+            <g:javascript>
+            jQuery('#serverNodeUpdate').click(function(e){
+               _updateMatchedNodes({},'matchednodes_${enc(js: rkey)}','${enc(js: execdata?.project)}', true, {requireRunAuth:true});
+            });
+            </g:javascript>
         </g:if>
     </g:else>
     <g:if test="${execdata?.doNodedispatch}">
