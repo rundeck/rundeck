@@ -25,6 +25,25 @@ function setText(elem,text){
 function appendText(elem,text){
     $(elem).appendChild(document.createTextNode(text));
 }
+/**
+ * take escaped text and unescape html encoding
+ * @param text
+ * @returns unescaped text
+ */
+function html_unescape(text){
+    return jQuery('<div/>').html(text).text();
+}
+/**
+ * Load json data which is html encoded in a script element
+ * @param id
+ * @returns {*}
+ */
+function loadJsonData(id){
+    var dataElement = document.getElementById(id);
+    // unescape the content of the span
+    var jsonText = dataElement.textContent || dataElement.innerText
+    return JSON.parse(jsonText);
+}
 
 function toggleDisclosure(id,iconid,closeUrl,openUrl){
     $(id).toggle();

@@ -753,7 +753,7 @@ class UtilityTagLib{
         }else if(attrs.js){
             out << attrs.js.toString().encodeAsJavaScript()
         }else if(attrs.json!=null){
-            out << attrs.json.encodeAsJSON()
+            out << attrs.json.encodeAsJSON().replaceAll('<', '\\\\u003c') //nb: replace < to allow embedding in page
         }else if(attrs.url){
             out << attrs.url.toString().encodeAsURL()
         }else if(attrs.code){
@@ -761,5 +761,18 @@ class UtilityTagLib{
         }else{
             out <<body().encodeAsHTML()
         }
+    }
+
+    /**
+     * Embed JSON in a page within a script tag
+     * @attr data the objects to encode as json
+     * @attr id element id to use
+     */
+    def embedJSON={attrs,body->
+        def obj=attrs.data
+        def id=attrs.id
+        out << '<script id="'+enc(html:id)+'" type="text/json">'
+        out << enc(json: obj)
+        out << '</script>'
     }
 }
