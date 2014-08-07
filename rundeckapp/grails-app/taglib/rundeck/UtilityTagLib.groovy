@@ -447,7 +447,7 @@ class UtilityTagLib{
         }
         if(text){
             if(attrs.showtitle=='true' && text!=otext){
-                out<<'<span title="'+otext.encodeAsHTML()+'" class="truncatedtext">'
+                out<<'<span title="'+otext.encodeAsHTMLAttribute()+'" class="truncatedtext">'
             }
             out<<text
 
@@ -742,6 +742,8 @@ class UtilityTagLib{
     /**
      * Encode a string, can be specified via attribute, or HTML encode the body if no attributes are specified.
      * @attr html HTML encode the string
+     * @attr attr encode the string for placing inside an HTML attribute value
+     * @attr xml encode the string for placing inside XML
      * @attr js javascript encode the string
      * @attr json json encode the string
      * @attr url url encode the string
@@ -750,6 +752,10 @@ class UtilityTagLib{
     def enc={attrs,body->
         if(attrs.html){
             out << attrs.html.toString().encodeAsHTML()
+        }else if(attrs.attr){
+            out << attrs.attr.toString().encodeAsHTMLAttribute()
+        }else if(attrs.xml){
+            out << attrs.xml.toString().encodeAsXMLContent()
         }else if(attrs.js){
             out << attrs.js.toString().encodeAsJavaScript()
         }else if(attrs.json!=null){
