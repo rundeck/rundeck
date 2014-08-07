@@ -77,7 +77,10 @@
         %{divcounts++;}%
         <div style="margin-bottom:4px;">
         <g:if test="${jscallback}">
-            <span class="expandComponentControl textbtn action groupname jobgroupexpand" onclick="${jscallback + '(\'' + (prefix ? prefix + '/' + group.key : group.key) + '\');return false;' }" title="${jscallback ? 'Select this group' : 'Expand/Collapse this group'}" style="padding-left:4px;"><%--
+            <span class="expandComponentControl textbtn action groupname jobgroupexpand"
+                  title="Select this group"
+                onclick="groupChosen('${enc(js:prefix ? prefix + '/' + group.key : group.key)}'); return false;"
+                style="padding-left:4px;"><%--
             --%> ${displaygroup}<%--
         --%></span>
         </g:if>

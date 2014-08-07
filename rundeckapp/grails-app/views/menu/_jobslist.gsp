@@ -29,7 +29,7 @@
                             <tr class=" expandComponentHolder expanded" id="jobrow_${scheduledExecution.id}">
                                <td class="jobname">
                                    <div style="overflow:hidden; text-overflow: ellipsis; height:16px;">
-                                       <span class="action textbtn" title="Choose this job" onclick="${jobsjscallback}('${scheduledExecution.jobName}','${scheduledExecution.groupPath}');">${enc(html:scheduledExecution.jobName)}</span>
+                                       <span class="action textbtn" title="Choose this job" onclick="jobChosen('${enc(js:scheduledExecution.jobName)}','${enc(js:scheduledExecution.groupPath)}');">${enc(html:scheduledExecution.jobName)}</span>
 
                                        <span class="jobdesc" title="${enc(html:scheduledExecution.description)}">${enc(html:scheduledExecution.description)}</span>
                                    </div>

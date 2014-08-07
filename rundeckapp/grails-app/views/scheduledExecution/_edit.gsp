@@ -54,7 +54,7 @@ function getCurSEID(){
                 'jobChooserContent',
                     appLinks.menuJobsPicker,
                 {
-                parameters: {jobsjscallback:'jobChosen',runAuthRequired:true},
+                parameters: {jobsjscallback:'true',runAuthRequired:true},
                  onSuccess: function(transport) {
                     new MenuController().showRelativeTo(elem,target);
                      jQuery('#jobChooseBtn').button('reset');
@@ -415,7 +415,7 @@ function getCurSEID(){
                         jQuery('#groupChooseBtn').popover('hide');
                         jQuery('#groupChooseBtn').button('reset');
                     }else{
-                        jQuery.get(appLinks.scheduledExecutionGroupTreeFragment+'?jscallback=groupChosen', function (d) {
+                        jQuery.get(appLinks.scheduledExecutionGroupTreeFragment+'?jscallback=true', function (d) {
                             jQuery('#groupChooseBtn').popover({html:true, container:'body', placement: 'left',content: d,trigger:'manual'}).popover('show');
                             jQuery('#groupChooseBtn').button('reset');
                         });
