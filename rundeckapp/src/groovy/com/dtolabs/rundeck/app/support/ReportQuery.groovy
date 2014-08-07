@@ -1,4 +1,7 @@
 package com.dtolabs.rundeck.app.support
+
+import grails.validation.Validateable
+
 /*
  * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
  *
@@ -25,6 +28,7 @@ package com.dtolabs.rundeck.app.support
 /**
  * Used as a command object for the reports action, for date conversion from g:datePicker in gsp page
  */
+@Validateable
 class ReportQuery extends BaseQuery{
 
     Date startafterFilter

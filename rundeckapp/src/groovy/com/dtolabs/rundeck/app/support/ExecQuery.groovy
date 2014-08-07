@@ -1,4 +1,7 @@
 package com.dtolabs.rundeck.app.support
+
+import grails.validation.Validateable
+
 /*
  * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
  *
@@ -22,6 +25,7 @@ package com.dtolabs.rundeck.app.support
  * Created: Feb 29, 2008 3:17:13 PM
  * $Id$
  */
+@Validateable
 class ExecQuery extends ReportQuery{
     String controllerFilter
     String cmdFilter
@@ -29,7 +33,7 @@ class ExecQuery extends ReportQuery{
     String groupPathExactFilter
 
     static constraints = {
-        statFilter(nullable:true,inList:["succeed","fail"])
+        statFilter(nullable:true,inList:["succeed","fail",'cancel'])
         sortBy(nullable:true,inList:[
             "jobFilter",
             "jobIdFilter",

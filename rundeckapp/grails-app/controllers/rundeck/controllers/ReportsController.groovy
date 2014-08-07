@@ -29,8 +29,18 @@ class ReportsController extends ControllerBase{
     def scheduledExecutionService
     def ApiService apiService
 
-    def index = { ExecQuery query->
-       //find previous executions
+    public def index (ExecQuery query) {
+        //data binding allows '123' followed by any characters to bind as integer 123, prevent additional chars after the integer value
+        if (params.max != null && params.max != query.max.toString()) {
+            query.errors.rejectValue('max', 'typeMismatch.java.lang.Integer', ['max'] as Object[], 'invalid')
+        }
+        if (params.offset != null && params.offset != query.offset.toString()) {
+            query.errors.rejectValue('offset', 'typeMismatch.java.lang.Integer', ['offset'] as Object[], 'invalid')
+        }
+        if (query.hasErrors()) {
+            return render(view: '/common/error', model: [beanErrors: query.errors])
+        }
+        //find previous executions
         def usedFilter
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
