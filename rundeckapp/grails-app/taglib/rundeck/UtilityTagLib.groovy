@@ -740,7 +740,7 @@ class UtilityTagLib{
                 '</span>'
     }
     /**
-     * Encode a string, can be specified via attribute, or HTML encode the body if no attributes are specified.
+     * Encode a string, can be specified via attribute, or HTML encode the body if no attributes are specified. Only a single attribute can be specified.
      * @attr html HTML encode the string
      * @attr attr encode the string for placing inside an HTML attribute value
      * @attr xml encode the string for placing inside XML
@@ -748,6 +748,8 @@ class UtilityTagLib{
      * @attr json json encode the string
      * @attr url url encode the string
      * @attr code HTML encode a message from the given code
+     * @attr rawtext contents will be rendered without encoding
+     * @attr raw if set to true, tag body will be rendered without encoding
      */
     def enc={attrs,body->
         if(attrs.html){
@@ -764,8 +766,14 @@ class UtilityTagLib{
             out << attrs.url.toString().encodeAsURL()
         }else if(attrs.code){
             out << g.message(code:attrs.code).encodeAsHTML()
-        }else{
-            out <<body().encodeAsHTML()
+        }else if(attrs.rawtext) {
+            //explicitly not encoded
+            out << attrs.rawtext
+        }else if(attrs.raw=='true') {
+            //explicitly not encoded
+            out << body()
+        }else {
+            out << body().encodeAsHTML()
         }
     }
 
