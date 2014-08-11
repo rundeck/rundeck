@@ -173,7 +173,7 @@
                                     </g:if>
                                     <g:else>
                                         <span class="queryvalue text">
-                                            ${g.message(code:'jobquery.title.'+qparam+'.label.'+paginateParams[qparam].toString(),default:enc(html:paginateParams[qparam].toString()))}
+                                            ${g.message(code:'jobquery.title.'+qparam+'.label.'+paginateParams[qparam].toString(),default:enc(html:paginateParams[qparam].toString()).toString())}
                                         </span>
                                     </g:else>
 
@@ -184,7 +184,7 @@
                 </g:if>
                 <g:else>
                     <g:if test="${!params.compact}">
-                    <span class="h4"><g:message code="domain.ScheduledExecution.title"/>s (${totalauthorized})</span>
+                    <span class="h4"><g:message code="domain.ScheduledExecution.title"/>s (<g:enc>${totalauthorized}</g:enc>)</span>
                     </g:if>
 
                     <span class="textbtn textbtn-default obs_filtertoggle"  id="${enc(attr:rkey)}filter-toggle">
