@@ -42,8 +42,7 @@
         </div>
 
         <input type="button" onclick="['${rkey}fsave','${rkey}fsavebtn'].each(Element.toggle); return false;" value="Cancel" class="btn btn-default btn-sm"/>
-        %{--<g:actionSubmit value="Save Filter" name="nodesForm" url="[controller:'framework',action:'storeNodeFilter',params:[fragment:true]]" update="${rkey}nodeForm"/>--}%
-        
+
         <g:if test="${storeActionSubmit}">
             <g:actionSubmit value="Save Filter" action="${storeActionSubmit}" class="btn btn-primary btn-sm" />
         </g:if>

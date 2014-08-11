@@ -63,7 +63,6 @@
          style="${params.saveFilter ? '' : 'display:none;'} ">
         <input type="button" onclick="$$('.obs_hide_filtermgr').each(Element.toggle);
         return false;" value="Cancel" class="btn btn-default btn-sm"/>
-        %{--<g:actionSubmit value="Save Filter" name="nodesForm" url="[controller:'framework',action:'storeNodeFilter',params:[fragment:true]]" update="${rkey}nodeForm"/>--}%
 
         <g:if test="${storeActionSubmit}">
             <g:actionSubmit value="Save Filter" action="${storeActionSubmit}" class="btn btn-primary btn-sm"/>

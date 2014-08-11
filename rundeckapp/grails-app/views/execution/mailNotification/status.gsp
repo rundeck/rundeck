@@ -291,7 +291,6 @@ div.progressContainer div.progressContent{
                     </td>
                     <g:if test="${scheduledExecution}">
                         <td style="vertical-align:top;" class="toolbar small">
-                            %{--<g:render template="/scheduledExecution/actionButtons" model="${[scheduledExecution:scheduledExecution,objexists:objexists,jobAuthorized:jobAuthorized,execPage:true]}"/>--}%
                             <g:render template="/scheduledExecution/renderJobStats"
                                       model="${[scheduledExecution: scheduledExecution]}"/>
                         </td>

@@ -195,10 +195,6 @@ span.reqwarning {
     padding: 5px;
 }
 
-.actionButtons {
-    width: 100px;
-}
-
 table.jobsList span.inlinebuttons {
     display: inline;
     margin: 0;
