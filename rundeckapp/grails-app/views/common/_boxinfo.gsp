@@ -1,11 +1,7 @@
-
+<g:set var="boxrkey" value="${g.rkey()}"/>
+<g:embedJSON id="box_data_${boxrkey}" data="${model}"/>
 <script type="text/javascript">
-    boxdata={
-        <g:each in="${model}" var="item" status="i">
-        <g:if test="${i>0}">,</g:if>${g.enc(js:item.key)}: "${g.enc(js:item?.value)}"
-        </g:each>
-    };
     if(typeof(_updateBoxInfo)=='function'){
-        _updateBoxInfo('${name}',boxdata);
+        _updateBoxInfo('${enc(js:name)}',loadJsonData('box_data_${enc(js:boxrkey)}'));
     }
 </script>
