@@ -236,13 +236,13 @@
             <div class="presentation opt_sec_nexp_disabled" style="${wdgt.styleVisible(unless: option?.secureInput && !option?.secureExposed)}">
                 <span class="info note">The option values will be available to scripts in these forms:</span>
                 <div>
-                    Bash: <code>$<span id="bashpreview${enc(attr:rkey)}">${option?.name? enc(html:DataContextUtils.generateEnvVarName('option.'+option.name)):''}</span></code>
+                    Bash: <code>$<span id="bashpreview${enc(attr:rkey)}"><g:enc>${option?.name? DataContextUtils.generateEnvVarName('option.'+option.name):''}</g:enc></span></code>
                 </div>
                 <div>
-                    Commandline Arguments: <code>$<!-- -->{option.<span id="clipreview${enc(attr:rkey)}">${enc(html:option?.name)}</span>}</code>
+                    Commandline Arguments: <code>$<!-- -->{option.<span id="clipreview${enc(attr:rkey)}"><g:enc>${option?.name}</g:enc></span>}</code>
                 </div>
                 <div>
-                    Script Content: <code>@option.<span id="scptpreview${enc(attr:rkey)}">${enc(html:option?.name)}</span>@</code>
+                    Script Content: <code>@option.<span id="scptpreview${enc(attr:rkey)}"><g:enc>${option?.name}</g:enc></span>@</code>
                 </div>
             </div>
 

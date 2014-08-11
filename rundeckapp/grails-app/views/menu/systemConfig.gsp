@@ -32,30 +32,30 @@
     <h4>Server Connection Info</h4>
         <g:set var="fwkPropFile" value="${Framework.getPropertyFile(rundeckFramework.getConfigDir())}"/>
 
-        <div class="text-muted">${enc(html:fwkPropFile.absolutePath)}:</div>
+        <div class="text-muted"><g:enc>${fwkPropFile.absolutePath}</g:enc>:</div>
 
         <g:render template="displayConfigProps" model="[obscurePattern:~/password/,map: fwkProps,
             keys: fwkProps.keySet().findAll{it=~/^framework.server/}]"/>
 
-        <div class="text-muted">${enc(html:System.properties['rundeck.config.location'])}:</div>
+        <div class="text-muted"><g:enc>${System.properties['rundeck.config.location']}</g:enc>:</div>
 
         <g:render template="displayConfigProps" model="[map: flatConfig, keys: ['grails.serverURL']]"/>
 
     <h4>SSH Defaults</h4>
 
-        <div class="text-muted">${enc(html:fwkPropFile.absolutePath)}:</div>
+        <div class="text-muted"><g:enc>${fwkPropFile.absolutePath}</g:enc>:</div>
 
         <g:render template="displayConfigProps" model="[map: fwkProps,keys: fwkProps.keySet().findAll{it=~/^framework\.ssh\./}]"/>
 
     <h4>Datasource</h4>
 
-        <div class="text-muted">${enc(html:System.properties['rundeck.config.location'])}:</div>
+        <div class="text-muted"><g:enc>${System.properties['rundeck.config.location']}</g:enc>:</div>
 
         <g:render template="displayConfigProps" model="[map: flatConfig, keys: ['dataSource.url']]"/>
 
     <h4>Plugins</h4>
 
-        <div class="text-muted">${enc(html:System.properties['rundeck.config.location'])}:</div>
+        <div class="text-muted"><g:enc>${System.properties['rundeck.config.location']}</g:enc>:</div>
 
 
     <g:render template="displayConfigProps" model="[map: flatConfig, keys: flatConfig.keySet().grep(/^rundeck\.execution\.logs\./)]"/>

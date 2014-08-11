@@ -86,7 +86,7 @@
                 <g:set var="selvalue" value="${valuesMap?valuesMap[sellabel]:sellabel}"/>
             </g:else>
             <g:hiddenField name="${realFieldName}" value="${selvalue}" id="${fieldwatchid}"/>
-            <p class="form-control-static"><span class="singlelabel">${enc(html:sellabel)}</span></p>
+            <p class="form-control-static"><span class="singlelabel"><g:enc>${sellabel}</g:enc></span></p>
         </g:if>
         <g:else>
 
@@ -143,7 +143,7 @@
                         <div class="optionvaluemulti ">
                             <label>
                                 <input type="checkbox" name="${enc(attr:realFieldName)}" value="${enc(attr:entry.value)}" ${selectedvalue && entry.value == selectedvalue || (defaultMultiValues? entry.value in defaultMultiValues : entry.value == optionSelect.defaultValue) || selectedoptsmap && entry.value in selectedoptsmap[optName] ? 'checked' : ''} />
-                                ${enc(html:entry.name)}
+                                <g:enc>${entry.name}</g:enc>
                             </label>
                         </div>
                         </div>
@@ -176,7 +176,7 @@
 
                     <g:each in="${labelsSet}" var="sellabel">
                         <g:set var="entry" value="${sellabel instanceof Map?sellabel:[name:sellabel,value:sellabel]}"/>
-                        <option value="${enc(attr:entry.value)}" ${selectedvalue && entry.value == selectedvalue || entry.value == optionSelect.defaultValue || selectedoptsmap && entry.value == selectedoptsmap[optName] ? 'selected' : ''}>${enc(html:entry.name)}</option>
+                        <option value="${enc(attr:entry.value)}" ${selectedvalue && entry.value == selectedvalue || entry.value == optionSelect.defaultValue || selectedoptsmap && entry.value == selectedoptsmap[optName] ? 'selected' : ''}><g:enc>${entry.name}</g:enc></option>
                     </g:each>
                 </select>
                 <g:if test="${usesTextField}">
@@ -203,7 +203,7 @@
               title="Click to use default value: ${enc(attr:optionSelect.defaultValue)}"
             style="${wdgt.styleVisible(if: selectedoptsmap && selectedoptsmap[optName]!=optionSelect.defaultValue)}"
         >
-            default: <g:truncate max="50">${enc(html:optionSelect.defaultValue)}</g:truncate>
+            default: <g:truncate max="50"><g:enc>${optionSelect.defaultValue}</g:enc></g:truncate>
         </span>
         <g:javascript>
             fireWhenReady('${enc(js:optName)}_setdefault',
@@ -248,14 +248,14 @@
         });
         </g:javascript>
     </g:if>
-    <g:expander key="${rkey}_error_detail" classnames="textbtn-warning _error_detail">${enc(html:err.message)}</g:expander>
+    <g:expander key="${rkey}_error_detail" classnames="textbtn-warning _error_detail"><g:enc>${err.message}</g:enc></g:expander>
 
     <div class="alert alert-warning _error_detail" style="display:none" id="${g.enc(attr:rkey)}_error_detail">
         <g:if test="${err.exception}">
-            <div>Exception: ${enc(html:err.exception.message)}</div>
+            <div>Exception: <g:enc>${err.exception.message}</g:enc></div>
         </g:if>
         <g:if test="${srcUrl}">
-            <div>URL: ${enc(html:srcUrl)}</div>
+            <div>URL: <g:enc>${srcUrl}</g:enc></div>
         </g:if>
     </div>
     </div>

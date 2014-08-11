@@ -66,13 +66,13 @@
                     <i class="glyphicon glyphicon-time"></i>
                       <span title="${enc(attr:remoteClusterNodeUUID)}"><g:message code="expecting.another.cluster.server.to.run"/></span>
                       <g:relativeDate elapsed="${nextExecution}" untilClass="desc"/>
-                      at <span class="desc">${enc(html:nextExecution)}</span>
+                      at <span class="desc"><g:enc>${nextExecution}</g:enc></span>
                 </g:if>
                 <g:else>
                     <i class="glyphicon glyphicon-time"></i>
                         Next execution
                         <g:relativeDate elapsed="${nextExecution}" untilClass="timeuntil"/>
-                        at <span class="timeabs">${enc(html:nextExecution)}</span>
+                        at <span class="timeabs"><g:enc>${nextExecution}</g:enc></span>
                 </g:else>
 
                 </g:if>
@@ -192,7 +192,7 @@
                                var="isAscending"/>
 
                         <g:message code="sort.nodes.by"  />
-                        <strong>${execdata?.nodeRankAttribute ? g.enc(html:execdata?.nodeRankAttribute) : 'name'}</strong>
+                        <strong><g:enc>${execdata?.nodeRankAttribute?: 'name'}</g:enc></strong>
                         in
                         <strong>
                             <g:message code="${isAscending ? 'ascending' : 'descending'}"/>
@@ -264,7 +264,7 @@
                 <g:message code="scheduledExecution.property.timeout.label" />
             </td>
             <td>
-                <span title="Timeout duration">${g.enc(html:execdata.timeout)}</span>
+                <span title="Timeout duration"><g:enc>${execdata.timeout}</g:enc></span>
             </td>
         </tr>
     </g:if>
@@ -274,7 +274,7 @@
                 <span class="jobuuid desc">UUID:</span>
             </td>
             <td>
-                <span class="jobuuid desc" title="UUID for this job">${g.enc(html:scheduledExecution.uuid)}</span>
+                <span class="jobuuid desc" title="UUID for this job"><g:enc>${scheduledExecution.uuid}</g:enc></span>
             </td>
         </tr>
         <tr>

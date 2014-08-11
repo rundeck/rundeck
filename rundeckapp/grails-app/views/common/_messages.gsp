@@ -3,7 +3,7 @@
         <g:unless test="${notDismissable}">
             <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
         </g:unless>
-        <g:autoLink>${g.enc(html:flash.message)}${g.enc(html:request.message)}</g:autoLink>
+        <g:autoLink><g:enc>${flash.message}${request.message}</g:enc></g:autoLink>
     </div>
 </g:if>
 <g:if test="${flash.error||flash.errors!=null||request.error||request.errors||flash.errorCode||request.errorCode}">
@@ -11,8 +11,8 @@
         <g:unless test="${notDismissable}">
             <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
         </g:unless>
-        <g:autoLink>${g.enc(html:flash.error)}${request.error && request.error instanceof String ?
-            g.enc(html:request.error) : ''}</g:autoLink>
+        <g:autoLink><g:enc>${flash.error}${request.error && request.error instanceof String ?
+            request.error : ''}</g:enc></g:autoLink>
         <g:if test="${flash.errors instanceof org.springframework.validation.Errors}">
             <g:renderErrors bean="${flash.errors}" as="list"/>
         </g:if>
@@ -30,6 +30,6 @@
         <g:unless test="${notDismissable}">
             <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
         </g:unless>
-        <g:autoLink>${g.enc(html:flash.warn)}${g.enc(html:request.warn)}</g:autoLink>
+        <g:autoLink><g:enc>${flash.warn}${request.warn}</g:enc></g:autoLink>
     </div>
 </g:if>

@@ -870,7 +870,7 @@ function getCurSEID(){
         <div class="${fieldColSize}">
             <g:if test="${editSchedExecId && scheduledExecution?.uuid}">
                 <p class="form-control-static text-muted" title="UUID for this Job">
-                    ${enc(html:scheduledExecution?.uuid)}
+                    <g:enc>${scheduledExecution?.uuid}</g:enc>
                 </p>
             </g:if>
             <g:else>

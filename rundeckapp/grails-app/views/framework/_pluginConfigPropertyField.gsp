@@ -37,12 +37,12 @@
     <g:checkBox name="${fieldname}" value="true" checked="${values&&values[prop.name]?values[prop.name]=='true':prop.defaultValue=='true'}" id="${fieldid}"/>
     </td>
     <td>
-    <label class="${error ? 'fieldError' : ''}" for="${enc(attr:fieldid)}">${enc(html:prop.title?:prop.name)}</label>
+    <label class="${error ? 'fieldError' : ''}" for="${enc(attr:fieldid)}"><g:enc>${prop.title?:prop.name}</g:enc></label>
 </g:elseif>
 <g:elseif test="${prop.type.toString()=='Select' || prop.type.toString()=='FreeSelect'}">
     <g:set var="fieldid" value="${g.rkey()}"/>
     <td>
-        <label class="${error ? 'fieldError' : ''}  ${prop.required ? 'required' : ''}" for="${enc(attr:fieldid)}">${enc(html:prop.title?:prop.name)}</label>:
+        <label class="${error ? 'fieldError' : ''}  ${prop.required ? 'required' : ''}" for="${enc(attr:fieldid)}"><g:enc>${prop.title?:prop.name}</g:enc></label>:
     </td>
     <td>
     <g:hiddenField name="${origfieldname}" value="${values&&values[prop.name]?values[prop.name]:''}"/>
@@ -69,7 +69,7 @@
 <g:else>
     <g:set var="fieldid" value="${g.rkey()}"/>
     <td>
-    <label class="${error ? 'fieldError' : ''} ${prop.required?'required':''}" for="${enc(attr:fieldid)}" >${enc(html:prop.title?:prop.name)}</label>:
+    <label class="${error ? 'fieldError' : ''} ${prop.required?'required':''}" for="${enc(attr:fieldid)}" ><g:enc>${prop.title?:prop.name}</g:enc></label>:
     </td>
     <td>
     <g:hiddenField name="${origfieldname}" value="${values&&values[prop.name]?values[prop.name]:''}"/>
@@ -82,9 +82,9 @@
                  id="${fieldid}" size="100"/>
     </g:else>
 </g:else>
-    <div class="info note">${enc(html:prop.description)}</div>
+    <div class="info note"><g:enc>${prop.description}</g:enc></div>
     <g:if test="${error}">
-        <span class="warn note">${enc(html:error)}</span>
+        <span class="warn note"><g:enc>${error}</g:enc></span>
     </g:if>
     <g:if test="${outofscope}">
         <g:set var="scopeinfo" value="${g.rkey()}"/>

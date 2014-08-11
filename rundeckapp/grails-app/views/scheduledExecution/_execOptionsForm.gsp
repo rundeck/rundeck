@@ -77,7 +77,7 @@
                             <g:expander key="${expkey}" open="${selectedNodes?'true':'false'}">
                                 <g:if test="${group!='other'}">
                                     <span class="prompt">
-                                    ${enc(html:namegroups[group][0])}</span>
+                                    <g:enc>${namegroups[group][0]}</g:enc></span>
                                     to
                                     <span class="prompt">
                                 <g:enc>${namegroups[group][-1]}</g:enc>

@@ -35,7 +35,7 @@
             <g:textField name="newproject" size="50" autofocus="true" value="${newproject}" class="form-control"/>
 
             <g:if test="${projectNameError}">
-                <div class="text-warning">${enc(html:projectNameError)}</div>
+                <div class="text-warning"><g:enc>${projectNameError}</g:enc></div>
             </g:if>
         </div>
     </g:if>
@@ -63,7 +63,7 @@
                         <g:set var="desc" value="${resourceModelConfigDescriptions.find {it.name==config.type}}"/>
                         <g:if test="${!desc}">
                             <span
-                                class="warn note invalidProvider">Invalid Resource Model Source configuration: Provider not found: ${enc(html:config.type)}</span>
+                                class="warn note invalidProvider">Invalid Resource Model Source configuration: Provider not found: <g:enc>${config.type}</g:enc></span>
                         </g:if>
                         <g:render template="viewResourceModelConfig"
                                   model="${[prefix: prefixKey+'.'+(n+1)+'.', values: config.props, includeFormFields: true, description: desc, saved:true,type:config.type]}"/>
@@ -92,9 +92,9 @@
                    class="list-group-item">
                     <strong>
                         <i class="glyphicon glyphicon-plus"></i>
-                        ${enc(html:description.title)}
+                        <g:enc>${description.title}</g:enc>
                     </strong>
-                    <span class="help-block">${enc(html:description.description)}</span>
+                    <span class="help-block"><g:enc>${description.description}</g:enc></span>
                 </a>
             </g:each>
         </div>
@@ -125,9 +125,9 @@
                         class="nexec"
                         id="${nkey+'_input'}"
                         checked="${defaultNodeExec?defaultNodeExec==description.name:false}"/>
-                    <b>${enc(html:description.title)}</b>
+                    <b><g:enc>${description.title}</g:enc></b>
                 </label>
-                <span class="help-block">${enc(html:description.description)}</span>
+                <span class="help-block"><g:enc>${description.description}</g:enc></span>
             </div>
                 <g:hiddenField name="nodeexec.${nex}.type" value="${description.name}"/>
                 <g:set var="nodeexecprefix" value="nodeexec.${nex}.config."/>
@@ -169,9 +169,9 @@
                         class="fcopy"
                         id="${nkey+'_input'}"
                         checked="${defaultFileCopy?defaultFileCopy==description.name:false}"/>
-                    <b>${enc(html:description.title)}</b>
+                    <b><g:enc>${description.title}</g:enc></b>
                 </label>
-                <span class="help-block">${enc(html:description.description)}</span>
+                <span class="help-block"><g:enc>${description.description}</g:enc></span>
             </div>
             <g:hiddenField name="fcopy.${nex}.type" value="${description.name}"/>
             <g:set var="fcopyprefix" value="fcopy.${nex}.config."/>

@@ -25,15 +25,15 @@
 
 <span id="opt_${rkey}" class="optview">
     <span class="optdetail ${edit?'autohilite autoedit':''}" ${edit?'title="Click to edit"':''} ${edit?'':''}>
-        <span class=" ${option?.required ? 'required' : ''}" title="${enc(attr:option?.description)}${option?.required ? ' (Required)' : ''}">${enc(html:option.name)}</span>
-        <span class=""><g:truncate max="20" showtitle="true">${option.secureInput && option.defaultValue?'****':enc(html:option.defaultValue)}</g:truncate>${option.multivalued?'(+)':''}</span>
-        <span class="desc">${enc(html:option.description)}</span>
+        <span class=" ${option?.required ? 'required' : ''}" title="${enc(attr:option?.description)}${option?.required ? ' (Required)' : ''}"><g:enc>${option.name}</g:enc></span>
+        <span class=""><g:truncate max="20" showtitle="true"><g:enc>${option.secureInput && option.defaultValue?'****':option.defaultValue}</g:enc></g:truncate>${option.multivalued?'(+)':''}</span>
+        <span class="desc"><g:enc>${option.description}</g:enc></span>
     </span>
     <g:if test="${option?.values || option.valuesList}">
         <g:set var="opts" value="${option.values?option.values.sort():option.valuesList.split(',').sort()}"/>
         <div class="popout detailpopup" id="vls_${rkey}_tooltip" style="width:200px;display:none;" >
             <div class="info note">Allowed Values</div>
-            <g:each var="val" in="${opts}" status="i">${0!=i?', ':''}<span class="valueItem">${enc(html:val)}</span></g:each>
+            <g:each var="val" in="${opts}" status="i">${0!=i?', ':''}<span class="valueItem"><g:enc>${val}</g:enc></span></g:each>
         </div>
         <span class="valuesSet">
         <span class="valueslist" id="vls_${rkey}">${opts ? opts.size() :0} Value${1==opts?.size()?'':'s'}</span>
@@ -52,11 +52,11 @@
     </g:if>
     <g:elseif test="${option.regex}">
         <span class="enforceSet">
-        <span class="regex" id="rgx_${rkey}">${enc(html:option.regex)}</span>
+        <span class="regex" id="rgx_${rkey}"><g:enc>${option.regex}</g:enc></span>
         </span>
         <div class="popout detailpopup" style="display:none; width: 200px" id="rgx_${rkey}_tooltip">
             <div class="info note">Values must match the regular expression:</div>
-            <code>${enc(html:option.regex)}</code>
+            <code><g:enc>${option.regex}</g:enc></code>
         </div>
     </g:elseif>
     <g:else>

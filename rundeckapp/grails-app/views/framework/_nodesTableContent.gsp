@@ -26,7 +26,7 @@
     <tr>
         <th>Node</th>
         <g:each in="${cols}" var="colname">
-            <th>${enc(html:colname)}</th>
+            <th><g:enc>${colname}</g:enc></th>
         </g:each>
         <g:if test="${!cols}">
             <th>Tags</th>
@@ -49,14 +49,14 @@
                         <g:expander key="${ukey+'node_detail_'+i}" imgfirst="true">
                         <span class="node_ident" id="${g.enc(attr:ukey)}_${g.enc(attr:node.nodename)}_key">
                             <i class="rdicon node ${runnable?'node-runnable':''} icon-small"></i>
-                            ${enc(html:resName)}
+                            <g:enc>${resName}</g:enc>
                         </span>
                         </g:expander>
                     </g:if>
                     <g:else>
                         <span class="node_ident" id="${g.enc(attr:ukey)}_${g.enc(attr:node.nodename)}_key">
                             <i class="rdicon node ${runnable ? 'node-runnable' : ''} icon-small"></i>
-                            ${enc(html:resName)}
+                            <g:enc>${resName}</g:enc>
                         </span>
                     </g:else>
                     <tmpl:nodeFilterLink key="name" value="${resName}"
@@ -80,7 +80,7 @@
                         <td >
                             <g:if test="${node.attributes[colname]}">
                                 <span class="value">
-                                    ${enc(html:node.attributes[colname])}
+                                    <g:enc>${node.attributes[colname]}</g:enc>
                                     <tmpl:nodeFilterLink key="${colname}" value="${node.attributes[colname]}"
                                                          linkicon="glyphicon glyphicon-search textbtn-saturated hover-action"
                                                          linkclass="textbtn textbtn-info"/>

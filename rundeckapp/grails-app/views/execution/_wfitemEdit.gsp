@@ -98,7 +98,7 @@
     <g:if test="${isAdhocLocal}">
         <div id="localScriptDiv" class="${hasErrors(bean:item,field:'adhocExecution','fieldError')}">
             <div class="text-muted"><g:message code="Workflow.Step.adhocLocalString.description" />:</div>
-            <textarea rows="10" cols="60" name="adhocLocalString" id="adhocLocalStringField" class="code apply_ace" autofocus>${g.enc(html:item?.adhocLocalString)}</textarea>
+            <textarea rows="10" cols="60" name="adhocLocalString" id="adhocLocalStringField" class="code apply_ace" autofocus><g:enc>${item?.adhocLocalString}</g:enc></textarea>
         </div>
     </g:if>
     <g:elseif test="${isAdhocFileExecution}">
@@ -164,10 +164,10 @@
 
         <div id='interpreterArgsQuotedHelp${rkey}_preview' class="presentation">
             <code>$
-                <span id='interpreterPreview'>${g.enc(html:item?.scriptInterpreter)}</span>
+                <span id='interpreterPreview'><g:enc>${item?.scriptInterpreter}</g:enc></span>
                 <span class="interpreterquotepreview"
                       style="${wdgt.styleVisible(if: item?.interpreterArgsQuoted)}">&quot;</span
-                ><em>scriptfile</em> <span id='interpreterArgsPreview'>${g.enc(html:item?.argString)}</span
+                ><em>scriptfile</em> <span id='interpreterArgsPreview'><g:enc>${item?.argString}</g:enc></span
                     ><span class="interpreterquotepreview" style="${wdgt.styleVisible(if: item?.interpreterArgsQuoted)}">&quot;</span>
             </code>
         </div>
@@ -177,8 +177,8 @@
 <g:elseif test="${( newitemtype || item && item.instanceOf(PluginStep) ) && newitemDescription}">
     <div>
         <div>
-            <span class="prompt">${g.enc(html:newitemDescription.title)}</span>
-            <span class="text-muted">${g.enc(html:newitemDescription.description)}</span>
+            <span class="prompt"><g:enc>${newitemDescription.title}</g:enc></span>
+            <span class="text-muted"><g:enc>${newitemDescription.description}</g:enc></span>
         </div>
         <g:hiddenField name="pluginItem" value="true"/>
         <g:hiddenField name="newitemnodestep" value="${item?!!item.nodeStep:newitemnodestep=='true'}"/>

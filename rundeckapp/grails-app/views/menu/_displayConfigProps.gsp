@@ -1,11 +1,11 @@
 <g:each in="${keys.sort()}" var="key">
     <div>
-        <code>${enc(html:key)}:
+        <code><g:enc>${key}</g:enc>:
         <g:if test="${obscurePattern && key=~obscurePattern}">
             *****
         </g:if>
         <g:else>
-            ${enc(html:map[key])}
+            <g:enc>${map[key]}</g:enc>
         </g:else>
         </code>
     </div>

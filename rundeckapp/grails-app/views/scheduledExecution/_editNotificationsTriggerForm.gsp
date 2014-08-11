@@ -109,7 +109,7 @@
                                           placeholder="http://"
                                           rows="6"
                                           cols="40"
-                                          class="form-control ">${enc(html:notifurlcontent)}</textarea>
+                                          class="form-control "><g:enc>${notifurlcontent}</g:enc></textarea>
 
                                 <span class=" text-muted">
                                     <g:message code="notification.webhook.field.description"/>
@@ -119,8 +119,8 @@
                                 <div class="input-group  input-group-sm">
                                         <label class="input-group-addon"><g:message
                                         code="notification.webhook.field.title"/></label>
-                                <g:textField name="${enc(attr:triggerUrlFieldName)}"
-                                             value="${enc(html:notifurlcontent)}"
+                                <g:textField name="${triggerUrlFieldName}"
+                                             value="${notifurlcontent}"
                                              class="form-control "
                                              size="60"
                                              placeholder="http://"/>
@@ -162,9 +162,9 @@
                 <div>
                     <g:checkBox name="${checkboxFieldName}" value="true"
                                 checked="${definedNotif ? true : false}"/>
-                    <label for="${enc(attr:checkboxFieldName)}">${enc(html:pluginDescription['title'] ?: pluginDescription['name'] ?: pluginName)}</label>
+                    <label for="${enc(attr:checkboxFieldName)}"><g:enc>${pluginDescription['title'] ?: pluginDescription['name'] ?: pluginName}</g:enc></label>
                     <g:if test="${pluginDescription['description']}">
-                        <span class="text-muted">${enc(html:pluginDescription['description'])}</span>
+                        <span class="text-muted"><g:enc>${pluginDescription['description']}</g:enc></span>
                     </g:if>
                 </div>
 
@@ -173,7 +173,7 @@
                 <div id="notifholderPlugin${enc(attr:pkey)}" style="${wdgt.styleVisible(if: definedNotif ? true : false)}"
                       class="notificationplugin panel panel-default">
                     <div class="panel-body">
-                    <g:set var="prefix" value="${enc(html:'notifyPlugin.'+trigger+'.' + pluginName + '.config.')}"/>
+                    <g:set var="prefix" value="${'notifyPlugin.'+trigger+'.' + pluginName + '.config.'}"/>
                     <g:if test="${pluginDescription instanceof Description}">
                         <div class="form-horizontal">
                             <g:each in="${pluginDescription?.properties}" var="prop">
@@ -192,7 +192,7 @@
                                 </g:if>
                             </g:each>
                             <g:if test="${!pluginDescription?.properties}">
-                                <span class="text-muted">No configuration properties for ${enc(html:pluginDescription['title'] ?: pluginDescription['name'] ?: pluginName)}</span>
+                                <span class="text-muted">No configuration properties for <g:enc>${pluginDescription['title'] ?: pluginDescription['name'] ?: pluginName}</g:enc></span>
                             </g:if>
                         </div>
                     </g:if>

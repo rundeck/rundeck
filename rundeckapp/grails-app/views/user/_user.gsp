@@ -29,7 +29,7 @@
                 Email:
             </td>
             <td>
-                ${enc(html: user.email)}
+                <g:enc>${ user.email}</g:enc>
                 <g:if test="${edit}">
 
                     <small>
@@ -45,7 +45,7 @@
         <g:if test="${user.login == request.remoteUser}">
             <tr>
                 <td>Groups:</td>
-                <td>${enc(html: request.subject.getPrincipals(com.dtolabs.rundeck.core.authentication.Group.class).collect { it.name }.join(", ") ) }</td>
+                <td><g:enc>${request.subject.getPrincipals(com.dtolabs.rundeck.core.authentication.Group.class).collect { it.name }.join(", ") }</g:enc></td>
             </tr>
         </g:if>
         <g:if test="${session.user==user.login && (auth.resourceAllowedTest(kind:'user',action:[AuthConstants.ACTION_ADMIN],context:'application'))}">

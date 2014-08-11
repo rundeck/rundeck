@@ -21,7 +21,7 @@
             <span class="action textbtn button" onclick="loadProjectSelect({page:'configure'});"
                   title="Select project...">
                 Project Configuration:
-                ${g.enc(html:params.project ?: request.project ?: 'Select project...')}
+                <g:enc>${params.project ?: request.project ?: 'Select project...'}</g:enc>
             </span>
         </li>
     </g:else>

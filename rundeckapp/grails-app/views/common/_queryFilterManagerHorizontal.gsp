@@ -76,7 +76,7 @@
 <g:if test="${filterName}">
     <div class=" panel-body saved clear">
         <div class="well-sm well">
-            Saved filter: <strong>${g.enc(html:filterName)}</strong>
+            Saved filter: <strong><g:enc>${filterName}</g:enc></strong>
             <span class="textbtn textbtn-danger " onclick="['${rkey}fdel', '${rkey}fdelbtn'].each(Element.toggle);"
                   id="${rkey}fdelbtn" title="Click to delete this saved filter">
                 delete&hellip;

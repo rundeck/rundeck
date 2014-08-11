@@ -3,14 +3,14 @@
     <g:if test="${flash.error || uploadError}">
         <div class="row">
             <div class="col-sm-12">
-                <div class="alert alert-warning">${enc(html:flash.error?:uploadError)}</div>
+                <div class="alert alert-warning"><g:enc>${flash.error?:uploadError}</g:enc></div>
             </div>
         </div>
     </g:if>
     <g:if test="${flash.message}">
         <div class="row">
             <div class="col-sm-12">
-                <div class="alert alert-info">${enc(html:flash.message)}</div>
+                <div class="alert alert-info"><g:enc>${flash.message}</g:enc></div>
             </div>
         </div>
     </g:if>
@@ -47,19 +47,19 @@
                                 </td>
                                 <td class="jobname" >
                                     <g:if test="${scheduledExecution.id}">
-                                        <g:link controller="scheduledExecution" action="show" id="${scheduledExecution.extid}">${enc(html:scheduledExecution.jobName)}</g:link >
+                                        <g:link controller="scheduledExecution" action="show" id="${scheduledExecution.extid}"><g:enc>${scheduledExecution.jobName}</g:enc></g:link >
                                     </g:if>
                                     <g:else>
-                                        ${enc(html:scheduledExecution.jobName)}
+                                        <g:enc>${scheduledExecution.jobName}</g:enc>
                                     </g:else>
                                 </td>
-                                <td class="jobdesc" style="">${enc(html:scheduledExecution.description?.size()>100?scheduledExecution.description.substring(0,100):scheduledExecution.description)}</td>
+                                <td class="jobdesc" style=""><g:enc>${scheduledExecution.description?.size()>100?scheduledExecution.description.substring(0,100):scheduledExecution.description}</g:enc></td>
                                         <td class="errors">
                                 <g:hasErrors bean="${scheduledExecution}">
                                             <g:renderErrors bean="${scheduledExecution}" as="list"/>
                                 </g:hasErrors>
                                             <g:if test="${entry.errmsg}">
-                                                ${enc(html:entry.errmsg)}
+                                                <g:enc>${entry.errmsg}</g:enc>
                                             </g:if>
                                         </td>
                             </tr>
@@ -94,17 +94,17 @@
                                 <td class="jobname" >
                                     <g:enc>${scheduledExecution.jobName}</g:enc>
                                 </td>
-                                <td class="jobdesc" style="">${enc(html:scheduledExecution.description?.size()>100?scheduledExecution.description.substring(0,100):scheduledExecution.description)}</td>
+                                <td class="jobdesc" style=""><g:enc>${scheduledExecution.description?.size()>100?scheduledExecution.description.substring(0,100):scheduledExecution.description}</g:enc></td>
                                 <td class="sepL">
                                     Existing:
                                 </td>
                                 <td class="jobname">
                                     <g:if test="${scheduledExecution.id}">
-                                        <g:link controller="scheduledExecution" action="show" id="${scheduledExecution.extid}">${enc(html:scheduledExecution.jobName)}</g:link >
+                                        <g:link controller="scheduledExecution" action="show" id="${scheduledExecution.extid}"><g:enc>${scheduledExecution.jobName}</g:enc></g:link >
                                     </g:if>
                                 </td>
                                 <td class="jobdesc">
-                                    ${enc(html:scheduledExecution.origDescription.size()>100?scheduledExecution.origDescription.substring(0,100):scheduledExecution.origDescription)}
+                                    <g:enc>${scheduledExecution.origDescription.size()>100?scheduledExecution.origDescription.substring(0,100):scheduledExecution.origDescription}</g:enc>
                                 </td>
                             </tr>
                         </g:each>
@@ -136,7 +136,7 @@
         <div class="panel-heading">
             <span class="h4">
                 Upload <g:message code="domain.ScheduledExecution.title"/> Definition
-                to project <b>${enc(html:params.project ?: request.project)}</b>
+                to project <b><g:enc>${params.project ?: request.project}</g:enc></b>
             </span>
         </div>
         <div class="panel-body">

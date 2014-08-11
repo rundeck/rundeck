@@ -81,7 +81,7 @@
                   title="Select this group"
                 onclick="groupChosen('${enc(js:prefix ? prefix + '/' + group.key : group.key)}'); return false;"
                 style="padding-left:4px;"><%--
-            --%> ${enc(html:displaygroup)}<%--
+            --%> <g:enc>${displaygroup}</g:enc><%--
         --%></span>
         </g:if>
         <g:else>
@@ -89,11 +89,11 @@
             <g:expander open="${groupopen?'true':'false'}" jsfunc="${jsfunc}" imgfirst="true" style="padding-left:4px;" classnames="jobgroupexpand textbtn-secondary">
                 <span class="foldertoggle">&nbsp;</span>
                 <g:if test="${jobsjscallback}">
-                    ${enc(html:displaygroup)}
+                    <g:enc>${displaygroup}</g:enc>
                 </g:if>
             </g:expander>
             <g:if test="${!jobsjscallback}">
-            <a class=" groupname secondary" href="${createLink(controller: 'menu', action: 'jobs', params: [project:params.project,groupPath: prefix ? prefix + '/' + group.key : group.key])}">${enc(html:displaygroup)}</a>
+            <a class=" groupname secondary" href="${createLink(controller: 'menu', action: 'jobs', params: [project:params.project,groupPath: prefix ? prefix + '/' + group.key : group.key])}"><g:enc>${displaygroup}</g:enc></a>
             </g:if>
         </g:else>
         </div>

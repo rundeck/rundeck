@@ -25,7 +25,7 @@
             <span class="${i%2==1?'alternateRow':''} node_entry ${nodedata.islocal?'server':''} node_ident obs_clicktip action textbtn"
                   id="${enc(attr:nkey)}_key" data-node="${enc(attr:node.nodename)}" data-key="${enc(attr:nkey)}">
                 <i class="rdicon node ${runnable ? 'node-runnable' : ''} icon-small"></i>
-                ${enc(html:node.nodename)}
+                <g:enc>${node.nodename}</g:enc>
             </span>
             <g:render template="nodeTooltipView" model="[node:node,key: nkey+'_key',islocal:nodedata.islocal,runnable:runnable]"/>
             <% i++ %>

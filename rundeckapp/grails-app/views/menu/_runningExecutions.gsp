@@ -48,8 +48,8 @@
                     <td class=" eventtitle job">
                         <g:link title="View execution output" controller="execution" action="show" id="${execution.id}"
                                 params="[project: execution.project]"
-                                class="_defaultAction">#${enc(html:execution.id)}</g:link>
-                        ${enc(html:(scheduledExecution.groupPath ? scheduledExecution.groupPath + '/' : '') + scheduledExecution.jobName)}
+                                class="_defaultAction">#<g:enc>${execution.id}</g:enc></g:link>
+                        <g:enc>${(scheduledExecution.groupPath ? scheduledExecution.groupPath + '/' : '') + scheduledExecution.jobName}</g:enc>
                     </td>
 
                     <td class="eventargs">
@@ -62,9 +62,9 @@
                     <td class="jobname adhoc ">
                         <g:link title="View execution output" controller="execution" action="show" id="${execution.id}"
                             params="[project:execution.project]"
-                                class="_defaultAction">#${enc(html:execution.id)}</g:link>
+                                class="_defaultAction">#<g:enc>${execution.id}</g:enc></g:link>
 
-                        ${enc(html:execution.workflow.commands[0].adhocRemoteString)}
+                        <g:enc>${execution.workflow.commands[0].adhocRemoteString}</g:enc>
                     </td>
                     <td class="eventargs">
                     </td>

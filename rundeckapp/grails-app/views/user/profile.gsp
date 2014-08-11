@@ -86,7 +86,7 @@
 
 <div class="row">
     <div class="col-sm-10">
-        <h3>User: ${enc(html:user.login)}
+        <h3>User: <g:enc>${user.login}</g:enc>
         </h3>
     </div>
     <div class="col-sm-2">

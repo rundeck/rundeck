@@ -28,16 +28,16 @@
     <g:set var="filtersExc" value="${filters.exclude}"/>
     <g:each in="${filtersInc.keySet().sort()}" var="qparam">
         <g:if test="${filtersInc[qparam]}">
-            <span class="querykey include">${enc(html:qparam)}</span>:
+            <span class="querykey include"><g:enc>${qparam}</g:enc></span>:
             <span class="queryvalue text include ${filtersInc[qparam].contains(varStr) ? 'variable' : ''}">
-                <g:truncate max="50">${enc(html:filtersInc[qparam])}</g:truncate></span>
+                <g:truncate max="50"><g:enc>${filtersInc[qparam]}</g:enc></g:truncate></span>
         </g:if>
     </g:each>
     <g:each in="${filtersExc.keySet().sort()}" var="qparam">
         <g:if test="${filtersExc[qparam]}">
-            <span class="querykey exclude">${enc(html:qparam)}</span>:
+            <span class="querykey exclude"><g:enc>${qparam}</g:enc></span>:
             <span class="queryvalue text exclude ${filtersExc[qparam].contains(varStr) ? 'variable' : ''}">
-                <g:truncate max="50">${enc(html: filtersExc[qparam])}</g:truncate></span>
+                <g:truncate max="50"><g:enc>${ filtersExc[qparam]}</g:enc></g:truncate></span>
         </g:if>
     </g:each>
 </g:if>

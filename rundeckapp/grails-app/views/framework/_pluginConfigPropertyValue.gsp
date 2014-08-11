@@ -21,7 +21,7 @@
  --%>
 
 <%@ page contentType="text/html;charset=UTF-8" %>
-<div title="${enc(attr:prop.description)}">${prop.title ? enc(html:prop.title) : enc(html:prop.name)}:</div>
+<div title="${enc(attr:prop.description)}"><g:enc>${prop.title?:prop.name}</g:enc>:</div>
 <div>
 <g:if test="${prop.type.toString()=='Boolean'}">
     <g:if test="${values[prop.name]=='true'}">
@@ -32,9 +32,9 @@
     </g:else>
 </g:if>
 <g:elseif test="${values[prop.name]}">
-    <span class="configvalue">${enc(html:values[prop.name])}</span>
+    <span class="configvalue"><g:enc>${values[prop.name]}</g:enc></span>
 </g:elseif>
 <g:if test="${includeFormFields && values[prop.name]}">
-    <input type="hidden" name="${enc(html:prefix+ 'config.'+prop.name)}" value="${enc(html:values[prop.name])}"/>
+    <input type="hidden" name="${enc(attr:prefix+ 'config.'+prop.name)}" value="${enc(attr:values[prop.name])}"/>
 </g:if>
 </div>

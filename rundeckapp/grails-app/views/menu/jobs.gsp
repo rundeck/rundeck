@@ -5,7 +5,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="jobs"/>
-    <title><g:message code="gui.menu.Workflows"/> - ${enc(html:params.project ?: request.project)}</title>
+    <title><g:message code="gui.menu.Workflows"/> - <g:enc>${params.project ?: request.project}</g:enc></title>
     <g:javascript library="yellowfade"/>
     <g:javascript library="pagehistory"/>
     <g:javascript library="prototype/effects"/>
@@ -349,7 +349,7 @@
         <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
         <ul>
             <g:each in="${flash.bulkDeleteResult.errors*.message}" var="message">
-                <li>${enc(html:message)}</li>
+                <li><g:enc>${message}</g:enc></li>
             </g:each>
         </ul>
     </div>
@@ -359,7 +359,7 @@
         <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
         <ul>
         <g:each in="${flash.bulkDeleteResult.success*.message}" var="message">
-            <li>${enc(html:message)}</li>
+            <li><g:enc>${message}</g:enc></li>
         </g:each>
         </ul>
     </div>

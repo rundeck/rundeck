@@ -22,7 +22,7 @@
 
 <g:set var="ukey" value="${g.rkey()}"/>
     <td>
-        <span class="apitoken">${enc(html:token.token)}</span>
+        <span class="apitoken"><g:enc>${token.token}</g:enc></span>
     </td>
     <td>
 

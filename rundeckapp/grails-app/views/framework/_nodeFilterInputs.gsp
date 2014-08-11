@@ -28,8 +28,7 @@
 
 
             <div id="nodeFilterDivFilter" style="">
-                <g:set var="filtvalue"
-                       value="${enc(html: query?.('filter'))}"/>
+                <g:set var="filtvalue" value="${query?.('filter')}"/>
                 <div class="col-sm-12 nfilteritem">
 
                     <div class="input-group">

@@ -3,7 +3,7 @@
         <g:if test="${node.description}">
             <tr>
                 <td class="value text-muted" colspan="4">
-                    ${enc(html:node.description)}
+                    <g:enc>${node.description}</g:enc>
                 </td>
             </tr>
         </g:if>
@@ -79,7 +79,7 @@
                                     </td>
                                     <td class="setting " colspan="3">
                                         <div class="value">
-                                            ${enc(html:value)}
+                                            <g:enc>${value}</g:enc>
                                             <tmpl:nodeFilterLink key="${origAttrName}" value="${value}"
                                                                  linkclass="textbtn textbtn-info textbtn-saturated hover-action"
                                                                  linkicon="glyphicon glyphicon-search "/>
@@ -103,7 +103,7 @@
                     </td>
                     <td class="setting" colspan="3">
                         <div class="value">
-                        ${enc(html:nodeAttrs[setting])}
+                        <g:enc>${nodeAttrs[setting]}</g:enc>
                         <tmpl:nodeFilterLink key="${setting}" value="${nodeAttrs[setting]}"
                                              linkclass="textbtn textbtn-info textbtn-saturated hover-action"
                                              linkicon="glyphicon glyphicon-search "/>

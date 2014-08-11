@@ -50,7 +50,7 @@
         <g:else>
             <li id="projectSelect" class="dropdown">
                 <span class="action textbtn button" onclick="loadProjectSelect();"
-                      title="Select project...">${g.enc(html: params.project ?: request.project ?: 'Select project&hellip;')}
+                      title="Select project..."><g:enc>${ params.project ?: request.project ?: 'Select project&hellip;'}</g:enc>
                 </span>
             </li>
         </g:else>
@@ -152,7 +152,7 @@
         <li class="dropdown">
             <g:link controller="user" action="profile" class="dropdown-toggle" data-toggle="dropdown" data-target="#" id="userLabel"
                     role="button">
-                ${g.enc(html:session.user)} <span class="caret"></span>
+                <g:enc>${session.user}</g:enc> <span class="caret"></span>
             </g:link>
             <ul class="dropdown-menu" role="menu" aria-labelledby="userLabel">
                 <li><g:link controller="user" action="profile">

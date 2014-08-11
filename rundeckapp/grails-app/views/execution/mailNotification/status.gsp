@@ -241,7 +241,7 @@ div.progressContainer div.progressContent{
                 id="${execution.id}">
                 Download Output
             </g:link>
-             <g:if test="${filesize}">(${enc(html:filesize)} bytes)</g:if>
+             <g:if test="${filesize}">(<g:enc>${filesize}</g:enc> bytes)</g:if>
         </div>
         </g:if>
 
@@ -347,7 +347,7 @@ div.progressContainer div.progressContent{
 </div>
 <div class="foot">
     <g:message code="main.app.name"/> :
-    ${enc(html:execution.project)}
+    <g:enc>${execution.project}</g:enc>
     <g:link absolute="true" controller="framework" params="[project: execution.project]" action="nodes"><g:message code="gui.menu.Nodes"/> &raquo;</g:link>
     <g:link absolute="true" controller="menu" params="[project: execution.project]" action="jobs"><g:message code="gui.menu.Workflows"/> &raquo;</g:link>
     <g:link absolute="true" controller="reports" params="[project: execution.project]" action="index"><g:message code="gui.menu.Events"/> &raquo;</g:link>

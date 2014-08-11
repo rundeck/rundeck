@@ -50,7 +50,7 @@
                     <g:if test="${notifurlcontent && notifurlcontent.size() > 30}">
                         <textarea name="${enc(attr:notifyUrl)}"
                                   style="vertical-align:top;"
-                                  rows="6" cols="40">${enc(html:notifurlcontent)}</textarea>
+                                  rows="6" cols="40"><g:enc>${notifurlcontent}</g:enc></textarea>
                     </g:if>
                     <g:else>
                         <g:textField name="${enc(attr:notifyUrl)}" cols="70" rows="3"
@@ -82,14 +82,14 @@
                 <span>
                     <g:checkBox name="${checkboxFieldName}" value="true"
                                 checked="${definedNotif ? true : false}"/>
-                    <label for="${enc(attr:checkboxFieldName)}">${enc(html:pluginDescription['title'] ?: pluginDescription['name'] ?: pluginName)}</label>
+                    <label for="${enc(attr:checkboxFieldName)}"><g:enc>${pluginDescription['title'] ?: pluginDescription['name'] ?: pluginName}</g:enc></label>
                     <g:if test="${pluginDescription['description']}">
-                        <span class="info note">${enc(html:pluginDescription['description'])}</span>
+                        <span class="info note"><g:enc>${pluginDescription['description']}</g:enc></span>
                     </g:if>
                 </span>
                 <span id="notifholderPlugin${enc(attr:pkey)}" style="${wdgt.styleVisible(if: definedNotif ? true : false)}"
                       class="notificationplugin">
-                    <g:set var="prefix" value="${enc(html:'notifyPlugin.'+trigger+'.' + pluginName + '.config.')}"/>
+                    <g:set var="prefix" value="<g:enc>${'notifyPlugin.'+trigger+'.' + pluginName + '.config.'}</g:enc>"/>
                     <g:if test="${pluginDescription instanceof Description}">
                         <table class="simpleForm">
                             <g:each in="${pluginDescription?.properties}" var="prop">

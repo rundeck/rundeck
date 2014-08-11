@@ -33,7 +33,7 @@
 <g:if test="${includeDeleteButton}">
     <div class=" panel-body saved ">
         <div class="well-sm well clearfix">
-            <span class="h4">Saved filter: <strong>${g.enc(html:filterName)}</strong></span>
+            <span class="h4">Saved filter: <strong><g:enc>${filterName}</g:enc></strong></span>
             <button class="btn btn-danger btn-sm pull-right" data-toggle="modal" data-target="#deleteFilterModal">
                 Delete this filter&hellip;
                 <i class="glyphicon glyphicon-remove"></i>
@@ -55,7 +55,7 @@
                 <div class="form-group">
                     <label class="control-label col-sm-2">Name: </label>
                     <div class="col-sm-10">
-                        <span class="form-control-static" data-bind="text: filterName">${g.enc(html:filterName)}</span>
+                        <span class="form-control-static" data-bind="text: filterName"><g:enc>${filterName}</g:enc></span>
                         <g:hiddenField name="delFilterName" value="${filterName}" data-bind="value: filterName"/>
                     </div>
                 </div>

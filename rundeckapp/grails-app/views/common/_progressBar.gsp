@@ -10,7 +10,7 @@
          data-bind="${bind?'style: { width: '+ enc(attr:bind)+' < 101 ? '+ enc(attr:bind)+'+ \'%\' : \'100%\' }, text: '+ enc(attr:textToBind) +(progressBind? enc(attr:progressBind):''):''}">
         <g:if test="${showpercent}">${completePercent > 100 ? 100 : enc(html:completePercent)}%</g:if>${completePercent < 100 || showOverrun ? enc(html:remaining) : ''}<g:if
                 test="${overrun}"> <g:img
-                    file="icon-tiny-disclosure-waiting.gif"/> </g:if>${enc(html:innerContent)}
-        <span class="sr-only">${enc(html:completePercent)}% Complete</span>
+                    file="icon-tiny-disclosure-waiting.gif"/> </g:if><g:enc>${innerContent}</g:enc>
+        <span class="sr-only"><g:enc>${completePercent}</g:enc>% Complete</span>
     </div>
 </div>

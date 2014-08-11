@@ -21,9 +21,9 @@
                     </g:if>
                 </td>
                 <td width='10' class="info" style=" vertical-align:top;">
-                    <span class="${enc(attr:it.level)}">${enc(html:it.time)} </span>
+                    <span class="${enc(attr:it.level)}"><g:enc>${it.time}</g:enc> </span>
                 </td>
-                <td  class="data" style=" vertical-align:top;">${enc(html:it.mesg)}</td>
+                <td  class="data" style=" vertical-align:top;"><g:enc>${it.mesg}</g:enc></td>
             </tr>
                 <% i++ %>
             </g:each>

@@ -68,12 +68,12 @@
     <div class="col-sm-12">
     <div class="alert alert-warning" style="${wdgt.styleVisible(if: (flash.error || request.error || request.errors))}"
          id="editerror">
-        ${enc(html:flash.error)}${enc(html:request.error)}
+        <g:enc>${flash.error}${request.error}</g:enc>
         <g:if test="${request.errors}">
             <ul>
                 <g:each in="${request.errors}" var="err">
                     <g:if test="${err}">
-                        <li>${enc(html:err)}</li>
+                        <li><g:enc>${err}</g:enc></li>
                     </g:if>
                 </g:each>
             </ul>
@@ -88,7 +88,7 @@
                 <div class="panel-heading">
                         <span class="h3">
                             <g:message code="domain.Project.edit.message"
-                                       default="Configure Project"/>: ${enc(html:params.project ?: request.project)}
+                                       default="Configure Project"/>: <g:enc>${params.project ?: request.project}</g:enc>
                     </span>
                 </div>
                 <g:render template="editProjectForm" model="${[editOnly:true,project: params.project ?: request.project]}"/>

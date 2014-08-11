@@ -26,9 +26,9 @@
     <div class="row">
     <div class="col-sm-12">
         <div class=" text-info">
-            <g:if test="${!hideTitle}">${enc(html:description.title)}</g:if>
+            <g:if test="${!hideTitle}"><g:enc>${description.title}</g:enc></g:if>
             <g:if test="${!hideDescription}">
-                <small class="text-muted">${enc(html:description.description)}</small>
+                <small class="text-muted"><g:enc>${description.description}</g:enc></small>
             </g:if>
         </div>
     </div>
@@ -64,7 +64,7 @@
             <g:expander key="${rkey}_inv">Properties</g:expander>
             <ul id="${enc(attr:rkey)}_inv" style="display:none">
                 <g:each var="prop" in="${values}">
-                    <li>${enc(html:prop?.key)}: ${enc(html:prop?.value)}</li>
+                    <li><g:enc>${prop?.key}: ${prop?.value}</g:enc></li>
                     <input type="hidden" name="${enc(attr: prefix + 'config.' + prop?.key)}"
                            value="${enc(attr: prop?.value)}"/>
                 </g:each>

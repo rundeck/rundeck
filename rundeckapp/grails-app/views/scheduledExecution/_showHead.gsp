@@ -9,7 +9,7 @@
                 id="${scheduledExecution.extid}"
                 absolute="${absolute ? 'true' : 'false'}">
             <i class="glyphicon glyphicon-book"></i>
-            ${enc(html:scheduledExecution?.jobName)}</g:link>
+            <g:enc>${scheduledExecution?.jobName}</g:enc></g:link>
     </span>
         <g:if test="${scheduledExecution.scheduled && nextExecution}">
             <span class="scheduletime">
@@ -39,12 +39,12 @@
                         title="${'View ' + g.message(code: 'domain.ScheduledExecution.title') + 's in this group'}"
                         absolute="${absolute ? 'true' : 'false'}">
                     <g:if test="${!noimgs}"><b class="glyphicon glyphicon-folder-close"></b></g:if>
-                    ${enc(html:scheduledExecution.groupPath)}
+                    <g:enc>${scheduledExecution.groupPath}</g:enc>
                 </g:link>
             </g:if>
         </span>
     <div class="h4 jobInfoSection">
-        <span class="text-muted">${enc(html:scheduledExecution?.description)}</span>
+        <span class="text-muted"><g:enc>${scheduledExecution?.description}</g:enc></span>
     </div>
 
 </div>

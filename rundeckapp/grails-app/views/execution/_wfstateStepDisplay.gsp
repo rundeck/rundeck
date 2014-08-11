@@ -31,7 +31,7 @@
               data-execstate="${enc(attr:wfstep.stepState.executionState)}">
 
         </span>
-        <span class="stepctx">${subCtx ? enc(html:subCtx) + '/' : ''}${i + 1}. </span>
+        <span class="stepctx"><g:enc>${subCtx ? subCtx + '/' : ''}${i + 1}. </g:enc></span>
         <span class=" stepident" data-stepctx="${enc(attr:myctx)}"></span>
         </span>
     </div>
@@ -43,7 +43,7 @@
                       data-stepctx="${enc(attr:myctx)}"
                       style="${wdgt.styleVisible(if: wfstep.stepState.errorMessage)}">
                     <g:if test="${wfstep.stepState.errorMessage}">
-                    %{--${enc(html:wfstep.stepState.errorMessage)}--}%
+                    %{--<g:enc>${wfstep.stepState.errorMessage}</g:enc>--}%
                     </g:if>
                 </span>
             </div>
@@ -68,7 +68,7 @@
                                   data-stepctx="${enc(attr:myctx)}"
                                   style="${wdgt.styleVisible(if: wfstep.nodeStateMap[nodename]?.errorMessage)}">
                                 <g:if test="${wfstep.nodeStateMap[nodename]?.errorMessage}">
-                                %{--${enc(html:wfstep.nodeStateMap[nodename].errorMessage)}--}%
+                                %{--<g:enc>${wfstep.nodeStateMap[nodename].errorMessage}</g:enc>--}%
                                 </g:if>
                             </span>
                         </div>

@@ -31,7 +31,7 @@
             data-node-filter-name="${enc(attr:filter.name)}"
             data-node-filter="${enc(attr:filter.asFilter())}"
                 title="Apply filter: ${enc(attr:filter.name)}">
-            ${g.enc(html:filter.name)}</g:link>
+            <g:enc>${filter.name}</g:enc></g:link>
         </li>
     </g:each>
 </g:if>
@@ -47,7 +47,7 @@
             data-node-filter="${enc(attr:filter.asFilter())}"
             data-placement="bottom"
                 title="Apply filter: ${g.enc(attr:filter.name)}">
-            ${g.enc(html:filter.name)}</g:link>
+            <g:enc>${filter.name}</g:enc></g:link>
     </g:each>
     </span>
 </g:elseif>

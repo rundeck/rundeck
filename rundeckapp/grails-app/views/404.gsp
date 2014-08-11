@@ -50,7 +50,7 @@
             </div>
 
             <div class="text-muted small text-right">
-                URI: ${g.enc(html:request.forwardURI)}
+                URI: <g:enc>${request.forwardURI}</g:enc>
             </div>
         </div>
     </div>

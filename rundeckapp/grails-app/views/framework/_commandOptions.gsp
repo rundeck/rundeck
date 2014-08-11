@@ -31,7 +31,7 @@ used by _editOptions.gsp template
             <div class="form-group ${hasError ? 'has-warning' : ''} ${hasRemote?'remote':''}" >
               <label class="remoteoptionfield col-sm-2 control-label" for="${enc(attr:fieldhiddenid)}" id="${enc(attr:fieldNamekey)}">
                   <span style="display:none;" class="remotestatus"></span>
-                  ${enc(html:optName)}
+                  <g:enc>${optName}</g:enc>
                   <g:if test="${Environment.current == Environment.DEVELOPMENT && grailsApplication.config.rundeck?.debug}">
                       <g:enc>(${optiondependencies ? optiondependencies[optName] : '-'})(${dependentoptions ? dependentoptions[optName] : '-'})</g:enc>
                   </g:if>
@@ -52,7 +52,7 @@ used by _editOptions.gsp template
                             <span class="loading"></span>
                         </span>
                         <g:if test="${Environment.current == Environment.DEVELOPMENT && grailsApplication.config.rundeck?.debug}">
-                        <a onclick="_remoteOptionControl('_commandOptions').loadRemoteOptionValues('${enc(js:optName)}');return false;" href="#">${enc(html:optName)} reload</a>
+                        <a onclick="_remoteOptionControl('_commandOptions').loadRemoteOptionValues('${enc(js:optName)}');return false;" href="#"><g:enc>${optName}</g:enc> reload</a>
                         </g:if>
                         </div>
                     </g:if>
@@ -76,11 +76,11 @@ used by _editOptions.gsp template
                 </div>
 
                 <div class="col-sm-10 col-sm-offset-2">
-                    <span class="help-block">${enc(html:optDescription)}</span>
+                    <span class="help-block"><g:enc>${optDescription}</g:enc></span>
                 </div>
                 <g:if test="${hasError}">
                     <div class="col-sm-10 col-sm-offset-2">
-                        <p class="text-warning">${enc(html:hasError)}</p>
+                        <p class="text-warning"><g:enc>${hasError}</g:enc></p>
                     </div>
                 </g:if>
             </div>
@@ -196,7 +196,7 @@ used by _editOptions.gsp template
 </g:if>
 <g:elseif test="${!authorized}">
     <div class="info note">Not authorized to execute chosen job.</div>
-    <g:if test="${selectedargstring}"><div>Old value: ${enc(html:selectedargstring)}</div></g:if>
+    <g:if test="${selectedargstring}"><div>Old value: <g:enc>${selectedargstring}</g:enc></div></g:if>
 </g:elseif>
 <g:else>
     <div class="form-group">

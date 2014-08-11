@@ -38,7 +38,7 @@
             <div class="alert alert-dismissable alert-info">
                 <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
                 <div>
-                    ${enc(html:flash.message)}
+                    <g:enc>${flash.message}</g:enc>
                 </div>
             </div>
         </g:if>
@@ -46,7 +46,7 @@
             <div class="alert alert-dismissable alert-warning">
                 <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
                 <div>
-                    ${enc(html:flash.error)}
+                    <g:enc>${flash.error}</g:enc>
                 </div>
             </div>
         </g:if>

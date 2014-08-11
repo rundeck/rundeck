@@ -57,8 +57,8 @@
                         <a  class="list-group-item textbtn  add_node_step_type" data-node-step-type="${enc(attr:typedesc.name)}"
                             href="#">
                             <i class="rdicon icon-small plugin"></i>
-                            ${enc(html:typedesc.title)}
-                            <span class="text-info">- ${enc(html:typedesc.description)}</span>
+                            <g:enc>${typedesc.title}</g:enc>
+                            <span class="text-info">- <g:enc>${typedesc.description}</g:enc></span>
                         </a>
                     </g:each>
                 </g:if>
@@ -83,8 +83,8 @@
                     <g:each in="${stepDescriptions}" var="typedesc">
                         <a class="list-group-item textbtn  add_step_type" data-step-type="${g.enc(attr:typedesc.name)}" href="#">
                             <i class="rdicon icon-small plugin"></i>
-                            ${g.enc(html:typedesc.title)}
-                            <span class="text-info">- ${g.enc(html:typedesc.description)}</span>
+                            <g:enc>${typedesc.title}</g:enc>
+                            <span class="text-info">- <g:enc>${typedesc.description}</g:enc></span>
                         </a>
                     </g:each>
 

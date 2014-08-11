@@ -44,7 +44,10 @@
                                       />
                         </g:if>
                         <g:elseif test="${action}">
-                            <span class="${g.enc(attr:action.classnames)}" onclick="${g.enc(attr:action.onclick)}" data-tag="${enc(attr:tag)}" title="Filter by tag: ${g.enc(attr:tag)}">${enc(html:tag)}:${tagsummary[tag]}</span>
+                            <span class="${g.enc(attr:action.classnames)}" onclick="${g.enc(attr:action.onclick)}"
+                                  data-tag="${enc(attr:tag)}" title="Filter by tag: ${g.enc(attr:tag)}">
+                                <g:enc>${tag}:${tagsummary[tag]}</g:enc>
+                            </span>
                         </g:elseif>
                         <g:else>
                             <g:enc>${tag}:${tagsummary[tag]}</g:enc>
@@ -69,7 +72,9 @@
                             <g:elseif test="${action}">
                                 <span class=" ${g.enc(attr:action.classnames)}" onclick="${g.enc(attr:action.onclick)}"
                                       data-tag="${enc(attr:tag)}"
-                                      title="Filter by tag: ${g.enc(attr:tag)}">${enc(html:tag)}:${tagsummary[tag]}</span>
+                                      title="Filter by tag: ${g.enc(attr:tag)}">
+                                    <g:enc>${tag}:${tagsummary[tag]}</g:enc>
+                                </span>
                             </g:elseif>
                             <g:else>
                                 <g:enc>${tag}

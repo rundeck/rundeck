@@ -17,10 +17,10 @@
 <g:set var="parsed" value="${g.parseOptsFromString(args: argString)}"/>
 <g:if test="${parsed}">
     <g:each in="${parsed}" var="entry">
-        <span class="optkey">${g.enc(html:entry.key)}</span>:
-        <g:if test="${entry.value}"><span class="optvalue">${g.enc(html:entry.value)}</span></g:if>
+        <span class="optkey"><g:enc>${entry.key}</g:enc></span>:
+        <g:if test="${entry.value}"><span class="optvalue"><g:enc>${entry.value}</g:enc></span></g:if>
     </g:each>
 </g:if>
 <g:else>
-    <span class="optvalue">${g.enc(html:argString)}</span>
+    <span class="optvalue"><g:enc>${argString}</g:enc></span>
 </g:else>

@@ -5,7 +5,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="nodes"/>
-    <title><g:message code="gui.menu.Nodes"/> - ${g.enc(html:params.project ?: request.project)}</title>
+    <title><g:message code="gui.menu.Nodes"/> - <g:enc>${params.project ?: request.project}</g:enc></title>
     <g:javascript library="yellowfade"/>
     <asset:javascript src="nodeFiltersKO.js"/>
     <asset:javascript src="nodeRemoteEdit.js"/>
@@ -230,7 +230,7 @@
         <div class="well well-sm inline ">
             <div data-bind="visible: filterName()">
 
-                Selected Filter:  <strong data-bind="text: filterName()">${enc(html:filterName)}</strong>
+                Selected Filter:  <strong data-bind="text: filterName()"><g:enc>${filterName}</g:enc></strong>
                         <span data-bind="visible: filterName()">
                             <a href="#"
                                 class="textbtn textbtn-danger"
@@ -301,7 +301,7 @@
                            data-placement="left"
                         >
                             <i class="glyphicon glyphicon-play"></i>
-                            Run a command on <span data-bind="text: allcount">${enc(html:total)}</span>
+                            Run a command on <span data-bind="text: allcount"><g:enc>${total}</g:enc></span>
                             <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span> …
                         </a>
                     </li>

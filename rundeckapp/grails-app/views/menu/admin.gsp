@@ -37,7 +37,7 @@
     <g:if test="${flash.joberrors}">
         <ul class="error note">
             <g:each in="${flash.joberrors}" var="errmsg">
-                <li>${enc(html:errmsg)}</li>
+                <li><g:enc>${errmsg}</g:enc></li>
             </g:each>
         </ul>
     </g:if>
@@ -50,7 +50,7 @@
 <div class="col-sm-9">
 
     <span class="h3">
-        Project: ${enc(html:params.project ?: request.project)}
+        Project: <g:enc>${params.project ?: request.project}</g:enc>
 
     </span>
 <g:set var="authAdmin" value="${auth.resourceAllowedTest(action: AuthConstants.ACTION_ADMIN, type: "project",
@@ -124,7 +124,7 @@
                                 </g:if>
                                 <g:else>
                                     <span
-                                        class="warn note">Invalid Resource Model Source configuration: Provider not found: ${enc(html:config.type)}</span>
+                                        class="warn note">Invalid Resource Model Source configuration: Provider not found: <g:enc>${config.type}</g:enc></span>
                                 </g:else>
                             </div>
                         </li>
@@ -202,14 +202,14 @@
 <div class="tab-pane" id="export">
     <div class="panel panel-default panel-tab-content">
         <div class="panel-heading">
-            Download an archive of project <strong>${enc(html:params.project ?: request.project)}</strong>
+            Download an archive of project <strong><g:enc>${params.project ?: request.project}</g:enc></strong>
         </div>
         <div class="panel-body">
                 <g:link controller="project" action="export" params="[project: params.project ?: request.project]"
                     class="btn btn-success"
                 >
                     <i class="glyphicon glyphicon-download-alt"></i>
-                    ${enc(html:params.project ?: request.project)}.rdproject.jar
+                    <g:enc>${params.project ?: request.project}</g:enc>.rdproject.jar
                 </g:link>
 
         </div>
@@ -252,7 +252,7 @@
 
                                     <div class="col-sm-10">
                                         <span class="form-control-static"
-                                              data-bind="text: filterName">${enc(html:params.project ?: request.project)}</span>
+                                              data-bind="text: filterName"><g:enc>${params.project ?: request.project}</g:enc></span>
                                     </div>
                                 </div>
                             </div>

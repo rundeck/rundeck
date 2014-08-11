@@ -10,7 +10,7 @@
                 title="${scheduledExecution?.description}"
             >
                 <i class="glyphicon glyphicon-book"></i>
-                ${g.enc(html:scheduledExecution?.jobName)}
+                <g:enc>${scheduledExecution?.jobName}</g:enc>
             </g:link>
 
             </g:if>
@@ -24,7 +24,7 @@
                             absolute="${absolute ? 'true' : 'false'}"
                             >
                         <g:if test="${!noimgs}"><b class="glyphicon glyphicon-folder-close"></b></g:if>
-                        ${g.enc(html:scheduledExecution.groupPath)}
+                        <g:enc>${scheduledExecution.groupPath}</g:enc>
                     </g:link>
                 </span>
             </span>

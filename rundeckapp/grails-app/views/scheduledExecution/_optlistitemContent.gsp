@@ -34,7 +34,7 @@
             </div>
 
             <div class="panel-body">
-                Really delete option ${enc(html:option.name)}?
+                Really delete option <g:enc>${option.name}</g:enc>?
             </div>
 
             <div class="panel-footer">
