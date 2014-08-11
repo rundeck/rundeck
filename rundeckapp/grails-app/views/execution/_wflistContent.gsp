@@ -55,6 +55,6 @@
 </g:if>
 <g:if test="${null!=highlight}">
     <g:javascript>
-        fireWhenReady('wfivis_${highlight}',function(){Effect.Appear('wfivis_${highlight}', { duration: 0.5 });});
+        fireWhenReady('wfivis_${enc(js:highlight)}',function(){Effect.Appear('wfivis_${enc(js:highlight)}', { duration: 0.5 });});
     </g:javascript>
 </g:if>

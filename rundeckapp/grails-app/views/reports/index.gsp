@@ -157,8 +157,8 @@
                     paginate(e,data.offset,data.total,data.max,{
                         baseUrl:links.baseUrl,
                         ulCss:'pagination pagination-sm pagination-embed',
-                        'paginate.prev':"${g.message(code: 'default.paginate.prev',default:'Previous')}",
-                        'paginate.next':"${g.message(code: 'default.paginate.next',default:'Next')}",
+                        'paginate.prev':"${g.message(code: 'default.paginate.prev',default:'«')}",
+                        'paginate.next':"${g.message(code: 'default.paginate.next',default:'»')}",
                         prevBehavior:pagefunc,
                         stepBehavior:pagefunc,
                         nextBehavior:pagefunc

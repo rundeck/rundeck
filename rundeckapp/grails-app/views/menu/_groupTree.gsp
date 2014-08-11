@@ -81,7 +81,7 @@
                   title="Select this group"
                 onclick="groupChosen('${enc(js:prefix ? prefix + '/' + group.key : group.key)}'); return false;"
                 style="padding-left:4px;"><%--
-            --%> ${displaygroup}<%--
+            --%> ${enc(html:displaygroup)}<%--
         --%></span>
         </g:if>
         <g:else>

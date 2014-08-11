@@ -80,13 +80,13 @@
                                     ${enc(html:namegroups[group][0])}</span>
                                     to
                                     <span class="prompt">
-                                ${enc(html:namegroups[group][-1])}
+                                <g:enc>${namegroups[group][-1]}</g:enc>
                                     </span>
                                 </g:if>
                                 <g:else>
                                     <span class="prompt">${namegroups.size()>1?'Other ':''}Matched Nodes</span>
                                 </g:else>
-                                (${namegroups[group].size()})
+                                <g:enc>(${namegroups[group].size()})</g:enc>
                             </g:expander>
                         </div>
                         <div id="${enc(attr:expkey)}" style="${wdgt.styleVisible(if: selectedNodes)}" class="group_section panel-body">
@@ -113,7 +113,7 @@
                                                    ${selectedNodes ? '':'disabled' }
                                                    data-tag="${enc(attr:node.tags?.join(' '))}"
                                                     ${(null== selectedNodes||selectedNodes.contains(node.nodename))?'checked':''}
-                                                   />${enc(html:node.nodename)}</label>
+                                                   /><g:enc>${node.nodename}</g:enc></label>
 
                                         </div>
                                     </g:each>
@@ -134,7 +134,7 @@
                                        value="${enc(attr:node.nodename)}"
                                        disabled="true"
                                        data-tag="${enc(attr:node.tags?.join(' '))}"
-                                       checked="true"/>${enc(html:node.nodename)}</label>
+                                       checked="true"/><g:enc>${node.nodename}</g:enc></label>
 
                         </div>
                     </g:each>

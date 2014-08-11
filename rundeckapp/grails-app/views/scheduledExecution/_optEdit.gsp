@@ -275,8 +275,8 @@
                 <span class="btn btn-default btn-sm" onclick="_optcancelnew();" title="Cancel adding new option">Cancel</span>
                 <span class="btn btn-primary btn-sm" onclick="_optsavenew('optedit_${rkey}');" title="Save the new option">Save</span>
                 <g:javascript>
-                    fireWhenReady('optname_${rkey}',function(){
-                        $('optname_${rkey}').focus();
+                    fireWhenReady('optname_${enc(js:rkey)}',function(){
+                        $('optname_${enc(js:rkey)}').focus();
                     });
                 </g:javascript>
             </g:if>

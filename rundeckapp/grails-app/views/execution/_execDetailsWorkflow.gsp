@@ -94,7 +94,6 @@
         <g:javascript>
             fireWhenReady('nodeStratHelp', initTooltipForElements.curry('.obs_tooltip'));
         </g:javascript>
-%{--<span class="label">threadcount:</span> ${workflow?.threadcount}--}%
 </div>
 </g:if>
 </g:unless>

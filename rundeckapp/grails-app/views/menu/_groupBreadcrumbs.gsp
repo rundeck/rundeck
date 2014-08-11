@@ -31,8 +31,8 @@
             title='Top Level'
         }
     %>
-    ${path.name !="*"? path.name: 'All '+g.message(code:'domain.ScheduledExecution.title')+'s'}
+    ${path.name !="*"? enc(html:path.name): 'All '+g.message(code:'domain.ScheduledExecution.title')+'s'}
     <g:if test="${ i == paths.size()-1 && '*'!=groupPath}">
-        ${(groups?(' ('+(groups[path.path]?groups[path.path]:'0')+')'):'')}
+        <g:enc>${(groups?(' ('+(groups[path.path]?groups[path.path]:'0')+')'):'')}</g:enc>
     </g:if>
 </g:each>

@@ -19,7 +19,12 @@
         <g:set var="brandHtml"
                value="${grailsApplication.config.rundeck?.gui?.brand?.html ?: g.message(code: 'main.app.brand.html',default:'')}"/>
         <i class="rdicon app-logo"></i>
-        ${brandHtml ?: g.enc(html:appTitle)}
+        <g:if test="${brandHtml}">
+            <g:enc raw="true">${brandHtml}</g:enc>
+        </g:if>
+        <g:else>
+            <g:enc>${appTitle}</g:enc>
+        </g:else>
     </a>
     </div>
 
@@ -90,11 +95,11 @@
                 test="${auth.adhocAllowedTest(action:AuthConstants.ACTION_RUN,project: params.project?:request.project)}"><li
                     class="${adhocselected}"><g:link
                 controller="framework" action="adhoc"
-                                                  class=" toptab ${adhocselected}"
+                                                  class=" toptab ${enc(attr:adhocselected)}"
                                                 params="[project: params.project ?: request.project]">
            <g:message code="gui.menu.Adhoc"/>
        </g:link></li></g:if><!--
-        --><li class="${eventsselected}"><g:link controller="reports"  action="index" class=" toptab ${eventsselected}"
+        --><li class="${eventsselected}"><g:link controller="reports"  action="index" class=" toptab ${enc(attr:eventsselected)}"
                                                  params="[project: params.project ?: request.project]" >
             <g:message code="gui.menu.Events"/>
         </g:link></li>
@@ -103,7 +108,7 @@
     <g:unless test="${session.frameworkProjects}">
         <g:javascript>
             jQuery(window).load(function(){
-                jQuery('#projectSelect').load('${createLink(controller: 'framework', action: 'projectSelect', params: selectParams)}');
+                jQuery('#projectSelect').load('${enc(js:createLink(controller: 'framework', action: 'projectSelect', params: selectParams))}');
             });
         </g:javascript>
     </g:unless>

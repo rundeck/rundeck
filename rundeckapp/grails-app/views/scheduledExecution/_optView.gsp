@@ -66,10 +66,10 @@
     </g:else>
 </span>
 <g:javascript>
-    fireWhenReady('opt_${rkey}',function(){
+    fireWhenReady('opt_${enc(js:rkey)}',function(){
     if(typeof(initTooltipForElements)=='function'){
-        initTooltipForElements('#vls_${rkey}');
-        initTooltipForElements('#rgx_${rkey}');
+        initTooltipForElements('#vls_${enc(js: rkey)}');
+        initTooltipForElements('#rgx_${enc(js: rkey)}');
     }
     });
 </g:javascript>

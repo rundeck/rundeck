@@ -44,22 +44,22 @@
     <g:if test="${undo || redo}">
         <span class="btn btn-xs btn-default "
               data-toggle="popover"
-              data-popover-content-ref="#revert_${rkey}"
+              data-popover-content-ref="#revert_${enc(attr:rkey)}"
               data-placement="bottom"
               data-trigger="click"
-              id="revertall_${rkey}"
+              id="revertall_${enc(attr:rkey)}"
         >
             <i class="glyphicon glyphicon-fast-backward"></i>
             Revert All Changes</span>
 
-        <div id="revert_${rkey}" class="confirmMessage popout confirmbox" style="display:none">
-            <div class="text-warning">Really revert ${revertConfirm?revertConfirm:'all changes'}?</div>
+        <div id="revert_${enc(attr:rkey)}" class="confirmMessage popout confirmbox" style="display:none">
+            <div class="text-warning">Really revert <g:enc>${revertConfirm?:'all changes'}</g:enc>?</div>
 
             <span class="btn btn-xs btn-default " onclick="jQuery('#revertall_${rkey}').popover('hide');">No</span>
             <span class="btn btn-xs btn-warning " onclick="jQuery('#revertall_${rkey}').popover('destroy');_doRevertAction('${g.enc(js:key)}');">Yes</span>
         </div>
         <g:javascript>
-    _initPopoverContentRef("#undoredo${rkey}");
+    _initPopoverContentRef("#undoredo${enc(js:rkey)}");
         </g:javascript>
     </g:if>
 </div>

@@ -40,7 +40,7 @@
 
 <g:if test="${outofscope}">
     <div class="${labelColType} form-control-static ${error?'has-error':''}  ${prop.required ? 'required' : ''}">
-        ${prop.title ? enc(html:prop.title) : enc(html:prop.name)}:
+        <g:enc>${prop.title?:prop.name}</g:enc>:
     </div>
 </g:if>
 <g:elseif test="${prop.type.toString()=='Boolean'}">
@@ -49,7 +49,7 @@
         <g:hiddenField name="${origfieldname}" value="${values && values[prop.name] ? values[prop.name] : ''}"/>
         <div class="checkbox">
             <label
-                   for="${enc(attr:fieldid)}">${prop.title ? enc(html:prop.title) : enc(html:prop.name)}
+                   for="${enc(attr:fieldid)}"><g:enc>${prop.title ?: prop.name}</g:enc>
                 <g:checkBox name="${fieldname}" value="true"
                             checked="${values&&values[prop.name]?values[prop.name]=='true':prop.defaultValue=='true'}"
                             id="${fieldid}"/>
@@ -60,7 +60,7 @@
 <g:elseif test="${prop.type.toString()=='Select' || prop.type.toString()=='FreeSelect'}">
     <g:set var="fieldid" value="${g.rkey()}"/>
     <label class="${labelColType}   ${prop.required ? 'required' : ''}"
-           for="${enc(attr:fieldid)}">${prop.title ? enc(html:prop.title) : enc(html:prop.name)}</label>
+           for="${enc(attr:fieldid)}"><g:enc>${prop.title ?: prop.name}</g:enc></label>
 
     <g:hiddenField name="${origfieldname}" value="${values&&values[prop.name]?values[prop.name]:''}"/>
     <g:if test="${prop.type.toString()=='FreeSelect'}">
@@ -96,7 +96,7 @@
     <g:set var="fieldid" value="${g.rkey()}"/>
     <g:set var="hasStorageSelector" value="${prop.renderingOptions?.(StringRenderingConstants.SELECTION_ACCESSOR_KEY) == StringRenderingConstants.SelectionAccessor.STORAGE_PATH}"/>
     <label class="${labelColType}  ${prop.required?'required':''}"
-           for="${enc(attr:fieldid)}" >${prop.title ? enc(html:prop.title) : enc(html:prop.name)}</label>
+           for="${enc(attr:fieldid)}" ><g:enc>${prop.title ?: prop.name}</g:enc></label>
     <div class="${hasStorageSelector? valueColTypeSplit80: valueColType}">
     <g:hiddenField name="${origfieldname}" value="${values&&values[prop.name]?values[prop.name]:''}"/>
     <g:if test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) == StringRenderingConstants.DisplayType.MULTI_LINE}">

@@ -170,7 +170,7 @@
                         <span class="text-muted text-em">
                             <g:message code="execute.up.to"/>
                             <strong>
-                                ${execdata?.nodeThreadcount}
+                                <g:enc>${execdata?.nodeThreadcount}</g:enc>
                                 <g:message code="Node${execdata?.nodeThreadcount==1?'':'.plural'}"/>
                             </strong>
                             <g:message code="at.a.time"/>

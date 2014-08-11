@@ -25,15 +25,15 @@
                 <g:link controller="scheduledExecution" action="show" id="${scheduledExecution.extid}">${scheduledExecution.jobName}</g:link> cannot be executed:
             </g:if>
             <g:else>
-                ${scheduledExecution.jobName} cannot be executed:
+                <g:enc>${scheduledExecution.jobName}</g:enc> cannot be executed:
             </g:else>
-            User ${session.user} is not authorized to execute the job
+            User <g:enc>${session.user}</g:enc> is not authorized to execute the job
 
         </div>
     </g:if>
     <g:elseif test="${flash.error}">
         <div id="error" class="error note" >
-            ${flash.error}
+            <g:enc>${flash.error}</g:enc>
         </div>
     </g:elseif>
 

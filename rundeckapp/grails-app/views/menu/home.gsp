@@ -29,7 +29,7 @@
 
     <div class="col-sm-4">
         <span class="h3 text-muted">
-            ${projCount}
+            <g:enc>${projCount}</g:enc>
             <g:plural code="Project" count="${projCount}" textOnly="${true}"/>
         </span>
     </div>
@@ -48,14 +48,14 @@
                     <div>
                         in
                         <span class="text-info">
-                            ${projectSummary.size()}
+                            <g:enc>${projectSummary.size()}</g:enc>
                         </span>
 
 
                         <g:plural code="Project" count="${projectSummary.size()}" textOnly="${true}"/>:
                         <g:each var="project" in="${projectSummary.sort()}" status="i">
                             <g:link action="index" controller="menu" params="[project: project]">
-                                ${project}</g:link><g:if test="${i < projectSummary.size() - 1}">,</g:if>
+                                <g:enc>${project}</g:enc></g:link><g:if test="${i < projectSummary.size() - 1}">,</g:if>
                         </g:each>
                     </div>
                 </g:if>
@@ -63,11 +63,11 @@
                     <g:if test="${userCount > 0}">
                         by
                         <span class="text-info">
-                            ${userCount}
+                            <g:enc>${userCount}</g:enc>
                         </span>
                         <g:plural code="user" count="${userCount}" textOnly="${true}"/>:
                         <g:each in="${userSummary}" var="user" status="i">
-                            ${enc(html:user)}<g:if test="${i < userSummary.size() - 1}">,</g:if>
+                            <g:enc>${user}</g:enc><g:if test="${i < userSummary.size() - 1}">,</g:if>
                         </g:each>
                     </g:if>
                 </div>
@@ -131,10 +131,10 @@
                 <div class="col-sm-6 col-md-4">
                     <g:link action="index" controller="menu" params="[project: project]" class="h3">
                         <i class="glyphicon glyphicon-tasks"></i>
-                        ${project}</g:link>
+                        <g:enc>${project}</g:enc></g:link>
 
                     <g:if test="${data.description}">
-                        <span class="text-muted">${enc(html:data.description)}</span>
+                        <span class="text-muted"><g:enc>${data.description}</g:enc></span>
                     </g:if>
                 </div>
                 %{--<div class="col-sm-6 col-md-2">--}%
@@ -161,13 +161,13 @@
                         <g:if test="${data.userCount>0}">
                         by
                         <span class="text-info">
-                        ${data.userCount}
+                        <g:enc>${data.userCount}</g:enc>
                         </span>
 
                             <g:plural code="user" count="${data.userCount}" textOnly="${true}"/>:
 
                             <g:each in="${data.userSummary}" var="user" status="i">
-                                ${enc(html:user)}<g:if test="${i < data.userSummary.size() - 1}">,</g:if>
+                                <g:enc>${user}</g:enc><g:if test="${i < data.userSummary.size() - 1}">,</g:if>
                             </g:each>
                         </g:if>
                     </div>
@@ -234,19 +234,19 @@
                             <g:if test="${data.readme.motd && data.readme.readme}">
                             </g:if>
                             <g:if test="${data.readme.motdHTML}">
-                                ${data.readme.motdHTML}
+                                <g:enc raw="true">${data.readme.motdHTML}</g:enc>
                             </g:if>
                             <g:elseif test="${data.readme.motd}">
-                                ${enc(html:data.readme.motd)}
+                                <g:enc>${data.readme.motd}</g:enc>
                             </g:elseif>
                         </div>
                     </g:if>
                     <g:if test="${data.readme?.readme}">
                         <g:if test="${data.readme.readmeHTML}">
-                            ${data.readme.readmeHTML}
+                            <g:enc raw="true">${data.readme.readmeHTML}</g:enc>
                         </g:if>
                         <g:elseif test="${data.readme.readme}">
-                            ${enc(html:data.readme.readme)}
+                            <g:enc>${data.readme.readme}</g:enc>
                         </g:elseif>
 
                     </g:if>

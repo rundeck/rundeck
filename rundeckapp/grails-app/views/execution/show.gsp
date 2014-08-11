@@ -44,7 +44,7 @@
         var flowState=null;
         var nodeflowvm=null;
         function followOutput(){
-            followControl.beginFollowingOutput('${execution?.id}');
+            followControl.beginFollowingOutput('${enc(js:execution?.id)}');
         }
         function followState(){
             try{
@@ -231,7 +231,7 @@
                 <g:if test="${execution.retryAttempt}">
                     <div class="text-muted">
                         <i class="glyphicon glyphicon-repeat"></i>
-                        Retry #${execution.retryAttempt}  (of ${execution.retry})
+                        Retry #<g:enc>${execution.retryAttempt}</g:enc>  (of <g:enc>${execution.retry}</g:enc>)
                     </div>
                 </g:if>
                         <g:if test="${eprev || enext}">

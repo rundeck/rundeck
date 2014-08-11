@@ -183,7 +183,7 @@
 
                     <span class="sepL">
                         <g:link class="textbtn" style="padding:5px;"
-                                title="Download ${filesize > 0 ? filesize + ' bytes' : ''}"
+                                title="Download ${filesize > 0 ? enc(attr:filesize) + ' bytes' : ''}"
                                 controller="execution" action="downloadOutput" id="${execution.id}"
                                 params="[project: execution.project]">
                             <b class="glyphicon glyphicon-file"></b>

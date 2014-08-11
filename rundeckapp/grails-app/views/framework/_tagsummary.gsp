@@ -27,7 +27,7 @@
             <span class="textbtn textbtn-secondary tag"
                   title="Show tag demographics" onclick="Element.toggle('tagdemo'); Element.toggleClassName(this,'active');">
                 <i class="glyphicon glyphicon-tags text-muted "></i>
-                ${tagsummary.size()} tags
+                <g:enc>${tagsummary.size()}</g:enc> tags
                 <i class="glyphicon glyphicon-chevron-right"></i></span>
         </g:if>
         <span id="tagdemo" style="${wdgt.styleVisible(unless: hidetop)}">
@@ -47,7 +47,7 @@
                             <span class="${g.enc(attr:action.classnames)}" onclick="${g.enc(attr:action.onclick)}" data-tag="${enc(attr:tag)}" title="Filter by tag: ${g.enc(attr:tag)}">${enc(html:tag)}:${tagsummary[tag]}</span>
                         </g:elseif>
                         <g:else>
-                            ${enc(html:tag)}:${tagsummary[tag]}
+                            <g:enc>${tag}:${tagsummary[tag]}</g:enc>
                         </g:else>
                         </span>
                 </g:if>
@@ -72,8 +72,8 @@
                                       title="Filter by tag: ${g.enc(attr:tag)}">${enc(html:tag)}:${tagsummary[tag]}</span>
                             </g:elseif>
                             <g:else>
-                                ${enc(html:tag)}
-                                (${tagsummary[tag]})
+                                <g:enc>${tag}
+                                (${tagsummary[tag]})</g:enc>
                             </g:else></span>
                     </g:each>
                 </span>

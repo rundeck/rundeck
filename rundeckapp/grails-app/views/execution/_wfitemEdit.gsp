@@ -150,10 +150,10 @@
 
                 </g:javascript>
                 <span class="action obs_tooltip"
-                      id="interpreterArgsQuotedHelp${rkey}"><g:img file="icon-small-help.png" width="16px"
+                      id="interpreterArgsQuotedHelp${enc(attr:rkey)}"><g:img file="icon-small-help.png" width="16px"
                                                                    height="16px"/> Explain</span>
 
-                <div class="popout tooltipcontent" id="interpreterArgsQuotedHelp${rkey}_tooltip"
+                <div class="popout tooltipcontent" id="interpreterArgsQuotedHelp${enc(attr:rkey)}_tooltip"
                      style="display:none; background:white; position:absolute; max-width: 500px; width:500px;">
                     <g:message code="Workflow.Step.interpreterArgsQuoted.description"/>
                 </div>

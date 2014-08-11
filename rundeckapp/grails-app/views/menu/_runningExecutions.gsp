@@ -48,7 +48,7 @@
                     <td class=" eventtitle job">
                         <g:link title="View execution output" controller="execution" action="show" id="${execution.id}"
                                 params="[project: execution.project]"
-                                class="_defaultAction">#${execution.id}</g:link>
+                                class="_defaultAction">#${enc(html:execution.id)}</g:link>
                         ${enc(html:(scheduledExecution.groupPath ? scheduledExecution.groupPath + '/' : '') + scheduledExecution.jobName)}
                     </td>
 
@@ -62,7 +62,7 @@
                     <td class="jobname adhoc ">
                         <g:link title="View execution output" controller="execution" action="show" id="${execution.id}"
                             params="[project:execution.project]"
-                                class="_defaultAction">#${execution.id}</g:link>
+                                class="_defaultAction">#${enc(html:execution.id)}</g:link>
 
                         ${enc(html:execution.workflow.commands[0].adhocRemoteString)}
                     </td>
@@ -100,7 +100,7 @@
                             <g:if test="${!small}">
                                 <span class="timelabel">duration:</span>
                             </g:if>
-                            (${execution.durationAsString()})
+                            <g:enc>(${execution.durationAsString()})</g:enc>
                         </span>
                     </g:if>
                     <g:else>

@@ -63,7 +63,7 @@
                     </g:if>
                     <g:else>
                     <small>
-                        (${pluginDescList.size()})
+                        <g:enc>(${pluginDescList.size()})</g:enc>
                     </small>
                     </g:else>
                     <span class="text-muted"><g:message code="framework.service.${serviceName}.description"

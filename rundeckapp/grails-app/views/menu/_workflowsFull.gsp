@@ -210,13 +210,13 @@
                 <g:if test="${flash.savedJob}">
                     <div class="newjob">
                     <span class="popout message note" style="background:white">
-                        ${flash.savedJobMessage?flash.savedJobMessage:'Saved changes to Job'}:
+                        <g:enc>${flash.savedJobMessage?:'Saved changes to Job'}</g:enc>:
                         <g:link controller="scheduledExecution" action="show" id="${flash.savedJob.id}"
-                                params="[project: params.project ?: request.project]">${enc(html:flash.savedJob.generateFullName())}</g:link>
+                                params="[project: params.project ?: request.project]"><g:enc>${flash.savedJob.generateFullName()}</g:enc></g:link>
                     </span>
                     </div>
                     <g:javascript>
-                        fireWhenReady('jobrow_${flash.savedJob.id}',doyft.curry('jobrow_${flash.savedJob.id}'));
+                        fireWhenReady('jobrow_${enc(js:flash.savedJob.id)}',doyft.curry('jobrow_${enc(js:flash.savedJob.id)}'));
 
                     </g:javascript>
                 </g:if>
@@ -307,20 +307,20 @@
 <g:javascript>
     function _set_adhoc_filters(e){
         if($F(e.target)=='true'){
-            $('${rkey}adhocFilters').show();
-            $('${rkey}definedFilters').hide();
+            $('${enc(js:rkey)}adhocFilters').show();
+            $('${enc(js:rkey)}definedFilters').hide();
         }else if($F(e.target)=='false'){
-            $('${rkey}adhocFilters').hide();
-            $('${rkey}definedFilters').show();
+            $('${enc(js:rkey)}adhocFilters').hide();
+            $('${enc(js:rkey)}definedFilters').show();
         }else{
-            $('${rkey}adhocFilters').hide();
-            $('${rkey}definedFilters').hide();
+            $('${enc(js: rkey)}adhocFilters').hide();
+            $('${enc(js: rkey)}definedFilters').hide();
         }
     }
-    $$('#adhocFilterPick_${rkey} input').each(function(elem){
+    $$('#adhocFilterPick_${enc(js: rkey)} input').each(function(elem){
         Event.observe(elem,'click',function(e){_set_adhoc_filters(e)});
     });
-    $$('#${rkey}wffilterform input').each(function(elem){
+    $$('#${enc(js: rkey)}wffilterform input').each(function(elem){
         if(elem.type=='text'){
             elem.observe('keypress',noenter);
         }

@@ -60,7 +60,7 @@
                                   data-node="${enc(attr:nodename)}"
                                   data-stepctx="${enc(attr:myctx)}"
                                   data-execstate="${enc(attr:execState)}">
-                                ${nodename}
+                                <g:enc>${nodename}</g:enc>
 
                             </span>
                             <span class="errmsg isnode"

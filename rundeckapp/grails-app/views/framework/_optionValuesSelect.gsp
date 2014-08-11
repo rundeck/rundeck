@@ -132,7 +132,7 @@
                         </g:if>
                         <g:if test="${!labelsSet && !newvals}">
                             <g:javascript>
-                                fireWhenReady('${rkey}varinput', function(){ ExecutionOptions.addMultivarValue('${enc(js:optName)}','${rkey}varinput'); } );
+                                fireWhenReady('${enc(js:rkey)}varinput', function(){ ExecutionOptions.addMultivarValue('${enc(js:optName)}','${enc(js:rkey)}varinput'); } );
                             </g:javascript>
                         </g:if>
                     </g:if>
@@ -209,7 +209,7 @@
             fireWhenReady('${enc(js:optName)}_setdefault',
             function(){ $$('${'#' + enc(js:optName) + '_setdefault'}').each(function(e){
                 Event.observe(e,'click',function(evt){
-                    $('${fieldwatchid}').setValue('${enc(js:optionSelect.defaultValue)}');
+                    $('${enc(js:fieldwatchid)}').setValue('${enc(js:optionSelect.defaultValue)}');
                 });
             }); }
             );

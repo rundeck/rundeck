@@ -241,7 +241,7 @@ div.progressContainer div.progressContent{
                 id="${execution.id}">
                 Download Output
             </g:link>
-             <g:if test="${filesize}">(${filesize} bytes)</g:if>
+             <g:if test="${filesize}">(${enc(html:filesize)} bytes)</g:if>
         </div>
         </g:if>
 
@@ -325,10 +325,10 @@ div.progressContainer div.progressContent{
                             <g:set var="perc" value="${0}"/>
                         </g:else>
                         <g:if test="${vals && vals.size()>1 && vals[1]!='0' && vals[1]!=0}">
-                            ${vals[1]} failed
+                            <g:enc>${vals[1]}</g:enc> failed
                         </g:if>
                         <g:else>
-                            ${vals[0]} ok
+                            <g:enc>${vals[0]}</g:enc> ok
                         </g:else>
                         <g:if test="${perc>0}">
                         <g:render template="/common/progressBar" model="${[completePercent:(int)perc,title:'Failed nodes',className:'nodes failure',showpercent:false,innerContent:summary]}"/>
@@ -337,9 +337,9 @@ div.progressContainer div.progressContent{
                 <g:if test="${execution?.failedNodeList}">
                         <g:set var="failednodes" value="${execution?.failedNodeList.split(',')}"/>
                         <g:if test="${!nodestatus}">
-                        ${failednodes.length} failed:
+                        <g:enc>${failednodes.length}</g:enc> failed:
                         </g:if>
-                        <div>${execution?.failedNodeList}</div>
+                        <div><g:enc>${execution?.failedNodeList}</g:enc></div>
                 </g:if>
             </div>
         </g:if>

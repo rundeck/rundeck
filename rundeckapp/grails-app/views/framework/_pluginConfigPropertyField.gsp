@@ -25,7 +25,7 @@
 %{--<g:set var="origfieldname" value="${}"/>--}%
 <g:if test="${outofscope}">
     <td class="${error?'fieldError':''}  ${prop.required ? 'required' : ''}">
-        ${prop.title ? enc(html:prop.title) : enc(html:prop.name)}:
+        <g:enc>${prop.title?:prop.name}</g:enc>:
     </td>
     <td>
 

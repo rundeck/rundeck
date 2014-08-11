@@ -8,9 +8,9 @@
 <g:set var="notifyUrl" value="${'notify' + Trigger + 'Url'}"/>
 <tr class="notifyFields" style="${wdgt.styleVisible(if: isVisible)}">
 
-    <!-- ${trigger} -->
+    %{--${trigger} --}%
     <td>
-        <label for="notifyOn${trigger}"
+        <label for="notifyOn${enc(attr:trigger)}"
                class=" ${hasErrors(bean: scheduledExecution, field: notifyRecipients, 'fieldError')} ${hasErrors(bean: scheduledExecution, field: notifyUrl, 'fieldError')}">
             <g:message code="notification.event.on${trigger}"/>
         </label>
@@ -19,9 +19,9 @@
         <div>
             <span>
                 <g:checkBox name="notifyOn${trigger}" value="true" checked="${isEmail}"/>
-                <label for="notifyOn${trigger}">Send Email</label>
+                <label for="notifyOn${enc(attr: trigger)}">Send Email</label>
             </span>
-            <span id="notifholder${tkey}" style="${wdgt.styleVisible(if: isEmail)}">
+            <span id="notifholder${enc(attr:tkey)}" style="${wdgt.styleVisible(if: isEmail)}">
                 <label>to: <g:textField name="notify${Trigger}Recipients" cols="70" rows="3"
                                         value="${defEmail?.content ?: params[notifyRecipients]}"
                                         size="60"/></label>

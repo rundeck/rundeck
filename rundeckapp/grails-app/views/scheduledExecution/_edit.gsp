@@ -18,7 +18,6 @@
 <g:set var="fieldColHalfSize" value="col-sm-5"/>
 <g:set var="offsetColSize" value="col-sm-10 col-sm-offset-2"/>
 
-<g:set var="isWorkflow" value="${true}"/>
 <g:set var="editSchedExecId" value="${scheduledExecution?.id? scheduledExecution.extid:null}"/>
 <g:javascript library="prototype/scriptaculous"/>
 <g:javascript library="prototype/effects"/>
@@ -28,8 +27,7 @@
 //<!CDATA[
         var selFrameworkProject='${enc(js:project)}';
         var selArgs='${enc(js:scheduledExecution?.argString)}';
-        var isWorkflow=${isWorkflow};
-var curSEID ='${editSchedExecId?editSchedExecId:""}';
+var curSEID ='${enc(js:editSchedExecId?:"")}';
 function getCurSEID(){
     return curSEID;
 }

@@ -52,7 +52,7 @@
                             defaultFollow="${true}"/>
                 </div>
             </g:if>
-            <div id="schedExDetails${scheduledExecution?.id}"
+            <div id="schedExDetails${enc(attr:scheduledExecution?.id)}"
                  class="tab-pane panel panel-default panel-tab-content  ${runAccess ? '' : 'active'}">
                 <div class="panel-body">
                     <g:render template="showDetail"

@@ -57,7 +57,7 @@
         <td class="eventtitle ${rpt?.jcJobId ? 'job' : 'adhoc'} autoclickable" colspan="${rpt?.jcJobId?1:2}">
             <g:link controller="execution" action="show" id="${rpt.jcExecId}" class="_defaultAction"
                 params="[project:execution?execution.project:rpt.ctxProject?:params.project]"
-                    title="View execution output" absolute="${absoluteLinks}">#${rpt.jcExecId}</g:link>
+                    title="View execution output" absolute="${absoluteLinks}">#${enc(html:rpt.jcExecId)}</g:link>
             <g:if test="${options.summary}">
                 <g:if test="${rpt?.jcJobId}">
                     <g:set var="foundJob" value="${ScheduledExecution.getByIdOrUUID(it.jcJobId)}"/>
@@ -66,7 +66,7 @@
                     </g:if>
                     <g:else>
                         <span class="warning note">(<g:message
-                                code="domain.ScheduledExecution.title"/> ID ${it.jcJobId} has been deleted)</span>
+                                code="domain.ScheduledExecution.title"/> ID <g:enc>${it.jcJobId}</g:enc> has been deleted)</span>
                     </g:else>
 
                 </g:if>
@@ -79,7 +79,7 @@
                     <g:message code="status.label.${it.status}"/>
                 </g:if>
                 <g:if test="${(status == 'killed')}">
-                    by ${it.abortedByUser}
+                    by <g:enc>${it.abortedByUser}</g:enc>
                 </g:if>
             </g:else>
         </td>
@@ -90,7 +90,7 @@
                 <g:render template="/execution/execArgString" model="[argString: execution.argString]"/>
             </g:if>
             <g:if test="${params.debug}">
-                ${g.enc(html:rpt.toMap())}
+                <g:enc>${rpt.toMap()}</g:enc>
             </g:if>
             </div>
         </td>
@@ -117,10 +117,10 @@
             <g:unless test="${hideNodes}">
             <td class="${vals[1] != '0' ? 'fail' : 'ok'}  nodecount autoclickable ">
                 <g:if test="${vals[1] != '0'}">
-                    ${vals[1]} ${options.summary ? '' : 'node'} failed
+                    <g:enc>${vals[1]}</g:enc> ${options.summary ? '' : 'node'} failed
                 </g:if>
                 <g:else>
-                    ${vals[0]} ${options.summary ? '' : 'node'} ok
+                    <g:enc>${vals[0]}</g:enc> ${options.summary ? '' : 'node'} ok
                 </g:else>
             </td>
             </g:unless>

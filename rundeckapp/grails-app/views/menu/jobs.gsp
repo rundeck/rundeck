@@ -284,16 +284,16 @@
             });
         }
          function filterToggle(evt) {
-            ['${rkey}filter','${rkey}filter-toggle'].each(Element.toggle);
+            ['${enc(js:rkey)}filter','${enc(js:rkey)}filter-toggle'].each(Element.toggle);
             if($('outsidefiltersave')){
-                $('${rkey}filter').visible()? $('outsidefiltersave').hide: $('outsidefiltersave').show;
+                $('${enc(js:rkey)}filter').visible()? $('outsidefiltersave').hide: $('outsidefiltersave').show;
             }
         }
         function filterToggleSave(evt) {
-            ['${rkey}filter','${rkey}fsave'].each(Element.show);
-            ['${rkey}filter-toggle','${rkey}fsavebtn'].each(Element.hide);
+            ['${enc(js:rkey)}filter','${enc(js:rkey)}fsave'].each(Element.show);
+            ['${enc(js:rkey)}filter-toggle','${enc(js:rkey)}fsavebtn'].each(Element.hide);
             if ($('outsidefiltersave')) {
-                $('${rkey}filter').visible() ? $('outsidefiltersave').hide : $('outsidefiltersave').show;
+                $('${enc(js:rkey)}filter').visible() ? $('outsidefiltersave').hide : $('outsidefiltersave').show;
             }
         }
         function init(){

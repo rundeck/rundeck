@@ -79,8 +79,8 @@
                     </div>
 
                     <g:javascript>
-                    fireWhenReady('${rkeytok}',function(){addBehavior('${rkeytok}',"${enc(js:user.login)}");});
-                    fireWhenReady('${rkeytok}',function(){highlightNew('${rkeytok}');});
+                    fireWhenReady('${enc(js:rkeytok)}',function(){addBehavior('${enc(js: rkeytok)}',"${enc(js:user.login)}");});
+                    fireWhenReady('${enc(js: rkeytok)}',function(){highlightNew('${enc(js: rkeytok)}');});
                     </g:javascript>
                 </td>
             </tr>

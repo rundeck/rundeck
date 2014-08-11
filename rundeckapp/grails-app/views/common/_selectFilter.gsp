@@ -53,5 +53,5 @@
 </g:elseif>
 <g:elseif test="${filterset}">
     <g:select name="filterName" optionKey="name" optionValue="name" from="${filterset?filterset.sort({a,b->a.name.compareTo(b.name)}):filterset}" value="${filterName}"
-        noSelection="${['':noSelection?noSelection:'-select a filter-']}" onchange="setFilter('${prefName}',this.value);"/>
+        noSelection="${['':noSelection?noSelection:'-select a filter-']}" onchange="setFilter('${enc(attr:prefName)}',this.value);"/>
 </g:elseif>

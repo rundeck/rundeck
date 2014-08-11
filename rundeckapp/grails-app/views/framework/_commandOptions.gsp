@@ -33,7 +33,7 @@ used by _editOptions.gsp template
                   <span style="display:none;" class="remotestatus"></span>
                   ${enc(html:optName)}
                   <g:if test="${Environment.current == Environment.DEVELOPMENT && grailsApplication.config.rundeck?.debug}">
-                      (${optiondependencies ? optiondependencies[optName] : '-'})(${dependentoptions ? dependentoptions[optName] : '-'})
+                      <g:enc>(${optiondependencies ? optiondependencies[optName] : '-'})(${dependentoptions ? dependentoptions[optName] : '-'})</g:enc>
                   </g:if>
               </label>
                 %{--determine if option has all dependencies met--}%

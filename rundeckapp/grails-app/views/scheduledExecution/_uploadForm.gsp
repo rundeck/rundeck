@@ -43,7 +43,7 @@
                             <g:set var="entrynum" value="${entry.entrynum}"/>
                             <tr class=" ${j%2==1?'alternateRow':'normalRow'}">
                                 <td>
-                                    #${entrynum}:
+                                    #<g:enc>${entrynum}</g:enc>:
                                 </td>
                                 <td class="jobname" >
                                     <g:if test="${scheduledExecution.id}">
@@ -89,10 +89,10 @@
                             <tr class=" ${j%2==1?'alternateRow':'normalRow'}">
 
                                 <td>
-                                    #${entrynum}:
+                                    #<g:enc>${entrynum}</g:enc>:
                                 </td>
                                 <td class="jobname" >
-                                    ${enc(html:scheduledExecution.jobName)}
+                                    <g:enc>${scheduledExecution.jobName}</g:enc>
                                 </td>
                                 <td class="jobdesc" style="">${enc(html:scheduledExecution.description?.size()>100?scheduledExecution.description.substring(0,100):scheduledExecution.description)}</td>
                                 <td class="sepL">
