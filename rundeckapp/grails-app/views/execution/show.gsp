@@ -77,7 +77,7 @@
             iconUrl: "${resource(dir: 'images', file: 'icon-small')}",
             smallIconUrl: "${resource(dir: 'images', file: 'icon-small')}",
 
-            extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>&markdown=${g.enc(url: params.markdown)}&ansicolor=${g.enc(url: params.ansicolor)}",
+            extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>&markdown=${enc(js:enc(url: params.markdown))}&ansicolor=${enc(js:enc(url: params.ansicolor))}",
             lastlines: ${params.int('lastlines') ?: defaultLastLines},
             maxLastLines: ${params.int('maxlines') ?: maxLastLines},
             collapseCtx: {value:${null == execution?.dateCompleted},changed:false},

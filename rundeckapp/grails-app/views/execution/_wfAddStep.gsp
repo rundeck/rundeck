@@ -81,7 +81,7 @@
                         <g:plural for="${stepDescriptions}" code="workflow.step.plugin" />
                     </div>
                     <g:each in="${stepDescriptions}" var="typedesc">
-                        <a class="list-group-item textbtn  add_step_type" data-step-type="${g.enc(attr:typedesc.name)}" href="#">
+                        <a class="list-group-item textbtn  add_step_type" data-step-type="${enc(attr:typedesc.name)}" href="#">
                             <i class="rdicon icon-small plugin"></i>
                             <g:enc>${typedesc.title}</g:enc>
                             <span class="text-info">- <g:enc>${typedesc.description}</g:enc></span>

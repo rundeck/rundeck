@@ -149,8 +149,8 @@
                 extraParams:"<%="true" == params.boolean('disableMarkdown')? '&disableMarkdown=true' : ''%>",
                 smallIconUrl: "${resource(dir: 'images', file: 'icon-small')}",
                 iconUrl: "${resource(dir: 'images', file: 'icon-small')}",
-                lastlines: ${g.enc(js:params.int('lastlines')?: defaultLastLines)},
-                maxLastLines: ${g.enc(js:params.int('maxlines')?: maxLastLines)},
+                lastlines: ${enc(js:params.int('lastlines')?: defaultLastLines)},
+                maxLastLines: ${enc(js:params.int('maxlines')?: maxLastLines)},
                  showFinalLine: {value: false, changed: false},
                  colStep:{value:false},
                 tailmode: true,
@@ -254,7 +254,7 @@
             nodeFilter.filterName(filterName);
             nodeFilter.filter(filterString);
             nodeFilter.loading(true);
-            _updateMatchedNodes(data, elem, '${g.enc(js:params.project?:request.project)}', false, {view: view, expanddetail: true,
+            _updateMatchedNodes(data, elem, '${enc(js:params.project?:request.project)}', false, {view: view, expanddetail: true,
                 inlinepaging: false, maxShown: 20, requireRunAuth:true}, function (xht) {
                 nodeFilter.loading(false);
             });
@@ -295,7 +295,7 @@
             ko.applyBindings(history, document.getElementById('activity_section'));
             setupActivityLinks('activity_section', history);
             //if empty query, automatically load first activity_link
-            if("${g.enc(js:emptyQuery)}"=='true'){
+            if("${enc(js:emptyQuery)}"=='true'){
                 history.activateNowRunningTab();
             }
 

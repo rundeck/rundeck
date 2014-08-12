@@ -3,10 +3,10 @@
 <g:if test="${notification.type == 'url'}">
     <g:expander key="webhook${ukey}"><g:message code="notification.webhook.label" /> </g:expander>
     <span class="webhooklink note" id="webhook${ukey}" style="display:none;"
-          title="URLs: ${g.enc(attr:notification.content)}"><g:enc>${notification.content}</g:enc></span>
+          title="URLs: ${enc(attr:notification.content)}"><g:enc>${notification.content}</g:enc></span>
 </g:if>
 <g:elseif test="${notification.type == 'email'}">
-    <g:message code="notification.email.display" args="[g.enc(html:notification.mailConfiguration().recipients).toString()]" />
+    <g:message code="notification.email.display" args="[enc(html:notification.mailConfiguration().recipients).toString()]" />
 </g:elseif>
 <g:else>
 %{--plugin display--}%
@@ -20,6 +20,6 @@
         </span>
     </g:if>
     <g:elseif test="${!notificationPlugins?.get(notification.type)}">
-        <span class="warn note"><g:message code="plugin.not.found.0" args="[g.enc(html:notification.type).toString()]" /></span>
+        <span class="warn note"><g:message code="plugin.not.found.0" args="[enc(html:notification.type).toString()]" /></span>
     </g:elseif>
 </g:else>

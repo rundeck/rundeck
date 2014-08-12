@@ -44,8 +44,8 @@
                                       />
                         </g:if>
                         <g:elseif test="${action}">
-                            <span class="${g.enc(attr:action.classnames)}" onclick="${g.enc(attr:action.onclick)}"
-                                  data-tag="${enc(attr:tag)}" title="Filter by tag: ${g.enc(attr:tag)}">
+                            <span class="${enc(attr:action.classnames)}" onclick="${enc(attr:action.onclick)}"
+                                  data-tag="${enc(attr:tag)}" title="Filter by tag: ${enc(attr:tag)}">
                                 <g:enc>${tag}:${tagsummary[tag]}</g:enc>
                             </span>
                         </g:elseif>
@@ -60,9 +60,9 @@
             </g:each>
             <g:if test="${singletag}">
                 <span class="btn btn-sm btn-default receiver" title="See all tags"
-                      onclick="Element.show('${g.enc(attr:urkey)}singletags');
+                      onclick="Element.show('${enc(attr:urkey)}singletags');
                 Element.hide(this);">Show All&hellip;</span>
-                <span style="display:none" id="${g.enc(attr:urkey)}singletags">
+                <span style="display:none" id="${enc(attr:urkey)}singletags">
                     <g:each var="tag" in="${singletag}">
                         <span class="summary">
                             <g:if test="${link}">
@@ -70,9 +70,9 @@
                                           model="[key: 'tags', value: tag, linktext: tag + ' (' + tagsummary[tag]+')', css: 'tag textbtn']"/>
                             </g:if>
                             <g:elseif test="${action}">
-                                <span class=" ${g.enc(attr:action.classnames)}" onclick="${g.enc(attr:action.onclick)}"
+                                <span class=" ${enc(attr:action.classnames)}" onclick="${enc(attr:action.onclick)}"
                                       data-tag="${enc(attr:tag)}"
-                                      title="Filter by tag: ${g.enc(attr:tag)}">
+                                      title="Filter by tag: ${enc(attr:tag)}">
                                     <g:enc>${tag}:${tagsummary[tag]}</g:enc>
                                 </span>
                             </g:elseif>

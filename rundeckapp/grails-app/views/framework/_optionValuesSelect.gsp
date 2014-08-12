@@ -250,7 +250,7 @@
     </g:if>
     <g:expander key="${rkey}_error_detail" classnames="textbtn-warning _error_detail"><g:enc>${err.message}</g:enc></g:expander>
 
-    <div class="alert alert-warning _error_detail" style="display:none" id="${g.enc(attr:rkey)}_error_detail">
+    <div class="alert alert-warning _error_detail" style="display:none" id="${enc(attr:rkey)}_error_detail">
         <g:if test="${err.exception}">
             <div>Exception: <g:enc>${err.exception.message}</g:enc></div>
         </g:if>

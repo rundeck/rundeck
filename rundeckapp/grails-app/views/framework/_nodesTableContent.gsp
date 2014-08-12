@@ -47,14 +47,14 @@
                 <td class="nodeident" title="${enc(attr:node.description)}" >
                     <g:if test="${expanddetail||params.expanddetail}">
                         <g:expander key="${ukey+'node_detail_'+i}" imgfirst="true">
-                        <span class="node_ident" id="${g.enc(attr:ukey)}_${g.enc(attr:node.nodename)}_key">
+                        <span class="node_ident" id="${enc(attr:ukey)}_${enc(attr:node.nodename)}_key">
                             <i class="rdicon node ${runnable?'node-runnable':''} icon-small"></i>
                             <g:enc>${resName}</g:enc>
                         </span>
                         </g:expander>
                     </g:if>
                     <g:else>
-                        <span class="node_ident" id="${g.enc(attr:ukey)}_${g.enc(attr:node.nodename)}_key">
+                        <span class="node_ident" id="${enc(attr:ukey)}_${enc(attr:node.nodename)}_key">
                             <i class="rdicon node ${runnable ? 'node-runnable' : ''} icon-small"></i>
                             <g:enc>${resName}</g:enc>
                         </span>

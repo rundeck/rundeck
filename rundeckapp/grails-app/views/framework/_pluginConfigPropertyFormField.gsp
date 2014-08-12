@@ -116,9 +116,9 @@
         <button class="btn btn-sm btn-default obs-select-storage-path"
                 data-toggle="modal"
                 href="#storagebrowse"
-                data-storage-root="${g.enc(attr:storageRoot)}"
-                data-storage-filter="${g.enc(attr:storageFilter)}"
-                data-field="#${g.enc(attr:fieldid)}"
+                data-storage-root="${enc(attr:storageRoot)}"
+                data-storage-filter="${enc(attr:storageFilter)}"
+                data-field="#${enc(attr:fieldid)}"
         >Select... <i class="glyphicon glyphicon-folder-open"></i></button>
         </div>
     </g:if>

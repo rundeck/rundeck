@@ -42,7 +42,7 @@
         }
 
         var nodespage=0;
-        var pagingMax=${g.enc(js:params.int('max')?:20)};
+        var pagingMax=${enc(js:params.int('max')?:20)};
         /**
         * Expand paging results
         * @param page
@@ -92,7 +92,7 @@
             nodeFilter.filterName(filterName);
             nodeFilter.filter(filterString);
             nodeFilter.loading(true);
-            _updateMatchedNodes(data,elem,'${g.enc(js:params.project?:request.project)}',false,{view:view,expanddetail:true,inlinepaging:true,
+            _updateMatchedNodes(data,elem,'${enc(js:params.project?:request.project)}',false,{view:view,expanddetail:true,inlinepaging:true,
                 page:page,max:pagingMax},function(xht){
                 nodeFilter.loading(false);
             });

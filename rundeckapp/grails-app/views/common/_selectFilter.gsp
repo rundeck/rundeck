@@ -46,7 +46,7 @@
             data-node-filter-name="${enc(attr:filter.name)}"
             data-node-filter="${enc(attr:filter.asFilter())}"
             data-placement="bottom"
-                title="Apply filter: ${g.enc(attr:filter.name)}">
+                title="Apply filter: ${enc(attr:filter.name)}">
             <g:enc>${filter.name}</g:enc></g:link>
     </g:each>
     </span>
