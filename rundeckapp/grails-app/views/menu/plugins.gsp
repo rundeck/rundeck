@@ -84,7 +84,7 @@
     <div class="panel panel-default">
             <div class="panel-heading">
                 <h4 class="panel-title">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion${ukey}" href="#${ukeyx}">
+                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion${enc(attr:ukey)}" href="#${enc(attr:ukeyx)}">
                         <i class="glyphicon glyphicon-chevron-down"></i>
                     <i class="rdicon icon-small plugin"></i>
                     <g:enc>${pluginTitle?:pluginName}</g:enc></a>

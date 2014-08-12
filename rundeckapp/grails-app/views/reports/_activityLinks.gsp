@@ -116,7 +116,7 @@
             </td>
             <td class="right date autoclickable">
                 <span data-bind="if: dateCompleted()">
-                    <span class="timeabs" data-bind="text: endTimeFormat('${g.message(code:'jobslist.date.format.ko')}')">
+                    <span class="timeabs" data-bind="text: endTimeFormat('${enc(attr:g.message(code:'jobslist.date.format.ko'))}')">
 
                     </span>
                     <span title="">

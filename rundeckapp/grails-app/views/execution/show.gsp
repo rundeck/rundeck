@@ -592,7 +592,7 @@
                             <a href="#summary" data-toggle="tab">Summary</a>
                         </li>
                         <li id="tab_link_flow">
-                            <a href="#state" data-toggle="tab" data-bind="text: completed()?'${g.message(code: "report")}':'${g.message(code: "monitor")}' ">
+                            <a href="#state" data-toggle="tab" data-bind="text: completed()?'${enc(attr:g.message(code: "report"))}':'${enc(attr:g.message(code: "monitor"))}' ">
                                 <g:if test="${execution.dateCompleted==null}">
                                     <g:message code="monitor" />
                                 </g:if>
