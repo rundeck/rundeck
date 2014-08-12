@@ -6,4 +6,4 @@
 
     <g:link controller="menu" action="licenses">Licenses</g:link>
 
-    <span class="version">${grailsApplication.metadata['build.ident']}</span>
+    <span class="version"><g:enc>${grailsApplication.metadata['build.ident']}</g:enc></span>

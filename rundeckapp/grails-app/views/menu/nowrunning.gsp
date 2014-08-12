@@ -79,7 +79,7 @@
 
     <div class="pageTop">
         <div class="floatl">
-            <span class="welcomeMessage">Recent and Currently Running <g:message code="domain.ScheduledExecution.title"/>s (<span id='nrlocal'>${total}</span>)</span>
+            <span class="welcomeMessage">Recent and Currently Running <g:message code="domain.ScheduledExecution.title"/>s (<span id='nrlocal'><g:enc>${total}</g:enc></span>)</span>
         </div>
         <div class="clear"></div>
     </div>

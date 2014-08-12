@@ -49,7 +49,7 @@
                         data-target="#nodeSelect"
                     ${selectedNodes?'checked':''}
                               id="doReplaceFilters"/> <label for="doReplaceFilters">Change the Target Nodes
-                (<span class="nodeselectcount">${selectedNodes?selectedNodes.size():nodes.size()}</span>)</label>
+                (<span class="nodeselectcount"><g:enc>${selectedNodes?selectedNodes.size():nodes.size()}</g:enc></span>)</label>
                 </div>
 
             </div>
@@ -84,7 +84,7 @@
                                     </span>
                                 </g:if>
                                 <g:else>
-                                    <span class="prompt">${namegroups.size()>1?'Other ':''}Matched Nodes</span>
+                                    <span class="prompt"><g:enc>${namegroups.size()>1?'Other ':''}</g:enc>Matched Nodes</span>
                                 </g:else>
                                 <g:enc>(${namegroups[group].size()})</g:enc>
                             </g:expander>

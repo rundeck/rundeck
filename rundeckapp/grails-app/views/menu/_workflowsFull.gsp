@@ -148,7 +148,7 @@
                 <g:if test="${wasfiltered}">
                     <div>
                     <g:if test="${!params.compact}">
-                        <span class="h4">${totalauthorized} <g:message code="domain.ScheduledExecution.title"/>s</span>
+                        <span class="h4"><g:enc>${totalauthorized}</g:enc> <g:message code="domain.ScheduledExecution.title"/>s</span>
                             matching filter:
                     </g:if>
 

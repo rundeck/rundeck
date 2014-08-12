@@ -21,7 +21,7 @@
             <description></description>
         </g:else>
         <pubDate><g:rfc822Date date="${item.date}"/></pubDate>
-        ${'<dc:date>'}<g:w3cDate date="${item.date}"/>${'</dc:date>'}
+        <g:enc raw="true">${'<dc:date>'}</g:enc><g:w3cDate date="${item.date}"/><g:enc>${'</dc:date>'}</g:enc>
     </item>
     </g:each>
   </channel>

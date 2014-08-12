@@ -104,11 +104,11 @@ used by _editOptions.gsp template
             <g:set var="optionDepsMet"
                    value="${!optiondependencies[optName] || selectedoptsmap && optiondependencies[optName].every {selectedoptsmap[it]}}"/>
             <g:if test="${optiondependencies[optName]}">
-                remoteOptions.addOptionDependencies("${enc(js:optName)}", ${optiondependencies[optName] as JSON});
+                remoteOptions.addOptionDependencies("${enc(js:optName)}", ${enc(json:optiondependencies[optName])});
             </g:if>
             <g:if test="${dependentoptions[optName]}">
                 <%-- If option has dependents, register them to refresh when this option value changes --%>
-                remoteOptions.addOptionDeps("${enc(js:optName)}", ${dependentoptions[optName] as JSON});
+                remoteOptions.addOptionDeps("${enc(js:optName)}", ${enc(json:dependentoptions[optName])});
 
 
                 <g:if test="${optionSelect.enforced || selectedoptsmap && selectedoptsmap[optName]}">

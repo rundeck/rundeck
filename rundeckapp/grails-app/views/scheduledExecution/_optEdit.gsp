@@ -191,7 +191,7 @@
                     <wdgt:eventHandler for="etregex_${rkey}" state="unempty" target="vregex_${rkey}" focus="true" inline="true"/>
                 </div>
                 <g:if test="${regexError}">
-                    <pre class="error note">${regexError.trim()}</pre>
+                    <pre class="error note"><g:enc>${regexError.trim()}</g:enc></pre>
                 </g:if>
             </div>
         </div>

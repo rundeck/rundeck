@@ -37,7 +37,7 @@
 <div class="row ${description?'row-space':''}">
     <g:if test="${error}">
         <div class="col-sm-12">
-        <div class="alert alert-warning resourceConfigEdit">${error}</div>
+        <div class="alert alert-warning resourceConfigEdit"><g:enc>${error}</g:enc></div>
         </div>
     </g:if>
     <g:if test="${isCreate}">

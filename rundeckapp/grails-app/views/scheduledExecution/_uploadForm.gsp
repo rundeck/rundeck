@@ -20,7 +20,7 @@
             <div class="col-sm-12">
                 <div class="alert alert-info">
                     <g:each var="msg" in="${messages}">
-                        <div>${msg}</div>
+                        <div><g:enc>${msg}</g:enc></div>
                     </g:each>
                 </div>
             </div>
@@ -32,7 +32,7 @@
         <div class="row">
         <div class="col-sm-12">
       <div class="batchresset">
-               <span class="prompt errors">${errjobs.size()} Job${errjobs.size()==1?' was':'s were'} not processed due to errors</span>
+               <span class="prompt errors"><g:enc>${errjobs.size()}</g:enc> Job${errjobs.size()==1?' was':'s were'} not processed due to errors</span>
 
             <div class="presentation">
                 <g:if test="${errjobs.size()>0}">
@@ -77,7 +77,7 @@
         <div class="row">
         <div class="col-sm-12">
         <div class="batchresset">
-                <span class="prompt info">${skipjobs.size()} <g:message code="domain.ScheduledExecution.title"/>${skipjobs.size()==1?' was':'s were'} skipped due to existing jobs with the same name</span>
+                <span class="prompt info"><g:enc>${skipjobs.size()}</g:enc> <g:message code="domain.ScheduledExecution.title"/><g:enc>${skipjobs.size()==1?' was':'s were'}</g:enc> skipped due to existing jobs with the same name</span>
 
             <div class="presentation">
                 <g:if test="${skipjobs.size()>0}">
@@ -121,7 +121,7 @@
         <div class="row">
         <div class="col-sm-12">
       <div class="batchresset">
-           <span class="text-info">${jobs.size()} <g:message code="domain.ScheduledExecution.title"/>${jobs.size()==1?' was':'s were'} successfully created/modified</span>
+           <span class="text-info"><g:enc>${jobs.size()}</g:enc> <g:message code="domain.ScheduledExecution.title"/><g:enc>${jobs.size()==1?' was':'s were'}</g:enc> successfully created/modified</span>
 
             <g:render template="/menu/jobslist" model="[jobslist:jobs,total:jobs.size(), headers: false, showIcon:true]"/>
         </div>

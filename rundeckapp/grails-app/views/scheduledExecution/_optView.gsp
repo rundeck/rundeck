@@ -26,17 +26,17 @@
 <span id="opt_${rkey}" class="optview">
     <span class="optdetail ${edit?'autohilite autoedit':''}" ${edit?'title="Click to edit"':''} ${edit?'':''}>
         <span class=" ${option?.required ? 'required' : ''}" title="${enc(attr:option?.description)}${option?.required ? ' (Required)' : ''}"><g:enc>${option.name}</g:enc></span>
-        <span class=""><g:truncate max="20" showtitle="true"><g:enc>${option.secureInput && option.defaultValue?'****':option.defaultValue}</g:enc></g:truncate>${option.multivalued?'(+)':''}</span>
+        <span class=""><g:truncate max="20" showtitle="true"><g:enc>${option.secureInput && option.defaultValue?'****':option.defaultValue}</g:enc></g:truncate><g:enc>${option.multivalued?'(+)':''}</g:enc></span>
         <span class="desc"><g:enc>${option.description}</g:enc></span>
     </span>
     <g:if test="${option?.values || option.valuesList}">
         <g:set var="opts" value="${option.values?option.values.sort():option.valuesList.split(',').sort()}"/>
         <div class="popout detailpopup" id="vls_${rkey}_tooltip" style="width:200px;display:none;" >
             <div class="info note">Allowed Values</div>
-            <g:each var="val" in="${opts}" status="i">${0!=i?', ':''}<span class="valueItem"><g:enc>${val}</g:enc></span></g:each>
+            <g:each var="val" in="${opts}" status="i"><g:enc>${0!=i?', ':''}</g:enc><span class="valueItem"><g:enc>${val}</g:enc></span></g:each>
         </div>
         <span class="valuesSet">
-        <span class="valueslist" id="vls_${rkey}">${opts ? opts.size() :0} Value${1==opts?.size()?'':'s'}</span>
+        <span class="valueslist" id="vls_${rkey}"><g:enc>${opts ? opts.size() :0}</g:enc> Value${1==opts?.size()?'':'s'}</span>
         </span>
     </g:if>
     <g:elseif test="${option.realValuesUrl}">

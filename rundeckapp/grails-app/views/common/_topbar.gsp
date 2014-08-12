@@ -83,23 +83,23 @@
             </g:ifPageProperty>
         </g:ifPageProperty>
         <g:if test="${params.project?:request.project}">
-        <li class="${wfselected}"><g:link controller="menu" action="jobs" class=" toptab ${wfselected}"
+        <li class="${enc(attr:wfselected)}"><g:link controller="menu" action="jobs" class=" toptab ${enc(attr: wfselected)}"
                                           params="[project: params.project ?: request.project]">
            <g:message code="gui.menu.Workflows"/>
         </g:link></li><!--
-        --><li class="${resselected}"><g:link controller="framework" action="nodes" class=" toptab ${resselected}"
+        --><li class="${enc(attr:resselected)}"><g:link controller="framework" action="nodes" class=" toptab ${enc(attr: resselected)}"
                                               params="[project: params.project ?: request.project]" >
            <g:message code="gui.menu.Nodes"/>
        </g:link></li><!--
         --><g:if
                 test="${auth.adhocAllowedTest(action:AuthConstants.ACTION_RUN,project: params.project?:request.project)}"><li
-                    class="${adhocselected}"><g:link
+                    class="${enc(attr:adhocselected)}"><g:link
                 controller="framework" action="adhoc"
                                                   class=" toptab ${enc(attr:adhocselected)}"
                                                 params="[project: params.project ?: request.project]">
            <g:message code="gui.menu.Adhoc"/>
        </g:link></li></g:if><!--
-        --><li class="${eventsselected}"><g:link controller="reports"  action="index" class=" toptab ${enc(attr:eventsselected)}"
+        --><li class="${enc(attr:eventsselected)}"><g:link controller="reports"  action="index" class=" toptab ${enc(attr:eventsselected)}"
                                                  params="[project: params.project ?: request.project]" >
             <g:message code="gui.menu.Events"/>
         </g:link></li>
@@ -161,7 +161,7 @@
                     </g:link>
                 </li>
                 <li class="divider"></li>
-                <li><g:link action="logout" controller="user" title="Logout user: ${session.user}">
+                <li><g:link action="logout" controller="user" title="Logout user: ${enc(attr:session.user)}">
                     <i class="glyphicon glyphicon-remove"></i>
                     Logout
                 </g:link>

@@ -224,7 +224,7 @@ div.progressContainer div.progressContent{
             </span>
             </g:if>
             <g:if test="${execstate=='aborted'}">
-                by <em>${execution.abortedby}</em>
+                by <em><g:enc>${execution.abortedby}</g:enc></em>
             </g:if>
             - <g:link absolute="true" controller="execution"
                       params="[project: execution.project]"
@@ -254,7 +254,7 @@ div.progressContainer div.progressContent{
             <table class="executionInfo">
                 <tr>
                     <td>User:</td>
-                    <td>${execution?.user}</td>
+                    <td><g:enc>${execution?.user}</g:enc></td>
                 </tr>
                 <g:if test="${null!=execution.dateCompleted && null!=execution.dateStarted}">
 
@@ -269,7 +269,7 @@ div.progressContainer div.progressContent{
                     <td>
                         <g:relativeDate elapsed="${execution.dateStarted}" agoClass="timeago"/>
                     </td>
-                    <td><span class="timeabs">${execution.dateStarted}</span></td>
+                    <td><span class="timeabs"><g:enc>${execution.dateStarted}</g:enc></span></td>
                 </tr>
                 </g:if>
                 <g:else>
@@ -283,7 +283,7 @@ div.progressContainer div.progressContent{
                         <td>
                             <g:relativeDate elapsed="${execution.dateCompleted}" agoClass="timeago"/>
                         </td>
-                        <td><span class="timeabs">${execution.dateCompleted}</span></td>
+                        <td><span class="timeabs"><g:enc>${execution.dateCompleted}</g:enc></span></td>
                     </tr>
                 </g:if>
             </table>

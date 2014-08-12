@@ -134,9 +134,6 @@
             </tr>
 
             <g:if test="${expanddetail||params.expanddetail}">
-                %{--<g:link  controller="reports" action="index" params="${[nodeFilter:node.nodename]}" title="View History for Node ${node.nodename}">--}%
-                    <!--&raquo; history-->
-                %{--</g:link>--}%
                 <tr id="${enc(attr:ukey+'node_detail_'+i)}" class="detail_content nodedetail ${nodedata.islocal ? 'server' : ''}" style="display:none">
                     <td colspan="${(4+cols.size())}">
                         <g:render template="nodeDetailsSimple" model="[runnable:runnable, useNamespace:true, linkAttrs: true, node:node,key:ukey+'_'+node.nodename+'_key',projects:nodedata.projects,exclude: cols?null:['username','hostname']]"/>

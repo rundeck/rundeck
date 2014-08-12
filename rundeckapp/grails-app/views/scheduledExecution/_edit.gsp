@@ -2,7 +2,7 @@
 <div class="list-group">
 <g:if test="${flash.message}">
     <div class="list-group-item">
-    <div class="alert alert-info">${flash.message}</div>
+    <div class="alert alert-info"><g:enc>${flash.message}</g:enc></div>
     </div>
 </g:if>
 <g:hasErrors bean="${scheduledExecution}">
@@ -355,7 +355,7 @@ function getCurSEID(){
         %{--name--}%
     <div class="form-group ${g.hasErrors(bean:scheduledExecution,field:'jobName','has-error')}" id="schedJobNameLabel">
         <label for="schedJobName"
-               class="required ${labelColClass}"
+               class="required ${enc(attr:labelColClass)}"
                >
             <g:message code="domain.ScheduledExecution.title"/> Name
         </label>
@@ -374,10 +374,7 @@ function getCurSEID(){
             </g:hasErrors>
         </div>
         %{--group--}%
-    %{--<div class="form-group ${hasErrors(bean: scheduledExecution, field: 'groupPath', 'has-error')}">--}%
-        %{--<label for="schedJobGroup" class=" ${labelColClass}">--}%
-            %{--Group--}%
-        %{--</label>--}%
+
         <div class="${fieldColHalfSize}">
             <div class="input-group">
                 <g:hasErrors bean="${scheduledExecution}" field="groupPath">
@@ -863,7 +860,7 @@ function getCurSEID(){
 
     %{--uuid--}%
     <div class="form-group ${hasErrors(bean: scheduledExecution, field: 'uuid', 'has-error')}" id="schedJobUuidLabel">
-        <label for="schedJobUuid" class=" ${labelColClass} text-muted">
+        <label for="schedJobUuid" class=" ${enc(attr:labelColClass)} text-muted">
             UUID
         </label>
 

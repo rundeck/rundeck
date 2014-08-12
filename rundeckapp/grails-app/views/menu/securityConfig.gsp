@@ -53,7 +53,7 @@
             List of ACL Policy Files in directory <code><g:enc>${fwkConfigDir.absolutePath}</g:enc></code>:
             <ul>
             <g:each in="${fwkConfigDir.listFiles().grep{it.name=~/\.aclpolicy$/}}" var="file">
-                <li class="">${file.name}</li>
+                <li class=""><g:enc>${file.name}</g:enc></li>
             </g:each>
             </ul>
         </div>

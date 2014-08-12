@@ -6,7 +6,7 @@
     <g:set var="max" value="${params.int('maxShown')}"/>
 </g:if>
 <g:if test="${max>0 && nodes.size()>max}">
-<a href="#embednodeset" class="textbtn textbtn-default " data-toggle="collapse">Show all ${nodes.size()} Nodes
+<a href="#embednodeset" class="textbtn textbtn-default " data-toggle="collapse">Show all <g:enc>${nodes.size()}</g:enc> Nodes
     <i class="auto-caret"></i>
 </a>
 </g:if>

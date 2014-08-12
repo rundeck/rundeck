@@ -71,7 +71,7 @@
                 </g:else>
 
                 <g:if test="${!small}">
-                    <td class="dateStarted date " title="started: ${execution.dateStarted}">
+                    <td class="dateStarted date " title="started: ${enc(attr:execution.dateStarted)}">
                         <span class="timelabel">at:</span>
                         <span class="timeabs"><g:relativeDate atDate="${execution.dateStarted}"/></span>
                         <em>by</em>
@@ -82,7 +82,7 @@
                 <td class="runstatus " style="width:200px" colspan="2">
 
                     <g:if test="${execution.dateCompleted}">
-                        <span class="timelabel" title="completed: ${execution.dateCompleted}">
+                        <span class="timelabel" title="completed: ${enc(attr:execution.dateCompleted)}">
                             <g:if test="${execution.status=='true'}">
                                 completed:
                             </g:if>
@@ -93,7 +93,7 @@
                                 failed:
                             </g:else>
                         </span>
-                        <span class="completedTime" title="completed: ${execution.dateCompleted}">
+                        <span class="completedTime" title="completed: ${enc(attr:execution.dateCompleted)}">
                             <g:relativeDate atDate="${execution.dateCompleted}"/>
                         </span>
                         <span class=" duration">
@@ -141,7 +141,7 @@
 </g:if>
 <g:else>
     <g:if test="${emptyText}">
-    <span class="note empty">${emptyText}</span>
+    <span class="note empty"><g:enc>${emptyText}</g:enc></span>
     </g:if>
 </g:else>
 <script language="text/javascript">

@@ -142,7 +142,8 @@
                         <div class="">
                         <div class="optionvaluemulti ">
                             <label>
-                                <input type="checkbox" name="${enc(attr:realFieldName)}" value="${enc(attr:entry.value)}" ${selectedvalue && entry.value == selectedvalue || (defaultMultiValues? entry.value in defaultMultiValues : entry.value == optionSelect.defaultValue) || selectedoptsmap && entry.value in selectedoptsmap[optName] ? 'checked' : ''} />
+                                <g:set var="ischecked" value="${selectedvalue && entry.value == selectedvalue || (defaultMultiValues ? entry.value in defaultMultiValues : entry.value == optionSelect.defaultValue) || selectedoptsmap && entry.value in selectedoptsmap[optName]}"/>
+                                <input type="checkbox" name="${enc(attr:realFieldName)}" value="${enc(attr:entry.value)}" ${ ischecked ? 'checked' : ''} />
                                 <g:enc>${entry.name}</g:enc>
                             </label>
                         </div>
@@ -176,7 +177,8 @@
 
                     <g:each in="${labelsSet}" var="sellabel">
                         <g:set var="entry" value="${sellabel instanceof Map?sellabel:[name:sellabel,value:sellabel]}"/>
-                        <option value="${enc(attr:entry.value)}" ${selectedvalue && entry.value == selectedvalue || entry.value == optionSelect.defaultValue || selectedoptsmap && entry.value == selectedoptsmap[optName] ? 'selected' : ''}><g:enc>${entry.name}</g:enc></option>
+                        <g:set var="isselected" value="${selectedvalue && entry.value == selectedvalue || entry.value == optionSelect.defaultValue || selectedoptsmap && entry.value == selectedoptsmap[optName]}"/>
+                        <option value="${enc(attr:entry.value)}" ${isselected ? 'selected' : ''}><g:enc>${entry.name}</g:enc></option>
                     </g:each>
                 </select>
                 <g:if test="${usesTextField}">

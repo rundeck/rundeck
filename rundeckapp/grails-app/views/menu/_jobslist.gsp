@@ -113,6 +113,6 @@
                 <span class="note empty">None</span>
             </g:else>
                 <g:if test="${total && max && total.toInteger() > max.toInteger() && max.toInteger() > 0 && !hideSummary}">
-                    <span class="info note">Showing ${jobslist.size()} of ${total}</span>
+                    <span class="info note">Showing <g:enc>${jobslist.size()} of ${total}</g:enc></span>
                 </g:if>
         </div>

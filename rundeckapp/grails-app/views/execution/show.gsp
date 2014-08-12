@@ -78,24 +78,24 @@
             smallIconUrl: "${resource(dir: 'images', file: 'icon-small')}",
 
             extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>&markdown=${enc(js:enc(url: params.markdown))}&ansicolor=${enc(js:enc(url: params.ansicolor))}",
-            lastlines: ${params.int('lastlines') ?: defaultLastLines},
-            maxLastLines: ${params.int('maxlines') ?: maxLastLines},
-            collapseCtx: {value:${null == execution?.dateCompleted},changed:false},
+            lastlines: ${enc(js:params.int('lastlines') ?: defaultLastLines)},
+            maxLastLines: ${enc(js:params.int('maxlines') ?: maxLastLines)},
+            collapseCtx: {value:${enc(js:null == execution?.dateCompleted)},changed:false},
             showFinalLine: {value:false,changed:false},
-            tailmode: ${followmode == 'tail'},
-            browsemode: ${followmode == 'browse'},
-            nodemode: ${followmode == 'node'},
+            tailmode: ${enc(js:followmode == 'tail')},
+            browsemode: ${enc(js:followmode == 'browse')},
+            nodemode: ${enc(js:followmode == 'node')},
             execData: {},
-            groupOutput:{value:${followmode == 'browse'}},
-            updatepagetitle:${null == execution?.dateCompleted},
+            groupOutput:{value:${enc(js:followmode == 'browse')}},
+            updatepagetitle:${enc(js:null == execution?.dateCompleted)},
           <g:if test="${authChecks[AuthConstants.ACTION_KILL]}">
               killjobhtml: '<span class="btn btn-danger btn-sm textbtn" onclick="followControl.docancel();">Kill <g:message code="domain.ScheduledExecution.title"/> <i class="glyphicon glyphicon-remove"></i></span>',
           </g:if>
           <g:if test="${!authChecks[AuthConstants.ACTION_KILL]}">
               killjobhtml: "",
           </g:if>
-          totalDuration : 0 + ${scheduledExecution?.totalTime ? scheduledExecution.totalTime : -1},
-            totalCount: 0 + ${scheduledExecution?.execCount ? scheduledExecution.execCount : -1}
+          totalDuration : 0 + ${enc(js:scheduledExecution?.totalTime ?: -1)},
+            totalCount: 0 + ${enc(js:scheduledExecution?.execCount ?: -1)}
           });
           nodeflowvm=new NodeFlowViewModel(workflow,"${g.createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id)}.json");
           flowState = new FlowState('${execution?.id}','flowstate',{

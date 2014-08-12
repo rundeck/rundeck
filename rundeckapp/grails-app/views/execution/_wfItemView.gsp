@@ -82,7 +82,7 @@
             <g:else>
                 <g:if test="${!noimgs}">
                     <g:set var="iname" value="${icon?:'icon-small'}"/>
-                    <i class="rdicon ${item.adhocRemoteString?'shell':item.adhocLocalString?'script':'scriptfile'} ${iname}"></i>
+                    <i class="rdicon ${item.adhocRemoteString?'shell':item.adhocLocalString?'script':'scriptfile'} ${enc(attr:iname)}"></i>
                 </g:if>
                 <g:if test="${item.adhocRemoteString}">
                     <span class="argString"><g:truncate max="150" showtitle="true"><g:enc>${item.adhocRemoteString}</g:enc></g:truncate></span>

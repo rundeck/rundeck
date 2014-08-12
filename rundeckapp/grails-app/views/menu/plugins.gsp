@@ -59,7 +59,7 @@
     <g:message code="framework.service.${serviceName}.label.plural" default="${serviceName}"/></a>
 
                     <g:if test="${pluginDescList.size()>0}">
-                        <span class="label label-default">${pluginDescList.size()}</span>
+                        <span class="label label-default"><g:enc>${pluginDescList.size()}</g:enc></span>
                     </g:if>
                     <g:else>
                     <small>

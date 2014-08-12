@@ -1,7 +1,7 @@
 <g:set var="rkey" value="${g.rkey()}" />
 <g:render template="runningExecutions" model="[executions:nowrunning,jobs:jobs,nowrunning:true,idprefix:rkey,emptyText:'']"/>
     <g:if test="${total && max && total.toInteger() > max.toInteger()}">
-        <span class="info note">Showing ${nowrunning.size()} of ${total}</span>
+        <span class="info note">Showing <g:enc>${nowrunning.size()}of ${total}</g:enc></span>
     </g:if>
 <g:if test="${total>max}">
 <span class="paginate"><g:paginate action="nowrunning" total="${total}"  max="${max}"/></span>

@@ -53,7 +53,7 @@
             Revert All Changes</span>
 
         <div id="revert_${enc(attr:rkey)}" class="confirmMessage popout confirmbox" style="display:none">
-            <div class="text-warning">Really revert <enc>${revertConfirm?:'all changes'}</enc>?</div>
+            <div class="text-warning">Really revert <g:enc>${revertConfirm?:'all changes'}</g:enc>?</div>
 
             <span class="btn btn-xs btn-default " onclick="jQuery('#revertall_${rkey}').popover('hide');">No</span>
             <span class="btn btn-xs btn-warning " onclick="jQuery('#revertall_${rkey}').popover('destroy');_doRevertAction('${enc(js:key)}');">Yes</span>

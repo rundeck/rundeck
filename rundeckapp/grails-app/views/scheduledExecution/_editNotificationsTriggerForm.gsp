@@ -3,7 +3,7 @@
 <div class="notifyFields form-group"
      style="${wdgt.styleVisible(if: isVisible)}">
 
-    <!-- ${trigger} -->
+    %{-- ${trigger} --}%
     <div class="control-label text-form-label col-sm-2">
         <g:message code="notification.event.${trigger}"/>
     </div>

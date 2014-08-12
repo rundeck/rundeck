@@ -62,7 +62,7 @@
                 <g:if test="${nsname!=''}">
                 <tr>
                     <td class="key namespace">
-                        <g:expander key="${nkey}_ns_${nsname}" classnames="textbtn-muted textbtn-saturated">${nsname} (${nsAttrs.size()})</g:expander>
+                        <g:expander key="${nkey}_ns_${nsname}" classnames="textbtn-muted textbtn-saturated"><g:enc>${nsname} (${nsAttrs.size()})</g:enc></g:expander>
                     </td>
                 </tr>
                 </g:if>

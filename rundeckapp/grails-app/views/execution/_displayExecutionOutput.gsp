@@ -1,5 +1,5 @@
 <div>
-    <p class='smlabel'>file: ${execution.outputfilepath}</p>
+    <p class='smlabel'>file: <g:enc>${execution.outputfilepath}</g:enc></p>
     <table border='0' width='100%' class="execoutput" cellpadding="0" cellspacing="0">
         <thead>
             <tr>

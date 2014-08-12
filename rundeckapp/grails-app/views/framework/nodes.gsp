@@ -221,7 +221,7 @@
                        value="${auth.resourceAllowedTest(kind:'node',action:[AuthConstants.ACTION_REFRESH],project: params.project ?: request.project)}"/>
                 <g:if test="${adminauth}">
                     <g:if test="${selectedProject && selectedProject.shouldUpdateNodesResourceFile()}">
-                        <span class="floatr"><g:link action="reloadNodes" params="${[project:selectedProject.name]}" class="btn btn-sm btn-default" title="Click to update the resources.xml file from the source URL, for project ${selectedProject.name}" onclick="\$(this.parentNode).loading();">Update Nodes for project ${selectedProject.name}</g:link></span>
+                        <span class="floatr"><g:link action="reloadNodes" params="${[project:selectedProject.name]}" class="btn btn-sm btn-default" title="Click to update the resources.xml file from the source URL, for project ${enc(attr:selectedProject.name)}" onclick="\$(this.parentNode).loading();">Update Nodes for project <g:enc>${selectedProject.name}</g:enc></g:link></span>
                     </g:if>
                 </g:if>
         </div>
@@ -270,11 +270,11 @@
         <div class="col-sm-12">
             <span class="h4" data-bind="if: !loading()">
                 <g:if test="${summaryOnly}">
-                    <span data-bind="text: allcount">${total}</span>
+                    <span data-bind="text: allcount"><g:enc>${total}</g:enc></span>
                     <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span>
                 </g:if>
                 <g:else>
-                    <span data-bind="text: allcount">${total}</span>
+                    <span data-bind="text: allcount"><g:enc>${total}</g:enc></span>
                     <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span> matching filter
                 </g:else>
             </span>
@@ -313,7 +313,7 @@
                             data-placement="left"
                         >
                             <i class="glyphicon glyphicon-plus"></i>
-                            Create a job for <span data-bind="text: allcount">${total}</span>
+                            Create a job for <span data-bind="text: allcount"><g:enc>${total}</g:enc></span>
                             <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span> …
                         </a>
                     </li>

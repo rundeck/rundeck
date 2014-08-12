@@ -47,7 +47,7 @@
                 <g:if test="${!params.nofilters}">
                 <div class="queryresultsinfo">
                         <g:if test="${!params.compact}">
-                            <span class="prompt"><span class="_obs_histtotal">${total}</span> Results</span>
+                            <span class="prompt"><span class="_obs_histtotal"><g:enc>${total}</g:enc></span> Results</span>
                             matching ${filterName?'filter':'your query'}
                         </g:if>
 
@@ -88,7 +88,7 @@
                         </table>
 
                             <g:if test="${total && max && total.toInteger() > max.toInteger()}">
-                                <span class="info note">Showing ${reports.size()} of <span class="_obs_histtotal">${total}</span></span>
+                                <span class="info note">Showing <g:enc>${reports.size()}</g:enc> of <span class="_obs_histtotal"><g:enc>${total}</g:enc></span></span>
                                 <g:if test="${params.compact}">
                                     <a href="${createLink(controller:'reports',action:params.moreLinkAction?params.moreLinkAction:'index',params:filterName?[filterName:filterName]:paginateParams?paginateParams:[:])}">More&hellip;</a>
                                 </g:if>

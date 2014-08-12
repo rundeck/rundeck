@@ -10,11 +10,10 @@
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-    <g:set var="appTitle"
-       value="${grailsApplication.config.rundeck.gui.title ? grailsApplication.config.rundeck.gui.title : g.message(code: 'main.app.name')}"/>
+    <g:set var="appTitle" value="${grailsApplication.config.rundeck.gui.title ?: g.message(code: 'main.app.name')}"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="home"/>
-    <title>${appTitle}</title>
+    <title><g:enc>${appTitle}</g:enc></title>
 
 </head>
 <body>
@@ -38,7 +37,7 @@
     <g:if test="${projCount > 1}">
     %{--app summary info--}%
                 <span class="h4">
-                    <span class="summary-count ${execCount > 0 ? 'text-info' : 'text-muted'}">${execCount}</span>
+                    <span class="summary-count ${execCount > 0 ? 'text-info' : 'text-muted'}"><g:enc>${execCount}</g:enc></span>
                     <strong>
                         <g:plural code="Execution" count="${execCount}" textOnly="${true}"/>
                     </strong>
@@ -100,8 +99,8 @@
     <auth:resourceAllowed action="create" kind="project" context="application" has="true">
         <div class="jumbotron">
             <g:set var="appTitle"
-                   value="${grailsApplication.config.rundeck.gui.title ? grailsApplication.config.rundeck.gui.title : g.message(code: 'main.app.name')}"/>
-            <h1>Welcome to ${appTitle}</h1>
+                   value="${grailsApplication.config.rundeck.gui.title ?: g.message(code: 'main.app.name')}"/>
+            <h1>Welcome to <g:enc>${appTitle}</g:enc></h1>
 
             <p>
                 To get started, create a new project.
@@ -137,21 +136,14 @@
                         <span class="text-muted"><g:enc>${data.description}</g:enc></span>
                     </g:if>
                 </div>
-                %{--<div class="col-sm-6 col-md-2">--}%
-                    %{--<a class="h4 ${data.jobCount > 0 ? '' : 'text-muted'}" href="${g.createLink(controller:"framework",action:"selectProject",params:[page: 'jobs',project:project])}">--}%
-                        %{--<span class="summary-count ${data.jobCount > 0 ? 'text-info' : '' }">${data.jobCount}</span>--}%
 
-                        %{--<g:plural code="Job" count="${data.jobCount}" textOnly="${true}"/>--}%
-                        %{--<i class="glyphicon glyphicon-book"></i>--}%
-                    %{--</a>--}%
-                %{--</div>--}%
                 <div class="clearfix visible-sm"></div>
                 <div class="col-sm-6 col-md-4">
                     <a class="h4 ${data.execCount > 0 ? '' : 'text-muted'}"
                        href="${g.createLink(controller: "reports", action: "index", params: [project: project])}"
 
                     >
-                        <span class="summary-count ${data.execCount > 0 ? 'text-info' : '' }">${data.execCount}</span>
+                        <span class="summary-count ${data.execCount > 0 ? 'text-info' : '' }"><g:enc>${data.execCount}</g:enc></span>
                         <strong>
                             <g:plural code="Execution" count="${data.execCount}" textOnly="${true}"/>
                         </strong>
@@ -174,14 +166,6 @@
                 </div>
 
 
-                %{--<div class="col-sm-6 col-md-2">--}%
-                    %{--<a class="h4" href="${g.createLink(controller: "framework", action: "selectProject", params: [page: 'nodes',project:project])}">--}%
-                        %{--<span class="summary-count ${data.nodeCount>0?'text-info':''}">--}%
-                            %{--${data.nodeCount}--}%
-                        %{--</span>--}%
-                        %{--<g:plural code="Node" count="${data.nodeCount}" textOnly="${true}"/>--}%
-                    %{--</a>--}%
-                %{--</div>--}%
 
                 <div class="clearfix visible-xs visible-sm"></div>
                 <g:if test="${data.auth?.jobCreate || data.auth?.admin}">

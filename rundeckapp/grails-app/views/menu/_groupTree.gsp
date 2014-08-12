@@ -59,11 +59,11 @@
             outdiv= (['</div>'] * (count*2)).join('<!-- x -->');
             divcounts-=(count*2);
          }%
-        ${outdiv}
+        <g:enc raw="true">${outdiv}</g:enc>
 
     </g:elseif>
     <g:else>
-        ${(['</div>'] * divcounts).join('<!--rend-->')}
+        <g:enc raw="true">${(['</div>'] * divcounts).join('<!--rend-->')}</g:enc>
         <g:set var="level" value="${[]}"/>
         <g:set var="indent" value="${0}"/>
         <g:set var="divcounts" value="${0}"/>
@@ -109,7 +109,7 @@
 
     <g:timerEnd key="_groupTree2.gsp-loop"/>
 </g:each>
-    ${(['</div>'] * divcounts).join('<!--rlast-->')}
+    <g:enc raw="true">${(['</div>'] * divcounts).join('<!--rlast-->')}</g:enc>
 
     <g:if test="${currentJobs}">
         <g:timerStart key="_groupTree2.gsp-jobslist"/>
