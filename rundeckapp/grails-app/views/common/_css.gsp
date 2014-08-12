@@ -241,7 +241,7 @@
              }
             .rdicon.app-logo, .nodedetail.server .nodedesc, .node_entry.server .nodedesc{
                 background-image: url("${resource(dir: 'images', file: appLogoHires)}");
-                background-size: ${appLogoW} ${appLogoH};
+                background-size: ${enc(rawtext:appLogoW)} ${ enc(rawtext:appLogoH)};
             }
 
              .rdicon.icon-small.plugin {
