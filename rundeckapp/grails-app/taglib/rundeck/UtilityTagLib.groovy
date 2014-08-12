@@ -253,7 +253,7 @@ class UtilityTagLib{
             if(diff > 0 && !attrs.end){
                 val2 << "in "
             }
-            val2 << "<span class=\"${diff > 0 ? (attrs.untilClass?attrs.untilClass:'until') : (attrs.agoClass?attrs.agoClass : 'ago')}\" >"
+            val2 << "<span class=\"${enc(attr:diff > 0 ? (attrs.untilClass?:'until') : (attrs.agoClass ?: 'ago'))}\" >"
             val2 << val.toString()
             val2 << "</span>"
             if(diff < 0 && !attrs.end){
@@ -324,41 +324,8 @@ class UtilityTagLib{
             }
             out<<"every ${x}${ch} ${unit}"
         }else{
-            out<<"${unit} ${val}"
+            out<<"${unit} ${enc(html:val)}"
         }
-    }
-
-    /**
-     * Generate an html anchor link.  map contains all the attributes of the "<A" tag,
-     * and content will be the content of the tag.
-     * if map contains both "href" and "params" then the params will be used to generate
-     * query params for the href, and that will be used as the link URL.
-     */
-    def makeLink(map,content){
-        def StringBuffer out = new StringBuffer()
-        def href=map.href;
-        if(map.params){
-            def hrefc=href
-            map.params.each{k,v->
-                if(hrefc.lastIndexOf("?")>0){
-                    hrefc+="&"
-                }else{
-                    hrefc+="?"
-                }
-                hrefc+="${k}=${v.encodeAsURL()}"
-            }
-            map.href=hrefc
-            map.remove('params')
-        }
-        out<<"<a"
-            map.each{k,v->
-                out<<" ${k}=\"${v.encodeAsHTML()}\""
-            }
-        out<<">"
-        if(content){
-            out << content
-        }
-        out<<"</a>"
     }
 
     /**
@@ -369,7 +336,7 @@ class UtilityTagLib{
         out<<"<${name}"
             map.attrs.each{k,v->
                 if(v){
-                    out<<" ${k}=\"${v.encodeAsHTML()}\""
+                    out<<" ${k}=\"${enc(attr:v)}\""
                 }
             }
         if(content){
@@ -438,16 +405,16 @@ class UtilityTagLib{
         def String text=otext
         if(text && text.size()>max && max>=0){
             if(attrs.front =='true'){
-                text="&hellip;"+text.substring(text.length()-max)
+                text="…"+text.substring(text.length()-max)
             }else{
-                text=text.substring(0,max)+"&hellip;"
+                text=text.substring(0,max)+"…"
             }
         }else if(text){
             text=text
         }
         if(text){
             if(attrs.showtitle=='true' && text!=otext){
-                out<<'<span title="'+otext.encodeAsHTMLAttribute()+'" class="truncatedtext">'
+                out<<'<span title="'+enc(attr:otext)+'" class="truncatedtext">'
             }
             out<<text
 
@@ -458,22 +425,6 @@ class UtilityTagLib{
     }
 
 
-    /**
-     * Escapes the HTML rendered within the tag body
-     */
-    def escapeHTML = { attrs, body ->
-        def sw = new StringWriter()
-		def saveOut = body.delegate.out
-		def x = new PrintWriter(sw)
-		try {
-			body.delegate.out = x
-            x << body()
-		}
-		finally {
-			body.delegate.out = saveOut
-		}
-		out << sw.toString().encodeAsHTML()
-    }
     def autoLink={ attrs,body->
         def outx=body()
         def xparams = params.project?[params:[project:params.project]]:[:]
@@ -700,7 +651,7 @@ class UtilityTagLib{
     def username={attrs,body->
         if(attrs.user==session.user){
             if(attrs.youclass){
-                out<<"<span class='${attrs.youclass.encodeAsHTML()}'>"
+                out<<"<span class=\"${enc(attr:attrs.youclass)}\">"
             }
             out << "you"
             if (attrs.youclass) {
@@ -732,11 +683,11 @@ class UtilityTagLib{
         def glyph=attrs.glyphicon?:'question-sign'
         def placement=attrs.placement?:'bottom'
         out<<'<span ' +
-                ' class="has_tooltip '+ (css?.encodeAsHTML())+'" ' +
-                ' data-placement="'+(placement.encodeAsHTML())+'" ' +
+                ' class="has_tooltip '+ enc(attr:css)+'" ' +
+                ' data-placement="'+enc(attr:placement)+'" ' +
                 ' data-container="body" ' +
-                ' title="'+g.message(code: code).encodeAsHTML()+ '">\n' +
-                ' <i class="glyphicon glyphicon-'+(glyph?.encodeAsHTML())+'"></i>\n' +
+                ' title="'+enc(attr:g.message(code: code))+ '">\n' +
+                ' <i class="glyphicon glyphicon-'+enc(attr:glyph)+'"></i>\n' +
                 '</span>'
     }
     /**
@@ -765,7 +716,7 @@ class UtilityTagLib{
         }else if(attrs.url){
             out << attrs.url.toString().encodeAsURL()
         }else if(attrs.code){
-            out << g.message(code:attrs.code).encodeAsHTML()
+            out << g.message(code:attrs.code,encodeAs:attrs.codec?:'HTML')
         }else if(attrs.rawtext) {
             //explicitly not encoded
             out << attrs.rawtext
@@ -785,7 +736,7 @@ class UtilityTagLib{
     def embedJSON={attrs,body->
         def obj=attrs.data
         def id=attrs.id
-        out << '<script id="'+enc(html:id)+'" type="text/json">'
+        out << '<script id="'+enc(attr:id)+'" type="text/json">'
         out << enc(json: obj)
         out << '</script>'
     }
