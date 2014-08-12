@@ -135,9 +135,9 @@ public class WidgetTagLib {
         def funcstr=new StringBuffer()
         def varname='e'+(++counter)
         if('change'==evt && obsfreq){
-            funcstr<<"function(${varname},value){"
+            funcstr<<"function(${g.enc(js:varname)},value){"
         }else{
-            funcstr<<"function(evt){var ${varname}=evt.element();"
+            funcstr<<"function(evt){var ${g.enc(js:varname)}=evt.element();"
         }
 
         //define condition
@@ -160,14 +160,14 @@ public class WidgetTagLib {
         
         if(this."pageScope"."$AND_COND_VAR"){
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
-                funcstr<<'\nconsole.log(\'test condition: \'+ "'+this."pageScope"."$AND_COND_VAR".join(" && ").encodeAsJavaScript()+'");\n'
-                funcstr<<'\nconsole.log(\'test result: \'+ ('+this."pageScope"."$AND_COND_VAR".join(" && ")+') );\n'
+                funcstr<<'\nconsole.log(\'test condition: \'+ "'+g.enc(js:this."pageScope"."$AND_COND_VAR".join(" && "))+'");\n'
+                funcstr<<'\nconsole.log(\'test result: \'+ ('+g.enc(js:this."pageScope"."$AND_COND_VAR".join(" && "))+') );\n'
             }
             funcstr<<'if('
             funcstr<<this."pageScope"."$AND_COND_VAR".join(" && ")
             funcstr<<'){'
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
-                funcstr<<'\nconsole.log(\'trigger: \'+'+varname+'.identify());\n'
+                funcstr<<'\nconsole.log(\'trigger: \'+'+g.enc(js:varname)+'.identify());\n'
             }
             ifcase=true
         }
@@ -190,7 +190,7 @@ public class WidgetTagLib {
         if('true'!=attrs.oneway && ifcase && funcinvaction){
             funcstr<<"}else{"
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
-                funcstr<<'\nconsole.log(\'invert trigger: \'+'+varname+');\n'
+                funcstr<<'\nconsole.log(\'invert trigger: \'+'+ g.enc(js: varname)+');\n'
             }
             funcstr<<funcinvaction
         }
@@ -208,23 +208,23 @@ public class WidgetTagLib {
         }
         if(forElem){
             if('change'==evt && obsfreq){
-                out<<"new Form.Element.Observer('${forElem}',${obsfreq},"+funcstr+");"
+                out<<"new Form.Element.Observer('${g.enc(js:forElem)}',${g.enc(js:obsfreq)},"+funcstr+");"
             }else{
-                out<<"Event.observe('${forElem}','${evt}',"+funcstr+");"
+                out<<"Event.observe('${g.enc(js:forElem)}','${g.enc(js:evt)}',"+funcstr+");"
                 if(evt=='change'){
                     // fix for IE's bad onchange event
-                    out<<"if(Prototype.Browser.IE && \$('${forElem}').tagName.toLowerCase()=='input' && (\$('${forElem}').type.toLowerCase()=='radio'||\$('${forElem}').type.toLowerCase()=='checkbox')){"
-                    out << "Event.observe('${forElem}','click'," + funcstr + ");"
+                    out<<"if(Prototype.Browser.IE && \$('${g.enc(js:forElem)}').tagName.toLowerCase()=='input' && (\$('${g.enc(js:forElem)}').type.toLowerCase()=='radio'||\$('${g.enc(js:forElem)}').type.toLowerCase()=='checkbox')){"
+                    out << "Event.observe('${g.enc(js:forElem)}','click'," + funcstr + ");"
                     out<<"}"
                 }
             }
         }else if(forSelector){
-            out<<'$$(\''+forSelector.encodeAsJavaScript()+'\').each(function(elem){'
+            out<<'$$(\''+ g.enc(js:forSelector)+'\').each(function(elem){'
 
             if('change'==evt && obsfreq){
-                out<<"new Form.Element.Observer(elem,${obsfreq},"+funcstr+");"
+                out<<"new Form.Element.Observer(elem,${g.enc(js:obsfreq)},"+funcstr+");"
             }else{
-                out<<"Event.observe(elem,'${evt}',"+funcstr+");"
+                out<<"Event.observe(elem,'${g.enc(js:evt)}',"+funcstr+");"
                 if (evt == 'change') {
                     // fix for IE's bad onchange event
                     out << "if(Prototype.Browser.IE && \$(elem).tagName.toLowerCase()=='input' && (\$(elem).type.toLowerCase()=='radio'||\$(elem).type.toLowerCase()=='checkbox')){"
@@ -280,7 +280,7 @@ public class WidgetTagLib {
         }
         def forElem=attrs.for
         if(forElem){
-            varname="'${forElem}'"
+            varname="'${g.enc(js:forElem)}'"
         }
 
         //define condition
@@ -294,9 +294,9 @@ public class WidgetTagLib {
         }else if(state=='unempty'){
             andconds<<'$F('+varname+') && \'\'!=$F('+varname+')'
         }else if(null!=attrs.equals){
-            andconds<<'$F('+varname+')==\''+attrs.equals.encodeAsJavaScript()+'\''
+            andconds<<'$F('+varname+')==\''+ g.enc(js:attrs.equals)+'\''
         }else if(null!=attrs.notequals){
-            andconds<<'$F('+varname+')!=\''+attrs.notequals.encodeAsJavaScript()+'\''
+            andconds<<'$F('+varname+')!=\''+ g.enc(js:attrs.notequals)+'\''
         }
         
     }
@@ -355,9 +355,9 @@ public class WidgetTagLib {
 
         def funcsel=''
         def funcselend=''
-        def ftarget='\''+target+'\''
+        def ftarget='\''+ g.enc(js:target)+'\''
         if(targetSelector){
-            funcsel='$$(\''+targetSelector.encodeAsJavaScript()+'\').each(function(ftarget){'
+            funcsel='$$(\''+ g.enc(js:targetSelector)+'\').each(function(ftarget){'
             ftarget='ftarget'
             funcselend="});"
         }
@@ -431,7 +431,7 @@ public class WidgetTagLib {
             def trans=''
             def transend=''
             if(attrs.transformfuncname){
-                trans=attrs.transformfuncname.encodeAsJavaScript()+'('
+                trans= g.enc(js:attrs.transformfuncname)+'('
                 transend=')'
             }
 
@@ -463,7 +463,7 @@ public class WidgetTagLib {
         }
         if(attrs.jshandler){
 
-            funcaction+=attrs.jshandler.encodeAsJavaScript()+'();'
+            funcaction+= g.enc(js:attrs.jshandler)+'();'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
                 funcaction='\nconsole.log(\'jshandler trigger\');\n'+funcaction+'\n'
@@ -471,7 +471,7 @@ public class WidgetTagLib {
         }
         if(attrs.jstargethandler){
 
-            funcaction+=attrs.jstargethandler.encodeAsJavaScript()+'($('+ftarget+'));'
+            funcaction+= g.enc(js:attrs.jstargethandler)+'($('+ftarget+'));'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
                 funcaction='\nconsole.log(\'jstargethandler trigger\');\n'+funcaction+'\n'
@@ -496,7 +496,7 @@ public class WidgetTagLib {
                 bodyval=attrs.setHtml
             }
 
-            funcaction+='$('+ftarget+').innerHTML=\''+bodyval.encodeAsJavaScript()+'\';'
+            funcaction+='$('+ftarget+').innerHTML=\''+ g.enc(js:bodyval)+'\';'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
                 funcaction='\nconsole.log(\'setHtml body trigger\');\n'+funcaction+'\n'
@@ -504,12 +504,12 @@ public class WidgetTagLib {
         }
         if(attrs.addClassname){
 
-            funcaction+='$('+ftarget+').addClassName(\''+attrs.addClassname.encodeAsJavaScript()+'\');'
+            funcaction+='$('+ftarget+').addClassName(\''+ g.enc(js:attrs.addClassname)+'\');'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
                 funcaction='\nconsole.log(\'addClassname trigger\');\n'+funcaction+'\n'
             }
-            funcinvaction+='$('+ftarget+').removeClassName(\''+attrs.addClassname.encodeAsJavaScript()+'\');'
+            funcinvaction+='$('+ftarget+').removeClassName(\''+ g.enc(js:attrs.addClassname)+'\');'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
                 funcinvaction+='console.log(\'addClassname invert trigger\');\n'+funcinvaction+'\n'
@@ -517,19 +517,19 @@ public class WidgetTagLib {
         }
         if(attrs.removeClassname){
 
-            funcaction+='$('+ftarget+').removeClassName(\''+attrs.removeClassname.encodeAsJavaScript()+'\');'
+            funcaction+='$('+ftarget+').removeClassName(\''+ g.enc(js:attrs.removeClassname)+'\');'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
                 funcaction='\nconsole.log(\'removeClassname trigger\');\n'+funcaction+'\n'
             }
-            funcinvaction+='$('+ftarget+').addClassName(\''+attrs.removeClassname.encodeAsJavaScript()+'\');'
+            funcinvaction+='$('+ftarget+').addClassName(\''+ g.enc(js:attrs.removeClassname)+'\');'
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
                 funcinvaction+='console.log(\'removeClassname invert trigger\');\n'+funcinvaction+'\n'
             }
         }
         if(attrs.toggleClassname){
 
-            funcaction+='$('+ftarget+').toggleClassName(\''+attrs.toggleClassname.encodeAsJavaScript()+'\');'
+            funcaction+='$('+ftarget+').toggleClassName(\''+ g.enc(js:attrs.toggleClassname)+'\');'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
                 funcaction='\nconsole.log(\'toggleClassName trigger\');\n'+funcaction+'\n'
