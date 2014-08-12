@@ -53,7 +53,7 @@
     </li>
 </g:each>
 </g:if>
-<g:if test="${null!=highlight}">
+<g:if test="${workflow.commands && null!=highlight}">
     <g:javascript>
         fireWhenReady('wfivis_${enc(js:highlight)}',function(){Effect.Appear('wfivis_${enc(js:highlight)}', { duration: 0.5 });});
     </g:javascript>
