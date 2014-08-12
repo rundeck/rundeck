@@ -754,11 +754,11 @@ class UtilityTagLib{
     def enc={attrs,body->
         if(attrs.html){
             out << attrs.html.toString().encodeAsHTML()
-        }else if(attrs.attr){
+        }else if(null!=attrs.attr){
             out << attrs.attr.toString().encodeAsHTMLAttribute()
         }else if(attrs.xml){
             out << attrs.xml.toString().encodeAsXMLContent()
-        }else if(attrs.js){
+        }else if(null !=attrs.js){
             out << attrs.js.toString().encodeAsJavaScript()
         }else if(attrs.json!=null){
             out << attrs.json.encodeAsJSON().replaceAll('<', '\\\\u003c') //nb: replace < to allow embedding in page
