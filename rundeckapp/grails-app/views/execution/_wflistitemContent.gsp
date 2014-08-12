@@ -99,7 +99,8 @@
                         _wfiedit("${enc(js: i)}","${enc(js:stepNum)}",${isErrorHandler?true:false});
                     }
                 });
-            }).select('span.wfitem_add_errorhandler').each(function(e){
+            });
+            $('pfctrls_${enc(js: i)}').select('span.wfitem_add_errorhandler').each(function(e){
                 Event.observe(e,'click',function(evt){
                     var f=$('workflowContent').down('form');
                     if(!f || 0==f.length){
