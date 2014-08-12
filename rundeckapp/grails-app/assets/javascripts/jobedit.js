@@ -192,7 +192,7 @@ function _wfiaddnew(type,nodestep) {
     if (num % 2 == 1) {
         parentli.addClassName('alternate');
     }
-    parentli.setAttribute('wfitemNum', num);
+    parentli.setAttribute('data-wfitemnum', num);
     newitemElem = new Element('span');
     newitemElem.setAttribute('id', 'wfli_' + num);
     parentli.appendChild(newitemElem);
@@ -203,7 +203,7 @@ function _wfiaddnew(type,nodestep) {
     var ehUlElement = new Element('ul');
     ehUlElement.addClassName('wfhandleritem');
     ehUlElement.style.display='none';
-    ehUlElement.setAttribute('wfitemNum',num);
+    ehUlElement.setAttribute('data-wfitemnum',num);
     var ehLiElement = new Element('li');
     ehLiElement.setAttribute('id','wfli_eh_'+num);
     ehUlElement.appendChild(ehLiElement);
@@ -280,7 +280,7 @@ function _wfisavenew(formelem) {
                 $(litem).highlight();
                 $('wfnewbutton').show();
                 _showWFItemControls();
-                $('workflowDropfinal').setAttribute('wfitemNum', parseInt(litem.getAttribute('wfitemNum')) + 1);
+                $('workflowDropfinal').setAttribute('data-wfitemnum', parseInt(litem.getAttribute('data-wfitemnum')) + 1);
                 newitemElem = null;
             }
         }
@@ -403,7 +403,7 @@ function _wfiaddNewErrorHandler(elem,type,num,nodestep){
         //find num by looking for enclosing ul and getting wfitemNum attribute
         var d=$(elem).up('ul.wfhandleritem',0);
         if(d){
-            num= d.getAttribute('wfitemNum');
+            num= d.getAttribute('data-wfitemnum');
         }
     }
     var key='eh_'+num;
@@ -544,8 +544,8 @@ function _updateWFUndoRedo() {
 
 ///Drag drop
 function moveDragItem(dragged, droparea) {
-    var num = $(dragged).getAttribute('wfitemNum');
-    var to = $(droparea).getAttribute('wfitemNum');
+    var num = $(dragged).getAttribute('data-wfitemnum');
+    var to = $(droparea).getAttribute('data-wfitemnum');
 
     if (to > num) {
         to = to - 1;

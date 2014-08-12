@@ -106,7 +106,7 @@
     <ol id="wfilist_${rkey}" class="flowlist">
         <g:render template="/execution/wflistContent" model="${[workflow:workflow,edit:edit,noimgs:noimgs,project:project]}"/>
     </ol>
-    <div id="workflowDropfinal" wfitemNum="${workflow?.commands? workflow.commands.size():0}" style="display:none"></div>
+    <div id="workflowDropfinal" data-wfitemnum="${workflow?.commands? workflow.commands.size():0}" style="display:none"></div>
     <div class="empty note ${error?'error':''}" id="wfempty" style="${wdgt.styleVisible(unless:workflow && workflow?.commands)}">
         No Workflow ${g.message(code:'Workflow.step.label')}s
     </div>

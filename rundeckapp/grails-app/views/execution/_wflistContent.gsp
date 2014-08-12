@@ -23,7 +23,7 @@
  --%>
 <g:if test="${workflow && workflow?.commands}">
 <g:each in="${workflow.commands}" var="item" status="i">
-    <li class="${i%2==1?'alternate':''}"  wfitemNum="${i}">
+    <li class="${i%2==1?'alternate':''}" data-wfitemnum="${i}">
         <div id="wfli_${i}">
         <g:render template="/execution/wflistitemContent" model="${[i:i,stepNum: i,item:item,workflow:workflow,edit:edit,highlight:highlight,noimgs:noimgs, project: project]}"/>
         </div>
@@ -44,7 +44,7 @@
             </ul>
         </g:if>
         <g:else>
-            <ul class="wfhandleritem" style="display: none" wfitemNum="${enc(attr:i)}">
+            <ul class="wfhandleritem" style="display: none" data-wfitemnum="${enc(attr:i)}">
 
                 <li id="wfli_eh_${enc(attr:i)}"></li>
 
