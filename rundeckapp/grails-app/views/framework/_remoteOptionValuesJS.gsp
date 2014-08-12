@@ -352,6 +352,41 @@ var RemoteOptionControl = Class.create({
         }
         this.observers={};
         _unloadRemoteOptionControl(this.formId);
+    },
+    /**
+    * load remote option dataset from json data
+    * @param data
+     */
+    loadData:function(data){
+        for(var opt in data){
+            var params=data[opt];
+            if(params['optionDependencies']){
+                this.addOptionDependencies(opt,params['optionDependencies']);
+            }
+            if(params['optionDeps']){
+                this.addOptionDeps(opt,params['optionDeps']);
+            }
+            if(params['optionAutoReload']){
+                this.setOptionAutoReload(opt,params['optionAutoReload']);
+            }
+            if(params['hasUrl']){
+                this.addOption(opt, params['holder'], params['scheduledExecutionId'], opt, params['usePrefix'], params['selectedOptsMap'], params['fieldNameKey'], true);
+                if(params['loadonstart']){
+                    this.loadonstart[opt]=true;
+                }
+                if(params['optionAutoReload']){
+                    this.setOptionAutoReload(opt, true);
+                }
+                if(params['fieldMultiId']){
+                    this.setFieldMultiId(opt,params['fieldMultiId']);
+                }
+                if(params['fieldId']){
+                    this.setFieldId(opt,params['fieldId']);
+                }
+            }else{
+                this.addLocalOption(opt);
+            }
+        }
     }
 });
         /**

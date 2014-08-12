@@ -4,7 +4,7 @@ used by _editOptions.gsp template
 --%>
 <g:set var="rkey" value="${g.rkey()}"/>
 <g:if test="${ optionSelections}">
-    <g:set var="usePrefix" value="${paramsPrefix?paramsPrefix:''}"/>
+    <g:set var="usePrefix" value="${paramsPrefix?:''}"/>
     <g:set var="showDTFormat" value="${false}"/>
     <g:hiddenField name="${usePrefix+'argString'}" value=""/>
     <%
@@ -87,57 +87,31 @@ used by _editOptions.gsp template
         </g:each>
     </div>
         <%--
-        Javascript for configuring remote option cascading/dependencies
+        data for configuring remote option cascading/dependencies
         --%>
+    <g:each var="optName" in="${optionordering ?: optsmap.keySet().sort()}">
+
+        <g:set var="optionSelect" value="${optsmap[optName].selopt}"/>
+        <g:set var="fieldName" value="${usePrefix + 'option.' + optName}"/>
+        <g:set var="fieldNamekey" value="${rkey + '_' + optName + '_label'}"/>
+        <g:set var="holder" value="${rkey + '_' + optName + '_hold'}"/>
+        <g:set var="fieldhiddenid" value="${rkey + '_' + optName + '_h'}"/>
+        %{--
+        supplement the data about options from the server with dom details
+        --}%
+        <g:set var="newOptionData" value="${[holder:holder,usePrefix:usePrefix,fieldNameKey: fieldNamekey,(optionSelect.multivalued?'fieldMultiId':'fieldId'):fieldhiddenid]}"/>
+        <%
+            remoteOptionData[optName].putAll( newOptionData)
+        %>
+    </g:each>
+        <g:embedJSON id="remoteOptionData" data="${remoteOptionData}"/>
         <g:javascript>
-            fireWhenReady('_commandOptions', function(){
+            jQuery( function(){
                 var remoteOptions = _remoteOptionControl('_commandOptions');
                 <g:if test="${optionsDependenciesCyclic}">
                     remoteOptions.cyclic=true;
                 </g:if>
-        <g:each var="optName" in="${optionordering ?: optsmap.keySet().sort()}">
-            <g:set var="optionSelect" value="${optsmap[optName].selopt}"/>
-            <g:set var="fieldName" value="${usePrefix + 'option.' + optName}"/>
-            <g:set var="fieldNamekey" value="${rkey + '_' + optName + '_label'}"/>
-            <g:set var="holder" value="${rkey + '_' + optName + '_hold'}"/>
-            <g:set var="fieldhiddenid" value="${rkey + '_' + optName + '_h'}"/>
-            <g:set var="optionDepsMet"
-                   value="${!optiondependencies[optName] || selectedoptsmap && optiondependencies[optName].every {selectedoptsmap[it]}}"/>
-            <g:if test="${optiondependencies[optName]}">
-                remoteOptions.addOptionDependencies("${enc(js:optName)}", ${enc(json:optiondependencies[optName])});
-            </g:if>
-            <g:if test="${dependentoptions[optName]}">
-                <%-- If option has dependents, register them to refresh when this option value changes --%>
-                remoteOptions.addOptionDeps("${enc(js:optName)}", ${enc(json:dependentoptions[optName])});
-
-
-                <g:if test="${optionSelect.enforced || selectedoptsmap && selectedoptsmap[optName]}">
-                <%-- Will be a drop down list, so trigger change automatically. --%>
-                    remoteOptions.setOptionAutoReload("${enc(js:optName)}",true);
-                </g:if>
-            </g:if>
-            <g:if test="${optionSelect.realValuesUrl != null}">
-                <%-- If option has a remote URL, register data used for ajax reload --%>
-                remoteOptions.addOption("${enc(js:optName)}","${enc(js:holder)}",'${enc(js:scheduledExecutionId)}','${enc(js:optName)}','${enc(js:usePrefix)}','${selectedoptsmap ? enc(js:selectedoptsmap[optName]) : ''}','${enc(js:fieldNamekey)}',true);
-
-                <g:if test="${!optiondependencies[optName] || optionsDependenciesCyclic}">
-                    remoteOptions.loadonstart["${enc(js:optName)}"]=true;
-                </g:if>
-                <g:else>
-                    remoteOptions.setOptionAutoReload("${enc(js:optName)}",true);
-                </g:else>
-                <g:if test="${optionSelect.multivalued}">
-                    remoteOptions.setFieldMultiId('${enc(js:optName)}','${enc(js:fieldhiddenid)}');
-                </g:if>
-                <g:else>
-                    remoteOptions.setFieldId('${enc(js:optName)}','${enc(js:fieldhiddenid)}');
-                </g:else>
-            </g:if>
-            <g:else>
-                    remoteOptions.addLocalOption("${enc(js:optName)}");
-            </g:else>
-        </g:each>
-        <%-- register observers for field value changes --%>
+                remoteOptions.loadData(loadJsonData('remoteOptionData'));
                 remoteOptions.observeChanges();
                 if(typeof(_registerJobExecUnloadHandler)=='function'){
                     _registerJobExecUnloadHandler(remoteOptions.unload.bind(remoteOptions));

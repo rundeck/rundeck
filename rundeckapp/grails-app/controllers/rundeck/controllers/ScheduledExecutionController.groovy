@@ -1629,7 +1629,9 @@ class ScheduledExecutionController  extends ControllerBase{
         //map of option name to list of option names it depends on
         def optdeps=[:]
         boolean explicitOrdering=false
+        def optionSelections=[:]
         scheduledExecution.options.each { Option opt->
+            optionSelections[opt.name]=opt
             if(opt.sortIndex!=null){
                 explicitOrdering=true
             }
@@ -1668,6 +1670,32 @@ class ScheduledExecutionController  extends ControllerBase{
         if (!explicitOrdering && toporesult.result) {
             model.optionordering = toporesult.result
         }
+
+
+        //prepare dataset used by option view
+        //includes dependency information, auto reload and for remote options, selected values
+        def remoteOptionData = [:]
+        (model.optionordering).each{optName->
+            Option opt = optionSelections[optName]
+            def optData = [
+                    'optionDependencies': model.optiondependencies[optName],
+                    'optionDeps': model.dependentoptions[optName],
+                    optionAutoReload: model.dependentoptions[optName] && opt.enforced || model.selectedoptsmap && model.selectedoptsmap[optName]
+            ];
+            if (opt.realValuesUrl != null) {
+                optData << [
+                        'hasUrl': true,
+                        'scheduledExecutionId': scheduledExecution.extid,
+                        'selectedOptsMap': model.selectedoptsmap ? model.selectedoptsmap[optName] : '',
+                        'loadonstart': !model.optiondependencies[optName] || model.optionsDependenciesCyclic,
+                        'optionAutoReload': !(!model.optiondependencies[optName] || model.optionsDependenciesCyclic)
+                ]
+            } else {
+                optData['localOption'] = true;
+            }
+            remoteOptionData[optName] = optData
+        }
+        model.remoteOptionData=remoteOptionData
 
         return model
     }
