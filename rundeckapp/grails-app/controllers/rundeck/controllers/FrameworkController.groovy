@@ -816,7 +816,7 @@ class FrameworkController extends ControllerBase {
         def project=params.project?:params.newproject
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        def error=null
+        def errors=[]
         def configs = []
         if (!project) {
             return renderErrorView("Project parameter is required")
@@ -846,32 +846,41 @@ class FrameworkController extends ControllerBase {
             if (params.defaultNodeExec) {
                 def ndx=params.defaultNodeExec
                 (defaultNodeExec, nodeexec)=parseServiceConfigInput(params,"nodeexec",ndx)
-                final validation = frameworkService.validateServiceConfig(defaultNodeExec, "nodeexec.${ndx}.config.", params, framework.getNodeExecutorService())
-                if(!validation.valid){
-                    nodeexecreport=validation.report
-                    error = validation.error ?: "Node Executor configuration was invalid"
+                if (!(defaultNodeExec =~ /^[-_a-zA-Z0-9+][-\._a-zA-Z0-9+]*\u0024/)) {
+                    errors << "Default Node Executor provider name is invalid"
                 }else{
-                    try {
-                        addProjectServiceProperties(params, projProps, ndx, "nodeexec", NodeExecutorService.SERVICE_DEFAULT_PROVIDER_PROPERTY, framework.getNodeExecutorService(), removePrefixes)
-                    } catch (ExecutionServiceException e) {
-                        log.error(e.message)
-                        error = e.getMessage()
+                    final validation = frameworkService.validateServiceConfig(defaultNodeExec, "nodeexec.${ndx}.config.", params, framework.getNodeExecutorService())
+                    if(!validation.valid){
+                        nodeexecreport=validation.report
+                        errors << validation.error ? "Node Executor configuration was invalid: "+ validation.error : "Node Executor configuration was invalid"
+                    }else{
+                        try {
+                            addProjectServiceProperties(params, projProps, ndx, "nodeexec", NodeExecutorService.SERVICE_DEFAULT_PROVIDER_PROPERTY, framework.getNodeExecutorService(), removePrefixes)
+                        } catch (ExecutionServiceException e) {
+                            log.error(e.message)
+                            errors << e.getMessage()
+                        }
                     }
                 }
             }
             if (params.defaultFileCopy) {
                 def ndx=params.defaultFileCopy
                 (defaultFileCopy, fcopy) = parseServiceConfigInput(params, "fcopy", ndx)
-                final validation = frameworkService.validateServiceConfig(defaultFileCopy, "fcopy.${ndx}.config.", params, framework.getFileCopierService())
-                if(!validation.valid){
-                    fcopyreport = validation.report
-                    error=validation.error?:"File copier configuration was invalid"
+                if (!(defaultFileCopy =~ /^[-_a-zA-Z0-9+][-\._a-zA-Z0-9+]*\u0024/)) {
+                    errors << "Default File copier provider name is invalid"
                 }else{
-                    try {
-                        addProjectServiceProperties(params, projProps, ndx, "fcopy", FileCopierService.SERVICE_DEFAULT_PROVIDER_PROPERTY,framework.getFileCopierService(), removePrefixes)
-                    } catch (ExecutionServiceException e) {
-                        log.error(e.message)
-                        error = e.getMessage()
+                    final validation = frameworkService.validateServiceConfig(defaultFileCopy, "fcopy.${ndx}.config.", params, framework.getFileCopierService())
+                    if(!validation.valid){
+                        fcopyreport = validation.report
+                        errors <<validation.error? "File copier configuration was invalid: "+ validation.error : "File " +
+                                "copier configuration was invalid"
+                    }else{
+                        try {
+                            addProjectServiceProperties(params, projProps, ndx, "fcopy", FileCopierService.SERVICE_DEFAULT_PROVIDER_PROPERTY,framework.getFileCopierService(), removePrefixes)
+                        } catch (ExecutionServiceException e) {
+                            log.error(e.message)
+                            errors << e.getMessage()
+                        }
                     }
                 }
             }
@@ -889,14 +898,20 @@ class FrameworkController extends ControllerBase {
                     return
                 }
                 final service = framework.getResourceModelSourceService()
-                final provider
-                try {
-                    provider= service.providerOfType(type)
-                } catch (com.dtolabs.rundeck.core.execution.service.ExecutionServiceException e) {
-                }
+                def provider
                 def description
-                if (provider && provider instanceof Describable) {
-                    description=provider.description
+                if (!(type =~ /^[-_a-zA-Z0-9+][-\._a-zA-Z0-9+]*\u0024/)) {
+                    errors << "Invalid Resource Model Source definition for source #${ndx}"
+                }else{
+                    try {
+                        provider= service.providerOfType(type)
+                    } catch (com.dtolabs.rundeck.core.execution.service.ExecutionServiceException e) {
+                        errors << "Resource Model Source was not found: ${type}"
+                    }
+
+                    if (provider && provider instanceof Describable) {
+                        description=provider.description
+                    }
                 }
                 projProps[sourceConfigPrefix + '.' + count + '.type'] = type
                 def mapprops = frameworkService.parseResourceModelConfigInput(description, prefixKey + '.' + ndx + '.' + 'config.', params)
@@ -912,20 +927,20 @@ class FrameworkController extends ControllerBase {
             }
             removePrefixes<< FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX
 
-            if(!error){
+            if(!errors){
                 def result = frameworkService.updateFrameworkProjectConfig(project,projProps,removePrefixes)
                 if(!result.success){
-                    error=result.error
+                    errors <<result.error
                 }
             }
-            if(!error){
+            if(!errors){
                 def result=userService.storeFilterPref(session.user, [project: fproject.name])
                 flash.message="Project ${project} saved"
                 return redirect(controller:'menu',action:'admin',params:[project:fproject.name])
             }
         }
-        if(error){
-            request.error=error
+        if(errors){
+            request.errors=errors
         }
         final descriptions = framework.getResourceModelSourceService().listDescriptions()
         final nodeexecdescriptions = framework.getNodeExecutorService().listDescriptions()
