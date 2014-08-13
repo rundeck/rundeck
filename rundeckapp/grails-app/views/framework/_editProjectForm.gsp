@@ -39,8 +39,7 @@
             </g:if>
         </div>
     </g:if>
-
-
+    <g:render template="/common/messages" model="[notDismissable:true]"/>
 </div>
 <g:if test="${resourceModelConfigDescriptions}">
     <div class="list-group-item">

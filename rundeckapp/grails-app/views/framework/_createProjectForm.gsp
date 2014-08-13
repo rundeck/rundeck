@@ -40,9 +40,6 @@
         margin-top: 5px;
     }
 
-    div.buttons {
-        text-align: right;
-    }
     </style>
 </head>
 

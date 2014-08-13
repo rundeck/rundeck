@@ -19,6 +19,13 @@
         <g:if test="${request.errors instanceof org.springframework.validation.Errors}">
             <g:renderErrors bean="${request.errors}" as="list"/>
         </g:if>
+        <g:if test="${request.errors instanceof java.util.Collection}">
+            <ul>
+                <g:each in="${request.errors}" var="err">
+                    <li><g:enc>${err}</g:enc></li>
+                </g:each>
+            </ul>
+        </g:if>
         <g:if test="${flash.errorCode ?: request.errorCode}">
             <g:message code="${flash.errorCode ?: request.errorCode}"
                        args="${flash.errorArgs ?: request.errorArgs}"/>
