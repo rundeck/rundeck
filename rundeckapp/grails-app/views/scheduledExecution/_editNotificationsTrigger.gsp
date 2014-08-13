@@ -89,7 +89,7 @@
                 </span>
                 <span id="notifholderPlugin${enc(attr:pkey)}" style="${wdgt.styleVisible(if: definedNotif ? true : false)}"
                       class="notificationplugin">
-                    <g:set var="prefix" value="<g:enc>${'notifyPlugin.'+trigger+'.' + pluginName + '.config.'}</g:enc>"/>
+                    <g:set var="prefix" value="${'notifyPlugin.'+trigger+'.' + pluginName + '.config.'}"/>
                     <g:if test="${pluginDescription instanceof Description}">
                         <table class="simpleForm">
                             <g:each in="${pluginDescription?.properties}" var="prop">
