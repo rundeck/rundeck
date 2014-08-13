@@ -65,23 +65,6 @@
 <g:if test="${adminauth}">
 
     <div class="row">
-    <div class="col-sm-12">
-    <div class="alert alert-warning" style="${wdgt.styleVisible(if: (flash.error || request.error || request.errors))}"
-         id="editerror">
-        <g:enc>${flash.error}${request.error}</g:enc>
-        <g:if test="${request.errors}">
-            <ul>
-                <g:each in="${request.errors}" var="err">
-                    <g:if test="${err}">
-                        <li><g:enc>${err}</g:enc></li>
-                    </g:if>
-                </g:each>
-            </ul>
-        </g:if>
-    </div>
-    </div>
-    </div>
-    <div class="row">
         <g:form action="saveProject" method="post" onsubmit="return configControl.checkForm();" class="form">
         <div class="col-sm-10 col-sm-offset-1">
             <div class="panel panel-primary"  id="createform">
