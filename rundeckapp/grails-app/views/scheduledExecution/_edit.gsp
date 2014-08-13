@@ -137,6 +137,22 @@ function getCurSEID(){
         function _afterMatchNodes(){
             jQuery('.btn.refresh_nodes').button('reset');
         }
+        function setupUndoRedoControls(){
+            jQuery('.undoredocontrols').on('click','.act_undo',function(e){
+                _doUndoAction(jQuery(e.target).data('undo-key'));
+            }).on('click','.act_redo',function(e){
+                _doRedoAction(jQuery(e.target).data('undo-key'));
+            }).on('click','.act_revert_popover',function(e){
+                _initPopoverContentRef("#undoredo"+ jQuery(e.target).data('popover-key'));
+                jQuery(e.target).popover('show');
+            });
+            jQuery('body').on('click','.act_revert_cancel',function(e){
+                jQuery('#revertall_'+ jQuery(e.target).data('popover-key')).popover('hide');
+            }).on('click','.act_revert_confirm',function(e){
+                jQuery('#revertall_'+jQuery(e.target).data('popover-key')).popover('destroy');
+                _doRevertAction(jQuery(e.target).data('undo-key'));
+            });
+        }
         function pageinit(){
             _enableDragdrop();
 
@@ -163,6 +179,7 @@ function getCurSEID(){
                     _formUpdateMatchedNodes();
                 }
             });
+            setupUndoRedoControls();
         }
 
         jQuery(pageinit);

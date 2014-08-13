@@ -99,7 +99,7 @@
 </g:unless>
 <div class="pflowlist ${edit?'edit':''} rounded ${isAdhoc?'adhoc':''}" style="">
     <g:if test="${edit}">
-        <div id="wfundoredo" >
+        <div id="wfundoredo" class="undoredocontrols">
             <g:render template="/common/undoRedoControls"/>
         </div>
     </g:if>

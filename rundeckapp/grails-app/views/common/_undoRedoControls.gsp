@@ -24,7 +24,7 @@
 <g:set var="rkey" value="${g.rkey()}"/>
 <div style="margin-bottom:10px; " id="undoredo${rkey}">
     <g:if test="${undo}">
-        <span class="btn btn-xs btn-default " onclick="_doUndoAction('${enc(js:key)}');">
+        <span class="btn btn-xs btn-default act_undo"  data-undo-key="${enc(attr:key)}">
             <i class="glyphicon glyphicon-step-backward"></i>
             Undo
         </span>
@@ -33,7 +33,7 @@
         <span class="btn btn-xs btn-default disabled "><i class="glyphicon glyphicon-step-backward"></i> Undo</span>
     </g:else>
     <g:if test="${redo}">
-        <span class="btn btn-xs btn-default " onclick="_doRedoAction('${enc(js:key)}');">
+        <span class="btn btn-xs btn-default act_redo" data-undo-key="${enc(attr: key)}">
             Redo
             <i class="glyphicon glyphicon-step-forward"></i>
         </span>
@@ -42,11 +42,13 @@
         <span class="btn btn-xs btn-default disabled ">Redo <i class="glyphicon glyphicon-step-forward"></i></span>
     </g:else>
     <g:if test="${undo || redo}">
-        <span class="btn btn-xs btn-default "
+        %{--popover trigger is initialized on click, defined in jquery init from scheduledExecution/_edit.gsp --}%
+        <span class="btn btn-xs btn-default act_revert_popover"
               data-toggle="popover"
               data-popover-content-ref="#revert_${enc(attr:rkey)}"
               data-placement="bottom"
               data-trigger="click"
+              data-popover-key="${enc(attr:rkey)}"
               id="revertall_${enc(attr:rkey)}"
         >
             <i class="glyphicon glyphicon-fast-backward"></i>
@@ -55,11 +57,8 @@
         <div id="revert_${enc(attr:rkey)}" class="confirmMessage popout confirmbox" style="display:none">
             <div class="text-warning">Really revert <g:enc>${revertConfirm?:'all changes'}</g:enc>?</div>
 
-            <span class="btn btn-xs btn-default " onclick="jQuery('#revertall_${rkey}').popover('hide');">No</span>
-            <span class="btn btn-xs btn-warning " onclick="jQuery('#revertall_${rkey}').popover('destroy');_doRevertAction('${enc(js:key)}');">Yes</span>
+            <span class="btn btn-xs btn-default act_revert_cancel" data-popover-key="${enc(attr: rkey)}" data-undo-key="${enc(attr: key)}">No</span>
+            <span class="btn btn-xs btn-warning act_revert_confirm" data-popover-key="${enc(attr: rkey)}" data-undo-key="${enc(attr: key)}">Yes</span>
         </div>
-        <g:javascript>
-    _initPopoverContentRef("#undoredo${enc(js:rkey)}");
-        </g:javascript>
     </g:if>
 </div>
