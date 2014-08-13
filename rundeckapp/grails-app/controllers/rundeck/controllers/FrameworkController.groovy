@@ -3,6 +3,7 @@ package rundeck.controllers
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
+import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
@@ -609,32 +610,44 @@ class FrameworkController extends ControllerBase {
         if (params.defaultNodeExec) {
             def ndx = params.defaultNodeExec
             (defaultNodeExec, nodeexec) = parseServiceConfigInput(params, "nodeexec", ndx)
-            final validation = frameworkService.validateServiceConfig(defaultNodeExec, "nodeexec.${ndx}.config.", params, framework.getNodeExecutorService())
-            if (!validation.valid) {
-                nodeexecreport = validation.report
-                errors << (validation.error ?: "Default Node Executor configuration was invalid")
-            } else {
-                try {
-                    addProjectServiceProperties(params, projProps, ndx, "nodeexec", NodeExecutorService.SERVICE_DEFAULT_PROVIDER_PROPERTY, framework.getNodeExecutorService())
-                } catch (ExecutionServiceException e) {
-                    log.error(e.message)
-                    errors << e.getMessage()
+            if (!(defaultNodeExec =~ /^[-_a-zA-Z0-9+][-\._a-zA-Z0-9+]*\u0024/)) {
+                errors << "Default Node Executor provider name is invalid"
+                defaultNodeExec=null
+                nodeexec=null
+            }else{
+                final validation = frameworkService.validateServiceConfig(defaultNodeExec, "nodeexec.${ndx}.config.", params, framework.getNodeExecutorService())
+                if (!validation.valid) {
+                    nodeexecreport = validation.report
+                    errors << (validation.error ? "Default Node Executor configuration was invalid: "+ validation.error : "Default Node Executor configuration was invalid")
+                } else {
+                    try {
+                        addProjectServiceProperties(params, projProps, ndx, "nodeexec", NodeExecutorService.SERVICE_DEFAULT_PROVIDER_PROPERTY, framework.getNodeExecutorService())
+                    } catch (ExecutionServiceException e) {
+                        log.error(e.message)
+                        errors << e.getMessage()
+                    }
                 }
             }
         }
         if (params.defaultFileCopy) {
             def ndx = params.defaultFileCopy
             (defaultFileCopy, fcopy) = parseServiceConfigInput(params, "fcopy", ndx)
-            final validation = frameworkService.validateServiceConfig(defaultFileCopy, "fcopy.${ndx}.config.", params, framework.getFileCopierService())
-            if (!validation.valid) {
-                fcopyreport = validation.report
-                errors << (validation.error ?: "Default File copier configuration was invalid")
-            } else {
-                try {
-                    addProjectServiceProperties(params, projProps, ndx, "fcopy", FileCopierService.SERVICE_DEFAULT_PROVIDER_PROPERTY, framework.getFileCopierService())
-                } catch (ExecutionServiceException e) {
-                    log.error(e.message)
-                    errors << e.getMessage()
+            if (!(defaultFileCopy =~ /^[-_a-zA-Z0-9+][-\._a-zA-Z0-9+]*\u0024/)) {
+                errors << "Default File copier provider name is invalid"
+                defaultFileCopy=null
+                fcopy=null
+            }else{
+                final validation = frameworkService.validateServiceConfig(defaultFileCopy, "fcopy.${ndx}.config.", params, framework.getFileCopierService())
+                if (!validation.valid) {
+                    fcopyreport = validation.report
+                    errors << (validation.error ? "Default File copier configuration was invalid: "+ validation.error : "Default File copier configuration was invalid")
+                } else {
+                    try {
+                        addProjectServiceProperties(params, projProps, ndx, "fcopy", FileCopierService.SERVICE_DEFAULT_PROVIDER_PROPERTY, framework.getFileCopierService())
+                    } catch (ExecutionServiceException e) {
+                        log.error(e.message)
+                        errors << e.getMessage()
+                    }
                 }
             }
         }
@@ -651,10 +664,18 @@ class FrameworkController extends ControllerBase {
                 log.warn("missing type def for prefix: " + prefixKey + '.' + ndx);
                 return
             }
+            if(!(type =~ /^[-_a-zA-Z0-9+][-\._a-zA-Z0-9+]*\u0024/)){
+                errors << "Invalid Resource Model Source definition for source #${ndx}"
+                return
+            }
             final service = framework.getResourceModelSourceService()
-            final provider = service.providerOfType(type)
-            if (!(provider instanceof Describable)) {
-                errors << "Invalid provider type: ${params.type}, not available for configuration"
+            def provider=null
+            try {
+                provider = service.providerOfType(type)
+            } catch (MissingProviderException e) {
+            }
+            if (null==provider || !(provider instanceof Describable)) {
+                errors << "Resource Model Source provider was not found: ${type}"
             } else {
                 projProps[sourceConfigPrefix + '.' + count + '.type'] = type
                 def mapprops = frameworkService.parseResourceModelConfigInput(provider.description, prefixKey + '.' + ndx + '.' + 'config.', params)
@@ -691,7 +712,7 @@ class FrameworkController extends ControllerBase {
         }
         if (errors) {
 //            request.error=errors.join("\n")
-//            request.errors = errors
+            request.errors = errors
         }
         //get list of node executor, and file copier services
         final nodeexecdescriptions = framework.getNodeExecutorService().listDescriptions()
@@ -707,7 +728,6 @@ class FrameworkController extends ControllerBase {
                 defaultFileCopy: defaultFileCopy,
                 nodeExecDescriptions: nodeexecdescriptions,
                 fileCopyDescriptions: filecopydescs,
-
                 nodeexecconfig: nodeexec,
                 fcopyconfig: fcopy,
                 nodeexecreport: nodeexecreport,
