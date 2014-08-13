@@ -25,10 +25,13 @@
     <g:set var="rkey" value="${g.rkey()}" />
 </g:if>
 <g:if test="${!filterName}">
-    <span class="textbtn textbtn-success floatr" style="${wdgt.styleVisible(unless: params.saveFilter)}" onclick="['${rkey}fsave','${rkey}fsavebtn'].each(Element.toggle);" id="${enc(attr:rkey)}fsavebtn" title="Click to save this filter with a name">
-        save this filter&hellip;
+    <span class="btn btn-xs pull-right btn-success collapse in" style="${wdgt.styleVisible(unless: params.saveFilter)}"
+        data-toggle="collapse"
+        data-target="#${enc(attr: rkey)}fsave,#${enc(attr: rkey)}fsavebtn"
+          id="${enc(attr:rkey)}fsavebtn" title="Click to save this filter with a name">
+        <i class="glyphicon glyphicon-plus"></i> save this filter&hellip;
     </span>
-    <div id="${enc(attr:rkey)}fsave" style="${params.saveFilter ? '' : 'display:none;'} " class="filterdef clear">
+    <div id="${enc(attr:rkey)}fsave" class="filterdef clear collapse ${params.saveFilter ? 'in' : ''}">
         <p class="prompt">Save Filter</p>
         <div class="form-group">
             <label for="existsFilterName">Filter:</label>
@@ -40,29 +43,37 @@
             <label for="newFilterName">Name:</label>
             <g:textField name="newFilterName" class="form-control input-sm"/>
         </div>
-
-        <input type="button" onclick="['${rkey}fsave','${rkey}fsavebtn'].each(Element.toggle); return false;" value="Cancel" class="btn btn-default btn-sm"/>
+<div>
+        <input type="button"
+               data-toggle="collapse"
+               data-target="#${enc(attr: rkey)}fsave,#${enc(attr: rkey)}fsavebtn"
+               value="Cancel" class="btn btn-default btn-sm"/>
 
         <g:if test="${storeActionSubmit}">
             <g:actionSubmit value="Save Filter" action="${storeActionSubmit}" class="btn btn-primary btn-sm" />
         </g:if>
         <g:elseif test="${storeActionSubmitRemote}">
             <g:submitToRemote value="Save Filter" url="${storeActionSubmitRemote}" update="${update}" class="btn btn-primary btn-sm"/>
-        </g:elseif>
+        </g:elseif></div>
     </div>
 </g:if>
 <g:if test="${filterName}">
     <div class="filterdef saved clear">
         <span class="prompt"><g:enc>${filterName}</g:enc></span>
-        <span class="textbtn textbtn-danger pull-right" onclick="['${rkey}fdel','${rkey}fdelbtn'].each(Element.toggle);" id="${enc(attr:rkey)}fdelbtn" title="Click to delete this saved filter">
+        <span class="btn btn-xs btn-danger pull-right collapse in"
+              data-toggle="collapse"
+              data-target="#${enc(attr: rkey)}fdel,#${enc(attr: rkey)}fdelbtn"
+              id="${enc(attr:rkey)}fdelbtn" title="Click to delete this saved filter">
             <b class="glyphicon glyphicon-remove"></b>
             delete&hellip;
         </span>
-        <div id="${enc(attr:rkey)}fdel" style="display:none">
+        <div id="${enc(attr:rkey)}fdel" class="collapse">
             <g:hiddenField name="delFilterName" value="${filterName}"/>
             <span class="confirmMessage">Are you sure you want to delete this filter?</span>
-            <input type="button" onclick="['${rkey}fdel','${rkey}fdelbtn'].each(Element.toggle);
-            return false;" value="No" class="btn btn-default btn-sm"/>
+            <input type="button"
+                   data-toggle="collapse"
+                   data-target="#${enc(attr: rkey)}fdel,#${enc(attr: rkey)}fdelbtn"
+                   value="No" class="btn btn-default btn-sm"/>
             <g:if test="${deleteActionSubmit}">
                 <g:actionSubmit  action="${deleteActionSubmit}" value="Yes" class="btn btn-danger btn-sm"/>
             </g:if>
