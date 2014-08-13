@@ -48,10 +48,12 @@
             </li>
         </g:if>
         <g:else>
-            <li id="projectSelect" class="dropdown">
-                <span class="action textbtn button" onclick="loadProjectSelect();"
-                      title="Select project..."><g:enc>${ params.project ?: request.project ?: 'Select project&hellip;'}</g:enc>
-                </span>
+            <li id="projectSelect" class="dropdown disabled">
+                <a data-toggle="dropdown" href="#" class="disabled">
+                    <i class="glyphicon glyphicon-tasks"></i>
+                    <g:enc>${ params.project ?: request.project}</g:enc>
+                    <i class="caret"></i>
+                </a>
             </li>
         </g:else>
     </g:if>
@@ -107,8 +109,10 @@
 
     <g:unless test="${session.frameworkProjects}">
         <g:javascript>
-            jQuery(window).load(function(){
-                jQuery('#projectSelect').load('${enc(js:createLink(controller: 'framework', action: 'projectSelect', params: selectParams))}');
+            jQuery(function(){
+                jQuery('#projectSelect').load('${enc(js:createLink(controller: 'framework', action: 'projectSelect', params: selectParams))}',{},function(x,r){
+                    jQuery('#projectSelect').removeClass('disabled');
+                });
             });
         </g:javascript>
     </g:unless>
