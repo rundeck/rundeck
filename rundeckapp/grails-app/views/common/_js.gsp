@@ -253,15 +253,14 @@
             params.nodeExcludePrecedence="true";
         }
 //        $(elem).loading();
-        new Ajax.Updater(elem,appLinks.frameworkNodesFragment,{parameters:params,evalScripts:true,
-         onComplete: function(transport) {
-             $(elem).removeClassName('depress');
-             if (transport.request.success()) {
-                 if(typeof(callback)=='function'){
-                     callback(transport);
-                 }
-             }
-         }});
+          jQuery('#'+elem).load(_genUrl(appLinks.frameworkNodesFragment,params),function(response, status, xhr){
+              jQuery('#'+elem).removeClass('depress');
+              if (status=='success') {
+                  if (typeof(callback) == 'function') {
+                      callback(xhr);
+                  }
+              }
+          });
     }
 
     //set box filterselections

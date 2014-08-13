@@ -44,16 +44,17 @@
         };
         var runupdate;
         function loadNowRunning(){
-            runupdate=new Ajax.PeriodicalUpdater({ success:'nowrunning'},links.nowrunning,{
-                evalScripts:true,
-                parameters:eventsparams,
-                frequency:5,
-                onFailure:function (response) {
-                    showError("AJAX error: Now Running [" + runupdate.url + "]: " + response.status + " "
-                                      + response.statusText);
-                    runupdate.stop();
+            jQuery('#nowrunning').load(_genUrl(links.nowrunning,eventsparams),
+                function(response, status, xhr){
+                    if ( status == "error" ) {
+                        showError("AJAX error: Now Running [" + links.nowrunning + "]: " + xhr.status + " "+ xhr.statusText);
+
+                    }else{
+                        //reschedule
+                        setTimeout(loadNowRunning,5000);
+                    }
                 }
-            });
+            );
         }
         /** START history
          *

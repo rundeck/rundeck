@@ -59,17 +59,18 @@ var HistoryControl = Class.create({
         if(xparams){
             Object.extend(params,xparams);
         }
-        new Ajax.Updater(this.target, appLinks.reportsEventsFragment, {
-            parameters:params,
-            evalScripts:true,
-            onComplete: function(transport) {
+        jQuery('#' + this.target).load(
+            _genUrl(appLinks.reportsEventsFragment, params),
+            function (response, status, xhr) {
                 obj.histLoading = false;
-                if (transport.request.success()) {
+                if (status == "error") {
+
+                }else{
                     Element.show(obj.target);
                     obj.doHistoryHilite(obj.target);
                 }
             }
-        });
+        );
     },
 
     doHistoryHilite:function(param) {
