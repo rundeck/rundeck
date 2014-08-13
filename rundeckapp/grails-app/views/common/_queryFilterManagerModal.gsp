@@ -55,8 +55,8 @@
                 <div class="form-group">
                     <label class="control-label col-sm-2">Name: </label>
                     <div class="col-sm-10">
-                        <span class="form-control-static" data-bind="text: filterName"><g:enc>${filterName}</g:enc></span>
-                        <g:hiddenField name="delFilterName" value="${filterName}" data-bind="value: filterName"/>
+                        <span class="form-control-static obs_selected_filter_name" data-bind="text: filterName"><g:enc>${filterName}</g:enc></span>
+                        <g:hiddenField name="delFilterName" value="${filterName}" data-bind="value: filterName" class="obs_selected_filter_name"/>
                     </div>
                 </div>
                 <g:if test="${ko}">
