@@ -80,7 +80,7 @@
     var _setLoading=function(element,text){
         element=$(element);
         if(null===text || typeof(text)=='undefined'){
-            text="Loading&hellip;";
+            text="Loading…";
         }
         if(element.tagName==='TBODY'){
             var tr = new Element('tr');
