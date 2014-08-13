@@ -673,7 +673,9 @@ class FrameworkService implements ApplicationContextAware {
         } catch (ExecutionServiceException e) {
             result.error = e.message
         }
-        if (!provider || !(provider instanceof Describable)) {
+        if (!provider) {
+            result.error = "Invalid provider type: ${type}, not found"
+        } else if (!(provider instanceof Describable)) {
             result.error = "Invalid provider type: ${type}, not available for configuration"
         } else {
             def validated=validateDescription(provider.description, prefix, params)
