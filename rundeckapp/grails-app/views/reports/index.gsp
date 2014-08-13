@@ -213,6 +213,20 @@
                 var bfilters=data['filterpref'];
                 eventsparams={filterName:bfilters[name]};
                 pageparams={filterName:bfilters[name]};
+                var selected = bfilters[name]?true:false;
+                jQuery('.obs_filter_is_selected').each(function(x,el){
+                    jQuery(this).collapse(selected?'show':'hide');
+                });
+                jQuery('.obs_filter_is_deselected').each(function(x,el){
+                    jQuery(this).collapse(!selected?'show':'hide');
+                });
+                jQuery('.obs_selected_filter_name').each(function(x,el){
+                    if(this.tagName=='INPUT'){
+                        jQuery(this).val(bfilters[name]);
+                    }else{
+                        setText(this,bfilters[name]);
+                    }
+                });
                 loadHistory();
                 //reload page
 //                document.location="${createLink(controller:'reports',action:'index')}"+(bfilters[name]?"?filterName="+bfilters[name]:'');

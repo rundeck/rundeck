@@ -32,13 +32,29 @@
                             src="${resource(dir: 'images', file: 'feed.png')}" width="14px" height="14px"
                             alt=""/> RSS</a>
                 </g:ifServletContextAttribute>
-                <g:render template="/common/queryFilterManager" model="${[rkey:rkey,filterName:filterName,filterset:filterset,update:rkey+'evtsForm',deleteActionSubmit:'deleteFilter', storeActionSubmit:'storeFilter']}"/>
+                <g:render template="/common/queryFilterManagerModal" model="${[rkey:rkey,filterName:filterName,filterset:filterset,update:rkey+'evtsForm',deleteActionSubmit:'deleteFilter', storeActionSubmit:'storeFilter']}"/>
                 <g:hiddenField name="max" value="${max}"/>
                 <g:render template="baseFiltersPlain" model="${[params: params, query: query]}"/>
                 <g:render template="recentDateFiltersPlain" model="${[params:params,query:query]}"/>
                 <g:render template="advDateFiltersPlain" model="${[params:params,query:query]}"/>
 
                 <g:submitButton value="Filter" name="filterAll" class="btn btn-default btn-sm"/>
+                    <button class="btn btn-xs pull-right btn-success collapse ${filterName?'':'in'} obs_filter_is_deselected"
+                            style="${wdgt.styleVisible(unless: params.saveFilter)}"
+                            data-toggle="modal"
+                            data-target="#saveFilterModal" title="Click to save this filter with a name">
+                        <i class="glyphicon glyphicon-plus"></i> save this filter&hellip;
+                    </button>
+                    <span class="form-group ">
+                        <div class="filterdef saved  collapse ${filterName ? 'in' : ''} obs_filter_is_selected">
+                            Selected filter: <span class="prompt obs_selected_filter_name"><g:enc>${filterName}</g:enc></span>
+                            <button class="btn btn-xs btn-link btn-danger pull-right " data-toggle="modal"
+                                    data-target="#deleteFilterModal" title="Click to delete this saved filter">
+                                <b class="glyphicon glyphicon-remove"></b>
+                                delete filter…
+                            </button>
+                        </div>
+                    </span>
             </g:form>
         </div>
         </g:if>

@@ -71,7 +71,25 @@
                     Filter
                     <b class="glyphicon glyphicon-chevron-down"></b>
                 </span>
-                <g:render template="/common/queryFilterManager" model="${[rkey:rkey,filterName:filterName,filterset:filterset,update:rkey+'wffilterform',deleteActionSubmit:'deleteJobfilter',storeActionSubmit:'storeJobfilter']}"/>
+                <g:if test="${!filterName}">
+                    <button class="btn btn-xs pull-right btn-success collapse "
+                          style="${wdgt.styleVisible(unless: params.saveFilter)}"
+                          data-toggle="modal"
+                          data-target="#saveFilterModal" title="Click to save this filter with a name">
+                        <i class="glyphicon glyphicon-plus"></i> save this filter&hellip;
+                    </button>
+                </g:if>
+                <g:else >
+                    <div class="filterdef saved clear">
+                                    <span class="prompt"><g:enc>${filterName}</g:enc></span>
+                    <button class="btn btn-xs btn-link btn-danger pull-right" data-toggle="modal"
+                          data-target="#deleteFilterModal" title="Click to delete this saved filter">
+                        <b class="glyphicon glyphicon-remove"></b>
+                        delete&hellip;
+                    </button>
+                    </div>
+                </g:else>
+                <g:render template="/common/queryFilterManagerModal" model="${[rkey:rkey,filterName:filterName,filterset:filterset,update:rkey+'wffilterform',deleteActionSubmit:'deleteJobfilter',storeActionSubmit:'storeJobfilter']}"/>
                 
                 <div class="filter">
 
