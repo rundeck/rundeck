@@ -33,6 +33,8 @@
                 %{--<g:set var="fileName"--}%
                        %{--value="${execution.status == 'true' ? 'job-ok' : null == execution.dateCompleted ? 'job-running' : execution.cancelled ? 'job-warn' : 'job-error'}"/>--}%
                 %{--</g:if>--}%
+                <td style="display: none" class="eventicon obs_bulk_edit_enable">
+                </td>
                 <td style="width:12px;" class="eventicon">
                 %{--<g:if test="${!noimgs}"><img--}%
                         %{--src="${resource(dir: 'images', file: "icon-small-" + fileName + ".png")}"--}%
