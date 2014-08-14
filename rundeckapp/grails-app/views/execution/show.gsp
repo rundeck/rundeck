@@ -562,6 +562,7 @@
 
                 <div class="col-sm-6">
                     <section class="runstatus " data-bind="if: !completed() && jobAverageDuration()>0">
+                        <g:set var="progressBind" value="${', css: { \'progress-bar-info\': jobPercentageFixed() < 105 ,  \'progress-bar-warning\': jobPercentageFixed() > 104  }'}"/>
                         <g:render template="/common/progressBar"
                                   model="[completePercent: execution.dateCompleted ? 100 : 0,
                                           progressClass: 'rd-progress-exec progress-embed',
@@ -572,7 +573,7 @@
                                           progressId: 'progressBar',
                                           bind: 'jobPercentageFixed()',
                                           bindText: '(jobPercentageFixed()  < 105 ? jobPercentageFixed() + \'%\' : \'+\' + jobOverrunDuration()) + \' of average \' + formatDurationHumanize(jobAverageDuration())',
-                                          progressBind: ', css: { \'progress-bar-info\': jobPercentageFixed() < 105 ,  \'progress-bar-warning\': jobPercentageFixed() &gt; 104  }',
+                                          progressBind: progressBind,
                                   ]"/>
                     </section>
                     <div data-bind="if: completed() || jobAverageDuration() <= 0 ">
