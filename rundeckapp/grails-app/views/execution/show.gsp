@@ -78,8 +78,8 @@
             smallIconUrl: "${resource(dir: 'images', file: 'icon-small')}",
 
             extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>&markdown=${enc(js:enc(url: params.markdown))}&ansicolor=${enc(js:enc(url: params.ansicolor))}",
-            lastlines: ${enc(js:params.int('lastlines') ?: defaultLastLines)},
-            maxLastLines: ${enc(js:params.int('maxlines') ?: maxLastLines)},
+            lastlines: '${enc(js:params.int('lastlines') ?: defaultLastLines)}',
+            maxLastLines:'${enc(js:params.int('maxlines') ?: maxLastLines)}',
             collapseCtx: {value:${enc(js:null == execution?.dateCompleted)},changed:false},
             showFinalLine: {value:false,changed:false},
             tailmode: ${enc(js:followmode == 'tail')},
@@ -94,14 +94,14 @@
           <g:if test="${!authChecks[AuthConstants.ACTION_KILL]}">
               killjobhtml: "",
           </g:if>
-          totalDuration : 0 + ${enc(js:scheduledExecution?.totalTime ?: -1)},
-            totalCount: 0 + ${enc(js:scheduledExecution?.execCount ?: -1)}
+            totalDuration : '${enc(js:scheduledExecution?.totalTime ?: -1)}',
+            totalCount: '${enc(js:scheduledExecution?.execCount ?: -1)}'
           });
-          nodeflowvm=new NodeFlowViewModel(workflow,"${g.createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id)}.json");
-          flowState = new FlowState('${execution?.id}','flowstate',{
+          nodeflowvm=new NodeFlowViewModel(workflow,"${enc(js:g.createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id))}.json");
+          flowState = new FlowState('${enc(js:execution?.id)}','flowstate',{
             workflow:workflow,
-            loadUrl: "${g.createLink(controller: 'execution', action: 'ajaxExecState', id: execution.id)}",
-            outputUrl:"${g.createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id)}.json",
+            loadUrl: "${enc(js:g.createLink(controller: 'execution', action: 'ajaxExecState', id: execution.id))}",
+            outputUrl:"${g.enc(js:createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id))}.json",
             selectedOutputStatusId:'selectedoutputview',
             reloadInterval:1500
          });
