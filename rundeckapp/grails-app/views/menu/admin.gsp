@@ -301,7 +301,7 @@
 
             <div class="radio">
                     <label title="Original UUIDs will be preserved, conflicting UUIDs will be replaced">
-                        <input type="radio" name="import.jobUUIDBehavior" value="preserve" checked />
+                        <input type="radio" name="jobUUIDImportBehavior" value="preserve" checked />
                         <g:message code="project.archive.import.jobUUIDBehavior.preserve.label"/>
                     </label>
 
@@ -310,7 +310,7 @@
             </div>
             <div class="radio">
                 <label title="New UUIDs will be generated for every imported Job">
-                    <input type="radio" name="import.jobUUIDBehavior" value="remove"/>
+                    <input type="radio" name="jobUUIDImportBehavior" value="remove"/>
                     <g:message code="project.archive.import.jobUUIDBehavior.remove.label"/>
                 </label>
 
@@ -324,7 +324,7 @@
 
             <div class="radio">
                 <label title="All executions and reports will be imported">
-                    <input type="radio" name="import.executionImportBehavior" value="import" checked/>
+                    <input type="radio" name="executionImportBehavior" value="import" checked/>
                     Import All
                 </label>
                 <span class="help-block">Creates new Executions and History reports from the archive</span>
@@ -332,7 +332,7 @@
 
             <div class="radio">
                 <label title="No executions or reports will be imported">
-                    <input type="radio" name="import.executionImportBehavior" value="skip"/>
+                    <input type="radio" name="executionImportBehavior" value="skip"/>
                     Do Not Import
                 </label>
                 <span class="help-block">Does not import any Executions or History</span>

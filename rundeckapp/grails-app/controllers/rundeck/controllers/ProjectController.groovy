@@ -1,5 +1,6 @@
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.support.ProjectArchiveParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.common.Framework
@@ -29,8 +30,12 @@ class ProjectController extends ControllerBase{
         return redirect(controller: 'menu', action: 'jobs')
     }
 
-    def export={
-        def project=params.project?:params.name
+    public def export(ProjectArchiveParams archiveParams){
+        if (archiveParams.hasErrors()) {
+            flash.errors = archiveParams.errors
+            return redirect(controller: 'menu', action: 'admin', params: [project: params.project])
+        }
+        def project=params.project
         if (!project){
             return renderErrorView("Project parameter is required")
         }
@@ -69,7 +74,11 @@ class ProjectController extends ControllerBase{
         outfile.delete()
     }
 
-    def importArchive={
+    public def importArchive(ProjectArchiveParams archiveParams){
+        if(archiveParams.hasErrors()){
+            flash.errors=archiveParams.errors
+            return redirect(controller: 'menu', action: 'admin', params: [project: params.project])
+        }
         def project = params.project?:params.name
         if (!project) {
             return renderErrorView("Project parameter is required")
@@ -95,11 +104,14 @@ class ProjectController extends ControllerBase{
         if (request instanceof MultipartHttpServletRequest) {
             def file = request.getFile("zipFile")
             if (!file || file.empty) {
-                flash.message = "No file was uploaded."
-                return
+                flash.error = "No file was uploaded."
+                return redirect(controller: 'menu', action: 'admin', params: [project: project])
             }
             String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
-            def result=projectService.importToProject(project1,session.user,roleList,framework,authContext, file.getInputStream(),params.import)
+            def result = projectService.importToProject(project1, session.user, roleList, framework, authContext,
+                    file.getInputStream(), [jobUUIDBehavior: archiveParams.jobUUIDImportBehavior,
+                    executionImportBehavior: archiveParams.executionImportBehavior])
+
 
             if(result.success){
                 flash.message="Archive successfully imported"
@@ -111,7 +123,11 @@ class ProjectController extends ControllerBase{
         }
     }
 
-    def delete = {
+    def delete (ProjectArchiveParams archiveParams){
+        if (archiveParams.hasErrors()) {
+            flash.errors = archiveParams.errors
+            return redirect(controller: 'menu', action: 'admin', params: [project: params.project])
+        }
         def project = params.project
         if (!project) {
             request.error = "Project parameter is required"
