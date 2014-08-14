@@ -1,5 +1,6 @@
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.support.PluginConfigParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
@@ -813,7 +814,7 @@ class FrameworkController extends ControllerBase {
 
     def saveProject={
         def prefixKey= 'plugin'
-        def project=params.project?:params.newproject
+        def project=params.project
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def errors=[]
@@ -1023,29 +1024,49 @@ class FrameworkController extends ControllerBase {
             fileCopyDescriptions: filecopydescs,
             prefixKey: prefixKey, configs: configs]
     }
-    def createResourceModelConfig={
+    public def createResourceModelConfig(PluginConfigParams pluginConfig){
+        if(pluginConfig.hasErrors()){
+            request.errors=pluginConfig.errors
+            return render(template: '/common/messages')
+        }
         Framework framework = frameworkService.getRundeckFramework()
         def error
         if(!params.type){
             error = "Plugin provider type must be specified"
         }
         final service = framework.getResourceModelSourceService()
-        final provider = service.providerOfType(params.type)
-        if(provider instanceof Describable){
+        def provider=null
+        try {
+            provider = service.providerOfType(params.type)
+        } catch (ExecutionServiceException e) {
+        }
+
+        if(provider && provider instanceof Describable){
             def desc = provider.description
             return [description:desc,prefix:params.prefix,type:params.type,isCreate:true]
         }else{
             error="Invalid provider type: ${params.type}, not available for configuration"
         }
 
-        flash.error=error
+        request.error=error
+        return render(template: '/common/messages')
     }
-    def saveResourceModelConfig = {
+    public def saveResourceModelConfig(PluginConfigParams pluginConfig) {
+        if (pluginConfig.hasErrors()) {
+            request.errors = pluginConfig.errors
+            return render(template: '/common/messages')
+        }
         def project = params.project
         Framework framework = frameworkService.getRundeckFramework()
         def error
         def prefix = params.prefix ?: ''
         def String type=params[prefix+'type']
+        def newparams = new PluginConfigParams()
+        newparams.type=type
+        if(!newparams.validate()){
+            request.errors = newparams.errors
+            return render(template: '/common/messages')
+        }
         Properties props
         def report
         def desc
@@ -1063,12 +1084,22 @@ class FrameworkController extends ControllerBase {
         }
         render(view:'createResourceModelConfig',model:[project:project,prefix:prefix,values:props,description:desc,report:report,error:error])
     }
-    def checkResourceModelConfig = {
-        def project = params.project
+    public def checkResourceModelConfig(PluginConfigParams pluginConfig) {
+        if (pluginConfig.hasErrors()) {
+            def errorMsgs = pluginConfig.errors.allErrors.collect { g.message(error: it) }
+            return render([valid:false,errors: errorMsgs, error: errorMsgs.join(', ')] as JSON)
+        }
         Framework framework = frameworkService.getRundeckFramework()
         def error
         def prefix = params.prefix ?: ''
         def String type=params[prefix+'type']
+        def newparams = new PluginConfigParams()
+        newparams.type = type
+        newparams.validate()
+        if (newparams.hasErrors()) {
+            def errorMsgs = newparams.errors.allErrors.collect { g.message(error: it) }
+            return render ([valid: false, errors: errorMsgs, error: errorMsgs.join(', ')] as JSON)
+        }
         if('true'==params.revert){
             prefix='orig.'+prefix
         }
@@ -1087,11 +1118,21 @@ class FrameworkController extends ControllerBase {
     }
 
 
-    def editResourceModelConfig = {
+    def editResourceModelConfig(PluginConfigParams pluginConfig) {
+        if (pluginConfig.hasErrors()) {
+            request.errors = pluginConfig.errors
+            return render(template: '/common/messages')
+        }
         Framework framework = frameworkService.getRundeckFramework()
         def error
         def prefix = params.prefix ?: ''
         def String type = params[prefix + 'type']
+        def newparams = new PluginConfigParams()
+        newparams.type = type
+        if (!newparams.validate()) {
+            request.errors = newparams.errors
+            return render(template: '/common/messages')
+        }
         Properties props
         def report
         def desc
