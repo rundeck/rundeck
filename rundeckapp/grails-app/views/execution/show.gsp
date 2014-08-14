@@ -141,14 +141,13 @@
                     startTime:data.startTime? data.startTime : data.state ? data.state.startTime: null,
                     endTime:data.endTime ? data.endTime : data.state ? data.state.endTime : null
                 },{},nodeflowvm);
-
                 nodeflowvm.updateNodes(data.state);
             }});
             ko.mapping.fromJS({
-                completed:${execution.dateCompleted!=null},
+                completed:'${execution.dateCompleted!=null}',
                 startTime:'${enc(js:execution.dateStarted)}',
                 endTime:'${enc(js:execution.dateCompleted)}',
-                executionState:'${execState}'
+                executionState:'${enc(js:execState)}'
             },{},nodeflowvm);
             ko.applyBindings(nodeflowvm,jQuery('#execution_main')[0]);
 
