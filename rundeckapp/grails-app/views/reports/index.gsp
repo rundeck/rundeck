@@ -267,7 +267,7 @@
         }
         function init(){
             _pageInit();
-            jQuery('.autoclick').on('click','.autoclickable',function(evt){
+            jQuery('#histcontent').on('click','.autoclickable',function(evt){
                 var ac=jQuery(this).parent('.autoclick')[0];
                 //if bulk edit
                 if(jQuery(ac).find('.bulk_edit_enabled').length>0){
