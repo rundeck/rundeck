@@ -46,19 +46,13 @@
             if(!params){
                 params={id:id};
             }
-            new Ajax.Updater(
-                'execDivContent',
-                appLinks.scheduledExecutionExecuteFragment, {
-                parameters: params,
-                evalScripts:true,
-                onComplete: function(transport) {
-                    if (transport.request.success()) {
-                        loadedFormSuccess();
-                    }
-                },
-                onFailure: requestError.curry("executeFragment for [" + id + "]")
+            jQuery('#execDivContent').load(_genUrl(appLinks.scheduledExecutionExecuteFragment, params),function(response,status,xhr){
+                if (status=='success') {
+                    loadedFormSuccess();
+                } else{
+                    requestError("executeFragment for [" + id + "]",xhr);
+                }
             });
-
         }
         function execSubmit(elem){
             var params=Form.serialize(elem);
@@ -257,19 +251,13 @@
             }
             bcontent.loading();
 
-
-            new Ajax.Updater('jobIdDetailContent',appLinks.scheduledExecutionDetailFragment,{
-                parameters:{id:matchId},
-                evalScripts:true,
-                onComplete: function(trans){
-                    if(trans.request.success()){
-                        popJobDetails(elem);
-                        $('jobIdDetailContent').select('.apply_ace').each(function (t) {
-                            _applyAce(t);
-                        })
-                    }
-                },
-                onFailure: function(trans){
+            jQuery('#jobIdDetailContent').load(_genUrl(appLinks.scheduledExecutionDetailFragment, {id: matchId}),function(response,status,xhr){
+                if (status=='success') {
+                    popJobDetails(elem);
+                    $('jobIdDetailContent').select('.apply_ace').each(function (t) {
+                        _applyAce(t);
+                    })
+                }else{
                     clearHtml(bcontent);
                     viewdom.hide();
                 }
