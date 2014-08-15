@@ -41,6 +41,7 @@ import org.hibernate.StaleObjectStateException
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.MessageSource
+import org.springframework.validation.ObjectError
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
 import rundeck.*
@@ -1354,7 +1355,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             return [success: false, error: 'invalid', message: exc.getMessage(), options: exc.getOptions(), errors: exc.getErrors()]
         } catch (ExecutionServiceException exc) {
             def msg = exc.getMessage()
-            log.error("exception: " + exc)
+            log.error("Unable to create execution",exc)
             return [success: false, error: exc.code ?: 'failed', message: msg, options: input.option]
         }
     }
@@ -1425,8 +1426,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         if (!execution.save(flush:true)) {
             execution.errors.allErrors.each { log.warn(it.toString()) }
-            log.error("unable to save execution")
-            throw new ExecutionServiceException("unable to create execution")
+            def msg=execution.errors.allErrors.collect { ObjectError err-> lookupMessage(err.codes,err.arguments,err.defaultMessage) }.join(", ")
+            log.error("unable to create execution: " + msg)
+            throw new ExecutionServiceException("unable to create execution: "+msg)
         }
         return execution
     }
@@ -1948,9 +1950,31 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
           try {
               theValue =  messageSource.getMessage(theKey,data,locale )
           } catch (org.springframework.context.NoSuchMessageException e){
-              log.error "Missing message ${theKey}"
           } catch (java.lang.NullPointerException e) {
               log.error "Expression does not exist."
+          }
+          if(null==theValue && defaultMessage){
+              MessageFormat format = new MessageFormat(defaultMessage);
+              theValue=format.format(data)
+          }
+          return theValue
+      }
+      /**
+       * @parameter key
+       * @returns corresponding value from messages.properties
+       */
+      def lookupMessage(String[] theKeys, Object[] data, String defaultMessage=null) {
+          def locale = getLocale()
+          def theValue = null
+          MessageSource messageSource = applicationContext.getBean("messageSource")
+          theKeys.any{key->
+              try {
+                  theValue =  messageSource.getMessage(key,data,locale )
+                  return true
+              } catch (org.springframework.context.NoSuchMessageException e){
+              } catch (java.lang.NullPointerException e) {
+              }
+              return false
           }
           if(null==theValue && defaultMessage){
               MessageFormat format = new MessageFormat(defaultMessage);

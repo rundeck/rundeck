@@ -1,5 +1,6 @@
 package rundeck
 import com.dtolabs.rundeck.app.support.ExecutionContext
+import com.dtolabs.rundeck.core.common.FrameworkResource
 import com.dtolabs.rundeck.util.XmlParserUtil
 
 /**
@@ -23,6 +24,11 @@ class Execution extends ExecutionContext {
     Execution retryExecution
 
     static constraints = {
+        project(matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX, validator:{val,Execution obj->
+            if(obj.scheduledExecution && obj.scheduledExecution.project!=val){
+                return 'job.project.mismatch.error'
+            }
+        })
         workflow(nullable:true)
         argString(nullable:true)
         dateStarted(nullable:true)

@@ -1,6 +1,7 @@
 package rundeck
 import com.dtolabs.rundeck.app.support.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.ExecutionContext
+import com.dtolabs.rundeck.core.common.FrameworkResource
 
 class ScheduledExecution extends ExecutionContext {
     Long id
@@ -40,6 +41,7 @@ class ScheduledExecution extends ExecutionContext {
     static transients = ['adhocExecutionType','notifySuccessRecipients','notifyFailureRecipients','notifyStartRecipients', 'notifySuccessUrl', 'notifyFailureUrl', 'notifyStartUrl','crontabString']
 
     static constraints = {
+        project(matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
         workflow(nullable:true)
         options(nullable:true)
         jobName(blank: false, nullable: false, matches: "[^/]+")
