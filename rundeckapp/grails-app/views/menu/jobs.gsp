@@ -70,8 +70,6 @@
                     var result={};
                     if(trans.responseJSON){
                         result=trans.responseJSON;
-                    }else if(trans.responseText){
-                        result=eval(trans.responseText);
                     }
                     if(result.id){
                         if (result.follow && result.href) {
@@ -121,7 +119,7 @@
         //set box filterselections
 
         function _setFilterSuccess(response,name){
-            var data=eval("("+response.responseText+")"); // evaluate the JSON;
+            var data=JSON.parse(response.responseText); // evaluate the JSON;
             if(data){
                 var bfilters=data.filterpref;
                 //reload page

@@ -193,7 +193,7 @@
             
         }
         function _checkSinceSuccess(response){
-            var data=eval("("+response.responseText+")"); // evaluate the JSON;
+            var data=JSON.parse(response.responseText); // evaluate the JSON;
             if(data && data.since){
                 var count=data.since.count;
                 //display badge
@@ -209,7 +209,7 @@
         }
 
         function _setFilterSuccess(response,name){
-            var data=eval("("+response.responseText+")"); // evaluate the JSON;
+            var data=JSON.parse(response.responseText); // evaluate the JSON;
             if(data){
                 var bfilters=data['filterpref'];
                 eventsparams={filterName:bfilters[name]};
