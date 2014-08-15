@@ -212,7 +212,8 @@ ldap {
       roleObjectClass="posixGroup"
       cacheDurationMillis="300000"
       supplementalRoles="user"
-      reportStatistics="true";
+      reportStatistics="true"
+      nestedGroups="false";
 };
 ~~~~
 
@@ -283,6 +284,9 @@ The `JettyCachingLdapLoginModule` has these configuration properties:
 
 `supplementalRoles`
 :    Comma-separated list of role names. All of the given role names will be automatically added to authenticated users.  You can use this to provide a "default" role or roles for all users.
+
+`nestedGroups`
+:    "true/false" - Default: false. If true, will resolve all nested groups for authenticated users. For the first user to login after a fresh start it will take a couple of seconds longer, this is when the cache of all nested groups is built. This will happen as often as the cache is refreshed. Uses the cacheDurationMillis for cache timeout.
 
 #### Active Directory
 
