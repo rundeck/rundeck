@@ -2,6 +2,8 @@ package rundeck.controllers
 
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.app.api.ApiBulkJobDeleteRequest
+import com.dtolabs.rundeck.app.support.ExtraCommand
+import com.dtolabs.rundeck.app.support.RunJobCommand
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.Framework
@@ -1749,7 +1751,10 @@ class ScheduledExecutionController  extends ControllerBase{
             return [result:l]
         }
     }
-    def executeFragment = {
+    public def executeFragment(RunJobCommand runParams, ExtraCommand extra) {
+        if ([runParams, extra].any { it.hasErrors() }) {
+            request.errors = [runParams, extra].find { it.hasErrors() }.errors
+        }
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
@@ -1773,7 +1778,14 @@ class ScheduledExecutionController  extends ControllerBase{
     /**
      * Execute job specified by parameters, and return json results
      */
-    def runJobInline = {
+    public def runJobInline(RunJobCommand runParams, ExtraCommand extra) {
+        if ([runParams, extra].any { it.hasErrors() }) {
+            request.errors = [runParams, extra].find { it.hasErrors() }.errors
+            return render(contentType: 'application/json') {
+                delegate.error='invalid'
+                delegate.message = "Invalid parameters: " + request.errors.allErrors.collect { g.message(error: it) }.join(", ")
+            }
+        }
         def results = runJob()
 
         if(results.error=='invalid'){
@@ -1792,10 +1804,12 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }
     }
-    def runJobNow = {
-        return executeNow()
-    }
-    def executeNow = {
+    public def runJobNow(RunJobCommand runParams, ExtraCommand extra){
+        if ([runParams, extra].any{it.hasErrors()}) {
+            request.errors= [runParams, extra].find { it.hasErrors() }.errors
+            def model = show()
+            return render(view: 'show', model: model)
+        }
         def results = runJob()
         if(results.failed){
             log.error(results.message)
