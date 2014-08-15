@@ -285,8 +285,8 @@
 </div>
 <g:if test="${!hideHead}">
 <div class="panel-footer">
-    <div class="row" id="formbuttons">
-        <div class="col-sm-12">
+    <div class="row" >
+        <div class="col-sm-12" id="formbuttons">
             <g:if test="${!hideCancel}">
                 <g:actionSubmit id="execFormCancelButton" value="Cancel" class="btn btn-default"/>
             </g:if>
