@@ -1850,7 +1850,12 @@ class ScheduledExecutionController  extends ControllerBase{
         if(params.extra?.debug=='true'){
             params.extra.loglevel='DEBUG'
         }
-        def inputOpts=params.extra
+        Map inputOpts=[:]
+        //add any option.* values, or nodeInclude/nodeExclude filters
+        if(params.extra){
+            inputOpts.putAll(params.extra.subMap(['nodeIncludeName', 'loglevel',/*'argString',*/ 'optparams', 'option', '_replaceNodeFilters', 'filter']).findAll { it.value })
+            inputOpts.putAll(params.extra.findAll{it.key.startsWith('option.')||it.key.startsWith('nodeInclude')|| it.key.startsWith('nodeExclude')}.findAll { it.value })
+        }
         def result = executionService.executeJob(scheduledExecution, authContext, request.subject,session.user,
                 inputOpts)
 
@@ -2060,7 +2065,7 @@ class ScheduledExecutionController  extends ControllerBase{
             }
             username= params.asUser
         }
-        def inputOpts = [user:username]
+        def inputOpts = [:]
 
         if (params.argString) {
             inputOpts["argString"] = params.argString
