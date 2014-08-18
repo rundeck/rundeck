@@ -1603,9 +1603,6 @@ class ScheduledExecutionController  extends ControllerBase{
 
         }
 
-        if(params.failedNodes){
-            model.failedNodes=params.failedNodes
-        }
         if(params.retryFailedExecId){
             Execution e = Execution.get(params.retryFailedExecId)
             if (e && e.scheduledExecution?.id == scheduledExecution.id) {
