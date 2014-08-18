@@ -271,16 +271,10 @@
         }
          function filterToggle(evt) {
             ['${enc(js:rkey)}filter','${enc(js:rkey)}filter-toggle'].each(Element.toggle);
-            if($('outsidefiltersave')){
-                $('${enc(js:rkey)}filter').visible()? $('outsidefiltersave').hide: $('outsidefiltersave').show;
-            }
         }
         function filterToggleSave(evt) {
             ['${enc(js:rkey)}filter','${enc(js:rkey)}fsave'].each(Element.show);
             ['${enc(js:rkey)}filter-toggle','${enc(js:rkey)}fsavebtn'].each(Element.hide);
-            if ($('outsidefiltersave')) {
-                $('${enc(js:rkey)}filter').visible() ? $('outsidefiltersave').hide : $('outsidefiltersave').show;
-            }
         }
         function init(){
             <g:if test="${!(grailsApplication.config.rundeck?.gui?.enableJobHoverInfo in ['false',false])}">

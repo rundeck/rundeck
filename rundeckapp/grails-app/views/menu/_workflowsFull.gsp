@@ -34,22 +34,7 @@
 </g:if>
 
 <div id="${enc(attr:rkey)}wffilterform">
-        <g:if test="${flash.message}">
-            <div class="alert alert-dismissable alert-info">
-                <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
-                <div>
-                    <g:enc>${flash.message}</g:enc>
-                </div>
-            </div>
-        </g:if>
-        <g:if test="${flash.error}">
-            <div class="alert alert-dismissable alert-warning">
-                <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
-                <div>
-                    <g:enc>${flash.error}</g:enc>
-                </div>
-            </div>
-        </g:if>
+    <g:render template="/common/messages"/>
     <g:set var="wasfiltered" value="${paginateParams?.keySet().grep(~/(?!proj).*Filter|groupPath|idlist$/)}"/>
     <g:if test="${params.createFilters}">
         <span class="note help">
@@ -72,8 +57,7 @@
                     <b class="glyphicon glyphicon-chevron-down"></b>
                 </span>
                 <g:if test="${!filterName}">
-                    <button class="btn btn-xs pull-right btn-success collapse "
-                          style="${wdgt.styleVisible(unless: params.saveFilter)}"
+                    <button class="btn btn-xs pull-right btn-success"
                           data-toggle="modal"
                           data-target="#saveFilterModal" title="Click to save this filter with a name">
                         <i class="glyphicon glyphicon-plus"></i> save this filter&hellip;
@@ -174,11 +158,7 @@
                         <g:render template="/common/selectFilter" model="[noSelection:'-All-',filterset:filterset,filterName:filterName,prefName:'workflows']"/>
                         <!--<span class="info note">Filter:</span>-->
                     </g:if>
-                    <g:if test="${!filterName}">
-                        <span class="textbtn textbtn-info textbtn-on-hover obs_filtersave" id="outsidefiltersave" title="Click to save this filter with a name">
-                            save this filter&hellip;
-                        </span>
-                    </g:if></div>
+                    </div>
 
                             <span title="Click to modify filter" class="info textbtn textbtn-default query obs_filtertoggle"  id='${rkey}filter-toggle'>
                                 <g:each in="${wasfiltered.sort()}" var="qparam">
