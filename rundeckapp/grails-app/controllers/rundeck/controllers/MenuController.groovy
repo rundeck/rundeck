@@ -3,6 +3,7 @@ package rundeck.controllers
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
+import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.common.Framework
@@ -410,7 +411,14 @@ class MenuController extends ControllerBase{
     }
     
     
-    def storeJobfilter={ScheduledExecutionQuery query->
+    def storeJobfilter(ScheduledExecutionQuery query, StoreFilterCommand storeFilterCommand){
+        if (storeFilterCommand.hasErrors()) {
+            flash.errors = storeFilterCommand.errors
+            params.saveFilter = true
+            return redirect(controller: 'menu', action: params.fragment ? 'jobsFragment' : 'jobs',
+                    params: params.subMap(['newFilterName', 'existsFilterName', 'project', 'saveFilter']))
+        }
+
         def User u = userService.findOrCreateUser(session.user)
         def ScheduledExecutionFilter filter
         def boolean saveuser=false

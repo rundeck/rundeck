@@ -1,6 +1,7 @@
 package rundeck.controllers
 
 import com.dtolabs.client.utils.Constants
+import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.common.Framework
@@ -294,7 +295,11 @@ class ReportsController extends ControllerBase{
     }
 
 
-    def storeFilter={ReportQuery query->
+    public def storeFilter(ReportQuery query, StoreFilterCommand storeFilterCommand) {
+        if(storeFilterCommand.hasErrors()){
+            request.errors=storeFilterCommand.errors
+            return renderErrorView([:])
+        }
         def User u = userService.findOrCreateUser(session.user)
         def ReportFilter filter
         def boolean saveuser=false
