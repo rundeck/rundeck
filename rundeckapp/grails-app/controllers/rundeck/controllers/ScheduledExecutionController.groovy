@@ -95,17 +95,27 @@ class ScheduledExecutionController  extends ControllerBase{
 
     // the delete, save and update actions only
     // accept POST requests
-    def static allowedMethods = [delete:'POST',
-        save:'POST',
-        update:'POST',
-        deleteBulk:'POST',
-        apiJobsImport:'POST',
-        apiJobDelete:'DELETE',
-        apiJobAction:['GET','DELETE'],
-        apiRunScript:'POST',
-        apiJobDeleteBulk:['DELETE','POST'],
-        apiJobClusterTakeoverSchedule:'PUT',
-        apiJobUpdateSingle:'PUT'
+    def static allowedMethods = [
+            delete: 'POST',
+            deleteBulk: 'POST',
+            runJobInline: 'POST',
+            runJobNow: 'POST',
+            runAdhocInline: 'POST',
+            save: 'POST',
+            saveAndExec: 'POST',
+            update: 'POST',
+            upload: ['GET','POST'],
+            apiJobCreateSingle: 'POST',
+            apiJobRun: 'POST',
+            apiJobsImport: 'POST',
+            apiJobDelete: 'DELETE',
+            apiJobAction: ['GET', 'DELETE'],
+            apiRunScript: 'POST',
+            apiRunScriptUrl: 'POST',
+            apiRunCommand: 'POST',
+            apiJobDeleteBulk: ['DELETE', 'POST'],
+            apiJobClusterTakeoverSchedule: 'PUT',
+            apiJobUpdateSingle: 'PUT'
     ]
 
     def cancel = {

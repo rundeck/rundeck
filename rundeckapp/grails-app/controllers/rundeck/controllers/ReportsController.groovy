@@ -29,6 +29,9 @@ class ReportsController extends ControllerBase{
     def FrameworkService frameworkService
     def scheduledExecutionService
     def ApiService apiService
+    static allowedMethods = [
+            deleteFilter:'POST'
+    ]
 
     public def index (ExecQuery query) {
         //data binding allows '123' followed by any characters to bind as integer 123, prevent additional chars after the integer value

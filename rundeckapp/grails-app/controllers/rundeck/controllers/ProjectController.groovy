@@ -21,9 +21,14 @@ class ProjectController extends ControllerBase{
     def projectService
     def apiService
     def static allowedMethods = [
+            apiProjectConfigKeyDelete:['DELETE'],
+            apiProjectConfigKeyPut:['PUT'],
+            apiProjectConfigPut:['PUT'],
+            apiProjectCreate:['POST'],
+            apiProjectDelete:['DELETE'],
+            apiProjectImport: ['PUT'],
             importArchive: ['POST'],
             delete: ['POST'],
-            apiProjectImport:['PUT']
     ]
 
     def index () {

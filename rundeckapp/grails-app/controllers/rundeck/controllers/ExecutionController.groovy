@@ -45,8 +45,10 @@ class ExecutionController extends ControllerBase{
 
     static allowedMethods = [
             delete:['POST','DELETE'],
+            apiExecutionAbort: ['POST'],
             apiExecutionDelete: ['DELETE'],
             apiExecutionDeleteBulk: ['POST'],
+            cancelExecution:'POST'
     ]
 
     def index ={

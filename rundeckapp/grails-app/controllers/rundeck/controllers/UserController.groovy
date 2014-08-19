@@ -14,7 +14,13 @@ class UserController extends ControllerBase{
     FrameworkService frameworkService
     def grailsApplication
     def apiService
-
+    static allowedMethods = [
+            addFilterPref:'POST',
+            store:'POST',
+            update:'POST',
+            clearApiToken:'POST',
+            generateApiToken:'POST',
+    ]
     def index = {
         redirect(action:"login")
     }

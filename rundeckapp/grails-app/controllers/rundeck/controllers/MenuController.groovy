@@ -45,6 +45,10 @@ class MenuController extends ControllerBase{
     LogFileStorageService logFileStorageService
     def quartzScheduler
     def ApiService apiService
+    static allowedMethods = [
+            deleteJobfilter:'POST',
+            storeJobfilter:'POST',
+    ]
     def list = {
         def results = index(params)
         render(view:"index",model:results)

@@ -11,6 +11,14 @@ import rundeck.services.ExecutionService
 
 class WorkflowController extends ControllerBase {
     def frameworkService
+    static allowedMethods = [
+            redo:'POST',
+            remove:'POST',
+            reorder:'POST',
+            revert:'POST',
+            save:'POST',
+            undo:'POST',
+    ]
     def index = {
         return redirect(controller: 'menu', action: 'index')
     }

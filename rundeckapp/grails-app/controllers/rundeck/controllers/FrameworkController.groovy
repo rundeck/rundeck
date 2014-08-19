@@ -60,8 +60,16 @@ class FrameworkController extends ControllerBase {
     // the delete, save and update actions only
     // accept POST requests
     def static allowedMethods = [
-        apiProjectResources: [ 'POST'],
-        apiProjectResourcesRefresh: ['POST'],
+            apiProjectResources: ['POST'],
+            apiProjectResourcesPost: ['POST'],
+            apiProjectResourcesRefresh: ['POST'],
+            createProjectPost: 'POST',
+            deleteNodeFilter: 'POST',
+            performNodeReload: 'POST',
+            reloadNodes: 'POST',
+            saveProject: 'POST',
+            saveResourceModelConfig: 'POST',
+            storeNodeFilter: 'POST',
     ]
 
     def index = {

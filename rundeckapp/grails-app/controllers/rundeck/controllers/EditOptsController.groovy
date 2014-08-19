@@ -9,7 +9,13 @@ import rundeck.ScheduledExecution
  * Controller for manipulating the session-stored set of Options during job edit
  */
 class EditOptsController {
-
+    def static allowedMethods = [
+            redo: 'POST',
+            remove: 'POST',
+            revert: 'POST',
+            save: 'POST',
+            undo: 'POST',
+    ]
     def index = {
         redirect(controller: 'menu', action: 'index')
     }
