@@ -1341,37 +1341,7 @@ class ScheduledExecutionController  extends ControllerBase{
             return [success:false,failed:true,invalid:true,message:'Job configuration was incorrect.',scheduledExecution:scheduledExecution,params:params]
         }
     }
-    /**
-     * execute the job defined via input parameters, but do not store it.
-     */
-    def execAndForget = {
-        def results = runAdhoc()
-        if(results.error=='unauthorized'){
-            log.error(results.message)
-            flash.error=results.message
-            render(view:"/common/execUnauthorized",model:[scheduledExecution:results.scheduledExecution])
-            return
-        }else if(results.error){
-            log.error(results.message)
-            renderErrorView(results.message)
-            return
-        }else if(results.failed){
-            def scheduledExecution=results.scheduledExecution
-            scheduledExecution.jobName = ''
-            scheduledExecution.errors.allErrors.each { log.warn(it.defaultMessage) }
-            flash.message=results.message
-            Framework framework = frameworkService.getRundeckFramework()
 
-            def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
-            def stepTypes = frameworkService.getStepPluginDescriptions()
-            render(view:'create',model:[scheduledExecution:scheduledExecution,params:params,
-                    nodeStepDescriptions: nodeStepTypes, stepDescriptions: stepTypes])
-        } else {
-            log.debug("ExecutionController: immediate execution scheduled (${results.id})")
-            redirect(controller:"execution", action:"follow",id:results.id)
-        }
-    }
-    
     /**
     * Execute a transient ScheduledExecution and return execution data: [execution:Execution,id:Long]
      * if there is an error, return [error:'type',message:errormesg,...]
