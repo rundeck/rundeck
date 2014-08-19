@@ -78,7 +78,7 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">No</button>
                 <g:if test="${deleteActionSubmit}">
-                    <g:actionSubmit action="${deleteActionSubmit}" value="Yes" class="btn btn-danger"/>
+                    <g:actionSubmit action="${deleteActionSubmit}" value="Yes" formmethod="POST" class="btn btn-danger"/>
                 </g:if>
                 <g:elseif test="${deleteActionSubmitRemote}">
                     <g:submitToRemote value="Yes" url="${deleteActionSubmitRemote}" update="${update}"
@@ -119,7 +119,7 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
                 <g:if test="${storeActionSubmit}">
-                    <g:actionSubmit value="Save Filter" action="${storeActionSubmit}" class="btn btn-primary"/>
+                    <g:actionSubmit value="Save Filter" action="${storeActionSubmit}" formmethod="POST" class="btn btn-primary"/>
                 </g:if>
                 <g:elseif test="${storeActionSubmitRemote}">
                     <g:submitToRemote value="Save Filter" url="${storeActionSubmitRemote}" update="${update}"
