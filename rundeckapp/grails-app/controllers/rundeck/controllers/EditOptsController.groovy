@@ -414,7 +414,7 @@ class EditOptsController {
     /**
      * Use an Options props to configure params to be memoized for later configuring an Option
      */
-    private def _getParamsFromOption = {Option opt ->
+    private Map _getParamsFromOption (Option opt){
         def params = [:]
         params.putAll(opt.properties)
         if (opt.values) {
@@ -447,7 +447,7 @@ class EditOptsController {
     /**
      *  Load the options stored for the session, or store the specified options map in the session
      */
-    private def _getSessionOptions = {Map usedopts = null ->
+    private Map _getSessionOptions(Map usedopts = null){
         return getSessionOptions(session,params,usedopts)
     }
     /**
@@ -498,7 +498,7 @@ class EditOptsController {
      * @param id id of options to use
      * @param input action map
      */
-    private def _pushUndoAction = {String id, Map input ->
+    private def _pushUndoAction (String id, Map input){
         if (!input) {
             return
         }
@@ -521,7 +521,7 @@ class EditOptsController {
      * @param id id of options to use
      * @return undo action map if it exists
      */
-    private def _popUndoAction = {id ->
+    private def _popUndoAction (id){
         if (!id) {
             id = '_new'
         }
@@ -535,7 +535,7 @@ class EditOptsController {
      * @param id id of options to use
      * @param input action map
      */
-    private def _pushRedoAction = {id, Map input ->
+    private def _pushRedoAction (id, Map input){
         if (!input) {
             return
         }
@@ -557,7 +557,7 @@ class EditOptsController {
      * @param id id of options to use
      * @return action map
      */
-    private def _popRedoAction = {id ->
+    private def _popRedoAction (id){
         if (!id) {
             id = '_new'
         }
@@ -571,7 +571,7 @@ class EditOptsController {
      * Clear the redo stack for the id 
      * @param id id of options to use
      */
-    private def _clearRedoStack = {id ->
+    private void _clearRedoStack(id){
         if (!id) {
             id = '_new'
         }

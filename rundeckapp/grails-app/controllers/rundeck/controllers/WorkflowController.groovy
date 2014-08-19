@@ -494,7 +494,7 @@ class WorkflowController extends ControllerBase {
     /**
      * Push item to undo stack
      */
-    void _pushUndoAction(id, Map input){
+    private void _pushUndoAction(id, Map input){
         if (!input) {
             return
         }
@@ -515,7 +515,7 @@ class WorkflowController extends ControllerBase {
     /**
      * Pop item from undo stack
      */
-    Map _popUndoAction (String id){
+    private Map _popUndoAction (String id){
         if (!id) {
             id = '_new'
         }
@@ -528,7 +528,7 @@ class WorkflowController extends ControllerBase {
     /**
      * Push item to redo stack
      */
-    void _pushRedoAction (id, Map input){
+    private void _pushRedoAction (id, Map input){
         if (!input) {
             return
         }
@@ -548,7 +548,7 @@ class WorkflowController extends ControllerBase {
     /**
      * pop item from redo stack
      */
-    Map  _popRedoAction (id){
+    private Map  _popRedoAction (id){
         if (!id) {
             id = '_new'
         }
@@ -560,7 +560,7 @@ class WorkflowController extends ControllerBase {
     /**
      * Clear redo stack
      */
-    void _clearRedoStack (id){
+    private void _clearRedoStack (id){
         if (!id) {
             id = '_new'
         }
@@ -572,7 +572,7 @@ class WorkflowController extends ControllerBase {
     /**
      * Return the session-stored workflow, or store the specified one in the session
      */
-    private def _getSessionWorkflow = {Workflow usedwf = null ->
+    private def _getSessionWorkflow (Workflow usedwf = null){
         return getSessionWorkflow(session,params,usedwf)
     }
     /**
