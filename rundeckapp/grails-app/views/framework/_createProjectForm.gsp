@@ -49,7 +49,9 @@
 <g:if test="${adminauth}">
     <div class="row">
     <div class="col-sm-12 col-md-10 col-md-offset-1 col-lg-8 col-lg-offset-2">
-        <g:form action="createProject" method="post" onsubmit="return configControl.checkForm();">
+        <g:form action="createProject"
+                useToken="true"
+                method="post" onsubmit="return configControl.checkForm();">
             <div class="panel panel-primary"  id="createform">
                 <div class="panel-heading">
                     <span class="h3">

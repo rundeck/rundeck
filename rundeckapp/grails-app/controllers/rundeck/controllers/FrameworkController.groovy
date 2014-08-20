@@ -619,6 +619,16 @@ class FrameworkController extends ControllerBase {
 
     def createProjectPost() {
         metricService.markMeter(this.class.name,actionName)
+        boolean valid=false
+        withForm{
+            valid=true
+        }.invalidToken{
+            request.errorCode='request.error.invalidtoken.message'
+            renderErrorView([:])
+        }
+        if(!valid){
+            return
+        }
         //only attempt project create if form POST is used
         def prefixKey = 'plugin'
         def project = params.newproject
