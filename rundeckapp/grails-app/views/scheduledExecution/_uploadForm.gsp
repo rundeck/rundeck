@@ -120,6 +120,7 @@
 <div class="col-sm-10 col-sm-offset-1">
 <div class="panel panel-primary">
     <g:uploadForm method="POST"
+                  useToken="true"
                   controller="scheduledExecution" action="upload"
                   params="[project:params.project]" class="form" role="form">
         <div class="panel-heading">
