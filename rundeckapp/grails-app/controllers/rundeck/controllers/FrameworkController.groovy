@@ -855,6 +855,16 @@ class FrameworkController extends ControllerBase {
     }
 
     def saveProject={
+        boolean valid=false
+        withForm {
+            valid = true
+        }.invalidToken {
+            request.errorCode = 'request.error.invalidtoken.message'
+            renderErrorView([:])
+        }
+        if (!valid) {
+            return
+        }
         def prefixKey= 'plugin'
         def project=params.project
         Framework framework = frameworkService.getRundeckFramework()
