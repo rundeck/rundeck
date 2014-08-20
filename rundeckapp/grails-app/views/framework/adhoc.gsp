@@ -89,22 +89,22 @@
             disableRunBar(true);
             runStarted();
             $('runcontent').loading('Starting Execution&hellip;');
-            new Ajax.Request(appLinks.scheduledExecutionRunAdhocInline,{
-                parameters:data,
-                evalScripts:true,
-                evalJSON:true,
-                onSuccess: function(transport) {
-                    var data =transport.responseJSON;
-//                    alert("data: "+data);
-                    try{
-                    startRunFollow(data);
-                    }catch(e){
-                        console.log(e);
-                        runError(e);
+            jQuery.post(_genUrl(appLinks.scheduledExecutionRunAdhocInline,data),
+                '',
+                function (data,status,xhr) {
+                    if(status=='success'){
+//                        var data = transport.responseJSON;
+                        try {
+                            startRunFollow(data);
+                        } catch (e) {
+                            console.log(e);
+                            runError(e);
+                        }
+                    }else{
+                        requestFailure(xhr);
                     }
-                },
-                onFailure:requestFailure
-            });
+                }
+            );
             return false;
         }
         /**
@@ -346,6 +346,7 @@
                 <div class="col-sm-10" >
                     <div class="" id="runtab">
                             <div class="form form-horizontal clearfix" id="runbox">
+                                <g:form useToken="true" action="adhoc" params="[project:params.project]">
                                 <g:render template="nodeFiltersHidden"
                                           model="${[params: params, query: query]}"/>
                                 <div class="form-group ">
@@ -420,13 +421,14 @@
                                 </div>
                                 </div>
                             </div>
+                            </g:form>
                             </div>
 
                     </div>
                     <div class="${emptyQuery ? 'active' : ''}" id="nodeFilterInline">
                         <div class="spacing">
                         <div class="">
-                        <g:form action="adhoc" class="form form-horizontal" name="searchForm">
+                        <g:form action="adhoc" class="form form-horizontal" name="searchForm" >
                         <g:hiddenField name="max" value="${max}"/>
                         <g:hiddenField name="offset" value="${offset}"/>
                         <g:hiddenField name="formInput" value="true"/>

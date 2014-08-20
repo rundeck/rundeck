@@ -2,9 +2,11 @@
 
     <g:render template="/common/errorFragment"/>
 
-    <g:form method="post" onsubmit="if(typeof(validateJobEditForm)=='function'){return validateJobEditForm(this);}"
-            class="form-horizontal"
-    >
+    <g:form method="POST"
+            onsubmit="if(typeof(validateJobEditForm)=='function'){return validateJobEditForm(this);}"
+            useToken="true"
+            controller="scheduledExecution" action="save" params="[project: params.project]"
+            class="form-horizontal">
         <div class="panel panel-primary">
         <div class="panel-heading">
             <div class="row">
@@ -39,7 +41,7 @@
                                 onclick="if(typeof(jobEditCancelled)=='function'){jobEditCancelled();}"
                                 class="btn btn-default"/>
                 <g:if test="${auth.resourceAllowedTest( kind:'job',action:[AuthConstants.ACTION_CREATE],project: params.project ?: request.project)}">
-                    <g:actionSubmit action="save" value="Create"
+                    <g:submitButton name="Create" value="Create"
                                     class="cformAllowSave cformAllowSaveOnly btn btn-primary" />
                 </g:if>
 

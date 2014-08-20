@@ -1,19 +1,6 @@
-<g:if test="${flash.message || uploadError || flash.error || messages || errjobs || skipjobs || jobs || execerrors || execsuccess}">
+<g:render template="/common/messages"/>
+<g:if test="${ messages || errjobs || skipjobs || jobs || execerrors || execsuccess}">
 
-    <g:if test="${flash.error || uploadError}">
-        <div class="row">
-            <div class="col-sm-12">
-                <div class="alert alert-warning"><g:enc>${flash.error?:uploadError}</g:enc></div>
-            </div>
-        </div>
-    </g:if>
-    <g:if test="${flash.message}">
-        <div class="row">
-            <div class="col-sm-12">
-                <div class="alert alert-info"><g:enc>${flash.message}</g:enc></div>
-            </div>
-        </div>
-    </g:if>
 
     <g:if test="${messages}">
         <div class="row">
@@ -132,7 +119,9 @@
 <div class="row">
 <div class="col-sm-10 col-sm-offset-1">
 <div class="panel panel-primary">
-    <g:uploadForm method="post" action="upload" class="form" role="form" params="[project:params.project]">
+    <g:uploadForm method="POST"
+                  controller="scheduledExecution" action="upload"
+                  params="[project:params.project]" class="form" role="form">
         <div class="panel-heading">
             <span class="h4">
                 Upload <g:message code="domain.ScheduledExecution.title"/> Definition
@@ -216,7 +205,7 @@
 
             <div id="uploadFormButtons">
                 <g:actionSubmit id="createFormCancelButton" value="Cancel" class="btn btn-default"/>
-                <g:actionSubmit action="upload" value="Upload" id="uploadFormUpload"
+                <g:submitButton name="Upload" id="uploadFormUpload"
                                 onclick="['uploadFormButtons','schedUploadSpinner'].each(Element.toggle)"
                                 class="btn btn-primary"/>
             </div>

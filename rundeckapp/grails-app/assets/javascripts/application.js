@@ -747,7 +747,19 @@ function _initAnsiToggle(){
     jQuery('.ansi-color-toggle').on('change',_toggleAnsiColor);
     jQuery('.nodes_run_content').on('change','.ansi-color-toggle',_toggleAnsiColor);
 }
+function _initTokenRefresh() {
+    var xtokens={};
+    jQuery(document).ajaxComplete(function (evt, xhr, opts) {
+        if (xhr.getResponseHeader('X-RUNDECK-TOKEN-KEY') && xhr.getResponseHeader('X-RUNDECK-TOKEN-URI')) {
+            try {
+                jQuery('#SYNCHRONIZER_TOKEN').val(xhr.getResponseHeader('X-RUNDECK-TOKEN-KEY'));
+                jQuery('#SYNCHRONIZER_URI').val(xhr.getResponseHeader('X-RUNDECK-TOKEN-URI'));
+            } catch (e) {
 
+            }
+        }
+    });
+}
 (function(){
     if(typeof(jQuery)=='function'){
         jQuery(document).ready(function () {
@@ -758,6 +770,7 @@ function _initAnsiToggle(){
             _initIEPlaceholder();
             _initCollapseExpander();
             _initAnsiToggle();
+            _initTokenRefresh();
         });
     }
 })();

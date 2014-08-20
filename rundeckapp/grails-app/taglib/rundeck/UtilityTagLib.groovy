@@ -1,6 +1,7 @@
 package rundeck
 
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
+import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
 import rundeck.services.FrameworkService
 
 import java.text.MessageFormat
@@ -739,5 +740,11 @@ class UtilityTagLib{
         out << '<script id="'+enc(attr:id)+'" type="text/json">'
         out << enc(json: obj)
         out << '</script>'
+    }
+    def refreshFormTokensHeader={attrs,body->
+        def tokensHolder = SynchronizerTokensHolder.store(session)
+        def uri = attrs.uri ?: params[SynchronizerTokensHolder.TOKEN_URI]
+        response.addHeader(FormTokenFilters.TOKEN_KEY_HEADER, tokensHolder.generateToken(uri))
+        response.addHeader(FormTokenFilters.TOKEN_URI_HEADER, uri)
     }
 }

@@ -1,6 +1,8 @@
 <%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 
 <g:render template="/common/errorFragment"/>
+
+%{-- DELETE job modal form --}%
 <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE}" project="${scheduledExecution.project?: params.project ?: request.project}">
     <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_DELETE,project:scheduledExecution.project)}">
         <div class="modal" id="jobdelete" tabindex="-1" role="dialog" aria-labelledby="deletejobtitle" aria-hidden="true">
@@ -11,7 +13,7 @@
                         <h4 class="modal-title" id="deletejobtitle">Delete <g:message code="domain.ScheduledExecution.title"/></h4>
                     </div>
 
-                    <g:form controller="scheduledExecution" action="delete" method="post" class="form form-horizontal">
+                    <g:form controller="scheduledExecution" useToken="true" action="delete" method="post" class="form form-horizontal">
                     <div class="modal-body">
                         <g:render template="/scheduledExecution/showHead"
                                   model="${[scheduledExecution: scheduledExecution, runPage: true]}"/>
@@ -43,7 +45,12 @@
         </div>
     </g:if>
 </auth:resourceAllowed>
+
+%{--Edit job form--}%
 <g:form controller="scheduledExecution" method="post"
+        action="update"
+        params="[project:params.project]"
+        useToken="true"
         class="form-horizontal"
         onsubmit="if(typeof(validateJobEditForm)=='function'){return validateJobEditForm(this);}">
 

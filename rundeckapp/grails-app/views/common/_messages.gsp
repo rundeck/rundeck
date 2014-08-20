@@ -6,7 +6,7 @@
         <g:autoLink><g:enc>${flash.message}${request.message}</g:enc></g:autoLink>
     </div>
 </g:if>
-<g:if test="${flash.error||flash.errors!=null||request.error||request.errors||flash.errorCode||request.errorCode}">
+<g:if test="${flash.invalidToken||flash.error||flash.errors!=null||request.error||(request.errors&& ((request.errors instanceof org.springframework.validation.Errors && request.errors.hasErrors())|| request.errors instanceof java.util.Collection))||flash.errorCode||request.errorCode}">
     <div class="alert alert-danger alert-dismissable">
         <g:unless test="${notDismissable}">
             <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
@@ -30,10 +30,13 @@
             <g:message code="${flash.errorCode ?: request.errorCode}"
                        args="${flash.errorArgs ?: request.errorArgs}"/>
         </g:if>
+        <g:if test="${flash.invalidToken}">
+            <g:message code="request.error.invalidtoken.message"/>
+        </g:if>
     </div>
 </g:if>
 <g:if test="${flash.warn || request.warn}">
-    <div class="alert alert-warn alert-dismissable">
+    <div class="alert alert-warning alert-dismissable">
         <g:unless test="${notDismissable}">
             <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
         </g:unless>

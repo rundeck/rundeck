@@ -223,7 +223,7 @@
 <g:timerEnd key="head"/>
                 <g:if test="${ jobgroups}">
                     <g:timerStart key="groupTree"/>
-                    <g:form controller="scheduledExecution" action="deleteBulk">
+                    <g:form controller="scheduledExecution" action="deleteBulk" useToken="true" params="[project: params.project ?: request.project]">
                     <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE  }" project="${params.project ?: request.project}">
                         <div class="modal fade" id="bulk_del_confirm" tabindex="-1" role="dialog" aria-hidden="true">
                             <div class="modal-dialog">

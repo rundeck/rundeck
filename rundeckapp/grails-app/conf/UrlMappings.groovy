@@ -100,6 +100,9 @@ class UrlMappings {
         "/project/$project/history"(controller: 'reports', action: 'index')
         "/project/$project/jobs/$groupPath**?"(controller: 'menu', action: 'jobs')
         "/project/$project/job/show/$id/$fullName**?"(controller: 'scheduledExecution', action: 'show')
+        "/project/$project/job/upload"(controller: 'scheduledExecution'){
+            action = [GET: 'upload', POST: 'uploadPost']
+        }
         "/project/$project/job/$action?/$id?"(controller: 'scheduledExecution')
         "/resources/createProject"(controller: 'framework') {
             action = [GET: 'createProject', POST: 'createProjectPost']
