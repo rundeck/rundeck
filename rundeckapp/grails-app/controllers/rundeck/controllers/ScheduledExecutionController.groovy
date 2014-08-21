@@ -1479,7 +1479,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 flash.error = parseresult.error
                 return xmlerror()
             }else{
-                request.errors=[parseresult.error]
+                request.error=parseresult.error
                 return render(view:'upload')
             }
         }
