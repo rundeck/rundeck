@@ -780,9 +780,9 @@ class UtilityTagLib{
 //        if (attrs.duration) {
 //            expiry = Long.parseLong(attrs.duration)
 //        }
-        def id = params.id
-        def token = generateToken(params.url)
-        embedJSON(id: id, obj: [TOKEN:token,URL:params.url])
+        def id = attrs.id
+        def token = generateToken(attrs.url)
+        embedJSON.call([id: id, data: [TOKEN: token, URI: attrs.url]],body)
     }
 
     /**
