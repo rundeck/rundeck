@@ -37,11 +37,12 @@
                 Really delete option <g:enc>${option.name}</g:enc>?
             </div>
 
+            <g:jsonToken id="reqtoken_del_${ukey}" url="${request.forwardURI}"/>
             <div class="panel-footer">
                 <span class="btn btn-default btn-xs"
                       onclick="jQuery('#optdel_${enc(js:ukey)}').collapse('toggle');"><g:message code="cancel"/></span>
                 <span class="btn btn-danger btn-xs"
-                      onclick=" _doRemoveOption('${enc(js:option.name)}', $(this).up('li.optEntry'));"><g:message
+                      onclick=" _doRemoveOption('${enc(js:option.name)}', $(this).up('li.optEntry'),'reqtoken_del_${enc(js:ukey)}');"><g:message
                         code="delete"/></span>
             </div>
         </div>

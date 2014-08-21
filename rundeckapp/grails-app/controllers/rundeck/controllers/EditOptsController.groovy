@@ -91,6 +91,7 @@ class EditOptsController {
      * Save new option or existing option definition. params.name= name of existing option, or params.newoption is required
      */
     def save = {
+        withForm{
         if (!params.name && !params.newoption) {
             log.error("name parameter is required")
             flash.error = "name parameter is required"
@@ -111,12 +112,17 @@ class EditOptsController {
         }
 
         return render(template: "/scheduledExecution/optlistitemContent", model: [option: editopts[name], name: name, scheduledExecutionId: params.scheduledExecutionId, edit: true])
+        }.invalidToken{
+            request.error = g.message(code: 'request.error.invalidtoken.message')
+            return error.call()
+        }
     }
 
     /**
      * Remove an option by name.  params.name required
      */
     def remove = {
+        withForm {
         if (!params.name) {
             log.error("name parameter is required")
             flash.error = "name parameter is required"
@@ -138,6 +144,10 @@ class EditOptsController {
         }
 
         return render(template: "/scheduledExecution/optlistContent", model: [options: options, name: name, scheduledExecutionId: params.scheduledExecutionId, edit: true])
+        }.invalidToken{
+            request.error = g.message(code: 'request.error.invalidtoken.message')
+            return error.call()
+        }
     }
 
 
@@ -154,7 +164,7 @@ class EditOptsController {
      * Undo action, renders full options list after performing undo
      */
     def undo = {
-
+        withForm{
         def editopts = _getSessionOptions()
         def action = _popUndoAction(params.scheduledExecutionId)
 
@@ -174,6 +184,10 @@ class EditOptsController {
         def options = new TreeSet()
         options.addAll(editopts.values())
         return render(template: "/scheduledExecution/optlistContent", model: [options: options, scheduledExecutionId: params.scheduledExecutionId, edit: params.edit, highlight: name])
+        }.invalidToken {
+            request.error = g.message(code: 'request.error.invalidtoken.message')
+            return error.call()
+        }
     }
 
 
@@ -182,7 +196,7 @@ class EditOptsController {
      * redo action, renders full options list after performing redo
      */
     def redo = {
-
+        withForm{
         def editopts = _getSessionOptions()
         def action = _popRedoAction(params.scheduledExecutionId)
 
@@ -203,17 +217,26 @@ class EditOptsController {
         def options = new TreeSet()
         options.addAll(editopts.values())
         return render(template: "/scheduledExecution/optlistContent", model: [options: options, scheduledExecutionId: params.scheduledExecutionId, edit: params.edit, highlight: name])
+        }.invalidToken {
+            request.error = g.message(code: 'request.error.invalidtoken.message')
+            return error.call()
+        }
     }
 
     /**
      * revert action, reloads options from stored ScheduledExecution, clears undo/redo stack, and renders full options list
      */
     def revert = {
+        withForm{
         final String uid = params.scheduledExecutionId ? params.scheduledExecutionId : '_new'
         session.editOPTS?.remove(uid)
         session.undoOPTS?.remove(uid)
         session.redoOPTS?.remove(uid)
         return renderAll.call()
+        }.invalidToken {
+            request.error = g.message(code: 'request.error.invalidtoken.message')
+            return error.call()
+        }
     }
 
     /**

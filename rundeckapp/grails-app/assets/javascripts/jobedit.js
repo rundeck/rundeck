@@ -652,7 +652,9 @@ function _updateOptsUndoRedo() {
     if (getCurSEID()) {
         params['scheduledExecutionId'] = getCurSEID();
     }
-    new Ajax.Updater($('optundoredo'), appLinks.editOptsRenderUndo, {parameters:params});
+
+    jQuery('#optundoredo')
+        .load(_genUrl(appLinks.editOptsRenderUndo, params));
 }
 
 function _configureInputRestrictions(target) {
@@ -676,20 +678,16 @@ function _optedit(name, elem) {
         params['scheduledExecutionId'] = getCurSEID();
     }
     $('optsload').loading();
-    new Ajax.Updater(elem,
-        appLinks.editOptsEdit, {
-        parameters: params,
-        evalScripts:true,
-        onSuccess: function(transport) {
+    jQuery.ajax({
+        type:'GET',
+        url:_genUrl(appLinks.editOptsEdit, params),
+        success:function(data,status,jqxhr){
+            jQuery(elem).html(data);
             _hideOptControls();
+            _configureInputRestrictions(elem);
         },
-        onComplete: function(transport) {
-            if (transport && transport.request.success()) {
-                _configureInputRestrictions(elem);
-            }
-        },
-        onFailure: function(transport) {
-            alert("error: " + transport);
+        failure:function(data,status,jqxhr){
+            alert("error: " + status);
         }
     });
 }
@@ -710,21 +708,21 @@ function _optview(name, target) {
         }
     });
 }
-function _optsave(formelem, target) {
+function _optsave(formelem, tokendataid, target) {
     $('optsload').loading();
-    new Ajax.Updater(target,
-        appLinks.editOptsSave, {
-        parameters: Form.serialize(formelem),
-        evalScripts: true,
-        onComplete: function(transport) {
-            if (transport.request.success()) {
-                if (!$(target).down('div.optEditForm')) {
-                    _showOptControls();
-                    $(target).highlight();
-                } else {
-                    _configureInputRestrictions(target);
-                    _hideOptControls();
-                }
+    jQuery.ajax({
+        type: "POST",
+        url:_genUrl(appLinks.editOptsSave),
+        data:Form.serialize(formelem),
+        beforeSend: _ajaxSendTokens.curry(tokendataid),
+        success:function(data,status,xhr){
+            jQuery(target).html(data);
+            if (!$(target).down('div.optEditForm')) {
+                _showOptControls();
+                $(target).highlight();
+            } else {
+                _configureInputRestrictions(target);
+                _hideOptControls();
             }
         }
     });
@@ -755,17 +753,12 @@ function _optaddnew() {
     newoptli.appendChild(createElement);
     olist.appendChild(newoptli);
     $('optsload').loading();
-    new Ajax.Updater(createElement,
-        appLinks.editOptsEdit, {
-        parameters: params,
-        evalScripts:true,
-        onComplete: function(transport) {
-            if (transport && transport.request.success()) {
-                _configureInputRestrictions(createElement);
-                _hideOptControls();
-            }
-            clearHtml('optsload');
+    jQuery(createElement).load(_genUrl(appLinks.editOptsEdit,params),null,function(resp,status,jqxhr){
+        if (status=='success') {
+            _configureInputRestrictions(createElement);
+            _hideOptControls();
         }
+        clearHtml('optsload');
     });
 }
 
@@ -783,15 +776,8 @@ function _reloadOpts() {
     }
     var optslist = $('optionsContent').down('ul.options');
     $('optsload').loading();
-    new Ajax.Updater(optslist,
-        appLinks.editOptsRenderAll, {
-        parameters: params,
-        evalScripts: true,
-        onComplete: function(transport) {
-            if (transport.request.success()) {
-                _showOptControls();
-            }
-        }
+    jQuery('#optionsContent').find('ul.options').load(_genUrl(appLinks.editOptsRenderAll, params),function(data,status,jqxhr){
+        _showOptControls();
     });
 }
 
@@ -815,28 +801,31 @@ function _summarizeOpts() {
     });
 }
 
-function _optsavenew(formelem) {
+function _optsavenew(formelem,tokendataid) {
     var params = Form.serialize(formelem);
     $('optsload').loading();
-    new Ajax.Updater(newoptli,
-        appLinks.editOptsSave, {
-        parameters: params,
-        evalScripts: true,
-        onComplete: function(transport) {
-            if (transport.request.success() && !newoptli.down('div.optEditForm')) {
+    jQuery.ajax({
+        type: "POST",
+        url: _genUrl(appLinks.editOptsSave),
+        data: params,
+        beforeSend: _ajaxSendTokens.curry(tokendataid),
+        success: function (data, status, xhr) {
+            jQuery(newoptli).html(data);
+            if (!newoptli.down('div.optEditForm')) {
                 $(newoptli).highlight();
                 newoptli = null;
                 _showOptControls();
                 _reloadOpts();
-            } else if (transport.request.success() && newoptli.down('div.optEditForm')) {
+            } else if (newoptli.down('div.optEditForm')) {
                 _configureInputRestrictions(newoptli);
                 _hideOptControls();
             }
         }
     });
+
 }
 
-function _doRemoveOption(name, elem) {
+function _doRemoveOption(name, elem,tokendataid) {
     var params = {name:name,edit:true};
     if (getCurSEID()) {
         params['scheduledExecutionId'] = getCurSEID();
@@ -844,14 +833,14 @@ function _doRemoveOption(name, elem) {
     $('optsload').loading();
     Effect.Fade($(elem), {duration:0.2,afterFinish:
         function(f) {
-            new Ajax.Updater($('optionsContent').down('ul'),
-                appLinks.editOptsRemove, {
-                parameters: params,
-                evalScripts:true,
-                onComplete: function(transport) {
-                    if (transport.request.success()) {
-                        _showOptControls();
-                    }
+            jQuery.ajax({
+                type:'POST',
+                url:_genUrl(appLinks.editOptsRemove),
+                data:params,
+                beforeSend:_ajaxSendTokens.curry(tokendataid),
+                success:function(data,status,jqxhr){
+                    jQuery('#optionsContent').find('ul').html(data);
+                    _showOptControls();
                 }
             });
         }
@@ -863,15 +852,15 @@ function _doUndoOptsAction() {
     if (getCurSEID()) {
         params['scheduledExecutionId'] = getCurSEID();
     }
-
-    new Ajax.Updater($('optionsContent').down('ul'),
-        appLinks.editOptsUndo, {
-        parameters: params,
-        evalScripts:true,
-        onComplete: function(transport) {
-            if (transport.request.success()) {
-                _showOptControls();
-            }
+    var tokendataid='reqtoken_undo_opts';
+    jQuery.ajax({
+        type:'POST',
+        url:_genUrl(appLinks.editOptsUndo),
+        data:params,
+        beforeSend:_ajaxSendTokens.curry(tokendataid),
+        success:function(data,status,jqxhr){
+            jQuery('#optionsContent').find('ul').html(data);
+            _showOptControls();
         }
     });
 }
@@ -880,15 +869,15 @@ function _doRedoOptsAction() {
     if (getCurSEID()) {
         params['scheduledExecutionId'] = getCurSEID();
     }
-
-    new Ajax.Updater($('optionsContent').down('ul'),
-        appLinks.editOptsRedo, {
-        parameters: params,
-        evalScripts:true,
-        onComplete: function(transport) {
-            if (transport.request.success()) {
-                _showOptControls();
-            }
+    var tokendataid = 'reqtoken_undo_opts';
+    jQuery.ajax({
+        type: 'POST',
+        url: _genUrl(appLinks.editOptsRedo),
+        data: params,
+        beforeSend: _ajaxSendTokens.curry(tokendataid),
+        success: function (data, status, jqxhr) {
+            jQuery('#optionsContent').find('ul').html(data);
+            _showOptControls();
         }
     });
 }
@@ -897,15 +886,15 @@ function _doRevertOptsAction() {
     if (getCurSEID()) {
         params['scheduledExecutionId'] = getCurSEID();
     }
-
-    new Ajax.Updater($('optionsContent').down('ul'),
-        appLinks.editOptsRevert, {
-        parameters: params,
-        evalScripts:true,
-        onComplete: function(transport) {
-            if (transport.request.success()) {
-                _showOptControls();
-            }
+    var tokendataid = 'reqtoken_undo_opts';
+    jQuery.ajax({
+        type: 'POST',
+        url: _genUrl(appLinks.editOptsRevert),
+        data: params,
+        beforeSend: _ajaxSendTokens.curry(tokendataid),
+        success: function (data, status, jqxhr) {
+            jQuery('#optionsContent').find('ul').html(data);
+            _showOptControls();
         }
     });
 }

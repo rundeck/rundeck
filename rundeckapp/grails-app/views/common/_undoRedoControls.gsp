@@ -42,6 +42,7 @@
         <span class="btn btn-xs btn-default disabled ">Redo <i class="glyphicon glyphicon-step-forward"></i></span>
     </g:else>
     <g:if test="${undo || redo}">
+        <g:jsonToken id="reqtoken_undo_${key}" url="${request.forwardURI}"/>
         %{--popover trigger is initialized on click, defined in jquery init from scheduledExecution/_edit.gsp --}%
         <span class="btn btn-xs btn-default act_revert_popover"
               data-toggle="popover"
