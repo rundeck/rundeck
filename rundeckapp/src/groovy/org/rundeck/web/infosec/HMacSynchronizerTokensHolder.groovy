@@ -16,6 +16,7 @@
 
 package org.rundeck.web.infosec
 
+import org.apache.log4j.Logger
 import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
 
 import javax.servlet.http.HttpSession
@@ -33,7 +34,7 @@ import javax.servlet.http.HttpSession
  * @since 2014-08-20
  */
 class HMacSynchronizerTokensHolder extends SynchronizerTokensHolder implements Serializable{
-
+    static Logger logger = Logger.getLogger(HMacSynchronizerTokensHolder.class.name)
     public static final String HOLDER = "TOKENS_HOLDER"
     public static final String TOKEN_KEY = "TOKEN_KEY"
     public static final String TOKEN_TIMESTAMP = "TOKEN_TIMESTAMP"
@@ -48,6 +49,7 @@ class HMacSynchronizerTokensHolder extends SynchronizerTokensHolder implements S
 
     String generateToken(Long timestamp, String url) {
         def token = manager.generateToken(timestamp, sessionID, sessionData+[url])
+        logger.debug("Generate token for ${url}: ${sessionData}: ${token.substring(0,5)}...")
         currentTokens.put(token,timestamp)
         if(!urlTokens.containsKey(url)){
             urlTokens.put(url,new HashSet<String>([token]))
@@ -62,12 +64,13 @@ class HMacSynchronizerTokensHolder extends SynchronizerTokensHolder implements S
         return generateToken(System.currentTimeMillis() + tokenDuration,url)
     }
 
-    boolean isValid(Long timestamp, String url, String token) {
-        return currentTokens.containsKey(token) && manager.validToken(token, timestamp, sessionID, sessionData+[url])
-    }
     @Override
     boolean isValid(String url, String token) {
-        return urlTokens.containsKey(url) && urlTokens.get(url).contains(token) && isValid(currentTokens.get(token), url, token)
+        logger.debug("isValid token ${url}:${token.substring(0, 5)}...: ${urlTokens.containsKey(url)} ${urlTokens.get(url)?.contains(token)} ${currentTokens.containsKey(token)} ${manager.validToken(token, currentTokens.get(token), sessionID, sessionData + [url])}")
+        return urlTokens.containsKey(url) &&
+                urlTokens.get(url).contains(token) &&
+                currentTokens.containsKey(token) &&
+                manager.validToken(token, currentTokens.get(token), sessionID, sessionData+[url])
     }
 
     HMacSynchronizerTokensHolder(HMacSynchronizerTokensManager manager,String sessionID, List<String> sessionData) {
@@ -100,7 +103,8 @@ class HMacSynchronizerTokensHolder extends SynchronizerTokensHolder implements S
     static HMacSynchronizerTokensHolder store(HttpSession session, HMacSynchronizerTokensManager manager, List<String> data) {
         def found= session.getAttribute(SynchronizerTokensHolder.HOLDER)
         HMacSynchronizerTokensHolder tokensHolder
-        if (!found || !(found instanceof HMacSynchronizerTokensHolder)) {
+        if (!(found instanceof HMacSynchronizerTokensHolder)) {
+            logger.debug("Create new HMacSynchronizerTokensHolder for session ${session.id}: ${data}")
             tokensHolder = new HMacSynchronizerTokensHolder(manager,session.id,data)
             session.setAttribute(SynchronizerTokensHolder.HOLDER, tokensHolder)
         }else{
