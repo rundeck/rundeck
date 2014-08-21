@@ -1,5 +1,8 @@
 <%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 
+<g:if test="${!execution.dateCompleted}">
+    <g:jsonToken id="exec_cancel_token" url="${request.forwardURI}"/>
+</g:if>
 
 <g:if test="${inlineView}">
     <div class="panel-heading">

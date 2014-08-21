@@ -88,12 +88,11 @@
             var data = Form.serialize(elem);
             disableRunBar(true);
             runStarted();
-            $('runcontent').loading('Starting Execution&hellip;');
+            $('runcontent').loading('Starting Execution…');
             jQuery.post(_genUrl(appLinks.scheduledExecutionRunAdhocInline,data),
                 '',
                 function (data,status,xhr) {
                     if(status=='success'){
-//                        var data = transport.responseJSON;
                         try {
                             startRunFollow(data);
                         } catch (e) {
@@ -117,23 +116,15 @@
             }else if(!data.id){
                 runError("Server response was invalid: "+data.toString());
             }else {
-                $('runcontent').loading('Loading Output&hellip;');
-                new Ajax.Updater('runcontent',appLinks.executionFollowFragment,{
-                parameters:{id:data.id,mode:'tail'},
-                evalScripts:true,
-                onComplete: function(transport) {
-                    if (transport.request.success()) {
+                $('runcontent').loading('Loading Output…');
+                jQuery('#runcontent').load(_genUrl(appLinks.executionFollowFragment, {id: data.id, mode: 'tail'}),function(resp,status,jqxhr){
+                    if(status=='success'){
                         Element.show('runcontent');
-//                        try{
                         continueRunFollow(data);
-//                        }catch(e){
-//                            console.log(e,e);
-//                            runError(e);
-//                        }
+                    }else{
+                        requestFailure(jqxhr);
                     }
-                },
-                onFailure:requestFailure
-            });
+                });
             }
         }
         /**

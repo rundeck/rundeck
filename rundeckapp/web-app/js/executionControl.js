@@ -1423,9 +1423,6 @@ var FollowControl = Class.create({
     updatecancel: function(data) {
 
         var orig = data;
-        if (typeof(data) == "string") {
-            eval("data=" + data);
-        }
         if (data['cancelled']) {
             if ($('cancelresult')) {
                 $('cancelresult').loading('Killing Job...');
@@ -1447,13 +1444,17 @@ var FollowControl = Class.create({
             $('cancelresult').loading('Killing Job...');
         }
         var obj=this;
-        new Ajax.Request(this.appLinks.executionCancelExecution, {
-            parameters: {id:this.executionId},
-            onSuccess: function(transport) {
-                obj.updatecancel(transport.responseText);
+        jQuery.ajax({
+            type: 'POST',
+            url: this.appLinks.executionCancelExecution,
+            dataType:'json',
+            data: {id: this.executionId},
+            beforeSend: _ajaxSendTokens.curry('exec_cancel_token'),
+            success: function (data,status,jqxhr) {
+                obj.updatecancel(data);
             },
-            onFailure: function(response) {
-                obj.updatecancel({error:"Failed to kill Job: " + response.statusText});
+            error: function (jqxhr,status,err) {
+                obj.updatecancel({error: "Failed to kill Job: " + (jqxhr.responseJSON && jqxhr.responseJSON.error? jqxhr.responseJSON.error: err)});
             }
         });
     }
