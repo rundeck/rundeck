@@ -15,6 +15,7 @@ import com.dtolabs.rundeck.server.plugins.services.StreamingLogReaderPluginProvi
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogWriterPluginProviderService
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
 import com.dtolabs.rundeck.server.storage.StorageTreeFactory
+import com.dtolabs.rundeck.util.HMacSynchronizerTokensManager
 import groovy.io.FileType
 import org.springframework.core.task.SimpleAsyncTaskExecutor
 
@@ -143,5 +144,8 @@ beans={
         rundeckServerServiceProviderLoader=ref('rundeckServerServiceProviderLoader')
         pluginDirectory=pluginDir
         pluginCacheDirectory=cacheDir
+    }
+    hMacSynchronizerTokensManager(HMacSynchronizerTokensManager){
+
     }
 }

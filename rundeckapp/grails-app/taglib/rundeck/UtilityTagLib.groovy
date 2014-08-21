@@ -1,6 +1,8 @@
 package rundeck
 
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
+import com.dtolabs.rundeck.util.HMacSynchronizerTokensHolder
+import com.dtolabs.rundeck.util.HMacSynchronizerTokensManager
 import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
 import rundeck.services.FrameworkService
 
@@ -14,6 +16,7 @@ class UtilityTagLib{
 	static returnObjectForTags = ['rkey','w3cDateValue','sortGroupKeys','helpLinkUrl','helpLinkParams','parseOptsFromString','relativeDateString','enc']
 
     private static Random rand=new java.util.Random()
+    def HMacSynchronizerTokensManager hMacSynchronizerTokensManager
     /**
      * Return a new random string every time it is called.  Attrs are:
      * len: number of random bytes to use
@@ -747,4 +750,34 @@ class UtilityTagLib{
         response.addHeader(FormTokenFilters.TOKEN_KEY_HEADER, tokensHolder.generateToken(uri))
         response.addHeader(FormTokenFilters.TOKEN_URI_HEADER, uri)
     }
+
+    /**
+     * Generates hidden input fields to include in a form
+     */
+    def formToken = { attrs, body ->
+        def expiry = 30000L
+        if (attrs.duration) {
+            expiry = Long.parseLong(attrs.duration)
+        }
+        def token = generateToken(expiry)
+        out << "<input type=\"hidden\" name=\"${HMacSynchronizerTokensHolder.TOKEN_KEY}\" value=\"${token['TOKEN']}\"/>"
+        out << "<input type=\"hidden\" name=\"${HMacSynchronizerTokensHolder.TOKEN_TIMESTAMP}\" value=\"${token['TIMESTAMP']}\"/>"
+    }
+
+    def generateToken(long duration) {
+        def tokensHolder = HMacSynchronizerTokensHolder.store(session,hMacSynchronizerTokensManager,[session.user,request.remoteAddr])
+        long timestamp = System.currentTimeMillis() + duration
+        return [TOKEN:tokensHolder.generateToken(timestamp),TIMESTAMP:timestamp]
+    }
+
+    def jsonToken = { attrs, body ->
+        def expiry = 30000L
+        if (attrs.duration) {
+            expiry = Long.parseLong(attrs.duration)
+        }
+        def id = params.id
+        def token = generateToken(expiry)
+        embedJSON(id: id, obj: token)
+    }
+
 }

@@ -620,7 +620,7 @@ class FrameworkController extends ControllerBase {
     def createProjectPost() {
         metricService.markMeter(this.class.name,actionName)
         boolean valid=false
-        withForm{
+        withHmacToken{
             valid=true
         }.invalidToken{
             request.errorCode='request.error.invalidtoken.message'

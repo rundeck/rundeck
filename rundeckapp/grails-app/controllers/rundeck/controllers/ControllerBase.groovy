@@ -1,5 +1,13 @@
 package rundeck.controllers
 
+import com.dtolabs.rundeck.util.HMacSynchronizerTokensHolder
+import org.codehaus.groovy.grails.web.metaclass.InvalidResponseHandler
+import org.codehaus.groovy.grails.web.metaclass.ValidResponseHandler
+import org.codehaus.groovy.grails.web.servlet.mvc.GrailsWebRequest
+import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
+import org.codehaus.groovy.grails.web.servlet.mvc.TokenResponseHandler
+import org.springframework.web.context.request.RequestContextHolder
+
 import javax.servlet.http.HttpServletResponse
 
 /**
@@ -9,7 +17,53 @@ import javax.servlet.http.HttpServletResponse
  */
 class ControllerBase {
 
-    /**
+    protected def withHmacToken(Closure valid){
+        GrailsWebRequest request= (GrailsWebRequest) RequestContextHolder.currentRequestAttributes()
+        TokenResponseHandler handler
+        if(isTokenValid(request)){
+            resetToken(request)
+            handler = new ValidResponseHandler(valid?.call())
+        } else {
+            handler = new InvalidResponseHandler()
+        }
+
+        request.request.setAttribute(TokenResponseHandler.KEY, handler)
+        return handler
+    }
+
+    def resetToken(GrailsWebRequest request) {
+        HMacSynchronizerTokensHolder holder = request.currentRequest.getSession(false)?.getAttribute(HMacSynchronizerTokensHolder.HOLDER)
+        String tokenInRequest = request.params[HMacSynchronizerTokensHolder.TOKEN_KEY]
+        if (!tokenInRequest) return
+
+        holder.resetToken(tokenInRequest)
+    }
+
+    boolean isTokenValid(GrailsWebRequest request) {
+        HMacSynchronizerTokensHolder holder = request.currentRequest.getSession(false)?.getAttribute(HMacSynchronizerTokensHolder.HOLDER)
+        if (!holder) return false
+
+        String tokenInRequest = request.params[HMacSynchronizerTokensHolder.TOKEN_KEY]
+        if (!tokenInRequest) return false
+
+        String timestampInRequest = request.params[HMacSynchronizerTokensHolder.TOKEN_TIMESTAMP]
+        if (!timestampInRequest) return false
+
+        long timestamp=0
+        try{
+            timestamp=Long.parseLong(timestampInRequest)
+        }catch (NumberFormatException e){
+            return false
+        }
+
+        try {
+            return holder.isValid(timestamp, tokenInRequest)
+        }
+        catch (IllegalArgumentException) {
+            return false
+        }
+    }
+/**
      * Send a Not Found response unless the test passes, return true if the response was sent.
      * @param test exists test
      * @param type object type
