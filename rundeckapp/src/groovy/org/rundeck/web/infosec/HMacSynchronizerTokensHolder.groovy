@@ -92,6 +92,11 @@ class HMacSynchronizerTokensHolder extends SynchronizerTokensHolder implements S
         throw new IllegalArgumentException('Should not be invoked')
     }
 
+    @Override
+    boolean isEmpty() {
+        return currentTokens.isEmpty()
+    }
+
     static HMacSynchronizerTokensHolder store(HttpSession session, HMacSynchronizerTokensManager manager, List<String> data) {
         def found= session.getAttribute(SynchronizerTokensHolder.HOLDER)
         HMacSynchronizerTokensHolder tokensHolder
