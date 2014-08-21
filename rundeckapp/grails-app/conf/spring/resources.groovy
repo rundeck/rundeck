@@ -15,7 +15,7 @@ import com.dtolabs.rundeck.server.plugins.services.StreamingLogReaderPluginProvi
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogWriterPluginProviderService
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
 import com.dtolabs.rundeck.server.storage.StorageTreeFactory
-import com.dtolabs.rundeck.util.HMacSynchronizerTokensManager
+import org.rundeck.web.infosec.HMacSynchronizerTokensManager
 import groovy.io.FileType
 import org.springframework.core.task.SimpleAsyncTaskExecutor
 

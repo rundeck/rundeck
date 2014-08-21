@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.util
+package org.rundeck.web.infosec
 
+import com.dtolabs.rundeck.util.MacUtils
 import org.apache.log4j.Logger
 import org.codehaus.groovy.grails.plugins.codecs.HexCodec
 import org.springframework.beans.factory.InitializingBean

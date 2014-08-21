@@ -1,10 +1,9 @@
 package rundeck.controllers
 
-import com.dtolabs.rundeck.util.HMacSynchronizerTokensHolder
+import org.rundeck.web.infosec.HMacSynchronizerTokensHolder
 import org.codehaus.groovy.grails.web.metaclass.InvalidResponseHandler
 import org.codehaus.groovy.grails.web.metaclass.ValidResponseHandler
 import org.codehaus.groovy.grails.web.servlet.mvc.GrailsWebRequest
-import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.codehaus.groovy.grails.web.servlet.mvc.TokenResponseHandler
 import org.springframework.web.context.request.RequestContextHolder
 

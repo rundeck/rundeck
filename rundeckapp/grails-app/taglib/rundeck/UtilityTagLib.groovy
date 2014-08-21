@@ -1,9 +1,10 @@
 package rundeck
 
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
-import com.dtolabs.rundeck.util.HMacSynchronizerTokensHolder
-import com.dtolabs.rundeck.util.HMacSynchronizerTokensManager
+import org.rundeck.web.infosec.HMacSynchronizerTokensHolder
+import org.rundeck.web.infosec.HMacSynchronizerTokensManager
 import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
+import rundeck.filters.FormTokenFilters
 import rundeck.services.FrameworkService
 
 import java.text.MessageFormat
@@ -745,39 +746,60 @@ class UtilityTagLib{
         out << '</script>'
     }
     def refreshFormTokensHeader={attrs,body->
-        def tokensHolder = SynchronizerTokensHolder.store(session)
+        SynchronizerTokensHolder tokensHolder = tokensHolder()
         def uri = attrs.uri ?: params[SynchronizerTokensHolder.TOKEN_URI]
         response.addHeader(FormTokenFilters.TOKEN_KEY_HEADER, tokensHolder.generateToken(uri))
         response.addHeader(FormTokenFilters.TOKEN_URI_HEADER, uri)
     }
 
-    /**
-     * Generates hidden input fields to include in a form
-     */
-    def formToken = { attrs, body ->
-        def expiry = 30000L
-        if (attrs.duration) {
-            expiry = Long.parseLong(attrs.duration)
-        }
-        def token = generateToken(expiry)
-        out << "<input type=\"hidden\" name=\"${HMacSynchronizerTokensHolder.TOKEN_KEY}\" value=\"${token['TOKEN']}\"/>"
-        out << "<input type=\"hidden\" name=\"${HMacSynchronizerTokensHolder.TOKEN_TIMESTAMP}\" value=\"${token['TIMESTAMP']}\"/>"
-    }
 
     def generateToken(long duration) {
-        def tokensHolder = HMacSynchronizerTokensHolder.store(session,hMacSynchronizerTokensManager,[session.user,request.remoteAddr])
+        SynchronizerTokensHolder tokensHolder = tokensHolder()
         long timestamp = System.currentTimeMillis() + duration
         return [TOKEN:tokensHolder.generateToken(timestamp),TIMESTAMP:timestamp]
     }
+    def generateToken(String url) {
+        SynchronizerTokensHolder tokensHolder = tokensHolder()
+        return tokensHolder.generateToken(url)
+    }
+
+    protected SynchronizerTokensHolder tokensHolder() {
+        SynchronizerTokensHolder tokensHolder
+        if (grailsApplication.config.rundeck?.security?.useHMacRequestTokens in [true, 'true']) {
+            //enable hmac request tokens which expire instead of Grails' default UUID based tokens
+            tokensHolder = HMacSynchronizerTokensHolder.store(session, hMacSynchronizerTokensManager, [session.user,
+                    request.remoteAddr])
+        } else {
+            tokensHolder = SynchronizerTokensHolder.store(session)
+        }
+        tokensHolder
+    }
 
     def jsonToken = { attrs, body ->
-        def expiry = 30000L
-        if (attrs.duration) {
-            expiry = Long.parseLong(attrs.duration)
-        }
+//        def expiry = 30000L
+//        if (attrs.duration) {
+//            expiry = Long.parseLong(attrs.duration)
+//        }
         def id = params.id
-        def token = generateToken(expiry)
-        embedJSON(id: id, obj: token)
+        def token = generateToken(params.url)
+        embedJSON(id: id, obj: [TOKEN:token,URL:params.url])
+    }
+
+    /**
+     * Override the default grails g:form tag, so that we can supply our own Synchronizer Token Holder if necessarry
+     */
+    def form={attrs,body->
+        def useToken = false
+        if (attrs.containsKey('useToken')) {
+            useToken = attrs.boolean('useToken')
+        }
+        if(useToken && grailsApplication.config.rundeck?.security?.useHMacRequestTokens in [true,'true']){
+            //enable hmac request tokens which expire instead of Grails' default UUID based tokens
+            def tokensHolder = HMacSynchronizerTokensHolder.store(session, hMacSynchronizerTokensManager, [session.user, request.remoteAddr])
+        }
+        //call original form tag
+        def applicationTagLib = grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.FormTagLib')
+        applicationTagLib.form.call(attrs,body)
     }
 
 }
