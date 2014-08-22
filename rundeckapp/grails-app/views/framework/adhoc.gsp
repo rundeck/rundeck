@@ -89,21 +89,22 @@
             disableRunBar(true);
             runStarted();
             $('runcontent').loading('Starting Execution…');
-            jQuery.post(_genUrl(appLinks.scheduledExecutionRunAdhocInline,data),
-                '',
-                function (data,status,xhr) {
-                    if(status=='success'){
-                        try {
-                            startRunFollow(data);
-                        } catch (e) {
-                            console.log(e);
-                            runError(e);
-                        }
-                    }else{
-                        requestFailure(xhr);
+            jQuery.ajax({
+                type:'POST',
+                url:_genUrl(appLinks.scheduledExecutionRunAdhocInline,data),
+                beforeSend:_ajaxSendTokens.curry('adhoc_req_tokens'),
+                success:function (data,status,xhr) {
+                    try {
+                        startRunFollow(data);
+                    } catch (e) {
+                        console.log(e);
+                        runError(e);
                     }
+                },
+                error:function(data,jqxhr,err){
+                    requestFailure(jqxhr);
                 }
-            );
+            }).success(_ajaxReceiveTokens.curry('adhoc_req_tokens'));
             return false;
         }
         /**
@@ -337,7 +338,8 @@
                 <div class="col-sm-10" >
                     <div class="" id="runtab">
                             <div class="form form-horizontal clearfix" id="runbox">
-                                <g:form useToken="true" action="adhoc" params="[project:params.project]">
+                                <g:jsonToken id="adhoc_req_tokens" url="${request.forwardURI}"/>
+                                <g:form  action="adhoc" params="[project:params.project]">
                                 <g:render template="nodeFiltersHidden"
                                           model="${[params: params, query: query]}"/>
                                 <div class="form-group ">

@@ -767,6 +767,7 @@ function _ajaxSendTokens(id,jqxhr,settings){
         data={TOKEN: elem.data('rundeck-token-key'), URI: elem.data('rundeck-token-uri')};
     }else{
         data=loadJsonData(id);
+        clearHtml(document.getElementById(id));
     }
     if(data && data.TOKEN && data.URI){
         jqxhr.setRequestHeader('X-RUNDECK-TOKEN-KEY',data.TOKEN);
@@ -793,22 +794,15 @@ function _ajaxReceiveTokens(id,data,status,jqxhr){
     }
 }
 function _initTokenRefresh() {
-    var xtokens={};
     jQuery(document).ajaxComplete(function (evt, xhr, opts) {
         if (xhr.getResponseHeader('X-RUNDECK-TOKEN-KEY') && xhr.getResponseHeader('X-RUNDECK-TOKEN-URI')) {
             try {
-                xtokens[xhr.getResponseHeader('X-RUNDECK-TOKEN-URI')]= xhr.getResponseHeader('X-RUNDECK-TOKEN-KEY');
                 jQuery('#SYNCHRONIZER_TOKEN').val(xhr.getResponseHeader('X-RUNDECK-TOKEN-KEY'));
                 jQuery('#SYNCHRONIZER_URI').val(xhr.getResponseHeader('X-RUNDECK-TOKEN-URI'));
             } catch (e) {
 
             }
         }
-//    }).ajaxSend(function (event, jqxhr, settings) {
-//        if (xtokens['key'] && xtokens['uri']) {
-//            jqxhr.setRequestHeader('X-RUNDECK-TOKEN-KEY',xtokens['key']);
-//            jqxhr.setRequestHeader('X-RUNDECK-TOKEN-URI',xtokens['uri']);
-//        }
     });
 }
 (function(){
@@ -821,7 +815,6 @@ function _initTokenRefresh() {
             _initIEPlaceholder();
             _initCollapseExpander();
             _initAnsiToggle();
-            _initTokenRefresh();
         });
     }
 })();
