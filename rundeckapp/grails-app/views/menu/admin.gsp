@@ -232,7 +232,9 @@
                     Delete this Project&hellip;
                     <i class="glyphicon glyphicon-remove"></i>
                 </button>
-                <g:form style="display: inline;" controller="project" action="delete" params="[project: (params.project ?: request.project)]">
+                <g:form style="display: inline;" controller="project" action="delete" params="[project: (params.project ?: request.project)]"
+                        useToken="true"
+                >
                 <div class="modal fade" id="deleteProjectModal" role="dialog" aria-labelledby="deleteProjectModalLabel"
                      aria-hidden="true">
                     <div class="modal-dialog">
@@ -281,6 +283,7 @@
 <g:if test="${authImport}">
 <div class="tab-pane" id="import">
     <g:form controller="project" action="importArchive" params="[project:params.project ?: request.project]"
+            useToken="true"
             enctype="multipart/form-data" class="form">
     <div class="list-group list-group-tab-content">
         <div class="list-group-item">

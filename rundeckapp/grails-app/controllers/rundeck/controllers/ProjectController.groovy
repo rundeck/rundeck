@@ -80,6 +80,7 @@ class ProjectController extends ControllerBase{
     }
 
     public def importArchive(ProjectArchiveParams archiveParams){
+        withForm{
         if(archiveParams.hasErrors()){
             flash.errors=archiveParams.errors
             return redirect(controller: 'menu', action: 'admin', params: [project: params.project])
@@ -126,9 +127,14 @@ class ProjectController extends ControllerBase{
             }
             return redirect(controller: 'menu',action: 'admin',params:[project:project])
         }
+        }.invalidToken {
+            flash.error = g.message(code:'request.error.invalidtoken.message')
+            return redirect(controller: 'menu', action: 'admin', params: [project: params.project])
+        }
     }
 
     def delete (ProjectArchiveParams archiveParams){
+        withForm{
         if (archiveParams.hasErrors()) {
             flash.errors = archiveParams.errors
             return redirect(controller: 'menu', action: 'admin', params: [project: params.project])
@@ -163,6 +169,10 @@ class ProjectController extends ControllerBase{
         }
         flash.message = 'Deleted project: ' + project
         return redirect(controller: 'menu', action: 'home')
+        }.invalidToken {
+            flash.error= g.message(code: 'request.error.invalidtoken.message')
+            return redirect(controller: 'menu', action: 'admin', params: [project: params.project])
+        }
     }
 
     /**
