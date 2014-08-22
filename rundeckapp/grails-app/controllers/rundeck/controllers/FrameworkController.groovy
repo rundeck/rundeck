@@ -65,8 +65,6 @@ class FrameworkController extends ControllerBase {
             apiProjectResourcesRefresh: ['POST'],
             createProjectPost: 'POST',
             deleteNodeFilter: 'POST',
-            performNodeReload: 'POST',
-            reloadNodes: 'POST',
             saveProject: 'POST',
             saveResourceModelConfig: 'POST',
             storeNodeFilter: 'POST',
@@ -501,32 +499,11 @@ class FrameworkController extends ControllerBase {
     }
 
     /**
-     * calls performNodeReload, then redirects to 'nodes' action (for normal request), or returns JSON 
-     * results (for ajax request). JSON format: {success:true/false, message:string}
-     */
-    def reloadNodes = {
-        def result=performNodeReload()
-        def didsucceed=result.success
-        withFormat {
-            json{
-                def data=[success:didsucceed,message:didsucceed?"Remote resources loaded for project: ${params.project}":"Failed to load remote resources for project: ${params.project}"]
-                render data as JSON
-            }
-            html{
-                if(!didsucceed){
-                    flash.error=result.message?:'Failed reloading nodes: unknown reason'
-                }
-                redirect(action:'nodes',params:[project:params.project])
-            }
-        }
-    }
-
-    /**
      * If user has admin rights and the project parameter is specified, attempt to re-fetch the resources.xml
      * via the project's project.resources.url (if it exists).
      * Returns true if re-fetch succeeded, false otherwise.
      */
-    def performNodeReload = {String url=null->
+    protected def performNodeReload (String url = null){
         if(!params.project){
             return [success: false, message: "project parameter is required", invalid: true]
         }
@@ -1339,6 +1316,7 @@ class FrameworkController extends ControllerBase {
     /**
      * API: /api/2/project/NAME/resources/refresh
      * calls performNodeReload, then returns API response
+     * @deprecated will be removed
      * */
     def apiProjectResourcesRefresh = {
         if (!apiService.requireVersion(request,response,ApiRequestFilters.V2)) {

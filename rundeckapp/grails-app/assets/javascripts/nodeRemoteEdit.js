@@ -142,21 +142,7 @@ function _remoteEditContinue() {
  * Perform Ajax request to tell server to re-fetch the nodes data for the project
  */
 function _remoteEditDidSave() {
-    if (projectname) {
-        new Ajax.Request(appLinks.frameworkReloadNodes+'.json', {
-            parameters: {project: projectname},
-            evalJSON: true,
-            onSuccess: function (req) {
-                var data = req.responseJSON;
-                if (data.success) {
-                    shouldrefresh = true;
-                }
-            },
-            onFailure: function (e) {
-                //console.log(e);
-            }
-        });
-    }
+    //no-op now
 }
 
 //protocol handler functions//
