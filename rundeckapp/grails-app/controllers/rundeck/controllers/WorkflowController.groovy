@@ -9,6 +9,8 @@ import rundeck.PluginStep
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import rundeck.services.ExecutionService
 
+import javax.servlet.http.HttpServletResponse
+
 class WorkflowController extends ControllerBase {
     def frameworkService
     static allowedMethods = [
@@ -111,6 +113,8 @@ class WorkflowController extends ControllerBase {
      * Save workflow item
      */
     def save = {
+        withForm{
+            g.refreshFormTokensHeader()
         if (!params.num && !params.newitem) {
             log.error("num parameter is required")
             return renderErrorFragment("num parameter is required")
@@ -153,6 +157,10 @@ class WorkflowController extends ControllerBase {
         }
         def itemDescription = item.instanceOf(PluginStep) ? getPluginStepDescription(item.nodeStep, item.type) : null
         return render(template: "/execution/wflistitemContent", model: [workflow: editwf, item: item, i: params.key, stepNum: numi, scheduledExecutionId: params.scheduledExecutionId, edit: true,isErrorHandler: isErrorHandler,itemDescription: itemDescription])
+        }.invalidToken {
+            response.status=HttpServletResponse.SC_BAD_REQUEST
+            return renderErrorFragment(g.message(code: 'request.error.invalidtoken.message'))
+        }
     }
 
 
@@ -161,6 +169,7 @@ class WorkflowController extends ControllerBase {
      * Reorder items
      */
     def reorder = {
+        withForm{
         if (!params.fromnum) {
             log.error("fromnum parameter required")
             return renderErrorFragment("fromnum parameter required")
@@ -184,13 +193,17 @@ class WorkflowController extends ControllerBase {
 
         return render(template: "/execution/wflistContent", model: [workflow: editwf, edit: params.edit, highlight: toi,
                 project: params.project])
+        }.invalidToken {
+            response.status = HttpServletResponse.SC_BAD_REQUEST
+            return renderErrorFragment(g.message(code: 'request.error.invalidtoken.message'))
+        }
     }
 
     /**
      * Remove an item
      */
     def remove = {
-
+        withForm{
         if (!params.delnum) {
             log.error("delnum parameter required")
             return renderErrorFragment("delnum parameter required")
@@ -213,6 +226,10 @@ class WorkflowController extends ControllerBase {
         _clearRedoStack(params.scheduledExecutionId)
 
         return render(template: "/execution/wflistContent", model: [workflow: editwf, edit: params.edit, project: params.project])
+        }.invalidToken {
+            response.status = HttpServletResponse.SC_BAD_REQUEST
+            return renderErrorFragment(g.message(code: 'request.error.invalidtoken.message'))
+        }
     }
 
 
@@ -220,7 +237,7 @@ class WorkflowController extends ControllerBase {
      * Undo change
      */
     def undo = {
-
+        withForm{
         def Workflow editwf = _getSessionWorkflow()
         def action = _popUndoAction(params.scheduledExecutionId)
 
@@ -244,6 +261,10 @@ class WorkflowController extends ControllerBase {
 
         return render(template: "/execution/wflistContent", model: [workflow: editwf, edit: params.edit, highlight: num,
                 project: params.project])
+        }.invalidToken {
+            response.status = HttpServletResponse.SC_BAD_REQUEST
+            return renderErrorFragment(g.message(code: 'request.error.invalidtoken.message'))
+        }
     }
 
 
@@ -252,7 +273,7 @@ class WorkflowController extends ControllerBase {
      * redo change
      */
     def redo = {
-
+        withForm{
         def Workflow editwf = _getSessionWorkflow()
         def action = _popRedoAction(params.scheduledExecutionId)
 
@@ -272,12 +293,17 @@ class WorkflowController extends ControllerBase {
         }
 
         return render(template: "/execution/wflistContent", model: [workflow: editwf, edit: params.edit, highlight: num, project: params.project])
+        }.invalidToken {
+            response.status = HttpServletResponse.SC_BAD_REQUEST
+            return renderErrorFragment(g.message(code: 'request.error.invalidtoken.message'))
+        }
     }
 
     /**
      * revert all changes
      */
     def revert = {
+        withForm{
         final String uid = params.scheduledExecutionId ? params.scheduledExecutionId : '_new'
         session.editWF?.remove(uid)
         session.undoWF?.remove(uid)
@@ -286,6 +312,10 @@ class WorkflowController extends ControllerBase {
 
         return render(template: "/execution/wflistContent", model: [workflow: editwf, edit: true,
                 project: params.project])
+        }.invalidToken {
+            response.status = HttpServletResponse.SC_BAD_REQUEST
+            return renderErrorFragment(g.message(code: 'request.error.invalidtoken.message'))
+        }
     }
 
 

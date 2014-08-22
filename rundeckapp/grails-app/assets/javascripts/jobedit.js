@@ -158,22 +158,22 @@ function _wfiview(key,num,isErrorHandler) {
     });
 }
 function _wfisave(key,num, formelem,iseh) {
-    new Ajax.Updater($('wfli_' + key),
-        appLinks.workflowSave, {
-        parameters: Form.serialize(formelem),
-        evalScripts: true,
-        onComplete: function(transport) {
-            if (transport.request.success()) {
-                if (!$('wfli_' + key).down('div.wfitemEditForm')) {
-                    _showWFItemControls();
-                    if(iseh){
-                        _hideWFItemControlsAddEH(num);
-                    }
+    jQuery.ajax({
+        type: 'POST',
+        url: _genUrl(appLinks.workflowSave, Form.serialize(formelem)),
+        beforeSend: _ajaxSendTokens.curry('job_edit_tokens'),
+        success: function (resp, status, jqxhr) {
+            var litem = jQuery('#wfli_' + key);
+            litem.html(resp);
+            if (litem.find('div.wfitemEditForm').size()<1) {
+                _showWFItemControls();
+                if (iseh) {
+                    _hideWFItemControlsAddEH(num);
                 }
-                initTooltipForElements('#wfli_' + key + ' .obs_tooltip')
             }
+            initTooltipForElements('#wfli_' + key + ' .obs_tooltip')
         }
-    });
+    }).success(_ajaxReceiveTokens.curry('job_edit_tokens'));
 }
 var newitemElem;
 function _wfiaddnew(type,nodestep) {
@@ -270,21 +270,20 @@ function _addAceTextarea(textarea){
 }
 function _wfisavenew(formelem) {
     var params = Form.serialize(formelem);
-    new Ajax.Updater(newitemElem,
-        appLinks.workflowSave, {
-        parameters: params,
-        evalScripts: true,
-        onComplete: function(transport) {
-            if (transport.request.success() && !newitemElem.down('div.wfitemEditForm')) {
-                var litem=$(newitemElem.parentNode);
-                $(litem).highlight();
-                $('wfnewbutton').show();
-                _showWFItemControls();
-                $('workflowDropfinal').setAttribute('data-wfitemnum', parseInt(litem.getAttribute('data-wfitemnum')) + 1);
-                newitemElem = null;
-            }
+    jQuery.ajax({
+        type:'POST',
+        url:_genUrl(appLinks.workflowSave,params),
+        beforeSend:_ajaxSendTokens.curry('job_edit_tokens'),
+        success:function(resp,status,jqxhr){
+            jQuery(newitemElem).html(resp);
+            var litem = $(newitemElem.parentNode);
+            $(litem).highlight();
+            $('wfnewbutton').show();
+            _showWFItemControls();
+            $('workflowDropfinal').setAttribute('data-wfitemnum', parseInt(litem.getAttribute('data-wfitemnum')) + 1);
+            newitemElem = null;
         }
-    });
+    }).success(_ajaxReceiveTokens.curry('job_edit_tokens'));
 }
 function _wficancelnew() {
     var olist = $('workflowContent').down('ol');
@@ -436,100 +435,39 @@ function _wfiaddNewErrorHandler(elem,type,num,nodestep){
 }
 
 function _doMoveItem(from, to) {
-    var params = {fromnum:from,tonum:to,edit:true};
-    if (getCurSEID()) {
-        params['scheduledExecutionId'] = getCurSEID();
-    }
-
-    new Ajax.Updater($('workflowContent').down('ol'),
-        appLinks.workflowReorder, {
-        parameters: params,
-        evalScripts:true,
-        onComplete: function(transport) {
-            if (transport.request.success()) {
-                newitemElem = null;
-                $('wfnewbutton').show();
-                _showWFItemControls();
-            }
-        }
-    });
+    _ajaxWFAction(appLinks.workflowReorder,{fromnum:from,tonum:to,edit:true});
 }
 function _doRemoveItem(key,num,isErrorHandler) {
     var params = {delnum:num,edit:true,key:key,isErrorHandler:isErrorHandler};
-    if (getCurSEID()) {
-        params['scheduledExecutionId'] = getCurSEID();
-    }
     Effect.Fade($('wfivis_' + key), {duration:0.2,afterFinish:
         function(f) {
-            new Ajax.Updater($('workflowContent').down('ol'),
-                appLinks.workflowRemove, {
-                parameters: params,
-                evalScripts:true,
-                onComplete: function(transport) {
-                    if (transport.request.success()) {
-                        newitemElem = null;
-                        $('wfnewbutton').show();
-                        _showWFItemControls();
-                    }
-                }
-            });
+            _ajaxWFAction(appLinks.workflowRemove,params);
         }
     });
 }
 function _doUndoWFAction() {
-    var params = {edit:true};
-    if (getCurSEID()) {
-        params['scheduledExecutionId'] = getCurSEID();
-    }
-
-    new Ajax.Updater($('workflowContent').down('ol'),
-        appLinks.workflowUndo, {
-        parameters: params,
-        evalScripts:true,
-        onComplete: function(transport) {
-            if (transport.request.success()) {
-                newitemElem = null;
-                $('wfnewbutton').show();
-                _showWFItemControls();
-            }
-        }
-    });
+    _ajaxWFAction(appLinks.workflowUndo, {edit: true});
 }
 function _doRedoWFAction() {
-    var params = {edit:true};
-    if (getCurSEID()) {
-        params['scheduledExecutionId'] = getCurSEID();
-    }
-
-    new Ajax.Updater($('workflowContent').down('ol'),
-        appLinks.workflowRedo, {
-        parameters: params,
-        evalScripts:true,
-        onComplete: function(transport) {
-            if (transport.request.success()) {
-                newitemElem = null;
-                $('wfnewbutton').show();
-                _showWFItemControls();
-            }
-        }
-    });
+    _ajaxWFAction(appLinks.workflowRedo, {edit: true});
 }
 function _doResetWFAction() {
-    var params = {edit:true};
+    _ajaxWFAction(appLinks.workflowRevert, {edit: true});
+}
+function _ajaxWFAction(url, params){
+    var tokendataid = 'reqtoken_undo_workflow';
     if (getCurSEID()) {
         params['scheduledExecutionId'] = getCurSEID();
     }
-
-    new Ajax.Updater($('workflowContent').down('ol'),
-        appLinks.workflowRevert, {
-        parameters: params,
-        evalScripts:true,
-        onComplete: function(transport) {
-            if (transport.request.success()) {
-                newitemElem = null;
-                $('wfnewbutton').show();
-                _showWFItemControls();
-            }
+    jQuery.ajax({
+        type: 'POST',
+        url: _genUrl(url,params),
+        beforeSend: _ajaxSendTokens.curry(tokendataid),
+        success: function (data, status, jqxhr) {
+            jQuery('#workflowContent').find('ol').html(data);
+            newitemElem = null;
+            $('wfnewbutton').show();
+            _showWFItemControls();
         }
     });
 }
@@ -538,7 +476,7 @@ function _updateWFUndoRedo() {
     if (getCurSEID()) {
         params['scheduledExecutionId'] = getCurSEID();
     }
-    new Ajax.Updater($('wfundoredo'), appLinks.workflowRenderUndo, {parameters:params,evalScripts:true});
+    jQuery('#wfundoredo').load(_genUrl( appLinks.workflowRenderUndo,params));
 }
 
 

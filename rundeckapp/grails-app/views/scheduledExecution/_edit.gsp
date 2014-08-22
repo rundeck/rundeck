@@ -1,4 +1,6 @@
 <%@ page import="rundeck.User; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
+
+<g:jsonToken id="job_edit_tokens" url="${request.forwardURI}"/>
 <div class="list-group">
 <g:if test="${flash.message}">
     <div class="list-group-item">
