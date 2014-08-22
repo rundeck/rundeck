@@ -41,6 +41,9 @@ function html_unescape(text){
 function loadJsonData(id){
     var dataElement = document.getElementById(id);
     // unescape the content of the span
+    if(!dataElement){
+        return null;
+    }
     var jsonText = dataElement.textContent || dataElement.innerText
     return JSON.parse(jsonText);
 }
@@ -760,7 +763,7 @@ function _initAnsiToggle(){
 function _ajaxSendTokens(id,jqxhr,settings){
     var elem = jQuery('#' + id);
     var data = {};
-    if(elem.data('rundeck-token-key') && elem.data('rundeck-token-uri')){
+    if(elem && elem.data('rundeck-token-key') && elem.data('rundeck-token-uri')){
         data={TOKEN: elem.data('rundeck-token-key'), URI: elem.data('rundeck-token-uri')};
     }else{
         data=loadJsonData(id);
@@ -768,10 +771,8 @@ function _ajaxSendTokens(id,jqxhr,settings){
     if(data && data.TOKEN && data.URI){
         jqxhr.setRequestHeader('X-RUNDECK-TOKEN-KEY',data.TOKEN);
         jqxhr.setRequestHeader('X-RUNDECK-TOKEN-URI',data.URI);
-        return true;
-    }else{
-        return false;
     }
+    return true;
 }
 /**
  * Use as a ajaxSuccess event handler for ajax requests, to replace request tokens for an element in the dom.
