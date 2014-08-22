@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import grails.test.ControllerUnitTestCase
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.mock.web.MockMultipartHttpServletRequest
 import rundeck.services.ApiService
@@ -152,9 +153,7 @@ class ScheduledExecutionControllerTests  {
     }
 
     public void testSaveBasic() {
-        def sec = new ScheduledExecutionController()
-        if (true) {//test basic copy action
-
+        def sec = controller
             def se = new ScheduledExecution(
                     jobName: 'monkey1', project: 'testProject', description: 'blah',
                     workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
@@ -197,14 +196,22 @@ class ScheduledExecutionControllerTests  {
             subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
             sec.request.setAttribute("subject", subject)
 
+            setupFormTokens(sec)
+
             sec.save()
 
             assertNotNull sec.flash.savedJob
             assertNotNull sec.flash.savedJobMessage
             assertNull view, view
             assertEquals("/scheduledExecution/show/1", response.redirectedUrl)
-        }
     }
+
+    protected void setupFormTokens(ScheduledExecutionController sec) {
+        def token = SynchronizerTokensHolder.store(session)
+        sec.params[SynchronizerTokensHolder.TOKEN_KEY] = token.generateToken('/test')
+        sec.params[SynchronizerTokensHolder.TOKEN_URI] = '/test'
+    }
+
     public void testtransferSessionEditStateOpts() {
         def se = new ScheduledExecutionController()
         def params = [:]
@@ -301,7 +308,7 @@ class ScheduledExecutionControllerTests  {
             subject.principals << new Username('test')
             subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
             sec.request.setAttribute("subject", subject)
-
+            setupFormTokens(sec)
             sec.update()
 
             assertNotNull sec.flash.savedJob
@@ -364,6 +371,7 @@ class ScheduledExecutionControllerTests  {
             subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
             sec.request.setAttribute("subject", subject)
 
+        setupFormTokens(sec)
             sec.update()
 
             assertNotNull sec.flash.savedJob
@@ -421,6 +429,7 @@ class ScheduledExecutionControllerTests  {
 
             sec.metaClass.message={parms -> parms?.code ?: 'messageCodeMissing'}
 
+        setupFormTokens(sec)
             sec.save()
 
             assertNull sec.response.redirectedUrl
@@ -478,6 +487,7 @@ class ScheduledExecutionControllerTests  {
 
             sec.metaClass.message={parms -> parms?.code ?: 'messageCodeMissing'}
 
+        setupFormTokens(sec)
             sec.save()
 
             assertNull sec.response.redirectedUrl
@@ -1277,7 +1287,7 @@ class ScheduledExecutionControllerTests  {
      * test application/x-www-form-urlencoded instead of multipart
      */
     public void testUploadFormContentShouldCreate() {
-        def sec = new ScheduledExecutionController()
+        def sec = controller
 
         ScheduledExecution expectedJob = new ScheduledExecution(
                 uuid: 'testUUID',
@@ -1339,7 +1349,10 @@ class ScheduledExecutionControllerTests  {
         sec.request.setAttribute("subject", subject)
         sec.params.project="project1"
 
-        def result = sec.upload()
+        setupFormTokens(sec)
+
+        sec.uploadPost()
+        def result=sec.modelAndView.model
         assertNull sec.response.redirectedUrl
         assertNull "Result had an error: ${sec.flash.error}", sec.flash.error
         assertNull "Result had an error: ${sec.flash.message}", sec.flash.message
@@ -1426,7 +1439,11 @@ class ScheduledExecutionControllerTests  {
         sec.request.setAttribute("subject", subject)
         sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
         sec.params.project = "BProject"
-        def result = sec.upload()
+
+        setupFormTokens(sec)
+
+        sec.uploadPost()
+        def result = sec.modelAndView.model
         //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
         assertNotNull result
         assertTrue result.didupload
@@ -1504,7 +1521,11 @@ class ScheduledExecutionControllerTests  {
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
         sec.request.setAttribute("subject", subject)
         sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
-        def result = sec.upload()
+
+        setupFormTokens(sec)
+
+        sec.uploadPost()
+        def result = sec.modelAndView.model
         //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
         assertNotNull result
         assertTrue result.didupload
@@ -1595,7 +1616,11 @@ class ScheduledExecutionControllerTests  {
 
         sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/yaml', xml as byte[]))
         sec.params.fileformat = "yaml"
-        def result = sec.upload()
+
+        setupFormTokens(sec)
+
+        sec.uploadPost()
+        def result = sec.modelAndView.model
         //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
         assertNotNull result
         assertTrue result.didupload
@@ -1685,7 +1710,12 @@ class ScheduledExecutionControllerTests  {
         sec.params.project = "project1"
 
         sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
-        def result = sec.upload()
+
+        setupFormTokens(sec)
+
+
+        sec.uploadPost()
+        def result = sec.modelAndView.model
         //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
         assertNotNull result
         assertTrue result.didupload
@@ -1744,10 +1774,13 @@ class ScheduledExecutionControllerTests  {
         sec.scheduledExecutionService = mock2.createMock()
 
         request.method="POST"
-        def result = sec.upload()
-        assertEquals('No file was uploaded.', sec.flash.message)
-        assertNull result
 
+        setupFormTokens(sec)
+
+
+        sec.uploadPost()
+        def result = sec.modelAndView.model
+        assertEquals('No file was uploaded.', sec.request.getAttribute('message'))
     }
     /**
      * test missing File content
@@ -1768,9 +1801,12 @@ class ScheduledExecutionControllerTests  {
         mock2.demand.nextExecutionTimes { joblist -> return [] }
         sec.scheduledExecutionService = mock2.createMock()
 
-        def result = sec.upload()
-        assertEquals "No file was uploaded.", sec.flash.message
-        assertNull result
 
+        setupFormTokens(sec)
+
+
+        sec.uploadPost()
+        def result = sec.modelAndView.model
+        assertEquals "No file was uploaded.", sec.request.getAttribute('message')
     }
 }
