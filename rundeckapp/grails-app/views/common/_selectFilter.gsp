@@ -55,3 +55,4 @@
     <g:select name="filterName" optionKey="name" optionValue="name" from="${filterset?filterset.sort({a,b->a.name.compareTo(b.name)}):filterset}" value="${filterName}"
         noSelection="${['':noSelection?noSelection:'-select a filter-']}" onchange="setFilter('${enc(attr:prefName)}',this.value);"/>
 </g:elseif>
+<g:jsonToken id="filter_select_tokens" url="${request.forwardURI}"/>

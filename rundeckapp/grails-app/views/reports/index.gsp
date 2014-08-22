@@ -208,8 +208,7 @@
             }
         }
 
-        function _setFilterSuccess(response,name){
-            var data=JSON.parse(response.responseText); // evaluate the JSON;
+        function _setFilterSuccess(data,name){
             if(data){
                 var bfilters=data['filterpref'];
                 eventsparams={filterName:bfilters[name]};

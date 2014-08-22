@@ -112,22 +112,12 @@
 
         //set box filterselections
 
-        function _setFilterSuccess(response,name){
-            var data=JSON.parse(response.responseText); // evaluate the JSON;
+        function _setFilterSuccess(data,name){
             if(data){
                 var bfilters=data.filterpref;
                 //reload page
                 document.location=_genUrl(appLinks.menuJobs , bfilters[name] ? {filterName:bfilters[name]} : {});
             }
-        }
-        function setFilter(name,value){
-            if(!value){
-                value="!";
-            }
-            var str=name+"="+value;
-            new Ajax.Request(appLinks.userAddFilterPref,{parameters:{filterpref:str}, evalJSON:true,onSuccess:function(response){
-                _setFilterSuccess(response,name);
-            }});
         }
 
 

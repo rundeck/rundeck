@@ -272,15 +272,20 @@
             callback=_setFilterSuccess;
         }
         var str=name+"="+value;
-        new Ajax.Request("${createLink(controller:'user',action:'addFilterPref')}",{parameters:{filterpref:str}, evalJSON:true,onSuccess:function(response){
-            if(typeof(callback)==='function'){
-                callback(response,name);
-            }else{
-                try{
-                    _setFilterSuccess(response,name);
-                }catch(e){
+        jQuery.ajax({
+            type:'POST',
+            url:_genUrl(appLinks.userAddFilterPref,{filterpref:str}),
+            beforeSend:_ajaxSendTokens.curry('filter_select_tokens'),
+            success:function(data,status,jqxhr){
+                if(typeof(callback)==='function'){
+                    callback(data,name);
+                }else if(typeof(_setFilterSuccess)=='function'){
+                    try{
+                        _setFilterSuccess(data,name);
+                    }catch(e){
+                    }
                 }
             }
-        }});
+        }).success(_ajaxReceiveTokens.curry('filter_select_tokens'));
     }
 </script>
