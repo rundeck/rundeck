@@ -416,6 +416,7 @@ class MenuController extends ControllerBase{
     
     
     def storeJobfilter(ScheduledExecutionQuery query, StoreFilterCommand storeFilterCommand){
+        withForm{
         if (storeFilterCommand.hasErrors()) {
             flash.errors = storeFilterCommand.errors
             params.saveFilter = true
@@ -460,10 +461,14 @@ class MenuController extends ControllerBase{
             }
         }
         redirect(controller:'menu',action:params.fragment?'jobsFragment':'jobs',params:[filterName:filter.name,project:params.project])
+        }.invalidToken {
+            renderErrorView(g.message(code:'request.error.invalidtoken.message'))
+        }
     }
     
     
     def deleteJobfilter={
+        withForm{
         def User u = userService.findOrCreateUser(session.user)
         def filtername=params.delFilterName
         final def ffilter = ScheduledExecutionFilter.findByNameAndUser(filtername, u)
@@ -472,6 +477,9 @@ class MenuController extends ControllerBase{
             flash.message="Filter deleted: ${filtername.encodeAsHTML()}"
         }
         redirect(controller:'menu',action:params.fragment?'jobsFragment':'jobs',params:[project: params.project])
+        }.invalidToken{
+            renderErrorView(g.message(code:'request.error.invalidtoken.message'))
+        }
     }
 
     def admin={

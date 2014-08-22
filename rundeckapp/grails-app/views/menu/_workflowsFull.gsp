@@ -47,7 +47,7 @@
 
             <td style="text-align:left;vertical-align:top;width:200px; ${wdgt.styleVisible(if:filtersOpen)}" id="${enc(attr:rkey)}filter" class="wffilter" >
 
-            <g:form action="jobs" params="[project:params.project]" method="get" class="form">
+            <g:form action="jobs" params="[project:params.project]" method="POST" class="form" useToken="true">
                 <g:if test="${params.compact}">
                     <g:hiddenField name="compact" value="${params.compact}"/>
                 </g:if>
@@ -73,7 +73,10 @@
                     </button>
                     </div>
                 </g:else>
-                <g:render template="/common/queryFilterManagerModal" model="${[rkey:rkey,filterName:filterName,filterset:filterset,update:rkey+'wffilterform',deleteActionSubmit:'deleteJobfilter',storeActionSubmit:'storeJobfilter']}"/>
+                <g:render template="/common/queryFilterManagerModal" model="${[rkey:rkey,filterName:filterName,
+                        filterset:filterset,update:rkey+'wffilterform',
+                        deleteActionSubmit:'deleteJobfilter',
+                        storeActionSubmit:'storeJobfilter']}"/>
                 
                 <div class="filter">
 
