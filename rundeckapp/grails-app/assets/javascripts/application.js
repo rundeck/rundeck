@@ -375,7 +375,7 @@ function onlychars(regex, e) {
     return !(e && kCode != 0 && !String.fromCharCode(kCode).match(regex));
 }
 function fireWhenReady(elem,func){
-    if(jQuery('#'+elem)){
+    if(jQuery('#'+elem).size()>0){
         func();
     }else{
         jQuery.ready(func);
