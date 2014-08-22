@@ -9,6 +9,8 @@ import rundeck.AuthToken
 import rundeck.services.FrameworkService
 import rundeck.services.UserService
 
+import javax.servlet.http.HttpServletResponse
+
 class UserController extends ControllerBase{
     UserService userService
     FrameworkService frameworkService
@@ -356,15 +358,27 @@ class UserController extends ControllerBase{
     }
 
     def addFilterPref={
-        def result = userService.storeFilterPref(session.user,params.filterpref)
-        if(result.error){
-            return renderErrorFragment(result.error)
-        }
-        def storedpref=result.storedpref
+        withForm{
+            def result = userService.storeFilterPref(session.user,params.filterpref)
+            if(result.error){
+                return renderErrorFragment(result.error)
+            }
+            def storedpref=result.storedpref
 
-        render(contentType:"text/json"){
-            delegate.result="success"
-            delegate.filterpref=storedpref
+            //include new request tokens as headers in response
+            g.refreshFormTokensHeader()
+
+            render(contentType:"text/json"){
+                delegate.result="success"
+                delegate.filterpref=storedpref
+            }
+
+        }.invalidToken{
+            response.status= HttpServletResponse.SC_BAD_REQUEST
+            render(contentType: "text/json") {
+                delegate.result = "error"
+                delegate.message=g.message(code:'request.error.invalidtoken.message')
+            }
         }
     }
 
