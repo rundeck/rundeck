@@ -30,7 +30,8 @@ class ReportsController extends ControllerBase{
     def scheduledExecutionService
     def ApiService apiService
     static allowedMethods = [
-            deleteFilter:'POST'
+            deleteFilter:'POST',
+            storeFilter:'POST'
     ]
 
     public def index (ExecQuery query) {
@@ -299,6 +300,7 @@ class ReportsController extends ControllerBase{
 
 
     public def storeFilter(ReportQuery query, StoreFilterCommand storeFilterCommand) {
+        withForm{
         if(storeFilterCommand.hasErrors()){
             request.errors=storeFilterCommand.errors
             return renderErrorView([:])
@@ -333,17 +335,26 @@ class ReportsController extends ControllerBase{
             }
         }
         redirect(controller:'reports',action:params.fragment?'eventsFragment':'index',params:[filterName:filter.name,project:params.project])
+        }.invalidToken {
+            flash.error=g.message(code:'request.error.invalidtoken.message')
+            redirect(controller: 'reports', action: params.fragment ? 'eventsFragment' : 'index', params: [project: params.project])
+        }
     }
 
-    def deleteFilter={
-         def User u = userService.findOrCreateUser(session.user)
-        def filtername=params.delFilterName
-        final def ffilter = ReportFilter.findByNameAndUser(filtername, u)
-        if(ffilter){
-            ffilter.delete(flush:true)
-            flash.message="Filter deleted: ${filtername}"
+    def deleteFilter(){
+        withForm{
+            def User u = userService.findOrCreateUser(session.user)
+            def filtername=params.delFilterName
+            final def ffilter = ReportFilter.findByNameAndUser(filtername, u)
+            if(ffilter){
+                ffilter.delete(flush:true)
+                flash.message="Filter deleted: ${filtername}"
+            }
+            redirect(controller:'reports',action:params.fragment?'eventsFragment':'index',params:[project:params.project])
+        }.invalidToken {
+            flash.error= g.message(code: 'request.error.invalidtoken.message')
+            redirect(controller: 'reports', action: params.fragment ? 'eventsFragment' : 'index', params: [filterName: params.delFilterName,project: params.project])
         }
-        redirect(controller:'reports',action:params.fragment?'eventsFragment':'index',params:[project:params.project])
     }
    
 
