@@ -546,6 +546,7 @@ class FrameworkController extends ControllerBase {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
             return renderErrorView([:])
         }
+        withForm{
         def User u = userService.findOrCreateUser(session.user)
         def NodeFilter filter
         def boolean saveuser=false
@@ -578,15 +579,24 @@ class FrameworkController extends ControllerBase {
             }
         }
         redirect(controller:'framework',action:params.fragment?'nodesFragment':'nodes',params:[filterName:filter.name,project:params.project])
+        }.invalidToken{
+            response.status=HttpServletResponse.SC_BAD_REQUEST
+            renderErrorView(g.message('request.error.invalidtoken.message'))
+        }
     }
     def deleteNodeFilter={
-        def User u = userService.findOrCreateUser(session.user)
-        def filtername=params.delFilterName
-        final def ffilter = NodeFilter.findByNameAndUser(filtername, u)
-        if(ffilter){
-            ffilter.delete(flush:true)
+        withForm{
+            def User u = userService.findOrCreateUser(session.user)
+            def filtername=params.delFilterName
+            final def ffilter = NodeFilter.findByNameAndUser(filtername, u)
+            if(ffilter){
+                ffilter.delete(flush:true)
+            }
+            redirect(controller:'framework',action:params.fragment?'nodesFragment':'nodes',params:[project: params.project])
+        }.invalidToken{
+            request.error=g.message(code:'request.error.invalidtoken.message')
+            renderErrorView([:])
         }
-        redirect(controller:'framework',action:params.fragment?'nodesFragment':'nodes',params:[project: params.project])
     }
 
     /**

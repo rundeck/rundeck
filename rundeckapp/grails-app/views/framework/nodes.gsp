@@ -248,7 +248,7 @@
     </div>
 
     %{--Form for saving/deleting node filters--}%
-    <g:form class="form form-horizontal">
+    <g:form class="form form-horizontal" useToken="true">
         <g:hiddenField name="project" value="${params.project}"/>
         <g:render template="nodeFiltersHidden"/>
         <g:render template="/common/queryFilterManagerModal"
