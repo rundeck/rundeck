@@ -10,62 +10,56 @@
         var row=table.insertRow(-1);
         $(row).addClassName('apitokenform');
         $(row).style.opacity=0;
-        new Ajax.Updater(row,'${g.createLink(controller: 'user', action: 'renderApiToken')}',{
-            parameters:{login:login,token:token},
-            onComplete:function(req2){
-                if(req2.request.success()){
+        jQuery(row).load(_genUrl('${g.createLink(controller: 'user', action: 'renderApiToken')}',{login:login,token:token}),function(resp,status,jqxhr){
                     addRowBehavior($(row));
                     Effect.Appear($(row));
-                }
-            }
-
         });
     }
+    function tokenAjaxError(elem,msg){
+        setText($(elem).down('.gentokenerror-text'),"Error: "+msg);
+        $(elem).down('.gentokenerror').show();
+    }
     function generateToken(login,elem){
-        new Ajax.Request('${g.createLink(controller: 'user', action: 'generateApiToken')}.json',{
-            parameters:{login:login},
-            evalJSON:true,
-            onComplete:function(req){
-                var success=req.request.success();
-                var json=req.responseJSON;
-                var error = !success?req:json.error?json.error:null;
-                if( !error && json.result){
-                    addTokenRow(elem,login,json.apitoken);
+        jQuery.ajax({
+            type:'POST',
+            dataType:'json',
+            url:_genUrl(appLinks.userGenerateApiToken,{login:login}),
+            beforeSend:_ajaxSendTokens.curry('api_req_tokens'),
+            success:function(data,status,jqxhr){
+                if( data.result){
+                    addTokenRow(elem,login,data.apitoken);
                 }else{
-                    setText($(elem).down('.gentokenerror'),"Error: "+error);
-                    $(elem).down('.gentokenerror').show();
+                    tokenAjaxError(elem,data.error);
                 }
+            },
+            error:function(jqxhr,status,error){
+                tokenAjaxError(elem,jqxhr.responseJSON.error?jqxhr.responseJSON.error:error);
             }
-        });
+        }).success(_ajaxReceiveTokens.curry('api_req_tokens'));
     }
     function clearToken(elem){
         var login=$(elem).down('input[name="login"]').value;
         var token=$(elem).down('input[name="token"]').value;
-        new Ajax.Request('${g.createLink(controller: 'user', action: 'clearApiToken')}.json',{
-            parameters:{login:login,token:token},
-            evalJSON:true,
-            onComplete:function(req){
-                var success=req.request.success();
-                var json=req.responseJSON;
-                var error = !success?req:json.error?json.error:null;
-                if( !error && json.result){
-                    jQuery('#'+elem.identify()+' .modal').modal('hide');
-                    //remove element
+        var nelem=$(elem).up('.userapitoken');
+         jQuery.ajax({
+            type:'POST',
+            dataType:'json',
+            url:_genUrl(appLinks.userClearApiToken,{login:login,token:token}),
+            beforeSend:_ajaxSendTokens.curry('api_req_tokens'),
+            success:function(data,status,jqxhr){
+                if( data.error){
+                    tokenAjaxError(elem,data.error);
+                }else if(data.result){
+                    //remove row element
                     Effect.DropOut(elem);
-                }else{
-                    setText($(elem).up('.userapitoken').down('.gentokenerror'),"Error: "+error);
-                    $(elem).up('.userapitoken').down('.gentokenerror').show();
                 }
+            },
+            error:function(jqxhr,status,error){
+                tokenAjaxError(nelem,jqxhr.responseJSON.error?jqxhr.responseJSON.error:error);
+            },complete:function(){
+                jQuery('#'+elem.identify()+' .modal').modal('hide');
             }
-        });
-    }
-    function clearShow(elem){
-//        $(elem).down('.clearconfirm').show();
-//        $(elem).down('.cleartokenbtn').hide();
-    }
-    function clearHide(elem){
-//        $(elem).down('.clearconfirm').hide();
-//        $(elem).down('.cleartokenbtn').show();
+        }).success(_ajaxReceiveTokens.curry('api_req_tokens'));
     }
     function mkhndlr(func){
         return function(e){e.stop();func();return false;};
@@ -96,7 +90,7 @@
 
 <div class="pageBody" id="userProfilePage">
     <g:render template="/common/messages"/>
-
+    <g:jsonToken id='api_req_tokens' url="${request.forwardURI}"/>
     <tmpl:user user="${user}" edit="${true}"/>
 </div>
 </body>

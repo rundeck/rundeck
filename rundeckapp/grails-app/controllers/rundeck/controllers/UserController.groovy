@@ -108,6 +108,7 @@ class UserController extends ControllerBase{
         return model
     }
     public def store(User user){
+        withForm{
         if(user.hasErrors()){
             flash.errors=user.errors
             return render(view: 'edit', model: [user: user])
@@ -135,8 +136,13 @@ class UserController extends ControllerBase{
         }
         flash.message="User profile updated: ${user.login}"
         return redirect(action:'profile',params:[login: user.login])
+        }.invalidToken {
+            flash.error = g.message(code: 'request.error.invalidtoken.message')
+            return render(view: 'edit', model: [user: user])
+        }
     }
     public def update (User user) {
+        withForm{
         if (user.hasErrors()) {
             flash.errors = user.errors
             return render(view: 'edit', model: [user: user])
@@ -163,6 +169,10 @@ class UserController extends ControllerBase{
         }
         flash.message="User profile updated: ${params.login}"
         return redirect(action:'profile',params:[login:params.login])
+        }.invalidToken {
+            flash.error = g.message(code: 'request.error.invalidtoken.message')
+            return render(view: 'edit', model: [user: user])
+        }
     }
 
     def cancel={
@@ -173,6 +183,25 @@ class UserController extends ControllerBase{
         return model
     }
     def generateApiToken(User user) {
+        boolean valid=false
+        withForm{
+            valid=true
+            g.refreshFormTokensHeader()
+        }.invalidToken{
+            response.status=HttpServletResponse.SC_BAD_REQUEST
+            request.error = g.message(code: 'request.error.invalidtoken.message')
+            withFormat {
+                html {
+                    return render(view: 'profile', model: [user: user])
+                }
+                json {
+                    render([error: request.error] as JSON)
+                }
+            }
+        }
+        if(!valid){
+            return
+        }
         if (user.hasErrors()) {
             request.errors = user.errors
             withFormat {
@@ -269,6 +298,25 @@ class UserController extends ControllerBase{
     }
 
     def clearApiToken(User user) {
+        boolean valid=false
+        withForm{
+            valid=true
+            g.refreshFormTokensHeader()
+        }.invalidToken{
+            response.status = HttpServletResponse.SC_BAD_REQUEST
+            request.error = g.message(code: 'request.error.invalidtoken.message')
+            withFormat {
+                html {
+                    return render(view: 'profile', model: [user: user])
+                }
+                json {
+                    render([error: request.error] as JSON)
+                }
+            }
+        }
+        if(!valid){
+            return
+        }
         if (user.hasErrors()) {
             request.errors = user.errors
             withFormat {
