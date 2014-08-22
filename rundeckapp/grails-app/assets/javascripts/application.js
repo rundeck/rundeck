@@ -747,8 +747,24 @@ function _initAnsiToggle(){
     jQuery('.ansi-color-toggle').on('change',_toggleAnsiColor);
     jQuery('.nodes_run_content').on('change','.ansi-color-toggle',_toggleAnsiColor);
 }
+/**
+ * Use as a beforeSend ajax handler to include request tokens in ajax request. The tokens are either read from
+ * data stored in the dom on the element with given id, by the _ajaxReceiveTokens, or by loading json text
+ * embedded int the body of the element.
+ * @param id id of embedded token json script element
+ * @param jqxhr
+ * @param settings
+ * @returns {boolean}
+ * @private
+ */
 function _ajaxSendTokens(id,jqxhr,settings){
-    var data = loadJsonData(id);
+    var elem = jQuery('#' + id);
+    var data = {};
+    if(elem.data('rundeck-token-key') && elem.data('rundeck-token-uri')){
+        data={TOKEN: elem.data('rundeck-token-key'), URI: elem.data('rundeck-token-uri')};
+    }else{
+        data=loadJsonData(id);
+    }
     if(data && data.TOKEN && data.URI){
         jqxhr.setRequestHeader('X-RUNDECK-TOKEN-KEY',data.TOKEN);
         jqxhr.setRequestHeader('X-RUNDECK-TOKEN-URI',data.URI);
@@ -757,17 +773,41 @@ function _ajaxSendTokens(id,jqxhr,settings){
         return false;
     }
 }
+/**
+ * Use as a ajaxSuccess event handler for ajax requests, to replace request tokens for an element in the dom.
+ * @param id
+ * @param data
+ * @param status
+ * @param jqxhr
+ * @private
+ */
+function _ajaxReceiveTokens(id,data,status,jqxhr){
+    var elem=jQuery('#'+id);
+    if (jqxhr.getResponseHeader('X-RUNDECK-TOKEN-KEY') && jqxhr.getResponseHeader('X-RUNDECK-TOKEN-URI')) {
+        try {
+            elem.data('rundeck-token-key', jqxhr.getResponseHeader('X-RUNDECK-TOKEN-KEY'));
+            elem.data('rundeck-token-uri', jqxhr.getResponseHeader('X-RUNDECK-TOKEN-URI'));
+        } catch (e) {
+        }
+    }
+}
 function _initTokenRefresh() {
     var xtokens={};
     jQuery(document).ajaxComplete(function (evt, xhr, opts) {
         if (xhr.getResponseHeader('X-RUNDECK-TOKEN-KEY') && xhr.getResponseHeader('X-RUNDECK-TOKEN-URI')) {
             try {
+                xtokens[xhr.getResponseHeader('X-RUNDECK-TOKEN-URI')]= xhr.getResponseHeader('X-RUNDECK-TOKEN-KEY');
                 jQuery('#SYNCHRONIZER_TOKEN').val(xhr.getResponseHeader('X-RUNDECK-TOKEN-KEY'));
                 jQuery('#SYNCHRONIZER_URI').val(xhr.getResponseHeader('X-RUNDECK-TOKEN-URI'));
             } catch (e) {
 
             }
         }
+//    }).ajaxSend(function (event, jqxhr, settings) {
+//        if (xtokens['key'] && xtokens['uri']) {
+//            jqxhr.setRequestHeader('X-RUNDECK-TOKEN-KEY',xtokens['key']);
+//            jqxhr.setRequestHeader('X-RUNDECK-TOKEN-URI',xtokens['uri']);
+//        }
     });
 }
 (function(){
