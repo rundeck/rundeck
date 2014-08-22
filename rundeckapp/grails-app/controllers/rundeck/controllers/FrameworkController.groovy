@@ -66,7 +66,6 @@ class FrameworkController extends ControllerBase {
             createProjectPost: 'POST',
             deleteNodeFilter: 'POST',
             saveProject: 'POST',
-            saveResourceModelConfig: 'POST',
             storeNodeFilter: 'POST',
     ]
 
@@ -1090,39 +1089,7 @@ class FrameworkController extends ControllerBase {
         request.error=error
         return render(template: '/common/messages')
     }
-    public def saveResourceModelConfig(PluginConfigParams pluginConfig) {
-        if (pluginConfig.hasErrors()) {
-            request.errors = pluginConfig.errors
-            return render(template: '/common/messages')
-        }
-        def project = params.project
-        Framework framework = frameworkService.getRundeckFramework()
-        def error
-        def prefix = params.prefix ?: ''
-        def String type=params[prefix+'type']
-        def newparams = new PluginConfigParams()
-        newparams.type=type
-        if(!newparams.validate()){
-            request.errors = newparams.errors
-            return render(template: '/common/messages')
-        }
-        Properties props
-        def report
-        def desc
-        if (!type) {
-            error = "Plugin provider type must be specified"
-        }else{
-            def validate = frameworkService.validateServiceConfig(type, prefix + 'config.', params, framework.getResourceModelSourceService())
-            error = validate.error
-            desc = validate.desc
-            props = validate.props
-            report = validate.report
-            if(report.valid){
-                return render(template: 'viewResourceModelConfig',model:[project:project,prefix:prefix,includeFormFields:true,values:props,description:desc])
-            }
-        }
-        render(view:'createResourceModelConfig',model:[project:project,prefix:prefix,values:props,description:desc,report:report,error:error])
-    }
+
     public def checkResourceModelConfig(PluginConfigParams pluginConfig) {
         if (pluginConfig.hasErrors()) {
             def errorMsgs = pluginConfig.errors.allErrors.collect { g.message(error: it) }
