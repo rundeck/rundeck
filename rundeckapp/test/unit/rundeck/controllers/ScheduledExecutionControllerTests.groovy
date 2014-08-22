@@ -205,6 +205,59 @@ class ScheduledExecutionControllerTests  {
             assertNull view, view
             assertEquals("/scheduledExecution/show/1", response.redirectedUrl)
     }
+    public void testSave_invalidToken() {
+        def sec = controller
+            def se = new ScheduledExecution(
+                    jobName: 'monkey1', project: 'testProject', description: 'blah',
+                    workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
+            )
+            se.save()
+//
+            assertNotNull se.id
+
+            //try to do update of the ScheduledExecution
+            def fwkControl = mockFor(FrameworkService, true)
+            fwkControl.demand.getRundeckFramework {-> return null }
+            fwkControl.demand.getAuthContextForSubject {subject -> return null }
+            fwkControl.demand.projects {return []}
+            fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getRundeckFramework {-> return null }
+            fwkControl.demand.getRundeckFramework {-> return null }
+            sec.frameworkService = fwkControl.createMock()
+            def seServiceControl = mockFor(ScheduledExecutionService, true)
+
+            seServiceControl.demand.getByIDorUUID {id -> return se }
+            seServiceControl.demand._dosave {params, user, rolelist, framework, authctx, changeinfo ->
+                [success: true, scheduledExecution: se]
+            }
+            seServiceControl.demand.logJobChange {changeinfo, properties ->}
+            sec.scheduledExecutionService = seServiceControl.createMock()
+
+
+            sec.metaClass.message={params -> params?.code?:'messageCodeMissing'}
+
+            def params = [
+                    jobName: 'monkey1',
+                    project: 'testProject',
+                    description: 'blah',
+                    workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'a remote string']]
+            ]
+            sec.params.putAll(params)
+            final subject = new Subject()
+            subject.principals << new Username('test')
+            subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
+            sec.request.setAttribute("subject", subject)
+
+            //don't include request token
+
+            sec.save()
+
+            assertNull sec.flash.savedJob
+            assertNull sec.flash.savedJobMessage
+            assertEquals( '/common/error', view)
+            assertEquals("request.error.invalidtoken.message", request.getAttribute('errorCode'))
+    }
 
     protected void setupFormTokens(ScheduledExecutionController sec) {
         def token = SynchronizerTokensHolder.store(session)
@@ -315,6 +368,72 @@ class ScheduledExecutionControllerTests  {
             assertNotNull sec.flash.savedJobMessage
             assertNull view
             assertEquals("/scheduledExecution/show/1", response.redirectedUrl)
+    }
+    public void testUpdate_invalidToken() {
+        def sec = new ScheduledExecutionController()
+            def se = new ScheduledExecution(
+                    jobName: 'monkey1', project: 'testProject', description: 'blah',
+                    options: [new Option(name: 'blah',enforced:false)],
+                    workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
+            )
+            if(!se.validate()){
+                println(se.errors.allErrors.collect{it.toString()}.join(", "))
+            }
+            assertNotNull(se.save())
+//
+            assertNotNull se.id
+
+            //try to do update of the ScheduledExecution
+            def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getRundeckFramework {-> return null }
+        fwkControl.demand.getAuthContextForSubject {subject -> return null }
+            fwkControl.demand.projects {return []}
+            fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+        fwkControl.demand.getRundeckFramework {-> return null }
+        fwkControl.demand.getRundeckFramework {-> return null }
+            sec.frameworkService = fwkControl.createMock()
+            def seServiceControl = mockFor(ScheduledExecutionService, true)
+
+            seServiceControl.demand.getByIDorUUID {id -> return se }
+            seServiceControl.demand._doupdate {params, user, roleList, framework, authctx, changeinfo = [:] ->
+                assertNotNull(params['_sessionEditOPTSObject'])
+                assertEquals([],params['_sessionEditOPTSObject'])
+                [success: true, scheduledExecution: se]
+            }
+            seServiceControl.demand.logJobChange {changeinfo, properties ->}
+            sec.scheduledExecutionService = seServiceControl.createMock()
+
+
+            sec.metaClass.message={params -> params?.code?:'messageCodeMissing'}
+
+            def params = [
+                    id:se.id.toString(),
+                    jobName: 'monkey1',
+                    project: 'testProject',
+                    description: 'blah',
+                    workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'a remote string']],
+                    _sessionopts:true,
+            ]
+            sec.session['editOPTS']= [
+                    (se.id.toString()): [
+                            //empty list
+                    ]
+            ]
+            sec.params.putAll(params)
+            final subject = new Subject()
+            subject.principals << new Username('test')
+            subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
+            sec.request.setAttribute("subject", subject)
+            //don't include token
+            sec.update()
+
+
+
+        assertNull sec.flash.savedJob
+        assertNull sec.flash.savedJobMessage
+        assertEquals('/common/error', view)
+        assertEquals("request.error.invalidtoken.message", request.getAttribute('errorCode'))
     }
     public void testUpdateSessionWFEditEmptyList() {
         def sec = new ScheduledExecutionController()
@@ -1370,6 +1489,81 @@ class ScheduledExecutionControllerTests  {
         assertEquals "testgroup", job.groupPath
         assertEquals "desc", job.description
         assertEquals "project1", job.project
+    }
+    /**
+     * test application/x-www-form-urlencoded instead of multipart
+     */
+    public void testUpload_invalidToken() {
+        def sec = controller
+
+        ScheduledExecution expectedJob = new ScheduledExecution(
+                uuid: 'testUUID',
+                jobName: 'test1',
+                project: 'project1',
+                groupPath: 'testgroup',
+                description: 'desc',
+                argString: '-a b -c d',
+                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+                options: [new Option(name: 'testopt', defaultValue: '`ls -t1 /* | head -n1`', values: ['a', 'b', 'c'])]
+        )
+
+        //create mock of FrameworkService
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getRundeckFramework {-> return null }
+        fwkControl.demand.getAuthContextForSubject { subject -> return null }
+        fwkControl.demand.existsFrameworkProject { project, framework -> return true }
+        fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
+        fwkControl.demand.authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
+        fwkControl.demand.getRundeckFramework {-> return null }
+        sec.frameworkService = fwkControl.createMock()
+        //mock the scheduledExecutionService
+        def mock2 = mockFor(ScheduledExecutionService, true)
+        mock2.demand.nextExecutionTimes { joblist -> return [] }
+        mock2.demand.parseUploadedFile { input,format ->
+            [jobset:[expectedJob]]
+        }
+        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, user, roleList, changeinfo, framework, authctx ->
+            assert jobset==[expectedJob]
+            [
+                    jobs: [expectedJob],
+                    jobsi: [scheduledExecution: expectedJob, entrynum: 0],
+                    errjobs: [],
+                    skipjobs: []
+            ]
+        }
+        sec.scheduledExecutionService = mock2.createMock()
+
+        def xml = '''
+<joblist>
+    <job>
+        <name>test1</name>
+        <group>testgroup</group>
+        <description>desc</description>
+        <context>
+            <project>project1</project>
+        </context>
+        <sequence>
+            <command><exec>echo test</exec></command>
+        </sequence>
+    </job>
+</joblist>
+'''
+        params.xmlBatch = xml.toString()
+        request.method='POST'
+        final subject = new Subject()
+        subject.principals << new Username('test')
+        subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
+        sec.request.setAttribute("subject", subject)
+        sec.params.project="project1"
+
+        //don't set up form tokens
+
+        sec.uploadPost()
+
+        assertNull sec.flash.savedJob
+        assertNull sec.flash.savedJobMessage
+        assertEquals('/scheduledExecution/upload', view)
+        assertEquals("request.error.invalidtoken.message", request.getAttribute('warn'))
     }
 
 
