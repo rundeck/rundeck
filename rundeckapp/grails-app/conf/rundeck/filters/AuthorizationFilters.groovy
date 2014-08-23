@@ -11,6 +11,8 @@ import rundeck.AuthToken
 import rundeck.services.FrameworkService
 
 import javax.servlet.ServletContext
+import javax.servlet.http.HttpServletRequest
+import javax.servlet.http.HttpServletResponse
 
 /*
  * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
@@ -48,6 +50,13 @@ public class AuthorizationFilters {
          */
         loginCheck(controller: 'user', action: '(logout|login|error)', invert: true) {
             before = {
+                if(request.api_version && request.remoteUser){
+                    if(!(grailsApplication.config.rundeck?.api?.access?.cookies?.enabled in ['true',true])){
+                        //disallow api access via normal login
+                        request.invalidApiAuthentication=true
+                        return
+                    }
+                }
                 if (request.remoteUser && session.user!=request.remoteUser) {
                     session.user = request.remoteUser
                     
