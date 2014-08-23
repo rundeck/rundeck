@@ -45,7 +45,7 @@ function loadJsonData(id){
         return null;
     }
     var jsonText = dataElement.textContent || dataElement.innerText
-    return JSON.parse(jsonText);
+    return jsonText && jsonText!=''?JSON.parse(jsonText):null;
 }
 
 function toggleDisclosure(id,iconid,closeUrl,openUrl){
