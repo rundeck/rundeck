@@ -46,7 +46,7 @@ class ExecutionServiceTests  {
         )
         assertNotNull(se.workflow.save())
         assertNotNull(se.save())
-        Execution e = new Execution(project:"test",user:'bob',dateStarted: new Date(),dateCompleted: null,scheduledExecution: se,workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]))
+        Execution e = new Execution(project:"AProject",user:'bob',dateStarted: new Date(),dateCompleted: null,scheduledExecution: se,workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]))
         def valid=e.validate()
         e.errors.allErrors.each {println it.toString() }
         assertTrue(valid)
@@ -82,7 +82,7 @@ class ExecutionServiceTests  {
         )
         assertNotNull(se.save())
 
-        Execution e = new Execution(project: "test", user: 'bob', dateStarted: new Date(), dateCompleted: null, scheduledExecution: se, workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]))
+        Execution e = new Execution(project: "AProject", user: 'bob', dateStarted: new Date(), dateCompleted: null, scheduledExecution: se, workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]))
         def valid = e.validate()
         e.errors.allErrors.each { println it.toString() }
         assertTrue(valid)
