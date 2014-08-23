@@ -329,3 +329,4 @@
 </div>
 
 </g:if>
+<g:jsonToken id="history_tokens" url="${request.forwardURI}"/>

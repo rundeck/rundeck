@@ -987,6 +987,22 @@ class ExecutionController extends ControllerBase{
         }
     }
 
+    /**
+     * API compatible Delete bulk action requiring form token
+     * @return
+     */
+    def deleteBulkApi() {
+        withForm{
+            request.api_version=ApiRequestFilters.API_CURRENT_VERSION
+            g.refreshFormTokensHeader()
+            apiExecutionDeleteBulk()
+        }.invalidToken{
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'request.error.invalidtoken.message',
+            ])
+        }
+    }
 
 
     /**

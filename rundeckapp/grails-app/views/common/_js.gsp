@@ -57,7 +57,7 @@
         menuJobsPicker: '${createLink(controller:"menu",action:"jobsPicker",params:projParams)}',
         scheduledExecutionGroupTreeFragment: '${createLink(controller:"scheduledExecution",action:"groupTreeFragment",params:projParams)}',
         storageKeysApi: '${createLink(uri:"/api/${ApiRequestFilters.API_CURRENT_VERSION}/storage/")}',
-        apiExecutionsBulkDelete: '${createLink(uri:"/api/${ApiRequestFilters.API_CURRENT_VERSION}/executions/delete")}'
+        apiExecutionsBulkDelete: '${createLink(controller:'execution',action: 'deleteBulkApi')}'
     } ;
     //compatibility with WB javascript:
     var AppImages = {
