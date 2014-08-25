@@ -50,12 +50,10 @@ public class AuthorizationFilters {
          */
         loginCheck(controller: 'user', action: '(logout|login|error)', invert: true) {
             before = {
-                if(request.api_version && request.remoteUser){
-                    if(!(grailsApplication.config.rundeck?.api?.access?.cookies?.enabled in ['true',true])){
-                        //disallow api access via normal login
-                        request.invalidApiAuthentication=true
-                        return
-                    }
+                if(request.api_version && request.remoteUser && !(grailsApplication.config.rundeck?.security?.apiCookieAccess?.enabled in ['true',true])){
+                    //disallow api access via normal login
+                    request.invalidApiAuthentication=true
+                    return
                 }
                 if (request.remoteUser && session.user!=request.remoteUser) {
                     session.user = request.remoteUser
