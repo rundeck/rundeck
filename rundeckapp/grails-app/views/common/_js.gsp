@@ -56,7 +56,7 @@
         editOptsRevert: '${createLink(controller:"editOpts",action:"revert",params:projParams)}',
         menuJobsPicker: '${createLink(controller:"menu",action:"jobsPicker",params:projParams)}',
         scheduledExecutionGroupTreeFragment: '${createLink(controller:"scheduledExecution",action:"groupTreeFragment",params:projParams)}',
-        storageKeysApi: '${createLink(uri:"/api/${ApiRequestFilters.API_CURRENT_VERSION}/storage/")}',
+        storageKeysApi: '${createLink(uri:'/storage/access/')}',
         apiExecutionsBulkDelete: '${createLink(controller:'execution',action: 'deleteBulkApi')}'
     } ;
     //compatibility with WB javascript:

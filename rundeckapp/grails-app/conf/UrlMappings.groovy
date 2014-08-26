@@ -116,6 +116,8 @@ class UrlMappings {
         "/project/$project/importArchive"(controller: 'project',action: 'importArchive')
         "/project/$project"(controller: 'menu',action: 'index')
         "/project/$project/$action"(controller: 'project')
+        "/storage/access/keys/$resourcePath**"(controller: 'storage', action: 'keyStorageAccess')
+        "/storage/access/keys"(controller: 'storage', action: 'keyStorageAccess')
         "/job/show/$id"(controller: 'scheduledExecution',action: 'show')
         "/execution/show/$id"(controller: 'execution',action: 'show')
         "404"(view: '/404')

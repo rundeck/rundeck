@@ -28,7 +28,8 @@ class StorageController {
     ApiService apiService
     FrameworkService frameworkService
     static allowedMethods = [
-            apiKeys: ['GET','POST','PUT','DELETE']
+            apiKeys: ['GET','POST','PUT','DELETE'],
+            storageAccess:['GET']
     ]
 
     private def pathUrl(path){
@@ -177,10 +178,20 @@ class StorageController {
     }
 
     /**
+     * non-api action wrapper for apiKeys method
+     */
+    public def keyStorageAccess(){
+        params.resourcePath = "/keys/${params.resourcePath ?: ''}"
+        apiGetResource()
+    }
+    /**
      * Handle resource requests to the /ssh-key path
      * @return
      */
     def apiKeys() {
+        if(!apiService.requireVersion(request,response,ApiRequestFilters.V11)){
+            return
+        }
         params.resourcePath = "/keys/${params.resourcePath?:''}"
         switch (request.method) {
             case 'POST':
