@@ -14,7 +14,7 @@ proj="test"
 params="project=${proj}&exec=echo+testing+execution+api"
 
 # get listing
-docurl ${runurl}?${params} > $DIR/curl.out
+docurl -X POST ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2

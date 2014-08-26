@@ -555,7 +555,7 @@ runurl="${APIURL}/execution/${execid}/abort"
 params=""
 
 # get listing
-docurl  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+docurl -X POST ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
 sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 

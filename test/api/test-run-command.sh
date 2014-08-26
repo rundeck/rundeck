@@ -13,16 +13,16 @@ execargs="echo this is a test of /api/run/command"
 runurl="${APIURL}/run/command"
 
 echo "TEST: /api/run/command should fail with no project param"
-sh $SRC_DIR/api-expect-error.sh "${runurl}" "project=" 'parameter "project" is required' && echo "OK" || exit 2
+CURL_REQ_OPTS="-X POST $CURL_REQ_OPTS" sh $SRC_DIR/api-expect-error.sh "${runurl}" "project=" 'parameter "project" is required' && echo "OK" || exit 2
 
 
 echo "TEST: /api/run/command should fail with no exec param"
 params="project=${proj}"
-sh $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" 'parameter "exec" is required' && echo "OK" || exit 2
+CURL_REQ_OPTS="-X POST $CURL_REQ_OPTS" sh $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" 'parameter "exec" is required' && echo "OK" || exit 2
 
 echo "TEST: /api/run/command should succeed and return execution id"
 # make api request
-$CURL -H "$AUTHHEADER" --data-urlencode "exec=${execargs}" ${runurl}?${params} > $DIR/curl.out
+$CURL -X POST -H "$AUTHHEADER" --data-urlencode "exec=${execargs}" ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "FAIL: failed query request"
     exit 2

@@ -19,7 +19,7 @@ proj="test"
 params="project=${proj}&exec=echo+testing+adhoc+execution+query"
 
 # get listing
-docurl ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+docurl -X POST ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
 sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 execid1=$($XMLSTARLET sel -T -t -v "/result/execution/@id" $DIR/curl.out)
@@ -31,7 +31,7 @@ proj="test"
 params="project=${proj}&exec=echo+testing+adhoc+execution+query+should+fail;false"
 
 # get listing
-docurl ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+docurl -X POST ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
 sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 execid2=$($XMLSTARLET sel -T -t -v "/result/execution/@id" $DIR/curl.out)

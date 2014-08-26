@@ -14,7 +14,7 @@ proj="test"
 params="project=${proj}&exec=echo+testing+execution+abort+api%3Bsleep+120"
 
 # get listing
-docurl ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+docurl -X POST ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
 sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
@@ -63,7 +63,7 @@ params=""
 sleep 4
 
 # get listing
-docurl ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+docurl -X POST ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
 sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
