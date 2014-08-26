@@ -48,6 +48,9 @@ class ApiController extends ControllerBase{
      * Feature toggle api endpoint for development mode
      */
     def featureToggle={
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         def respond={
             render(contentType: 'text/plain', text: featurePresent(params.featureName) ? 'true' : 'false')
         }
@@ -92,7 +95,9 @@ class ApiController extends ControllerBase{
      * /api/11/tokens/$user?
      */
     def apiTokenList() {
-
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if(!frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER,
                 AuthConstants.ACTION_ADMIN)){
@@ -179,7 +184,9 @@ class ApiController extends ControllerBase{
      * /api/11/token/$token
      */
     def apiTokenManage() {
-
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (!frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER,
                 AuthConstants.ACTION_ADMIN)) {
@@ -217,6 +224,9 @@ class ApiController extends ControllerBase{
      * /api/1/system/info: display stats and info about the server
      */
     def apiSystemInfo={
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (!frameworkService.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_SYSTEM,
                 AuthConstants.ACTION_READ)) {

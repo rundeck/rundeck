@@ -110,7 +110,6 @@ class ScheduledExecutionController  extends ControllerBase{
             apiJobRun: 'POST',
             apiJobsImport: 'POST',
             apiJobDelete: 'DELETE',
-            apiJobAction: ['GET', 'DELETE'],
             apiRunScript: 'POST',
             apiRunScriptUrl: 'POST',
             apiRunCommand: 'POST',
@@ -730,6 +729,9 @@ class ScheduledExecutionController  extends ControllerBase{
      * @return
      */
     def apiJobCreateSingle(){
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         log.debug("ScheduledExecutionController: apiJobUpdateSingle " + params)
         def fileformat = params.format ?: 'xml'
         def parseresult
@@ -804,6 +806,9 @@ class ScheduledExecutionController  extends ControllerBase{
      * @return
      */
     def apiJobUpdateSingle(){
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         log.debug("ScheduledExecutionController: apiJobUpdateSingle " + params)
         def fileformat = params.format ?: 'xml'
         def parseresult
@@ -879,6 +884,9 @@ class ScheduledExecutionController  extends ControllerBase{
      * API: DELETE job definitions: /api/5/jobs/delete, version 5
     */
     def apiJobDeleteBulk(ApiBulkJobDeleteRequest deleteRequest) {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         if (deleteRequest.hasErrors()) {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.invalid.request', args: [deleteRequest.errors.allErrors.collect { g.message(error: it) }.join("; ")]])
@@ -1986,6 +1994,9 @@ class ScheduledExecutionController  extends ControllerBase{
      * API: /jobs/import, version 1
      */
     def apiJobsImport= {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         log.debug("ScheduledExecutionController: upload " + params)
         def fileformat = params.format ?: 'xml'
         def parseresult
@@ -2049,6 +2060,9 @@ class ScheduledExecutionController  extends ControllerBase{
      * API: export job definition: /job/{id}, version 1
      */
     def apiJobExport(){
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         log.debug("ScheduledExecutionController: /api/job GET : params: " + params)
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
         if (!apiService.requireExists(response, scheduledExecution,['Job ID',params.id])) {
@@ -2078,6 +2092,9 @@ class ScheduledExecutionController  extends ControllerBase{
      * API: Run a job immediately: /job/{id}/run, version 1
      */
     def apiJobRun = {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
         if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
             return
@@ -2145,6 +2162,9 @@ class ScheduledExecutionController  extends ControllerBase{
      * API: DELETE job definition: /job/{id}, version 1
      */
     def apiJobDelete() {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         log.debug("ScheduledExecutionController: /api/job DELETE : params: " + params)
         if (!apiService.requireParameters(params, response, ['id'])) {
             return
@@ -2187,6 +2207,9 @@ class ScheduledExecutionController  extends ControllerBase{
      * delete all executions for a job
      */
     def apiJobExecutionsDelete(){
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         log.debug("ScheduledExecutionController: /api/job DELETE : params: " + params)
         if (!apiService.requireParameters(params, response, ['id'])) {
             return
@@ -2210,6 +2233,9 @@ class ScheduledExecutionController  extends ControllerBase{
      * API: run simple exec: /api/run/command, version 1
      */
     def apiRunCommand={
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         if (!apiService.requireParameters(params, response, ['project','exec'])) {
             return
         }
@@ -2246,6 +2272,9 @@ class ScheduledExecutionController  extends ControllerBase{
      * API: run script: /api/run/script, version 1
      */
     def apiRunScript={
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         if(!apiService.requireParameters(params,response,['project','scriptFile'])){
             return
         }
@@ -2346,6 +2375,9 @@ class ScheduledExecutionController  extends ControllerBase{
      * API: run script: /api/run/url, version 4
      */
     def apiRunScriptUrl = {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         if (!apiService.requireVersion(request,response,ApiRequestFilters.V4)) {
             return
         }
@@ -2393,6 +2425,9 @@ class ScheduledExecutionController  extends ControllerBase{
      * API: /api/job/{id}/executions , version 1
      */
     def apiJobExecutions = {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         if (!apiService.requireParameters(params, response, ['id'])) {
             return
         }

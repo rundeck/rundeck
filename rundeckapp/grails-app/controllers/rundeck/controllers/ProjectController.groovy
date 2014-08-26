@@ -266,6 +266,9 @@ class ProjectController extends ControllerBase{
      * API: /api/11/projects
      */
     def apiProjectList(){
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def projlist = frameworkService.projects(authContext)
         withFormat{
@@ -297,6 +300,9 @@ class ProjectController extends ControllerBase{
      * API: /api/11/project/NAME
      */
     def apiProjectGet(){
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (!params.project) {
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
@@ -742,6 +748,9 @@ class ProjectController extends ControllerBase{
     }
 
     def apiProjectImport(){
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         def project = validateProjectConfigApiRequest(AuthConstants.ACTION_IMPORT)
         if (!project) {
             return

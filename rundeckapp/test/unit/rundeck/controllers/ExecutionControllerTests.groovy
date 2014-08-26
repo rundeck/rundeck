@@ -385,6 +385,7 @@ class ExecutionControllerTests  {
         controller.params.id = execs[2].id.toString()
 
         def svcMock = mockFor(ApiService, false)
+        svcMock.demand.requireApi { req, resp -> true }
         svcMock.demand.renderSuccessXml { response, Closure clos ->
             return true
         }
@@ -417,6 +418,7 @@ class ExecutionControllerTests  {
         controller.params.id = execs[2].id.toString()
 
         def svcMock = mockFor(ApiService, false)
+        svcMock.demand.requireApi { req, resp -> true }
         svcMock.demand.renderErrorXml { response, Map args ->
             assertEquals('api.error.item.unauthorized',args.code)
             assertEquals(403,args.status)
@@ -455,6 +457,7 @@ class ExecutionControllerTests  {
         controller.params.asUser = "testuser"
 
         def svcMock = mockFor(ApiService, false)
+        svcMock.demand.requireApi { req, resp -> true }
         svcMock.demand.renderErrorXml { response, Map args ->
             assertEquals('api.error.item.unauthorized', args.code)
             assertEquals(403, args.status)
@@ -493,6 +496,7 @@ class ExecutionControllerTests  {
         controller.params.asUser = "testuser"
 
         def svcMock = mockFor(ApiService, false)
+        svcMock.demand.requireApi { req, resp -> true }
         svcMock.demand.requireVersion { request,response,int min ->
             assertEquals(5,min)
             return true
@@ -530,6 +534,7 @@ class ExecutionControllerTests  {
         controller.params.asUser = "testuser"
 
         def svcMock = mockFor(ApiService, false)
+        svcMock.demand.requireApi { req, resp -> true }
         svcMock.demand.requireVersion { request, response, int min ->
             assertEquals(5, min)
             return true
@@ -563,6 +568,7 @@ class ExecutionControllerTests  {
         controller.params.asUser = "testuser"
 
         def svcMock = mockFor(ApiService, false)
+        svcMock.demand.requireApi { req, resp -> true }
         svcMock.demand.renderErrorXml { response, Map args ->
             assertEquals('api.error.item.unauthorized', args.code)
             assertEquals(403, args.status)

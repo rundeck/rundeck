@@ -407,6 +407,21 @@ class ApiService {
         return true
     }
     /**
+     * Require that the original request is via the /api URL mapping
+     * @param request
+     * @param response
+     * @return false if it is not a valid API request. If false, then an error status response has already been sent
+     */
+    def requireApi(request, HttpServletResponse response){
+        if(!request.api_version){
+            //not a /api URL
+            response.sendError(HttpServletResponse.SC_NOT_FOUND)
+
+            return false
+        }
+        true
+    }
+    /**
      * Require a minimum API version, and optional maximum
      * @param request
      * @param response
@@ -415,6 +430,9 @@ class ApiService {
      * @return false if requirement is not met: response will already have been made
      */
     def requireVersion(request, HttpServletResponse response, int min, int max = 0){
+        if(!requireApi(request,response)){
+            return false
+        }
         if (request.api_version < min) {
             renderErrorFormat(response,[
                     status:HttpServletResponse.SC_BAD_REQUEST,

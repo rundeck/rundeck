@@ -1461,6 +1461,9 @@ class FrameworkController extends ControllerBase {
      * API: /api/resource/$name, version 1
      */
     def apiResource={
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if(!params.project){
@@ -1506,9 +1509,12 @@ class FrameworkController extends ControllerBase {
      * API: /api/1/resources, version 1
      */
     def apiResources(ExtNodeFilters query) {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         if (query.hasErrors()) {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: 'api.error.invalid.request', args: [query.errors.allErrors.collect{g.message(error:it)}.join("; ")]])
+                    code: 'api.error.invalid.request', args: [query.errors.allErrors.collect { g.message(error: it) }.join("; ")]])
         }
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)

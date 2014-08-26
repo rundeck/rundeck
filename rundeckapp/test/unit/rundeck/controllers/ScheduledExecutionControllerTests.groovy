@@ -983,6 +983,9 @@ class ScheduledExecutionControllerTests  {
         sec.executionService = eServiceControl.createMock()
 
         def svcMock = mockFor(ApiService, true)
+        svcMock.demand.requireApi { req,resp ->
+            true
+        }
         svcMock.demand.requireExists { response, exists, args ->
             true
         }
@@ -1065,6 +1068,9 @@ class ScheduledExecutionControllerTests  {
         sec.executionService = eServiceControl.createMock()
 
         def svcMock = mockFor(ApiService, true)
+        svcMock.demand.requireApi { req, resp ->
+            true
+        }
         svcMock.demand.requireExists { response, exists, args ->
             true
         }
@@ -1161,6 +1167,9 @@ class ScheduledExecutionControllerTests  {
         def succeeded = false
         def svcMock = mockFor(ApiService, true)
         def requireFailed=false
+        svcMock.demand.requireApi { req, resp ->
+            true
+        }
         svcMock.demand.requireParameters { reqparams, response, List needparams ->
             assertTrue('project' in needparams)
             assertTrue('exec' in needparams)
@@ -1241,6 +1250,9 @@ class ScheduledExecutionControllerTests  {
         def succeeded=false
         def svcMock = mockFor(ApiService, true)
         def requireFailed = true
+        svcMock.demand.requireApi { req, resp ->
+            true
+        }
         svcMock.demand.requireParameters { reqparams, response, List needparams ->
             assertTrue('project' in needparams)
             assertTrue('exec' in needparams)
@@ -1330,6 +1342,9 @@ class ScheduledExecutionControllerTests  {
 
         def svcMock = mockFor(ApiService, true)
         def requireFailed = true
+        svcMock.demand.requireApi { req, resp ->
+            true
+        }
         svcMock.demand.requireParameters { reqparams, response, List needparams ->
             assertTrue('project' in needparams)
             assertTrue('exec' in needparams)

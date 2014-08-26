@@ -50,6 +50,9 @@ class ProjectControllerTest {
         }
 
         controller.apiService = mockWith(ApiService){
+            requireApi(1..1) { req, resp ->
+                true
+            }
             renderSuccessXml(1..1) { req, resp, clos ->
 
             }
@@ -72,6 +75,9 @@ class ProjectControllerTest {
                         [name: 'testproject2'],
                 ]
             }
+        }
+        controller.apiService=mockWith(ApiService){
+            requireApi(1..1){req,resp->true}
         }
 
         response.format='json'
@@ -101,6 +107,7 @@ class ProjectControllerTest {
         }
 
         controller.apiService = mockWith(ApiService) {
+            requireApi(1..1) { req, resp -> true }
             renderSuccessXml(1..1) { req, resp, clos ->
 
             }
@@ -121,6 +128,7 @@ class ProjectControllerTest {
         }
 
         controller.apiService = mockWith(ApiService) {
+            requireApi(1..1) { req, resp -> true }
             renderErrorFormat(1..1) { resp, map ->
                 assertEquals(HttpServletResponse.SC_BAD_REQUEST,map.status)
                 assertEquals('api.error.parameter.required',map.code)
@@ -149,6 +157,7 @@ class ProjectControllerTest {
         }
 
         controller.apiService = mockWith(ApiService) {
+            requireApi(1..1) { req, resp -> true }
             renderErrorFormat(1..1) { resp, map ->
                 assertEquals(HttpServletResponse.SC_FORBIDDEN,map.status)
                 assertEquals('api.error.item.unauthorized',map.code)
@@ -182,6 +191,7 @@ class ProjectControllerTest {
         }
 
         controller.apiService = mockWith(ApiService) {
+            requireApi(1..1) { req, resp -> true }
             renderErrorFormat(1..1) { resp, map ->
                 assertEquals(HttpServletResponse.SC_NOT_FOUND,map.status)
                 assertEquals('api.error.item.doesnotexist',map.code)

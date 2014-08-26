@@ -35,6 +35,9 @@ class StorageControllerTests {
         controller.storageService=mockWith(StorageService){
             hasPath{ctx,path-> false }
         }
+        controller.apiService = mockWith(ApiService) {
+            requireApi(1..1) { req, resp -> true }
+        }
 
         def result=controller.apiGetResource()
         assertEquals(404,response.status)
@@ -64,6 +67,9 @@ class StorageControllerTests {
         controller.storageService=mockWith(StorageService){
             hasPath{ctx,path-> true }
             getResource{ctx,path-> mRes }
+        }
+        controller.apiService = mockWith(ApiService) {
+            requireApi(1..1) { req, resp -> true }
         }
 
         def result=controller.apiGetResource()
@@ -97,6 +103,9 @@ class StorageControllerTests {
                 [mRes1, mRes2] as Set
             }
         }
+        controller.apiService = mockWith(ApiService) {
+            requireApi(1..1) { req, resp -> true }
+        }
 
         def result=controller.apiGetResource()
         assertEquals(200,response.status)
@@ -118,6 +127,9 @@ class StorageControllerTests {
         controller.storageService = mockWith(StorageService) {
             hasResource { ctx,path -> true }
         }
+        controller.apiService = mockWith(ApiService) {
+            requireApi(1..1) { req, resp -> true }
+        }
         params.resourcePath = 'abc'
         def result=controller.apiPostResource()
         assertEquals(409,response.status)
@@ -130,6 +142,9 @@ class StorageControllerTests {
         controller.storageService = mockWith(StorageService) {
             hasResource { ctx,path -> false }
             hasPath { ctx,path -> true }
+        }
+        controller.apiService = mockWith(ApiService) {
+            requireApi(1..1) { req, resp -> true }
         }
         params.resourcePath = 'abc'
         def result=controller.apiPostResource()
@@ -148,6 +163,9 @@ class StorageControllerTests {
             createResource{ctx,path,meta,stream->
                 mRes2
             }
+        }
+        controller.apiService = mockWith(ApiService) {
+            requireApi(1..1) { req, resp -> true }
         }
         params.resourcePath = 'abc'
         response.format='json'
@@ -174,6 +192,7 @@ class StorageControllerTests {
             }
         }
         controller.apiService=mockWith(ApiService){
+            requireApi(1..1) { req, resp -> true }
             renderErrorFormat{resp,map->
                 assertEquals(500,map.status)
                 assertEquals("failed",map.message)
@@ -191,6 +210,9 @@ class StorageControllerTests {
         controller.storageService = mockWith(StorageService) {
             hasResource { ctx,path -> false }
         }
+        controller.apiService = mockWith(ApiService) {
+            requireApi(1..1) { req, resp -> true }
+        }
         params.resourcePath = 'abc'
         def result=controller.apiPutResource()
         assertEquals(404,response.status)
@@ -207,6 +229,9 @@ class StorageControllerTests {
             updateResource{ctx,path,meta,stream->
                 mRes2
             }
+        }
+        controller.apiService = mockWith(ApiService) {
+            requireApi(1..1) { req, resp -> true }
         }
         params.resourcePath = 'abc'
         response.format='json'
@@ -232,6 +257,7 @@ class StorageControllerTests {
             }
         }
         controller.apiService=mockWith(ApiService){
+            requireApi(1..1) { req, resp -> true }
             renderErrorFormat{resp,map->
                 assertEquals(500,map.status)
                 assertEquals("failed",map.message)
@@ -250,6 +276,7 @@ class StorageControllerTests {
             hasResource { ctx, path -> false }
         }
         controller.apiService = mockWith(ApiService) {
+            requireApi(1..1) { req, resp -> true }
             renderErrorFormat { resp, map ->
                 assertEquals(404, map.status)
                 assertEquals("api.error.item.doesnotexist", map.code)
@@ -268,6 +295,9 @@ class StorageControllerTests {
             hasResource { ctx, path -> true }
             delResource { ctx, path -> true }
         }
+        controller.apiService = mockWith(ApiService) {
+            requireApi(1..1) { req, resp -> true }
+        }
         params.resourcePath = 'abc'
         def result = controller.apiDeleteResource()
         assertEquals(204,response.status)
@@ -282,6 +312,7 @@ class StorageControllerTests {
             delResource { ctx, path -> false }
         }
         controller.apiService = mockWith(ApiService) {
+            requireApi(1..1) { req, resp -> true }
             renderErrorFormat { resp, map ->
                 assertEquals(500, map.status)
                 assertEquals("Resource was not deleted: abc/test1", map.message)
@@ -302,6 +333,7 @@ class StorageControllerTests {
             }
         }
         controller.apiService = mockWith(ApiService) {
+            requireApi(1..1) { req, resp -> true }
             renderErrorFormat { resp, map ->
                 assertEquals(500, map.status)
                 assertEquals("failed", map.message)

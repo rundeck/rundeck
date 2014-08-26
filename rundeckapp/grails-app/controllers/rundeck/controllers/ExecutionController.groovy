@@ -993,9 +993,8 @@ class ExecutionController extends ControllerBase{
      */
     def deleteBulkApi() {
         withForm{
-            request.api_version=ApiRequestFilters.API_CURRENT_VERSION
             g.refreshFormTokensHeader()
-            apiExecutionDeleteBulk()
+            executionDeleteBulk()
         }.invalidToken{
             return apiService.renderErrorFormat(response, [
                     status: HttpServletResponse.SC_BAD_REQUEST,
@@ -1035,6 +1034,9 @@ class ExecutionController extends ControllerBase{
      * API: /api/execution/{id} , version 1
      */
     def apiExecution={
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         def Execution e = Execution.get(params.id)
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (!e) {
@@ -1184,6 +1186,9 @@ class ExecutionController extends ControllerBase{
      * API: /api/execution/{id}/abort, version 1
      */
     def apiExecutionAbort={
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         def Execution e = Execution.get(params.id)
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (!e) {
@@ -1275,13 +1280,20 @@ class ExecutionController extends ControllerBase{
     }
 
     /**
-     * Delete bulk
+     * Delete bulk API action
      * @return
      */
     def apiExecutionDeleteBulk() {
         if (!apiService.requireVersion(request, response, ApiRequestFilters.V12)) {
             return
         }
+        return executionDeleteBulk()
+    }
+    /**
+     * Delete bulk
+     * @return
+     */
+    private def executionDeleteBulk() {
         log.debug("executionController: apiExecutionDeleteBulk : params: " + params)
         def ids=[]
         if(request.format in ['json','xml']){

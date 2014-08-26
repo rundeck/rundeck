@@ -811,6 +811,9 @@ class MenuController extends ControllerBase{
      * API: /api/jobs, version 1
      */
     def apiJobsList = {ScheduledExecutionQuery query ->
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         if(!params.project){
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])
@@ -861,6 +864,9 @@ class MenuController extends ControllerBase{
      * API: /jobs/export, version 1
      */
     def apiJobsExport = {ScheduledExecutionQuery query ->
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         if(!params.project){
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])
@@ -895,7 +901,9 @@ class MenuController extends ControllerBase{
      * API: /executions/running, version 1
      */
     def apiExecutionsRunning = {
-
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         if(!params.project){
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])
