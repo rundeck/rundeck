@@ -92,7 +92,26 @@ public class ApiRequestFilters {
     }
 
     def allowed_actions = ["renderError", "invalid", "error"]
+    def allowed_pre_api_reqs=[
+            'user':['login','loggedout'],
+            'menu':['index','home'],
+    ]
     def filters = {
+        /**
+         * Disallow api access if a request comes for non-api url after login
+         */
+        apiAccess(uri: '/api/**', invert: true) {
+            before = {
+                if(allowed_pre_api_reqs[controllerName] && (actionName in allowed_pre_api_reqs[controllerName])){
+                    return true
+                }
+                if (null == session.api_access_allowed) {
+                    log.debug("Disallowing API access, blocked due to request for ${controllerName}/${actionName}")
+                    session.api_access_allowed = false
+                }
+                true
+            }
+        }
         /**
          * Require valid api version in request path /api/version/...
          */
@@ -100,6 +119,13 @@ public class ApiRequestFilters {
             before = {
                 request[REQUEST_TIME]=System.currentTimeMillis()
                 request[METRIC_TIMER]= timer()
+                if (request.remoteUser && null != session.api_access_allowed && !session.api_access_allowed) {
+                    log.debug("Api access request disallowed for ${request.forwardURI}")
+                    response.sendError(HttpServletResponse.SC_NOT_FOUND)
+                    return false
+                }else if(null==session.api_access_allowed){
+                    session.api_access_allowed=true
+                }
                 if (controllerName == 'api' && allowed_actions.contains(actionName) || request.api_version) {
                     request.is_allowed_api_request = true
                     return true
