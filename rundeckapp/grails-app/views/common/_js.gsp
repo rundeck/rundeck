@@ -1,4 +1,3 @@
-<%@ page import="rundeck.filters.ApiRequestFilters" %>
 <script type="text/javascript">
     <g:set var="currentProject" value="${params.project?:request.project}"/>
     <g:set var="projParams" value="${currentProject?[project:currentProject]:[:]}"/>
