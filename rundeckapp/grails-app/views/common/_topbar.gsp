@@ -1,4 +1,4 @@
-<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
+<%@ page import="com.opensymphony.module.sitemesh.RequestConstants; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 <g:set var="selectParams" value="${[:]}"/>
 <g:if test="${pageScope._metaTabPage}">
     <g:set var="selectParams" value="${[page: _metaTabPage,project:params.project?:request.project]}"/>
@@ -33,11 +33,13 @@
     <ul class="nav navbar-nav">
 <g:if test="${session?.user && request.subject }">
     <g:set var="homeselected" value="${false}"/>
+    <g:if test="${request.getAttribute(RequestConstants.PAGE)}">
     <g:ifPageProperty name='meta.tabpage'>
         <g:ifPageProperty name='meta.tabpage' equals='home'>
             <g:set var="homeselected" value="${true}"/>
         </g:ifPageProperty>
     </g:ifPageProperty>
+    </g:if>
     <g:if test="${! homeselected}">
 
     <g:if test="${params.project ?: request.project || session?.projects}">
@@ -61,6 +63,7 @@
         <g:set var="selectedclass" value="active"/>
 
         <g:set var="wfselected" value=""/>
+        <g:if test="${request.getAttribute(RequestConstants.PAGE)}">
         <g:ifPageProperty name='meta.tabpage' >
         <g:ifPageProperty name='meta.tabpage' equals='jobs'>
            <g:set var="wfselected" value="${selectedclass}"/>
@@ -84,6 +87,7 @@
                 <g:set var="eventsselected" value="${selectedclass}"/>
             </g:ifPageProperty>
         </g:ifPageProperty>
+        </g:if>
         <g:if test="${params.project?:request.project}">
         <li class="${enc(attr:wfselected)}"><g:link controller="menu" action="jobs" class=" toptab ${enc(attr: wfselected)}"
                                           params="[project: params.project ?: request.project]">
@@ -128,11 +132,14 @@
             <g:set var="projConfigAuth" value="${auth.resourceAllowedTest(type:'project',name: (params.project ?: request.project),
                     action: [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT,
                             AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_DELETE],any:true,context:'application')}"/>
+
+            <g:if test="${request.getAttribute(RequestConstants.PAGE)}">
             <g:ifPageProperty name='meta.tabpage'>
                 <g:ifPageProperty name='meta.tabpage' equals='configure'>
                     <g:set var="cfgselected" value="active"/>
                 </g:ifPageProperty>
             </g:ifPageProperty>
+            </g:if>
             <g:if test="${projConfigAuth}">
             <li class="${cfgselected ?: ''}">
                 <g:link controller="menu" action="admin" title="${g.message(code:'gui.menu.Admin')}"
