@@ -242,5 +242,19 @@ Rundeck now attempts to retry the update to correctly register the final state o
 
 Delay is in milliseconds. If a max is set to `-1`, then retries will happen indefinitely.
 
+#### Metrics servlets
+
+Rundeck includes the [Metrics](http://metrics.codahale.com) servlets.  You can selectively disable these by setting these config values:
+
+`rundeck.web.metrics.servlets.[name].enabled=true/false`
+    
+Servlet names are:
+    
+* `metrics`
+* `threads`
+* `ping`
+* `healthcheck`
+
+All of the servlets are enabled by default.
 
 [Resource Model Sources]: ../administration/managing-node-sources.html
