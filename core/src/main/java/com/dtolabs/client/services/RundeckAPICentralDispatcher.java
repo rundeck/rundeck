@@ -703,12 +703,15 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
 
     public DispatcherResult killDispatcherExecution(final String execId) throws CentralDispatcherException {
         final HashMap<String, String> params = new HashMap<String, String>();
+        final HashMap<String, String> data = new HashMap<String, String>();
+        //:( trigger POST correctly
+        data.put("a", "a");
 
         final String rundeckApiKillJobPath = substitutePathVariable(RUNDECK_API_KILL_JOB_PATH, "id", execId);
         //2. send request via ServerService
         final WebserviceResponse response;
         try {
-            response = serverService.makeRundeckRequest(rundeckApiKillJobPath, params, null, null, null);
+            response = serverService.makeRundeckRequest(rundeckApiKillJobPath, params, null, "POST", null,data,null);
         } catch (MalformedURLException e) {
             throw new CentralDispatcherServerRequestException("Failed to make request", e);
         }
