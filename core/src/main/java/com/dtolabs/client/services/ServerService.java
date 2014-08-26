@@ -171,7 +171,7 @@ public class ServerService {
         final URL jcUrl = new URL(connParams.getServerUrl());
         final String jcBasePath = jcUrl.getPath();
         final WebserviceHttpClient hc ;
-        if(null==formData){
+        if(null==formData || formData.size()<1){
             hc= WebserviceHttpClientFactory.getInstance().getWebserviceHttpClient(jcUrl
                                                                                                        + urlPath,
             jcBasePath,
