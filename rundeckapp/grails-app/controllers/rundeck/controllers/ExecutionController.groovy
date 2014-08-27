@@ -46,7 +46,7 @@ class ExecutionController extends ControllerBase{
     static allowedMethods = [
             delete:['POST','DELETE'],
             bulkDelete:['POST'],
-            apiExecutionAbort: ['POST'],
+            apiExecutionAbort: ['POST','GET'],
             apiExecutionDelete: ['DELETE'],
             apiExecutionDeleteBulk: ['POST'],
             cancelExecution:'POST'
