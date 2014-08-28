@@ -78,7 +78,12 @@ class FrameworkController extends ControllerBase {
         return renderErrorView([:])
     }
 
-    def nodes ={ ExtNodeFilters query ->
+    def nodes(ExtNodeFilters query) {
+        if (query.hasErrors()) {
+            request.errors = query.errors
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
+            return renderErrorView([:])
+        }
         if(params.fromExecId|| params.retryFailedExecId) {
             return redirect(action: 'adhoc',params: params)
         }else if(params.exec){
@@ -140,7 +145,12 @@ class FrameworkController extends ControllerBase {
         return new ArrayList(incset + excset)
     }
 
-    def adhoc = { ExtNodeFilters query ->
+    def adhoc(ExtNodeFilters query) {
+        if (query.hasErrors()) {
+            request.errors = query.errors
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
+            return renderErrorView([:])
+        }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (unauthorizedResponse(
                 frameworkService.authorizeProjectResource(authContext, AuthConstants.RESOURCE_ADHOC,
@@ -222,6 +232,11 @@ class FrameworkController extends ControllerBase {
      * render a set of nodes via ajax
      */
     def nodesdata (ExtNodeFilters query){
+        if (query.hasErrors()) {
+            request.errors = query.errors
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
+            return renderErrorView([:])
+        }
 
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
@@ -415,7 +430,11 @@ class FrameworkController extends ControllerBase {
     /**
      * nodesFragment renders a set of nodes in HTML snippet, for ajax
      */
-    def nodesFragment = {ExtNodeFilters query->
+    def nodesFragment(ExtNodeFilters query) {
+        if (query.hasErrors()) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
+            return renderErrorFragment(g.message(error: query.errors.allErrors.collect { g.message(error: it) }.join("; ")))
+        }
 
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
@@ -530,7 +549,12 @@ class FrameworkController extends ControllerBase {
         }
     }
 
-    def storeNodeFilter={ExtNodeFilters query->
+    def storeNodeFilter(ExtNodeFilters query) {
+        if (query.hasErrors()) {
+            request.errors = query.errors
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
+            return renderErrorView([:])
+        }
         def User u = userService.findOrCreateUser(session.user)
         def NodeFilter filter
         def boolean saveuser=false
@@ -1483,7 +1507,7 @@ class FrameworkController extends ControllerBase {
     /**
      * API: /api/2/project/NAME/resources, version 2
      */
-    def apiResourcesv2={ExtNodeFilters query->
+    def apiResourcesv2(ExtNodeFilters query) {
         if (!apiService.requireVersion(request, response,ApiRequestFilters.V2)) {
             return
         }
@@ -1492,7 +1516,11 @@ class FrameworkController extends ControllerBase {
     /**
      * API: /api/1/resources, version 1
      */
-    def apiResources={ExtNodeFilters query->
+    def apiResources(ExtNodeFilters query) {
+        if (query.hasErrors()) {
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.invalid.request', args: [query.errors.allErrors.collect{g.message(error:it)}.join("; ")]])
+        }
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if(!params.project){
