@@ -78,7 +78,7 @@ class ScheduledExecution extends ExecutionContext {
         seconds(nullable:true)
         year(nullable:true)
         description(nullable:true)
-        uuid(unique: true, nullable:true, blank:false, matches: /^\S+$/)
+        uuid(unique: true, nullable:true, blank:false, matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
         multipleExecutions(nullable: true)
         serverNodeUUID(size: 36..36, blank: true, nullable: true, validator: { val, obj ->
             if (null == val) return true;

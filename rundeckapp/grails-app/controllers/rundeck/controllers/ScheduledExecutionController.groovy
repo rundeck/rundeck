@@ -665,7 +665,11 @@ class ScheduledExecutionController  extends ControllerBase{
      * Delete a set of jobs as specified in the idlist parameter.
      * Only allowed via POST http method
      */
-    def deleteBulk = {ApiBulkJobDeleteRequest deleteRequest ->
+    def deleteBulk (ApiBulkJobDeleteRequest deleteRequest) {
+        if(deleteRequest.hasErrors()){
+            flash.errors = deleteRequest.error
+            return redirect(controller: 'menu', action: 'jobs')
+        }
         log.debug("ScheduledExecutionController: deleteBulk : params: " + params)
         if (!params.ids && !params.idlist) {
             flash.error = g.message(code: 'ScheduledExecutionController.bulkDelete.empty')
@@ -850,7 +854,11 @@ class ScheduledExecutionController  extends ControllerBase{
      * Only allowed via DELETE http method
      * API: DELETE job definitions: /api/5/jobs/delete, version 5
     */
-    def apiJobDeleteBulk = {ApiBulkJobDeleteRequest deleteRequest->
+    def apiJobDeleteBulk(ApiBulkJobDeleteRequest deleteRequest) {
+        if (deleteRequest.hasErrors()) {
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.invalid.request', args: [deleteRequest.errors.allErrors.collect { g.message(error: it) }.join("; ")]])
+        }
         log.debug("ScheduledExecutionController: apiJobDeleteBulk : params: " + params)
         if (!apiService.requireAnyParameters(params, response, ['ids', 'idlist'])) {
             return
