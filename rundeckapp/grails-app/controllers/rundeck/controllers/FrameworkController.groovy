@@ -78,12 +78,6 @@ class FrameworkController extends ControllerBase {
         return renderErrorView([:])
     }
 
-    def nodeFilterPresets = { ExtNodeFilters query->
-        query.filter = 'name: .*'
-        def model = nodesdata(query)
-        def filterset=User.findByLogin(session.user)?.nodefilters
-        render(template: 'nodeFilterPresets', model:model + [filterset:filterset])
-    }
     def nodes ={ ExtNodeFilters query ->
         if(params.fromExecId|| params.retryFailedExecId) {
             return redirect(action: 'adhoc',params: params)
