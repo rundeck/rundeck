@@ -39,20 +39,28 @@
     <g:expander key="internalerror">Error Details</g:expander>
     <div style="display:none" id="internalerror">
         <div class="message">
-            <div><b>Request:</b> <g:enc>${null != controllerName && null != actionName ? createLink(controller: controllerName, action: actionName, params: params) : request.getRequestURL()}</g:enc></div>
-            <strong>Message:</strong> <g:enc>${exception.message}</g:enc> <br/>
-            <strong>Caused by:</strong> <g:enc>${exception.cause?.message}</g:enc> <br/>
-            <strong>Class:</strong> <g:enc>${exception.className}</g:enc> <br/>
-            <strong>At Line:</strong> [<g:enc>${exception.lineNumber}</g:enc>] <br/>
-            <strong>Code Snippet:</strong><br/>
-            <div class="snippet">
-                <g:each var="cs" in="${exception.codeSnippet}">
-                    <g:enc>${cs}</g:enc><br/>
-                </g:each>
+            <div><b>Request:</b> <g:enc>${null != controllerName && null != actionName ? createLink(controller: controllerName, action: actionName, params: params) : request.getRequestURL()}</g:enc>
             </div>
+            <strong>Message:</strong> <g:enc>${exception.message}</g:enc> <br/>
+            <g:set var="hideStacktrace" value="${(grailsApplication.config?.rundeck?.gui?.errorpage?.hidestacktrace in [true,'true']) ||
+                 Boolean.valueOf(System.getProperty("org.rundeck.gui.errorpage.hidestacktrace", "false"))}"/>
+            <g:if test="${!hideStacktrace}">
+                <strong>Caused by:</strong> <g:enc>${exception.cause?.message}</g:enc> <br/>
+                <strong>Class:</strong> <g:enc>${exception.className}</g:enc> <br/>
+                <strong>At Line:</strong> [<g:enc>${exception.lineNumber}</g:enc>] <br/>
+                <strong>Code Snippet:</strong><br/>
+
+                <div class="snippet">
+                    <g:each var="cs" in="${exception.codeSnippet}">
+                        <g:enc>${cs}</g:enc><br/>
+                    </g:each>
+                </div>
+            </g:if>
         </div>
-        <h3>Stack Trace</h3>
-        <pre><g:enc>${exception.stackTraceText}</g:enc></pre>
+        <g:if test="${!hideStacktrace}">
+            <h3>Stack Trace</h3>
+            <pre><g:enc>${exception.stackTraceText}</g:enc></pre>
+        </g:if>
     </div>
 </div>
 </body>

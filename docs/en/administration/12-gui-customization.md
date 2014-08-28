@@ -51,5 +51,12 @@ these properties in the [rundeck-config.properties](configuration-file-reference
                                             pages. (Default: true)
                                             
 `rundeck.gui.login.welcome    `             Text displayed in the login form.
-                                            pages. (Default: blank)                                            
+                                            pages. (Default: blank)     
+
+`rundeck.gui.errorpage.hidestacktrace`      Hide Java stacktraces from the end   true/false
+                                            user when an error occurs. 
+                                            Default: false.                        
 -------------------------------------------------------------------------------
+
+The `rundeck.gui.errorpage.hidestacktrace` can also be set to true via a Java system property defined at system startup: 
+`-Dorg.rundeck.gui.errorpage.hidestacktrace=true`.
