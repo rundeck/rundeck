@@ -1,5 +1,6 @@
 package rundeck
 
+import com.dtolabs.rundeck.app.api.ApiBulkJobDeleteRequest
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 /*
  * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
@@ -38,7 +39,8 @@ public class ScheduledExecutionFilter {
 
     static belongsTo = [user:User]
     static constraints={
-        idlist(nullable:true)
+        name(blank: false, matches: /^[^<>&'"\/]+$/)
+        idlist(nullable: true, matches: ApiBulkJobDeleteRequest.IDLIST_REGEX)
         jobFilter(nullable:true)
         projFilter(nullable:true)
         groupPath(nullable:true)

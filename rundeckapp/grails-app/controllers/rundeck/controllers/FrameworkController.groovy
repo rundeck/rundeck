@@ -1,6 +1,7 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.PluginConfigParams
+import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
@@ -549,9 +550,14 @@ class FrameworkController extends ControllerBase {
         }
     }
 
-    def storeNodeFilter(ExtNodeFilters query) {
+    def storeNodeFilter(ExtNodeFilters query, StoreFilterCommand storeFilterCommand) {
         if (query.hasErrors()) {
             request.errors = query.errors
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
+            return renderErrorView([:])
+        }
+        if (storeFilterCommand.hasErrors()) {
+            request.errors = storeFilterCommand.errors
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
             return renderErrorView([:])
         }
