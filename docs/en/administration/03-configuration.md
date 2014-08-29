@@ -185,11 +185,10 @@ loglevel, datasource configuration, and
    `-Dorg.rundeck.web.infosec.HMacSynchronizerTokensHolder.DEFAULT_DURATION=[timeout in ms]`.
 
 * `rundeck.security.apiCookieAccess.enabled`: `true/false`. Default: `true`.  
-    Determines whether access to the API is allowed if authenticated via 
-    session cookies (i.e. username and password login.)  The default allows 
-    the current CLI tools to operate, but it *does not prevent* some forms of 
-    CSRF vulnerabilities from accessing the API via a logged-in user session.  
-    If you want to prevent *all* CSRF vulnerabilities, set this to `false`.
+    Determines whether access to the API is allowed if the API client
+    authenticates via session cookies (i.e. username and password login.)  If
+    set to `false`, the current CLI tools and API libraries will not operate
+    correctly if they use username and password login.
 
 
 #### SSH Key Storage settings
