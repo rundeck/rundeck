@@ -38,7 +38,7 @@ class HMacSynchronizerTokensHolder extends SynchronizerTokensHolder implements S
     public static final String HOLDER = "TOKENS_HOLDER"
     public static final String TOKEN_KEY = "TOKEN_KEY"
     public static final String TOKEN_TIMESTAMP = "TOKEN_TIMESTAMP"
-    public static final long DEFAULT_DURATION= Long.getLong(HMacSynchronizerTokensHolder.class.name + '.DEFAULT_DURATION', 15 * 60 * 1000L)
+    public static final long DEFAULT_DURATION= Long.getLong(HMacSynchronizerTokensHolder.class.name + '.DEFAULT_DURATION', 30 * 60 * 1000L)
 
     String sessionID
     List<String> sessionData
