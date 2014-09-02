@@ -1050,7 +1050,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     dateCompleted:new Date(),
                     cancelled:true,
                     abortedby: userIdent
-                    ]
+                    ],
+                    null,
+                    null
                 )
             abortstate=ABORT_ABORTED
             jobstate=EXECUTION_ABORTED
