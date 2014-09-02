@@ -93,7 +93,7 @@ Select the Default Node Executor you wish to use for all remote Nodes for the pr
 
 ![Default Node Executor Choice](../figures/fig0712.png)
 
-You can install more types of Node Executors as plugins, see [Node Execution Plugins](../plugins-user-guide/resource-model-source-plugins.html#node-execution-plugins).
+You can install more types of Node Executors as plugins, see [Node Execution Plugins](../plugins-user-guide/node-execution-plugins.html).
 
 ### Default File Copier Configuration
 
@@ -106,7 +106,7 @@ Select the Default File Copier you wish to use for all remote Nodes for the proj
 
 ![Default File Copier Choice](../figures/fig0713.png)
 
-You can install more types of File Copiers as plugins, see [Node Execution Plugins](../plugins-user-guide/resource-model-source-plugins.html#node-execution-plugins).
+You can install more types of File Copiers as plugins, see [Node Execution Plugins](../plugins-user-guide/node-execution-plugins.html).
 
 ## System Configuration
 
