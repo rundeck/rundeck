@@ -65,7 +65,9 @@
 <g:if test="${adminauth}">
 
     <div class="row">
-        <g:form action="saveProject" method="post" onsubmit="return configControl.checkForm();" class="form">
+        <g:form action="saveProject" method="post"
+                useToken="true"
+                onsubmit="return configControl.checkForm();" class="form">
         <div class="col-sm-10 col-sm-offset-1">
             <div class="panel panel-primary"  id="createform">
                 <div class="panel-heading">

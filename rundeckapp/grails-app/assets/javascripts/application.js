@@ -41,8 +41,11 @@ function html_unescape(text){
 function loadJsonData(id){
     var dataElement = document.getElementById(id);
     // unescape the content of the span
+    if(!dataElement){
+        return null;
+    }
     var jsonText = dataElement.textContent || dataElement.innerText
-    return JSON.parse(jsonText);
+    return jsonText && jsonText!=''?JSON.parse(jsonText):null;
 }
 
 function toggleDisclosure(id,iconid,closeUrl,openUrl){
@@ -372,7 +375,7 @@ function onlychars(regex, e) {
     return !(e && kCode != 0 && !String.fromCharCode(kCode).match(regex));
 }
 function fireWhenReady(elem,func){
-    if(jQuery('#'+elem)){
+    if(jQuery('#'+elem).size()>0){
         func();
     }else{
         jQuery.ready(func);
@@ -747,7 +750,61 @@ function _initAnsiToggle(){
     jQuery('.ansi-color-toggle').on('change',_toggleAnsiColor);
     jQuery('.nodes_run_content').on('change','.ansi-color-toggle',_toggleAnsiColor);
 }
+/**
+ * Use as a beforeSend ajax handler to include request tokens in ajax request. The tokens are either read from
+ * data stored in the dom on the element with given id, by the _ajaxReceiveTokens, or by loading json text
+ * embedded int the body of the element.
+ * @param id id of embedded token json script element
+ * @param jqxhr
+ * @param settings
+ * @returns {boolean}
+ * @private
+ */
+function _ajaxSendTokens(id,jqxhr,settings){
+    var elem = jQuery('#' + id);
+    var data = {};
+    if(elem && elem.data('rundeck-token-key') && elem.data('rundeck-token-uri')){
+        data={TOKEN: elem.data('rundeck-token-key'), URI: elem.data('rundeck-token-uri')};
+    }else{
+        data=loadJsonData(id);
+        clearHtml(document.getElementById(id));
+    }
+    if(data && data.TOKEN && data.URI){
+        jqxhr.setRequestHeader('X-RUNDECK-TOKEN-KEY',data.TOKEN);
+        jqxhr.setRequestHeader('X-RUNDECK-TOKEN-URI',data.URI);
+    }
+    return true;
+}
+/**
+ * Use as a ajaxSuccess event handler for ajax requests, to replace request tokens for an element in the dom.
+ * @param id
+ * @param data
+ * @param status
+ * @param jqxhr
+ * @private
+ */
+function _ajaxReceiveTokens(id,data,status,jqxhr){
+    var elem=jQuery('#'+id);
+    if (jqxhr.getResponseHeader('X-RUNDECK-TOKEN-KEY') && jqxhr.getResponseHeader('X-RUNDECK-TOKEN-URI')) {
+        try {
+            elem.data('rundeck-token-key', jqxhr.getResponseHeader('X-RUNDECK-TOKEN-KEY'));
+            elem.data('rundeck-token-uri', jqxhr.getResponseHeader('X-RUNDECK-TOKEN-URI'));
+        } catch (e) {
+        }
+    }
+}
+function _initTokenRefresh() {
+    jQuery(document).ajaxComplete(function (evt, xhr, opts) {
+        if (xhr.getResponseHeader('X-RUNDECK-TOKEN-KEY') && xhr.getResponseHeader('X-RUNDECK-TOKEN-URI')) {
+            try {
+                jQuery('#SYNCHRONIZER_TOKEN').val(xhr.getResponseHeader('X-RUNDECK-TOKEN-KEY'));
+                jQuery('#SYNCHRONIZER_URI').val(xhr.getResponseHeader('X-RUNDECK-TOKEN-URI'));
+            } catch (e) {
 
+            }
+        }
+    });
+}
 (function(){
     if(typeof(jQuery)=='function'){
         jQuery(document).ready(function () {
@@ -761,3 +818,227 @@ function _initAnsiToggle(){
         });
     }
 })();
+
+
+var updateNowRunning = function (count) {
+    var nrtitle = "Now Running (" + count + ")";
+    if ($('nowrunninglink')) {
+        setText($('nowrunninglink'), nrtitle);
+    }
+    $$('.nowrunningcount').each(function (e) {
+        setText(e, "(" + count + ")");
+    });
+    if (typeof(_pageUpdateNowRunning) === "function") {
+        _pageUpdateNowRunning(count);
+    }
+};
+var _setLoading = function (element, text) {
+    element = $(element);
+    if (null === text || typeof(text) == 'undefined') {
+        text = "Loading…";
+    }
+    if (element.tagName === 'TBODY') {
+        var tr = new Element('tr');
+        var td = new Element('td');
+        tr.appendChild(td);
+        element.appendChild(tr);
+
+        var sp = new Element('span');
+        sp.addClassName('loading');
+        var img = new Element('img');
+        img.src = appLinks.iconSpinner;
+        $(sp).appendChild(img);
+        appendText(sp, ' ' + text);
+        td.appendChild(sp);
+    } else {
+        var sp = new Element('span');
+        sp.addClassName('loading');
+        var img = new Element('img');
+        img.src = appLinks.iconSpinner;
+        $(sp).appendChild(img);
+        appendText(sp, ' ' + text);
+        clearHtml(element);
+        element.appendChild(sp);
+    }
+    return element;
+};
+
+var _tooltipElemSelector = null;
+var _tooltiptimer = null;
+var _tooltipelem = null;
+
+var tooltipMouseOut = function () {
+    _tooltiptimer = null;
+    _tooltipelem = null;
+    if (_tooltipElemSelector) {
+        $$('.tooltipcontent').each(Element.hide);
+        $$(_tooltipElemSelector).each(function (e) {
+            $(e).removeClassName('glow');
+            $(e).removeClassName('active');
+            $(e).removeAttribute('data-rdtooltip');
+        });
+    }
+};
+/**
+ * initialize a tooltip detail view for the matching elements.
+ * The tooltipe element is identified by the 'id' of the matching element
+ * with "_tooltip" appended.
+ *
+ * E.g. if the matched element has id "key" then the element with
+ * id "key_tooltip" will be shown when the element is hovered over.
+ * @param selector a selector expression to identify a set of elements
+ */
+var initTooltipForElements = function (selector) {
+    $$(selector).each(function (elem) {
+        var ident = elem.identify();
+        if ($(ident + '_tooltip')) {
+            var over = function (evt) {
+                if (_tooltiptimer && _tooltipelem == elem) {
+                    return;
+                }
+                if (_tooltiptimer) {
+                    clearTimeout(_tooltiptimer);
+                    tooltipMouseOut();
+                }
+
+                $(elem).addClassName('glow');
+                new MenuController().showRelativeTo(elem, ident + '_tooltip');
+                $(elem).setAttribute('data-rdtooltip', 'true');
+            };
+            var out = function (evt) {
+                if (!_tooltiptimer) {
+                    _tooltiptimer = setTimeout(tooltipMouseOut, 50);
+                    _tooltipelem = elem;
+                }
+            };
+            Event.observe(elem, 'mouseenter', over);
+            Event.observe(elem, 'mouseleave', out);
+        }
+    });
+    if (null == _tooltipElemSelector) {
+        _tooltipElemSelector = selector;
+        Event.observe(document.body, 'click', function (evt) {
+            //click outside of popup bubble hides it
+            if (!evt.element().hasAttribute('data-rdtooltip')) {
+                tooltipMouseOut();
+            }
+        }, false);
+    } else {
+        _tooltipElemSelector = _tooltipElemSelector + ', ' + selector;
+    }
+
+};
+/**
+ * initialize a tooltip detail view for the matching elements.
+ * The tooltipe element is identified by the 'id' of the matching element
+ * with "_tooltip" appended.
+ *
+ * E.g. if the matched element has id "key" then the element with
+ * id "key_tooltip" will be shown when the element is hovered over.
+ * @param selector a selector expression to identify a set of elements
+ */
+var initClicktipForElements = function (selector) {
+    $$(selector).each(function (elem) {
+        var ident = elem.identify();
+        if ($(ident + '_tooltip')) {
+            var out = function (evt) {
+                if (!_tooltiptimer) {
+                    _tooltiptimer = setTimeout(tooltipMouseOut, 50);
+                    _tooltipelem = null;
+                }
+            };
+            var over = function (evt) {
+                var oldelem = _tooltipelem;
+                if (_tooltipelem && _tooltipelem != elem) {
+                    clearTimeout(_tooltiptimer);
+                    tooltipMouseOut();
+                }
+                if (_tooltipelem == elem || oldelem == elem) {
+                    out(evt);
+                    return;
+                }
+                if (_tooltiptimer) {
+                    clearTimeout(_tooltiptimer);
+                    tooltipMouseOut();
+                }
+
+                $(elem).addClassName('active');
+                new MenuController().showRelativeTo(elem, ident + '_tooltip');
+                _tooltipelem = elem;
+                $(elem).setAttribute('data-rdtooltip', 'true');
+            };
+            Event.observe(elem, 'click', over, true);
+        }
+    });
+    if (null == _tooltipElemSelector) {
+        _tooltipElemSelector = selector;
+        Event.observe(document.body, 'click', function (evt) {
+            //click outside of popup bubble hides it
+            if (!evt.element().hasAttribute('data-rdtooltip')) {
+                tooltipMouseOut();
+            }
+        }, false);
+    } else {
+        _tooltipElemSelector = _tooltipElemSelector + ', ' + selector;
+    }
+
+};
+Element.addMethods({
+    loading: _setLoading
+});
+/** node filter preview code */
+
+function _updateMatchedNodes(data, elem, project, localnodeonly, inparams, callback) {
+    var i;
+    if (!project) {
+        return;
+    }
+    var params = Object.extend({view: 'embed', declarenone: true, fullresults: true}, data);
+    if (null !== inparams) {
+        Object.extend(params, inparams);
+    }
+    if (localnodeonly) {
+        params.localNodeOnly = 'true';
+    }
+
+    if (typeof(data.nodeExcludePrecedence) == 'string' && data.nodeExcludePrecedence === "false"
+        || typeof(data.nodeExcludePrecedence) == 'boolean' && !data.nodeExcludePrecedence) {
+        params.nodeExcludePrecedence = "false";
+    } else {
+        params.nodeExcludePrecedence = "true";
+    }
+    jQuery('#' + elem).load(_genUrl(appLinks.frameworkNodesFragment, params), function (response, status, xhr) {
+        jQuery('#' + elem).removeClass('depress');
+        if (status == 'success') {
+            if (typeof(callback) == 'function') {
+                callback(xhr);
+            }
+        }
+    });
+}
+
+//set box filterselections
+function setFilter(name, value, callback) {
+    if (!value) {
+        value = "!";
+    }
+    if (null === callback) {
+        callback = _setFilterSuccess;
+    }
+    var str = name + "=" + value;
+    jQuery.ajax({
+        type: 'POST',
+        url: _genUrl(appLinks.userAddFilterPref, {filterpref: str}),
+        beforeSend: _ajaxSendTokens.curry('filter_select_tokens'),
+        success: function (data, status, jqxhr) {
+            if (typeof(callback) === 'function') {
+                callback(data, name);
+            } else if (typeof(_setFilterSuccess) == 'function') {
+                try {
+                    _setFilterSuccess(data, name);
+                } catch (e) {
+                }
+            }
+        }
+    }).success(_ajaxReceiveTokens.curry('filter_select_tokens'));
+}

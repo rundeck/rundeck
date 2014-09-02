@@ -58,12 +58,11 @@ function _formUpdateMatchedNodes() {
     if(typeof(_beforeMatchNodes)=='function'){
         _beforeMatchNodes();
     }
-    new Ajax.Updater('matchednodes', appLinks.frameworkNodesFragment, {parameters:params,evalScripts:true,onSuccess:function(
-        e) {
+    jQuery('#matchednodes').load(_genUrl(appLinks.frameworkNodesFragment,params),function(resp,status,jqxhr) {
         if (typeof(_afterMatchNodes) == 'function') {
             _afterMatchNodes();
         }
-    }});
+    });
 }
 function _matchNodes() {
     if (mnodetimer) {
@@ -121,25 +120,16 @@ function _wfiedit(key,num,isErrorHandler) {
     if (getCurSEID()) {
         params.scheduledExecutionId = getCurSEID();
     }
-    new Ajax.Updater($('wfli_' + key),
-        appLinks.workflowEdit, {
-        parameters: params,
-        evalScripts:true,
-        onSuccess: function(transport) {
-            _hideWFItemControls();
-        },
-        onComplete: function(transport) {
-            if (transport.request.success()) {
-
-                $('wfli_' + key).select('input').each(function(elem) {
-                    if (elem.type === 'text') {
-                        elem.observe('keypress', noenter);
-                    }
-                });
-                initTooltipForElements('#wfli_' + key + ' .obs_tooltip');
-                $('wfli_' + key).select('textarea.apply_ace').each(_addAceTextarea);
+    jQuery('#wfli_' + key).load(_genUrl(appLinks.workflowEdit, params),function(resp,status,jqxhr){
+        _hideWFItemControls();
+        var liitem = jQuery('#wfli_' + key);
+        liitem.find('input').each(function (ndx,elem) {
+            if (elem.type === 'text') {
+                elem.observe('keypress', noenter);
             }
-        }
+        });
+        liitem.find('textarea.apply_ace').each(function(ndx,elem){_addAceTextarea(elem)});
+        initTooltipForElements('#wfli_' + key + ' .obs_tooltip');
     });
 }
 
@@ -148,32 +138,25 @@ function _wfiview(key,num,isErrorHandler) {
     if (getCurSEID()) {
         params['scheduledExecutionId'] = getCurSEID();
     }
-    new Ajax.Updater($('wfli_' + key),
-        appLinks.workflowRender, {
-        parameters: params,
-        evalScripts:true,
-        onSuccess: function(transport) {
-            _showWFItemControls();
-        }
-    });
+    jQuery('#wfli_' + key).load(_genUrl(appLinks.workflowRender,params),_showWFItemControls);
 }
 function _wfisave(key,num, formelem,iseh) {
-    new Ajax.Updater($('wfli_' + key),
-        appLinks.workflowSave, {
-        parameters: Form.serialize(formelem),
-        evalScripts: true,
-        onComplete: function(transport) {
-            if (transport.request.success()) {
-                if (!$('wfli_' + key).down('div.wfitemEditForm')) {
-                    _showWFItemControls();
-                    if(iseh){
-                        _hideWFItemControlsAddEH(num);
-                    }
+    jQuery.ajax({
+        type: 'POST',
+        url: _genUrl(appLinks.workflowSave, Form.serialize(formelem)),
+        beforeSend: _ajaxSendTokens.curry('job_edit_tokens'),
+        success: function (resp, status, jqxhr) {
+            var litem = jQuery('#wfli_' + key);
+            litem.html(resp);
+            if (litem.find('div.wfitemEditForm').size()<1) {
+                _showWFItemControls();
+                if (iseh) {
+                    _hideWFItemControlsAddEH(num);
                 }
-                initTooltipForElements('#wfli_' + key + ' .obs_tooltip')
             }
+            initTooltipForElements('#wfli_' + key + ' .obs_tooltip')
         }
-    });
+    }).success(_ajaxReceiveTokens.curry('job_edit_tokens'));
 }
 var newitemElem;
 function _wfiaddnew(type,nodestep) {
@@ -209,24 +192,17 @@ function _wfiaddnew(type,nodestep) {
     ehUlElement.appendChild(ehLiElement);
     parentli.appendChild(ehUlElement);
     olist.appendChild(parentli);
-    new Ajax.Updater(newitemElem,
-        appLinks.workflowEdit, {
-        parameters: params,
-        evalScripts:true,
-        onComplete: function(transport) {
-            if (transport.request.success()) {
-                $(newitemElem).select('input').each(function(elem) {
-                    if (elem.type == 'text') {
-                        elem.observe('keypress', noenter);
-                    }
-                });
-                $(newitemElem).down('input[type=text]').focus();
-                initTooltipForElements('#wfli_' + num+ ' .obs_tooltip');
-                $(newitemElem).select('textarea.apply_ace').each(_addAceTextarea);
-                $(newitemElem).select('textarea.apply_resize').each(_applyTextareaResizer);
-
+    jQuery(newitemElem).load(_genUrl(appLinks.workflowEdit,params),function(){
+        $(newitemElem).select('input').each(function (elem) {
+            if (elem.type == 'text') {
+                elem.observe('keypress', noenter);
             }
-        }
+        });
+        $(newitemElem).down('input[type=text]').focus();
+        initTooltipForElements('#wfli_' + num + ' .obs_tooltip');
+        $(newitemElem).select('textarea.apply_ace').each(_addAceTextarea);
+        $(newitemElem).select('textarea.apply_resize').each(_applyTextareaResizer);
+
     });
 }
 
@@ -270,21 +246,20 @@ function _addAceTextarea(textarea){
 }
 function _wfisavenew(formelem) {
     var params = Form.serialize(formelem);
-    new Ajax.Updater(newitemElem,
-        appLinks.workflowSave, {
-        parameters: params,
-        evalScripts: true,
-        onComplete: function(transport) {
-            if (transport.request.success() && !newitemElem.down('div.wfitemEditForm')) {
-                var litem=$(newitemElem.parentNode);
-                $(litem).highlight();
-                $('wfnewbutton').show();
-                _showWFItemControls();
-                $('workflowDropfinal').setAttribute('data-wfitemnum', parseInt(litem.getAttribute('data-wfitemnum')) + 1);
-                newitemElem = null;
-            }
+    jQuery.ajax({
+        type:'POST',
+        url:_genUrl(appLinks.workflowSave,params),
+        beforeSend:_ajaxSendTokens.curry('job_edit_tokens'),
+        success:function(resp,status,jqxhr){
+            jQuery(newitemElem).html(resp);
+            var litem = $(newitemElem.parentNode);
+            $(litem).highlight();
+            $('wfnewbutton').show();
+            _showWFItemControls();
+            $('workflowDropfinal').setAttribute('data-wfitemnum', parseInt(litem.getAttribute('data-wfitemnum')) + 1);
+            newitemElem = null;
         }
-    });
+    }).success(_ajaxReceiveTokens.curry('job_edit_tokens'));
 }
 function _wficancelnew() {
     var olist = $('workflowContent').down('ol');
@@ -413,123 +388,55 @@ function _wfiaddNewErrorHandler(elem,type,num,nodestep){
     if (getCurSEID()) {
         params.scheduledExecutionId = getCurSEID();
     }
-    var wfiehli = $('wfli_' + key);
+    var wfiehli = jQuery('#wfli_' + key);
     _hideAddNewEH();
 
-    new Ajax.Updater(wfiehli,
-        appLinks.workflowEdit, {
-            parameters:params,
-            evalScripts:true,
-            onComplete:function (transport) {
-                if (transport.request.success()) {
-                    $(wfiehli).select('input').each(function (elem) {
-                        if (elem.type == 'text') {
-                            elem.observe('keypress', noenter);
-                        }
-                    });
-                    initTooltipForElements('#wfli_' + key + ' .obs_tooltip');
-                    $(wfiehli).select('textarea.apply_ace').each(_addAceTextarea);
-                    $(wfiehli).select('textarea.apply_resize').each(_applyTextareaResizer);
-                }
+    wfiehli.load(_genUrl(appLinks.workflowEdit,params),function(){
+        wfiehli.find('input').each(function (ndx,elem) {
+            if (elem.type == 'text') {
+                elem.observe('keypress', noenter);
             }
         });
+        wfiehli.find('textarea.apply_ace').each(function (){_addAceTextarea(this);});
+        wfiehli.find('textarea.apply_resize').each(function(){_applyTextareaResizer(this);});
+        initTooltipForElements('#wfli_' + key + ' .obs_tooltip');
+    });
 }
 
 function _doMoveItem(from, to) {
-    var params = {fromnum:from,tonum:to,edit:true};
-    if (getCurSEID()) {
-        params['scheduledExecutionId'] = getCurSEID();
-    }
-
-    new Ajax.Updater($('workflowContent').down('ol'),
-        appLinks.workflowReorder, {
-        parameters: params,
-        evalScripts:true,
-        onComplete: function(transport) {
-            if (transport.request.success()) {
-                newitemElem = null;
-                $('wfnewbutton').show();
-                _showWFItemControls();
-            }
-        }
-    });
+    _ajaxWFAction(appLinks.workflowReorder,{fromnum:from,tonum:to,edit:true});
 }
 function _doRemoveItem(key,num,isErrorHandler) {
     var params = {delnum:num,edit:true,key:key,isErrorHandler:isErrorHandler};
-    if (getCurSEID()) {
-        params['scheduledExecutionId'] = getCurSEID();
-    }
     Effect.Fade($('wfivis_' + key), {duration:0.2,afterFinish:
         function(f) {
-            new Ajax.Updater($('workflowContent').down('ol'),
-                appLinks.workflowRemove, {
-                parameters: params,
-                evalScripts:true,
-                onComplete: function(transport) {
-                    if (transport.request.success()) {
-                        newitemElem = null;
-                        $('wfnewbutton').show();
-                        _showWFItemControls();
-                    }
-                }
-            });
+            _ajaxWFAction(appLinks.workflowRemove,params);
         }
     });
 }
 function _doUndoWFAction() {
-    var params = {edit:true};
-    if (getCurSEID()) {
-        params['scheduledExecutionId'] = getCurSEID();
-    }
-
-    new Ajax.Updater($('workflowContent').down('ol'),
-        appLinks.workflowUndo, {
-        parameters: params,
-        evalScripts:true,
-        onComplete: function(transport) {
-            if (transport.request.success()) {
-                newitemElem = null;
-                $('wfnewbutton').show();
-                _showWFItemControls();
-            }
-        }
-    });
+    _ajaxWFAction(appLinks.workflowUndo, {edit: true});
 }
 function _doRedoWFAction() {
-    var params = {edit:true};
-    if (getCurSEID()) {
-        params['scheduledExecutionId'] = getCurSEID();
-    }
-
-    new Ajax.Updater($('workflowContent').down('ol'),
-        appLinks.workflowRedo, {
-        parameters: params,
-        evalScripts:true,
-        onComplete: function(transport) {
-            if (transport.request.success()) {
-                newitemElem = null;
-                $('wfnewbutton').show();
-                _showWFItemControls();
-            }
-        }
-    });
+    _ajaxWFAction(appLinks.workflowRedo, {edit: true});
 }
 function _doResetWFAction() {
-    var params = {edit:true};
+    _ajaxWFAction(appLinks.workflowRevert, {edit: true});
+}
+function _ajaxWFAction(url, params){
+    var tokendataid = 'reqtoken_undo_workflow';
     if (getCurSEID()) {
         params['scheduledExecutionId'] = getCurSEID();
     }
-
-    new Ajax.Updater($('workflowContent').down('ol'),
-        appLinks.workflowRevert, {
-        parameters: params,
-        evalScripts:true,
-        onComplete: function(transport) {
-            if (transport.request.success()) {
-                newitemElem = null;
-                $('wfnewbutton').show();
-                _showWFItemControls();
-            }
+    jQuery.ajax({
+        type: 'POST',
+        url: _genUrl(url,params),
+        beforeSend: _ajaxSendTokens.curry(tokendataid),
+        success: function (data, status, jqxhr) {
+            jQuery('#workflowContent').find('ol').html(data);
+            newitemElem = null;
+            $('wfnewbutton').show();
+            _showWFItemControls();
         }
     });
 }
@@ -538,7 +445,7 @@ function _updateWFUndoRedo() {
     if (getCurSEID()) {
         params['scheduledExecutionId'] = getCurSEID();
     }
-    new Ajax.Updater($('wfundoredo'), appLinks.workflowRenderUndo, {parameters:params,evalScripts:true});
+    jQuery('#wfundoredo').load(_genUrl( appLinks.workflowRenderUndo,params));
 }
 
 
@@ -652,7 +559,9 @@ function _updateOptsUndoRedo() {
     if (getCurSEID()) {
         params['scheduledExecutionId'] = getCurSEID();
     }
-    new Ajax.Updater($('optundoredo'), appLinks.editOptsRenderUndo, {parameters:params});
+
+    jQuery('#optundoredo')
+        .load(_genUrl(appLinks.editOptsRenderUndo, params));
 }
 
 function _configureInputRestrictions(target) {
@@ -676,20 +585,16 @@ function _optedit(name, elem) {
         params['scheduledExecutionId'] = getCurSEID();
     }
     $('optsload').loading();
-    new Ajax.Updater(elem,
-        appLinks.editOptsEdit, {
-        parameters: params,
-        evalScripts:true,
-        onSuccess: function(transport) {
+    jQuery.ajax({
+        type:'GET',
+        url:_genUrl(appLinks.editOptsEdit, params),
+        success:function(data,status,jqxhr){
+            jQuery(elem).html(data);
             _hideOptControls();
+            _configureInputRestrictions(elem);
         },
-        onComplete: function(transport) {
-            if (transport && transport.request.success()) {
-                _configureInputRestrictions(elem);
-            }
-        },
-        onFailure: function(transport) {
-            alert("error: " + transport);
+        failure:function(data,status,jqxhr){
+            alert("error: " + status);
         }
     });
 }
@@ -699,32 +604,23 @@ function _optview(name, target) {
     if (getCurSEID()) {
         params['scheduledExecutionId'] = getCurSEID();
     }
-    new Ajax.Updater(target,
-        appLinks.editOptsRender, {
-        parameters: params,
-        evalScripts:true,
-        onComplete: function(transport) {
-            if (transport.request.success()) {
-                _showOptControls();
-            }
-        }
-    });
+    jQuery('#'+target).load(_genUrl(appLinks.editOptsRender,params), _showOptControls);
 }
-function _optsave(formelem, target) {
+function _optsave(formelem, tokendataid, target) {
     $('optsload').loading();
-    new Ajax.Updater(target,
-        appLinks.editOptsSave, {
-        parameters: Form.serialize(formelem),
-        evalScripts: true,
-        onComplete: function(transport) {
-            if (transport.request.success()) {
-                if (!$(target).down('div.optEditForm')) {
-                    _showOptControls();
-                    $(target).highlight();
-                } else {
-                    _configureInputRestrictions(target);
-                    _hideOptControls();
-                }
+    jQuery.ajax({
+        type: "POST",
+        url:_genUrl(appLinks.editOptsSave),
+        data:Form.serialize(formelem),
+        beforeSend: _ajaxSendTokens.curry(tokendataid),
+        success:function(data,status,xhr){
+            jQuery(target).html(data);
+            if (!$(target).down('div.optEditForm')) {
+                _showOptControls();
+                $(target).highlight();
+            } else {
+                _configureInputRestrictions(target);
+                _hideOptControls();
             }
         }
     });
@@ -755,17 +651,12 @@ function _optaddnew() {
     newoptli.appendChild(createElement);
     olist.appendChild(newoptli);
     $('optsload').loading();
-    new Ajax.Updater(createElement,
-        appLinks.editOptsEdit, {
-        parameters: params,
-        evalScripts:true,
-        onComplete: function(transport) {
-            if (transport && transport.request.success()) {
-                _configureInputRestrictions(createElement);
-                _hideOptControls();
-            }
-            clearHtml('optsload');
+    jQuery(createElement).load(_genUrl(appLinks.editOptsEdit,params),null,function(resp,status,jqxhr){
+        if (status=='success') {
+            _configureInputRestrictions(createElement);
+            _hideOptControls();
         }
+        clearHtml('optsload');
     });
 }
 
@@ -783,15 +674,8 @@ function _reloadOpts() {
     }
     var optslist = $('optionsContent').down('ul.options');
     $('optsload').loading();
-    new Ajax.Updater(optslist,
-        appLinks.editOptsRenderAll, {
-        parameters: params,
-        evalScripts: true,
-        onComplete: function(transport) {
-            if (transport.request.success()) {
-                _showOptControls();
-            }
-        }
+    jQuery('#optionsContent').find('ul.options').load(_genUrl(appLinks.editOptsRenderAll, params),function(data,status,jqxhr){
+        _showOptControls();
     });
 }
 
@@ -803,40 +687,34 @@ function _summarizeOpts() {
     }
     var optssummary = $('optssummary');
     $('optsload').loading();
-    new Ajax.Updater(optssummary,
-        appLinks.editOptsRenderSummary, {
-        parameters: params,
-        evalScripts: true,
-        onComplete: function(transport) {
-            if (transport.request.success()) {
-                _showOptControls();
-            }
-        }
-    });
+    jQuery('#optssummary').load(_genUrl(appLinks.editOptsRenderSummary, params), _showOptControls);
 }
 
-function _optsavenew(formelem) {
+function _optsavenew(formelem,tokendataid) {
     var params = Form.serialize(formelem);
     $('optsload').loading();
-    new Ajax.Updater(newoptli,
-        appLinks.editOptsSave, {
-        parameters: params,
-        evalScripts: true,
-        onComplete: function(transport) {
-            if (transport.request.success() && !newoptli.down('div.optEditForm')) {
+    jQuery.ajax({
+        type: "POST",
+        url: _genUrl(appLinks.editOptsSave),
+        data: params,
+        beforeSend: _ajaxSendTokens.curry(tokendataid),
+        success: function (data, status, xhr) {
+            jQuery(newoptli).html(data);
+            if (!newoptli.down('div.optEditForm')) {
                 $(newoptli).highlight();
                 newoptli = null;
                 _showOptControls();
                 _reloadOpts();
-            } else if (transport.request.success() && newoptli.down('div.optEditForm')) {
+            } else if (newoptli.down('div.optEditForm')) {
                 _configureInputRestrictions(newoptli);
                 _hideOptControls();
             }
         }
     });
+
 }
 
-function _doRemoveOption(name, elem) {
+function _doRemoveOption(name, elem,tokendataid) {
     var params = {name:name,edit:true};
     if (getCurSEID()) {
         params['scheduledExecutionId'] = getCurSEID();
@@ -844,14 +722,14 @@ function _doRemoveOption(name, elem) {
     $('optsload').loading();
     Effect.Fade($(elem), {duration:0.2,afterFinish:
         function(f) {
-            new Ajax.Updater($('optionsContent').down('ul'),
-                appLinks.editOptsRemove, {
-                parameters: params,
-                evalScripts:true,
-                onComplete: function(transport) {
-                    if (transport.request.success()) {
-                        _showOptControls();
-                    }
+            jQuery.ajax({
+                type:'POST',
+                url:_genUrl(appLinks.editOptsRemove),
+                data:params,
+                beforeSend:_ajaxSendTokens.curry(tokendataid),
+                success:function(data,status,jqxhr){
+                    jQuery('#optionsContent').find('ul').html(data);
+                    _showOptControls();
                 }
             });
         }
@@ -863,15 +741,15 @@ function _doUndoOptsAction() {
     if (getCurSEID()) {
         params['scheduledExecutionId'] = getCurSEID();
     }
-
-    new Ajax.Updater($('optionsContent').down('ul'),
-        appLinks.editOptsUndo, {
-        parameters: params,
-        evalScripts:true,
-        onComplete: function(transport) {
-            if (transport.request.success()) {
-                _showOptControls();
-            }
+    var tokendataid='reqtoken_undo_opts';
+    jQuery.ajax({
+        type:'POST',
+        url:_genUrl(appLinks.editOptsUndo),
+        data:params,
+        beforeSend:_ajaxSendTokens.curry(tokendataid),
+        success:function(data,status,jqxhr){
+            jQuery('#optionsContent').find('ul').html(data);
+            _showOptControls();
         }
     });
 }
@@ -880,15 +758,15 @@ function _doRedoOptsAction() {
     if (getCurSEID()) {
         params['scheduledExecutionId'] = getCurSEID();
     }
-
-    new Ajax.Updater($('optionsContent').down('ul'),
-        appLinks.editOptsRedo, {
-        parameters: params,
-        evalScripts:true,
-        onComplete: function(transport) {
-            if (transport.request.success()) {
-                _showOptControls();
-            }
+    var tokendataid = 'reqtoken_undo_opts';
+    jQuery.ajax({
+        type: 'POST',
+        url: _genUrl(appLinks.editOptsRedo),
+        data: params,
+        beforeSend: _ajaxSendTokens.curry(tokendataid),
+        success: function (data, status, jqxhr) {
+            jQuery('#optionsContent').find('ul').html(data);
+            _showOptControls();
         }
     });
 }
@@ -897,15 +775,15 @@ function _doRevertOptsAction() {
     if (getCurSEID()) {
         params['scheduledExecutionId'] = getCurSEID();
     }
-
-    new Ajax.Updater($('optionsContent').down('ul'),
-        appLinks.editOptsRevert, {
-        parameters: params,
-        evalScripts:true,
-        onComplete: function(transport) {
-            if (transport.request.success()) {
-                _showOptControls();
-            }
+    var tokendataid = 'reqtoken_undo_opts';
+    jQuery.ajax({
+        type: 'POST',
+        url: _genUrl(appLinks.editOptsRevert),
+        data: params,
+        beforeSend: _ajaxSendTokens.curry(tokendataid),
+        success: function (data, status, jqxhr) {
+            jQuery('#optionsContent').find('ul').html(data);
+            _showOptControls();
         }
     });
 }

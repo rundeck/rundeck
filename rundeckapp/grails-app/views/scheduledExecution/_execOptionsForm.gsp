@@ -1,7 +1,8 @@
 
 <div class="row">
 <div class="col-sm-12 ">
-<g:form controller="scheduledExecution" method="post" action="runJobNow" params="[project:scheduledExecution.project]" class="form-horizontal" role="form">
+<g:form controller="scheduledExecution" method="post" action="runJobNow" useToken="true"
+        params="[project:scheduledExecution.project]" class="form-horizontal" role="form">
 <div class="panel panel-default panel-tab-content">
 <g:if test="${!hideHead}">
     <div class="panel-heading">

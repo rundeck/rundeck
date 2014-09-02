@@ -23,7 +23,7 @@ line 4 final
 END
 
 # get listing
-docurl ${runurl}?${params} > $DIR/curl.out
+docurl -X POST ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2

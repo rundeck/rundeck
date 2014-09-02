@@ -16,7 +16,7 @@
     <div class="queryTable">
         <g:if test="${!params.nofilters}">
         <div id="${enc(attr:rkey)}filter" >
-            <g:form action="index" class="form-inline" role="form" params="${[project: params.project ?: request.project]}">
+            <g:form action="index" class="form-inline" role="form" params="${[project: params.project ?: request.project]}" useToken="true">
                 <g:if test="${params.compact}">
                     <g:hiddenField name="compact" value="${params.compact}"/>
                 </g:if>
@@ -92,7 +92,7 @@
 
                 <div class="jobsReport clear">
                     <g:if test="${reports}">
-                        <g:form action="bulkDelete" controller="execution" method="POST" name="bulkDeleteForm">
+                        <g:form action="bulkDelete" controller="execution" method="POST" name="bulkDeleteForm" useToken="true">
                             <g:hiddenField name="project" value="${params.project}"/>
                         <table class=" table table-hover table-condensed events-table" style="width:100%">
                         <g:if test="${includeNowRunning}">

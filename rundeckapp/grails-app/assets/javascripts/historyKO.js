@@ -230,6 +230,7 @@ function History(ajaxHistoryLink,ajaxNowRunningLink,ajaxBulkDeleteLink) {
             data: JSON.stringify({"ids": self.bulkEditIds()}),
             contentType: 'application/json',
             dataType:'json',
+            beforeSend:_ajaxSendTokens.curry('history_tokens'),
             success:function(data,status,xhr){
                 self.bulkEditProgress(false);
                 self.bulkEditResults(data);
@@ -242,10 +243,10 @@ function History(ajaxHistoryLink,ajaxNowRunningLink,ajaxBulkDeleteLink) {
             },
             error:function(xhr,status,err){
                 self.bulkEditProgress(false);
-                self.bulkEditResults({error:"Request did not succeed: "+status+": "+err});
+                self.bulkEditResults({error:"Request did not succeed: "+((xhr.responseJSON && xhr.responseJSON.message)? xhr.responseJSON.message:err)});
                 jQuery(resultmodal).modal('show');
             }
-        });
+        }).success(_ajaxReceiveTokens.curry('history_tokens'));
     };
 
     //load dataset again

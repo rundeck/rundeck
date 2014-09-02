@@ -21,9 +21,14 @@ class ProjectController extends ControllerBase{
     def projectService
     def apiService
     def static allowedMethods = [
+            apiProjectConfigKeyDelete:['DELETE'],
+            apiProjectConfigKeyPut:['PUT'],
+            apiProjectConfigPut:['PUT'],
+            apiProjectCreate:['POST'],
+            apiProjectDelete:['DELETE'],
+            apiProjectImport: ['PUT'],
             importArchive: ['POST'],
             delete: ['POST'],
-            apiProjectImport:['PUT']
     ]
 
     def index () {
@@ -75,6 +80,7 @@ class ProjectController extends ControllerBase{
     }
 
     public def importArchive(ProjectArchiveParams archiveParams){
+        withForm{
         if(archiveParams.hasErrors()){
             flash.errors=archiveParams.errors
             return redirect(controller: 'menu', action: 'admin', params: [project: params.project])
@@ -121,9 +127,14 @@ class ProjectController extends ControllerBase{
             }
             return redirect(controller: 'menu',action: 'admin',params:[project:project])
         }
+        }.invalidToken {
+            flash.error = g.message(code:'request.error.invalidtoken.message')
+            return redirect(controller: 'menu', action: 'admin', params: [project: params.project])
+        }
     }
 
     def delete (ProjectArchiveParams archiveParams){
+        withForm{
         if (archiveParams.hasErrors()) {
             flash.errors = archiveParams.errors
             return redirect(controller: 'menu', action: 'admin', params: [project: params.project])
@@ -158,6 +169,10 @@ class ProjectController extends ControllerBase{
         }
         flash.message = 'Deleted project: ' + project
         return redirect(controller: 'menu', action: 'home')
+        }.invalidToken {
+            flash.error= g.message(code: 'request.error.invalidtoken.message')
+            return redirect(controller: 'menu', action: 'admin', params: [project: params.project])
+        }
     }
 
     /**
@@ -251,6 +266,9 @@ class ProjectController extends ControllerBase{
      * API: /api/11/projects
      */
     def apiProjectList(){
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def projlist = frameworkService.projects(authContext)
         withFormat{
@@ -282,6 +300,9 @@ class ProjectController extends ControllerBase{
      * API: /api/11/project/NAME
      */
     def apiProjectGet(){
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (!params.project) {
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
@@ -727,6 +748,9 @@ class ProjectController extends ControllerBase{
     }
 
     def apiProjectImport(){
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         def project = validateProjectConfigApiRequest(AuthConstants.ACTION_IMPORT)
         if (!project) {
             return

@@ -1,4 +1,3 @@
-<%@ page import="rundeck.filters.ApiRequestFilters" %>
 <script type="text/javascript">
     <g:set var="currentProject" value="${params.project?:request.project}"/>
     <g:set var="projParams" value="${currentProject?[project:currentProject]:[:]}"/>
@@ -31,6 +30,8 @@
         executionFollowFragment: "${createLink(controller:'execution',action:'followFragment',params:projParams)}",
         menuJobs: "${createLink(controller:'menu',action:'jobs',params: projParams)}",
         userAddFilterPref: "${createLink(controller:'user',action:'addFilterPref',params:projParams)}",
+        userClearApiToken: "${g.createLink(controller: 'user', action: 'clearApiToken')}",
+        userGenerateApiToken: "${g.createLink(controller: 'user', action: 'generateApiToken')}",
 
         workflowEdit: '${createLink(controller:"workflow",action:"edit",params:projParams)}',
         workflowRender: '${createLink(controller:"workflow",action:"render",params:projParams)}',
@@ -54,8 +55,8 @@
         editOptsRevert: '${createLink(controller:"editOpts",action:"revert",params:projParams)}',
         menuJobsPicker: '${createLink(controller:"menu",action:"jobsPicker",params:projParams)}',
         scheduledExecutionGroupTreeFragment: '${createLink(controller:"scheduledExecution",action:"groupTreeFragment",params:projParams)}',
-        storageKeysApi: '${createLink(uri:"/api/${ApiRequestFilters.API_CURRENT_VERSION}/storage/")}',
-        apiExecutionsBulkDelete: '${createLink(uri:"/api/${ApiRequestFilters.API_CURRENT_VERSION}/executions/delete")}'
+        storageKeysApi: '${createLink(uri:'/storage/access/')}',
+        apiExecutionsBulkDelete: '${createLink(controller:'execution',action: 'deleteBulkApi')}'
     } ;
     //compatibility with WB javascript:
     var AppImages = {
@@ -66,221 +67,4 @@
         iconTinyRemoveXGray: '${resource(dir:"images",file:"icon-tiny-removex-gray.png")}',
         iconSmallPrefix:'${resource(dir:"images",file:"icon-small-")}'
     };
-    var _g_nodeFilterData={};
-    var updateNowRunning = function(count) {
-        var nrtitle = "Now Running (" + count + ")";
-        if ($('nowrunninglink')) {
-            setText($('nowrunninglink'),nrtitle);
-        }
-        $$('.nowrunningcount').each(function(e){setText(e,"("+count+")");});
-        if(typeof(_pageUpdateNowRunning)==="function"){
-            _pageUpdateNowRunning(count);
-        }
-    };
-    var _setLoading=function(element,text){
-        element=$(element);
-        if(null===text || typeof(text)=='undefined'){
-            text="Loading…";
-        }
-        if(element.tagName==='TBODY'){
-            var tr = new Element('tr');
-            var td = new Element('td');
-            tr.appendChild(td);
-            element.appendChild(tr);
-
-            var sp = new Element('span');
-            sp.addClassName('loading');
-            var img = new Element('img');
-            img.src = appLinks.iconSpinner;
-            $(sp).appendChild(img);
-            appendText(sp, ' ' + text);
-            td.appendChild(sp);
-        }else{
-            var sp = new Element('span');
-            sp.addClassName('loading');
-            var img = new Element('img');
-            img.src = appLinks.iconSpinner;
-            $(sp).appendChild(img);
-            appendText(sp, ' ' + text);
-            clearHtml(element);
-            element.appendChild(sp);
-        }
-        return element;
-    };
-
-    var _tooltipElemSelector=null;
-    var _tooltiptimer=null;
-    var _tooltipelem=null;
-
-    var tooltipMouseOut=function(){
-        _tooltiptimer=null;
-        _tooltipelem=null;
-        if(_tooltipElemSelector){
-            $$('.tooltipcontent').each(Element.hide);
-            $$(_tooltipElemSelector).each(function(e){
-                $(e).removeClassName('glow');
-                $(e).removeClassName('active');
-                $(e).removeAttribute('data-rdtooltip');
-            });
-        }
-    };
-    /**
-     * initialize a tooltip detail view for the matching elements.
-     * The tooltipe element is identified by the 'id' of the matching element
-     * with "_tooltip" appended.
-     *
-     * E.g. if the matched element has id "key" then the element with
-     * id "key_tooltip" will be shown when the element is hovered over.
-     * @param selector a selector expression to identify a set of elements
-     */
-    var initTooltipForElements=function(selector){
-        $$(selector).each(function(elem){
-            var ident=elem.identify();
-            if($(ident+'_tooltip')){
-                var over = function(evt){
-                    if(_tooltiptimer && _tooltipelem==elem){
-                        return;
-                    }
-                    if(_tooltiptimer){
-                        clearTimeout(_tooltiptimer);
-                        tooltipMouseOut();
-                    }
-
-                    $(elem).addClassName('glow');
-                    new MenuController().showRelativeTo(elem,ident+'_tooltip');
-                    $(elem).setAttribute('data-rdtooltip', 'true');
-                };
-                var out=function(evt){
-                    if(!_tooltiptimer){
-                        _tooltiptimer=setTimeout(tooltipMouseOut,50);
-                        _tooltipelem = elem;
-                    }
-                };
-                Event.observe(elem,'mouseenter',over);
-                Event.observe(elem,'mouseleave', out);
-            }
-        });
-        if(null==_tooltipElemSelector){
-            _tooltipElemSelector = selector;
-            Event.observe(document.body, 'click', function (evt) {
-                //click outside of popup bubble hides it
-                if (!evt.element().hasAttribute('data-rdtooltip')) {
-                    tooltipMouseOut();
-                }
-            }, false);
-        }else{
-            _tooltipElemSelector = _tooltipElemSelector+', '+selector;
-        }
-
-    };
-    /**
-     * initialize a tooltip detail view for the matching elements.
-     * The tooltipe element is identified by the 'id' of the matching element
-     * with "_tooltip" appended.
-     *
-     * E.g. if the matched element has id "key" then the element with
-     * id "key_tooltip" will be shown when the element is hovered over.
-     * @param selector a selector expression to identify a set of elements
-     */
-    var initClicktipForElements=function(selector){
-        $$(selector).each(function(elem){
-            var ident=elem.identify();
-            if($(ident+'_tooltip')){
-                var out=function(evt){
-                    if(!_tooltiptimer){
-                        _tooltiptimer=setTimeout(tooltipMouseOut,50);
-                        _tooltipelem = null;
-                    }
-                };
-                var over = function (evt) {
-                    var oldelem= _tooltipelem;
-                    if(_tooltipelem && _tooltipelem != elem){
-                        clearTimeout(_tooltiptimer);
-                        tooltipMouseOut();
-                    }
-                    if(_tooltipelem == elem || oldelem==elem){
-                        out(evt);
-                        return;
-                    }
-                    if (_tooltiptimer) {
-                        clearTimeout(_tooltiptimer);
-                        tooltipMouseOut();
-                    }
-
-                    $(elem).addClassName('active');
-                    new MenuController().showRelativeTo(elem, ident + '_tooltip');
-                    _tooltipelem = elem;
-                    $(elem).setAttribute('data-rdtooltip', 'true');
-                };
-                Event.observe(elem,'click',over,true);
-            }
-        });
-        if(null==_tooltipElemSelector){
-            _tooltipElemSelector = selector;
-            Event.observe(document.body, 'click', function (evt) {
-                //click outside of popup bubble hides it
-                if(!evt.element().hasAttribute('data-rdtooltip')){
-                    tooltipMouseOut();
-                }
-            }, false);
-        }else{
-            _tooltipElemSelector = _tooltipElemSelector+', '+selector;
-        }
-
-    };
-    Element.addMethods( {
-      loading: _setLoading
-    });
-      /** node filter preview code */
-
-    function _updateMatchedNodes(data,elem,project,localnodeonly,inparams,callback){
-        var i;
-        if(!project){
-            return;
-        }
-        var params =Object.extend({view:'embed',declarenone:true,fullresults:true},data);
-        if(null!==inparams){
-            Object.extend(params,inparams);
-        }
-        if(localnodeonly){
-            params.localNodeOnly='true';
-        }
-
-        if(typeof(data.nodeExcludePrecedence) == 'string' && data.nodeExcludePrecedence==="false"
-            || typeof(data.nodeExcludePrecedence)=='boolean' && !data.nodeExcludePrecedence){
-            params.nodeExcludePrecedence="false";
-        }else{
-            params.nodeExcludePrecedence="true";
-        }
-//        $(elem).loading();
-          jQuery('#'+elem).load(_genUrl(appLinks.frameworkNodesFragment,params),function(response, status, xhr){
-              jQuery('#'+elem).removeClass('depress');
-              if (status=='success') {
-                  if (typeof(callback) == 'function') {
-                      callback(xhr);
-                  }
-              }
-          });
-    }
-
-    //set box filterselections
-    function setFilter(name,value,callback){
-        if(!value){
-            value="!";
-        }
-        if(null===callback){
-            callback=_setFilterSuccess;
-        }
-        var str=name+"="+value;
-        new Ajax.Request("${createLink(controller:'user',action:'addFilterPref')}",{parameters:{filterpref:str}, evalJSON:true,onSuccess:function(response){
-            if(typeof(callback)==='function'){
-                callback(response,name);
-            }else{
-                try{
-                    _setFilterSuccess(response,name);
-                }catch(e){
-                }
-            }
-        }});
-    }
 </script>

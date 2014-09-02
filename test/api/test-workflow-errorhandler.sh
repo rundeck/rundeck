@@ -73,7 +73,7 @@ END
   params=""
 
   # specify the file for upload with curl, named "xmlBatch"
-  ulopts="-F xmlBatch=@$DIR/temp.out"
+  ulopts="-F xmlBatch=@$DIR/temp.out -X POST"
 
   # get listing
   docurl $ulopts ${runurl}?${params} > $DIR/curl.out
@@ -110,7 +110,7 @@ runjob(){
   params=""
 
   # get listing
-  docurl ${runurl}?${params} > $DIR/curl.out
+  docurl -X POST ${runurl}?${params} > $DIR/curl.out
   if [ 0 != $? ] ; then
       errorMsg "ERROR: failed query request"
       exit 2

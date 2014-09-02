@@ -29,6 +29,10 @@ class ReportsController extends ControllerBase{
     def FrameworkService frameworkService
     def scheduledExecutionService
     def ApiService apiService
+    static allowedMethods = [
+            deleteFilter:'POST',
+            storeFilter:'POST'
+    ]
 
     public def index (ExecQuery query) {
         //data binding allows '123' followed by any characters to bind as integer 123, prevent additional chars after the integer value
@@ -296,6 +300,7 @@ class ReportsController extends ControllerBase{
 
 
     public def storeFilter(ReportQuery query, StoreFilterCommand storeFilterCommand) {
+        withForm{
         if(storeFilterCommand.hasErrors()){
             request.errors=storeFilterCommand.errors
             return renderErrorView([:])
@@ -330,17 +335,26 @@ class ReportsController extends ControllerBase{
             }
         }
         redirect(controller:'reports',action:params.fragment?'eventsFragment':'index',params:[filterName:filter.name,project:params.project])
+        }.invalidToken {
+            flash.error=g.message(code:'request.error.invalidtoken.message')
+            redirect(controller: 'reports', action: params.fragment ? 'eventsFragment' : 'index', params: [project: params.project])
+        }
     }
 
-    def deleteFilter={
-         def User u = userService.findOrCreateUser(session.user)
-        def filtername=params.delFilterName
-        final def ffilter = ReportFilter.findByNameAndUser(filtername, u)
-        if(ffilter){
-            ffilter.delete(flush:true)
-            flash.message="Filter deleted: ${filtername}"
+    def deleteFilter(){
+        withForm{
+            def User u = userService.findOrCreateUser(session.user)
+            def filtername=params.delFilterName
+            final def ffilter = ReportFilter.findByNameAndUser(filtername, u)
+            if(ffilter){
+                ffilter.delete(flush:true)
+                flash.message="Filter deleted: ${filtername}"
+            }
+            redirect(controller:'reports',action:params.fragment?'eventsFragment':'index',params:[project:params.project])
+        }.invalidToken {
+            flash.error= g.message(code: 'request.error.invalidtoken.message')
+            redirect(controller: 'reports', action: params.fragment ? 'eventsFragment' : 'index', params: [filterName: params.delFilterName,project: params.project])
         }
-        redirect(controller:'reports',action:params.fragment?'eventsFragment':'index',params:[project:params.project])
     }
    
 
@@ -373,6 +387,9 @@ class ReportsController extends ControllerBase{
      * API, /api/history, version 1
      */
     def apiHistory={ExecQuery query->
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         if(!params.project){
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])

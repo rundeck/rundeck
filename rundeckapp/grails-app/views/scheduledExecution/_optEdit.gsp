@@ -273,7 +273,7 @@
             <g:if test="${newoption}">
                 <g:hiddenField name="newoption" value="true"/>
                 <span class="btn btn-default btn-sm" onclick="_optcancelnew();" title="Cancel adding new option">Cancel</span>
-                <span class="btn btn-primary btn-sm" onclick="_optsavenew('optedit_${rkey}');" title="Save the new option">Save</span>
+                <span class="btn btn-primary btn-sm" onclick="_optsavenew('optedit_${enc(attr:rkey)}', 'reqtoken_${enc(attr:rkey)}');" title="Save the new option">Save</span>
                 <g:javascript>
                     fireWhenReady('optname_${enc(js:rkey)}',function(){
                         $('optname_${enc(js:rkey)}').focus();
@@ -282,9 +282,10 @@
             </g:if>
             <g:else>
                 <span class="btn btn-default btn-sm" onclick="_optview('${enc(js:origName?:option?.name)}',$(this).up('li.optEntry'));" title="Discard changes to the option">Discard</span>
-                <span class="btn btn-primary btn-sm" onclick="_optsave('optedit_${rkey}',$(this).up('li.optEntry'));" title="Save changes to the option">Save</span>
+                <span class="btn btn-primary btn-sm" onclick="_optsave('optedit_${enc(attr:rkey)}','reqtoken_${enc(attr:rkey)}',$(this).up('li.optEntry'));" title="Save changes to the option">Save</span>
             </g:else>
         </div>
+        <g:jsonToken id="reqtoken_${rkey}" url="${request.forwardURI}"/>
         <div class="clear"></div>
     </div>
 </div>

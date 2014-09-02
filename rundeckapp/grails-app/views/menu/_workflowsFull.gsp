@@ -47,7 +47,7 @@
 
             <td style="text-align:left;vertical-align:top;width:200px; ${wdgt.styleVisible(if:filtersOpen)}" id="${enc(attr:rkey)}filter" class="wffilter" >
 
-            <g:form action="jobs" params="[project:params.project]" method="get" class="form">
+            <g:form action="jobs" params="[project:params.project]" method="POST" class="form" useToken="true">
                 <g:if test="${params.compact}">
                     <g:hiddenField name="compact" value="${params.compact}"/>
                 </g:if>
@@ -73,7 +73,10 @@
                     </button>
                     </div>
                 </g:else>
-                <g:render template="/common/queryFilterManagerModal" model="${[rkey:rkey,filterName:filterName,filterset:filterset,update:rkey+'wffilterform',deleteActionSubmit:'deleteJobfilter',storeActionSubmit:'storeJobfilter']}"/>
+                <g:render template="/common/queryFilterManagerModal" model="${[rkey:rkey,filterName:filterName,
+                        filterset:filterset,update:rkey+'wffilterform',
+                        deleteActionSubmit:'deleteJobfilter',
+                        storeActionSubmit:'storeJobfilter']}"/>
                 
                 <div class="filter">
 
@@ -223,7 +226,7 @@
 <g:timerEnd key="head"/>
                 <g:if test="${ jobgroups}">
                     <g:timerStart key="groupTree"/>
-                    <g:form controller="scheduledExecution" action="deleteBulk">
+                    <g:form controller="scheduledExecution" action="deleteBulk" useToken="true" params="[project: params.project ?: request.project]">
                     <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE  }" project="${params.project ?: request.project}">
                         <div class="modal fade" id="bulk_del_confirm" tabindex="-1" role="dialog" aria-hidden="true">
                             <div class="modal-dialog">

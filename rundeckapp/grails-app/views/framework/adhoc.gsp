@@ -88,23 +88,23 @@
             var data = Form.serialize(elem);
             disableRunBar(true);
             runStarted();
-            $('runcontent').loading('Starting Execution&hellip;');
-            new Ajax.Request(appLinks.scheduledExecutionRunAdhocInline,{
-                parameters:data,
-                evalScripts:true,
-                evalJSON:true,
-                onSuccess: function(transport) {
-                    var data =transport.responseJSON;
-//                    alert("data: "+data);
-                    try{
-                    startRunFollow(data);
-                    }catch(e){
+            $('runcontent').loading('Starting Execution…');
+            jQuery.ajax({
+                type:'POST',
+                url:_genUrl(appLinks.scheduledExecutionRunAdhocInline,data),
+                beforeSend:_ajaxSendTokens.curry('adhoc_req_tokens'),
+                success:function (data,status,xhr) {
+                    try {
+                        startRunFollow(data);
+                    } catch (e) {
                         console.log(e);
                         runError(e);
                     }
                 },
-                onFailure:requestFailure
-            });
+                error:function(data,jqxhr,err){
+                    requestFailure(jqxhr);
+                }
+            }).success(_ajaxReceiveTokens.curry('adhoc_req_tokens'));
             return false;
         }
         /**
@@ -117,23 +117,15 @@
             }else if(!data.id){
                 runError("Server response was invalid: "+data.toString());
             }else {
-                $('runcontent').loading('Loading Output&hellip;');
-                new Ajax.Updater('runcontent',appLinks.executionFollowFragment,{
-                parameters:{id:data.id,mode:'tail'},
-                evalScripts:true,
-                onComplete: function(transport) {
-                    if (transport.request.success()) {
+                $('runcontent').loading('Loading Output…');
+                jQuery('#runcontent').load(_genUrl(appLinks.executionFollowFragment, {id: data.id, mode: 'tail'}),function(resp,status,jqxhr){
+                    if(status=='success'){
                         Element.show('runcontent');
-//                        try{
                         continueRunFollow(data);
-//                        }catch(e){
-//                            console.log(e,e);
-//                            runError(e);
-//                        }
+                    }else{
+                        requestFailure(jqxhr);
                     }
-                },
-                onFailure:requestFailure
-            });
+                });
             }
         }
         /**
@@ -346,6 +338,8 @@
                 <div class="col-sm-10" >
                     <div class="" id="runtab">
                             <div class="form form-horizontal clearfix" id="runbox">
+                                <g:jsonToken id="adhoc_req_tokens" url="${request.forwardURI}"/>
+                                <g:form  action="adhoc" params="[project:params.project]">
                                 <g:render template="nodeFiltersHidden"
                                           model="${[params: params, query: query]}"/>
                                 <div class="form-group ">
@@ -420,13 +414,14 @@
                                 </div>
                                 </div>
                             </div>
+                            </g:form>
                             </div>
 
                     </div>
                     <div class="${emptyQuery ? 'active' : ''}" id="nodeFilterInline">
                         <div class="spacing">
                         <div class="">
-                        <g:form action="adhoc" class="form form-horizontal" name="searchForm">
+                        <g:form action="adhoc" class="form form-horizontal" name="searchForm" >
                         <g:hiddenField name="max" value="${max}"/>
                         <g:hiddenField name="offset" value="${offset}"/>
                         <g:hiddenField name="formInput" value="true"/>

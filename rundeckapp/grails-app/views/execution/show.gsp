@@ -525,7 +525,7 @@
                             </div>
 
                             <div class="modal-footer">
-                                <g:form controller="execution" action="delete" method="post">
+                                <g:form controller="execution" action="delete" method="post" useToken="true">
                                     <g:hiddenField name="id" value="${execution.id}"/>
                                     <button type="submit" class="btn btn-default btn-sm "
                                             data-dismiss="modal">

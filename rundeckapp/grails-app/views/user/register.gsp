@@ -15,7 +15,7 @@
 <div class="row" id="userProfilePage">
     <g:render template="/common/messages"/>
     <div class="col-sm-6 col-sm-push-1">
-        <g:form action="store" method="POST" class="form">
+        <g:form action="store" method="POST" class="form" useToken="true">
         <tmpl:edit user="${user}"/>
         <div class="form-group">
 

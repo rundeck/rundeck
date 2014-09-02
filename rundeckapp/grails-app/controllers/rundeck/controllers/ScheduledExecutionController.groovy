@@ -95,17 +95,27 @@ class ScheduledExecutionController  extends ControllerBase{
 
     // the delete, save and update actions only
     // accept POST requests
-    def static allowedMethods = [delete:'POST',
-        save:'POST',
-        update:'POST',
-        deleteBulk:'POST',
-        apiJobsImport:'POST',
-        apiJobDelete:'DELETE',
-        apiJobAction:['GET','DELETE'],
-        apiRunScript:'POST',
-        apiJobDeleteBulk:['DELETE','POST'],
-        apiJobClusterTakeoverSchedule:'PUT',
-        apiJobUpdateSingle:'PUT'
+    def static allowedMethods = [
+            delete: 'POST',
+            deleteBulk: 'POST',
+            runJobInline: 'POST',
+            runJobNow: 'POST',
+            runAdhocInline: 'POST',
+            save: 'POST',
+            saveAndExec: 'POST',
+            update: 'POST',
+            upload: 'GET',
+            uploadPost: ['POST'],
+            apiJobCreateSingle: 'POST',
+            apiJobRun: ['POST','GET'],
+            apiJobsImport: 'POST',
+            apiJobDelete: 'DELETE',
+            apiRunScript: 'POST',
+            apiRunScriptUrl: ['POST','GET'],
+            apiRunCommand: ['POST','GET'],
+            apiJobDeleteBulk: ['DELETE', 'POST'],
+            apiJobClusterTakeoverSchedule: 'PUT',
+            apiJobUpdateSingle: 'PUT'
     ]
 
     def cancel = {
@@ -646,20 +656,27 @@ class ScheduledExecutionController  extends ControllerBase{
     */
     def delete = {
         if (!params.id) {
-            response.setStatus(400)
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
             return renderErrorView(g.message(code: 'api.error.parameter.required', args: ['id']))
         }
         def jobid=params.id
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        def result = scheduledExecutionService.deleteScheduledExecutionById(jobid, authContext,
+        withForm {
+            def result = scheduledExecutionService.deleteScheduledExecutionById(jobid, authContext,
                 params.deleteExecutions=='true', session.user, 'delete')
-        if (!result.success) {
-            return renderErrorView(result.error.message)
-        } else {
-            def project = result.success.job?result.success.job.project:params.project
-            flash.bulkDeleteResult = [success: [result.success]]
-            redirect(controller: 'menu', action: 'jobs',params:[project:project])
+            if (!result.success) {
+                return renderErrorView(result.error.message)
+            } else {
+                def project = result.success.job ? result.success.job.project : params.project
+                flash.bulkDeleteResult = [success: [result.success]]
+                redirect(controller: 'menu', action: 'jobs', params: [project: project])
+            }
+        }.invalidToken {
+            response.status = HttpServletResponse.SC_BAD_REQUEST
+            request.errorCode = 'request.error.invalidtoken.message'
+            return renderErrorView([:])
         }
+
     }
     /**
      * Delete a set of jobs as specified in the idlist parameter.
@@ -671,34 +688,40 @@ class ScheduledExecutionController  extends ControllerBase{
             return redirect(controller: 'menu', action: 'jobs')
         }
         log.debug("ScheduledExecutionController: deleteBulk : params: " + params)
-        if (!params.ids && !params.idlist) {
-            flash.error = g.message(code: 'ScheduledExecutionController.bulkDelete.empty')
-            return redirect(controller: 'menu', action: 'jobs')
-        }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        def ids = new HashSet<String>()
-        if (deleteRequest.ids) {
-            ids.addAll(deleteRequest.ids)
-        }
-        if (deleteRequest.idlist) {
-            ids.addAll(deleteRequest.idlist.split(','))
-        }
-
-        def successful = []
-        def deleteerrs = []
-        ids.sort().each {jobid ->
-            def result = scheduledExecutionService.deleteScheduledExecutionById(jobid, authContext,
-                    params.deleteExecutions == 'true', session.user, 'deleteBulk')
-            if (result.errorCode) {
-                deleteerrs << [id: jobid, errorCode: result.errorCode, message: g.message(code: result.errorCode, args: ['Job ID', jobid])]
-            }else if (result.error) {
-                deleteerrs << result.error
-            } else {
-                successful << result.success
+        withForm{
+            if (!params.ids && !params.idlist) {
+                flash.error = g.message(code: 'ScheduledExecutionController.bulkDelete.empty')
+                return redirect(controller: 'menu', action: 'jobs')
             }
+            AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+            def ids = new HashSet<String>()
+            if (deleteRequest.ids) {
+                ids.addAll(deleteRequest.ids)
+            }
+            if (deleteRequest.idlist) {
+                ids.addAll(deleteRequest.idlist.split(','))
+            }
+
+            def successful = []
+            def deleteerrs = []
+            ids.sort().each {jobid ->
+                def result = scheduledExecutionService.deleteScheduledExecutionById(jobid, authContext,
+                        params.deleteExecutions == 'true', session.user, 'deleteBulk')
+                if (result.errorCode) {
+                    deleteerrs << [id: jobid, errorCode: result.errorCode, message: g.message(code: result.errorCode, args: ['Job ID', jobid])]
+                }else if (result.error) {
+                    deleteerrs << result.error
+                } else {
+                    successful << result.success
+                }
+            }
+            flash.bulkDeleteResult = [success: successful, errors: deleteerrs]
+            redirect(controller: 'menu', action: 'jobs',params:[project:params.project])
+        }.invalidToken{
+            response.status = HttpServletResponse.SC_BAD_REQUEST
+            request.errorCode = 'request.error.invalidtoken.message'
+            return renderErrorView([:])
         }
-        flash.bulkDeleteResult = [success: successful, errors: deleteerrs]
-        redirect(controller: 'menu', action: 'jobs')
     }
 
     /**
@@ -706,6 +729,9 @@ class ScheduledExecutionController  extends ControllerBase{
      * @return
      */
     def apiJobCreateSingle(){
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         log.debug("ScheduledExecutionController: apiJobUpdateSingle " + params)
         def fileformat = params.format ?: 'xml'
         def parseresult
@@ -780,6 +806,9 @@ class ScheduledExecutionController  extends ControllerBase{
      * @return
      */
     def apiJobUpdateSingle(){
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         log.debug("ScheduledExecutionController: apiJobUpdateSingle " + params)
         def fileformat = params.format ?: 'xml'
         def parseresult
@@ -855,6 +884,9 @@ class ScheduledExecutionController  extends ControllerBase{
      * API: DELETE job definitions: /api/5/jobs/delete, version 5
     */
     def apiJobDeleteBulk(ApiBulkJobDeleteRequest deleteRequest) {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         if (deleteRequest.hasErrors()) {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.invalid.request', args: [deleteRequest.errors.allErrors.collect { g.message(error: it) }.join("; ")]])
@@ -958,7 +990,8 @@ class ScheduledExecutionController  extends ControllerBase{
 
 
 
-    def update = {
+    public def update (){
+        withForm{
         Framework framework=frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def changeinfo=[method:'update',change:'modify',user:session.user]
@@ -1013,6 +1046,10 @@ class ScheduledExecutionController  extends ControllerBase{
             flash.savedJobMessage="Saved changes to Job"
             scheduledExecutionService.logJobChange(changeinfo,scheduledExecution.properties)
             redirect(controller: 'scheduledExecution', action: 'show', params: [id: scheduledExecution.extid])
+        }
+        }.invalidToken{
+            request.errorCode='request.error.invalidtoken.message'
+            renderErrorView([:])
         }
     }
 
@@ -1219,8 +1256,11 @@ class ScheduledExecutionController  extends ControllerBase{
         }
     }
 
-
-    def saveAndExec = {
+    /**
+     * @deprecated not used, should be removed
+     * @return
+     */
+    private def saveAndExec(){
         log.debug("ScheduledExecutionController: saveAndExec : params: " + params)
         def changeinfo = [user: session.user, change: 'create', method: 'saveAndExec']
         Framework framework = frameworkService.getRundeckFramework()
@@ -1268,11 +1308,17 @@ class ScheduledExecutionController  extends ControllerBase{
      * execute the job defined via input parameters, but do not store it.
      */
     def runAdhocInline = {
-        def results=runAdhoc()
-        if(results.failed){
-            results.error=results.message
-        } else {
-            log.debug("ExecutionController: immediate execution scheduled (${results.id})")
+        def results=[:]
+        withForm{
+            results=runAdhoc()
+            if(results.failed){
+                results.error=results.message
+            } else {
+                log.debug("ExecutionController: immediate execution scheduled (${results.id})")
+            }
+            g.refreshFormTokensHeader()
+        }.invalidToken{
+            results.error=g.message(code:'request.error.invalidtoken.message')
         }
         return render(contentType:'text/json'){
             if(results.error){
@@ -1331,37 +1377,7 @@ class ScheduledExecutionController  extends ControllerBase{
             return [success:false,failed:true,invalid:true,message:'Job configuration was incorrect.',scheduledExecution:scheduledExecution,params:params]
         }
     }
-    /**
-     * execute the job defined via input parameters, but do not store it.
-     */
-    def execAndForget = {
-        def results = runAdhoc()
-        if(results.error=='unauthorized'){
-            log.error(results.message)
-            flash.error=results.message
-            render(view:"/common/execUnauthorized",model:[scheduledExecution:results.scheduledExecution])
-            return
-        }else if(results.error){
-            log.error(results.message)
-            renderErrorView(results.message)
-            return
-        }else if(results.failed){
-            def scheduledExecution=results.scheduledExecution
-            scheduledExecution.jobName = ''
-            scheduledExecution.errors.allErrors.each { log.warn(it.defaultMessage) }
-            flash.message=results.message
-            Framework framework = frameworkService.getRundeckFramework()
 
-            def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
-            def stepTypes = frameworkService.getStepPluginDescriptions()
-            render(view:'create',model:[scheduledExecution:scheduledExecution,params:params,
-                    nodeStepDescriptions: nodeStepTypes, stepDescriptions: stepTypes])
-        } else {
-            log.debug("ExecutionController: immediate execution scheduled (${results.id})")
-            redirect(controller:"execution", action:"follow",id:results.id)
-        }
-    }
-    
     /**
     * Execute a transient ScheduledExecution and return execution data: [execution:Execution,id:Long]
      * if there is an error, return [error:'type',message:errormesg,...]
@@ -1392,6 +1408,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
 
     def save = {
+        withForm{
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def changeinfo=[user:session.user,change:'create',method:'save']
@@ -1426,37 +1443,40 @@ class ScheduledExecutionController  extends ControllerBase{
                 notificationPlugins: notificationService.listNotificationPlugins(),
                 notificationValidation:params['notificationValidation']
         ])
+        }.invalidToken{
+            request.errorCode='request.error.invalidtoken.message'
+            renderErrorView([:])
+        }
     }
 
 
-    def upload ={
-        log.debug("ScheduledExecutionController: upload " + params)
+    def upload(){
 
+    }
+    def uploadPost ={
+        log.debug("ScheduledExecutionController: upload " + params)
+        withForm{
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         
         def fileformat = params.fileformat ?: 'xml'
         def parseresult
-        if (request.method == 'POST') {
-            if(params.xmlBatch && params.xmlBatch instanceof String) {
-                String fileContent = params.xmlBatch
-                parseresult = scheduledExecutionService.parseUploadedFile(fileContent, fileformat)
-            } else if(params.xmlBatch && params.xmlBatch instanceof CommonsMultipartFile) {
-                InputStream fileContent = params.xmlBatch.inputStream
-                parseresult = scheduledExecutionService.parseUploadedFile(fileContent, fileformat)
-            } else if (request instanceof MultipartHttpServletRequest) {
-                def file = request.getFile("xmlBatch")
-                if (!file || file.empty) {
-                    flash.message = "No file was uploaded."
-                    return
-                }
-                parseresult = scheduledExecutionService.parseUploadedFile(file.getInputStream(), fileformat)
-            } else {
-                flash.message = "No file was uploaded."
-                return
+        if(params.xmlBatch && params.xmlBatch instanceof String) {
+            String fileContent = params.xmlBatch
+            parseresult = scheduledExecutionService.parseUploadedFile(fileContent, fileformat)
+        } else if(params.xmlBatch && params.xmlBatch instanceof CommonsMultipartFile) {
+            InputStream fileContent = params.xmlBatch.inputStream
+            parseresult = scheduledExecutionService.parseUploadedFile(fileContent, fileformat)
+        } else if (request instanceof MultipartHttpServletRequest) {
+            def file = request.getFile("xmlBatch")
+            if (!file || file.empty) {
+                request.message = "No file was uploaded."
+                return render(view: 'upload')
             }
-        }else{
-            return
+            parseresult = scheduledExecutionService.parseUploadedFile(file.getInputStream(), fileformat)
+        } else {
+            request.message = "No file was uploaded."
+            return render(view:'upload')
         }
         def jobset
         if(parseresult.errorCode){
@@ -1467,8 +1487,8 @@ class ScheduledExecutionController  extends ControllerBase{
                 flash.error = parseresult.error
                 return xmlerror()
             }else{
-                render(view:'upload',model:[uploadError:parseresult.error])
-                return
+                request.error=parseresult.error
+                return render(view:'upload')
             }
         }
         jobset=parseresult.jobset
@@ -1486,10 +1506,10 @@ class ScheduledExecutionController  extends ControllerBase{
         def skipjobs = loadresults.skipjobs
 
         if(!params.xmlreq){
-            return [jobs: jobs, errjobs: errjobs, skipjobs: skipjobs,
+            return render(view: 'upload',model: [jobs: jobs, errjobs: errjobs, skipjobs: skipjobs,
                 nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), 
                 messages: msgs,
-                didupload: true]
+                didupload: true])
         }else{
             //TODO: update commander's jobs upload task to submit XML content directly instead of via uploaded file, and use proper
             //TODO: grails content negotiation
@@ -1499,6 +1519,10 @@ class ScheduledExecutionController  extends ControllerBase{
                         renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
                     }
                 }
+        }
+        }.invalidToken{
+            request.warn=g.message(code:'request.error.invalidtoken.message')
+            render(view: 'upload',params: [project:params.project])
         }
     }
 
@@ -1784,18 +1808,25 @@ class ScheduledExecutionController  extends ControllerBase{
      * Execute job specified by parameters, and return json results
      */
     public def runJobInline(RunJobCommand runParams, ExtraCommand extra) {
-        if ([runParams, extra].any { it.hasErrors() }) {
-            request.errors = [runParams, extra].find { it.hasErrors() }.errors
-            return render(contentType: 'application/json') {
-                delegate.error='invalid'
-                delegate.message = "Invalid parameters: " + request.errors.allErrors.collect { g.message(error: it) }.join(", ")
+        def results=[:]
+        withForm{
+            if ([runParams, extra].any { it.hasErrors() }) {
+                request.errors = [runParams, extra].find { it.hasErrors() }.errors
+                return render(contentType: 'application/json') {
+                    delegate.error='invalid'
+                    delegate.message = "Invalid parameters: " + request.errors.allErrors.collect { g.message(error: it) }.join(", ")
+                }
             }
-        }
-        def results = runJob()
+            results = runJob()
 
-        if(results.error=='invalid'){
-            session.jobexecOptionErrors=results.errors
-            session.selectedoptsmap=results.options
+            if(results.error=='invalid'){
+                session.jobexecOptionErrors=results.errors
+                session.selectedoptsmap=results.options
+            }
+        }.invalidToken{
+            results.failed=true
+            results.error='request.error.invalidtoken.message'
+            results.message=g.message(code:'request.error.invalidtoken.message')
         }
         return render(contentType:'application/json'){
             if(results.failed){
@@ -1815,7 +1846,13 @@ class ScheduledExecutionController  extends ControllerBase{
             def model = show()
             return render(view: 'show', model: model)
         }
-        def results = runJob()
+        def results=[:]
+        withForm{
+            results = runJob()
+        }.invalidToken{
+            results.code= HttpServletResponse.SC_BAD_REQUEST
+            request.errorCode='request.error.invalidtoken.message'
+        }
         if(results.failed){
             log.error(results.message)
             if(results.error=='unauthorized'){
@@ -1957,6 +1994,9 @@ class ScheduledExecutionController  extends ControllerBase{
      * API: /jobs/import, version 1
      */
     def apiJobsImport= {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         log.debug("ScheduledExecutionController: upload " + params)
         def fileformat = params.format ?: 'xml'
         def parseresult
@@ -2020,6 +2060,9 @@ class ScheduledExecutionController  extends ControllerBase{
      * API: export job definition: /job/{id}, version 1
      */
     def apiJobExport(){
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         log.debug("ScheduledExecutionController: /api/job GET : params: " + params)
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
         if (!apiService.requireExists(response, scheduledExecution,['Job ID',params.id])) {
@@ -2049,6 +2092,9 @@ class ScheduledExecutionController  extends ControllerBase{
      * API: Run a job immediately: /job/{id}/run, version 1
      */
     def apiJobRun = {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
         if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
             return
@@ -2116,6 +2162,9 @@ class ScheduledExecutionController  extends ControllerBase{
      * API: DELETE job definition: /job/{id}, version 1
      */
     def apiJobDelete() {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         log.debug("ScheduledExecutionController: /api/job DELETE : params: " + params)
         if (!apiService.requireParameters(params, response, ['id'])) {
             return
@@ -2158,6 +2207,9 @@ class ScheduledExecutionController  extends ControllerBase{
      * delete all executions for a job
      */
     def apiJobExecutionsDelete(){
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         log.debug("ScheduledExecutionController: /api/job DELETE : params: " + params)
         if (!apiService.requireParameters(params, response, ['id'])) {
             return
@@ -2181,6 +2233,9 @@ class ScheduledExecutionController  extends ControllerBase{
      * API: run simple exec: /api/run/command, version 1
      */
     def apiRunCommand={
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         if (!apiService.requireParameters(params, response, ['project','exec'])) {
             return
         }
@@ -2217,6 +2272,9 @@ class ScheduledExecutionController  extends ControllerBase{
      * API: run script: /api/run/script, version 1
      */
     def apiRunScript={
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         if(!apiService.requireParameters(params,response,['project','scriptFile'])){
             return
         }
@@ -2317,6 +2375,9 @@ class ScheduledExecutionController  extends ControllerBase{
      * API: run script: /api/run/url, version 4
      */
     def apiRunScriptUrl = {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         if (!apiService.requireVersion(request,response,ApiRequestFilters.V4)) {
             return
         }
@@ -2364,6 +2425,9 @@ class ScheduledExecutionController  extends ControllerBase{
      * API: /api/job/{id}/executions , version 1
      */
     def apiJobExecutions = {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         if (!apiService.requireParameters(params, response, ['id'])) {
             return
         }

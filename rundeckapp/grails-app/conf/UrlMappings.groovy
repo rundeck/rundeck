@@ -62,7 +62,6 @@ class UrlMappings {
         }
 //        "/api/renderError"(controller: 'api', action: 'renderError')
 //        "/api/error"(controller: 'api', action: 'error')
-        "/api/$api_version/report/create"(controller: 'reports', action: 'apiReportCreate')
         "/api/$api_version/resources"(controller: 'framework', action: 'apiResources')
         "/api/$api_version/resource/$name"(controller: 'framework', action: 'apiResource')
         "/api/$api_version/run/command"(controller: 'scheduledExecution', action: 'apiRunCommand')
@@ -100,6 +99,9 @@ class UrlMappings {
         "/project/$project/history"(controller: 'reports', action: 'index')
         "/project/$project/jobs/$groupPath**?"(controller: 'menu', action: 'jobs')
         "/project/$project/job/show/$id/$fullName**?"(controller: 'scheduledExecution', action: 'show')
+        "/project/$project/job/upload"(controller: 'scheduledExecution'){
+            action = [GET: 'upload', POST: 'uploadPost']
+        }
         "/project/$project/job/$action?/$id?"(controller: 'scheduledExecution')
         "/resources/createProject"(controller: 'framework') {
             action = [GET: 'createProject', POST: 'createProjectPost']
@@ -113,6 +115,8 @@ class UrlMappings {
         "/project/$project/importArchive"(controller: 'project',action: 'importArchive')
         "/project/$project"(controller: 'menu',action: 'index')
         "/project/$project/$action"(controller: 'project')
+        "/storage/access/keys/$resourcePath**"(controller: 'storage', action: 'keyStorageAccess')
+        "/storage/access/keys"(controller: 'storage', action: 'keyStorageAccess')
         "/job/show/$id"(controller: 'scheduledExecution',action: 'show')
         "/execution/show/$id"(controller: 'execution',action: 'show')
         "404"(view: '/404')

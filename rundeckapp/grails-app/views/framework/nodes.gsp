@@ -217,14 +217,7 @@
 
 
 
-                <g:set var="adminauth"
-                       value="${auth.resourceAllowedTest(kind:'node',action:[AuthConstants.ACTION_REFRESH],project: params.project ?: request.project)}"/>
-                <g:if test="${adminauth}">
-                    <g:if test="${selectedProject && selectedProject.shouldUpdateNodesResourceFile()}">
-                        <span class="floatr"><g:link action="reloadNodes" params="${[project:selectedProject.name]}" class="btn btn-sm btn-default" title="Click to update the resources.xml file from the source URL, for project ${enc(attr:selectedProject.name)}" onclick="\$(this.parentNode).loading();">Update Nodes for project <g:enc>${selectedProject.name}</g:enc></g:link></span>
-                    </g:if>
-                </g:if>
-        </div>
+    </div>
 
     <div class="col-sm-3" data-bind="visible: filterName() || filterWithoutAll()">
         <div class="well well-sm inline ">
@@ -255,7 +248,7 @@
     </div>
 
     %{--Form for saving/deleting node filters--}%
-    <g:form class="form form-horizontal">
+    <g:form class="form form-horizontal" useToken="true">
         <g:hiddenField name="project" value="${params.project}"/>
         <g:render template="nodeFiltersHidden"/>
         <g:render template="/common/queryFilterManagerModal"

@@ -75,7 +75,9 @@
                         </a>
                     </div>
 
-                    <div style="display:none" class="gentokenerror error note">
+                    <div style="display:none" class="gentokenerror alert alert-danger alert-dismissable">
+                        <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
+                        <span class="gentokenerror-text"></span>
                     </div>
 
                     <g:javascript>

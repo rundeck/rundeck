@@ -1,6 +1,10 @@
 package rundeck
 
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
+import org.rundeck.web.infosec.HMacSynchronizerTokensHolder
+import org.rundeck.web.infosec.HMacSynchronizerTokensManager
+import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
+import rundeck.filters.FormTokenFilters
 import rundeck.services.FrameworkService
 
 import java.text.MessageFormat
@@ -13,6 +17,7 @@ class UtilityTagLib{
 	static returnObjectForTags = ['rkey','w3cDateValue','sortGroupKeys','helpLinkUrl','helpLinkParams','parseOptsFromString','relativeDateString','enc']
 
     private static Random rand=new java.util.Random()
+    def HMacSynchronizerTokensManager hMacSynchronizerTokensManager
     /**
      * Return a new random string every time it is called.  Attrs are:
      * len: number of random bytes to use
@@ -740,4 +745,61 @@ class UtilityTagLib{
         out << enc(json: obj)
         out << '</script>'
     }
+    def refreshFormTokensHeader={attrs,body->
+        SynchronizerTokensHolder tokensHolder = tokensHolder()
+        def uri = attrs.uri ?: params[SynchronizerTokensHolder.TOKEN_URI]
+        response.addHeader(FormTokenFilters.TOKEN_KEY_HEADER, tokensHolder.generateToken(uri))
+        response.addHeader(FormTokenFilters.TOKEN_URI_HEADER, uri)
+    }
+
+
+    def generateToken(long duration) {
+        SynchronizerTokensHolder tokensHolder = tokensHolder()
+        long timestamp = System.currentTimeMillis() + duration
+        return [TOKEN:tokensHolder.generateToken(timestamp),TIMESTAMP:timestamp]
+    }
+    def generateToken(String url) {
+        SynchronizerTokensHolder tokensHolder = tokensHolder()
+        return tokensHolder.generateToken(url)
+    }
+
+    protected SynchronizerTokensHolder tokensHolder() {
+        SynchronizerTokensHolder tokensHolder
+        if (grailsApplication.config.rundeck?.security?.useHMacRequestTokens in [true, 'true']) {
+            //enable hmac request tokens which expire instead of Grails' default UUID based tokens
+            tokensHolder = HMacSynchronizerTokensHolder.store(session, hMacSynchronizerTokensManager, [session.user,
+                    request.remoteAddr])
+        } else {
+            tokensHolder = SynchronizerTokensHolder.store(session)
+        }
+        tokensHolder
+    }
+
+    def jsonToken = { attrs, body ->
+//        def expiry = 30000L
+//        if (attrs.duration) {
+//            expiry = Long.parseLong(attrs.duration)
+//        }
+        def id = attrs.id
+        def token = generateToken(attrs.url)
+        embedJSON.call([id: id, data: [TOKEN: token, URI: attrs.url]],body)
+    }
+
+    /**
+     * Override the default grails g:form tag, so that we can supply our own Synchronizer Token Holder if necessarry
+     */
+    def form={attrs,body->
+        def useToken = false
+        if (attrs.containsKey('useToken')) {
+            useToken = attrs.boolean('useToken')
+        }
+        if(useToken && grailsApplication.config.rundeck?.security?.useHMacRequestTokens in [true,'true']){
+            //enable hmac request tokens which expire instead of Grails' default UUID based tokens
+            def tokensHolder = HMacSynchronizerTokensHolder.store(session, hMacSynchronizerTokensManager, [session.user, request.remoteAddr])
+        }
+        //call original form tag
+        def applicationTagLib = grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.FormTagLib')
+        applicationTagLib.form.call(attrs,body)
+    }
+
 }

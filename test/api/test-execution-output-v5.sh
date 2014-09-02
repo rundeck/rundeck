@@ -19,7 +19,7 @@ proj="test"
 params="project=${proj}&exec=echo+testing+execution+output+api1v5+line+1;sleep+2;echo+line+2;sleep+2;echo+line+3;sleep+2;echo+line+4+final"
 
 # get listing
-docurl ${runurl}?${params} > $DIR/curl.out
+docurl -X POST ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2
@@ -123,7 +123,7 @@ proj="test"
 params="project=${proj}&exec=echo+testing+execution+output+api2v5+line+1;sleep+2;echo+line+2;sleep+2;echo+line+3;sleep+2;echo+line+4+final"
 
 # get listing
-docurl ${runurl}?${params} > $DIR/curl.out
+docurl -X POST ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2
@@ -210,7 +210,7 @@ proj="test"
 params="project=${proj}&exec=echo+testing+execution+output+api3v5+line+1;sleep+2;echo+line+2;sleep+2;echo+line+3;sleep+2;echo+line+4+final"
 
 # get listing
-docurl ${runurl}?${params} > $DIR/curl.out
+docurl -X POST ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2

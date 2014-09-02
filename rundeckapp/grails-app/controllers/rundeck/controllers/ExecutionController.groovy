@@ -45,8 +45,11 @@ class ExecutionController extends ControllerBase{
 
     static allowedMethods = [
             delete:['POST','DELETE'],
+            bulkDelete:['POST'],
+            apiExecutionAbort: ['POST','GET'],
             apiExecutionDelete: ['DELETE'],
             apiExecutionDeleteBulk: ['POST'],
+            cancelExecution:'POST'
     ]
 
     def index ={
@@ -132,6 +135,7 @@ class ExecutionController extends ControllerBase{
                 enext: enext, eprev: eprev,stepPluginDescriptions: pluginDescs, ]
     }
     def delete = {
+        withForm{
         def Execution e = Execution.get(params.id)
         if (notFoundResponse(e, 'Execution ID', params.id)) {
             return
@@ -157,10 +161,14 @@ class ExecutionController extends ControllerBase{
             flash.message = "Deleted execution ID: ${params.id} of job {{Job ${jobid}}}"
         }
         return redirect(controller: 'reports', action: 'index', params: [project: params.project])
-
+        }.invalidToken{
+            request.error=g.message(code:'request.error.invalidtoken.message')
+            renderErrorView([:])
+        }
     }
 
     def bulkDelete(){
+        withForm{
         def ids
         if(params.bulk_edit){
             ids=[params.bulk_edit].flatten()
@@ -177,6 +185,10 @@ class ExecutionController extends ControllerBase{
         }
         flash.message="${result.successTotal} Executions deleted"
         return redirect(action: 'index', controller: 'reports', params: [project: params.project])
+        }.invalidToken{
+            flash.error=g.message(code:'request.error.invalidtoken.message')
+            return redirect(action: 'index', controller: 'reports', params: [project: params.project])
+        }
     }
     def ajaxExecState={
         def Execution e = Execution.get(params.id)
@@ -278,6 +290,27 @@ class ExecutionController extends ControllerBase{
         }
     }
     def cancelExecution = {
+        boolean valid=false
+        withForm{
+            valid=true
+        }.invalidToken{
+
+        }
+        if(!valid){
+            response.status=HttpServletResponse.SC_BAD_REQUEST
+            request.error = g.message(code: 'request.error.invalidtoken.message')
+            return withFormat {
+                json {
+                    render(contentType: "text/json") {
+                        delegate.cancelled = false
+                        delegate.error= request.error
+                    }
+                }
+                xml {
+                    xmlerror.call()
+                }
+            }
+        }
         def Execution e = Execution.get(params.id)
         if(!e){
             log.error("Execution not found for id: "+params.id)
@@ -954,6 +987,21 @@ class ExecutionController extends ControllerBase{
         }
     }
 
+    /**
+     * API compatible Delete bulk action requiring form token
+     * @return
+     */
+    def deleteBulkApi() {
+        withForm{
+            g.refreshFormTokensHeader()
+            executionDeleteBulk()
+        }.invalidToken{
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'request.error.invalidtoken.message',
+            ])
+        }
+    }
 
 
     /**
@@ -986,6 +1034,9 @@ class ExecutionController extends ControllerBase{
      * API: /api/execution/{id} , version 1
      */
     def apiExecution={
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         def Execution e = Execution.get(params.id)
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (!e) {
@@ -1135,6 +1186,9 @@ class ExecutionController extends ControllerBase{
      * API: /api/execution/{id}/abort, version 1
      */
     def apiExecutionAbort={
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         def Execution e = Execution.get(params.id)
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (!e) {
@@ -1226,13 +1280,20 @@ class ExecutionController extends ControllerBase{
     }
 
     /**
-     * Delete bulk
+     * Delete bulk API action
      * @return
      */
     def apiExecutionDeleteBulk() {
         if (!apiService.requireVersion(request, response, ApiRequestFilters.V12)) {
             return
         }
+        return executionDeleteBulk()
+    }
+    /**
+     * Delete bulk
+     * @return
+     */
+    private def executionDeleteBulk() {
         log.debug("executionController: apiExecutionDeleteBulk : params: " + params)
         def ids=[]
         if(request.format in ['json','xml']){

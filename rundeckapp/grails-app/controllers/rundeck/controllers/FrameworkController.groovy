@@ -60,8 +60,13 @@ class FrameworkController extends ControllerBase {
     // the delete, save and update actions only
     // accept POST requests
     def static allowedMethods = [
-        apiProjectResources: [ 'POST'],
-        apiProjectResourcesRefresh: ['POST'],
+            apiProjectResources: ['POST'],
+            apiProjectResourcesPost: ['POST'],
+            apiProjectResourcesRefresh: ['POST'],
+            createProjectPost: 'POST',
+            deleteNodeFilter: 'POST',
+            saveProject: 'POST',
+            storeNodeFilter: 'POST',
     ]
 
     def index = {
@@ -493,32 +498,11 @@ class FrameworkController extends ControllerBase {
     }
 
     /**
-     * calls performNodeReload, then redirects to 'nodes' action (for normal request), or returns JSON 
-     * results (for ajax request). JSON format: {success:true/false, message:string}
-     */
-    def reloadNodes = {
-        def result=performNodeReload()
-        def didsucceed=result.success
-        withFormat {
-            json{
-                def data=[success:didsucceed,message:didsucceed?"Remote resources loaded for project: ${params.project}":"Failed to load remote resources for project: ${params.project}"]
-                render data as JSON
-            }
-            html{
-                if(!didsucceed){
-                    flash.error=result.message?:'Failed reloading nodes: unknown reason'
-                }
-                redirect(action:'nodes',params:[project:params.project])
-            }
-        }
-    }
-
-    /**
      * If user has admin rights and the project parameter is specified, attempt to re-fetch the resources.xml
      * via the project's project.resources.url (if it exists).
      * Returns true if re-fetch succeeded, false otherwise.
      */
-    def performNodeReload = {String url=null->
+    protected def performNodeReload (String url = null){
         if(!params.project){
             return [success: false, message: "project parameter is required", invalid: true]
         }
@@ -561,6 +545,7 @@ class FrameworkController extends ControllerBase {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
             return renderErrorView([:])
         }
+        withForm{
         def User u = userService.findOrCreateUser(session.user)
         def NodeFilter filter
         def boolean saveuser=false
@@ -593,15 +578,24 @@ class FrameworkController extends ControllerBase {
             }
         }
         redirect(controller:'framework',action:params.fragment?'nodesFragment':'nodes',params:[filterName:filter.name,project:params.project])
+        }.invalidToken{
+            response.status=HttpServletResponse.SC_BAD_REQUEST
+            renderErrorView(g.message('request.error.invalidtoken.message'))
+        }
     }
     def deleteNodeFilter={
-        def User u = userService.findOrCreateUser(session.user)
-        def filtername=params.delFilterName
-        final def ffilter = NodeFilter.findByNameAndUser(filtername, u)
-        if(ffilter){
-            ffilter.delete(flush:true)
+        withForm{
+            def User u = userService.findOrCreateUser(session.user)
+            def filtername=params.delFilterName
+            final def ffilter = NodeFilter.findByNameAndUser(filtername, u)
+            if(ffilter){
+                ffilter.delete(flush:true)
+            }
+            redirect(controller:'framework',action:params.fragment?'nodesFragment':'nodes',params:[project: params.project])
+        }.invalidToken{
+            request.error=g.message(code:'request.error.invalidtoken.message')
+            renderErrorView([:])
         }
-        redirect(controller:'framework',action:params.fragment?'nodesFragment':'nodes',params:[project: params.project])
     }
 
     /**
@@ -611,6 +605,16 @@ class FrameworkController extends ControllerBase {
 
     def createProjectPost() {
         metricService.markMeter(this.class.name,actionName)
+        boolean valid=false
+        withForm{
+            valid=true
+        }.invalidToken{
+            request.errorCode='request.error.invalidtoken.message'
+            renderErrorView([:])
+        }
+        if(!valid){
+            return
+        }
         //only attempt project create if form POST is used
         def prefixKey = 'plugin'
         def project = params.newproject
@@ -837,6 +841,16 @@ class FrameworkController extends ControllerBase {
     }
 
     def saveProject={
+        boolean valid=false
+        withForm {
+            valid = true
+        }.invalidToken {
+            request.errorCode = 'request.error.invalidtoken.message'
+            renderErrorView([:])
+        }
+        if (!valid) {
+            return
+        }
         def prefixKey= 'plugin'
         def project=params.project
         Framework framework = frameworkService.getRundeckFramework()
@@ -1075,39 +1089,7 @@ class FrameworkController extends ControllerBase {
         request.error=error
         return render(template: '/common/messages')
     }
-    public def saveResourceModelConfig(PluginConfigParams pluginConfig) {
-        if (pluginConfig.hasErrors()) {
-            request.errors = pluginConfig.errors
-            return render(template: '/common/messages')
-        }
-        def project = params.project
-        Framework framework = frameworkService.getRundeckFramework()
-        def error
-        def prefix = params.prefix ?: ''
-        def String type=params[prefix+'type']
-        def newparams = new PluginConfigParams()
-        newparams.type=type
-        if(!newparams.validate()){
-            request.errors = newparams.errors
-            return render(template: '/common/messages')
-        }
-        Properties props
-        def report
-        def desc
-        if (!type) {
-            error = "Plugin provider type must be specified"
-        }else{
-            def validate = frameworkService.validateServiceConfig(type, prefix + 'config.', params, framework.getResourceModelSourceService())
-            error = validate.error
-            desc = validate.desc
-            props = validate.props
-            report = validate.report
-            if(report.valid){
-                return render(template: 'viewResourceModelConfig',model:[project:project,prefix:prefix,includeFormFields:true,values:props,description:desc])
-            }
-        }
-        render(view:'createResourceModelConfig',model:[project:project,prefix:prefix,values:props,description:desc,report:report,error:error])
-    }
+
     public def checkResourceModelConfig(PluginConfigParams pluginConfig) {
         if (pluginConfig.hasErrors()) {
             def errorMsgs = pluginConfig.errors.allErrors.collect { g.message(error: it) }
@@ -1311,6 +1293,7 @@ class FrameworkController extends ControllerBase {
     /**
      * API: /api/2/project/NAME/resources/refresh
      * calls performNodeReload, then returns API response
+     * @deprecated will be removed
      * */
     def apiProjectResourcesRefresh = {
         if (!apiService.requireVersion(request,response,ApiRequestFilters.V2)) {
@@ -1478,6 +1461,9 @@ class FrameworkController extends ControllerBase {
      * API: /api/resource/$name, version 1
      */
     def apiResource={
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if(!params.project){
@@ -1523,9 +1509,12 @@ class FrameworkController extends ControllerBase {
      * API: /api/1/resources, version 1
      */
     def apiResources(ExtNodeFilters query) {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
         if (query.hasErrors()) {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: 'api.error.invalid.request', args: [query.errors.allErrors.collect{g.message(error:it)}.join("; ")]])
+                    code: 'api.error.invalid.request', args: [query.errors.allErrors.collect { g.message(error: it) }.join("; ")]])
         }
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)

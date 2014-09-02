@@ -173,6 +173,24 @@ The primary Rundeck webapp configuration file. Defines default
 loglevel, datasource configuration, and
 [GUI customization](gui-customization.html).
 
+#### Security
+
+* `rundeck.security.useHMacRequestTokens` : `true/false`.  Default: `true`.  
+   Switches between HMac based request tokens, and the default grails UUID 
+   tokens.  HMac tokens have a timeout, which may cause submitted forms or 
+   actions to fail with a message like "Token has expired".  
+   If set to false, UUIDs will be used instead of HMac tokens,
+   and they have no timeouts.
+   The default timeout for tokens can be changed with the 
+   `-Dorg.rundeck.web.infosec.HMacSynchronizerTokensHolder.DEFAULT_DURATION=[timeout in ms]`.
+
+* `rundeck.security.apiCookieAccess.enabled`: `true/false`. Default: `true`.  
+    Determines whether access to the API is allowed if the API client
+    authenticates via session cookies (i.e. username and password login.)  If
+    set to `false`, the current CLI tools and API libraries will not operate
+    correctly if they use username and password login.
+
+
 #### SSH Key Storage settings
 
 The [SSH Key storage](ssh-key-storage.html) mechanism is configured within this file, see:

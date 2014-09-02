@@ -28,7 +28,8 @@ class StorageController {
     ApiService apiService
     FrameworkService frameworkService
     static allowedMethods = [
-            apiKeys: ['GET','POST','PUT','DELETE']
+            apiKeys: ['GET','POST','PUT','DELETE'],
+            storageAccess:['GET']
     ]
 
     private def pathUrl(path){
@@ -177,10 +178,20 @@ class StorageController {
     }
 
     /**
+     * non-api action wrapper for apiKeys method
+     */
+    public def keyStorageAccess(){
+        params.resourcePath = "/keys/${params.resourcePath ?: ''}"
+        getResource()
+    }
+    /**
      * Handle resource requests to the /ssh-key path
      * @return
      */
     def apiKeys() {
+        if(!apiService.requireVersion(request,response,ApiRequestFilters.V11)){
+            return
+        }
         params.resourcePath = "/keys/${params.resourcePath?:''}"
         switch (request.method) {
             case 'POST':
@@ -199,6 +210,12 @@ class StorageController {
     }
 
     def apiPostResource() {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
+        return postResource()
+    }
+    private def postResource() {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         String resourcePath = params.resourcePath
         if (storageService.hasResource(authContext, resourcePath)) {
@@ -235,6 +252,12 @@ class StorageController {
 
 
     def apiDeleteResource() {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
+        return deleteResource()
+    }
+    private def deleteResource() {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         String resourcePath = params.resourcePath
         if(!storageService.hasResource(authContext, resourcePath)) {
@@ -270,7 +293,14 @@ class StorageController {
             ])
         }
     }
+
     def apiPutResource() {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
+        return putResource()
+    }
+    private def putResource() {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         String resourcePath = params.resourcePath
         def found = storageService.hasResource(authContext, resourcePath)
@@ -301,7 +331,14 @@ class StorageController {
             ])
         }
     }
+
     def apiGetResource() {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
+        return getResource()
+    }
+    private def getResource() {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         String resourcePath = params.resourcePath
         def found = storageService.hasPath(authContext, resourcePath)
