@@ -7,7 +7,7 @@ Rundeck provides a Web API for use with your application.
 API Version Number
 ----
 
-The current API version is `11`.
+The current API version is `${APIVERS}`.
 
 For API endpoints described in this document, the *minimum* API version required for their
 use is indicated by the URL used, e.g.:
