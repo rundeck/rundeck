@@ -29,7 +29,7 @@
                 Email:
             </td>
             <td>
-                ${user.email}
+                <g:enc>${ user.email}</g:enc>
                 <g:if test="${edit}">
 
                     <small>
@@ -45,12 +45,12 @@
         <g:if test="${user.login == request.remoteUser}">
             <tr>
                 <td>Groups:</td>
-                <td><%=request.subject.getPrincipals(com.dtolabs.rundeck.core.authentication.Group.class).collect { it.name }.join(", ")%></td>
+                <td><g:enc>${request.subject.getPrincipals(com.dtolabs.rundeck.core.authentication.Group.class).collect { it.name }.join(", ") }</g:enc></td>
             </tr>
         </g:if>
         <g:if test="${session.user==user.login && (auth.resourceAllowedTest(kind:'user',action:[AuthConstants.ACTION_ADMIN],context:'application'))}">
             <g:set var="rkeytok" value="${g.rkey()}"/>
-            <tr id="${rkeytok}" class="userapitoken">
+            <tr id="${enc(attr:rkeytok)}" class="userapitoken">
                 <td>API Tokens:</td>
                 <td>
                     <g:set var="tokens" value="${rundeck.AuthToken.findAllByUser(user)}"/>
@@ -79,8 +79,8 @@
                     </div>
 
                     <g:javascript>
-                    fireWhenReady('${rkeytok}',function(){addBehavior('${rkeytok}',"${user.login.encodeAsJavaScript()}");});
-                    fireWhenReady('${rkeytok}',function(){highlightNew('${rkeytok}');});
+                    fireWhenReady('${enc(js:rkeytok)}',function(){addBehavior('${enc(js: rkeytok)}',"${enc(js:user.login)}");});
+                    fireWhenReady('${enc(js: rkeytok)}',function(){highlightNew('${enc(js: rkeytok)}');});
                     </g:javascript>
                 </td>
             </tr>

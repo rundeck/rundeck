@@ -28,10 +28,10 @@
         <li>
         <g:link action="nodes" controller="framework" params="[filterName: filter.name, project: project ?: params.project]"
                 class="${isActive ? 'active' : ''} textbtn textbtn-primary nodefilterlink "
-            data-node-filter-name="${filter.name}"
-            data-node-filter="${filter.asFilter()}"
-                title="Apply filter: ${filter.name.encodeAsHTML()}">
-            ${filter.name.encodeAsHTML()}</g:link>
+            data-node-filter-name="${enc(attr:filter.name)}"
+            data-node-filter="${enc(attr:filter.asFilter())}"
+                title="Apply filter: ${enc(attr:filter.name)}">
+            <g:enc>${filter.name}</g:enc></g:link>
         </li>
     </g:each>
 </g:if>
@@ -43,15 +43,15 @@
         <g:set var="isActive" value="${filter.name == filterName}"/>
         <g:link action="nodes" controller="framework" params="[filterName: filter.name,project:project?:params.project]"
                 class="${isActive ? 'active' : ''} textbtn textbtn-primary has_tooltip nodefilterlink "
-            data-node-filter-name="${filter.name}"
-            data-node-filter="${filter.asFilter()}"
+            data-node-filter-name="${enc(attr:filter.name)}"
+            data-node-filter="${enc(attr:filter.asFilter())}"
             data-placement="bottom"
-                title="Apply filter: ${filter.name.encodeAsHTML()}">
-            ${filter.name.encodeAsHTML()}</g:link>
+                title="Apply filter: ${enc(attr:filter.name)}">
+            <g:enc>${filter.name}</g:enc></g:link>
     </g:each>
     </span>
 </g:elseif>
 <g:elseif test="${filterset}">
     <g:select name="filterName" optionKey="name" optionValue="name" from="${filterset?filterset.sort({a,b->a.name.compareTo(b.name)}):filterset}" value="${filterName}"
-        noSelection="${['':noSelection?noSelection:'-select a filter-']}" onchange="setFilter('${prefName}',this.value);"/>
+        noSelection="${['':noSelection?noSelection:'-select a filter-']}" onchange="setFilter('${enc(attr:prefName)}',this.value);"/>
 </g:elseif>

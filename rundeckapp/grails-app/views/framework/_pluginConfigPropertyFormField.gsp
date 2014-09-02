@@ -36,11 +36,11 @@
 <g:set var="propScope"
        value="${prop.scope != null && prop.scope != PropertyScope.Unspecified ? prop.scope : defaultScope}"/>
 <g:unless test="${outofscopeOnly && propScope?.isInstanceLevel()}">
-<div class="form-group ${hasError}">
+<div class="form-group ${enc(attr:hasError)}">
 
 <g:if test="${outofscope}">
     <div class="${labelColType} form-control-static ${error?'has-error':''}  ${prop.required ? 'required' : ''}">
-        ${prop.title ? prop.title.encodeAsHTML() : prop.name.encodeAsHTML()}:
+        <g:enc>${prop.title?:prop.name}</g:enc>:
     </div>
 </g:if>
 <g:elseif test="${prop.type.toString()=='Boolean'}">
@@ -49,7 +49,7 @@
         <g:hiddenField name="${origfieldname}" value="${values && values[prop.name] ? values[prop.name] : ''}"/>
         <div class="checkbox">
             <label
-                   for="${fieldid.encodeAsHTML()}">${prop.title ? prop.title.encodeAsHTML() : prop.name.encodeAsHTML()}
+                   for="${enc(attr:fieldid)}"><g:enc>${prop.title ?: prop.name}</g:enc>
                 <g:checkBox name="${fieldname}" value="true"
                             checked="${values&&values[prop.name]?values[prop.name]=='true':prop.defaultValue=='true'}"
                             id="${fieldid}"/>
@@ -60,7 +60,7 @@
 <g:elseif test="${prop.type.toString()=='Select' || prop.type.toString()=='FreeSelect'}">
     <g:set var="fieldid" value="${g.rkey()}"/>
     <label class="${labelColType}   ${prop.required ? 'required' : ''}"
-           for="${fieldid.encodeAsHTML()}">${prop.title ? prop.title.encodeAsHTML() : prop.name.encodeAsHTML()}</label>
+           for="${enc(attr:fieldid)}"><g:enc>${prop.title ?: prop.name}</g:enc></label>
 
     <g:hiddenField name="${origfieldname}" value="${values&&values[prop.name]?values[prop.name]:''}"/>
     <g:if test="${prop.type.toString()=='FreeSelect'}">
@@ -96,7 +96,7 @@
     <g:set var="fieldid" value="${g.rkey()}"/>
     <g:set var="hasStorageSelector" value="${prop.renderingOptions?.(StringRenderingConstants.SELECTION_ACCESSOR_KEY) == StringRenderingConstants.SelectionAccessor.STORAGE_PATH}"/>
     <label class="${labelColType}  ${prop.required?'required':''}"
-           for="${fieldid.encodeAsHTML()}" >${prop.title ? prop.title.encodeAsHTML() : prop.name.encodeAsHTML()}</label>
+           for="${enc(attr:fieldid)}" ><g:enc>${prop.title ?: prop.name}</g:enc></label>
     <div class="${hasStorageSelector? valueColTypeSplit80: valueColType}">
     <g:hiddenField name="${origfieldname}" value="${values&&values[prop.name]?values[prop.name]:''}"/>
     <g:if test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) == StringRenderingConstants.DisplayType.MULTI_LINE}">
@@ -116,17 +116,17 @@
         <button class="btn btn-sm btn-default obs-select-storage-path"
                 data-toggle="modal"
                 href="#storagebrowse"
-                data-storage-root="${storageRoot}"
-                data-storage-filter="${storageFilter}"
-                data-field="#${fieldid}"
+                data-storage-root="${enc(attr:storageRoot)}"
+                data-storage-filter="${enc(attr:storageFilter)}"
+                data-field="#${enc(attr:fieldid)}"
         >Select... <i class="glyphicon glyphicon-folder-open"></i></button>
         </div>
     </g:if>
 </g:else>
 <div class="${offsetColType}">
-    <div class="help-block">${prop.description?.encodeAsHTML()}</div>
+    <div class="help-block"><g:enc>${prop.description}</g:enc></div>
     <g:if test="${error}">
-        <div class="text-warning">${error.encodeAsHTML()}</div>
+        <div class="text-warning"><g:enc>${error}</g:enc></div>
     </g:if>
     <g:if test="${outofscope}">
         <g:render template="/framework/pluginConfigPropertyScopeInfo" model="[propScope:propScope,mapping:mapping, frameworkMapping: frameworkMapping, hideMissingFrameworkMapping: hideMissingFrameworkMapping]"/>

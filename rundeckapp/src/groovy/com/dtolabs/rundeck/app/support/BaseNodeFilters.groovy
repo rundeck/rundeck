@@ -2,6 +2,7 @@ package com.dtolabs.rundeck.app.support
 
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
+import grails.validation.Validateable
 
 /*
  * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
@@ -29,6 +30,7 @@ import com.dtolabs.rundeck.core.utils.OptsUtil
 /**
  * Represents a query corresponding to the filters available for a NodeSet
  */
+@Validateable
 public class BaseNodeFilters {
 
     String nodeInclude

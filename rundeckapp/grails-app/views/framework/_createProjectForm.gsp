@@ -14,7 +14,7 @@
 
     var configControl;
     function init(){
-        configControl=new ResourceModelConfigControl('${prefixKey.encodeAsJavaScript()}');
+        configControl=new ResourceModelConfigControl('${enc(js:prefixKey)}');
         configControl.pageInit();
         $$('input').each(function(elem){
             if(elem.type=='text'){
@@ -40,9 +40,6 @@
         margin-top: 5px;
     }
 
-    div.buttons {
-        text-align: right;
-    }
     </style>
 </head>
 

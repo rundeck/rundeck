@@ -28,14 +28,13 @@
 
 
             <div id="nodeFilterDivFilter" style="">
-                <g:set var="filtvalue"
-                       value="${query?.('filter')?.encodeAsHTML()}"/>
+                <g:set var="filtvalue" value="${query?.('filter')}"/>
                 <div class="col-sm-12 nfilteritem">
 
                     <div class="input-group">
                         <input type='text' name="filter" class="form-control schedJobNodeFilter"
                             placeholder="Enter a node filter"
-                               value="${filtvalue}" id="schedJobNodeFilter" onchange="_matchNodes();"/>
+                               value="${enc(attr:filtvalue)}" id="schedJobNodeFilter" onchange="_matchNodes();"/>
 
                         <span class="input-group-btn">
                             <a class="btn btn-info" data-toggle='collapse' href="#queryFilterHelp">

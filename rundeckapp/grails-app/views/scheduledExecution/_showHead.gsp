@@ -9,14 +9,14 @@
                 id="${scheduledExecution.extid}"
                 absolute="${absolute ? 'true' : 'false'}">
             <i class="glyphicon glyphicon-book"></i>
-            ${scheduledExecution?.jobName.encodeAsHTML()}</g:link>
+            <g:enc>${scheduledExecution?.jobName}</g:enc></g:link>
     </span>
         <g:if test="${scheduledExecution.scheduled && nextExecution}">
             <span class="scheduletime">
                 <i class="glyphicon glyphicon-time"></i>
                 <g:set var="titleHint"
                        value="${remoteClusterNodeUUID ? g.message(code: "expecting.another.cluster.server.to.run") : ''}"/>
-                <span title="${clusterUUID ? g.message(code: "expecting.another.cluster.server.to.run") : ''} at ${g.relativeDate(atDate:nextExecution)}">
+                <span title="${clusterUUID ? g.message(code: "expecting.another.cluster.server.to.run") : ''} at ${enc(attr:g.relativeDate(atDate:nextExecution))}">
                     <g:relativeDate elapsed="${nextExecution}"
                                     untilClass="timeuntil"/>
                 </span>
@@ -39,12 +39,12 @@
                         title="${'View ' + g.message(code: 'domain.ScheduledExecution.title') + 's in this group'}"
                         absolute="${absolute ? 'true' : 'false'}">
                     <g:if test="${!noimgs}"><b class="glyphicon glyphicon-folder-close"></b></g:if>
-                    ${scheduledExecution.groupPath.encodeAsHTML()}
+                    <g:enc>${scheduledExecution.groupPath}</g:enc>
                 </g:link>
             </g:if>
         </span>
     <div class="h4 jobInfoSection">
-        <span class="text-muted">${scheduledExecution?.description?.encodeAsHTML()}</span>
+        <span class="text-muted"><g:enc>${scheduledExecution?.description}</g:enc></span>
     </div>
 
 </div>

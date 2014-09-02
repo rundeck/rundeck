@@ -32,7 +32,7 @@
                 if( !error && json.result){
                     addTokenRow(elem,login,json.apitoken);
                 }else{
-                    $(elem).down('.gentokenerror').innerHTML="Error: "+error;
+                    setText($(elem).down('.gentokenerror'),"Error: "+error);
                     $(elem).down('.gentokenerror').show();
                 }
             }
@@ -53,7 +53,7 @@
                     //remove element
                     Effect.DropOut(elem);
                 }else{
-                    $(elem).up('.userapitoken').down('.gentokenerror').innerHTML="Error: "+error;
+                    setText($(elem).up('.userapitoken').down('.gentokenerror'),"Error: "+error);
                     $(elem).up('.userapitoken').down('.gentokenerror').show();
                 }
             }
@@ -86,7 +86,7 @@
 
 <div class="row">
     <div class="col-sm-10">
-        <h3>User: ${user.login}
+        <h3>User: <g:enc>${user.login}</g:enc>
         </h3>
     </div>
     <div class="col-sm-2">

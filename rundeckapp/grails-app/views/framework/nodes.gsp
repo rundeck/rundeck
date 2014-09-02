@@ -5,13 +5,13 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="nodes"/>
-    <title><g:message code="gui.menu.Nodes"/> - ${(params.project ?: request.project).encodeAsHTML()}</title>
+    <title><g:message code="gui.menu.Nodes"/> - <g:enc>${params.project ?: request.project}</g:enc></title>
     <g:javascript library="yellowfade"/>
     <asset:javascript src="nodeFiltersKO.js"/>
     <asset:javascript src="nodeRemoteEdit.js"/>
     <script type="text/javascript">
         function showError(message) {
-            $("error").innerHTML += message;
+            appendText($("error"),message);
             $("error").show();
         }
 
@@ -42,7 +42,7 @@
         }
 
         var nodespage=0;
-        var pagingMax=${params.max?params.max.encodeAsJavaScript():20};
+        var pagingMax=${enc(js:params.int('max')?:20)};
         /**
         * Expand paging results
         * @param page
@@ -92,7 +92,7 @@
             nodeFilter.filterName(filterName);
             nodeFilter.filter(filterString);
             nodeFilter.loading(true);
-            _updateMatchedNodes(data,elem,'${params.project?:request.project}',false,{view:view,expanddetail:true,inlinepaging:true,
+            _updateMatchedNodes(data,elem,'${enc(js:params.project?:request.project)}',false,{view:view,expanddetail:true,inlinepaging:true,
                 page:page,max:pagingMax},function(xht){
                 nodeFilter.loading(false);
             });
@@ -116,7 +116,7 @@
                 $(elem).hide();
             }else{
                 //update moreCount
-                $('moreCount').innerHTML=total-loadCount;
+                setText($('moreCount'),total-loadCount);
                 if(total-loadCount<max){
                     $('nextPageButton').hide();
                 }
@@ -151,7 +151,7 @@
          * START page init
          */
         function init() {
-            var filterParams =${[filterName:params.filterName,filter:query?.filter,filterAll:params.showall in ['true',true]].encodeAsJSON()};
+            var filterParams =loadJsonData('filterParamsJSON');
             nodeFilter = new NodeFilters(
                     appLinks.frameworkAdhoc,
                     appLinks.scheduledExecutionCreate,
@@ -172,6 +172,8 @@
 
     </script>
 
+    <g:embedJSON id="filterParamsJSON"
+                 data="${[filterName: params.filterName, filter: query?.filter, filterAll: params.showall in ['true', true]]}"/>
 </head>
 <body>
 
@@ -188,13 +190,12 @@
     <g:set var="wasfiltered" value="${ paginateParams?.keySet().grep(~/(?!proj).*Filter|groupPath|project$/)||(query && !query.nodeFilterIsEmpty() && !summaryOnly)}"/>
     <g:set var="filtersOpen" value="${summaryOnly || showFilter||params.createFilters||params.editFilters||params.saveFilter || filterErrors?true:false}"/>
 
-    <div id="${ukey}filter">
+    <div id="${enc(attr:ukey)}filter">
         <g:form action="nodes" controller="framework" class="form form-inline" name="searchForm">
             <g:hiddenField name="max" value="${max}"/>
             <g:hiddenField name="offset" value="${offset}"/>
             <g:hiddenField name="formInput" value="true"/>
-            <g:set var="filtvalue"
-                   value="${query?.('filter')?.encodeAsHTML()}"/>
+            <g:set var="filtvalue" value="${query?.('filter')}"/>
 
             <div class="form-group">
                 <span class="input-group" >
@@ -220,7 +221,7 @@
                        value="${auth.resourceAllowedTest(kind:'node',action:[AuthConstants.ACTION_REFRESH],project: params.project ?: request.project)}"/>
                 <g:if test="${adminauth}">
                     <g:if test="${selectedProject && selectedProject.shouldUpdateNodesResourceFile()}">
-                        <span class="floatr"><g:link action="reloadNodes" params="${[project:selectedProject.name]}" class="btn btn-sm btn-default" title="Click to update the resources.xml file from the source URL, for project ${selectedProject.name}" onclick="\$(this.parentNode).loading();">Update Nodes for project ${selectedProject.name}</g:link></span>
+                        <span class="floatr"><g:link action="reloadNodes" params="${[project:selectedProject.name]}" class="btn btn-sm btn-default" title="Click to update the resources.xml file from the source URL, for project ${enc(attr:selectedProject.name)}" onclick="\$(this.parentNode).loading();">Update Nodes for project <g:enc>${selectedProject.name}</g:enc></g:link></span>
                     </g:if>
                 </g:if>
         </div>
@@ -229,7 +230,7 @@
         <div class="well well-sm inline ">
             <div data-bind="visible: filterName()">
 
-                Selected Filter:  <strong data-bind="text: filterName()">${filterName.encodeAsHTML()}</strong>
+                Selected Filter:  <strong data-bind="text: filterName()"><g:enc>${filterName}</g:enc></strong>
                         <span data-bind="visible: filterName()">
                             <a href="#"
                                 class="textbtn textbtn-danger"
@@ -269,11 +270,11 @@
         <div class="col-sm-12">
             <span class="h4" data-bind="if: !loading()">
                 <g:if test="${summaryOnly}">
-                    <span data-bind="text: allcount">${total}</span>
+                    <span data-bind="text: allcount"><g:enc>${total}</g:enc></span>
                     <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span>
                 </g:if>
                 <g:else>
-                    <span data-bind="text: allcount">${total}</span>
+                    <span data-bind="text: allcount"><g:enc>${total}</g:enc></span>
                     <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span> matching filter
                 </g:else>
             </span>
@@ -300,7 +301,7 @@
                            data-placement="left"
                         >
                             <i class="glyphicon glyphicon-play"></i>
-                            Run a command on <span data-bind="text: allcount">${total}</span>
+                            Run a command on <span data-bind="text: allcount"><g:enc>${total}</g:enc></span>
                             <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span> …
                         </a>
                     </li>
@@ -312,7 +313,7 @@
                             data-placement="left"
                         >
                             <i class="glyphicon glyphicon-plus"></i>
-                            Create a job for <span data-bind="text: allcount">${total}</span>
+                            Create a job for <span data-bind="text: allcount"><g:enc>${total}</g:enc></span>
                             <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span> …
                         </a>
                     </li>

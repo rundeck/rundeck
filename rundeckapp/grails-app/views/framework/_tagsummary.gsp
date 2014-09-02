@@ -27,7 +27,7 @@
             <span class="textbtn textbtn-secondary tag"
                   title="Show tag demographics" onclick="Element.toggle('tagdemo'); Element.toggleClassName(this,'active');">
                 <i class="glyphicon glyphicon-tags text-muted "></i>
-                ${tagsummary.size()} tags
+                <g:enc>${tagsummary.size()}</g:enc> tags
                 <i class="glyphicon glyphicon-chevron-right"></i></span>
         </g:if>
         <span id="tagdemo" style="${wdgt.styleVisible(unless: hidetop)}">
@@ -44,10 +44,13 @@
                                       />
                         </g:if>
                         <g:elseif test="${action}">
-                            <span class="${action.classnames}" onclick="${action.onclick}" data-tag="${tag.encodeAsHTML()}" title="Filter by tag: ${tag}">${tag.encodeAsHTML()}:${tagsummary[tag]}</span>
+                            <span class="${enc(attr:action.classnames)}" onclick="${enc(attr:action.onclick)}"
+                                  data-tag="${enc(attr:tag)}" title="Filter by tag: ${enc(attr:tag)}">
+                                <g:enc>${tag}:${tagsummary[tag]}</g:enc>
+                            </span>
                         </g:elseif>
                         <g:else>
-                            ${tag.encodeAsHTML()}:${tagsummary[tag]}
+                            <g:enc>${tag}:${tagsummary[tag]}</g:enc>
                         </g:else>
                         </span>
                 </g:if>
@@ -57,9 +60,9 @@
             </g:each>
             <g:if test="${singletag}">
                 <span class="btn btn-sm btn-default receiver" title="See all tags"
-                      onclick="Element.show('${urkey}singletags');
+                      onclick="Element.show('${enc(attr:urkey)}singletags');
                 Element.hide(this);">Show All&hellip;</span>
-                <span style="display:none" id="${urkey}singletags">
+                <span style="display:none" id="${enc(attr:urkey)}singletags">
                     <g:each var="tag" in="${singletag}">
                         <span class="summary">
                             <g:if test="${link}">
@@ -67,13 +70,15 @@
                                           model="[key: 'tags', value: tag, linktext: tag + ' (' + tagsummary[tag]+')', css: 'tag textbtn']"/>
                             </g:if>
                             <g:elseif test="${action}">
-                                <span class=" ${action.classnames}" onclick="${action.onclick}"
-                                      data-tag="${tag.encodeAsHTML()}"
-                                      title="Filter by tag: ${tag}">${tag.encodeAsHTML()}:${tagsummary[tag]}</span>
+                                <span class=" ${enc(attr:action.classnames)}" onclick="${enc(attr:action.onclick)}"
+                                      data-tag="${enc(attr:tag)}"
+                                      title="Filter by tag: ${enc(attr:tag)}">
+                                    <g:enc>${tag}:${tagsummary[tag]}</g:enc>
+                                </span>
                             </g:elseif>
                             <g:else>
-                                ${tag.encodeAsHTML()}
-                                (${tagsummary[tag]})
+                                <g:enc>${tag}
+                                (${tagsummary[tag]})</g:enc>
                             </g:else></span>
                     </g:each>
                 </span>

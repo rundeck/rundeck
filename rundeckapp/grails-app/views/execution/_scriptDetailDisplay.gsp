@@ -24,10 +24,9 @@
 <g:set var="rkey" value="${rkey?:g.rkey()}"/>
 <g:set var="split" value="${script.split('(\r?\n)') as List}"/>
 <g:if test="${edit}">
-    <span class="">${label ? label : ''}[${split.size()} lines]</span>
+    <span class=""><g:enc>${label ? label : ''}</g:enc>[${split.size()} lines]</span>
 </g:if>
 <g:else>
-    <g:expander key="${rkey}">${label ? label : ''}[${split.size()} lines]</g:expander>
-    <g:set var="encoded" value="${split.collect { it.encodeAsHTML() }}"/>
-    <div class="scriptContent expanded apply_ace" id="${rkey}" style="display: none;">${script.encodeAsHTML()}</div>
+    <g:expander key="${rkey}"><g:enc>${label ? label : ''}</g:enc>[${split.size()} lines]</g:expander>
+    <div class="scriptContent expanded apply_ace" id="${enc(attr:rkey)}" style="display: none;"><g:enc>${script}</g:enc></div>
 </g:else>

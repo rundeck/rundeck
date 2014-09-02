@@ -34,25 +34,25 @@
                     <g:if test="${!noimgs }">
                         <i class="glyphicon glyphicon-book"></i>
                     </g:if>
-                    ${item.jobGroup?item.jobGroup.encodeAsHTML()+'/':''}${item.jobName.encodeAsHTML()}</g:link>
+                    <g:enc>${(item.jobGroup?item.jobGroup+'/':'')+item.jobName}</g:enc></g:link>
                 </g:if>
                 <g:else>
                     <g:if test="${!noimgs }">
                         <i class="glyphicon glyphicon-book"></i>
                     </g:if>
-                    ${item.jobGroup?item.jobGroup.encodeAsHTML()+'/':''}${item.jobName.encodeAsHTML()}
+                    <g:enc>${(item.jobGroup?item.jobGroup+'/':'')+item.jobName}</g:enc>
                 </g:else>
 
                 %{--display step description--}%
                 <g:if test="${item.description}">
                     <div class="text-info">
-                        ${item.description.encodeAsHTML()}
+                        <g:enc>${item.description}</g:enc>
                     </div>
                 </g:if>
 
                 %{--display argstring--}%
                 <g:if test="${item.argString}">
-                   <div class="argString" title="${item.argString.encodeAsHTML()}">
+                   <div class="argString" title="${enc(attr:item.argString)}">
                        <g:render template="/execution/execArgString" model="[argString: item.argString]"/>
                    </div>
                 </g:if>
@@ -61,7 +61,7 @@
                 <g:if test="${item.nodeStep}">
                     <g:if test="${!noimgs && item.nodeStep}"><g:img file="icon-small-Node.png" width="16px"
                                                                     height="16px"/></g:if>
-                    <span class="info note" title="${g.message(code:'JobExec.nodeStep.true.description').encodeAsHTML()}">
+                    <span class="info note" title="${enc(code:'JobExec.nodeStep.true.description')}">
                         <g:message code="JobExec.nodeStep.true.label" />
                     </span>
                 </g:if>
@@ -74,7 +74,7 @@
                     </g:if>
                 </g:if>
                 <g:if test="${item.description}">
-                    ${item.description.encodeAsHTML()}
+                    <g:enc>${item.description}</g:enc>
                 </g:if>
                 <stepplugin:display step="${item}" prefix="" includeFormFields="false"/>
 
@@ -82,22 +82,22 @@
             <g:else>
                 <g:if test="${!noimgs}">
                     <g:set var="iname" value="${icon?:'icon-small'}"/>
-                    <i class="rdicon ${item.adhocRemoteString?'shell':item.adhocLocalString?'script':'scriptfile'} ${iname}"></i>
+                    <i class="rdicon ${item.adhocRemoteString?'shell':item.adhocLocalString?'script':'scriptfile'} ${enc(attr:iname)}"></i>
                 </g:if>
                 <g:if test="${item.adhocRemoteString}">
-                    <span class="argString"><g:truncate max="150" showtitle="true">${item.adhocRemoteString.encodeAsHTML()}</g:truncate></span>
+                    <span class="argString"><g:truncate max="150" showtitle="true"><g:enc>${item.adhocRemoteString}</g:enc></g:truncate></span>
                 </g:if>
                 <g:elseif test="${item.adhocLocalString}">
                     <g:render template="/execution/scriptDetailDisplay" model="${[rkey: g.rkey(),script:item.adhocLocalString,label: '',edit:edit]}"/>
                 </g:elseif>
                 <g:if test="${item.description}">
                     <div class="text-info">
-                        ${item.description.encodeAsHTML()}
+                        <g:enc>${item.description}</g:enc>
                     </div>
                 </g:if>
                 <g:elseif test="${item.adhocFilepath}">
                     <g:if test="${item.scriptInterpreter}">
-                        <span class="argString">${item.scriptInterpreter.encodeAsHTML()}</span>
+                        <span class="argString"><g:enc>${item.scriptInterpreter}</g:enc></span>
                         <g:if test="${item.interpreterArgsQuoted}">
                             &quot;
                         </g:if>
@@ -105,16 +105,16 @@
                     <g:if test="${item.adhocFilepath=~/^https?:/}">
                         <g:set var="urlString" value="${item.adhocFilepath.replaceAll('^(https?://)([^:@/]+):[^@/]*@', '$1$2:****@')}"/>
                         <span class="argString"><g:truncate max="150"
-                                                            showtitle="true">${urlString.encodeAsHTML()}</g:truncate></span>
+                                                            showtitle="true"><g:enc>${urlString}</g:enc></g:truncate></span>
                     </g:if>
                     <g:else>
-                        <span class="argString"><g:truncate max="150"  showtitle="true">${item.adhocFilepath.encodeAsHTML()}</g:truncate></span>
+                        <span class="argString"><g:truncate max="150"  showtitle="true"><g:enc>${item.adhocFilepath}</g:enc></g:truncate></span>
                     </g:else>
                 </g:elseif>
                 <g:if test="${item.adhocLocalString}">
                     <g:if test="${item.scriptInterpreter}">
                         <span class="text-muted"><g:message code="executed.as" />:</span>
-                        <span class="argString">${item.scriptInterpreter.encodeAsHTML()}</span>
+                        <span class="argString"><g:enc>${item.scriptInterpreter}</g:enc></span>
                         <g:if test="${item.interpreterArgsQuoted}">
                             &quot;
                         </g:if>
@@ -122,7 +122,7 @@
                     </g:if>
                 </g:if>
                 <g:if test="${item.argString}">
-                   <div class="argString"><g:truncate max="150"  showtitle="true">${item.argString.encodeAsHTML()}</g:truncate></div>
+                   <div class="argString"><g:truncate max="150"  showtitle="true"><g:enc>${item.argString}</g:enc></g:truncate></div>
                 </g:if>
                 <g:if test="${item.interpreterArgsQuoted}">
                     &quot;

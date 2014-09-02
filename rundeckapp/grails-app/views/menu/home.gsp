@@ -10,11 +10,10 @@
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-    <g:set var="appTitle"
-       value="${grailsApplication.config.rundeck.gui.title ? grailsApplication.config.rundeck.gui.title : g.message(code: 'main.app.name')}"/>
+    <g:set var="appTitle" value="${grailsApplication.config.rundeck.gui.title ?: g.message(code: 'main.app.name')}"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="home"/>
-    <title>${appTitle}</title>
+    <title><g:enc>${appTitle}</g:enc></title>
 
 </head>
 <body>
@@ -29,7 +28,7 @@
 
     <div class="col-sm-4">
         <span class="h3 text-muted">
-            ${projCount}
+            <g:enc>${projCount}</g:enc>
             <g:plural code="Project" count="${projCount}" textOnly="${true}"/>
         </span>
     </div>
@@ -38,7 +37,7 @@
     <g:if test="${projCount > 1}">
     %{--app summary info--}%
                 <span class="h4">
-                    <span class="summary-count ${execCount > 0 ? 'text-info' : 'text-muted'}">${execCount}</span>
+                    <span class="summary-count ${execCount > 0 ? 'text-info' : 'text-muted'}"><g:enc>${execCount}</g:enc></span>
                     <strong>
                         <g:plural code="Execution" count="${execCount}" textOnly="${true}"/>
                     </strong>
@@ -48,14 +47,14 @@
                     <div>
                         in
                         <span class="text-info">
-                            ${projectSummary.size()}
+                            <g:enc>${projectSummary.size()}</g:enc>
                         </span>
 
 
                         <g:plural code="Project" count="${projectSummary.size()}" textOnly="${true}"/>:
                         <g:each var="project" in="${projectSummary.sort()}" status="i">
                             <g:link action="index" controller="menu" params="[project: project]">
-                                ${project}</g:link><g:if test="${i < projectSummary.size() - 1}">,</g:if>
+                                <g:enc>${project}</g:enc></g:link><g:if test="${i < projectSummary.size() - 1}">,</g:if>
                         </g:each>
                     </div>
                 </g:if>
@@ -63,11 +62,11 @@
                     <g:if test="${userCount > 0}">
                         by
                         <span class="text-info">
-                            ${userCount}
+                            <g:enc>${userCount}</g:enc>
                         </span>
                         <g:plural code="user" count="${userCount}" textOnly="${true}"/>:
                         <g:each in="${userSummary}" var="user" status="i">
-                            ${user.encodeAsHTML()}<g:if test="${i < userSummary.size() - 1}">,</g:if>
+                            <g:enc>${user}</g:enc><g:if test="${i < userSummary.size() - 1}">,</g:if>
                         </g:each>
                     </g:if>
                 </div>
@@ -100,8 +99,8 @@
     <auth:resourceAllowed action="create" kind="project" context="application" has="true">
         <div class="jumbotron">
             <g:set var="appTitle"
-                   value="${grailsApplication.config.rundeck.gui.title ? grailsApplication.config.rundeck.gui.title : g.message(code: 'main.app.name')}"/>
-            <h1>Welcome to ${appTitle}</h1>
+                   value="${grailsApplication.config.rundeck.gui.title ?: g.message(code: 'main.app.name')}"/>
+            <h1>Welcome to <g:enc>${appTitle}</g:enc></h1>
 
             <p>
                 To get started, create a new project.
@@ -131,27 +130,20 @@
                 <div class="col-sm-6 col-md-4">
                     <g:link action="index" controller="menu" params="[project: project]" class="h3">
                         <i class="glyphicon glyphicon-tasks"></i>
-                        ${project}</g:link>
+                        <g:enc>${project}</g:enc></g:link>
 
                     <g:if test="${data.description}">
-                        <span class="text-muted">${data.description.encodeAsHTML()}</span>
+                        <span class="text-muted"><g:enc>${data.description}</g:enc></span>
                     </g:if>
                 </div>
-                %{--<div class="col-sm-6 col-md-2">--}%
-                    %{--<a class="h4 ${data.jobCount > 0 ? '' : 'text-muted'}" href="${g.createLink(controller:"framework",action:"selectProject",params:[page: 'jobs',project:project])}">--}%
-                        %{--<span class="summary-count ${data.jobCount > 0 ? 'text-info' : '' }">${data.jobCount}</span>--}%
 
-                        %{--<g:plural code="Job" count="${data.jobCount}" textOnly="${true}"/>--}%
-                        %{--<i class="glyphicon glyphicon-book"></i>--}%
-                    %{--</a>--}%
-                %{--</div>--}%
                 <div class="clearfix visible-sm"></div>
                 <div class="col-sm-6 col-md-4">
                     <a class="h4 ${data.execCount > 0 ? '' : 'text-muted'}"
                        href="${g.createLink(controller: "reports", action: "index", params: [project: project])}"
 
                     >
-                        <span class="summary-count ${data.execCount > 0 ? 'text-info' : '' }">${data.execCount}</span>
+                        <span class="summary-count ${data.execCount > 0 ? 'text-info' : '' }"><g:enc>${data.execCount}</g:enc></span>
                         <strong>
                             <g:plural code="Execution" count="${data.execCount}" textOnly="${true}"/>
                         </strong>
@@ -161,27 +153,19 @@
                         <g:if test="${data.userCount>0}">
                         by
                         <span class="text-info">
-                        ${data.userCount}
+                        <g:enc>${data.userCount}</g:enc>
                         </span>
 
                             <g:plural code="user" count="${data.userCount}" textOnly="${true}"/>:
 
                             <g:each in="${data.userSummary}" var="user" status="i">
-                                ${user.encodeAsHTML()}<g:if test="${i < data.userSummary.size() - 1}">,</g:if>
+                                <g:enc>${user}</g:enc><g:if test="${i < data.userSummary.size() - 1}">,</g:if>
                             </g:each>
                         </g:if>
                     </div>
                 </div>
 
 
-                %{--<div class="col-sm-6 col-md-2">--}%
-                    %{--<a class="h4" href="${g.createLink(controller: "framework", action: "selectProject", params: [page: 'nodes',project:project])}">--}%
-                        %{--<span class="summary-count ${data.nodeCount>0?'text-info':''}">--}%
-                            %{--${data.nodeCount}--}%
-                        %{--</span>--}%
-                        %{--<g:plural code="Node" count="${data.nodeCount}" textOnly="${true}"/>--}%
-                    %{--</a>--}%
-                %{--</div>--}%
 
                 <div class="clearfix visible-xs visible-sm"></div>
                 <g:if test="${data.auth?.jobCreate || data.auth?.admin}">
@@ -234,19 +218,19 @@
                             <g:if test="${data.readme.motd && data.readme.readme}">
                             </g:if>
                             <g:if test="${data.readme.motdHTML}">
-                                ${data.readme.motdHTML}
+                                <g:enc raw="true">${data.readme.motdHTML}</g:enc>
                             </g:if>
                             <g:elseif test="${data.readme.motd}">
-                                ${data.readme.motd.encodeAsHTML()}
+                                <g:enc>${data.readme.motd}</g:enc>
                             </g:elseif>
                         </div>
                     </g:if>
                     <g:if test="${data.readme?.readme}">
                         <g:if test="${data.readme.readmeHTML}">
-                            ${data.readme.readmeHTML}
+                            <g:enc raw="true">${data.readme.readmeHTML}</g:enc>
                         </g:if>
                         <g:elseif test="${data.readme.readme}">
-                            ${data.readme.readme.encodeAsHTML()}
+                            <g:enc>${data.readme.readme}</g:enc>
                         </g:elseif>
 
                     </g:if>

@@ -324,13 +324,14 @@ var FollowControl = Class.create({
     },
     appendCmdOutputError: function (message) {
         if ($(this.cmdOutputErrorId)) {
-            $(this.cmdOutputErrorId).innerHTML += message;
+            appendText($(this.cmdOutputErrorId),message);
             $(this.cmdOutputErrorId).show();
         }
     },
     _log: function(message) {
         if ($('log')) {
-            $("log").innerHTML += message + "<br>";
+            appendText($("log"), message);
+            appendHtml($("log"), "<br>");
         }
     },
 
@@ -599,13 +600,13 @@ var FollowControl = Class.create({
     showLoading:function(message,percent){
         if (this.fileloadId && $(this.fileloadId)) {
             $(this.fileloadId).show();
-            $(this.fileloadPctId).innerHTML = (message!=null ? message : '');
+            setText($(this.fileloadPctId), (message!=null ? message : ''));
             if(percent!=null && $(this.fileloadProgressId)){
                 $(this.fileloadProgressId).show();
                 $(this.fileloadProgressId).down('.progress-bar').style.width=percent+'%';
             }
             if(percent){
-                $(this.fileloadPctId).innerHTML = (message != null ? message : '')+percent+'%';
+                setText($(this.fileloadPctId),(message != null ? message : '')+percent+'%');
             }
         }
     },
@@ -705,7 +706,7 @@ var FollowControl = Class.create({
 
             if ($(this.viewoptionsCompleteId) && null != data.totalSize) {
                 if ($(this.outfileSizeId)) {
-                    $(this.outfileSizeId).innerHTML = data.totalSize + " bytes";
+                    setText($(this.outfileSizeId),data.totalSize + " bytes");
                 }
                 $(this.viewoptionsCompleteId).show();
             }
@@ -745,7 +746,7 @@ var FollowControl = Class.create({
 
             if (this.viewoptionsCompleteId && $(this.viewoptionsCompleteId) && null != data.totalSize) {
                 if ($(this.outfileSizeId)) {
-                    $(this.outfileSizeId).innerHTML = data.totalSize + " bytes";
+                    setText($(this.outfileSizeId), data.totalSize + " bytes");
                 }
                 $(this.viewoptionsCompleteId).show();
             }
@@ -855,7 +856,6 @@ var FollowControl = Class.create({
 
     loadMoreOutputTail: function(id, offset) {
         var url = this.appLinks.tailExecutionOutput;
-        //    $(this.parentElement).innerHTML+="id,offset: "+id+","+offset+"; runningcmd: "+this.runningcmd.id+","+this.runningcmd.offset;
         var obj=this;
         if(this.isrunning){
             var idstr=id?( "id=" + id ): '';
@@ -984,7 +984,7 @@ var FollowControl = Class.create({
         var tr = $(tbody.insertRow(-1));
         this.configureDataRow(tr, data, node);
         if ($('ctxCount' + node)) {
-            $('ctxCount' + node).innerHTML = '' + tbody.rows.length + " lines";
+            setText($('ctxCount' + node), '' + tbody.rows.length + " lines");
             if (data.level == 'ERROR' || data.level == 'SEVERE') {
                 $('ctxCount' + node).addClassName(data.level);
             }
@@ -993,15 +993,6 @@ var FollowControl = Class.create({
         this.lastrow = data;
         return tr;
     },
-    escapeHtml: function escapeHtml(unsafe) {
-        return unsafe
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    },
-
 
     createNewNodeTbody: function(data, tbl, ctxid) {
         //create new Table body
@@ -1032,20 +1023,23 @@ var FollowControl = Class.create({
 
 
         if (null != data['node'] && '' != data['node']) {
-            cell.innerHTML += "<span class='node'>" + data['node'] + "</span>";
+            var sp = new Element('span');
+            sp.addClassName('node');
+            setText(sp,data['node']);
+            cell.appendChild(sp);
         }
 
         if ( data['stepctx'] && this.workflow) {
             var contextstr= this.workflow.renderContextString(data['stepctx']);
         } else {
             tr.addClassName('console');
-            cell.innerHTML += " <span class='console'>[console]</span>";
+            appendHtml(cell," <span class='console'>[console]</span>");
         }
         var countspan = new Element('span');
         countspan.setAttribute('id', 'ctxCount' + ctxid);
         countspan.setAttribute('count', '0');
         countspan.addClassName('ctxcounter');
-        countspan.innerHTML = " -";
+        setText(countspan, " -");
         cell.appendChild(countspan);
         var cell2 = $(tr.insertCell(2));
         cell2.setAttribute('id', 'ctxExp' + ctxid);
@@ -1161,17 +1155,28 @@ var FollowControl = Class.create({
 
 
         if (null != data['node'] && '' != data['node']) {
-            cell.innerHTML += "<span class='node'>" + data['node'] + "</span>";
+            var sp = new Element('span');
+            sp.addClassName('node');
+            setText(sp, data['node']);
+            cell.appendChild(sp);
         }
 
         if (data['stepctx'] && this.workflow) {
             var contextstr = this.workflow.renderContextString(data['stepctx']);
             var stepnum = this.workflow.renderContextStepNumber(data['stepctx']);
-            cell.innerHTML += "<span class='stepnum' title='" + this.escapeHtml(contextstr) + "'>" + this.escapeHtml(contextstr) + "</span>";
-            cell.innerHTML += "<span class='stepident'>" + this.escapeHtml(contextstr) + "</span>";
+
+            var sp = new Element('span');
+            sp.addClassName('stepnum');
+            sp.title=contextstr;
+            setText(sp,contextstr);
+            cell.appendChild(sp);
+            var sp2 = new Element('span');
+            sp2.addClassName('stepident');
+            setText(sp, contextstr);
+            cell.appendChild(sp2);
         } else {
             tr.addClassName('console');
-            cell.innerHTML += " <span class='console'>[console]</span>";
+            appendHtml(cell," <span class='console'>[console]</span>");
         }
         var cell2 = $(tr.insertCell(2));
         cell2.setAttribute('id', 'ctxExp' + ctxid);
@@ -1254,11 +1259,11 @@ var FollowControl = Class.create({
         tdtime.addClassName('time');
         var timespan = new Element('span');
         timespan.addClassName(data.level);
-        timespan.innerHTML=data.time;
+        setText(timespan,data.time);
         tdtime.appendChild(timespan);
         if(data.absolute_time){
             if(typeof(moment)=='function'){
-                timespan.innerHTML= MomentUtil.formatTime(data.absolute_time,'HH:mm:ss');
+                setText(timespan, MomentUtil.formatTime(data.absolute_time,'HH:mm:ss'));
             }
             tdtime.setAttribute('title', data.absolute_time);
         }
@@ -1277,7 +1282,7 @@ var FollowControl = Class.create({
             tr.addClassName('node-empty');
         } else{
             tdnode.setAttribute('title', data.node);
-            tdnode.innerHTML = data.node;
+            setText(tdnode, data.node);
             shownode=true;
             tr.addClassName('node-new');
         }
@@ -1301,22 +1306,19 @@ var FollowControl = Class.create({
         tddata.addClassName('data');
         tddata.setAttribute('colspan', colspan);
         if (null != data['loghtml']) {
-            tddata.innerHTML = data.loghtml;
+            setHtml(tddata,data.loghtml);
             tddata.addClassName('datahtml log_'+ data.level.toLowerCase());
         } else {
             var txt = data.log;
-            txt = txt.replace(/[\\\n\\\r]+$/, '');
-            txt = txt.replace(/</g, '&lt;');
-            txt = txt.replace(/>/g, '&gt;');
             if(txt==''){
                 txt="\n";
             }
-            tddata.innerHTML = txt;
+            setText(tddata,txt);
             tddata.addClassName('log_'+data.level.toLowerCase());
         }
     },
     clearCmdOutput: function() {
-        $(this.parentElement).innerHTML = '';
+        clearHtml($(this.parentElement));
         this.cmdoutputtbl = null;
         this.cmdoutspinner = null;
         this.runningcmd = null;
@@ -1362,12 +1364,12 @@ var FollowControl = Class.create({
     jobFinishStatus: function(result) {
         if (null != result) {
             if($('runstatus')){
-                $('runstatus').innerHTML = result == 'succeeded' ? '<span class="exec-status succeed">Succeeded</span>'
-                    : (result == 'aborted' ? '<span class="exec-status warn">Killed</span>' : '<span class="exec-status fail">Failed</span>');
+                setHtml($('runstatus'), result == 'succeeded' ? '<span class="exec-status succeed">Succeeded</span>'
+                    : (result == 'aborted' ? '<span class="exec-status warn">Killed</span>' : '<span class="exec-status fail">Failed</span>'));
             }
             $$('.execstatus').each(function(e){
-                e.innerHTML = result == 'succeeded' ? '<span class="exec-status succeed">Succeeded</span>'
-                : (result == 'aborted' ? '<span class="exec-status warn">Killed</span>' : '<span class="exec-status fail">Failed</span>');
+                setHtml(e, result == 'succeeded' ? '<span class="exec-status succeed">Succeeded</span>'
+                : (result == 'aborted' ? '<span class="exec-status warn">Killed</span>' : '<span class="exec-status fail">Failed</span>'));
             });
             if ($('jobInfo_' + this.executionId)) {
                 var icon = $('jobInfo_' + this.executionId).down('.exec-status.icon');
@@ -1430,9 +1432,12 @@ var FollowControl = Class.create({
             }
         } else {
             if ($('cancelresult')) {
-                $('cancelresult').innerHTML =
-                '<span class="fail">' + (data['error'] ? data['error'] : 'Failed to Kill Job.') + '</span> '
-                    + this.killjobhtml;
+                var sp = new Element('span');
+                sp.addClassName('fail');
+                setText(sp, (data['error'] ? data['error'] : 'Failed to Kill Job.'));
+                clearHtml($('cancelresult'));
+                $('cancelresult').appendChild(sp);
+                appendHtml($('cancelresult'), this.killjobhtml);
             }
         }
     },

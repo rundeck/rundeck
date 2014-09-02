@@ -37,15 +37,15 @@
 <g:if test="${'job'==newitemtype || item instanceof JobExec || (item instanceof java.util.Map && item?.jobName)}">
     <div >
        <div class="text-muted">Job Name</div>
-       <input id="jobNameField" type="text" name="jobName" value="${item?.jobName}" size="100" autofocus/>
+       <input id="jobNameField" type="text" name="jobName" value="${enc(attr:item?.jobName)}" size="100" autofocus/>
     </div>
     <div >
         <div class="text-muted">Job Group</div>
-        <input id="jobGroupField"  type="text" name="jobGroup" value="${item?.jobGroup}" size="100"/>
+        <input id="jobGroupField"  type="text" name="jobGroup" value="${enc(attr:item?.jobGroup)}" size="100"/>
     </div>
     <div  >
         <div class="text-muted">Enter the commandline arguments for the Job:</div>
-        <input type='text' name="argString" value="${item?.argString?.encodeAsHTML()}" size="100" id="jobArgStringField"/>
+        <input type='text' name="argString" value="${enc(attr:item?.argString)}" size="100" id="jobArgStringField"/>
     </div>
     <div style="margin-top:5px;">
         <span class="btn btn-sm btn-default" onclick="loadJobChooser(this,'jobChooser');" id="jobChooseBtn"
@@ -98,34 +98,34 @@
     <g:if test="${isAdhocLocal}">
         <div id="localScriptDiv" class="${hasErrors(bean:item,field:'adhocExecution','fieldError')}">
             <div class="text-muted"><g:message code="Workflow.Step.adhocLocalString.description" />:</div>
-            <textarea rows="10" cols="60" name="adhocLocalString" id="adhocLocalStringField" class="code apply_ace" autofocus>${item?.adhocLocalString?.encodeAsHTML()}</textarea>
+            <textarea rows="10" cols="60" name="adhocLocalString" id="adhocLocalStringField" class="code apply_ace" autofocus><g:enc>${item?.adhocLocalString}</g:enc></textarea>
         </div>
     </g:if>
     <g:elseif test="${isAdhocFileExecution}">
     <div id="filepathDiv" >
         <div class="text-muted"><g:message code="Workflow.Step.adhocFilepath.description" />:</div>
-        <input type='text' name="adhocFilepath" value="${item?.adhocFilepath?.encodeAsHTML()}" size="100" id="adhocFilepathField" autofocus/>
+        <input type='text' name="adhocFilepath" value="${enc(attr:item?.adhocFilepath)}" size="100" id="adhocFilepathField" autofocus/>
     </div>
     </g:elseif>
     <g:elseif test="${isAdhocRemote}">
     <div id="remoteScriptDiv"  class="${hasErrors(bean:item,field:'adhocExecution','fieldError')}">
         <div class="text-muted"><g:message code="Workflow.Step.adhocRemoteString.description" />:</div>
-        <input type='text' name="adhocRemoteString" value="${item?.adhocRemoteString?.encodeAsHTML()}" size="100" id="adhocRemoteStringField" autofocus/>
+        <input type='text' name="adhocRemoteString" value="${enc(attr:item?.adhocRemoteString)}" size="100" id="adhocRemoteStringField" autofocus/>
     </div>
     </g:elseif>
     <g:if test="${!isAdhocRemote||isAdhocFileExecution}">
     <div id="adhocScriptArgs" >
         <div class="text-muted"><g:message code="Workflow.Step.argString.description" />:</div>
-        <input type='text' name="argString" value="${item?.argString?.encodeAsHTML()}" size="100" id="argStringField"/>
+        <input type='text' name="argString" value="${enc(attr:item?.argString)}" size="100" id="argStringField"/>
     </div>
     </g:if>
     <g:if test="${!isAdhocRemote}">
         <g:expander key="scriptInterpreter${rkey}" open="${item?.scriptInterpreter?'true':'false'}">Advanced </g:expander>
-        <div id="scriptInterpreter${rkey}" style="${wdgt.styleVisible(if: item?.scriptInterpreter)}" class="presentation">
+        <div id="scriptInterpreter${enc(attr:rkey)}" style="${wdgt.styleVisible(if: item?.scriptInterpreter)}" class="presentation">
             <div class="text-muted"><g:message code="Workflow.Step.scriptInterpreter.description"/>:</div>
             <input type='text' name="scriptInterpreter"
-                   placeholder="${g.message(code: 'Workflow.Step.scriptInterpreter.prompt')}"
-                   value="${item?.scriptInterpreter?.encodeAsHTML()}" size="100"
+                   placeholder="${enc(attr:g.message(code: 'Workflow.Step.scriptInterpreter.prompt'))}"
+                   value="${enc(attr:item?.scriptInterpreter)}" size="100"
                    id="scriptInterpreterField" autofocus/>
             <div>
                 <label>
@@ -150,10 +150,10 @@
 
                 </g:javascript>
                 <span class="action obs_tooltip"
-                      id="interpreterArgsQuotedHelp${rkey}"><g:img file="icon-small-help.png" width="16px"
+                      id="interpreterArgsQuotedHelp${enc(attr:rkey)}"><g:img file="icon-small-help.png" width="16px"
                                                                    height="16px"/> Explain</span>
 
-                <div class="popout tooltipcontent" id="interpreterArgsQuotedHelp${rkey}_tooltip"
+                <div class="popout tooltipcontent" id="interpreterArgsQuotedHelp${enc(attr:rkey)}_tooltip"
                      style="display:none; background:white; position:absolute; max-width: 500px; width:500px;">
                     <g:message code="Workflow.Step.interpreterArgsQuoted.description"/>
                 </div>
@@ -164,10 +164,10 @@
 
         <div id='interpreterArgsQuotedHelp${rkey}_preview' class="presentation">
             <code>$
-                <span id='interpreterPreview'>${item?.scriptInterpreter?.encodeAsHTML()}</span>
+                <span id='interpreterPreview'><g:enc>${item?.scriptInterpreter}</g:enc></span>
                 <span class="interpreterquotepreview"
                       style="${wdgt.styleVisible(if: item?.interpreterArgsQuoted)}">&quot;</span
-                ><em>scriptfile</em> <span id='interpreterArgsPreview'>${item?.argString?.encodeAsHTML()}</span
+                ><em>scriptfile</em> <span id='interpreterArgsPreview'><g:enc>${item?.argString}</g:enc></span
                     ><span class="interpreterquotepreview" style="${wdgt.styleVisible(if: item?.interpreterArgsQuoted)}">&quot;</span>
             </code>
         </div>
@@ -177,8 +177,8 @@
 <g:elseif test="${( newitemtype || item && item.instanceOf(PluginStep) ) && newitemDescription}">
     <div>
         <div>
-            <span class="prompt">${newitemDescription.title?.encodeAsHTML()}</span>
-            <span class="text-muted">${newitemDescription.description?.encodeAsHTML()}</span>
+            <span class="prompt"><g:enc>${newitemDescription.title}</g:enc></span>
+            <span class="text-muted"><g:enc>${newitemDescription.description}</g:enc></span>
         </div>
         <g:hiddenField name="pluginItem" value="true"/>
         <g:hiddenField name="newitemnodestep" value="${item?!!item.nodeStep:newitemnodestep=='true'}"/>
@@ -211,7 +211,7 @@
 <g:else>
     <div>
         <div class="info note">Step Description</div>
-        <input id="description" type="text" name="description" value="${item?.description?.encodeAsHTML()}" size="100"/>
+        <input id="description" type="text" name="description" value="${enc(attr:item?.description)}" size="100"/>
     </div>
 </g:else>
 
@@ -232,8 +232,7 @@
                 <g:hiddenField name="num" value="${num}"/>
                 <span class="btn btn-default btn-sm" onclick="_wficancelnewEH(this);"
                       title="Cancel adding new ${g.message(code: 'Workflow.'+ msgItem+'.label')}">Cancel</span>
-                <span class="btn btn-primary btn-sm" onclick="_wfisave('${key}', ${num}, 'wfiedit_${rkey}',${
-                        isErrorHandler?true:false});" title="Save the new ${g.message(code:'Workflow.'+ msgItem+'.label')}">Save</span>
+                <span class="btn btn-primary btn-sm" onclick="_wfisave('${key}', ${num}, 'wfiedit_${rkey}',${ isErrorHandler?true:false});" title="Save the new ${g.message(code:'Workflow.'+ msgItem+'.label')}">Save</span>
             </g:if>
             <g:else>
 
@@ -245,8 +244,7 @@
         <g:else>
             <g:hiddenField name="num" value="${num}"/>
             <span class="btn btn-default btn-sm" onclick="_wfiview('${key}',${num},${isErrorHandler?true:false});" title="Discard changes to the ${g.message(code:'Workflow.'+ msgItem+'.label')}">Discard</span>
-            <span class="btn btn-primary btn-sm" onclick="_wfisave('${key}',${num}, 'wfiedit_${rkey}', ${
-                    isErrorHandler?true:false});"
+            <span class="btn btn-primary btn-sm" onclick="_wfisave('${key}',${num}, 'wfiedit_${rkey}', ${ isErrorHandler?true:false});"
                   title="Save changes to the ${g.message(code:'Workflow.'+ msgItem+'.label')}">Save</span>
         </g:else>
     </div>

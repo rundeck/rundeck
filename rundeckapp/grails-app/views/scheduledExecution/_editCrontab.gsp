@@ -1,7 +1,7 @@
 <%@ page import="rundeck.UtilityTagLib" %>
 <script type="text/javascript">
     function changeCronExpression(elem){
-        $('crontooltip').innerHTML='';
+        clearHtml($('crontooltip'));
         var params={crontabString:$F(elem)};
         new Ajax.Updater('cronstrinfo',
             '${createLink(controller:'scheduledExecution',action:'checkCrontab')}',{
@@ -12,16 +12,16 @@
     }
     var cronSects=['Second','Minute','Hour','Day of Month','Month','Day of Week','Year'];
     function tkeyup(el){
-        $('cronstrinfo').innerHTML='';
+        clearHtml('cronstrinfo');
         var pos=getCaretPos(el);
         var f =$F(el);
         //find # of space chars prior to pos
         var sub=f.substring(0,pos);
         var c = sub.split(' ').size();
         if(c>=1&&c<=7){
-            $('crontooltip').innerHTML=cronSects[c-1];
+            setText($('crontooltip'),cronSects[c-1]);
         }else{
-            $('crontooltip').innerHTML='';
+            clearHtml('crontooltip');
         }
     }
     function getCaretPos(el) {
@@ -40,7 +40,7 @@
 
 <g:set var="useCrontabString" value="${scheduledExecution?.crontabString?true:scheduledExecution?.shouldUseCrontabString()?true:false}"/>
 
-<input type="hidden" name="dayOfMonth" value="${scheduledExecution?.dayOfMonth}"/>
+<input type="hidden" name="dayOfMonth" value="${enc(attr:scheduledExecution?.dayOfMonth)}"/>
 <g:hiddenField name="useCrontabString" value="${useCrontabString}" id="useCrontabString"/>
 <ul class="nav nav-tabs crontab-edit">
     <li class="${!useCrontabString ? 'active' : ''}">

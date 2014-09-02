@@ -50,7 +50,7 @@
             </div>
 
             <div class="text-muted small text-right">
-                URI: ${request.forwardURI.encodeAsHTML()}
+                URI: <g:enc>${request.forwardURI}</g:enc>
             </div>
         </div>
     </div>

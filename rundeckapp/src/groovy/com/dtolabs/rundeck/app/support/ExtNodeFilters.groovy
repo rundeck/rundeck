@@ -1,4 +1,8 @@
 package com.dtolabs.rundeck.app.support
+
+import com.dtolabs.rundeck.core.common.FrameworkResource
+import grails.validation.Validateable
+
 /*
  * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
  *
@@ -26,12 +30,13 @@ package com.dtolabs.rundeck.app.support
 /**
  * Extends BaseNodeFilters to add filter params used in GUI filtering
  */
+@Validateable
 public class ExtNodeFilters extends BaseNodeFilters{
 
     String project
 
     static constraints={
-        project(nullable:true)
+        project(nullable:true, matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
     }
 
     public boolean nodeFilterIsEmpty(){

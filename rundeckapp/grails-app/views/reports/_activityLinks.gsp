@@ -66,7 +66,7 @@
     <g:if test="${execution}">
         <li>
             <g:link controller="reports" action="index" class="activity_link"
-                    title="Executions by ${execution.user.encodeAsHTML()}"
+                    title="Executions by ${enc(attr:execution.user)}"
                     params="${linkParams+[ userFilter: execution.user]}">
                 <i class="glyphicon glyphicon-user"></i>
                 by <g:username user="${execution.user}"/>
@@ -116,7 +116,7 @@
             </td>
             <td class="right date autoclickable">
                 <span data-bind="if: dateCompleted()">
-                    <span class="timeabs" data-bind="text: endTimeFormat('${g.message(code:'jobslist.date.format.ko')}')">
+                    <span class="timeabs" data-bind="text: endTimeFormat('${enc(attr:g.message(code:'jobslist.date.format.ko'))}')">
 
                     </span>
                     <span title="">
@@ -133,6 +133,7 @@
                     ]}"/>
                     </div>
                     <div data-bind="if: jobId() && jobAverageDuration()>0">
+                        <g:set var="progressBind" value="${', css: { \'progress-bar-info\': jobPercentageFixed() < 105 ,  \'progress-bar-warning\': jobPercentageFixed() > 104  }'}"/>
                         <g:render template="/common/progressBar"
                                   model="[completePercent: 0,
                                           progressClass: 'rd-progress-exec progress-embed',
@@ -143,7 +144,7 @@
                                           progressId: 'progressBar',
                                           bind: 'jobPercentageFixed()',
                                           bindText: '(jobPercentageFixed()  < 105 ? jobPercentageFixed() + \'%\' : \'+\' + jobOverrunDuration()) + \' of average \' + MomentUtil.formatDurationHumanize(jobAverageDuration())',
-                                          progressBind: ', css: { \'progress-bar-info\': jobPercentageFixed() < 105 ,  \'progress-bar-warning\': jobPercentageFixed() &gt; 104  }',
+                                          progressBind: progressBind,
                                   ]"/>
                     </div>
                 </span>

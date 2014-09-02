@@ -152,6 +152,7 @@ class ExecutionJobTest  {
     void testExecuteCommandStartOkFinishOkThreadSuccessful(){
         ScheduledExecution se = setupJob()
         Execution execution = setupExecution(se, new Date(), new Date())
+        Assert.assertNotNull(execution)
         ExecutionJob job = new ExecutionJob()
         def mockes = new GrailsMock(ExecutionService)
         def mockeus = new GrailsMock(ExecutionUtilService)
@@ -177,7 +178,7 @@ class ExecutionJobTest  {
     }
 
     Execution setupExecution(ScheduledExecution se, Date startDate, Date finishDate) {
-        Execution e = new Execution(project: "test", user: 'bob',
+        Execution e = new Execution(project: "AProject", user: 'bob',
                 dateStarted: startDate,
                 dateCompleted: finishDate,
                 scheduledExecution: se, workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]))

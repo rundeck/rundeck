@@ -2,7 +2,7 @@
 <div class="list-group">
 <g:if test="${flash.message}">
     <div class="list-group-item">
-    <div class="alert alert-info">${flash.message}</div>
+    <div class="alert alert-info"><g:enc>${flash.message}</g:enc></div>
     </div>
 </g:if>
 <g:hasErrors bean="${scheduledExecution}">
@@ -18,18 +18,16 @@
 <g:set var="fieldColHalfSize" value="col-sm-5"/>
 <g:set var="offsetColSize" value="col-sm-10 col-sm-offset-2"/>
 
-<g:set var="isWorkflow" value="${true}"/>
 <g:set var="editSchedExecId" value="${scheduledExecution?.id? scheduledExecution.extid:null}"/>
 <g:javascript library="prototype/scriptaculous"/>
 <g:javascript library="prototype/effects"/>
 <g:javascript library="prototype/dragdrop"/>
-<g:set var="project" value="${scheduledExecution?.project ?: params.project?:request.project?: projects?.size() == 1 ? projects[0].name.encodeAsJavaScript() : ''}"/>
+<g:set var="project" value="${scheduledExecution?.project ?: params.project?:request.project?: projects?.size() == 1 ? projects[0].name : ''}"/>
 <script type="text/javascript">
 //<!CDATA[
-        var selFrameworkProject='${project.encodeAsJavaScript()}';
-        var selArgs='${scheduledExecution?.argString?.encodeAsJavaScript()}';
-        var isWorkflow=${isWorkflow};
-var curSEID ='${editSchedExecId?editSchedExecId:""}';
+        var selFrameworkProject='${enc(js:project)}';
+        var selArgs='${enc(js:scheduledExecution?.argString)}';
+var curSEID ='${enc(js:editSchedExecId?:"")}';
 function getCurSEID(){
     return curSEID;
 }
@@ -54,7 +52,7 @@ function getCurSEID(){
                 'jobChooserContent',
                     appLinks.menuJobsPicker,
                 {
-                parameters: {jobsjscallback:'jobChosen',runAuthRequired:true},
+                parameters: {jobsjscallback:'true',runAuthRequired:true},
                  onSuccess: function(transport) {
                     new MenuController().showRelativeTo(elem,target);
                      jQuery('#jobChooseBtn').button('reset');
@@ -139,6 +137,22 @@ function getCurSEID(){
         function _afterMatchNodes(){
             jQuery('.btn.refresh_nodes').button('reset');
         }
+        function setupUndoRedoControls(){
+            jQuery('.undoredocontrols').on('click','.act_undo',function(e){
+                _doUndoAction(jQuery(e.target).data('undo-key'));
+            }).on('click','.act_redo',function(e){
+                _doRedoAction(jQuery(e.target).data('undo-key'));
+            }).on('click','.act_revert_popover',function(e){
+                _initPopoverContentRef("#undoredo"+ jQuery(e.target).data('popover-key'));
+                jQuery(e.target).popover('show');
+            });
+            jQuery('body').on('click','.act_revert_cancel',function(e){
+                jQuery('#revertall_'+ jQuery(e.target).data('popover-key')).popover('hide');
+            }).on('click','.act_revert_confirm',function(e){
+                jQuery('#revertall_'+jQuery(e.target).data('popover-key')).popover('destroy');
+                _doRevertAction(jQuery(e.target).data('undo-key'));
+            });
+        }
         function pageinit(){
             _enableDragdrop();
 
@@ -165,6 +179,7 @@ function getCurSEID(){
                     _formUpdateMatchedNodes();
                 }
             });
+            setupUndoRedoControls();
         }
 
         jQuery(pageinit);
@@ -345,25 +360,25 @@ function getCurSEID(){
 </style>
 
 <g:if test="${scheduledExecution && scheduledExecution.id}">
-    <input type="hidden" name="id" value="${scheduledExecution.extid}"/>
+    <input type="hidden" name="id" value="${enc(attr:scheduledExecution.extid)}"/>
 </g:if>
 
 
 <div class="alert alert-danger" style="display: none" id="editerror">
-    
+
 </div>
 
     <div class="list-group-item"  >
         %{--name--}%
     <div class="form-group ${g.hasErrors(bean:scheduledExecution,field:'jobName','has-error')}" id="schedJobNameLabel">
         <label for="schedJobName"
-               class="required ${labelColClass}"
+               class="required ${enc(attr:labelColClass)}"
                >
             <g:message code="domain.ScheduledExecution.title"/> Name
         </label>
         <div class="${fieldColHalfSize}">
             <g:textField name="jobName"
-                         value="${scheduledExecution?.jobName.encodeAsHTML()}"
+                         value="${scheduledExecution?.jobName}"
                          id="schedJobName"
                          class="form-control"
             />
@@ -376,10 +391,7 @@ function getCurSEID(){
             </g:hasErrors>
         </div>
         %{--group--}%
-    %{--<div class="form-group ${hasErrors(bean: scheduledExecution, field: 'groupPath', 'has-error')}">--}%
-        %{--<label for="schedJobGroup" class=" ${labelColClass}">--}%
-            %{--Group--}%
-        %{--</label>--}%
+
         <div class="${fieldColHalfSize}">
             <div class="input-group">
                 <g:hasErrors bean="${scheduledExecution}" field="groupPath">
@@ -387,7 +399,7 @@ function getCurSEID(){
                       <i class="glyphicon glyphicon-warning-sign"></i>
                     </span>
                 </g:hasErrors>
-                <input type='text' name="groupPath" value="${scheduledExecution?.groupPath?.encodeAsHTML()}"
+                <input type='text' name="groupPath" value="${enc(attr:scheduledExecution?.groupPath)}"
                        id="schedJobGroup"
                     class="form-control"
                     placeholder="${g.message(code:'scheduledExecution.groupPath.description')}"
@@ -415,7 +427,7 @@ function getCurSEID(){
                         jQuery('#groupChooseBtn').popover('hide');
                         jQuery('#groupChooseBtn').button('reset');
                     }else{
-                        jQuery.get(appLinks.scheduledExecutionGroupTreeFragment+'?jscallback=groupChosen', function (d) {
+                        jQuery.get(appLinks.scheduledExecutionGroupTreeFragment+'?jscallback=true', function (d) {
                             jQuery('#groupChooseBtn').popover({html:true, container:'body', placement: 'left',content: d,trigger:'manual'}).popover('show');
                             jQuery('#groupChooseBtn').button('reset');
                         });
@@ -465,7 +477,7 @@ function getCurSEID(){
                         <g:render template="/execution/execArgString" model="[argString: scheduledExecution.argString]"/>
                     </g:if>
                     <g:hiddenField name="_sessionopts" value="true"/>
-                
+
                 </div>
             </div>
         </div>
@@ -557,7 +569,7 @@ function getCurSEID(){
             </div>
 
         </g:hasErrors>
-        <g:set var="filtvalue" value="${scheduledExecution.asFilter().encodeAsHTML()}"/>
+        <g:set var="filtvalue" value="${scheduledExecution.asFilter()}"/>
 
                 <span class="input-group nodefilters">
                     <g:if test="${session.user && User.findByLogin(session.user)?.nodefilters}">
@@ -573,7 +585,7 @@ function getCurSEID(){
             </div>
         </div>
 
-        
+
     </div>
 
 
@@ -639,7 +651,7 @@ function getCurSEID(){
                 <div class="row">
                 <div class="col-sm-4">
                 <input type='text' name="nodeThreadcount"
-                       value="${scheduledExecution?.nodeThreadcount?.encodeAsHTML()}" id="schedJobnodeThreadcount"
+                       value="${enc(attr:scheduledExecution?.nodeThreadcount)}" id="schedJobnodeThreadcount"
                        size="3"
                        class="form-control input-sm"/>
                 </div>
@@ -666,7 +678,7 @@ function getCurSEID(){
                 <div class="row">
                     <div class="col-sm-4">
                 <input type='text' name="nodeRankAttribute"
-                       value="${scheduledExecution?.nodeRankAttribute?.encodeAsHTML()}" id="schedJobnodeRankAttribute"
+                       value="${enc(attr:scheduledExecution?.nodeRankAttribute)}" id="schedJobnodeRankAttribute"
                        class="form-control input-sm"/>
                     </div>
                 </div>
@@ -837,7 +849,7 @@ function getCurSEID(){
 
         <div class="${fieldColHalfSize}">
 
-            <input type='text' name="timeout" value="${scheduledExecution?.timeout?.encodeAsHTML()}"
+            <input type='text' name="timeout" value="${enc(attr:scheduledExecution?.timeout)}"
                    id="schedJobTimeout" maxlength="256" class="form-control"/>
 
             <span class="help-block">
@@ -853,7 +865,7 @@ function getCurSEID(){
 
         <div class="${fieldColHalfSize}">
 
-            <input type='text' name="retry" value="${scheduledExecution?.retry?.encodeAsHTML()}"
+            <input type='text' name="retry" value="${enc(attr:scheduledExecution?.retry)}"
                    id="schedJobRetry" maxlength="256" class="form-control"/>
 
             <span class="help-block">
@@ -865,18 +877,18 @@ function getCurSEID(){
 
     %{--uuid--}%
     <div class="form-group ${hasErrors(bean: scheduledExecution, field: 'uuid', 'has-error')}" id="schedJobUuidLabel">
-        <label for="schedJobUuid" class=" ${labelColClass} text-muted">
+        <label for="schedJobUuid" class=" ${enc(attr:labelColClass)} text-muted">
             UUID
         </label>
 
         <div class="${fieldColSize}">
             <g:if test="${editSchedExecId && scheduledExecution?.uuid}">
                 <p class="form-control-static text-muted" title="UUID for this Job">
-                    ${scheduledExecution?.uuid?.encodeAsHTML()}
+                    <g:enc>${scheduledExecution?.uuid}</g:enc>
                 </p>
             </g:if>
             <g:else>
-                <input type='text' name="uuid" value="${scheduledExecution?.uuid?.encodeAsHTML()}"
+                <input type='text' name="uuid" value="${enc(attr:scheduledExecution?.uuid)}"
                        id="schedJobUuid" size="36" class="form-control"/>
                 <g:hasErrors bean="${scheduledExecution}" field="uuid">
                     <i class="glyphicon glyphicon-warning-sign" id="schedJobUuidErr"></i>

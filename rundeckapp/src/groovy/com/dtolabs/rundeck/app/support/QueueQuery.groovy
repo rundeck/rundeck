@@ -1,4 +1,7 @@
 package com.dtolabs.rundeck.app.support
+
+import grails.validation.Validateable
+
 /*
  * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
  *
@@ -23,6 +26,7 @@ package com.dtolabs.rundeck.app.support
  * $Id$
  */
 
+@Validateable
 public class QueueQuery extends ExecQuery{
     String runningFilter
 

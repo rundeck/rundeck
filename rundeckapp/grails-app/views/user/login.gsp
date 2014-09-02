@@ -48,7 +48,7 @@
             <div class="row">
                 <span class="col-sm-12">
                     <h3 class="text-muted">
-                        ${loginmsg.encodeAsHTML()}
+                        <g:enc>${loginmsg}</g:enc>
                     </h3>
                 </span>
             </div>
@@ -70,7 +70,7 @@
         </div>
         <g:if test="${flash.error}">
             <div class="panel-footer panel-danger">
-                ${flash.error}
+                <g:enc>${flash.error}</g:enc>
             </div>
         </g:if>
     </div>

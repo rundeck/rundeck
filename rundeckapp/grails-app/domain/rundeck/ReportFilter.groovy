@@ -59,7 +59,7 @@ class ReportFilter {
 
     static belongsTo = [user:User]
     static constraints={
-        name(blank:false,unique:true)
+        name(blank:false,unique:true, matches: /^[^<>&'"\/]+$/)
 //        sortOrder(inList:["ascending","descending"])
         jobFilter(nullable:true)
         jobIdFilter(nullable:true)

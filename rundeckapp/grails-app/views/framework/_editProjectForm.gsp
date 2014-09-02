@@ -35,12 +35,11 @@
             <g:textField name="newproject" size="50" autofocus="true" value="${newproject}" class="form-control"/>
 
             <g:if test="${projectNameError}">
-                <div class="text-warning">${projectNameError.encodeAsHTML()}</div>
+                <div class="text-warning"><g:enc>${projectNameError}</g:enc></div>
             </g:if>
         </div>
     </g:if>
-
-
+    <g:render template="/common/messages" model="[notDismissable:true]"/>
 </div>
 <g:if test="${resourceModelConfigDescriptions}">
     <div class="list-group-item">
@@ -63,7 +62,7 @@
                         <g:set var="desc" value="${resourceModelConfigDescriptions.find {it.name==config.type}}"/>
                         <g:if test="${!desc}">
                             <span
-                                class="warn note invalidProvider">Invalid Resource Model Source configuration: Provider not found: ${config.type.encodeAsHTML()}</span>
+                                class="warn note invalidProvider">Invalid Resource Model Source configuration: Provider not found: <g:enc>${config.type}</g:enc></span>
                         </g:if>
                         <g:render template="viewResourceModelConfig"
                                   model="${[prefix: prefixKey+'.'+(n+1)+'.', values: config.props, includeFormFields: true, description: desc, saved:true,type:config.type]}"/>
@@ -86,15 +85,15 @@
         </div>
         <div class="list-group">
             <g:each in="${resourceModelConfigDescriptions}" var="description">
-                <a onclick="configControl.addConfig('${description.name.encodeAsJavaScript()}');
+                <a onclick="configControl.addConfig('${enc(js: description.name)}');
                 return false;"
                     href="#"
                    class="list-group-item">
                     <strong>
                         <i class="glyphicon glyphicon-plus"></i>
-                        ${description.title.encodeAsHTML()}
+                        <g:enc>${description.title}</g:enc>
                     </strong>
-                    <span class="help-block">${description.description.encodeAsHTML()}</span>
+                    <span class="help-block"><g:enc>${description.description}</g:enc></span>
                 </a>
             </g:each>
         </div>
@@ -125,9 +124,9 @@
                         class="nexec"
                         id="${nkey+'_input'}"
                         checked="${defaultNodeExec?defaultNodeExec==description.name:false}"/>
-                    <b>${description.title.encodeAsHTML()}</b>
+                    <b><g:enc>${description.title}</g:enc></b>
                 </label>
-                <span class="help-block">${description.description.encodeAsHTML()}</span>
+                <span class="help-block"><g:enc>${description.description}</g:enc></span>
             </div>
                 <g:hiddenField name="nodeexec.${nex}.type" value="${description.name}"/>
                 <g:set var="nodeexecprefix" value="nodeexec.${nex}.config."/>
@@ -138,7 +137,7 @@
                     <wdgt:eventHandler state="checked" for="${nkey+'_input'}">
                         <wdgt:action visible="true" target="${nkey+'_det'}"/>
                     </wdgt:eventHandler>
-                    <div class="well well-sm nexecDetails" id="${nkey + '_det'}"
+                    <div class="well well-sm nexecDetails" id="${enc(attr:nkey) + '_det'}"
                          style="${wdgt.styleVisible(if: defaultNodeExec == description.name)}">
                         <div class="form-horizontal " >
                         <g:each in="${description.properties}" var="prop">
@@ -169,9 +168,9 @@
                         class="fcopy"
                         id="${nkey+'_input'}"
                         checked="${defaultFileCopy?defaultFileCopy==description.name:false}"/>
-                    <b>${description.title.encodeAsHTML()}</b>
+                    <b><g:enc>${description.title}</g:enc></b>
                 </label>
-                <span class="help-block">${description.description.encodeAsHTML()}</span>
+                <span class="help-block"><g:enc>${description.description}</g:enc></span>
             </div>
             <g:hiddenField name="fcopy.${nex}.type" value="${description.name}"/>
             <g:set var="fcopyprefix" value="fcopy.${nex}.config."/>
@@ -182,7 +181,7 @@
                 <wdgt:eventHandler state="checked" for="${nkey+'_input'}">
                     <wdgt:action visible="true" target="${nkey+'_det'}"/>
                 </wdgt:eventHandler>
-                <div class="well well-sm fcopyDetails" id="${nkey + '_det'}"
+                <div class="well well-sm fcopyDetails" id="${enc(attr:nkey) + '_det'}"
                        style="${wdgt.styleVisible(if: defaultFileCopy == description.name)}">
                 <div class="form-horizontal " >
                     <g:each in="${description.properties}" var="prop">

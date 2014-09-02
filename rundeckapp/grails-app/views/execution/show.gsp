@@ -5,7 +5,7 @@
     <meta name="tabpage" content="events"/>
     <meta name="layout" content="base" />
     <title><g:message code="main.app.name"/> - <g:if test="${null==execution?.dateCompleted}"><g:message
-            code="now.running" /> - </g:if><g:if test="${scheduledExecution}">${scheduledExecution?.jobName.encodeAsHTML()} :  </g:if><g:else><g:message code="execution.type.adhoc.title" /></g:else> <g:message code="execution.at.time.by.user" args="[g.relativeDateString(atDate:execution.dateStarted),execution.user]"/></title>
+            code="now.running" /> - </g:if><g:if test="${scheduledExecution}"><g:enc>${scheduledExecution?.jobName}</g:enc> :  </g:if><g:else><g:message code="execution.type.adhoc.title" /></g:else> <g:message code="execution.at.time.by.user" args="[g.relativeDateString(atDate:execution.dateStarted),execution.user]"/></title>
     <g:set var="followmode" value="${params.mode in ['browse','tail','node']?params.mode:'tail'}"/>
     <g:set var="execState" value="${execution.dateCompleted == null ? 'RUNNING' : execution.status == 'true' ?
         'SUCCEEDED' : execution.cancelled ? 'ABORTED' : execution.timedOut ? 'TIMEDOUT' : 'FAILED'}"/>
@@ -35,15 +35,36 @@
       <asset:javascript src="executionState_HistoryKO.js"/>
 
       <g:javascript library="prototype/effects"/>
+      <g:embedJSON id="workflowDataJSON" data="${execution.workflow.commands*.toMap()}"/>
+      <g:embedJSON id="nodeStepPluginsJSON" data="${stepPluginDescriptions.node.collectEntries { [(it.key): [title: it.value.title]] }}"/>
+      <g:embedJSON id="wfStepPluginsJSON" data="${stepPluginDescriptions.workflow.collectEntries { [(it.key): [title: it.value.title]] }}"/>
       <g:javascript>
+        var workflow=null;
+        var followControl=null;
+        var flowState=null;
+        var nodeflowvm=null;
+        function followOutput(){
+            followControl.beginFollowingOutput('${enc(js:execution?.id)}');
+        }
+        function followState(){
+            try{
+                flowState.beginFollowing();
+            }catch(e){
+                nodeflowvm.errorMessage('Could not load flow state: '+e);
+                nodeflowvm.stateLoaded(false);
+            }
+        }
+        function showTab(id){
+            jQuery('#'+id+' a').tab('show');
+        }
+        function init() {
+            var workflowData=loadJsonData('workflowDataJSON');
+            workflow = new RDWorkflow(workflowData,{
+                nodeSteppluginDescriptions:loadJsonData('nodeStepPluginsJSON'),
+                wfSteppluginDescriptions:loadJsonData('wfStepPluginsJSON')
+              });
 
-        var workflowData=${execution.workflow.commands*.toMap().encodeAsJSON()};
-        var workflow = new RDWorkflow(workflowData,{
-            nodeSteppluginDescriptions:${stepPluginDescriptions.node.collectEntries { [(it.key): [title: it.value.title]] }.encodeAsJSON()},
-            wfSteppluginDescriptions:${stepPluginDescriptions.workflow.collectEntries { [(it.key): [title: it.value.title]] }.encodeAsJSON()}
-        });
-
-        var followControl = new FollowControl('${execution?.id}','outputappendform',{
+          followControl = new FollowControl('${execution?.id}','outputappendform',{
             parentElement:'commandPerform',
             fileloadId:'fileload',
             fileloadPctId:'fileloadpercent',
@@ -55,52 +76,35 @@
             appLinks:appLinks,
             iconUrl: "${resource(dir: 'images', file: 'icon-small')}",
             smallIconUrl: "${resource(dir: 'images', file: 'icon-small')}",
-            extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>&markdown=${params.markdown}&ansicolor=${params.ansicolor}",
-            lastlines: ${params.lastlines ? params.lastlines : defaultLastLines},
-            maxLastLines: ${params.maxlines ? params.maxlines : maxLastLines},
-            collapseCtx: {value:${null == execution?.dateCompleted },changed:false},
+
+            extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>&markdown=${enc(js:enc(url: params.markdown))}&ansicolor=${enc(js:enc(url: params.ansicolor))}",
+            lastlines: '${enc(js:params.int('lastlines') ?: defaultLastLines)}',
+            maxLastLines:'${enc(js:params.int('maxlines') ?: maxLastLines)}',
+            collapseCtx: {value:${enc(js:null == execution?.dateCompleted)},changed:false},
             showFinalLine: {value:false,changed:false},
-            tailmode: ${followmode == 'tail'},
-            browsemode: ${followmode == 'browse'},
-            nodemode: ${followmode == 'node'},
+            tailmode: ${enc(js:followmode == 'tail')},
+            browsemode: ${enc(js:followmode == 'browse')},
+            nodemode: ${enc(js:followmode == 'node')},
             execData: {},
-            groupOutput:{value:${followmode == 'browse'}},
-            updatepagetitle:${null == execution?.dateCompleted},
-            <g:if test="${authChecks[AuthConstants.ACTION_KILL]}">
-            killjobhtml: '<span class="btn btn-danger btn-sm textbtn" onclick="followControl.docancel();">Kill <g:message code="domain.ScheduledExecution.title"/> <i class="glyphicon glyphicon-remove"></i></span>',
-            </g:if>
-            <g:if test="${!authChecks[AuthConstants.ACTION_KILL]}">
-            killjobhtml: "",
-            </g:if>
-            totalDuration : 0 + ${scheduledExecution?.totalTime ? scheduledExecution.totalTime : -1},
-            totalCount: 0 + ${scheduledExecution?.execCount ? scheduledExecution.execCount : -1}
-        });
-        var flowState = new FlowState('${execution?.id}','flowstate',{
+            groupOutput:{value:${enc(js:followmode == 'browse')}},
+            updatepagetitle:${enc(js:null == execution?.dateCompleted)},
+          <g:if test="${authChecks[AuthConstants.ACTION_KILL]}">
+              killjobhtml: '<span class="btn btn-danger btn-sm textbtn" onclick="followControl.docancel();">Kill <g:message code="domain.ScheduledExecution.title"/> <i class="glyphicon glyphicon-remove"></i></span>',
+          </g:if>
+          <g:if test="${!authChecks[AuthConstants.ACTION_KILL]}">
+              killjobhtml: "",
+          </g:if>
+            totalDuration : '${enc(js:scheduledExecution?.totalTime ?: -1)}',
+            totalCount: '${enc(js:scheduledExecution?.execCount ?: -1)}'
+          });
+          nodeflowvm=new NodeFlowViewModel(workflow,"${enc(js:g.createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id))}.json");
+          flowState = new FlowState('${enc(js:execution?.id)}','flowstate',{
             workflow:workflow,
-            loadUrl: "${g.createLink(controller: 'execution', action: 'ajaxExecState', id: execution.id)}",
-            outputUrl:"${g.createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id)}.json",
+            loadUrl: "${enc(js:g.createLink(controller: 'execution', action: 'ajaxExecState', id: execution.id))}",
+            outputUrl:"${g.enc(js:createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id))}.json",
             selectedOutputStatusId:'selectedoutputview',
             reloadInterval:1500
          });
-         var stepState= new StepFlow(flowState,'flowstate');
-
-         var nodeflowvm=new NodeFlowViewModel(workflow,"${g.createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id)}.json");
-         function followOutput(){
-            followControl.beginFollowingOutput('${execution?.id}');
-         }
-         function followState(){
-            try{
-                flowState.beginFollowing();
-            }catch(e){
-                nodeflowvm.errorMessage('Could not load flow state: '+e);
-                nodeflowvm.stateLoaded(false);
-            }
-         }
-         function showTab(id){
-            jQuery('#'+id+' a').tab('show');
-         }
-        function init() {
-//            flowState.addUpdater(stepState);
             flowState.addUpdater({
             updateError:function(error,data){
                 nodeflowvm.stateLoaded(false);
@@ -137,14 +141,13 @@
                     startTime:data.startTime? data.startTime : data.state ? data.state.startTime: null,
                     endTime:data.endTime ? data.endTime : data.state ? data.state.endTime : null
                 },{},nodeflowvm);
-
                 nodeflowvm.updateNodes(data.state);
             }});
             ko.mapping.fromJS({
-                completed:${execution.dateCompleted!=null},
-                startTime:'${execution.dateStarted.encodeAsJavaScript()}',
-                endTime:'${execution.dateCompleted?.encodeAsJavaScript()}',
-                executionState:'${execState}'
+                completed:'${execution.dateCompleted!=null}',
+                startTime:'${enc(js:execution.dateStarted)}',
+                endTime:'${enc(js:execution.dateCompleted)}',
+                executionState:'${enc(js:execState)}'
             },{},nodeflowvm);
             ko.applyBindings(nodeflowvm,jQuery('#execution_main')[0]);
 
@@ -179,6 +182,10 @@
                 ko.applyBindings(activity, document.getElementById('activity_section'));
                 setupActivityLinks('activity_section', activity);
            }
+            $$('.apply_ace').each(function (t) {
+                _applyAce(t);
+            })
+            followControl.bindActions('outputappendform');
         });
       </g:javascript>
       <style type="text/css">
@@ -223,7 +230,7 @@
                 <g:if test="${execution.retryAttempt}">
                     <div class="text-muted">
                         <i class="glyphicon glyphicon-repeat"></i>
-                        Retry #${execution.retryAttempt}  (of ${execution.retry})
+                        Retry #<g:enc>${execution.retryAttempt}</g:enc>  (of <g:enc>${execution.retry}</g:enc>)
                     </div>
                 </g:if>
                         <g:if test="${eprev || enext}">
@@ -554,6 +561,7 @@
 
                 <div class="col-sm-6">
                     <section class="runstatus " data-bind="if: !completed() && jobAverageDuration()>0">
+                        <g:set var="progressBind" value="${', css: { \'progress-bar-info\': jobPercentageFixed() < 105 ,  \'progress-bar-warning\': jobPercentageFixed() > 104  }'}"/>
                         <g:render template="/common/progressBar"
                                   model="[completePercent: execution.dateCompleted ? 100 : 0,
                                           progressClass: 'rd-progress-exec progress-embed',
@@ -564,7 +572,7 @@
                                           progressId: 'progressBar',
                                           bind: 'jobPercentageFixed()',
                                           bindText: '(jobPercentageFixed()  < 105 ? jobPercentageFixed() + \'%\' : \'+\' + jobOverrunDuration()) + \' of average \' + formatDurationHumanize(jobAverageDuration())',
-                                          progressBind: ', css: { \'progress-bar-info\': jobPercentageFixed() < 105 ,  \'progress-bar-warning\': jobPercentageFixed() &gt; 104  }',
+                                          progressBind: progressBind,
                                   ]"/>
                     </section>
                     <div data-bind="if: completed() || jobAverageDuration() <= 0 ">
@@ -584,7 +592,7 @@
                             <a href="#summary" data-toggle="tab">Summary</a>
                         </li>
                         <li id="tab_link_flow">
-                            <a href="#state" data-toggle="tab" data-bind="text: completed()?'${g.message(code: "report")}':'${g.message(code: "monitor")}' ">
+                            <a href="#state" data-toggle="tab" data-bind="text: completed()?'${enc(attr:g.message(code: "report"))}':'${enc(attr:g.message(code: "monitor"))}' ">
                                 <g:if test="${execution.dateCompleted==null}">
                                     <g:message code="monitor" />
                                 </g:if>
@@ -641,16 +649,6 @@
     </g:if>
 
   <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
-    <g:javascript>
-      fireWhenReady('executionShowPage', function (z) {
-          $$('.apply_ace').each(function (t) {
-              _applyAce(t);
-          })
-      });
-        fireWhenReady('outputappendform',function(z){
-            followControl.bindActions('outputappendform');
-        });
-    </g:javascript>
 
   </body>
 </html>

@@ -33,23 +33,8 @@
     <g:set var="filterset" value="${User.findByLogin(session.user)?.jobfilters}"/>
 </g:if>
 
-<div id="${rkey}wffilterform">
-        <g:if test="${flash.message}">
-            <div class="alert alert-dismissable alert-info">
-                <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
-                <div>
-                    ${flash.message.encodeAsHTML()}
-                </div>
-            </div>
-        </g:if>
-        <g:if test="${flash.error}">
-            <div class="alert alert-dismissable alert-warning">
-                <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
-                <div>
-                    ${flash.error.encodeAsHTML()}
-                </div>
-            </div>
-        </g:if>
+<div id="${enc(attr:rkey)}wffilterform">
+    <g:render template="/common/messages"/>
     <g:set var="wasfiltered" value="${paginateParams?.keySet().grep(~/(?!proj).*Filter|groupPath|idlist$/)}"/>
     <g:if test="${params.createFilters}">
         <span class="note help">
@@ -60,7 +45,7 @@
     <table cellspacing="0" cellpadding="0" width="100%">
         <tr>
 
-            <td style="text-align:left;vertical-align:top;width:200px; ${wdgt.styleVisible(if:filtersOpen)}" id="${rkey}filter" class="wffilter" >
+            <td style="text-align:left;vertical-align:top;width:200px; ${wdgt.styleVisible(if:filtersOpen)}" id="${enc(attr:rkey)}filter" class="wffilter" >
 
             <g:form action="jobs" params="[project:params.project]" method="get" class="form">
                 <g:if test="${params.compact}">
@@ -71,7 +56,24 @@
                     Filter
                     <b class="glyphicon glyphicon-chevron-down"></b>
                 </span>
-                <g:render template="/common/queryFilterManager" model="${[rkey:rkey,filterName:filterName,filterset:filterset,update:rkey+'wffilterform',deleteActionSubmit:'deleteJobfilter',storeActionSubmit:'storeJobfilter']}"/>
+                <g:if test="${!filterName}">
+                    <button class="btn btn-xs pull-right btn-success"
+                          data-toggle="modal"
+                          data-target="#saveFilterModal" title="Click to save this filter with a name">
+                        <i class="glyphicon glyphicon-plus"></i> save this filter&hellip;
+                    </button>
+                </g:if>
+                <g:else >
+                    <div class="filterdef saved clear">
+                                    <span class="prompt"><g:enc>${filterName}</g:enc></span>
+                    <button class="btn btn-xs btn-link btn-danger pull-right" data-toggle="modal"
+                          data-target="#deleteFilterModal" title="Click to delete this saved filter">
+                        <b class="glyphicon glyphicon-remove"></b>
+                        delete&hellip;
+                    </button>
+                    </div>
+                </g:else>
+                <g:render template="/common/queryFilterManagerModal" model="${[rkey:rkey,filterName:filterName,filterset:filterset,update:rkey+'wffilterform',deleteActionSubmit:'deleteJobfilter',storeActionSubmit:'storeJobfilter']}"/>
                 
                 <div class="filter">
 
@@ -79,25 +81,25 @@
                             <g:hiddenField name="offset" value="${offset}"/>
                             <g:if test="${params.idlist}">
                                 <div class="form-group">
-                                    <label for="${rkey}idlist"><g:message code="jobquery.title.idlist"/></label>:
+                                    <label for="${enc(attr:rkey)}idlist"><g:message code="jobquery.title.idlist"/></label>:
                                     <g:textField name="idlist" id="${rkey}idlist" value="${params.idlist}"
                                                  class="form-control" />
                                 </div>
                             </g:if>
                             <div class="form-group">
-                                <label for="${rkey}jobFilter"><g:message code="jobquery.title.jobFilter"/></label>:
+                                <label for="${enc(attr:rkey)}jobFilter"><g:message code="jobquery.title.jobFilter"/></label>:
                                 <g:textField name="jobFilter" id="${rkey}jobFilter" value="${params.jobFilter}"
                                              class="form-control" />
                             </div>
 
                             <div class="form-group">
-                                <label for="${rkey}groupPath"><g:message code="jobquery.title.groupPath"/></label>:
+                                <label for="${enc(attr:rkey)}groupPath"><g:message code="jobquery.title.groupPath"/></label>:
                                 <g:textField name="groupPath" id="${rkey}groupPath" value="${params.groupPath}"
                                              class="form-control"/>
                             </div>
 
                             <div class="form-group">
-                                <label for="${rkey}descFilter"><g:message code="jobquery.title.descFilter"/></label>:
+                                <label for="${enc(attr:rkey)}descFilter"><g:message code="jobquery.title.descFilter"/></label>:
                                 <g:textField name="descFilter" id="${rkey}descFilter" value="${params.descFilter}"
                                              class="form-control"/>
                             </div>
@@ -111,7 +113,7 @@
             </g:form>
 
             </td>
-            <td style="text-align:left;vertical-align:top;" id="${rkey}wfcontent" class="wfcontent">
+            <td style="text-align:left;vertical-align:top;" id="${enc(attr:rkey)}wfcontent" class="wfcontent">
 
                 <div class="jobscontent head">
     <g:if test="${!params.compact}">
@@ -148,7 +150,7 @@
                 <g:if test="${wasfiltered}">
                     <div>
                     <g:if test="${!params.compact}">
-                        <span class="h4">${totalauthorized} <g:message code="domain.ScheduledExecution.title"/>s</span>
+                        <span class="h4"><g:enc>${totalauthorized}</g:enc> <g:message code="domain.ScheduledExecution.title"/>s</span>
                             matching filter:
                     </g:if>
 
@@ -156,24 +158,20 @@
                         <g:render template="/common/selectFilter" model="[noSelection:'-All-',filterset:filterset,filterName:filterName,prefName:'workflows']"/>
                         <!--<span class="info note">Filter:</span>-->
                     </g:if>
-                    <g:if test="${!filterName}">
-                        <span class="textbtn textbtn-info textbtn-on-hover obs_filtersave" id="outsidefiltersave" title="Click to save this filter with a name">
-                            save this filter&hellip;
-                        </span>
-                    </g:if></div>
+                    </div>
 
                             <span title="Click to modify filter" class="info textbtn textbtn-default query obs_filtertoggle"  id='${rkey}filter-toggle'>
                                 <g:each in="${wasfiltered.sort()}" var="qparam">
                                     <span class="querykey"><g:message code="jobquery.title.${qparam}"/></span>:
 
                                     <g:if test="${paginateParams[qparam] instanceof java.util.Date}">
-                                        <span class="queryvalue date" title="${paginateParams[qparam].toString().encodeAsHTML()}">
+                                        <span class="queryvalue date" title="${enc(attr:paginateParams[qparam].toString())}">
                                             <g:relativeDate atDate="${paginateParams[qparam]}"/>
                                         </span>
                                     </g:if>
                                     <g:else>
                                         <span class="queryvalue text">
-                                            ${g.message(code:'jobquery.title.'+qparam+'.label.'+paginateParams[qparam].toString(),default:paginateParams[qparam].toString().encodeAsHTML())}
+                                            ${g.message(code:'jobquery.title.'+qparam+'.label.'+paginateParams[qparam].toString(),default:enc(html:paginateParams[qparam].toString()).toString())}
                                         </span>
                                     </g:else>
 
@@ -184,10 +182,10 @@
                 </g:if>
                 <g:else>
                     <g:if test="${!params.compact}">
-                    <span class="h4"><g:message code="domain.ScheduledExecution.title"/>s (${totalauthorized})</span>
+                    <span class="h4"><g:message code="domain.ScheduledExecution.title"/>s (<g:enc>${totalauthorized}</g:enc>)</span>
                     </g:if>
 
-                    <span class="textbtn textbtn-default obs_filtertoggle"  id="${rkey}filter-toggle">
+                    <span class="textbtn textbtn-default obs_filtertoggle"  id="${enc(attr:rkey)}filter-toggle">
                         Filter
                         <b class="glyphicon glyphicon-chevron-${wasfiltered?'down':'right'}"></b>
                     </span>
@@ -210,13 +208,13 @@
                 <g:if test="${flash.savedJob}">
                     <div class="newjob">
                     <span class="popout message note" style="background:white">
-                        ${flash.savedJobMessage?flash.savedJobMessage:'Saved changes to Job'}:
+                        <g:enc>${flash.savedJobMessage?:'Saved changes to Job'}</g:enc>:
                         <g:link controller="scheduledExecution" action="show" id="${flash.savedJob.id}"
-                                params="[project: params.project ?: request.project]">${flash.savedJob.generateFullName().encodeAsHTML()}</g:link>
+                                params="[project: params.project ?: request.project]"><g:enc>${flash.savedJob.generateFullName()}</g:enc></g:link>
                     </span>
                     </div>
                     <g:javascript>
-                        fireWhenReady('jobrow_${flash.savedJob.id}',doyft.curry('jobrow_${flash.savedJob.id}'));
+                        fireWhenReady('jobrow_${enc(js:flash.savedJob.id)}',doyft.curry('jobrow_${enc(js:flash.savedJob.id)}'));
 
                     </g:javascript>
                 </g:if>
@@ -307,20 +305,20 @@
 <g:javascript>
     function _set_adhoc_filters(e){
         if($F(e.target)=='true'){
-            $('${rkey}adhocFilters').show();
-            $('${rkey}definedFilters').hide();
+            $('${enc(js:rkey)}adhocFilters').show();
+            $('${enc(js:rkey)}definedFilters').hide();
         }else if($F(e.target)=='false'){
-            $('${rkey}adhocFilters').hide();
-            $('${rkey}definedFilters').show();
+            $('${enc(js:rkey)}adhocFilters').hide();
+            $('${enc(js:rkey)}definedFilters').show();
         }else{
-            $('${rkey}adhocFilters').hide();
-            $('${rkey}definedFilters').hide();
+            $('${enc(js: rkey)}adhocFilters').hide();
+            $('${enc(js: rkey)}definedFilters').hide();
         }
     }
-    $$('#adhocFilterPick_${rkey} input').each(function(elem){
+    $$('#adhocFilterPick_${enc(js: rkey)} input').each(function(elem){
         Event.observe(elem,'click',function(e){_set_adhoc_filters(e)});
     });
-    $$('#${rkey}wffilterform input').each(function(elem){
+    $$('#${enc(js: rkey)}wffilterform input').each(function(elem){
         if(elem.type=='text'){
             elem.observe('keypress',noenter);
         }

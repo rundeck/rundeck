@@ -15,7 +15,7 @@
  */
 
 function showError(message) {
-    $("editerror").innerHTML += message;
+    appendHtml($("editerror"),message);
     $("editerror").show();
 }
 function showRowSelected(elem, tbl, classname) {
@@ -181,7 +181,7 @@ function _wfiaddnew(type,nodestep) {
     if (getCurSEID()) {
         params.scheduledExecutionId = getCurSEID();
     }
-    $('wfnewitem').innerHTML = '';
+    clearHtml('wfnewitem');
     $('wfnewtypes').hide();
     _hideWFItemControls();
     var olist = $('workflowContent').down('ol');
@@ -192,7 +192,7 @@ function _wfiaddnew(type,nodestep) {
     if (num % 2 == 1) {
         parentli.addClassName('alternate');
     }
-    parentli.setAttribute('wfitemNum', num);
+    parentli.setAttribute('data-wfitemnum', num);
     newitemElem = new Element('span');
     newitemElem.setAttribute('id', 'wfli_' + num);
     parentli.appendChild(newitemElem);
@@ -203,7 +203,7 @@ function _wfiaddnew(type,nodestep) {
     var ehUlElement = new Element('ul');
     ehUlElement.addClassName('wfhandleritem');
     ehUlElement.style.display='none';
-    ehUlElement.setAttribute('wfitemNum',num);
+    ehUlElement.setAttribute('data-wfitemnum',num);
     var ehLiElement = new Element('li');
     ehLiElement.setAttribute('id','wfli_eh_'+num);
     ehUlElement.appendChild(ehLiElement);
@@ -230,14 +230,6 @@ function _wfiaddnew(type,nodestep) {
     });
 }
 
-function escapeHtml(unsafe) {
-    return unsafe
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
 function _addAceTextarea(textarea){
     if (_isIe(8)||_isIe(7)||_isIe(6)) {
         return;
@@ -249,7 +241,7 @@ function _addAceTextarea(textarea){
         height: "560px"
     });
     _shadow.addClassName('ace_text');
-    _shadow.innerHTML= escapeHtml($F(textarea));
+    setText(_shadow,$F(textarea));
     textarea.insert({ after: _shadow });
     var editor = ace.edit(_shadow.identify());
     editor.setTheme("ace/theme/chrome");
@@ -288,7 +280,7 @@ function _wfisavenew(formelem) {
                 $(litem).highlight();
                 $('wfnewbutton').show();
                 _showWFItemControls();
-                $('workflowDropfinal').setAttribute('wfitemNum', parseInt(litem.getAttribute('wfitemNum')) + 1);
+                $('workflowDropfinal').setAttribute('data-wfitemnum', parseInt(litem.getAttribute('data-wfitemnum')) + 1);
                 newitemElem = null;
             }
         }
@@ -378,7 +370,7 @@ function _wficancelnewEH(elem){
     var ul = $(elem).up('ul.wfhandleritem', 0);
     ul.hide();
     var d = $(elem).up('ul.wfhandleritem li', 0);
-    d.innerHTML='';
+    clearHtml(d);
 
     _showWFItemControls();
 }
@@ -392,7 +384,7 @@ function _hideAddNewEH(){
 function _wfishownewErrorHandler(key,num,nodeStep){
     var newehdiv=$('wfnew_eh_types');
     var wfiehli=$('wfli_eh_'+key);
-    wfiehli.innerHTML='';
+    clearHtml(wfiehli);
     newehdiv.parentNode.removeChild(newehdiv);
     wfiehli.appendChild(newehdiv);
 
@@ -411,7 +403,7 @@ function _wfiaddNewErrorHandler(elem,type,num,nodestep){
         //find num by looking for enclosing ul and getting wfitemNum attribute
         var d=$(elem).up('ul.wfhandleritem',0);
         if(d){
-            num= d.getAttribute('wfitemNum');
+            num= d.getAttribute('data-wfitemnum');
         }
     }
     var key='eh_'+num;
@@ -552,8 +544,8 @@ function _updateWFUndoRedo() {
 
 ///Drag drop
 function moveDragItem(dragged, droparea) {
-    var num = $(dragged).getAttribute('wfitemNum');
-    var to = $(droparea).getAttribute('wfitemNum');
+    var num = $(dragged).getAttribute('data-wfitemnum');
+    var to = $(droparea).getAttribute('data-wfitemnum');
 
     if (to > num) {
         to = to - 1;
@@ -638,7 +630,7 @@ function _showOptControls() {
     $('optnewbutton').show();
     _updateOptsUndoRedo();
     _showOptEmptyMessage();
-    $('optsload').innerHTML = '';
+    clearHtml('optsload');
 }
 function _showOptEmptyMessage() {
     var x = $('optionsContent').down('ul li');
@@ -653,7 +645,7 @@ function _showOptEmptyMessage() {
 function _hideOptControls() {
     $$('#optionsContent .opteditcontrols').each(Element.hide);
     $('optnewbutton').hide();
-    $('optsload').innerHTML = '';
+    clearHtml('optsload');
 }
 function _updateOptsUndoRedo() {
     var params = {};
@@ -772,7 +764,7 @@ function _optaddnew() {
                 _configureInputRestrictions(createElement);
                 _hideOptControls();
             }
-            $('optsload').innerHTML = '';
+            clearHtml('optsload');
         }
     });
 }

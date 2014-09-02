@@ -93,7 +93,7 @@ grails.project.dependency.resolution = {
                 'com.jcraft:jsch:0.1.50','log4j:log4j:1.2.16','commons-collections:commons-collections:3.2.1',
                 'commons-codec:commons-codec:1.5', 'com.fasterxml.jackson.core:jackson-databind:2.0.2',
                 'com.codahale.metrics:metrics-core:3.0.1',
-                'com.google.guava:guava:15.0'
+                'com.google.guava:guava:15.0','org.owasp.encoder:encoder:1.1.1'
         compile("org.rundeck:rundeck-core:${rundeckVersion}") {
             changing = true
             excludes("xalan")

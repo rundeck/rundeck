@@ -22,38 +22,38 @@
     $Id$
  --%>
 <g:set var="ukey" value="${g.rkey()}"/>
-<div id="optvis_${option.name.encodeAsHTML()}" >
+<div id="optvis_${enc(attr:option.name)}" >
     <div class="optitem optctrlholder">
-        <span class="opt item " id="opt_${option.name.encodeAsHTML()}" >
+        <span class="opt item " id="opt_${enc(attr:option.name)}" >
             <g:render template="/scheduledExecution/optView" model="${[option:option,edit:edit]}"/>
         </span>
 
-        <div id="optdel_${ukey}" class="panel panel-danger collapse">
+        <div id="optdel_${enc(attr:ukey)}" class="panel panel-danger collapse">
             <div class="panel-heading">
                 Delete this option
             </div>
 
             <div class="panel-body">
-                Really delete option ${option.name.encodeAsHTML()}?
+                Really delete option <g:enc>${option.name}</g:enc>?
             </div>
 
             <div class="panel-footer">
                 <span class="btn btn-default btn-xs"
-                      onclick="jQuery('#optdel_${ukey.encodeAsJavaScript()}').collapse('toggle');"><g:message code="cancel"/></span>
+                      onclick="jQuery('#optdel_${enc(js:ukey)}').collapse('toggle');"><g:message code="cancel"/></span>
                 <span class="btn btn-danger btn-xs"
-                      onclick=" _doRemoveOption('${option.name.encodeAsJavaScript()}', $(this).up('li.optEntry'));"><g:message
+                      onclick=" _doRemoveOption('${enc(js:option.name)}', $(this).up('li.optEntry'));"><g:message
                         code="delete"/></span>
             </div>
         </div>
 
     <g:if test="${edit}">
-        <span class="optctrl opteditcontrols controls " id="optctrls_${option.name.encodeAsHTML()}">
+        <span class="optctrl opteditcontrols controls " id="optctrls_${enc(attr:option.name)}">
             <span class="textbtn textbtn-danger "
                   data-toggle="collapse"
-                  data-target="#optdel_${ukey.encodeAsHTML()}"
+                  data-target="#optdel_${enc(attr:ukey)}"
                   title="Delete this option.">
                 <i class="glyphicon glyphicon-remove"></i></span>
-            <span class="textbtn textbtn-info" onclick="_optedit('${option.name.encodeAsJavaScript()}',$(this).up('li.optEntry'));"
+            <span class="textbtn textbtn-info" onclick="_optedit('${enc(js:option.name)}',$(this).up('li.optEntry'));"
                   title="Edit this option">
                 <i class="glyphicon glyphicon-edit"></i>
                 edit
@@ -61,12 +61,12 @@
         </span>
 
         <g:javascript>
-        fireWhenReady('opt_${option.name.encodeAsJavaScript()}',function(){
-            $('opt_${option.name.encodeAsJavaScript()}').select('span.autoedit').each(function(e){
+        fireWhenReady('opt_${enc(js:option.name)}',function(){
+            $('opt_${enc(js:option.name)}').select('span.autoedit').each(function(e){
                 Event.observe(e,'click',function(evt){
                     var f=$('optionsContent').down('form');
                     if(!f || 0==f.length){
-                        _optedit('${option.name.encodeAsJavaScript()}',$(e).up('li.optEntry'));
+                        _optedit('${enc(js:option.name)}',$(e).up('li.optEntry'));
                     }
                 });
             });

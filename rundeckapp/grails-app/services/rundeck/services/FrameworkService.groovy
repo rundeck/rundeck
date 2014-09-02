@@ -667,13 +667,15 @@ class FrameworkService implements ApplicationContextAware {
     public Map validateServiceConfig(String type, String prefix, Map params, ProviderService<?> service) {
         Map result = [:]
         result.valid=false
-        final provider
+        def provider=null
         try {
             provider = service.providerOfType(type)
         } catch (ExecutionServiceException e) {
             result.error = e.message
         }
-        if (provider && !(provider instanceof Describable)) {
+        if (!provider) {
+            result.error = "Invalid provider type: ${type}, not found"
+        } else if (!(provider instanceof Describable)) {
             result.error = "Invalid provider type: ${type}, not available for configuration"
         } else {
             def validated=validateDescription(provider.description, prefix, params)

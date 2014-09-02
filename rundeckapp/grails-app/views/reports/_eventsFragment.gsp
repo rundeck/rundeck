@@ -6,7 +6,7 @@
 </g:if>
 <g:set var="isCompact" value="${params.compact?true:false}"/>
     
-<div id="${rkey}evtsForm">
+<div id="${enc(attr:rkey)}evtsForm">
     <g:if test="${params.createFilters}">
         <span class="note help">
             Enter filter parameters below and click "save this filter" to set a name and save it.
@@ -15,8 +15,8 @@
     <g:set var="wasfiltered" value="${paginateParams}"/>
     <div class="queryTable">
         <g:if test="${!params.nofilters}">
-        <div id="${rkey}filter" >
-            <g:form action="index" class="form-inline" role="form">
+        <div id="${enc(attr:rkey)}filter" >
+            <g:form action="index" class="form-inline" role="form" params="${[project: params.project ?: request.project]}">
                 <g:if test="${params.compact}">
                     <g:hiddenField name="compact" value="${params.compact}"/>
                 </g:if>
@@ -32,22 +32,38 @@
                             src="${resource(dir: 'images', file: 'feed.png')}" width="14px" height="14px"
                             alt=""/> RSS</a>
                 </g:ifServletContextAttribute>
-                <g:render template="/common/queryFilterManager" model="${[rkey:rkey,filterName:filterName,filterset:filterset,update:rkey+'evtsForm',deleteActionSubmit:'deleteFilter', storeActionSubmit:'storeFilter']}"/>
+                <g:render template="/common/queryFilterManagerModal" model="${[rkey:rkey,filterName:filterName,filterset:filterset,update:rkey+'evtsForm',deleteActionSubmit:'deleteFilter', storeActionSubmit:'storeFilter']}"/>
                 <g:hiddenField name="max" value="${max}"/>
                 <g:render template="baseFiltersPlain" model="${[params: params, query: query]}"/>
                 <g:render template="recentDateFiltersPlain" model="${[params:params,query:query]}"/>
                 <g:render template="advDateFiltersPlain" model="${[params:params,query:query]}"/>
 
                 <g:submitButton value="Filter" name="filterAll" class="btn btn-default btn-sm"/>
+                    <button class="btn btn-xs pull-right btn-success collapse ${filterName?'':'in'} obs_filter_is_deselected"
+                            style="${wdgt.styleVisible(unless: params.saveFilter)}"
+                            data-toggle="modal"
+                            data-target="#saveFilterModal" title="Click to save this filter with a name">
+                        <i class="glyphicon glyphicon-plus"></i> save this filter&hellip;
+                    </button>
+                    <span class="form-group ">
+                        <div class="filterdef saved  collapse ${filterName ? 'in' : ''} obs_filter_is_selected">
+                            Selected filter: <span class="prompt obs_selected_filter_name"><g:enc>${filterName}</g:enc></span>
+                            <button class="btn btn-xs btn-link btn-danger pull-right " data-toggle="modal"
+                                    data-target="#deleteFilterModal" title="Click to delete this saved filter">
+                                <b class="glyphicon glyphicon-remove"></b>
+                                delete filter…
+                            </button>
+                        </div>
+                    </span>
             </g:form>
         </div>
         </g:if>
     </div>
-            <div id="${rkey}evtscontent">
+            <div id="${enc(attr:rkey)}evtscontent">
                 <g:if test="${!params.nofilters}">
                 <div class="queryresultsinfo">
                         <g:if test="${!params.compact}">
-                            <span class="prompt"><span class="_obs_histtotal">${total}</span> Results</span>
+                            <span class="prompt"><span class="_obs_histtotal"><g:enc>${total}</g:enc></span> Results</span>
                             matching ${filterName?'filter':'your query'}
                         </g:if>
 
@@ -88,7 +104,7 @@
                         </table>
 
                             <g:if test="${total && max && total.toInteger() > max.toInteger()}">
-                                <span class="info note">Showing ${reports.size()} of <span class="_obs_histtotal">${total}</span></span>
+                                <span class="info note">Showing <g:enc>${reports.size()}</g:enc> of <span class="_obs_histtotal"><g:enc>${total}</g:enc></span></span>
                                 <g:if test="${params.compact}">
                                     <a href="${createLink(controller:'reports',action:params.moreLinkAction?params.moreLinkAction:'index',params:filterName?[filterName:filterName]:paginateParams?paginateParams:[:])}">More&hellip;</a>
                                 </g:if>

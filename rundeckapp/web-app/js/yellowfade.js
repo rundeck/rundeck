@@ -40,7 +40,7 @@ function yellowfade(id,perc,time,rate,ramp,test,rgb1,rgb2){
     $(id).style.background=bgcol;
 
     if(test){
-        $(id).innerHTML="bg: "+bgcol+", perc: "+perc+", time: "+time+", rate: "+rate+", ramp: "+ramp;
+        setText($(id),"bg: "+bgcol+", perc: "+perc+", time: "+time+", rate: "+rate+", ramp: "+ramp);
     }
     if(perc<1.0){
         var newperc = ((perc*time)+(1000/rate))/time;
@@ -50,11 +50,12 @@ function yellowfade(id,perc,time,rate,ramp,test,rgb1,rgb2){
             newperc=perc;
         }
         if(test){
-        $(id).innerHTML+=", newperc: "+newperc+", newramp: "+newramp+", delay: "+(1000/rate) ;
+        appendText($(id),", newperc: "+newperc+", newramp: "+newramp+", delay: "+(1000/rate) );
         }
         var tostr = "yellowfade('"+ $(id).identify()+"',"+newperc+","+time+","+rate+","+newramp+", "+test+",new Array("+rgbstart[0]+","+rgbstart[1]+","+rgbstart[2]+"),new Array("+rgbend[0]+","+rgbend[1]+","+rgbend[2]+"));";
         if(test){
-            $(id).innerHTML+="<br>"+tostr;
+            appendHtml($(id),"<br>");
+            appendText($(id),tostr);
         }
         setTimeout(tostr,1000/rate);
     }

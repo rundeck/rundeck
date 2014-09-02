@@ -26,9 +26,9 @@
     <div class="row">
     <div class="col-sm-12">
         <div class=" text-info">
-            <g:if test="${!hideTitle}">${description.title.encodeAsHTML()}</g:if>
+            <g:if test="${!hideTitle}"><g:enc>${description.title}</g:enc></g:if>
             <g:if test="${!hideDescription}">
-                <small class="text-muted">${description.description?.encodeAsHTML()}</small>
+                <small class="text-muted"><g:enc>${description.description}</g:enc></small>
             </g:if>
         </div>
     </div>
@@ -44,7 +44,7 @@
     <div class="col-sm-12 form-horizontal">
     <g:if test="${values}">
 
-        <span id="${rkey}_summary">
+        <span id="${enc(attr:rkey)}_summary">
             <g:if test="${description}">
                 <g:each in="${description.properties}" var="prop">
                     <g:render template="/framework/pluginConfigPropertySummaryValue"
@@ -53,7 +53,7 @@
             </g:if>
         </span>
         <g:if test="${description}">
-            <div  id="${rkey}" style="display:none;">
+            <div  id="${enc(attr:rkey)}" style="display:none;">
                 <g:each in="${description.properties}" var="prop">
                         <g:render template="/framework/pluginConfigPropertyValue"
                                   model="${[prop:prop,prefix:prefix,values:values,includeFormFields:includeFormFields]}"/>
@@ -62,11 +62,11 @@
         </g:if>
         <g:elseif test="${includeFormFields}">
             <g:expander key="${rkey}_inv">Properties</g:expander>
-            <ul id="${rkey}_inv" style="display:none">
+            <ul id="${enc(attr:rkey)}_inv" style="display:none">
                 <g:each var="prop" in="${values}">
-                    <li>${prop?.key.encodeAsHTML()}: ${prop?.value.encodeAsHTML()}</li>
-                    <input type="hidden" name="${(prefix + 'config.' + prop?.key).encodeAsHTML()}"
-                           value="${prop?.value?.encodeAsHTML()}"/>
+                    <li><g:enc>${prop?.key}: ${prop?.value}</g:enc></li>
+                    <input type="hidden" name="${enc(attr: prefix + 'config.' + prop?.key)}"
+                           value="${enc(attr: prop?.value)}"/>
                 </g:each>
             </ul>
         </g:elseif>

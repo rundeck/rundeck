@@ -94,20 +94,19 @@
         <g:javascript>
             fireWhenReady('nodeStratHelp', initTooltipForElements.curry('.obs_tooltip'));
         </g:javascript>
-%{--<span class="label">threadcount:</span> ${workflow?.threadcount}--}%
 </div>
 </g:if>
 </g:unless>
 <div class="pflowlist ${edit?'edit':''} rounded ${isAdhoc?'adhoc':''}" style="">
     <g:if test="${edit}">
-        <div id="wfundoredo" >
+        <div id="wfundoredo" class="undoredocontrols">
             <g:render template="/common/undoRedoControls"/>
         </div>
     </g:if>
     <ol id="wfilist_${rkey}" class="flowlist">
         <g:render template="/execution/wflistContent" model="${[workflow:workflow,edit:edit,noimgs:noimgs,project:project]}"/>
     </ol>
-    <div id="workflowDropfinal" wfitemNum="${workflow?.commands? workflow.commands.size():0}" style="display:none"></div>
+    <div id="workflowDropfinal" data-wfitemnum="${workflow?.commands? workflow.commands.size():0}" style="display:none"></div>
     <div class="empty note ${error?'error':''}" id="wfempty" style="${wdgt.styleVisible(unless:workflow && workflow?.commands)}">
         No Workflow ${g.message(code:'Workflow.step.label')}s
     </div>

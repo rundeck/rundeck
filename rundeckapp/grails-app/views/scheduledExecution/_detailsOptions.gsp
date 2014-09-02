@@ -25,11 +25,8 @@
 <g:set var="rkey" value="${g.rkey()}"/>
 
     <g:if test="${edit}">
-        <div id="optundoredo" >
-            <div style="margin-bottom:10px;">
-                <span class="btn btn-default btn-sm disabled">Undo</span>
-                <span class="btn btn-default btn-sm disabled">Redo</span>
-            </div>
+        <div id="optundoredo" class="undoredocontrols">
+            <g:render template="/common/undoRedoControls"/>
         </div>
     </g:if>
 

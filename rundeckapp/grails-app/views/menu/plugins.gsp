@@ -35,7 +35,7 @@
             <g:set var="pluginUrl" value="http://rundeck.org/plugins/?${pluginParams}"/>
             <g:set var="pluginLinkUrl"
                    value="${grailsApplication.config?.rundeck?.gui?.pluginLink ?: pluginUrl}"/>
-            <a href="${pluginLinkUrl.encodeAsHTML()}" class="btn btn-success ">
+            <a href="${enc(attr:pluginLinkUrl)}" class="btn btn-success ">
                 <g:message code="gui.admin.GetPlugins" default="Get Plugins"/>
                 <i class="glyphicon glyphicon-arrow-right"></i>
             </a>
@@ -59,11 +59,11 @@
     <g:message code="framework.service.${serviceName}.label.plural" default="${serviceName}"/></a>
 
                     <g:if test="${pluginDescList.size()>0}">
-                        <span class="label label-default">${pluginDescList.size()}</span>
+                        <span class="label label-default"><g:enc>${pluginDescList.size()}</g:enc></span>
                     </g:if>
                     <g:else>
                     <small>
-                        (${pluginDescList.size()})
+                        <g:enc>(${pluginDescList.size()})</g:enc>
                     </small>
                     </g:else>
                     <span class="text-muted"><g:message code="framework.service.${serviceName}.description"
@@ -71,9 +71,9 @@
                 </h4>
             </div>
 
-            <div id="${ukey}" class="panel-collapse collapse">
+            <div id="${enc(attr:ukey)}" class="panel-collapse collapse">
                 <div class="panel-body">
-                <div class="panel-group" id="accordion${ukey}">
+                <div class="panel-group" id="accordion${enc(attr:ukey)}">
         <g:each in="${pluginDescList}" var="${pluginDescription}">
             <g:set var="pluginName" value="${pluginDescription.name}"/>
             <g:set var="pluginTitle" value="${pluginDescription.title}"/>
@@ -84,13 +84,13 @@
     <div class="panel panel-default">
             <div class="panel-heading">
                 <h4 class="panel-title">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion${ukey}" href="#${ukeyx}">
+                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion${enc(attr:ukey)}" href="#${enc(attr:ukeyx)}">
                         <i class="glyphicon glyphicon-chevron-down"></i>
                     <i class="rdicon icon-small plugin"></i>
-                    ${(pluginTitle?:pluginName).encodeAsHTML()}</a>
+                    <g:enc>${pluginTitle?:pluginName}</g:enc></a>
 
                     <g:if test="${pluginDesc}">
-                        <span class="text-muted">${pluginDesc.encodeAsHTML()}</span>
+                        <span class="text-muted"><g:enc>${pluginDesc}</g:enc></span>
                     </g:if>
                     <g:if test="${bundledPlugins&& bundledPlugins[serviceName] && bundledPlugins[serviceName].contains(pluginName)}">
                         <span class="label label-default pull-right">bundled</span>
@@ -101,7 +101,7 @@
                 </h4>
             </div>
 
-            <div id="${ukeyx}" class="panel-collapse collapse">
+            <div id="${enc(attr:ukeyx)}" class="panel-collapse collapse">
                 <div class="panel-body">
                     <g:each in="${pluginDescription?.properties}" var="prop">
                         <g:set var="outofscope"

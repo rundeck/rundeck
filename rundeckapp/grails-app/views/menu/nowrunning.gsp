@@ -8,15 +8,15 @@
         //<!--
         function _pageUpdateNowRunning(count, perc) {
             document.title = "Now Running (" + count + ")";
-            $('nrlocal').innerHTML = '' + count;
+            setText($('nrlocal'), '' + count);
         }
         function showError(message) {
             if ($('loaderror')) {
-                $("loaderror").innerHTML += message;
+                appendText($("loaderror"),message);
                 $("loaderror").show();
             }
         }
-        var bfilters=${boxfilters.encodeAsJSON()};
+        var bfilters=loadJsonData('boxfiltersJSON');
         var links = {
             nowrunning:'${createLink(controller:"menu",action:"nowrunningFragment")}',
             %{--jobs:'${createLink(controller:"reports",action:"jobsFragment")}',--}%
@@ -54,6 +54,7 @@
         Event.observe(window, 'load', _pageInit);
         //-->
     </script>
+    <g:embedJSON id="boxfiltersJSON" data="${boxfilters}"/>
     <style type="text/css">
     table.dashboxes td.dashbox {
         width: auto;
@@ -78,7 +79,7 @@
 
     <div class="pageTop">
         <div class="floatl">
-            <span class="welcomeMessage">Recent and Currently Running <g:message code="domain.ScheduledExecution.title"/>s (<span id='nrlocal'>${total}</span>)</span>
+            <span class="welcomeMessage">Recent and Currently Running <g:message code="domain.ScheduledExecution.title"/>s (<span id='nrlocal'><g:enc>${total}</g:enc></span>)</span>
         </div>
         <div class="clear"></div>
     </div>

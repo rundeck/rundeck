@@ -3,14 +3,14 @@
     <g:if test="${flash.error || uploadError}">
         <div class="row">
             <div class="col-sm-12">
-                <div class="alert alert-warning">${flash.error?flash.error.encodeAsHTML():uploadError.encodeAsHTML()}</div>
+                <div class="alert alert-warning"><g:enc>${flash.error?:uploadError}</g:enc></div>
             </div>
         </div>
     </g:if>
     <g:if test="${flash.message}">
         <div class="row">
             <div class="col-sm-12">
-                <div class="alert alert-info">${flash.message.encodeAsHTML()}</div>
+                <div class="alert alert-info"><g:enc>${flash.message}</g:enc></div>
             </div>
         </div>
     </g:if>
@@ -20,7 +20,7 @@
             <div class="col-sm-12">
                 <div class="alert alert-info">
                     <g:each var="msg" in="${messages}">
-                        <div>${msg}</div>
+                        <div><g:enc>${msg}</g:enc></div>
                     </g:each>
                 </div>
             </div>
@@ -32,7 +32,7 @@
         <div class="row">
         <div class="col-sm-12">
       <div class="batchresset">
-               <span class="prompt errors">${errjobs.size()} Job${errjobs.size()==1?' was':'s were'} not processed due to errors</span>
+               <span class="prompt errors"><g:enc>${errjobs.size()}</g:enc> Job${errjobs.size()==1?' was':'s were'} not processed due to errors</span>
 
             <div class="presentation">
                 <g:if test="${errjobs.size()>0}">
@@ -43,23 +43,23 @@
                             <g:set var="entrynum" value="${entry.entrynum}"/>
                             <tr class=" ${j%2==1?'alternateRow':'normalRow'}">
                                 <td>
-                                    #${entrynum}:
+                                    #<g:enc>${entrynum}</g:enc>:
                                 </td>
                                 <td class="jobname" >
                                     <g:if test="${scheduledExecution.id}">
-                                        <g:link controller="scheduledExecution" action="show" id="${scheduledExecution.extid}">${scheduledExecution.jobName.encodeAsHTML()}</g:link >
+                                        <g:link controller="scheduledExecution" action="show" id="${scheduledExecution.extid}"><g:enc>${scheduledExecution.jobName}</g:enc></g:link >
                                     </g:if>
                                     <g:else>
-                                        ${scheduledExecution.jobName.encodeAsHTML()}
+                                        <g:enc>${scheduledExecution.jobName}</g:enc>
                                     </g:else>
                                 </td>
-                                <td class="jobdesc" style="">${scheduledExecution.description?.size()>100?scheduledExecution.description.substring(0,100).encodeAsHTML():scheduledExecution.description?.encodeAsHTML()}</td>
+                                <td class="jobdesc" style=""><g:enc>${scheduledExecution.description?.size()>100?scheduledExecution.description.substring(0,100):scheduledExecution.description}</g:enc></td>
                                         <td class="errors">
                                 <g:hasErrors bean="${scheduledExecution}">
                                             <g:renderErrors bean="${scheduledExecution}" as="list"/>
                                 </g:hasErrors>
                                             <g:if test="${entry.errmsg}">
-                                                ${entry.errmsg.encodeAsHTML()}
+                                                <g:enc>${entry.errmsg}</g:enc>
                                             </g:if>
                                         </td>
                             </tr>
@@ -77,7 +77,7 @@
         <div class="row">
         <div class="col-sm-12">
         <div class="batchresset">
-                <span class="prompt info">${skipjobs.size()} <g:message code="domain.ScheduledExecution.title"/>${skipjobs.size()==1?' was':'s were'} skipped due to existing jobs with the same name</span>
+                <span class="prompt info"><g:enc>${skipjobs.size()}</g:enc> <g:message code="domain.ScheduledExecution.title"/><g:enc>${skipjobs.size()==1?' was':'s were'}</g:enc> skipped due to existing jobs with the same name</span>
 
             <div class="presentation">
                 <g:if test="${skipjobs.size()>0}">
@@ -89,22 +89,22 @@
                             <tr class=" ${j%2==1?'alternateRow':'normalRow'}">
 
                                 <td>
-                                    #${entrynum}:
+                                    #<g:enc>${entrynum}</g:enc>:
                                 </td>
                                 <td class="jobname" >
-                                    ${scheduledExecution.jobName.encodeAsHTML()}
+                                    <g:enc>${scheduledExecution.jobName}</g:enc>
                                 </td>
-                                <td class="jobdesc" style="">${scheduledExecution.description?.size()>100?scheduledExecution.description.substring(0,100).encodeAsHTML():scheduledExecution.description?.encodeAsHTML()}</td>
+                                <td class="jobdesc" style=""><g:enc>${scheduledExecution.description?.size()>100?scheduledExecution.description.substring(0,100):scheduledExecution.description}</g:enc></td>
                                 <td class="sepL">
                                     Existing:
                                 </td>
                                 <td class="jobname">
                                     <g:if test="${scheduledExecution.id}">
-                                        <g:link controller="scheduledExecution" action="show" id="${scheduledExecution.extid}">${scheduledExecution.jobName.encodeAsHTML()}</g:link >
+                                        <g:link controller="scheduledExecution" action="show" id="${scheduledExecution.extid}"><g:enc>${scheduledExecution.jobName}</g:enc></g:link >
                                     </g:if>
                                 </td>
                                 <td class="jobdesc">
-                                    ${scheduledExecution.origDescription.size()>100?scheduledExecution.origDescription.substring(0,100).encodeAsHTML():scheduledExecution.origDescription.encodeAsHTML()}
+                                    <g:enc>${scheduledExecution.origDescription.size()>100?scheduledExecution.origDescription.substring(0,100):scheduledExecution.origDescription}</g:enc>
                                 </td>
                             </tr>
                         </g:each>
@@ -121,7 +121,7 @@
         <div class="row">
         <div class="col-sm-12">
       <div class="batchresset">
-           <span class="text-info">${jobs.size()} <g:message code="domain.ScheduledExecution.title"/>${jobs.size()==1?' was':'s were'} successfully created/modified</span>
+           <span class="text-info"><g:enc>${jobs.size()}</g:enc> <g:message code="domain.ScheduledExecution.title"/><g:enc>${jobs.size()==1?' was':'s were'}</g:enc> successfully created/modified</span>
 
             <g:render template="/menu/jobslist" model="[jobslist:jobs,total:jobs.size(), headers: false, showIcon:true]"/>
         </div>
@@ -136,7 +136,7 @@
         <div class="panel-heading">
             <span class="h4">
                 Upload <g:message code="domain.ScheduledExecution.title"/> Definition
-                to project <b>${(params.project ?: request.project).encodeAsHTML()}</b>
+                to project <b><g:enc>${params.project ?: request.project}</g:enc></b>
             </span>
         </div>
         <div class="panel-body">

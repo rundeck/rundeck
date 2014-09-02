@@ -25,8 +25,8 @@
 <span class="argstring">
 <g:each in="${options}" var="optionsel" status="i">
         <span class=" ${optionsel.secureInput?'secure':''}"
-              title="${optionsel.description?.encodeAsHTML()}">${optionsel.name.encodeAsHTML()}</span><g:if
-        test="${optionsel.defaultValue}">: <code class="optvalue">${optionsel.secureInput?'*****':optionsel.defaultValue?.encodeAsHTML()}</code></g:if><g:if
+              title="${enc(attr:optionsel.description)}"><g:enc>${optionsel.name}</g:enc></span><g:if
+        test="${optionsel.defaultValue}">: <code class="optvalue"><g:enc>${optionsel.secureInput?'*****':optionsel.defaultValue}</g:enc></code></g:if><g:if
         test="${i <options.size()-1}">,</g:if>
 </g:each>
 </span>

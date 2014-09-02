@@ -22,24 +22,24 @@
  --%>
 <g:set var="type" value="${include?'Include':'Exclude'}"/>
 <g:set var="predefinedDefaults" value="${g.message(code: 'node.metadata.' + key + '.defaults', default: '')}"/>
-<div id="nodeFilter${type}${key}"
-     class="nodefilterfield form-group ${query?.('node' + type + key)?'has-success':''}">
+<div id="nodeFilter${enc(attr:type+key)}"
+     class="nodefilterfield form-group ${enc(attr:query?.('node' + type + key)?'has-success':'')}">
 <span class="input">
     <label class="control-label col-sm-2"
-           for="schedJobNodeInclude${key}">${NODE_FILTER_MAP[key] ? NODE_FILTER_MAP[key] : key}:</label>
+           for="schedJobNodeInclude${enc(attr:key)}"><g:enc>${NODE_FILTER_MAP[key] ?: key}</g:enc>:</label>
     <g:set var="filtvalue"
-           value="${query?.('node' + type + key)?.encodeAsHTML()}"/>
+           value="${ query?.('node' + type + key)}"/>
 
     <div class="${predefinedDefaults ? 'col-sm-4' : 'col-sm-6'} nfilteritem">
-        <input type='text' name="node${type}${key}" class="filterIncludeText form-control input-sm"
-               value="${filtvalue}" id="schedJobNodeInclude${key}" onchange="_matchNodes();"/>
+        <input type='text' name="node${enc(attr:type+key)}" class="filterIncludeText form-control input-sm"
+               value="${enc(attr:filtvalue)}" id="schedJobNodeInclude${enc(attr:key)}" onchange="_matchNodes();"/>
     </div>
     <g:if test="${predefinedDefaults}">
         <div class="col-sm-2">
             <g:select from="${predefinedDefaults.split(',').sort()}"
                       onchange="setFilter('${key}',true,this.value);_matchNodesKeyPress();"
                       class="form-control col-sm-2 input-sm"
-                      name="_${key}defaults"/>
+                      name="_${enc(attr:key)}defaults"/>
         </div>
     </g:if>
 

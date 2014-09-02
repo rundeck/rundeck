@@ -38,7 +38,7 @@
                     </a>
                 </li>
             </g:else>
-            <li class="${runAccess ? '' : 'active'}"><a href="#schedExDetails${scheduledExecution?.id}"
+            <li class="${runAccess ? '' : 'active'}"><a href="#schedExDetails${enc(attr:scheduledExecution?.id)}"
                                                         data-toggle="tab"><g:message code="definition"/></a></li>
         </ul>
 
@@ -52,7 +52,7 @@
                             defaultFollow="${true}"/>
                 </div>
             </g:if>
-            <div id="schedExDetails${scheduledExecution?.id}"
+            <div id="schedExDetails${enc(attr:scheduledExecution?.id)}"
                  class="tab-pane panel panel-default panel-tab-content  ${runAccess ? '' : 'active'}">
                 <div class="panel-body">
                     <g:render template="showDetail"

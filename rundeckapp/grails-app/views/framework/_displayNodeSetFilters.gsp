@@ -19,13 +19,13 @@ Display values of a NodeSet
  --%>
 <g:set var="varStr" value=""/> <% varStr='${' %>
 <g:each in="${com.dtolabs.rundeck.core.utils.NodeSet.FILTER_ENUM.values().sort{a,b->a.name<=>b.name}}" var="qparam">
-<g:each in="${['Include','Exclude']}" var="clusion">
-    <g:set var="value" value="${qparam.value(nodeset[clusion.toLowerCase()])}"/>
+<g:each in="${['include','exclude']}" var="clusion">
+    <g:set var="value" value="${qparam.value(nodeset[clusion])}"/>
     <g:if test="${value}">
-        <span class="querykey ${clusion.toLowerCase()}"><g:message
+        <span class="querykey ${enc(attr:clusion)}"><g:message
                 code="BaseNodeFilters.title.${qparam.name}" default="${qparam.name}"/></span>:
-        <span class="queryvalue text ${clusion.toLowerCase()} ${value.contains(varStr)?'variable':''}">
-            <g:truncate max="50" title="${value.toString().encodeAsHTML()}">${value.toString().encodeAsHTML()}</g:truncate></span>
+        <span class="queryvalue text ${enc(attr:clusion)} ${value.contains(varStr)?'variable':''}">
+            <g:truncate max="50"><g:enc>${value}</g:enc></g:truncate></span>
     </g:if>
 </g:each>
 </g:each>

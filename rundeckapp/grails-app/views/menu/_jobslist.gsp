@@ -29,9 +29,10 @@
                             <tr class=" expandComponentHolder expanded" id="jobrow_${scheduledExecution.id}">
                                <td class="jobname">
                                    <div style="overflow:hidden; text-overflow: ellipsis; height:16px;">
-                                       <span class="action textbtn" title="Choose this job" onclick="${jobsjscallback}('${scheduledExecution.jobName}','${scheduledExecution.groupPath}');">${scheduledExecution.jobName.encodeAsHTML()}</span>
+                                       <g:set var="jstext" value="jobChosen('${enc(js: scheduledExecution.jobName)}','${enc(js: scheduledExecution.groupPath)}')"/>
+                                       <span class="action textbtn" title="Choose this job" onclick="${enc(attr:jstext)}"><g:enc>${scheduledExecution.jobName}</g:enc></span>
 
-                                       <span class="jobdesc" title="${scheduledExecution.description?.encodeAsHTML()}">${scheduledExecution.description?.encodeAsHTML()}</span>
+                                       <span class="jobdesc" title="${enc(attr:scheduledExecution.description)}"><g:enc>${scheduledExecution.description}</g:enc></span>
                                    </div>
                                </td>
                             </tr>
@@ -41,7 +42,7 @@
                             <td class="jobname">
                                     <span class="jobbulkeditfield" style="display: none">
                                     <g:if test="${jobauthorizations && jobauthorizations[AuthConstants.ACTION_DELETE]?.contains(scheduledExecution.id.toString())}">
-                                        <input type="checkbox" name="ids" value="${scheduledExecution.extid}"/>
+                                        <input type="checkbox" name="ids" value="${enc(attr:scheduledExecution.extid)}"/>
                                     </g:if>
                                     <g:else>
                                         <span class="info note" style="width:12px;margin: 3px;"
@@ -69,7 +70,7 @@
                                         <g:if test="${showIcon}">
                                             <i class="glyphicon glyphicon-book"></i>
                                         </g:if>
-                                        ${scheduledExecution.jobName.encodeAsHTML()}
+                                        <g:enc>${scheduledExecution.jobName}</g:enc>
                                     </g:link>
 
                                 <g:if test="${jobauthorizations && jobauthorizations[AuthConstants.ACTION_UPDATE]?.contains(scheduledExecution.id.toString())}">
@@ -82,7 +83,7 @@
                                         edit</g:link>
                                 </g:if>
 
-                                <span class="text-muted" title="${scheduledExecution.description?.encodeAsHTML()}">${scheduledExecution.description?.encodeAsHTML()}</span>
+                                <span class="text-muted" title="${enc(attr:scheduledExecution.description)}"><g:enc>${scheduledExecution.description}</g:enc></span>
 
                             </td>
                             <td class="scheduletime">
@@ -112,6 +113,6 @@
                 <span class="note empty">None</span>
             </g:else>
                 <g:if test="${total && max && total.toInteger() > max.toInteger() && max.toInteger() > 0 && !hideSummary}">
-                    <span class="info note">Showing ${jobslist.size()} of ${total}</span>
+                    <span class="info note">Showing <g:enc>${jobslist.size()} of ${total}</g:enc></span>
                 </g:if>
         </div>

@@ -5,7 +5,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="jobs"/>
-    <title><g:message code="gui.menu.Workflows"/> - ${(params.project ?: request.project).encodeAsHTML()}</title>
+    <title><g:message code="gui.menu.Workflows"/> - <g:enc>${params.project ?: request.project}</g:enc></title>
     <g:javascript library="yellowfade"/>
     <g:javascript library="pagehistory"/>
     <g:javascript library="prototype/effects"/>
@@ -16,7 +16,7 @@
         /** knockout binding for activity */
         var pageActivity;
         function showError(message){
-             $('error').innerHTML+=message;
+             appendText($('error'),message);
              $("error").show();
         }
         var _jobExecUnloadHandlers=new Array();
@@ -32,7 +32,7 @@
             }
             new Effect.BlindDown('indexMain', {duration: 0.2});
             new Effect.BlindUp('execDiv', {duration: 0.2, afterFinish:function(e){
-                $('execDivContent').innerHTML = '';
+                clearHtml('execDivContent');
             }});
             $('busy').hide();
         }
@@ -46,19 +46,13 @@
             if(!params){
                 params={id:id};
             }
-            new Ajax.Updater(
-                'execDivContent',
-                appLinks.scheduledExecutionExecuteFragment, {
-                parameters: params,
-                evalScripts:true,
-                onComplete: function(transport) {
-                    if (transport.request.success()) {
-                        loadedFormSuccess();
-                    }
-                },
-                onFailure: requestError.curry("executeFragment for [" + id + "]")
+            jQuery('#execDivContent').load(_genUrl(appLinks.scheduledExecutionExecuteFragment, params),function(response,status,xhr){
+                if (status=='success') {
+                    loadedFormSuccess();
+                } else{
+                    requestError("executeFragment for [" + id + "]",xhr);
+                }
             });
-
         }
         function execSubmit(elem){
             var params=Form.serialize(elem);
@@ -70,8 +64,6 @@
                     var result={};
                     if(trans.responseJSON){
                         result=trans.responseJSON;
-                    }else if(trans.responseText){
-                        result=eval(trans.responseText);
                     }
                     if(result.id){
                         if (result.follow && result.href) {
@@ -121,7 +113,7 @@
         //set box filterselections
 
         function _setFilterSuccess(response,name){
-            var data=eval("("+response.responseText+")"); // evaluate the JSON;
+            var data=JSON.parse(response.responseText); // evaluate the JSON;
             if(data){
                 var bfilters=data.filterpref;
                 //reload page
@@ -259,20 +251,14 @@
             }
             bcontent.loading();
 
-
-            new Ajax.Updater('jobIdDetailContent',appLinks.scheduledExecutionDetailFragment,{
-                parameters:{id:matchId},
-                evalScripts:true,
-                onComplete: function(trans){
-                    if(trans.request.success()){
-                        popJobDetails(elem);
-                        $('jobIdDetailContent').select('.apply_ace').each(function (t) {
-                            _applyAce(t);
-                        })
-                    }
-                },
-                onFailure: function(trans){
-                    bcontent.innerHTML='';
+            jQuery('#jobIdDetailContent').load(_genUrl(appLinks.scheduledExecutionDetailFragment, {id: matchId}),function(response,status,xhr){
+                if (status=='success') {
+                    popJobDetails(elem);
+                    $('jobIdDetailContent').select('.apply_ace').each(function (t) {
+                        _applyAce(t);
+                    })
+                }else{
+                    clearHtml(bcontent);
                     viewdom.hide();
                 }
             });
@@ -284,17 +270,11 @@
             });
         }
          function filterToggle(evt) {
-            ['${rkey}filter','${rkey}filter-toggle'].each(Element.toggle);
-            if($('outsidefiltersave')){
-                $('${rkey}filter').visible()? $('outsidefiltersave').hide: $('outsidefiltersave').show;
-            }
+            ['${enc(js:rkey)}filter','${enc(js:rkey)}filter-toggle'].each(Element.toggle);
         }
         function filterToggleSave(evt) {
-            ['${rkey}filter','${rkey}fsave'].each(Element.show);
-            ['${rkey}filter-toggle','${rkey}fsavebtn'].each(Element.hide);
-            if ($('outsidefiltersave')) {
-                $('${rkey}filter').visible() ? $('outsidefiltersave').hide : $('outsidefiltersave').show;
-            }
+            ['${enc(js:rkey)}filter','${enc(js:rkey)}fsave'].each(Element.show);
+            ['${enc(js:rkey)}filter-toggle','${enc(js:rkey)}fsavebtn'].each(Element.hide);
         }
         function init(){
             <g:if test="${!(grailsApplication.config.rundeck?.gui?.enableJobHoverInfo in ['false',false])}">
@@ -349,7 +329,7 @@
         <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
         <ul>
             <g:each in="${flash.bulkDeleteResult.errors*.message}" var="message">
-                <li>${message.encodeAsHTML()}</li>
+                <li><g:enc>${message}</g:enc></li>
             </g:each>
         </ul>
     </div>
@@ -359,7 +339,7 @@
         <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
         <ul>
         <g:each in="${flash.bulkDeleteResult.success*.message}" var="message">
-            <li>${message.encodeAsHTML()}</li>
+            <li><g:enc>${message}</g:enc></li>
         </g:each>
         </ul>
     </div>

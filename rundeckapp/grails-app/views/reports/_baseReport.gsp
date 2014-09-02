@@ -34,9 +34,11 @@
             <g:set var="status" value="${execution.status == 'true' ? 'succeeded' : null == execution.dateCompleted ? 'running' : execution.cancelled ? 'killed' : 'failed'}"/>
         </g:if>
         <tr class="link autoclick ${it?.status != 'succeed' ? 'fail' : ''}  ${!it.dateCompleted ? 'nowrunning' : ''} ${sincetime && it.dateCompleted.time>sincetime?'newitem':''}  " >
+            <g:if test="${!hideEdit}">
             <td style="display: none" class="eventicon obs_bulk_edit_enable">
-                <input type="checkbox" value="${rpt.jcExecId}" name="bulk_edit" class="_defaultInput bulk_edit"/>
+                <input type="checkbox" value="${enc(attr:rpt.jcExecId)}" name="bulk_edit" class="_defaultInput bulk_edit"/>
             </td>
+            </g:if>
             <td class="eventicon autoclickable">
                 <i class="exec-status icon ${!execution.dateCompleted ? 'running' : execution.status == 'true' ?
                     'succeed' : execution.cancelled ? 'aborted' :execution.willRetry ? 'failedretry' :execution.timedOut ? 'timedout' : 'fail'}"></i>
@@ -55,21 +57,21 @@
         <td class="eventtitle ${rpt?.jcJobId ? 'job' : 'adhoc'} autoclickable" colspan="${rpt?.jcJobId?1:2}">
             <g:link controller="execution" action="show" id="${rpt.jcExecId}" class="_defaultAction"
                 params="[project:execution?execution.project:rpt.ctxProject?:params.project]"
-                    title="View execution output" absolute="${absoluteLinks}">#${rpt.jcExecId}</g:link>
+                    title="View execution output" absolute="${absoluteLinks}">#<g:enc>${rpt.jcExecId}</g:enc></g:link>
             <g:if test="${options.summary}">
                 <g:if test="${rpt?.jcJobId}">
                     <g:set var="foundJob" value="${ScheduledExecution.getByIdOrUUID(it.jcJobId)}"/>
                     <g:if test="${foundJob}">
-                        ${foundJob.groupPath?foundJob.groupPath+'/':''}${foundJob.jobName.encodeAsHTML()}
+                        <g:enc>${foundJob.groupPath ? foundJob.groupPath+'/':''}${foundJob.jobName}</g:enc>
                     </g:if>
                     <g:else>
                         <span class="warning note">(<g:message
-                                code="domain.ScheduledExecution.title"/> ID ${it.jcJobId} has been deleted)</span>
+                                code="domain.ScheduledExecution.title"/> ID <g:enc>${it.jcJobId}</g:enc> has been deleted)</span>
                     </g:else>
 
                 </g:if>
                 <g:else>
-                    ${rpt.title.encodeAsHTML()}
+                    <g:enc>${rpt.title}</g:enc>
                 </g:else>
             </g:if>
             <g:else>
@@ -77,7 +79,7 @@
                     <g:message code="status.label.${it.status}"/>
                 </g:if>
                 <g:if test="${(status == 'killed')}">
-                    by ${it.abortedByUser}
+                    by <g:enc>${it.abortedByUser}</g:enc>
                 </g:if>
             </g:else>
         </td>
@@ -88,7 +90,7 @@
                 <g:render template="/execution/execArgString" model="[argString: execution.argString]"/>
             </g:if>
             <g:if test="${params.debug}">
-                ${rpt.toMap()}
+                <g:enc>${rpt.toMap()}</g:enc>
             </g:if>
             </div>
         </td>
@@ -115,10 +117,10 @@
             <g:unless test="${hideNodes}">
             <td class="${vals[1] != '0' ? 'fail' : 'ok'}  nodecount autoclickable ">
                 <g:if test="${vals[1] != '0'}">
-                    ${vals[1]} ${options.summary ? '' : 'node'} failed
+                    <g:enc>${vals[1]}</g:enc> ${options.summary ? '' : 'node'} failed
                 </g:if>
                 <g:else>
-                    ${vals[0]} ${options.summary ? '' : 'node'} ok
+                    <g:enc>${vals[0]}</g:enc> ${options.summary ? '' : 'node'} ok
                 </g:else>
             </td>
             </g:unless>

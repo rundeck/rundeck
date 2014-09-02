@@ -26,13 +26,15 @@
 
             <g:set var="execLink" value="${createLink(controller:'execution',action:'show', id:execution.id)}"/>
 
-            <tr class=" ${j % 2 == 1 ? 'alternateRow' : ''}  ${!execution.dateCompleted ? 'nowrunning' : ''} execution ${execstatus} link"
-                id="${upref}exec-${execution.id}-row" onclick="document.location='${execLink}';">
+            <tr class=" ${j % 2 == 1 ? 'alternateRow' : ''}  ${!execution.dateCompleted ? 'nowrunning' : ''} execution ${enc(attr:execstatus)} link"
+                id="${enc(attr:upref)}exec-${enc(attr:execution.id)}-row" onclick="document.location='${execLink}';">
                 <g:set var="fileName" value="job"/>
                 %{--<g:if test="${execution}">--}%
                 %{--<g:set var="fileName"--}%
                        %{--value="${execution.status == 'true' ? 'job-ok' : null == execution.dateCompleted ? 'job-running' : execution.cancelled ? 'job-warn' : 'job-error'}"/>--}%
                 %{--</g:if>--}%
+                <td style="display: none" class="eventicon obs_bulk_edit_enable">
+                </td>
                 <td style="width:12px;" class="eventicon">
                 %{--<g:if test="${!noimgs}"><img--}%
                         %{--src="${resource(dir: 'images', file: "icon-small-" + fileName + ".png")}"--}%
@@ -48,8 +50,8 @@
                     <td class=" eventtitle job">
                         <g:link title="View execution output" controller="execution" action="show" id="${execution.id}"
                                 params="[project: execution.project]"
-                                class="_defaultAction">#${execution.id}</g:link>
-                        ${scheduledExecution.groupPath ? scheduledExecution.groupPath + '/' : ''}${scheduledExecution.jobName.encodeAsHTML()}
+                                class="_defaultAction">#<g:enc>${execution.id}</g:enc></g:link>
+                        <g:enc>${(scheduledExecution.groupPath ? scheduledExecution.groupPath + '/' : '') + scheduledExecution.jobName}</g:enc>
                     </td>
 
                     <td class="eventargs">
@@ -62,16 +64,16 @@
                     <td class="jobname adhoc ">
                         <g:link title="View execution output" controller="execution" action="show" id="${execution.id}"
                             params="[project:execution.project]"
-                                class="_defaultAction">#${execution.id}</g:link>
+                                class="_defaultAction">#<g:enc>${execution.id}</g:enc></g:link>
 
-                        ${execution.workflow.commands[0].adhocRemoteString.encodeAsHTML()}
+                        <g:enc>${execution.workflow.commands[0].adhocRemoteString}</g:enc>
                     </td>
                     <td class="eventargs">
                     </td>
                 </g:else>
 
                 <g:if test="${!small}">
-                    <td class="dateStarted date " title="started: ${execution.dateStarted}">
+                    <td class="dateStarted date " title="started: ${enc(attr:execution.dateStarted)}">
                         <span class="timelabel">at:</span>
                         <span class="timeabs"><g:relativeDate atDate="${execution.dateStarted}"/></span>
                         <em>by</em>
@@ -82,7 +84,7 @@
                 <td class="runstatus " style="width:200px" colspan="2">
 
                     <g:if test="${execution.dateCompleted}">
-                        <span class="timelabel" title="completed: ${execution.dateCompleted}">
+                        <span class="timelabel" title="completed: ${enc(attr:execution.dateCompleted)}">
                             <g:if test="${execution.status=='true'}">
                                 completed:
                             </g:if>
@@ -93,14 +95,14 @@
                                 failed:
                             </g:else>
                         </span>
-                        <span class="completedTime" title="completed: ${execution.dateCompleted}">
+                        <span class="completedTime" title="completed: ${enc(attr:execution.dateCompleted)}">
                             <g:relativeDate atDate="${execution.dateCompleted}"/>
                         </span>
                         <span class=" duration">
                             <g:if test="${!small}">
                                 <span class="timelabel">duration:</span>
                             </g:if>
-                            (${execution.durationAsString()})
+                            <g:enc>(${execution.durationAsString()})</g:enc>
                         </span>
                     </g:if>
                     <g:else>
@@ -141,7 +143,7 @@
 </g:if>
 <g:else>
     <g:if test="${emptyText}">
-    <span class="note empty">${emptyText}</span>
+    <span class="note empty"><g:enc>${emptyText}</g:enc></span>
     </g:if>
 </g:else>
 <script language="text/javascript">

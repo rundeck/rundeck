@@ -70,9 +70,9 @@
     var updateNowRunning = function(count) {
         var nrtitle = "Now Running (" + count + ")";
         if ($('nowrunninglink')) {
-            $('nowrunninglink').innerHTML = nrtitle;
+            setText($('nowrunninglink'),nrtitle);
         }
-        $$('.nowrunningcount').each(function(e){e.innerHTML = "("+count+")";});
+        $$('.nowrunningcount').each(function(e){setText(e,"("+count+")");});
         if(typeof(_pageUpdateNowRunning)==="function"){
             _pageUpdateNowRunning(count);
         }
@@ -80,16 +80,30 @@
     var _setLoading=function(element,text){
         element=$(element);
         if(null===text || typeof(text)=='undefined'){
-            text="Loading&hellip;";
+            text="Loading…";
         }
         if(element.tagName==='TBODY'){
             var tr = new Element('tr');
             var td = new Element('td');
             tr.appendChild(td);
             element.appendChild(tr);
-            td.innerHTML='<span class="loading"><img src="'+appLinks.iconSpinner+'" alt="Loading"/> '+text+'</span>';
+
+            var sp = new Element('span');
+            sp.addClassName('loading');
+            var img = new Element('img');
+            img.src = appLinks.iconSpinner;
+            $(sp).appendChild(img);
+            appendText(sp, ' ' + text);
+            td.appendChild(sp);
         }else{
-            element.innerHTML='<span class="loading"><img src="'+appLinks.iconSpinner+'" alt="Loading"/> '+text+'</span>';
+            var sp = new Element('span');
+            sp.addClassName('loading');
+            var img = new Element('img');
+            img.src = appLinks.iconSpinner;
+            $(sp).appendChild(img);
+            appendText(sp, ' ' + text);
+            clearHtml(element);
+            element.appendChild(sp);
         }
         return element;
     };
@@ -239,15 +253,14 @@
             params.nodeExcludePrecedence="true";
         }
 //        $(elem).loading();
-        new Ajax.Updater(elem,appLinks.frameworkNodesFragment,{parameters:params,evalScripts:true,
-         onComplete: function(transport) {
-             $(elem).removeClassName('depress');
-             if (transport.request.success()) {
-                 if(typeof(callback)=='function'){
-                     callback(transport);
-                 }
-             }
-         }});
+          jQuery('#'+elem).load(_genUrl(appLinks.frameworkNodesFragment,params),function(response, status, xhr){
+              jQuery('#'+elem).removeClass('depress');
+              if (status=='success') {
+                  if (typeof(callback) == 'function') {
+                      callback(xhr);
+                  }
+              }
+          });
     }
 
     //set box filterselections

@@ -1,11 +1,11 @@
 <g:set var="appLogo"
-       value="${grailsApplication.config.rundeck.gui.logo ? grailsApplication.config.rundeck.gui.logo : g.message(code: 'main.app.logo')}"/>
+       value="${grailsApplication.config.rundeck.gui.logo ?: g.message(code: 'main.app.logo')}"/>
 <g:set var="appLogoHires"
-       value="${grailsApplication.config.rundeck.gui.logoHires ? grailsApplication.config.rundeck.gui.logoHires : g.message(code: 'main.app.logo.hires')}"/>
+       value="${grailsApplication.config.rundeck.gui.logoHires ?: g.message(code: 'main.app.logo.hires')}"/>
 <g:set var="appLogoW"
-       value="${grailsApplication.config.rundeck.gui.'logo-width' ? grailsApplication.config.rundeck.gui.'logo-width' : g.message(code: 'main.app.logo.width')}"/>
+       value="${grailsApplication.config.rundeck.gui.'logo-width' ?: g.message(code: 'main.app.logo.width')}"/>
 <g:set var="appLogoH"
-       value="${grailsApplication.config.rundeck.gui.'logo-height' ? grailsApplication.config.rundeck.gui.'logo-height' : g.message(code: 'main.app.logo.height')}"/>
+       value="${grailsApplication.config.rundeck.gui.'logo-height' ?: g.message(code: 'main.app.logo.height')}"/>
 
 <style type="text/css">
 
@@ -136,8 +136,8 @@
           height: 24px;
     }
     .rdicon.app-logo, .nodedetail.server .nodedesc, .node_entry.server .nodedesc{
-          width: ${appLogoW};
-          height: ${appLogoH};
+          width: ${enc(rawtext:appLogoW)};
+          height: ${enc(rawtext:appLogoH)};
         vertical-align: baseline;
     }
     .rdicon.app-logo.middle{
@@ -241,7 +241,7 @@
              }
             .rdicon.app-logo, .nodedetail.server .nodedesc, .node_entry.server .nodedesc{
                 background-image: url("${resource(dir: 'images', file: appLogoHires)}");
-                background-size: ${appLogoW} ${appLogoH};
+                background-size: ${enc(rawtext:appLogoW)} ${ enc(rawtext:appLogoH)};
             }
 
              .rdicon.icon-small.plugin {

@@ -2,6 +2,8 @@ package rundeck.controllers
 
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.app.api.ApiBulkJobDeleteRequest
+import com.dtolabs.rundeck.app.support.ExtraCommand
+import com.dtolabs.rundeck.app.support.RunJobCommand
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.Framework
@@ -227,7 +229,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def User user = User.findByLogin(session.user)
         //list executions using query params and pagination params
 
-        def executions=Execution.findAllByScheduledExecution(scheduledExecution,[offset: params.offset?params.offset:0, max: params.max?params.max:10, sort:'dateStarted', order:'desc'])
+        def executions=Execution.findAllByScheduledExecution(scheduledExecution,[offset: params.int('offset')?:0, max: params.int('max')?:10, sort:'dateStarted', order:'desc'])
 
         def total = Execution.countByScheduledExecution(scheduledExecution)
 
@@ -242,8 +244,8 @@ class ScheduledExecutionController  extends ControllerBase{
                 nextExecution: scheduledExecutionService.nextExecutionTime(scheduledExecution),
                 remoteClusterNodeUUID: remoteClusterNodeUUID,
                 notificationPlugins: notificationService.listNotificationPlugins(),
-                max: params.max ? params.max : 10,
-                offset: params.offset ? params.offset : 0] + _prepareExecute(scheduledExecution, framework,authContext)
+                max: params.int('max') ?: 10,
+                offset: params.int('offset') ?: 0] + _prepareExecute(scheduledExecution, framework,authContext)
         withFormat{
             html{
                 dataMap
@@ -663,7 +665,11 @@ class ScheduledExecutionController  extends ControllerBase{
      * Delete a set of jobs as specified in the idlist parameter.
      * Only allowed via POST http method
      */
-    def deleteBulk = {ApiBulkJobDeleteRequest deleteRequest ->
+    def deleteBulk (ApiBulkJobDeleteRequest deleteRequest) {
+        if(deleteRequest.hasErrors()){
+            flash.errors = deleteRequest.error
+            return redirect(controller: 'menu', action: 'jobs')
+        }
         log.debug("ScheduledExecutionController: deleteBulk : params: " + params)
         if (!params.ids && !params.idlist) {
             flash.error = g.message(code: 'ScheduledExecutionController.bulkDelete.empty')
@@ -848,7 +854,11 @@ class ScheduledExecutionController  extends ControllerBase{
      * Only allowed via DELETE http method
      * API: DELETE job definitions: /api/5/jobs/delete, version 5
     */
-    def apiJobDeleteBulk = {ApiBulkJobDeleteRequest deleteRequest->
+    def apiJobDeleteBulk(ApiBulkJobDeleteRequest deleteRequest) {
+        if (deleteRequest.hasErrors()) {
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.invalid.request', args: [deleteRequest.errors.allErrors.collect { g.message(error: it) }.join("; ")]])
+        }
         log.debug("ScheduledExecutionController: apiJobDeleteBulk : params: " + params)
         if (!apiService.requireAnyParameters(params, response, ['ids', 'idlist'])) {
             return
@@ -1601,9 +1611,6 @@ class ScheduledExecutionController  extends ControllerBase{
 
         }
 
-        if(params.failedNodes){
-            model.failedNodes=params.failedNodes
-        }
         if(params.retryFailedExecId){
             Execution e = Execution.get(params.retryFailedExecId)
             if (e && e.scheduledExecution?.id == scheduledExecution.id) {
@@ -1629,7 +1636,9 @@ class ScheduledExecutionController  extends ControllerBase{
         //map of option name to list of option names it depends on
         def optdeps=[:]
         boolean explicitOrdering=false
+        def optionSelections=[:]
         scheduledExecution.options.each { Option opt->
+            optionSelections[opt.name]=opt
             if(opt.sortIndex!=null){
                 explicitOrdering=true
             }
@@ -1668,6 +1677,32 @@ class ScheduledExecutionController  extends ControllerBase{
         if (!explicitOrdering && toporesult.result) {
             model.optionordering = toporesult.result
         }
+
+
+        //prepare dataset used by option view
+        //includes dependency information, auto reload and for remote options, selected values
+        def remoteOptionData = [:]
+        (model.optionordering).each{optName->
+            Option opt = optionSelections[optName]
+            def optData = [
+                    'optionDependencies': model.optiondependencies[optName],
+                    'optionDeps': model.dependentoptions[optName],
+                    optionAutoReload: model.dependentoptions[optName] && opt.enforced || model.selectedoptsmap && model.selectedoptsmap[optName]
+            ];
+            if (opt.realValuesUrl != null) {
+                optData << [
+                        'hasUrl': true,
+                        'scheduledExecutionId': scheduledExecution.extid,
+                        'selectedOptsMap': model.selectedoptsmap ? model.selectedoptsmap[optName] : '',
+                        'loadonstart': !model.optiondependencies[optName] || model.optionsDependenciesCyclic,
+                        'optionAutoReload': !(!model.optiondependencies[optName] || model.optionsDependenciesCyclic)
+                ]
+            } else {
+                optData['localOption'] = true;
+            }
+            remoteOptionData[optName] = optData
+        }
+        model.remoteOptionData=remoteOptionData
 
         return model
     }
@@ -1721,7 +1756,10 @@ class ScheduledExecutionController  extends ControllerBase{
             return [result:l]
         }
     }
-    def executeFragment = {
+    public def executeFragment(RunJobCommand runParams, ExtraCommand extra) {
+        if ([runParams, extra].any { it.hasErrors() }) {
+            request.errors = [runParams, extra].find { it.hasErrors() }.errors
+        }
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
@@ -1745,7 +1783,14 @@ class ScheduledExecutionController  extends ControllerBase{
     /**
      * Execute job specified by parameters, and return json results
      */
-    def runJobInline = {
+    public def runJobInline(RunJobCommand runParams, ExtraCommand extra) {
+        if ([runParams, extra].any { it.hasErrors() }) {
+            request.errors = [runParams, extra].find { it.hasErrors() }.errors
+            return render(contentType: 'application/json') {
+                delegate.error='invalid'
+                delegate.message = "Invalid parameters: " + request.errors.allErrors.collect { g.message(error: it) }.join(", ")
+            }
+        }
         def results = runJob()
 
         if(results.error=='invalid'){
@@ -1764,10 +1809,12 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }
     }
-    def runJobNow = {
-        return executeNow()
-    }
-    def executeNow = {
+    public def runJobNow(RunJobCommand runParams, ExtraCommand extra){
+        if ([runParams, extra].any{it.hasErrors()}) {
+            request.errors= [runParams, extra].find { it.hasErrors() }.errors
+            def model = show()
+            return render(view: 'show', model: model)
+        }
         def results = runJob()
         if(results.failed){
             log.error(results.message)
@@ -1808,7 +1855,12 @@ class ScheduledExecutionController  extends ControllerBase{
         if(params.extra?.debug=='true'){
             params.extra.loglevel='DEBUG'
         }
-        def inputOpts=params.extra
+        Map inputOpts=[:]
+        //add any option.* values, or nodeInclude/nodeExclude filters
+        if(params.extra){
+            inputOpts.putAll(params.extra.subMap(['nodeIncludeName', 'loglevel',/*'argString',*/ 'optparams', 'option', '_replaceNodeFilters', 'filter']).findAll { it.value })
+            inputOpts.putAll(params.extra.findAll{it.key.startsWith('option.')||it.key.startsWith('nodeInclude')|| it.key.startsWith('nodeExclude')}.findAll { it.value })
+        }
         def result = executionService.executeJob(scheduledExecution, authContext, request.subject,session.user,
                 inputOpts)
 
@@ -2018,7 +2070,7 @@ class ScheduledExecutionController  extends ControllerBase{
             }
             username= params.asUser
         }
-        def inputOpts = [user:username]
+        def inputOpts = [:]
 
         if (params.argString) {
             inputOpts["argString"] = params.argString

@@ -49,7 +49,7 @@
                         data-target="#nodeSelect"
                     ${selectedNodes?'checked':''}
                               id="doReplaceFilters"/> <label for="doReplaceFilters">Change the Target Nodes
-                (<span class="nodeselectcount">${selectedNodes?selectedNodes.size():nodes.size()}</span>)</label>
+                (<span class="nodeselectcount"><g:enc>${selectedNodes?selectedNodes.size():nodes.size()}</g:enc></span>)</label>
                 </div>
 
             </div>
@@ -77,19 +77,19 @@
                             <g:expander key="${expkey}" open="${selectedNodes?'true':'false'}">
                                 <g:if test="${group!='other'}">
                                     <span class="prompt">
-                                    ${namegroups[group][0].encodeAsHTML()}</span>
+                                    <g:enc>${namegroups[group][0]}</g:enc></span>
                                     to
                                     <span class="prompt">
-                                ${namegroups[group][-1].encodeAsHTML()}
+                                <g:enc>${namegroups[group][-1]}</g:enc>
                                     </span>
                                 </g:if>
                                 <g:else>
-                                    <span class="prompt">${namegroups.size()>1?'Other ':''}Matched Nodes</span>
+                                    <span class="prompt"><g:enc>${namegroups.size()>1?'Other ':''}</g:enc>Matched Nodes</span>
                                 </g:else>
-                                (${namegroups[group].size()})
+                                <g:enc>(${namegroups[group].size()})</g:enc>
                             </g:expander>
                         </div>
-                        <div id="${expkey}" style="${wdgt.styleVisible(if: selectedNodes)}" class="group_section panel-body">
+                        <div id="${enc(attr:expkey)}" style="${wdgt.styleVisible(if: selectedNodes)}" class="group_section panel-body">
                                 <g:if test="${namegroups.size()>1}">
                                 <div class="group_select_control" style="display:none">
                                     Select:
@@ -103,17 +103,17 @@
                                     <g:each var="node" in="${nodemap.subMap(namegroups[group]).values()}" status="index">
                                         <g:set var="nkey" value="${g.rkey()}"/>
                                         <div>
-                                            <label for="${nkey}"
+                                            <label for="${enc(attr:nkey)}"
                                                    class=" ${localNodeName && localNodeName == node.nodename ? 'server' : ''} node_ident  checkbox-inline"
-                                                   id="${nkey}_key">
-                                            <input id="${nkey}"
+                                                   id="${enc(attr:nkey)}_key">
+                                            <input id="${enc(attr:nkey)}"
                                                    type="checkbox"
                                                    name="extra.nodeIncludeName"
-                                                   value="${node.nodename}"
+                                                   value="${enc(attr:node.nodename)}"
                                                    ${selectedNodes ? '':'disabled' }
-                                                   data-tag="${node.tags?.join(' ').encodeAsHTML()}"
+                                                   data-tag="${enc(attr:node.tags?.join(' '))}"
                                                     ${(null== selectedNodes||selectedNodes.contains(node.nodename))?'checked':''}
-                                                   />${node.nodename.encodeAsHTML()}</label>
+                                                   /><g:enc>${node.nodename}</g:enc></label>
 
                                         </div>
                                     </g:each>
@@ -125,16 +125,16 @@
                     <g:each var="node" in="${nodes}" status="index">
                         <g:set var="nkey" value="${g.rkey()}"/>
                         <div>
-                            <label for="${nkey}"
+                            <label for="${enc(attr:nkey)}"
                                    class=" ${localNodeName && localNodeName == node.nodename ? 'server' : ''} node_ident  checkbox-inline"
-                                   id="${nkey}_key">
-                                <input id="${nkey}"
+                                   id="${enc(attr:nkey)}_key">
+                                <input id="${enc(attr:nkey)}"
                                        type="checkbox"
                                        name="extra.nodeIncludeName"
-                                       value="${node.nodename}"
+                                       value="${enc(attr:node.nodename)}"
                                        disabled="true"
-                                       data-tag="${node.tags?.join(' ').encodeAsHTML()}"
-                                       checked="true"/>${node.nodename.encodeAsHTML()}</label>
+                                       data-tag="${enc(attr:node.tags?.join(' '))}"
+                                       checked="true"/><g:enc>${node.nodename}</g:enc></label>
 
                         </div>
                     </g:each>
@@ -149,7 +149,7 @@
                         }
                     });
                     $$('.nodeselectcount').each(function (e2) {
-                        $(e2).innerHTML = count + '';
+                        setText($(e2), count + '');
                         $(e2).removeClassName('text-info');
                         $(e2).removeClassName('text-danger');
                         $(e2).addClassName(count>0?'text-info':'text-danger');
@@ -285,8 +285,8 @@
 </div>
 <g:if test="${!hideHead}">
 <div class="panel-footer">
-    <div class="row" id="formbuttons">
-        <div class="col-sm-12">
+    <div class="row" >
+        <div class="col-sm-12" id="formbuttons">
             <g:if test="${!hideCancel}">
                 <g:actionSubmit id="execFormCancelButton" value="Cancel" class="btn btn-default"/>
             </g:if>

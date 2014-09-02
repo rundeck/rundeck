@@ -37,7 +37,7 @@
     <g:if test="${flash.joberrors}">
         <ul class="error note">
             <g:each in="${flash.joberrors}" var="errmsg">
-                <li>${errmsg.encodeAsHTML()}</li>
+                <li><g:enc>${errmsg}</g:enc></li>
             </g:each>
         </ul>
     </g:if>
@@ -50,7 +50,7 @@
 <div class="col-sm-9">
 
     <span class="h3">
-        Project: ${(params.project ?: request.project).encodeAsHTML()}
+        Project: <g:enc>${params.project ?: request.project}</g:enc>
 
     </span>
 <g:set var="authAdmin" value="${auth.resourceAllowedTest(action: AuthConstants.ACTION_ADMIN, type: "project",
@@ -124,7 +124,7 @@
                                 </g:if>
                                 <g:else>
                                     <span
-                                        class="warn note">Invalid Resource Model Source configuration: Provider not found: ${config.type.encodeAsHTML()}</span>
+                                        class="warn note">Invalid Resource Model Source configuration: Provider not found: <g:enc>${config.type}</g:enc></span>
                                 </g:else>
                             </div>
                         </li>
@@ -202,14 +202,14 @@
 <div class="tab-pane" id="export">
     <div class="panel panel-default panel-tab-content">
         <div class="panel-heading">
-            Download an archive of project <strong>${(params.project ?: request.project).encodeAsHTML()}</strong>
+            Download an archive of project <strong><g:enc>${params.project ?: request.project}</g:enc></strong>
         </div>
         <div class="panel-body">
                 <g:link controller="project" action="export" params="[project: params.project ?: request.project]"
                     class="btn btn-success"
                 >
                     <i class="glyphicon glyphicon-download-alt"></i>
-                    ${(params.project ?: request.project).encodeAsHTML()}.rdproject.jar
+                    <g:enc>${params.project ?: request.project}</g:enc>.rdproject.jar
                 </g:link>
 
         </div>
@@ -252,7 +252,7 @@
 
                                     <div class="col-sm-10">
                                         <span class="form-control-static"
-                                              data-bind="text: filterName">${(params.project ?: request.project).encodeAsHTML()}</span>
+                                              data-bind="text: filterName"><g:enc>${params.project ?: request.project}</g:enc></span>
                                     </div>
                                 </div>
                             </div>
@@ -301,7 +301,7 @@
 
             <div class="radio">
                     <label title="Original UUIDs will be preserved, conflicting UUIDs will be replaced">
-                        <input type="radio" name="import.jobUUIDBehavior" value="preserve" checked />
+                        <input type="radio" name="jobUUIDImportBehavior" value="preserve" checked />
                         <g:message code="project.archive.import.jobUUIDBehavior.preserve.label"/>
                     </label>
 
@@ -310,7 +310,7 @@
             </div>
             <div class="radio">
                 <label title="New UUIDs will be generated for every imported Job">
-                    <input type="radio" name="import.jobUUIDBehavior" value="remove"/>
+                    <input type="radio" name="jobUUIDImportBehavior" value="remove"/>
                     <g:message code="project.archive.import.jobUUIDBehavior.remove.label"/>
                 </label>
 
@@ -324,7 +324,7 @@
 
             <div class="radio">
                 <label title="All executions and reports will be imported">
-                    <input type="radio" name="import.executionImportBehavior" value="import" checked/>
+                    <input type="radio" name="executionImportBehavior" value="import" checked/>
                     Import All
                 </label>
                 <span class="help-block">Creates new Executions and History reports from the archive</span>
@@ -332,7 +332,7 @@
 
             <div class="radio">
                 <label title="No executions or reports will be imported">
-                    <input type="radio" name="import.executionImportBehavior" value="skip"/>
+                    <input type="radio" name="executionImportBehavior" value="skip"/>
                     Do Not Import
                 </label>
                 <span class="help-block">Does not import any Executions or History</span>

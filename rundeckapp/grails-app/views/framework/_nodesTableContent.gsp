@@ -26,7 +26,7 @@
     <tr>
         <th>Node</th>
         <g:each in="${cols}" var="colname">
-            <th>${colname.encodeAsHTML()}</th>
+            <th><g:enc>${colname}</g:enc></th>
         </g:each>
         <g:if test="${!cols}">
             <th>Tags</th>
@@ -44,19 +44,19 @@
             <g:set var="runnable" value="${null == nodeauthrun || nodeauthrun[node.nodename]}"/>
 
             <tr class="${i%2==1?'alternateRow':''} node_entry ${nodedata.islocal?'server':''} hover-action-holder">
-                <td class="nodeident" title="${node.description?.encodeAsHTML()}" >
+                <td class="nodeident" title="${enc(attr:node.description)}" >
                     <g:if test="${expanddetail||params.expanddetail}">
                         <g:expander key="${ukey+'node_detail_'+i}" imgfirst="true">
-                        <span class="node_ident" id="${ukey}_${node.nodename}_key">
+                        <span class="node_ident" id="${enc(attr:ukey)}_${enc(attr:node.nodename)}_key">
                             <i class="rdicon node ${runnable?'node-runnable':''} icon-small"></i>
-                            ${resName.encodeAsHTML()}
+                            <g:enc>${resName}</g:enc>
                         </span>
                         </g:expander>
                     </g:if>
                     <g:else>
-                        <span class="node_ident" id="${ukey}_${node.nodename}_key">
+                        <span class="node_ident" id="${enc(attr:ukey)}_${enc(attr:node.nodename)}_key">
                             <i class="rdicon node ${runnable ? 'node-runnable' : ''} icon-small"></i>
-                            ${resName.encodeAsHTML()}
+                            <g:enc>${resName}</g:enc>
                         </span>
                     </g:else>
                     <tmpl:nodeFilterLink key="name" value="${resName}"
@@ -80,7 +80,7 @@
                         <td >
                             <g:if test="${node.attributes[colname]}">
                                 <span class="value">
-                                    ${node.attributes[colname].encodeAsHTML()}
+                                    <g:enc>${node.attributes[colname]}</g:enc>
                                     <tmpl:nodeFilterLink key="${colname}" value="${node.attributes[colname]}"
                                                          linkicon="glyphicon glyphicon-search textbtn-saturated hover-action"
                                                          linkclass="textbtn textbtn-info"/>
@@ -119,7 +119,7 @@
                             nodecontextdata.project=nodedata.project.name
                         %>
                         <g:set var="remoteUrl" value="${DataContextUtils.replaceDataReferences(node.attributes?.remoteUrl,[node:nodecontextdata])}" />
-                        <span class="action " title="Edit this node via remote URL..." onclick='doRemoteEdit("${node.nodename.encodeAsJavaScript()}","${nodedata.project.name.encodeAsJavaScript()}","${remoteUrl.encodeAsJavaScript()}");'>Edit&hellip;</span>
+                        <span class="action " title="Edit this node via remote URL..." onclick='doRemoteEdit("${enc(js: node.nodename)}","${enc(js: nodedata.project.name)}","${enc(js: remoteUrl)}");'>Edit&hellip;</span>
                     </g:if>
                     <g:elseif test="${node.attributes?.editUrl}">
                         <g:set var="nodecontextdata" value="${DataContextUtils.nodeData(node)}"/>
@@ -127,17 +127,14 @@
                             nodecontextdata.project=nodedata.project.name
                         %>
                         <g:set var="editUrl" value="${DataContextUtils.replaceDataReferences(node.attributes?.editUrl,[node:nodecontextdata])}" />
-                        <a href="${editUrl.encodeAsHTML()}" target="_blank" title="Opens a link to edit this node at a remote site.">Edit</a>
+                        <a href="${enc(attr:editUrl)}" target="_blank" title="Opens a link to edit this node at a remote site.">Edit</a>
                     </g:elseif>
 
                 </td>
             </tr>
 
             <g:if test="${expanddetail||params.expanddetail}">
-                %{--<g:link  controller="reports" action="index" params="${[nodeFilter:node.nodename]}" title="View History for Node ${node.nodename}">--}%
-                    <!--&raquo; history-->
-                %{--</g:link>--}%
-                <tr id="${ukey}node_detail_${i}" class="detail_content nodedetail ${nodedata.islocal ? 'server' : ''}" style="display:none">
+                <tr id="${enc(attr:ukey+'node_detail_'+i)}" class="detail_content nodedetail ${nodedata.islocal ? 'server' : ''}" style="display:none">
                     <td colspan="${(4+cols.size())}">
                         <g:render template="nodeDetailsSimple" model="[runnable:runnable, useNamespace:true, linkAttrs: true, node:node,key:ukey+'_'+node.nodename+'_key',projects:nodedata.projects,exclude: cols?null:['username','hostname']]"/>
                     </td>

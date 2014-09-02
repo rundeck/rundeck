@@ -40,7 +40,7 @@
             <g:set var="loginmodule" value="${System.getProperty('loginmodule.name', "rundecklogin")}"/>
 
             <div>
-                <code>${loginmodule.encodeAsHTML()}</code>
+                <code><g:enc>${loginmodule}</g:enc></code>
             </div>
         </div>
         <h4>Access Control</h4>
@@ -50,10 +50,10 @@
         </div>
         <div>
             <g:set var="fwkConfigDir" value="${rundeckFramework.getConfigDir()}"/>
-            List of ACL Policy Files in directory <code>${fwkConfigDir.absolutePath.encodeAsHTML()}</code>:
+            List of ACL Policy Files in directory <code><g:enc>${fwkConfigDir.absolutePath}</g:enc></code>:
             <ul>
             <g:each in="${fwkConfigDir.listFiles().grep{it.name=~/\.aclpolicy$/}}" var="file">
-                <li class="">${file.name}</li>
+                <li class=""><g:enc>${file.name}</g:enc></li>
             </g:each>
             </ul>
         </div>

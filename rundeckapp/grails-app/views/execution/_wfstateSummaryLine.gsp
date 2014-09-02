@@ -1,6 +1,6 @@
 
 <span class=" execstate execstatedisplay overall h4"
-      data-execstate="${execState}"
+      data-execstate="${enc(attr:execState)}"
       data-bind="attr: { 'data-execstate': executionState() } ">
 </span>
 

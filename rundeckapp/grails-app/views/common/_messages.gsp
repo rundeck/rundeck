@@ -3,23 +3,32 @@
         <g:unless test="${notDismissable}">
             <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
         </g:unless>
-        <g:if test="${flash.message || request.message}">
-            <g:autoLink>${flash.message?.encodeAsHTML()}${request.message?.encodeAsHTML()}</g:autoLink>
-        </g:if>
+        <g:autoLink><g:enc>${flash.message}${request.message}</g:enc></g:autoLink>
     </div>
 </g:if>
-<g:if test="${flash.error||request.error||flash.errorCode||request.errorCode}">
+<g:if test="${flash.error||flash.errors!=null||request.error||request.errors||flash.errorCode||request.errorCode}">
     <div class="alert alert-danger alert-dismissable">
         <g:unless test="${notDismissable}">
             <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
         </g:unless>
-        <g:if test="${flash.error || request.error || flash.errorCode || request.errorCode}">
-            <g:autoLink>${flash.error?.encodeAsHTML()}${request.error && request.error instanceof String ?
-                request.error.encodeAsHTML() : ''}</g:autoLink>
-            <g:if test="${flash.errorCode ?: request.errorCode}">
-                <g:message code="${flash.errorCode ?: request.errorCode}"
-                           args="${flash.errorArgs ?: request.errorArgs}"/>
-            </g:if>
+        <g:autoLink><g:enc>${flash.error}${request.error && request.error instanceof String ?
+            request.error : ''}</g:enc></g:autoLink>
+        <g:if test="${flash.errors instanceof org.springframework.validation.Errors}">
+            <g:renderErrors bean="${flash.errors}" as="list"/>
+        </g:if>
+        <g:if test="${request.errors instanceof org.springframework.validation.Errors}">
+            <g:renderErrors bean="${request.errors}" as="list"/>
+        </g:if>
+        <g:if test="${request.errors instanceof java.util.Collection}">
+            <ul>
+                <g:each in="${request.errors}" var="err">
+                    <li><g:enc>${err}</g:enc></li>
+                </g:each>
+            </ul>
+        </g:if>
+        <g:if test="${flash.errorCode ?: request.errorCode}">
+            <g:message code="${flash.errorCode ?: request.errorCode}"
+                       args="${flash.errorArgs ?: request.errorArgs}"/>
         </g:if>
     </div>
 </g:if>
@@ -28,8 +37,6 @@
         <g:unless test="${notDismissable}">
             <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
         </g:unless>
-        <g:if test="${flash.warn || request.warn}">
-            <g:autoLink>${flash.warn?.encodeAsHTML()}${request.warn?.encodeAsHTML()}</g:autoLink>
-        </g:if>
+        <g:autoLink><g:enc>${flash.warn}${request.warn}</g:enc></g:autoLink>
     </div>
 </g:if>

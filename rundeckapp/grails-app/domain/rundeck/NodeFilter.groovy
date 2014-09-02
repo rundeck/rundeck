@@ -47,7 +47,7 @@ public class NodeFilter {
 
     static belongsTo = [user:User]
     static constraints={
-        name(blank:false)
+        name(blank:false, matches: /^[^<>&'"\/]+$/)
         nodeInclude(nullable: true)
         nodeExclude(nullable: true)
         nodeIncludeName(nullable: true)

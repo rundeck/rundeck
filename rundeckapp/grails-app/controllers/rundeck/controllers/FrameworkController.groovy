@@ -1,8 +1,11 @@
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.support.PluginConfigParams
+import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
+import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
@@ -76,13 +79,12 @@ class FrameworkController extends ControllerBase {
         return renderErrorView([:])
     }
 
-    def nodeFilterPresets = { ExtNodeFilters query->
-        query.filter = 'name: .*'
-        def model = nodesdata(query)
-        def filterset=User.findByLogin(session.user)?.nodefilters
-        render(template: 'nodeFilterPresets', model:model + [filterset:filterset])
-    }
-    def nodes ={ ExtNodeFilters query ->
+    def nodes(ExtNodeFilters query) {
+        if (query.hasErrors()) {
+            request.errors = query.errors
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
+            return renderErrorView([:])
+        }
         if(params.fromExecId|| params.retryFailedExecId) {
             return redirect(action: 'adhoc',params: params)
         }else if(params.exec){
@@ -144,7 +146,12 @@ class FrameworkController extends ControllerBase {
         return new ArrayList(incset + excset)
     }
 
-    def adhoc = { ExtNodeFilters query ->
+    def adhoc(ExtNodeFilters query) {
+        if (query.hasErrors()) {
+            request.errors = query.errors
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
+            return renderErrorView([:])
+        }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (unauthorizedResponse(
                 frameworkService.authorizeProjectResource(authContext, AuthConstants.RESOURCE_ADHOC,
@@ -226,6 +233,11 @@ class FrameworkController extends ControllerBase {
      * render a set of nodes via ajax
      */
     def nodesdata (ExtNodeFilters query){
+        if (query.hasErrors()) {
+            request.errors = query.errors
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
+            return renderErrorView([:])
+        }
 
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
@@ -419,7 +431,11 @@ class FrameworkController extends ControllerBase {
     /**
      * nodesFragment renders a set of nodes in HTML snippet, for ajax
      */
-    def nodesFragment = {ExtNodeFilters query->
+    def nodesFragment(ExtNodeFilters query) {
+        if (query.hasErrors()) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
+            return renderErrorFragment(g.message(error: query.errors.allErrors.collect { g.message(error: it) }.join("; ")))
+        }
 
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
@@ -492,7 +508,7 @@ class FrameworkController extends ControllerBase {
                 if(!didsucceed){
                     flash.error=result.message?:'Failed reloading nodes: unknown reason'
                 }
-                redirect(action:'nodes')
+                redirect(action:'nodes',params:[project:params.project])
             }
         }
     }
@@ -534,7 +550,17 @@ class FrameworkController extends ControllerBase {
         }
     }
 
-    def storeNodeFilter={ExtNodeFilters query->
+    def storeNodeFilter(ExtNodeFilters query, StoreFilterCommand storeFilterCommand) {
+        if (query.hasErrors()) {
+            request.errors = query.errors
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
+            return renderErrorView([:])
+        }
+        if (storeFilterCommand.hasErrors()) {
+            request.errors = storeFilterCommand.errors
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
+            return renderErrorView([:])
+        }
         def User u = userService.findOrCreateUser(session.user)
         def NodeFilter filter
         def boolean saveuser=false
@@ -609,32 +635,44 @@ class FrameworkController extends ControllerBase {
         if (params.defaultNodeExec) {
             def ndx = params.defaultNodeExec
             (defaultNodeExec, nodeexec) = parseServiceConfigInput(params, "nodeexec", ndx)
-            final validation = frameworkService.validateServiceConfig(defaultNodeExec, "nodeexec.${ndx}.config.", params, framework.getNodeExecutorService())
-            if (!validation.valid) {
-                nodeexecreport = validation.report
-                errors << (validation.error ?: "Default Node Executor configuration was invalid")
-            } else {
-                try {
-                    addProjectServiceProperties(params, projProps, ndx, "nodeexec", NodeExecutorService.SERVICE_DEFAULT_PROVIDER_PROPERTY, framework.getNodeExecutorService())
-                } catch (ExecutionServiceException e) {
-                    log.error(e.message)
-                    errors << e.getMessage()
+            if (!(defaultNodeExec =~ /^[-_a-zA-Z0-9+][-\._a-zA-Z0-9+]*\u0024/)) {
+                errors << "Default Node Executor provider name is invalid"
+                defaultNodeExec=null
+                nodeexec=null
+            }else{
+                final validation = frameworkService.validateServiceConfig(defaultNodeExec, "nodeexec.${ndx}.config.", params, framework.getNodeExecutorService())
+                if (!validation.valid) {
+                    nodeexecreport = validation.report
+                    errors << (validation.error ? "Default Node Executor configuration was invalid: "+ validation.error : "Default Node Executor configuration was invalid")
+                } else {
+                    try {
+                        addProjectServiceProperties(params, projProps, ndx, "nodeexec", NodeExecutorService.SERVICE_DEFAULT_PROVIDER_PROPERTY, framework.getNodeExecutorService())
+                    } catch (ExecutionServiceException e) {
+                        log.error(e.message)
+                        errors << e.getMessage()
+                    }
                 }
             }
         }
         if (params.defaultFileCopy) {
             def ndx = params.defaultFileCopy
             (defaultFileCopy, fcopy) = parseServiceConfigInput(params, "fcopy", ndx)
-            final validation = frameworkService.validateServiceConfig(defaultFileCopy, "fcopy.${ndx}.config.", params, framework.getFileCopierService())
-            if (!validation.valid) {
-                fcopyreport = validation.report
-                errors << (validation.error ?: "Default File copier configuration was invalid")
-            } else {
-                try {
-                    addProjectServiceProperties(params, projProps, ndx, "fcopy", FileCopierService.SERVICE_DEFAULT_PROVIDER_PROPERTY, framework.getFileCopierService())
-                } catch (ExecutionServiceException e) {
-                    log.error(e.message)
-                    errors << e.getMessage()
+            if (!(defaultFileCopy =~ /^[-_a-zA-Z0-9+][-\._a-zA-Z0-9+]*\u0024/)) {
+                errors << "Default File copier provider name is invalid"
+                defaultFileCopy=null
+                fcopy=null
+            }else{
+                final validation = frameworkService.validateServiceConfig(defaultFileCopy, "fcopy.${ndx}.config.", params, framework.getFileCopierService())
+                if (!validation.valid) {
+                    fcopyreport = validation.report
+                    errors << (validation.error ? "Default File copier configuration was invalid: "+ validation.error : "Default File copier configuration was invalid")
+                } else {
+                    try {
+                        addProjectServiceProperties(params, projProps, ndx, "fcopy", FileCopierService.SERVICE_DEFAULT_PROVIDER_PROPERTY, framework.getFileCopierService())
+                    } catch (ExecutionServiceException e) {
+                        log.error(e.message)
+                        errors << e.getMessage()
+                    }
                 }
             }
         }
@@ -651,10 +689,18 @@ class FrameworkController extends ControllerBase {
                 log.warn("missing type def for prefix: " + prefixKey + '.' + ndx);
                 return
             }
+            if(!(type =~ /^[-_a-zA-Z0-9+][-\._a-zA-Z0-9+]*\u0024/)){
+                errors << "Invalid Resource Model Source definition for source #${ndx}"
+                return
+            }
             final service = framework.getResourceModelSourceService()
-            final provider = service.providerOfType(type)
-            if (!(provider instanceof Describable)) {
-                errors << "Invalid provider type: ${params.type}, not available for configuration"
+            def provider=null
+            try {
+                provider = service.providerOfType(type)
+            } catch (MissingProviderException e) {
+            }
+            if (null==provider || !(provider instanceof Describable)) {
+                errors << "Resource Model Source provider was not found: ${type}"
             } else {
                 projProps[sourceConfigPrefix + '.' + count + '.type'] = type
                 def mapprops = frameworkService.parseResourceModelConfigInput(provider.description, prefixKey + '.' + ndx + '.' + 'config.', params)
@@ -691,7 +737,7 @@ class FrameworkController extends ControllerBase {
         }
         if (errors) {
 //            request.error=errors.join("\n")
-//            request.errors = errors
+            request.errors = errors
         }
         //get list of node executor, and file copier services
         final nodeexecdescriptions = framework.getNodeExecutorService().listDescriptions()
@@ -707,7 +753,6 @@ class FrameworkController extends ControllerBase {
                 defaultFileCopy: defaultFileCopy,
                 nodeExecDescriptions: nodeexecdescriptions,
                 fileCopyDescriptions: filecopydescs,
-
                 nodeexecconfig: nodeexec,
                 fcopyconfig: fcopy,
                 nodeexecreport: nodeexecreport,
@@ -793,10 +838,10 @@ class FrameworkController extends ControllerBase {
 
     def saveProject={
         def prefixKey= 'plugin'
-        def project=params.project?:params.newproject
+        def project=params.project
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        def error=null
+        def errors=[]
         def configs = []
         if (!project) {
             return renderErrorView("Project parameter is required")
@@ -826,32 +871,41 @@ class FrameworkController extends ControllerBase {
             if (params.defaultNodeExec) {
                 def ndx=params.defaultNodeExec
                 (defaultNodeExec, nodeexec)=parseServiceConfigInput(params,"nodeexec",ndx)
-                final validation = frameworkService.validateServiceConfig(defaultNodeExec, "nodeexec.${ndx}.config.", params, framework.getNodeExecutorService())
-                if(!validation.valid){
-                    nodeexecreport=validation.report
-                    error = validation.error ?: "Node Executor configuration was invalid"
+                if (!(defaultNodeExec =~ /^[-_a-zA-Z0-9+][-\._a-zA-Z0-9+]*\u0024/)) {
+                    errors << "Default Node Executor provider name is invalid"
                 }else{
-                    try {
-                        addProjectServiceProperties(params, projProps, ndx, "nodeexec", NodeExecutorService.SERVICE_DEFAULT_PROVIDER_PROPERTY, framework.getNodeExecutorService(), removePrefixes)
-                    } catch (ExecutionServiceException e) {
-                        log.error(e.message)
-                        error = e.getMessage()
+                    final validation = frameworkService.validateServiceConfig(defaultNodeExec, "nodeexec.${ndx}.config.", params, framework.getNodeExecutorService())
+                    if(!validation.valid){
+                        nodeexecreport=validation.report
+                        errors << validation.error ? "Node Executor configuration was invalid: "+ validation.error : "Node Executor configuration was invalid"
+                    }else{
+                        try {
+                            addProjectServiceProperties(params, projProps, ndx, "nodeexec", NodeExecutorService.SERVICE_DEFAULT_PROVIDER_PROPERTY, framework.getNodeExecutorService(), removePrefixes)
+                        } catch (ExecutionServiceException e) {
+                            log.error(e.message)
+                            errors << e.getMessage()
+                        }
                     }
                 }
             }
             if (params.defaultFileCopy) {
                 def ndx=params.defaultFileCopy
                 (defaultFileCopy, fcopy) = parseServiceConfigInput(params, "fcopy", ndx)
-                final validation = frameworkService.validateServiceConfig(defaultFileCopy, "fcopy.${ndx}.config.", params, framework.getFileCopierService())
-                if(!validation.valid){
-                    fcopyreport = validation.report
-                    error=validation.error?:"File copier configuration was invalid"
+                if (!(defaultFileCopy =~ /^[-_a-zA-Z0-9+][-\._a-zA-Z0-9+]*\u0024/)) {
+                    errors << "Default File copier provider name is invalid"
                 }else{
-                    try {
-                        addProjectServiceProperties(params, projProps, ndx, "fcopy", FileCopierService.SERVICE_DEFAULT_PROVIDER_PROPERTY,framework.getFileCopierService(), removePrefixes)
-                    } catch (ExecutionServiceException e) {
-                        log.error(e.message)
-                        error = e.getMessage()
+                    final validation = frameworkService.validateServiceConfig(defaultFileCopy, "fcopy.${ndx}.config.", params, framework.getFileCopierService())
+                    if(!validation.valid){
+                        fcopyreport = validation.report
+                        errors <<validation.error? "File copier configuration was invalid: "+ validation.error : "File " +
+                                "copier configuration was invalid"
+                    }else{
+                        try {
+                            addProjectServiceProperties(params, projProps, ndx, "fcopy", FileCopierService.SERVICE_DEFAULT_PROVIDER_PROPERTY,framework.getFileCopierService(), removePrefixes)
+                        } catch (ExecutionServiceException e) {
+                            log.error(e.message)
+                            errors << e.getMessage()
+                        }
                     }
                 }
             }
@@ -869,14 +923,20 @@ class FrameworkController extends ControllerBase {
                     return
                 }
                 final service = framework.getResourceModelSourceService()
-                final provider
-                try {
-                    provider= service.providerOfType(type)
-                } catch (com.dtolabs.rundeck.core.execution.service.ExecutionServiceException e) {
-                }
+                def provider
                 def description
-                if (provider && provider instanceof Describable) {
-                    description=provider.description
+                if (!(type =~ /^[-_a-zA-Z0-9+][-\._a-zA-Z0-9+]*\u0024/)) {
+                    errors << "Invalid Resource Model Source definition for source #${ndx}"
+                }else{
+                    try {
+                        provider= service.providerOfType(type)
+                    } catch (com.dtolabs.rundeck.core.execution.service.ExecutionServiceException e) {
+                        errors << "Resource Model Source was not found: ${type}"
+                    }
+
+                    if (provider && provider instanceof Describable) {
+                        description=provider.description
+                    }
                 }
                 projProps[sourceConfigPrefix + '.' + count + '.type'] = type
                 def mapprops = frameworkService.parseResourceModelConfigInput(description, prefixKey + '.' + ndx + '.' + 'config.', params)
@@ -892,20 +952,20 @@ class FrameworkController extends ControllerBase {
             }
             removePrefixes<< FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX
 
-            if(!error){
+            if(!errors){
                 def result = frameworkService.updateFrameworkProjectConfig(project,projProps,removePrefixes)
                 if(!result.success){
-                    error=result.error
+                    errors <<result.error
                 }
             }
-            if(!error){
+            if(!errors){
                 def result=userService.storeFilterPref(session.user, [project: fproject.name])
                 flash.message="Project ${project} saved"
                 return redirect(controller:'menu',action:'admin',params:[project:fproject.name])
             }
         }
-        if(error){
-            request.error=error
+        if(errors){
+            request.errors=errors
         }
         final descriptions = framework.getResourceModelSourceService().listDescriptions()
         final nodeexecdescriptions = framework.getNodeExecutorService().listDescriptions()
@@ -988,29 +1048,49 @@ class FrameworkController extends ControllerBase {
             fileCopyDescriptions: filecopydescs,
             prefixKey: prefixKey, configs: configs]
     }
-    def createResourceModelConfig={
+    public def createResourceModelConfig(PluginConfigParams pluginConfig){
+        if(pluginConfig.hasErrors()){
+            request.errors=pluginConfig.errors
+            return render(template: '/common/messages')
+        }
         Framework framework = frameworkService.getRundeckFramework()
         def error
         if(!params.type){
             error = "Plugin provider type must be specified"
         }
         final service = framework.getResourceModelSourceService()
-        final provider = service.providerOfType(params.type)
-        if(provider instanceof Describable){
+        def provider=null
+        try {
+            provider = service.providerOfType(params.type)
+        } catch (ExecutionServiceException e) {
+        }
+
+        if(provider && provider instanceof Describable){
             def desc = provider.description
             return [description:desc,prefix:params.prefix,type:params.type,isCreate:true]
         }else{
             error="Invalid provider type: ${params.type}, not available for configuration"
         }
 
-        flash.error=error
+        request.error=error
+        return render(template: '/common/messages')
     }
-    def saveResourceModelConfig = {
+    public def saveResourceModelConfig(PluginConfigParams pluginConfig) {
+        if (pluginConfig.hasErrors()) {
+            request.errors = pluginConfig.errors
+            return render(template: '/common/messages')
+        }
         def project = params.project
         Framework framework = frameworkService.getRundeckFramework()
         def error
         def prefix = params.prefix ?: ''
         def String type=params[prefix+'type']
+        def newparams = new PluginConfigParams()
+        newparams.type=type
+        if(!newparams.validate()){
+            request.errors = newparams.errors
+            return render(template: '/common/messages')
+        }
         Properties props
         def report
         def desc
@@ -1028,12 +1108,22 @@ class FrameworkController extends ControllerBase {
         }
         render(view:'createResourceModelConfig',model:[project:project,prefix:prefix,values:props,description:desc,report:report,error:error])
     }
-    def checkResourceModelConfig = {
-        def project = params.project
+    public def checkResourceModelConfig(PluginConfigParams pluginConfig) {
+        if (pluginConfig.hasErrors()) {
+            def errorMsgs = pluginConfig.errors.allErrors.collect { g.message(error: it) }
+            return render([valid:false,errors: errorMsgs, error: errorMsgs.join(', ')] as JSON)
+        }
         Framework framework = frameworkService.getRundeckFramework()
         def error
         def prefix = params.prefix ?: ''
         def String type=params[prefix+'type']
+        def newparams = new PluginConfigParams()
+        newparams.type = type
+        newparams.validate()
+        if (newparams.hasErrors()) {
+            def errorMsgs = newparams.errors.allErrors.collect { g.message(error: it) }
+            return render ([valid: false, errors: errorMsgs, error: errorMsgs.join(', ')] as JSON)
+        }
         if('true'==params.revert){
             prefix='orig.'+prefix
         }
@@ -1052,11 +1142,21 @@ class FrameworkController extends ControllerBase {
     }
 
 
-    def editResourceModelConfig = {
+    def editResourceModelConfig(PluginConfigParams pluginConfig) {
+        if (pluginConfig.hasErrors()) {
+            request.errors = pluginConfig.errors
+            return render(template: '/common/messages')
+        }
         Framework framework = frameworkService.getRundeckFramework()
         def error
         def prefix = params.prefix ?: ''
         def String type = params[prefix + 'type']
+        def newparams = new PluginConfigParams()
+        newparams.type = type
+        if (!newparams.validate()) {
+            request.errors = newparams.errors
+            return render(template: '/common/messages')
+        }
         Properties props
         def report
         def desc
@@ -1194,7 +1294,7 @@ class FrameworkController extends ControllerBase {
             projects = frameworkService.projects(authContext)
             session.frameworkProjects=projects
         }
-        [projects:projects,project:params.project]
+        [projects:projects,project:params.project] + (params.page?[selectParams:[page:params.page]]:[:])
     }
     /**
      * Select project via parameter, and redirect to default page for the project
@@ -1413,7 +1513,7 @@ class FrameworkController extends ControllerBase {
     /**
      * API: /api/2/project/NAME/resources, version 2
      */
-    def apiResourcesv2={ExtNodeFilters query->
+    def apiResourcesv2(ExtNodeFilters query) {
         if (!apiService.requireVersion(request, response,ApiRequestFilters.V2)) {
             return
         }
@@ -1422,7 +1522,11 @@ class FrameworkController extends ControllerBase {
     /**
      * API: /api/1/resources, version 1
      */
-    def apiResources={ExtNodeFilters query->
+    def apiResources(ExtNodeFilters query) {
+        if (query.hasErrors()) {
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.invalid.request', args: [query.errors.allErrors.collect{g.message(error:it)}.join("; ")]])
+        }
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if(!params.project){

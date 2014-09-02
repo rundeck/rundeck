@@ -12,14 +12,19 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
         </button>
-    <a href="${grailsApplication.config.rundeck.gui.titleLink ? grailsApplication.config.rundeck.gui.titleLink : g.resource(dir: '/')}"
+    <a href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.resource(dir: '/')}"
        title="Home" class="navbar-brand">
         <g:set var="appTitle"
                value="${grailsApplication.config.rundeck?.gui?.title ?: g.message(code: 'main.app.name',default:'Rundeck')}"/>
         <g:set var="brandHtml"
                value="${grailsApplication.config.rundeck?.gui?.brand?.html ?: g.message(code: 'main.app.brand.html',default:'')}"/>
         <i class="rdicon app-logo"></i>
-        ${brandHtml?:appTitle?.encodeAsHTML()}
+        <g:if test="${brandHtml}">
+            <g:enc raw="true">${brandHtml}</g:enc>
+        </g:if>
+        <g:else>
+            <g:enc>${appTitle}</g:enc>
+        </g:else>
     </a>
     </div>
 
@@ -43,10 +48,12 @@
             </li>
         </g:if>
         <g:else>
-            <li id="projectSelect" class="dropdown">
-                <span class="action textbtn button" onclick="loadProjectSelect();"
-                      title="Select project...">${params.project ?: request.project?: 'Select project&hellip;'}
-                </span>
+            <li id="projectSelect" class="dropdown disabled">
+                <a data-toggle="dropdown" href="#" class="disabled">
+                    <i class="glyphicon glyphicon-tasks"></i>
+                    <g:enc>${ params.project ?: request.project}</g:enc>
+                    <i class="caret"></i>
+                </a>
             </li>
         </g:else>
     </g:if>
@@ -78,23 +85,23 @@
             </g:ifPageProperty>
         </g:ifPageProperty>
         <g:if test="${params.project?:request.project}">
-        <li class="${wfselected}"><g:link controller="menu" action="jobs" class=" toptab ${wfselected}"
+        <li class="${enc(attr:wfselected)}"><g:link controller="menu" action="jobs" class=" toptab ${enc(attr: wfselected)}"
                                           params="[project: params.project ?: request.project]">
            <g:message code="gui.menu.Workflows"/>
         </g:link></li><!--
-        --><li class="${resselected}"><g:link controller="framework" action="nodes" class=" toptab ${resselected}"
+        --><li class="${enc(attr:resselected)}"><g:link controller="framework" action="nodes" class=" toptab ${enc(attr: resselected)}"
                                               params="[project: params.project ?: request.project]" >
            <g:message code="gui.menu.Nodes"/>
        </g:link></li><!--
         --><g:if
                 test="${auth.adhocAllowedTest(action:AuthConstants.ACTION_RUN,project: params.project?:request.project)}"><li
-                    class="${adhocselected}"><g:link
+                    class="${enc(attr:adhocselected)}"><g:link
                 controller="framework" action="adhoc"
-                                                  class=" toptab ${adhocselected}"
+                                                  class=" toptab ${enc(attr:adhocselected)}"
                                                 params="[project: params.project ?: request.project]">
            <g:message code="gui.menu.Adhoc"/>
        </g:link></li></g:if><!--
-        --><li class="${eventsselected}"><g:link controller="reports"  action="index" class=" toptab ${eventsselected}"
+        --><li class="${enc(attr:eventsselected)}"><g:link controller="reports"  action="index" class=" toptab ${enc(attr:eventsselected)}"
                                                  params="[project: params.project ?: request.project]" >
             <g:message code="gui.menu.Events"/>
         </g:link></li>
@@ -102,8 +109,10 @@
 
     <g:unless test="${session.frameworkProjects}">
         <g:javascript>
-            jQuery(window).load(function(){
-                jQuery('#projectSelect').load('${createLink(controller: 'framework', action: 'projectSelect', params: selectParams)}');
+            jQuery(function(){
+                jQuery('#projectSelect').load('${enc(js:createLink(controller: 'framework', action: 'projectSelect', params: selectParams))}',{},function(x,r){
+                    jQuery('#projectSelect').removeClass('disabled');
+                });
             });
         </g:javascript>
     </g:unless>
@@ -132,12 +141,22 @@
                 </g:link>
             </li>
                 <!-- --></g:if><!--
-        --></g:if><!--
+        --></g:if><g:elseif
+            test="${auth.resourceAllowedTest(type: 'resource', kind: 'system',
+                    action: [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN], any: true, context: 'application')}">
+
+        <li class="${cfgselected ?: ''}">
+        %{--Generic config page no project selected--}%
+            <g:link controller="menu" action="systemConfig" title="${g.message(code: 'gui.menu.Admin')}">
+                <i class="glyphicon glyphicon-cog"></i>
+            </g:link>
+        </li>
+    </g:elseif><!--
             -->
         <li class="dropdown">
             <g:link controller="user" action="profile" class="dropdown-toggle" data-toggle="dropdown" data-target="#" id="userLabel"
                     role="button">
-                ${session.user.encodeAsHTML()} <span class="caret"></span>
+                <g:enc>${session.user}</g:enc> <span class="caret"></span>
             </g:link>
             <ul class="dropdown-menu" role="menu" aria-labelledby="userLabel">
                 <li><g:link controller="user" action="profile">
@@ -146,7 +165,7 @@
                     </g:link>
                 </li>
                 <li class="divider"></li>
-                <li><g:link action="logout" controller="user" title="Logout user: ${session.user}">
+                <li><g:link action="logout" controller="user" title="Logout user: ${enc(attr:session.user)}">
                     <i class="glyphicon glyphicon-remove"></i>
                     Logout
                 </g:link>
@@ -154,14 +173,14 @@
             </ul>
         </li>
         <li>
-            <a href="${helpLinkUrl.encodeAsHTML()}" class="help ">
+            <a href="${enc(attr:helpLinkUrl)}" class="help ">
                 help <b class="glyphicon glyphicon-question-sign"></b>
             </a>
         </li>
     </g:if>
     <g:else>
         <li >
-            <a href="${helpLinkUrl.encodeAsHTML()}" class="help ">
+            <a href="${enc(attr:helpLinkUrl)}" class="help ">
                 help <b class="glyphicon glyphicon-question-sign"></b>
             </a>
         </li>

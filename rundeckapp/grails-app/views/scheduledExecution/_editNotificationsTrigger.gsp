@@ -8,9 +8,9 @@
 <g:set var="notifyUrl" value="${'notify' + Trigger + 'Url'}"/>
 <tr class="notifyFields" style="${wdgt.styleVisible(if: isVisible)}">
 
-    <!-- ${trigger} -->
+    %{--${trigger} --}%
     <td>
-        <label for="notifyOn${trigger}"
+        <label for="notifyOn${enc(attr:trigger)}"
                class=" ${hasErrors(bean: scheduledExecution, field: notifyRecipients, 'fieldError')} ${hasErrors(bean: scheduledExecution, field: notifyUrl, 'fieldError')}">
             <g:message code="notification.event.on${trigger}"/>
         </label>
@@ -19,9 +19,9 @@
         <div>
             <span>
                 <g:checkBox name="notifyOn${trigger}" value="true" checked="${isEmail}"/>
-                <label for="notifyOn${trigger}">Send Email</label>
+                <label for="notifyOn${enc(attr: trigger)}">Send Email</label>
             </span>
-            <span id="notifholder${tkey}" style="${wdgt.styleVisible(if: isEmail)}">
+            <span id="notifholder${enc(attr:tkey)}" style="${wdgt.styleVisible(if: isEmail)}">
                 <label>to: <g:textField name="notify${Trigger}Recipients" cols="70" rows="3"
                                         value="${defEmail?.content ?: params[notifyRecipients]}"
                                         size="60"/></label>
@@ -48,13 +48,13 @@
                     <g:set var="notifurlcontent"
                            value="${defUrl?.content ?: params[notifyUrl]}"/>
                     <g:if test="${notifurlcontent && notifurlcontent.size() > 30}">
-                        <textarea name="${notifyUrl}"
+                        <textarea name="${enc(attr:notifyUrl)}"
                                   style="vertical-align:top;"
-                                  rows="6" cols="40">${notifurlcontent?.encodeAsHTML()}</textarea>
+                                  rows="6" cols="40"><g:enc>${notifurlcontent}</g:enc></textarea>
                     </g:if>
                     <g:else>
-                        <g:textField name="${notifyUrl}" cols="70" rows="3"
-                                     value="${notifurlcontent?.encodeAsHTML()}" size="60"/>
+                        <g:textField name="${enc(attr:notifyUrl)}" cols="70" rows="3"
+                                     value="${enc(attr:notifurlcontent)}" size="60"/>
                     </g:else>
                 </label>
 
@@ -76,20 +76,20 @@
                    value="${params.notifyPlugin?.get(trigger)?.get(pluginName)?.config ?: definedNotif?.configuration}"/>
             <g:set var="pluginDescription" value="${plugin.description}"/>
             <g:set var="validation" value="${notificationValidation?.get('on'+trigger)?.get(pluginName)?.report}"/>
-            <g:set var="checkboxFieldName" value="notifyPlugin.${trigger}.enabled.${pluginName.encodeAsHTML()}"/>
+            <g:set var="checkboxFieldName" value="notifyPlugin.${trigger}.enabled.${pluginName}"/>
             <div>
                 <g:hiddenField name="notifyPlugin.${trigger}.type" value="${pluginName}"/>
                 <span>
                     <g:checkBox name="${checkboxFieldName}" value="true"
                                 checked="${definedNotif ? true : false}"/>
-                    <label for="${checkboxFieldName}">${pluginDescription['title'] ?: pluginDescription['name'] ?: pluginName}</label>
+                    <label for="${enc(attr:checkboxFieldName)}"><g:enc>${pluginDescription['title'] ?: pluginDescription['name'] ?: pluginName}</g:enc></label>
                     <g:if test="${pluginDescription['description']}">
-                        <span class="info note">${pluginDescription['description']?.encodeAsHTML()}</span>
+                        <span class="info note"><g:enc>${pluginDescription['description']}</g:enc></span>
                     </g:if>
                 </span>
-                <span id="notifholderPlugin${pkey}" style="${wdgt.styleVisible(if: definedNotif ? true : false)}"
+                <span id="notifholderPlugin${enc(attr:pkey)}" style="${wdgt.styleVisible(if: definedNotif ? true : false)}"
                       class="notificationplugin">
-                    <g:set var="prefix" value="${('notifyPlugin.'+trigger+'.' + pluginName + '.config.').encodeAsHTML()}"/>
+                    <g:set var="prefix" value="${'notifyPlugin.'+trigger+'.' + pluginName + '.config.'}"/>
                     <g:if test="${pluginDescription instanceof Description}">
                         <table class="simpleForm">
                             <g:each in="${pluginDescription?.properties}" var="prop">

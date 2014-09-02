@@ -3,7 +3,7 @@
         <g:if test="${node.description}">
             <tr>
                 <td class="value text-muted" colspan="4">
-                    ${node.description?.encodeAsHTML()}
+                    <g:enc>${node.description}</g:enc>
                 </td>
             </tr>
         </g:if>
@@ -62,11 +62,11 @@
                 <g:if test="${nsname!=''}">
                 <tr>
                     <td class="key namespace">
-                        <g:expander key="${nkey}_ns_${nsname}" classnames="textbtn-muted textbtn-saturated">${nsname} (${nsAttrs.size()})</g:expander>
+                        <g:expander key="${nkey}_ns_${nsname}" classnames="textbtn-muted textbtn-saturated"><g:enc>${nsname} (${nsAttrs.size()})</g:enc></g:expander>
                     </td>
                 </tr>
                 </g:if>
-                    <tbody id="${nkey}_ns_${nsname}"  style="${wdgt.styleVisible(if:nsname=='')}" class="${nsname!=''?'subattrs':''}">
+                    <tbody id="${enc(attr:nkey+'_ns_'+nsname)}"  style="${wdgt.styleVisible(if:nsname=='')}" class="${nsname!=''?'subattrs':''}">
                         <g:if test="${nsAttrs?.size()>0}">
                             <g:each var="inNsAttrName" in="${nsAttrs.keySet().findAll{nsAttrs[it]?.get(1)}.sort()}">
                                 <g:set var="origAttrName" value="${nsAttrs[inNsAttrName][0]}"/>
@@ -79,7 +79,7 @@
                                     </td>
                                     <td class="setting " colspan="3">
                                         <div class="value">
-                                            ${value.encodeAsHTML()}
+                                            <g:enc>${value}</g:enc>
                                             <tmpl:nodeFilterLink key="${origAttrName}" value="${value}"
                                                                  linkclass="textbtn textbtn-info textbtn-saturated hover-action"
                                                                  linkicon="glyphicon glyphicon-search "/>
@@ -103,7 +103,7 @@
                     </td>
                     <td class="setting" colspan="3">
                         <div class="value">
-                        ${nodeAttrs[setting].encodeAsHTML()}
+                        <g:enc>${nodeAttrs[setting]}</g:enc>
                         <tmpl:nodeFilterLink key="${setting}" value="${nodeAttrs[setting]}"
                                              linkclass="textbtn textbtn-info textbtn-saturated hover-action"
                                              linkicon="glyphicon glyphicon-search "/>

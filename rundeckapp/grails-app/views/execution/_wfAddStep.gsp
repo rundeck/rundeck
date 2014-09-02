@@ -54,11 +54,11 @@
                     </div>
                     <g:each in="${nodeStepDescriptions}" var="typedesc">
 
-                        <a  class="list-group-item textbtn  add_node_step_type" data-node-step-type="${typedesc.name.encodeAsHTML()}"
+                        <a  class="list-group-item textbtn  add_node_step_type" data-node-step-type="${enc(attr:typedesc.name)}"
                             href="#">
                             <i class="rdicon icon-small plugin"></i>
-                            ${typedesc.title?.encodeAsHTML()}
-                            <span class="text-info">- ${typedesc.description.encodeAsHTML()}</span>
+                            <g:enc>${typedesc.title}</g:enc>
+                            <span class="text-info">- <g:enc>${typedesc.description}</g:enc></span>
                         </a>
                     </g:each>
                 </g:if>
@@ -81,10 +81,10 @@
                         <g:plural for="${stepDescriptions}" code="workflow.step.plugin" />
                     </div>
                     <g:each in="${stepDescriptions}" var="typedesc">
-                        <a class="list-group-item textbtn  add_step_type" data-step-type="${typedesc.name.encodeAsHTML()}" href="#">
+                        <a class="list-group-item textbtn  add_step_type" data-step-type="${enc(attr:typedesc.name)}" href="#">
                             <i class="rdicon icon-small plugin"></i>
-                            ${typedesc.title.encodeAsHTML()}
-                            <span class="text-info">- ${typedesc.description.encodeAsHTML()}</span>
+                            <g:enc>${typedesc.title}</g:enc>
+                            <span class="text-info">- <g:enc>${typedesc.description}</g:enc></span>
                         </a>
                     </g:each>
 

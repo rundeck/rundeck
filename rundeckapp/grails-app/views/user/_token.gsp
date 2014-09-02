@@ -22,20 +22,20 @@
 
 <g:set var="ukey" value="${g.rkey()}"/>
     <td>
-        <span class="apitoken">${token.token.encodeAsHTML()}</span>
+        <span class="apitoken"><g:enc>${token.token}</g:enc></span>
     </td>
     <td>
 
         <a style="${wdgt.styleVisible(if: token.token && !(params.showConfirm && params.token==token.token))}"
            class=" textbtn textbtn-danger"
            data-toggle="modal"
-           href="#myModal${ukey}">
+           href="#myModal${enc(attr:ukey)}">
             <i class="glyphicon glyphicon-remove-circle"></i>
             Delete&hellip;
         </a>
 
         <!-- Modal -->
-        <div class="modal fade clearconfirm" id="myModal${ukey}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+        <div class="modal fade clearconfirm" id="myModal${enc(attr: ukey)}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
              aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">

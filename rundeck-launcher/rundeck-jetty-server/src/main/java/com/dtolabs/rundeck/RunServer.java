@@ -99,6 +99,7 @@ public class RunServer {
         final WebAppContext context = createWebAppContext(new File(serverdir, "exp/webapp"));
 
         server.setHandler(context);
+        //context.getSessionHandler().getSessionManager().setHttpOnly(true);//TODO: upgrade jetty to support HttpOnly session cookies
 
         configureRealms(server);
         try {

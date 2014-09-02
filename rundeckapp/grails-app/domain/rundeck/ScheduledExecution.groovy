@@ -1,6 +1,7 @@
 package rundeck
 import com.dtolabs.rundeck.app.support.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.ExecutionContext
+import com.dtolabs.rundeck.core.common.FrameworkResource
 
 class ScheduledExecution extends ExecutionContext {
     Long id
@@ -40,6 +41,7 @@ class ScheduledExecution extends ExecutionContext {
     static transients = ['adhocExecutionType','notifySuccessRecipients','notifyFailureRecipients','notifyStartRecipients', 'notifySuccessUrl', 'notifyFailureUrl', 'notifyStartUrl','crontabString']
 
     static constraints = {
+        project(nullable:false, blank: false, matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
         workflow(nullable:true)
         options(nullable:true)
         jobName(blank: false, nullable: false, matches: "[^/]+")
@@ -71,12 +73,16 @@ class ScheduledExecution extends ExecutionContext {
         nodeThreadcount(nullable:true)
         nodeRankOrderAscending(nullable:true)
         nodeRankAttribute(nullable:true)
-        project(nullable:false,blank:false)
         argString(nullable:true)
-        seconds(nullable:true)
-        year(nullable:true)
+        seconds(nullable: true, matches: /^[0-9*\/,-]*$/)
+        minute(nullable:true, matches: /^[0-9*\/,-]*$/ )
+        hour(nullable:true, matches: /^[0-9*\/,-]*$/ )
+        dayOfMonth(nullable:true, matches: /^[0-9*\/,?LW-]*$/ )
+        month(nullable:true, matches: /^[0-9a-zA-z*\/,-]*$/ )
+        dayOfWeek(nullable:true, matches: /^[0-9a-zA-z*\/?,L#-]*$/ )
+        year(nullable:true, matches: /^[0-9*\/,-]*$/)
         description(nullable:true)
-        uuid(unique: true, nullable:true, blank:false, matches: /^\S+$/)
+        uuid(unique: true, nullable:true, blank:false, matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
         multipleExecutions(nullable: true)
         serverNodeUUID(size: 36..36, blank: true, nullable: true, validator: { val, obj ->
             if (null == val) return true;

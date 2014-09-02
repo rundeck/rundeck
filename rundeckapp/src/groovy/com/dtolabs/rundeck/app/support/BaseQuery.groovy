@@ -1,4 +1,7 @@
 package com.dtolabs.rundeck.app.support
+
+import grails.validation.Validateable
+
 /*
  * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
  *
@@ -22,14 +25,17 @@ package com.dtolabs.rundeck.app.support
  * Created: Feb 13, 2008 4:18:48 PM
  * $Id$
  */
+@Validateable
 class BaseQuery {
-    int max
-    int offset
+    Integer max
+    Integer offset
     String sortBy
     String sortOrder
 
     static constraints={
-        sortOrder(inList:["ascending","descending"])
+        sortOrder(inList:["ascending","descending"],nullable: true)
+        max(min:0,nullable: true)
+        offset(min:0,nullable: true)
     }
 
     /**

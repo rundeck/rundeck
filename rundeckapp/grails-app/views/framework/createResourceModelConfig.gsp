@@ -27,8 +27,8 @@
 <g:if test="${description}">
     <div class="row">
     <div class="col-sm-12">
-    <div class="h4 text-info">${description.title.encodeAsHTML()}
-        <small class="text-muted">${description.description.encodeAsHTML()}</small>
+    <div class="h4 text-info"><g:enc>${description.title}</g:enc>
+        <small class="text-muted"><g:enc>${description.description}</g:enc></small>
     </div>
 
     </div>
@@ -37,7 +37,7 @@
 <div class="row ${description?'row-space':''}">
     <g:if test="${error}">
         <div class="col-sm-12">
-        <div class="alert alert-warning resourceConfigEdit">${error}</div>
+        <div class="alert alert-warning resourceConfigEdit"><g:enc>${error}</g:enc></div>
         </div>
     </g:if>
     <g:if test="${isCreate}">
@@ -60,9 +60,9 @@
         <span>Properties:</span>
         <ul>
         <g:each var="prop" in="${values}">
-        <li>${prop.name.encodeAsHTML()}: ${prop.value.encodeAsHTML()} </li>
-            <input type="hidden" name="${(prefix + 'config.' + prop.name).encodeAsHTML()}"
-                   value="${prop.value?.encodeAsHTML()}"/>
+        <li><g:enc>${prop.name}: ${prop.value}</g:enc> </li>
+            <input type="hidden" name="${enc(attr:prefix + 'config.' + prop.name)}"
+                   value="${enc(attr:prop.value)}"/>
         </g:each>
         </ul>
         </div>

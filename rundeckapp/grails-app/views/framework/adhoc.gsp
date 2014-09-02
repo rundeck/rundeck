@@ -21,7 +21,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="adhoc"/>
-    <title><g:message code="gui.menu.Nodes"/> - ${(params.project ?: request.project).encodeAsHTML()}</title>
+    <title><g:message code="gui.menu.Nodes"/> - <g:enc>${params.project ?: request.project}</g:enc></title>
     <g:javascript library="executionControl"/>
     <g:javascript library="yellowfade"/>
     <g:javascript library="pagehistory"/>
@@ -30,7 +30,7 @@
     <g:set var="maxLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.max}"/>
     <script type="text/javascript">
         function showError(message) {
-            $("error").innerHTML += message;
+            appendText($("error"),message);
             $("error").show();
         }
 
@@ -146,11 +146,11 @@
                  viewoptionsCompleteId: 'viewoptionscomplete',
                  cmdOutputErrorId: 'cmdoutputerror',
                  outfileSizeId: 'outfilesize',
-                extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>",
+                extraParams:"<%="true" == params.boolean('disableMarkdown')? '&disableMarkdown=true' : ''%>",
                 smallIconUrl: "${resource(dir: 'images', file: 'icon-small')}",
                 iconUrl: "${resource(dir: 'images', file: 'icon-small')}",
-                lastlines: ${params.lastlines ? params.lastlines : defaultLastLines},
-                maxLastLines: ${params.maxlines ? params.maxlines : maxLastLines},
+                lastlines: ${enc(js:params.int('lastlines')?: defaultLastLines)},
+                maxLastLines: ${enc(js:params.int('maxlines')?: maxLastLines)},
                  showFinalLine: {value: false, changed: false},
                  colStep:{value:false},
                 tailmode: true,
@@ -254,7 +254,7 @@
             nodeFilter.filterName(filterName);
             nodeFilter.filter(filterString);
             nodeFilter.loading(true);
-            _updateMatchedNodes(data, elem, '${params.project?:request.project}', false, {view: view, expanddetail: true,
+            _updateMatchedNodes(data, elem, '${enc(js:params.project?:request.project)}', false, {view: view, expanddetail: true,
                 inlinepaging: false, maxShown: 20, requireRunAuth:true}, function (xht) {
                 nodeFilter.loading(false);
             });
@@ -295,19 +295,19 @@
             ko.applyBindings(history, document.getElementById('activity_section'));
             setupActivityLinks('activity_section', history);
             //if empty query, automatically load first activity_link
-            if("${emptyQuery}"=='true'){
+            if("${enc(js:emptyQuery)}"=='true'){
                 history.activateNowRunningTab();
             }
 
             //setup node filters knockout bindings
-            var filterParams =${[filterName:params.filterName,filter:query?.filter,filterAll:params.showall in ['true',true]].encodeAsJSON()};
+            var filterParams =loadJsonData('filterParamsJSON');
             nodeFilter = new NodeFilters(
                     appLinks.frameworkAdhoc,
                     appLinks.scheduledExecutionCreate,
                     appLinks.frameworkNodes,
                     Object.extend(filterParams, {
-                        nodesTitleSingular: "${g.message(code:'Node',default:'Node')}",
-                        nodesTitlePlural: "${g.message(code:'Node.plural',default:'Nodes')}"
+                        nodesTitleSingular: "${enc(js:g.message(code:'Node',default:'Node'))}",
+                        nodesTitlePlural: "${enc(js:g.message(code:'Node.plural',default:'Nodes'))}"
                     }));
             ko.applyBindings(nodeFilter,document.getElementById('tabsarea'));
             jQuery('#searchForm').submit(_matchNodes);
@@ -316,6 +316,7 @@
         jQuery(document).ready(init);
 
     </script>
+    <g:embedJSON id="filterParamsJSON" data="${[filterName: params.filterName, filter: query?.filter, filterAll: params.showall in ['true', true]]}"/>
     <style type="text/css">
         #runerror{
             margin:5px 0;
@@ -429,8 +430,7 @@
                         <g:hiddenField name="max" value="${max}"/>
                         <g:hiddenField name="offset" value="${offset}"/>
                         <g:hiddenField name="formInput" value="true"/>
-                        <g:set var="filtvalue"
-                               value="${query?.('filter')?.encodeAsHTML()}"/>
+                        <g:set var="filtvalue" value="${query?.('filter')}"/>
 
                             <div class="form-group">
                                 <label class="col-sm-2 text-right form-control-static" for="schedJobNodeFilter">Nodes:</label>
@@ -475,7 +475,7 @@
                                 </a>
                                 </span>
                             </div>
-                            <span id="${ukey}nodeForm">
+                            <span id="${enc(attr:ukey)}nodeForm">
                             </span>
                         </div>
                     </div>

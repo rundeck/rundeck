@@ -26,14 +26,14 @@
     </td>
     <td>
         <span class="userlogin" >
-            ${user.login}
+            <g:enc>${user.login}</g:enc>
         </span>
         <span class="username" >
-            ${user.firstName} ${user.lastName}
+            <g:enc>${user.firstName} ${user.lastName}</g:enc>
         </span>
         <span class="useremail">
             <g:if test="${user.email}">
-                &lt;${user.email}&gt;
+                &lt;<g:enc>${user.email}</g:enc>&gt;
             </g:if>
         </span>
 
@@ -47,7 +47,7 @@
         </g:if>
     </td>
 </tr>
-<tr class="${index!=null && (index%2)==1?'alternateRow':''}" id="udetail_${user.login}" style="display:none">
+<tr class="${index!=null && (index%2)==1?'alternateRow':''}" id="udetail_${enc(attr:user.login)}" style="display:none">
     <td></td>
     <td >
         <tmpl:user user="${user}" expandAccess="${true}"/>

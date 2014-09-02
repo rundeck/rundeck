@@ -65,12 +65,12 @@
                             <g:each in="${dataset.keySet().sort()}" var="dataname">
                                 <g:if test="${dataset[dataname] instanceof Map}">
                                     <tbody>
-                                    <th colspan="2">${dataname.encodeAsHTML()}</th>
+                                    <th colspan="2"><g:enc>${dataname}</g:enc></th>
                                     <g:each
                                         in="${dataset[dataname].keySet().sort().grep{!it.endsWith('.unit') && !it.endsWith('.info')}}"
                                         var="valuename">
                                         <tr>
-                                            <td title="${dataset[dataname][valuename + '.info'] ? dataset[dataname][valuename + '.info'].encodeAsHTML() : ''}">${valuename.encodeAsHTML()}</td>
+                                            <td title="${enc(attr:dataset[dataname][valuename + '.info'] ?: '')}"><g:enc>${valuename}</g:enc></td>
                                             <td>
 
                                                 <g:if test="${dataset[dataname][valuename+'.unit']=='ratio'}">
@@ -82,7 +82,7 @@
                                                                 unit="${dataset[dataname][valuename+'.unit']}"/>
                                                 </g:elseif>
                                                 <g:else>
-                                                    ${dataset[dataname][valuename].encodeAsHTML()}
+                                                    <g:enc>${dataset[dataname][valuename]}</g:enc>
                                                 </g:else>
                                             </td>
                                         </tr>

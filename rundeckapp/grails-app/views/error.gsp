@@ -34,25 +34,25 @@
 </div>
 <div class="pageBody">
     <div class="errorMessage">
-        <b>${exception.message}</b>
+        <b><g:enc>${exception.message}</g:enc></b>
     </div>
     <g:expander key="internalerror">Error Details</g:expander>
     <div style="display:none" id="internalerror">
         <div class="message">
-            <div><b>Request:</b> ${null != controllerName && null != actionName ? createLink(controller: controllerName, action: actionName, params: params) : request.getRequestURL()}</div>
-            <strong>Message:</strong> ${exception.message} <br/>
-            <strong>Caused by:</strong> ${exception.cause?.message} <br/>
-            <strong>Class:</strong> ${exception.className} <br/>
-            <strong>At Line:</strong> [${exception.lineNumber}] <br/>
+            <div><b>Request:</b> <g:enc>${null != controllerName && null != actionName ? createLink(controller: controllerName, action: actionName, params: params) : request.getRequestURL()}</g:enc></div>
+            <strong>Message:</strong> <g:enc>${exception.message}</g:enc> <br/>
+            <strong>Caused by:</strong> <g:enc>${exception.cause?.message}</g:enc> <br/>
+            <strong>Class:</strong> <g:enc>${exception.className}</g:enc> <br/>
+            <strong>At Line:</strong> [<g:enc>${exception.lineNumber}</g:enc>] <br/>
             <strong>Code Snippet:</strong><br/>
             <div class="snippet">
                 <g:each var="cs" in="${exception.codeSnippet}">
-                    ${cs}<br/>
+                    <g:enc>${cs}</g:enc><br/>
                 </g:each>
             </div>
         </div>
         <h3>Stack Trace</h3>
-        <pre>${exception.stackTraceText}</pre>
+        <pre><g:enc>${exception.stackTraceText}</g:enc></pre>
     </div>
 </div>
 </body>

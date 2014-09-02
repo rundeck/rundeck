@@ -23,7 +23,7 @@
  --%>
 <g:if test="${workflow && workflow?.commands}">
 <g:each in="${workflow.commands}" var="item" status="i">
-    <li class="${i%2==1?'alternate':''}"  wfitemNum="${i}">
+    <li class="${i%2==1?'alternate':''}" data-wfitemnum="${i}">
         <div id="wfli_${i}">
         <g:render template="/execution/wflistitemContent" model="${[i:i,stepNum: i,item:item,workflow:workflow,edit:edit,highlight:highlight,noimgs:noimgs, project: project]}"/>
         </div>
@@ -44,17 +44,17 @@
             </ul>
         </g:if>
         <g:else>
-            <ul class="wfhandleritem" style="display: none" wfitemNum="${i}">
+            <ul class="wfhandleritem" style="display: none" data-wfitemnum="${enc(attr:i)}">
 
-                <li id="wfli_eh_${i}"></li>
+                <li id="wfli_eh_${enc(attr:i)}"></li>
 
             </ul>
         </g:else>
     </li>
 </g:each>
 </g:if>
-<g:if test="${null!=highlight}">
+<g:if test="${workflow && workflow.commands && null!=highlight}">
     <g:javascript>
-        fireWhenReady('wfivis_${highlight}',function(){Effect.Appear('wfivis_${highlight}', { duration: 0.5 });});
+        fireWhenReady('wfivis_${enc(js:highlight)}',function(){Effect.Appear('wfivis_${enc(js:highlight)}', { duration: 0.5 });});
     </g:javascript>
 </g:if>

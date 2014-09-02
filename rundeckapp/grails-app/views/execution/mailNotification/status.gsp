@@ -224,7 +224,7 @@ div.progressContainer div.progressContent{
             </span>
             </g:if>
             <g:if test="${execstate=='aborted'}">
-                by <em>${execution.abortedby}</em>
+                by <em><g:enc>${execution.abortedby}</g:enc></em>
             </g:if>
             - <g:link absolute="true" controller="execution"
                       params="[project: execution.project]"
@@ -241,7 +241,7 @@ div.progressContainer div.progressContent{
                 id="${execution.id}">
                 Download Output
             </g:link>
-             <g:if test="${filesize}">(${filesize} bytes)</g:if>
+             <g:if test="${filesize}">(<g:enc>${filesize}</g:enc> bytes)</g:if>
         </div>
         </g:if>
 
@@ -254,7 +254,7 @@ div.progressContainer div.progressContent{
             <table class="executionInfo">
                 <tr>
                     <td>User:</td>
-                    <td>${execution?.user}</td>
+                    <td><g:enc>${execution?.user}</g:enc></td>
                 </tr>
                 <g:if test="${null!=execution.dateCompleted && null!=execution.dateStarted}">
 
@@ -269,7 +269,7 @@ div.progressContainer div.progressContent{
                     <td>
                         <g:relativeDate elapsed="${execution.dateStarted}" agoClass="timeago"/>
                     </td>
-                    <td><span class="timeabs">${execution.dateStarted}</span></td>
+                    <td><span class="timeabs"><g:enc>${execution.dateStarted}</g:enc></span></td>
                 </tr>
                 </g:if>
                 <g:else>
@@ -283,7 +283,7 @@ div.progressContainer div.progressContent{
                         <td>
                             <g:relativeDate elapsed="${execution.dateCompleted}" agoClass="timeago"/>
                         </td>
-                        <td><span class="timeabs">${execution.dateCompleted}</span></td>
+                        <td><span class="timeabs"><g:enc>${execution.dateCompleted}</g:enc></span></td>
                     </tr>
                 </g:if>
             </table>
@@ -291,7 +291,6 @@ div.progressContainer div.progressContent{
                     </td>
                     <g:if test="${scheduledExecution}">
                         <td style="vertical-align:top;" class="toolbar small">
-                            %{--<g:render template="/scheduledExecution/actionButtons" model="${[scheduledExecution:scheduledExecution,objexists:objexists,jobAuthorized:jobAuthorized,execPage:true]}"/>--}%
                             <g:render template="/scheduledExecution/renderJobStats"
                                       model="${[scheduledExecution: scheduledExecution]}"/>
                         </td>
@@ -326,10 +325,10 @@ div.progressContainer div.progressContent{
                             <g:set var="perc" value="${0}"/>
                         </g:else>
                         <g:if test="${vals && vals.size()>1 && vals[1]!='0' && vals[1]!=0}">
-                            ${vals[1]} failed
+                            <g:enc>${vals[1]}</g:enc> failed
                         </g:if>
                         <g:else>
-                            ${vals[0]} ok
+                            <g:enc>${vals[0]}</g:enc> ok
                         </g:else>
                         <g:if test="${perc>0}">
                         <g:render template="/common/progressBar" model="${[completePercent:(int)perc,title:'Failed nodes',className:'nodes failure',showpercent:false,innerContent:summary]}"/>
@@ -338,9 +337,9 @@ div.progressContainer div.progressContent{
                 <g:if test="${execution?.failedNodeList}">
                         <g:set var="failednodes" value="${execution?.failedNodeList.split(',')}"/>
                         <g:if test="${!nodestatus}">
-                        ${failednodes.length} failed:
+                        <g:enc>${failednodes.length}</g:enc> failed:
                         </g:if>
-                        <div>${execution?.failedNodeList}</div>
+                        <div><g:enc>${execution?.failedNodeList}</g:enc></div>
                 </g:if>
             </div>
         </g:if>
@@ -348,7 +347,7 @@ div.progressContainer div.progressContent{
 </div>
 <div class="foot">
     <g:message code="main.app.name"/> :
-    ${execution.project.encodeAsHTML()}
+    <g:enc>${execution.project}</g:enc>
     <g:link absolute="true" controller="framework" params="[project: execution.project]" action="nodes"><g:message code="gui.menu.Nodes"/> &raquo;</g:link>
     <g:link absolute="true" controller="menu" params="[project: execution.project]" action="jobs"><g:message code="gui.menu.Workflows"/> &raquo;</g:link>
     <g:link absolute="true" controller="reports" params="[project: execution.project]" action="index"><g:message code="gui.menu.Events"/> &raquo;</g:link>

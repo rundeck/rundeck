@@ -59,11 +59,11 @@
             outdiv= (['</div>'] * (count*2)).join('<!-- x -->');
             divcounts-=(count*2);
          }%
-        ${outdiv}
+        <g:enc raw="true">${outdiv}</g:enc>
 
     </g:elseif>
     <g:else>
-        ${(['</div>'] * divcounts).join('<!--rend-->')}
+        <g:enc raw="true">${(['</div>'] * divcounts).join('<!--rend-->')}</g:enc>
         <g:set var="level" value="${[]}"/>
         <g:set var="indent" value="${0}"/>
         <g:set var="divcounts" value="${0}"/>
@@ -77,8 +77,11 @@
         %{divcounts++;}%
         <div style="margin-bottom:4px;">
         <g:if test="${jscallback}">
-            <span class="expandComponentControl textbtn action groupname jobgroupexpand" onclick="${jscallback + '(\'' + (prefix ? prefix + '/' + group.key : group.key) + '\');return false;' }" title="${jscallback ? 'Select this group' : 'Expand/Collapse this group'}" style="padding-left:4px;"><%--
-            --%> ${displaygroup}<%--
+            <span class="expandComponentControl textbtn action groupname jobgroupexpand"
+                  title="Select this group"
+                onclick="groupChosen('${enc(js:prefix ? prefix + '/' + group.key : group.key)}'); return false;"
+                style="padding-left:4px;"><%--
+            --%> <g:enc>${displaygroup}</g:enc><%--
         --%></span>
         </g:if>
         <g:else>
@@ -86,11 +89,11 @@
             <g:expander open="${groupopen?'true':'false'}" jsfunc="${jsfunc}" imgfirst="true" style="padding-left:4px;" classnames="jobgroupexpand textbtn-secondary">
                 <span class="foldertoggle">&nbsp;</span>
                 <g:if test="${jobsjscallback}">
-                    ${displaygroup}
+                    <g:enc>${displaygroup}</g:enc>
                 </g:if>
             </g:expander>
             <g:if test="${!jobsjscallback}">
-            <a class=" groupname secondary" href="${createLink(controller: 'menu', action: 'jobs', params: [project:params.project,groupPath: prefix ? prefix + '/' + group.key : group.key])}">${displaygroup}</a>
+            <a class=" groupname secondary" href="${createLink(controller: 'menu', action: 'jobs', params: [project:params.project,groupPath: prefix ? prefix + '/' + group.key : group.key])}"><g:enc>${displaygroup}</g:enc></a>
             </g:if>
         </g:else>
         </div>
@@ -106,7 +109,7 @@
 
     <g:timerEnd key="_groupTree2.gsp-loop"/>
 </g:each>
-    ${(['</div>'] * divcounts).join('<!--rlast-->')}
+    <g:enc raw="true">${(['</div>'] * divcounts).join('<!--rlast-->')}</g:enc>
 
     <g:if test="${currentJobs}">
         <g:timerStart key="_groupTree2.gsp-jobslist"/>

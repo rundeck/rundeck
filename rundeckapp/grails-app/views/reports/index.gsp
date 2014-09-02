@@ -6,7 +6,7 @@
     <g:ifServletContextAttribute attribute="RSS_ENABLED" value="true">
     <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="${createLink(controller:"feed",action:"index",params:paginateParams?paginateParams:[:])}"/>
     </g:ifServletContextAttribute>
-    <title><g:message code="gui.menu.Events"/> - ${(params.project ?: request.project).encodeAsHTML()}</title>
+    <title><g:message code="gui.menu.Events"/> - <g:enc>${params.project ?: request.project}</g:enc></title>
     <g:javascript library="yellowfade"/>
     <g:javascript library="pagehistory"/>
     <g:javascript>
@@ -16,7 +16,7 @@
         function _pageUpdateNowRunning(count, perc) {
             document.title = "Now Running (" + count + ")";
             if($('nrlocal')){
-                $('nrlocal').innerHTML = '' + count;
+                setText($('nrlocal'), '' + count);
             }
             if(pagefirstload){
                 pagefirstload=false;
@@ -27,16 +27,15 @@
         }
         function showError(message) {
             if ($('loaderror')) {
-                $("loaderror").innerHTML += message;
+                appendText($("loaderror"),message);
                 $("loaderror").show();
             }
         }
 
-        var bfilters=${filterPref.encodeAsJSON()};
         <g:set var="pageparams" value="${[offset:params.offset,max:params.max]}"/>
         <g:set var="eventsparams" value="${paginateParams}"/>
-        var eventsparams=${eventsparams.encodeAsJSON()};
-        var pageparams=${pageparams.encodeAsJSON()};
+        var eventsparams;
+        var pageparams;
         var autoLoad=${params.refresh == 'true' ? true : false};
         var links = {
             events:'${createLink(controller: "reports", action: "eventsFragment", params: [project: params.project])}',
@@ -45,16 +44,17 @@
         };
         var runupdate;
         function loadNowRunning(){
-            runupdate=new Ajax.PeriodicalUpdater({ success:'nowrunning'},links.nowrunning,{
-                evalScripts:true,
-                parameters:eventsparams,
-                frequency:5,
-                onFailure:function (response) {
-                    showError("AJAX error: Now Running [" + runupdate.url + "]: " + response.status + " "
-                                      + response.statusText);
-                    runupdate.stop();
+            jQuery('#nowrunning').load(_genUrl(links.nowrunning,eventsparams),
+                function(response, status, xhr){
+                    if ( status == "error" ) {
+                        showError("AJAX error: Now Running [" + links.nowrunning + "]: " + xhr.status + " "+ xhr.statusText);
+
+                    }else{
+                        //reschedule
+                        setTimeout(loadNowRunning,5000);
+                    }
                 }
-            });
+            );
         }
         /** START history
          *
@@ -71,6 +71,8 @@
             });
         }
         function _pageInit() {
+            eventsparams=loadJsonData('eventsparamsJSON');
+            pageparams=loadJsonData('pageparamsJSON')
             try{
                 if(pageparams && pageparams.offset){
                     Object.extend(eventsparams,pageparams);
@@ -109,7 +111,7 @@
         var lastRunExec = 0;
         var lastRunTime = 0;
         var checkUpdatedUrl='';
-        var pageTitle="${g.message(code: 'gui.menu.Events').encodeAsJavaScript()} - ${(params.project ?: request.project).encodeAsJavaScript()}";
+        var pageTitle="${enc(js:g.message(code: 'gui.menu.Events'))} - ${enc(js:params.project ?: request.project)}";
         var firstLoad=true;
         var firstparams=Object.extend({refresh:${params.refresh == 'true' ? true : false}},eventsparams);
         window.onpopstate = function(event) {
@@ -128,7 +130,7 @@
         function _updateBoxInfo(name, data) {
             if(name==='events' && data.total){
                 $$('._obs_histtotal').each(function(e){
-                    $(e).innerHTML=data.total;
+                    setText($(e),data.total);
                 });
             }
             if(name=='events' && data.checkUpdatedUrl ){
@@ -156,8 +158,8 @@
                     paginate(e,data.offset,data.total,data.max,{
                         baseUrl:links.baseUrl,
                         ulCss:'pagination pagination-sm pagination-embed',
-                        'paginate.prev':"${g.message(code: 'default.paginate.prev',default:'Previous')}",
-                        'paginate.next':"${g.message(code: 'default.paginate.next',default:'Next')}",
+                        'paginate.prev':"${g.message(code: 'default.paginate.prev',default:'«')}",
+                        'paginate.next':"${g.message(code: 'default.paginate.next',default:'»')}",
                         prevBehavior:pagefunc,
                         stepBehavior:pagefunc,
                         nextBehavior:pagefunc
@@ -191,7 +193,7 @@
             
         }
         function _checkSinceSuccess(response){
-            var data=eval("("+response.responseText+")"); // evaluate the JSON;
+            var data=JSON.parse(response.responseText); // evaluate the JSON;
             if(data && data.since){
                 var count=data.since.count;
                 //display badge
@@ -207,11 +209,25 @@
         }
 
         function _setFilterSuccess(response,name){
-            var data=eval("("+response.responseText+")"); // evaluate the JSON;
+            var data=JSON.parse(response.responseText); // evaluate the JSON;
             if(data){
                 var bfilters=data['filterpref'];
                 eventsparams={filterName:bfilters[name]};
                 pageparams={filterName:bfilters[name]};
+                var selected = bfilters[name]?true:false;
+                jQuery('.obs_filter_is_selected').each(function(x,el){
+                    jQuery(this).collapse(selected?'show':'hide');
+                });
+                jQuery('.obs_filter_is_deselected').each(function(x,el){
+                    jQuery(this).collapse(!selected?'show':'hide');
+                });
+                jQuery('.obs_selected_filter_name').each(function(x,el){
+                    if(this.tagName=='INPUT'){
+                        jQuery(this).val(bfilters[name]);
+                    }else{
+                        setText(this,bfilters[name]);
+                    }
+                });
                 loadHistory();
                 //reload page
 //                document.location="${createLink(controller:'reports',action:'index')}"+(bfilters[name]?"?filterName="+bfilters[name]:'');
@@ -220,7 +236,7 @@
 
         function _updateEventsCount(count){
             if(count>0){
-                $('eventsCountContent').innerHTML=count+" new";
+                setText($('eventsCountContent'),count+" new");
                 $('eventsCountBadge').show();
             }else{
                 $('eventsCountBadge').hide();
@@ -251,7 +267,7 @@
         }
         function init(){
             _pageInit();
-            jQuery('.autoclick').on('click','.autoclickable',function(evt){
+            jQuery('#histcontent').on('click','.autoclickable',function(evt){
                 var ac=jQuery(this).parent('.autoclick')[0];
                 //if bulk edit
                 if(jQuery(ac).find('.bulk_edit_enabled').length>0){
@@ -271,6 +287,8 @@
         
         jQuery(init);
     </g:javascript>
+    <g:embedJSON id="eventsparamsJSON" data="${eventsparams}"/>
+    <g:embedJSON id="pageparamsJSON" data="${pageparams}"/>
     <style type="text/css">
     table.dashboxes td.dashbox {
         width: auto;

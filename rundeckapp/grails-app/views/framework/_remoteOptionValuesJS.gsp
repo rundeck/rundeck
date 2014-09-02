@@ -37,12 +37,12 @@
             }
             btn.addClassName('action');
             btn.addClassName('textbtn');
-            if($(elem).innerHTML.indexOf("_error_detail")<0){
-                icn.removeClassName('error');
-                icn.addClassName('ok');
-            }else{
+            if($(elem).down("._error_detail")) {
                 icn.removeClassName('ok');
                 icn.addClassName('error');
+            } else {
+                icn.removeClassName('error');
+                icn.addClassName('ok');
             }
 
             btn.setAttribute('title','Click to reload the remote option values for: '+optName);
@@ -55,7 +55,7 @@
                 }
             }
             if(!$(reloader)){
-                btn.innerHTML='reload';
+                setText(btn,'reload');
                 $(btn).insert({bottom:icn});
                 $(elem).insert({bottom:btn});
             }
@@ -265,7 +265,7 @@ var RemoteOptionControl = Class.create({
             var elem = $(this.options[name][0]);
             if(!elem.down('div.emptyMessage')){
                 //wrap elem contents and hide it
-                elem.innerHTML = "<div style='display:none' class='fieldcontent'>"+elem.innerHTML+"</div>";
+                wrapContentsHtml(elem,"<div style='display:none' class='fieldcontent'>","</div>");
                 //insert note
                 var note = new Element('div',{'class':'info note emptyMessage'});
                 note.appendChild(document.createTextNode('No values to choose from. '));
@@ -352,6 +352,41 @@ var RemoteOptionControl = Class.create({
         }
         this.observers={};
         _unloadRemoteOptionControl(this.formId);
+    },
+    /**
+    * load remote option dataset from json data
+    * @param data
+     */
+    loadData:function(data){
+        for(var opt in data){
+            var params=data[opt];
+            if(params['optionDependencies']){
+                this.addOptionDependencies(opt,params['optionDependencies']);
+            }
+            if(params['optionDeps']){
+                this.addOptionDeps(opt,params['optionDeps']);
+            }
+            if(params['optionAutoReload']){
+                this.setOptionAutoReload(opt,params['optionAutoReload']);
+            }
+            if(params['hasUrl']){
+                this.addOption(opt, params['holder'], params['scheduledExecutionId'], opt, params['usePrefix'], params['selectedOptsMap'], params['fieldNameKey'], true);
+                if(params['loadonstart']){
+                    this.loadonstart[opt]=true;
+                }
+                if(params['optionAutoReload']){
+                    this.setOptionAutoReload(opt, true);
+                }
+                if(params['fieldMultiId']){
+                    this.setFieldMultiId(opt,params['fieldMultiId']);
+                }
+                if(params['fieldId']){
+                    this.setFieldId(opt,params['fieldId']);
+                }
+            }else{
+                this.addLocalOption(opt);
+            }
+        }
     }
 });
         /**

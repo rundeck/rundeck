@@ -25,23 +25,23 @@
 
 <span id="opt_${rkey}" class="optview">
     <span class="optdetail ${edit?'autohilite autoedit':''}" ${edit?'title="Click to edit"':''} ${edit?'':''}>
-        <span class=" ${option?.required ? 'required' : ''}" title="${option?.description?.encodeAsHTML()}${option?.required ? ' (Required)' : ''}">${option.name.encodeAsHTML()}</span>
-        <span class=""><g:truncate max="20" showtitle="true">${option.secureInput && option.defaultValue?'****':option.defaultValue?.encodeAsHTML()}</g:truncate>${option.multivalued?'(+)':''}</span>
-        <span class="desc">${option.description?.encodeAsHTML()}</span>
+        <span class=" ${option?.required ? 'required' : ''}" title="${enc(attr:option?.description)}${option?.required ? ' (Required)' : ''}"><g:enc>${option.name}</g:enc></span>
+        <span class=""><g:truncate max="20" showtitle="true"><g:enc>${option.secureInput && option.defaultValue?'****':option.defaultValue}</g:enc></g:truncate><g:enc>${option.multivalued?'(+)':''}</g:enc></span>
+        <span class="desc"><g:enc>${option.description}</g:enc></span>
     </span>
     <g:if test="${option?.values || option.valuesList}">
         <g:set var="opts" value="${option.values?option.values.sort():option.valuesList.split(',').sort()}"/>
         <div class="popout detailpopup" id="vls_${rkey}_tooltip" style="width:200px;display:none;" >
             <div class="info note">Allowed Values</div>
-            <g:each var="val" in="${opts}" status="i">${0!=i?', ':''}<span class="valueItem">${val.encodeAsHTML()}</span></g:each>
+            <g:each var="val" in="${opts}" status="i"><g:enc>${0!=i?', ':''}</g:enc><span class="valueItem"><g:enc>${val}</g:enc></span></g:each>
         </div>
         <span class="valuesSet">
-        <span class="valueslist" id="vls_${rkey}">${opts ? opts.size() :0} Value${1==opts?.size()?'':'s'}</span>
+        <span class="valueslist" id="vls_${rkey}"><g:enc>${opts ? opts.size() :0}</g:enc> Value${1==opts?.size()?'':'s'}</span>
         </span>
     </g:if>
     <g:elseif test="${option.realValuesUrl}">
         <span class="valuesSet">
-        <span class="valuesUrl" title="Values loaded from Remote URL: ${option.realValuesUrl.toString().encodeAsHTML()}">URL</span>
+        <span class="valuesUrl" title="Values loaded from Remote URL: ${enc(attr:option.realValuesUrl)}">URL</span>
         </span>
     </g:elseif>
 
@@ -52,11 +52,11 @@
     </g:if>
     <g:elseif test="${option.regex}">
         <span class="enforceSet">
-        <span class="regex" id="rgx_${rkey}">${option.regex.encodeAsHTML()}</span>
+        <span class="regex" id="rgx_${rkey}"><g:enc>${option.regex}</g:enc></span>
         </span>
         <div class="popout detailpopup" style="display:none; width: 200px" id="rgx_${rkey}_tooltip">
             <div class="info note">Values must match the regular expression:</div>
-            <code>${option.regex.encodeAsHTML()}</code>
+            <code><g:enc>${option.regex}</g:enc></code>
         </div>
     </g:elseif>
     <g:else>
@@ -66,10 +66,10 @@
     </g:else>
 </span>
 <g:javascript>
-    fireWhenReady('opt_${rkey}',function(){
+    fireWhenReady('opt_${enc(js:rkey)}',function(){
     if(typeof(initTooltipForElements)=='function'){
-        initTooltipForElements('#vls_${rkey}');
-        initTooltipForElements('#rgx_${rkey}');
+        initTooltipForElements('#vls_${enc(js: rkey)}');
+        initTooltipForElements('#rgx_${enc(js: rkey)}');
     }
     });
 </g:javascript>

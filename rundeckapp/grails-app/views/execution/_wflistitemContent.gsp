@@ -22,8 +22,8 @@
     $Id$
 
 
- --%><div id="wfivis_${i}" style="${wdgt.styleVisible(unless:i==highlight)}">
-    <div class="pflowitem wfctrlholder"><span class="pflow item " id="wfitem_${i}" >
+ --%><div id="wfivis_${enc(attr:i)}" style="${wdgt.styleVisible(unless:i==highlight)}">
+    <div class="pflowitem wfctrlholder"><span class="pflow item " id="wfitem_${enc(attr:i)}" >
         <g:if test="${isErrorHandler}">
             <span class="info note"><g:message code="Workflow.stepErrorHandler.label.on.error" /></span>
         </g:if>
@@ -51,7 +51,7 @@
         </g:if>
         <g:if test="${isErrorHandler}">
             <g:if test="${item.keepgoingOnSuccess}">
-                <span class=" succeed" title="${g.message(code:'Workflow.stepErrorHandler.keepgoingOnSuccess.description').encodeAsHTML()}"><g:message code="Workflow.stepErrorHandler.label.keep.going.on.success" /></span>
+                <span class=" succeed" title="${enc(code:'Workflow.stepErrorHandler.keepgoingOnSuccess.description')}"><g:message code="Workflow.stepErrorHandler.label.keep.going.on.success" /></span>
             </g:if>
         </g:if>
     </span>
@@ -60,14 +60,14 @@
         </g:unless>
 
     <g:if test="${edit}">
-        <span class="wfitemcontrols controls " id="pfctrls_${i}" >
+        <span class="wfitemcontrols controls " id="pfctrls_${enc(attr:i)}" >
             <g:if test="${!isErrorHandler && !item.errorHandler}">
                 <span class="textbtn textbtn-success wfitem_add_errorhandler">
                     <i class="glyphicon glyphicon-plus"></i><g:message code="Workflow.stepErrorHandler.label"/></span>
             </g:if>
             <span class="textbtn textbtn-danger "
                   data-toggle="collapse"
-                  data-target="#itemdel_${i}"
+                  data-target="#itemdel_${enc(attr:i)}"
                   title="${g.message(code:'Workflow.'+(isErrorHandler?'stepErrorHandler':'step')+'.action.delete.label')}">
                 <i class="glyphicon glyphicon-remove"></i></span>
 
@@ -83,29 +83,28 @@
 
         <g:javascript>
 
-        fireWhenReady('wfitem_${i}',function(){
-            $('wfitem_${i}').select('span.autoedit').each(function(e){
+        fireWhenReady('wfitem_${enc(js:i)}',function(){
+            $('wfitem_${enc(js: i)}').select('span.autoedit').each(function(e){
                 Event.observe(e,'click',function(evt){
                     var f=$('workflowContent').down('form');
                     if(!f || 0==f.length){
-                        _wfiedit("${i}","${stepNum}",${isErrorHandler?true:false});
+                        _wfiedit("${enc(js: i)}","${enc(js:stepNum)}",${isErrorHandler?true:false});
                     }
                 });
             });
-            $('pfctrls_${i}').select('span.wfitem_edit').each(function(e){
+            $('pfctrls_${enc(js: i)}').select('span.wfitem_edit').each(function(e){
                 Event.observe(e,'click',function(evt){
                     var f=$('workflowContent').down('form');
                     if(!f || 0==f.length){
-                        _wfiedit("${i}","${stepNum}",${isErrorHandler?true:false});
+                        _wfiedit("${enc(js: i)}","${enc(js:stepNum)}",${isErrorHandler?true:false});
                     }
                 });
             });
-
-            $('pfctrls_${i}').select('span.wfitem_add_errorhandler').each(function(e){
+            $('pfctrls_${enc(js: i)}').select('span.wfitem_add_errorhandler').each(function(e){
                 Event.observe(e,'click',function(evt){
                     var f=$('workflowContent').down('form');
                     if(!f || 0==f.length){
-                        _wfishownewErrorHandler("${i}","${stepNum}",${!!item.nodeStep});
+                        _wfishownewErrorHandler("${enc(js: i)}","${enc(js:stepNum)}",${!!item.nodeStep});
                     }
                 });
             });
