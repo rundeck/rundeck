@@ -146,3 +146,8 @@ rundeck.gui.execution.tail.lines.max = 500
 rundeck.mail.template.subject='${notification.eventStatus} [${execution.project}] ${job.group}/${job.name} ${execution.argstring}'
 rundeck.security.useHMacRequestTokens=true
 rundeck.security.apiCookieAccess.enabled=true
+
+rundeck.web.metrics.servlets.metrics.enabled = true
+rundeck.web.metrics.servlets.ping.enabled = true
+rundeck.web.metrics.servlets.threads.enabled = true
+rundeck.web.metrics.servlets.healthcheck.enabled = true

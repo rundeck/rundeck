@@ -22,3 +22,8 @@ log4j = {
 
     warn   'org.mortbay.log'
 }
+
+rundeck.web.metrics.servlets.metrics.enabled=true
+rundeck.web.metrics.servlets.ping.enabled=true
+rundeck.web.metrics.servlets.threads.enabled=true
+rundeck.web.metrics.servlets.healthcheck.enabled=true

@@ -89,7 +89,7 @@ each HTTP reqest, and provides some utility methods to Controllers and Services 
             servletElement + {
                 'servlet' {
                     'servlet-name'("metrics-admin-servlet")
-                    'servlet-class'("com.codahale.metrics.servlets.AdminServlet")
+                    'servlet-class'("org.grails.plugins.metricsweb.DisablingAdminServlet")
                 }
             }
         }
