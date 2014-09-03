@@ -29,10 +29,7 @@ import java.util.*;
 
 import com.dtolabs.rundeck.core.common.PropertyRetriever;
 import com.dtolabs.rundeck.core.plugins.Plugin;
-import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
-import com.dtolabs.rundeck.plugins.descriptions.PluginProperty;
-import com.dtolabs.rundeck.plugins.descriptions.SelectValues;
-import com.dtolabs.rundeck.plugins.descriptions.TextArea;
+import com.dtolabs.rundeck.plugins.descriptions.*;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
 
@@ -170,6 +167,11 @@ public class PluginAdapterUtility {
             if (field.getAnnotation(TextArea.class) != null) {
                 renderBehaviour = StringRenderingConstants.DisplayType.MULTI_LINE;
             }
+
+            if (field.getAnnotation(Password.class) != null) {
+                renderBehaviour = StringRenderingConstants.DisplayType.PASSWORD;
+            }
+
             pbuild.renderingOption(StringRenderingConstants.DISPLAY_TYPE_KEY, renderBehaviour);
         }
 

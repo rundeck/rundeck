@@ -18,6 +18,7 @@ import com.dtolabs.rundeck.server.storage.StorageTreeFactory
 import org.rundeck.web.infosec.HMacSynchronizerTokensManager
 import groovy.io.FileType
 import org.springframework.core.task.SimpleAsyncTaskExecutor
+import rundeck.services.PasswordFieldsService
 
 beans={
     log4jConfigurer(org.springframework.beans.factory.config.MethodInvokingFactoryBean) {
@@ -148,4 +149,11 @@ beans={
     hMacSynchronizerTokensManager(HMacSynchronizerTokensManager){
 
     }
+
+    /**
+     * Track passwords on these plugins
+     */
+    resourcesPasswordFieldsService(PasswordFieldsService)
+    execPasswordFieldsService(PasswordFieldsService)
+    fcopyPasswordFieldsService(PasswordFieldsService)
 }

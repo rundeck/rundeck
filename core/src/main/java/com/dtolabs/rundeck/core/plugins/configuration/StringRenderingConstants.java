@@ -30,7 +30,8 @@ public class StringRenderingConstants {
 
     public enum DisplayType {
         SINGLE_LINE,
-        MULTI_LINE
+        MULTI_LINE,
+        PASSWORD
     }
     public enum SelectionAccessor{
         STORAGE_PATH,

@@ -10,7 +10,10 @@ import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
 import com.dtolabs.rundeck.core.authorization.providers.SAREAuthorization
 import com.dtolabs.rundeck.core.common.*
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
+import com.dtolabs.rundeck.core.execution.service.FileCopierService
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
+import com.dtolabs.rundeck.core.plugins.PluggableProviderRegistryService
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Description
@@ -29,6 +32,7 @@ import rundeck.PluginStep
 import rundeck.ScheduledExecution
 
 import javax.security.auth.Subject
+
 /**
  * Interfaces with the core Framework object
  */
@@ -756,5 +760,91 @@ class FrameworkService implements ApplicationContextAware {
         } catch (IOException e) {
         }
         return props
+    }
+
+    public def listResourceModelConfigurations(String project) {
+        def fproject = getFrameworkProject(project)
+        fproject.listResourceModelConfigurations()
+    }
+
+    /**
+     * Return all the descriptions for the Rundeck Framework
+     * @return tuple(resourceConfigs, nodeExec
+     */
+    public def listDescriptions() {
+        final fmk = getRundeckFramework()
+        final descriptions = fmk.getResourceModelSourceService().listDescriptions()
+        final nodeexecdescriptions = getNodeExecutorService().listDescriptions()
+        final filecopydescs = getFileCopierService().listDescriptions()
+        return [descriptions, nodeexecdescriptions, filecopydescs]
+    }
+
+    public getDefaultNodeExecutorService(String project) {
+        final fproject = getFrameworkProject(project)
+        fproject.hasProperty(NodeExecutorService.SERVICE_DEFAULT_PROVIDER_PROPERTY) ? fproject.getProperty(NodeExecutorService.SERVICE_DEFAULT_PROVIDER_PROPERTY) : null
+    }
+
+    public getDefaultFileCopyService(String project) {
+        final fproject = getFrameworkProject(project)
+        fproject.hasProperty(FileCopierService.SERVICE_DEFAULT_PROVIDER_PROPERTY) ? fproject.getProperty(FileCopierService.SERVICE_DEFAULT_PROVIDER_PROPERTY) : null
+    }
+
+    public Map<String, String> getFileCopyConfigurationForType(String serviceType, String project) {
+        getServicePropertiesForType(serviceType, getFileCopierService(), project)
+    }
+
+    public Map<String, String> getNodeExecConfigurationForType(String serviceType, String project) {
+        getServicePropertiesForType(serviceType, getNodeExecutorService(), project)
+    }
+
+    private void getServicePropertiesForType(String serviceType, PluggableProviderRegistryService service, String project) {
+        def properties = [:]
+        if (serviceType) {
+            try {
+                final desc = service.providerOfType(serviceType).description
+                properties = Validator.demapProperties(getFrameworkProject(project).getProperties(), desc)
+            } catch (ExecutionServiceException e) {
+                log.error(e.message)
+            }
+        }
+        properties
+    }
+
+
+    private ProviderService getFileCopierService() {
+        getRundeckFramework().getFileCopierService()
+    }
+
+    public ProviderService getNodeExecutorService() {
+        getRundeckFramework().getNodeExecutorService()
+    }
+
+    public void addProjectNodeExecutorPropertiesForType(String type, Properties projectProps, config, Set removePrefixes = null) {
+        addProjectServicePropertiesForType(type, getNodeExecutorService(), projectProps, NodeExecutorService.SERVICE_DEFAULT_PROVIDER_PROPERTY, config, removePrefixes)
+    }
+
+    public void addProjectFileCopierPropertiesForType(String type, Properties projectProps, config, Set removePrefixes = null) {
+        addProjectServicePropertiesForType(type, getFileCopierService(), projectProps, FileCopierService.SERVICE_DEFAULT_PROVIDER_PROPERTY, config, removePrefixes)
+    }
+
+    private void addProjectServicePropertiesForType(String type, ProviderService service, Properties projProps, String defaultProviderProp, config, Set removePrefixes) {
+        final executor = service.providerOfType(type)
+        final Description desc = executor.description
+
+        projProps[defaultProviderProp] = type
+        mapProperties(config, desc, projProps)
+        accumulatePrefixesToRemoveFrom(desc, removePrefixes)
+    }
+
+    private void accumulatePrefixesToRemoveFrom(Description desc, Set removePrefixes) {
+        if (null != removePrefixes && desc.propertiesMapping) {
+            removePrefixes.addAll(desc.propertiesMapping.values())
+        }
+    }
+
+    private void mapProperties(config, Description desc, Properties projectProperties) {
+        if (config && config instanceof Map) {
+            projectProperties.putAll(Validator.mapProperties(config, desc))
+        }
     }
 }
