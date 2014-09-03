@@ -1372,7 +1372,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def ScheduledExecution scheduledExecution=result.scheduledExecution
         def failed=result.failed
         if(!failed){
-            return _transientExecute(scheduledExecution,params,authContext, request.subject)
+            return _transientExecute(scheduledExecution,params,authContext)
         }else{
             return [success:false,failed:true,invalid:true,message:'Job configuration was incorrect.',scheduledExecution:scheduledExecution,params:params]
         }
@@ -1382,7 +1382,7 @@ class ScheduledExecutionController  extends ControllerBase{
     * Execute a transient ScheduledExecution and return execution data: [execution:Execution,id:Long]
      * if there is an error, return [error:'type',message:errormesg,...]
      */
-    private Map _transientExecute(ScheduledExecution scheduledExecution, Map params, AuthContext authContext, Subject subject){
+    private Map _transientExecute(ScheduledExecution scheduledExecution, Map params, AuthContext authContext){
         def object
         def isauth = scheduledExecutionService.userAuthorizedForAdhoc(params.request,scheduledExecution,authContext)
         if (!isauth){
@@ -1401,7 +1401,7 @@ class ScheduledExecutionController  extends ControllerBase{
             return [success:false,error:'failed',message:exc.getMessage()]
         }
 
-        def eid = scheduledExecutionService.scheduleTempJob(params.user, subject,params,e);
+        def eid = scheduledExecutionService.scheduleTempJob(authContext, e);
         return [success:true,execution:e,id:eid]
     }
 
@@ -1898,8 +1898,7 @@ class ScheduledExecutionController  extends ControllerBase{
             inputOpts.putAll(params.extra.subMap(['nodeIncludeName', 'loglevel',/*'argString',*/ 'optparams', 'option', '_replaceNodeFilters', 'filter']).findAll { it.value })
             inputOpts.putAll(params.extra.findAll{it.key.startsWith('option.')||it.key.startsWith('nodeInclude')|| it.key.startsWith('nodeExclude')}.findAll { it.value })
         }
-        def result = executionService.executeJob(scheduledExecution, authContext, request.subject,session.user,
-                inputOpts)
+        def result = executionService.executeJob(scheduledExecution, authContext,session.user, inputOpts)
 
         if (result.error){
             result.failed=true
@@ -2137,7 +2136,7 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }
 
-        def result = executionService.executeJob(scheduledExecution, authContext, request.subject, username, inputOpts)
+        def result = executionService.executeJob(scheduledExecution, authContext, username, inputOpts)
         if(!result.success){
             if(result.error=='unauthorized'){
                 return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,

@@ -4,7 +4,6 @@ import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.Timer
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.execution.ServiceThreadBase
-import org.quartz.JobDataMap
 import org.quartz.JobExecutionContext
 import com.dtolabs.rundeck.core.common.Framework
 import org.quartz.InterruptableJob
@@ -120,7 +119,7 @@ class ExecutionJob implements InterruptableJob {
         }
         saveState(context.jobDetail.jobDataMap,initMap.executionService, initMap.execution ? initMap.execution : (Execution) null, success,
             wasInterrupted, wasTimeout, initMap.isTemp,
-                initMap.scheduledExecutionId ? initMap.scheduledExecutionId : -1L,
+                initMap.scheduledExecutionId ? initMap.scheduledExecutionId : -1L,initMap,
                 result?.execmap)
     }
 
@@ -160,8 +159,6 @@ class ExecutionJob implements InterruptableJob {
 
     def initialize(JobExecutionContext context, def jobDataMap) {
         def initMap=[:]
-//        def jobDetail = context.getJobDetail()
-//        def jobDataMap = jobDetail.getJobDataMap()
         initMap.isTemp = "true"==jobDataMap.get("isTempExecution")
         if(initMap.isTemp){
             //temp execution, means no associated ScheduledExecution object
@@ -181,8 +178,8 @@ class ExecutionJob implements InterruptableJob {
         initMap.executionService = fetchExecutionService(jobDataMap)
         initMap.executionUtilService = fetchExecutionUtilService(jobDataMap)
         initMap.frameworkService = fetchFrameworkService(jobDataMap)
-        initMap.adbase = jobDataMap.get("rdeck.base")
         if(initMap.isTemp){
+            //an adhoc execution without associated job
             initMap.execution = Execution.get(initMap.executionId)
             if (!initMap.execution) {
                 throw new RuntimeException("failed to lookup Exception object from job data map: id: ${initMap.executionId}")
@@ -193,57 +190,39 @@ class ExecutionJob implements InterruptableJob {
             initMap.execution.refresh()
             FrameworkService frameworkService = initMap.frameworkService
             initMap.framework = frameworkService.rundeckFramework
-            def subject = jobDataMap.get("userSubject")
-            if(subject){
-                initMap.authContext = frameworkService.getAuthContextForSubject(subject)
-            }else{
-                def roles = jobDataMap.get("userRoles")
-                if (null == roles) {
-                    throw new RuntimeException("userRoleList not found in job data map")
-                }
-                def rolelist = Arrays.asList(roles.split(","))
-                initMap.authContext = frameworkService.getAuthContextForUserAndRoles(initMap.execution.user, rolelist)
-            }
+            initMap.authContext=jobDataMap.get('authContext')
         }else if(jobDataMap.get("executionId")){
-                initMap.executionId=jobDataMap.get("executionId")
-                initMap.secureOpts=jobDataMap.get("secureOpts")
-                initMap.secureOptsExposed=jobDataMap.get("secureOptsExposed")
+            //a job execution invoked by a user
+            initMap.executionId=jobDataMap.get("executionId")
+            initMap.secureOpts=jobDataMap.get("secureOpts")
+            initMap.secureOptsExposed=jobDataMap.get("secureOptsExposed")
+            initMap.execution = Execution.get(initMap.executionId)
+            //NOTE: Oracle/hibernate bug workaround: if session has not flushed we may have to wait until Execution.get
+            //can return the right entity
+            int retry=30
+            if(!initMap.execution){
+                log.warn("ExecutionJob: Execution not found with ID [${initMap.executionId}], will retry for up to 60 seconds...")
+            }
+            while(!initMap.execution && retry>0){
+                Thread.sleep(2000)
                 initMap.execution = Execution.get(initMap.executionId)
-                //NOTE: Oracle/hibernate bug workaround: if session has not flushed we may have to wait until Execution.get
-                //can return the right entity
-                int retry=30
-                if(!initMap.execution){
-                    log.warn("ExecutionJob: Execution not found with ID [${initMap.executionId}], will retry for up to 60 seconds...")
-                }
-                while(!initMap.execution && retry>0){
-                    Thread.sleep(2000)
-                    initMap.execution = Execution.get(initMap.executionId)
-                    retry--;
-                }
-                if (!initMap.execution) {
-                    throw new RuntimeException("Failed to find Execution with id: ${initMap.executionId}")
-                }
-                if(retry<30){
-                    log.info("ExecutionJob: Execution found with ID [${initMap.executionId}] retried (${30-retry})")
-                }
-                if (! initMap.execution instanceof Execution) {
-                    throw new RuntimeException("JobDataMap contained invalid Execution type: " + initMap.execution.getClass().getName())
-                }
-                initMap.execution.refresh()
-                FrameworkService frameworkService = initMap.frameworkService
-                initMap.framework = frameworkService.rundeckFramework
-                def subject = jobDataMap.get("userSubject")
-                if (subject) {
-                    initMap.authContext = frameworkService.getAuthContextForSubject(subject)
-                } else {
-                    def roles = jobDataMap.get("userRoles")
-                    if (null == roles) {
-                        throw new RuntimeException("userRoleList not found in job data map")
-                    }
-                    def rolelist = Arrays.asList(roles.split(","))
-                    initMap.authContext = frameworkService.getAuthContextForUserAndRoles(initMap.execution.user, rolelist)
-                }
+                retry--;
+            }
+            if (!initMap.execution) {
+                throw new RuntimeException("Failed to find Execution with id: ${initMap.executionId}")
+            }
+            if(retry<30){
+                log.info("ExecutionJob: Execution found with ID [${initMap.executionId}] retried (${30-retry})")
+            }
+            if (! initMap.execution instanceof Execution) {
+                throw new RuntimeException("JobDataMap contained invalid Execution type: " + initMap.execution.getClass().getName())
+            }
+            initMap.execution.refresh()
+            FrameworkService frameworkService = initMap.frameworkService
+            initMap.framework = frameworkService.rundeckFramework
+            initMap.authContext = jobDataMap.get('authContext')
         }else{
+            //a scheduled job that was triggered
             def serverUUID = jobDataMap.get("serverUUID")
             if (serverUUID != null && jobDataMap.get("bySchedule")) {
                 //verify scheduled job should be run on this node in cluster mode
@@ -253,13 +232,15 @@ class ExecutionJob implements InterruptableJob {
                     return initMap
                 }
             }
-//            initMap.framework = FrameworkService.getFrameworkForUserAndRoles(initMap.scheduledExecution.user,initMap.scheduledExecution.userRoles,initMap.adbase)
             FrameworkService frameworkService = initMap.frameworkService
             initMap.framework = frameworkService.rundeckFramework
             def rolelist = initMap.scheduledExecution.userRoles
             initMap.authContext = frameworkService.getAuthContextForUserAndRoles(initMap.scheduledExecution.user, rolelist)
             initMap.secureOptsExposed = initMap.executionService.selectSecureOptionInput(initMap.scheduledExecution,[:],true)
             initMap.execution = initMap.executionService.createExecution(initMap.scheduledExecution,initMap.scheduledExecution.user)
+        }
+        if (!initMap.authContext) {
+            throw new RuntimeException("authContext could not be determined")
         }
         return initMap
     }
@@ -378,7 +359,7 @@ class ExecutionJob implements InterruptableJob {
     def saveState(def jobDataMap, ExecutionService executionService,Execution execution, boolean success,
                   boolean _interrupted,
                   boolean timedOut,
-                  boolean isTemp, long scheduledExecutionId=-1, Map execmap) {
+                  boolean isTemp, long scheduledExecutionId=-1, Map initMap, Map execmap) {
         Map<String,Object> failedNodes=extractFailedNodes(execmap)
         Set<String> succeededNodes=extractSucceededNodes(execmap)
 
@@ -396,9 +377,8 @@ class ExecutionJob implements InterruptableJob {
         def saveStateComplete=false
         def saveStateException=null
         Map retryContext=[
-            user: jobDataMap?.get("user"),
-            userSubject: jobDataMap?.get("userSubject"),
-            authContext: jobDataMap?.get("authContext"),
+            user: execution.user,
+            authContext: jobDataMap?.get("authContext")?:initMap?.get("authContext"),
             secureOpts: jobDataMap?.get("secureOpts"),
             secureOptsExposed: jobDataMap?.get("secureOptsExposed"),
             retryAttempt: jobDataMap?.get("retryAttempt"),
