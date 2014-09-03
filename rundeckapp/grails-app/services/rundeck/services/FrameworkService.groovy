@@ -316,6 +316,9 @@ class FrameworkService implements ApplicationContextAware {
         if (null == project) {
             throw new IllegalArgumentException("null project")
         }
+        if (null == authContext) {
+            throw new IllegalArgumentException("null authContext")
+        }
         def Set decisions
         metricService.withTimer(this.class.name,'authorizeProjectResources') {
             decisions= authContext.evaluate(
@@ -337,6 +340,9 @@ class FrameworkService implements ApplicationContextAware {
         if (null == project) {
             throw new IllegalArgumentException("null project")
         }
+        if (null == authContext) {
+            throw new IllegalArgumentException("null authContext")
+        }
         def decision= metricService.withTimer(this.class.name,'authorizeProjectResource') {
             authContext.evaluate(
                     resource,
@@ -356,6 +362,9 @@ class FrameworkService implements ApplicationContextAware {
     def boolean authorizeProjectResourceAll(AuthContext authContext, Map resource, Collection actions, String project){
         if(null==project){
             throw new IllegalArgumentException("null project")
+        }
+        if (null == authContext) {
+            throw new IllegalArgumentException("null authContext")
         }
         def decisions= metricService.withTimer(this.class.name,'authorizeProjectResourceAll') {
             authContext.evaluate(
@@ -420,6 +429,9 @@ class FrameworkService implements ApplicationContextAware {
         if (null == project) {
             throw new IllegalArgumentException("null project")
         }
+        if (null == authContext) {
+            throw new IllegalArgumentException("null authContext")
+        }
         def decisions= metricService.withTimer(this.class.name,'authorizeProjectJobAll') {
             authContext.evaluate(
                     [authResourceForJob(job)] as Set,
@@ -437,6 +449,9 @@ class FrameworkService implements ApplicationContextAware {
      * @return
      */
     def boolean authorizeApplicationResource(AuthContext authContext, Map resource, String action) {
+        if (null == authContext) {
+            throw new IllegalArgumentException("null authContext")
+        }
 
         def decision = metricService.withTimer(this.class.name,'authorizeApplicationResource') {
             authContext.evaluate(
@@ -454,6 +469,9 @@ class FrameworkService implements ApplicationContextAware {
      * @return set of authorized resources
      */
     def Set authorizeApplicationResourceSet(AuthContext authContext, Set<Map> resources, String action) {
+        if (null == authContext) {
+            throw new IllegalArgumentException("null authContext")
+        }
         def decisions = metricService.withTimer(this.class.name,'authorizeApplicationResourceSet') {
             authContext.evaluate(
                     resources,
@@ -471,6 +489,9 @@ class FrameworkService implements ApplicationContextAware {
      * @return
      */
     def boolean authorizeApplicationResourceAll(AuthContext authContext, Map resource, Collection actions) {
+        if (null == authContext) {
+            throw new IllegalArgumentException("null authContext")
+        }
         def Set decisions = metricService.withTimer(this.class.name,'authorizeApplicationResourceAll') {
             authContext.evaluate(
                 [resource] as Set,
@@ -501,6 +522,9 @@ class FrameworkService implements ApplicationContextAware {
      */
     def boolean authorizeApplicationResourceType(AuthContext authContext, String resourceType, String action) {
 
+        if (null == authContext) {
+            throw new IllegalArgumentException("null authContext")
+        }
         def decision = metricService.withTimer(this.class.name,'authorizeApplicationResourceType') {
             authContext.evaluate(
                     AuthorizationUtil.resourceType(resourceType),
@@ -517,6 +541,9 @@ class FrameworkService implements ApplicationContextAware {
      * @return
      */
     def boolean authorizeApplicationResourceTypeAll(AuthContext authContext, String resourceType, Collection actions) {
+        if (null == authContext) {
+            throw new IllegalArgumentException("null authContext")
+        }
         def Set decisions= metricService.withTimer(this.class.name,'authorizeApplicationResourceType') {
             authContext.evaluate(
                     [AuthorizationUtil.resourceType(resourceType)] as Set,

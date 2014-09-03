@@ -89,6 +89,8 @@ class ExecutionJobTest  {
     @Test()
     void testInitializeJobExecution(){
         ScheduledExecution se = setupJob()
+        se.user='test'
+        se.userRoleList='a,b'
         ExecutionJob job = new ExecutionJob()
         def mockes=new GrailsMock(ExecutionService)
         def mockeus=new GrailsMock(ExecutionUtilService)
@@ -105,20 +107,19 @@ class ExecutionJobTest  {
             'fakeFramework'
         }
         mockfs.demand.getAuthContextForUserAndRoles(1..1) { user, rolelist ->
-
+            [dummy: true]
         }
         ExecutionService es = mockes.createMock()
         ExecutionUtilService eus = mockeus.createMock()
         FrameworkService fs = mockfs.createMock()
 
-        def contextMock = setupJobDataMap([scheduledExecutionId:se.id,frameworkService:fs,executionService:es,executionUtilService:eus,'rdeck.base':'/test/rdeck/base'])
+        def contextMock = setupJobDataMap([scheduledExecutionId:se.id,frameworkService:fs,executionService:es,executionUtilService:eus,authContext:[dummy:true]])
         def result=job.initialize(null, contextMock)
 
         Assert.assertEquals(se.id,result.scheduledExecutionId)
         Assert.assertEquals(se,result.scheduledExecution)
         Assert.assertEquals(es,result.executionService)
         Assert.assertEquals(eus,result.executionUtilService)
-        Assert.assertEquals("/test/rdeck/base",result.adbase)
         Assert.assertEquals([test:'input'],result.secureOptsExposed)
         Assert.assertEquals("fakeFramework",result.framework)
         Assert.assertEquals("fakeExecution",result.execution)
@@ -374,7 +375,7 @@ class ExecutionJobTest  {
         }
 
         def es = mockes.createMock()
-        job.saveState(null,es,execution,true,false,false,true,-1,execMap)
+        job.saveState(null,es,execution,true,false,false,true,-1,null,execMap)
         Assert.assertEquals(true,saveStateCalled)
     }
 
@@ -413,7 +414,7 @@ class ExecutionJobTest  {
         }
 
         def es = mockes.createMock()
-        def result=job.saveState(null,es,execution,true,false, false, false, scheduledExecution.id,execMap)
+        def result=job.saveState(null,es,execution,true,false, false, false, scheduledExecution.id,null,execMap)
         Assert.assertTrue(x)
         Assert.assertEquals(true, saveStateCalled)
     }
@@ -456,7 +457,7 @@ class ExecutionJobTest  {
 
         def es = mockes.createMock()
         job.statsRetryMax=2
-        def result=job.saveState(null,es,execution,true,false, false,false, scheduledExecution.id,execMap)
+        def result=job.saveState(null,es,execution,true,false, false,false, scheduledExecution.id,null,execMap)
         Assert.assertFalse(saveStatsComplete)
         Assert.assertEquals(true, saveStateCalled)
     }
@@ -498,7 +499,7 @@ class ExecutionJobTest  {
 
         def es = mockes.createMock()
         job.statsRetryMax=4
-        def result=job.saveState(null,es,execution,true,false, false,false, scheduledExecution.id,execMap)
+        def result=job.saveState(null,es,execution,true,false, false,false, scheduledExecution.id,null,execMap)
         Assert.assertTrue(saveStatsComplete)
         Assert.assertEquals(true, saveStateCalled)
     }
@@ -534,7 +535,7 @@ class ExecutionJobTest  {
         def es = mockes.createMock()
 
         job.finalizeRetryMax=2
-        def result=job.saveState(null,es,execution,true,false, false,true,-1,execMap)
+        def result=job.saveState(null,es,execution,true,false, false,true,-1,null,execMap)
         Assert.assertEquals(false,result)
     }
 

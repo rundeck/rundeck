@@ -752,7 +752,7 @@ class ScheduledExecutionControllerTests  {
                 assertEquals('adhoc',params.groupPath)
                 [failed: false, scheduledExecution: se]
             }
-            seServiceControl.demand.scheduleTempJob {user,subject,params,exec ->
+            seServiceControl.demand.scheduleTempJob { auth, exec ->
                 return exec.id
             }
             seServiceControl.demand.logJobChange {changeinfo, properties ->}
@@ -787,6 +787,7 @@ class ScheduledExecutionControllerTests  {
             def model= controller.runAdhoc()
 
             assertNull model.failed
+            assertTrue model.success
             assertNotNull model.execution
             assertNotNull exec.id
             assertEquals exec, model.execution
@@ -828,9 +829,7 @@ class ScheduledExecutionControllerTests  {
             assertEquals('adhoc',params.groupPath)
             [failed: false, scheduledExecution: se]
         }
-        seServiceControl.demand.scheduleTempJob {user,subject,params,exec ->
-            assertNotNull(params.filter)
-            assertEquals("name: rambo tags: balogna !hostname: somehostname !os-arch: x86",params.filter)
+        seServiceControl.demand.scheduleTempJob { auth, exec ->
             return exec.id
         }
         seServiceControl.demand.logJobChange {changeinfo, properties ->}
@@ -902,7 +901,7 @@ class ScheduledExecutionControllerTests  {
                 assertEquals('adhoc',params.groupPath)
                 [failed: true, scheduledExecution: se]
             }
-            seServiceControl.demand.scheduleTempJob {user,subject,params,exec ->
+            seServiceControl.demand.scheduleTempJob { auth, exec ->
                 return exec.id
             }
             seServiceControl.demand.logJobChange {changeinfo, properties ->}
@@ -973,7 +972,7 @@ class ScheduledExecutionControllerTests  {
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
         assertNotNull exec.save()
-        eServiceControl.demand.executeJob { scheduledExecution, authctx, subject, user, inparams ->
+        eServiceControl.demand.executeJob { scheduledExecution, authctx, user, inparams ->
             assert 'anonymous' == user
             return [executionId: exec.id, name: scheduledExecution.jobName, execution: exec,success:true]
         }
@@ -1056,7 +1055,7 @@ class ScheduledExecutionControllerTests  {
         )
         assertNotNull exec.save()
         eServiceControl.demand.executeJob { ScheduledExecution scheduledExecution, AuthContext authContext,
-                                            Subject subject, String user,
+                                            String user,
                                             Map input ->
             assert userName == user
             return [executionId: exec.id, name: scheduledExecution.jobName, execution: exec,success:true]
@@ -1131,8 +1130,7 @@ class ScheduledExecutionControllerTests  {
             true
         }
 
-        seServiceControl.demand.scheduleTempJob(1..1) { user, subject, params, e ->
-            assert 'testuser' == user
+        seServiceControl.demand.scheduleTempJob { auth, exec ->
             'fakeid'
         }
 
@@ -1214,8 +1212,7 @@ class ScheduledExecutionControllerTests  {
             true
         }
 
-        seServiceControl.demand.scheduleTempJob(1..1){ user, subject, params, e->
-            assert 'anonymous'==user
+        seServiceControl.demand.scheduleTempJob { auth, exec ->
             'fakeid'
         }
 
@@ -1304,8 +1301,7 @@ class ScheduledExecutionControllerTests  {
             true
         }
 
-        seServiceControl.demand.scheduleTempJob(1..1) { user, subject, params, e ->
-            assert 'anotheruser' == user
+        seServiceControl.demand.scheduleTempJob { auth, exec ->
             'fakeid'
         }
 

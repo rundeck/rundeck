@@ -592,13 +592,12 @@ class ScheduledExecutionService implements ApplicationContextAware{
     /**
      * Schedule a stored job to execute immediately, include a set of params in the data map
      */
-    def long scheduleTempJob(ScheduledExecution se, String user, Subject subject, AuthContext authContext,
+    def long scheduleTempJob(ScheduledExecution se, String user, AuthContext authContext,
                              Execution e, long timeout, Map secureOpts =null,
                              Map secureOptsExposed =null, int retryAttempt = 0) {
 
         def jobDetail = createJobDetail(se, "TEMP:" + user + ":" + se.id + ":" + e.id, user + ":run:" + se.id)
         jobDetail.getJobDataMap().put("user", user)
-        jobDetail.getJobDataMap().put("userSubject", subject)
         jobDetail.getJobDataMap().put("authContext", authContext)
         jobDetail.getJobDataMap().put("executionId", e.id.toString())
         jobDetail.getJobDataMap().put("timeout", timeout)
@@ -629,15 +628,13 @@ class ScheduledExecutionService implements ApplicationContextAware{
     /**
      * Schedule a temp job to execute immediately.
      */
-    def long scheduleTempJob(String user, Subject subject, Map params, Execution e) {
+    def long scheduleTempJob(AuthContext authContext, Execution e) {
         def ident = getJobIdent(null, e);
         def jobDetail = new JobDetail(ident.jobname, ident.groupname, ExecutionJob)
         jobDetail.setDescription("Execute command: " + e)
         jobDetail.getJobDataMap().put("isTempExecution", "true")
         jobDetail.getJobDataMap().put("executionId", e.id.toString())
-        jobDetail.getJobDataMap().put("rdeck.base", frameworkService.getRundeckBase())
-        jobDetail.getJobDataMap().put("userSubject", subject)
-//        jobDetail.addJobListener("sessionBinderListener")
+        jobDetail.getJobDataMap().put("authContext", authContext)
         jobDetail.addJobListener("defaultGrailsServiceInjectorJobListener")
 
         def Trigger trigger = TriggerUtils.makeImmediateTrigger(0, 0)

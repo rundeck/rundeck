@@ -1050,7 +1050,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     dateCompleted:new Date(),
                     cancelled:true,
                     abortedby: userIdent
-                    ]
+                    ],
+                    null,
+                    null
                 )
             abortstate=ABORT_ABORTED
             jobstate=EXECUTION_ABORTED
@@ -1315,11 +1317,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param input, map of input overrides, allowed keys: nodeIncludeName: Collection/String, loglevel: String, argString: String, optparams: Map,   option.*: String, option: Map, _replaceNodeFilters:true/false, filter: String
      * @return
      */
-    public Map executeJob(ScheduledExecution scheduledExecution, AuthContext authContext, Subject subject, String user,
-                          Map input) {
+    public Map executeJob(ScheduledExecution scheduledExecution, AuthContext authContext, String user, Map input) {
         def secureOpts = selectSecureOptionInput(scheduledExecution, input)
         def secureOptsExposed = selectSecureOptionInput(scheduledExecution, input, true)
-       return retryExecuteJob(scheduledExecution,authContext,subject,user,input,secureOpts,secureOptsExposed,0)
+        return retryExecuteJob(scheduledExecution, authContext, user, input, secureOpts, secureOptsExposed, 0)
     }
     /**
      * retry a job execution
@@ -1334,7 +1335,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param attempt
      * @return
      */
-    public Map retryExecuteJob(ScheduledExecution scheduledExecution, AuthContext authContext, Subject subject,
+    public Map retryExecuteJob(ScheduledExecution scheduledExecution, AuthContext authContext,
                                String user, Map input, Map secureOpts=[:], Map secureOptsExposed = [:], int attempt) {
         if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
                 scheduledExecution.project)) {
@@ -1350,7 +1351,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             if (e.timeout) {
                 timeout = evaluateTimeoutDuration(e.timeout)
             }
-            def eid = scheduledExecutionService.scheduleTempJob(scheduledExecution, user, subject, authContext, e,
+            def eid = scheduledExecutionService.scheduleTempJob(scheduledExecution, user, authContext, e,
                     timeout,
                     secureOpts, secureOptsExposed,e.retryAttempt)
             return [success: true, executionId: eid, name: scheduledExecution.jobName, execution: e]
@@ -1734,7 +1735,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         filter: execution.filter //TODO: failed nodes?
                 ]
                 def result = retryExecuteJob(scheduledExecution, retryContext.authContext,
-                        retryContext.userSubject, retryContext.user, input, retryContext.secureOpts,
+                        retryContext.user, input, retryContext.secureOpts,
                         retryContext.secureOptsExposed, count + 1)
                 if(result.success){
                     execution.retryExecution=result.execution
