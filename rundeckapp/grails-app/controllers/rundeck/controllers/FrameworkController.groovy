@@ -872,7 +872,7 @@ class FrameworkController extends ControllerBase {
             def Set<String> removePrefixes=[]
             removePrefixes<< FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY
 
-            (defaultNodeExec, nodeexec, nodeexecreport) = parseDefaultNodeExec(errors, projProps, removePrefixes, defaultNodeExec, nodeexec, nodeexecreport)
+            (defaultNodeExec, nodeexec, nodeexecreport) = parseDefaultNodeExec(errors, projProps, removePrefixes, nodeexecdescriptions, defaultNodeExec, nodeexec, nodeexecreport)
 
             if (params.defaultFileCopy) {
                 def ndx=params.defaultFileCopy
@@ -998,7 +998,7 @@ class FrameworkController extends ControllerBase {
             configs: configs])
     }
 
-    private List parseDefaultNodeExec(ArrayList errors, Properties projProps, Set<String> removePrefixes, defaultNodeExec, nodeexec, nodeexecreport) {
+    private List parseDefaultNodeExec(ArrayList errors, Properties projProps, Set<String> removePrefixes, nodeexecdescriptions, defaultNodeExec, nodeexec, nodeexecreport) {
         if (!params.defaultNodeExec) {
             [defaultNodeExec, nodeexec, nodeexecreport]
         }
@@ -1017,8 +1017,7 @@ class FrameworkController extends ControllerBase {
             } else {
                 try {
                     def (type, config) = parseServiceConfigInput(params, "nodeexec", ndx)
-                    def nodeExecDescription = frameworkService.listDescriptions()[1]
-                    execPasswordFieldsService.untrack([[config:[type:type, props:config],index:0]], *nodeExecDescription)
+                    execPasswordFieldsService.untrack([[config:[type:type, props:config],index:0]], *nodeexecdescriptions)
                     frameworkService.addProjectNodeExecutorPropertiesForType(type, projProps, config, removePrefixes)
                 } catch (ExecutionServiceException e) {
                     log.error(e.message)

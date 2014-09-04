@@ -119,11 +119,14 @@ class PasswordFieldsService {
     public int untrack(configurations, Description... descriptions) {
         def count = 0
         for(resource in configurations) {
+            if (resource == null) {
+                continue
+            }
             Map config=resource.config
-            Integer configurationPosition=resource.index
             if(config == null) {
                 continue
             }
+            Integer configurationPosition = resource.index
 
 
 
