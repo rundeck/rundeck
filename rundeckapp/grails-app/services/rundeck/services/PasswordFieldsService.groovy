@@ -29,7 +29,7 @@ class PasswordFieldsService {
 
     static scope = "session"
 
-    private Map<String, String> fields = new HashMap<String, String>()
+    private Map<Fieldkey, Map<String,String>> fields = new HashMap<Fieldkey, Map<String, String>>()
     private final sessionPassphrase = generateSessionPassphrase()
 
     private static String generateSessionPassphrase() {
@@ -64,7 +64,7 @@ class PasswordFieldsService {
 
     private void shift(int pos) {
         fields.keySet().findAll {
-            it.endsWith(Integer.toString(pos))
+            it.position==pos
         }.each {
             fields.remove(it)
         }
@@ -101,13 +101,49 @@ class PasswordFieldsService {
                     def h = hash(value)
 
                     config.props[key] = h
-                    fields.put(key + configPos, [original: value, hash: h])
+                    fields.put(fieldKey(key, configPos), [original: value, hash: h])
                     count++
                 }
             }
             configPos++
         }
         return count
+    }
+
+    /**
+     * generate a key object
+     * @param key
+     * @param configPos
+     * @return
+     */
+    private static Fieldkey fieldKey(String key, int configPos) {
+        [name: key, position: configPos] as Fieldkey
+    }
+    /**
+     * Key class suitable for hash map
+     */
+    static class Fieldkey {
+        String name
+        Integer position
+
+        boolean equals(o) {
+            if (this.is(o)) return true
+            if (getClass() != o.class) return false
+
+            Fieldkey keyvalue = (Fieldkey) o
+
+            if (name != keyvalue.name) return false
+            if (position != keyvalue.position) return false
+
+            return true
+        }
+
+        int hashCode() {
+            int result
+            result = name.hashCode()
+            result = 31 * result + position.hashCode()
+            return result
+        }
     }
 
     /**
@@ -143,13 +179,13 @@ class PasswordFieldsService {
                 String key = property.getName()
                 String value = config.props[key]
 
-                if (!fields.containsKey(key + configurationPosition)) {
+                if (!fields.containsKey(fieldKey(key, configurationPosition))) {
                     config.props[key] = value
                     continue
                 }
 
 
-                def field = fields[key + configurationPosition]
+                def field = fields[fieldKey(key, configurationPosition)]
 
                 if (value != field.hash) {
                     config.props[key] = value
@@ -157,7 +193,7 @@ class PasswordFieldsService {
                     config.props[key] = field.original
                 }
 
-                fields.remove(key + configurationPosition)
+                fields.remove(fieldKey(key, configurationPosition))
                 count++
 
             }
