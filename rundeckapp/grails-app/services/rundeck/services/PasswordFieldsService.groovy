@@ -110,10 +110,17 @@ class PasswordFieldsService {
         return count
     }
 
+    /**
+     * Untrack hashed password values
+     * @param configurations list of Maps.  Each map has entries: [ config: [type: String, props: Map], index: Integer]
+     * @param descriptions plugin descriptions
+     * @return
+     */
     public int untrack(configurations, Description... descriptions) {
         def count = 0
-        def configurationPosition = 0
-        for(config in configurations) {
+        for(resource in configurations) {
+            Map config=resource.config
+            Integer configurationPosition=resource.index
             if(config == null) {
                 continue
             }
@@ -122,7 +129,6 @@ class PasswordFieldsService {
 
             Description desc = descriptions.find { it.name == config.type }
             if (desc == null) {
-                configurationPosition++
                 continue
             }
 
@@ -152,8 +158,6 @@ class PasswordFieldsService {
                 count++
 
             }
-
-            configurationPosition++
         }
         count
     }

@@ -858,8 +858,10 @@ class FrameworkController extends ControllerBase {
 
         def framework = frameworkService.getRundeckFramework()
 
+        def (resourceModelSourceDescriptions, nodeexecdescriptions, filecopydescs) = frameworkService.listDescriptions()
         def errors=[]
         def configs = []
+        def resourceMappings = []
         def defaultNodeExec
         def defaultFileCopy
         def nodeexec, fcopy
@@ -886,8 +888,7 @@ class FrameworkController extends ControllerBase {
                     }else{
                         try {
                             def (type, config) = parseServiceConfigInput(params, "fcopy", ndx)
-                            def nodeExecDescription = frameworkService.listDescriptions()[2]
-                            execPasswordFieldsService.untrack([[type:type, props:config]], *nodeExecDescription)
+                            execPasswordFieldsService.untrack([[config:[type:type, props:config],index:0]], * filecopydescs)
                             frameworkService.addProjectFileCopierPropertiesForType(type, projProps, config, removePrefixes)
                         } catch (ExecutionServiceException e) {
                             log.error(e.message)
@@ -900,10 +901,10 @@ class FrameworkController extends ControllerBase {
 
             //parse plugin config properties, and convert to project.properties
             def sourceConfigPrefix = FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX
-            def ndxes = [params.list('index')].flatten()
+            def ndxes = [params.list('index')].flatten().collect { Integer.valueOf(it) }
 
 
-            resourcesPasswordFieldsService.adjust(ndxes.collect { Integer.valueOf(it) })
+            resourcesPasswordFieldsService.adjust(ndxes)
 
             def count = 1
             ndxes.each {ndx ->
@@ -939,18 +940,24 @@ class FrameworkController extends ControllerBase {
                 Properties props = new Properties()
                 props.putAll(mapprops)
 
+                //store the parsed config
                 def config = [type: type, props: props]
                 configs << config
-
-                resourcesPasswordFieldsService.untrack(configs, description)
-
-                props.keySet().each {k ->
-                    if(props[k]){
+                resourceMappings<<[config:config,prefix: resourceConfigPrefix,index:ndx-1]
+            }
+            //replace any unmodified password fields with the session data
+            resourcesPasswordFieldsService.untrack(resourceMappings, *resourceModelSourceDescriptions)
+            //for each resources model source definition, add project properties from the input config
+            resourceMappings.each{ Map mapping->
+                def props=mapping.config.props
+                def resourceConfigPrefix=mapping.prefix
+                props.keySet().each { k ->
+                    if (props[k]) {
                         projProps[resourceConfigPrefix + k] = props[k]
                     }
                 }
-
             }
+
             removePrefixes << FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX
 
             if (!errors) {
@@ -973,7 +980,6 @@ class FrameworkController extends ControllerBase {
             request.errors=errors
         }
 
-        def (descriptions, nodeexecdescriptions, filecopydescs) = frameworkService.listDescriptions()
 
         return render(view:'editProject',model:
         [
@@ -985,7 +991,7 @@ class FrameworkController extends ControllerBase {
             defaultFileCopy: defaultFileCopy,
             nodeExecDescriptions: nodeexecdescriptions,
             fileCopyDescriptions: filecopydescs,
-            resourceModelConfigDescriptions: descriptions,
+            resourceModelConfigDescriptions: resourceModelSourceDescriptions,
             nodeexecreport: nodeexecreport,
             fcopyreport: fcopyreport,
             prefixKey: prefixKey,
@@ -1012,7 +1018,7 @@ class FrameworkController extends ControllerBase {
                 try {
                     def (type, config) = parseServiceConfigInput(params, "nodeexec", ndx)
                     def nodeExecDescription = frameworkService.listDescriptions()[1]
-                    execPasswordFieldsService.untrack([[type:type, props:config]], *nodeExecDescription)
+                    execPasswordFieldsService.untrack([[config:[type:type, props:config],index:0]], *nodeExecDescription)
                     frameworkService.addProjectNodeExecutorPropertiesForType(type, projProps, config, removePrefixes)
                 } catch (ExecutionServiceException e) {
                     log.error(e.message)
