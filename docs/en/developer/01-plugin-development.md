@@ -218,6 +218,21 @@ construct one by using the
 Newer plugin types support using java annotations to create a Description object.
 See [Plugin Annotations](plugin-annotations.html).
 
+#### Description Properties
+
+Within a Description object you can define a set of Property objects, which represent the input properties for the plugin.
+
+Some plugin types support using Java Annotations to define properties, see [Plugin Annotations](plugin-annotations.html).
+
+For the remaining plugin types, the Properties must be defined using the other interfaces described above, typically with the use of a [PropertyBuilder](../javadoc/com/dtolabs/rundeck/plugins/util/PropertyBuilder.html).
+
+**Rendering Options**
+
+You can specify "rendering options" to affect the property being rendered in the Rundeck GUI.  These affect Property type *String* only:
+
+* Textarea: renders the input as a multi-line text area.
+* Password: renders the input as a password input.
+
 
 ## Script Plugin Development
 
