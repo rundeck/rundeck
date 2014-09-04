@@ -98,11 +98,13 @@ class PasswordFieldsService {
                 if (isPasswordDisplay(property)) {
                     String key = property.getName()
                     String value = config.props[key]
-                    def h = hash(value)
+                    if(value!=null){
+                        def h = hash(value)
 
-                    config.props[key] = h
-                    fields.put(fieldKey(key, configPos), [original: value, hash: h])
-                    count++
+                        config.props[key] = h
+                        fields.put(fieldKey(key, configPos), [original: value, hash: h])
+                        count++
+                    }
                 }
             }
             configPos++
