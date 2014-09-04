@@ -188,7 +188,11 @@ class PasswordFieldsService {
                 def field = fields[fieldKey(key, configurationPosition)]
 
                 if (value != field.hash) {
-                    config.props[key] = value
+                    if(value){
+                        config.props[key] = value
+                    }else{
+                        config.props.remove(key)
+                    }
                 } else {
                     config.props[key] = field.original
                 }
