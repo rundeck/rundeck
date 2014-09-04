@@ -5,10 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.dtolabs.rundeck.core.plugins.configuration.Property;
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil;
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyValidator;
+import com.dtolabs.rundeck.core.plugins.configuration.*;
 
 
 /**
@@ -188,6 +185,7 @@ public class PropertyBuilder {
     
     /**
      * Adds all rendering options from the given renderingOptions
+     * @see StringRenderingConstants
      */
     public PropertyBuilder renderingOptions(final Map<String, Object> renderingOptions) {
         this.renderingOptions.putAll(renderingOptions);
@@ -196,10 +194,33 @@ public class PropertyBuilder {
     
     /**
      * Adds the given renderingOption
+     * @see StringRenderingConstants
      */
     public PropertyBuilder renderingOption(final String optionKey, final Object optionValue) {
         this.renderingOptions.put(optionKey, optionValue);
         return this;
+    }
+    /**
+     * Set the string property to display as a Multi-line Text area.
+     * @throws IllegalStateException if the property type is not {@link Property.Type.String}
+     */
+    public PropertyBuilder renderingAsTextarea() {
+        if (this.type != Property.Type.String) {
+            throw new IllegalStateException("stringRenderingTextarea can only be applied to a String property");
+        }
+        return renderingOption(StringRenderingConstants.DISPLAY_TYPE_KEY, StringRenderingConstants.DisplayType
+                .MULTI_LINE);
+    }
+    /**
+     * Set the string property to display as a Password.
+     * @throws IllegalStateException if the property type is not {@link Property.Type.String}
+     */
+    public PropertyBuilder renderingAsPassword() {
+        if (this.type != Property.Type.String) {
+            throw new IllegalStateException("stringRenderingPassword can only be applied to a String property");
+        }
+        return renderingOption(StringRenderingConstants.DISPLAY_TYPE_KEY, StringRenderingConstants.DisplayType
+                .PASSWORD);
     }
 
     /**

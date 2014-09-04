@@ -19,15 +19,21 @@ package com.dtolabs.rundeck.core.plugins.configuration;
 /**
  * Constants that govern the different ways a {@link Property.Type.String} can be rendered.
  * 
- * User: Kim Ho <a href="mailto:kim.ho@salesforce.com">kim.ho@salesforce.com</a>
+ * @author Kim Ho <a href="mailto:kim.ho@salesforce.com">kim.ho@salesforce.com</a>
  */
 public class StringRenderingConstants {
     
     public static final String SELECTION_ACCESSOR_KEY = "selectionAccessor";
     public static final String STORAGE_PATH_ROOT_KEY = "storage-path-root";
     public static final String STORAGE_FILE_META_FILTER_KEY = "storage-file-meta-filter";
+    /**
+     * Rendering option key to set the display type of a String property
+     */
     public static final String DISPLAY_TYPE_KEY = "displayType";
 
+    /**
+     * Values that can be specified for a key of {@link #DISPLAY_TYPE_KEY}
+     */
     public enum DisplayType {
         SINGLE_LINE,
         MULTI_LINE,
