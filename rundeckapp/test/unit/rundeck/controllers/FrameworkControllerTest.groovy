@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.ScheduledExecution
@@ -326,13 +327,26 @@ class FrameworkControllerTest {
             getFwkPropertyMapping: { [:] }
     ] as Description
 
+    protected void setupFormTokens(FrameworkController sec) {
+        def token = SynchronizerTokensHolder.store(session)
+        sec.params[SynchronizerTokensHolder.TOKEN_KEY] = token.generateToken('/test')
+        sec.params[SynchronizerTokensHolder.TOKEN_URI] = '/test'
+    }
+    public void testSaveProjectInvalidRequestToken() {
+        controller.saveProject()
+        assertEquals('/common/error', view)
+        assertEquals("request.error.invalidtoken.message", request.getAttribute('errorCode'))
+    }
+
     public void testSaveProjectMissingProject() {
+        setupFormTokens(controller)
         controller.saveProject()
         assertEquals(view, "/common/error")
         assertNotNull(request.error)
     }
 
     public void testSaveProjectCancel() {
+        setupFormTokens(controller)
         params.cancel = "Cancel"
         params.project = "TestSaveProjectCancel"
         controller.saveProject()
@@ -396,6 +410,7 @@ class FrameworkControllerTest {
                 ]
         ]
 
+        setupFormTokens(controller)
         controller.saveProject()
 
         assertNull(view)
