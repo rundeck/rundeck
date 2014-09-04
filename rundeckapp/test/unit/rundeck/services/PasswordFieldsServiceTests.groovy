@@ -119,6 +119,20 @@ class PasswordFieldsServiceTests {
         ].collect { [config: it, index: i++] }
     }
 
+    private def genMultiConfiguration(int max=1) {
+        def list=[]
+        for(int j=0;j<max;j++){
+            list<<[
+                    config: [
+                            "type": "withPasswordDescription",
+                            "props": props("simple=text", "password=secret", "textField=a test field")
+                    ],
+                    index: j
+            ]
+        }
+        return list
+    }
+
     void testPasswordResetFields() {
         service.reset()
         assertEquals(0, service.tracking())
@@ -140,9 +154,17 @@ class PasswordFieldsServiceTests {
         assertEquals(0, service.tracking())
     }
 
+    void testAdjustFields() {
+        def cnf = genMultiConfiguration(12)
+        service.track(cnf*.config, withPasswordFieldDescription,noPasswordFieldDescription)
+        assertEquals(12, service.tracking())
+        assertEquals(1, service.adjust([2]))
+        assertEquals(11, service.tracking())
+    }
+
     void testTrackRemoveWithoutPassword() {
         def cnf = genConfiguration()
-        service.track(cnf, noPasswordFieldDescription)
+        service.track(cnf*.config, noPasswordFieldDescription)
         // index = [1,2]
         cnf = cnf.subList(0,1)
         // index = [1]
