@@ -793,11 +793,24 @@ class FrameworkService implements ApplicationContextAware {
         getServicePropertiesForType(serviceType, getFileCopierService(), project)
     }
 
+    /**
+     * Return a map of property name to value
+     * @param serviceType
+     * @param project
+     * @return
+     */
     public Map<String, String> getNodeExecConfigurationForType(String serviceType, String project) {
         getServicePropertiesForType(serviceType, getNodeExecutorService(), project)
     }
 
-    private void getServicePropertiesForType(String serviceType, PluggableProviderRegistryService service, String project) {
+    /**
+     * Return a map of property name to value for the configured project plugin
+     * @param serviceType
+     * @param service
+     * @param project
+     * @return
+     */
+    private Map<String,String> getServicePropertiesForType(String serviceType, PluggableProviderRegistryService service, String project) {
         def properties = [:]
         if (serviceType) {
             try {

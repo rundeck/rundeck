@@ -1046,7 +1046,7 @@ class FrameworkController extends ControllerBase {
         final defaultNodeExec = frameworkService.getDefaultNodeExecutorService(project)
         final defaultFileCopy = frameworkService.getDefaultFileCopyService(project)
 
-        final nodeConfig = frameworkService.getNodeExecConfigurationForType(defaultFileCopy, project)
+        final nodeConfig = frameworkService.getNodeExecConfigurationForType(defaultNodeExec, project)
         final filecopyConfig = frameworkService.getFileCopyConfigurationForType(defaultFileCopy, project)
         final resourceConfig = frameworkService.listResourceModelConfigurations(project)
 
@@ -1059,8 +1059,8 @@ class FrameworkController extends ControllerBase {
         // Replace the Password Fields in configs with hashes
 
         resourcesPasswordFieldsService.track(resourceConfig, *resourceDescs)
-        execPasswordFieldsService.track([nodeConfig], *execDesc)
-        fcopyPasswordFieldsService.track([filecopyConfig], *filecopyDesc)
+        execPasswordFieldsService.track([[type:defaultNodeExec,props:nodeConfig]], *execDesc)
+        fcopyPasswordFieldsService.track([[type:defaultFileCopy,props:filecopyConfig]], *filecopyDesc)
         // resourceConfig CRUD rely on this session mapping
         // saveProject will replace the password fields on change
 
