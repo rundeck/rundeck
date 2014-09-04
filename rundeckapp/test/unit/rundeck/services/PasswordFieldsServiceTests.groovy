@@ -229,6 +229,21 @@ class PasswordFieldsServiceTests {
 
     }
 
+    /**
+     * Input is not set for a password field
+     */
+    void testTrackDescriptionWithPasswordFieldNoValue() {
+        def cnf = genConfiguration()
+        cnf[0].config.props.remove('password')
+
+        Properties original = props("simple=text", "textField=a test field")
+        int count = service.track(cnf*.config, withPasswordFieldDescription)
+        assertEquals(0, count)
+        assertEquals(0, service.tracking())
+
+        assertNull("password should not be set", cnf[0].config.props["password"])
+    }
+
     void testUntrackDescriptionWithPasswordFieldNullArguments() {
         for(arg in [null, [null]]) {
             def cnf = genConfiguration()
