@@ -30,10 +30,12 @@
     </g:if>
 </g:if>
 <g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) == StringRenderingConstants.DisplayType.PASSWORD}">
+    <g:if test="${values[prop.name]}">
     <span class="configpair">
         <span title="${enc(attr:prop.description)}"><g:enc>${prop.title?:prop.name}</g:enc>:</span>
         <span class="text-success">&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;</span>
     </span>
+    </g:if>
 </g:elseif>
 <g:elseif test="${values[prop.name]}">
     <span class="configpair">
