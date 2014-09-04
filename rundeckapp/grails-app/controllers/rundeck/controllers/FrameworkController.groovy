@@ -3,6 +3,7 @@ package rundeck.controllers
 import com.dtolabs.rundeck.app.support.PluginConfigParams
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.common.ProviderService
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
@@ -871,33 +872,26 @@ class FrameworkController extends ControllerBase {
             def Properties projProps = new Properties()
             def Set<String> removePrefixes=[]
             removePrefixes<< FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY
-
-            (defaultNodeExec, nodeexec, nodeexecreport) = parseDefaultNodeExec(errors, projProps, removePrefixes, nodeexecdescriptions, defaultNodeExec, nodeexec, nodeexecreport)
-
-            if (params.defaultFileCopy) {
-                def ndx=params.defaultFileCopy
-                (defaultFileCopy, fcopy) = parseServiceConfigInput(params, "fcopy", ndx)
-                if (!(defaultFileCopy =~ /^[-_a-zA-Z0-9+][-\._a-zA-Z0-9+]*\u0024/)) {
-                    errors << "Default File copier provider name is invalid"
-                }else{
-                    final validation = frameworkService.validateServiceConfig(defaultFileCopy, "fcopy.${ndx}.config.", params, framework.getFileCopierService())
-                    if(!validation.valid){
-                        fcopyreport = validation.report
-                        errors <<validation.error? "File copier configuration was invalid: "+ validation.error : "File " +
-                                "copier configuration was invalid"
-                    }else{
-                        try {
-                            def (type, config) = parseServiceConfigInput(params, "fcopy", ndx)
-                            execPasswordFieldsService.untrack([[config:[type:type, props:config],index:0]], * filecopydescs)
-                            frameworkService.addProjectFileCopierPropertiesForType(type, projProps, config, removePrefixes)
-                        } catch (ExecutionServiceException e) {
-                            log.error(e.message)
-                            errors << e.getMessage()
-                        }
-                    }
+            if (params.defaultNodeExec) {
+                (defaultNodeExec, nodeexec, nodeexecreport) = parseDefaultPluginConfig(errors, params.defaultNodeExec, "nodeexec", frameworkService.getNodeExecutorService(),'Node Executor')
+                try {
+                    execPasswordFieldsService.untrack([[config: [type: defaultNodeExec, props: nodeexec], index: 0]], * nodeexecdescriptions)
+                    frameworkService.addProjectNodeExecutorPropertiesForType(defaultNodeExec, projProps, nodeexec, removePrefixes)
+                } catch (ExecutionServiceException e) {
+                    log.error(e.message)
+                    errors << e.getMessage()
                 }
             }
-            //removePrefixes << JschNodeExecutor.PROJ_PROP_SSH_KEYPATH
+            if (params.defaultFileCopy) {
+                (defaultFileCopy, fcopy, fcopyreport) = parseDefaultPluginConfig(errors, params.defaultFileCopy, "fcopy", frameworkService.getFileCopierService(),'File Copier')
+                try {
+                    fcopyPasswordFieldsService.untrack([[config: [type: defaultFileCopy, props: fcopy], index: 0]], * filecopydescs)
+                    frameworkService.addProjectFileCopierPropertiesForType(defaultFileCopy, projProps, fcopy, removePrefixes)
+                } catch (ExecutionServiceException e) {
+                    log.error(e.message)
+                    errors << e.getMessage()
+                }
+            }
 
             //parse plugin config properties, and convert to project.properties
             def sourceConfigPrefix = FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX
@@ -973,6 +967,7 @@ class FrameworkController extends ControllerBase {
                 def projectName = frameworkService.getFrameworkProject(project).name
                 def result = userService.storeFilterPref(session.user, [project: projectName])
                 flash.message = "Project ${project} saved"
+                //TODO: clear session stored password fields
                 return redirect(controller: 'menu', action: 'admin', params: [project: projectName])
             }
         }
@@ -998,34 +993,19 @@ class FrameworkController extends ControllerBase {
             configs: configs])
     }
 
-    private List parseDefaultNodeExec(ArrayList errors, Properties projProps, Set<String> removePrefixes, nodeexecdescriptions, defaultNodeExec, nodeexec, nodeexecreport) {
-        if (!params.defaultNodeExec) {
-            [defaultNodeExec, nodeexec, nodeexecreport]
-        }
-
-
-
-        def ndx = params.defaultNodeExec
-        (defaultNodeExec, nodeexec) = parseServiceConfigInput(params, "nodeexec", ndx)
-        if (!(defaultNodeExec =~ /^[-_a-zA-Z0-9+][-\._a-zA-Z0-9+]*\u0024/)) {
-            errors << "Default Node Executor provider name is invalid"
+    private List parseDefaultPluginConfig(ArrayList errors, ndx, String identifier, ProviderService service, String title) {
+        def (type, config) = parseServiceConfigInput(params, identifier, ndx)
+        def report
+        if (!(type =~ /^[-_a-zA-Z0-9+][-\._a-zA-Z0-9+]*\u0024/)) {
+            errors << "${title} provider name is invalid"
         } else {
-            final validation = frameworkService.validateServiceConfig(defaultNodeExec, "nodeexec.${ndx}.config.", params, frameworkService.getNodeExecutorService())
+            final validation = frameworkService.validateServiceConfig(type, identifier+".${ndx}.config.", params, service)
             if (!validation.valid) {
-                nodeexecreport = validation.report
-                errors << validation.error ? "Node Executor configuration was invalid: " + validation.error : "Node Executor configuration was invalid"
-            } else {
-                try {
-                    def (type, config) = parseServiceConfigInput(params, "nodeexec", ndx)
-                    execPasswordFieldsService.untrack([[config:[type:type, props:config],index:0]], *nodeexecdescriptions)
-                    frameworkService.addProjectNodeExecutorPropertiesForType(type, projProps, config, removePrefixes)
-                } catch (ExecutionServiceException e) {
-                    log.error(e.message)
-                    errors << e.getMessage()
-                }
+                report = validation.report
+                errors << validation.error ? "${title} configuration was invalid: " + validation.error : "${title} configuration was invalid"
             }
         }
-        [defaultNodeExec, nodeexec, nodeexecreport]
+        [type, config, report]
     }
 
     def editProject = {
@@ -1059,10 +1039,8 @@ class FrameworkController extends ControllerBase {
         resourcesPasswordFieldsService.reset()
         execPasswordFieldsService.reset()
         fcopyPasswordFieldsService.reset()
-        //resetPasswordFields(session.getAttribute("_passwordFields"))
         // Store Password Fields values in Session
         // Replace the Password Fields in configs with hashes
-
         resourcesPasswordFieldsService.track(resourceConfig, *resourceDescs)
         execPasswordFieldsService.track([[type:defaultNodeExec,props:nodeConfig]], *execDesc)
         fcopyPasswordFieldsService.track([[type:defaultFileCopy,props:filecopyConfig]], *filecopyDesc)
