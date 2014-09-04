@@ -236,6 +236,13 @@ class PasswordFieldsServiceTests {
             service.untrack(arg, withPasswordFieldDescription)
         }
     }
+    void testUntrackNullValueFields() {
+        def cnf = genConfiguration()
+        service.track(cnf*.config, withPasswordFieldDescription)
+        cnf[0].config.props.remove('password')
+        service.untrack(cnf, withPasswordFieldDescription)
+        assertNull(cnf[0].config.props.password)
+    }
 
     void testUntrackDescriptionWithPasswordField() {
         def cnf = genConfiguration()
