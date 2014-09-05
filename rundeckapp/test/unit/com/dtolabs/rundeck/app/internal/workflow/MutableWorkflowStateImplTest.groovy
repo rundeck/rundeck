@@ -8,6 +8,8 @@ import com.dtolabs.rundeck.core.execution.workflow.state.StepState
 import com.dtolabs.rundeck.core.execution.workflow.state.WorkflowState
 import com.dtolabs.rundeck.core.execution.workflow.state.WorkflowStepState
 
+import java.text.SimpleDateFormat
+
 import static com.dtolabs.rundeck.core.execution.workflow.state.StateUtils.*
 
 /**
@@ -699,6 +701,56 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
         assertEquals(ExecutionState.SUCCEEDED, step1.nodeStateMap['a'].executionState)
 
     }
+
+    void processStateChanges(MutableWorkflowStateImpl mutableWorkflowState, List<Map> changes) {
+        changes.each{Map change->
+            processStateChange(mutableWorkflowState,change)
+        }
+    }
+
+    protected void processStateChange(MutableWorkflowStateImpl mutableWorkflowState,Map change) {
+        if (change.workflow) {
+            mutableWorkflowState.updateWorkflowState(parseState(change.workflow.state),
+                    parseDate(change.workflow.date), change.workflow.nodes)
+        } else if (change.step) {
+            def stepchange = change.step.node ? stepStateChange(stepState(parseState(change.step.state)),
+                    change.step.node) : stepStateChange(stepState(parseState(change.step.state)))
+            def ident = parseStepIdent(change.step.ident)
+            def index = change.step.index ?: 0
+            def date = parseDate(change.step.date)
+
+            mutableWorkflowState.updateStateForStep(ident, index, stepchange,
+                    date)
+        } else if (change.subworkflow) {
+            mutableWorkflowState.updateSubWorkflowState(parseStepIdent(change.subworkflow.ident),
+                    change.subworkflow.index, change.subworkflow.quell ? true : false,
+                    parseState(change.subworkflow.state),
+                    parseDate(change.subworkflow.date), change.subworkflow.nodes, change.subworkflow.parent)
+        }
+    }
+
+
+
+    protected Date parseDate(date) {
+        if(date instanceof Date){
+            return date
+        }
+        def format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
+        format.parse(date)
+    }
+    protected ExecutionState parseState(state) {
+        if(state instanceof ExecutionState){
+            return state
+        }
+        ExecutionState.valueOf(state)
+    }
+    protected StepIdentifier parseStepIdent(ident) {
+        if(ident instanceof StepIdentifier){
+            return ident
+        }
+        StateUtils.stepIdentifierFromString(ident)
+    }
+
     /**
      * A step which is both a node-step and a sub-workflow step, should finalize correctly
      */
