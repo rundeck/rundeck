@@ -1,4 +1,13 @@
+<%@ page import="com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants" %>
 <g:set var="scopeinfo" value="${g.rkey()}"/>
+
+<g:if test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) == StringRenderingConstants.DisplayType.PASSWORD}">
+    <g:set var="propValue" value="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;"/>
+</g:if>
+<g:else>
+    <g:set var="propValue" value="${prop.defaultValue ?: 'value'}"/>
+</g:else>
+
 <g:unless test="${outofscopeShown}">
     <g:expander key="${scopeinfo}">Admin configuration info</g:expander>
 </g:unless>
@@ -12,8 +21,8 @@
             <g:else>
             <g:pluginPropertyProjectScopeKey provider="${pluginName}"
                                              service="${serviceName}"
-                                             property="${prop.name}"/>=<g:enc>${prop.defaultValue ?: 'value'}</g:enc>
-             </g:else>
+                                             property="${prop.name}"/>=<g:enc>${propValue}</g:enc>
+            </g:else>
         </code></div>
     </g:if>
     <g:if test="${propScope?.isFrameworkLevel() && (frameworkMapping&& frameworkMapping[prop.name] || !hideMissingFrameworkMapping )}">
@@ -27,14 +36,14 @@
             <g:else>
                 <g:pluginPropertyFrameworkScopeKey provider="${pluginName}"
                                                    service="${serviceName}"
-                                                   property="${prop.name}"/>=<g:enc>${prop.defaultValue ?: 'value'}</g:enc>
+                                                   property="${prop.name}"/>=<g:enc>${propValue}</g:enc>
             </g:else>
         </code>
             </div>
     </g:if>
     <div class="text-info">
         <g:if test="${prop.defaultValue}">
-            Default value: <code><g:enc>${prop.defaultValue}</g:enc></code>
+            Default value: <code><g:enc>${propValue}</g:enc></code>
         </g:if>
         <g:if test="${prop.selectValues}">
             Allowed values:

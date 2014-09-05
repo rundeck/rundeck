@@ -17,16 +17,22 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.ExtNodeFilters
+import com.dtolabs.rundeck.core.plugins.configuration.Description
+import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
 import rundeck.CommandExec
 import rundeck.Execution
-import rundeck.Option
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.WorkflowStep
 import rundeck.services.FrameworkService
+import rundeck.services.PasswordFieldsService
+import rundeck.services.PasswordFieldsServiceTests
+import rundeck.services.UserService
 
 /**
  * $INTERFACE is ...
@@ -231,5 +237,214 @@ class FrameworkControllerTest {
         assertEquals("name: monkey1",result.query.filter)
         assertNotNull(result.runCommand)
         assertEquals("a remote string",result.runCommand)
+    }
+
+    public void testEditProjectObscurePassword() {
+        given:
+        def fwk = mockFor(FrameworkService, true)
+
+        fwk.demand.getAuthContextForSubject {subject -> return null}
+        fwk.demand.authResourceForProject {project -> return null}
+        fwk.demand.authorizeApplicationResourceAll {ctx, e, actions -> true }
+
+        fwk.demand.listResourceModelConfigurations { project ->
+            [
+                    [
+                            "type": "withPasswordDescription",
+                            "props": PasswordFieldsServiceTests.props("simple=text", "password=secret", "textField=a test field")
+                    ],
+            ]
+        }
+        fwk.demand.listDescriptions { -> [[withPasswordFieldDescription], null, null] }
+        fwk.demand.getDefaultNodeExecutorService { -> null }
+        fwk.demand.getDefaultFileCopyService { -> null }
+        fwk.demand.getNodeExecConfigurationForType { -> null }
+        fwk.demand.getFileCopyConfigurationForType { -> null }
+
+        controller.frameworkService = fwk.createMock()
+
+        def resourcePFmck = mockFor(PasswordFieldsService)
+        def execPFmck = mockFor(PasswordFieldsService)
+        def fcopyPFmck = mockFor(PasswordFieldsService)
+
+        resourcePFmck.demand.reset{ -> return null}
+        resourcePFmck.demand.track{a, b -> return null}
+        execPFmck.demand.reset{ -> return null}
+        execPFmck.demand.track{a, b -> return null}
+        fcopyPFmck.demand.reset{ -> return null}
+        fcopyPFmck.demand.track{a, b -> return null}
+
+        controller.resourcesPasswordFieldsService = resourcePFmck.createMock()
+        controller.execPasswordFieldsService = execPFmck.createMock()
+        controller.fcopyPasswordFieldsService = fcopyPFmck.createMock()
+
+        def passwordFieldsService = new PasswordFieldsService()
+        passwordFieldsService.fields.put("dummy", "stuff")
+
+        controller.resourcesPasswordFieldsService = passwordFieldsService
+        params.project = "edit_test_project"
+
+        when:
+        def model = controller.editProject()
+
+        then:
+        assertEquals("plugin", model["prefixKey"])
+        assertEquals(model["project"], "edit_test_project")
+        assertEquals(1, model["configs"].size())
+        assertEquals(1, passwordFieldsService.fields.size())
+    }
+
+
+    static passwordField = [
+            getName: { "password" },
+            getRenderingOptions: {
+                [
+                        "displayType": StringRenderingConstants.DisplayType.PASSWORD,
+                ]
+            }
+    ] as Property
+
+    static textField = [
+            getName: { "textField" },
+            getRenderingOptions: {[:]}
+    ] as Property
+
+    static noPasswordFieldDescription = [
+            getName: { "noPasswordDescription" },
+            getTitle: { "No Password" },
+            getDescription: {"No Password Description" },
+            getProperties: { [textField] },
+            getPropertyMapping: { [:] },
+            getFwkPropertyMapping: { [:] }
+    ] as Description
+
+    static withPasswordFieldDescription = [
+            getName: { "withPasswordDescription" },
+            getTitle: { "With Password" },
+            getDescription: {"With Password Description" },
+            getProperties: { [textField, passwordField] },
+            getPropertyMapping: { [:] },
+            getFwkPropertyMapping: { [:] }
+    ] as Description
+
+    protected void setupFormTokens(FrameworkController sec) {
+        def token = SynchronizerTokensHolder.store(session)
+        sec.params[SynchronizerTokensHolder.TOKEN_KEY] = token.generateToken('/test')
+        sec.params[SynchronizerTokensHolder.TOKEN_URI] = '/test'
+    }
+    public void testSaveProjectInvalidRequestToken() {
+        controller.saveProject()
+        assertEquals('/common/error', view)
+        assertEquals("request.error.invalidtoken.message", request.getAttribute('errorCode'))
+    }
+
+    public void testSaveProjectMissingProject() {
+        setupFormTokens(controller)
+        controller.saveProject()
+        assertEquals(view, "/common/error")
+        assertNotNull(request.error)
+    }
+
+    public void testSaveProjectCancel() {
+        setupFormTokens(controller)
+        params.cancel = "Cancel"
+        params.project = "TestSaveProjectCancel"
+        controller.saveProject()
+        assertNull(view)
+        assertNull(request.error)
+
+    }
+
+    public void testSaveProjectNominal() {
+        def fwk = mockFor(FrameworkService, true)
+
+        fwk.demand.getAuthContextForSubject {subject -> return null}
+        fwk.demand.authResourceForProject {project -> return null}
+        fwk.demand.authorizeApplicationResourceAll {ctx, e, actions -> true }
+        fwk.demand.listDescriptions { -> [null, null, null] }
+        fwk.demand.getRundeckFramework { -> null }
+
+        fwk.demand.getFrameworkProject { project -> [name:project] }
+        fwk.demand.getNodeExecutorService { -> null }
+        fwk.demand.validateServiceConfig { a, b, c, d -> [valid:true] }
+        fwk.demand.getNodeExecutorService { -> null }
+        fwk.demand.addProjectNodeExecutorPropertiesForType {type, props, config, remove ->
+            props.setProperty("foobar", "barbaz")
+        }
+
+        fwk.demand.updateFrameworkProjectConfig { project, Properties props, removePrefixes ->
+            ["success":props.size() != 0]
+        }
+
+        controller.frameworkService = fwk.createMock()
+
+        def resourcePFmck = mockFor(PasswordFieldsService)
+        def execPFmck = mockFor(PasswordFieldsService)
+        def fcopyPFmck = mockFor(PasswordFieldsService)
+
+        resourcePFmck.demand.adjust{a -> return null}
+        resourcePFmck.demand.untrack{a, b -> return null}
+        execPFmck.demand.untrack{a, b -> return null}
+        fcopyPFmck.demand.untrack{a, b -> return null}
+
+        controller.resourcesPasswordFieldsService = resourcePFmck.createMock()
+        controller.execPasswordFieldsService = execPFmck.createMock()
+        controller.fcopyPasswordFieldsService = fcopyPFmck.createMock()
+
+        def us = mockFor(UserService)
+        us.demand.storeFilterPref { -> true }
+        controller.userService = us.createMock()
+
+        request.method = "POST"
+
+        params.project = "TestSaveProject"
+        params.defaultNodeExec = 1
+        params.nodeexec = [
+                "1": [
+                        type  : "foobar",
+                        config: [
+                                specialvalue1: "foobar",
+                                specialvalue2: "barfoo",
+                                specialvalue3: "fizbaz"
+                        ]
+                ]
+        ]
+
+        setupFormTokens(controller)
+        controller.saveProject()
+
+        assertNull(view)
+        assertNull(request.error)
+        assertEquals("Project TestSaveProject saved", flash.message)
+
+    }
+
+    public void skip_testSaveProjectPrefixKeyWrong() {
+        def fwk = mockFor(FrameworkService, true)
+
+        fwk.demand.getAuthContextForSubject { subject -> return null }
+        fwk.demand.authResourceForProject { project -> return null }
+        fwk.demand.authorizeApplicationResourceAll { ctx, e, actions -> true }
+        fwk.demand.listDescriptions { -> [null, null, null] }
+        fwk.demand.getRundeckFramework { -> null }
+        fwk.demand.updateFrameworkProjectConfig { a, b, c -> ["success": true] }
+        fwk.demand.getFrameworkProject { project -> [name: project] }
+        fwk.demand.getNodeExecutorService { -> null }
+        fwk.demand.validateServiceConfig { a, b, c, d -> [valid: true] }
+
+        controller.frameworkService = fwk.createMock()
+
+        def us = mockFor(UserService)
+        us.demand.storeFilterPref { -> true }
+        controller.userService = us.createMock()
+
+        params.project = "TestSaveProject"
+        request.method = "POST"
+        // nodeexec
+        params.defaultNodeExec = 1
+        params["nodexec.1.type"] = "foobar"  // the key isn't correct <<<<<=======
+        params["nodexec.1.config.specialvalue1"] = "foobar"
+
+        controller.saveProject()
     }
 }

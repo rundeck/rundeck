@@ -15,7 +15,8 @@
  */
 
 var ResourceModelConfigControl = Class.create({
-    configCount: 0,
+    configCount: 0,  /* This element is used by passwordFieldsService to track when resources are deleted.  Do not reuse
+     the configCount values after delete.  i.e. if you delete #2 and add a new resource, ensure that it is #3. */
     prefixKey: 'x',
     initialize: function(pfix) {
         if(pfix){
@@ -242,6 +243,7 @@ pageInit:function () {
         self.hidePicker();
     });
     //load widgets for any in-page configs
+    // widgets must be indexed from 1.  PasswordFieldsService depends on this ordering.
     var n = 0;
     $('configs').select('li div.inpageconfig').each(function(e) {
         n++;

@@ -19,22 +19,8 @@
     Author: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
     Created: 7/28/11 12:03 PM
  --%>
-
-<%@ page contentType="text/html;charset=UTF-8" %>
-<div title="${enc(attr:prop.description)}"><g:enc>${prop.title?:prop.name}</g:enc>:</div>
-<div>
-<g:if test="${prop.type.toString()=='Boolean'}">
-    <g:if test="${values[prop.name]=='true'}">
-        <span class="configvalue">Yes</span>
-    </g:if>
-    <g:else>
-        No
-    </g:else>
-</g:if>
-<g:elseif test="${values[prop.name]}">
-    <span class="configvalue"><g:enc>${values[prop.name]}</g:enc></span>
-</g:elseif>
+<%@ page import="com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants" contentType="text/html;charset=UTF-8" %>
+<g:set var="propValue" value="${enc(attr:values[prop.name])}"/>
 <g:if test="${includeFormFields && values[prop.name]}">
-    <input type="hidden" name="${enc(attr:prefix+ 'config.'+prop.name)}" value="${enc(attr:values[prop.name])}"/>
+    <input type="hidden" name="${enc(attr:prefix+ 'config.'+prop.name)}" value="${propValue}"/>
 </g:if>
-</div>

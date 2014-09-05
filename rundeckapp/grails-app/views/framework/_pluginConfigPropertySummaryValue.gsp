@@ -19,9 +19,7 @@
    Author: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
    Created: 7/28/11 12:03 PM
 --%>
-
-<%@ page contentType="text/html;charset=UTF-8" %>
-
+<%@ page import="com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants" contentType="text/html;charset=UTF-8" %>
 
 <g:if test="${prop.type.toString()=='Boolean'}">
     <g:if test="${values[prop.name]=='true'}">
@@ -31,6 +29,14 @@
         </span>
     </g:if>
 </g:if>
+<g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) == StringRenderingConstants.DisplayType.PASSWORD}">
+    <g:if test="${values[prop.name]}">
+    <span class="configpair">
+        <span title="${enc(attr:prop.description)}"><g:enc>${prop.title?:prop.name}</g:enc>:</span>
+        <span class="text-success">&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;</span>
+    </span>
+    </g:if>
+</g:elseif>
 <g:elseif test="${values[prop.name]}">
     <span class="configpair">
         <span title="${enc(attr:prop.description)}"><g:enc>${prop.title?:prop.name}</g:enc>:</span>

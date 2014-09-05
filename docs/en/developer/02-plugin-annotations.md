@@ -52,7 +52,8 @@ workflow configuration.
 These annotation classes are used:
 
 * [PluginProperty](../javadoc/com/dtolabs/rundeck/plugins/descriptions/PluginProperty.html) - Declares a class field as a plugin configuration property
-* [SelectValues](..//javadoc/com/dtolabs/rundeck/plugins/descriptions/SelectValues.html) - Declares a String property to be a "Select" property, which defines a set of input values that can be chosen from a list
+* [SelectValues](../javadoc/com/dtolabs/rundeck/plugins/descriptions/SelectValues.html) - Declares a String property to be a "Select" property, which defines a set of input values that can be chosen from a list
+* [TextArea](../javadoc/com/dtolabs/rundeck/plugins/descriptions/TextArea.html) - Declares a String property to be rendered as a multi-line text area in the Rundeck GUI.
 
 Attributes:
 

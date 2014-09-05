@@ -30,14 +30,11 @@ import java.util.List;
 import java.util.Map;
 
 import com.dtolabs.rundeck.core.plugins.configuration.*;
+import com.dtolabs.rundeck.plugins.descriptions.*;
 import junit.framework.TestCase;
 
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants.DisplayType;
-import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
-import com.dtolabs.rundeck.plugins.descriptions.PluginProperty;
-import com.dtolabs.rundeck.plugins.descriptions.SelectValues;
-import com.dtolabs.rundeck.plugins.descriptions.TextArea;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
 
@@ -259,6 +256,9 @@ public class PluginAdapterUtilityTest extends TestCase {
         @TextArea
         @PluginProperty(name = "textArea", title = "textAreaTitle", description = "textAreaDescription")
         private String textArea;
+        @Password
+        @PluginProperty
+        private String password;
     }
 
     public void testFieldTypesString() throws Exception {
@@ -293,6 +293,16 @@ public class PluginAdapterUtilityTest extends TestCase {
         assertEquals("textAreaDescription", p1.getDescription());
         assertEquals("textAreaTitle", p1.getTitle());
         assertEquals(DisplayType.MULTI_LINE, p1.getRenderingOptions().get(StringRenderingConstants.DISPLAY_TYPE_KEY));
+    }
+
+    public void testPassword() {
+        typeTest1 test = new typeTest1();
+        Description desc = PluginAdapterUtility.buildDescription(test, DescriptionBuilder.builder());
+        assertNotNull(desc);
+        HashMap<String, Property> map = mapOfProperties(desc);
+
+        Property p1 = map.get("password");
+        assertEquals(DisplayType.PASSWORD, p1.getRenderingOptions().get(StringRenderingConstants.DISPLAY_TYPE_KEY));
     }
 
     public void testSetTextArea() {
