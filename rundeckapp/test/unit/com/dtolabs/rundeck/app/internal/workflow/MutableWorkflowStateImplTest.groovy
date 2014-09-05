@@ -8,6 +8,8 @@ import com.dtolabs.rundeck.core.execution.workflow.state.StepState
 import com.dtolabs.rundeck.core.execution.workflow.state.WorkflowState
 import com.dtolabs.rundeck.core.execution.workflow.state.WorkflowStepState
 
+import java.text.SimpleDateFormat
+
 import static com.dtolabs.rundeck.core.execution.workflow.state.StateUtils.*
 
 /**
@@ -699,6 +701,770 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
         assertEquals(ExecutionState.SUCCEEDED, step1.nodeStateMap['a'].executionState)
 
     }
+
+    void processStateChanges(MutableWorkflowStateImpl mutableWorkflowState, List<Map> changes) {
+        changes.eachWithIndex{Map change, int ndx->
+            try{
+                processStateChange(mutableWorkflowState,change)
+            }catch (Throwable t){
+                t.printStackTrace(System.err)
+                fail("Error processing change: ${t}: ${ndx}: ${change}")
+            }
+        }
+    }
+
+    protected void processStateChange(MutableWorkflowStateImpl mutableWorkflowState,Map change) {
+        if (change.workflow) {
+            mutableWorkflowState.updateWorkflowState(parseState(change.workflow.state),
+                    parseDate(change.workflow.date), change.workflow.nodes)
+        } else if (change.step) {
+            def stepchange = change.step.node ? stepStateChange(stepState(parseState(change.step.state)),
+                    change.step.node) : stepStateChange(stepState(parseState(change.step.state)))
+            def ident = parseStepIdent(change.step.ident)
+            def index = change.step.index ?: 0
+            def date = parseDate(change.step.date)
+
+            mutableWorkflowState.updateStateForStep(ident, index, stepchange,
+                    date)
+        } else if (change.subworkflow) {
+            mutableWorkflowState.updateSubWorkflowState(parseStepIdent(change.subworkflow.ident),
+                    change.subworkflow.index, change.subworkflow.quell ? true : false,
+                    parseState(change.subworkflow.state),
+                    parseDate(change.subworkflow.date), change.subworkflow.nodes, change.subworkflow.parent)
+        }
+    }
+
+    public void testErrorHandlerSubworkflow1() {
+        def mutableStep1 = new MutableWorkflowStepStateImpl(stepIdentifier(1))
+        mutableStep1.nodeStep = false
+        MutableWorkflowStateImpl mutableWorkflowState = new MutableWorkflowStateImpl(['a'], 1, [0: mutableStep1]);
+
+        def date = new Date(123)
+        def newdate = new Date()
+        def changes=[]
+
+//        mutableWorkflowState.updateWorkflowState(ExecutionState.RUNNING, date, ['a'])
+        changes << [workflow:[state: ExecutionState.RUNNING, date: date, nodes: ['a']]]
+
+//        mutableWorkflowState.updateStateForStep(stepIdentifier(1), stepStateChange(stepState(ExecutionState.RUNNING)), newdate)
+        changes << [step: [ident:stepIdentifier(1), state: ExecutionState.RUNNING, date: newdate]]
+        //step 1: sub workflow
+//        mutableWorkflowState.updateSubWorkflowState(stepIdentifier(1), 0, false, ExecutionState.RUNNING, newdate, ['a' ], null)
+        changes << [subworkflow: [ident: stepIdentifier(1), index:0, quell:false, state: ExecutionState.RUNNING, date: newdate, nodes: ['a'] ]]
+//        mutableWorkflowState.updateStateForStep(stepIdentifier(1, 1), stepStateChange(stepState(ExecutionState.RUNNING)), newdate)
+        changes << [step: [ident: stepIdentifier(1,1), state: ExecutionState.RUNNING, date: newdate]]
+//        mutableWorkflowState.updateStateForStep(stepIdentifier(1,1), stepStateChange(stepState(ExecutionState.RUNNING), 'a'), newdate)
+        changes << [step: [ident: stepIdentifier(1, 1), state: ExecutionState.RUNNING, date: newdate, node: 'a']]
+//        mutableWorkflowState.updateStateForStep(stepIdentifier(1,1), stepStateChange(stepState(ExecutionState.FAILED), 'a'), newdate)
+        changes << [step: [ident: stepIdentifier(1, 1), state: ExecutionState.FAILED, date: newdate, node: 'a']]
+//        mutableWorkflowState.updateStateForStep(stepIdentifier(1, 1), stepStateChange(stepState(ExecutionState.FAILED)), newdate)
+        changes << [step: [ident: stepIdentifier(1, 1), state: ExecutionState.FAILED, date: newdate]]
+
+        changes << [step: [ident: stepIdentifier(1), state: ExecutionState.FAILED, date: newdate]]
+//        mutableWorkflowState.updateStateForStep(stepIdentifier(stepContextId(1, true)), stepStateChange(stepState(ExecutionState.RUNNING_HANDLER)), newdate)
+        changes << [step: [ident: stepIdentifier(stepContextId(1, true)), state: ExecutionState.RUNNING_HANDLER, date: newdate]]
+//        mutableWorkflowState.updateStateForStep(stepIdentifier(stepContextId(1, true)), stepStateChange(stepState(ExecutionState.RUNNING_HANDLER), 'a'), newdate)
+        changes << [step: [ident: stepIdentifier(stepContextId(1, true)), state: ExecutionState.RUNNING_HANDLER, date : newdate, node:'a']]
+//        mutableWorkflowState.updateStateForStep(stepIdentifier(stepContextId(1, true)), stepStateChange(stepState(ExecutionState.SUCCEEDED), 'a'), newdate)
+        changes << [step: [ident: stepIdentifier(stepContextId(1, true)), state: ExecutionState.SUCCEEDED, date: newdate, node: 'a']]
+//        mutableWorkflowState.updateStateForStep(stepIdentifier(stepContextId(1, true)), stepStateChange(stepState(ExecutionState.SUCCEEDED)), newdate)
+        changes << [step: [ident: stepIdentifier(stepContextId(1, true)), state: ExecutionState.SUCCEEDED, date: newdate]]
+
+        //finish
+//        mutableWorkflowState.updateWorkflowState(ExecutionState.SUCCEEDED, newdate, null)
+        changes << [workflow: [state: ExecutionState.SUCCEEDED, date: date]]
+        processStateChanges(mutableWorkflowState,changes)
+
+        assertEquals(ExecutionState.SUCCEEDED, mutableWorkflowState.executionState)
+        assertEquals(newdate, mutableWorkflowState.updateTime)
+        assertEquals(['a'], mutableWorkflowState.nodeSet)
+
+        def step1 = mutableWorkflowState[1]
+        assertStepId(1, step1.stepIdentifier)
+        assertEquals(ExecutionState.SUCCEEDED, step1.stepState.executionState)
+        assertEquals(['a'], step1.nodeStepTargets)
+        assertEquals(ExecutionState.SUCCEEDED, step1.nodeStateMap['a'].executionState)
+        def WorkflowState subWorkflowState = step1.subWorkflowState
+        assertEquals(ExecutionState.SUCCEEDED, subWorkflowState.executionState)
+        def WorkflowStepState subStepState1 = subWorkflowState.getStepStates()[0]
+        assertEquals(ExecutionState.FAILED, subStepState1.stepState.executionState)
+    }
+
+    /**
+     * Workflow step is a job reference, and the error handler is too
+     */
+    public void testSubworkflowErrorHandlerWorkflow() {
+        def mutableStep1 = new MutableWorkflowStepStateImpl(stepIdentifier(1))
+        mutableStep1.nodeStep = false
+        MutableWorkflowStateImpl mutableWorkflowState = new MutableWorkflowStateImpl(['localhost'], 1, [0: mutableStep1]);
+
+        processStateChange mutableWorkflowState,
+                ["workflow":
+                        [
+                                "date": "2014-09-05T19:16:14Z",
+                                "nodes": ["localhost"],
+                                "state": "RUNNING"
+                        ]
+                ]
+        processStateChange mutableWorkflowState,
+                ["step":
+                        [
+                                "state": "RUNNING",
+                                "date": "2014-09-05T19:16:14Z",
+                                "index": 0,
+                                "ident": "1"
+                        ]
+                ]
+        processStateChange mutableWorkflowState,
+                ["subworkflow":
+                        [
+                                "quell": false,
+                                "nodes": ["localhost"],
+                                "state": "RUNNING",
+                                "index": 0,
+                                "ident": "1",
+                                "date": "2014-09-05T19:16:14Z"
+                        ]
+                ]
+        processStateChange mutableWorkflowState,       [
+                        "step": [
+                                "state": "RUNNING",
+                                "date": "2014-09-05T19:16:14Z",
+                                "index": 0,
+                                "ident": "1/1"
+                        ]
+                ]
+        processStateChange mutableWorkflowState,
+                [
+                        "step": [
+                                "node": "localhost",
+                                "state": "RUNNING",
+                                "date": "2014-09-05T19:16:14Z",
+                                "index": 0,
+                                "ident": "1/1"
+                        ]
+                ]
+        processStateChange mutableWorkflowState,
+                [
+                        "step": [
+                                "node": "localhost",
+                                "meta": [
+                                        "failureReason": "NonZeroResultCode",
+                                        "resultCode": 1
+                                ],
+                                "state": "FAILED",
+                                "errorMessage": "Result code was 1",
+                                "date": "2014-09-05T19:16:15Z",
+                                "index": 0,
+                                "ident": "1/1"
+                        ]
+                ]
+        processStateChange mutableWorkflowState,
+                [
+                        "subworkflow": [
+                                "quell": false,
+                                "nodes": null,
+                                "state": "FAILED",
+                                "index": 0,
+                                "ident": "1",
+                                "date": "2014-09-05T19:16:15Z"
+                        ]
+                ]
+        processStateChange mutableWorkflowState,
+                [
+                        "step": [
+                                "meta": [
+                                        "handlerTriggered": "true"
+                                ],
+                                "state": "RUNNING_HANDLER",
+                                "errorMessage": null,
+                                "date": "2014-09-05T19:16:15Z",
+                                "index": 0,
+                                "ident": "1e"
+                        ]
+                ]
+        //error handler context allows transition from FAILED to RUNNING in this change
+        processStateChange mutableWorkflowState,
+                [
+                        "subworkflow": [
+                                "quell": false,
+                                "nodes": [
+                                        "alpha1",
+                                        "alpha2",
+                                        "alpha4"
+                                ],
+                                "state": "RUNNING",
+                                "index": 0,
+                                "ident": "1e",
+                                "date": "2014-09-05T19:16:15Z"
+                        ]
+                ]
+
+        assertEquals(ExecutionState.RUNNING, mutableWorkflowState.executionState)
+        assertEquals(['localhost'], mutableWorkflowState.nodeSet)
+
+        def step1 = mutableWorkflowState[1]
+        assertStepId(1, step1.stepIdentifier)
+        assertEquals(ExecutionState.RUNNING_HANDLER, step1.stepState.executionState)
+        def WorkflowState subWorkflowState = step1.subWorkflowState
+        assertEquals(ExecutionState.RUNNING, subWorkflowState.executionState)
+        def WorkflowStepState subStepState1 = subWorkflowState.getStepStates()[0]
+        assertEquals(['localhost'], subStepState1.nodeStepTargets)
+        assertEquals(ExecutionState.FAILED, subStepState1.nodeStateMap['localhost'].executionState)
+        assertEquals(ExecutionState.FAILED, subStepState1.stepState.executionState)
+    }
+    /**
+     * Workflow step is a job reference, and the error handler is too
+     */
+    public void testSubworkflowErrorHandlerWorkflow2() {
+        def mutableStep1 = new MutableWorkflowStepStateImpl(stepIdentifier(1))
+        mutableStep1.nodeStep = false
+        MutableWorkflowStateImpl mutableWorkflowState = new MutableWorkflowStateImpl(['localhost'], 1, [0: mutableStep1]);
+
+        processStateChange mutableWorkflowState, [
+                "workflow": [
+                        "date": "2014-09-05T19:57:37Z",
+                        "nodes": [
+                                "localhost"
+                        ],
+                        "state": "RUNNING"
+                ]
+        ]
+        processStateChange mutableWorkflowState,
+                [
+                        "step": [
+                                "meta": null,
+                                "state": "RUNNING",
+                                "errorMessage": null,
+                                "date": "2014-09-05T19:57:38Z",
+                                "index": 0,
+                                "ident": "1"
+                        ]
+                ]
+        processStateChange mutableWorkflowState,
+                [
+                        "subworkflow": [
+                                "quell": false,
+                                "nodes": [
+                                        "localhost"
+                                ],
+                                "state": "RUNNING",
+                                "index": 0,
+                                "ident": "1",
+                                "date": "2014-09-05T19:57:38Z"
+                        ]
+                ]
+        processStateChange mutableWorkflowState,
+                [
+                        "step": [
+                                "meta": null,
+                                "state": "RUNNING",
+                                "errorMessage": null,
+                                "date": "2014-09-05T19:57:38Z",
+                                "index": 0,
+                                "ident": "1/1"
+                        ]
+                ]
+        processStateChange mutableWorkflowState,
+                [
+                        "step": [
+                                "node": "localhost",
+                                "meta": null,
+                                "state": "RUNNING",
+                                "errorMessage": null,
+                                "date": "2014-09-05T19:57:38Z",
+                                "index": 0,
+                                "ident": "1/1"
+                        ]
+                ]
+        processStateChange mutableWorkflowState,
+                [
+                        "step": [
+                                "node": "localhost",
+                                "meta": [
+                                        "failureReason": "NonZeroResultCode",
+                                        "resultCode": 1
+                                ],
+                                "state": "FAILED",
+                                "errorMessage": "Result code was 1",
+                                "date": "2014-09-05T19:57:38Z",
+                                "index": 0,
+                                "ident": "1/1"
+                        ]
+                ]
+        processStateChange mutableWorkflowState,
+                [
+                        "subworkflow": [
+                                "quell": false,
+                                "nodes": null,
+                                "state": "FAILED",
+                                "index": 0,
+                                "ident": "1",
+                                "date": "2014-09-05T19:57:38Z"
+                        ]
+                ]
+        processStateChange mutableWorkflowState,
+                [
+                        "step": [
+                                "meta": [
+                                        "handlerTriggered": "true"
+                                ],
+                                "state": "RUNNING_HANDLER",
+                                "errorMessage": null,
+                                "date": "2014-09-05T19:57:38Z",
+                                "index": 0,
+                                "ident": "1e"
+                        ]
+                ]
+        processStateChange mutableWorkflowState,
+                [
+                        "subworkflow": [
+                                "quell": false,
+                                "nodes": [
+                                        "alpha1",
+                                        "alpha2",
+                                        "alpha4"
+                                ],
+                                "state": "RUNNING",
+                                "index": 0,
+                                "ident": "1e",
+                                "date": "2014-09-05T19:57:38Z"
+                        ]
+                ]
+        processStateChange mutableWorkflowState,
+                [
+                        "step": [
+                                "meta": null,
+                                "state": "RUNNING",
+                                "errorMessage": null,
+                                "date": "2014-09-05T19:57:38Z",
+                                "index": 0,
+                                "ident": "1e/1"
+                        ]
+                ]
+        processStateChange mutableWorkflowState,
+                [
+                        "step": [
+                                "node": "alpha1",
+                                "meta": null,
+                                "state": "RUNNING",
+                                "errorMessage": null,
+                                "date": "2014-09-05T19:57:38Z",
+                                "index": 0,
+                                "ident": "1e/1"
+                        ]
+                ]
+        processStateChange mutableWorkflowState,
+                [
+                        "step": [
+                                "node": "alpha1",
+                                "meta": null,
+                                "state": "SUCCEEDED",
+                                "errorMessage": null,
+                                "date": "2014-09-05T19:57:39Z",
+                                "index": 0,
+                                "ident": "1e/1"
+                        ]
+                ]
+        processStateChange mutableWorkflowState,
+                [
+                        "step": [
+                                "meta": null,
+                                "state": "RUNNING",
+                                "errorMessage": null,
+                                "date": "2014-09-05T19:57:39Z",
+                                "index": 0,
+                                "ident": "1e/1"
+                        ]
+                ]
+        processStateChange mutableWorkflowState,
+                [
+                        "step": [
+                                "node": "alpha2",
+                                "meta": null,
+                                "state": "RUNNING",
+                                "errorMessage": null,
+                                "date": "2014-09-05T19:57:39Z",
+                                "index": 0,
+                                "ident": "1e/1"
+                        ]
+                ]
+        processStateChange mutableWorkflowState,
+                [
+                        "step": [
+                                "node": "alpha2",
+                                "meta": null,
+                                "state": "SUCCEEDED",
+                                "errorMessage": null,
+                                "date": "2014-09-05T19:57:39Z",
+                                "index": 0,
+                                "ident": "1e/1"
+                        ]
+                ]
+        processStateChange mutableWorkflowState,
+                [
+                        "step": [
+                                "meta": null,
+                                "state": "RUNNING",
+                                "errorMessage": null,
+                                "date": "2014-09-05T19:57:39Z",
+                                "index": 0,
+                                "ident": "1e/1"
+                        ]
+                ]
+        processStateChange mutableWorkflowState,
+                [
+                        "step": [
+                                "node": "alpha4",
+                                "meta": null,
+                                "state": "RUNNING",
+                                "errorMessage": null,
+                                "date": "2014-09-05T19:57:39Z",
+                                "index": 0,
+                                "ident": "1e/1"
+                        ]
+                ]
+        processStateChange mutableWorkflowState,
+                [
+                        "step": [
+                                "node": "alpha4",
+                                "meta": null,
+                                "state": "SUCCEEDED",
+                                "errorMessage": null,
+                                "date": "2014-09-05T19:57:40Z",
+                                "index": 0,
+                                "ident": "1e/1"
+                        ]
+                ]
+        processStateChange mutableWorkflowState,
+                [
+                        "subworkflow": [
+                                "quell": false,
+                                "nodes": null,
+                                "state": "SUCCEEDED",
+                                "index": 0,
+                                "ident": "1e",
+                                "date": "2014-09-05T19:57:40Z"
+                        ]
+                ]
+        processStateChange mutableWorkflowState,
+                [
+                        "step": [
+                                "meta": null,
+                                "state": "RUNNING",
+                                "errorMessage": null,
+                                "date": "2014-09-05T19:57:40Z",
+                                "index": 0,
+                                "ident": "2"
+                        ]
+                ]
+        processStateChange mutableWorkflowState,
+                [
+                        "step": [
+                                "node": "localhost",
+                                "meta": null,
+                                "state": "RUNNING",
+                                "errorMessage": null,
+                                "date": "2014-09-05T19:57:40Z",
+                                "index": 0,
+                                "ident": "2"
+                        ]
+                ]
+        processStateChange mutableWorkflowState,
+                [
+                        "step": [
+                                "node": "localhost",
+                                "meta": null,
+                                "state": "SUCCEEDED",
+                                "errorMessage": null,
+                                "date": "2014-09-05T19:57:40Z",
+                                "index": 0,
+                                "ident": "2"
+                        ]
+                ]
+        processStateChange mutableWorkflowState,
+                [
+                        "workflow": [
+                                "date": "2014-09-05T19:57:40Z",
+                                "nodes": null,
+                                "state": "SUCCEEDED"
+                        ]
+                ]
+
+
+
+
+        assertEquals(ExecutionState.SUCCEEDED, mutableWorkflowState.executionState)
+        assertEquals(['localhost'], mutableWorkflowState.nodeSet)
+
+        def step1 = mutableWorkflowState[1]
+        assertStepId(1, step1.stepIdentifier)
+        assertEquals(ExecutionState.NODE_MIXED, step1.stepState.executionState)
+        def WorkflowState subWorkflowState = step1.subWorkflowState
+        assertEquals(ExecutionState.SUCCEEDED, subWorkflowState.executionState)
+        def WorkflowStepState subStepState1 = subWorkflowState.getStepStates()[0]
+        assertEquals(['localhost'], subStepState1.nodeStepTargets)
+        assertEquals(ExecutionState.FAILED, subStepState1.nodeStateMap['localhost'].executionState)
+        assertEquals(ExecutionState.SUCCEEDED, subStepState1.nodeStateMap['alpha1'].executionState)
+        assertEquals(ExecutionState.SUCCEEDED, subStepState1.nodeStateMap['alpha2'].executionState)
+        assertEquals(ExecutionState.SUCCEEDED, subStepState1.nodeStateMap['alpha4'].executionState)
+        assertEquals(ExecutionState.NODE_MIXED, subStepState1.stepState.executionState)
+    }
+    /**
+     * Workflow step is a node step, error handler is a subworkflow as node step
+     * Workflow error handler should ignore the node "parameter"
+     */
+    public void testSubworkflowErrorHandlerWorkflow3() {
+        def mutableStep1 = new MutableWorkflowStepStateImpl(stepIdentifier(1))
+        mutableStep1.nodeStep = true
+        MutableWorkflowStateImpl mutableWorkflowState = new MutableWorkflowStateImpl(['localhost'], 1, [0: mutableStep1]);
+
+        def changes= [
+                [
+                        "workflow": [
+                                "date": "2014-09-05T21:28:04Z",
+                                "nodes": [
+                                        "localhost"
+                                ],
+                                "state": "RUNNING"
+                        ]
+                ],
+                [
+                        "step": [
+                                "meta": null,
+                                "state": "RUNNING",
+                                "errorMessage": null,
+                                "date": "2014-09-05T21:28:04Z",
+                                "index": 0,
+                                "ident": "1"
+                        ]
+                ],
+                [
+                        "step": [
+                                "node": "localhost",
+                                "meta": null,
+                                "state": "RUNNING",
+                                "errorMessage": null,
+                                "date": "2014-09-05T21:28:04Z",
+                                "index": 0,
+                                "ident": "1"
+                        ]
+                ],
+                [
+                        "step": [
+                                "node": "localhost",
+                                "meta": [
+                                        "failureReason": "NonZeroResultCode"
+                                ],
+                                "state": "FAILED",
+                                "errorMessage": "Result code was 1",
+                                "date": "2014-09-05T21:28:04Z",
+                                "index": 0,
+                                "ident": "1"
+                        ]
+                ],
+                [
+                        "step": [
+                                "meta": [
+                                        "handlerTriggered": "true"
+                                ],
+                                "state": "RUNNING_HANDLER",
+                                "errorMessage": null,
+                                "date": "2014-09-05T21:28:04Z",
+                                "index": 0,
+                                "ident": "1e"
+                        ]
+                ],
+                [
+                        "step": [
+                                "node": "localhost",
+                                "meta": null,
+                                "state": "RUNNING_HANDLER",
+                                "errorMessage": null,
+                                "date": "2014-09-05T21:28:04Z",
+                                "index": 0,
+                                "ident": "1e"
+                        ]
+                ],
+                //this state transition should apply to step "1"
+                [
+                        "subworkflow": [
+                                "quell": false,
+                                "nodes": [
+                                        "alpha1",
+                                        "alpha2",
+                                        "alpha4"
+                                ],
+                                "state": "RUNNING",
+                                "index": 0,
+                                "ident": "1e@node=localhost",
+                                "date": "2014-09-05T21:28:04Z"
+                        ]
+                ],
+            ]
+
+        processStateChanges(mutableWorkflowState, changes)
+
+        assertEquals(ExecutionState.RUNNING, mutableWorkflowState.executionState)
+        assertEquals(['localhost'], mutableWorkflowState.nodeSet)
+
+        def step1 = mutableWorkflowState[1]
+        assertStepId(1, step1.stepIdentifier)
+        assertEquals(ExecutionState.RUNNING_HANDLER, step1.stepState.executionState)
+        def WorkflowState subWorkflowState = step1.subWorkflowState
+        assertEquals(ExecutionState.RUNNING, subWorkflowState.executionState)
+
+        changes=[
+                [
+                        "step": [
+                                "meta": null,
+                                "state": "RUNNING",
+                                "errorMessage": null,
+                                "date": "2014-09-05T21:28:04Z",
+                                "index": 0,
+                                "ident": "1e@node=localhost/1"
+                        ]
+                ],
+                [
+                        "step": [
+                                "node": "alpha1",
+                                "meta": null,
+                                "state": "RUNNING",
+                                "errorMessage": null,
+                                "date": "2014-09-05T21:28:04Z",
+                                "index": 0,
+                                "ident": "1e@node=localhost/1"
+                        ]
+                ],
+                [
+                        "step": [
+                                "node": "alpha1",
+                                "meta": null,
+                                "state": "SUCCEEDED",
+                                "errorMessage": null,
+                                "date": "2014-09-05T21:28:05Z",
+                                "index": 0,
+                                "ident": "1e@node=localhost/1"
+                        ]
+                ],
+                [
+                        "step": [
+                                "meta": null,
+                                "state": "RUNNING",
+                                "errorMessage": null,
+                                "date": "2014-09-05T21:28:05Z",
+                                "index": 0,
+                                "ident": "1e@node=localhost/1"
+                        ]
+                ],
+                [
+                        "step": [
+                                "node": "alpha2",
+                                "meta": null,
+                                "state": "RUNNING",
+                                "errorMessage": null,
+                                "date": "2014-09-05T21:28:05Z",
+                                "index": 0,
+                                "ident": "1e@node=localhost/1"
+                        ]
+                ],
+                [
+                        "step": [
+                                "node": "alpha2",
+                                "meta": null,
+                                "state": "SUCCEEDED",
+                                "errorMessage": null,
+                                "date": "2014-09-05T21:28:05Z",
+                                "index": 0,
+                                "ident": "1e@node=localhost/1"
+                        ]
+                ],
+                [
+                        "step": [
+                                "meta": null,
+                                "state": "RUNNING",
+                                "errorMessage": null,
+                                "date": "2014-09-05T21:28:05Z",
+                                "index": 0,
+                                "ident": "1e@node=localhost/1"
+                        ]
+                ],
+                [
+                        "step": [
+                                "node": "alpha4",
+                                "meta": null,
+                                "state": "RUNNING",
+                                "errorMessage": null,
+                                "date": "2014-09-05T21:28:05Z",
+                                "index": 0,
+                                "ident": "1e@node=localhost/1"
+                        ]
+                ],
+                [
+                        "step": [
+                                "node": "alpha4",
+                                "meta": null,
+                                "state": "SUCCEEDED",
+                                "errorMessage": null,
+                                "date": "2014-09-05T21:28:06Z",
+                                "index": 0,
+                                "ident": "1e@node=localhost/1"
+                        ]
+                ],
+                [
+                        "subworkflow": [
+                                "quell": false,
+                                "nodes": null,
+                                "state": "SUCCEEDED",
+                                "index": 0,
+                                "ident": "1e@node=localhost",
+                                "date": "2014-09-05T21:28:06Z"
+                        ]
+                ],
+                [
+                        "step": [
+                                "node": "localhost",
+                                "meta": null,
+                                "state": "SUCCEEDED",
+                                "errorMessage": null,
+                                "date": "2014-09-05T21:28:06Z",
+                                "index": 0,
+                                "ident": "1e@node=localhost"
+                        ]
+                ]
+        ]
+
+        processStateChanges(mutableWorkflowState,changes)
+
+        assertEquals(ExecutionState.RUNNING, mutableWorkflowState.executionState)
+        assertEquals(['localhost'], mutableWorkflowState.nodeSet)
+
+        assertStepId(1, step1.stepIdentifier)
+        assertEquals(ExecutionState.SUCCEEDED, step1.stepState.executionState)
+        assertEquals(ExecutionState.SUCCEEDED, subWorkflowState.executionState)
+
+    }
+
+    protected Date parseDate(date) {
+        if(date instanceof Date){
+            return date
+        }
+        def format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
+        format.parse(date)
+    }
+    protected ExecutionState parseState(state) {
+        if(state instanceof ExecutionState){
+            return state
+        }
+        ExecutionState.valueOf(state)
+    }
+    protected StepIdentifier parseStepIdent(ident) {
+        if(ident instanceof StepIdentifier){
+            return ident
+        }
+        StateUtils.stepIdentifierFromString(ident)
+    }
+
     /**
      * A step which is both a node-step and a sub-workflow step, should finalize correctly
      */

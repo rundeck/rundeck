@@ -463,8 +463,8 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         }
         currentStep = states[ndx]
         //parameterized substep
-        if(null!=subid.params){
-            currentStep=currentStep.getParameterizedStepState(StateUtils.stepIdentifier(subid),subid.params)
+        if (null != subid.params && subid.aspect != StepAspect.ErrorHandler) {
+            currentStep = currentStep.getParameterizedStepState(StateUtils.stepIdentifier(subid), subid.params)
         }
         currentStep
     }
@@ -500,7 +500,7 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
      * @param toState
      * @return
      */
-    public static ExecutionState updateState(ExecutionState fromState, ExecutionState toState) {
+    public static ExecutionState updateState(ExecutionState fromState, ExecutionState toState,boolean errorHandler=false) {
         if(fromState==toState){
             return toState
         }
@@ -511,6 +511,9 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         ]
         ExecutionState.values().findAll{it.isCompletedState()}.each{
             allowed[it]= [it,ExecutionState.RUNNING, ExecutionState.RUNNING_HANDLER, ExecutionState.WAITING]
+            if(errorHandler){
+                allowed[ExecutionState.RUNNING]<<it
+            }
         }
         if (toState == null) {
 //            System.err.println("Cannot change state to ${toState}")
@@ -531,7 +534,8 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
     synchronized void updateWorkflowState(StepIdentifier identifier, boolean quellFinalState, ExecutionState executionState, Date timestamp, List<String> nodenames, MutableWorkflowState parent) {
         touchWFState(timestamp)
         if (!(quellFinalState && executionState.isCompletedState())) {
-            this.executionState = updateState(this.executionState, executionState)
+            this.executionState = updateState(this.executionState, executionState,
+                    identifier != null ? !(identifier.context.last().aspect.isMain()) : false)
         }
         if (null != nodenames && (null == mutableNodeSet || mutableNodeSet.size() < 1)) {
             mutableNodeSet = new ArrayList<>(nodenames)

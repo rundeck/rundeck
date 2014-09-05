@@ -22,7 +22,7 @@ import com.dtolabs.rundeck.core.execution.workflow.state.StepState
 import com.dtolabs.rundeck.core.execution.workflow.state.StepStateChange
 
 /**
- * $INTERFACE is ...
+ * Collects state change data as a sequence of maps
  * User: greg
  * Date: 2/6/14
  * Time: 4:25 PM
@@ -34,21 +34,18 @@ class LogMutableWorkflowState extends DelegateMutableWorkflowState {
         super(delegate)
     }
 
-    private void addStateChange(Date timestamp, String type, Map data) {
-        this.stateChanges << [type: type, timestamp: timestamp] + data
+    private void addStateChange( Map data) {
+        this.stateChanges << data
     }
 
     static Map asChangeMap(StepStateChange stepStateChange) {
-        [
-                node: stepStateChange.nodeName,
-                nodeState: stepStateChange.nodeState,
-        ] + asChangeMap(stepStateChange.stepState)
+        asChangeMap(stepStateChange.stepState) + (stepStateChange.nodeState? [node: stepStateChange.nodeName] : [:])
     }
 
     static Map asChangeMap(StepState stepState) {
         [
                 errorMessage: stepState.errorMessage,
-                executionState: stepState.executionState,
+                state: stepState.executionState.toString(),
                 meta: stepState.metadata,
         ]
     }
@@ -56,20 +53,20 @@ class LogMutableWorkflowState extends DelegateMutableWorkflowState {
     @Override
     void updateSubWorkflowState(StepIdentifier identifier, int index, boolean quellFinalState, ExecutionState executionState, Date timestamp,
                                 List<String> nodeNames, MutableWorkflowState parent) {
-        addStateChange(timestamp, "updateSubWorkflowState", [identifier: identifier, index: index,
-                executionState: executionState, nodeNames: nodeNames, quellFinalState:quellFinalState])
+        addStateChange([subworkflow:[date:timestamp,ident: identifier.toString(), index: index,
+                state: executionState.toString(), nodes: nodeNames, quell:quellFinalState]])
         super.updateSubWorkflowState(identifier, index, quellFinalState, executionState, timestamp, nodeNames, parent)
     }
 
     @Override
     void updateStateForStep(StepIdentifier identifier, int index, StepStateChange stepStateChange, Date timestamp) {
-        addStateChange(timestamp, "updateStateForStep", asChangeMap(stepStateChange) + [identifier: identifier])
+        addStateChange([step:[ident: identifier.toString(),index:index,date:timestamp]+ asChangeMap(stepStateChange)])
         super.updateStateForStep(identifier, index, stepStateChange, timestamp)
     }
 
     @Override
     void updateWorkflowState(ExecutionState executionState, Date timestamp, List<String> nodeNames) {
-        addStateChange(timestamp, "updateWorkflowState", [executionState: executionState, nodeNames: nodeNames])
+        addStateChange([workflow: [state: executionState.toString(), nodes:nodeNames, date: timestamp] ])
         super.updateWorkflowState(executionState, timestamp, nodeNames)
     }
 }

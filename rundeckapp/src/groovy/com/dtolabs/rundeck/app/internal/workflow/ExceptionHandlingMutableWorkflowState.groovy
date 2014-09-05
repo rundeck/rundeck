@@ -21,7 +21,7 @@ import com.dtolabs.rundeck.core.execution.workflow.state.StepIdentifier
 import com.dtolabs.rundeck.core.execution.workflow.state.StepStateChange
 
 /**
- * Catch illegal state exception for state changes and allow logging without interrupting execution
+ * Catch illegal state exception and runtime exception for state changes and allow logging without interrupting execution
  */
 class ExceptionHandlingMutableWorkflowState extends DelegateMutableWorkflowState {
 
@@ -29,14 +29,20 @@ class ExceptionHandlingMutableWorkflowState extends DelegateMutableWorkflowState
         super(delegate)
     }
     Closure illegalStateHandler
+    Closure runtimeExceptionHandler
     @Override
     void updateStateForStep(StepIdentifier identifier, int index, StepStateChange stepStateChange, Date timestamp) {
         try{
             delegate.updateStateForStep(identifier,index,stepStateChange,timestamp)
         }catch (IllegalStateException e) {
-            if (illegalStateHandler) {
-                illegalStateHandler("updateStateForStep("+[identifier:identifier, index:index, stepStateChange: stepStateChange,
+            if (illegalStateHandler || runtimeExceptionHandler) {
+                (illegalStateHandler ?: runtimeExceptionHandler)("updateStateForStep("+[identifier:identifier, index:index, stepStateChange: stepStateChange,
                         timestamp: timestamp]+")", e)
+            }
+        }catch(RuntimeException e){
+            if (runtimeExceptionHandler) {
+                runtimeExceptionHandler("updateStateForStep(" + [identifier: identifier, index: index, stepStateChange: stepStateChange,
+                        timestamp: timestamp] + ")", e)
             }
         }
     }
@@ -46,8 +52,12 @@ class ExceptionHandlingMutableWorkflowState extends DelegateMutableWorkflowState
         try {
             delegate.updateWorkflowState(executionState,timestamp,nodeNames)
         } catch (IllegalStateException e) {
-            if (illegalStateHandler) {
-                illegalStateHandler("updateWorkflowState("+[executionState: executionState, timestamp: timestamp, nodeNames: nodeNames]+")", e)
+            if (illegalStateHandler || runtimeExceptionHandler) {
+                (illegalStateHandler ?: runtimeExceptionHandler)("updateWorkflowState("+[executionState: executionState, timestamp: timestamp, nodeNames: nodeNames]+")", e)
+            }
+        } catch (RuntimeException e) {
+            if (runtimeExceptionHandler) {
+                runtimeExceptionHandler("updateWorkflowState(" + [executionState: executionState, timestamp: timestamp, nodeNames: nodeNames] + ")", e)
             }
         }
     }
@@ -58,12 +68,20 @@ class ExceptionHandlingMutableWorkflowState extends DelegateMutableWorkflowState
         try {
             delegate.updateSubWorkflowState(identifier,index,quellFinalState,executionState,timestamp,nodeNames,parent)
         } catch (IllegalStateException e) {
-            if (illegalStateHandler) {
-                illegalStateHandler("updateSubWorkflowState("+[
+            if (illegalStateHandler || runtimeExceptionHandler) {
+                (illegalStateHandler ?: runtimeExceptionHandler)("updateSubWorkflowState("+[
                         identifier:identifier, index:index, executionState:executionState, timestamp:timestamp,
                         quellFinalState:quellFinalState,
                         nodeNames:nodeNames, parent: parent
                 ]+")",e)
+            }
+        } catch (RuntimeException e) {
+            if (runtimeExceptionHandler) {
+                runtimeExceptionHandler("updateSubWorkflowState(" + [
+                        identifier: identifier, index: index, executionState: executionState, timestamp: timestamp,
+                        quellFinalState: quellFinalState,
+                        nodeNames: nodeNames, parent: parent
+                ] + ")", e)
             }
         }
     }
