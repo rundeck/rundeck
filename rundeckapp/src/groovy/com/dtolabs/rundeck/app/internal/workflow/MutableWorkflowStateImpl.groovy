@@ -463,8 +463,8 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         }
         currentStep = states[ndx]
         //parameterized substep
-        if(null!=subid.params){
-            currentStep=currentStep.getParameterizedStepState(StateUtils.stepIdentifier(subid),subid.params)
+        if (null != subid.params && subid.aspect != StepAspect.ErrorHandler) {
+            currentStep = currentStep.getParameterizedStepState(StateUtils.stepIdentifier(subid), subid.params)
         }
         currentStep
     }

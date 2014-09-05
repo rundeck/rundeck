@@ -703,8 +703,13 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
     }
 
     void processStateChanges(MutableWorkflowStateImpl mutableWorkflowState, List<Map> changes) {
-        changes.each{Map change->
-            processStateChange(mutableWorkflowState,change)
+        changes.eachWithIndex{Map change, int ndx->
+            try{
+                processStateChange(mutableWorkflowState,change)
+            }catch (Throwable t){
+                t.printStackTrace(System.err)
+                fail("Error processing change: ${t}: ${ndx}: ${change}")
+            }
         }
     }
 
@@ -1204,6 +1209,240 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
         assertEquals(ExecutionState.SUCCEEDED, subStepState1.nodeStateMap['alpha2'].executionState)
         assertEquals(ExecutionState.SUCCEEDED, subStepState1.nodeStateMap['alpha4'].executionState)
         assertEquals(ExecutionState.NODE_MIXED, subStepState1.stepState.executionState)
+    }
+    /**
+     * Workflow step is a node step, error handler is a subworkflow as node step
+     * Workflow error handler should ignore the node "parameter"
+     */
+    public void testSubworkflowErrorHandlerWorkflow3() {
+        def mutableStep1 = new MutableWorkflowStepStateImpl(stepIdentifier(1))
+        mutableStep1.nodeStep = true
+        MutableWorkflowStateImpl mutableWorkflowState = new MutableWorkflowStateImpl(['localhost'], 1, [0: mutableStep1]);
+
+        def changes= [
+                [
+                        "workflow": [
+                                "date": "2014-09-05T21:28:04Z",
+                                "nodes": [
+                                        "localhost"
+                                ],
+                                "state": "RUNNING"
+                        ]
+                ],
+                [
+                        "step": [
+                                "meta": null,
+                                "state": "RUNNING",
+                                "errorMessage": null,
+                                "date": "2014-09-05T21:28:04Z",
+                                "index": 0,
+                                "ident": "1"
+                        ]
+                ],
+                [
+                        "step": [
+                                "node": "localhost",
+                                "meta": null,
+                                "state": "RUNNING",
+                                "errorMessage": null,
+                                "date": "2014-09-05T21:28:04Z",
+                                "index": 0,
+                                "ident": "1"
+                        ]
+                ],
+                [
+                        "step": [
+                                "node": "localhost",
+                                "meta": [
+                                        "failureReason": "NonZeroResultCode"
+                                ],
+                                "state": "FAILED",
+                                "errorMessage": "Result code was 1",
+                                "date": "2014-09-05T21:28:04Z",
+                                "index": 0,
+                                "ident": "1"
+                        ]
+                ],
+                [
+                        "step": [
+                                "meta": [
+                                        "handlerTriggered": "true"
+                                ],
+                                "state": "RUNNING_HANDLER",
+                                "errorMessage": null,
+                                "date": "2014-09-05T21:28:04Z",
+                                "index": 0,
+                                "ident": "1e"
+                        ]
+                ],
+                [
+                        "step": [
+                                "node": "localhost",
+                                "meta": null,
+                                "state": "RUNNING_HANDLER",
+                                "errorMessage": null,
+                                "date": "2014-09-05T21:28:04Z",
+                                "index": 0,
+                                "ident": "1e"
+                        ]
+                ],
+                //this state transition should apply to step "1"
+                [
+                        "subworkflow": [
+                                "quell": false,
+                                "nodes": [
+                                        "alpha1",
+                                        "alpha2",
+                                        "alpha4"
+                                ],
+                                "state": "RUNNING",
+                                "index": 0,
+                                "ident": "1e@node=localhost",
+                                "date": "2014-09-05T21:28:04Z"
+                        ]
+                ],
+            ]
+
+        processStateChanges(mutableWorkflowState, changes)
+
+        assertEquals(ExecutionState.RUNNING, mutableWorkflowState.executionState)
+        assertEquals(['localhost'], mutableWorkflowState.nodeSet)
+
+        def step1 = mutableWorkflowState[1]
+        assertStepId(1, step1.stepIdentifier)
+        assertEquals(ExecutionState.RUNNING_HANDLER, step1.stepState.executionState)
+        def WorkflowState subWorkflowState = step1.subWorkflowState
+        assertEquals(ExecutionState.RUNNING, subWorkflowState.executionState)
+
+        changes=[
+                [
+                        "step": [
+                                "meta": null,
+                                "state": "RUNNING",
+                                "errorMessage": null,
+                                "date": "2014-09-05T21:28:04Z",
+                                "index": 0,
+                                "ident": "1e@node=localhost/1"
+                        ]
+                ],
+                [
+                        "step": [
+                                "node": "alpha1",
+                                "meta": null,
+                                "state": "RUNNING",
+                                "errorMessage": null,
+                                "date": "2014-09-05T21:28:04Z",
+                                "index": 0,
+                                "ident": "1e@node=localhost/1"
+                        ]
+                ],
+                [
+                        "step": [
+                                "node": "alpha1",
+                                "meta": null,
+                                "state": "SUCCEEDED",
+                                "errorMessage": null,
+                                "date": "2014-09-05T21:28:05Z",
+                                "index": 0,
+                                "ident": "1e@node=localhost/1"
+                        ]
+                ],
+                [
+                        "step": [
+                                "meta": null,
+                                "state": "RUNNING",
+                                "errorMessage": null,
+                                "date": "2014-09-05T21:28:05Z",
+                                "index": 0,
+                                "ident": "1e@node=localhost/1"
+                        ]
+                ],
+                [
+                        "step": [
+                                "node": "alpha2",
+                                "meta": null,
+                                "state": "RUNNING",
+                                "errorMessage": null,
+                                "date": "2014-09-05T21:28:05Z",
+                                "index": 0,
+                                "ident": "1e@node=localhost/1"
+                        ]
+                ],
+                [
+                        "step": [
+                                "node": "alpha2",
+                                "meta": null,
+                                "state": "SUCCEEDED",
+                                "errorMessage": null,
+                                "date": "2014-09-05T21:28:05Z",
+                                "index": 0,
+                                "ident": "1e@node=localhost/1"
+                        ]
+                ],
+                [
+                        "step": [
+                                "meta": null,
+                                "state": "RUNNING",
+                                "errorMessage": null,
+                                "date": "2014-09-05T21:28:05Z",
+                                "index": 0,
+                                "ident": "1e@node=localhost/1"
+                        ]
+                ],
+                [
+                        "step": [
+                                "node": "alpha4",
+                                "meta": null,
+                                "state": "RUNNING",
+                                "errorMessage": null,
+                                "date": "2014-09-05T21:28:05Z",
+                                "index": 0,
+                                "ident": "1e@node=localhost/1"
+                        ]
+                ],
+                [
+                        "step": [
+                                "node": "alpha4",
+                                "meta": null,
+                                "state": "SUCCEEDED",
+                                "errorMessage": null,
+                                "date": "2014-09-05T21:28:06Z",
+                                "index": 0,
+                                "ident": "1e@node=localhost/1"
+                        ]
+                ],
+                [
+                        "subworkflow": [
+                                "quell": false,
+                                "nodes": null,
+                                "state": "SUCCEEDED",
+                                "index": 0,
+                                "ident": "1e@node=localhost",
+                                "date": "2014-09-05T21:28:06Z"
+                        ]
+                ],
+                [
+                        "step": [
+                                "node": "localhost",
+                                "meta": null,
+                                "state": "SUCCEEDED",
+                                "errorMessage": null,
+                                "date": "2014-09-05T21:28:06Z",
+                                "index": 0,
+                                "ident": "1e@node=localhost"
+                        ]
+                ]
+        ]
+
+        processStateChanges(mutableWorkflowState,changes)
+
+        assertEquals(ExecutionState.RUNNING, mutableWorkflowState.executionState)
+        assertEquals(['localhost'], mutableWorkflowState.nodeSet)
+
+        assertStepId(1, step1.stepIdentifier)
+        assertEquals(ExecutionState.SUCCEEDED, step1.stepState.executionState)
+        assertEquals(ExecutionState.SUCCEEDED, subWorkflowState.executionState)
+
     }
 
     protected Date parseDate(date) {
