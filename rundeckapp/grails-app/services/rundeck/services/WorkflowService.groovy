@@ -17,6 +17,7 @@ import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import grails.converters.JSON
+import grails.util.Environment
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import rundeck.Execution
@@ -134,13 +135,20 @@ class WorkflowService implements ApplicationContextAware{
 
         MutableWorkflowState state = createStateForWorkflow(execution, execution.workflow, execution.project, framework,
                 authContext, jobcontext, secureOpts)
-        def logstate = new LogMutableWorkflowState(state)
-        state = logstate
+        def logstate
+        if(Environment.getCurrent() == Environment.DEVELOPMENT){
+            //add state change logger in dev mode
+            logstate = new LogMutableWorkflowState(state)
+            state = logstate
+        }
         state = new ExceptionHandlingMutableWorkflowState(state)
-        state.illegalStateHandler = { name, Exception e ->
+        state.runtimeExceptionHandler = { name, Exception e ->
             log.error(name + ": " + e.message, e)
-            log.error(logstate.stateChanges)
-            log.error(stateMapping.mapOf(id, state).encodeAsJSON())
+            if (Environment.getCurrent() == Environment.DEVELOPMENT) {
+                //print state change list in dev mode
+                log.error(logstate.stateChanges.encodeAsJSON())
+                log.error(stateMapping.mapOf(id, state).encodeAsJSON())
+            }
         }
 
 

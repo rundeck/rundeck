@@ -22,7 +22,7 @@ import com.dtolabs.rundeck.core.execution.workflow.state.StepState
 import com.dtolabs.rundeck.core.execution.workflow.state.StepStateChange
 
 /**
- * $INTERFACE is ...
+ * Collects state change data as a sequence of maps
  * User: greg
  * Date: 2/6/14
  * Time: 4:25 PM
