@@ -1619,8 +1619,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 }
                 if(opt.multivalued){
                     if (opt.regex && !opt.enforced && optparams[opt.name]) {
-                        def val = [optparams[opt.name]].flatten()
-                        val.each{value->
+                        def val
+                        if (optparams[opt.name] instanceof Collection) {
+                            val = [optparams[opt.name]].flatten();
+                        } else {
+                            val = optparams[opt.name].toString().split(Pattern.quote(opt.delimiter))
+                        }
+                        val.grep { it }.each{value->
                             if (!(value ==~ opt.regex)) {
                                 fail = true
                                 if (!failedkeys[opt.name]) {
