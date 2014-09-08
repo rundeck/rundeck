@@ -1,6 +1,8 @@
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.api.ApiBulkJobDeleteRequest
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.common.FrameworkResource
 
 /*
  * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
@@ -1186,6 +1188,58 @@ class ScheduledExecutionControllerTests  {
         assert requireFailed
     }
 
+    public void testApiBulkJobDeleteRequest_validation() {
+            def cmd = mockCommandObject(ApiBulkJobDeleteRequest)
+        cmd.ids = ['a9cd7388-05c5-45ce-8cdb-93f5f0325218', '669ee20d-24bc-4b31-8552-001bb396edd0',
+                'api-test-job-run-scheduled', 'api-v5-test-exec-query2', 'api-v5-test-exec-query',
+                'b2767051-6669-492c-aaba-e78c4d2d9ce8', 'bc6bc234-4ed3-4fda-8909-579041835575',
+                '7a1f4c82-5f30-413f-99ff-3be44976c958', '000523a2-4f6e-4718-a0b2-25252a25dd79',
+                '4bbd6b2f-7c92-4ad2-8067-9adcda4fcb65', 'fd043bd4-e3c9-443e-9eb2-1e78988dba04',
+                'c1421959-510b-4075-9860-d801c013d7ec', '068c29db-6e6f-4f6b-b3bf-7bae31238814']
+            def valid=cmd.validate()
+            cmd.errors.allErrors.each{
+                println(it)
+            }
+            assertTrue(valid)
+    }
+    public void testApiBulkJobDeleteRequest_validation_idlist() {
+            def cmd = mockCommandObject(ApiBulkJobDeleteRequest)
+        cmd.idlist = ['a9cd7388-05c5-45ce-8cdb-93f5f0325218', '669ee20d-24bc-4b31-8552-001bb396edd0',
+                'api-test-job-run-scheduled', 'api-v5-test-exec-query2', 'api-v5-test-exec-query',
+                'b2767051-6669-492c-aaba-e78c4d2d9ce8', 'bc6bc234-4ed3-4fda-8909-579041835575',
+                '7a1f4c82-5f30-413f-99ff-3be44976c958', '000523a2-4f6e-4718-a0b2-25252a25dd79',
+                '4bbd6b2f-7c92-4ad2-8067-9adcda4fcb65', 'fd043bd4-e3c9-443e-9eb2-1e78988dba04',
+                'c1421959-510b-4075-9860-d801c013d7ec', '068c29db-6e6f-4f6b-b3bf-7bae31238814'].join(",")
+            def valid=cmd.validate()
+            cmd.errors.allErrors.each{
+                println(it)
+            }
+            assertTrue(valid)
+    }
+    public void testApiBulkJobDeleteRequest_validation_failure_blank_ids() {
+        def cmd = mockCommandObject(ApiBulkJobDeleteRequest)
+        cmd.ids = ['']
+        assertFalse(cmd.validate())
+        assertTrue(cmd.errors.hasFieldErrors('ids'))
+    }
+    public void testApiBulkJobDeleteRequest_validation_failure_invalid_ids() {
+        def cmd = mockCommandObject(ApiBulkJobDeleteRequest)
+        cmd.ids = ['asdf/monkey']
+        assertFalse(cmd.validate())
+        assertTrue(cmd.errors.hasFieldErrors('ids'))
+    }
+    public void testApiBulkJobDeleteRequest_validation_failure_invalid_id() {
+        def cmd = mockCommandObject(ApiBulkJobDeleteRequest)
+        cmd.id = 'asdf/monkey'
+        assertFalse(cmd.validate())
+        assertTrue(cmd.errors.hasFieldErrors('id'))
+    }
+    public void testApiBulkJobDeleteRequest_validation_failure_invalid_idlist() {
+        def cmd = mockCommandObject(ApiBulkJobDeleteRequest)
+        cmd.idlist = '068c29db-6e6f-4f6b-b3bf-7bae31238814,asdf/monkey'
+        assertFalse(cmd.validate())
+        assertTrue(cmd.errors.hasFieldErrors('idlist'))
+    }
     public void testApiRunCommand() {
         def sec = new ScheduledExecutionController()
 

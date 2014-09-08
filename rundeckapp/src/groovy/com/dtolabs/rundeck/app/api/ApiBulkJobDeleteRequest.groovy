@@ -35,9 +35,13 @@ class ApiBulkJobDeleteRequest {
     String idlist
     String id
     static constraints={
-        ids(nullable:true,validator: {obj,val->
-            return !val.any{
-                !(it==~FrameworkResource.VALID_RESOURCE_NAME_REGEX)
+        ids(nullable:true,validator: {val,obj->
+            def test = val.every{
+                it==~FrameworkResource.VALID_RESOURCE_NAME_REGEX
+            }
+            println("test is ${test}")
+            if(!test){
+                return false
             }
         })
         idlist(nullable:true, matches: IDLIST_REGEX)
