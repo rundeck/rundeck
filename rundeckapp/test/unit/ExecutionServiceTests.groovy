@@ -741,6 +741,9 @@ class ExecutionServiceTests  {
             assertEquals(1, se2.options.size())
             assertTrue testService.validateInputOptionValues(se2, ['option.test1': 'abc'])
             assertTrue testService.validateInputOptionValues(se2, ['option.test1': ['abc']])
+            assertTrue testService.validateInputOptionValues(se2, ['option.test1': 'abc cba'])
+            assertTrue testService.validateInputOptionValues(se2, ['option.test1': 'abc  cba   bca  '])
+            assertTrue testService.validateInputOptionValues(se2, ['argString': '-test1 "abcbcbabcbbab acbbcb"'])
             try {
                 //should fail with invalid regex value
                 testService.validateInputOptionValues(se2, ['option.test1': 'zabc'])
@@ -760,6 +763,22 @@ class ExecutionServiceTests  {
             try {
                 //should fail with invalid regex value
                 testService.validateInputOptionValues(se2, ['option.test1': ['abc', 'blah']])
+                fail("Should have thrown exception")
+            } catch (Exception e) {
+                assertNotNull(e)
+                assertTrue(e.message,e.message.contains("did not all match regular expression"))
+            }
+            try {
+                //should fail with invalid regex value
+                testService.validateInputOptionValues(se2, ['option.test1': 'abc cba def'])
+                fail("Should have thrown exception")
+            } catch (Exception e) {
+                assertNotNull(e)
+                assertTrue(e.message,e.message.contains("did not all match regular expression"))
+            }
+            try {
+                //should fail with invalid regex value
+                testService.validateInputOptionValues(se2, ['argString': '-test1 "abc def"'])
                 fail("Should have thrown exception")
             } catch (Exception e) {
                 assertNotNull(e)
