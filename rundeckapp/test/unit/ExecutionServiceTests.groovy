@@ -410,11 +410,10 @@ class ExecutionServiceTests  {
 
     void testValidateInputOptionValues(){
         ScheduledExecution se = new ScheduledExecution()
-		def testService = new ExecutionService()
-		def frameworkService = new FrameworkService()
+        def frameworkService = new FrameworkService()
+		def testService = service
         testService.frameworkService=frameworkService
 
-        t:{
             //test regex and optional value
             assertTrue testService.validateInputOptionValues(se,[:])
             ScheduledExecution se2 = new ScheduledExecution()
@@ -500,8 +499,13 @@ class ExecutionServiceTests  {
             }
         }
 
-        t:{
-            //test enforced values list
+    void testValidateInputOptionValues_enforced() {
+        ScheduledExecution se = new ScheduledExecution()
+        def frameworkService = new FrameworkService()
+        def testService = service
+        testService.frameworkService = frameworkService
+
+        //test enforced values list
             assertTrue testService.validateInputOptionValues(se,[:])
             ScheduledExecution se2 = new ScheduledExecution()
             final Option option = new Option(name: 'test1', enforced: true)
@@ -558,8 +562,13 @@ class ExecutionServiceTests  {
         }
 
 
-        t:{
-            //test required & values list
+    void testValidateInputOptionValues_required_enforced() {
+        ScheduledExecution se = new ScheduledExecution()
+        def frameworkService = new FrameworkService()
+        def testService = service
+        testService.frameworkService = frameworkService
+
+        //test required & values list
             assertTrue testService.validateInputOptionValues(se,[:])
             ScheduledExecution se2 = new ScheduledExecution()
             final Option option = new Option(name: 'test1', enforced: true, required:true)
@@ -586,8 +595,13 @@ class ExecutionServiceTests  {
             }
         }
 
-        t:{
-            //test non-multi-valued and list input
+    void testValidateInputOptionValues_enforced_notrequired() {
+        ScheduledExecution se = new ScheduledExecution()
+        def frameworkService = new FrameworkService()
+        def testService = service
+        testService.frameworkService = frameworkService
+
+        //test non-multi-valued and list input
             assertTrue testService.validateInputOptionValues(se,[:])
             ScheduledExecution se2 = new ScheduledExecution()
             final Option option = new Option(name: 'test1', required:false, enforced: true, multivalued: false)
@@ -624,8 +638,14 @@ class ExecutionServiceTests  {
                 assertTrue(e.message, e.message.contains("does not allow multiple values"))
             }
         }
-        t:{
-            //test multi-valued and list input
+
+    void testValidateInputOptionValues_multivalued_enforced() {
+        ScheduledExecution se = new ScheduledExecution()
+        def frameworkService = new FrameworkService()
+        def testService = service
+        testService.frameworkService = frameworkService
+
+        //test multi-valued and list input
             assertTrue testService.validateInputOptionValues(se,[:])
             ScheduledExecution se2 = new ScheduledExecution()
             final Option option = new Option(name: 'test1', required:false, enforced: true, multivalued: true, delimiter: ' ')
@@ -654,8 +674,65 @@ class ExecutionServiceTests  {
                 assertTrue(e.message, e.message.contains("were not all in the allowed values"))
             }
         }
-        t: {
-            //test multi-valued list with regex validation
+    void testValidateInputOptionValues_multivalued_enforced_stringinput() {
+        ScheduledExecution se = new ScheduledExecution()
+        def frameworkService = new FrameworkService()
+        def testService = service
+        testService.frameworkService = frameworkService
+
+        //test multi-valued and list input
+        assertTrue testService.validateInputOptionValues(se,[:])
+        ScheduledExecution se2 = new ScheduledExecution()
+        final Option option = new Option(name: 'test1', required:false, enforced: true, multivalued: true, delimiter: ',')
+        option.addToValues('abc')
+        option.addToValues('def')
+        option.addToValues('ghi')
+        se2.addToOptions(option)
+        assertNotNull(se2.options)
+        assertEquals(1,se2.options.size())
+        assertTrue testService.validateInputOptionValues(se2, ['option.test1': 'abc'])
+        assertTrue testService.validateInputOptionValues(se2, ['option.test1': ['abc','def']])
+        assertTrue testService.validateInputOptionValues(se2, ['option.test1': 'abc,def'])
+        assertTrue testService.validateInputOptionValues(se2, ['argString': '-test1 abc,def'])
+        try{
+            //should fail with invalid value input
+            testService.validateInputOptionValues(se2, ['option.test1': ['blah']])
+            fail("Should have thrown exception")
+        }catch (Exception e){
+            assertNotNull(e)
+            assertTrue(e.message, e.message.contains("were not all in the allowed values"))
+        }
+        try{
+            //should fail with invalid value input
+            testService.validateInputOptionValues(se2, ['option.test1': ['abc','blah']])
+            fail("Should have thrown exception")
+        }catch (Exception e){
+            assertNotNull(e)
+            assertTrue(e.message, e.message.contains("were not all in the allowed values"))
+        }
+        try {
+            assertTrue testService.validateInputOptionValues(se2, ['option.test1': 'abc,gef'])
+            fail("Should have thrown exception")
+        } catch (Exception e) {
+            assertNotNull(e)
+            assertTrue(e.message, e.message.contains("were not all in the allowed values"))
+        }
+        try {
+            assertTrue testService.validateInputOptionValues(se2, ['argString': '-test1 abc,zef'])
+            fail("Should have thrown exception")
+        } catch (Exception e) {
+            assertNotNull(e)
+            assertTrue(e.message, e.message.contains("were not all in the allowed values"))
+        }
+        }
+
+    void testValidateInputOptionValues_regex_multivalued() {
+        ScheduledExecution se = new ScheduledExecution()
+        def frameworkService = new FrameworkService()
+        def testService = service
+        testService.frameworkService = frameworkService
+
+        //test multi-valued list with regex validation
             assertTrue testService.validateInputOptionValues(se, [:])
             ScheduledExecution se2 = new ScheduledExecution()
             final Option option = new Option(name: 'test1', required: false, enforced: false, multivalued: true, delimiter: ' ',regex:'^[abc]+$')
@@ -664,6 +741,9 @@ class ExecutionServiceTests  {
             assertEquals(1, se2.options.size())
             assertTrue testService.validateInputOptionValues(se2, ['option.test1': 'abc'])
             assertTrue testService.validateInputOptionValues(se2, ['option.test1': ['abc']])
+            assertTrue testService.validateInputOptionValues(se2, ['option.test1': 'abc cba'])
+            assertTrue testService.validateInputOptionValues(se2, ['option.test1': 'abc  cba   bca  '])
+            assertTrue testService.validateInputOptionValues(se2, ['argString': '-test1 "abcbcbabcbbab acbbcb"'])
             try {
                 //should fail with invalid regex value
                 testService.validateInputOptionValues(se2, ['option.test1': 'zabc'])
@@ -688,7 +768,22 @@ class ExecutionServiceTests  {
                 assertNotNull(e)
                 assertTrue(e.message,e.message.contains("did not all match regular expression"))
             }
-        }
+            try {
+                //should fail with invalid regex value
+                testService.validateInputOptionValues(se2, ['option.test1': 'abc cba def'])
+                fail("Should have thrown exception")
+            } catch (Exception e) {
+                assertNotNull(e)
+                assertTrue(e.message,e.message.contains("did not all match regular expression"))
+            }
+            try {
+                //should fail with invalid regex value
+                testService.validateInputOptionValues(se2, ['argString': '-test1 "abc def"'])
+                fail("Should have thrown exception")
+            } catch (Exception e) {
+                assertNotNull(e)
+                assertTrue(e.message,e.message.contains("did not all match regular expression"))
+            }
     }
 
     void testParseJobOptsFromString() {

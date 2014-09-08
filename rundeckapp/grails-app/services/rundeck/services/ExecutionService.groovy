@@ -1494,7 +1494,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * options. return a key value map for option name and value.
      * @param props
      * @param scheduledExec
-     * @return
+     * @return a Map of String to String, does not produce multiple values for multivalued options
      */
     protected HashMap parseJobOptionInput(Map props, ScheduledExecution scheduledExec) {
         def optparams = filterOptParams(props)
@@ -1586,6 +1586,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * evaluate the options value map, and if any Options defined for the Job have regex constraints,
      * require the values in the properties to match the regular expressions.  Throw ExecutionServiceException if
      * any options don't match.
+     * @param scheduledExecution the job
+     * @param optparams Map of String to String
      */
     def boolean validateOptionValues(ScheduledExecution scheduledExecution, Map optparams) throws ExecutionServiceValidationException {
 
@@ -1617,8 +1619,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 }
                 if(opt.multivalued){
                     if (opt.regex && !opt.enforced && optparams[opt.name]) {
-                        def val = [optparams[opt.name]].flatten()
-                        val.each{value->
+                        def val
+                        if (optparams[opt.name] instanceof Collection) {
+                            val = [optparams[opt.name]].flatten();
+                        } else {
+                            val = optparams[opt.name].toString().split(Pattern.quote(opt.delimiter))
+                        }
+                        val.grep { it }.each{value->
                             if (!(value ==~ opt.regex)) {
                                 fail = true
                                 if (!failedkeys[opt.name]) {
@@ -1635,7 +1642,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         }
                     }
                     if (opt.enforced && opt.values && optparams[opt.name]) {
-                        def val = [optparams[opt.name]].flatten();
+                        def val
+                        if(optparams[opt.name] instanceof Collection){
+                            val = [optparams[opt.name]].flatten();
+                        }else{
+                            val = optparams[opt.name].toString().split(Pattern.quote(opt.delimiter))
+                        }
                         if (!opt.values.containsAll(val.grep{it})) {
                             fail = true
                             if (!failedkeys[opt.name]) {
