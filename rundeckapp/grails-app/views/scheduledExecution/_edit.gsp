@@ -852,7 +852,7 @@ function getCurSEID(){
         <div class="${fieldColHalfSize}">
 
             <input type='text' name="timeout" value="${enc(attr:scheduledExecution?.timeout)}"
-                   id="schedJobTimeout" maxlength="256" class="form-control"/>
+                   id="schedJobTimeout" class="form-control"/>
 
             <span class="help-block">
                 <g:message code="scheduledExecution.property.timeout.description"/>
@@ -868,7 +868,7 @@ function getCurSEID(){
         <div class="${fieldColHalfSize}">
 
             <input type='text' name="retry" value="${enc(attr:scheduledExecution?.retry)}"
-                   id="schedJobRetry" maxlength="256" class="form-control"/>
+                   id="schedJobRetry" class="form-control"/>
 
             <span class="help-block">
                 <g:message code="scheduledExecution.property.retry.description"/>
