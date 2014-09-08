@@ -35,6 +35,7 @@ import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
@@ -772,9 +773,15 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
     private void purgeAction() throws JobsToolException {
         final Collection<IStoredJob> result;
         final Collection<DeleteJobResult> deleteresult;
+        final FileOutputStream output;
         try {
-            final FileOutputStream output = null != argFile ? new FileOutputStream(
-                argFile) : null;
+            output = null != argFile ? new FileOutputStream(
+                    argFile) : null;
+        } catch (FileNotFoundException e) {
+            final String msg = "Failed to open output file for writing: " + argFile + ": " + e.getMessage();
+            throw new JobsToolException(msg, e);
+        }
+        try {
             try {
                 result = framework.getCentralDispatcherMgr().listStoredJobs(this, output, format);
             } finally {
@@ -782,28 +789,37 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
                     output.close();
                 }
             }
-            if (null != argFile) {
-                log("Wrote " + format + " to file: " + argFile.getAbsolutePath());
-            }
-            ArrayList<String> jobIds = new ArrayList<String>();
-            for (final IStoredJob job : result) {
-                jobIds.add(job.getJobId());
-            }
-            if(jobIds.size()==0){
-                log("# Found 0 matching jobs");
-                return;
-            }
-            if (argVerbose) {
-                log("# Deleting " + result.size() + " jobs...");
-            }
-            deleteresult = framework.getCentralDispatcherMgr().deleteStoredJobs(jobIds);
+
         } catch (CentralDispatcherException e) {
-            final String msg = "Failed request to list the queue: " + e.getMessage();
+            final String msg = "Failed request to list stored jobs: " + e.getMessage();
             throw new JobsToolException(msg, e);
         } catch (IOException e) {
-            final String msg = "Failed request to list the queue: " + e.getMessage();
+            final String msg = "Failed to close output file: " + argFile + ": " + e.getMessage();
             throw new JobsToolException(msg, e);
         }
+        if (null != argFile) {
+            log("Wrote " + format + " to file: " + argFile.getAbsolutePath());
+        }
+
+        ArrayList<String> jobIds = new ArrayList<String>();
+        for (final IStoredJob job : result) {
+            jobIds.add(job.getJobId());
+        }
+        if (jobIds.size() == 0) {
+            log("# Found 0 matching jobs");
+            return;
+        }
+        if (argVerbose) {
+            log("# Deleting " + result.size() + " jobs...");
+        }
+
+        try{
+            deleteresult = framework.getCentralDispatcherMgr().deleteStoredJobs(jobIds);
+        } catch (CentralDispatcherException e) {
+            final String msg = "Failed request to delete jobs: " + e.getMessage();
+            throw new JobsToolException(msg, e);
+        }
+        
         List<DeleteJobResult> successful = new ArrayList<DeleteJobResult>();
         List<DeleteJobResult> failed = new ArrayList<DeleteJobResult>();
         for (final DeleteJobResult jobResult : deleteresult) {
