@@ -113,6 +113,12 @@ abstract class HttpClientChannel implements BaseHttpClient {
         logger.debug("creating connection object to URL: " + requestUrl);
 
         httpc = new HttpClient();
+        if (null != System.getProperty("http.proxyPort") && null != System.getProperty("http.proxyHost")) {
+            Integer port = Integer.getInteger("http.proxyPort");
+            if (null != port) {
+                httpc.getHostConfiguration().setProxy(System.getProperty("http.proxyHost"), port);
+            }
+        }
     }
 
     private static final HashSet validMethodTypes= new HashSet();
