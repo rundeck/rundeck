@@ -534,9 +534,14 @@ class ScheduledExecutionTest  {
         assertTrue(new ScheduledExecution(hour: '*').shouldUseCrontabString())
         assertTrue(new ScheduledExecution(hour: '*/2').shouldUseCrontabString())
         assertFalse(new ScheduledExecution(hour: '12').shouldUseCrontabString())
+        assertTrue(new ScheduledExecution(hour: '12,6').shouldUseCrontabString())
         assertTrue(new ScheduledExecution(minute: '*').shouldUseCrontabString())
         assertTrue(new ScheduledExecution(minute: '*/2').shouldUseCrontabString())
         assertFalse(new ScheduledExecution(minute: '12').shouldUseCrontabString())
+        assertTrue(new ScheduledExecution(minute: '12,14').shouldUseCrontabString())
+        assertTrue(new ScheduledExecution(hour: '06,08,10,12,14,16,18').shouldUseCrontabString())
+        assertTrue(new ScheduledExecution(minute: '06,08,10,12,14,16,18').shouldUseCrontabString())
+        //example: 0 00 06,08,10,12,14,16,18 ? * * *
     }
 
     void testZeroPaddedString() {

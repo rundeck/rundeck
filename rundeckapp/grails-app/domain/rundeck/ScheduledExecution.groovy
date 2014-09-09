@@ -433,7 +433,8 @@ class ScheduledExecution extends ExecutionContext {
         if ('0' != seconds
                 || '*' != year
                 || ('*' in [minute, hour])
-                || [minute, hour, dayOfMonth, dayOfWeek].find { crontabSpecialValue(it) }
+                || [minute, hour].any { it.contains(',') }
+                || [minute, hour, dayOfMonth, dayOfWeek].any { crontabSpecialValue(it) }
                 || crontabSpecialMonthValue(month)) {
             return true
         }
