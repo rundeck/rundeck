@@ -1,21 +1,16 @@
-String savedUserDir;
+import org.eclipse.jetty.server.Server
+import org.eclipse.jetty.server.handler.ContextHandlerCollection
+import org.eclipse.jetty.webapp.WebAppContext
+import org.eclipse.jetty.server.Handler
 
-/**
- * WORKAROUND FOR GRAILS BUG: http://jira.grails.org/browse/MAVEN-154
- */
-eventTestPhasesStart = {args ->
-    println "Setting user.dir (${basedir})"
-    savedUserDir = System.getProperty("user.dir")
-    System.setProperty("user.dir", "${basedir}")
-}
 
-/**
- * WORKAROUND FOR GRAILS BUG: http://jira.grails.org/browse/MAVEN-154
- */
-eventTestPhasesEnd = {args ->
-    if (savedUserDir)
-    {
-        println "Restoring user.dir (${savedUserDir})"
-        System.setProperty("user.dir", savedUserDir)
+
+eventConfigureJetty = { Server server ->
+    try {
+        WebAppContext ctx=server.handler
+        ctx.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false");
+    }
+    catch (e) {
+        e.printStackTrace()
     }
 }

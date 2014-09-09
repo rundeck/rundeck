@@ -220,6 +220,7 @@ public class RunServer {
         }
         final WebAppContext context = new WebAppContext(webapp.getAbsolutePath(), appContext);
         context.setTempDirectory(new File(serverdir, "work"));
+        context.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false");
         return context;
     }
 
