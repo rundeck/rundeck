@@ -1537,9 +1537,21 @@ class ScheduledExecutionController  extends ControllerBase{
         //test nodeset to make sure there are matches
         if(scheduledExecution.doNodedispatch){
             NodeSet nset = ExecutionService.filtersAsNodeSet(scheduledExecution)
-            def project=frameworkService.getFrameworkProject(scheduledExecution.project)
-//            def nodes=project.getNodes().filterNodes(nset)
             model.nodeset=nset
+            //check nodeset filters for variable expansion
+            def varfound = scheduledExecution.asFilter().contains("\${")
+            if (varfound) {
+                model.nodesetvariables = true
+            }
+            if (params.retryFailedExecId) {
+                Execution e = Execution.get(params.retryFailedExecId)
+                if (e && e.scheduledExecution?.id == scheduledExecution.id) {
+                    model.failedNodes = e.failedNodeList
+                    if(varfound){
+                        nset = ExecutionService.filtersAsNodeSet([filter: "name: " + e.failedNodeList])
+                    }
+                }
+            }
             def nodes = frameworkService.filterAuthorizedNodes(
                     scheduledExecution.project,
                     new HashSet<String>(["read", "run"]),
@@ -1625,22 +1637,9 @@ class ScheduledExecutionController  extends ControllerBase{
             }else{
                 model.nodes = nodes
             }
-            //check nodeset filters for variable expansion
-            def varfound=NodeSet.FILTER_ENUM.find{filter->
-                (nset.include?filter.value(nset.include)?.contains("\${"):false)||(nset.exclude?filter.value(nset.exclude)?.contains("\${"):false)
-            }
-            if(varfound){
-                model.nodesetvariables=true
-            }
 
         }
 
-        if(params.retryFailedExecId){
-            Execution e = Execution.get(params.retryFailedExecId)
-            if (e && e.scheduledExecution?.id == scheduledExecution.id) {
-                model.failedNodes = e.failedNodeList
-            }
-        }
         if(params.retryExecId){
             Execution e = Execution.get(params.retryExecId)
             if(e && e.scheduledExecution?.id == scheduledExecution.id){

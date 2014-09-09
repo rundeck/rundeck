@@ -17,12 +17,12 @@
 <div class="row">
 <div class="${hideHead?'col-sm-9':'col-sm-12'}">
     <g:render template="editOptions" model="${[scheduledExecution:scheduledExecution, selectedoptsmap:selectedoptsmap, selectedargstring:selectedargstring,authorized:authorized,jobexecOptionErrors:jobexecOptionErrors, optiondependencies: optiondependencies, dependentoptions: dependentoptions, optionordering: optionordering]}"/>
-    <div class="form-group" style="${wdgt.styleVisible(if:nodesetvariables || nodesetempty || nodes)}">
+    <div class="form-group" style="${wdgt.styleVisible(if: nodesetvariables && !failedNodes || nodesetempty || nodes)}">
     <div class="col-sm-2 control-label text-form-label">
         Nodes
     </div>
     <div class="col-sm-10">
-        <g:if test="${nodesetvariables }">
+        <g:if test="${nodesetvariables && !failedNodes}">
             %{--show node filters--}%
             <div>
                 <span class="query form-control-static">
